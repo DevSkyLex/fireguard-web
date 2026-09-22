@@ -13,6 +13,8 @@ import type { CallState } from '@core/request-state';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface MessageThreadState {
+  /** Generation distinguishing repeated visits to the same conversation. */
+  readonly readGeneration: number;
   /** Conversation the loaded page belongs to, or `null` before the first load. */
   readonly conversationId: string | null;
   /** Server-reported total. Paging must be driven from this, not the row count. */

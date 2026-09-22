@@ -19,6 +19,26 @@ import type { ChecklistOutput } from '@features/organization/features/checklists
 export interface ChecklistState {
   //#region Properties
   /**
+   * Property currentOrganizationId
+   * @readonly
+   * @description Organization owning the list and its mutation state.
+   * @access public
+   * @since 2.1.0
+   * @type {string | null}
+   */
+  readonly currentOrganizationId: string | null;
+
+  /**
+   * Property loadedPage
+   * @readonly
+   * @description Page whose server total is authoritative, null while a replacement is pending.
+   * @access public
+   * @since 2.1.0
+   * @type {number | null}
+   */
+  readonly loadedPage: number | null;
+
+  /**
    * Property createCallState
    * @readonly
    *

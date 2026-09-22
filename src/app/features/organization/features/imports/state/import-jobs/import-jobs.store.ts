@@ -130,6 +130,8 @@ export const ImportJobsStore = signalStore(
       dispatcher = inject(Dispatcher),
     ) => {
       let organization = '';
+      let organizationGeneration = 0;
+      const activeCreates = new Set<number>();
       let lastQuery: {
         organizationId: string;
         options?: RequestOptions;
@@ -200,9 +202,10 @@ export const ImportJobsStore = signalStore(
         pipe(
           tap((request): void => {
             if (organization !== request.organizationId) {
+              organizationGeneration += 1;
+              organization = request.organizationId;
               changedOrganization.next();
               activePolls.clear();
-              organization = request.organizationId;
               patchState(store, removeAllEntities({ collection: 'job' }), INITIAL_STATE);
             }
             lastQuery = request;
@@ -228,6 +231,16 @@ export const ImportJobsStore = signalStore(
         ),
       );
 
+      /**
+       * Method create
+       * @method create
+       * @description Accepts one upload per organization generation. An already accepted upload
+       * keeps its subscription across context changes, but its result cannot affect a later visit.
+       * @access public
+       * @since 1.0.0
+       * @param {object} request - The organization, import kind, file and optional dry-run choice.
+       * @returns {void}
+       */
       const create = rxMethod<{
         organizationId: string;
         kind: ImportJobKind;
@@ -235,14 +248,21 @@ export const ImportJobsStore = signalStore(
         dryRun?: boolean;
       }>(
         pipe(
-          tap((): void => {
+          mergeMap(({ organizationId, kind, file, dryRun }) => {
+            if (!organization) {
+              organization = organizationId;
+              organizationGeneration += 1;
+            }
+            if (organization !== organizationId || activeCreates.has(organizationGeneration))
+              return EMPTY;
+            const generation = organizationGeneration;
+            activeCreates.add(generation);
             patchState(store, { createCallState: pendingCallState() });
-          }),
-          exhaustMap(({ organizationId, kind, file, dryRun }) =>
-            service.create(organizationId, kind, file, dryRun).pipe(
+            return service.create(organizationId, kind, file, dryRun).pipe(
               tapResponse({
                 next: (job: ImportJobOutput): void => {
-                  if (organization && organization !== organizationId) return;
+                  if (generation !== organizationGeneration || organization !== organizationId)
+                    return;
                   patchState(store, addEntity(job, { collection: 'job' }), {
                     createCallState: successCallState(job),
                   });
@@ -253,12 +273,15 @@ export const ImportJobsStore = signalStore(
                   if (lastQuery) load(lastQuery);
                 },
                 error: (error: unknown): void => {
+                  if (generation !== organizationGeneration || organization !== organizationId)
+                    return;
                   const storeError: StoreError = toStoreError(error);
                   patchState(store, { createCallState: errorCallState(storeError) });
                 },
               }),
-            ),
-          ),
+              finalize(() => activeCreates.delete(generation)),
+            );
+          }),
         ),
       );
 
@@ -459,6 +482,7 @@ export const ImportJobsStore = signalStore(
          * @returns {void}
          */
         resetCreateOperation(): void {
+          if (activeCreates.has(organizationGeneration)) return;
           patchState(store, { createCallState: idleCallState() });
         },
       };

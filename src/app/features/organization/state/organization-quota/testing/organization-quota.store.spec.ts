@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationService } from '@features/organization/data-access';
 import {
   ORGANIZATION_QUOTA_RESOURCE,
@@ -28,11 +29,15 @@ const quota = (items: readonly OrganizationQuotaItemOutput[]): OrganizationQuota
   }) as OrganizationQuotaOutput;
 
 describe('OrganizationQuotaStore', () => {
+  const sessionRevision = signal(0);
+  const isAuthenticated = signal(true);
   const selectedOrganizationId = signal<string | null>(null);
   let store: OrganizationQuotaStore;
   const organizationService = { getQuota: vi.fn() };
 
   beforeEach(() => {
+    sessionRevision.set(0);
+    isAuthenticated.set(true);
     vi.clearAllMocks();
     selectedOrganizationId.set(null);
     organizationService.getQuota.mockReturnValue(
@@ -46,6 +51,7 @@ describe('OrganizationQuotaStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated, sessionRevision } },
         OrganizationQuotaStore,
         { provide: OrganizationService, useValue: organizationService },
         { provide: ActiveOrganizationStore, useValue: { selectedOrganizationId } },
@@ -96,5 +102,48 @@ describe('OrganizationQuotaStore', () => {
 
     expect(organizationService.getQuota).toHaveBeenCalledTimes(2);
     expect(organizationService.getQuota).toHaveBeenLastCalledWith('org-1');
+  });
+  it('retains limits on same-context refresh but clears them for another organization', async () => {
+    selectedOrganizationId.set('org-1');
+    await flushEffects();
+    const refresh = new Subject<OrganizationQuotaOutput>();
+    organizationService.getQuota.mockReturnValueOnce(refresh);
+    store.reload();
+    expect(store.items()).toHaveLength(2);
+    expect(store.isAtLimit(ORGANIZATION_QUOTA_RESOURCE.MEMBERS)).toBe(true);
+    refresh.error(new Error('offline'));
+    expect(store.items()).toHaveLength(2);
+    store.reload();
+    expect(store.quotaCallState().status).toBe('success');
+    const otherOrganization = new Subject<OrganizationQuotaOutput>();
+    organizationService.getQuota.mockReturnValueOnce(otherOrganization);
+    selectedOrganizationId.set('org-2');
+    await flushEffects();
+    expect(store.items()).toEqual([]);
+    expect(store.isAtLimit(ORGANIZATION_QUOTA_RESOURCE.MEMBERS)).toBe(false);
+    store.clear();
+    expect(otherOrganization.observed).toBe(false);
+    otherOrganization.next(
+      quota([{ resource: ORGANIZATION_QUOTA_RESOURCE.MEMBERS, used: 20, limit: 20 }]),
+    );
+    expect(store.items()).toEqual([]);
+    expect(store.isLoadingQuota()).toBe(false);
+  });
+
+  it('invalidates the quota cache on session replacement and does not fetch while logged out', async () => {
+    selectedOrganizationId.set('org-1');
+    await flushEffects();
+    const response = new Subject<OrganizationQuotaOutput>();
+    organizationService.getQuota.mockReturnValueOnce(response);
+    sessionRevision.update((revision) => revision + 1);
+    await flushEffects();
+    expect(store.items()).toEqual([]);
+    expect(store.isLoadingQuota()).toBe(true);
+    isAuthenticated.set(false);
+    sessionRevision.update((revision) => revision + 1);
+    await flushEffects();
+    expect(response.observed).toBe(false);
+    expect(store.items()).toEqual([]);
+    expect(organizationService.getQuota).toHaveBeenCalledTimes(2);
   });
 });

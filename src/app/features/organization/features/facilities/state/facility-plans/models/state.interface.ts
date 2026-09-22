@@ -57,13 +57,19 @@ export interface FacilityPlansState {
   /** The plan the tab is showing; null defers to the primary-first default. */
   readonly selectedPlanId: string | null;
 
+  /** @description Advances on explicit context/selection changes even when batched A-B-A returns to the same id. */
+  readonly selectionRevision: number;
+
   /**
    * The selected plan's decoded image bytes as a browser object URL, fed to
    * `app-plan-viewer`'s `src`; null while unloaded, loading, or the platform
    * is not the browser. Revoked whenever the selection changes and on
    * destroy — see `withHooks` in {@link FacilityPlansStore}.
    */
-  readonly planImageUrl: string | null;
+  readonly imageUrl: string | null;
+
+  /** @description Context key of the loaded image, including organization, facility and attachment. */
+  readonly imageKey: string | null;
 
   /**
    * The organization owning the facility, set by `load`. Held here because
@@ -80,7 +86,10 @@ export interface FacilityPlansState {
   readonly overlayCallState: CallState;
 
   /** The selected plan's zone/equipment overlay; null while unloaded or loading. */
-  readonly overlay: FacilityPlanOverlayOutput | null;
+  readonly planOverlay: FacilityPlanOverlayOutput | null;
+
+  /** @description Context key of the loaded annotations. */
+  readonly overlayKey: string | null;
 
   /** Whether the overlay's zone polygons are shown. */
   readonly showZones: boolean;

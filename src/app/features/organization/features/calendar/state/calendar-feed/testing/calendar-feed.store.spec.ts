@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Dispatcher } from '@ngrx/signals/events';
 import { Subject, of, throwError } from 'rxjs';
 import type { ApiError } from '@core/api/models';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
@@ -23,6 +24,7 @@ const apiError = (status: number, detail: string): ApiError => ({
 
 describe('CalendarFeedStore', () => {
   let store: InstanceType<typeof CalendarFeedStore>;
+  let dispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockCalendarService: {
     getFeed: ReturnType<typeof vi.fn>;
     createEvent: ReturnType<typeof vi.fn>;
@@ -51,6 +53,7 @@ describe('CalendarFeedStore', () => {
   };
 
   beforeEach(() => {
+    dispatcher = { dispatch: vi.fn() };
     mockCalendarService = {
       getFeed: vi.fn().mockReturnValue(of(feed)),
       createEvent: vi.fn().mockReturnValue(of(event)),
@@ -59,7 +62,11 @@ describe('CalendarFeedStore', () => {
     };
 
     TestBed.configureTestingModule({
-      providers: [CalendarFeedStore, { provide: CalendarService, useValue: mockCalendarService }],
+      providers: [
+        CalendarFeedStore,
+        { provide: CalendarService, useValue: mockCalendarService },
+        { provide: Dispatcher, useValue: dispatcher },
+      ],
     });
 
     store = TestBed.inject(CalendarFeedStore);
@@ -271,6 +278,154 @@ describe('CalendarFeedStore', () => {
       expect(store.moveEventCallState().status).toBe('error');
       expect(store.moveEventCallState().error?.code).toBe(409);
       expect(mockCalendarService.getFeed).not.toHaveBeenCalled();
+    });
+
+    it('should preserve a newer period when a move in the previous period fails', () => {
+      const update = new Subject<CalendarEventOutput>();
+      mockCalendarService.updateEvent.mockReturnValue(update);
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00Z',
+      });
+      const september: CalendarFeedOutput = {
+        ...movableFeed,
+        from: '2026-09-01T00:00:00Z',
+        to: '2026-09-30T23:59:59Z',
+        items: [
+          { ...movableFeed.items[0], id: 'september-event', startsAt: '2026-09-10T09:00:00Z' },
+        ],
+      };
+      mockCalendarService.getFeed.mockReturnValue(of(september));
+      store.load({ organizationId: 'org-1', from: september.from, to: september.to });
+      update.error(apiError(409, 'Conflict'));
+
+      expect(store.queryData()).toEqual(september);
+      expect(store.lastLoadCommand()?.from).toBe(september.from);
+      expect(store.moveEventCallState().status).toBe('error');
+    });
+
+    it('should not overwrite pending window state with an optimistic rollback', () => {
+      const update = new Subject<CalendarEventOutput>();
+      const window = new Subject<CalendarFeedOutput>();
+      mockCalendarService.updateEvent.mockReturnValue(update);
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00Z',
+      });
+      mockCalendarService.getFeed.mockReturnValue(window);
+      store.load({ organizationId: 'org-1', from: '2026-09-01', to: '2026-09-30' });
+      update.error(apiError(409, 'Conflict'));
+
+      expect(store.isQueryLoading()).toBe(true);
+      window.next({ ...feed, from: '2026-09-01', to: '2026-09-30' });
+      expect(store.queryData()?.from).toBe('2026-09-01');
+      expect(store.items()).toEqual([]);
+    });
+
+    it('should preserve an authoritative refresh of the same period after an older move fails', () => {
+      const update = new Subject<CalendarEventOutput>();
+      mockCalendarService.updateEvent.mockReturnValue(update);
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00Z',
+      });
+      const fresh = {
+        ...movableFeed,
+        items: [{ ...movableFeed.items[0], title: 'Edited elsewhere' }],
+      };
+      mockCalendarService.getFeed.mockReturnValue(of(fresh));
+      store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+      update.error(apiError(409, 'Conflict'));
+
+      expect(store.queryData()).toEqual(fresh);
+    });
+
+    it('should retain queued writes while preventing their old-period optimistic patches and rollbacks', () => {
+      const first = new Subject<CalendarEventOutput>();
+      const queued = new Subject<CalendarEventOutput>();
+      mockCalendarService.updateEvent.mockReturnValueOnce(first).mockReturnValueOnce(queued);
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00Z',
+      });
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-04T09:00:00Z',
+      });
+      expect(mockCalendarService.updateEvent).toHaveBeenCalledTimes(1);
+      const september = { ...movableFeed, from: '2026-09-01', to: '2026-09-30' };
+      mockCalendarService.getFeed.mockReturnValue(of(september));
+      store.load({ organizationId: 'org-1', from: september.from, to: september.to });
+      first.error(apiError(409, 'First failed'));
+
+      expect(mockCalendarService.updateEvent).toHaveBeenCalledTimes(2);
+      expect(mockCalendarService.updateEvent).toHaveBeenLastCalledWith('org-1', 'evt-1', {
+        startsAt: '2026-08-04T09:00:00Z',
+      });
+      expect(store.queryData()).toEqual(september);
+      queued.error(apiError(409, 'Queued failed'));
+      expect(store.queryData()).toEqual(september);
+    });
+
+    it('should skip departed queued moves even when returning to the same organization', () => {
+      const departed = new Subject<CalendarEventOutput>();
+      const current = new Subject<CalendarEventOutput>();
+      mockCalendarService.updateEvent.mockReturnValueOnce(departed).mockReturnValueOnce(current);
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00Z',
+      });
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-04T09:00:00Z',
+      });
+      store.load({ organizationId: 'org-2', from: feed.from, to: feed.to });
+      store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-05T09:00:00Z',
+      });
+
+      expect(departed.observed).toBe(true);
+      mockCalendarService.getFeed.mockClear();
+      departed.next(event);
+      departed.complete();
+
+      expect(mockCalendarService.updateEvent).toHaveBeenCalledTimes(2);
+      expect(mockCalendarService.updateEvent).toHaveBeenLastCalledWith('org-1', 'evt-1', {
+        startsAt: '2026-08-05T09:00:00Z',
+      });
+      expect(mockCalendarService.getFeed).not.toHaveBeenCalled();
+      expect(dispatcher.dispatch).not.toHaveBeenCalled();
+      expect(store.moveEventCallState().status).toBe('pending');
+      current.next(event);
+      expect(store.moveEventCallState().status).toBe('success');
+    });
+
+    it('should ignore a departed move failure while the new organization feed is loading', () => {
+      const departed = new Subject<CalendarEventOutput>();
+      mockCalendarService.updateEvent.mockReturnValueOnce(departed);
+      store.moveEvent({
+        organizationId: 'org-1',
+        eventId: 'evt-1',
+        startsAt: '2026-08-03T09:00:00Z',
+      });
+      mockCalendarService.getFeed.mockReturnValue(new Subject<CalendarFeedOutput>());
+      store.load({ organizationId: 'org-2', from: feed.from, to: feed.to });
+      departed.error(apiError(409, 'Old organization failure'));
+
+      expect(store.queryData()).toBeNull();
+      expect(store.isQueryLoading()).toBe(true);
+      expect(store.moveEventCallState().status).toBe('idle');
+      expect(dispatcher.dispatch).not.toHaveBeenCalled();
     });
   });
 

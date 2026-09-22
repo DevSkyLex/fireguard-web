@@ -1,8 +1,8 @@
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { signal } from '@angular/core';
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AuthSessionNavigationService } from '@features/auth/services';
 import { unauthorizedInterceptor } from '../unauthorized.interceptor';
@@ -10,6 +10,7 @@ import { unauthorizedInterceptor } from '../unauthorized.interceptor';
 describe('unauthorizedInterceptor', () => {
   let httpClient: HttpClient;
   let httpMock: HttpTestingController;
+  let sessionRevision: WritableSignal<number>;
   let mockSessionNavigation: { navigateToLogin: ReturnType<typeof vi.fn> };
   let mockSession: {
     clearSession: ReturnType<typeof vi.fn>;
@@ -17,6 +18,7 @@ describe('unauthorizedInterceptor', () => {
   };
 
   beforeEach(() => {
+    sessionRevision = signal(0);
     mockSessionNavigation = { navigateToLogin: vi.fn() };
     mockSession = { clearSession: vi.fn(), renewSession: vi.fn(() => of(null)) };
 
@@ -29,6 +31,7 @@ describe('unauthorizedInterceptor', () => {
           provide: AUTH_SESSION_PORT,
           useValue: {
             ...mockSession,
+            sessionRevision,
             accessToken: signal<string | null>(null),
             isAuthenticated: signal(false),
             initialized: signal(true),
@@ -110,6 +113,44 @@ describe('unauthorizedInterceptor', () => {
   });
 
   describe('silent renewal', () => {
+    it('does not renew or replay a request from an ended session', () => {
+      const failed = vi.fn();
+      httpClient.post('/api/protected', { command: 'old' }).subscribe({ error: failed });
+      sessionRevision.set(2);
+      httpMock.expectOne('/api/protected').flush(null, { status: 401, statusText: 'Unauthorized' });
+      expect(failed).toHaveBeenCalledOnce();
+      expect(mockSession.renewSession).not.toHaveBeenCalled();
+      expect(mockSession.clearSession).not.toHaveBeenCalled();
+      expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
+      httpMock.expectNone('/api/protected');
+    });
+
+    it.each(['new-token', null])('ignores renewal result %s after the session changes', (token) => {
+      const renewal = new Subject<string | null>();
+      mockSession.renewSession.mockReturnValue(renewal);
+      const failed = vi.fn();
+      httpClient.get('/api/protected').subscribe({ error: failed });
+      httpMock.expectOne('/api/protected').flush(null, { status: 401, statusText: 'Unauthorized' });
+      sessionRevision.set(1);
+      renewal.next(token);
+      renewal.complete();
+      expect(failed).toHaveBeenCalledOnce();
+      expect(mockSession.clearSession).not.toHaveBeenCalled();
+      expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
+      httpMock.expectNone('/api/protected');
+    });
+
+    it('does not clear a new session when the old replay returns 401', () => {
+      mockSession.renewSession.mockReturnValue(of('renewed-token'));
+      httpClient.get('/api/protected').subscribe({ error: () => undefined });
+      httpMock.expectOne('/api/protected').flush(null, { status: 401, statusText: 'Unauthorized' });
+      const replay = httpMock.expectOne('/api/protected');
+      sessionRevision.set(2);
+      replay.flush(null, { status: 401, statusText: 'Unauthorized' });
+      expect(mockSession.clearSession).not.toHaveBeenCalled();
+      expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
+    });
+
     it('should renew and replay the request instead of signing the user out', () => {
       mockSession.renewSession.mockReturnValue(of('fresh-token'));
       let body: unknown = null;

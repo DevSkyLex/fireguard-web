@@ -27,6 +27,7 @@ const flushEffects = async (): Promise<void> => {
 
 describe('OrganizationMemberAccessStore', () => {
   const isAuthenticated = signal(true);
+  const sessionRevision = signal(0);
   const selectedOrganization = signal<{ id: string } | null>(null);
   const selectedOrganizationId = computed<string | null>(() => selectedOrganization()?.id ?? null);
 
@@ -85,6 +86,7 @@ describe('OrganizationMemberAccessStore', () => {
 
   beforeEach(() => {
     isAuthenticated.set(true);
+    sessionRevision.set(0);
     selectedOrganization.set(null);
     routerEvents = new Subject<NavigationEnd>();
     mockRouter = {
@@ -104,7 +106,7 @@ describe('OrganizationMemberAccessStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated } },
+        { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated, sessionRevision } },
         {
           provide: ActiveOrganizationStore,
           useValue: {
@@ -136,6 +138,7 @@ describe('OrganizationMemberAccessStore', () => {
     expect(mockOrganizationMemberService.getCurrentProfile).not.toHaveBeenCalled();
 
     isAuthenticated.set(true);
+    sessionRevision.set(0);
     await flushEffects();
     expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledOnce();
   });
@@ -339,5 +342,61 @@ describe('OrganizationMemberAccessStore', () => {
       organizationSettingsStoreEvents.organizationUpdated({ id: 'org-1' } as never),
     );
     expect(store.permissions()).toEqual([]);
+  });
+  it('shares one read between an imperative load and guard resolution', async () => {
+    const response = new Subject<CurrentOrganizationMemberProfileOutput>();
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(response);
+    store.loadAccess('org-1');
+    const resolution = firstValueFrom(store.ensureAccessResolved('org-1'));
+    store.loadAccess('org-1');
+    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledOnce();
+    response.next(profile);
+    await expect(resolution).resolves.toBe(true);
+  });
+
+  it('settles replaced guards and ignores old permissions across A to B to A', async () => {
+    const firstA = new Subject<CurrentOrganizationMemberProfileOutput>();
+    const requestB = new Subject<CurrentOrganizationMemberProfileOutput>();
+    const secondA = new Subject<CurrentOrganizationMemberProfileOutput>();
+    mockOrganizationMemberService.getCurrentProfile
+      .mockReturnValueOnce(firstA)
+      .mockReturnValueOnce(requestB)
+      .mockReturnValueOnce(secondA);
+    const guardA = firstValueFrom(store.ensureAccessResolved('org-1'));
+    const guardB = firstValueFrom(store.ensureAccessResolved('org-2'));
+    const guardAgain = firstValueFrom(store.ensureAccessResolved('org-1'));
+    await expect(guardA).resolves.toBe(false);
+    await expect(guardB).resolves.toBe(false);
+    expect(firstA.observed).toBe(false);
+    expect(requestB.observed).toBe(false);
+    firstA.next(profile);
+    requestB.next({ ...profile, organizationId: 'org-2' });
+    expect(store.permissions()).toEqual([]);
+    secondA.next({ ...profile, permissions: [] });
+    await expect(guardAgain).resolves.toBe(true);
+    expect(store.currentOrganizationId()).toBe('org-1');
+    expect(store.permissions()).toEqual([]);
+  });
+
+  it('invalidates a successful access cache for a new session before effects run', async () => {
+    await expect(firstValueFrom(store.ensureAccessResolved('org-1'))).resolves.toBe(true);
+    sessionRevision.update((revision) => revision + 1);
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValue(
+      of({ ...profile, permissions: [] }),
+    );
+    await expect(firstValueFrom(store.ensureAccessResolved('org-1'))).resolves.toBe(true);
+    await flushEffects();
+    expect(mockOrganizationMemberService.getCurrentProfile).toHaveBeenCalledTimes(2);
+    expect(store.accessCallState().status).toBe('success');
+    expect(store.permissions()).toEqual([]);
+  });
+
+  it('retries an access refusal without retaining a completed pending reference', async () => {
+    mockOrganizationMemberService.getCurrentProfile.mockReturnValueOnce(
+      throwError(() => new Error('offline')),
+    );
+    await expect(firstValueFrom(store.ensureAccessResolved('org-1'))).resolves.toBe(false);
+    await expect(firstValueFrom(store.ensureAccessResolved('org-1'))).resolves.toBe(true);
+    expect(store.accessCallState().status).toBe('success');
   });
 });

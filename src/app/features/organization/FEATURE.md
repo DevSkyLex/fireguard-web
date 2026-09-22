@@ -799,15 +799,22 @@ dead weight.
 - May expose the caller's own organization memberships and the ability to leave one to
   `features/account` through `MY_ORGANIZATIONS_PORT`.
 - May expose current active member access to approved sibling features through `ORGANIZATION_MEMBER_ACCESS_PORT`.
-- Consumes Auth's `AUTH_SESSION_PORT` to gate member-access reads. A remembered organization
-  never triggers a protected request before authentication and MFA finish. Session loss clears
-  permissions and cancels pending member-access requests, including guard resolutions.
+- Consumes Auth's `AUTH_SESSION_PORT` to gate member-access, directory, counter and quota reads.
+  A remembered organization never triggers a protected request before authentication and MFA
+  finish. Caches belong to an organization and authentication session revision; a new session or
+  scope clears previous data and cancels reads. Only a refresh of the same context retains data.
+  Permission guards and imperative loads share one request; replacement settles guard waits to
+  `false`, and failed reads remain retryable.
 - May expose onboarding-approved setup workflows through `organization/setup`.
 - Must not move organization-owned widgets into layouts just because they render in the shell.
 
 ## Invariants
 
 - Active organization context is organization-owned state.
+- Settings commands retain their original organization and session. Navigation resets local
+  action state without cancelling accepted writes; late results never replace a new selection.
+  Same-session invalidation events identify the organization actually changed, while page
+  feedback is restricted to the command's current context.
 - Organization-scoped child workflows stay under this feature boundary.
 - Layouts and sibling features consume organization behavior through the published port, not through direct store injection.
 - Resolvers that load organization context belong to this feature.

@@ -52,7 +52,7 @@ describe('FederatedCallbackPage', () => {
             resetCompleteLogin: vi.fn(),
           },
         },
-        { provide: AuthStore, useValue: { applySession: vi.fn() } },
+        { provide: AuthStore, useValue: { applySession: vi.fn(), sessionRevision: signal(0) } },
       ],
     });
     const context = TestBed.inject(FederatedReturnContextService);
@@ -116,7 +116,7 @@ describe('FederatedCallbackPage', () => {
             resetCompleteLogin: vi.fn(),
           },
         },
-        { provide: AuthStore, useValue: { applySession: vi.fn() } },
+        { provide: AuthStore, useValue: { applySession: vi.fn(), sessionRevision: signal(0) } },
       ],
     });
     TestBed.overrideComponent(FederatedCallbackPage, { set: { template: '' } });
@@ -162,7 +162,7 @@ describe('FederatedCallbackPage', () => {
             resetCompleteLogin: vi.fn(),
           },
         },
-        { provide: AuthStore, useValue: { applySession: vi.fn() } },
+        { provide: AuthStore, useValue: { applySession: vi.fn(), sessionRevision: signal(0) } },
       ],
     });
     TestBed.overrideComponent(FederatedCallbackPage, { set: { template: '' } });
@@ -212,7 +212,7 @@ describe('FederatedCallbackPage', () => {
             resetCompleteLogin: vi.fn(),
           },
         },
-        { provide: AuthStore, useValue: { applySession: vi.fn() } },
+        { provide: AuthStore, useValue: { applySession: vi.fn(), sessionRevision: signal(0) } },
       ],
     });
     TestBed.overrideComponent(FederatedCallbackPage, { set: { template: '' } });
@@ -224,6 +224,63 @@ describe('FederatedCallbackPage', () => {
       provider: 'google',
       input: { error: 'access_denied', state: 'opaque-state' },
     });
+  });
+
+  it('discards a callback result if another session was established before its page continuation', async () => {
+    const completeLoginResult = signal<LoginOutput | null>(null);
+    const sessionRevision = signal(0);
+    const applySession = vi.fn();
+    const navigate = vi.fn();
+    const navigateByUrl = vi.fn();
+    const resetCompleteLogin = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: Location, useValue: { replaceState: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({ provider: 'google' }),
+              queryParamMap: convertToParamMap({ code: 'one-time-code', state: 'opaque-state' }),
+            },
+          },
+        },
+        {
+          provide: Router,
+          useValue: {
+            url: '/auth/federated/google/callback?code=one-time-code&state=opaque-state',
+            navigate,
+            navigateByUrl,
+          },
+        },
+        {
+          provide: FederatedAuthStore,
+          useValue: {
+            completeLogin: vi.fn(),
+            completeLoginResult,
+            completeLoginError: signal(null),
+            resetCompleteLogin,
+          },
+        },
+        { provide: AuthStore, useValue: { applySession, sessionRevision } },
+      ],
+    });
+    TestBed.overrideComponent(FederatedCallbackPage, { set: { template: '' } });
+    const fixture = TestBed.createComponent(FederatedCallbackPage);
+    fixture.detectChanges();
+    completeLoginResult.set({
+      '@id': '/api/auth/federated/google/complete',
+      '@type': 'Token',
+      access_token: 'obsolete-token',
+    } as LoginOutput);
+    sessionRevision.set(1);
+    await fixture.whenStable();
+    expect(applySession).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(navigateByUrl).not.toHaveBeenCalled();
+    expect(resetCompleteLogin).toHaveBeenCalledOnce();
   });
 
   it('should apply an MFA callback result before navigating to verification', async () => {
@@ -263,7 +320,7 @@ describe('FederatedCallbackPage', () => {
             resetCompleteLogin,
           },
         },
-        { provide: AuthStore, useValue: { applySession } },
+        { provide: AuthStore, useValue: { applySession, sessionRevision: signal(0) } },
       ],
     });
     TestBed.overrideComponent(FederatedCallbackPage, { set: { template: '' } });

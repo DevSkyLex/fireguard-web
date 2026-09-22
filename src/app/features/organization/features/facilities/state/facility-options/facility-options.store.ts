@@ -1,10 +1,17 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID } from '@angular/core';
+import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, pipe, Subject, switchMap, takeUntil } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -17,6 +24,7 @@ import {
   toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   FacilityOption,
@@ -37,6 +45,7 @@ import type { FacilityOptionsState } from './models';
  * @since 1.0.0
  */
 const INITIAL_FACILITY_OPTIONS_STATE: FacilityOptionsState = {
+  organizationId: null,
   facilities: [],
   loadCallState: idleCallState(),
 };
@@ -94,37 +103,80 @@ export const FacilityOptionsStore = signalStore(
       dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
       facilityService: FacilityService = inject<FacilityService>(FacilityService),
       platformId: object = inject(PLATFORM_ID),
+      authSession = inject(AUTH_SESSION_PORT),
     ) => {
+      const cancellation = new Subject<void>();
+      let generation = 0;
+      let sessionRevision = authSession.sessionRevision();
+      /**
+       * Function clear
+       * @description Invalidates a picker cache and cancels its outstanding read.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const clear = (): void => {
+        generation += 1;
+        cancellation.next();
+        patchState(store, INITIAL_FACILITY_OPTIONS_STATE);
+      };
+      /**
+       * Function synchronizeSession
+       * @description Prevents a mounted picker from reusing another session's options.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const synchronizeSession = (): void => {
+        const revision = authSession.sessionRevision();
+        if (revision !== sessionRevision || !authSession.isAuthenticated()) {
+          sessionRevision = revision;
+          clear();
+        }
+      };
       const load = rxMethod<string>(
         pipe(
-          tap((): void => {
-            patchState(store, { loadCallState: pendingCallState() });
+          switchMap((organizationId: string) => {
+            synchronizeSession();
+            if (!isPlatformBrowser(platformId) || !authSession.isAuthenticated()) return EMPTY;
+            const revision = authSession.sessionRevision();
+            const requestGeneration = ++generation;
+            patchState(store, {
+              organizationId,
+              facilities: store.organizationId() === organizationId ? store.facilities() : [],
+              loadCallState: pendingCallState(),
+            });
+            const isCurrent = (): boolean =>
+              requestGeneration === generation && revision === authSession.sessionRevision();
+            return facilityService
+              .list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE })
+              .pipe(
+                takeUntil(cancellation),
+                tapResponse({
+                  next: (response: HydraCollection<FacilityOutput>): void => {
+                    if (!isCurrent()) return;
+                    patchState(store, {
+                      facilities: response.member,
+                      loadCallState: successCallState(null),
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    if (!isCurrent()) return;
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { loadCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      facilityOptionsStoreEvents.loadFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load facility options'),
+                      ),
+                    );
+                  },
+                }),
+              );
           }),
-          switchMap((organizationId: string) =>
-            facilityService.list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE }).pipe(
-              tapResponse({
-                next: (response: HydraCollection<FacilityOutput>): void => {
-                  patchState(store, {
-                    facilities: response.member,
-                    loadCallState: successCallState(null),
-                  });
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { facilities: [], loadCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    facilityOptionsStoreEvents.loadFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load facility options'),
-                    ),
-                  );
-                },
-              }),
-            ),
-          ),
         ),
       );
 
       return {
+        clear,
+        synchronizeSession,
         /**
          * Method load
          * @method load
@@ -150,14 +202,31 @@ export const FacilityOptionsStore = signalStore(
         ensureLoaded(organizationId: string): void {
           if (!isPlatformBrowser(platformId)) return;
 
+          synchronizeSession();
           const status = store.loadCallState().status;
-          if (status === 'pending' || status === 'success') return;
+          if (
+            store.organizationId() === organizationId &&
+            (status === 'pending' || status === 'success')
+          )
+            return;
 
           load(organizationId);
         },
       };
     },
   ),
+  withHooks((store, authSession = inject(AUTH_SESSION_PORT)) => ({
+    onInit(): void {
+      effect(() => {
+        authSession.sessionRevision();
+        authSession.isAuthenticated();
+        untracked(() => store.synchronizeSession());
+      });
+    },
+    onDestroy(): void {
+      store.clear();
+    },
+  })),
 );
 
 /**

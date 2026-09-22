@@ -9,15 +9,15 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, pipe, Subject, switchMap, takeUntil } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
-  isCallSuccess,
   pendingCallState,
   successCallState,
   toStoreError,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationService } from '@features/organization/data-access';
 import {
   ORGANIZATION_QUOTA_RESOURCES,
@@ -62,7 +62,7 @@ export const OrganizationQuotaStore = signalStore(
     /** Per-resource quota usage items. */
     items: computed<ReadonlyArray<OrganizationQuotaItemOutput>>(() => {
       const state = store.quotaCallState();
-      return isCallSuccess(state) ? state.data.items : [];
+      return state.data?.items ?? [];
     }),
 
     /** Whether the quota payload is currently loading. */
@@ -74,9 +74,7 @@ export const OrganizationQuotaStore = signalStore(
      */
     statusByResource: computed<Record<OrganizationQuotaResource, QuotaStatus>>(() => {
       const state = store.quotaCallState();
-      const items: ReadonlyArray<OrganizationQuotaItemOutput> = isCallSuccess(state)
-        ? state.data.items
-        : [];
+      const items: ReadonlyArray<OrganizationQuotaItemOutput> = state.data?.items ?? [];
 
       const statuses = {} as Record<OrganizationQuotaResource, QuotaStatus>;
       for (const resource of ORGANIZATION_QUOTA_RESOURCES) {
@@ -103,44 +101,87 @@ export const OrganizationQuotaStore = signalStore(
     },
   })),
 
-  withMethods((store, organizationService = inject<OrganizationService>(OrganizationService)) => ({
-    /**
-     * Method load
-     *
-     * @description
-     * Loads the quota usage for the given organization.
-     */
-    load: rxMethod<string>(
-      pipe(
-        tap((organizationId: string) =>
-          patchState(store, {
-            currentOrganizationId: organizationId,
-            quotaCallState: pendingCallState(store.quotaCallState().data ?? undefined),
-          }),
-        ),
-        switchMap((organizationId: string) =>
-          organizationService.getQuota(organizationId).pipe(
-            tapResponse({
-              next: (quota: OrganizationQuotaOutput) =>
-                patchState(store, { quotaCallState: successCallState(quota) }),
-              error: (error: unknown) =>
-                patchState(store, { quotaCallState: errorCallState(toStoreError(error)) }),
+  withMethods(
+    (
+      store,
+      organizationService = inject(OrganizationService),
+      authSession = inject(AUTH_SESSION_PORT),
+    ) => {
+      const cancellation = new Subject<void>();
+      let generation = 0;
+      let sessionRevision = authSession.sessionRevision();
+      /**
+       * Function clear
+       * @description Invalidates quota reads and drops usage from a previous context.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const clear = (): void => {
+        generation += 1;
+        cancellation.next();
+        patchState(store, INITIAL_STATE);
+      };
+      /**
+       * Function synchronizeSession
+       * @description Invalidates cached limits whenever the authenticated session changes.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const synchronizeSession = (): void => {
+        const revision = authSession.sessionRevision();
+        if (revision !== sessionRevision || !authSession.isAuthenticated()) {
+          sessionRevision = revision;
+          clear();
+        }
+      };
+      return {
+        clear,
+        synchronizeSession,
+        /**
+         * Method load
+         * @method load
+         * @description Loads quota usage, retaining values only for a refresh of the same context.
+         * @access public
+         * @since 1.0.0
+         * @type {RxMethod<string>}
+         */
+        load: rxMethod<string>(
+          pipe(
+            switchMap((organizationId) => {
+              synchronizeSession();
+              if (!authSession.isAuthenticated()) return EMPTY;
+              const revision = authSession.sessionRevision();
+              const requestGeneration = ++generation;
+              const previous =
+                store.currentOrganizationId() === organizationId
+                  ? (store.quotaCallState().data ?? undefined)
+                  : undefined;
+              patchState(store, {
+                currentOrganizationId: organizationId,
+                quotaCallState: pendingCallState(previous),
+              });
+              const isCurrent = (): boolean =>
+                requestGeneration === generation && revision === authSession.sessionRevision();
+              return organizationService.getQuota(organizationId).pipe(
+                takeUntil(cancellation),
+                tapResponse({
+                  next: (quota: OrganizationQuotaOutput) => {
+                    if (isCurrent()) patchState(store, { quotaCallState: successCallState(quota) });
+                  },
+                  error: (error: unknown) => {
+                    if (isCurrent())
+                      patchState(store, {
+                        quotaCallState: errorCallState(toStoreError(error), previous),
+                      });
+                  },
+                }),
+              );
             }),
           ),
         ),
-      ),
-    ),
-
-    /**
-     * Method clear
-     *
-     * @description
-     * Resets the quota state.
-     */
-    clear(): void {
-      patchState(store, INITIAL_STATE);
+      };
     },
-  })),
+  ),
 
   withMethods((store) => ({
     /**
@@ -159,16 +200,21 @@ export const OrganizationQuotaStore = signalStore(
     },
   })),
 
-  withHooks((store) => {
+  withHooks((store, authSession = inject(AUTH_SESSION_PORT)) => {
     const activeOrganizationStore: ActiveOrganizationStore =
       inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
     return {
+      onDestroy(): void {
+        store.clear();
+      },
       onInit(): void {
         effect(() => {
           const organizationId: string | null = activeOrganizationStore.selectedOrganizationId();
-
-          if (!organizationId) {
+          authSession.sessionRevision();
+          const authenticated = authSession.isAuthenticated();
+          untracked(() => store.synchronizeSession());
+          if (!authenticated || !organizationId) {
             untracked(() => store.clear());
             return;
           }

@@ -536,6 +536,7 @@ test.describe('Facility Plan Overlay', () => {
     await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, {});
     await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_CHILD_ID, {});
     await api.mockFacilityPlans(E2E_FACILITY_ID, [facilityAttachmentOutput()]);
+    await api.mockFacilityPlans(E2E_FACILITY_CHILD_ID, []);
     await api.mockEquipmentDetail(E2E_ORGANIZATION_ID, equipmentOutput());
     await api.mockFacilityPlanOverlay(
       E2E_ORGANIZATION_ID,
@@ -573,6 +574,8 @@ test.describe('Facility Plan Overlay', () => {
 
     await facilities.planDetailViewRecord.click();
     await expect(page).toHaveURL(new RegExp(`/facilities/${E2E_FACILITY_CHILD_ID}$`));
+    await facilities.plansTab.click();
+    await expect(facilities.plansEmpty).toBeVisible();
 
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
     await facilities.plansTab.click();

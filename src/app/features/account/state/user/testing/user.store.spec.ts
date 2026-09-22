@@ -1,7 +1,7 @@
 import { makeStateKey, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { LocalePreferenceService } from '@core/locale';
 import { UserProfileService } from '@features/account/data-access';
 import { ACCOUNT_PERMISSION } from '@features/account/models';
@@ -187,5 +187,90 @@ describe('UserStore', () => {
 
     expect(store.profile()).toBeNull();
     expect(store.loadCallState().status).toBe('idle');
+  });
+
+  it('should share initialization and reactive profile reads', async () => {
+    const response = new Subject<UserProfileOutput>();
+    mockUserProfileService.getCurrentProfile.mockReturnValue(response);
+
+    store.load();
+    const first = store.initialize();
+    const second = store.initialize();
+    response.next(profile);
+    response.complete();
+    await Promise.all([first, second]);
+
+    expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(1);
+    expect(store.profile()).toEqual(profile);
+    expect(mockLocalePreference.applyPreference).toHaveBeenCalledTimes(1);
+  });
+
+  it('should cancel initialization at logout and permit an immediate new session read', async () => {
+    const departed = new Subject<UserProfileOutput>();
+    const current = new Subject<UserProfileOutput>();
+    mockUserProfileService.getCurrentProfile
+      .mockReturnValueOnce(departed)
+      .mockReturnValueOnce(current);
+    const previousInitialization = store.initialize();
+
+    store.clear();
+    const currentInitialization = store.initialize();
+    await previousInitialization;
+    const concurrentInitialization = store.initialize();
+    departed.next({ ...profile, locale: 'fr' });
+
+    expect(departed.observed).toBe(false);
+    expect(store.profile()).toBeNull();
+    expect(store.loadCallState().status).toBe('pending');
+    expect(mockLocalePreference.applyPreference).not.toHaveBeenCalled();
+    expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(2);
+
+    current.next({ ...profile, id: 'user-2', locale: 'en' });
+    await Promise.all([currentInitialization, concurrentInitialization]);
+    expect(store.profile()?.id).toBe('user-2');
+    expect(mockLocalePreference.applyPreference).toHaveBeenCalledExactlyOnceWith('en');
+  });
+
+  it('should ignore a delayed profile error after clear and keep the reactive loader reusable', () => {
+    const departed = new Subject<UserProfileOutput>();
+    mockUserProfileService.getCurrentProfile
+      .mockReturnValueOnce(departed)
+      .mockReturnValueOnce(of(profile));
+    store.load();
+    store.clear();
+    departed.error(new Error('Old failure'));
+
+    expect(store.loadCallState().status).toBe('idle');
+    expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+    store.load();
+    expect(store.profile()).toEqual(profile);
+  });
+
+  it('should preserve an authoritative profile save over older reads and locale responses', async () => {
+    const oldResponse = new Subject<UserProfileOutput>();
+    mockUserProfileService.getCurrentProfile.mockReturnValue(oldResponse);
+    const pending = store.initialize();
+    const saved = { ...profile, firstName: 'Saved', locale: 'en' as const };
+
+    store.setProfile(saved);
+    oldResponse.next({ ...profile, locale: 'fr' });
+    await pending;
+
+    expect(oldResponse.observed).toBe(false);
+    expect(store.profile()).toEqual(saved);
+    expect(mockLocalePreference.applyPreference).toHaveBeenCalledExactlyOnceWith('en');
+  });
+
+  it('should remove an unconsumed profile handoff when the session is cleared', async () => {
+    const key = makeStateKey<UserProfileOutput | null>('user-profile');
+    transferState.set(key, profile);
+    store.clear();
+    mockUserProfileService.getCurrentProfile.mockReturnValue(of({ ...profile, id: 'user-2' }));
+
+    await store.initialize();
+
+    expect(transferState.hasKey(key)).toBe(false);
+    expect(store.profile()?.id).toBe('user-2');
+    expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(1);
   });
 });

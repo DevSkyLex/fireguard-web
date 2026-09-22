@@ -5,7 +5,11 @@ import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService } from '@core/mercure';
 import { NotificationService } from '@features/account/data-access';
-import type { NotificationOutput, NotificationTypeOutput } from '@features/account/models';
+import type {
+  MarkAllNotificationsAsReadOutput,
+  NotificationOutput,
+  NotificationTypeOutput,
+} from '@features/account/models';
 import { authStoreEvents } from '@features/auth';
 import { NotificationStore } from '../notification.store';
 
@@ -101,18 +105,17 @@ describe('NotificationStore', () => {
     configure();
   });
 
-  it('should reuse transferred notifications on the browser without calling the API', async () => {
+  it('should load the browser feed without reading a legacy private handoff', async () => {
     transferState.set(
       makeStateKey<HydraCollection<NotificationOutput> | null>('notification-list'),
       notificationCollection,
     );
+    mockNotificationService.list.mockReturnValue(of(otherNotificationCollection));
 
     await store.initialize();
 
-    expect(mockNotificationService.list).not.toHaveBeenCalled();
-    expect(store.notifications()).toEqual([notification]);
-    expect(store.totalNotifications()).toBe(1);
-    expect(store.listCallState().status).toBe('success');
+    expect(mockNotificationService.list).toHaveBeenCalledTimes(1);
+    expect(store.notifications()).toEqual([otherNotification]);
   });
 
   it('should fetch notifications without seeding transfer state on the browser', async () => {
@@ -133,30 +136,24 @@ describe('NotificationStore', () => {
     ).toBeNull();
   });
 
-  it('should write notifications to transfer state when rendering on the server', async () => {
+  it('should keep every feed and catalog entrypoint browser-only during SSR', async () => {
     configure('server');
-    mockNotificationService.list.mockReturnValue(of(notificationCollection));
 
     await store.initialize();
-
-    expect(
-      transferState.get(
-        makeStateKey<HydraCollection<NotificationOutput> | null>('notification-list'),
-        null,
-      ),
-    ).toEqual(notificationCollection);
-  });
-
-  it('should reuse transferred notification types on the browser without calling the API', async () => {
-    transferState.set(
-      makeStateKey<ReadonlyArray<NotificationTypeOutput> | null>('notification-types'),
-      notificationTypes,
-    );
-
     await store.initializeTypes();
+    store.load();
+    store.loadPage({ page: 2 });
+    store.loadMore();
+    store.loadTypes();
+    store.loadUnreadCount();
 
+    expect(mockNotificationService.list).not.toHaveBeenCalled();
     expect(mockNotificationService.listTypes).not.toHaveBeenCalled();
-    expect(store.types()).toEqual(notificationTypes);
+    expect(mockNotificationService.unreadCount).not.toHaveBeenCalled();
+    expect(store.notifications()).toEqual([]);
+    expect(store.listCallState().status).toBe('idle');
+    expect(transferState.hasKey(makeStateKey('notification-list'))).toBe(false);
+    expect(transferState.hasKey(makeStateKey('notification-types'))).toBe(false);
   });
 
   it('should not call the Mercure subscription endpoint during SSR', () => {
@@ -254,20 +251,6 @@ describe('NotificationStore', () => {
           null,
         ),
       ).toBeNull();
-    });
-
-    it('should write types to transfer state when rendering on the server', async () => {
-      configure('server');
-      mockNotificationService.listTypes.mockReturnValue(of(notificationTypes));
-
-      await store.initializeTypes();
-
-      expect(
-        transferState.get(
-          makeStateKey<ReadonlyArray<NotificationTypeOutput> | null>('notification-types'),
-          null,
-        ),
-      ).toEqual(notificationTypes);
     });
 
     it('should be a no-op once types are already loaded', async () => {
@@ -479,6 +462,99 @@ describe('NotificationStore', () => {
   });
 
   describe('markAsRead', () => {
+    it.each(['load', 'loadPage', 'loadMore'] as const)(
+      'should preserve a confirmed acknowledgement when an older %s response arrives',
+      (loader) => {
+        const pendingFeed = new Subject<HydraCollection<NotificationOutput>>();
+        const acknowledgement = new Subject<NotificationOutput>();
+        const updated = { ...otherNotification, isRead: true, readAt: '2026-04-15T11:00:00Z' };
+        mockNotificationService.list
+          .mockReturnValueOnce(of(notificationCollection))
+          .mockReturnValueOnce(pendingFeed);
+        mockNotificationService.markAsRead.mockReturnValue(acknowledgement);
+        store.load();
+        if (loader === 'loadPage') store.loadPage({ page: 2 });
+        else store[loader]();
+        store.markAsRead(otherNotification.id);
+        acknowledgement.next(updated);
+        pendingFeed.next(otherNotificationCollection);
+
+        expect(store.notificationEntityMap()[otherNotification.id]).toEqual(updated);
+        expect(store.listCallState().status).toBe('success');
+        expect(mockNotificationService.list).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it.each(['load', 'loadPage', 'loadMore'] as const)(
+      'should apply confirmed bulk read to rows arriving from an older %s snapshot',
+      (loader) => {
+        const pendingFeed = new Subject<HydraCollection<NotificationOutput>>();
+        const acknowledgement = new Subject<MarkAllNotificationsAsReadOutput>();
+        mockNotificationService.list
+          .mockReturnValueOnce(of(notificationCollection))
+          .mockReturnValueOnce(pendingFeed);
+        mockNotificationService.markAllAsRead.mockReturnValue(acknowledgement);
+        store.load();
+        if (loader === 'loadPage') store.loadPage({ page: 2 });
+        else store[loader]();
+        store.markAllAsRead();
+        acknowledgement.next({ '@id': '', '@type': 'Notification', count: 2 });
+        pendingFeed.next(otherNotificationCollection);
+
+        expect(store.notifications().every((row) => row.isRead)).toBe(true);
+        expect(store.notificationEntityMap()[otherNotification.id].readAt).toEqual(
+          expect.any(String),
+        );
+        expect(store.unreadCount()).toBe(0);
+        expect(store.listCallState().status).toBe('success');
+        expect(mockNotificationService.list).toHaveBeenCalledTimes(2);
+      },
+    );
+
+    it.each(['single', 'bulk'] as const)(
+      'should cancel a count snapshot older than a confirmed %s acknowledgement',
+      (mode) => {
+        const staleCount = new Subject<number>();
+        mockNotificationService.list.mockReturnValue(of(notificationCollection));
+        mockNotificationService.unreadCount
+          .mockReturnValueOnce(of(42))
+          .mockReturnValueOnce(staleCount)
+          .mockReturnValueOnce(of(2));
+        mockNotificationService.markAsRead.mockReturnValue(of({ ...notification, isRead: true }));
+        mockNotificationService.markAllAsRead.mockReturnValue(
+          of({ '@id': '', '@type': 'Notification', count: 42 }),
+        );
+        store.load();
+        store.loadUnreadCount();
+        store.loadUnreadCount();
+        if (mode === 'single') store.markAsRead(notification.id);
+        else store.markAllAsRead();
+        staleCount.next(42);
+
+        expect(staleCount.observed).toBe(false);
+        expect(store.unreadCount()).toBe(mode === 'single' ? 41 : 0);
+        store.loadUnreadCount();
+        expect(store.unreadCount()).toBe(2);
+      },
+    );
+
+    it('should discard per-request acknowledgement reconciliation when a later query starts', () => {
+      const staleFeed = new Subject<HydraCollection<NotificationOutput>>();
+      mockNotificationService.list
+        .mockReturnValueOnce(staleFeed)
+        .mockReturnValueOnce(of(otherNotificationCollection));
+      mockNotificationService.markAllAsRead.mockReturnValue(
+        of({ '@id': '', '@type': 'Notification', count: 1 }),
+      );
+      store.load();
+      store.markAllAsRead();
+      store.load();
+
+      expect(staleFeed.observed).toBe(false);
+      expect(store.notifications()).toEqual([otherNotification]);
+      expect(store.notificationEntityMap()[otherNotification.id].isRead).toBe(false);
+    });
+
     it('should set error call state and dispatch markAsReadFailed on failure', async () => {
       mockNotificationService.markAsRead.mockReturnValue(throwError(() => new Error('boom')));
 
@@ -508,6 +584,17 @@ describe('NotificationStore', () => {
   });
 
   describe('synchronizeNotification', () => {
+    it('should preserve an acknowledgement from another notification view over an older feed read', () => {
+      const pending = new Subject<HydraCollection<NotificationOutput>>();
+      const updated = { ...notification, isRead: true, readAt: '2026-04-15T11:00:00Z' };
+      mockNotificationService.list.mockReturnValue(pending);
+      store.load();
+      store.synchronizeNotification(updated);
+      pending.next(notificationCollection);
+
+      expect(store.notifications()).toEqual([updated]);
+    });
+
     it('should replace an entity that is already present in the collection', async () => {
       mockNotificationService.list.mockReturnValue(of(notificationCollection));
       store.load();
@@ -635,6 +722,137 @@ describe('NotificationStore', () => {
   });
 
   describe('session teardown', () => {
+    it('should resolve cancelled bootstrap waits without clearing a newer in-flight read', async () => {
+      const departed = new Subject<HydraCollection<NotificationOutput>>();
+      const current = new Subject<HydraCollection<NotificationOutput>>();
+      mockNotificationService.list.mockReturnValueOnce(departed).mockReturnValueOnce(current);
+      const previous = store.initialize();
+
+      store.clear();
+      const next = store.initialize();
+      await previous;
+      const concurrent = store.initialize();
+      departed.next(notificationCollection);
+
+      expect(departed.observed).toBe(false);
+      expect(mockNotificationService.list).toHaveBeenCalledTimes(2);
+      expect(store.listCallState().status).toBe('pending');
+      expect(store.notifications()).toEqual([]);
+      current.next(otherNotificationCollection);
+      await Promise.all([next, concurrent]);
+      expect(store.notifications()).toEqual([otherNotification]);
+    });
+
+    it('should cancel all direct feed loaders and allow the next session to load', () => {
+      const departed = new Subject<HydraCollection<NotificationOutput>>();
+      mockNotificationService.list
+        .mockReturnValueOnce(departed)
+        .mockReturnValueOnce(of(otherNotificationCollection));
+      store.loadPage({ page: 1 });
+      store.clear();
+      departed.error(new Error('Departed session'));
+
+      expect(store.listCallState().status).toBe('idle');
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+      store.load();
+      expect(store.notifications()).toEqual([otherNotification]);
+    });
+
+    it('should discard pagination replaced by a fresh query', () => {
+      const oldPage = new Subject<HydraCollection<NotificationOutput>>();
+      mockNotificationService.list
+        .mockReturnValueOnce(of(notificationCollection))
+        .mockReturnValueOnce(oldPage)
+        .mockReturnValueOnce(of(otherNotificationCollection));
+      store.load();
+      store.loadMore();
+      store.loadPage({ page: 3, limit: 10 });
+      oldPage.next(notificationCollection);
+
+      expect(oldPage.observed).toBe(false);
+      expect(store.notifications()).toEqual([otherNotification]);
+      expect(store.currentPage()).toBe(3);
+      expect(store.totalNotifications()).toBe(2);
+    });
+
+    it('should cancel and deduplicate catalog bootstrap for the next session', async () => {
+      const departed = new Subject<ReadonlyArray<NotificationTypeOutput>>();
+      const current = new Subject<ReadonlyArray<NotificationTypeOutput>>();
+      mockNotificationService.listTypes.mockReturnValueOnce(departed).mockReturnValueOnce(current);
+      const previous = store.initializeTypes();
+      store.clear();
+      const next = store.initializeTypes();
+      await previous;
+      store.loadTypes();
+      const concurrent = store.initializeTypes();
+      departed.next(notificationTypes);
+
+      expect(store.typesLoaded()).toBe(false);
+      expect(mockNotificationService.listTypes).toHaveBeenCalledTimes(2);
+      current.next([]);
+      current.complete();
+      await Promise.all([next, concurrent]);
+      store.loadTypes();
+      expect(store.types()).toEqual([]);
+      expect(store.typesLoaded()).toBe(true);
+      expect(mockNotificationService.listTypes).toHaveBeenCalledTimes(2);
+    });
+
+    it('should keep an old unread count out of the next session', () => {
+      const count = new Subject<number>();
+      mockNotificationService.unreadCount.mockReturnValueOnce(count).mockReturnValueOnce(of(2));
+      store.loadUnreadCount();
+      store.clear();
+      store.loadUnreadCount();
+      count.next(42);
+
+      expect(count.observed).toBe(false);
+      expect(store.unreadCount()).toBe(2);
+    });
+
+    it('should cancel subscription-token bootstrap before it can open the old SSE stream', () => {
+      const departed = new Subject<{ topic: string; token: string }>();
+      const pushed = new Subject<NotificationOutput>();
+      mockNotificationService.getSubscription
+        .mockReturnValueOnce(departed)
+        .mockReturnValueOnce(of({ topic: 'current', token: 'current-token' }));
+      mockMercureService.subscribe.mockReturnValue(pushed);
+      store.connectMercure();
+      store.clear();
+      store.connectMercure();
+      departed.next({ topic: 'departed', token: 'departed-token' });
+
+      expect(departed.observed).toBe(false);
+      expect(mockMercureService.subscribe).toHaveBeenCalledExactlyOnceWith(
+        'current',
+        'current-token',
+      );
+      expect(store.mercureConnected()).toBe(true);
+      expect(mockNotificationService.list).not.toHaveBeenCalled();
+    });
+
+    it('should ignore departed acknowledgements and accept current-session commands immediately', () => {
+      const departedRead = new Subject<NotificationOutput>();
+      const departedBulk = new Subject<MarkAllNotificationsAsReadOutput>();
+      mockNotificationService.markAsRead
+        .mockReturnValueOnce(departedRead)
+        .mockReturnValueOnce(of({ ...otherNotification, isRead: true }));
+      mockNotificationService.markAllAsRead.mockReturnValueOnce(departedBulk);
+      store.markAsRead(notification.id);
+      store.markAllAsRead();
+      store.clear();
+      mockDispatcher.dispatch.mockClear();
+      departedRead.next({ ...notification, isRead: true });
+      departedBulk.error(new Error('Old bulk failure'));
+
+      expect(store.markAsReadCallState().status).toBe('idle');
+      expect(store.markAllAsReadCallState().status).toBe('idle');
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+      store.markAsRead(otherNotification.id);
+      expect(store.markAsReadCallState().data?.id).toBe(otherNotification.id);
+      expect(mockNotificationService.markAsRead).toHaveBeenCalledTimes(2);
+    });
+
     /**
      * The real `Dispatcher` is required here: the store reacts through `Events`,
      * which only sees what a genuine dispatcher publishes. The shared `configure()`

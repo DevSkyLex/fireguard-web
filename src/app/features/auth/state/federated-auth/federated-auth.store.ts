@@ -33,6 +33,7 @@ import type {
   PasswordSetupConfirmInput,
   PasswordSetupConfirmOutput,
 } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { FederatedReturnContextService } from '@features/auth/services';
 import { authStoreEvents } from '../auth';
 import type { FederatedAuthState } from './models';
@@ -82,7 +83,8 @@ const INITIAL_STATE: FederatedAuthState = {
  * @description
  * Owns provider availability, full-page redirect starts, one-time callback
  * completion, connected identities and first-password setup. Only public
- * provider availability crosses the SSR boundary.
+ * provider availability crosses the SSR boundary. Callback completion belongs
+ * to the initiating session revision and is cancelled when reset or cleared.
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
@@ -119,9 +121,11 @@ export const FederatedAuthStore = signalStore(
       transferState = inject(TransferState),
       platformId = inject(PLATFORM_ID),
       events = inject<Events>(Events),
+      session = inject(AUTH_SESSION_PORT),
       returnContext = inject(FederatedReturnContextService),
     ) => {
       const startCancellation = new Subject<void>();
+      const completionCancellation = new Subject<void>();
 
       return {
         loadProviders: rxMethod<void>(
@@ -185,24 +189,28 @@ export const FederatedAuthStore = signalStore(
 
         completeLogin: rxMethod<{ provider: FederatedProvider; input: FederatedCompleteInput }>(
           pipe(
-            tap(({ provider }) =>
+            exhaustMap(({ provider, input }) => {
+              const revision = session.sessionRevision();
               patchState(store, {
                 pendingProvider: provider,
                 completeLoginCallState: pendingCallState(),
-              }),
-            ),
-            exhaustMap(({ provider, input }) =>
-              service.completeLogin(provider, input).pipe(
+              });
+              return service.completeLogin(provider, input).pipe(
+                takeUntil(completionCancellation),
                 tapResponse({
-                  next: (result: LoginOutput) =>
-                    patchState(store, { completeLoginCallState: successCallState(result) }),
-                  error: (error: unknown) =>
+                  next: (result: LoginOutput) => {
+                    if (revision !== session.sessionRevision()) return;
+                    patchState(store, { completeLoginCallState: successCallState(result) });
+                  },
+                  error: (error: unknown) => {
+                    if (revision !== session.sessionRevision()) return;
                     patchState(store, {
                       completeLoginCallState: errorCallState(toStoreError(error)),
-                    }),
+                    });
+                  },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 
@@ -372,6 +380,7 @@ export const FederatedAuthStore = signalStore(
         },
 
         resetCompleteLogin(): void {
+          completionCancellation.next();
           patchState(store, { completeLoginCallState: idleCallState(), pendingProvider: null });
         },
 
@@ -395,6 +404,7 @@ export const FederatedAuthStore = signalStore(
          * @returns {void}
          */
         clearSessionState(): void {
+          completionCancellation.next();
           startCancellation.next();
           returnContext.clear();
           patchState(store, {

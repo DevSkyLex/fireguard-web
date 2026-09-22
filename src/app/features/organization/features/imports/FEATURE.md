@@ -42,6 +42,10 @@ The open report resolves its selected id from the live cache, even outside the c
 Polling errors and interrupted observation preserve the last known job without pretending
 completion. Reports paginate the received rows locally. Organization changes cancel polls
 and discard the previous context. Upload inputs reset only after server acceptance.
+An upload becomes pending only once accepted locally. One upload may run per organization
+generation; switching organizations permits another upload immediately without cancelling an
+accepted server write. Departed results cannot change state or open reports, even after returning
+to the same organization, and clearing form feedback cannot unlock a pending upload.
 
 Primary service: `ImportJobService` — extends `HydraApiService`. `create`
 posts multipart to the canonical `/api/imports` (not organization-scoped;

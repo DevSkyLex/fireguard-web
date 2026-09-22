@@ -14,7 +14,16 @@ import type { Observable } from 'rxjs';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface AuthSessionPort {
+  /**
+   * Property sessionRevision
+   * @readonly
+   * @description Local session identity; changes on replacement or clearing, never on bearer rotation.
+   * @access public
+   * @type {Signal<number>}
+   */
+  readonly sessionRevision: Signal<number>;
   readonly accessToken: Signal<string | null>;
+  /** Established local session, including an expired bearer awaiting silent renewal. */
   readonly isAuthenticated: Signal<boolean>;
   readonly initialized: Signal<boolean>;
 

@@ -78,6 +78,7 @@ export function provideAuthFeature(): EnvironmentProviders {
     {
       provide: AUTH_SESSION_PORT,
       useFactory: (authStore: AuthStore, userProfilePort: UserProfilePort) => ({
+        sessionRevision: authStore.sessionRevision,
         accessToken: authStore.accessToken,
         isAuthenticated: authStore.isAuthenticated,
         initialized: authStore.initialized,

@@ -277,6 +277,7 @@ describe('AuthStore', () => {
     };
     mockAuthService.logout.mockReturnValue(of(logoutResponse));
     store.setToken('access-token', 3600);
+    mockUserProfilePort.clear.mockClear();
 
     store.logout();
     await flushEffects();
@@ -295,6 +296,7 @@ describe('AuthStore', () => {
   it('should clear state and dispatch an event on logout error', async () => {
     mockAuthService.logout.mockReturnValue(throwError(() => new Error('Network error')));
     store.setToken('access-token', 3600);
+    mockUserProfilePort.clear.mockClear();
 
     store.logout();
     await flushEffects();
@@ -459,10 +461,24 @@ describe('AuthStore', () => {
     expect(store.isAuthenticated()).toBe(false);
   });
 
-  it('should return false for isAuthenticated when token is expired', () => {
+  it('keeps an established session while its expired bearer awaits renewal', () => {
     store.setToken('expired-token', -1);
 
-    expect(store.isAuthenticated()).toBe(false);
+    expect(store.isAuthenticated()).toBe(true);
+  });
+
+  it('evaluates the expiry warning at call time without expiring the local session', () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    try {
+      store.setToken('token', 600);
+      expect(store.isTokenExpiringSoon()).toBe(false);
+      now.mockReturnValue(1_400_000);
+      expect(store.isTokenExpiringSoon()).toBe(true);
+      now.mockReturnValue(1_700_000);
+      expect(store.isAuthenticated()).toBe(true);
+    } finally {
+      now.mockRestore();
+    }
   });
 
   it('should return true for isTokenExpiringSoon when token expires within 5 minutes', () => {
@@ -623,6 +639,148 @@ describe('AuthStore', () => {
   });
 
   describe('renewSession', () => {
+    it('invalidates a refused renewal after its callers can end the originating session', async () => {
+      store.setToken('expired', 1);
+      const revision = store.sessionRevision();
+      mockAuthService.refresh.mockReturnValue(throwError(() => new Error('revoked')));
+      let revisionAtRefusal: number | undefined;
+      store.renewSession().subscribe((token) => {
+        expect(token).toBeNull();
+        revisionAtRefusal = store.sessionRevision();
+      });
+      expect(revisionAtRefusal).toBe(revision);
+      expect(store.sessionRevision()).toBe(revision + 1);
+      expect(store.initialized()).toBe(true);
+      expect(store.isAuthenticated()).toBe(false);
+      expect(store.refreshCallState().status).toBe('error');
+    });
+
+    it('finishes bootstrap readiness when a new session supersedes restoration', async () => {
+      const restoration = new Subject<LoginOutput>();
+      mockAuthService.refresh.mockReturnValue(restoration);
+      const startup = store.initialize();
+      store.applySession(loginResponse);
+      await startup;
+      expect(restoration.observed).toBe(false);
+      expect(store.initialized()).toBe(true);
+      expect(store.isAuthenticated()).toBe(true);
+      expect(mockUserProfilePort.load).toHaveBeenCalledOnce();
+      expect(mockUserProfilePort.initialize).not.toHaveBeenCalled();
+    });
+
+    it('cancels old MFA verification when a replacement challenge is established', () => {
+      const verification = new Subject<LoginOutput>();
+      mockAuthService.mfaVerify.mockReturnValue(verification);
+      store.applySession({
+        mfa_required: true,
+        mfa_token: 'challenge-a',
+        challenge_token: 'a',
+      } as LoginOutput);
+      store.mfaVerify({ preAuthToken: 'challenge-a', code: '123456' });
+      const revision = store.sessionRevision();
+      store.applySession({
+        mfa_required: true,
+        mfa_token: 'challenge-b',
+        challenge_token: 'b',
+      } as LoginOutput);
+      expect(store.sessionRevision()).toBeGreaterThan(revision);
+      expect(verification.observed).toBe(false);
+      verification.next(loginResponse);
+      expect(store.accessToken()).toBeNull();
+      expect(store.mfaToken()).toBe('challenge-b');
+      expect(store.isVerifyingMfa()).toBe(false);
+      mockAuthService.mfaVerify.mockReturnValue(of(loginResponse));
+      store.mfaVerify({ preAuthToken: 'challenge-b', code: '654321' });
+      expect(store.isAuthenticated()).toBe(true);
+    });
+
+    it('settles cancelled renewal callers and immediately accepts a new session renewal', async () => {
+      const oldResponse = new Subject<LoginOutput>();
+      const currentResponse = new Subject<LoginOutput>();
+      mockAuthService.refresh.mockReturnValueOnce(oldResponse).mockReturnValueOnce(currentResponse);
+      store.setToken('old', 3600);
+      const revision = store.sessionRevision();
+      const old = firstValueFrom(store.renewSession());
+      store.clearToken();
+      expect(await old).toBeNull();
+      store.setToken('new', 3600);
+      const currentRevision = store.sessionRevision();
+      expect(currentRevision).toBeGreaterThan(revision);
+      const current = firstValueFrom(store.renewSession());
+      oldResponse.error(new Error('late old failure'));
+      expect(store.accessToken()).toBe('new');
+      expect(store.isRefreshing()).toBe(true);
+      currentResponse.next(loginResponse);
+      currentResponse.complete();
+      expect(await current).toBe('access-token');
+      expect(store.sessionRevision()).toBe(currentRevision);
+    });
+
+    it('shares initialization, refresh and interceptor renewal in one generation', async () => {
+      const response = new Subject<LoginOutput>();
+      mockAuthService.refresh.mockReturnValue(response);
+      const initialization = store.initialize();
+      store.refresh();
+      const renewal = firstValueFrom(store.renewSession());
+      expect(mockAuthService.refresh).toHaveBeenCalledOnce();
+      response.next(loginResponse);
+      response.complete();
+      await initialization;
+      expect(await renewal).toBe('access-token');
+      expect(store.initialized()).toBe(true);
+      expect(mockUserProfilePort.initialize).toHaveBeenCalledOnce();
+    });
+
+    it('does not bootstrap an old profile after initialization is invalidated', async () => {
+      const response = new Subject<LoginOutput>();
+      mockAuthService.refresh.mockReturnValue(response);
+      const initialization = store.initialize();
+      store.clearToken();
+      response.next(loginResponse);
+      response.complete();
+      await initialization;
+      expect(store.accessToken()).toBeNull();
+      expect(store.initialized()).toBe(true);
+      expect(mockUserProfilePort.initialize).not.toHaveBeenCalled();
+    });
+
+    it('does not subscribe to a renewal captured before session invalidation', async () => {
+      const renewal = store.renewSession();
+      store.clearToken();
+      expect(await firstValueFrom(renewal)).toBeNull();
+      expect(mockAuthService.refresh).not.toHaveBeenCalled();
+    });
+
+    it('ignores login and MFA responses after local session clearing', () => {
+      const login = new Subject<LoginOutput>();
+      mockAuthService.login.mockReturnValue(login);
+      store.login(credentials);
+      store.clearToken();
+      login.next(loginResponse);
+      expect(store.accessToken()).toBeNull();
+      expect(store.isLoggingIn()).toBe(false);
+      const mfa = new Subject<LoginOutput>();
+      mockAuthService.mfaVerify.mockReturnValue(mfa);
+      store.mfaVerify({ preAuthToken: 'old', code: '123456' });
+      store.clearToken();
+      mfa.next(loginResponse);
+      expect(store.accessToken()).toBeNull();
+      expect(mockUserProfilePort.load).not.toHaveBeenCalled();
+    });
+
+    it('does not clear a replacement session after an old logout response', () => {
+      const logout = new Subject<LogoutOutput>();
+      mockAuthService.logout.mockReturnValue(logout);
+      store.setToken('old', 3600);
+      store.logout();
+      store.setToken('replacement', 3600);
+      mockDispatcher.dispatch.mockClear();
+      logout.next({ '@id': '/api/auth/logout', '@type': 'Logout', message: 'Signed out' });
+      expect(store.accessToken()).toBe('replacement');
+      expect(store.isLoggingOut()).toBe(false);
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+    });
+
     it('should return the new access token and apply it', async () => {
       mockAuthService.refresh.mockReturnValue(of(loginResponse));
 

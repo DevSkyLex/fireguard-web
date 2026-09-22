@@ -155,6 +155,31 @@ describe('InterventionRecurrenceTable', () => {
     expect(removed).toHaveBeenCalledExactlyOnceWith(target);
   });
 
+  it('locks all controls on each busy row while unrelated rows remain available', async () => {
+    fixture.componentRef.setInput('recurrences', [
+      recurrence({ id: 'saving' }),
+      recurrence({ id: 'removing' }),
+      recurrence({ id: 'available' }),
+    ]);
+    fixture.componentRef.setInput('canWrite', true);
+    fixture.componentRef.setInput('savingIds', ['saving']);
+    fixture.componentRef.setInput('removingIds', ['removing']);
+    await fixture.whenStable();
+    for (const id of ['saving', 'removing']) {
+      expect((byTestId(`intervention-recurrence-menu-${id}`) as HTMLButtonElement).disabled).toBe(
+        true,
+      );
+      expect(
+        byTestId(`intervention-recurrence-toggle-${id}`)
+          ?.querySelector('brn-switch')
+          ?.getAttribute('data-disabled'),
+      ).toBe('true');
+    }
+    expect((byTestId('intervention-recurrence-menu-available') as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+  });
+
   it('should emit activeToggled when a row switch is flipped', () => {
     fixture.componentInstance['toggleActive']('recurrence-1', false);
 

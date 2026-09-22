@@ -13,8 +13,8 @@ import { Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   catchError,
+  defer,
   defaultIfEmpty,
-  filter,
   finalize,
   map,
   of,
@@ -23,7 +23,6 @@ import {
   Subject,
   switchMap,
   takeUntil,
-  tap,
   type Observable,
 } from 'rxjs';
 import {
@@ -32,13 +31,11 @@ import {
   pendingCallState,
   successCallState,
   toStoreError,
-  type CallState,
   type StoreError,
 } from '@core/request-state';
 import { authStoreEvents } from '@features/auth';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization';
 import { myOrganizationsStoreEvents } from '../my-organizations/events';
 import { organizationInvitationAcceptStoreEvents } from '../organization-invitation-accept/events';
@@ -114,131 +111,120 @@ export const OrganizationMemberAccessStore = signalStore(
         readonly request$: Observable<boolean>;
       } | null = null;
 
+      let generation = 0;
+      let sessionRevision = authSession.sessionRevision();
+
+      /**
+       * Function clearAccess
+       * @description Invalidates every permission reader without destroying the reusable rxMethod.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const clearAccess = (): void => {
+        generation += 1;
+        accessCancellation.next();
+        pendingAccess = null;
+        patchState(store, INITIAL_STATE);
+      };
+
+      /**
+       * Function synchronizeSession
+       * @description Invalidates the access cache once per session transition, including guard-driven loads before effects run.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const synchronizeSession = (): void => {
+        const revision = authSession.sessionRevision();
+        if (sessionRevision !== revision || !authSession.isAuthenticated()) {
+          sessionRevision = revision;
+          clearAccess();
+        }
+      };
+
+      /**
+       * Function resolveAccess
+       * @description Shares one permission read across guards and imperative loads in the current session.
+       * @since 1.0.0
+       * @param {string} organizationId - Organization whose access is required.
+       * @returns {Observable<boolean>} False when superseded, unauthenticated or refused.
+       */
+      const resolveAccess = (organizationId: string): Observable<boolean> =>
+        defer(() => {
+          synchronizeSession();
+          const revision = authSession.sessionRevision();
+          if (!authSession.isAuthenticated()) return of(false);
+          if (
+            store.currentOrganizationId() === organizationId &&
+            store.accessCallState().status === 'success'
+          ) {
+            return of(true);
+          }
+          if (pendingAccess?.organizationId === organizationId) return pendingAccess.request$;
+
+          clearAccess();
+          const requestGeneration = generation;
+          patchState(store, {
+            currentOrganizationId: organizationId,
+            accessCallState: pendingCallState(),
+          });
+          const isCurrent = (): boolean =>
+            requestGeneration === generation &&
+            revision === authSession.sessionRevision() &&
+            authSession.isAuthenticated();
+          const request$ = defer(() =>
+            isCurrent()
+              ? organizationMemberService.getCurrentProfile(organizationId).pipe(
+                  takeUntil(accessCancellation),
+                  tapResponse({
+                    next: (profile) => {
+                      if (isCurrent())
+                        patchState(store, { profile, accessCallState: successCallState(profile) });
+                    },
+                    error: (error: unknown) => {
+                      if (isCurrent())
+                        patchState(store, {
+                          profile: null,
+                          accessCallState: errorCallState(toStoreError(error)),
+                        });
+                    },
+                  }),
+                  map(() => isCurrent()),
+                  catchError(() => of(false)),
+                  defaultIfEmpty(false),
+                )
+              : of(false),
+          ).pipe(
+            finalize(() => {
+              if (pendingAccess?.request$ === request$) pendingAccess = null;
+            }),
+            shareReplay({ bufferSize: 1, refCount: false }),
+          );
+          pendingAccess = { organizationId, request$ };
+          return request$;
+        });
+
       return {
+        synchronizeSession,
         /**
          * Method loadAccess
-         *
-         * @description
-         * Loads the authenticated user's effective access for the given organization.
-         * Skips duplicate successful loads for the same organization identifier.
+         * @method loadAccess
+         * @description Loads access through the same request coordinator used by route guards.
+         * @access public
+         * @since 1.0.0
+         * @type {RxMethod<string>}
          */
-        loadAccess: rxMethod<string>(
-          pipe(
-            filter(() => authSession.isAuthenticated()),
-            filter((organizationId: string) => {
-              const callState: CallState<CurrentOrganizationMemberProfileOutput> =
-                store.accessCallState();
-              return (
-                organizationId !== store.currentOrganizationId() ||
-                (callState.status !== 'success' && callState.status !== 'pending')
-              );
-            }),
-            tap((organizationId: string) => {
-              patchState(store, {
-                currentOrganizationId: organizationId,
-                profile: null,
-                accessCallState: pendingCallState(),
-              });
-            }),
-            switchMap((organizationId: string) =>
-              organizationMemberService.getCurrentProfile(organizationId).pipe(
-                takeUntil(accessCancellation),
-                tapResponse({
-                  next: (profile: CurrentOrganizationMemberProfileOutput) => {
-                    patchState(store, {
-                      currentOrganizationId: organizationId,
-                      profile,
-                      accessCallState: successCallState(profile),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, {
-                      currentOrganizationId: organizationId,
-                      profile: null,
-                      accessCallState: errorCallState(storeError),
-                    });
-                  },
-                }),
-              ),
-            ),
-          ),
-        ),
+        loadAccess: rxMethod<string>(pipe(switchMap(resolveAccess))),
 
         /**
          * Method ensureAccessResolved
-         *
-         * @description
-         * Ensures the target organization's access payload is resolved, loading
-         * it when the store holds another organization's.
-         *
-         * **The wait is driven by the request, not by watching store signals.**
-         * It used to subscribe to `toObservable(currentOrganizationId)` and
-         * `toObservable(accessCallState)` and wait for the pair to settle. Those
-         * bridges emit from an effect, and effects do not run while the router is
-         * blocked on a guard — so switching organization from inside the running
-         * application waited on an emission that never came, the navigation was
-         * cancelled, and the member silently stayed where they were. A full page
-         * load worked, which is why the bug survived: every deep link resolved
-         * during bootstrap, when effects still run.
-         *
+         * @method ensureAccessResolved
+         * @description Resolves directly from the HTTP request so guards never wait on an Angular effect.
+         * @access public
+         * @since 1.0.0
          * @param {string} organizationId - Organization identifier to resolve.
-         *
-         * @returns {Observable<boolean>} `true` when access is resolved successfully.
+         * @returns {Observable<boolean>} Whether the current access request succeeded.
          */
-        ensureAccessResolved(organizationId: string): Observable<boolean> {
-          if (!authSession.isAuthenticated()) return of(false);
-          const currentOrganizationId: string | null = store.currentOrganizationId();
-          const accessCallState: CallState<CurrentOrganizationMemberProfileOutput> =
-            store.accessCallState();
-
-          if (currentOrganizationId === organizationId && accessCallState.status === 'success') {
-            return of(true);
-          }
-
-          if (pendingAccess?.organizationId === organizationId) {
-            return pendingAccess.request$;
-          }
-
-          patchState(store, {
-            currentOrganizationId: organizationId,
-            profile: null,
-            accessCallState: pendingCallState(),
-          });
-
-          const request$: Observable<boolean> = organizationMemberService
-            .getCurrentProfile(organizationId)
-            .pipe(
-              takeUntil(accessCancellation),
-              map((profile: CurrentOrganizationMemberProfileOutput): boolean => {
-                patchState(store, {
-                  currentOrganizationId: organizationId,
-                  profile,
-                  accessCallState: successCallState(profile),
-                });
-
-                return true;
-              }),
-              catchError((error: unknown): Observable<boolean> => {
-                patchState(store, {
-                  currentOrganizationId: organizationId,
-                  profile: null,
-                  accessCallState: errorCallState(toStoreError(error)),
-                });
-
-                return of(false);
-              }),
-              defaultIfEmpty(false),
-              finalize((): void => {
-                if (pendingAccess?.organizationId === organizationId) pendingAccess = null;
-              }),
-              shareReplay({ bufferSize: 1, refCount: false }),
-            );
-
-          pendingAccess = { organizationId, request$ };
-
-          return request$;
-        },
+        ensureAccessResolved: resolveAccess,
 
         /**
          * Method reload
@@ -270,9 +256,7 @@ export const OrganizationMemberAccessStore = signalStore(
          * Resets the organization member access state.
          */
         clear(): void {
-          accessCancellation.next();
-          pendingAccess = null;
-          patchState(store, INITIAL_STATE);
+          clearAccess();
         },
       };
     },
@@ -285,6 +269,9 @@ export const OrganizationMemberAccessStore = signalStore(
     const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
 
     return {
+      onDestroy(): void {
+        store.clear();
+      },
       onInit(): void {
         accessEvents
           .on(authStoreEvents.sessionEnded)
@@ -306,7 +293,11 @@ export const OrganizationMemberAccessStore = signalStore(
             organizationSettingsStoreEvents.organizationUpdated,
           )
           .pipe(takeUntilDestroyed())
-          .subscribe(() => store.reload());
+          .subscribe(({ payload }) => {
+            const organizationId =
+              'organizationId' in payload ? payload.organizationId : payload.id;
+            if (organizationId === store.currentOrganizationId()) store.reload();
+          });
         /**
          * Identifier seen by the previous run, so a *transition* to `null` can
          * be told apart from simply not knowing it yet.
@@ -329,8 +320,8 @@ export const OrganizationMemberAccessStore = signalStore(
          * would throw away the request the guard is waiting on.
          */
         effect(() => {
-          // A remembered workspace is a preference, not proof of an authenticated session.
-          // Loading it before OAuth/MFA completes would turn its 401 into a login redirect.
+          authSession.sessionRevision();
+          untracked(() => store.synchronizeSession());
           if (!authSession.isAuthenticated()) {
             previousOrganizationId = null;
             untracked(() => store.clear());

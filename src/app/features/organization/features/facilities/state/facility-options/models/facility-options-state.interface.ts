@@ -11,6 +11,16 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
  * @since 1.0.0
  */
 export interface FacilityOptionsState {
+  /**
+   * Property organizationId
+   * @readonly
+   * @description Organization owning the cached options, including an empty successful list.
+   * @access public
+   * @since 1.0.0
+   * @type {string | null}
+   */
+  readonly organizationId: string | null;
+
   /** The loaded facilities, in API order. */
   readonly facilities: readonly FacilityOutput[];
 

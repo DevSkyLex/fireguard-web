@@ -9,7 +9,7 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap } from 'rxjs';
+import { EMPTY, pipe, Subject, switchMap, takeUntil } from 'rxjs';
 import {
   resetQuery,
   setErrorQuery,
@@ -18,6 +18,7 @@ import {
   toStoreError,
   withQueryState,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationNavigationCountersOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../active-organization';
@@ -97,67 +98,95 @@ export const OrganizationNavigationCountersStore = signalStore(
     openNonConformities: computed<number>(() => store.queryData()?.openNonConformities ?? 0),
   })),
 
-  withMethods((store, service = inject<OrganizationService>(OrganizationService)) => ({
-    /**
-     * Method load
-     * @method load
-     *
-     * @description
-     * Loads the navigation counters for one organization, superseding any
-     * in-flight read.
-     *
-     * @access public
-     * @since 1.0.0
-     *
-     * @type {RxMethod<string>}
-     */
-    load: rxMethod<string>(
-      pipe(
-        switchMap((organizationId) => {
-          patchState(store, { currentOrganizationId: organizationId }, setPendingQuery());
-
-          return service.navigationCounters(organizationId).pipe(
-            tapResponse({
-              next: (counters) => patchState(store, setSuccessQuery(counters)),
-              error: (error: unknown) => patchState(store, setErrorQuery(toStoreError(error))),
+  withMethods(
+    (store, service = inject(OrganizationService), authSession = inject(AUTH_SESSION_PORT)) => {
+      const cancellation = new Subject<void>();
+      let generation = 0;
+      let sessionRevision = authSession.sessionRevision();
+      /**
+       * Function clear
+       * @description Clears counters and invalidates any outstanding organization read.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const clear = (): void => {
+        generation += 1;
+        cancellation.next();
+        patchState(store, { currentOrganizationId: null }, resetQuery());
+      };
+      /**
+       * Function synchronizeSession
+       * @description Invalidates counts retained across authentication transitions.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const synchronizeSession = (): void => {
+        const revision = authSession.sessionRevision();
+        if (revision !== sessionRevision || !authSession.isAuthenticated()) {
+          sessionRevision = revision;
+          clear();
+        }
+      };
+      return {
+        clear,
+        synchronizeSession,
+        /**
+         * Method load
+         * @method load
+         * @description Loads counters, retaining prior values only during a refresh of the same context.
+         * @access public
+         * @since 1.0.0
+         * @type {RxMethod<string>}
+         */
+        load: rxMethod<string>(
+          pipe(
+            switchMap((organizationId) => {
+              synchronizeSession();
+              if (!authSession.isAuthenticated()) return EMPTY;
+              if (store.currentOrganizationId() !== organizationId) clear();
+              const revision = authSession.sessionRevision();
+              const requestGeneration = ++generation;
+              patchState(store, { currentOrganizationId: organizationId }, setPendingQuery());
+              const isCurrent = (): boolean =>
+                requestGeneration === generation && revision === authSession.sessionRevision();
+              return service.navigationCounters(organizationId).pipe(
+                takeUntil(cancellation),
+                tapResponse({
+                  next: (counters) => {
+                    if (isCurrent()) patchState(store, setSuccessQuery(counters));
+                  },
+                  error: (error: unknown) => {
+                    if (isCurrent()) patchState(store, setErrorQuery(toStoreError(error)));
+                  },
+                }),
+              );
             }),
-          );
-        }),
-      ),
-    ),
-
-    /**
-     * Method clear
-     * @method clear
-     *
-     * @description
-     * Resets the store to its idle state.
-     *
-     * @access public
-     * @since 1.0.0
-     *
-     * @returns {void} No return value.
-     */
-    clear(): void {
-      patchState(store, { currentOrganizationId: null }, resetQuery());
+          ),
+        ),
+      };
     },
-  })),
+  ),
 
-  withHooks((store) => {
+  withHooks((store, authSession = inject(AUTH_SESSION_PORT)) => {
     const activeOrganizationStore: ActiveOrganizationStore =
       inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
     return {
+      onDestroy(): void {
+        store.clear();
+      },
       onInit(): void {
         effect(() => {
           const organizationId: string | null = activeOrganizationStore.selectedOrganizationId();
-
-          if (organizationId === null) {
+          authSession.sessionRevision();
+          const authenticated = authSession.isAuthenticated();
+          untracked(() => store.synchronizeSession());
+          if (!authenticated || organizationId === null) {
             untracked(() => store.clear());
             return;
           }
 
-          if (organizationId === store.currentOrganizationId()) return;
+          if (untracked(() => organizationId === store.currentOrganizationId())) return;
 
           untracked(() => store.load(organizationId));
         });

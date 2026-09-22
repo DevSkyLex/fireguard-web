@@ -103,6 +103,7 @@ function createApiStub(appOrigin, onShutdown) {
         ],
         [`GET ${org}/navigation-counters`, organizationNavigationCountersOutput()],
         ['GET /api/notifications', hydraCollection([])],
+        ['GET /api/notification-types', hydraCollection([])],
         ['GET /api/notifications/unread-count', { unreadCount: 0 }],
         ['GET /api/inbox/unread-count', { unreadCount: 0 }],
         ['GET /api/notifications/subscription', mercureSubscriptionOutput()],

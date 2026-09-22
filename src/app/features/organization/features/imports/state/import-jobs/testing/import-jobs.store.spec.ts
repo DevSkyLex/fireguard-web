@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { ImportJobService } from '@features/organization/features/imports/data-access';
@@ -11,6 +12,7 @@ const flushEffects = async (): Promise<void> => {
 
 describe('ImportJobsStore', () => {
   let store: InstanceType<typeof ImportJobsStore>;
+  let dispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockService: {
     list: ReturnType<typeof vi.fn>;
     get: ReturnType<typeof vi.fn>;
@@ -48,6 +50,7 @@ describe('ImportJobsStore', () => {
   };
 
   beforeEach(() => {
+    dispatcher = { dispatch: vi.fn() };
     mockService = {
       list: vi.fn().mockReturnValue(of(collection)),
       get: vi.fn().mockReturnValue(of(job)),
@@ -59,7 +62,11 @@ describe('ImportJobsStore', () => {
     };
 
     TestBed.configureTestingModule({
-      providers: [ImportJobsStore, { provide: ImportJobService, useValue: mockService }],
+      providers: [
+        ImportJobsStore,
+        { provide: ImportJobService, useValue: mockService },
+        { provide: Dispatcher, useValue: dispatcher },
+      ],
     });
 
     store = TestBed.inject(ImportJobsStore);
@@ -183,6 +190,84 @@ describe('ImportJobsStore', () => {
   });
 
   describe('create', () => {
+    it('should accept uploads in new organization generations without cancelling previous writes', () => {
+      const firstVisit = new Subject<ImportJobOutput>();
+      const secondOrganization = new Subject<ImportJobOutput>();
+      const currentVisit = new Subject<ImportJobOutput>();
+      const file = new File(['a,b'], 'equipment.csv');
+      mockService.list.mockReturnValue(of({ ...collection, member: [], totalItems: 0 }));
+      mockService.create
+        .mockReturnValueOnce(firstVisit)
+        .mockReturnValueOnce(secondOrganization)
+        .mockReturnValueOnce(currentVisit);
+
+      store.load({ organizationId });
+      store.create({ organizationId, kind: 'equipment', file });
+      store.load({ organizationId: 'org-2' });
+      store.create({ organizationId: 'org-2', kind: 'equipment', file });
+
+      expect(mockService.create).toHaveBeenCalledTimes(2);
+      expect(firstVisit.observed).toBe(true);
+      expect(store.isCreating()).toBe(true);
+
+      store.load({ organizationId });
+      store.create({ organizationId, kind: 'equipment', file });
+      firstVisit.next({ ...job, id: 'departed-job', status: 'completed' });
+      firstVisit.complete();
+      secondOrganization.error(new Error('Departed failure'));
+      store.create({ organizationId, kind: 'facility', file });
+
+      expect(mockService.create).toHaveBeenCalledTimes(3);
+      expect(store.isCreating()).toBe(true);
+      expect(store.createError()).toBeNull();
+      expect(store.jobEntities()).toEqual([]);
+      expect(dispatcher.dispatch).not.toHaveBeenCalled();
+      expect(mockService.pollJob).not.toHaveBeenCalled();
+
+      const accepted = { ...job, id: 'current-job', status: 'completed' as const };
+      currentVisit.next(accepted);
+      currentVisit.complete();
+      expect(store.createCallState().status).toBe('success');
+      expect(store.jobEntityMap()[accepted.id]).toEqual(accepted);
+      expect(dispatcher.dispatch).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          type: '[Import Jobs Store] reportReady',
+          payload: { organizationId, jobId: accepted.id },
+        }),
+      );
+    });
+
+    it('should not let form reset or a duplicate command unlock an accepted upload', () => {
+      const response = new Subject<ImportJobOutput>();
+      const file = new File(['a,b'], 'equipment.csv');
+      mockService.create.mockReturnValue(response);
+      store.create({ organizationId, kind: 'equipment', file });
+      store.resetCreateOperation();
+      store.create({ organizationId, kind: 'equipment', file });
+
+      expect(mockService.create).toHaveBeenCalledTimes(1);
+      expect(response.observed).toBe(true);
+      expect(store.createCallState().status).toBe('pending');
+
+      response.error(new Error('Retryable upload failure'));
+      mockService.create.mockReturnValue(of(job));
+      store.create({ organizationId, kind: 'equipment', file });
+      expect(mockService.create).toHaveBeenCalledTimes(2);
+      expect(store.createCallState().status).toBe('success');
+    });
+
+    it('should reject an upload for an inactive organization without marking it pending', () => {
+      store.load({ organizationId });
+      store.create({
+        organizationId: 'departed',
+        kind: 'equipment',
+        file: new File([''], 'e.csv'),
+      });
+
+      expect(mockService.create).not.toHaveBeenCalled();
+      expect(store.createCallState().status).toBe('idle');
+    });
+
     it('should insert the created job and start polling it', async () => {
       const file = new File(['a,b'], 'equipment.csv', { type: 'text/csv' });
 

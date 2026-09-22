@@ -1358,8 +1358,8 @@
             [templates]="planningOptions.templates()"
             [loading]="recurrenceStore.listCallState().status === 'pending'"
             [error]="recurrenceStore.listCallState().error?.message ?? null"
-            [savingId]="recurrenceStore.savingId()"
-            [removingId]="recurrenceStore.removingId()"
+            [savingIds]="recurrenceStore.savingIds()"
+            [removingIds]="recurrenceStore.removingIds()"
             [canWrite]="canWriteRecurrences()"
             (editRequested)="editRecurrence($event)"
             (removed)="requestRecurrenceDelete($event)"
@@ -1407,7 +1407,7 @@
 
   <app-intervention-recurrence-delete-dialog
     [recurrence]="pendingRecurrenceDelete()"
-    [pending]="recurrenceStore.removeCallState().status === 'pending'"
+    [pending]="recurrenceRemovePending()"
     (confirmed)="confirmRecurrenceDelete()"
     (dismissed)="dismissRecurrenceDelete()"
   />

@@ -1,3 +1,4 @@
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
@@ -18,7 +19,10 @@ describe('RegisterStore', () => {
     verify: ReturnType<typeof vi.fn>;
     resend: ReturnType<typeof vi.fn>;
   };
-  let mockAuthStore: { applySession: ReturnType<typeof vi.fn> };
+  let mockAuthStore: {
+    applySession: ReturnType<typeof vi.fn>;
+    sessionRevision: WritableSignal<number>;
+  };
 
   const registerInput: RegisterInput = {
     firstName: 'Jane',
@@ -58,7 +62,7 @@ describe('RegisterStore', () => {
       verify: vi.fn(),
       resend: vi.fn(),
     };
-    mockAuthStore = { applySession: vi.fn() };
+    mockAuthStore = { applySession: vi.fn(), sessionRevision: signal(0) };
 
     TestBed.configureTestingModule({
       providers: [
@@ -233,5 +237,35 @@ describe('RegisterStore', () => {
     expect(store.resendError()).toMatchObject({ code: 503, retryable: true });
     expect(store.challengeToken()).toBe('challenge-token');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(2);
+  });
+  it('does not establish a session from verification started before another session', () => {
+    const previous = new Subject<LoginOutput>();
+    mockRegistrationService.verify.mockReturnValueOnce(previous);
+    store.setChallengeToken('previous-challenge');
+    store.verify({ code: '123456' });
+    mockAuthStore.sessionRevision.set(1);
+    previous.next(verifyResponse);
+    previous.complete();
+    expect(mockAuthStore.applySession).not.toHaveBeenCalled();
+    store.clear();
+    store.setChallengeToken('current-challenge');
+    mockRegistrationService.verify.mockReturnValueOnce(of(verifyResponse));
+    store.verify({ code: '234567' });
+    expect(mockAuthStore.applySession).toHaveBeenCalledExactlyOnceWith(verifyResponse);
+  });
+
+  it('cancels pending verification on clear and leaves the root stream reusable', () => {
+    const previous = new Subject<LoginOutput>();
+    mockRegistrationService.verify.mockReturnValueOnce(previous);
+    store.setChallengeToken('previous-challenge');
+    store.verify({ code: '123456' });
+    store.clear();
+    expect(previous.observed).toBe(false);
+    previous.error(new Error('Obsolete'));
+    expect(store.verifyCallState().status).toBe('idle');
+    store.setChallengeToken('current-challenge');
+    mockRegistrationService.verify.mockReturnValueOnce(of(verifyResponse));
+    store.verify({ code: '234567' });
+    expect(mockAuthStore.applySession).toHaveBeenCalledExactlyOnceWith(verifyResponse);
   });
 });

@@ -49,6 +49,7 @@ import {
   lucideWrench,
   lucideChevronDown,
 } from '@ng-icons/lucide';
+import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
@@ -175,6 +176,7 @@ import {
 } from '../../../state/intervention-planning-options';
 import {
   InterventionRecurrenceStore,
+  interventionRecurrenceStoreEvents,
   type InterventionRecurrenceStoreType,
 } from '../../../state/intervention-recurrence';
 import { InterventionBoardCard } from '../../components/intervention-board-card';
@@ -850,11 +852,27 @@ export class InterventionsPage {
   protected readonly recurrenceTarget: WritableSignal<InterventionRecurrenceFormTarget> =
     signal<InterventionRecurrenceFormTarget>(null);
 
-  /** Whether a recurrence create/update was submitted from the sheet and its outcome is still awaited — closes the sheet on success. */
-  protected readonly awaitingRecurrenceWrite: WritableSignal<boolean> = signal<boolean>(false);
+  /**
+   * Property awaitingRecurrenceWrite
+   * @readonly
+   * @description Captures the sheet's accepted operation and target until its matching result arrives.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<'create' | { readonly recurrenceId: string } | null>}
+   */
+  protected readonly awaitingRecurrenceWrite: WritableSignal<
+    'create' | { readonly recurrenceId: string } | null
+  > = signal(null);
 
-  /** Whether a recurrence delete was confirmed and its outcome is still awaited — closes the dialog on success. */
-  protected readonly awaitingRecurrenceRemove: WritableSignal<boolean> = signal<boolean>(false);
+  /**
+   * Property awaitingRecurrenceRemove
+   * @readonly
+   * @description Captures the confirmed recurrence id until its matching deletion settles.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly awaitingRecurrenceRemove: WritableSignal<string | null> = signal(null);
 
   /** The recurrence a row's Delete action asked to remove, pending the confirm dialog. */
   protected readonly pendingRecurrenceDelete: WritableSignal<InterventionRecurrenceOutput | null> =
@@ -991,20 +1009,59 @@ export class InterventionsPage {
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /** Whether the recurrence sheet's create or update write is in flight. */
-  protected readonly recurrencePending: Signal<boolean> = computed<boolean>(
-    () =>
-      isCallPending(this.recurrenceStore.createCallState()) ||
-      isCallPending(this.recurrenceStore.updateCallState()),
-  );
+  /**
+   * Property recurrencePending
+   * @readonly
+   * @description Whether the current sheet target has an accepted command in flight.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly recurrencePending: Signal<boolean> = computed(() => {
+    const target = this.recurrenceTarget();
+    if (target === null) return false;
+    if (target === 'create') return isCallPending(this.recurrenceStore.createCallState());
+    return (
+      this.recurrenceStore.savingIds().includes(target.id) ||
+      this.recurrenceStore.removingIds().includes(target.id)
+    );
+  });
 
-  /** The recurrence sheet's own create/update failure message, if any. */
-  protected readonly recurrenceServerError: Signal<string | null> = computed<string | null>(
-    () =>
-      this.recurrenceStore.createCallState().error?.message ??
-      this.recurrenceStore.updateCallState().error?.message ??
-      null,
-  );
+  /**
+   * Property recurrenceServerError
+   * @readonly
+   * @description Failure belonging exclusively to the current form target.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly recurrenceServerError: Signal<string | null> = computed(() => {
+    const target = this.recurrenceTarget();
+    if (target === null) return null;
+    return (
+      (target === 'create'
+        ? this.recurrenceStore.createCallState().error
+        : this.recurrenceStore.updateCallStates()[target.id]?.error
+      )?.message ?? null
+    );
+  });
+
+  /**
+   * Property recurrenceRemovePending
+   * @readonly
+   * @description Locks confirmation only while its target is being updated or removed.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly recurrenceRemovePending: Signal<boolean> = computed(() => {
+    const target = this.pendingRecurrenceDelete();
+    return (
+      target !== null &&
+      (this.recurrenceStore.savingIds().includes(target.id) ||
+        this.recurrenceStore.removingIds().includes(target.id))
+    );
+  });
 
   /** Creation and its URL entry point share the planning permission. */
   protected readonly canCreate: Signal<boolean> = computed(() =>
@@ -1735,6 +1792,7 @@ export class InterventionsPage {
   //#region Constructor
   /**
    * Constructor
+   * @constructor
    *
    * @description
    * Registers the "New intervention" page action, wires the search debounce,
@@ -1747,6 +1805,14 @@ export class InterventionsPage {
    * @since 1.0.0
    */
   public constructor() {
+    effect(() => {
+      const organizationIri = `/api/organizations/${this.organizationId()}`;
+      untracked(() => {
+        this.closeRecurrenceSheet();
+        this.dismissRecurrenceDelete();
+        this.recurrenceStore.setOrganization(organizationIri);
+      });
+    });
     effect(() => {
       const ids = this.assignAttemptIds();
       if (
@@ -1880,31 +1946,58 @@ export class InterventionsPage {
       });
     });
 
-    effect((): void => {
-      const createStatus: CallState['status'] = this.recurrenceStore.createCallState().status;
-      const updateStatus: CallState['status'] = this.recurrenceStore.updateCallState().status;
-
-      untracked((): void => {
-        if (!this.awaitingRecurrenceWrite()) return;
-        if (createStatus === 'pending' || updateStatus === 'pending') return;
-
-        this.awaitingRecurrenceWrite.set(false);
-        if (createStatus === 'success' || updateStatus === 'success') {
+    const recurrenceEvents = inject(Events);
+    recurrenceEvents
+      .on(
+        interventionRecurrenceStoreEvents.createSucceeded,
+        interventionRecurrenceStoreEvents.createFailed,
+      )
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        if (this.awaitingRecurrenceWrite() !== 'create' || this.recurrenceTarget() !== 'create')
+          return;
+        this.awaitingRecurrenceWrite.set(null);
+        if (event.type === interventionRecurrenceStoreEvents.createSucceeded.type)
           this.recurrenceTarget.set(null);
-        }
       });
-    });
-
-    effect((): void => {
-      const status: CallState['status'] = this.recurrenceStore.removeCallState().status;
-
-      untracked((): void => {
-        if (!this.awaitingRecurrenceRemove() || status === 'pending') return;
-
-        this.awaitingRecurrenceRemove.set(false);
-        if (status === 'success') this.pendingRecurrenceDelete.set(null);
+    recurrenceEvents
+      .on(
+        interventionRecurrenceStoreEvents.updateSucceeded,
+        interventionRecurrenceStoreEvents.updateFailed,
+      )
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        const awaiting = this.awaitingRecurrenceWrite();
+        const target = this.recurrenceTarget();
+        if (
+          awaiting === null ||
+          awaiting === 'create' ||
+          target === null ||
+          target === 'create' ||
+          awaiting.recurrenceId !== event.payload.recurrenceId ||
+          target.id !== event.payload.recurrenceId
+        )
+          return;
+        this.awaitingRecurrenceWrite.set(null);
+        if (event.type === interventionRecurrenceStoreEvents.updateSucceeded.type)
+          this.recurrenceTarget.set(null);
       });
-    });
+    recurrenceEvents
+      .on(
+        interventionRecurrenceStoreEvents.removeSucceeded,
+        interventionRecurrenceStoreEvents.removeFailed,
+      )
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        if (
+          this.awaitingRecurrenceRemove() !== event.payload.recurrenceId ||
+          this.pendingRecurrenceDelete()?.id !== event.payload.recurrenceId
+        )
+          return;
+        this.awaitingRecurrenceRemove.set(null);
+        if (event.type === interventionRecurrenceStoreEvents.removeSucceeded.type)
+          this.pendingRecurrenceDelete.set(null);
+      });
 
     effect((): void => {
       const requested: boolean = this.create() === '1';
@@ -2429,25 +2522,60 @@ export class InterventionsPage {
     this.pendingBulkAssignIds.set(null);
   }
 
-  /** Opens the recurrence sheet on an empty draft. */
+  /**
+   * Method openRecurrenceCreate
+   * @method openRecurrenceCreate
+   * @description Opens the recurrence sheet on an empty draft and clears any previous wait.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
   protected openRecurrenceCreate(): void {
+    this.awaitingRecurrenceWrite.set(null);
     this.recurrenceTarget.set('create');
   }
 
-  /** Opens the recurrence sheet on an existing rule. */
+  /**
+   * Method editRecurrence
+   * @method editRecurrence
+   * @description Opens a recurrence draft and clears the previous target's wait.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionRecurrenceOutput} recurrence - Recurrence to edit.
+   * @returns {void}
+   */
   protected editRecurrence(recurrence: InterventionRecurrenceOutput): void {
+    this.awaitingRecurrenceWrite.set(null);
     this.recurrenceTarget.set(recurrence);
   }
 
-  /** Closes the recurrence sheet — the sheet already confirmed a dirty close. */
+  /**
+   * Method closeRecurrenceSheet
+   * @method closeRecurrenceSheet
+   * @description Closes the sheet after its dirty-close confirmation and discards its pending result correlation.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
   protected closeRecurrenceSheet(): void {
-    this.awaitingRecurrenceWrite.set(false);
+    this.awaitingRecurrenceWrite.set(null);
     this.recurrenceTarget.set(null);
   }
 
-  /** Creates or updates a recurrence, depending on whether the form's values carry an existing row's id. */
+  /**
+   * Method submitRecurrence
+   * @method submitRecurrence
+   * @description Submits one create or update for the current target and waits for its matching result.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionRecurrenceFormValues} values - Validated recurrence draft and optional existing id.
+   * @returns {void}
+   */
   protected submitRecurrence(values: InterventionRecurrenceFormValues): void {
-    this.awaitingRecurrenceWrite.set(true);
+    if (this.recurrencePending()) return;
+    this.awaitingRecurrenceWrite.set(
+      values.recurrenceId === null ? 'create' : { recurrenceId: values.recurrenceId },
+    );
     if (values.recurrenceId === null) {
       this.recurrenceStore.create({
         organization: `/api/organizations/${this.organizationId()}`,
@@ -2481,23 +2609,46 @@ export class InterventionsPage {
     });
   }
 
-  /** Raises the delete confirmation for a row the table asked to remove. */
+  /**
+   * Method requestRecurrenceDelete
+   * @method requestRecurrenceDelete
+   * @description Opens confirmation for one recurrence and clears the previous deletion wait.
+   * @access protected
+   * @since 1.0.0
+   * @param {InterventionRecurrenceOutput} recurrence - Recurrence to remove.
+   * @returns {void}
+   */
   protected requestRecurrenceDelete(recurrence: InterventionRecurrenceOutput): void {
+    this.awaitingRecurrenceRemove.set(null);
     this.pendingRecurrenceDelete.set(recurrence);
   }
 
-  /** Deletes the recurrence the confirm dialog approved; the dialog closes on success. */
+  /**
+   * Method confirmRecurrenceDelete
+   * @method confirmRecurrenceDelete
+   * @description Submits deletion of the current confirmation target and closes only on its success.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
   protected confirmRecurrenceDelete(): void {
     const recurrence: InterventionRecurrenceOutput | null = this.pendingRecurrenceDelete();
-    if (recurrence === null) return;
+    if (recurrence === null || this.recurrenceRemovePending()) return;
 
-    this.awaitingRecurrenceRemove.set(true);
+    this.awaitingRecurrenceRemove.set(recurrence.id);
     this.recurrenceStore.remove(recurrence.id);
   }
 
-  /** Closes the delete confirmation without removing anything. */
+  /**
+   * Method dismissRecurrenceDelete
+   * @method dismissRecurrenceDelete
+   * @description Closes deletion confirmation and clears its pending result correlation.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
   protected dismissRecurrenceDelete(): void {
-    this.awaitingRecurrenceRemove.set(false);
+    this.awaitingRecurrenceRemove.set(null);
     this.pendingRecurrenceDelete.set(null);
   }
 

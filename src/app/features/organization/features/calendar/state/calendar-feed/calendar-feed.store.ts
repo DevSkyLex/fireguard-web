@@ -3,11 +3,12 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { concatMap, pipe, switchMap, tap } from 'rxjs';
+import { concatMap, EMPTY, map, pipe, switchMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
   pendingCallState,
+  resetQuery,
   setErrorQuery,
   setPendingQuery,
   setSuccessQuery,
@@ -112,6 +113,24 @@ export interface CalendarEventDeleteCommand {
  * @since 1.1.0
  */
 interface CalendarFeedWriteState {
+  /**
+   * Property contextRevision
+   * @readonly
+   * @description Distinguishes separate visits to an organization for queued move commands.
+   * @access private
+   * @since 1.2.0
+   * @type {number}
+   */
+  readonly contextRevision: number;
+  /**
+   * Property feedRevision
+   * @readonly
+   * @description Invalidates optimistic snapshots as soon as a window read starts or resolves.
+   * @access private
+   * @since 1.2.0
+   * @type {number}
+   */
+  readonly feedRevision: number;
   readonly createEventCallState: CallState<CalendarEventOutput>;
   readonly updateEventCallState: CallState<CalendarEventOutput>;
   readonly deleteEventCallState: CallState<null>;
@@ -120,6 +139,8 @@ interface CalendarFeedWriteState {
 }
 
 const INITIAL_WRITE_STATE: CalendarFeedWriteState = {
+  contextRevision: 0,
+  feedRevision: 0,
   createEventCallState: idleCallState(),
   updateEventCallState: idleCallState(),
   deleteEventCallState: idleCallState(),
@@ -201,13 +222,27 @@ export const CalendarFeedStore = signalStore(
      */
     load: rxMethod<CalendarFeedLoadCommand>(
       pipe(
-        tap((command) => patchState(store, { lastLoadCommand: command })),
+        tap((command) => {
+          if (store.lastLoadCommand()?.organizationId !== command.organizationId) {
+            patchState(store, resetQuery(), {
+              contextRevision: store.contextRevision() + 1,
+              createEventCallState: idleCallState(),
+              updateEventCallState: idleCallState(),
+              deleteEventCallState: idleCallState(),
+              moveEventCallState: idleCallState(),
+            });
+          }
+          patchState(store, { lastLoadCommand: command, feedRevision: store.feedRevision() + 1 });
+        }),
         switchMap((command) => {
           patchState(store, setPendingQuery());
 
           return service.getFeed(command.organizationId, command.from, command.to).pipe(
             tapResponse({
-              next: (feed) => patchState(store, setSuccessQuery(feed)),
+              next: (feed) =>
+                patchState(store, setSuccessQuery(feed), {
+                  feedRevision: store.feedRevision() + 1,
+                }),
               error: (error: unknown) => patchState(store, setErrorQuery(toStoreError(error))),
             }),
           );
@@ -324,13 +359,14 @@ export const CalendarFeedStore = signalStore(
        * first, then the merge-patch (`startsAt`, plus `endsAt` only when the
        * command carries one) is sent. Success still re-reads the last loaded
        * window, so the server's own merge/sort reconciles the optimistic
-       * guess; failure rolls the entry back to the snapshot taken before the
-       * patch and dispatches {@link calendarFeedStoreEvents.moveEventFailed}
+       * guess; failure restores only that entry while its feed revision is current,
+       * and dispatches {@link calendarFeedStoreEvents.moveEventFailed}
        * for the app-wide toast. This is the feature's one sanctioned
        * exception to the refresh-after-write invariant (`FEATURE.md`) — a
        * dropped chip snapping back to its old day for a round-trip would
        * read as a failed drop. `concatMap`: a second drop queues behind the
-       * first instead of racing its rollback snapshot.
+       * first instead of racing its rollback snapshot. Context is captured before queuing;
+       * commands and results from an abandoned organization visit are ignored.
        *
        * @access public
        * @since 1.2.0
@@ -339,21 +375,37 @@ export const CalendarFeedStore = signalStore(
        */
       moveEvent: rxMethod<CalendarEventMoveCommand>(
         pipe(
-          concatMap((command) => {
-            const previous: CalendarFeedOutput | null = store.queryData();
+          map((command) => ({
+            command,
+            contextRevision: store.contextRevision(),
+            feedRevision: store.feedRevision(),
+          })),
+          concatMap(({ command, contextRevision, feedRevision }) => {
+            if (
+              contextRevision !== store.contextRevision() ||
+              (store.lastLoadCommand() !== null &&
+                store.lastLoadCommand()?.organizationId !== command.organizationId)
+            )
+              return EMPTY;
+            const feed = store.queryData();
+            const previous =
+              feedRevision === store.feedRevision() && !store.isQueryLoading()
+                ? feed?.items.find(
+                    (item) => item.sourceKey === 'calendar_event' && item.id === command.eventId,
+                  )
+                : undefined;
             const input: UpdateCalendarEventInput = {
               startsAt: command.startsAt,
               ...(command.endsAt !== undefined ? { endsAt: command.endsAt } : {}),
             };
 
             patchState(store, { moveEventCallState: pendingCallState() });
-            if (previous !== null) {
+            if (feed !== null && previous !== undefined) {
+              const moved: CalendarFeedItemOutput = { ...previous, ...input };
               const optimistic: CalendarFeedOutput = {
-                ...previous,
-                items: previous.items.map((item: CalendarFeedItemOutput): CalendarFeedItemOutput =>
-                  item.sourceKey === 'calendar_event' && item.id === command.eventId
-                    ? { ...item, ...input }
-                    : item,
+                ...feed,
+                items: feed.items.map((item: CalendarFeedItemOutput): CalendarFeedItemOutput =>
+                  item.sourceKey === 'calendar_event' && item.id === command.eventId ? moved : item,
                 ),
               };
               patchState(store, setSuccessQuery(optimistic));
@@ -362,13 +414,31 @@ export const CalendarFeedStore = signalStore(
             return service.updateEvent(command.organizationId, command.eventId, input).pipe(
               tapResponse({
                 next: (event) => {
+                  if (contextRevision !== store.contextRevision()) return;
                   patchState(store, { moveEventCallState: successCallState(event) });
                   refreshLastWindow(store);
                 },
                 error: (error: unknown) => {
+                  if (contextRevision !== store.contextRevision()) return;
                   const storeError: StoreError = toStoreError(error);
-
-                  if (previous !== null) patchState(store, setSuccessQuery(previous));
+                  const currentFeed = store.queryData();
+                  if (
+                    previous !== undefined &&
+                    currentFeed !== null &&
+                    feedRevision === store.feedRevision()
+                  ) {
+                    patchState(
+                      store,
+                      setSuccessQuery<CalendarFeedOutput>({
+                        ...currentFeed,
+                        items: currentFeed.items.map((item) =>
+                          item.sourceKey === 'calendar_event' && item.id === command.eventId
+                            ? previous
+                            : item,
+                        ),
+                      }),
+                    );
+                  }
                   patchState(store, { moveEventCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
                     calendarFeedStoreEvents.moveEventFailed(

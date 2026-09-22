@@ -87,7 +87,10 @@ primitives with this one; no application wrapper sits between the pages and thos
 
 Root-provided stores:
 
-- `UserStore` — the profile, its derived identity, and the SSR/`TransferState` handoff
+- `UserStore` — the profile, its derived identity, and the SSR/`TransferState` handoff.
+  Bootstrap and reactive consumers share one profile request. Clearing the session or applying
+  an authoritative profile invalidates older reads, including locale reconciliation and handoffs;
+  cancelled initialization waits settle and the next session can load immediately.
 - `InboxStore` — shared bell/page entries keyed by source and identifier. The opaque cursor is echoed
   unchanged. Account or workspace changes cancel pending reads and clear the previous cache.
   The badge uses the server count; secondary feed reads are browser-only and lazy. Partial sources
@@ -97,10 +100,16 @@ Root-provided stores:
 - `NotificationStore` — the notification-only feed as `withEntities`, its paging, category
   filters, bulk actions and Mercure stream. Its typed change event invalidates `InboxStore`;
   the unified badge belongs to `InboxStore` and always refreshes from the server count.
+  Feed, count and catalog reads are browser-only and lazy, including direct account-page links.
+  No notification payload or catalog enters `TransferState`. Session invalidation cancels reads,
+  acknowledgements and the complete Mercure bootstrap before clearing data. Replaced queries cancel
+  previous pagination; a departed response never repopulates the next session's state.
 
 Page-scoped workflow stores (provided by the page, so an abandoned edit does not follow the user):
 
-- `AccountProfileEditStore` — profile save and avatar upload
+- `AccountProfileEditStore` — profile save and avatar upload. Command outcomes update profile,
+  locale, feedback and request state only within their originating session; a new session can
+  submit immediately without cancelling an already accepted write from the departed session.
 - `AccountPasswordChangeStore` — the two-step change, holding the challenge token that ties the
   steps together
 - `AccountTotpEnrollmentStore` — setup, confirm and disable
@@ -213,6 +222,8 @@ gating **global** (non-organization-scoped) permissions outside this feature.
   `AccountSecurityPage`, scoped to that page. Recorded in auth's `FEATURE.md`.
 - **Consumes `features/auth`'s `AUTH_SESSION_PORT`** in `AccountSecurityPage` to purge the local
   session after a successful account deactivation — the same `clearSession()` the 401 path uses.
+  `AccountProfileEditStore` reads its `sessionRevision` to apply profile and avatar outcomes only
+  to the session that submitted them.
 - **Consumes `features/organization`'s `MY_ORGANIZATIONS_PORT`** in `AccountOrganizationsPage` —
   the caller's own organization memberships and the ability to leave one, entirely through the
   port; this feature imports no organization store, service, or dialog directly. Recorded in
@@ -232,7 +243,8 @@ lazy loading and mark-read handlers. Desktop retains the native menu and popover
 windows. Interaction-mode changes preserve the profile Signal Form and locale reconciliation.
 
 - `provideAccountFeature()` binds account-owned ports to concrete stores using `useExisting`, and
-  primes the notification center once a profile is present.
+  starts browser-only notification realtime once a profile is present. Feed activation owns its
+  loading independently, with no delayed continuation from feed initialization to realtime startup.
 - Layouts should consume account ports instead of injecting account stores directly.
 
 ## Approved Exceptions

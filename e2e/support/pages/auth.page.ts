@@ -68,15 +68,11 @@ export class AuthPages {
   }
 
   /**
-   * Types a code into the shared OTP form. `brn-input-otp` auto-submits once
-   * every slot is filled (`completed` → `autoSubmit()`), which races an
-   * explicit submit click on a fast browser — the button can already be
-   * disabled or detached (navigated away) by the time the click lands. The
-   * click is a fallback only, best-effort, for whenever auto-submit did not
-   * fire.
+   * Types a code into the shared OTP form, whose completed event submits it.
+   * The caller waits for its own success or error outcome; a second click
+   * would race the automatic submission and any resulting navigation.
    */
   public async submitOtp(code: string): Promise<void> {
     await this.otpCode.fill(code);
-    await this.otpSubmit.click({ timeout: 2_000 }).catch(() => undefined);
   }
 }

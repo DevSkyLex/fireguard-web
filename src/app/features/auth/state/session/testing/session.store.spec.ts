@@ -132,4 +132,37 @@ describe('SessionStore', () => {
     expect(store.revokeCallState().status).toBe('idle');
     expect(store.revokeAllCallState().status).toBe('idle');
   });
+
+  it('retains sessions and totals when a single revocation fails, then dismisses its error', () => {
+    mockSessionService.list.mockReturnValue(of(sessionsCollection));
+    mockSessionService.revoke.mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 503, detail: 'Retry later.' })),
+    );
+    store.loadSessions();
+
+    store.revoke('other');
+
+    expect(store.revokeCallState()).toMatchObject({ status: 'error', error: { code: 503 } });
+    expect(store.sessions()).toEqual([currentSession, otherSession]);
+    expect(store.totalSessions()).toBe(2);
+    expect(mockDispatcher.dispatch).toHaveBeenCalledOnce();
+    store.resetRevokeOperation();
+    expect(store.revokeCallState().status).toBe('idle');
+  });
+
+  it('retains sessions when bulk revocation fails, then permits a clean retry', () => {
+    mockSessionService.list.mockReturnValue(of(sessionsCollection));
+    mockSessionService.revokeOthers.mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 503, detail: 'Retry later.' })),
+    );
+    store.loadSessions();
+
+    store.revokeOthers();
+
+    expect(store.revokeAllCallState()).toMatchObject({ status: 'error', error: { code: 503 } });
+    expect(store.sessions()).toEqual([currentSession, otherSession]);
+    expect(mockDispatcher.dispatch).toHaveBeenCalledOnce();
+    store.resetRevokeAllOperation();
+    expect(store.revokeAllCallState().status).toBe('idle');
+  });
 });

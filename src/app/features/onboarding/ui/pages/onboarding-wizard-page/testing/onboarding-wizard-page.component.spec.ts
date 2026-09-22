@@ -2,9 +2,9 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
-import { idleCallState, type CallState } from '@core/request-state';
+import { errorCallState, idleCallState, toStoreError, type CallState } from '@core/request-state';
 import type {
   OnboardingSetupOperation,
   OnboardingStepKey,
@@ -68,6 +68,7 @@ describe('OnboardingWizardPage', () => {
     executeStep: ReturnType<typeof vi.fn>;
     skipStep: ReturnType<typeof vi.fn>;
     rollback: ReturnType<typeof vi.fn>;
+    load: ReturnType<typeof vi.fn>;
   };
   let organizationSetupServiceMock: {
     createOrganization: ReturnType<typeof vi.fn>;
@@ -119,6 +120,7 @@ describe('OnboardingWizardPage', () => {
       executeStep: vi.fn(),
       skipStep: vi.fn(),
       rollback: vi.fn(),
+      load: vi.fn(),
     };
     organizationSetupServiceMock = {
       createOrganization: vi.fn().mockReturnValue(of(undefined)),
@@ -172,6 +174,131 @@ describe('OnboardingWizardPage', () => {
 
   it('should bootstrap the onboarding record on construction', () => {
     expect(storeMock.initialize).toHaveBeenCalled();
+  });
+
+  it('scopes address searches to the current creation and clears short or orphaned queries', () => {
+    const search = vi
+      .spyOn(fixture.componentInstance['addressSearch'], 'search')
+      .mockReturnValue({ destroy: vi.fn() });
+    const clear = vi.spyOn(fixture.componentInstance['addressSearch'], 'clear');
+    fixture.componentInstance['searchFacilityAddress']('Paris');
+    expect(clear).toHaveBeenCalledOnce();
+    storeMock.targetOrganizationId.set('org-1');
+    fixture.componentInstance['searchFacilityAddress']('pa');
+    expect(clear).toHaveBeenCalledTimes(2);
+    fixture.componentInstance['searchFacilityAddress']('Paris');
+    expect(search).toHaveBeenCalledWith({ organizationId: 'org-1', query: 'Paris' });
+  });
+
+  it('loads a new durable snapshot once and waits for an active batch before replacing it', async () => {
+    const snapshot = { id: 'onboarding-1', state: 'in_progress' };
+    setupMock.pending.set(true);
+    storeMock.onboarding.set(snapshot);
+    await fixture.whenStable();
+    expect(setupMock.load).not.toHaveBeenCalled();
+    setupMock.pending.set(false);
+    await fixture.whenStable();
+    expect(setupMock.load).toHaveBeenCalledExactlyOnceWith(snapshot);
+    await fixture.whenStable();
+    expect(setupMock.load).toHaveBeenCalledOnce();
+  });
+
+  it('loads and retries invitation roles explicitly after a catalog failure', async () => {
+    storeMock.targetOrganizationId.set('org-1');
+    organizationSetupServiceMock.listRoles.mockReturnValue(throwError(() => new Error('Offline')));
+    storeMock.nextStep.set('invite_members');
+    storeMock.steps.set([stepOf('invite_members', 'pending')]);
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listRoles).toHaveBeenCalledExactlyOnceWith('org-1');
+    expect(feedbackMock.show).toHaveBeenCalledOnce();
+    expect(fixture.componentInstance['catalogPending']()).toBe(false);
+
+    const roles = [{ id: 'role-1', name: 'Technician' }];
+    organizationSetupServiceMock.listRoles.mockReturnValue(of(roles));
+    fixture.componentInstance['retryCatalog']();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['roles']()).toEqual(roles);
+    expect(feedbackMock.show).toHaveBeenCalledOnce();
+    fixture.componentInstance['submitMembers']([]);
+    expect(setupMock.run).not.toHaveBeenCalled();
+  });
+
+  it('retries persisted facilities without creating equipment after a query failure', async () => {
+    storeMock.targetOrganizationId.set('org-1');
+    organizationSetupServiceMock.listFacilities.mockReturnValue(
+      throwError(() => new Error('Offline')),
+    );
+    storeMock.nextStep.set('create_first_equipment');
+    storeMock.steps.set([stepOf('create_first_equipment', 'pending')]);
+    await fixture.whenStable();
+    expect(feedbackMock.show).toHaveBeenCalledOnce();
+    organizationSetupServiceMock.listFacilities.mockReturnValue(
+      of([{ id: 'site-1', name: 'Site', type: 'site' }]),
+    );
+    fixture.componentInstance['retryCatalog']();
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listFacilities).toHaveBeenCalledTimes(2);
+    expect(fixture.componentInstance['createdFacilities']()).toHaveLength(1);
+    expect(setupMock.run).not.toHaveBeenCalled();
+  });
+
+  it('keeps a failed Checkout retryable without confirming the plan or duplicating feedback', () => {
+    storeMock.targetOrganizationId.set('org-1');
+    billingServiceMock.createCheckoutSession.mockReturnValue(
+      throwError(() => ({
+        '@type': 'Error',
+        status: 503,
+        detail: 'Billing temporarily unavailable.',
+      })),
+    );
+    fixture.componentInstance['submitPlan']({
+      planKey: 'pro',
+      interval: 'month',
+      pricingState: 'priced',
+    });
+    expect(fixture.componentInstance['stepPending']()).toBe(false);
+    expect(feedbackMock.show).toHaveBeenCalledOnce();
+    expect(storeMock.executeStep).not.toHaveBeenCalled();
+  });
+
+  it('does not compete with an active Checkout or request catalogs twice while pending', async () => {
+    const catalog = new Subject<{ member: []; totalItems: number }>();
+    planServiceMock.listAvailable.mockReturnValue(catalog);
+    storeMock.nextStep.set('select_plan');
+    storeMock.steps.set([stepOf('select_plan', 'pending')]);
+    await fixture.whenStable();
+    fixture.componentInstance['retryCatalog']();
+    expect(planServiceMock.listAvailable).toHaveBeenCalledOnce();
+    setupMock.pending.set(true);
+    fixture.componentInstance['submitPlan']({
+      planKey: 'pro',
+      interval: 'month',
+      pricingState: 'priced',
+    });
+    fixture.componentInstance['skipCurrentStep']();
+    expect(billingServiceMock.createCheckoutSession).not.toHaveBeenCalled();
+    expect(storeMock.skipStep).not.toHaveBeenCalled();
+    catalog.complete();
+  });
+
+  it('retries the failed lifecycle command and respects rollback permissions and busy state', () => {
+    const failure = toStoreError(new Error('Offline'));
+    storeMock.startCallState.set(errorCallState(failure));
+    fixture.componentInstance['retryLifecycle']();
+    expect(storeMock.initialize).toHaveBeenCalledTimes(2);
+    storeMock.startCallState.set(idleCallState());
+    storeMock.rollbackCallState.set(errorCallState(failure));
+    fixture.componentInstance['retryLifecycle']();
+    expect(storeMock.rollback).not.toHaveBeenCalled();
+    storeMock.canRollback.set(true);
+    fixture.componentInstance['retryLifecycle']();
+    expect(storeMock.rollback).toHaveBeenCalledOnce();
+    storeMock.rollbackCallState.set(idleCallState());
+    fixture.componentInstance['retryLifecycle']();
+    expect(storeMock.load).toHaveBeenCalledOnce();
+    storeMock.isBusy.set(true);
+    fixture.componentInstance['retryLifecycle']();
+    expect(storeMock.load).toHaveBeenCalledOnce();
   });
 
   it('opens workspace discovery without rolling back an existing creation', () => {

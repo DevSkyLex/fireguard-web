@@ -24,20 +24,36 @@ jobs:
   publish:
     name: Build and publish image
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
     timeout-minutes: 30
     env:
       SOURCE_BRANCH: ${{ github.event.workflow_run.head_branch || github.ref_name }}
       SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
     steps:
-      - name: Validate release branch
-        shell: bash
-        run: |
-          case "$SOURCE_BRANCH" in
-            main|develop) ;;
-            *) echo "Unsupported release branch: $SOURCE_BRANCH"; exit 1 ;;
-          esac
+      - name: Checkout deployment verifier
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve publishing event
+        id: context
+        run: node .github/scripts/deployment-context.mjs
+
+      - name: Verify exact CI and SonarQube gate
+        id: verified
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_BRANCH: ${{ steps.context.outputs.source-branch }}
+          SOURCE_SHA: ${{ steps.context.outputs.source-sha }}
+          EXPECTED_RUN_ID: ${{ steps.context.outputs.run-id }}
+          SONAR_PROJECT_PREFIX: fireguard-web
+          SONAR_DEPLOYMENTS_READY: ${{ vars[steps.context.outputs.source-branch == 'main' && 'SONAR_READY_MAIN' || 'SONAR_READY_DEVELOP'] }}
+        run: node .github/scripts/verify-ci.mjs
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -71,6 +87,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -79,11 +96,19 @@ jobs:
           tags: |
             ${{ steps.image.outputs.image_ref }}
             ${{ steps.image.outputs.channel_ref }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ env.SOURCE_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Trigger VPS deployment
         env:
           GH_TOKEN: ${{ github.token }}
-          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
-        run: gh workflow run deploy-vps.yml --repo "$GITHUB_REPOSITORY" --ref "$SOURCE_BRANCH" -f image_ref="$IMAGE_REF"
+          IMAGE_NAME: ${{ steps.image.outputs.image_name }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && steps.verified.outputs.verified-run-id || '' }}
+        run: |
+          test -n "$IMAGE_DIGEST"
+          gh workflow run deploy-vps.yml --repo "$GITHUB_REPOSITORY" --ref "$SOURCE_BRANCH" \
+            -f image_ref="${IMAGE_NAME}@${IMAGE_DIGEST}" -f source_run_id="$SOURCE_RUN_ID"

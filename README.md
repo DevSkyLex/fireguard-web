@@ -48,6 +48,10 @@ swaps in `src/environments/environment.ts` (production) or
 
 ## Available scripts
 
+SonarQube analyzes `main` and `develop` in separate projects and protects both
+deployment environments. See [SONARQUBE.md](SONARQUBE.md) for setup, baseline
+activation and quality-gate behavior.
+
 | Script                            | Description                                                                       |
 | --------------------------------- | --------------------------------------------------------------------------------- |
 | `npm start`                       | `ng serve` — dev server with SSR                                                  |

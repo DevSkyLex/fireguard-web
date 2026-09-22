@@ -888,6 +888,55 @@ describe('InterventionWorkspaceStore call state', () => {
     expect(store.blockerCount()).toBe(1);
   });
 
+  it.each([
+    [412, 'This intervention changed since it was loaded. Refresh and try again.'],
+    [403, "You do not have permission to change this intervention's status."],
+    [422, "This status change is not allowed from the intervention's current status."],
+    [500, 'The intervention status could not be updated.'],
+  ] as const)('maps transition failure %s to an actionable message', async (status, message) => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    mockService['update'].mockReturnValue(
+      throwError(() => ({
+        '@type': 'Error',
+        status,
+        detail: 'Technical transition failure.',
+      })),
+    );
+
+    store.transition({ interventionId: 'intervention-1', status: 'in_progress' });
+    await vi.waitFor(() => expect(store.transitionCallState().status).toBe('error'));
+
+    expect(store.transitionCallState().error?.message).toBe(message);
+    expect(store.intervention()?.status).toBe(intervention.status);
+  });
+
+  it('keeps the last issues when their silent refresh fails after a successful write', async () => {
+    const blocker = {
+      severity: 'blocker',
+      message: 'Missing work item',
+    } as InterventionIssueOutput;
+    mockService['listIssues'].mockReturnValueOnce(
+      of({
+        '@id': '/api/interventions/intervention-1/issues',
+        '@type': 'Collection',
+        totalItems: 1,
+        member: [blocker],
+      }),
+    );
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.issues()).toEqual([blocker]));
+    mockService['listIssues'].mockReturnValue(
+      throwError(() => ({ '@type': 'Error', status: 503, detail: 'Unavailable' })),
+    );
+    mockService['update'].mockReturnValue(of({ ...intervention, status: 'in_progress' }));
+
+    store.transition({ interventionId: 'intervention-1', status: 'in_progress' });
+    await vi.waitFor(() => expect(store.issuesCallState().status).toBe('error'));
+
+    expect(store.issues()).toEqual([blocker]);
+  });
+
   it('refreshes the issues checklist after a work item status write', async () => {
     store.load('intervention-1');
     await vi.waitFor(() => expect(store.loading()).toBe(false));

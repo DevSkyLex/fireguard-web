@@ -2,6 +2,8 @@ import { computed } from '@angular/core';
 import {
   patchState,
   signalStoreFeature,
+  type SignalStoreFeatureType,
+  type StateSignals,
   withComputed,
   withMethods,
   withState,
@@ -148,11 +150,24 @@ export function withDashboardFilterState() {
   );
 }
 
-export function buildDashboardTrendBaseParams(store: {
-  readonly selectedGranularity: () => OrganizationDashboardGranularity;
-  readonly selectedDateRange: () => Date[] | null;
-  readonly compareEnabled: () => boolean;
-}): Omit<OrganizationDashboardTrendResourceParams, 'organizationId'> | null {
+/**
+ * Type DashboardFilterSignals
+ * @type DashboardFilterSignals
+ * @description Read contract derived from the owning filter feature's state.
+ */
+type DashboardFilterSignals = StateSignals<
+  SignalStoreFeatureType<typeof withDashboardFilterState>['state']
+>;
+
+/**
+ * Function buildDashboardTrendBaseParams
+ * @description Converts applied filter signals to trend parameters; incomplete periods defer queries.
+ * @param {DashboardFilterSignals} store - The owning dashboard filter signals.
+ * @returns {Omit<OrganizationDashboardTrendResourceParams, 'organizationId'> | null} Query parameters or an incomplete-period sentinel.
+ */
+export function buildDashboardTrendBaseParams(
+  store: DashboardFilterSignals,
+): Omit<OrganizationDashboardTrendResourceParams, 'organizationId'> | null {
   const range = store.selectedDateRange();
   if (range !== null && (range.length < 2 || !range[1])) return null;
   return {

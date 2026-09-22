@@ -46,6 +46,8 @@ Primary service:
 ## Cross-Feature Dependencies
 
 - May be consumed by sibling organization subfeatures such as inspections.
+- Consumes Auth's `AUTH_SESSION_PORT` revision to scope cached templates and pending commands
+  to the authenticated session; ordinary token refresh does not invalidate this cache.
 - Must stay owned here even when another subfeature uses checklist selection in its UI.
 
 ## Invariants
@@ -56,6 +58,12 @@ Primary service:
 
 - Checklist ownership remains separate from inspections and facilities.
 - Checklist state and mutations stay local to this subfeature.
+- List and inspection-create option caches belong to an organization and session. Changing
+  either cancels reads and clears the previous templates; successful empty results are cached
+  and failed reads can be retried. Reads remain browser-only, including direct list activation.
+- Archiving refreshes the current server query so its filters, totals and page contents are
+  reconciled. The library owns `?page`, returns to the last valid page after a successful read
+  reduces the total, and preserves other query parameters. Pending reads never clamp paging.
 - Consumers (e.g. inspections) reach checklists only through the feature's concern barrels
   (`state`, `models`, `data-access`), never a deep import.
 - `ChecklistsPage` searches, filters and archives through a confirmation dialog. Creation and

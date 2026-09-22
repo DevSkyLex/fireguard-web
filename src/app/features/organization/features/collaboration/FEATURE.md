@@ -1,5 +1,11 @@
 # Collaboration
 
+Message-thread initial reads, older-page reads, background refreshes and local outbox restoration
+belong to the loaded conversation generation. Reset or a new load clears obsolete rows and
+cancels those reads without disabling their request streams; late responses, errors and A-B-A
+visits cannot change the current entities, totals or page bounds. Pagination admits one read
+at a time and applies it only to the expected preceding page of the current loaded window.
+
 Nested subfeature of `features/organization`, alongside `facilities`, `equipments`,
 `inspections` and `interventions` — the same shape those four have: a top-level backend module
 whose resources are owned by an organization, so the frontend keeps it under the organization it

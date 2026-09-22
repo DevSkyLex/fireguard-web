@@ -64,6 +64,7 @@ describe('OrganizationInvitationAcceptPage', () => {
     };
 
     const authSession: AuthSessionPort = {
+      sessionRevision: signal(0),
       accessToken: signal<string | null>(null),
       isAuthenticated,
       initialized: signal(true),

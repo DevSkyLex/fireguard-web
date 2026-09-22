@@ -22,6 +22,7 @@ import {
   type StoreError,
 } from '@core/request-state';
 import { TitleService } from '@core/title';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type {
@@ -149,6 +150,10 @@ describe('EquipmentDetailPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision: signal(0), isAuthenticated: signal(true) },
+        },
         {
           provide: ActiveEquipmentStore,
           useValue: { selectedEquipment, getError, isLoadingEquipment, resolveEquipment },

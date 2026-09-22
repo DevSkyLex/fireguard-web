@@ -1,11 +1,25 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID } from '@angular/core';
+import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
-import { addEntity, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
+import {
+  addEntity,
+  removeAllEntities,
+  setAllEntities,
+  setEntity,
+  withEntities,
+} from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, filter, map, mergeMap, pipe, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -17,6 +31,7 @@ import {
   toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { ChecklistService } from '@features/organization/features/checklists/data-access';
 import type {
   ChecklistOutput,
@@ -45,6 +60,8 @@ const INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE = 200;
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 const INITIAL_CHECKLIST_STATE: ChecklistState = {
+  currentOrganizationId: null,
+  loadedPage: null,
   createCallState: idleCallState(),
   archiveCallState: idleCallState(),
   updateCallState: idleCallState(),
@@ -305,7 +322,66 @@ export const ChecklistStore = signalStore(
       ),
       dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
       platformId = inject<object>(PLATFORM_ID),
+      authSession = inject(AUTH_SESSION_PORT),
     ) => {
+      const cancellation = new Subject<void>();
+      let generation = 0;
+      let listGeneration = 0;
+      let sessionRevision = authSession.sessionRevision();
+      let lastQuery: { organizationId: string; options?: ChecklistListOptions } | null = null;
+      /**
+       * Function clear
+       * @description Invalidates cached templates and pending reads across organization or session changes.
+       * @since 2.1.0
+       * @returns {void}
+       */
+      const clear = (): void => {
+        generation += 1;
+        listGeneration += 1;
+        cancellation.next();
+        lastQuery = null;
+        patchState(store, INITIAL_CHECKLIST_STATE, removeAllEntities({ collection: 'checklist' }));
+      };
+      /**
+       * Function synchronizeSession
+       * @description Prevents reuse of templates belonging to a previous authenticated session.
+       * @since 2.1.0
+       * @returns {void}
+       */
+      const synchronizeSession = (): void => {
+        const revision = authSession.sessionRevision();
+        if (revision !== sessionRevision || !authSession.isAuthenticated()) {
+          sessionRevision = revision;
+          clear();
+        }
+      };
+      /**
+       * Function captureContext
+       * @description Associates a read or accepted command with its organization and current session.
+       * @since 2.1.0
+       * @param {string} organizationId - Organization owning the request.
+       * @returns {{ generation: number; revision: number }} Captured context.
+       */
+      const captureContext = (organizationId: string) => {
+        synchronizeSession();
+        if (store.currentOrganizationId() !== organizationId) {
+          clear();
+          patchState(store, { currentOrganizationId: organizationId });
+        }
+        return { generation, revision: sessionRevision };
+      };
+      /**
+       * Function isCurrent
+       * @description Restricts request results to the context that accepted them.
+       * @since 2.1.0
+       * @param {ReturnType<typeof captureContext>} context - Original request context.
+       * @returns {boolean} Whether the result can still update the store.
+       */
+      const isCurrent = (context: ReturnType<typeof captureContext>): boolean =>
+        context.generation === generation &&
+        context.revision === authSession.sessionRevision() &&
+        authSession.isAuthenticated();
+
       /**
        * Constant loadFn
        * @const loadFn
@@ -322,20 +398,29 @@ export const ChecklistStore = signalStore(
        */
       const loadFn = rxMethod<{ organizationId: string; options?: ChecklistListOptions }>(
         pipe(
-          tap((): void => {
-            patchState(store, { listCallState: pendingCallState() });
-          }),
-          switchMap(({ organizationId, options }) =>
-            checklistService.list(organizationId, options).pipe(
+          switchMap(({ organizationId, options }) => {
+            const context = captureContext(organizationId);
+            if (!isPlatformBrowser(platformId) || !authSession.isAuthenticated()) return EMPTY;
+            const requestGeneration = ++listGeneration;
+            lastQuery = { organizationId, options };
+            patchState(store, { loadedPage: null, listCallState: pendingCallState() });
+            return checklistService.list(organizationId, options).pipe(
+              takeUntil(cancellation),
               tapResponse({
                 next: (response: HydraCollection<ChecklistOutput>): void => {
+                  if (!isCurrent(context) || requestGeneration !== listGeneration) return;
                   patchState(
                     store,
                     setAllEntities([...response.member], { collection: 'checklist' }),
-                    { totalChecklists: response.totalItems, listCallState: successCallState(null) },
+                    {
+                      totalChecklists: response.totalItems,
+                      loadedPage: options?.page ?? 1,
+                      listCallState: successCallState(null),
+                    },
                   );
                 },
                 error: (error: unknown): void => {
+                  if (!isCurrent(context) || requestGeneration !== listGeneration) return;
                   const storeError: StoreError = toStoreError(error);
                   patchState(store, { listCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
@@ -345,12 +430,14 @@ export const ChecklistStore = signalStore(
                   );
                 },
               }),
-            ),
-          ),
+            );
+          }),
         ),
       );
 
       return {
+        clear,
+        synchronizeSession,
         /**
          * Method ensureInspectionCreateOptionsLoaded
          *
@@ -370,16 +457,17 @@ export const ChecklistStore = signalStore(
             return;
           }
 
+          synchronizeSession();
           const callState = store.listCallState();
-          if (callState.status === 'pending' || callState.status === 'success') {
+          if (
+            store.currentOrganizationId() === organizationId &&
+            (callState.status === 'pending' || callState.status === 'success')
+          ) {
             return;
           }
 
           loadFn({
             organizationId,
-            // Only active checklists are usable as inspection templates; an
-            // archived one is rejected on submit (400), so keep them out of the
-            // inspection-create selector.
             options: { itemsPerPage: INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE, status: 'active' },
           });
         },
@@ -417,8 +505,8 @@ export const ChecklistStore = signalStore(
          * @method create
          *
          * @description
-         * Creates a new checklist via the API. Uses `exhaustMap` to prevent
-         * concurrent submissions. On success the `createCallState` transitions
+         * Creates a new checklist via the API. Rejects duplicate submissions within the current context
+         * while preserving accepted writes across navigation. On success the `createCallState` transitions
          * to a success state carrying the newly created entity.
          *
          * @since 1.0.0
@@ -427,13 +515,18 @@ export const ChecklistStore = signalStore(
          */
         create: rxMethod<{ organizationId: string; input: CreateChecklistInput }>(
           pipe(
+            map((params) => ({ ...params, context: captureContext(params.organizationId) })),
+            filter(
+              () => authSession.isAuthenticated() && store.createCallState().status !== 'pending',
+            ),
             tap((): void => {
               patchState(store, { createCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, input }) =>
+            mergeMap(({ organizationId, input, context }) =>
               checklistService.create(organizationId, input).pipe(
                 tapResponse({
                   next: (checklist: ChecklistOutput): void => {
+                    if (!isCurrent(context)) return;
                     patchState(store, addEntity(checklist, { collection: 'checklist' }), {
                       createCallState: successCallState(checklist),
                       totalChecklists: store.totalChecklists() + 1,
@@ -445,6 +538,7 @@ export const ChecklistStore = signalStore(
                     );
                   },
                   error: (error: unknown): void => {
+                    if (!isCurrent(context)) return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { createCallState: errorCallState(storeError) });
                     dispatcher.dispatch(
@@ -464,10 +558,9 @@ export const ChecklistStore = signalStore(
          * @method archive
          *
          * @description
-         * Archives a checklist by organization ID and checklist ID. Uses
-         * `exhaustMap` to prevent concurrent archive operations. On success:
-         * updates the entity in the collection and transitions the
-         * `archiveCallState` to success.
+         * Archives a checklist by organization ID and checklist ID. Accepts
+         * one archive per context. Success reloads the current server query
+         * so filters, totals and pagination reflect the archived template.
          *
          * @since 1.0.0
          *
@@ -475,22 +568,28 @@ export const ChecklistStore = signalStore(
          */
         archive: rxMethod<{ organizationId: string; checklistId: string }>(
           pipe(
+            map((params) => ({ ...params, context: captureContext(params.organizationId) })),
+            filter(
+              () => authSession.isAuthenticated() && store.archiveCallState().status !== 'pending',
+            ),
             tap((): void => {
               patchState(store, { archiveCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, checklistId }) =>
+            mergeMap(({ organizationId, checklistId, context }) =>
               checklistService.archive(organizationId, checklistId).pipe(
                 tapResponse({
                   next: (checklist: ChecklistOutput): void => {
+                    if (!isCurrent(context)) return;
                     patchState(store, setEntity(checklist, { collection: 'checklist' }), {
                       archiveCallState: successCallState(checklist),
                     });
-                    // If the archived checklist is the currently active one, update it.
                     if (activeChecklistStore.selectedChecklist()?.id === checklist.id) {
                       activeChecklistStore.setChecklist(checklist);
                     }
+                    if (lastQuery?.organizationId === organizationId) loadFn(lastQuery);
                   },
                   error: (error: unknown): void => {
+                    if (!isCurrent(context)) return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { archiveCallState: errorCallState(storeError) });
                     dispatcher.dispatch(
@@ -511,7 +610,7 @@ export const ChecklistStore = signalStore(
          *
          * @description
          * Partially updates a checklist by organization ID and checklist ID.
-         * Uses `exhaustMap` to prevent concurrent update operations. On
+         * Accepts one update per context without cancelling an accepted write. On
          * success: updates the entity in the collection, syncs
          * {@link ActiveChecklistStore} when the updated checklist is the
          * currently active one, and dispatches a success feedback event.
@@ -526,13 +625,18 @@ export const ChecklistStore = signalStore(
           input: UpdateChecklistInput;
         }>(
           pipe(
+            map((params) => ({ ...params, context: captureContext(params.organizationId) })),
+            filter(
+              () => authSession.isAuthenticated() && store.updateCallState().status !== 'pending',
+            ),
             tap((): void => {
               patchState(store, { updateCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, checklistId, input }) =>
+            mergeMap(({ organizationId, checklistId, input, context }) =>
               checklistService.update(organizationId, checklistId, input).pipe(
                 tapResponse({
                   next: (checklist: ChecklistOutput): void => {
+                    if (!isCurrent(context)) return;
                     patchState(store, setEntity(checklist, { collection: 'checklist' }), {
                       updateCallState: successCallState(checklist),
                     });
@@ -546,6 +650,7 @@ export const ChecklistStore = signalStore(
                     );
                   },
                   error: (error: unknown): void => {
+                    if (!isCurrent(context)) return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { updateCallState: errorCallState(storeError) });
                     dispatcher.dispatch(
@@ -609,6 +714,18 @@ export const ChecklistStore = signalStore(
       };
     },
   ),
+  withHooks((store, authSession = inject(AUTH_SESSION_PORT)) => ({
+    onInit(): void {
+      effect(() => {
+        authSession.sessionRevision();
+        authSession.isAuthenticated();
+        untracked(() => store.synchronizeSession());
+      });
+    },
+    onDestroy(): void {
+      store.clear();
+    },
+  })),
   //#endregion
 );
 

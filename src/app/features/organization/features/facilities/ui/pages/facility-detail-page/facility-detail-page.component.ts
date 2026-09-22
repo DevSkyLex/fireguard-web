@@ -314,8 +314,13 @@ export class FacilityDetailPage {
   protected readonly plans: FacilityPlansStoreType =
     inject<FacilityPlansStoreType>(FacilityPlansStore);
 
-  /** Whether the Plans tab has already requested its list — loaded once, on first activation. */
-  private plansLoadRequested = false;
+  /**
+   * @description Organization/facility key whose Plans tab has been activated and loaded.
+   * @access private
+   * @since 1.10.0
+   * @type {string | null}
+   */
+  private plansLoadRequested: string | null = null;
 
   /** Organization permission checks gating every write on this page. */
   private readonly permissions: OrganizationPermissionService = inject(
@@ -772,6 +777,33 @@ export class FacilityDetailPage {
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
     registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
+
+    effect((): void => {
+      const organizationId = this.organizationId();
+      const facilityId = this.facilityId();
+      const active = this.activeTab() === 'plans';
+      const key = JSON.stringify([organizationId, facilityId]);
+      untracked(() => {
+        if (this.plansLoadRequested !== key) {
+          this.plans.reset();
+          this.plansLoadRequested = null;
+        }
+        if (active && this.isBrowser && this.plansLoadRequested !== key) {
+          this.plansLoadRequested = key;
+          this.plans.load({ organizationId, facilityId });
+        }
+      });
+    });
+
+    effect((): void => {
+      this.plans.selectedPlanKey();
+      untracked(() => {
+        this.selectedZoneId.set(null);
+        this.selectedEquipmentId.set(null);
+        this.zoneGeometryDialogFacilityId.set(null);
+        this.pinPositionDialogEquipmentId.set(null);
+      });
+    });
 
     effect((): void => {
       const state: CallState<null> = this.plans.saveZoneGeometryCallState();
@@ -1571,10 +1603,6 @@ export class FacilityDetailPage {
       if (this.plans.editMode() !== 'none') this.plans.cancelEditing();
       this.selectedZoneId.set(null);
       this.selectedEquipmentId.set(null);
-    }
-    if (target === 'plans' && this.isBrowser && !this.plansLoadRequested) {
-      this.plansLoadRequested = true;
-      this.plans.load({ facilityId: this.facilityId(), organizationId: this.organizationId() });
     }
   }
 

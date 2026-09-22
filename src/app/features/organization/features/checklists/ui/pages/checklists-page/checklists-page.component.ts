@@ -8,6 +8,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
   untracked,
   viewChild,
@@ -17,7 +18,7 @@ import {
   type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -135,6 +136,16 @@ export class ChecklistsPage {
    * @type {InstanceType<typeof Router>}
    */
   private readonly router = inject(Router);
+
+  /**
+   * Property route
+   * @readonly
+   * @description Current route used to preserve unrelated query parameters during paging.
+   * @access private
+   * @since 2.2.0
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
   //#region Inputs
   /**
    * Property organizationId
@@ -145,6 +156,16 @@ export class ChecklistsPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property pageQuery
+   * @readonly
+   * @description One-based page bound from the URL; navigation and browser history update the local window.
+   * @access public
+   * @since 2.2.0
+   * @type {InputSignal<string>}
+   */
+  public readonly pageQuery: InputSignal<string> = input('1', { alias: 'page' });
   /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(
     () => this.store.listCallState().error?.code === 403,
@@ -186,8 +207,17 @@ export class ChecklistsPage {
   /** The draft search term. */
   protected readonly searchTerm: WritableSignal<string> = signal<string>('');
 
-  /** The page window, one-based. */
-  protected readonly page: WritableSignal<number> = signal<number>(1);
+  /**
+   * @description One-based page window synchronized with the route query parameter.
+   * @access protected
+   * @since 1.0.0
+   * @readonly
+   * @type {WritableSignal<number>}
+   */
+  protected readonly page: WritableSignal<number> = linkedSignal(() => {
+    const page = Number(this.pageQuery());
+    return Number.isSafeInteger(page) && page > 0 ? page : 1;
+  });
 
   /** How many rows a page holds. */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
@@ -338,6 +368,19 @@ export class ChecklistsPage {
     });
 
     effect((): void => {
+      const callState = this.store.listCallState();
+      const loadedPage = this.store.loadedPage();
+      const currentPage = this.page();
+      const lastPage = this.pageCount();
+      if (callState.status !== 'success' || loadedPage !== currentPage || currentPage <= lastPage)
+        return;
+      untracked(() => {
+        this.page.set(lastPage);
+        this.synchronizePageUrl();
+      });
+    });
+
+    effect((): void => {
       const callState: CallState<ChecklistOutput | null> = this.store.archiveCallState();
 
       untracked((): void => {
@@ -364,6 +407,7 @@ export class ChecklistsPage {
       value === 'active' || value === 'archived' ? value : null;
 
     this.page.set(1);
+    this.synchronizePageUrl();
     this.status.set(status);
     if (status !== null && this.openFilterKey() === 'status') this.openFilterKey.set(null);
   }
@@ -378,6 +422,7 @@ export class ChecklistsPage {
    */
   protected applySearch(term: string): void {
     this.page.set(1);
+    this.synchronizePageUrl();
     this.searchTerm.set(term);
   }
 
@@ -391,6 +436,7 @@ export class ChecklistsPage {
    */
   protected setPageSize(size: number): void {
     this.page.set(1);
+    this.synchronizePageUrl();
     this.pageSize.set(size);
   }
 
@@ -404,6 +450,24 @@ export class ChecklistsPage {
    */
   protected goToPage(target: number): void {
     this.page.set(Math.min(Math.max(1, target), this.pageCount()));
+    this.synchronizePageUrl();
+  }
+
+  /**
+   * Method synchronizePageUrl
+   * @method synchronizePageUrl
+   * @description Keeps pagination and its canonical URL aligned, including after an archive removes the last page.
+   * @access private
+   * @since 2.2.0
+   * @returns {void}
+   */
+  private synchronizePageUrl(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: this.page() === 1 ? null : String(this.page()) },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   /**
@@ -501,6 +565,7 @@ export class ChecklistsPage {
    */
   protected clearFilters(): void {
     this.page.set(1);
+    this.synchronizePageUrl();
     this.status.set(null);
     this.searchTerm.set('');
   }

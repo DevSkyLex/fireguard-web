@@ -18,6 +18,14 @@ import type {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface AuthState {
+  /**
+   * Property sessionRevision
+   * @readonly
+   * @description Monotonic identity of the current local session, independent of token refreshes.
+   * @access public
+   * @type {number}
+   */
+  readonly sessionRevision: number;
   //#region Properties
   /**
    * Property initialized

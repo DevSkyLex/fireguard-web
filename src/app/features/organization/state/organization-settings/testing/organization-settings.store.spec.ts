@@ -1,7 +1,9 @@
+import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import type { ApiError } from '@core/api/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../../active-organization';
@@ -13,6 +15,10 @@ const flushEffects = async (): Promise<void> => {
 };
 
 describe('OrganizationSettingsStore', () => {
+  const sessionRevision = signal(0);
+  const isAuthenticated = signal(true);
+  const selectedOrganization = signal<OrganizationOutput | null>(null);
+  const selectedOrganizationId = computed(() => selectedOrganization()?.id ?? null);
   let store: OrganizationSettingsStore;
   let mockOrganizationService: {
     update: ReturnType<typeof vi.fn>;
@@ -28,7 +34,8 @@ describe('OrganizationSettingsStore', () => {
   };
   let mockActiveOrganizationStore: {
     setOrganization: ReturnType<typeof vi.fn>;
-    selectedOrganization: ReturnType<typeof vi.fn>;
+    selectedOrganization: typeof selectedOrganization;
+    selectedOrganizationId: typeof selectedOrganizationId;
   };
   let dispatcher: Dispatcher;
 
@@ -50,6 +57,8 @@ describe('OrganizationSettingsStore', () => {
   };
 
   beforeEach(() => {
+    sessionRevision.set(0);
+    isAuthenticated.set(true);
     mockOrganizationService = {
       update: vi.fn().mockReturnValue(of(updatedOrg)),
       uploadLogo: vi.fn().mockReturnValue(of(updatedOrg)),
@@ -62,13 +71,16 @@ describe('OrganizationSettingsStore', () => {
     mockMemberService = {
       leave: vi.fn().mockReturnValue(of(undefined)),
     };
+    selectedOrganization.set(updatedOrg);
     mockActiveOrganizationStore = {
       setOrganization: vi.fn(),
-      selectedOrganization: vi.fn().mockReturnValue(updatedOrg),
+      selectedOrganization,
+      selectedOrganizationId,
     };
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated, sessionRevision } },
         OrganizationSettingsStore,
         { provide: OrganizationService, useValue: mockOrganizationService },
         { provide: OrganizationMemberService, useValue: mockMemberService },
@@ -78,7 +90,7 @@ describe('OrganizationSettingsStore', () => {
 
     store = TestBed.inject(OrganizationSettingsStore);
     dispatcher = TestBed.inject(Dispatcher);
-    vi.spyOn(dispatcher, 'dispatch');
+    vi.spyOn(dispatcher, 'dispatch').mockClear();
   });
 
   it('should save settings and refresh the active organization', async () => {
@@ -216,5 +228,81 @@ describe('OrganizationSettingsStore', () => {
 
     expect(store.leaveError()?.message).toBe('Transfer ownership before leaving.');
     expect(store.leaveSucceeded()).toBe(false);
+  });
+  it('keeps an accepted save running across navigation without applying it to the new organization', () => {
+    const first = new Subject<OrganizationOutput>();
+    const second = new Subject<OrganizationOutput>();
+    mockOrganizationService.update.mockReturnValueOnce(first).mockReturnValueOnce(second);
+    store.save({ organizationId: 'org-1', input: { name: 'First' } });
+    selectedOrganization.set({ ...updatedOrg, id: 'org-2' });
+    store.save({ organizationId: 'org-2', input: { name: 'Second' } });
+    expect(first.observed).toBe(true);
+    first.next(updatedOrg);
+    expect(store.isSaving()).toBe(true);
+    expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+    expect(dispatcher.dispatch).toHaveBeenCalledWith(
+      organizationSettingsStoreEvents.organizationUpdated(updatedOrg),
+    );
+    second.next({ ...updatedOrg, id: 'org-2', name: 'Second' });
+    expect(store.saveSucceeded()).toBe(true);
+    expect(mockActiveOrganizationStore.setOrganization).toHaveBeenCalledWith({
+      ...updatedOrg,
+      id: 'org-2',
+      name: 'Second',
+    });
+  });
+
+  it('does not clear another organization logo and publishes the actual mutated organization', () => {
+    const response = new Subject<void>();
+    mockOrganizationService.removeLogo.mockReturnValueOnce(response);
+    store.removeLogo({ organizationId: 'org-1' });
+    selectedOrganization.set({ ...updatedOrg, id: 'org-2', logoUrl: 'other-logo' });
+    TestBed.tick();
+    expect(store.isRemovingLogo()).toBe(false);
+    response.next();
+    expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+    expect(dispatcher.dispatch).toHaveBeenCalledWith(
+      organizationSettingsStoreEvents.organizationUpdated({ ...updatedOrg, logoUrl: null }),
+    );
+    expect(store.removeLogoCallState().status).toBe('idle');
+  });
+
+  it('ignores an old save error after A to B to A and keeps the newer action pending', () => {
+    const first = new Subject<OrganizationOutput>();
+    const second = new Subject<OrganizationOutput>();
+    mockOrganizationService.update.mockReturnValueOnce(first).mockReturnValueOnce(second);
+    store.save({ organizationId: 'org-1', input: { name: 'First' } });
+    selectedOrganization.set({ ...updatedOrg, id: 'org-2' });
+    TestBed.tick();
+    selectedOrganization.set(updatedOrg);
+    store.save({ organizationId: 'org-1', input: { name: 'Second' } });
+    first.error(new Error('old failure'));
+    expect(store.isSaving()).toBe(true);
+    expect(store.saveError()).toBeNull();
+    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    second.next(updatedOrg);
+    expect(store.saveSucceeded()).toBe(true);
+  });
+
+  it('rejects a duplicate pending action without cancelling the accepted write', () => {
+    const response = new Subject<OrganizationOutput>();
+    mockOrganizationService.update.mockReturnValueOnce(response);
+    store.save({ organizationId: 'org-1', input: { name: 'First' } });
+    store.save({ organizationId: 'org-1', input: { name: 'Second' } });
+    expect(mockOrganizationService.update).toHaveBeenCalledOnce();
+    expect(response.observed).toBe(true);
+    response.next(updatedOrg);
+    expect(store.saveSucceeded()).toBe(true);
+  });
+
+  it('ignores a mutation from an earlier session even before context effects run', () => {
+    const response = new Subject<OrganizationOutput>();
+    mockOrganizationService.update.mockReturnValueOnce(response);
+    store.save({ organizationId: 'org-1', input: { name: 'First' } });
+    sessionRevision.update((revision) => revision + 1);
+    response.next(updatedOrg);
+    expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    expect(store.saveCallState().status).toBe('idle');
   });
 });

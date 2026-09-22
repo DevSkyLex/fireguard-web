@@ -8,6 +8,7 @@ import {
   withComputed,
   withHooks,
   withMethods,
+  withProps,
   withState,
 } from '@ngrx/signals';
 import {
@@ -33,8 +34,9 @@ import {
   type Observable,
   of,
   pipe,
-  filter as rxFilter,
   switchMap,
+  Subject,
+  takeUntil,
   tap,
   timer,
 } from 'rxjs';
@@ -80,6 +82,7 @@ import { messageThreadStoreEvents } from './events';
 import type { MessageThreadState } from './models';
 
 const INITIAL_STATE: MessageThreadState = {
+  readGeneration: 0,
   conversationId: null,
   total: 0,
   oldestLoadedPage: 0,
@@ -207,6 +210,7 @@ function optimisticMessage(
 export const MessageThreadStore = signalStore(
   withEntities({ entity: type<MessageOutput>(), collection: 'message' }),
   withState<MessageThreadState>(INITIAL_STATE),
+  withProps(() => ({ readsInvalidated: new Subject<void>() })),
 
   withComputed((store) => ({
     isLoading: computed(
@@ -258,14 +262,17 @@ export const MessageThreadStore = signalStore(
       restoreQueued: rxMethod<string>(
         pipe(
           switchMap((conversationId) => {
+            const generation = store.readGeneration();
             const ownerId = identity.profile()?.id ?? identity.profile()?.sub;
             if (!ownerId) return EMPTY;
             patchState(store, { outboxCallState: pendingCallState() });
             return defer(() => outbox.listForConversation(conversationId)).pipe(
+              takeUntil(store.readsInvalidated),
               tapResponse({
                 next: (operations) => {
                   if (
                     store.conversationId() !== conversationId ||
+                    store.readGeneration() !== generation ||
                     (identity.profile()?.id ?? identity.profile()?.sub) !== ownerId
                   )
                     return;
@@ -306,6 +313,7 @@ export const MessageThreadStore = signalStore(
                 error: (error: unknown) => {
                   if (
                     store.conversationId() !== conversationId ||
+                    store.readGeneration() !== generation ||
                     (identity.profile()?.id ?? identity.profile()?.sub) !== ownerId
                   )
                     return;
@@ -338,11 +346,16 @@ export const MessageThreadStore = signalStore(
        */
       load: rxMethod<string>(
         pipe(
-          tap((conversationId: string) =>
-            patchState(store, { conversationId, listCallState: pendingCallState() }),
-          ),
-          switchMap((conversationId: string) =>
-            service.list(conversationId, { page: 1, itemsPerPage: MESSAGE_PAGE_SIZE }).pipe(
+          switchMap((conversationId: string) => {
+            const generation = store.readGeneration() + 1;
+            store.readsInvalidated.next();
+            patchState(store, removeAllEntities({ collection: 'message' }), {
+              ...INITIAL_STATE,
+              conversationId,
+              readGeneration: generation,
+              listCallState: pendingCallState(),
+            });
+            return service.list(conversationId, { page: 1, itemsPerPage: MESSAGE_PAGE_SIZE }).pipe(
               switchMap((probe: HydraCollection<MessageOutput>): Observable<LoadedMessagePage> => {
                 const newestPage: number = newestPageOf(probe.totalItems);
 
@@ -357,9 +370,14 @@ export const MessageThreadStore = signalStore(
                         })),
                       );
               }),
+              takeUntil(store.readsInvalidated),
               tapResponse({
                 next: ({ page, collection }: LoadedMessagePage): void => {
-                  if (store.conversationId() !== conversationId) return;
+                  if (
+                    store.conversationId() !== conversationId ||
+                    store.readGeneration() !== generation
+                  )
+                    return;
                   patchState(
                     store,
                     setAllEntities([...collection.member], { collection: 'message' }),
@@ -373,6 +391,11 @@ export const MessageThreadStore = signalStore(
                   store.restoreQueued(conversationId);
                 },
                 error: (error: unknown): void => {
+                  if (
+                    store.conversationId() !== conversationId ||
+                    store.readGeneration() !== generation
+                  )
+                    return;
                   const storeError = toStoreError(error);
                   patchState(store, { listCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
@@ -382,8 +405,8 @@ export const MessageThreadStore = signalStore(
                   );
                 },
               }),
-            ),
-          ),
+            );
+          }),
         ),
       ),
 
@@ -396,36 +419,44 @@ export const MessageThreadStore = signalStore(
        */
       loadOlder: rxMethod<void>(
         pipe(
-          map((): number => store.oldestLoadedPage() - 1),
-          rxFilter((page: number): boolean => page >= 1 && store.conversationId() !== null),
-          tap(() => patchState(store, { listCallState: pendingCallState() })),
-          exhaustMap((page: number) =>
-            service
-              .list(store.conversationId() ?? '', { page, itemsPerPage: MESSAGE_PAGE_SIZE })
-              .pipe(
-                tapResponse({
-                  next: (collection: HydraCollection<MessageOutput>): void =>
-                    patchState(
-                      store,
-                      addEntities([...collection.member], { collection: 'message' }),
-                      {
-                        total: collection.totalItems,
-                        oldestLoadedPage: page,
-                        listCallState: successCallState(null),
-                      },
+          exhaustMap(() => {
+            const conversationId = store.conversationId();
+            const generation = store.readGeneration();
+            const page = store.oldestLoadedPage() - 1;
+            if (conversationId === null || page < 1) return EMPTY;
+            const current = (): boolean =>
+              store.conversationId() === conversationId &&
+              store.readGeneration() === generation &&
+              store.oldestLoadedPage() === page + 1;
+            patchState(store, { listCallState: pendingCallState() });
+            return service.list(conversationId, { page, itemsPerPage: MESSAGE_PAGE_SIZE }).pipe(
+              takeUntil(store.readsInvalidated),
+              tapResponse({
+                next: (collection: HydraCollection<MessageOutput>): void => {
+                  if (!current()) return;
+                  patchState(
+                    store,
+                    addEntities([...collection.member], { collection: 'message' }),
+                    {
+                      total: collection.totalItems,
+                      oldestLoadedPage: page,
+                      listCallState: successCallState(null),
+                    },
+                  );
+                },
+                error: (error: unknown): void => {
+                  if (!current()) return;
+                  const storeError = toStoreError(error);
+                  patchState(store, { listCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    messageThreadStoreEvents.loadFailed(
+                      toStoreFailureEventPayload(storeError, 'Messages could not be loaded.'),
                     ),
-                  error: (error: unknown): void => {
-                    const storeError = toStoreError(error);
-                    patchState(store, { listCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      messageThreadStoreEvents.loadFailed(
-                        toStoreFailureEventPayload(storeError, 'Messages could not be loaded.'),
-                      ),
-                    );
-                  },
-                }),
-              ),
-          ),
+                  );
+                },
+              }),
+            );
+          }),
         ),
       ),
 
@@ -440,7 +471,12 @@ export const MessageThreadStore = signalStore(
        * conversation.
        */
       reset(): void {
-        patchState(store, removeAllEntities({ collection: 'message' }), INITIAL_STATE);
+        const generation = store.readGeneration() + 1;
+        store.readsInvalidated.next();
+        patchState(store, removeAllEntities({ collection: 'message' }), {
+          ...INITIAL_STATE,
+          readGeneration: generation,
+        });
       },
 
       /**
@@ -994,10 +1030,16 @@ export const MessageThreadStore = signalStore(
 
             if (conversationId === null) return EMPTY;
 
+            const generation = store.readGeneration();
             const page: number = Math.max(1, store.newestLoadedPage());
 
             return service.list(conversationId, { page, itemsPerPage: MESSAGE_PAGE_SIZE }).pipe(
               switchMap((collection: HydraCollection<MessageOutput>) => {
+                if (
+                  store.readGeneration() !== generation ||
+                  store.conversationId() !== conversationId
+                )
+                  return EMPTY;
                 patchState(
                   store,
                   upsertEntities([...collection.member], { collection: 'message' }),
@@ -1020,6 +1062,7 @@ export const MessageThreadStore = signalStore(
                     ),
                   );
               }),
+              takeUntil(store.readsInvalidated),
               catchError(() => EMPTY),
             );
           }),

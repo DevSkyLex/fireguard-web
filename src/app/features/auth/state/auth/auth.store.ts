@@ -1,10 +1,13 @@
-import { computed, inject } from '@angular/core';
+import { computed, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
   catchError,
+  defaultIfEmpty,
+  defer,
   EMPTY,
   exhaustMap,
   finalize,
@@ -14,7 +17,9 @@ import {
   of,
   pipe,
   shareReplay,
+  Subject,
   switchMap,
+  takeUntil,
   tap,
 } from 'rxjs';
 import {
@@ -70,6 +75,7 @@ const TOKEN_EXPIRY_WARNING_MS: number = 5 * 60 * 1000;
  * @type {AuthState}
  */
 const INITIAL_AUTH_STATE: AuthState = {
+  sessionRevision: 0,
   initialized: false,
   accessToken: null,
   expiresAt: null,
@@ -145,24 +151,14 @@ export const AuthStore = signalStore(
      * Computed isAuthenticated
      *
      * @description
-     * Returns true if the user has a valid,
-     * non-expired access token.
+     * Reports an established local session outside MFA. An expired bearer is
+     * renewed on 401 rather than ending the session merely because time elapsed.
      *
      * @since 1.0.0
      *
      * @returns {boolean}
      */
-    isAuthenticated: computed<boolean>(() => {
-      const token: string | null = store.accessToken();
-      const expiresAt: number | null = store.expiresAt();
-      const mfaRequired: boolean = store.mfaRequired();
-
-      if (!token || mfaRequired) return false;
-
-      if (expiresAt && Date.now() >= expiresAt) return false;
-
-      return true;
-    }),
+    isAuthenticated: computed<boolean>(() => !!store.accessToken() && !store.mfaRequired()),
 
     /**
      * Computed isLoggingIn
@@ -261,23 +257,6 @@ export const AuthStore = signalStore(
     mfaResendError: computed<StoreError | null>(() => store.mfaResendCallState().error),
 
     /**
-     * Computed isTokenExpiringSoon
-     *
-     * @description
-     * Returns true if the token will expire within 5 minutes.
-     * Useful for proactive token refresh.
-     *
-     * @since 1.0.0
-     *
-     * @returns {boolean}
-     */
-    isTokenExpiringSoon: computed<boolean>(() => {
-      const expiresAt: number | null = store.expiresAt();
-      if (!expiresAt) return false;
-      return Date.now() >= expiresAt - TOKEN_EXPIRY_WARNING_MS;
-    }),
-
-    /**
      * Computed mfaMethod
      *
      * @description
@@ -326,6 +305,7 @@ export const AuthStore = signalStore(
       authService = inject<AuthService>(AuthService),
       userProfilePort = inject<UserProfilePort>(USER_PROFILE_PORT),
       activeTrustedDeviceStore = inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore),
+      destroyRef = inject(DestroyRef),
     ) => {
       /**
        * In-flight session renewal, shared by every concurrent caller.
@@ -334,6 +314,88 @@ export const AuthStore = signalStore(
        * against one refresh rather than racing several against a rotating token.
        */
       let renewal: Observable<string | null> | null = null;
+      const invalidated = new Subject<void>();
+      const mfaInvalidated = new Subject<void>();
+
+      /**
+       * Function invalidateSession
+       * @description Advances local identity before settling old token producers and renewal waiters.
+       * @access private
+       * @returns {void}
+       */
+      function invalidateSession(): void {
+        patchState(store, {
+          sessionRevision: store.sessionRevision() + 1,
+          loginCallState: store.isLoggingIn() ? idleCallState() : store.loginCallState(),
+          logoutCallState: store.isLoggingOut() ? idleCallState() : store.logoutCallState(),
+          refreshCallState: store.isRefreshing() ? idleCallState() : store.refreshCallState(),
+          mfaVerifyCallState: store.isVerifyingMfa() ? idleCallState() : store.mfaVerifyCallState(),
+          mfaResendCallState: store.isResendingMfa() ? idleCallState() : store.mfaResendCallState(),
+        });
+        renewal = null;
+        invalidated.next();
+      }
+
+      /**
+       * Function renewSession
+       * @description Shares one refresh per session; cancellation resolves null and cannot clear a newer memo.
+       * @access private
+       * @returns {Observable<string | null>} The refreshed bearer, or null for an invalidated/refused renewal.
+       */
+      function renewSession(): Observable<string | null> {
+        if (renewal) return renewal;
+        const revision = store.sessionRevision();
+        const request$: Observable<string | null> = defer(() => {
+          if (revision !== store.sessionRevision() || store.isLoggingOut()) return of(null);
+          patchState(store, { refreshCallState: pendingCallState() });
+          return authService.refresh().pipe(
+            takeUntil(invalidated),
+            takeUntilDestroyed(destroyRef),
+            map((response: AuthenticatedLoginOutput): string | null => {
+              if (revision !== store.sessionRevision()) return null;
+              patchState(store, {
+                accessToken: response.access_token,
+                expiresAt: calculateExpiresAt(response.expires_in),
+                refreshCallState: successCallState(response),
+              });
+              return response.access_token;
+            }),
+            catchError((error: unknown) => {
+              const failure = errorCallState<AuthenticatedLoginOutput>(toStoreError(error));
+              if (revision === store.sessionRevision()) {
+                patchState(store, {
+                  accessToken: null,
+                  expiresAt: null,
+                  refreshCallState: failure,
+                });
+              }
+              return of(null).pipe(
+                finalize(() => {
+                  if (revision !== store.sessionRevision()) return;
+                  invalidateSession();
+                  patchState(store, {
+                    ...INITIAL_AUTH_STATE,
+                    initialized: true,
+                    sessionRevision: store.sessionRevision(),
+                    refreshCallState: failure,
+                  });
+                  activeTrustedDeviceStore.clear();
+                  userProfilePort.clear();
+                  dispatcher.dispatch(authStoreEvents.sessionEnded());
+                }),
+              );
+            }),
+            defaultIfEmpty(null),
+          );
+        }).pipe(
+          finalize(() => {
+            if (renewal === request$) renewal = null;
+          }),
+          shareReplay({ bufferSize: 1, refCount: false }),
+        );
+        renewal = request$;
+        return request$;
+      }
 
       /**
        * Function applySessionTokens
@@ -349,18 +411,52 @@ export const AuthStore = signalStore(
        * @returns {void}
        */
       const applySessionTokens = (response: AuthenticatedLoginOutput): void => {
+        const replacingSession = !!store.accessToken();
+        invalidateSession();
+        userProfilePort.clear();
+        if (replacingSession) dispatcher.dispatch(authStoreEvents.sessionEnded());
         patchState(store, {
+          initialized: true,
           accessToken: response.access_token,
           expiresAt: calculateExpiresAt(response.expires_in),
           mfaRequired: false,
           mfaToken: null,
           challengeToken: null,
         });
-        // Bootstrap account-owned profile state after authentication completes.
         userProfilePort.load();
       };
 
+      /** @description Replaces any previous token producer with a new, unauthenticated MFA challenge. */
+      const applyMfaChallenge = (response: MfaChallengeLoginOutput): void => {
+        const replacingSession = !!store.accessToken();
+        invalidateSession();
+        userProfilePort.clear();
+        if (replacingSession) dispatcher.dispatch(authStoreEvents.sessionEnded());
+        patchState(store, {
+          initialized: true,
+          accessToken: null,
+          expiresAt: null,
+          mfaRequired: true,
+          mfaToken: response.mfa_token ?? null,
+          challengeToken: response.challenge_token ?? null,
+          mfaResendAvailableAt: toResendAvailableAt(response.mfa_resend_in),
+          loginCallState: successCallState(response),
+        });
+      };
+
       return {
+        /**
+         * Method isTokenExpiringSoon
+         * @method isTokenExpiringSoon
+         * @description Evaluates bearer freshness at call time without a cached clock or SSR timer.
+         * @access public
+         * @since 1.0.0
+         * @returns {boolean} Whether expiry is within the warning window.
+         */
+        isTokenExpiringSoon(): boolean {
+          const expiresAt = store.expiresAt();
+          return expiresAt !== null && Date.now() >= expiresAt - TOKEN_EXPIRY_WARNING_MS;
+        },
         //#region Reactive Methods
         /**
          * Method login
@@ -375,21 +471,14 @@ export const AuthStore = signalStore(
          */
         login: rxMethod<LoginInput>(
           pipe(
-            tap(() => {
+            exhaustMap((credentials) => {
               patchState(store, { loginCallState: pendingCallState() });
-            }),
-            exhaustMap((credentials) =>
-              authService.login(credentials).pipe(
+              return authService.login(credentials).pipe(
+                takeUntil(invalidated),
                 tapResponse({
                   next: (response: LoginOutput) => {
                     if (response.mfa_required === true) {
-                      patchState(store, {
-                        mfaRequired: true,
-                        mfaToken: response.mfa_token ?? null,
-                        challengeToken: response.challenge_token ?? null,
-                        mfaResendAvailableAt: toResendAvailableAt(response.mfa_resend_in),
-                        loginCallState: successCallState(response),
-                      });
+                      applyMfaChallenge(response);
                     } else {
                       patchState(store, { loginCallState: successCallState(response) });
                       applySessionTokens(response);
@@ -405,8 +494,8 @@ export const AuthStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 
@@ -420,15 +509,18 @@ export const AuthStore = signalStore(
          */
         logout: rxMethod<void>(
           pipe(
-            tap(() => {
+            exhaustMap(() => {
               patchState(store, { logoutCallState: pendingCallState() });
-            }),
-            exhaustMap(() =>
-              authService.logout().pipe(
+              const revision = store.sessionRevision();
+              return authService.logout().pipe(
+                takeUntil(invalidated),
                 tapResponse({
                   next: (response: LogoutOutput) => {
+                    if (revision !== store.sessionRevision()) return;
+                    invalidateSession();
                     patchState(store, {
                       ...INITIAL_AUTH_STATE,
+                      sessionRevision: store.sessionRevision(),
                       initialized: true,
                       logoutCallState: successCallState(response),
                     });
@@ -439,9 +531,12 @@ export const AuthStore = signalStore(
                     dispatcher.dispatch(authStoreEvents.logoutSucceeded());
                   },
                   error: (error: unknown) => {
+                    if (revision !== store.sessionRevision()) return;
                     const storeError: StoreError = toStoreError(error);
+                    invalidateSession();
                     patchState(store, {
                       ...INITIAL_AUTH_STATE,
+                      sessionRevision: store.sessionRevision(),
                       initialized: true,
                       logoutCallState: errorCallState(storeError),
                     });
@@ -458,8 +553,8 @@ export const AuthStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 
@@ -471,33 +566,7 @@ export const AuthStore = signalStore(
          *
          * @since 1.0.0
          */
-        refresh: rxMethod<void>(
-          pipe(
-            tap(() => {
-              patchState(store, { refreshCallState: pendingCallState() });
-            }),
-            switchMap(() =>
-              authService.refresh().pipe(
-                tapResponse({
-                  next: (response: AuthenticatedLoginOutput) => {
-                    patchState(store, {
-                      accessToken: response.access_token,
-                      expiresAt: calculateExpiresAt(response.expires_in),
-                      refreshCallState: successCallState(response),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    patchState(store, {
-                      accessToken: null,
-                      expiresAt: null,
-                      refreshCallState: errorCallState(toStoreError(error)),
-                    });
-                  },
-                }),
-              ),
-            ),
-          ),
-        ),
+        refresh: rxMethod<void>(pipe(exhaustMap(() => renewSession()))),
 
         /**
          * Method mfaVerify
@@ -512,11 +581,11 @@ export const AuthStore = signalStore(
          */
         mfaVerify: rxMethod<MfaVerifyInput>(
           pipe(
-            tap(() => {
+            exhaustMap((input) => {
               patchState(store, { mfaVerifyCallState: pendingCallState() });
-            }),
-            exhaustMap((input) =>
-              authService.mfaVerify(input).pipe(
+              return authService.mfaVerify(input).pipe(
+                takeUntil(invalidated),
+                takeUntil(mfaInvalidated),
                 tapResponse({
                   next: (response: AuthenticatedLoginOutput) => {
                     patchState(store, { mfaVerifyCallState: successCallState(response) });
@@ -537,8 +606,8 @@ export const AuthStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 
@@ -571,6 +640,8 @@ export const AuthStore = signalStore(
               }
 
               return authService.mfaResend({ preAuthToken }).pipe(
+                takeUntil(invalidated),
+                takeUntil(mfaInvalidated),
                 tapResponse({
                   next: (response: MfaChallengeLoginOutput) => {
                     patchState(store, {
@@ -623,32 +694,7 @@ export const AuthStore = signalStore(
          * @returns {Observable<string | null>} The new access token, or `null`.
          */
         renewSession(): Observable<string | null> {
-          renewal ??= authService.refresh().pipe(
-            map((response: AuthenticatedLoginOutput): string | null => {
-              patchState(store, {
-                accessToken: response.access_token,
-                expiresAt: calculateExpiresAt(response.expires_in),
-                refreshCallState: successCallState(response),
-              });
-
-              return response.access_token;
-            }),
-            catchError((error: unknown) => {
-              patchState(store, {
-                accessToken: null,
-                expiresAt: null,
-                refreshCallState: errorCallState(toStoreError(error)),
-              });
-
-              return of(null);
-            }),
-            finalize(() => {
-              renewal = null;
-            }),
-            shareReplay({ bufferSize: 1, refCount: false }),
-          );
-
-          return renewal;
+          return renewSession();
         },
 
         //#region Initialization Methods
@@ -668,25 +714,13 @@ export const AuthStore = signalStore(
          * @returns {Promise<void>} Resolves when initialization is complete.
          */
         async initialize(): Promise<void> {
-          try {
-            const response: AuthenticatedLoginOutput = await firstValueFrom(authService.refresh());
-
-            patchState(store, {
-              initialized: true,
-              accessToken: response.access_token,
-              expiresAt: calculateExpiresAt(response.expires_in),
-              refreshCallState: successCallState(response),
-            });
-
-            // Load user profile after successful refresh and wait for it during bootstrap.
-            await userProfilePort.initialize();
-          } catch {
-            patchState(store, {
-              initialized: true,
-              accessToken: null,
-              expiresAt: null,
-            });
-          }
+          const revision = store.sessionRevision();
+          const restoring = !store.accessToken();
+          const token = await firstValueFrom(renewSession());
+          if (revision !== store.sessionRevision()) return;
+          if (token && restoring) invalidateSession();
+          patchState(store, { initialized: true });
+          if (token) await userProfilePort.initialize();
         },
         //#endregion
 
@@ -704,7 +738,12 @@ export const AuthStore = signalStore(
          * @param {number} expiresIn - Token lifetime in seconds.
          */
         setToken(token: string, expiresIn: number): void {
+          const replacingSession = !!store.accessToken();
+          invalidateSession();
+          userProfilePort.clear();
+          if (replacingSession) dispatcher.dispatch(authStoreEvents.sessionEnded());
           patchState(store, {
+            initialized: true,
             accessToken: token,
             expiresAt: calculateExpiresAt(expiresIn),
             mfaRequired: false,
@@ -729,13 +768,7 @@ export const AuthStore = signalStore(
          */
         applySession(response: LoginOutput): void {
           if (response.mfa_required === true) {
-            patchState(store, {
-              mfaRequired: true,
-              mfaToken: response.mfa_token ?? null,
-              challengeToken: response.challenge_token ?? null,
-              mfaResendAvailableAt: toResendAvailableAt(response.mfa_resend_in),
-              loginCallState: successCallState(response),
-            });
+            applyMfaChallenge(response);
 
             return;
           }
@@ -761,8 +794,12 @@ export const AuthStore = signalStore(
          * @fires authStoreEvents.sessionEnded
          */
         clearToken(): void {
+          invalidateSession();
           activeTrustedDeviceStore.clear();
           patchState(store, {
+            ...INITIAL_AUTH_STATE,
+            initialized: true,
+            sessionRevision: store.sessionRevision(),
             accessToken: null,
             expiresAt: null,
             mfaRequired: false,
@@ -783,12 +820,15 @@ export const AuthStore = signalStore(
          * @since 1.0.0
          */
         clearMfaState(): void {
+          mfaInvalidated.next();
           activeTrustedDeviceStore.clear();
           patchState(store, {
             mfaRequired: false,
             mfaToken: null,
             challengeToken: null,
             mfaResendAvailableAt: null,
+            mfaVerifyCallState: idleCallState(),
+            mfaResendCallState: idleCallState(),
           });
         },
 

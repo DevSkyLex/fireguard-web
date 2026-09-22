@@ -11,6 +11,89 @@ const run = process.env['FG_SSR_RUN'] ?? 'current';
 if (!/^[a-zA-Z0-9_-]+$/.test(run)) throw new Error('Invalid SSR run name.');
 const evidenceRoot = resolve('e2e/artifacts/ssr-smoke', run);
 
+for (const direct of [false, true]) {
+  test(`loads the notification feed once after ${direct ? 'a direct browser link' : 'browser tab activation'} without SSR feed reads`, async ({
+    browser,
+    request,
+  }, info) => {
+    const context = await browser.newContext({
+      baseURL: appOrigin,
+      ignoreHTTPSErrors: true,
+      serviceWorkers: 'block',
+    });
+    await context.addCookies([
+      {
+        name: 'refresh_token',
+        value: 'ssr-harness-session',
+        url: apiOrigin,
+        secure: true,
+        sameSite: 'None',
+      },
+    ]);
+    try {
+      const path = `/account/notifications${direct ? '?tab=notifications' : ''}`;
+      const before = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
+      const response = await context.request.get(path);
+      expect(response.status()).toBe(200);
+      const html = await response.text();
+      expect(html).not.toContain('fireguard-notifications');
+      expect(html).not.toContain('e2e-access-token');
+      const afterServer = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
+      expect(
+        afterServer.requests
+          .slice(before.requests.length)
+          .filter((entry: { path: string }) => entry.path === '/api/notifications'),
+      ).toEqual([]);
+      await context.route('**/*', async (route) => {
+        const origin = new URL(route.request().url()).origin;
+        if ([appOrigin, apiOrigin].includes(origin)) return route.continue();
+        await route.abort();
+        expect.soft(origin, 'Notification checks must stay in the local harness.').toBe(appOrigin);
+      });
+      const page = await context.newPage();
+      const errors: string[] = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      let feedReads = 0;
+      page.on('request', (value) => {
+        if (value.method() === 'GET' && new URL(value.url()).pathname === '/api/notifications')
+          feedReads++;
+      });
+      await page.goto(path);
+      await expect(page.locator('#account-notifications')).toBeVisible();
+      if (!direct) {
+        expect(feedReads).toBe(0);
+        await page.getByTestId('account-notifications-tab-notifications').click();
+      }
+      await expect(page.getByText('You are all caught up.', { exact: true })).toBeVisible();
+      await expect.poll(() => feedReads).toBe(1);
+      await page.getByTestId('account-notifications-tab-inbox').click();
+      await page.getByTestId('account-notifications-tab-notifications').click();
+      await expect(page.getByText('You are all caught up.', { exact: true })).toBeVisible();
+      expect(feedReads).toBe(1);
+      const ledger = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
+      expect(ledger.unexpected).toEqual([]);
+      expect(errors).toEqual([]);
+      const directory = resolve(evidenceRoot, info.project.name);
+      await mkdir(directory, { recursive: true });
+      await writeFile(
+        resolve(directory, `notifications-${direct ? 'direct' : 'activation'}.json`),
+        JSON.stringify(
+          {
+            source: await sourceEvidence(),
+            serverReads: afterServer.requests.slice(before.requests.length),
+            browserFeedReads: feedReads,
+            errors,
+          },
+          null,
+          2,
+        ),
+      );
+    } finally {
+      await context.close();
+    }
+  });
+}
+
 /**
  * Function sourceEvidence
  * @description Distinguishes the current checkout from recorded build inputs; never claims an

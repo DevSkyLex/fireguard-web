@@ -126,8 +126,11 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   **One sanctioned exception**: `moveEvent`, the drag-reschedule, repositions
   the matching entry optimistically before its PATCH — a dropped chip
   snapping back to its old day for a round-trip would read as a failed drop —
-  then still reconciles through the window re-read on success, and rolls back
-  to the pre-drop snapshot (plus an error toast) on failure.
+  then still reconciles through the window re-read on success. Failure restores only the moved
+  entry while the same feed revision remains current, preserving every other entry and never
+  replacing a newer or pending window. Moves keep their serialized queue; each command captures
+  its organization visit and feed revision before queuing. Changing organization clears displayed
+  data, skips departed queued commands and prevents late move results from affecting a later visit.
 - **Only a `calendar_event`-source entry is ever editable.** `CalendarEntryList`
   — not the page — enforces the gate: its `isEditableOf()` shows the
   Edit/Delete icon buttons only when `item.sourceKey === 'calendar_event'`

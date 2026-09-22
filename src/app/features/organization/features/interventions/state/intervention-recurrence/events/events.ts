@@ -24,12 +24,12 @@ export const interventionRecurrenceStoreEvents = eventGroup({
     /** Dispatched when creating a recurrence fails. */
     createFailed: type<StoreFailureEventPayload>(),
     /** Dispatched when a recurrence (including its active toggle) is updated. */
-    updateSucceeded: type<FeedbackEventPayload>(),
+    updateSucceeded: type<FeedbackEventPayload & { readonly recurrenceId: string }>(),
     /** Dispatched when updating a recurrence fails. */
-    updateFailed: type<StoreFailureEventPayload>(),
+    updateFailed: type<StoreFailureEventPayload & { readonly recurrenceId: string }>(),
     /** Dispatched when a recurrence is deleted. */
-    removeSucceeded: type<FeedbackEventPayload>(),
+    removeSucceeded: type<FeedbackEventPayload & { readonly recurrenceId: string }>(),
     /** Dispatched when deleting a recurrence fails. */
-    removeFailed: type<StoreFailureEventPayload>(),
+    removeFailed: type<StoreFailureEventPayload & { readonly recurrenceId: string }>(),
   },
 });

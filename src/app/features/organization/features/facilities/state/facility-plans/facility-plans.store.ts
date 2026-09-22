@@ -13,6 +13,7 @@ import {
 import {
   addEntity,
   removeEntity,
+  removeAllEntities,
   setAllEntities,
   setEntity,
   updateEntity,
@@ -20,7 +21,7 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, mergeMap, pipe, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -71,11 +72,14 @@ const INITIAL_STATE: FacilityPlansState = {
   settingPrimaryId: null,
   deletingId: null,
   selectedPlanId: null,
-  planImageUrl: null,
+  selectionRevision: 0,
+  imageUrl: null,
+  imageKey: null,
   organizationId: null,
   facilityId: null,
   overlayCallState: idleCallState(),
-  overlay: null,
+  planOverlay: null,
+  overlayKey: null,
   showZones: true,
   showEquipment: true,
   editMode: 'none',
@@ -189,7 +193,41 @@ export const FacilityPlansStore = signalStore(
 
       return store.primaryPlan() ?? store.orderedPlans()[0] ?? null;
     }),
+  })),
 
+  withComputed((store) => ({
+    /** @description Identifies the complete selection independently of effect scheduling. */
+    selectedPlanKey: computed(() => {
+      const plan = store.selectedPlan();
+      return plan && store.organizationId() && store.facilityId()
+        ? JSON.stringify([store.organizationId(), store.facilityId(), plan.id])
+        : null;
+    }),
+  })),
+
+  withComputed((store) => ({
+    /** @description Only exposes image bytes belonging to the current selection. */
+    planImageUrl: computed(() =>
+      store.imageKey() === store.selectedPlanKey() ? store.imageUrl() : null,
+    ),
+    /** @description Only exposes annotations belonging to the current selection. */
+    overlay: computed(() =>
+      store.overlayKey() === store.selectedPlanKey() ? store.planOverlay() : null,
+    ),
+    /** @description Editing requires both resources for the same currently selected plan. */
+    selectedPlanReady: computed(
+      () =>
+        store.selectedPlanKey() !== null &&
+        store.imageKey() === store.selectedPlanKey() &&
+        store.overlayKey() === store.selectedPlanKey() &&
+        store.imageCallState().status === 'success' &&
+        store.overlayCallState().status === 'success' &&
+        store.imageUrl() !== null &&
+        store.planOverlay() !== null,
+    ),
+  })),
+
+  withComputed((store) => ({
     /**
      * Property overlayHasContent
      * @readonly
@@ -256,6 +294,32 @@ export const FacilityPlansStore = signalStore(
       dispatcher: Dispatcher = inject(Dispatcher),
       platformId: object = inject(PLATFORM_ID),
     ) => {
+      const selectionChanged = new Subject<void>();
+      const contextChanged = new Subject<void>();
+      let selectionGeneration = 0;
+      let contextGeneration = 0;
+
+      /** @description Cancels selected-plan reads, releases bytes and discards the old editor draft. */
+      function clearSelectionResources(): void {
+        selectionGeneration++;
+        selectionChanged.next();
+        const previous = store.imageUrl();
+        if (previous) URL.revokeObjectURL(previous);
+        patchState(store, {
+          imageUrl: null,
+          imageKey: null,
+          imageCallState: idleCallState(),
+          planOverlay: null,
+          overlayKey: null,
+          overlayCallState: idleCallState(),
+          editMode: 'none',
+          drawTargetFacilityId: null,
+          placeEquipmentId: null,
+          draftPoints: [],
+          saveZoneGeometryCallState: idleCallState(),
+          savePinPositionCallState: idleCallState(),
+        });
+      }
       /**
        * Constant loadOverlayFn
        * @const loadOverlayFn
@@ -276,19 +340,32 @@ export const FacilityPlansStore = signalStore(
         attachmentId: string;
       }>(
         pipe(
-          tap((): void => {
-            patchState(store, { overlayCallState: pendingCallState() });
-          }),
-          switchMap(({ organizationId, facilityId, attachmentId }) =>
-            facilityService.getPlanOverlay(organizationId, facilityId, attachmentId).pipe(
+          switchMap(({ organizationId, facilityId, attachmentId }) => {
+            const key = JSON.stringify([organizationId, facilityId, attachmentId]);
+            if (key !== store.selectedPlanKey() || !isPlatformBrowser(platformId)) return EMPTY;
+            const generation = selectionGeneration;
+            patchState(store, {
+              planOverlay: null,
+              overlayKey: null,
+              overlayCallState: pendingCallState(),
+            });
+            return facilityService.getPlanOverlay(organizationId, facilityId, attachmentId).pipe(
+              takeUntil(selectionChanged),
               tapResponse({
                 next: (overlay: FacilityPlanOverlayOutput): void => {
-                  patchState(store, { overlay, overlayCallState: successCallState(null) });
+                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                  patchState(store, {
+                    planOverlay: overlay,
+                    overlayKey: key,
+                    overlayCallState: successCallState(null),
+                  });
                 },
                 error: (error: unknown): void => {
+                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
                   const storeError: StoreError = toStoreError(error);
                   patchState(store, {
-                    overlay: null,
+                    planOverlay: null,
+                    overlayKey: null,
                     overlayCallState: errorCallState(storeError),
                   });
                   dispatcher.dispatch(
@@ -301,8 +378,8 @@ export const FacilityPlansStore = signalStore(
                   );
                 },
               }),
-            ),
-          ),
+            );
+          }),
         ),
       );
 
@@ -321,36 +398,38 @@ export const FacilityPlansStore = signalStore(
        */
       const loadZoneCandidatesFn = rxMethod<void>(
         pipe(
-          tap((): void => {
-            patchState(store, { zoneCandidatesCallState: pendingCallState() });
-          }),
           switchMap(() => {
-            const organizationId: string | null = store.organizationId();
-            const facilityId: string | null = store.facilityId();
-            if (!organizationId || !facilityId) return EMPTY;
-
-            return facilityService.listChildren(organizationId, facilityId, {
-              itemsPerPage: 200,
-            });
-          }),
-          tapResponse({
-            next: (response: HydraCollection<FacilityOutput>): void => {
-              patchState(store, {
-                zoneCandidates: response.member.filter((candidate) =>
-                  ZONE_CANDIDATE_TYPES.has(candidate.type),
-                ),
-                zoneCandidatesCallState: successCallState(null),
-              });
-            },
-            error: (error: unknown): void => {
-              const storeError: StoreError = toStoreError(error);
-              patchState(store, { zoneCandidatesCallState: errorCallState(storeError) });
-              dispatcher.dispatch(
-                facilityPlansStoreEvents.zoneCandidatesFailed(
-                  toStoreFailureEventPayload(storeError, 'Failed to load candidate zones'),
-                ),
+            const organizationId = store.organizationId();
+            const facilityId = store.facilityId();
+            if (!organizationId || !facilityId || !isPlatformBrowser(platformId)) return EMPTY;
+            const generation = contextGeneration;
+            patchState(store, { zoneCandidatesCallState: pendingCallState() });
+            return facilityService
+              .listChildren(organizationId, facilityId, { itemsPerPage: 200 })
+              .pipe(
+                takeUntil(contextChanged),
+                tapResponse({
+                  next: (response: HydraCollection<FacilityOutput>): void => {
+                    if (generation !== contextGeneration) return;
+                    patchState(store, {
+                      zoneCandidates: response.member.filter((candidate) =>
+                        ZONE_CANDIDATE_TYPES.has(candidate.type),
+                      ),
+                      zoneCandidatesCallState: successCallState(null),
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    if (generation !== contextGeneration) return;
+                    const storeError = toStoreError(error);
+                    patchState(store, { zoneCandidatesCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      facilityPlansStoreEvents.zoneCandidatesFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to load candidate zones'),
+                      ),
+                    );
+                  },
+                }),
               );
-            },
           }),
         ),
       );
@@ -371,37 +450,39 @@ export const FacilityPlansStore = signalStore(
        */
       const loadFacilityEquipmentFn = rxMethod<void>(
         pipe(
-          tap((): void => {
-            patchState(store, { facilityEquipmentCallState: pendingCallState() });
-          }),
           switchMap(() => {
-            const organizationId: string | null = store.organizationId();
-            const facilityId: string | null = store.facilityId();
-            if (!organizationId || !facilityId) return EMPTY;
-
-            return equipmentService.listByFacility(organizationId, facilityId, {
-              itemsPerPage: 200,
-            });
-          }),
-          tapResponse({
-            next: (response: HydraCollection<EquipmentOutput>): void => {
-              patchState(store, {
-                facilityEquipment: [...response.member],
-                facilityEquipmentCallState: successCallState(null),
-              });
-            },
-            error: (error: unknown): void => {
-              const storeError: StoreError = toStoreError(error);
-              patchState(store, { facilityEquipmentCallState: errorCallState(storeError) });
-              dispatcher.dispatch(
-                facilityPlansStoreEvents.facilityEquipmentFailed(
-                  toStoreFailureEventPayload(
-                    storeError,
-                    "Failed to load this facility's equipment",
-                  ),
-                ),
+            const organizationId = store.organizationId();
+            const facilityId = store.facilityId();
+            if (!organizationId || !facilityId || !isPlatformBrowser(platformId)) return EMPTY;
+            const generation = contextGeneration;
+            patchState(store, { facilityEquipmentCallState: pendingCallState() });
+            return equipmentService
+              .listByFacility(organizationId, facilityId, { itemsPerPage: 200 })
+              .pipe(
+                takeUntil(contextChanged),
+                tapResponse({
+                  next: (response: HydraCollection<EquipmentOutput>): void => {
+                    if (generation !== contextGeneration) return;
+                    patchState(store, {
+                      facilityEquipment: [...response.member],
+                      facilityEquipmentCallState: successCallState(null),
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    if (generation !== contextGeneration) return;
+                    const storeError = toStoreError(error);
+                    patchState(store, { facilityEquipmentCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      facilityPlansStoreEvents.facilityEquipmentFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          "Failed to load this facility's equipment",
+                        ),
+                      ),
+                    );
+                  },
+                }),
               );
-            },
           }),
         ),
       );
@@ -430,16 +511,22 @@ export const FacilityPlansStore = signalStore(
         points: ReadonlyArray<readonly [number, number]> | null;
       }>(
         pipe(
-          tap((): void => {
+          mergeMap(({ organizationId, facilityId, attachmentId, points }) => {
+            if (
+              !store.selectedPlanReady() ||
+              store.saveZoneGeometryCallState().status === 'pending'
+            )
+              return EMPTY;
+            const generation = selectionGeneration;
+            const key = store.selectedPlanKey();
             patchState(store, { saveZoneGeometryCallState: pendingCallState() });
-          }),
-          exhaustMap(({ organizationId, facilityId, attachmentId, points }) =>
-            facilityService
+            return facilityService
               .setPlanGeometry(organizationId, facilityId, { attachmentId, points })
               .pipe(
                 tapResponse({
                   next: (): void => {
-                    if (store.organizationId() !== organizationId) return;
+                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                      return;
                     patchState(store, {
                       saveZoneGeometryCallState: successCallState(null),
                       editMode: 'none',
@@ -468,7 +555,8 @@ export const FacilityPlansStore = signalStore(
                     }
                   },
                   error: (error: unknown): void => {
-                    if (store.organizationId() !== organizationId) return;
+                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                      return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { saveZoneGeometryCallState: errorCallState(storeError) });
                     const currentFacilityId: string | null = store.facilityId();
@@ -502,8 +590,8 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                 }),
-              ),
-          ),
+              );
+          }),
         ),
       );
 
@@ -532,16 +620,19 @@ export const FacilityPlansStore = signalStore(
         exitPlaceMode: boolean;
       }>(
         pipe(
-          tap((): void => {
+          mergeMap(({ organizationId, equipmentId, attachmentId, x, y, exitPlaceMode }) => {
+            if (!store.selectedPlanReady() || store.savePinPositionCallState().status === 'pending')
+              return EMPTY;
+            const generation = selectionGeneration;
+            const key = store.selectedPlanKey();
             patchState(store, { savePinPositionCallState: pendingCallState() });
-          }),
-          exhaustMap(({ organizationId, equipmentId, attachmentId, x, y, exitPlaceMode }) =>
-            equipmentService
+            return equipmentService
               .setPlanPosition(organizationId, equipmentId, { attachmentId, x, y })
               .pipe(
                 tapResponse({
                   next: (): void => {
-                    if (store.organizationId() !== organizationId) return;
+                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                      return;
                     patchState(store, {
                       savePinPositionCallState: successCallState(null),
                       ...(exitPlaceMode
@@ -570,7 +661,8 @@ export const FacilityPlansStore = signalStore(
                     }
                   },
                   error: (error: unknown): void => {
-                    if (store.organizationId() !== organizationId) return;
+                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                      return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { savePinPositionCallState: errorCallState(storeError) });
                     const currentFacilityId: string | null = store.facilityId();
@@ -604,8 +696,8 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                 }),
-              ),
-          ),
+              );
+          }),
         ),
       );
 
@@ -630,6 +722,15 @@ export const FacilityPlansStore = signalStore(
         load: rxMethod<{ facilityId: string; organizationId: string }>(
           pipe(
             tap(({ organizationId, facilityId }): void => {
+              if (store.organizationId() !== organizationId || store.facilityId() !== facilityId) {
+                contextGeneration += 1;
+                contextChanged.next();
+                clearSelectionResources();
+                patchState(store, removeAllEntities({ collection: 'plan' }), {
+                  ...INITIAL_STATE,
+                  selectionRevision: store.selectionRevision() + 1,
+                });
+              }
               patchState(store, {
                 listCallState: pendingCallState(),
                 organizationId,
@@ -638,6 +739,7 @@ export const FacilityPlansStore = signalStore(
             }),
             switchMap(({ facilityId }) =>
               service.list(facilityId, 'floor_plan').pipe(
+                takeUntil(contextChanged),
                 tapResponse({
                   next: (response: HydraCollection<FacilityAttachmentOutput>): void => {
                     patchState(
@@ -674,13 +776,18 @@ export const FacilityPlansStore = signalStore(
          */
         upload: rxMethod<{ facilityId: string; file: File }>(
           pipe(
-            tap((): void => {
+            mergeMap(({ facilityId, file }) => {
+              if (
+                store.uploadCallState().status === 'pending' ||
+                (store.facilityId() !== null && store.facilityId() !== facilityId)
+              )
+                return EMPTY;
+              const generation = contextGeneration;
               patchState(store, { uploadCallState: pendingCallState() });
-            }),
-            switchMap(({ facilityId, file }) =>
-              service.upload(facilityId, file, file.name, 'floor_plan').pipe(
+              return service.upload(facilityId, file, file.name, 'floor_plan').pipe(
                 tapResponse({
                   next: (plan: FacilityAttachmentOutput): void => {
+                    if (generation !== contextGeneration) return;
                     patchState(store, addEntity(plan, { collection: 'plan' }), {
                       uploadCallState: successCallState(plan),
                       selectedPlanId: plan.id,
@@ -694,6 +801,7 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                   error: (error: unknown): void => {
+                    if (generation !== contextGeneration) return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { uploadCallState: errorCallState(storeError) });
                     dispatcher.dispatch(
@@ -703,8 +811,8 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 
@@ -723,16 +831,17 @@ export const FacilityPlansStore = signalStore(
          */
         setPrimary: rxMethod<{ attachmentId: string }>(
           pipe(
-            tap(({ attachmentId }): void => {
+            mergeMap(({ attachmentId }) => {
+              if (store.setPrimaryCallState().status === 'pending') return EMPTY;
+              const generation = contextGeneration;
               patchState(store, {
                 setPrimaryCallState: pendingCallState(),
                 settingPrimaryId: attachmentId,
               });
-            }),
-            switchMap(({ attachmentId }) =>
-              service.setPrimary(attachmentId).pipe(
+              return service.setPrimary(attachmentId).pipe(
                 tapResponse({
                   next: (plan: FacilityAttachmentOutput): void => {
+                    if (generation !== contextGeneration) return;
                     const previousPrimaryId: string | undefined = store
                       .planEntities()
                       .find((entry) => entry.isPrimaryPlan && entry.id !== plan.id)?.id;
@@ -759,6 +868,7 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                   error: (error: unknown): void => {
+                    if (generation !== contextGeneration) return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, {
                       setPrimaryCallState: errorCallState(storeError),
@@ -771,8 +881,8 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 
@@ -789,13 +899,14 @@ export const FacilityPlansStore = signalStore(
          */
         remove: rxMethod<{ attachmentId: string; revision: number }>(
           pipe(
-            tap(({ attachmentId }): void => {
+            mergeMap(({ attachmentId, revision }) => {
+              if (store.deleteCallState().status === 'pending') return EMPTY;
+              const generation = contextGeneration;
               patchState(store, { deleteCallState: pendingCallState(), deletingId: attachmentId });
-            }),
-            switchMap(({ attachmentId, revision }) =>
-              service.remove(attachmentId, revision).pipe(
+              return service.remove(attachmentId, revision).pipe(
                 tapResponse({
                   next: (): void => {
+                    if (generation !== contextGeneration) return;
                     patchState(store, removeEntity(attachmentId, { collection: 'plan' }), {
                       deleteCallState: successCallState(null),
                       deletingId: null,
@@ -811,6 +922,7 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                   error: (error: unknown): void => {
+                    if (generation !== contextGeneration) return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, {
                       deleteCallState: errorCallState(storeError),
@@ -823,8 +935,8 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 
@@ -842,7 +954,26 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         selectPlan(planId: string): void {
-          patchState(store, { selectedPlanId: planId });
+          if (store.selectedPlan()?.id === planId) return;
+          clearSelectionResources();
+          patchState(store, {
+            selectedPlanId: planId,
+            selectionRevision: store.selectionRevision() + 1,
+          });
+        },
+
+        /** @description Releases resources and cancels reads when the selected plan disappears. */
+        clearSelectionResources,
+
+        /** @description Clears a facility context when its parameterized page is reused. */
+        reset(): void {
+          contextGeneration += 1;
+          contextChanged.next();
+          clearSelectionResources();
+          patchState(store, removeAllEntities({ collection: 'plan' }), {
+            ...INITIAL_STATE,
+            selectionRevision: store.selectionRevision() + 1,
+          });
         },
 
         /**
@@ -862,24 +993,37 @@ export const FacilityPlansStore = signalStore(
          */
         loadImage: rxMethod<{ attachmentId: string }>(
           pipe(
-            tap((): void => {
-              patchState(store, { imageCallState: pendingCallState() });
-            }),
-            switchMap(({ attachmentId }) =>
-              service.download(attachmentId).pipe(
+            switchMap(({ attachmentId }) => {
+              const key = store.selectedPlanKey();
+              if (
+                !key ||
+                store.selectedPlan()?.id !== attachmentId ||
+                !isPlatformBrowser(platformId)
+              )
+                return EMPTY;
+              const generation = selectionGeneration;
+              const previous = store.imageUrl();
+              if (previous) URL.revokeObjectURL(previous);
+              patchState(store, {
+                imageUrl: null,
+                imageKey: null,
+                imageCallState: pendingCallState(),
+              });
+              return service.download(attachmentId).pipe(
+                takeUntil(selectionChanged),
                 tapResponse({
                   next: (blob: Blob): void => {
-                    if (!isPlatformBrowser(platformId)) return;
-
-                    const previous: string | null = store.planImageUrl();
-                    if (previous) URL.revokeObjectURL(previous);
-
+                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                      return;
                     patchState(store, {
-                      planImageUrl: URL.createObjectURL(blob),
+                      imageUrl: URL.createObjectURL(blob),
+                      imageKey: key,
                       imageCallState: successCallState(null),
                     });
                   },
                   error: (error: unknown): void => {
+                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                      return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { imageCallState: errorCallState(storeError) });
                     dispatcher.dispatch(
@@ -892,8 +1036,8 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
 
@@ -989,6 +1133,7 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         enterDrawZoneMode(targetFacilityId: string): void {
+          if (!store.selectedPlanReady()) return;
           patchState(store, {
             editMode: 'draw-zone',
             drawTargetFacilityId: targetFacilityId,
@@ -1007,6 +1152,7 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         enterPlacePinMode(equipmentId: string): void {
+          if (!store.selectedPlanReady()) return;
           patchState(store, {
             editMode: 'place-pin',
             placeEquipmentId: equipmentId,
@@ -1042,7 +1188,7 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         addDraftVertex(point: readonly [number, number]): void {
-          if (store.editMode() !== 'draw-zone') return;
+          if (!store.selectedPlanReady() || store.editMode() !== 'draw-zone') return;
 
           patchState(store, { draftPoints: [...store.draftPoints(), point] });
         },
@@ -1074,6 +1220,7 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         finishDrawZone(): void {
+          if (!store.selectedPlanReady() || store.editMode() !== 'draw-zone') return;
           const organizationId: string | null = store.organizationId();
           const facilityId: string | null = store.drawTargetFacilityId();
           const plan: FacilityAttachmentOutput | null = store.selectedPlan();
@@ -1093,6 +1240,7 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         clearZoneGeometry(facilityId: string): void {
+          if (!store.selectedPlanReady()) return;
           const organizationId: string | null = store.organizationId();
           if (!organizationId) return;
 
@@ -1113,6 +1261,7 @@ export const FacilityPlansStore = signalStore(
           facilityId: string,
           points: ReadonlyArray<readonly [number, number]>,
         ): void {
+          if (!store.selectedPlanReady()) return;
           const organizationId: string | null = store.organizationId();
           const plan: FacilityAttachmentOutput | null = store.selectedPlan();
           if (!organizationId || !plan || points.length < 3) return;
@@ -1133,6 +1282,7 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         placePin(point: readonly [number, number]): void {
+          if (!store.selectedPlanReady() || store.editMode() !== 'place-pin') return;
           const organizationId: string | null = store.organizationId();
           const equipmentId: string | null = store.placeEquipmentId();
           const plan: FacilityAttachmentOutput | null = store.selectedPlan();
@@ -1159,6 +1309,7 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         movePin(equipmentId: string, point: readonly [number, number]): void {
+          if (!store.selectedPlanReady()) return;
           const organizationId: string | null = store.organizationId();
           const plan: FacilityAttachmentOutput | null = store.selectedPlan();
           if (!organizationId || !plan) return;
@@ -1183,6 +1334,7 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         removePinFromPlan(equipmentId: string): void {
+          if (!store.selectedPlanReady()) return;
           const organizationId: string | null = store.organizationId();
           if (!organizationId) return;
 
@@ -1200,7 +1352,7 @@ export const FacilityPlansStore = signalStore(
   ),
 
   withHooks((store) => {
-    let previousSelectedId: string | null = null;
+    let previousKey: string | null = null;
 
     return {
       /**
@@ -1211,41 +1363,33 @@ export const FacilityPlansStore = signalStore(
       onInit(): void {
         effect((): void => {
           const selected: FacilityAttachmentOutput | null = store.selectedPlan();
-          const nextId: string | null = selected?.id ?? null;
-          if (nextId === previousSelectedId) return;
+          const selectedKey = store.selectedPlanKey();
+          const nextKey = JSON.stringify([selectedKey, store.selectionRevision()]);
+          if (nextKey === previousKey) return;
 
-          previousSelectedId = nextId;
+          previousKey = nextKey;
           untracked((): void => {
-            if (nextId && selected) {
-              store.loadImage({ attachmentId: nextId });
+            store.clearSelectionResources();
+            if (selectedKey && selected) {
+              store.loadImage({ attachmentId: selected.id });
 
               const organizationId: string | null = store.organizationId();
               if (organizationId) {
                 store.loadOverlay({
                   organizationId,
                   facilityId: selected.facilityId,
-                  attachmentId: nextId,
+                  attachmentId: selected.id,
                 });
               }
 
               return;
             }
-
-            const previous: string | null = store.planImageUrl();
-            if (previous) URL.revokeObjectURL(previous);
-            patchState(store, {
-              planImageUrl: null,
-              imageCallState: idleCallState(),
-              overlay: null,
-              overlayCallState: idleCallState(),
-            });
           });
         });
       },
       /** Revokes the last live object URL so the store never leaks one. */
       onDestroy(): void {
-        const url: string | null = store.planImageUrl();
-        if (url) URL.revokeObjectURL(url);
+        store.clearSelectionResources();
       },
     };
   }),

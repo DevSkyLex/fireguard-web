@@ -127,24 +127,24 @@ export class InterventionRecurrenceTable {
   public readonly error: InputSignal<string | null> = input<string | null>(null);
 
   /**
-   * Property savingId
+   * Property savingIds
    * @readonly
-   * @description Id of the recurrence whose update write is in flight, if any — disables that row's active toggle.
+   * @description Ids of recurrences whose update writes are in flight; all their row actions are disabled.
    * @access public
    * @since 1.0.0
-   * @type {InputSignal<string | null>}
+   * @type {InputSignal<readonly string[]>}
    */
-  public readonly savingId: InputSignal<string | null> = input<string | null>(null);
+  public readonly savingIds: InputSignal<readonly string[]> = input<readonly string[]>([]);
 
   /**
-   * Property removingId
+   * Property removingIds
    * @readonly
-   * @description Id of the recurrence whose delete write is in flight, if any — disables that row's confirm button.
+   * @description Ids of recurrences whose delete writes are in flight; all their row actions are disabled.
    * @access public
    * @since 1.0.0
-   * @type {InputSignal<string | null>}
+   * @type {InputSignal<readonly string[]>}
    */
-  public readonly removingId: InputSignal<string | null> = input<string | null>(null);
+  public readonly removingIds: InputSignal<readonly string[]> = input<readonly string[]>([]);
 
   /**
    * Property canWrite

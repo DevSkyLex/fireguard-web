@@ -1,6 +1,7 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationNavigationCountersOutput } from '@features/organization/models';
 import { ActiveOrganizationStore } from '../../active-organization';
@@ -16,6 +17,8 @@ const flushEffects = async (): Promise<void> => {
 };
 
 describe('OrganizationNavigationCountersStore', () => {
+  const sessionRevision = signal(0);
+  const isAuthenticated = signal(true);
   let store: OrganizationNavigationCountersStore;
   let selectedOrganizationId: WritableSignal<string | null>;
   let mockOrganizationService: {
@@ -31,6 +34,8 @@ describe('OrganizationNavigationCountersStore', () => {
   };
 
   beforeEach(() => {
+    sessionRevision.set(0);
+    isAuthenticated.set(true);
     selectedOrganizationId = signal<string | null>(null);
     mockOrganizationService = {
       navigationCounters: vi.fn().mockReturnValue(of(counters)),
@@ -38,6 +43,7 @@ describe('OrganizationNavigationCountersStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated, sessionRevision } },
         { provide: ActiveOrganizationStore, useValue: { selectedOrganizationId } },
         { provide: OrganizationService, useValue: mockOrganizationService },
       ],
@@ -142,5 +148,52 @@ describe('OrganizationNavigationCountersStore', () => {
     expect(store.isQueryLoading()).toBe(false);
     expect(store.queryHasError()).toBe(false);
     expect(store.submittedInterventions()).toBe(0);
+  });
+  it('drops counters immediately on organization replacement and cancels reads when cleared', async () => {
+    selectedOrganizationId.set('org-1');
+    await flushEffects();
+    const response = new Subject<OrganizationNavigationCountersOutput>();
+    mockOrganizationService.navigationCounters.mockReturnValueOnce(response);
+    selectedOrganizationId.set('org-2');
+    await flushEffects();
+    expect(store.submittedInterventions()).toBe(0);
+    expect(store.isQueryLoading()).toBe(true);
+    store.clear();
+    expect(response.observed).toBe(false);
+    response.next(counters);
+    expect(store.submittedInterventions()).toBe(0);
+    expect(store.isQueryLoading()).toBe(false);
+  });
+
+  it('retains same-context counters during refresh and retries after failure', async () => {
+    selectedOrganizationId.set('org-1');
+    await flushEffects();
+    const response = new Subject<OrganizationNavigationCountersOutput>();
+    mockOrganizationService.navigationCounters.mockReturnValueOnce(response);
+    store.load('org-1');
+    expect(store.submittedInterventions()).toBe(7);
+    response.error(new Error('offline'));
+    expect(store.submittedInterventions()).toBe(7);
+    store.load('org-1');
+    expect(store.isQueryLoaded()).toBe(true);
+    expect(mockOrganizationService.navigationCounters).toHaveBeenCalledTimes(3);
+  });
+
+  it('reloads the remembered organization for a new session and ignores the old session response', async () => {
+    const response = new Subject<OrganizationNavigationCountersOutput>();
+    mockOrganizationService.navigationCounters.mockReturnValueOnce(response);
+    selectedOrganizationId.set('org-1');
+    await flushEffects();
+    sessionRevision.update((revision) => revision + 1);
+    await flushEffects();
+    expect(response.observed).toBe(false);
+    expect(mockOrganizationService.navigationCounters).toHaveBeenCalledTimes(2);
+    response.next({ ...counters, submittedInterventions: 99 });
+    expect(store.submittedInterventions()).toBe(7);
+    isAuthenticated.set(false);
+    sessionRevision.update((revision) => revision + 1);
+    await flushEffects();
+    expect(store.submittedInterventions()).toBe(0);
+    expect(mockOrganizationService.navigationCounters).toHaveBeenCalledTimes(2);
   });
 });

@@ -856,6 +856,48 @@ describe('InterventionWorkspaceStore call state', () => {
     expect(pending.observed).toBe(false);
   });
 
+  it('does not apply an accepted team assignment to a newer workspace or A-B-A visit', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    const old = new Subject<InterventionOutput>();
+    const current = new Subject<InterventionOutput>();
+    mockService['assignTeam'].mockReturnValueOnce(old).mockReturnValueOnce(current);
+    store.assignTeam({ interventionId: 'intervention-1', input: { teamId: 'old-team' } });
+    mockService['get'].mockReturnValueOnce(of({ ...intervention, id: 'B' }));
+    store.load('B');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    expect(old.observed).toBe(true);
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    store.assignTeam({ interventionId: 'intervention-1', input: { teamId: 'current-team' } });
+    old.next({ ...intervention, revision: 99 });
+    old.complete();
+    expect(store.intervention()?.revision).toBe(3);
+    expect(store.assignTeamCallState().status).toBe('pending');
+    store.assignTeam({ interventionId: 'intervention-1', input: { teamId: 'duplicate' } });
+    expect(mockService['assignTeam']).toHaveBeenCalledTimes(2);
+    current.next({ ...intervention, revision: 4 });
+    current.complete();
+    expect(store.intervention()?.revision).toBe(4);
+    expect(store.assignTeamCallState().status).toBe('success');
+  });
+
+  it('ignores an old team assignment conflict without reloading the replacement workspace', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    const old = new Subject<InterventionOutput>();
+    mockService['assignTeam'].mockReturnValueOnce(old);
+    store.assignTeam({ interventionId: 'intervention-1', input: { teamId: 'old-team' } });
+    mockService['get'].mockReturnValueOnce(of({ ...intervention, id: 'B' }));
+    store.load('B');
+    await vi.waitFor(() => expect(store.loading()).toBe(false));
+    const reads = mockService['get'].mock.calls.length;
+    old.error(new HttpErrorResponse({ status: 409 }));
+    expect(store.intervention()?.id).toBe('B');
+    expect(store.assignTeamCallState().status).toBe('idle');
+    expect(mockService['get']).toHaveBeenCalledTimes(reads);
+  });
+
   it('preserves conflicted local intent when a fresh remote workspace arrives', async () => {
     const offline = TestBed.inject(InterventionOfflineService);
     vi.mocked(offline.getWorkspace).mockResolvedValue(null);

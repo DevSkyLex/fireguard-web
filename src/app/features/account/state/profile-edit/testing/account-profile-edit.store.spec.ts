@@ -1,11 +1,13 @@
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { of, throwError, type Observable } from 'rxjs';
+import { of, Subject, throwError, type Observable } from 'rxjs';
 import { UserProfileService } from '@features/account/data-access';
 import type {
   UpdateCurrentUserProfileInput,
   UserOutput,
   UserProfileOutput,
 } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { UserStore } from '../../user';
 import { AccountProfileEditStore } from '../account-profile-edit.store';
 
@@ -25,6 +27,7 @@ interface MockUserStore {
 }
 
 interface SetupResult {
+  readonly sessionRevision: WritableSignal<number>;
   readonly store: AccountProfileEditStore;
   readonly mockUserProfileService: MockUserProfileService;
   readonly mockUserStore: MockUserStore;
@@ -52,6 +55,7 @@ const INPUT: UpdateCurrentUserProfileInput = {
 
 describe('AccountProfileEditStore', () => {
   const setup = (): SetupResult => {
+    const sessionRevision = signal(0);
     const mockUserProfileService: MockUserProfileService = {
       updateCurrentProfile: vi.fn<
         (input: UpdateCurrentUserProfileInput) => Observable<UserProfileOutput>
@@ -69,13 +73,14 @@ describe('AccountProfileEditStore', () => {
     TestBed.configureTestingModule({
       providers: [
         AccountProfileEditStore,
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision } },
         { provide: UserProfileService, useValue: mockUserProfileService },
         { provide: UserStore, useValue: mockUserStore },
       ],
     });
 
     const store: AccountProfileEditStore = TestBed.inject(AccountProfileEditStore);
-    return { store, mockUserProfileService, mockUserStore };
+    return { store, mockUserProfileService, mockUserStore, sessionRevision };
   };
 
   it('should patch and store the current profile without reloading it', () => {
@@ -138,5 +143,43 @@ describe('AccountProfileEditStore', () => {
     store.uploadAvatar(new File(['x'], 'avatar.png', { type: 'image/png' }));
 
     expect(store.avatarError()).not.toBeNull();
+  });
+  it('keeps a new session save independent of an older accepted save', () => {
+    const { store, mockUserProfileService, mockUserStore, sessionRevision } = setup();
+    const previous = new Subject<UserProfileOutput>();
+    const current = new Subject<UserProfileOutput>();
+    mockUserProfileService.updateCurrentProfile
+      .mockReturnValueOnce(previous)
+      .mockReturnValueOnce(current);
+    store.save(INPUT);
+    store.save(INPUT);
+    expect(mockUserProfileService.updateCurrentProfile).toHaveBeenCalledTimes(1);
+    sessionRevision.set(1);
+    store.save({ firstName: 'Current', lastName: 'User' });
+    expect(previous.observed).toBe(true);
+    previous.next(USER_PROFILE_OUTPUT);
+    previous.complete();
+    expect(mockUserStore.setProfile).not.toHaveBeenCalled();
+    expect(store.saveCallState().status).toBe('pending');
+    store.save(INPUT);
+    expect(mockUserProfileService.updateCurrentProfile).toHaveBeenCalledTimes(2);
+    const profile = { ...USER_PROFILE_OUTPUT, id: 'current', firstName: 'Current' };
+    current.next(profile);
+    current.complete();
+    expect(mockUserStore.setProfile).toHaveBeenCalledExactlyOnceWith(profile);
+  });
+
+  it('ignores a stale avatar response after session change and resets its visible state', () => {
+    const { store, mockUserProfileService, mockUserStore, sessionRevision } = setup();
+    const previous = new Subject<UserOutput>();
+    mockUserProfileService.uploadCurrentAvatar.mockReturnValueOnce(previous);
+    store.uploadAvatar(new File(['x'], 'old.png'));
+    sessionRevision.set(1);
+    TestBed.tick();
+    previous.next(USER_OUTPUT);
+    previous.complete();
+    expect(mockUserStore.setProfile).not.toHaveBeenCalled();
+    expect(mockUserStore.reload).not.toHaveBeenCalled();
+    expect(store.avatarCallState().status).toBe('idle');
   });
 });

@@ -66,6 +66,7 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<unknown>> => {
   const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
   const sessionNavigation: AuthSessionNavigationService = inject(AuthSessionNavigationService);
+  const sessionRevision = authSession.sessionRevision();
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -76,11 +77,12 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
       // A 403 is intentionally not handled here: it does not block the page,
       // so it propagates to the caller's error handling (CallState / toast)
       // instead of triggering a full-page redirect.
-      if (error.status !== 401 || isExcluded) {
+      if (error.status !== 401 || isExcluded || authSession.sessionRevision() !== sessionRevision) {
         return throwError(() => error);
       }
 
       const endSession = (): Observable<never> => {
+        if (authSession.sessionRevision() !== sessionRevision) return throwError(() => error);
         authSession.clearSession();
         sessionNavigation.navigateToLogin();
 
@@ -89,6 +91,7 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
 
       return authSession.renewSession().pipe(
         switchMap((token: string | null) => {
+          if (authSession.sessionRevision() !== sessionRevision) return throwError(() => error);
           if (token === null) return endSession();
 
           // This interceptor sits *after* the one that attaches the bearer, so a

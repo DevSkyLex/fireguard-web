@@ -890,6 +890,14 @@ organization-scoped read never carries `revision`, then sends the required
 - The detail page's header makes "Add sub-facility" (the list with `?create=1&parent=`) its primary action, QR code the outline secondary, and folds Delete into the overflow menu (`DESIGN.md` "Header actions"); the Hierarchy section repeats the link in context only under `FACILITIES_WRITE`, whether or not the facility already has children.
 - At most one floor plan is primary per facility; setting a new primary must reflect the swap on both plans without a re-fetch (mirrors the backend's atomic unset).
 - The Plans tab loads only when activated and only in the browser — it is secondary content, never part of the resolver's seeded fetch.
+- Plan images and annotations belong to the full organization/facility/attachment selection.
+  A changed or removed selection cancels its reads, revokes its image URL and discards editor drafts.
+  `selectedPlanReady` requires both current resources; every editing command is blocked until ready.
+  Delayed writes cannot settle another selection's editor state. Reused parameterized pages reload
+  the Plans tab for the new facility on browser activation.
+- Facility options consume the published `AUTH_SESSION_PORT` revision and cache by session and
+  organization. Context changes clear old options immediately; successful empty lists are cached,
+  while failed loads remain retryable.
 - `FacilityPlanOverlay` stays read-only and presentational — it never gains a store, a service, or navigation of its own; every editor affordance lives in `FacilityPlanEditor` (which wraps it) and the page.
 - Drawing a zone outline requires at least three vertices, mirrored client-side (`isClosablePolygon`) ahead of the backend's own check.
 - Every editor write is permission-gated: `FACILITIES_WRITE` for a zone outline, `EQUIPMENT_WRITE` for an equipment pin — never inferred from the other.

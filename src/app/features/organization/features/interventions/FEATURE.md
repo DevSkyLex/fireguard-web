@@ -832,7 +832,14 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   which hosts the Signal Forms `ui/forms/intervention-recurrence-form` and
   confirms a dirty close through `@shared/unsaved-changes`; delete confirms in
   `ui/dialogs/intervention-recurrence-delete-dialog`. Only the page talks to
-  the store. The list loads once, on the tab's first activation.
+  the store. The list loads once per organization, on the tab's first activation.
+  Changing organization clears rows, request states and page dialog targets, cancels obsolete
+  reads and invalidates accepted writes' results, including A-B-A navigation. Accepted writes
+  finish independently: update and delete share one lock per recurrence id, while creation
+  admits one request per organization generation. `updateCallStates`/`removeCallStates` and
+  `savingIds`/`removingIds` expose each row's state. Mutation events carry `recurrenceId` for
+  update/delete; the page closes only the surface awaiting that operation on that target.
+  Opening or closing a surface clears its wait, and failures preserve its draft.
   `create`/`update`/`remove` patch the entity
   collection from the response rather than reloading the list, so the
   server-authoritative `nextOccurrenceAt` lands without a second round trip. A
@@ -842,7 +849,10 @@ LINKED_RESOURCES_PAGE_SIZE }` (30) — omitting `itemsPerPage` used to fall
   one organization team's active members into the intervention's participants —
   union, deduped, never a replace — via `InterventionService.assignTeam`. Online-only,
   no offline queue: team membership at request time cannot be meaningfully replayed
-  later. A `409` (the intervention left its mutable window) silently reloads the
+  later. Results and failures belong to the captured workspace generation; an old assignment
+  cannot change a replacement workspace, including an A-B-A visit. Commands on the active
+  workspace share one assignment lock without cancelling accepted writes in older contexts.
+  A `409` (the intervention left its mutable window) silently reloads the
   workspace instead of surfacing a stale error.
 
 Data-access (transport boundary — `data-access/`):

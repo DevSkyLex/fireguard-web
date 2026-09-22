@@ -281,6 +281,68 @@ describe('MessageThreadStore', () => {
     expect(store.sortedMessages().map((row) => row.id)).toEqual(['older', 'newest']);
   });
 
+  it('cancels obsolete history on A-B-A and accepts history in the new generation', () => {
+    const page = { ...collection([message({ id: 'tail' })]), totalItems: 120 };
+    service.list.mockReturnValue(of(page));
+    const store = createStore();
+    store.load('conversation-1');
+    const oldHistory = new Subject<HydraCollection<MessageOutput>>();
+    service.list.mockReturnValueOnce(oldHistory);
+    store.loadOlder();
+    store.loadOlder();
+    expect(oldHistory.observed).toBe(true);
+    store.load('conversation-2');
+    expect(oldHistory.observed).toBe(false);
+    store.load('conversation-1');
+    const currentHistory = new Subject<HydraCollection<MessageOutput>>();
+    service.list.mockReturnValueOnce(currentHistory);
+    store.loadOlder();
+    oldHistory.next({ ...collection([message({ id: 'obsolete' })]), totalItems: 999 });
+    oldHistory.error(new Error('Old history failed'));
+    expect(store.listCallState().status).toBe('pending');
+    expect(store.total()).toBe(120);
+    currentHistory.next({ ...collection([message({ id: 'older' })]), totalItems: 120 });
+    currentHistory.complete();
+    expect(store.messageEntities().map((row) => row.id)).toEqual(['tail', 'older']);
+    expect(store.oldestLoadedPage()).toBe(2);
+  });
+
+  it('cancels reads on reset without permanently disabling the request streams', () => {
+    const pending = new Subject<HydraCollection<MessageOutput>>();
+    service.list.mockReturnValueOnce(pending);
+    const store = createStore();
+    store.load('conversation-1');
+    store.reset();
+    expect(pending.observed).toBe(false);
+    pending.error(new Error('Obsolete'));
+    expect(store.listCallState().status).toBe('idle');
+    service.list.mockReturnValue(of({ ...collection([message()]), totalItems: 120 }));
+    store.load('conversation-1');
+    const older = new Subject<HydraCollection<MessageOutput>>();
+    service.list.mockReturnValueOnce(older);
+    store.loadOlder();
+    store.reset();
+    expect(older.observed).toBe(false);
+    service.list.mockReturnValue(of(collection([message({ id: 'new' })])));
+    store.load('conversation-2');
+    expect(store.messageEntities().map((row) => row.id)).toEqual(['new']);
+    expect(store.listCallState().status).toBe('success');
+  });
+
+  it('cancels a background refresh when a new conversation replaces its loaded window', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    const store = createStore();
+    store.load('conversation-1');
+    const oldRefresh = new Subject<HydraCollection<MessageOutput>>();
+    service.list.mockReturnValueOnce(oldRefresh);
+    store.refresh();
+    store.load('conversation-2');
+    expect(oldRefresh.observed).toBe(false);
+    oldRefresh.next({ ...collection([message({ id: 'obsolete' })]), totalItems: 999 });
+    expect(store.messageEntityMap()['obsolete']).toBeUndefined();
+    expect(store.total()).toBe(1);
+  });
+
   it('should stop paging older history at the first page', () => {
     service.list.mockReturnValue(of({ ...collection([message()]), totalItems: 12 }));
 

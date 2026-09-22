@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,6 +8,7 @@ import {
   input,
   untracked,
   OnInit,
+  PLATFORM_ID,
   type InputSignal,
   type Signal,
 } from '@angular/core';
@@ -154,6 +156,16 @@ export class AccountNotificationsPage implements OnInit {
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
+
+  /**
+   * Property isBrowser
+   * @readonly
+   * @description Keeps all secondary tab reads out of direct-link SSR rendering.
+   * @access private
+   * @since 1.2.0
+   * @type {boolean}
+   */
+  private readonly isBrowser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
 
   /**
    * Property activeTab
@@ -304,13 +316,15 @@ export class AccountNotificationsPage implements OnInit {
    */
   public constructor() {
     effect((): void => {
+      if (!this.isBrowser) return;
       const tab = this.activeTab();
       untracked(() => {
         if (tab === 'inbox') this.inbox.ensureLoaded();
-        if (tab === 'notifications') this.store.load();
+        if (tab === 'notifications') void this.store.initialize();
       });
     });
     effect((): void => {
+      if (!this.isBrowser) return;
       if (this.activeTab() !== 'preferences' || this.preferencesRequested) return;
 
       this.preferencesRequested = true;
@@ -334,6 +348,7 @@ export class AccountNotificationsPage implements OnInit {
    * @returns {void}
    */
   public ngOnInit(): void {
+    if (!this.isBrowser) return;
     this.store.loadTypes();
     this.store.loadUnreadCount();
   }
@@ -380,6 +395,7 @@ export class AccountNotificationsPage implements OnInit {
    */
   protected filterByCategory(category: string | null): void {
     this.store.setFilter(category ? { category } : null);
+    this.store.load();
   }
 
   /**

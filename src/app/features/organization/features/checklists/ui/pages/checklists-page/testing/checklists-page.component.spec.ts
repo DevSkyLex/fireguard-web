@@ -12,7 +12,12 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { PageActionsService } from '@core/page-actions';
-import { idleCallState, successCallState, type CallState } from '@core/request-state';
+import {
+  idleCallState,
+  pendingCallState,
+  successCallState,
+  type CallState,
+} from '@core/request-state';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
@@ -71,6 +76,9 @@ describe('ChecklistsPage', () => {
   let updateCallState: WritableSignal<CallState<ChecklistOutput | null>>;
   let archiveCallState: WritableSignal<CallState<ChecklistOutput | null>>;
   let hasPermission: ReturnType<typeof vi.fn>;
+  let listCallState: WritableSignal<CallState>;
+  let loadedPage: WritableSignal<number | null>;
+  let totalChecklists: WritableSignal<number>;
 
   const createPage = async (): Promise<void> => {
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -91,6 +99,9 @@ describe('ChecklistsPage', () => {
     updateCallState = signal<CallState<ChecklistOutput | null>>(idleCallState());
     archiveCallState = signal<CallState<ChecklistOutput | null>>(idleCallState());
     hasPermission = vi.fn().mockReturnValue(true);
+    listCallState = signal<CallState>(idleCallState());
+    loadedPage = signal<number | null>(null);
+    totalChecklists = signal(1);
 
     TestBed.configureTestingModule({
       providers: [
@@ -119,8 +130,9 @@ describe('ChecklistsPage', () => {
             provide: ChecklistStore,
             useValue: {
               checklists: signal<readonly ChecklistOutput[]>([checklist()]),
-              totalChecklists: signal(1),
-              listCallState: signal(idleCallState()),
+              totalChecklists,
+              listCallState,
+              loadedPage,
               isLoadingChecklists: signal(false),
               createCallState,
               updateCallState,
@@ -242,5 +254,59 @@ describe('ChecklistsPage', () => {
     fixture.componentInstance['reload']();
 
     expect(load).toHaveBeenCalledTimes(1);
+  });
+  it('loads a deep-linked page and preserves it while a response is pending', async () => {
+    await createPage();
+    fixture.componentRef.setInput('page', '3');
+    listCallState.set(pendingCallState());
+    await fixture.whenStable();
+    expect(load).toHaveBeenLastCalledWith(
+      expect.objectContaining({ options: expect.objectContaining({ page: 3 }) }),
+    );
+    expect(fixture.componentInstance['page']()).toBe(3);
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+  });
+
+  it('returns to the last valid page and updates its URL after the refreshed total shrinks', async () => {
+    await createPage();
+    fixture.componentRef.setInput('page', '3');
+    totalChecklists.set(61);
+    await fixture.whenStable();
+    load.mockClear();
+    listCallState.set(pendingCallState());
+    loadedPage.set(null);
+    totalChecklists.set(60);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['page']()).toBe(3);
+    loadedPage.set(3);
+    listCallState.set(successCallState(null));
+    await fixture.whenStable();
+    expect(fixture.componentInstance['page']()).toBe(2);
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { page: '2' },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      }),
+    );
+    expect(load).toHaveBeenLastCalledWith(
+      expect.objectContaining({ options: expect.objectContaining({ page: 2 }) }),
+    );
+  });
+
+  it('uses page one for an empty refreshed list and removes the page query parameter', async () => {
+    await createPage();
+    fixture.componentRef.setInput('page', '2');
+    await fixture.whenStable();
+    totalChecklists.set(0);
+    loadedPage.set(2);
+    listCallState.set(successCallState(null));
+    await fixture.whenStable();
+    expect(fixture.componentInstance['page']()).toBe(1);
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { page: null } }),
+    );
   });
 });

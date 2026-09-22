@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
-import type { ApiError } from '@core/api/models';
+import type { ApiError, HydraCollection } from '@core/api/models';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import {
@@ -123,6 +123,15 @@ describe('FacilityPlansStore', () => {
     listByFacility: ReturnType<typeof vi.fn>;
   };
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
+
+  function loadReadyPlan(): void {
+    mockService.list.mockReturnValue(
+      of({ '@id': '', '@type': 'Collection', member: [plan()], totalItems: 1 }),
+    );
+    store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+    TestBed.tick();
+    expect(store.selectedPlanReady()).toBe(true);
+  }
 
   beforeEach(() => {
     const emptyCollection = { '@id': '', '@type': 'Collection', member: [], totalItems: 0 };
@@ -473,6 +482,7 @@ describe('FacilityPlansStore', () => {
   });
 
   describe('editor mode', () => {
+    beforeEach(() => loadReadyPlan());
     it('enters draw-zone mode with an empty draft', () => {
       store.enterDrawZoneMode('zone-1');
 
@@ -516,7 +526,7 @@ describe('FacilityPlansStore', () => {
 
   describe('finishDrawZone', () => {
     it('does nothing below three vertices', () => {
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
       store.enterDrawZoneMode('zone-1');
       store.addDraftVertex([0.1, 0.1]);
 
@@ -535,7 +545,7 @@ describe('FacilityPlansStore', () => {
         }),
       );
       mockFacilityService.setPlanGeometry.mockReturnValue(of(undefined));
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
       await flushEffects();
       mockFacilityService.getPlanOverlay.mockClear();
 
@@ -575,7 +585,7 @@ describe('FacilityPlansStore', () => {
       mockFacilityService.setPlanGeometry.mockReturnValue(
         throwError(() => apiError(409, 'raw backend detail', 'floor_plan_outside_ancestry')),
       );
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
 
       store.enterDrawZoneMode('zone-1');
       store.addDraftVertex([0, 0]);
@@ -603,7 +613,7 @@ describe('FacilityPlansStore', () => {
   describe('clearZoneGeometry', () => {
     it('writes null attachment and points', () => {
       mockFacilityService.setPlanGeometry.mockReturnValue(of(undefined));
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
 
       store.clearZoneGeometry('zone-1');
 
@@ -616,7 +626,7 @@ describe('FacilityPlansStore', () => {
 
   describe('placePin / movePin / removePinFromPlan', () => {
     it('placePin is a no-op outside place-pin mode', () => {
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
 
       store.placePin([0.5, 0.5]);
 
@@ -633,7 +643,7 @@ describe('FacilityPlansStore', () => {
           totalItems: 1,
         }),
       );
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
       store.enterPlacePinMode('equipment-1');
 
       store.placePin([0.4, 0.6]);
@@ -657,7 +667,7 @@ describe('FacilityPlansStore', () => {
           totalItems: 1,
         }),
       );
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
 
       store.movePin('equipment-2', [0.1, 0.9]);
 
@@ -670,7 +680,7 @@ describe('FacilityPlansStore', () => {
 
     it('removePinFromPlan writes null attachment and coordinates', () => {
       mockEquipmentService.setPlanPosition.mockReturnValue(of(undefined));
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
 
       store.removePinFromPlan('equipment-1');
 
@@ -685,7 +695,7 @@ describe('FacilityPlansStore', () => {
       mockEquipmentService.setPlanPosition.mockReturnValue(
         throwError(() => apiError(409, 'raw backend detail', 'equipment_facility_required')),
       );
-      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      loadReadyPlan();
 
       store.removePinFromPlan('equipment-1');
 
@@ -698,7 +708,7 @@ describe('FacilityPlansStore', () => {
   it('keeps an accepted pin write active when the member submits twice', () => {
     const write = new Subject<EquipmentOutput>();
     mockEquipmentService.setPlanPosition.mockReturnValue(write);
-    store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+    loadReadyPlan();
     store.removePinFromPlan('equipment-1');
     store.removePinFromPlan('equipment-1');
     expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledTimes(1);
@@ -706,6 +716,113 @@ describe('FacilityPlansStore', () => {
     write.next(facilityEquipment());
     write.complete();
     expect(store.savePinPositionCallState().status).toBe('success');
+  });
+
+  describe('selection ownership', () => {
+    it('hides old bytes synchronously and waits for both current resources before editing', () => {
+      loadReadyPlan();
+      const oldUrl = store.planImageUrl();
+      const imageB = new Subject<Blob>();
+      const overlayB = new Subject<FacilityPlanOverlayOutput>();
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan(), plan({ id: 'plan-2' })],
+          totalItems: 2,
+        }),
+      );
+      store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
+      store.enterDrawZoneMode('zone-1');
+      store.addDraftVertex([0, 0]);
+      mockService.download.mockReturnValue(imageB);
+      mockFacilityService.getPlanOverlay.mockReturnValue(overlayB);
+
+      store.selectPlan('plan-2');
+      expect(store.planImageUrl()).toBeNull();
+      expect(store.overlay()).toBeNull();
+      expect(store.editMode()).toBe('none');
+      expect(store.draftPoints()).toEqual([]);
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(oldUrl);
+      TestBed.tick();
+      imageB.next(new Blob(['B']));
+      expect(store.selectedPlanReady()).toBe(false);
+      store.movePin('equipment-1', [0.2, 0.3]);
+      expect(mockEquipmentService.setPlanPosition).not.toHaveBeenCalled();
+      overlayB.next(overlay({ attachmentId: 'plan-2' }));
+      expect(store.selectedPlanReady()).toBe(true);
+      store.movePin('equipment-1', [0.2, 0.3]);
+      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith('org-1', 'equipment-1', {
+        attachmentId: 'plan-2',
+        x: 0.2,
+        y: 0.3,
+      });
+    });
+
+    it('cancels A reads through A-B-A and cancels reads when selection disappears', () => {
+      const imageA = new Subject<Blob>();
+      const overlayA = new Subject<FacilityPlanOverlayOutput>();
+      mockService.download.mockReturnValue(imageA);
+      mockFacilityService.getPlanOverlay.mockReturnValue(overlayA);
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan(), plan({ id: 'plan-2' })],
+          totalItems: 2,
+        }),
+      );
+      store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
+      TestBed.tick();
+      store.selectPlan('plan-2');
+      expect(imageA.observed).toBe(false);
+      expect(overlayA.observed).toBe(false);
+      const currentImage = new Subject<Blob>();
+      const currentOverlay = new Subject<FacilityPlanOverlayOutput>();
+      mockService.download.mockReturnValue(currentImage);
+      mockFacilityService.getPlanOverlay.mockReturnValue(currentOverlay);
+      store.selectPlan('plan-1');
+      TestBed.tick();
+      expect(currentImage.observed).toBe(true);
+      expect(currentOverlay.observed).toBe(true);
+      imageA.next(new Blob(['stale']));
+      overlayA.next(overlay());
+      expect(store.selectedPlanReady()).toBe(false);
+      store.reset();
+      expect(currentImage.observed).toBe(false);
+      expect(currentOverlay.observed).toBe(false);
+      currentImage.next(new Blob(['late']));
+      expect(store.planImageUrl()).toBeNull();
+      expect(store.overlay()).toBeNull();
+    });
+
+    it('keeps a failed selection uneditable and permits a fresh read', () => {
+      loadReadyPlan();
+      mockService.download.mockReturnValue(throwError(() => apiError(500, 'failed')));
+      store.loadImage({ attachmentId: 'plan-1' });
+      expect(store.selectedPlanReady()).toBe(false);
+      expect(store.planImageUrl()).toBeNull();
+      store.enterPlacePinMode('equipment-1');
+      store.removePinFromPlan('equipment-1');
+      expect(store.editMode()).toBe('none');
+      expect(mockEquipmentService.setPlanPosition).not.toHaveBeenCalled();
+      mockService.download.mockReturnValue(of(new Blob(['retry'])));
+      store.loadImage({ attachmentId: 'plan-1' });
+      expect(store.selectedPlanReady()).toBe(true);
+    });
+
+    it('does not settle a new facility editor when an old pin write completes', () => {
+      loadReadyPlan();
+      const write = new Subject<EquipmentOutput>();
+      mockEquipmentService.setPlanPosition.mockReturnValue(write);
+      store.movePin('equipment-1', [0.2, 0.3]);
+      store.load({ organizationId: 'org-2', facilityId: 'facility-2' });
+      TestBed.tick();
+      write.next(facilityEquipment());
+      write.complete();
+      expect(store.savePinPositionCallState().status).toBe('idle');
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+    });
   });
 
   describe('candidate lists', () => {
@@ -805,6 +922,175 @@ describe('FacilityPlansStore', () => {
         itemsPerPage: 200,
       });
       expect(store.facilityEquipment().map((item) => item.id)).toEqual(['equipment-1']);
+    });
+  });
+  describe('commands across replaced contexts', () => {
+    it('keeps uploads accepted in different facilities independent without installing the old plan', () => {
+      loadReadyPlan();
+      const first = new Subject<FacilityAttachmentOutput>();
+      const second = new Subject<FacilityAttachmentOutput>();
+      mockService.upload.mockReturnValueOnce(first).mockReturnValueOnce(second);
+      const file = new File(['plan'], 'plan.png', { type: 'image/png' });
+      store.upload({ facilityId: 'facility-1', file });
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan({ id: 'plan-b', facilityId: 'facility-2' })],
+          totalItems: 1,
+        }),
+      );
+      store.load({ organizationId: 'org-2', facilityId: 'facility-2' });
+      store.upload({ facilityId: 'facility-2', file });
+      expect(first.observed).toBe(true);
+      expect(mockService.upload).toHaveBeenCalledTimes(2);
+      first.next(plan({ id: 'old-upload' }));
+      expect(store.orderedPlans().map((entry) => entry.id)).toEqual(['plan-b']);
+      expect(store.uploadCallState().status).toBe('pending');
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+      second.next(plan({ id: 'new-upload', facilityId: 'facility-2' }));
+      expect(store.selectedPlan()?.id).toBe('new-upload');
+      expect(store.uploadCallState().status).toBe('success');
+    });
+
+    it('ignores old primary changes and removal failures after a facility replacement', () => {
+      loadReadyPlan();
+      const primary = new Subject<FacilityAttachmentOutput>();
+      const removal = new Subject<void>();
+      mockService.setPrimary.mockReturnValue(primary);
+      mockService.remove.mockReturnValue(removal);
+      store.setPrimary({ attachmentId: 'plan-1' });
+      store.remove({ attachmentId: 'plan-1', revision: 1 });
+      const planB = plan({ id: 'plan-b', facilityId: 'facility-2', isPrimaryPlan: true });
+      mockService.list.mockReturnValue(
+        of({ '@id': '', '@type': 'Collection', member: [planB], totalItems: 1 }),
+      );
+      store.load({ organizationId: 'org-2', facilityId: 'facility-2' });
+      primary.next(plan({ isPrimaryPlan: true }));
+      removal.error(apiError(409, 'old revision'));
+      expect(store.orderedPlans()).toEqual([planB]);
+      expect(store.primaryPlan()).toEqual(planB);
+      expect(store.setPrimaryCallState().status).toBe('idle');
+      expect(store.deleteCallState().status).toBe('idle');
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('accepts a pin move on a new selection while the previous selection write remains pending', () => {
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan(), plan({ id: 'plan-2' })],
+          totalItems: 2,
+        }),
+      );
+      store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
+      TestBed.tick();
+      const first = new Subject<EquipmentOutput>();
+      const second = new Subject<EquipmentOutput>();
+      mockEquipmentService.setPlanPosition.mockReturnValueOnce(first).mockReturnValueOnce(second);
+      store.movePin('equipment-1', [0.1, 0.2]);
+      store.selectPlan('plan-2');
+      TestBed.tick();
+      store.movePin('equipment-2', [0.3, 0.4]);
+      expect(first.observed).toBe(true);
+      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledTimes(2);
+      first.next(facilityEquipment());
+      expect(store.savePinPositionCallState().status).toBe('pending');
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+      second.next(facilityEquipment({ id: 'equipment-2' }));
+      expect(store.savePinPositionCallState().status).toBe('success');
+    });
+
+    it('accepts a new zone command after A to B to A and does not settle it with the first A result', () => {
+      mockService.list.mockReturnValue(
+        of({
+          '@id': '',
+          '@type': 'Collection',
+          member: [plan(), plan({ id: 'plan-2' })],
+          totalItems: 2,
+        }),
+      );
+      store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
+      TestBed.tick();
+      const first = new Subject<void>();
+      const second = new Subject<void>();
+      mockFacilityService.setPlanGeometry.mockReturnValueOnce(first).mockReturnValueOnce(second);
+      store.clearZoneGeometry('zone-1');
+      store.selectPlan('plan-2');
+      store.selectPlan('plan-1');
+      TestBed.tick();
+      store.clearZoneGeometry('zone-2');
+      expect(first.observed).toBe(true);
+      expect(mockFacilityService.setPlanGeometry).toHaveBeenCalledTimes(2);
+      first.error(apiError(409, 'old zone failure'));
+      expect(store.saveZoneGeometryCallState().status).toBe('pending');
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+      second.next();
+      expect(store.saveZoneGeometryCallState().status).toBe('success');
+    });
+
+    it('ignores duplicate upload requests without cancelling the accepted upload', () => {
+      loadReadyPlan();
+      const response = new Subject<FacilityAttachmentOutput>();
+      mockService.upload.mockReturnValue(response);
+      const file = new File(['plan'], 'plan.png', { type: 'image/png' });
+      store.upload({ facilityId: 'facility-1', file });
+      store.upload({ facilityId: 'facility-1', file });
+      expect(mockService.upload).toHaveBeenCalledOnce();
+      expect(response.observed).toBe(true);
+      expect(store.uploadCallState().status).toBe('pending');
+    });
+  });
+
+  describe('candidate context cancellation', () => {
+    it('cancels both candidate reads when the facility changes and permits retry in the new context', () => {
+      store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
+      const zones = new Subject<HydraCollection<FacilityOutput>>();
+      const equipment = new Subject<HydraCollection<EquipmentOutput>>();
+      mockFacilityService.listChildren.mockReturnValueOnce(zones);
+      mockEquipmentService.listByFacility.mockReturnValueOnce(equipment);
+      store.ensureZoneCandidatesLoaded();
+      store.ensureFacilityEquipmentLoaded();
+      store.reset();
+      store.load({ organizationId: 'org-2', facilityId: 'facility-2' });
+      expect(zones.observed).toBe(false);
+      expect(equipment.observed).toBe(false);
+      zones.next({ '@id': '', '@type': 'Collection', member: [zoneFacility()], totalItems: 1 });
+      equipment.next({
+        '@id': '',
+        '@type': 'Collection',
+        member: [facilityEquipment()],
+        totalItems: 1,
+      });
+      expect(store.zoneCandidates()).toEqual([]);
+      expect(store.facilityEquipment()).toEqual([]);
+      store.ensureZoneCandidatesLoaded();
+      store.ensureFacilityEquipmentLoaded();
+      expect(mockFacilityService.listChildren).toHaveBeenLastCalledWith('org-2', 'facility-2', {
+        itemsPerPage: 200,
+      });
+      expect(mockEquipmentService.listByFacility).toHaveBeenLastCalledWith('org-2', 'facility-2', {
+        itemsPerPage: 200,
+      });
+    });
+
+    it('keeps candidate loaders reusable after errors', () => {
+      store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
+      mockFacilityService.listChildren.mockReturnValueOnce(
+        throwError(() => apiError(500, 'offline')),
+      );
+      mockEquipmentService.listByFacility.mockReturnValueOnce(
+        throwError(() => apiError(500, 'offline')),
+      );
+      store.ensureZoneCandidatesLoaded();
+      store.ensureFacilityEquipmentLoaded();
+      expect(store.zoneCandidatesCallState().status).toBe('error');
+      expect(store.facilityEquipmentCallState().status).toBe('error');
+      store.ensureZoneCandidatesLoaded();
+      store.ensureFacilityEquipmentLoaded();
+      expect(store.zoneCandidatesCallState().status).toBe('success');
+      expect(store.facilityEquipmentCallState().status).toBe('success');
     });
   });
 });

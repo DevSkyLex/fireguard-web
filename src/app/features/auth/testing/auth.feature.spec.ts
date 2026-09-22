@@ -10,6 +10,7 @@ import { provideAuthFeature } from '../auth.feature';
 
 describe('provideAuthFeature', () => {
   const auth = {
+    sessionRevision: signal(3),
     accessToken: signal<string | null>('session-token'),
     isAuthenticated: signal(true),
     initialized: signal(false),
@@ -74,6 +75,7 @@ describe('provideAuthFeature', () => {
     configureAuth('browser', null);
     const session = TestBed.inject(AUTH_SESSION_PORT);
     const readiness = TestBed.inject(BOOT_READINESS_PORT);
+    expect(session.sessionRevision()).toBe(3);
     expect(session.accessToken()).toBe('session-token');
     expect(session.isAuthenticated()).toBe(true);
     expect(readiness.initialized()).toBe(false);

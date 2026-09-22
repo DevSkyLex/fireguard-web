@@ -1,5 +1,6 @@
 import {
   LOCALE_ID,
+  PLATFORM_ID,
   provideZonelessChangeDetection,
   signal,
   type WritableSignal,
@@ -45,6 +46,7 @@ const TYPES: ReadonlyArray<NotificationTypeOutput> = [
 describe('AccountNotificationsPage', () => {
   let fixture: ComponentFixture<AccountNotificationsPage>;
   let store: {
+    initialize: ReturnType<typeof vi.fn>;
     loadTypes: ReturnType<typeof vi.fn>;
     loadUnreadCount: ReturnType<typeof vi.fn>;
     load: ReturnType<typeof vi.fn>;
@@ -87,8 +89,13 @@ describe('AccountNotificationsPage', () => {
     await fixture.whenStable();
   };
 
-  beforeEach(async () => {
+  const configure = async (
+    platformId: 'browser' | 'server' = 'browser',
+    tab?: string,
+  ): Promise<void> => {
+    TestBed.resetTestingModule();
     store = {
+      initialize: vi.fn().mockResolvedValue(undefined),
       loadTypes: vi.fn(),
       loadUnreadCount: vi.fn(),
       load: vi.fn(),
@@ -124,6 +131,7 @@ describe('AccountNotificationsPage', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: LOCALE_ID, useValue: 'en-US' },
+        { provide: PLATFORM_ID, useValue: platformId },
         { provide: NotificationStore, useValue: store },
         {
           provide: InboxStore,
@@ -151,16 +159,42 @@ describe('AccountNotificationsPage', () => {
       .compileComponents();
 
     fixture = TestBed.createComponent(AccountNotificationsPage);
+    if (tab) fixture.componentRef.setInput('tab', tab);
     await fixture.whenStable();
+  };
+
+  beforeEach(async () => {
+    await configure();
   });
 
   it('should load the type catalog backing both panes', () => {
     expect(store.loadTypes).toHaveBeenCalled();
   });
 
-  it('should not refetch the feed the account provider already primed', () => {
+  it('should leave the notification feed lazy on the default inbox tab', () => {
+    expect(store.load).not.toHaveBeenCalled();
+    expect(store.initialize).not.toHaveBeenCalled();
+  });
+
+  it('should request the shared notification bootstrap when its tab activates', async () => {
+    fixture.componentRef.setInput('tab', 'notifications');
+    await fixture.whenStable();
+    expect(store.initialize).toHaveBeenCalledTimes(1);
     expect(store.load).not.toHaveBeenCalled();
   });
+
+  it.each(['inbox', 'notifications', 'preferences'])(
+    'should keep direct-link %s reads out of SSR',
+    async (tab) => {
+      await configure('server', tab);
+      expect(store.initialize).not.toHaveBeenCalled();
+      expect(store.load).not.toHaveBeenCalled();
+      expect(store.loadTypes).not.toHaveBeenCalled();
+      expect(store.loadUnreadCount).not.toHaveBeenCalled();
+      expect(preferencesStore.load).not.toHaveBeenCalled();
+      expect(TestBed.inject(InboxStore).ensureLoaded).not.toHaveBeenCalled();
+    },
+  );
 
   it('should open on the inbox when no tab is requested', () => {
     expect(fixture.componentInstance['activeTab']()).toBe('inbox');

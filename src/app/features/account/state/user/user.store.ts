@@ -1,10 +1,30 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import {
+  computed,
+  DestroyRef,
+  inject,
+  makeStateKey,
+  PLATFORM_ID,
+  TransferState,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { filter, firstValueFrom, pipe, switchMap, tap } from 'rxjs';
+import {
+  defer,
+  EMPTY,
+  filter,
+  finalize,
+  firstValueFrom,
+  Observable,
+  pipe,
+  shareReplay,
+  Subject,
+  switchMap,
+  takeUntil,
+} from 'rxjs';
 import { pickAvatarUrl } from '@core/api/utils';
 import { LocalePreferenceService } from '@core/locale';
 import {
@@ -253,174 +273,205 @@ export const UserStore = signalStore(
       localePreference = inject<LocalePreferenceService>(LocalePreferenceService),
       platformId = inject<object>(PLATFORM_ID),
       transferState = inject<TransferState>(TransferState),
-    ) => ({
-      //#region Reactive Methods
+      destroyRef = inject(DestroyRef),
+    ) => {
+      let generation = 0;
+      let profileRequest: Observable<UserProfileOutput> | null = null;
+      const invalidated = new Subject<void>();
+
       /**
-       * Method load
-       *
-       * @description
-       * Loads the current user profile from the account-owned `/api/me` endpoint.
-       * Idempotent: skips loading if already loading or successfully loaded.
-       * Uses switchMap to cancel previous requests if called multiple times.
-       *
+       * Function invalidateProfile
+       * @description Cancels reads superseded by a session purge or an authoritative profile.
+       * @access private
        * @since 1.0.0
+       * @returns {void}
        */
-      load: rxMethod<void>(
-        pipe(
-          filter(() => {
-            const callState: CallState<UserProfileOutput> = store.loadCallState();
-            return callState.status !== 'pending' && callState.status !== 'success';
+      const invalidateProfile = (): void => {
+        generation += 1;
+        profileRequest = null;
+        invalidated.next();
+        transferState.remove(USER_TRANSFER_KEY);
+      };
+
+      /**
+       * Function requestProfile
+       * @description Shares the current profile read between bootstrap and reactive consumers.
+       * @access private
+       * @since 1.0.0
+       * @returns {Observable<UserProfileOutput>} The current generation's profile response.
+       */
+      const requestProfile = (): Observable<UserProfileOutput> => {
+        if (profileRequest) return profileRequest;
+        const requestGeneration = generation;
+        const request = defer(() => {
+          if (requestGeneration !== generation) return EMPTY;
+          patchState(store, { loadCallState: pendingCallState(store.profile()) });
+          return userProfileService.getCurrentProfile();
+        }).pipe(
+          takeUntil(invalidated),
+          takeUntilDestroyed(destroyRef),
+          tapResponse({
+            next: (response: UserProfileOutput) => {
+              if (requestGeneration !== generation) return;
+              patchState(store, { profile: response, loadCallState: successCallState(response) });
+              if (!isPlatformBrowser(platformId)) transferState.set(USER_TRANSFER_KEY, response);
+              localePreference.applyPreference(response.locale);
+            },
+            error: (error: unknown) => {
+              if (requestGeneration !== generation) return;
+              const storeError = toStoreError(error);
+              patchState(store, { loadCallState: errorCallState(storeError, store.profile()) });
+              if (!isPlatformBrowser(platformId)) transferState.set(USER_TRANSFER_KEY, null);
+              dispatcher.dispatch(
+                userStoreEvents.loadFailed(
+                  toStoreFailureEventPayload(storeError, 'Failed to load user profile'),
+                ),
+              );
+            },
           }),
-          tap(() => {
-            patchState(store, { loadCallState: pendingCallState() });
+          finalize(() => {
+            if (profileRequest === request) profileRequest = null;
           }),
-          switchMap(() =>
-            userProfileService.getCurrentProfile().pipe(
-              tapResponse({
-                next: (response: UserProfileOutput) => {
-                  patchState(store, {
-                    profile: response,
-                    loadCallState: successCallState(response),
-                  });
-                  localePreference.applyPreference(response.locale);
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { loadCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    userStoreEvents.loadFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to load user profile'),
-                    ),
-                  );
-                },
-              }),
-            ),
+          shareReplay({ bufferSize: 1, refCount: true }),
+        );
+        profileRequest = request;
+        return request;
+      };
+
+      return {
+        //#region Reactive Methods
+        /**
+         * Method load
+         * @method load
+         *
+         * @description
+         * Loads the current user profile from the account-owned `/api/me` endpoint.
+         * Idempotent: skips loading if already loading or successfully loaded.
+         * Uses switchMap to cancel previous requests if called multiple times.
+         *
+         * @access public
+         * @since 1.0.0
+         * @returns {void}
+         */
+        load: rxMethod<void>(
+          pipe(
+            filter(() => {
+              const callState: CallState<UserProfileOutput> = store.loadCallState();
+              return callState.status !== 'pending' && callState.status !== 'success';
+            }),
+            switchMap(() => requestProfile()),
           ),
         ),
-      ),
-      //#endregion
+        //#endregion
 
-      //#region Synchronous Methods
-      /**
-       * Method reload
-       *
-       * @description
-       * Forces a reload of the user profile by resetting the operation state
-       * and triggering a new load.
-       *
-       * @since 1.0.0
-       */
-      reload(): void {
-        patchState(store, { loadCallState: idleCallState() });
-        this.load();
-      },
+        //#region Synchronous Methods
+        /**
+         * Method reload
+         * @method reload
+         *
+         * @description
+         * Forces a reload of the user profile by resetting the operation state
+         * and triggering a new load.
+         *
+         * @access public
+         * @since 1.0.0
+         * @returns {void}
+         */
+        reload(): void {
+          invalidateProfile();
+          patchState(store, { loadCallState: idleCallState() });
+          this.load();
+        },
 
-      /**
-       * Method setProfile
-       *
-       * @description
-       * Replaces the current authenticated-user profile with an authoritative
-       * profile response without issuing another API request, then reconciles
-       * its display-language preference with the active localized bundle.
-       *
-       * @since 1.0.0
-       *
-       * @param {UserProfileOutput} profile - Current user profile to store.
-       */
-      setProfile(profile: UserProfileOutput): void {
-        patchState(store, {
-          profile,
-          loadCallState: successCallState(profile),
-        });
-        localePreference.applyPreference(profile.locale);
-      },
+        /**
+         * Method setProfile
+         * @method setProfile
+         *
+         * @description
+         * Replaces the current authenticated-user profile with an authoritative
+         * profile response without issuing another API request, then reconciles
+         * its display-language preference with the active localized bundle. Invalidates older reads.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @param {UserProfileOutput} profile - Current user profile to store.
+         * @returns {void}
+         */
+        setProfile(profile: UserProfileOutput): void {
+          invalidateProfile();
+          patchState(store, {
+            profile,
+            loadCallState: successCallState(profile),
+          });
+          localePreference.applyPreference(profile.locale);
+        },
 
-      /**
-       * Method clear
-       *
-       * @description
-       * Clears the user profile.
-       * Should be called on logout.
-       *
-       * @since 1.0.0
-       */
-      clear(): void {
-        patchState(store, INITIAL_USER_STATE);
-      },
+        /**
+         * Method clear
+         * @method clear
+         *
+         * @description
+         * Cancels pending reads and clears the profile and unconsumed hydration handoff on logout.
+         *
+         * @access public
+         * @since 1.0.0
+         * @returns {void}
+         */
+        clear(): void {
+          invalidateProfile();
+          patchState(store, INITIAL_USER_STATE);
+        },
 
-      /**
-       * Method resetLoadOperation
-       *
-       * @description
-       * Resets the load operation state to idle.
-       *
-       * @since 1.0.0
-       */
-      resetLoadOperation(): void {
-        patchState(store, { loadCallState: idleCallState() });
-      },
+        /**
+         * Method resetLoadOperation
+         * @method resetLoadOperation
+         *
+         * @description
+         * Invalidates the current read and resets the load operation state to idle.
+         *
+         * @access public
+         * @since 1.0.0
+         * @returns {void}
+         */
+        resetLoadOperation(): void {
+          invalidateProfile();
+          patchState(store, { loadCallState: idleCallState() });
+        },
 
-      /**
-       * Method initialize
-       *
-       * @description
-       * Initializes the user profile using TransferState when available (browser
-       * after SSR hydration) to avoid a duplicate current-profile request.
-       * Falls back to a regular load() call if no transferred state is found.
-       *
-       * @since 1.0.0
-       *
-       * @returns {Promise<void>} Resolves when initialization is complete.
-       */
-      async initialize(): Promise<void> {
-        // Browser: consume the profile transferred from SSR to avoid a duplicate request.
-        if (isPlatformBrowser(platformId) && transferState.hasKey(USER_TRANSFER_KEY)) {
-          const transferred: UserProfileOutput | null = transferState.get(USER_TRANSFER_KEY, null);
-          transferState.remove(USER_TRANSFER_KEY);
+        /**
+         * Method initialize
+         * @method initialize
+         *
+         * @description
+         * Initializes the user profile using TransferState when available (browser
+         * after SSR hydration) to avoid a duplicate current-profile request.
+         * Shares an active profile read if no transferred state is found. Cancellation settles the wait.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @returns {Promise<void>} Resolves when initialization is complete.
+         */
+        async initialize(): Promise<void> {
+          if (store.loadCallState().status === 'success') return;
+          if (isPlatformBrowser(platformId) && transferState.hasKey(USER_TRANSFER_KEY)) {
+            const transferred: UserProfileOutput | null = transferState.get(
+              USER_TRANSFER_KEY,
+              null,
+            );
+            transferState.remove(USER_TRANSFER_KEY);
 
-          if (transferred) {
-            patchState(store, {
-              profile: transferred,
-              loadCallState: successCallState(transferred),
-            });
-            localePreference.applyPreference(transferred.locale);
-            return;
+            if (transferred) {
+              this.setProfile(transferred);
+              return;
+            }
           }
-
-          // Retry once in the browser when SSR could not load the profile.
-        }
-
-        // SSR or browser without transfer: fetch current profile and store result for hydration.
-        await firstValueFrom(
-          userProfileService.getCurrentProfile().pipe(
-            tapResponse({
-              next: (response: UserProfileOutput) => {
-                patchState(store, {
-                  profile: response,
-                  loadCallState: successCallState(response),
-                });
-                localePreference.applyPreference(response.locale);
-                // Store result for browser hydration (SSR only, no-op in browser).
-                transferState.set(USER_TRANSFER_KEY, response);
-              },
-              error: (error: unknown) => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { loadCallState: errorCallState(storeError) });
-                // Signal SSR failure to the browser.
-                transferState.set(USER_TRANSFER_KEY, null);
-                dispatcher.dispatch(
-                  userStoreEvents.loadFailed(
-                    toStoreFailureEventPayload(storeError, 'Failed to load user profile'),
-                  ),
-                );
-              },
-            }),
-          ),
-          { defaultValue: undefined },
-        );
-      },
-      //#endregion
-    }),
+          await firstValueFrom(requestProfile(), { defaultValue: undefined });
+        },
+        //#endregion
+      };
+    },
   ),
   //#endregion
 );

@@ -1,8 +1,15 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, pipe, Subject, switchMap, takeUntil } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -11,6 +18,7 @@ import {
   successCallState,
   toStoreError,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService } from '@features/organization/data-access';
 import {
@@ -18,6 +26,7 @@ import {
   type MemberDirectoryEntry,
   type OrganizationMemberOutput,
 } from '@features/organization/models';
+import { ActiveOrganizationStore } from '../active-organization';
 import type { MemberDirectoryState } from './models';
 import { toDirectoryEntry } from './utils';
 
@@ -70,48 +79,90 @@ export const MemberDirectoryStore = signalStore(
       store,
       service = inject(OrganizationMemberService),
       permissions = inject(OrganizationPermissionService),
+      authSession = inject(AUTH_SESSION_PORT),
     ) => {
+      const cancellation = new Subject<void>();
+      let generation = 0;
+      let sessionRevision = authSession.sessionRevision();
+      /**
+       * Function clear
+       * @description Drops names from a previous organization or session and cancels its directory read.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const clear = (): void => {
+        generation += 1;
+        cancellation.next();
+        patchState(store, INITIAL_STATE);
+      };
+      /**
+       * Function synchronizeSession
+       * @description Invalidates the cache before a caller can reuse it after a new login.
+       * @since 1.0.0
+       * @returns {void}
+       */
+      const synchronizeSession = (): void => {
+        const revision = authSession.sessionRevision();
+        if (revision !== sessionRevision || !authSession.isAuthenticated()) {
+          sessionRevision = revision;
+          clear();
+        }
+      };
       const load = rxMethod<string>(
         pipe(
-          tap((organizationId: string) =>
-            patchState(store, { organizationId, callState: pendingCallState() }),
-          ),
-          switchMap((organizationId: string) =>
-            service.listAll(organizationId).pipe(
+          switchMap((organizationId: string) => {
+            synchronizeSession();
+            if (!authSession.isAuthenticated()) return EMPTY;
+            const revision = authSession.sessionRevision();
+            const requestGeneration = ++generation;
+            patchState(store, {
+              organizationId,
+              byId: store.organizationId() === organizationId ? store.byId() : new Map(),
+              callState: pendingCallState(),
+            });
+            const isCurrent = (): boolean =>
+              requestGeneration === generation && revision === authSession.sessionRevision();
+            return service.listAll(organizationId).pipe(
+              takeUntil(cancellation),
               tapResponse({
                 next: (members: readonly OrganizationMemberOutput[]): void => {
+                  if (!isCurrent()) return;
                   patchState(store, {
                     byId: new Map<string, MemberDirectoryEntry>(
-                      members.map(
-                        (member: OrganizationMemberOutput): [string, MemberDirectoryEntry] => [
-                          member.id,
-                          toDirectoryEntry(member),
-                        ],
-                      ),
+                      members.map((member) => [member.id, toDirectoryEntry(member)]),
                     ),
                     callState: successCallState(null),
                   });
                 },
-                // Failure is silent by design: every consumer already renders
-                // correctly without a name, and a directory toast would fire on
-                // a surface the member did not ask for.
-                error: (error: unknown): void =>
-                  patchState(store, { callState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown): void => {
+                  if (isCurrent())
+                    patchState(store, { callState: errorCallState(toStoreError(error)) });
+                },
               }),
-            ),
-          ),
+            );
+          }),
         ),
       );
 
       return {
+        clear,
+        synchronizeSession,
         /**
          * Loads the directory for an organization unless it is already loaded
          * or loading for that same organization. A no-op without the
          * permission.
          */
         ensureLoaded(organizationId: string): void {
-          if (!permissions.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ)) return;
-          if (store.organizationId() === organizationId) return;
+          synchronizeSession();
+          if (!permissions.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ)) {
+            clear();
+            return;
+          }
+          if (
+            store.organizationId() === organizationId &&
+            ['pending', 'success'].includes(store.callState().status)
+          )
+            return;
 
           load(organizationId);
         },
@@ -137,6 +188,38 @@ export const MemberDirectoryStore = signalStore(
           if (!permissions.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ)) return;
 
           load(organizationId);
+        },
+      };
+    },
+  ),
+  withHooks(
+    (
+      store,
+      authSession = inject(AUTH_SESSION_PORT),
+      activeOrganization = inject(ActiveOrganizationStore),
+    ) => {
+      let previousOrganizationId = activeOrganization.selectedOrganizationId();
+      return {
+        onInit(): void {
+          effect(() => {
+            authSession.sessionRevision();
+            authSession.isAuthenticated();
+            const organizationId = activeOrganization.selectedOrganizationId();
+            const available = store.isAvailable();
+            untracked(() => {
+              if (
+                !available ||
+                (organizationId !== previousOrganizationId &&
+                  organizationId !== store.organizationId())
+              )
+                store.clear();
+              store.synchronizeSession();
+            });
+            previousOrganizationId = organizationId;
+          });
+        },
+        onDestroy(): void {
+          store.clear();
         },
       };
     },

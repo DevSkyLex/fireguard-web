@@ -1,8 +1,10 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
   effect,
   inject,
   makeEnvironmentProviders,
   provideAppInitializer,
+  PLATFORM_ID,
   untracked,
   type EnvironmentProviders,
 } from '@angular/core';
@@ -27,6 +29,7 @@ import { NotificationStore, UserStore } from '@features/account/state';
  *
  * @version 1.0.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @returns {EnvironmentProviders} Account ports and browser realtime initialization.
  *
  * @example
  * ```typescript
@@ -52,6 +55,7 @@ export function provideAccountFeature(): EnvironmentProviders {
       useExisting: NotificationStore,
     },
     provideAppInitializer((): void => {
+      if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
       /**
        * Constant userIdentityPort
        * @const userIdentityPort
@@ -81,18 +85,12 @@ export function provideAccountFeature(): EnvironmentProviders {
       const notificationCenterPort: NotificationCenterPort =
         inject<NotificationCenterPort>(NOTIFICATION_CENTER_PORT);
 
-      // Initialize the notification center if the user is already authenticated
       effect((): void => {
         if (!userIdentityPort.profile()) {
           return;
         }
 
-        untracked((): void => {
-          notificationCenterPort
-            .initialize()
-            .then((): void => notificationCenterPort.connectMercure())
-            .catch(() => undefined);
-        });
+        untracked((): void => notificationCenterPort.connectMercure());
       });
     }),
   ]);

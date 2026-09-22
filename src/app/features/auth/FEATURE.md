@@ -126,7 +126,21 @@ Primary services:
 - `applyPasswordRules`, `applyPasswordConfirmation`
 
 `AUTH_SESSION_PORT` is the stable boundary consumed by auth-owned infrastructure such as HTTP interceptors.
-It exposes the access token, initialization state, authenticated-session validity, and session clearing.
+It exposes the access token, initialization state, local session establishment, session revision, and session clearing.
+`sessionRevision` changes on session termination and every new establishment, including the same
+account signing in again; ordinary bearer renewal preserves it. Protected requests capture that
+revision before dispatch. A superseded request cannot renew, replay, clear, or navigate another session.
+
+`isAuthenticated` denotes an established, non-invalidated local session outside MFA. Bearer expiry
+alone does not end it: a 401 can renew it silently. `isTokenExpiringSoon()` evaluates time when called;
+it is not a reactive clock. Bootstrap, explicit refresh and interceptor renewal share one request per
+revision. Invalidating a session completes old waiters and cancels its token-producing reads without
+destroying the root store's command streams.
+A refused renewal first delivers `null` to its callers so the originating 401 can clear and
+navigate its own session. If no caller clears it, completion invalidates and purges that revision.
+Registration verification, federated callback exchanges and their page continuations capture the
+originating revision: a late result cannot establish a session after clearing or replacement.
+Reset cancels those reads without permanently destroying their reusable command streams.
 
 The password policy is published as a **rule set**, not only as constants: `features/account`'s
 change-password form owns the form but not the policy, and handing it the four numbers rather than

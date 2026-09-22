@@ -385,6 +385,9 @@ export const InterventionWorkspaceStore = signalStore(
       ),
       dispatcher = inject<Dispatcher>(Dispatcher),
     ) => {
+      let contextGeneration = 0;
+      const teamAssignments = new Set<number>();
+
       const fetchWorkspace = (interventionId: string) =>
         forkJoin({
           intervention: service.get(interventionId),
@@ -503,6 +506,7 @@ export const InterventionWorkspaceStore = signalStore(
        * @since 6.2.0
        */
       function load(interventionId: string): void {
+        contextGeneration += 1;
         const generation = store.loadGeneration() + 1;
         patchState(store, {
           contextId: interventionId,
@@ -1150,11 +1154,18 @@ export const InterventionWorkspaceStore = signalStore(
          */
         assignTeam: rxMethod<{ interventionId: string; input: AssignInterventionTeamInput }>(
           pipe(
-            tap(() => patchState(store, { assignTeamCallState: pendingCallState() })),
-            switchMap(({ interventionId, input }) =>
-              service.assignTeam(interventionId, input, store.intervention()?.revision).pipe(
+            mergeMap(({ interventionId, input }) => {
+              const generation = contextGeneration;
+              if (store.contextId() !== interventionId || teamAssignments.has(generation))
+                return EMPTY;
+              const current = (): boolean =>
+                store.contextId() === interventionId && contextGeneration === generation;
+              teamAssignments.add(generation);
+              patchState(store, { assignTeamCallState: pendingCallState() });
+              return service.assignTeam(interventionId, input, store.intervention()?.revision).pipe(
                 tapResponse({
                   next: (updatedIntervention: InterventionOutput): void => {
+                    if (!current()) return;
                     patchState(store, {
                       intervention: updatedIntervention,
                       assignTeamCallState: successCallState(null),
@@ -1168,6 +1179,7 @@ export const InterventionWorkspaceStore = signalStore(
                     );
                   },
                   error: (error: unknown): void => {
+                    if (!current()) return;
                     const storeError: StoreError = toStoreError(error);
                     const message: string =
                       storeError.code === 422
@@ -1190,8 +1202,9 @@ export const InterventionWorkspaceStore = signalStore(
                     if (storeError.code === 409) reload(interventionId);
                   },
                 }),
-              ),
-            ),
+                finalize(() => teamAssignments.delete(generation)),
+              );
+            }),
           ),
         ),
 

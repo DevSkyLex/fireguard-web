@@ -1878,7 +1878,80 @@ describe('InterventionsPage', () => {
       expect(page['recurrenceTarget']()).toEqual(row);
       page['closeRecurrenceSheet']();
       expect(page['recurrenceTarget']()).toBeNull();
-      expect(page['awaitingRecurrenceWrite']()).toBe(false);
+      expect(page['awaitingRecurrenceWrite']()).toBeNull();
+    });
+
+    it('keeps an edit pending when an independent row toggle succeeds', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const service = TestBed.inject(InterventionRecurrenceService);
+      const edit = new Subject<InterventionRecurrenceOutput>();
+      const toggle = new Subject<InterventionRecurrenceOutput>();
+      vi.mocked(service.update).mockReturnValueOnce(edit).mockReturnValueOnce(toggle);
+      const page = fixture.componentInstance;
+      const edited = recurrence({ id: 'edit-row' });
+      page['editRecurrence'](edited);
+      page['submitRecurrence']({ ...values, recurrenceId: edited.id });
+      page['toggleRecurrenceActive']({ recurrenceId: 'toggle-row', isActive: false });
+      toggle.next(recurrence({ id: 'toggle-row', isActive: false }));
+      toggle.complete();
+      await fixture.whenStable();
+      expect(page['recurrenceTarget']()).toEqual(edited);
+      expect(page['recurrencePending']()).toBe(true);
+      edit.next({ ...edited, name: values.name });
+      edit.complete();
+      await fixture.whenStable();
+      expect(page['recurrenceTarget']()).toBeNull();
+    });
+
+    it('keeps a replacement sheet open when the previous target succeeds', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const service = TestBed.inject(InterventionRecurrenceService);
+      const previous = new Subject<InterventionRecurrenceOutput>();
+      vi.mocked(service.update).mockReturnValueOnce(previous);
+      const page = fixture.componentInstance;
+      const first = recurrence({ id: 'first' });
+      const second = recurrence({ id: 'second' });
+      page['editRecurrence'](first);
+      page['submitRecurrence']({ ...values, recurrenceId: first.id });
+      page['closeRecurrenceSheet']();
+      page['editRecurrence'](second);
+      previous.next(first);
+      previous.complete();
+      await fixture.whenStable();
+      expect(page['recurrenceTarget']()).toEqual(second);
+      expect(page['recurrencePending']()).toBe(false);
+      expect(page['recurrenceServerError']()).toBeNull();
+    });
+
+    it('keeps a replacement delete confirmation open when an older deletion settles', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const service = TestBed.inject(InterventionRecurrenceService);
+      const previous = new Subject<void>();
+      vi.mocked(service.remove).mockReturnValueOnce(previous);
+      const page = fixture.componentInstance;
+      const second = recurrence({ id: 'second' });
+      page['requestRecurrenceDelete'](recurrence({ id: 'first' }));
+      page['confirmRecurrenceDelete']();
+      page['dismissRecurrenceDelete']();
+      page['requestRecurrenceDelete'](second);
+      previous.next();
+      previous.complete();
+      await fixture.whenStable();
+      expect(page['pendingRecurrenceDelete']()).toEqual(second);
+      expect(page['recurrenceRemovePending']()).toBe(false);
+    });
+
+    it('reloads recurrences and closes old targets when a reused page changes organization', async () => {
+      fixture = await createPage({ view: 'recurrences' });
+      const service = TestBed.inject(InterventionRecurrenceService);
+      const page = fixture.componentInstance;
+      page['editRecurrence'](recurrence());
+      page['requestRecurrenceDelete'](recurrence());
+      fixture.componentRef.setInput('organizationId', 'org-2');
+      await fixture.whenStable();
+      expect(service.list).toHaveBeenLastCalledWith('/api/organizations/org-2', undefined);
+      expect(page['recurrenceTarget']()).toBeNull();
+      expect(page['pendingRecurrenceDelete']()).toBeNull();
     });
 
     it('pauses and resumes a rule without changing its schedule', async () => {

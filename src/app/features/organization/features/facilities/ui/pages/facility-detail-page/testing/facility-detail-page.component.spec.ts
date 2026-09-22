@@ -330,6 +330,9 @@ describe('FacilityDetailPage', () => {
             useValue: {
               orderedPlans,
               selectedPlan,
+              selectedPlanKey: () => selectedPlan()?.id ?? null,
+              selectedPlanReady: signal(true),
+              reset: vi.fn(),
               planImageUrl,
               isLoading: plansLoading,
               listCallState: planListCallState,

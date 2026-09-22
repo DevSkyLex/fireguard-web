@@ -157,6 +157,15 @@ export class FederatedCallbackPage implements OnInit {
   private handled: boolean = false;
 
   /**
+   * Property callbackSessionRevision
+   * @description Session generation that initiated this callback exchange.
+   * @access private
+   * @since 1.0.0
+   * @type {number}
+   */
+  private callbackSessionRevision: number = this.authStore.sessionRevision();
+
+  /**
    * Property outcome
    * @readonly
    *
@@ -168,6 +177,11 @@ export class FederatedCallbackPage implements OnInit {
   private readonly outcome: EffectRef = effect((): void => {
     const result: LoginOutput | null = this.federatedStore.completeLoginResult();
     if (!result || this.handled) return;
+    if (this.callbackSessionRevision !== this.authStore.sessionRevision()) {
+      this.handled = true;
+      untracked(() => this.federatedStore.resetCompleteLogin());
+      return;
+    }
 
     this.handled = true;
     untracked((): void => {
@@ -204,6 +218,7 @@ export class FederatedCallbackPage implements OnInit {
    */
   public ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
+    this.callbackSessionRevision = this.authStore.sessionRevision();
 
     const provider = this.toProvider(this.route.snapshot.paramMap.get('provider'));
     const code = this.route.snapshot.queryParamMap.get('code');

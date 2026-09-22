@@ -1,4 +1,10 @@
-import { makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import {
+  makeStateKey,
+  PLATFORM_ID,
+  signal,
+  TransferState,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
@@ -12,12 +18,14 @@ import type {
   PasswordSetupChallengeOutput,
   PasswordSetupConfirmOutput,
 } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { FederatedReturnContextService } from '@features/auth/services';
 import { authStoreEvents } from '../../auth';
 import { FederatedAuthStore } from '../federated-auth.store';
 
 describe('FederatedAuthStore', () => {
   let store: FederatedAuthStore;
+  let sessionRevision: WritableSignal<number>;
   let service: {
     completeLink: ReturnType<typeof vi.fn>;
     completeLogin: ReturnType<typeof vi.fn>;
@@ -31,6 +39,7 @@ describe('FederatedAuthStore', () => {
   };
 
   beforeEach(() => {
+    sessionRevision = signal(0);
     service = {
       completeLink: vi.fn(),
       completeLogin: vi.fn(),
@@ -45,6 +54,7 @@ describe('FederatedAuthStore', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision } },
         { provide: FederatedAuthService, useValue: service },
       ],
     });
@@ -285,6 +295,7 @@ describe('FederatedAuthStore', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision } },
         { provide: FederatedAuthService, useValue: service },
       ],
     });
@@ -495,5 +506,36 @@ describe('FederatedAuthStore', () => {
     expect(store.connectionsCallState().status).toBe('idle');
     expect(store.startUrl()).toBeNull();
     expect(store.pendingProvider()).toBeNull();
+  });
+  it('ignores completion from a replaced session and can exchange another callback after reset', () => {
+    const previous = new Subject<LoginOutput>();
+    const result = {
+      '@id': '/api/auth/federated/google/complete',
+      '@type': 'Token',
+      access_token: 'new-token',
+    } as LoginOutput;
+    service.completeLogin.mockReturnValueOnce(previous).mockReturnValueOnce(of(result));
+    store.completeLogin({ provider: 'google', input: { code: 'old', state: 'old' } });
+    sessionRevision.set(1);
+    previous.next(result);
+    previous.complete();
+    expect(store.completeLoginResult()).toBeNull();
+    store.resetCompleteLogin();
+    store.completeLogin({ provider: 'google', input: { code: 'current', state: 'current' } });
+    expect(store.completeLoginResult()).toEqual(result);
+  });
+
+  it('cancels pending callback completion on session clear without destroying its stream', () => {
+    const previous = new Subject<LoginOutput>();
+    const current = new Subject<LoginOutput>();
+    service.completeLogin.mockReturnValueOnce(previous).mockReturnValueOnce(current);
+    store.completeLogin({ provider: 'google', input: { code: 'old', state: 'old' } });
+    TestBed.inject(Dispatcher).dispatch(authStoreEvents.sessionEnded());
+    expect(previous.observed).toBe(false);
+    expect(store.completeLoginCallState().status).toBe('idle');
+    store.completeLogin({ provider: 'google', input: { code: 'current', state: 'current' } });
+    previous.error(new Error('Obsolete'));
+    expect(current.observed).toBe(true);
+    expect(store.completeLoginCallState().status).toBe('pending');
   });
 });

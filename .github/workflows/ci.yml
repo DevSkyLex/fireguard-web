@@ -84,6 +84,8 @@ jobs:
     name: Unit and Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      sonar-coverage-ready: ${{ steps.coverage-ready.outputs.ready }}
 
     steps:
       - name: Checkout code
@@ -94,30 +96,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Run tests and enforce minimum line coverage
-        id: coverage
+      - name: Run tests and collect complete coverage
         run: |
-          npm run test:coverage -- \
+          npm run test:ci -- --coverage \
             --coverage-reporters=lcovonly \
             --coverage-reporters=json-summary \
             --coverage-reporters=text-summary
 
-      - name: Summarize line coverage
-        if: ${{ !cancelled() }}
-        run: |
-          node --input-type=module <<'NODE'
-          import { appendFileSync, readFileSync } from 'node:fs';
-          const { total: { lines } } = JSON.parse(readFileSync('coverage/fireguard-web/coverage-summary.json', 'utf8'));
-          const workspace = JSON.parse(readFileSync('angular.json', 'utf8'));
-          const minimum = workspace.projects['fireguard-web'].architect.test.configurations.coverage.coverageThresholds.lines;
-          const percentage = 100 * lines.covered / lines.total;
-          appendFileSync(process.env.GITHUB_STEP_SUMMARY,
-            `### Frontend coverage\n\nExecutable lines: **${percentage.toFixed(2)}%** (${lines.covered}/${lines.total}). Required: **${minimum}%**.\n`);
-          NODE
+      - name: Validate and summarize line coverage
+        run: node .github/scripts/coverage-threshold.mjs --report
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
         with:
           name: frontend-coverage
           path: |
@@ -125,6 +115,10 @@ jobs:
             coverage/fireguard-web/coverage-summary.json
           if-no-files-found: error
           retention-days: 14
+
+      - name: Mark same-run coverage ready for SonarQube
+        id: coverage-ready
+        run: echo 'ready=true' >> "$GITHUB_OUTPUT"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -136,6 +130,9 @@ jobs:
           verbose: true
         continue-on-error: true
 
+      - name: Enforce minimum line coverage
+        run: node .github/scripts/coverage-threshold.mjs --enforce
+
   # ==========================================================================
   # Production Build (strict templates, i18n locales, bundle budgets)
   # ==========================================================================
@@ -145,6 +142,8 @@ jobs:
     timeout-minutes: 25
     needs: tests-unit
     if: >-
+      always() &&
+      needs.tests-unit.outputs.sonar-coverage-ready == 'true' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     steps:

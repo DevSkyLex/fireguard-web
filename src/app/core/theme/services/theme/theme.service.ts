@@ -1,8 +1,11 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
+  afterNextRender,
   computed,
+  DestroyRef,
   effect,
   inject,
+  Injector,
   Service,
   PLATFORM_ID,
   signal,
@@ -21,8 +24,9 @@ import { isThemeMode } from '../../utils';
  * @description
  * SSR-compatible service for managing theme preferences.
  * Uses signals with effect() for reactive cookie synchronization.
+ * Explicit appearance changes use a circle-blur view transition when supported.
  *
- * @version 1.0.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -70,6 +74,34 @@ export class ThemeService {
    * @type {object}
    */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
+
+  /**
+   * Property injector
+   * @readonly
+   * @description Injection context for waiting until theme-dependent views have rendered.
+   * @access private
+   * @since 1.4.0
+   * @type {Injector}
+   */
+  private readonly injector: Injector = inject(Injector);
+
+  /**
+   * Property activeTransition
+   * @description Current theme animation, replaced when a newer choice arrives.
+   * @access private
+   * @since 1.4.0
+   * @type {ViewTransition | null}
+   */
+  private activeTransition: ViewTransition | null = null;
+
+  /**
+   * Property themeChangeId
+   * @description Prevents a skipped transition's deferred callback from applying an old choice.
+   * @access private
+   * @since 1.4.0
+   * @type {number}
+   */
+  private themeChangeId: number = 0;
 
   /**
    * Property THEME_COOKIE_NAME
@@ -153,6 +185,8 @@ export class ThemeService {
    * @since 1.0.0
    */
   public constructor() {
+    inject(DestroyRef).onDestroy(() => this.cancelThemeTransition());
+
     effect(() => {
       const currentTheme: ThemeMode = this.theme();
       if (isPlatformBrowser(this.platformId)) {
@@ -167,9 +201,10 @@ export class ThemeService {
   //#region Public Methods
   /**
    * Method switchTheme
+   * @method switchTheme
    *
    * @description
-   * Toggles between LIGHT and DARK theme.
+   * Toggles between LIGHT and DARK theme through the explicit appearance transition.
    *
    * @access public
    * @since 1.0.0
@@ -178,15 +213,17 @@ export class ThemeService {
    */
   public switchTheme(): void {
     const newTheme: ThemeMode = this.theme() === 'light' ? 'dark' : 'light';
-    this.theme.set(newTheme);
+    this.setTheme(newTheme);
   }
 
   /**
    * Method setTheme
+   * @method setTheme
    *
    * @description
-   * Sets the theme mode. Cookie is automatically
-   * persisted via effect().
+   * Sets the preference inside a native view transition, waiting for Angular's render
+   * before the new snapshot. SSR, reduced motion and unchanged appearances apply immediately.
+   * Cookie persistence and automatic system-theme updates remain driven by the effect.
    *
    * @access public
    * @since 1.0.0
@@ -196,7 +233,99 @@ export class ThemeService {
    * @returns {void} - Nothing.
    */
   public setTheme(mode: ThemeMode): void {
+    this.cancelThemeTransition();
+
+    if (this.resolveTheme(mode) === this.resolvedTheme() || !this.canAnimateThemeChange()) {
+      this.commitTheme(mode);
+      return;
+    }
+
+    const changeId: number = this.themeChangeId;
+    this.document.documentElement.setAttribute('data-theme-transition', 'circle-blur');
+
+    try {
+      const transition: ViewTransition = this.document.startViewTransition(() => {
+        if (changeId !== this.themeChangeId) return;
+
+        this.commitTheme(mode);
+        return new Promise<void>((resolve) => {
+          afterNextRender({ read: () => resolve() }, { injector: this.injector });
+        });
+      });
+      this.activeTransition = transition;
+
+      // Skipped or hidden-document transitions reject ready but still apply their update.
+      void transition.ready.catch(() => undefined);
+      void transition.finished.then(
+        () => this.finishThemeTransition(transition),
+        () => this.finishThemeTransition(transition),
+      );
+    } catch {
+      this.document.documentElement.removeAttribute('data-theme-transition');
+      this.commitTheme(mode);
+    }
+  }
+
+  /**
+   * Method canAnimateThemeChange
+   * @method canAnimateThemeChange
+   * @description Checks browser support, visibility and the current reduced-motion preference.
+   * @access private
+   * @since 1.4.0
+   * @returns {boolean} Whether an explicit appearance change can animate.
+   */
+  private canAnimateThemeChange(): boolean {
+    return (
+      isPlatformBrowser(this.platformId) &&
+      typeof this.document.startViewTransition === 'function' &&
+      this.document.visibilityState !== 'hidden' &&
+      !this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    );
+  }
+
+  /**
+   * Method commitTheme
+   * @method commitTheme
+   * @description Applies the preference and document colors together inside the snapshot update.
+   * @access private
+   * @since 1.4.0
+   * @param {ThemeMode} mode - Requested preference, including system mode.
+   * @returns {void} Nothing.
+   */
+  private commitTheme(mode: ThemeMode): void {
     this.theme.set(mode);
+    this.applyThemeToDocument(mode);
+  }
+
+  /**
+   * Method cancelThemeTransition
+   * @method cancelThemeTransition
+   * @description Invalidates pending updates and releases the previous animation's CSS scope.
+   * @access private
+   * @since 1.4.0
+   * @returns {void} Nothing.
+   */
+  private cancelThemeTransition(): void {
+    this.themeChangeId += 1;
+    this.activeTransition?.skipTransition();
+    this.activeTransition = null;
+    this.document.documentElement.removeAttribute('data-theme-transition');
+  }
+
+  /**
+   * Method finishThemeTransition
+   * @method finishThemeTransition
+   * @description Clears animation styles only when the finishing transition still owns them.
+   * @access private
+   * @since 1.4.0
+   * @param {ViewTransition} transition - Settled browser transition.
+   * @returns {void} Nothing.
+   */
+  private finishThemeTransition(transition: ViewTransition): void {
+    if (this.activeTransition !== transition) return;
+
+    this.activeTransition = null;
+    this.document.documentElement.removeAttribute('data-theme-transition');
   }
 
   /**

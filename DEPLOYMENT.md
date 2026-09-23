@@ -4,10 +4,10 @@ The Angular SSR frontend is built once and configured when the container starts.
 deploys production, while `develop` deploys the development environment on the same VPS
 as a separate Docker project.
 
-| GitHub environment | Branch | Domain | VPS directory | Docker project | Channel tag |
-| --- | --- | --- | --- | --- | --- |
-| `production` | `main` | `app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/production/front` | `fireguard-production-front` | `latest` |
-| `development` | `develop` | `dev.app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/development/front` | `fireguard-dev-front` | `develop` |
+| GitHub environment | Branch    | Domain                                  | VPS directory                           | Docker project               | Channel tag |
+| ------------------ | --------- | --------------------------------------- | --------------------------------------- | ---------------------------- | ----------- |
+| `production`       | `main`    | `app.fireguard.valentin-fortin.pro`     | `/srv/apps/fireguard/production/front`  | `fireguard-production-front` | `latest`    |
+| `development`      | `develop` | `dev.app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/development/front` | `fireguard-dev-front`        | `develop`   |
 
 Each image gets a `sha-<full commit>` tag and OCI labels identifying its repository
 and commit. Deployment always resolves the image to a `sha256` digest and verifies

@@ -11,20 +11,20 @@ live in the `FEATURE.md` files. The palette and interactions are governed by
 A skill provides a procedure; an agent carries out an independent, bounded responsibility.
 Having a specialist available does not make delegation mandatory.
 
-| Need | Skill or reference | Agent | Validation |
-| --- | --- | --- | --- |
-| Page/component | `spartan` + `fg-web-spartan` | `fg-web-component-builder` | Targeted tests, build for template changes, useful screenshots |
-| Native composition | `spartan` + `fg-web-spartan` | `fg-web-spartan-ui` | Desktop/mobile screenshots and affected themes |
-| Form / overlay / collection | Targeted `fg-web-spartan` reference | `fg-web-form-builder` / `fg-web-overlay-builder` / `fg-web-collection-builder` | Inputs/outputs, focus, and affected flows |
-| Directive / pipe / helper | `fg-web-directive` / `fg-web-pipe` / `fg-web-util` | `fg-web-directive-builder` / `fg-web-pipe-builder` / `fg-web-utils-builder` | Host/SSR behavior or pure inputs and outputs |
-| Ownership / routes | `fg-web-feature` | `fg-web-feature-builder` / `fg-web-routing-ssr-builder` | Boundaries, redirects, and SSR/hydration |
-| Transport / access / offline | `fg-web-service` | `fg-web-service-builder` / `fg-web-access-builder` / `fg-web-offline-sync-builder` | Wire mapping, access denial, replay/conflicts |
-| State | `fg-web-store` | `fg-web-signal-store` | Transitions, errors, and introduced races |
-| Tests | `fg-web-test` + `fg-web-quality` | `fg-web-web-test-writer` | Targeted `ng test`, then justified checks |
-| Browser | `fg-web-e2e` | `fg-web-e2e-runner` | Explicit SPA/harness/SSR/localized mode |
-| Architecture / accessibility / design | `fg-web-arch-review` / `fg-web-a11y` / design reference | `fg-web-architecture-reviewer` / `fg-web-a11y-auditor` / `fg-web-design-reviewer` | Evidence and limits; read-only |
-| API contract / i18n | `fg-web-service` API reference / [i18n](references/i18n-review.md) | `fg-web-api-contract-reviewer` / `fg-web-i18n-auditor` | Wire contracts / IDs and placeholders |
-| Requested second opinion | `fg-web-codex-challenge` | Targeted reviewer from the [catalog](references/agents.md) | Verified findings and stated independence |
+| Need                                  | Skill or reference                                                 | Agent                                                                              | Validation                                                     |
+| ------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Page/component                        | `spartan` + `fg-web-spartan`                                       | `fg-web-component-builder`                                                         | Targeted tests, build for template changes, useful screenshots |
+| Native composition                    | `spartan` + `fg-web-spartan`                                       | `fg-web-spartan-ui`                                                                | Desktop/mobile screenshots and affected themes                 |
+| Form / overlay / collection           | Targeted `fg-web-spartan` reference                                | `fg-web-form-builder` / `fg-web-overlay-builder` / `fg-web-collection-builder`     | Inputs/outputs, focus, and affected flows                      |
+| Directive / pipe / helper             | `fg-web-directive` / `fg-web-pipe` / `fg-web-util`                 | `fg-web-directive-builder` / `fg-web-pipe-builder` / `fg-web-utils-builder`        | Host/SSR behavior or pure inputs and outputs                   |
+| Ownership / routes                    | `fg-web-feature`                                                   | `fg-web-feature-builder` / `fg-web-routing-ssr-builder`                            | Boundaries, redirects, and SSR/hydration                       |
+| Transport / access / offline          | `fg-web-service`                                                   | `fg-web-service-builder` / `fg-web-access-builder` / `fg-web-offline-sync-builder` | Wire mapping, access denial, replay/conflicts                  |
+| State                                 | `fg-web-store`                                                     | `fg-web-signal-store`                                                              | Transitions, errors, and introduced races                      |
+| Tests                                 | `fg-web-test` + `fg-web-quality`                                   | `fg-web-web-test-writer`                                                           | Targeted `ng test`, then justified checks                      |
+| Browser                               | `fg-web-e2e`                                                       | `fg-web-e2e-runner`                                                                | Explicit SPA/harness/SSR/localized mode                        |
+| Architecture / accessibility / design | `fg-web-arch-review` / `fg-web-a11y` / design reference            | `fg-web-architecture-reviewer` / `fg-web-a11y-auditor` / `fg-web-design-reviewer`  | Evidence and limits; read-only                                 |
+| API contract / i18n                   | `fg-web-service` API reference / [i18n](references/i18n-review.md) | `fg-web-api-contract-reviewer` / `fg-web-i18n-auditor`                             | Wire contracts / IDs and placeholders                          |
+| Requested second opinion              | `fg-web-codex-challenge`                                           | Targeted reviewer from the [catalog](references/agents.md)                         | Verified findings and stated independence                      |
 
 Commands, prerequisites, and limits for each check are in the
 [validation matrix](references/validation.md).

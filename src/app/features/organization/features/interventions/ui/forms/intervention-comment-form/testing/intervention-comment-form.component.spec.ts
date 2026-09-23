@@ -204,7 +204,7 @@ describe('InterventionCommentForm', () => {
 
   it('dismisses a mention query with Escape and reopens suggestions after the query changes', async () => {
     await type('Notify @Ma');
-    expect(mentionOptions().length).toBe(1);
+    expect(mentionOptions()).toHaveLength(1);
 
     const escape = new KeyboardEvent('keydown', {
       key: 'Escape',
@@ -214,11 +214,11 @@ describe('InterventionCommentForm', () => {
     body().dispatchEvent(escape);
     await fixture.whenStable();
     expect(escape.defaultPrevented).toBe(true);
-    expect(mentionOptions().length).toBe(0);
+    expect(mentionOptions()).toHaveLength(0);
     expect(body().value).toBe('Notify @Ma');
 
     await type('Notify @Mar');
-    expect(mentionOptions().length).toBe(1);
+    expect(mentionOptions()).toHaveLength(1);
   });
 
   it('should insert the readable member name at the caret when a suggestion is picked', async () => {

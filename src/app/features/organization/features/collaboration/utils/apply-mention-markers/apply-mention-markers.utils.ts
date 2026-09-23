@@ -1,5 +1,4 @@
-/** Splits an HTML string into tags and the text between them. */
-const TAG_SPLIT = /(<[^>]*>)/;
+import { splitHtmlSegments } from '../split-html-segments/split-html-segments.utils';
 
 /**
  * Function applyMentionMarkers
@@ -45,16 +44,15 @@ export function applyMentionMarkers(html: string, mentions: ReadonlyMap<string, 
     (a: string, b: string): number => b.length - a.length,
   );
 
-  return html
-    .split(TAG_SPLIT)
-    .map((segment: string): string => {
-      if (segment.startsWith('<')) return segment;
+  return splitHtmlSegments(html)
+    .map(({ value, isTag }): string => {
+      if (isTag) return value;
 
       return labels.reduce((text: string, label: string): string => {
         const marker = `@{${mentions.get(label) ?? ''}}`;
 
         return text.replaceAll(`@${label}`, marker).replaceAll(`@${escapeText(label)}`, marker);
-      }, segment);
+      }, value);
     })
     .join('');
 }

@@ -207,6 +207,10 @@ const change = (overrides: Partial<InterventionChangeOutput> = {}): Intervention
 const inBody = (id: string): HTMLElement =>
   document.querySelector(`[data-testid="${id}"]`) as HTMLElement;
 
+const dispatchRecordShortcut = (options: KeyboardEventInit = {}): void => {
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', bubbles: true, ...options }));
+};
+
 /**
  * Stands in for the shell's `DashboardPageActions`. Discussion and the
  * "more actions" menu are registered as a `TemplateRef` on the real
@@ -273,6 +277,7 @@ describe('InterventionDetailPage', () => {
   let saving: WritableSignal<boolean>;
   let updateDetailsCallState: WritableSignal<CallState>;
   let workItemWriteCallState: WritableSignal<CallState>;
+  let attachmentWriteCallState: WritableSignal<CallState>;
   let loadError: WritableSignal<string | null>;
   let loadFailed: WritableSignal<boolean>;
   let hasOlderActivities: WritableSignal<boolean>;
@@ -348,6 +353,44 @@ describe('InterventionDetailPage', () => {
     expect(loadActivities).toHaveBeenCalledTimes(1);
   });
 
+  it('reconciles queued row changes locally and closes the edited effort without fetching activity', async () => {
+    fixture = await createPage();
+    const page = fixture.componentInstance;
+    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
+    const linked = fixture.debugElement.injector.get(InterventionLinkedResourcesStore);
+    const setOffline = vi.spyOn(queries, 'setOffline');
+    const reconcileWorkItem = vi.spyOn(queries, 'reconcileWorkItem');
+    const reconcileChange = vi.spyOn(queries, 'reconcileChange');
+    const removeWorkItems = vi.spyOn(queries, 'removeWorkItems');
+    const updatedItem = workItem({ status: 'completed' });
+    const proposedChange = change();
+    page['effortItem'].set({ item: updatedItem, mode: 'planning' });
+    loadActivities.mockClear();
+
+    TestBed.inject(Dispatcher).dispatch(
+      interventionWorkspaceStoreEvents.mutationSucceeded({
+        interventionId: 'intervention-1',
+        source: 'queued',
+        collections: ['workItems', 'changes', 'activity'],
+        workItem: updatedItem,
+        change: proposedChange,
+        deletedWorkItemIds: ['wi-2'],
+      }),
+    );
+
+    expect(setOffline).toHaveBeenCalledWith(true, false);
+    expect(reconcileWorkItem).toHaveBeenCalledExactlyOnceWith(updatedItem);
+    expect(reconcileChange).toHaveBeenCalledExactlyOnceWith(proposedChange);
+    expect(removeWorkItems).toHaveBeenCalledExactlyOnceWith('intervention-1', ['wi-2']);
+    expect(linked.invalidate).toHaveBeenCalledWith('intervention-1', [
+      'workItems',
+      'changes',
+      'activity',
+    ]);
+    expect(page['effortItem']()).toBeNull();
+    expect(loadActivities).not.toHaveBeenCalled();
+  });
+
   it('reloads the workspace before replay-invalidated queries and ignores a different intervention', async () => {
     fixture = await createPage();
     const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
@@ -376,6 +419,41 @@ describe('InterventionDetailPage', () => {
     expect(invalidated).toHaveBeenCalledWith('intervention-1', ['changes']);
   });
 
+  it('refreshes dependent collections after reconnecting before leaving offline query mode', async () => {
+    online.set(false);
+    fixture = await createPage();
+    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
+    const linked = fixture.debugElement.injector.get(InterventionLinkedResourcesStore);
+    const workspace = fixture.debugElement.injector.get(InterventionWorkspaceStore);
+    const queryOffline = vi.spyOn(queries, 'setOffline');
+    const queryInvalidated = vi.spyOn(queries, 'invalidate');
+    const linkedInvalidated = vi.mocked(linked.invalidate);
+    vi.mocked(workspace.loadAttachments).mockClear();
+    loadActivities.mockClear();
+    reload.mockClear();
+
+    online.set(true);
+    await fixture.whenStable();
+    expect(reload).toHaveBeenCalledExactlyOnceWith('intervention-1');
+    expect(queryOffline).toHaveBeenCalledWith(true, false);
+    expect(queryInvalidated).not.toHaveBeenCalled();
+
+    TestBed.inject(Dispatcher).dispatch(
+      interventionWorkspaceStoreEvents.reloadSucceeded({ interventionId: 'intervention-1' }),
+    );
+    expect(queryOffline).toHaveBeenLastCalledWith(false, false);
+    expect(queryInvalidated).toHaveBeenCalledWith(
+      'intervention-1',
+      expect.arrayContaining(['workItems', 'activity', 'attachments']),
+    );
+    expect(linkedInvalidated).toHaveBeenCalledWith(
+      'intervention-1',
+      expect.arrayContaining(['facilities', 'equipment', 'inspections']),
+    );
+    expect(loadActivities).toHaveBeenCalledExactlyOnceWith('intervention-1');
+    expect(workspace.loadAttachments).toHaveBeenCalledExactlyOnceWith('intervention-1');
+  });
+
   beforeAll(() => {
     globalThis.ResizeObserver ??= class {
       public observe(): void {}
@@ -396,6 +474,7 @@ describe('InterventionDetailPage', () => {
     saving = signal(false);
     updateDetailsCallState = signal<CallState>(idleCallState());
     workItemWriteCallState = signal<CallState>(idleCallState());
+    attachmentWriteCallState = signal<CallState>(idleCallState());
     loadError = signal<string | null>(null);
     loadFailed = signal(false);
     hasOlderActivities = signal(false);
@@ -550,7 +629,16 @@ describe('InterventionDetailPage', () => {
         },
         {
           provide: InterventionLabelService,
-          useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
+          useValue: {
+            list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            create: vi
+              .fn()
+              .mockReturnValue(of({ id: 'label-1', name: 'Urgent', color: '#ff0000' })),
+            update: vi
+              .fn()
+              .mockReturnValue(of({ id: 'label-1', name: 'Renamed', color: '#00ff00' })),
+            remove: vi.fn().mockReturnValue(of(undefined)),
+          },
         },
         { provide: BrowserDownloadService, useValue: { trigger: browserDownloadTrigger } },
         {
@@ -663,7 +751,7 @@ describe('InterventionDetailPage', () => {
               queuedAttachments: signal([]),
               removeQueuedAttachment: vi.fn(),
               attachmentsCallState: signal(idleCallState()),
-              attachmentWriteCallState: signal(idleCallState()),
+              attachmentWriteCallState,
               attachmentDeleteCallState: signal(idleCallState()),
               pendingAttachmentIds: signal(new Set<string>()),
               loadAttachments: vi.fn(),
@@ -717,14 +805,29 @@ describe('InterventionDetailPage', () => {
               equipmentQuery: signal({ search: '', type: null, status: null }),
               inspectionsQuery: signal({ search: '', status: null, result: null }),
               facilities: signal([]),
+              facilitiesCallState: signal({ data: null }),
               facilitiesLoading: signal(false),
+              facilitiesLoadingMore: signal(false),
+              facilitiesTotalItems: signal(0),
               facilitiesError: signal(null),
+              queryFacilities: vi.fn(),
+              loadMoreFacilities: vi.fn(),
               equipment: signal([]),
+              equipmentCallState: signal({ data: null }),
               equipmentLoading: signal(false),
+              equipmentLoadingMore: signal(false),
+              equipmentTotalItems: signal(0),
               equipmentError: signal(null),
+              queryEquipment: vi.fn(),
+              loadMoreEquipment: vi.fn(),
               inspections: signal([]),
+              inspectionsCallState: signal({ data: null }),
               inspectionsLoading: signal(false),
+              inspectionsLoadingMore: signal(false),
+              inspectionsTotalItems: signal(0),
               inspectionsError: signal(null),
+              queryInspections: vi.fn(),
+              loadMoreInspections: vi.fn(),
               ensureFacilitiesLoaded: vi.fn(),
               ensureEquipmentLoaded: vi.fn(),
               ensureInspectionsLoaded: vi.fn(),
@@ -1166,6 +1269,44 @@ describe('InterventionDetailPage', () => {
       });
     });
 
+    it('keeps signature submission recoverable after an unrelated upload and a failed signature upload', async () => {
+      current.set(intervention({ status: 'in_progress', hasSignature: false }));
+      workItems.set([workItem({ status: 'completed' })]);
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      (byTestId('intervention-detail-command') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      page['onSignatureCaptured'](new Blob(['signature'], { type: 'image/png' }));
+      page['onSignatureDismissed']();
+      expect(page['signingSubmitPending']()).toBe(true);
+      expect(page['signatureDialogVisible']()).toBe(true);
+      TestBed.inject(Dispatcher).dispatch(
+        interventionWorkspaceStoreEvents.attachmentUploadSucceeded({ attachment: attachment() }),
+      );
+      expect(transition).not.toHaveBeenCalled();
+
+      attachmentWriteCallState.set(
+        errorCallState({
+          error: null,
+          message: 'Signature upload failed',
+          code: null,
+          retryable: true,
+          timestamp: 0,
+        }),
+      );
+      await fixture.whenStable();
+      expect(page['signingSubmitPending']()).toBe(false);
+      expect(page['signatureDialogVisible']()).toBe(true);
+      expect(transition).not.toHaveBeenCalled();
+
+      page['onSignatureSkipped']();
+      expect(transition).toHaveBeenCalledExactlyOnceWith({
+        interventionId: 'intervention-1',
+        status: 'submitted',
+      });
+    });
+
     it('should submit directly without a dialog once already signed', async () => {
       current.set(intervention({ status: 'in_progress', hasSignature: true }));
       workItems.set([workItem({ status: 'completed' })]);
@@ -1504,6 +1645,69 @@ describe('InterventionDetailPage', () => {
       expect(navigate).not.toHaveBeenCalled();
       expect(root().querySelector('[data-testid="intervention-detail-next"]')).toBeNull();
     });
+
+    it('uses j/k for neighbouring records without intercepting typing in form controls', async () => {
+      orderedIds.set(['previous', 'intervention-1', 'next']);
+      fixture = await createPage();
+      const input = document.createElement('input');
+      const textarea = document.createElement('textarea');
+      const select = document.createElement('select');
+      root().append(input, textarea, select);
+
+      for (const control of [input, textarea, select]) {
+        control.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', bubbles: true }));
+        control.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', bubbles: true }));
+      }
+      expect(navigate).not.toHaveBeenCalled();
+
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', bubbles: true }));
+
+      expect(navigate).toHaveBeenNthCalledWith(
+        1,
+        ['/organizations', 'org-1', 'interventions', 'next'],
+        { queryParamsHandling: 'preserve' },
+      );
+      expect(navigate).toHaveBeenNthCalledWith(
+        2,
+        ['/organizations', 'org-1', 'interventions', 'previous'],
+        { queryParamsHandling: 'preserve' },
+      );
+    });
+
+    it('keeps record shortcuts inactive during editing, confirmation and modified key presses', async () => {
+      orderedIds.set(['previous', 'intervention-1', 'next']);
+      fixture = await createPage();
+
+      dispatchRecordShortcut({ ctrlKey: true });
+      dispatchRecordShortcut({ metaKey: true });
+      dispatchRecordShortcut({ altKey: true });
+      const alreadyHandled = new KeyboardEvent('keydown', {
+        key: 'j',
+        bubbles: true,
+        cancelable: true,
+      });
+      alreadyHandled.preventDefault();
+      document.dispatchEvent(alreadyHandled);
+
+      const page = fixture.componentInstance;
+      page['pendingConfirm'].set({ kind: 'deleteIntervention' });
+      dispatchRecordShortcut();
+      page['pendingConfirm'].set(null);
+      page['editState'].set({ open: 'priority', saving: null, failed: null, failure: null });
+      dispatchRecordShortcut();
+      page['editState'].set({ open: null, saving: null, failed: null, failure: null });
+      page['discussionSheetVisible'].set(true);
+      dispatchRecordShortcut();
+      page['discussionSheetVisible'].set(false);
+      expect(navigate).not.toHaveBeenCalled();
+
+      dispatchRecordShortcut();
+      expect(navigate).toHaveBeenCalledExactlyOnceWith(
+        ['/organizations', 'org-1', 'interventions', 'next'],
+        { queryParamsHandling: 'preserve' },
+      );
+    });
   });
 
   describe('in-place editing', () => {
@@ -1584,6 +1788,21 @@ describe('InterventionDetailPage', () => {
       expect(document.activeElement).toBe(focused);
     });
 
+    it('does not scroll the old intervention when a tab switch is overtaken by route navigation', async () => {
+      fixture = await createPage();
+      const main = document.createElement('main');
+      main.id = 'dashboard-main';
+      main.append(root());
+      main.scrollTo = vi.fn();
+
+      fixture.componentInstance['onLinkedTabActivated']('changes');
+      fixture.componentRef.setInput('interventionId', 'intervention-2');
+      await fixture.whenStable();
+
+      expect(main.scrollTo).not.toHaveBeenCalled();
+      expect(load).toHaveBeenCalledWith('intervention-2');
+    });
+
     it('should restore the loaded name after internal navigation and ignore another intervention', async () => {
       fixture = await createPage();
       const title = TestBed.inject(TitleService);
@@ -1643,6 +1862,35 @@ describe('InterventionDetailPage', () => {
         [],
         expect.objectContaining({ queryParams: { tab: null } }),
       );
+    });
+
+    it('loads each linked resource only when its tab is visited and queries applied changes after publication', async () => {
+      current.set(intervention({ status: 'published' }));
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const linked = fixture.debugElement.injector.get(InterventionLinkedResourcesStore);
+      const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
+      const changesActivated = vi.spyOn(queries, 'activateChanges');
+      expect(linked.ensureFacilitiesLoaded).not.toHaveBeenCalled();
+      expect(linked.ensureEquipmentLoaded).not.toHaveBeenCalled();
+      expect(linked.ensureInspectionsLoaded).not.toHaveBeenCalled();
+
+      page['onLinkedTabActivated']('changes');
+      await fixture.whenStable();
+      expect(changesActivated).toHaveBeenCalledWith('intervention-1', {
+        search: '',
+        status: 'applied',
+      });
+
+      page['onLinkedTabActivated']('facilities');
+      await fixture.whenStable();
+      expect(linked.ensureFacilitiesLoaded).toHaveBeenCalledExactlyOnceWith('intervention-1');
+      page['onLinkedTabActivated']('equipment');
+      await fixture.whenStable();
+      expect(linked.ensureEquipmentLoaded).toHaveBeenCalledExactlyOnceWith('intervention-1');
+      page['onLinkedTabActivated']('inspections');
+      await fixture.whenStable();
+      expect(linked.ensureInspectionsLoaded).toHaveBeenCalledExactlyOnceWith('intervention-1');
     });
   });
 
@@ -2194,7 +2442,98 @@ describe('InterventionDetailPage', () => {
     expect(fixture.componentInstance['operationsVisible']()).toBe(true);
   });
 
+  it('opens permitted secondary mobile actions only after a loaded intervention exists', async () => {
+    mobile.set(true);
+    permitted.add('organization.teams.read');
+    fixture = await createPage();
+    const page = fixture.componentInstance;
+
+    page['onMobileActionsClosed']('discussion');
+    expect(page['discussionSheetVisible']()).toBe(true);
+    page['onMobileActionsClosed']('team');
+    expect(page['teamAssignVisible']()).toBe(true);
+    page['onMobileActionsClosed']('delete');
+    expect(page['pendingConfirm']()).toEqual({ kind: 'deleteIntervention' });
+    expect(listDelete).not.toHaveBeenCalled();
+
+    current.set(null);
+    await fixture.whenStable();
+    page['pendingConfirm'].set(null);
+    page['teamAssignVisible'].set(false);
+    page['discussionSheetVisible'].set(false);
+    page['onMobileActionsClosed']('delete');
+    page['onMobileActionsClosed']('team');
+    page['onMobileActionsClosed']('discussion');
+    expect(page['pendingConfirm']()).toBeNull();
+    expect(page['teamAssignVisible']()).toBe(false);
+    expect(page['discussionSheetVisible']()).toBe(false);
+  });
+
+  it('defers a mobile request for changes until the drawer reports that it closed', async () => {
+    mobile.set(true);
+    current.set(intervention({ status: 'submitted' }));
+    fixture = await createPage();
+    const page = fixture.componentInstance;
+    const drawer = { close: vi.fn() };
+
+    page['onMobileTransitionSelected']('changes_requested', drawer as never);
+    expect(drawer.close).toHaveBeenCalledExactlyOnceWith('requestChanges');
+    expect(page['requestChangesVisible']()).toBe(false);
+    expect(transition).not.toHaveBeenCalled();
+
+    page['onMobileActionsClosed']('requestChanges');
+    expect(page['requestChangesVisible']()).toBe(true);
+    expect(transition).not.toHaveBeenCalled();
+
+    drawer.close.mockClear();
+    page['onMobileTransitionSelected']('draft', drawer as never);
+    expect(drawer.close).not.toHaveBeenCalled();
+    expect(transition).not.toHaveBeenCalled();
+  });
+
   describe('secondary workflow commands', () => {
+    it('refreshes label choices after a label is created, updated and removed in the manage dialog', async () => {
+      fixture = await createPage();
+      const service = TestBed.inject(InterventionLabelService);
+      const options = fixture.debugElement.injector.get(InterventionPlanningOptionsStore);
+      const grid = fixture.debugElement.query(By.css('app-intervention-properties-grid'));
+      grid.triggerEventHandler('manageLabelsRequested');
+      await fixture.whenStable();
+      expect(fixture.componentInstance['manageLabelsVisible']()).toBe(true);
+      expect(service.list).toHaveBeenCalledWith('/api/organizations/org-1');
+
+      const dialog = fixture.debugElement.query(By.css('app-intervention-label-manage-dialog'));
+      dialog.triggerEventHandler('created', { name: 'Urgent', color: '#ff0000' });
+      await fixture.whenStable();
+      expect(service.create).toHaveBeenCalledWith({
+        organization: '/api/organizations/org-1',
+        name: 'Urgent',
+        color: '#ff0000',
+      });
+      expect(options.loadWorkspaceOptions).toHaveBeenCalledWith('org-1');
+
+      vi.mocked(options.loadWorkspaceOptions).mockClear();
+      dialog.triggerEventHandler('updated', {
+        labelId: 'label-1',
+        name: 'Renamed',
+        color: '#00ff00',
+      });
+      await fixture.whenStable();
+      expect(service.update).toHaveBeenCalledWith('label-1', {
+        name: 'Renamed',
+        color: '#00ff00',
+      });
+      expect(options.loadWorkspaceOptions).toHaveBeenCalledWith('org-1');
+
+      vi.mocked(options.loadWorkspaceOptions).mockClear();
+      dialog.triggerEventHandler('removed', 'label-1');
+      await fixture.whenStable();
+      expect(service.remove).toHaveBeenCalledWith('label-1');
+      expect(options.loadWorkspaceOptions).toHaveBeenCalledWith('org-1');
+      dialog.triggerEventHandler('closed');
+      expect(fixture.componentInstance['manageLabelsVisible']()).toBe(false);
+    });
+
     it('retries selected resources and activity pages without changing the draft', async () => {
       current.set(intervention({ participants: ['/api/organizations/org-1/members/member-2'] }));
       fixture = await createPage();
@@ -2490,6 +2829,37 @@ describe('InterventionDetailPage', () => {
       expect(workItems()).toHaveLength(1);
       expect(setWorkItemStatus).not.toHaveBeenCalled();
     });
+
+    it('reveals a matched work item and hands keyboard focus back to the work list', async () => {
+      const matched = workItem({
+        targetSummary: {
+          resource: '/api/facilities/north-riser',
+          kind: 'facility',
+          label: 'North riser',
+        },
+      });
+      workItems.set([matched]);
+      vi.mocked(TestBed.inject(InterventionFieldExecutionService).scanToWorkItem).mockResolvedValue(
+        { kind: 'matched', item: matched },
+      );
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      page['setLinkedTab']('equipment');
+      const input = document.createElement('input');
+      Object.defineProperty(input, 'files', { value: [new File(['qr'], 'qr.jpg')] });
+
+      page['onScanFileSelected']({ target: input } as unknown as Event);
+      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await fixture.whenStable();
+
+      expect(page['activeLinkedTab']()).toBe('overview');
+      expect(page['scanProblem']()).toBeNull();
+      expect(TestBed.inject(FeedbackService).success).toHaveBeenCalledWith(
+        expect.stringContaining('North riser'),
+      );
+      expect(page['workItemTable']()?.['focusedItemId']()).toBe(matched.id);
+    });
   });
 
   it('refuses publication when the fresh server response removes the capability', async () => {
@@ -2501,6 +2871,106 @@ describe('InterventionDetailPage', () => {
     });
     vi.mocked(TestBed.inject(InterventionService).get).mockReturnValue(of(denied));
     await fixture.componentInstance['confirmPublish']();
+    expect(publish).not.toHaveBeenCalled();
+    expect(reload).toHaveBeenCalledWith('intervention-1');
+    expect(fixture.componentInstance['offlineBlockReason']()).toContain(
+      'Publication is unavailable',
+    );
+    expect(fixture.componentInstance['publicationPreparing']()).toBe(false);
+  });
+
+  it('blocks publication while local operations remain unsynchronized', async () => {
+    current.set(intervention({ status: 'submitted' }));
+    listOutbox.mockResolvedValue([
+      {
+        id: 'pending-offline-change',
+        interventionId: 'intervention-1',
+        type: 'comment.create',
+        payload: { body: 'Saved offline comment' },
+        createdAt: '2026-09-20T10:00:00Z',
+        status: 'pending',
+      },
+    ]);
+    fixture = await createPage();
+    listOutbox.mockClear();
+
+    await fixture.componentInstance['confirmPublish']();
+
+    expect(listOutbox).toHaveBeenCalledWith('intervention-1');
+    expect(publish).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['offlineBlockReason']()).toContain('local operations');
+    expect(fixture.componentInstance['publicationPreparing']()).toBe(false);
+  });
+
+  it('does not publish an old intervention after the route changes during synchronization', async () => {
+    current.set(intervention({ status: 'submitted' }));
+    let finishSync!: () => void;
+    const pendingSync = new Promise<void>((resolve) => {
+      finishSync = resolve;
+    });
+    vi.mocked(TestBed.inject(InterventionSyncCoordinatorService).syncIntervention).mockReturnValue(
+      pendingSync,
+    );
+    fixture = await createPage();
+    listOutbox.mockClear();
+
+    const publication = fixture.componentInstance['confirmPublish']();
+    fixture.componentRef.setInput('interventionId', 'intervention-2');
+    fixture.detectChanges();
+    finishSync();
+    await publication;
+
+    expect(listOutbox).not.toHaveBeenCalledWith('intervention-1');
+    expect(publish).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['publicationPreparing']()).toBe(false);
+  });
+
+  it('rechecks server blockers before publishing a previously ready intervention', async () => {
+    current.set(intervention({ status: 'submitted' }));
+    fixture = await createPage();
+    vi.mocked(TestBed.inject(InterventionService).listIssues).mockReturnValue(
+      of({
+        '@id': '/api/interventions/intervention-1/issues',
+        '@type': 'Collection',
+        member: [
+          {
+            '@id': '/api/issues/new-blocker',
+            '@type': 'InterventionIssue',
+            severity: 'blocker',
+            resource: '/api/facilities/facility-1',
+            field: null,
+            message: 'Fresh server blocker',
+          } as InterventionIssueOutput,
+        ],
+        totalItems: 1,
+      }),
+    );
+
+    await fixture.componentInstance['confirmPublish']();
+
+    expect(publish).not.toHaveBeenCalled();
+    expect(reload).toHaveBeenCalledWith('intervention-1');
+    expect(fixture.componentInstance['offlineBlockReason']()).toContain(
+      'Publication is unavailable',
+    );
+  });
+
+  it('refuses publication when the network drops during synchronization', async () => {
+    current.set(intervention({ status: 'submitted' }));
+    let finishSync!: () => void;
+    const pendingSync = new Promise<void>((resolve) => {
+      finishSync = resolve;
+    });
+    vi.mocked(TestBed.inject(InterventionSyncCoordinatorService).syncIntervention).mockReturnValue(
+      pendingSync,
+    );
+    fixture = await createPage();
+
+    const publication = fixture.componentInstance['confirmPublish']();
+    online.set(false);
+    finishSync();
+    await publication;
+
     expect(publish).not.toHaveBeenCalled();
     expect(reload).toHaveBeenCalledWith('intervention-1');
     expect(fixture.componentInstance['offlineBlockReason']()).toContain(

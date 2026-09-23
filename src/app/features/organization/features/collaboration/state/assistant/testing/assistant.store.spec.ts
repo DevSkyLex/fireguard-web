@@ -9,9 +9,11 @@ import type {
   AssistantFrame,
   AssistantMessageOutput,
   AssistantThreadDetailOutput,
+  AskAssistantQuestionOutput,
 } from '@features/organization/features/collaboration/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { AssistantStore, type AssistantStoreType } from '../assistant.store';
+import { ASSISTANT_SUBSCRIPTION_REFRESH_MS } from '../constants';
 
 /** A turn, with only the fields a test cares about spelled out. */
 function message(
@@ -169,6 +171,50 @@ describe('AssistantStore', () => {
     expect(service.ask).not.toHaveBeenCalled();
   });
 
+  it('keeps the question available after thread creation fails and permits retry', () => {
+    service.startThread.mockReturnValueOnce(throwError(() => new Error('Service unavailable')));
+    const store = createStore();
+
+    store.ask('first');
+    expect(store.askError()?.message).toBe('Service unavailable');
+    expect(store.threadId()).toBeNull();
+    expect(cookies.setCookie).not.toHaveBeenCalled();
+
+    store.ask('first');
+    expect(service.startThread).toHaveBeenCalledTimes(2);
+    expect(service.ask).toHaveBeenCalledTimes(1);
+    expect(store.askError()).toBeNull();
+    expect(store.messages()).toHaveLength(2);
+  });
+
+  it.each(['success', 'error'] as const)(
+    'ignores a late %s question response from the previous organization',
+    (outcome) => {
+      const pending = new Subject<AskAssistantQuestionOutput>();
+      service.ask.mockReturnValueOnce(pending.asObservable());
+      const store = createStore();
+      store.ask('first');
+      expect(store.isAsking()).toBe(true);
+
+      organization.set('org-2');
+      TestBed.tick();
+      if (outcome === 'success') {
+        pending.next({
+          threadId: 'thread-1',
+          organizationId: 'org-1',
+          userMessage: message('old-user', 'user'),
+          assistantMessage: message('old-reply', 'assistant'),
+        } as AskAssistantQuestionOutput);
+        pending.complete();
+      } else pending.error(new Error('Old request failed'));
+
+      expect(store.threadId()).toBeNull();
+      expect(store.messages()).toEqual([]);
+      expect(store.askError()).toBeNull();
+      expect(store.isAsking()).toBe(false);
+    },
+  );
+
   it('replaces the reply body from each frame and settles on complete', () => {
     const store: AssistantStoreType = createStore();
     store.ask('first');
@@ -223,6 +269,18 @@ describe('AssistantStore', () => {
 
     vi.advanceTimersByTime(2_000);
     expect(store.generationStalled()).toBe(true);
+  });
+
+  it('reports a stalled generation when the watchdog cannot verify the reply', () => {
+    const store = createStore();
+    store.ask('first');
+    service.getThread.mockReturnValueOnce(throwError(() => new Error('Network unavailable')));
+
+    vi.advanceTimersByTime(91_000);
+
+    expect(store.generationStalled()).toBe(true);
+    expect(store.generatingMessageId()).toBe('m-bot');
+    expect(store.messages()[1]?.status).toBe('pending');
   });
 
   it('keeps a cancelled attempt stopped and ignores late frames after retry', () => {
@@ -323,6 +381,61 @@ describe('AssistantStore', () => {
     expect(store.controlError()).not.toBeNull();
   });
 
+  it.each(['success', 'error'] as const)(
+    'ignores a late %s cancellation after changing organizations and drops duplicate controls',
+    (outcome) => {
+      cookies.getCookie.mockReturnValueOnce('thread-1');
+      const active = message('m-bot', 'assistant', {
+        status: 'streaming',
+        attemptId: 'a1',
+        canCancel: true,
+      });
+      service.getThread.mockReturnValue(of(detail([active], 1, 1)));
+      const pending = new Subject<AssistantMessageOutput>();
+      service.controlAttempt.mockReturnValueOnce(pending.asObservable());
+      const store = createStore();
+
+      store.dismissStalled();
+      store.dismissStalled();
+      expect(service.controlAttempt).toHaveBeenCalledTimes(1);
+
+      organization.set('org-2');
+      TestBed.tick();
+      if (outcome === 'success') {
+        pending.next({ ...active, status: 'cancelled', canCancel: false });
+        pending.complete();
+      } else pending.error(new Error('Old control failed'));
+
+      expect(store.threadId()).toBeNull();
+      expect(store.messages()).toEqual([]);
+      expect(store.controlError()).toBeNull();
+    },
+  );
+
+  it('waits for cancellation to finish before accepting another question', () => {
+    cookies.getCookie.mockReturnValueOnce('thread-1');
+    const active = message('m-bot', 'assistant', {
+      status: 'streaming',
+      attemptId: 'a1',
+      canCancel: true,
+    });
+    service.getThread.mockReturnValue(of(detail([active], 1, 1)));
+    const pending = new Subject<AssistantMessageOutput>();
+    service.controlAttempt.mockReturnValueOnce(pending.asObservable());
+    const store = createStore();
+
+    store.dismissStalled();
+    store.ask('new question');
+    expect(service.ask).not.toHaveBeenCalled();
+
+    pending.next({ ...active, status: 'cancelled', canCancel: false });
+    pending.complete();
+    store.ask('new question');
+    expect(service.ask).toHaveBeenCalledExactlyOnceWith('org-1', 'thread-1', {
+      body: 'new question',
+    });
+  });
+
   it('does not restore an old conversation after the organization changes', () => {
     cookies.getCookie.mockReturnValueOnce('thread-1');
     const pending = new Subject<AssistantThreadDetailOutput>();
@@ -360,6 +473,20 @@ describe('AssistantStore', () => {
     expect(store.hasEarlierMessages()).toBe(false);
   });
 
+  it('retries subscriber-token minting after a transient failure', () => {
+    cookies.getCookie.mockReturnValue('thread-1');
+    service.getSubscription.mockReturnValueOnce(throwError(() => new Error('Hub unavailable')));
+    const store = createStore();
+
+    vi.advanceTimersByTime(1);
+    expect(store.topic()).toBeNull();
+    expect(service.getSubscription).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(ASSISTANT_SUBSCRIPTION_REFRESH_MS);
+    expect(service.getSubscription).toHaveBeenCalledTimes(2);
+    expect(store.topic()).toBe('/t/thread-1');
+  });
+
   it('forgets a remembered thread the server no longer has', () => {
     cookies.getCookie.mockReturnValue('thread-gone');
     service.getThread.mockReturnValue(
@@ -378,6 +505,20 @@ describe('AssistantStore', () => {
     expect(cookies.deleteCookie).toHaveBeenCalledWith('fg-assistant-thread-org-1');
     expect(store.threadId()).toBeNull();
     expect(store.loadError()).toBeNull();
+  });
+
+  it('shows a retryable error when a remembered thread read fails', () => {
+    cookies.getCookie.mockReturnValue('thread-1');
+    service.getThread.mockReturnValueOnce(throwError(() => new Error('Network unavailable')));
+    const store = createStore();
+
+    expect(store.threadId()).toBe('thread-1');
+    expect(store.loadError()?.message).toBe('Network unavailable');
+    expect(cookies.deleteCookie).not.toHaveBeenCalled();
+
+    store.loadThread('thread-1');
+    expect(store.loadError()).toBeNull();
+    expect(store.threadCallState().status).toBe('success');
   });
 
   it('opens and closes the assistant sheet', () => {

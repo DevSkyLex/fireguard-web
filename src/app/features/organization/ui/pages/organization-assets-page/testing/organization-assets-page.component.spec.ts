@@ -533,6 +533,86 @@ describe('OrganizationAssetsPage', () => {
     expect(loadInspections).toHaveBeenCalledWith({ organizationId: 'org-1' });
   });
 
+  it('pages the selected site resources independently and retries in the same scope', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['onNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: facility(),
+    });
+    await fixture.whenStable();
+    loadEquipment.mockClear();
+    loadInspections.mockClear();
+
+    fixture.componentInstance['changePanePage']('equipment', 3);
+    expect(loadEquipment).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      page: 3,
+    });
+    expect(loadInspections).not.toHaveBeenCalled();
+
+    fixture.componentInstance['changePanePage']('inspections', 2);
+    expect(loadInspections).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      page: 2,
+    });
+    loadEquipment.mockClear();
+    loadInspections.mockClear();
+    fixture.componentInstance['retryPane']();
+    expect(loadEquipment).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
+    expect(loadInspections).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
+  });
+
+  it('does not load a resource the acting member cannot read when paging or retrying', async () => {
+    hasPermission.mockImplementation(
+      (permission: string) => permission === 'organization.equipment.read',
+    );
+    fixture = await createPage();
+    loadEquipment.mockClear();
+    loadInspections.mockClear();
+
+    fixture.componentInstance['changePanePage']('equipment', 2);
+    fixture.componentInstance['changePanePage']('inspections', 2);
+    fixture.componentInstance['retryPane']();
+
+    expect(loadEquipment).toHaveBeenCalledTimes(2);
+    expect(loadInspections).not.toHaveBeenCalled();
+  });
+
+  it('retries a failed compliance tree but does not query a summary without a selection', async () => {
+    fixture = await createPage();
+    loadTree.mockClear();
+    loadSummary.mockClear();
+
+    fixture.componentInstance['retryComplianceTree']();
+    fixture.componentInstance['retryComplianceSummary']();
+
+    expect(loadTree).toHaveBeenCalledExactlyOnceWith('org-1');
+    expect(loadSummary).not.toHaveBeenCalled();
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    await fixture.whenStable();
+    loadSummary.mockClear();
+    fixture.componentInstance['retryComplianceSummary']();
+    expect(loadSummary).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
+  });
+
   it('delegates branch expansion to the guarded tree store method', async () => {
     fixture = await createPage();
 

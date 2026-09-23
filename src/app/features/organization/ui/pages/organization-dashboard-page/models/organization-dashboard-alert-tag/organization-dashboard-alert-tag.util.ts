@@ -50,7 +50,7 @@ export function resolveOrganizationDashboardAlertTag(
 ): OrganizationDashboardAlertTagDescriptor {
   return (
     CODE[code] ?? {
-      label: code.replace(/_/g, ' '),
+      label: code.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideBellRing',
     }

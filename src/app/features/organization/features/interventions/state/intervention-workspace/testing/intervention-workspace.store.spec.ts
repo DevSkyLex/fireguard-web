@@ -586,6 +586,36 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     expect(store.activityCallState().status).toBe('error');
   });
 
+  it('treats an empty first activity page as the complete timeline', () => {
+    mockService.listActivities.mockReturnValueOnce(of({ totalItems: 5, member: [] }));
+
+    store.loadActivities('intervention-1');
+
+    expect(mockService.listActivities).toHaveBeenCalledTimes(1);
+    expect(store.activities()).toEqual([]);
+    expect(store.activityOldestPage()).toBe(1);
+    expect(store.activityCallState().status).toBe('success');
+  });
+
+  it('keeps the current activity page when loading older history fails', () => {
+    mockService.listActivities.mockImplementation((_id: string, page?: number) =>
+      page === 2
+        ? of({ totalItems: 3, member: [newest] })
+        : of({ totalItems: 3, member: [comment, comment] }),
+    );
+    store.loadActivities('intervention-1');
+    expect(store.activityOldestPage()).toBe(2);
+    mockService.listActivities.mockReturnValueOnce(
+      throwError(() => new Error('History unavailable')),
+    );
+
+    store.loadOlderActivities('intervention-1');
+
+    expect(store.activityCallState().status).toBe('error');
+    expect(store.activities()).toEqual([newest]);
+    expect(store.activityOldestPage()).toBe(2);
+  });
+
   it('invalidates activity through a typed event after a successful status transition', async () => {
     store.load('intervention-1');
     await vi.waitFor(() => expect(store.loading()).toBe(false));
@@ -854,6 +884,49 @@ describe('InterventionWorkspaceStore call state', () => {
     await vi.waitFor(() => expect(store.loading()).toBe(false));
     expect(store.intervention()?.id).toBe('B');
     expect(pending.observed).toBe(false);
+  });
+
+  it('ignores a reload for another intervention and keeps the current workspace ready', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loadCallState().status).toBe('success'));
+    mockService['get'].mockClear();
+
+    store.reload('intervention-2');
+
+    expect(mockService['get']).not.toHaveBeenCalled();
+    expect(store.contextId()).toBe('intervention-1');
+    expect(store.intervention()?.id).toBe('intervention-1');
+    expect(store.loadCallState().status).toBe('success');
+  });
+
+  it('ignores an issue refresh that finishes after the workspace changes', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loadCallState().status).toBe('success'));
+    const lateIssues = new Subject<{
+      member: readonly InterventionIssueOutput[];
+      totalItems: number;
+    }>();
+    mockService['listIssues'].mockReturnValueOnce(lateIssues);
+    mockService['update'].mockReturnValueOnce(
+      of({ ...intervention, status: 'in_progress', revision: 4 }),
+    );
+
+    store.transition({ interventionId: 'intervention-1', status: 'in_progress' });
+    expect(store.issuesCallState().status).toBe('pending');
+
+    mockService['get'].mockReturnValueOnce(of({ ...intervention, id: 'intervention-2' }));
+    mockService['listAllWorkItems'].mockReturnValueOnce(of([]));
+    store.load('intervention-2');
+    await vi.waitFor(() => expect(store.loadCallState().status).toBe('success'));
+    lateIssues.next({
+      member: [{ severity: 'blocker', message: 'Stale issue' } as InterventionIssueOutput],
+      totalItems: 1,
+    });
+    lateIssues.complete();
+
+    expect(store.intervention()?.id).toBe('intervention-2');
+    expect(store.issues()).toEqual([]);
+    expect(store.issuesCallState().status).toBe('success');
   });
 
   it('does not apply an accepted team assignment to a newer workspace or A-B-A visit', async () => {
@@ -1229,6 +1302,38 @@ describe('InterventionWorkspaceStore call state', () => {
     expect(store.intervention()).not.toBeNull();
     expect(store.error()).toBe('The intervention workspace could not be loaded.');
   });
+
+  it('accepts an empty work item deletion without a network write', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loadCallState().status).toBe('success'));
+
+    store.deleteWorkItems({ interventionId: 'intervention-1', workItems: [] });
+
+    expect(mockService['removeWorkItem']).not.toHaveBeenCalled();
+    expect(store.deleteWorkItemsCallState().status).toBe('success');
+    expect(store.workItems()).toEqual([workItem]);
+  });
+
+  it('does not apply a late work item deletion to a replacement workspace', async () => {
+    store.load('intervention-1');
+    await vi.waitFor(() => expect(store.loadCallState().status).toBe('success'));
+    const pendingDelete = new Subject<void>();
+    mockService['removeWorkItem'].mockReturnValueOnce(pendingDelete);
+    store.deleteWorkItems({ interventionId: 'intervention-1', workItems: [workItem] });
+    expect(store.deleteWorkItemsCallState().status).toBe('pending');
+
+    mockService['get'].mockReturnValueOnce(of({ ...intervention, id: 'intervention-2' }));
+    store.load('intervention-2');
+    await vi.waitFor(() => expect(store.loadCallState().status).toBe('success'));
+    const dispatchSpy = vi.spyOn(TestBed.inject(Dispatcher), 'dispatch');
+    pendingDelete.next(undefined);
+    pendingDelete.complete();
+
+    expect(store.intervention()?.id).toBe('intervention-2');
+    expect(store.workItems()).toEqual([workItem]);
+    expect(store.deleteWorkItemsCallState().status).toBe('idle');
+    expect(dispatchSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe('InterventionWorkspaceStore evidence upload', () => {
@@ -1587,6 +1692,29 @@ describe('InterventionWorkspaceStore offline attachment queue', () => {
       expect.objectContaining({ id: 'op-1', fileName: 'evidence.jpg' }),
     ]);
   });
+
+  it('keeps server attachments visible when reading the device outbox fails', async () => {
+    const attachment = { id: 'server-attachment', revision: 1 };
+    mockService['listAttachments'].mockReturnValueOnce(of({ totalItems: 1, member: [attachment] }));
+    mockOffline.listOutbox.mockRejectedValueOnce(new Error('IndexedDB unavailable'));
+
+    store.loadAttachments('intervention-1');
+
+    await vi.waitFor(() => expect(store.attachmentsCallState().status).toBe('success'));
+    expect(store.attachments()).toEqual([attachment]);
+    expect(store.queuedAttachments()).toEqual([]);
+  });
+
+  it('reports an outbox deletion failure and retains its queued attachment', async () => {
+    store.loadAttachments('intervention-1');
+    await vi.waitFor(() => expect(store.queuedAttachments()).toHaveLength(1));
+    mockOffline.removeOutbox.mockRejectedValueOnce(new Error('IndexedDB unavailable'));
+
+    store.removeQueuedAttachment(store.queuedAttachments()[0]);
+
+    await vi.waitFor(() => expect(store.attachmentDeleteCallState().status).toBe('error'));
+    expect(store.queuedAttachments()).toHaveLength(1);
+  });
 });
 
 describe('InterventionWorkspaceStore', () => {
@@ -1600,6 +1728,8 @@ describe('InterventionWorkspaceStore', () => {
     update: vi.fn(),
     updateWorkItem: vi.fn(),
     createWorkItem: vi.fn(),
+    updateChange: vi.fn(),
+    removeWorkItem: vi.fn(),
     listAttachments: vi.fn(),
     removeAttachment: vi.fn(),
   };
@@ -1638,6 +1768,8 @@ describe('InterventionWorkspaceStore', () => {
     service.update.mockReturnValue(of({ ...intervention, revision: 4 }));
     service.updateWorkItem.mockReturnValue(of({ ...workItem, revision: 2 }));
     service.createWorkItem.mockReturnValue(of({ ...workItem, id: 'new-work-item' }));
+    service.updateChange.mockReturnValue(of({ ...proposedChange, status: 'rejected' }));
+    service.removeWorkItem.mockReturnValue(of(undefined));
     service.listAttachments.mockReturnValue(of({ member: [], totalItems: 0 }));
     service.removeAttachment.mockReturnValue(of(undefined));
     TestBed.configureTestingModule({
@@ -1869,6 +2001,114 @@ describe('InterventionWorkspaceStore', () => {
     expect(service.updateWorkItem).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps one in-flight creation and appends only the accepted server work item', () => {
+    const pending = new Subject<InterventionWorkItemOutput>();
+    service.createWorkItem.mockReturnValueOnce(pending);
+    store.createWorkItem({
+      interventionId: intervention.id,
+      input: {
+        clientId: 'first-client-id',
+        intervention: intervention['@id'],
+        action: 'inventory',
+        source: 'discovered',
+        required: false,
+      },
+    });
+    store.createWorkItem({
+      interventionId: intervention.id,
+      input: {
+        clientId: 'second-client-id',
+        intervention: intervention['@id'],
+        action: 'inventory',
+        source: 'discovered',
+        required: false,
+      },
+    });
+
+    expect(service.createWorkItem).toHaveBeenCalledTimes(1);
+    expect(store.createWorkItemCallState().status).toBe('pending');
+
+    pending.next({ ...workItem, id: 'created-item' });
+    pending.complete();
+
+    expect(store.createWorkItemCallState().status).toBe('success');
+    expect(store.workItems().map((item) => item.id)).toEqual(['work-item-1', 'created-item']);
+    expect(store.intervention()?.workItemsCount).toBe(2);
+  });
+
+  it('ignores a creation result from an intervention that has since been replaced', async () => {
+    const pending = new Subject<InterventionWorkItemOutput>();
+    service.createWorkItem.mockReturnValueOnce(pending);
+    store.createWorkItem({
+      interventionId: intervention.id,
+      input: {
+        clientId: 'stale-client-id',
+        intervention: intervention['@id'],
+        action: 'inventory',
+        source: 'discovered',
+        required: false,
+      },
+    });
+
+    service.get.mockReturnValueOnce(
+      of({ ...intervention, id: 'replacement', '@id': '/api/interventions/replacement' }),
+    );
+    service.listAllWorkItems.mockReturnValueOnce(of([]));
+    store.load('replacement');
+    await vi.waitFor(() => expect(store.contextId()).toBe('replacement'));
+
+    pending.next({ ...workItem, id: 'stale-item' });
+    pending.complete();
+
+    expect(store.workItems()).toEqual([]);
+    expect(store.intervention()?.workItemsCount).toBe(1);
+    expect(store.createWorkItemCallState().status).toBe('idle');
+  });
+
+  it('queues a stable creation when the online request loses connectivity', async () => {
+    service.createWorkItem.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 0 })),
+    );
+    store.createWorkItem({
+      interventionId: intervention.id,
+      input: {
+        clientId: 'retryable-client-id',
+        intervention: intervention['@id'],
+        action: 'inventory',
+        source: 'discovered',
+        required: false,
+      },
+    });
+
+    await vi.waitFor(() => expect(store.createWorkItemCallState().status).toBe('success'));
+    expect(offline.queue).toHaveBeenCalledExactlyOnceWith(
+      intervention.id,
+      'work-item.create',
+      expect.objectContaining({ clientId: 'retryable-client-id' }),
+    );
+    expect(store.workItems().at(-1)?.id).toBe('retryable-client-id');
+  });
+
+  it('keeps the original workspace and skips the outbox for an authorization refusal', () => {
+    service.createWorkItem.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 403 })),
+    );
+    store.createWorkItem({
+      interventionId: intervention.id,
+      input: {
+        clientId: 'forbidden-client-id',
+        intervention: intervention['@id'],
+        action: 'inventory',
+        source: 'discovered',
+        required: false,
+      },
+    });
+
+    expect(store.createWorkItemCallState().status).toBe('error');
+    expect(store.workItems()).toEqual([workItem]);
+    expect(offline.queue).not.toHaveBeenCalled();
+  });
+
   it.each(['offline', 'network-failure'] as const)(
     'preserves an explicit transition revision and consent in the outbox after %s',
     async (mode) => {
@@ -1923,6 +2163,173 @@ describe('InterventionWorkspaceStore', () => {
     await vi.waitFor(() => expect(store.updateDetailsCallState().status).toBe('error'));
     expect(store.intervention()?.revision).toBe(3);
     expect(store.error()).toContain('could not be saved');
+  });
+
+  it('serializes planning dates and labels before queueing an offline edit', async () => {
+    connectivity.isOffline.mockReturnValue(true);
+    const plannedStartAt = new Date('2026-07-01T08:30:00.000Z');
+
+    store.updateDetails({
+      interventionId: intervention.id,
+      revision: 2,
+      input: { plannedStartAt, dueAt: null, labelIds: ['safety'], priority: 'urgent' },
+    });
+
+    await vi.waitFor(() => expect(store.updateDetailsCallState().status).toBe('success'));
+    expect(service.update).not.toHaveBeenCalled();
+    expect(offline.queue).toHaveBeenCalledExactlyOnceWith(intervention.id, 'intervention.update', {
+      plannedStartAt: plannedStartAt.toISOString(),
+      dueAt: null,
+      labelIds: ['safety'],
+      priority: 'urgent',
+      revision: 2,
+    });
+    expect(store.intervention()).toMatchObject({
+      plannedStartAt: plannedStartAt.toISOString(),
+      dueAt: null,
+      priority: 'urgent',
+      revision: 4,
+    });
+    expect(offline.saveWorkspace).toHaveBeenCalled();
+  });
+
+  it('does not apply a late planning response to a replacement intervention', async () => {
+    const pending = new Subject<InterventionOutput>();
+    service.update.mockReturnValueOnce(pending);
+    store.updateDetails({ interventionId: intervention.id, input: { priority: 'urgent' } });
+    service.get.mockReturnValueOnce(
+      of({ ...intervention, id: 'replacement', '@id': '/api/interventions/replacement' }),
+    );
+    store.load('replacement');
+    await vi.waitFor(() => expect(store.contextId()).toBe('replacement'));
+    dispatch.mockClear();
+
+    pending.next({ ...intervention, priority: 'urgent', revision: 4 });
+    pending.complete();
+
+    expect(store.intervention()?.id).toBe('replacement');
+    expect(store.intervention()?.priority).not.toBe('urgent');
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('queues a skipped task with its reason after a network drop and unlocks the row', async () => {
+    const pending = new Subject<InterventionWorkItemOutput>();
+    service.updateWorkItem.mockReturnValueOnce(pending);
+    const command = {
+      interventionId: intervention.id,
+      workItemId: workItem.id,
+      status: 'skipped' as const,
+      skipReason: 'Equipment unavailable',
+    };
+    store.setWorkItemStatus(command);
+    store.setWorkItemStatus(command);
+    expect(service.updateWorkItem).toHaveBeenCalledTimes(1);
+    expect(store.pendingWorkItemIds().has(workItem.id)).toBe(true);
+
+    pending.error(new HttpErrorResponse({ status: 0 }));
+
+    await vi.waitFor(() => expect(store.workItemWriteCallState().status).toBe('success'));
+    expect(offline.queue).toHaveBeenCalledExactlyOnceWith(intervention.id, 'work-item.update', {
+      workItemId: workItem.id,
+      status: 'skipped',
+      skipReason: 'Equipment unavailable',
+      revision: 1,
+    });
+    expect(store.workItems()[0]).toMatchObject({
+      status: 'skipped',
+      skipReason: 'Equipment unavailable',
+      revision: 2,
+    });
+    expect(store.pendingWorkItemIds().size).toBe(0);
+  });
+
+  it('keeps a status refusal on its task row and captures the workload review', () => {
+    service.updateWorkItem.mockReturnValueOnce(
+      throwError(() => ({ status: 409, detail: 'Review required', assessment })),
+    );
+
+    store.setWorkItemStatus({
+      interventionId: intervention.id,
+      workItemId: workItem.id,
+      status: 'completed',
+    });
+
+    expect(store.workItemWriteCallState().status).toBe('error');
+    expect(store.workItemErrors()[workItem.id]).toBeTruthy();
+    expect(store.planningConfirmation()?.kind).toBe('workItem');
+    expect(store.workItems()).toEqual([workItem]);
+    expect(store.pendingWorkItemIds().size).toBe(0);
+    expect(offline.queue).not.toHaveBeenCalled();
+  });
+
+  it('queues a proposed change rejection when the server connection drops', async () => {
+    service.listAllChanges.mockReturnValueOnce(of([proposedChange]));
+    store.load(intervention.id);
+    await vi.waitFor(() => expect(store.changes()).toHaveLength(1));
+    service.updateChange.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 0 })),
+    );
+
+    store.rejectChange({ interventionId: intervention.id, changeId: proposedChange.id });
+
+    await vi.waitFor(() => expect(store.rejectChangeCallState().status).toBe('success'));
+    expect(offline.queue).toHaveBeenCalledExactlyOnceWith(intervention.id, 'change.update', {
+      changeId: proposedChange.id,
+      status: 'rejected',
+      revision: 1,
+    });
+    expect(store.changes()[0]).toMatchObject({ status: 'rejected', revision: 2 });
+    expect(store.pendingChangeIds().size).toBe(0);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({ source: 'queued', collections: ['changes'] }),
+      }),
+    );
+  });
+
+  it('retains loaded attachments when the next server listing fails', async () => {
+    const attachment = { id: 'attachment-1', revision: 4 };
+    service.listAttachments.mockReturnValueOnce(of({ member: [attachment], totalItems: 1 }));
+    store.loadAttachments(intervention.id);
+    await vi.waitFor(() => expect(store.attachmentsCallState().status).toBe('success'));
+    service.listAttachments.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 500 })),
+    );
+
+    store.loadAttachments(intervention.id);
+
+    await vi.waitFor(() => expect(store.attachmentsCallState().status).toBe('error'));
+    expect(store.attachments()).toEqual([attachment]);
+  });
+
+  it('reports a missing offline snapshot after a network failure during reload', async () => {
+    service.get.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+
+    store.reload(intervention.id);
+
+    await vi.waitFor(() => expect(store.loadCallState().status).toBe('error'));
+    expect(offline.getWorkspace).toHaveBeenCalledWith(intervention.id);
+    expect(store.intervention()).toEqual(intervention);
+    expect(store.workItems()).toEqual([workItem]);
+  });
+
+  it('preserves planned tasks after a deletion refusal and permits retry', () => {
+    service.removeWorkItem.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 412 })),
+    );
+
+    store.deleteWorkItems({ interventionId: intervention.id, workItems: [workItem] });
+
+    expect(store.deleteWorkItemsCallState().status).toBe('error');
+    expect(store.workItems()).toEqual([workItem]);
+    expect(store.intervention()?.workItemsCount).toBe(1);
+
+    store.deleteWorkItems({ interventionId: intervention.id, workItems: [workItem] });
+
+    expect(service.removeWorkItem).toHaveBeenCalledTimes(2);
+    expect(store.deleteWorkItemsCallState().status).toBe('success');
+    expect(store.workItems()).toEqual([]);
+    expect(store.intervention()?.workItemsCount).toBe(0);
   });
 
   it('keeps a successful task write when the secondary issue refresh fails', () => {

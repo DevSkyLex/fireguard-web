@@ -5,6 +5,7 @@ import {
   DestroyRef,
   ElementRef,
   Injector,
+  OnInit,
   afterNextRender,
   untracked,
   computed,
@@ -146,7 +147,7 @@ export function redirectToStripe(documentRef: Document, url: string): void {
   templateUrl: './onboarding-wizard-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OnboardingWizardPage {
+export class OnboardingWizardPage implements OnInit {
   /**
    * Property addressSearch
    * @readonly
@@ -646,7 +647,6 @@ export class OnboardingWizardPage {
 
   //#region Lifecycle
   constructor() {
-    void this.store.initialize();
     let wasPending = false;
     effect(() => {
       const pending = this.stepPending();
@@ -746,6 +746,18 @@ export class OnboardingWizardPage {
       if (step.key === 'create_first_equipment' && this.facilitiesCallState().status === 'idle')
         untracked(() => this.loadFacilities());
     });
+  }
+
+  /**
+   * Method ngOnInit
+   * @method ngOnInit
+   * @description Loads the route-critical onboarding record after component creation.
+   * @access public
+   * @since 1.0.0
+   * @returns {void}
+   */
+  public ngOnInit(): void {
+    void this.store.initialize();
   }
   //#endregion
 

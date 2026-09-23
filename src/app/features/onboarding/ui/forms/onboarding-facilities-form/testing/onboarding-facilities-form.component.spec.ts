@@ -44,6 +44,14 @@ describe('OnboardingFacilitiesForm', () => {
   };
 
   beforeEach(async () => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = vi.fn();
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
     fixture = TestBed.createComponent(OnboardingFacilitiesForm);
@@ -51,6 +59,8 @@ describe('OnboardingFacilitiesForm', () => {
 
     element = fixture.nativeElement as HTMLElement;
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it('should refuse an empty submit and let the required-field errors name what is missing', async () => {
     const emitted: Array<readonly SetupCreateFacilityInput[]> = [];
@@ -268,5 +278,92 @@ describe('OnboardingFacilitiesForm', () => {
     await submit();
     expect(emitted).toEqual([]);
     expect(element.textContent).toContain('Select a suggested address.');
+  });
+
+  it('keeps completed restored rows immutable while a failed row remains editable', async () => {
+    const saved: SetupCreateFacilityInput = {
+      type: 'site',
+      name: 'Saved site',
+      address: '1 Main Street',
+      latitude: 48.8,
+      longitude: 2.3,
+    };
+    const failed: SetupCreateFacilityInput = {
+      type: 'building',
+      name: 'Retry building',
+      address: '2 Main Street',
+      latitude: 48.9,
+      longitude: 2.4,
+    };
+    fixture.componentRef.setInput('restored', [saved, failed]);
+    fixture.componentRef.setInput('completed', [{ ...saved }]);
+    fixture.componentRef.setInput('failed', ['Retry building']);
+    await fixture.whenStable();
+
+    const rows = element.querySelectorAll<HTMLLIElement>(
+      '[data-testid="onboarding-facilities-staged"] li',
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.textContent).toContain('Saved');
+    expect(rows[1]?.textContent).toContain('Needs retry');
+    expect(rows[0]?.querySelectorAll<HTMLButtonElement>('button:disabled')).toHaveLength(2);
+    expect(rows[1]?.querySelectorAll<HTMLButtonElement>('button:disabled')).toHaveLength(0);
+
+    (
+      element.querySelector('[data-testid="onboarding-facilities-remove-0"]') as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+    expect(element.textContent).toContain('Saved site');
+
+    (
+      element.querySelector('[data-testid="onboarding-facilities-remove-1"]') as HTMLButtonElement
+    ).click();
+    await fixture.whenStable();
+    expect(element.textContent).not.toContain('Retry building');
+  });
+
+  it('does not replace a staged row while another draft is invalid', async () => {
+    await setDraft({ type: 'site', name: 'Original site', address: '' });
+    (element.querySelector('[data-testid="onboarding-facility-add"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    const form = fixture.componentInstance as unknown as {
+      model: WritableSignal<OnboardingFacilityDraft>;
+      editFacility(index: number): void;
+    };
+    form.model.set({
+      type: '',
+      name: 'Unfinished replacement',
+      address: '',
+      city: '',
+      country: '',
+      postalCode: '',
+    });
+    await fixture.whenStable();
+    form.editFacility(0);
+    await fixture.whenStable();
+
+    expect(element.textContent).toContain('Original site');
+    expect(form.model().name).toBe('Unfinished replacement');
+    expect(element.textContent).toContain('Facility type is required.');
+  });
+
+  it('searches with the structured locality and leaves a confirmed address alone', async () => {
+    await setDraft({ type: 'site', name: 'HQ', address: '12 Quai des Docks' });
+    const searched: string[] = [];
+    fixture.componentInstance.addressSearched.subscribe((query) => searched.push(query));
+    const form = fixture.componentInstance as unknown as { searchAddress(query: string): void };
+
+    form.searchAddress('12 Quai des Docks');
+    expect(searched).toEqual([]);
+
+    form.searchAddress('34 Rue Neuve');
+    await fixture.whenStable();
+    expect(searched).toEqual(['34 Rue Neuve, Paris, France']);
+    expect(
+      (
+        fixture.componentInstance as unknown as { model: WritableSignal<OnboardingFacilityDraft> }
+      ).model().address,
+    ).toBe('');
   });
 });

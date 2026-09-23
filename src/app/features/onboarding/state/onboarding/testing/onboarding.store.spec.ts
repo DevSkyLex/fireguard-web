@@ -119,6 +119,7 @@ describe('OnboardingStore', () => {
     const previous = new Subject<OnboardingOutput>();
     mockOnboardingService.start.mockReturnValue(previous);
     const pending = store.initialize();
+    expect(mockOnboardingService.start).toHaveBeenCalledWith({ reset: false });
     store.clear();
     previous.next({ ...onboarding, targetOrganizationId: 'previous-creation' });
     await expect(pending).resolves.toBeUndefined();

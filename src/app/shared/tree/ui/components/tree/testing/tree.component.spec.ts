@@ -45,12 +45,26 @@ describe('Tree', () => {
     await fixture.whenStable();
   };
 
-  const dragEventOn = (id: string, type: string): DragEvent => {
+  const dragEventOn = (
+    id: string,
+    type: string,
+    options: {
+      dataTransfer?: DataTransfer | null;
+      clientY?: number;
+      relatedTarget?: EventTarget | null;
+    } = {},
+  ): DragEvent => {
     const event = new Event(type, { bubbles: true, cancelable: true });
     Object.defineProperty(event, 'currentTarget', { value: item(id), configurable: true });
-    Object.defineProperty(event, 'dataTransfer', { value: null, configurable: true });
-    Object.defineProperty(event, 'clientY', { value: 0, configurable: true });
-    Object.defineProperty(event, 'relatedTarget', { value: null, configurable: true });
+    Object.defineProperty(event, 'dataTransfer', {
+      value: options.dataTransfer ?? null,
+      configurable: true,
+    });
+    Object.defineProperty(event, 'clientY', { value: options.clientY ?? 0, configurable: true });
+    Object.defineProperty(event, 'relatedTarget', {
+      value: options.relatedTarget ?? null,
+      configurable: true,
+    });
     return event as unknown as DragEvent;
   };
 
@@ -109,6 +123,43 @@ describe('Tree', () => {
 
     await press('a', 'End');
     expect(focusable()).toEqual(['c']);
+  });
+
+  it('should retain the roving tab stop after a reorder and recover when that row disappears', async () => {
+    await create([node('a'), node('b'), node('c')]);
+
+    await press('a', 'ArrowDown');
+    expect(item('b')?.getAttribute('tabindex')).toBe('0');
+
+    fixture.componentRef.setInput('nodes', [node('c'), node('b'), node('a')]);
+    await fixture.whenStable();
+    expect(item('b')?.getAttribute('tabindex')).toBe('0');
+
+    fixture.componentRef.setInput('nodes', [node('c'), node('a')]);
+    await fixture.whenStable();
+    expect(item('c')?.getAttribute('tabindex')).toBe('0');
+    expect(root().querySelectorAll('[data-tree-id][tabindex="0"]')).toHaveLength(1);
+  });
+
+  it('should let a disclosure button toggle a branch without selecting its row', async () => {
+    await create([node('a', true)]);
+    const expanded: TreeNode<null>[] = [];
+    const selected: TreeNode<null>[] = [];
+    fixture.componentInstance.expandRequested.subscribe((n) => expanded.push(n));
+    fixture.componentInstance.selected.subscribe((n) => selected.push(n));
+
+    const toggle = item('a')?.querySelector<HTMLButtonElement>('[data-testid="tree-toggle"]');
+    expect(toggle?.getAttribute('aria-label')).toBe('Expand');
+    toggle?.click();
+    await fixture.whenStable();
+    expect(item('a')?.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle?.getAttribute('aria-label')).toBe('Collapse');
+
+    toggle?.click();
+    await fixture.whenStable();
+    expect(item('a')?.getAttribute('aria-expanded')).toBe('false');
+    expect(expanded.map((n) => n.id)).toEqual(['a']);
+    expect(selected).toEqual([]);
   });
 
   it('should emit expandRequested only when a node without loaded children is expanded', async () => {
@@ -272,6 +323,111 @@ describe('Tree', () => {
       await fixture.whenStable();
 
       expect(item('b')?.getAttribute('data-drag-over')).toBe('valid');
+    });
+
+    it('should ignore dragover before a tree drag begins and advertise valid and invalid native drop effects', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+      const transfer = {
+        setData: vi.fn(),
+        effectAllowed: 'uninitialized',
+        dropEffect: 'none',
+      } as unknown as DataTransfer;
+
+      const prematureOver = dragEventOn('b', 'dragover', { dataTransfer: transfer });
+      item('b')?.dispatchEvent(prematureOver);
+      await fixture.whenStable();
+      expect(prematureOver.defaultPrevented).toBe(false);
+      expect(item('b')?.getAttribute('data-drag-over')).toBeNull();
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragstart', { dataTransfer: transfer }));
+      expect(transfer.setData).toHaveBeenCalledWith('text/plain', 'a');
+      expect(transfer.effectAllowed).toBe('move');
+
+      const validOver = dragEventOn('b', 'dragover', { dataTransfer: transfer });
+      item('b')?.dispatchEvent(validOver);
+      await fixture.whenStable();
+      expect(validOver.defaultPrevented).toBe(true);
+      expect(transfer.dropEffect).toBe('move');
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragover', { dataTransfer: transfer }));
+      await fixture.whenStable();
+      expect(transfer.dropEffect).toBe('none');
+      expect(item('a')?.getAttribute('data-drag-over')).toBe('invalid');
+    });
+
+    it('should preserve a drop cue while entering a child element and clear it on leaving the row', async () => {
+      await create([node('a'), node('b', true)], { draggable: true });
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragover'));
+      await fixture.whenStable();
+
+      const toggle = item('b')?.querySelector('[data-testid="tree-toggle"]');
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragleave', { relatedTarget: toggle }));
+      await fixture.whenStable();
+      expect(item('b')?.getAttribute('data-drag-over')).toBe('valid');
+
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragleave'));
+      await fixture.whenStable();
+      expect(item('b')?.getAttribute('data-drag-over')).toBeNull();
+    });
+
+    it('should request unloaded children after a sustained hover, but cancel when the pointer leaves', async () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      try {
+        await create([node('a'), node('b', true)], { draggable: true });
+        const expanded: TreeNode<null>[] = [];
+        fixture.componentInstance.expandRequested.subscribe((n) => expanded.push(n));
+
+        item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+        item('b')?.dispatchEvent(dragEventOn('b', 'dragover'));
+        item('b')?.dispatchEvent(dragEventOn('b', 'dragleave'));
+        await vi.advanceTimersByTimeAsync(600);
+        await fixture.whenStable();
+        expect(item('b')?.getAttribute('aria-expanded')).toBe('false');
+        expect(expanded).toEqual([]);
+
+        item('b')?.dispatchEvent(dragEventOn('b', 'dragover'));
+        await vi.advanceTimersByTimeAsync(600);
+        await fixture.whenStable();
+        expect(item('b')?.getAttribute('aria-expanded')).toBe('true');
+        expect(expanded.map((n) => n.id)).toEqual(['b']);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('should not emit a drop if the dragged row disappeared before release', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+      const dropped = vi.fn();
+      fixture.componentInstance.nodeDropped.subscribe(dropped);
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+      fixture.componentRef.setInput('nodes', [node('b')]);
+      await fixture.whenStable();
+      item('b')?.dispatchEvent(dragEventOn('b', 'drop'));
+      await fixture.whenStable();
+
+      expect(dropped).not.toHaveBeenCalled();
+    });
+
+    it('should scroll the nearest overflowing ancestor only when hovering near its top or bottom edge', async () => {
+      await create([node('a'), node('b')], { draggable: true });
+      const container = root();
+      const scrollBy = vi.fn();
+      container.style.overflowY = 'auto';
+      Object.defineProperty(container, 'scrollHeight', { value: 500, configurable: true });
+      Object.defineProperty(container, 'clientHeight', { value: 100, configurable: true });
+      Object.defineProperty(container, 'scrollBy', { value: scrollBy, configurable: true });
+      vi.spyOn(container, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 100, 100, 100));
+
+      item('a')?.dispatchEvent(dragEventOn('a', 'dragstart'));
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragover', { clientY: 105 }));
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragover', { clientY: 195 }));
+      item('b')?.dispatchEvent(dragEventOn('b', 'dragover', { clientY: 150 }));
+
+      expect(scrollBy).toHaveBeenCalledTimes(2);
+      expect(scrollBy).toHaveBeenNthCalledWith(1, { top: -24 });
+      expect(scrollBy).toHaveBeenNthCalledWith(2, { top: 24 });
     });
 
     it('should expose the drop cue icon to assistive tech while a row is dragged over', async () => {

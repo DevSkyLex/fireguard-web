@@ -13,7 +13,7 @@ import {
   FormField,
   disabled,
   required,
-  pattern,
+  validate,
   type FieldTree,
 } from '@angular/forms/signals';
 import { HlmButton } from '@shared/ui/button';
@@ -72,8 +72,14 @@ export class OrganizationDomainForm {
     required(path.domain, {
       message: $localize`:@@org.access.domainRequired:Enter your company domain.`,
     });
-    pattern(path.domain, /^[^\s/@:]+\.[^\s/@:]+$/, {
-      message: $localize`:@@org.access.domainInvalid:Enter a domain such as company.com, without https:// or an email address.`,
+    validate(path.domain, ({ value }) => {
+      const domain = value();
+      const separator = domain.indexOf('.', 1);
+      if (separator > 0 && separator < domain.length - 1 && !/[\s/@:]/u.test(domain)) return null;
+      return {
+        kind: 'pattern',
+        message: $localize`:@@org.access.domainInvalid:Enter a domain such as company.com, without https:// or an email address.`,
+      };
     });
   });
   /**

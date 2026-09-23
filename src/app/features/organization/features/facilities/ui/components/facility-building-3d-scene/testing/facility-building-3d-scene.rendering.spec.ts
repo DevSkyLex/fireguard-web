@@ -1,4 +1,9 @@
-import { PLATFORM_ID, provideZonelessChangeDetection, signal } from '@angular/core';
+import {
+  PLATFORM_ID,
+  provideZonelessChangeDetection,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Mesh, type Intersection, type Object3D } from 'three';
 import { THEME_PORT, type ThemePort } from '@core/theme';
@@ -121,6 +126,7 @@ describe('FacilityBuilding3dScene', () => {
   let disconnect: ReturnType<typeof vi.fn<() => void>>;
   let observe: ReturnType<typeof vi.fn<(element: Element) => void>>;
   let theme: ThemePort;
+  let resolvedTheme: WritableSignal<'light' | 'dark'>;
 
   /**
    * Function mount
@@ -180,9 +186,10 @@ describe('FacilityBuilding3dScene', () => {
         public readonly disconnect = disconnect;
       },
     );
+    resolvedTheme = signal<'light' | 'dark'>('light');
     theme = {
       theme: signal('light'),
-      resolvedTheme: signal<'light' | 'dark'>('light'),
+      resolvedTheme,
       setTheme: vi.fn(),
     };
     TestBed.configureTestingModule({
@@ -245,6 +252,24 @@ describe('FacilityBuilding3dScene', () => {
     expect(disposed).toHaveBeenCalledTimes(1);
     expect(outline?.parent).toBeNull();
     expect(material).toMatchObject({ opacity: 1 });
+  });
+
+  it('rebuilds the palette on theme changes while retaining the active room and floor isolation', async () => {
+    await mount();
+    const scene = fixture.componentInstance;
+    fixture.componentRef.setInput('selectedRoomId', 'room-0');
+    fixture.componentRef.setInput('isolatedFloorId', 'floor-0');
+    await fixture.whenStable();
+    const previousRoom = sceneObject(scene['roomMeshes'].get('room-0'));
+    const disposed = vi.spyOn(previousRoom.geometry, 'dispose');
+
+    resolvedTheme.set('dark');
+    await fixture.whenStable();
+
+    expect(disposed).toHaveBeenCalledTimes(1);
+    expect(scene['roomMeshes'].get('room-0')).not.toBe(previousRoom);
+    expect(scene['selectedRoomOutline']?.parent).toBe(scene['roomMeshes'].get('room-0')?.parent);
+    expect(scene['roomMeshes'].get('room-1')?.material).toMatchObject({ opacity: 0.15 });
   });
 
   it('finishes a bounded exploded-layout animation and resets the camera on demand', async () => {
@@ -311,6 +336,32 @@ describe('FacilityBuilding3dScene', () => {
     expect(backgroundActivated).toHaveBeenCalledTimes(1);
   });
 
+  it('excludes a non-isolated floor from activation until isolation is cleared', async () => {
+    const canvas = await mount();
+    const scene = fixture.componentInstance;
+    const roomActivated = vi.fn();
+    const backgroundActivated = vi.fn();
+    scene.roomActivated.subscribe(roomActivated);
+    scene.backgroundActivated.subscribe(backgroundActivated);
+    const raycast = vi
+      .spyOn(sceneObject(scene['raycaster']), 'intersectObjects')
+      .mockReturnValue([hit(sceneObject(scene['roomMeshes'].get('room-1')))]);
+
+    fixture.componentRef.setInput('isolatedFloorId', 'floor-0');
+    await fixture.whenStable();
+    canvas.dispatchEvent(new MouseEvent('pointerdown'));
+    canvas.dispatchEvent(new MouseEvent('pointerup'));
+    expect(backgroundActivated).toHaveBeenCalledOnce();
+    expect(roomActivated).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('isolatedFloorId', null);
+    await fixture.whenStable();
+    raycast.mockReturnValue([hit(sceneObject(scene['roomMeshes'].get('room-1')))]);
+    canvas.dispatchEvent(new MouseEvent('pointerdown'));
+    canvas.dispatchEvent(new MouseEvent('pointerup'));
+    expect(roomActivated).toHaveBeenCalledExactlyOnceWith('room-1');
+  });
+
   it('coalesces hover raycasts and emits only changed room identities', async () => {
     const canvas = await mount();
     frame();
@@ -373,5 +424,20 @@ describe('FacilityBuilding3dScene', () => {
     fixture.destroy();
     expect(graphics.dispose).toHaveBeenCalledTimes(1);
     expect(graphics.controlsDispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps an empty building renderable without trying to frame missing geometry', async () => {
+    const canvas = await mount();
+    const scene = fixture.componentInstance;
+    fixture.componentRef.setInput('model', { ...MODEL, floors: [] });
+    await fixture.whenStable();
+    expect(scene['floorGroups'].size).toBe(0);
+    expect(canvas.getAttribute('aria-label')).toContain('0 floor(s)');
+
+    graphics.controlsUpdate.mockClear();
+    fixture.componentRef.setInput('cameraResetToken', 1);
+    await fixture.whenStable();
+    expect(graphics.controlsUpdate).not.toHaveBeenCalled();
+    expect(scene['ready']()).toBe(true);
   });
 });

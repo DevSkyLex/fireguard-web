@@ -68,15 +68,29 @@ describe('sanitizePolygon', () => {
     expect(result.status).toBe('rejected');
   });
 
-  it('rejects a self-intersecting (bow-tie) outline', () => {
-    const result: SanitizedPolygonResult = sanitizePolygon([
+  it('rejects a self-intersecting outline even when its signed area is nonzero', () => {
+    const bowTie: ReadonlyArray<readonly [number, number]> = [
       [0.1, 0.1],
-      [0.5, 0.5],
-      [0.5, 0.1],
-      [0.1, 0.5],
-    ]);
+      [0.9, 0.8],
+      [0.9, 0.1],
+      [0.1, 0.9],
+    ];
+    const result: SanitizedPolygonResult = sanitizePolygon(bowTie);
 
+    expect(Math.abs(shoelaceArea(bowTie))).toBeGreaterThan(1e-9);
     expect(result.status).toBe('rejected');
+  });
+
+  it('keeps a valid concave outline with non-adjacent edges that do not cross', () => {
+    const contour: ReadonlyArray<readonly [number, number]> = [
+      [0.1, 0.1],
+      [0.9, 0.1],
+      [0.9, 0.9],
+      [0.5, 0.5],
+      [0.1, 0.9],
+    ];
+
+    expect(sanitizePolygon(contour)).toEqual({ status: 'accepted', points: contour });
   });
 
   it('rejects a non-finite coordinate', () => {

@@ -931,4 +931,116 @@ describe('OrganizationSettingsPage', () => {
     expect(byTestId('org-settings-tab-access')).not.toBeNull();
     expect(fixture.componentInstance['accessStore'].loadPolicy).toHaveBeenCalledWith('org-1');
   });
+
+  it('does not submit stale settings or branding writes after the organization is cleared', async () => {
+    permissions.set(['organization.settings.write', 'organization.members.manage']);
+    await createPage('access');
+    const page = fixture.componentInstance;
+    const file = new File(['data'], 'logo.png', { type: 'image/png' });
+
+    selectedOrganization.set(null);
+    await fixture.whenStable();
+
+    page['saveGeneral']({ name: 'Stale', slug: 'stale', description: '' });
+    page['uploadLogo'](file);
+    page['removeLogo']();
+    page['saveLegal']({
+      country: 'FR',
+      legalType: '',
+      legalName: 'Stale',
+      registrationNumber: '',
+      vatNumber: '',
+    });
+    page['saveNotifications'](page['notificationsSeed']());
+    page['saveRegional'](page['regionalSeed']());
+    page['saveCompliance'](page['complianceSeed']());
+    page['saveAutomation'](page['automationSeed']());
+    page['saveApproval']({ actionRules: {}, allowSelfApproval: false, approvalTtlDays: 14 });
+    page['saveAccessPolicy']({ mode: 'invitation_only' });
+
+    expect(save).not.toHaveBeenCalled();
+    expect(uploadLogo).not.toHaveBeenCalled();
+    expect(page['settingsStore'].removeLogo).not.toHaveBeenCalled();
+    expect(page['accessStore'].savePolicy).not.toHaveBeenCalled();
+  });
+
+  it('saves regional preferences and approval policy for the active organization', async () => {
+    await createPage('compliance');
+    const page = fixture.componentInstance;
+    const regional = page['regionalSeed']();
+    const approval = {
+      actionRules: {
+        'intervention.publish': {
+          enabled: true,
+          minApproverRole: 'reviewer',
+          minSeverity: 'high',
+        },
+      },
+      allowSelfApproval: false,
+      approvalTtlDays: 7,
+    };
+
+    page['saveRegional'](regional);
+    page['saveApproval'](approval);
+
+    expect(save).toHaveBeenCalledWith({ organizationId: 'org-1', input: { regional } });
+    expect(save).toHaveBeenCalledWith({ organizationId: 'org-1', input: { approval } });
+  });
+
+  it('removes a logo and submits admission policy only with the current permissions', async () => {
+    permissions.set(['organization.settings.write', 'organization.members.manage']);
+    await createPage('access');
+    const page = fixture.componentInstance;
+    const policy = { mode: 'approval_required' } as const;
+
+    page['removeLogo']();
+    page['saveAccessPolicy'](policy);
+    permissions.set(['organization.settings.write']);
+    await fixture.whenStable();
+    page['saveAccessPolicy'](policy);
+
+    expect(page['settingsStore'].removeLogo).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+    });
+    expect(page['accessStore'].savePolicy).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      input: policy,
+    });
+  });
+
+  it('does not start billing or destructive commands after the organization is cleared', async () => {
+    await createPage('danger');
+    const page = fixture.componentInstance;
+    page['onCurrentPlanKeyChange']('plan-pro');
+
+    selectedOrganization.set(null);
+    await fixture.whenStable();
+
+    page['startCheckout']();
+    page['startPortal']();
+    page['cancelSubscription']();
+    page['resumeSubscription']();
+    page['deleteOrganization']();
+    page['suspendOrganization']();
+    page['restoreOrganization']();
+    page['transferOwnership']({ newOwnerUserId: 'user-2' });
+
+    expect(startCheckout).not.toHaveBeenCalled();
+    expect(startPortal).not.toHaveBeenCalled();
+    expect(cancelSubscription).not.toHaveBeenCalled();
+    expect(resumeSubscription).not.toHaveBeenCalled();
+    expect(deleteOrganization).not.toHaveBeenCalled();
+    expect(suspend).not.toHaveBeenCalled();
+    expect(restore).not.toHaveBeenCalled();
+    expect(transferOwnership).not.toHaveBeenCalled();
+  });
+
+  it('renders dates safely when the API omits or sends an invalid timestamp', async () => {
+    await createPage('subscription');
+    const page = fixture.componentInstance;
+
+    expect(page['formatDate'](null)).toBeNull();
+    expect(page['formatDate']('not-a-date')).toBeNull();
+    expect(page['formatDate']('2026-09-23T12:00:00+00:00')).toBeTruthy();
+  });
 });

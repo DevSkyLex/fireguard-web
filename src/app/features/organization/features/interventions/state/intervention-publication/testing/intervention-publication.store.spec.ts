@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { lastValueFrom, Subject } from 'rxjs';
@@ -129,6 +130,28 @@ describe('InterventionPublicationStore', () => {
     expect(api.checkStatus).not.toHaveBeenCalled();
   });
 
+  it('treats a definite launch rejection as failed and permits a new deliberate attempt', async () => {
+    api.start.mockRejectedValueOnce(
+      new HttpErrorResponse({
+        status: 422,
+        error: { detail: 'Publication prerequisites missing' },
+      }),
+    );
+    store.publish(intervention);
+    await flush();
+
+    expect(store.tracking()?.status).toBe('failed');
+    expect(store.unresolved()).toBe(false);
+    expect(store.timedOut()).toBe(false);
+    expect(api.observe).not.toHaveBeenCalled();
+
+    store.reset();
+    store.publish(intervention);
+    await flush();
+    expect(api.start).toHaveBeenCalledTimes(2);
+    expect(store.publishCallState().data).toEqual(completed);
+  });
+
   it('surfaces a confirmed failure and permits a deliberate new attempt', async () => {
     api.observe.mockResolvedValue({ ...accepted, status: 'failed', error: 'Rejected revision' });
     store.publish(intervention);
@@ -176,6 +199,37 @@ describe('InterventionPublicationStore', () => {
     expect(store.publicationId()).toBe('new-pub');
   });
 
+  it('blocks a new launch while recovery metadata is loading', async () => {
+    const pending = new Subject<null>();
+    offline.loadPublicationTracking.mockReturnValueOnce(lastValueFrom(pending));
+    store.restore({ organization: intervention.organization, interventionId: intervention.id });
+
+    expect(store.restoreCallState().status).toBe('pending');
+    store.publish(intervention);
+    await flush();
+    expect(api.start).not.toHaveBeenCalled();
+
+    pending.next(null);
+    pending.complete();
+    await flush();
+    store.publish(intervention);
+    await flush();
+    expect(api.start).toHaveBeenCalledTimes(1);
+    expect(store.publishCallState().data).toEqual(completed);
+  });
+
+  it('blocks launch when saved recovery metadata cannot be read', async () => {
+    offline.loadPublicationTracking.mockRejectedValueOnce(new Error('Device storage unavailable'));
+    store.restore({ organization: intervention.organization, interventionId: intervention.id });
+    await flush();
+
+    expect(store.restoreCallState().status).toBe('error');
+    expect(store.storageError()).toContain('could not be read');
+    store.publish(intervention);
+    await flush();
+    expect(api.start).not.toHaveBeenCalled();
+  });
+
   it('does not treat an in-progress recheck as a failure or success of publication', async () => {
     api.observe.mockRejectedValue(new PublicationPollTimeoutError('p1'));
     store.publish(intervention);
@@ -198,6 +252,32 @@ describe('InterventionPublicationStore', () => {
     await flush();
     expect(store.publicationId()).toBe('p1');
     expect(store.unresolved()).toBe(true);
+  });
+
+  it('reconciles an unknown result only from the matching published intervention', async () => {
+    api.start.mockRejectedValueOnce(new Error('connection lost'));
+    store.publish(intervention);
+    await flush();
+    expect(store.tracking()?.status).toBe('unknown');
+
+    const published = { ...intervention, status: 'published' } as InterventionOutput;
+    store.reconcilePublished({ ...published, id: 'another-intervention' });
+    store.reconcilePublished({ ...published, organization: '/api/organizations/other' });
+    store.reconcilePublished({ ...published, status: 'draft' });
+    expect(store.tracking()?.status).toBe('unknown');
+
+    store.reconcilePublished(published);
+    await flush();
+    expect(store.tracking()).toMatchObject({ publicationId: null, status: 'completed' });
+    expect(store.unresolved()).toBe(false);
+    expect(store.timedOut()).toBe(false);
+    expect(store.publishCallState().status).toBe('idle');
+    expect(offline.savePublicationTracking).toHaveBeenLastCalledWith(
+      intervention.organization,
+      intervention.id,
+      expect.objectContaining({ publicationId: null, status: 'completed' }),
+    );
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
   it('reports storage failures without hiding the accepted publication identifier', async () => {

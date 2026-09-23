@@ -9,13 +9,13 @@
 >
   <ng-container surfaceHead>
     <tr hlmTableRow>
-      <th hlmTableHead i18n="@@maintenance.table.colEquipment">Equipment</th>
-      <th hlmTableHead i18n="@@maintenance.table.colFacility">Facility</th>
-      <th hlmTableHead i18n="@@maintenance.table.colNextDue">Next due</th>
-      <th hlmTableHead i18n="@@maintenance.table.colDueStatus">Status</th>
-      <th hlmTableHead i18n="@@maintenance.table.colOverride">Interval override</th>
+      <th hlmTableHead scope="col" i18n="@@maintenance.table.colEquipment">Equipment</th>
+      <th hlmTableHead scope="col" i18n="@@maintenance.table.colFacility">Facility</th>
+      <th hlmTableHead scope="col" i18n="@@maintenance.table.colNextDue">Next due</th>
+      <th hlmTableHead scope="col" i18n="@@maintenance.table.colDueStatus">Status</th>
+      <th hlmTableHead scope="col" i18n="@@maintenance.table.colOverride">Interval override</th>
       @if (canManage()) {
-        <th hlmTableHead class="w-px">
+        <th hlmTableHead scope="col" class="w-px">
           <span class="sr-only" i18n="@@common.actions">Actions</span>
         </th>
       }

@@ -211,4 +211,97 @@ describe('WorkloadCapacitySheet', () => {
       document.querySelector<HTMLButtonElement>('button[form="workload-capacity-form"]')?.disabled,
     ).toBe(true);
   });
+
+  it('keeps the current member and workflow while a draft or write is in progress', async () => {
+    await edit('capacity-day-0-hours', '6');
+    fixture.componentInstance['setScope']('member');
+    fixture.componentInstance['setMode']('exception');
+
+    expect(fixture.componentInstance['memberId']()).toBeNull();
+    expect(fixture.componentInstance['mode']()).toBe('week');
+
+    fixture.componentInstance['dirty'].set(false);
+    fixture.componentRef.setInput('writeState', pendingCallState());
+    await fixture.whenStable();
+    fixture.componentInstance['setScope']('member');
+    fixture.componentInstance['setMode']('exception');
+
+    expect(fixture.componentInstance['memberId']()).toBeNull();
+    expect(fixture.componentInstance['mode']()).toBe('week');
+
+    fixture.componentRef.setInput('writeState', idleCallState());
+    await fixture.whenStable();
+    fixture.componentInstance['setScope']('member');
+    fixture.componentInstance['setMode']('exception');
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['memberId']()).toBe('member');
+    expect(fixture.componentInstance['mode']()).toBe('exception');
+  });
+
+  it('does not close a pending write and closes a clean sheet immediately', async () => {
+    const closed = vi.fn();
+    fixture.componentInstance.closed.subscribe(closed);
+    fixture.componentRef.setInput('writeState', pendingCallState());
+    await fixture.whenStable();
+
+    fixture.componentInstance['requestClose']();
+    expect(closed).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('writeState', idleCallState());
+    await fixture.whenStable();
+    fixture.componentInstance['requestClose']();
+    expect(closed).toHaveBeenCalledOnce();
+  });
+
+  it('submits an availability exception only for an online member without a pending write', async () => {
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    const exception = { startsOn: '2026-09-17', endsOn: '2026-09-18', minutes: 120 };
+
+    fixture.componentInstance['saveException'](exception);
+    expect(submitted).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('initialMemberId', 'member');
+    fixture.componentRef.setInput('online', false);
+    await fixture.whenStable();
+    fixture.componentInstance['saveException'](exception);
+    expect(submitted).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('online', true);
+    fixture.componentRef.setInput('writeState', pendingCallState());
+    await fixture.whenStable();
+    fixture.componentInstance['saveException'](exception);
+    expect(submitted).not.toHaveBeenCalled();
+
+    fixture.componentRef.setInput('writeState', idleCallState());
+    await fixture.whenStable();
+    fixture.componentInstance['saveException'](exception);
+    expect(submitted).toHaveBeenCalledExactlyOnceWith({
+      kind: 'exception',
+      organizationId: 'org',
+      memberId: 'member',
+      input: exception,
+    });
+  });
+
+  it('cancels only the confirmed exception and clears its pending identifier', async () => {
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    fixture.componentRef.setInput('initialMemberId', 'member');
+    await fixture.whenStable();
+
+    fixture.componentInstance['confirmCancellation']();
+    expect(submitted).not.toHaveBeenCalled();
+
+    fixture.componentInstance['cancelExceptionId'].set('absence');
+    fixture.componentInstance['confirmCancellation']();
+    expect(submitted).toHaveBeenCalledExactlyOnceWith({
+      kind: 'cancel',
+      organizationId: 'org',
+      memberId: 'member',
+      exceptionId: 'absence',
+    });
+    expect(fixture.componentInstance['cancelExceptionId']()).toBeNull();
+  });
 });

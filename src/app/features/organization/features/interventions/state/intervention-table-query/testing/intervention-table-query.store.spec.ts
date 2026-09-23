@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import {
@@ -87,6 +88,34 @@ describe('InterventionTableQueryStore', () => {
     expect(service.listWorkItems).toHaveBeenCalledTimes(2);
     expect(store.workItemsQuery().page).toBe(2);
     expect(store.workItemsPage()).toBe(2);
+    expect(store.workItems()).toEqual([workItem]);
+  });
+
+  it('limits a requested page size and recovers the last available page', () => {
+    service.listWorkItems
+      .mockReturnValueOnce(of({ member: [], totalItems: 150 }))
+      .mockReturnValueOnce(of({ member: [workItem], totalItems: 150 }));
+
+    store.loadWorkItems({
+      interventionId: 'A',
+      search: '',
+      statuses: null,
+      page: 999,
+      itemsPerPage: 500,
+    });
+
+    expect(service.listWorkItems).toHaveBeenNthCalledWith(
+      1,
+      'A',
+      expect.objectContaining({ page: 999, itemsPerPage: 100 }),
+    );
+    expect(service.listWorkItems).toHaveBeenNthCalledWith(
+      2,
+      'A',
+      expect.objectContaining({ page: 2, itemsPerPage: 100 }),
+    );
+    expect(store.workItemsPage()).toBe(2);
+    expect(store.workItemsPageSize()).toBe(100);
     expect(store.workItems()).toEqual([workItem]);
   });
 
@@ -197,6 +226,56 @@ describe('InterventionTableQueryStore', () => {
     expect(store.changesSource()).toBe('api');
   });
 
+  it('uses saved work and change rows after a transport failure without marking them unavailable', async () => {
+    const savedItem = {
+      ...workItem,
+      intervention: '/api/interventions/A',
+      status: 'planned',
+      action: 'inventory',
+      updatedAt: '2026-09-16',
+    } as InterventionWorkItemOutput;
+    const savedChange = {
+      ...change,
+      intervention: '/api/interventions/A',
+      status: 'proposed',
+      patch: { name: 'Pump room' },
+    } as InterventionChangeOutput;
+    offline.getWorkspace.mockResolvedValue({
+      intervention: { id: 'A' },
+      workItems: [savedItem],
+      changes: [savedChange],
+      issues: [],
+    });
+    const networkFailure = new HttpErrorResponse({ status: 0 });
+    service.listWorkItems.mockReturnValue(throwError(() => networkFailure));
+    service.listAllChanges.mockReturnValue(throwError(() => networkFailure));
+
+    store.activateWorkItems('A', { search: '', statuses: ['planned'] });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.workItems()).toEqual([savedItem]);
+    expect(store.workItemsSource()).toBe('saved');
+    expect(store.workItemsError()).toBeNull();
+
+    store.activateChanges('A', { search: '', status: 'proposed' });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.changes()).toEqual([savedChange]);
+    expect(store.changesSource()).toBe('saved');
+    expect(store.changesError()).toBeNull();
+    expect(service.listWorkItems).toHaveBeenCalledTimes(1);
+    expect(service.listAllChanges).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains the visible change history when a non-network refresh fails', () => {
+    store.activateChanges('A', { search: '', status: 'proposed' });
+    service.listAllChanges.mockReturnValueOnce(throwError(() => new Error('Server rejected')));
+
+    store.refreshChanges();
+
+    expect(store.changes()).toEqual([change]);
+    expect(store.changesSource()).toBe('api');
+    expect(store.changesError()?.message).toContain('Server rejected');
+  });
+
   it('keeps prior rows after a refresh error and retries identical criteria', () => {
     store.activateWorkItems('A', { search: '', statuses: null });
     service.listWorkItems.mockReturnValueOnce(throwError(() => new Error('refresh failed')));
@@ -257,6 +336,41 @@ describe('InterventionTableQueryStore', () => {
     store.invalidate('A', ['changes']);
     expect(store.changes()).toEqual([]);
     expect(store.changesQuery().status).toBe('proposed');
+  });
+
+  it('ignores late row mutations and invalidations from the previous intervention', () => {
+    const aWork = {
+      ...workItem,
+      intervention: '/api/interventions/A',
+      status: 'planned',
+    } as InterventionWorkItemOutput;
+    const bWork = { ...aWork, intervention: '/api/interventions/B' };
+    const aChange = {
+      ...change,
+      intervention: '/api/interventions/A',
+      status: 'proposed',
+    } as InterventionChangeOutput;
+    const bChange = { ...aChange, intervention: '/api/interventions/B' };
+    service.listWorkItems.mockImplementation((id: string) =>
+      of({ member: [id === 'A' ? aWork : bWork], totalItems: 1 }),
+    );
+    service.listAllChanges.mockImplementation((id: string) => of([id === 'A' ? aChange : bChange]));
+    store.activateWorkItems('A', { search: '', statuses: null });
+    store.activateChanges('A', { search: '', status: 'proposed' });
+    store.activateWorkItems('B', { search: '', statuses: null });
+    store.activateChanges('B', { search: '', status: 'proposed' });
+    service.listWorkItems.mockClear();
+    service.listAllChanges.mockClear();
+
+    store.invalidate('A', ['workItems', 'changes']);
+    store.reconcileWorkItem({ ...aWork, status: 'completed' });
+    store.reconcileChange({ ...aChange, status: 'rejected' });
+    store.removeWorkItems('A', [aWork.id]);
+
+    expect(service.listWorkItems).not.toHaveBeenCalled();
+    expect(service.listAllChanges).not.toHaveBeenCalled();
+    expect(store.workItems()).toEqual([bWork]);
+    expect(store.changes()).toEqual([bChange]);
   });
 
   it('retains per-tab criteria and resets them only for a new intervention', async () => {

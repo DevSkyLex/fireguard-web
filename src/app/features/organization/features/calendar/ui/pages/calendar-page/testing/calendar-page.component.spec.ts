@@ -14,7 +14,13 @@ import { of } from 'rxjs';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import { PageTabsService } from '@core/page-tabs';
-import { idleCallState, type CallState, type StoreError } from '@core/request-state';
+import {
+  errorCallState,
+  idleCallState,
+  successCallState,
+  type CallState,
+  type StoreError,
+} from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
 import type {
@@ -90,6 +96,10 @@ describe('CalendarPage', () => {
   let updateEvent: ReturnType<typeof vi.fn>;
   let deleteEvent: ReturnType<typeof vi.fn>;
   let moveEvent: ReturnType<typeof vi.fn>;
+  let createEventCallState: WritableSignal<CallState<unknown>>;
+  let updateEventCallState: WritableSignal<CallState<unknown>>;
+  let deleteEventCallState: WritableSignal<CallState<unknown>>;
+  let moveEventCallState: WritableSignal<CallState<unknown>>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
@@ -106,6 +116,10 @@ describe('CalendarPage', () => {
     updateEvent = vi.fn();
     deleteEvent = vi.fn();
     moveEvent = vi.fn();
+    createEventCallState = signal<CallState<unknown>>(idleCallState());
+    updateEventCallState = signal<CallState<unknown>>(idleCallState());
+    deleteEventCallState = signal<CallState<unknown>>(idleCallState());
+    moveEventCallState = signal<CallState<unknown>>(idleCallState());
 
     const storeMock = {
       items,
@@ -119,10 +133,10 @@ describe('CalendarPage', () => {
       updateEvent,
       deleteEvent,
       moveEvent,
-      createEventCallState: signal<CallState<unknown>>(idleCallState()),
-      updateEventCallState: signal<CallState<unknown>>(idleCallState()),
-      deleteEventCallState: signal<CallState<unknown>>(idleCallState()),
-      moveEventCallState: signal<CallState<unknown>>(idleCallState()),
+      createEventCallState,
+      updateEventCallState,
+      deleteEventCallState,
+      moveEventCallState,
     };
 
     TestBed.configureTestingModule({
@@ -436,6 +450,74 @@ describe('CalendarPage', () => {
     });
   });
 
+  it('clears optional event fields explicitly while preserving an equivalent start instant', async () => {
+    await render(true);
+    const original = feedItem({
+      sourceKey: 'calendar_event',
+      id: 'evt-1',
+      title: 'Fire drill',
+      description: 'Old plan',
+      startsAt: '2026-08-01T09:00:00+02:00',
+      endsAt: '2026-08-01T10:00:00+02:00',
+      allDay: false,
+      facilityId: 'site-1',
+    });
+    const page = fixture.componentInstance as unknown as {
+      openEditDialog(item: CalendarFeedItemOutput): void;
+      onEventFormSubmitted(values: Record<string, unknown>): void;
+    };
+    page.openEditDialog(original);
+
+    page.onEventFormSubmitted({
+      title: 'Fire drill',
+      description: null,
+      startsAt: '2026-08-01T07:00:00+00:00',
+      endsAt: null,
+      allDay: true,
+      facilityId: null,
+    });
+
+    expect(updateEvent).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      eventId: 'evt-1',
+      input: { description: null, endsAt: null, allDay: true, facilityId: null },
+    });
+  });
+
+  it('includes changed start and end instants in an event update', async () => {
+    await render(true);
+    const original = feedItem({
+      sourceKey: 'calendar_event',
+      id: 'evt-1',
+      title: 'Fire drill',
+      startsAt: '2026-08-01T09:00:00+02:00',
+      endsAt: null,
+    });
+    const page = fixture.componentInstance as unknown as {
+      openEditDialog(item: CalendarFeedItemOutput): void;
+      onEventFormSubmitted(values: Record<string, unknown>): void;
+    };
+    page.openEditDialog(original);
+
+    page.onEventFormSubmitted({
+      title: 'Fire drill',
+      description: null,
+      startsAt: '2026-08-02T09:00:00+02:00',
+      endsAt: '2026-08-02T10:00:00+02:00',
+      allDay: false,
+      facilityId: null,
+    });
+
+    expect(updateEvent).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      eventId: 'evt-1',
+      input: {
+        startsAt: '2026-08-02T09:00:00+02:00',
+        endsAt: '2026-08-02T10:00:00+02:00',
+      },
+    });
+  });
+
   it('sends the delete write for the confirmed target', async () => {
     await render(true);
 
@@ -449,6 +531,44 @@ describe('CalendarPage', () => {
     (fixture.componentInstance as unknown as { confirmDelete(): void }).confirmDelete();
 
     expect(deleteEvent).toHaveBeenCalledWith({ organizationId: 'org-1', eventId: 'evt-1' });
+  });
+
+  it('keeps failed writes open and closes create and delete dialogs only on success', async () => {
+    await render(true);
+    const page = fixture.componentInstance as unknown as {
+      eventDialogVisible: WritableSignal<boolean>;
+      pendingDeleteEvent: WritableSignal<CalendarFeedItemOutput | null>;
+      openCreateDialog(): void;
+      requestDelete(item: CalendarFeedItemOutput): void;
+      confirmDelete(): void;
+    };
+    const failure: StoreError = {
+      error: new Error('Write failed'),
+      message: 'Write failed',
+      code: 500,
+      retryable: true,
+      timestamp: Date.now(),
+    };
+    page.openCreateDialog();
+    createEventCallState.set(errorCallState(failure));
+    await fixture.whenStable();
+    expect(page.eventDialogVisible()).toBe(true);
+
+    createEventCallState.set(successCallState({}));
+    await fixture.whenStable();
+    expect(page.eventDialogVisible()).toBe(false);
+
+    const target = feedItem({ sourceKey: 'calendar_event', id: 'evt-1' });
+    page.requestDelete(target);
+    deleteEventCallState.set(errorCallState(failure));
+    await fixture.whenStable();
+    expect(page.pendingDeleteEvent()).toBe(target);
+
+    deleteEventCallState.set(successCallState(null));
+    await fixture.whenStable();
+    expect(page.pendingDeleteEvent()).toBeNull();
+    page.confirmDelete();
+    expect(deleteEvent).not.toHaveBeenCalled();
   });
 
   describe('granularities', () => {
@@ -590,6 +710,64 @@ describe('CalendarPage', () => {
       page.onEventDropped({ id: 'inspection:insp-1', day: '2026-08-05' });
 
       expect(moveEvent).not.toHaveBeenCalled();
+    });
+
+    it('moves an event without an end time without inventing one', async () => {
+      await render(true);
+      items.set([
+        feedItem({
+          sourceKey: 'calendar_event',
+          id: 'evt-1',
+          startsAt: '2026-08-09T09:30:00+02:00',
+          endsAt: null,
+        }),
+      ]);
+      const page = fixture.componentInstance as unknown as {
+        onEventDropped(drop: { id: string; day: string }): void;
+      };
+
+      page.onEventDropped({ id: 'calendar_event:evt-1', day: '2026-08-05' });
+
+      expect(moveEvent).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ organizationId: 'org-1', eventId: 'evt-1' }),
+      );
+      expect(moveEvent.mock.calls[0]?.[0]).not.toHaveProperty('endsAt');
+    });
+
+    it('does not move a standalone event without the event-write permission', async () => {
+      await render(false);
+      items.set([
+        feedItem({
+          sourceKey: 'calendar_event',
+          id: 'evt-1',
+          startsAt: '2026-08-09T09:30:00+02:00',
+        }),
+      ]);
+      const page = fixture.componentInstance as unknown as {
+        onEventDropped(drop: { id: string; day: string }): void;
+      };
+
+      page.onEventDropped({ id: 'calendar_event:evt-1', day: '2026-08-05' });
+
+      expect(moveEvent).not.toHaveBeenCalled();
+    });
+
+    it('announces that a failed move has been rolled back', async () => {
+      await render(true);
+      moveEventCallState.set(
+        errorCallState({
+          error: new Error('Move failed'),
+          message: 'Move failed',
+          code: 500,
+          retryable: true,
+          timestamp: Date.now(),
+        }),
+      );
+      await fixture.whenStable();
+
+      expect(
+        root().querySelector('[data-testid="calendar-move-live-region"]')?.textContent,
+      ).toContain('could not be moved');
     });
   });
 });

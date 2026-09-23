@@ -58,7 +58,7 @@ const APPROVAL_STATUS: Record<ApprovalStatus, ApprovalTagDescriptor> = {
 export function resolveApprovalTag(value: string): ApprovalTagDescriptor {
   return (
     APPROVAL_STATUS[value as ApprovalStatus] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideTag',
     }

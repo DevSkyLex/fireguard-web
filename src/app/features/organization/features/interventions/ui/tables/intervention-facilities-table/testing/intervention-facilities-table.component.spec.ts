@@ -117,6 +117,139 @@ describe('InterventionFacilitiesTable', () => {
     expect(root().textContent).not.toContain('Main warehouse');
   });
 
+  it('should emit search changes to a server-filtering host', async () => {
+    fixture.componentRef.setInput('serverFiltering', true);
+    await fixture.whenStable();
+    const emitted = vi.fn();
+    fixture.componentInstance.queryChanged.subscribe(emitted);
+
+    const search = byTestId('intervention-facilities-search') as HTMLInputElement;
+    search.value = 'north';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+
+    expect(emitted).toHaveBeenLastCalledWith({ search: 'north', type: null, status: null });
+  });
+
+  it('should apply type and status together to loaded facilities', async () => {
+    fixture.componentRef.setInput('items', [
+      facility({ id: 'facility-1', type: 'building', status: 'active' }),
+      facility({ id: 'facility-2', type: 'site', status: 'active' }),
+      facility({ id: 'facility-3', type: 'building', status: 'archived' }),
+    ]);
+    fixture.componentRef.setInput('query', { search: '', type: 'building', status: 'active' });
+    await fixture.whenStable();
+
+    const rows = root().querySelectorAll('[data-testid="intervention-facilities-table-row"]');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.textContent).toContain('Main warehouse');
+    expect(fixture.componentInstance['activeFilterKeys']()).toEqual(['type', 'status']);
+
+    fixture.componentRef.setInput('query', { search: '', type: 'site', status: 'archived' });
+    await fixture.whenStable();
+    expect(byTestId('intervention-facilities-empty')?.textContent).toContain(
+      'No facilities match the current search or filters',
+    );
+  });
+
+  it('should retain server-returned facilities even when the local query would filter them out', async () => {
+    fixture.componentRef.setInput('items', [facility({ type: 'site' })]);
+    fixture.componentRef.setInput('serverFiltering', true);
+    fixture.componentRef.setInput('query', {
+      search: 'missing',
+      type: 'building',
+      status: 'archived',
+    });
+    await fixture.whenStable();
+
+    expect(
+      root().querySelectorAll('[data-testid="intervention-facilities-table-row"]'),
+    ).toHaveLength(1);
+    expect(byTestId('intervention-facilities-empty')).toBeNull();
+  });
+
+  it('should preserve search and the other filter as each criterion changes', async () => {
+    fixture.componentRef.setInput('query', { search: 'WH-1', type: null, status: null });
+    await fixture.whenStable();
+    const emitted = vi.fn();
+    fixture.componentInstance.queryChanged.subscribe(emitted);
+
+    fixture.componentInstance['onTypeFilterChanged']('building');
+    await fixture.whenStable();
+    fixture.componentInstance['onStatusFilterChanged']('active');
+    await fixture.whenStable();
+    expect(emitted).toHaveBeenLastCalledWith({
+      search: 'WH-1',
+      type: 'building',
+      status: 'active',
+    });
+
+    fixture.componentInstance['onFieldRemoved']('type');
+    await fixture.whenStable();
+    expect(emitted).toHaveBeenLastCalledWith({ search: 'WH-1', type: null, status: 'active' });
+
+    fixture.componentInstance['clearFilters']();
+    expect(emitted).toHaveBeenLastCalledWith({ search: 'WH-1', type: null, status: null });
+  });
+
+  it('should discard unrecognized filter values and ignore unknown field keys', async () => {
+    const emitted = vi.fn();
+    fixture.componentInstance.queryChanged.subscribe(emitted);
+
+    fixture.componentInstance['onTypeFilterChanged']('unknown-type');
+    fixture.componentInstance['onStatusFilterChanged']('unknown-status');
+    fixture.componentInstance['onFieldRemoved']('unknown-field');
+
+    expect(fixture.componentInstance['query']()).toEqual({ search: '', type: null, status: null });
+    expect(emitted).toHaveBeenCalledTimes(2);
+  });
+
+  it('should keep only the selected filter popover open', () => {
+    fixture.componentInstance['onFieldPicked']('type');
+    expect(fixture.componentInstance['fieldPopoverState']('type')).toBe('open');
+    expect(fixture.componentInstance['fieldPopoverState']('status')).toBe('closed');
+
+    fixture.componentInstance['onFilterPopoverStateChanged']('status', 'closed');
+    expect(fixture.componentInstance['fieldPopoverState']('type')).toBe('open');
+    fixture.componentInstance['onFilterPopoverStateChanged']('status', 'open');
+    fixture.componentInstance['onFilterPopoverStateChanged']('status', 'closed');
+    expect(fixture.componentInstance['fieldPopoverState']('status')).toBe('closed');
+  });
+
+  it('should mount both value controls when the filter bar is opened', async () => {
+    const toggle = byTestId('intervention-facilities-filters-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+    toggle.click();
+    await fixture.whenStable();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(root().querySelector('#intervention-facilities-filter-bar')).not.toBeNull();
+    expect(fixture.componentInstance['filterTemplates']()['type']).toBeDefined();
+    expect(fixture.componentInstance['filterTemplates']()['status']).toBeDefined();
+
+    toggle.click();
+    await fixture.whenStable();
+    expect(root().querySelector('#intervention-facilities-filter-bar')).toBeNull();
+  });
+
+  it('should find linked facilities by their code and street address', async () => {
+    fixture.componentRef.setInput('items', [
+      facility({ id: 'facility-1', code: 'WH-1', address: '25 North Street' }),
+      facility({ id: 'facility-2', name: 'South annex', code: 'SA-2', address: '4 South Road' }),
+    ]);
+    fixture.componentRef.setInput('query', { search: 'north street', type: null, status: null });
+    await fixture.whenStable();
+    expect(
+      root().querySelectorAll('[data-testid="intervention-facilities-table-row"]'),
+    ).toHaveLength(1);
+    expect(byTestId('intervention-facilities-table-row')?.textContent).toContain('Main warehouse');
+
+    fixture.componentRef.setInput('query', { search: 'SA-2', type: null, status: null });
+    await fixture.whenStable();
+    expect(byTestId('intervention-facilities-table-row')?.textContent).toContain('South annex');
+  });
+
   it('should link a published facility to its detail route', async () => {
     fixture.componentRef.setInput('items', [
       facility({ id: 'facility-1', name: 'Main warehouse', recordStatus: 'published' }),
@@ -174,6 +307,17 @@ describe('InterventionFacilitiesTable', () => {
     expect(alert).not.toBeNull();
     expect(alert?.getAttribute('role')).toBe('alert');
     expect(alert?.textContent).toContain('Linked facilities could not be loaded.');
+  });
+
+  it('should emit retry from the table error action', async () => {
+    fixture.componentRef.setInput('error', 'Linked facilities could not be loaded.');
+    await fixture.whenStable();
+    const retry = vi.fn();
+    fixture.componentInstance.retryRequested.subscribe(retry);
+
+    byTestId('intervention-facilities-error')?.querySelector('button')?.click();
+
+    expect(retry).toHaveBeenCalledTimes(1);
   });
 
   it('should show the empty state when nothing is linked', () => {

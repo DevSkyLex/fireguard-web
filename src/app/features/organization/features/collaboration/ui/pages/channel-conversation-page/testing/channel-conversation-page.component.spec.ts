@@ -8,7 +8,7 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import {
   provideInteractionCapabilities,
   INTERACTION_CAPABILITIES_PORT,
@@ -24,13 +24,17 @@ import {
   ConversationService,
   MessageService,
 } from '@features/organization/features/collaboration/data-access';
-import type { ChannelOutput } from '@features/organization/features/collaboration/models';
+import type {
+  ChannelOutput,
+  MessageOutput,
+} from '@features/organization/features/collaboration/models';
 import {
   channelsStoreEvents,
   ChannelParticipantsStore,
   ChannelsStore,
   MessageThreadStore,
   PinnedMessagesStore,
+  pinnedMessagesStoreEvents,
 } from '@features/organization/features/collaboration/state';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -82,6 +86,12 @@ describe('ChannelConversationPage', () => {
     messageEntityMap: ReturnType<typeof vi.fn>;
     noteReplyPosted: ReturnType<typeof vi.fn>;
     noteUnpinned: ReturnType<typeof vi.fn>;
+    pin: ReturnType<typeof vi.fn>;
+    unpin: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
+    unsave: ReturnType<typeof vi.fn>;
+    editMessage: ReturnType<typeof vi.fn>;
+    deleteMessage: ReturnType<typeof vi.fn>;
     editCallState: ReturnType<typeof signal>;
     deleteCallState: ReturnType<typeof signal>;
   };
@@ -100,11 +110,15 @@ describe('ChannelConversationPage', () => {
   let participantsReset: ReturnType<typeof vi.fn>;
   let participantsAdd: ReturnType<typeof vi.fn>;
   let participantsRemove: ReturnType<typeof vi.fn>;
+  let pinned: WritableSignal<readonly MessageOutput[]>;
+  let pinnedLoad: ReturnType<typeof vi.fn>;
+  let pinnedUnpin: ReturnType<typeof vi.fn>;
   let favorite: ReturnType<typeof vi.fn>;
   let unfavorite: ReturnType<typeof vi.fn>;
   let directoryAvailable: WritableSignal<boolean>;
   let directoryEntries: WritableSignal<ReadonlyMap<string, MemberDirectoryEntry>>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
+  let memberProfile: WritableSignal<{ id: string; organizationId: string } | null>;
   let navigate: ReturnType<typeof vi.fn>;
 
   const byTestId = (id: string): HTMLElement | null =>
@@ -163,7 +177,7 @@ describe('ChannelConversationPage', () => {
         {
           provide: ORGANIZATION_MEMBER_ACCESS_PORT,
           useValue: {
-            profile: signal({ id: 'member-1', organizationId: 'org-1' }),
+            profile: memberProfile,
             roles: signal([]),
             permissions,
             isLoadingAccess: signal(false),
@@ -190,9 +204,9 @@ describe('ChannelConversationPage', () => {
             provide: PinnedMessagesStore,
             useValue: {
               reset: vi.fn(),
-              load: vi.fn(),
-              unpin: vi.fn(),
-              sortedPins: signal([]),
+              load: pinnedLoad,
+              unpin: pinnedUnpin,
+              sortedPins: pinned,
               isLoading: signal(false),
               isUnpinning: signal(false),
               loadError: signal(null),
@@ -238,6 +252,9 @@ describe('ChannelConversationPage', () => {
     participantsReset = vi.fn();
     participantsAdd = vi.fn();
     participantsRemove = vi.fn();
+    pinned = signal<readonly MessageOutput[]>([]);
+    pinnedLoad = vi.fn();
+    pinnedUnpin = vi.fn();
     favorite = vi.fn().mockReturnValue(of(channel({ isFavorite: true })));
     unfavorite = vi.fn().mockReturnValue(of(undefined));
     directoryAvailable = signal<boolean>(true);
@@ -246,6 +263,10 @@ describe('ChannelConversationPage', () => {
       ORGANIZATION_PERMISSION.MESSAGING_WRITE,
       ORGANIZATION_PERMISSION.MESSAGING_MANAGE,
     ]);
+    memberProfile = signal<{ id: string; organizationId: string } | null>({
+      id: 'member-1',
+      organizationId: 'org-1',
+    });
     thread = {
       reset: vi.fn(),
       load: vi.fn(),
@@ -266,6 +287,12 @@ describe('ChannelConversationPage', () => {
       messageEntityMap: vi.fn(() => ({})),
       noteReplyPosted: vi.fn(),
       noteUnpinned: vi.fn(),
+      pin: vi.fn(),
+      unpin: vi.fn(),
+      save: vi.fn(),
+      unsave: vi.fn(),
+      editMessage: vi.fn(),
+      deleteMessage: vi.fn(),
       editCallState: signal(idleCallState()),
       deleteCallState: signal(idleCallState()),
     };
@@ -546,5 +573,360 @@ describe('ChannelConversationPage', () => {
     permissions.set([ORGANIZATION_PERMISSION.MESSAGING_READ]);
     fixture.componentInstance['onMobileActionsClosed']('edit');
     expect(fixture.componentInstance['editDialogVisible']()).toBe(false);
+  });
+
+  it('pins and saves existing messages according to their current state', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+    page['togglePin']('missing');
+    page['toggleSave']('missing');
+    expect(thread.pin).not.toHaveBeenCalled();
+    expect(thread.save).not.toHaveBeenCalled();
+
+    thread.messageEntityMap.mockReturnValue({
+      'message-1': { id: 'message-1', isSaved: false } as MessageOutput,
+    });
+    page['togglePin']('message-1');
+    page['toggleSave']('message-1');
+    expect(thread.pin).toHaveBeenCalledExactlyOnceWith('message-1');
+    expect(thread.save).toHaveBeenCalledExactlyOnceWith('message-1');
+
+    thread.messageEntityMap.mockReturnValue({
+      'message-1': {
+        id: 'message-1',
+        pinnedAt: '2026-01-03T00:00:00Z',
+        isSaved: true,
+      } as MessageOutput,
+    });
+    page['togglePin']('message-1');
+    page['toggleSave']('message-1');
+    expect(thread.unpin).toHaveBeenCalledExactlyOnceWith('message-1');
+    expect(thread.unsave).toHaveBeenCalledExactlyOnceWith('message-1');
+  });
+
+  it('edits and deletes only the selected message and clears targets on close', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+    page['submitMessageEdit']('Updated');
+    page['confirmMessageDelete']();
+    expect(thread.editMessage).not.toHaveBeenCalled();
+    expect(thread.deleteMessage).not.toHaveBeenCalled();
+
+    page['editTargetId'].set('message-1');
+    page['submitMessageEdit']('Updated');
+    expect(thread.editMessage).toHaveBeenCalledExactlyOnceWith({
+      messageId: 'message-1',
+      input: { body: 'Updated' },
+    });
+    page['onMessageEditDialogVisibleChange'](true);
+    expect(page['editTargetId']()).toBe('message-1');
+    page['onMessageEditDialogVisibleChange'](false);
+    expect(page['editTargetId']()).toBeNull();
+
+    page['messageDeleteTargetId'].set('message-2');
+    page['confirmMessageDelete']();
+    expect(thread.deleteMessage).toHaveBeenCalledExactlyOnceWith('message-2');
+    page['onMessageDeleteDialogVisibleChange'](true);
+    expect(page['messageDeleteTargetId']()).toBe('message-2');
+    page['onMessageDeleteDialogVisibleChange'](false);
+    expect(page['messageDeleteTargetId']()).toBeNull();
+
+    page['replyTargetId'].set('message-3');
+    page['onReplySheetVisibleChange'](true);
+    expect(page['replyTargetId']()).toBe('message-3');
+    page['onReplySheetVisibleChange'](false);
+    expect(page['replyTargetId']()).toBeNull();
+  });
+
+  it('releases favorite busy state after a failed write without refreshing the channel', async () => {
+    favorite.mockReturnValue(throwError(() => new Error('offline')));
+    await createPage();
+    channelsLoadOne.mockClear();
+
+    expect(fixture.componentInstance['toggleFavorite']()).toBe(true);
+    expect(fixture.componentInstance['favoritePending']()).toBe(false);
+    expect(channelsLoadOne).not.toHaveBeenCalled();
+  });
+
+  it('opens mobile participant, edit and delete actions only for the current authorized channel', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+    page['onMobileActionsClosed']('participants');
+    expect(page['participantsSheetVisible']()).toBe(true);
+    page['onMobileActionsClosed']('edit');
+    expect(page['editDialogVisible']()).toBe(true);
+    page['onMobileActionsClosed']('delete');
+    expect(page['deletePending']()).toBe(true);
+
+    page['editDialogVisible'].set(false);
+    page['deletePending'].set(false);
+    channelEntityMap.set({});
+    page['onMobileActionsClosed']('edit');
+    page['onMobileActionsClosed']('delete');
+    expect(page['editDialogVisible']()).toBe(false);
+    expect(page['deletePending']()).toBe(false);
+  });
+
+  it('uses the roster while a deep-linked channel resolves and avoids writes without its entity', async () => {
+    channelEntityMap.set({});
+    participants.set([
+      { memberId: 'member-1', source: 'direct', addedAt: '2026-01-01' },
+      { memberId: 'member-2', source: 'direct', addedAt: '2026-01-01' },
+    ]);
+    await createPage();
+    const page = fixture.componentInstance;
+
+    expect(page['participantCount']()).toBe(2);
+    expect(page['composerPlaceholder']()).toBe('Write a message');
+    expect(page['toggleFavorite']()).toBe(false);
+    page['submitEdit']({ name: 'Premature rename', parentChannelId: null });
+    expect(favorite).not.toHaveBeenCalled();
+    expect(channelsUpdate).not.toHaveBeenCalled();
+
+    channelEntityMap.set({ 'channel-1': channel({ name: 'Resolved', participantCount: 6 }) });
+    await fixture.whenStable();
+    expect(page['participantCount']()).toBe(6);
+    expect(page['composerPlaceholder']()).toContain('#Resolved');
+  });
+
+  it('restricts mentions to resolved participants and offers only active nonparticipants to add', async () => {
+    participants.set([
+      { memberId: 'member-1', role: 'admin', source: 'direct', addedAt: '2026-01-01' },
+      { memberId: 'member-missing', source: 'direct', addedAt: '2026-01-01' },
+    ]);
+    directoryEntries.set(
+      new Map([
+        [
+          'member-1',
+          {
+            memberId: 'member-1',
+            displayName: 'Ada Lovelace',
+            roleNames: [],
+            isActive: true,
+          },
+        ],
+        [
+          'member-2',
+          { memberId: 'member-2', displayName: 'Zoe Martin', roleNames: [], isActive: true },
+        ],
+        [
+          'member-3',
+          { memberId: 'member-3', displayName: 'Inactive', roleNames: [], isActive: false },
+        ],
+      ]),
+    );
+    await createPage();
+    const page = fixture.componentInstance;
+
+    expect(page['mentionCandidates']().map((member) => member.memberId)).toEqual(['member-1']);
+    expect(page['addableMembers']().map((member) => member.memberId)).toEqual(['member-2']);
+    expect(page['participantViews']()).toEqual([
+      expect.objectContaining({
+        memberId: 'member-1',
+        displayName: 'Ada Lovelace',
+        isResolved: true,
+        role: 'admin',
+      }),
+      expect.objectContaining({
+        memberId: 'member-missing',
+        displayName: 'Unknown member',
+        isResolved: false,
+      }),
+    ]);
+    expect(page['participantAvatars']()[0]?.initials).toBe('AL');
+
+    directoryAvailable.set(false);
+    await fixture.whenStable();
+    expect(page['mentionCandidates']()).toEqual([]);
+    expect(page['addableMembers']()).toEqual([]);
+    expect(page['participantViews']()[0]?.displayName).toBe('Unknown member');
+  });
+
+  it('offers other root channels as parents and resolves the current parent IRI for a move', async () => {
+    channelEntityMap.set({
+      'channel-1': channel({ parent: '/api/channels/root-1' }),
+      'root-1': channel({ id: 'root-1', name: 'Main' }),
+      'root-2': channel({ id: 'root-2', name: 'Secondary' }),
+    });
+    await createPage();
+    const page = fixture.componentInstance;
+
+    expect(page['currentParentId']()).toBe('root-1');
+    expect(page['parentOptions']()).toEqual([
+      { value: 'root-1', label: '#Main' },
+      { value: 'root-2', label: '#Secondary' },
+    ]);
+
+    page['submitEdit']({ name: 'Bâtiment Nord', parentChannelId: null });
+    expect(channelsUpdate).not.toHaveBeenCalled();
+    expect(channelsSetParent).toHaveBeenCalledExactlyOnceWith({
+      channelId: 'channel-1',
+      input: { parentChannelId: null },
+    });
+  });
+
+  it('honors a wildcard grant and revokes channel actions when that grant disappears', async () => {
+    permissions.set(['organization.*']);
+    await createPage();
+
+    expect(fixture.componentInstance['canWrite']()).toBe(true);
+    expect(fixture.componentInstance['canManage']()).toBe(true);
+    expect(byTestId('message-composer-input')).not.toBeNull();
+
+    permissions.set([ORGANIZATION_PERMISSION.MESSAGING_READ]);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['canWrite']()).toBe(false);
+    expect(fixture.componentInstance['canManage']()).toBe(false);
+    expect(byTestId('message-composer-read-only')).not.toBeNull();
+  });
+
+  it('locks favorite writes until their response and then refreshes the shared channel', async () => {
+    const pending = new Subject<ChannelOutput>();
+    favorite.mockReturnValue(pending);
+    await createPage();
+    channelsLoadOne.mockClear();
+    const page = fixture.componentInstance;
+
+    expect(page['toggleFavorite']()).toBe(true);
+    expect(page['favoritePending']()).toBe(true);
+    expect(page['toggleFavorite']()).toBe(false);
+    expect(favorite).toHaveBeenCalledExactlyOnceWith('channel-1');
+    expect(channelsLoadOne).not.toHaveBeenCalled();
+
+    pending.next(channel({ isFavorite: true }));
+    expect(page['favoritePending']()).toBe(false);
+    expect(channelsLoadOne).toHaveBeenCalledExactlyOnceWith('channel-1');
+  });
+
+  it('routes composer, reaction and pinned-sheet actions to the current thread', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+
+    page['send']('North entrance inspected');
+    page['toggleReaction']({ messageId: 'message-1', emoji: '👍' });
+    page['unpinFromSheet']('message-2');
+
+    expect(thread.send).toHaveBeenCalledExactlyOnceWith({
+      conversationId: 'channel-1',
+      input: { body: 'North entrance inspected' },
+    });
+    expect(thread.toggleReaction).toHaveBeenCalledExactlyOnceWith('message-1', '👍');
+    expect(pinnedUnpin).toHaveBeenCalledExactlyOnceWith('message-2');
+  });
+
+  it('resolves reply and edit targets only while the selected message belongs to the thread', async () => {
+    const message: MessageOutput = {
+      '@id': '/api/messages/message-1',
+      '@type': 'MessageOutput',
+      id: 'message-1',
+      conversation: '/api/conversations/channel-1',
+      authorMember: '/api/organizations/org-1/members/member-1',
+      body: 'Safety update',
+      mentions: [],
+      mentionNames: {},
+      createdAt: '2026-01-01T00:00:00Z',
+      updatedAt: '2026-01-01T00:00:00Z',
+      isDeleted: false,
+      attachments: [],
+      isSaved: false,
+      replyCount: 0,
+      reactions: [],
+      references: [],
+    };
+    thread.sortedMessages.mockReturnValue([message]);
+    thread.messageEntityMap.mockReturnValue({ 'message-1': message });
+    await createPage();
+    const page = fixture.componentInstance;
+
+    page['replyTargetId'].set('message-1');
+    page['editTargetId'].set('message-1');
+    expect(page['replyTargetView']()?.id).toBe('message-1');
+    expect(page['editTargetMessage']()).toBe(message);
+
+    page['replyTargetId'].set('missing');
+    page['editTargetId'].set('missing');
+    expect(page['replyTargetView']()).toBeNull();
+    expect(page['editTargetMessage']()).toBeNull();
+  });
+
+  it('updates the open thread when a pin is removed from the information sheet', async () => {
+    await createPage();
+
+    TestBed.inject(Dispatcher).dispatch(pinnedMessagesStoreEvents.unpinned('message-2'));
+
+    expect(thread.noteUnpinned).toHaveBeenCalledExactlyOnceWith('message-2');
+  });
+
+  it('shows pinned authors and permits unpinning only for the pinning member or a manager', async () => {
+    pinned.set([
+      {
+        id: 'message-1',
+        authorDisplayName: 'Ada Lovelace',
+        body: 'Safety update',
+        mentionNames: {},
+        isDeleted: false,
+        createdAt: '2026-01-01T00:00:00Z',
+        pinnedBy: '/api/organizations/org-1/members/member-1',
+      },
+      {
+        id: 'message-2',
+        body: 'Follow-up',
+        mentionNames: {},
+        isDeleted: false,
+        createdAt: '2026-01-02T00:00:00Z',
+        pinnedBy: '/api/organizations/org-1/members/member-2',
+      },
+    ] as MessageOutput[]);
+    permissions.set([ORGANIZATION_PERMISSION.MESSAGING_WRITE]);
+    await createPage();
+    const page = fixture.componentInstance;
+
+    expect(page['pinnedItems']().map((item) => item.canUnpin)).toEqual([true, false]);
+    expect(page['pinnedItems']()[0]?.authorName).toBe('Ada Lovelace');
+    expect(page['pinnedItems']()[1]?.authorName).toBe('Unknown member');
+
+    permissions.set([ORGANIZATION_PERMISSION.MESSAGING_MANAGE]);
+    expect(page['pinnedItems']().map((item) => item.canUnpin)).toEqual([true, true]);
+
+    memberProfile.set(null);
+    permissions.set([]);
+    expect(page['pinnedItems']().map((item) => item.canUnpin)).toEqual([false, false]);
+
+    page['infoSheetVisible'].set(true);
+    await fixture.whenStable();
+    expect(pinnedLoad).toHaveBeenCalledWith('channel-1');
+  });
+
+  it('marks the channel read only while its document is visible', async () => {
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    await createPage();
+    thread.markRead.mockClear();
+
+    fixture.componentInstance['markRead']();
+    expect(thread.markRead).not.toHaveBeenCalled();
+
+    visibility.mockReturnValue('visible');
+    fixture.componentInstance['markRead']();
+    expect(thread.markRead).toHaveBeenCalledExactlyOnceWith({ conversationId: 'channel-1' });
+    visibility.mockRestore();
+  });
+
+  it('keeps channel deletion pending while the dialog stays open and clears it on dismissal', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+    page['requestDelete']();
+    page['confirmDelete']();
+    channelsMutationCallState.set(errorCallState(toStoreError(new Error('Cannot delete'))));
+    await fixture.whenStable();
+
+    page['onDeleteDialogStateChanged']('open');
+    expect(page['deletePending']()).toBe(true);
+    expect(page['deleteDialogError']()).not.toBeNull();
+
+    page['onDeleteDialogStateChanged']('closed');
+    await fixture.whenStable();
+    expect(page['deletePending']()).toBe(false);
+    expect(page['deleteDialogError']()).toBeNull();
   });
 });

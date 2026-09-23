@@ -64,7 +64,7 @@ const IMPORT_ROW_ERROR_CODE: Record<ImportRowErrorCode, ImportRowErrorTagDescrip
 export function resolveImportRowErrorTag(value: string): ImportRowErrorTagDescriptor {
   return (
     IMPORT_ROW_ERROR_CODE[value as ImportRowErrorCode] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideTag',
     }

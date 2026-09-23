@@ -116,12 +116,18 @@
     </div>
     <ng-container surfaceHead>
       <tr hlmTableRow>
-        <th hlmTableHead class="w-32" i18n="@@intervention.changes.columnResource">Resource</th>
-        <th hlmTableHead class="w-32" i18n="@@intervention.changes.columnField">Field</th>
-        <th hlmTableHead i18n="@@intervention.changes.columnValue">Proposed value</th>
-        <th hlmTableHead class="w-28" i18n="@@intervention.changes.columnStatus">Status</th>
+        <th hlmTableHead scope="col" class="w-32" i18n="@@intervention.changes.columnResource">
+          Resource
+        </th>
+        <th hlmTableHead scope="col" class="w-32" i18n="@@intervention.changes.columnField">
+          Field
+        </th>
+        <th hlmTableHead scope="col" i18n="@@intervention.changes.columnValue">Proposed value</th>
+        <th hlmTableHead scope="col" class="w-28" i18n="@@intervention.changes.columnStatus">
+          Status
+        </th>
         @if (showActionsColumn()) {
-          <th hlmTableHead class="w-20 text-right">
+          <th hlmTableHead scope="col" class="w-20 text-right">
             <span class="sr-only" i18n="@@common.actions">Actions</span>
           </th>
         }

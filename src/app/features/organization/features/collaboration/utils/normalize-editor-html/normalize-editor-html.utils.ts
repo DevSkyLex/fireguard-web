@@ -1,11 +1,4 @@
-/**
- * Splits an HTML string into tags and the text between them.
- *
- * Deliberately duplicated from `applyMentionMarkers` rather than shared: it is
- * one line, the two utilities are independent, and the rule of three has not
- * been met.
- */
-const TAG_SPLIT = /(<[^>]*>)/;
+import { splitHtmlSegments } from '../split-html-segments/split-html-segments.utils';
 
 /**
  * Function normalizeEditorHtml
@@ -38,10 +31,7 @@ const TAG_SPLIT = /(<[^>]*>)/;
 export function normalizeEditorHtml(html: string): string {
   if (html.length === 0) return html;
 
-  return html
-    .split(TAG_SPLIT)
-    .map((segment: string): string =>
-      segment.startsWith('<') ? segment : segment.replaceAll('&nbsp;', ' '),
-    )
+  return splitHtmlSegments(html)
+    .map(({ value, isTag }): string => (isTag ? value : value.replaceAll('&nbsp;', ' ')))
     .join('');
 }

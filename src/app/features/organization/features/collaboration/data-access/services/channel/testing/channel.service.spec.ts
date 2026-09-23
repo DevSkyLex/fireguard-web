@@ -84,21 +84,29 @@ describe('ChannelService', () => {
     });
 
     it('should omit isArchived entirely when the caller does not set it', () => {
-      service.list(query).subscribe();
+      const received = vi.fn();
+      service.list(query).subscribe(received);
 
       const req = httpMock.expectOne(
         (request) => request.url === channelsUrl && !request.params.has('isArchived'),
       );
-      req.flush(collection([]));
+      expect(req.request.params.has('isArchived')).toBe(false);
+      const response = collection([]);
+      req.flush(response);
+      expect(received).toHaveBeenCalledExactlyOnceWith(response);
     });
 
     it('should send isArchived when the caller sets it, even to false', () => {
-      service.list({ ...query, isArchived: false }).subscribe();
+      const received = vi.fn();
+      service.list({ ...query, isArchived: false }).subscribe(received);
 
       const req = httpMock.expectOne(
         (request) => request.url === channelsUrl && request.params.get('isArchived') === 'false',
       );
-      req.flush(collection([]));
+      expect(req.request.params.get('isArchived')).toBe('false');
+      const response = collection([]);
+      req.flush(response);
+      expect(received).toHaveBeenCalledExactlyOnceWith(response);
     });
   });
 

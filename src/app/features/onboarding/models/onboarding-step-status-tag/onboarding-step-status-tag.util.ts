@@ -50,7 +50,7 @@ const STATUS: Record<OnboardingStepStatus, OnboardingStepStatusTagDescriptor> = 
 export function resolveOnboardingStepStatusTag(value: string): OnboardingStepStatusTagDescriptor {
   return (
     STATUS[value as OnboardingStepStatus] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideCircle',
     }

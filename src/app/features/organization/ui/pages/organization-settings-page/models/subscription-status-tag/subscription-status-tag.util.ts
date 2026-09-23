@@ -70,7 +70,7 @@ const STATUS: Record<SubscriptionStatus, SubscriptionStatusTagDescriptor> = {
 export function resolveSubscriptionStatusTag(value: string): SubscriptionStatusTagDescriptor {
   return (
     STATUS[value as SubscriptionStatus] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideClock',
     }

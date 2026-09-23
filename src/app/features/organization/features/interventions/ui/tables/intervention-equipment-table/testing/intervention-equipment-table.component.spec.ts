@@ -140,6 +140,128 @@ describe('InterventionEquipmentTable', () => {
     expect(searches).toContain('sn-002');
   });
 
+  it('should apply type and status together to loaded rows', async () => {
+    fixture.componentRef.setInput('items', [
+      equipment({ id: 'eq-1', type: 'fire_extinguisher', status: 'operational' }),
+      equipment({ id: 'eq-2', type: 'smoke_detector', status: 'operational' }),
+      equipment({ id: 'eq-3', type: 'fire_extinguisher', status: 'decommissioned' }),
+    ]);
+    fixture.componentRef.setInput('query', {
+      search: '',
+      type: 'fire_extinguisher',
+      status: 'operational',
+    });
+    await fixture.whenStable();
+
+    const rows = root().querySelectorAll('[data-testid="intervention-equipment-table-row"]');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.textContent).toContain('SN-001');
+    expect(fixture.componentInstance['activeFilterKeys']()).toEqual(['type', 'status']);
+
+    fixture.componentRef.setInput('query', {
+      search: '',
+      type: 'smoke_detector',
+      status: 'decommissioned',
+    });
+    await fixture.whenStable();
+    expect(byTestId('intervention-equipment-empty')?.textContent).toContain(
+      'No equipment matches the current search or filters',
+    );
+  });
+
+  it('should retain server-returned rows even when the local query would filter them out', async () => {
+    fixture.componentRef.setInput('items', [equipment({ type: 'smoke_detector' })]);
+    fixture.componentRef.setInput('serverFiltering', true);
+    fixture.componentRef.setInput('query', {
+      search: 'missing',
+      type: 'fire_extinguisher',
+      status: 'decommissioned',
+    });
+    await fixture.whenStable();
+
+    expect(
+      root().querySelectorAll('[data-testid="intervention-equipment-table-row"]'),
+    ).toHaveLength(1);
+    expect(byTestId('intervention-equipment-empty')).toBeNull();
+  });
+
+  it('should preserve search and the other filter as each criterion changes', async () => {
+    fixture.componentRef.setInput('query', { search: 'SN-001', type: null, status: null });
+    await fixture.whenStable();
+    const emitted = vi.fn();
+    fixture.componentInstance.queryChanged.subscribe(emitted);
+
+    fixture.componentInstance['onTypeFilterChanged']('fire_extinguisher');
+    await fixture.whenStable();
+    fixture.componentInstance['onStatusFilterChanged']('operational');
+    await fixture.whenStable();
+    expect(emitted).toHaveBeenLastCalledWith({
+      search: 'SN-001',
+      type: 'fire_extinguisher',
+      status: 'operational',
+    });
+
+    fixture.componentInstance['onFieldRemoved']('type');
+    await fixture.whenStable();
+    expect(emitted).toHaveBeenLastCalledWith({
+      search: 'SN-001',
+      type: null,
+      status: 'operational',
+    });
+
+    fixture.componentInstance['clearFilters']();
+    expect(emitted).toHaveBeenLastCalledWith({
+      search: 'SN-001',
+      type: null,
+      status: null,
+    });
+  });
+
+  it('should discard unrecognized filter values and ignore unknown field keys', async () => {
+    const emitted = vi.fn();
+    fixture.componentInstance.queryChanged.subscribe(emitted);
+
+    fixture.componentInstance['onTypeFilterChanged']('unknown-type');
+    fixture.componentInstance['onStatusFilterChanged']('unknown-status');
+    fixture.componentInstance['onFieldRemoved']('unknown-field');
+
+    expect(fixture.componentInstance['query']()).toEqual({
+      search: '',
+      type: null,
+      status: null,
+    });
+    expect(emitted).toHaveBeenCalledTimes(2);
+  });
+
+  it('should keep only the selected filter popover open', () => {
+    fixture.componentInstance['onFieldPicked']('type');
+    expect(fixture.componentInstance['fieldPopoverState']('type')).toBe('open');
+    expect(fixture.componentInstance['fieldPopoverState']('status')).toBe('closed');
+
+    fixture.componentInstance['onFilterPopoverStateChanged']('status', 'closed');
+    expect(fixture.componentInstance['fieldPopoverState']('type')).toBe('open');
+    fixture.componentInstance['onFilterPopoverStateChanged']('status', 'open');
+    fixture.componentInstance['onFilterPopoverStateChanged']('status', 'closed');
+    expect(fixture.componentInstance['fieldPopoverState']('status')).toBe('closed');
+  });
+
+  it('should mount both value controls when the filter bar is opened', async () => {
+    const toggle = byTestId('intervention-equipment-filters-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+    toggle.click();
+    await fixture.whenStable();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(root().querySelector('#intervention-equipment-filter-bar')).not.toBeNull();
+    expect(fixture.componentInstance['filterTemplates']()['type']).toBeDefined();
+    expect(fixture.componentInstance['filterTemplates']()['status']).toBeDefined();
+
+    toggle.click();
+    await fixture.whenStable();
+    expect(root().querySelector('#intervention-equipment-filter-bar')).toBeNull();
+  });
+
   it('should link a published equipment row to its detail route', async () => {
     fixture.componentRef.setInput('items', [equipment({ id: 'eq-1', recordStatus: 'published' })]);
     await fixture.whenStable();
@@ -150,6 +272,28 @@ describe('InterventionEquipmentTable', () => {
 
     expect(link).not.toBeNull();
     expect(link?.getAttribute('href')).toBe('/organizations/org-1/equipments/eq-1');
+    expect(link?.getAttribute('aria-label')).toContain('SN-001');
+  });
+
+  it('should use the visible type as the link name when an equipment has no serial number', async () => {
+    fixture.componentRef.setInput('items', [equipment({ serialNumber: null })]);
+    await fixture.whenStable();
+
+    const link = byTestId('intervention-equipment-table-row')?.querySelector('a');
+    expect(link?.textContent).toContain('fire extinguisher');
+    expect(link?.hasAttribute('aria-label')).toBe(false);
+  });
+
+  it('should show empty-value fallbacks when brand, model and location are absent', async () => {
+    fixture.componentRef.setInput('items', [
+      equipment({ brand: null, model: null, locationLabel: null }),
+    ]);
+    await fixture.whenStable();
+
+    const row = byTestId('intervention-equipment-table-row') as HTMLElement;
+    const cells = row.querySelectorAll('td');
+    expect(cells[1]?.textContent?.trim()).toBe('—');
+    expect(cells[3]?.textContent?.trim()).toBe('—');
   });
 
   it('should render a draft-record row as plain text, not a link', async () => {
@@ -192,6 +336,17 @@ describe('InterventionEquipmentTable', () => {
     expect(alert).not.toBeNull();
     expect(alert?.getAttribute('role')).toBe('alert');
     expect(alert?.textContent).toContain('Linked equipment could not be loaded.');
+  });
+
+  it('should emit retry from the table error action', async () => {
+    fixture.componentRef.setInput('error', 'Linked equipment could not be loaded.');
+    await fixture.whenStable();
+    const retry = vi.fn();
+    fixture.componentInstance.retryRequested.subscribe(retry);
+
+    byTestId('intervention-equipment-error')?.querySelector('button')?.click();
+
+    expect(retry).toHaveBeenCalledTimes(1);
   });
 
   it('should show the empty state when nothing is linked', () => {

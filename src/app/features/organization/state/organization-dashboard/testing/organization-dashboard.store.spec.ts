@@ -210,6 +210,130 @@ describe('DashboardStore', () => {
     expect(store.queryData()).toEqual(dashboard);
   });
 
+  it('recovers from an initial load failure when the active organization retries', async () => {
+    const pending = new Subject<OrganizationDashboardOutput>();
+    mockOrganizationService.getDashboard.mockReturnValue(pending);
+    await flushEffects();
+
+    expect(store.isQueryLoading()).toBe(true);
+    expect(store.queryData()).toBeNull();
+    expect(store.facilityCount()).toBeNull();
+
+    pending.error(new Error('Dashboard unavailable'));
+    expect(store.queryHasError()).toBe(true);
+    expect(store.queryError()?.message).toBe('Dashboard unavailable');
+
+    mockOrganizationService.getDashboard.mockReturnValue(of(dashboard));
+    store.load('org-1');
+
+    expect(store.isQueryLoaded()).toBe(true);
+    expect(store.queryError()).toBeNull();
+    expect(store.facilityCount()).toBe(4);
+  });
+
+  it('keeps the previous snapshot during refresh and replaces all KPI details on success', async () => {
+    await flushEffects();
+    const pending = new Subject<OrganizationDashboardOutput>();
+    mockOrganizationService.getDashboard.mockReturnValue(pending);
+    store.load('org-1');
+
+    expect(store.isQueryLoading()).toBe(true);
+    expect(store.memberCount()).toBe(12);
+    expect(store.facilitiesComparison()).toEqual({ value: 2, direction: 'up' });
+
+    const refreshed = {
+      ...dashboard,
+      overview: {
+        facilities: { summary: [{ value: '6' }] },
+        members: { summary: [{ value: 14 }] },
+        equipment: { summary: [{ value: 20 }] },
+        inspections: { summary: [{ value: 9 }] },
+      },
+      comparison: {
+        metrics: [
+          { key: 'facilities', value: 2, direction: null },
+          { key: 'members', value: 3, direction: 'up' },
+          { key: 'equipment', value: -2, direction: 'down' },
+          { key: 'inspections', value: 0, direction: 'stable' },
+        ],
+      },
+      recentInterventions: [],
+      alerts: [],
+    } as unknown as OrganizationDashboardOutput;
+    pending.next(refreshed);
+
+    expect(store.isQueryLoaded()).toBe(true);
+    expect(store.queryData()).toEqual(refreshed);
+    expect(store.facilityCount()).toBe('6');
+    expect(store.memberCount()).toBe(14);
+    expect(store.equipmentCount()).toBe(20);
+    expect(store.inspectionCount()).toBe(9);
+    expect(store.facilitiesComparison()).toEqual({ value: 2, direction: null });
+    expect(store.membersComparison()).toEqual({ value: 3, direction: 'up' });
+    expect(store.equipmentComparison()).toEqual({ value: -2, direction: 'down' });
+    expect(store.inspectionsComparison()).toEqual({ value: 0, direction: 'stable' });
+    expect(store.recentInterventions()).toEqual([]);
+    expect(store.alerts()).toEqual([]);
+  });
+
+  it('does not preserve obsolete KPI values when a partial snapshot arrives', async () => {
+    await flushEffects();
+    const partial = {
+      ...dashboard,
+      overview: {
+        facilities: { summary: [] },
+        members: { summary: [{ value: null }] },
+      },
+      comparison: { metrics: [{ key: 'members', value: 0, direction: null }] },
+      trends: {
+        facilities: [{ bucket: '2026-07-13', value: 'unavailable' }],
+        members: [
+          { bucket: '2026-07-13', value: '' },
+          { bucket: '2026-07-14', value: '13' },
+        ],
+      },
+      recentInterventions: undefined,
+      alerts: undefined,
+    } as unknown as OrganizationDashboardOutput;
+    mockOrganizationService.getDashboard.mockReturnValue(of(partial));
+    store.load('org-1');
+
+    expect(store.facilityCount()).toBeNull();
+    expect(store.memberCount()).toBeNull();
+    expect(store.equipmentCount()).toBeNull();
+    expect(store.inspectionCount()).toBeNull();
+    expect(store.facilitiesComparison()).toBeNull();
+    expect(store.membersComparison()).toEqual({ value: 0, direction: null });
+    expect(store.equipmentComparison()).toBeNull();
+    expect(store.inspectionsComparison()).toBeNull();
+    expect(store.facilitiesSparkline()).toBeNull();
+    expect(store.membersSparkline()).toEqual([13]);
+    expect(store.recentInterventions()).toEqual([]);
+    expect(store.alerts()).toEqual([]);
+  });
+
+  it('keeps the latest same-organization refresh when the previous request settles late', async () => {
+    await flushEffects();
+    const stale = new Subject<OrganizationDashboardOutput>();
+    const latest = new Subject<OrganizationDashboardOutput>();
+    mockOrganizationService.getDashboard.mockReturnValueOnce(stale).mockReturnValueOnce(latest);
+
+    store.load('org-1');
+    store.load('org-1');
+
+    expect(stale.observed).toBe(false);
+    expect(latest.observed).toBe(true);
+
+    const refreshed = { ...dashboard, recentInterventions: [] };
+    latest.next(refreshed);
+    stale.error(new Error('Obsolete refresh failed'));
+
+    expect(store.isQueryLoaded()).toBe(true);
+    expect(store.queryError()).toBeNull();
+    expect(store.queryData()).toEqual(refreshed);
+    expect(store.recentInterventions()).toEqual([]);
+  });
+
   it('does not issue a manual refresh with an obsolete organization identifier', async () => {
     await flushEffects();
     const pending = new Subject<OrganizationDashboardOutput>();

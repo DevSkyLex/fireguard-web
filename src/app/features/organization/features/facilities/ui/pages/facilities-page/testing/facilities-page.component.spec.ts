@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
@@ -24,7 +24,11 @@ import {
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import type {
+  CreateFacilityInput,
+  FacilityGeocodeOutput,
+  FacilityOutput,
+} from '@features/organization/features/facilities/models';
 import {
   FacilityOptionsStore,
   FacilityStore,
@@ -94,8 +98,14 @@ describe('FacilitiesPage', () => {
   let rootFacilities: WritableSignal<readonly FacilityOutput[]>;
   let totalRootFacilities: WritableSignal<number>;
   let rootListCallState: WritableSignal<CallState>;
+  let createCallState: WritableSignal<CallState<FacilityOutput | null>>;
+  let isCreating: WritableSignal<boolean>;
+  let createFacility: ReturnType<typeof vi.fn>;
+  let resetCreateOperation: ReturnType<typeof vi.fn>;
+  let ensureOptionsLoaded: ReturnType<typeof vi.fn>;
   let hasPermission: ReturnType<typeof vi.fn>;
   let exportCsv: ReturnType<typeof vi.fn>;
+  let geocode: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
 
@@ -106,8 +116,14 @@ describe('FacilitiesPage', () => {
     rootFacilities = signal<readonly FacilityOutput[]>([]);
     totalRootFacilities = signal<number>(0);
     rootListCallState = signal<CallState>(idleCallState());
+    createCallState = signal<CallState<FacilityOutput | null>>(idleCallState());
+    isCreating = signal(false);
+    createFacility = vi.fn();
+    resetCreateOperation = vi.fn();
+    ensureOptionsLoaded = vi.fn();
     hasPermission = vi.fn().mockReturnValue(true);
     exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+    geocode = vi.fn();
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
 
@@ -137,18 +153,18 @@ describe('FacilitiesPage', () => {
             totalRootFacilities,
             rootListCallState,
             isLoadingRootFacilities: signal(false),
-            createCallState: signal(idleCallState()),
-            isCreating: signal(false),
+            createCallState,
+            isCreating,
             createError: signal(null),
-            create: vi.fn(),
-            resetCreateOperation: vi.fn(),
+            create: createFacility,
+            resetCreateOperation,
             loadRootFacilities,
             archive,
             restore,
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
-        { provide: FacilityService, useValue: { exportCsv } },
+        { provide: FacilityService, useValue: { exportCsv, geocode } },
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         { provide: ActivatedRoute, useValue: {} },
       ],
@@ -159,7 +175,11 @@ describe('FacilitiesPage', () => {
         providers: [
           {
             provide: FacilityOptionsStore,
-            useValue: { options: signal([]), mapCenter: signal(undefined), ensureLoaded: vi.fn() },
+            useValue: {
+              options: signal([]),
+              mapCenter: signal(undefined),
+              ensureLoaded: ensureOptionsLoaded,
+            },
           },
         ],
       },
@@ -247,6 +267,104 @@ describe('FacilitiesPage', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+  });
+
+  it('should consume a scoped creation deep link and load its picker options', async () => {
+    fixture = await createPage({ create: '1', parent: 'parent-7' });
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+    expect(fixture.componentInstance['pendingScopeId']()).toBe('parent-7');
+    expect(ensureOptionsLoaded).toHaveBeenCalledOnce();
+    expect(ensureOptionsLoaded).toHaveBeenCalledWith('org-1');
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { create: null, parent: null } }),
+    );
+
+    fixture.componentInstance['onCreateSheetVisibleChange'](false);
+    expect(fixture.componentInstance['pendingScopeId']()).toBeNull();
+  });
+
+  it('should consume a creation deep link without opening the sheet when writing is denied', async () => {
+    hasPermission.mockReturnValue(false);
+    fixture = await createPage({ create: '1', parent: 'parent-7' });
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(false);
+    expect(fixture.componentInstance['pendingScopeId']()).toBeNull();
+    expect(ensureOptionsLoaded).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { create: null, parent: null } }),
+    );
+  });
+
+  it('should submit once and navigate to the created facility only after the write succeeds', async () => {
+    fixture = await createPage();
+    const payload: CreateFacilityInput = { name: 'Annex', type: 'building' };
+    fixture.componentInstance['openCreate']();
+
+    isCreating.set(true);
+    fixture.componentInstance['onCreateSubmitted'](payload);
+    expect(createFacility).not.toHaveBeenCalled();
+
+    isCreating.set(false);
+    fixture.componentInstance['onCreateSubmitted'](payload);
+    expect(createFacility).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      input: payload,
+    });
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+
+    createCallState.set(successCallState(facility({ id: 'created-7' })));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(false);
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'facilities', 'created-7']);
+    expect(resetCreateOperation).toHaveBeenCalledOnce();
+  });
+
+  it('should ignore a duplicate geocode request while a lookup is pending', async () => {
+    const pending = new Subject<FacilityGeocodeOutput>();
+    const match: FacilityGeocodeOutput = {
+      '@id': '/api/facilities/geocode/annex',
+      '@type': 'FacilityGeocode',
+      displayName: 'Annex Street',
+      latitude: 48.85,
+      longitude: 2.35,
+    };
+    geocode.mockReturnValue(pending);
+    fixture = await createPage();
+
+    fixture.componentInstance['onGeocodeRequested']('Annex Street');
+    fixture.componentInstance['onGeocodeRequested']('Annex Street');
+    expect(geocode).toHaveBeenCalledExactlyOnceWith('org-1', 'Annex Street');
+    expect(fixture.componentInstance['geocodePending']()).toBe(true);
+
+    pending.next(match);
+    pending.complete();
+    expect(fixture.componentInstance['geocodePending']()).toBe(false);
+    expect(fixture.componentInstance['geocodeResult']()).toEqual(match);
+    expect(feedbackError).not.toHaveBeenCalled();
+  });
+
+  it('should show a geocode 404 inline and surface a rate-limit detail as a toast', async () => {
+    fixture = await createPage();
+    geocode.mockReturnValueOnce(
+      throwError(() => ({ '@type': 'Error', status: 404, detail: 'No address matched' })),
+    );
+
+    fixture.componentInstance['onGeocodeRequested']('Unknown address');
+    expect(fixture.componentInstance['geocodeNotFound']()).toBe(true);
+    expect(feedbackError).not.toHaveBeenCalled();
+
+    geocode.mockReturnValueOnce(
+      throwError(() => ({ '@type': 'Error', status: 429, detail: 'Too many lookups' })),
+    );
+    fixture.componentInstance['onGeocodeRequested']('Busy address');
+
+    expect(fixture.componentInstance['geocodeNotFound']()).toBe(false);
+    expect(fixture.componentInstance['geocodePending']()).toBe(false);
+    expect(feedbackError).toHaveBeenCalledExactlyOnceWith('Too many lookups');
   });
 
   it('should show the error state and let the operator retry', async () => {

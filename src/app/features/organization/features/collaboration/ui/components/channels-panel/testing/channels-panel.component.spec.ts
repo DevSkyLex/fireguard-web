@@ -45,6 +45,7 @@ describe('ChannelsPanel', () => {
   let isLoading: WritableSignal<boolean>;
   let loadError: WritableSignal<StoreError | null>;
   let isMutating: WritableSignal<boolean>;
+  let selectedOrganizationId: WritableSignal<string | null>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
   let load: ReturnType<typeof vi.fn>;
   let create: ReturnType<typeof vi.fn>;
@@ -65,7 +66,7 @@ describe('ChannelsPanel', () => {
         { provide: PLATFORM_ID, useValue: platformId },
         {
           provide: ORGANIZATION_CONTEXT_PORT,
-          useValue: { selectedOrganizationId: signal('org-1') },
+          useValue: { selectedOrganizationId },
         },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: { permissions } },
       ],
@@ -109,6 +110,7 @@ describe('ChannelsPanel', () => {
     isLoading = signal(false);
     loadError = signal<StoreError | null>(null);
     isMutating = signal(false);
+    selectedOrganizationId = signal<string | null>('org-1');
     permissions = signal<ReadonlyArray<string>>([ORGANIZATION_PERMISSION.MESSAGING_MANAGE]);
     load = vi.fn();
     create = vi.fn();
@@ -286,5 +288,60 @@ describe('ChannelsPanel', () => {
     panel.moveChannel('leaf', 'other');
     expect(setParent).not.toHaveBeenCalled();
     expect(panel.canMoveTo('leaf', null)).toBe(false);
+  });
+
+  it('refuses moves for absent, foreign, unchanged or currently mutating channels', async () => {
+    channelEntities.set([
+      channel({ id: 'root' }),
+      channel({ id: 'child', parent: '/api/channels/root' }),
+      channel({ id: 'foreign', organization: '/api/organizations/org-2' }),
+    ]);
+    await createPage();
+    const panel = fixture.componentInstance;
+
+    expect(panel['canMoveTo']('missing', 'root')).toBe(false);
+    expect(panel['canMoveTo']('foreign', 'root')).toBe(false);
+    expect(panel['canMoveTo']('child', 'root')).toBe(false);
+    isMutating.set(true);
+    expect(panel['canMoveTo']('child', null)).toBe(false);
+  });
+
+  it('commits only a pointer drop over a valid target and always clears drag feedback', async () => {
+    channelEntities.set([channel({ id: 'root' }), channel({ id: 'child' })]);
+    await createPage();
+    const panel = fixture.componentInstance as unknown as {
+      dropParentId: WritableSignal<string | null | undefined>;
+      draggedChannelId: WritableSignal<string | null>;
+      moveStatus: WritableSignal<string>;
+      dropChannel(event: { isPointerOverContainer: boolean; item: { data: string } }): void;
+    };
+
+    panel.dropParentId.set('root');
+    panel.draggedChannelId.set('child');
+    panel.moveStatus.set('Ready');
+    panel.dropChannel({ isPointerOverContainer: false, item: { data: 'child' } });
+    expect(setParent).not.toHaveBeenCalled();
+    expect(panel.dropParentId()).toBeUndefined();
+    expect(panel.draggedChannelId()).toBeNull();
+    expect(panel.moveStatus()).toBe('');
+
+    panel.dropParentId.set('root');
+    panel.dropChannel({ isPointerOverContainer: true, item: { data: 'child' } });
+    expect(setParent).toHaveBeenCalledExactlyOnceWith({
+      channelId: 'child',
+      input: { parentChannelId: 'root' },
+    });
+    expect(panel.dropParentId()).toBeUndefined();
+  });
+
+  it('skips loading, retry and creation without a selected organization', async () => {
+    selectedOrganizationId.set(null);
+    await createPage();
+    const panel = fixture.componentInstance;
+    panel['reload']();
+    panel['submitCreate']({ name: 'Incident room', parentChannelId: null });
+
+    expect(load).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
   });
 });

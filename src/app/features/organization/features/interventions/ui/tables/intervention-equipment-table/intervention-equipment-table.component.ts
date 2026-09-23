@@ -563,7 +563,7 @@ export class InterventionEquipmentTable {
    * @returns {string} The humanized type.
    */
   protected typeLabelOf(item: EquipmentOutput): string {
-    return item.type.replace(/_/g, ' ');
+    return item.type.replaceAll('_', ' ');
   }
 
   /**

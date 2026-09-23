@@ -123,8 +123,8 @@ export function formatDashboardTrendBucket(
   const weekMatch = bucket.match(/^(\d{4})-W(\d{2})$/);
 
   if (weekMatch) {
-    const year = parseInt(weekMatch[1], 10);
-    const week = parseInt(weekMatch[2], 10);
+    const year = Number.parseInt(weekMatch[1], 10);
+    const week = Number.parseInt(weekMatch[2], 10);
     const jan4 = new Date(year, 0, 4);
     const dayOffset = (jan4.getDay() + 6) % 7;
     const weekStart = new Date(year, 0, 4 - dayOffset + (week - 1) * 7);
@@ -148,12 +148,12 @@ export function formatDashboardTrendBucket(
   let date: Date;
 
   if (monthMatch) {
-    date = new Date(parseInt(monthMatch[1], 10), parseInt(monthMatch[2], 10) - 1, 1);
+    date = new Date(Number.parseInt(monthMatch[1], 10), Number.parseInt(monthMatch[2], 10) - 1, 1);
   } else if (dayMatch) {
     date = new Date(
-      parseInt(dayMatch[1], 10),
-      parseInt(dayMatch[2], 10) - 1,
-      parseInt(dayMatch[3], 10),
+      Number.parseInt(dayMatch[1], 10),
+      Number.parseInt(dayMatch[2], 10) - 1,
+      Number.parseInt(dayMatch[3], 10),
     );
   } else {
     date = new Date(bucket);

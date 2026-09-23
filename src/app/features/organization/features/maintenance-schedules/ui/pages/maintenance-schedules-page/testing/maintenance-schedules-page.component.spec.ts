@@ -72,6 +72,7 @@ describe('MaintenanceSchedulesPage', () => {
   let exportCsv: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
+  let listFacilities: ReturnType<typeof vi.fn>;
 
   const schedule: MaintenanceScheduleOutput = {
     '@id': '/api/maintenance/schedules/schedule-1',
@@ -98,6 +99,7 @@ describe('MaintenanceSchedulesPage', () => {
     exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
+    listFacilities = vi.fn().mockReturnValue(of({ member: [], totalItems: 0 }));
 
     TestBed.configureTestingModule({
       providers: [
@@ -148,7 +150,7 @@ describe('MaintenanceSchedulesPage', () => {
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         {
           provide: FacilityService,
-          useValue: { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) },
+          useValue: { list: listFacilities },
         },
         { provide: ActivatedRoute, useValue: {} },
       ],
@@ -289,6 +291,135 @@ describe('MaintenanceSchedulesPage', () => {
     expect(load).toHaveBeenCalledWith(
       expect.objectContaining({ dueBefore: '2026-06-30T00:00:00.000Z' }),
     );
+  });
+
+  it('should resolve a schedule facility label from the loaded organization catalog', async () => {
+    listFacilities.mockReturnValue(
+      of({
+        member: [
+          { '@id': '/api/organizations/org-1/facilities/site-1', name: 'North site' },
+          { '@id': '/api/organizations/org-1/facilities/site-2', name: 'South site' },
+        ],
+        totalItems: 2,
+      }),
+    );
+    fixture = await createPage();
+
+    expect(listFacilities).toHaveBeenCalledWith('org-1', { itemsPerPage: 200 });
+    expect(fixture.componentInstance['tableFacilityLabelOf']('site-2')).toBe('South site');
+    expect(fixture.componentInstance['tableFacilityLabelOf']('unknown')).toBeNull();
+  });
+
+  it('should remove the facility, equipment type and due-before filters independently', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['filters'].set({
+      dueStatus: 'due_soon',
+      facility: '/api/organizations/org-1/facilities/site-1',
+      equipmentType: 'fire_extinguisher',
+      dueBefore: new Date('2026-12-31T00:00:00Z'),
+    });
+    await fixture.whenStable();
+
+    fixture.componentInstance['onFieldRemoved']('facility');
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0]).toMatchObject({
+      facility: undefined,
+      equipmentType: 'fire_extinguisher',
+      dueStatus: 'due_soon',
+    });
+
+    fixture.componentInstance['onFieldRemoved']('equipmentType');
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0]).toMatchObject({
+      equipmentType: undefined,
+      dueStatus: 'due_soon',
+    });
+
+    fixture.componentInstance['onFieldRemoved']('dueBefore');
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0]).toMatchObject({
+      dueBefore: undefined,
+      dueStatus: 'due_soon',
+    });
+  });
+
+  it('should reset pagination and all query fields when clearing filters', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['page'].set(3);
+    fixture.componentInstance['filters'].set({
+      dueStatus: 'overdue',
+      facility: '/api/organizations/org-1/facilities/site-1',
+      equipmentType: 'fire_extinguisher',
+      dueBefore: new Date('2026-12-31T00:00:00Z'),
+    });
+    fixture.componentInstance['searchTerm'].set('alarm');
+    await fixture.whenStable();
+
+    fixture.componentInstance['clearFilters']();
+    await fixture.whenStable();
+
+    expect(load.mock.calls.at(-1)?.[0]).toEqual({
+      organization: '/api/organizations/org-1',
+      facility: undefined,
+      equipmentType: undefined,
+      dueStatus: undefined,
+      dueBefore: undefined,
+      search: undefined,
+      page: 1,
+      itemsPerPage: 30,
+    });
+  });
+
+  it('should bound pagination and return to page one when the page size changes', async () => {
+    totalSchedules.set(85);
+    fixture = await createPage();
+
+    fixture.componentInstance['goToPage'](99);
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0]).toMatchObject({ page: 3, itemsPerPage: 30 });
+
+    fixture.componentInstance['goToPage'](-5);
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0]).toMatchObject({ page: 1, itemsPerPage: 30 });
+
+    fixture.componentInstance['setPageSize'](60);
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0]).toMatchObject({ page: 1, itemsPerPage: 60 });
+  });
+
+  it('should scope a generated campaign and clear operation state when dismissed', async () => {
+    fixture = await createPage();
+
+    fixture.componentInstance['openCampaignDialog']();
+    expect(fixture.componentInstance['campaignDialogVisible']()).toBe(true);
+    expect(resetCampaignOperation).toHaveBeenCalledTimes(1);
+
+    fixture.componentInstance['submitCampaign']({
+      name: 'Winter inspection',
+      dueBefore: '2026-12-31T00:00:00.000Z',
+      facility: '/api/organizations/org-1/facilities/site-1',
+    });
+    expect(generateCampaign).toHaveBeenCalledWith({
+      organization: '/api/organizations/org-1',
+      name: 'Winter inspection',
+      dueBefore: '2026-12-31T00:00:00.000Z',
+      facility: '/api/organizations/org-1/facilities/site-1',
+    });
+
+    fixture.componentInstance['closeCampaignDialog']();
+    expect(fixture.componentInstance['campaignDialogVisible']()).toBe(false);
+    expect(resetCampaignOperation).toHaveBeenCalledTimes(2);
+  });
+
+  it('should ignore an override submission after its dialog has been closed', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['openOverrideDialog'](schedule);
+    fixture.componentInstance['closeOverrideDialog']();
+    fixture.componentInstance['submitOverride']('P3M');
+
+    expect(setIntervalOverride).not.toHaveBeenCalled();
+    expect(resetOverrideOperation).toHaveBeenCalledTimes(1);
+    expect(fixture.componentInstance['overrideTarget']()).toBeNull();
   });
 
   it('should register the "Generate inspection campaign" action only when both permissions are held', async () => {

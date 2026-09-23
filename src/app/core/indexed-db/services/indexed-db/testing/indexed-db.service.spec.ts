@@ -487,6 +487,14 @@ describe('IndexedDbService', () => {
       },
     );
 
+    it('rejects with an Error when a failed request has no DOMException', async () => {
+      const result = service.get('outbox', 'draft-1');
+      const rejected = expect(result).rejects.toThrow('IndexedDB request failed');
+      await opened();
+      valueRequest.dispatchEvent(new Event('error'));
+      await rejected;
+    });
+
     it('does not open storage for empty batches or transactions', async () => {
       await service.putMany('outbox', []);
       await service.putTransaction({});
@@ -596,6 +604,14 @@ describe('IndexedDbService', () => {
         await Promise.all(rejected);
       },
     );
+
+    it('rejects with an Error when an aborted transaction has no DOMException', async () => {
+      const result = service.putMany('outbox', [{ key: 'draft-1', value: {} }]);
+      const rejected = expect(result).rejects.toThrow('IndexedDB transaction aborted');
+      await opened();
+      transaction.dispatchEvent(new Event('abort'));
+      await rejected;
+    });
 
     it('upgrades the schema without recreating active stores and closes on a later upgrade', async () => {
       const result = service.count('outbox');

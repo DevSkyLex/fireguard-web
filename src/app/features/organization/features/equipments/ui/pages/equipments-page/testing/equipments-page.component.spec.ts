@@ -9,6 +9,7 @@ import {
   type InputSignal,
   type TemplateRef,
   type WritableSignal,
+  PLATFORM_ID,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
@@ -25,7 +26,10 @@ import {
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import type {
+  CreateEquipmentInput,
+  EquipmentOutput,
+} from '@features/organization/features/equipments/models';
 import {
   EquipmentKpisStore,
   EquipmentStore,
@@ -80,6 +84,12 @@ describe('EquipmentsPage', () => {
   let exportLabels: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
+  let createCallState: WritableSignal<CallState<EquipmentOutput | null>>;
+  let isCreating: WritableSignal<boolean>;
+  let create: ReturnType<typeof vi.fn>;
+  let resetCreateOperation: ReturnType<typeof vi.fn>;
+  let ensureFacilitiesLoaded: ReturnType<typeof vi.fn>;
+  let platformId: string;
 
   beforeEach(() => {
     const mobile: WritableSignal<boolean> = signal(false);
@@ -92,6 +102,12 @@ describe('EquipmentsPage', () => {
     exportLabels = vi.fn().mockReturnValue(of(new Blob(['pdf'], { type: 'application/pdf' })));
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
+    createCallState = signal<CallState<EquipmentOutput | null>>(idleCallState());
+    isCreating = signal(false);
+    create = vi.fn();
+    resetCreateOperation = vi.fn();
+    ensureFacilitiesLoaded = vi.fn();
+    platformId = 'browser';
 
     TestBed.configureTestingModule({
       providers: [
@@ -104,6 +120,7 @@ describe('EquipmentsPage', () => {
           } satisfies ThemePort,
         },
         provideZonelessChangeDetection(),
+        { provide: PLATFORM_ID, useFactory: () => platformId },
         provideRouter([]),
         {
           provide: INTERACTION_CAPABILITIES_PORT,
@@ -120,11 +137,11 @@ describe('EquipmentsPage', () => {
             listCallState,
             totalEquipment,
             isLoadingEquipment: signal(false),
-            createCallState: signal(idleCallState()),
-            isCreating: signal(false),
+            createCallState,
+            isCreating,
             createError: signal(null),
-            create: vi.fn(),
-            resetCreateOperation: vi.fn(),
+            create,
+            resetCreateOperation,
           },
         },
         {
@@ -147,7 +164,11 @@ describe('EquipmentsPage', () => {
         providers: [
           {
             provide: FacilityOptionsStore,
-            useValue: { options: signal([]), mapCenter: signal(undefined), ensureLoaded: vi.fn() },
+            useValue: {
+              options: signal([]),
+              mapCenter: signal(undefined),
+              ensureLoaded: ensureFacilitiesLoaded,
+            },
           },
         ],
       },
@@ -225,6 +246,75 @@ describe('EquipmentsPage', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+    expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('org-1');
+  });
+
+  it('should open a facility-scoped creation deep link and clear its one-shot query params', async () => {
+    fixture = await createPage({ create: '1', facility: 'site-2' });
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+    expect(fixture.componentInstance['pendingScopeId']()).toBe('site-2');
+    expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('org-1');
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { create: null, facility: null } }),
+    );
+
+    fixture.componentInstance['onCreateSheetVisibleChange'](false);
+    expect(fixture.componentInstance['pendingScopeId']()).toBeNull();
+  });
+
+  it('should consume a creation deep link without opening the sheet when write access is denied', async () => {
+    hasPermission.mockReturnValue(false);
+    fixture = await createPage({ create: '1', facility: 'site-2' });
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(false);
+    expect(ensureFacilitiesLoaded).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { create: null, facility: null } }),
+    );
+  });
+
+  it('should preserve a creation deep link during server rendering for hydration', async () => {
+    platformId = 'server';
+    fixture = await createPage({ create: '1', facility: 'site-2' });
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(false);
+    expect(ensureFacilitiesLoaded).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('should submit once while creation is idle, then ignore a repeat while it is pending', async () => {
+    fixture = await createPage();
+    const payload: CreateEquipmentInput = {
+      type: 'fire_extinguisher',
+      facility: '/facilities/site-2',
+    };
+
+    fixture.componentInstance['onCreateSubmitted'](payload);
+    expect(create).toHaveBeenCalledWith({ organizationId: 'org-1', input: payload });
+
+    isCreating.set(true);
+    fixture.componentInstance['onCreateSubmitted'](payload);
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('should navigate to a created equipment and reset the operation', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['createSheetVisible'].set(true);
+
+    createCallState.set(successCallState({ id: 'new-equipment' } as EquipmentOutput));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(false);
+    expect(navigate).toHaveBeenCalledWith([
+      '/organizations',
+      'org-1',
+      'equipments',
+      'new-equipment',
+    ]);
+    expect(resetCreateOperation).toHaveBeenCalledTimes(1);
   });
 
   it('should show the error state and let the operator retry', async () => {
@@ -316,6 +406,29 @@ describe('EquipmentsPage', () => {
     expect(fixture.componentInstance['page']()).toBe(1);
   });
 
+  it('should keep one filter selector open and clear only the removed filter', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['applyFilter']({ type: 'fire_extinguisher', status: 'operational' });
+    await fixture.whenStable();
+
+    fixture.componentInstance['onFieldPicked']('type');
+    expect(fixture.componentInstance['fieldPopoverState']('type')).toBe('open');
+    expect(fixture.componentInstance['fieldPopoverState']('status')).toBe('closed');
+    fixture.componentInstance['onFieldPopoverStateChanged']('status', 'closed');
+    expect(fixture.componentInstance['fieldPopoverState']('type')).toBe('open');
+    fixture.componentInstance['onFieldPopoverStateChanged']('status', 'open');
+    fixture.componentInstance['onFieldPopoverStateChanged']('status', 'closed');
+    expect(fixture.componentInstance['fieldPopoverState']('status')).toBe('closed');
+
+    fixture.componentInstance['onFieldRemoved']('type');
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0].options.params).toEqual({ status: 'operational' });
+
+    fixture.componentInstance['onFieldRemoved']('status');
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0].options.params).toEqual({});
+  });
+
   describe('filters visibility', () => {
     function toggleButton(): HTMLButtonElement | null {
       return (fixture.nativeElement as HTMLElement).querySelector(
@@ -370,6 +483,15 @@ describe('EquipmentsPage', () => {
     beforeEach(() => {
       URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
       URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should skip a CSV export when the inventory is empty', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+
+      expect(exportCsv).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
     });
 
     it('should disable the button while the list is loading, busy or empty', async () => {
@@ -439,6 +561,15 @@ describe('EquipmentsPage', () => {
     beforeEach(() => {
       URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
       URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should skip label generation when the inventory is empty', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['printLabels']();
+
+      expect(exportLabels).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['labelsBusy']()).toBe(false);
     });
 
     it('should disable the button while the list is loading, busy or empty', async () => {

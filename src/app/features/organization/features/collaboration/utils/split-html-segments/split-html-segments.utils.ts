@@ -1,3 +1,5 @@
+import { findHtmlTagClose } from '../find-html-tag-close/find-html-tag-close.utils';
+
 /**
  * Function splitHtmlSegments
  * @function splitHtmlSegments
@@ -23,19 +25,7 @@ export function splitHtmlSegments(
     }
     if (open > cursor) segments.push({ value: html.slice(cursor, open), isTag: false });
 
-    let close = -1;
-    let quote: '"' | "'" | null = null;
-    for (let index = open + 1; index < html.length; index++) {
-      const character = html[index];
-      if (quote !== null) {
-        if (character === quote) quote = null;
-      } else if (character === '"' || character === "'") {
-        quote = character;
-      } else if (character === '>') {
-        close = index;
-        break;
-      }
-    }
+    const close = findHtmlTagClose(html, open);
     if (close === -1) {
       segments.push({ value: html.slice(open), isTag: false });
       break;

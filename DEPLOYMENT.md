@@ -1,77 +1,92 @@
-# Déploiement VPS
+# VPS deployment
 
-Le frontend Angular SSR est construit une seule fois puis configuré au démarrage du conteneur. `main` déploie la production et `develop` déploie l’environnement de développement sur le même VPS, dans deux projets Docker distincts.
+The Angular SSR frontend is built once and configured when the container starts. `main`
+deploys production, while `develop` deploys the development environment on the same VPS
+as a separate Docker project.
 
-| Environnement GitHub | Branche   | Domaine                                 | Répertoire VPS                          | Projet Docker                | Image de canal |
-| -------------------- | --------- | --------------------------------------- | --------------------------------------- | ---------------------------- | -------------- |
-| `production`         | `main`    | `app.fireguard.valentin-fortin.pro`     | `/srv/apps/fireguard/production/front`  | `fireguard-production-front` | `latest`       |
-| `development`        | `develop` | `dev.app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/development/front` | `fireguard-dev-front`        | `develop`      |
+| GitHub environment | Branch | Domain | VPS directory | Docker project | Channel tag |
+| --- | --- | --- | --- | --- | --- |
+| `production` | `main` | `app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/production/front` | `fireguard-production-front` | `latest` |
+| `development` | `develop` | `dev.app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/development/front` | `fireguard-dev-front` | `develop` |
 
-Chaque image reçoit un tag `sha-<commit complet>` et les labels OCI du dépôt et du commit. Le déploiement résout toujours la référence en digest `sha256` et vérifie la provenance de l'image ainsi que la CI du commit correspondant.
+Each image gets a `sha-<full commit>` tag and OCI labels identifying its repository
+and commit. Deployment always resolves the image to a `sha256` digest and verifies
+its provenance and the CI result for the corresponding commit.
 
-## Configuration runtime
+## Runtime configuration
 
-Le serveur SSR lit ces variables au démarrage :
+The SSR server reads these variables at startup:
 
 - `APP_API_URL`
 - `APP_MERCURE_HUB_URL`
 - `APP_NAME`
 - `APP_MAINTENANCE`
 
-La configuration publique résolue côté serveur est transmise au navigateur avec `TransferState`. Le serveur expose aussi la même configuration sur `/runtime-config.json` : le bootstrap navigateur la charge avant de créer les services, ce qui garde un shell PWA mis en cache sur l'environnement qui le sert. Le service worker privilégie le SSR pour les navigations et conserve cette configuration publique comme secours hors ligne pendant 24 heures.
+The public configuration resolved on the server is passed to the browser through
+`TransferState`. The server also exposes it at `/runtime-config.json`: browser
+bootstrap loads it before creating services, so a cached PWA shell retains the
+configuration of the environment serving it. The service worker favors SSR for
+navigation and keeps this public configuration as an offline fallback for 24 hours.
 
-Les fichiers `src/environments/environment*.ts` restent les valeurs de secours des commandes Angular locales et ne portent aucune configuration propre au VPS. Un déploiement hébergé échoue au démarrage si son endpoint runtime est indisponible ou invalide au lieu de retomber sur la configuration d'un autre environnement.
+The `src/environments/environment*.ts` files remain fallbacks for local Angular
+commands and contain no VPS-specific configuration. A hosted deployment fails at
+startup if its runtime endpoint is unavailable or invalid instead of falling back
+to another environment's configuration.
 
-## Environnements GitHub
+## GitHub environments
 
-`production` accepte uniquement `main`. `development` accepte uniquement `develop`. Les valeurs de connexion au VPS sont enregistrées séparément dans chaque environnement afin qu’un job de `develop` ne puisse pas lire les secrets de production.
+`production` accepts only `main`. `development` accepts only `develop`. VPS connection
+values are stored separately in each environment so a `develop` job cannot read
+production secrets.
 
-Secrets requis :
+Required secrets:
 
 - `VPS_HOST`
 - `VPS_USER`
 - `VPS_SSH_KEY`
-- `GHCR_TOKEN` si le jeton du workflow ne suffit pas
-- `BASIC_AUTH_USERS` dans `development`, au format htpasswd reconnu par Traefik
-- `BASIC_AUTH_CREDENTIALS` dans `development`, au format `utilisateur:mot-de-passe`, uniquement pour le contrôle de santé public
+- `GHCR_TOKEN` if the workflow token is insufficient
+- `BASIC_AUTH_USERS` in `development`, in the htpasswd format accepted by Traefik
+- `BASIC_AUTH_CREDENTIALS` in `development`, as `username:password`, only for the public health check
 
-Variables requises :
+Required variables:
 
 - `VPS_PORT`, `VPS_APP_DIR`, `VPS_APP_PORT`
 - `APP_HOST`, `APP_API_URL`, `APP_MERCURE_HUB_URL`, `APP_NAME`, `APP_MAINTENANCE`
 - `DOCKER_PROJECT_NAME`, `DOCKER_CONTAINER_NAME`, `TRAEFIK_ROUTER_NAME`
 - `GHCR_USERNAME`
 
-La surcharge `docker-compose.dev.yml` applique Basic Auth au seul frontend et ajoute `X-Robots-Tag: noindex, nofollow, noarchive`. L’API conserve ses en-têtes Bearer sans middleware Basic Auth.
+The `docker-compose.dev.yml` override applies Basic Auth only to the frontend and
+adds `X-Robots-Tag: noindex, nofollow, noarchive`. The API retains its Bearer headers
+without Basic Auth middleware.
 
 ## Pipeline
 
-1. `CI` contrôle les pull requests et les pushes sur `main` et `develop`. Les pushes et lancements manuels sur ces deux branches analysent leur projet SonarQube et attendent son quality gate.
-2. `Docker Image` publie l’image `sha-*` et met à jour `latest` ou `develop` après un push dont la CI et le contrôle SonarQube ont réussi pour ce commit. Les diagnostics manuels de la CI ne publient pas automatiquement. Une publication manuelle doit retrouver une CI valide pour le commit demandé.
-3. `Deploy VPS` vérifie le dépôt, la révision OCI, le résultat SonarQube de la branche et le digest avant tout accès au VPS. Il choisit ensuite l’environnement GitHub depuis la branche, vérifie au moins 2,5 Gio de mémoire disponible et 10 Gio de disque libre, puis valide la configuration Compose.
-4. Le conteneur doit devenir sain. Le contrôle public suit les redirections, vérifie Basic Auth en dev et confirme la présence de `noindex`.
+1. `CI` checks pull requests and pushes to `main` and `develop`. Pushes and manual runs on these branches analyze their SonarQube project and wait for its quality gate.
+2. `Docker Image` publishes the `sha-*` image and updates `latest` or `develop` after a push whose CI and SonarQube checks passed for that commit. Manual CI diagnostics do not publish automatically. A manual publication must find a valid CI run for the requested commit.
+3. `Deploy VPS` checks the repository, OCI revision, branch-specific SonarQube result, and digest before accessing the VPS. It then selects the GitHub environment from the branch, checks for at least 2.5 GiB of available memory and 10 GiB of free disk space, and validates the Compose configuration.
+4. The container must become healthy. The public check follows redirects, verifies Basic Auth in development, and confirms the presence of `noindex`.
 
-Les variables de dépôt `SONAR_READY_MAIN` et `SONAR_READY_DEVELOP` doivent être
-explicitement à `true` après validation des premières analyses. Voir
-[SONARQUBE.md](SONARQUBE.md) pour les secrets et la mise en service. Une erreur de
-vérification bloque la livraison ; un résultat de `develop` ne valide jamais
-la production. Les protections GitHub `production`/`development` restent liées
-à `main`/`develop`.
+The repository variables `SONAR_READY_MAIN` and `SONAR_READY_DEVELOP` must
+explicitly be set to `true` after the initial analyses are validated. See
+[SONARQUBE.md](SONARQUBE.md) for secrets and rollout steps. A verification error
+blocks delivery; a `develop` result never validates production. GitHub
+`production`/`development` protections remain tied to `main`/`develop`.
 
-## Pré-requis VPS
+## VPS prerequisites
 
-- Docker Engine et le plugin Docker Compose
-- accès SSH de GitHub Actions
-- réseau externe `traefik_proxy`
-- Traefik avec l’entrypoint `websecure` et le résolveur `letsencrypt`
-- enregistrements DNS A des domaines vers le VPS
+- Docker Engine and the Docker Compose plugin
+- SSH access from GitHub Actions
+- External `traefik_proxy` network
+- Traefik with the `websecure` entrypoint and `letsencrypt` resolver
+- DNS A records pointing the domains to the VPS
 
 ## Rollback
 
-Relancer `Deploy VPS` depuis la branche de l’environnement avec une ancienne référence `ghcr.io/devskylex/fireguard-web:sha-<commit>`. Le rollback dev agit uniquement dans `/srv/apps/fireguard/development/front` et le projet `fireguard-dev-front`.
+Rerun `Deploy VPS` from the environment's branch with an older image reference,
+`ghcr.io/devskylex/fireguard-web:sha-<commit>`. A development rollback affects
+only `/srv/apps/fireguard/development/front` and the `fireguard-dev-front` project.
 
-Laisser `source_run_id` vide pour un rollback manuel. L'image doit porter les
-labels de provenance et son commit doit avoir passé la CI et SonarQube sur la
-branche de l'environnement. Le workflow contrôle la dernière tentative
-applicable et déploie le digest vérifié ; les images sans preuve de validation
-sont refusées.
+Leave `source_run_id` empty for a manual rollback. The image must have provenance
+labels, and its commit must have passed CI and SonarQube on the environment's
+branch. The workflow checks the latest applicable attempt and deploys the
+verified digest; images without validation evidence are rejected.

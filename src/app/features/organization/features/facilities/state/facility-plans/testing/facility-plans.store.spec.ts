@@ -1,3 +1,4 @@
+import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
@@ -265,6 +266,24 @@ describe('FacilityPlansStore', () => {
       expect(store.setPrimaryCallState().status).toBe('success');
       expect(store.settingPrimaryId()).toBeNull();
     });
+
+    it('keeps the previous primary plan when the update is refused', () => {
+      const previous = plan({ id: 'plan-1', isPrimaryPlan: true });
+      const candidate = plan({ id: 'plan-2', isPrimaryPlan: false });
+      mockService.list.mockReturnValue(
+        of({ '@id': '', '@type': 'Collection', member: [previous, candidate], totalItems: 2 }),
+      );
+      mockService.setPrimary.mockReturnValue(throwError(() => apiError(409, 'Plan changed')));
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+
+      store.setPrimary({ attachmentId: 'plan-2' });
+
+      expect(store.primaryPlan()).toEqual(previous);
+      expect(store.planEntityMap()['plan-2']?.isPrimaryPlan).toBe(false);
+      expect(store.setPrimaryCallState().status).toBe('error');
+      expect(store.settingPrimaryId()).toBeNull();
+      expect(mockDispatcher.dispatch).toHaveBeenCalledOnce();
+    });
   });
 
   describe('remove', () => {
@@ -467,6 +486,36 @@ describe('FacilityPlansStore', () => {
       await flushEffects();
 
       expect(store.overlayHasContent()).toBe(false);
+    });
+
+    it('reports content when the overlay contains only an equipment pin', async () => {
+      mockService.list.mockReturnValue(
+        of({ '@id': '', '@type': 'Collection', member: [plan()], totalItems: 1 }),
+      );
+      mockFacilityService.getPlanOverlay.mockReturnValue(
+        of(
+          overlay({
+            equipment: [
+              {
+                equipmentId: 'equipment-1',
+                type: 'fire_extinguisher',
+                serialNumber: null,
+                locationLabel: null,
+                status: 'operational',
+                x: 0.3,
+                y: 0.4,
+              },
+            ],
+          }),
+        ),
+      );
+
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      await flushEffects();
+
+      expect(store.overlay()?.zones).toEqual([]);
+      expect(store.overlay()?.equipment).toHaveLength(1);
+      expect(store.overlayHasContent()).toBe(true);
     });
   });
 
@@ -811,6 +860,32 @@ describe('FacilityPlansStore', () => {
       expect(store.selectedPlanReady()).toBe(true);
     });
 
+    it('blocks every plan editor write while the selected plan image is unavailable', () => {
+      loadReadyPlan();
+      mockService.download.mockReturnValue(throwError(() => apiError(500, 'failed')));
+      store.loadImage({ attachmentId: 'plan-1' });
+      expect(store.selectedPlanReady()).toBe(false);
+
+      store.enterDrawZoneMode('zone-1');
+      store.addDraftVertex([0.1, 0.1]);
+      store.finishDrawZone();
+      store.clearZoneGeometry('zone-1');
+      store.saveZoneGeometryFromDialog('zone-1', [
+        [0.1, 0.1],
+        [0.8, 0.1],
+        [0.8, 0.8],
+      ]);
+      store.enterPlacePinMode('equipment-1');
+      store.placePin([0.4, 0.5]);
+      store.movePin('equipment-1', [0.4, 0.5]);
+      store.removePinFromPlan('equipment-1');
+
+      expect(store.editMode()).toBe('none');
+      expect(store.draftPoints()).toEqual([]);
+      expect(mockFacilityService.setPlanGeometry).not.toHaveBeenCalled();
+      expect(mockEquipmentService.setPlanPosition).not.toHaveBeenCalled();
+    });
+
     it('does not settle a new facility editor when an old pin write completes', () => {
       loadReadyPlan();
       const write = new Subject<EquipmentOutput>();
@@ -922,6 +997,25 @@ describe('FacilityPlansStore', () => {
         itemsPerPage: 200,
       });
       expect(store.facilityEquipment().map((item) => item.id)).toEqual(['equipment-1']);
+    });
+
+    it('does not duplicate a pending equipment lookup and caches an empty successful result', () => {
+      const pending = new Subject<HydraCollection<EquipmentOutput>>();
+      mockEquipmentService.listByFacility.mockReturnValue(pending);
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+
+      store.ensureFacilityEquipmentLoaded();
+      store.ensureFacilityEquipmentLoaded();
+      expect(mockEquipmentService.listByFacility).toHaveBeenCalledOnce();
+      expect(store.facilityEquipmentCallState().status).toBe('pending');
+
+      pending.next({ '@id': '', '@type': 'Collection', member: [], totalItems: 0 });
+      pending.complete();
+      store.ensureFacilityEquipmentLoaded();
+
+      expect(mockEquipmentService.listByFacility).toHaveBeenCalledOnce();
+      expect(store.facilityEquipment()).toEqual([]);
+      expect(store.facilityEquipmentCallState().status).toBe('success');
     });
   });
   describe('commands across replaced contexts', () => {
@@ -1092,5 +1186,326 @@ describe('FacilityPlansStore', () => {
       expect(store.zoneCandidatesCallState().status).toBe('success');
       expect(store.facilityEquipmentCallState().status).toBe('success');
     });
+  });
+
+  it('keeps the active editor draft and loaded resources when the same plan is selected again', () => {
+    loadReadyPlan();
+    const imageUrl = store.planImageUrl();
+    store.enterDrawZoneMode('zone-1');
+    store.addDraftVertex([0.2, 0.3]);
+    mockService.download.mockClear();
+    mockFacilityService.getPlanOverlay.mockClear();
+
+    store.selectPlan('plan-1');
+    TestBed.tick();
+
+    expect(store.selectedPlanReady()).toBe(true);
+    expect(store.planImageUrl()).toBe(imageUrl);
+    expect(store.editMode()).toBe('draw-zone');
+    expect(store.draftPoints()).toEqual([[0.2, 0.3]]);
+    expect(mockService.download).not.toHaveBeenCalled();
+    expect(mockFacilityService.getPlanOverlay).not.toHaveBeenCalled();
+  });
+
+  it('keeps the accepted primary and delete writes active despite duplicate submissions', () => {
+    loadReadyPlan();
+    const primary = new Subject<FacilityAttachmentOutput>();
+    mockService.setPrimary.mockReturnValue(primary);
+    store.setPrimary({ attachmentId: 'plan-1' });
+    store.setPrimary({ attachmentId: 'plan-1' });
+    expect(mockService.setPrimary).toHaveBeenCalledOnce();
+    expect(store.setPrimaryCallState().status).toBe('pending');
+
+    primary.next(plan({ isPrimaryPlan: true }));
+    primary.complete();
+    expect(store.primaryPlan()?.id).toBe('plan-1');
+    expect(store.setPrimaryCallState().status).toBe('success');
+
+    const removal = new Subject<void>();
+    mockService.remove.mockReturnValue(removal);
+    store.remove({ attachmentId: 'plan-1', revision: 1 });
+    store.remove({ attachmentId: 'plan-1', revision: 1 });
+    expect(mockService.remove).toHaveBeenCalledOnce();
+    expect(store.deleteCallState().status).toBe('pending');
+    removal.next();
+    removal.complete();
+    expect(store.orderedPlans()).toEqual([]);
+    expect(store.deleteCallState().status).toBe('success');
+  });
+
+  it('refreshes the overlay on a pin conflict and permits retry without losing the placement target', async () => {
+    loadReadyPlan();
+    await flushEffects();
+    mockFacilityService.getPlanOverlay.mockClear();
+    store.enterPlacePinMode('equipment-1');
+    mockEquipmentService.setPlanPosition.mockReturnValueOnce(
+      throwError(() => apiError(412, 'Plan revision changed')),
+    );
+
+    store.placePin([0.4, 0.6]);
+    expect(store.savePinPositionCallState().status).toBe('error');
+    expect(store.editMode()).toBe('place-pin');
+    expect(store.placeEquipmentId()).toBe('equipment-1');
+    expect(mockFacilityService.getPlanOverlay).toHaveBeenCalledOnce();
+
+    mockEquipmentService.setPlanPosition.mockReturnValueOnce(of(undefined));
+    store.placePin([0.4, 0.6]);
+    expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledTimes(2);
+    expect(store.savePinPositionCallState().status).toBe('success');
+    expect(store.editMode()).toBe('none');
+    expect(mockFacilityService.getPlanOverlay).toHaveBeenCalledTimes(2);
+  });
+
+  it('retains a rejected zone outline for retry without refreshing the overlay on a server error', async () => {
+    loadReadyPlan();
+    await flushEffects();
+    mockFacilityService.getPlanOverlay.mockClear();
+    mockFacilityService.setPlanGeometry.mockReturnValueOnce(
+      throwError(() => apiError(500, 'Geometry unavailable')),
+    );
+    store.enterDrawZoneMode('zone-1');
+    store.addDraftVertex([0, 0]);
+    store.addDraftVertex([1, 0]);
+    store.addDraftVertex([1, 1]);
+
+    store.finishDrawZone();
+    expect(store.saveZoneGeometryCallState().status).toBe('error');
+    expect(store.editMode()).toBe('draw-zone');
+    expect(store.draftPoints()).toEqual([
+      [0, 0],
+      [1, 0],
+      [1, 1],
+    ]);
+    expect(mockFacilityService.getPlanOverlay).not.toHaveBeenCalled();
+
+    mockFacilityService.setPlanGeometry.mockReturnValueOnce(of(undefined));
+    store.finishDrawZone();
+    expect(store.saveZoneGeometryCallState().status).toBe('success');
+    expect(store.draftPoints()).toEqual([]);
+    expect(mockFacilityService.getPlanOverlay).toHaveBeenCalledOnce();
+  });
+
+  it('does not query editor candidates until a facility context exists', () => {
+    store.ensureZoneCandidatesLoaded();
+    store.ensureFacilityEquipmentLoaded();
+    expect(mockFacilityService.listChildren).not.toHaveBeenCalled();
+    expect(mockEquipmentService.listByFacility).not.toHaveBeenCalled();
+
+    store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
+    store.ensureZoneCandidatesLoaded();
+    store.ensureFacilityEquipmentLoaded();
+    expect(mockFacilityService.listChildren).toHaveBeenCalledOnce();
+    expect(mockEquipmentService.listByFacility).toHaveBeenCalledOnce();
+  });
+
+  it('excludes equipment already pinned on the selected overlay from placement choices', () => {
+    mockService.list.mockReturnValue(
+      of({ '@id': '', '@type': 'Collection', member: [plan()], totalItems: 1 }),
+    );
+    mockFacilityService.getPlanOverlay.mockReturnValue(
+      of(
+        overlay({
+          equipment: [
+            {
+              equipmentId: 'equipment-1',
+              type: 'fire_extinguisher',
+              serialNumber: null,
+              locationLabel: null,
+              status: 'operational',
+              x: 0.3,
+              y: 0.4,
+            },
+          ],
+        }),
+      ),
+    );
+    mockEquipmentService.listByFacility.mockReturnValue(
+      of({
+        '@id': '',
+        '@type': 'Collection',
+        member: [facilityEquipment(), facilityEquipment({ id: 'equipment-2' })],
+        totalItems: 2,
+      }),
+    );
+    store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+    TestBed.tick();
+    store.ensureFacilityEquipmentLoaded();
+
+    expect(store.availableEquipmentCandidates().map((item) => item.id)).toEqual(['equipment-2']);
+  });
+
+  it('falls back to the primary plan and reloads its resources after deleting the selected plan', () => {
+    const primary = plan({ id: 'plan-1', isPrimaryPlan: true });
+    const secondary = plan({ id: 'plan-2', isPrimaryPlan: false });
+    mockService.list.mockReturnValue(
+      of({ '@id': '', '@type': 'Collection', member: [primary, secondary], totalItems: 2 }),
+    );
+    mockService.remove.mockReturnValue(of(undefined));
+    store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+    TestBed.tick();
+    store.selectPlan('plan-2');
+    TestBed.tick();
+    expect(store.selectedPlan()?.id).toBe('plan-2');
+    mockService.download.mockClear();
+    mockFacilityService.getPlanOverlay.mockClear();
+
+    store.remove({ attachmentId: 'plan-2', revision: 1 });
+    TestBed.tick();
+
+    expect(store.selectedPlan()?.id).toBe('plan-1');
+    expect(store.selectedPlanReady()).toBe(true);
+    expect(mockService.download).toHaveBeenCalledWith('plan-1');
+    expect(mockFacilityService.getPlanOverlay).toHaveBeenCalledWith(
+      'org-1',
+      'facility-1',
+      'plan-1',
+    );
+  });
+
+  it('reports pending and empty states through list and upload without hiding an accepted plan', () => {
+    const list = new Subject<HydraCollection<FacilityAttachmentOutput>>();
+    mockService.list.mockReturnValueOnce(list);
+
+    store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+    expect(store.isLoading()).toBe(true);
+    expect(store.isEmpty()).toBe(false);
+    list.next({ '@id': '', '@type': 'Collection', member: [], totalItems: 0 });
+    list.complete();
+    expect(store.isLoading()).toBe(false);
+    expect(store.isEmpty()).toBe(true);
+
+    const upload = new Subject<FacilityAttachmentOutput>();
+    mockService.upload.mockReturnValueOnce(upload);
+    store.upload({ facilityId: 'facility-1', file: new File(['plan'], 'plan.png') });
+    expect(store.isUploading()).toBe(true);
+    expect(store.isEmpty()).toBe(true);
+    upload.next(plan());
+    upload.complete();
+    expect(store.isUploading()).toBe(false);
+    expect(store.isEmpty()).toBe(false);
+    expect(store.selectedPlan()?.id).toBe('plan-1');
+  });
+
+  it('offers all facility candidates before a plan has an overlay', () => {
+    mockFacilityService.listChildren.mockReturnValueOnce(
+      of({ '@id': '', '@type': 'Collection', member: [zoneFacility()], totalItems: 1 }),
+    );
+    mockEquipmentService.listByFacility.mockReturnValueOnce(
+      of({ '@id': '', '@type': 'Collection', member: [facilityEquipment()], totalItems: 1 }),
+    );
+    store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+
+    store.ensureZoneCandidatesLoaded();
+    store.ensureFacilityEquipmentLoaded();
+
+    expect(store.selectedPlan()).toBeNull();
+    expect(store.availableZoneCandidates().map((candidate) => candidate.id)).toEqual(['zone-1']);
+    expect(store.availableEquipmentCandidates().map((candidate) => candidate.id)).toEqual([
+      'equipment-1',
+    ]);
+  });
+
+  it('validates dialog coordinates and prevents a second outline write while the first is pending', () => {
+    store.saveZoneGeometryFromDialog('zone-1', [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+    ]);
+    expect(mockFacilityService.setPlanGeometry).not.toHaveBeenCalled();
+    loadReadyPlan();
+    store.saveZoneGeometryFromDialog('zone-1', [
+      [0, 0],
+      [1, 0],
+    ]);
+    expect(mockFacilityService.setPlanGeometry).not.toHaveBeenCalled();
+
+    const pending = new Subject<void>();
+    mockFacilityService.setPlanGeometry.mockReturnValueOnce(pending);
+    const points = [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+    ] as const;
+    store.saveZoneGeometryFromDialog('zone-1', points);
+    store.saveZoneGeometryFromDialog('zone-1', points);
+
+    expect(mockFacilityService.setPlanGeometry).toHaveBeenCalledExactlyOnceWith('org-1', 'zone-1', {
+      attachmentId: 'plan-1',
+      points,
+    });
+    expect(store.isSavingZoneGeometry()).toBe(true);
+    pending.next();
+    pending.complete();
+    expect(store.isSavingZoneGeometry()).toBe(false);
+    expect(store.saveZoneGeometryCallState().status).toBe('success');
+  });
+
+  it('keeps pin placement busy until the server accepts the coordinate write', () => {
+    loadReadyPlan();
+    const pending = new Subject<EquipmentOutput>();
+    mockEquipmentService.setPlanPosition.mockReturnValueOnce(pending);
+    store.enterPlacePinMode('equipment-1');
+
+    store.placePin([0.25, 0.75]);
+
+    expect(store.isSavingPinPosition()).toBe(true);
+    expect(store.editMode()).toBe('place-pin');
+    pending.next(facilityEquipment());
+    pending.complete();
+    expect(store.isSavingPinPosition()).toBe(false);
+    expect(store.editMode()).toBe('none');
+  });
+
+  it('ignores direct image and overlay reads for an unrelated plan', () => {
+    loadReadyPlan();
+    mockService.download.mockClear();
+    mockFacilityService.getPlanOverlay.mockClear();
+
+    store.loadImage({ attachmentId: 'unrelated-plan' });
+    store.loadOverlay({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      attachmentId: 'unrelated-plan',
+    });
+
+    expect(mockService.download).not.toHaveBeenCalled();
+    expect(mockFacilityService.getPlanOverlay).not.toHaveBeenCalled();
+    expect(store.selectedPlan()?.id).toBe('plan-1');
+  });
+
+  it('does not fetch browser-only editor data or image bytes during server rendering', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        FacilityPlansStore,
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: FacilityAttachmentService, useValue: mockService },
+        { provide: FacilityService, useValue: mockFacilityService },
+        { provide: EquipmentService, useValue: mockEquipmentService },
+        { provide: Dispatcher, useValue: mockDispatcher },
+      ],
+    });
+    store = TestBed.inject(FacilityPlansStore);
+    mockService.list.mockReturnValueOnce(
+      of({ '@id': '', '@type': 'Collection', member: [plan()], totalItems: 1 }),
+    );
+
+    store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+    TestBed.tick();
+    store.ensureZoneCandidatesLoaded();
+    store.ensureFacilityEquipmentLoaded();
+    store.loadImage({ attachmentId: 'plan-1' });
+    store.loadOverlay({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      attachmentId: 'plan-1',
+    });
+
+    expect(store.orderedPlans().map((entry) => entry.id)).toEqual(['plan-1']);
+    expect(store.selectedPlanReady()).toBe(false);
+    expect(mockService.download).not.toHaveBeenCalled();
+    expect(mockFacilityService.getPlanOverlay).not.toHaveBeenCalled();
+    expect(mockFacilityService.listChildren).not.toHaveBeenCalled();
+    expect(mockEquipmentService.listByFacility).not.toHaveBeenCalled();
   });
 });

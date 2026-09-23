@@ -203,7 +203,7 @@ export class FacilityTable {
   protected typeLabelOf(type: string): string {
     return (
       FACILITY_TYPE_OPTIONS.find((option) => option.value === (type as FacilityType))?.label ??
-      type.replace(/_/g, ' ')
+      type.replaceAll('_', ' ')
     );
   }
 

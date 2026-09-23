@@ -10,15 +10,17 @@
         i18n-aria-label="@@org.members.tabsAriaLabel"
         data-testid="organization-members-tabs-list"
       >
-        <button
-          hlmTabsTrigger="members"
-          class="mobile-ui:min-h-11 mobile-ui:px-3"
-          data-testid="organization-members-tab-members"
-          i18n="@@org.members.tab.members"
-        >
-          <ng-icon name="lucideUsersRound" class="size-4 mobile-ui:hidden" aria-hidden="true" />
-          Members
-        </button>
+        @if (canViewMembersTab()) {
+          <button
+            hlmTabsTrigger="members"
+            class="mobile-ui:min-h-11 mobile-ui:px-3"
+            data-testid="organization-members-tab-members"
+            i18n="@@org.members.tab.members"
+          >
+            <ng-icon name="lucideUsersRound" class="size-4 mobile-ui:hidden" aria-hidden="true" />
+            Members
+          </button>
+        }
         @if (canManageMembers()) {
           <button
             hlmTabsTrigger="requests"
@@ -78,251 +80,232 @@
         </ng-template>
       </div>
     }
-    <div hlmTabsContent="members">
-      <ng-template hlmTabsContentLazy>
-        <div class="flex flex-col gap-6">
+    @if (canViewMembersTab()) {
+      <div hlmTabsContent="members">
+        <ng-template hlmTabsContentLazy>
           <div class="flex flex-col gap-6">
-            <section
-              class="grid shrink-0 grid-cols-2 gap-4 lg:grid-cols-4"
-              data-testid="organization-members-kpis"
-            >
-              @for (tile of kpiTiles(); track tile.id) {
-                <div [attr.data-testid]="'organization-members-kpi-' + tile.id">
-                  <app-stat-tile
-                    [label]="tile.label"
-                    [value]="tile.value"
-                    [icon]="tile.icon"
-                    [progress]="tile.progress"
-                    [loading]="tile.loading"
-                  />
-                </div>
-              }
-            </section>
-
-            @if (actionError(); as error) {
-              <div
-                hlmAlert
-                variant="destructive"
-                class="shrink-0"
-                data-testid="organization-members-action-error"
+            <div class="flex flex-col gap-6">
+              <section
+                class="grid shrink-0 grid-cols-2 gap-4 lg:grid-cols-4"
+                data-testid="organization-members-kpis"
               >
-                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-                <p hlmAlertTitle>{{ actionErrorTitle }}</p>
-                <p hlmAlertDescription>{{ error.message ?? actionErrorFallback }}</p>
-                <button
-                  hlmAlertAction
-                  hlmBtn
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
-                  data-testid="organization-members-action-error-dismiss"
-                  (click)="dismissActionError()"
-                >
-                  <ng-icon name="lucideX" aria-hidden="true" />
-                  <span class="sr-only" i18n="@@common.dismiss">Dismiss</span>
-                </button>
-              </div>
-            }
+                @for (tile of kpiTiles(); track tile.id) {
+                  <div [attr.data-testid]="'organization-members-kpi-' + tile.id">
+                    <app-stat-tile
+                      [label]="tile.label"
+                      [value]="tile.value"
+                      [icon]="tile.icon"
+                      [progress]="tile.progress"
+                      [loading]="tile.loading"
+                    />
+                  </div>
+                }
+              </section>
 
-            <section class="flex shrink-0 flex-col gap-3">
-              @if (canManageMembers() && selectedIds().size > 0) {
-                <div class="flex justify-end">
+              @if (actionError(); as error) {
+                <div
+                  hlmAlert
+                  variant="destructive"
+                  class="shrink-0"
+                  data-testid="organization-members-action-error"
+                >
+                  <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                  <p hlmAlertTitle>{{ actionErrorTitle }}</p>
+                  <p hlmAlertDescription>{{ error.message ?? actionErrorFallback }}</p>
                   <button
+                    hlmAlertAction
                     hlmBtn
                     type="button"
-                    variant="destructive"
-                    size="sm"
-                    class="min-w-0 shrink mobile-ui:min-h-11"
-                    data-testid="organization-members-bulk-remove"
-                    (click)="requestBulkRemove()"
+                    variant="ghost"
+                    size="icon-sm"
+                    class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
+                    data-testid="organization-members-action-error-dismiss"
+                    (click)="dismissActionError()"
                   >
-                    <ng-icon name="lucideTrash2" aria-hidden="true" />
-                    <span class="truncate">{{ bulkRemoveLabel() }}</span>
+                    <ng-icon name="lucideX" aria-hidden="true" />
+                    <span class="sr-only" i18n="@@common.dismiss">Dismiss</span>
                   </button>
                 </div>
               }
 
-              <app-collection-toolbar>
-                <app-collection-search-box
-                  toolbarStart
-                  testIdPrefix="organization-members"
-                  placeholder="Search by name or email..."
-                  i18n-placeholder="@@org.members.searchPlaceholder"
-                  ariaLabel="Search by name or email..."
-                  i18n-ariaLabel="@@org.members.searchPlaceholder"
-                  [value]="searchTerm()"
-                  (queryChanged)="onSearchQueryChanged($event)"
-                />
-
-                <hlm-toggle-group
-                  toolbarEnd
-                  type="single"
-                  [nullable]="false"
-                  variant="outline"
-                  size="sm"
-                  [value]="statusFilter()"
-                  data-testid="organization-members-status-filter"
-                  aria-label="Filter by status"
-                  i18n-aria-label="@@org.members.statusFilterAriaLabel"
-                  (valueChange)="onStatusFilterChanged($event)"
-                >
-                  <button
-                    hlmToggleGroupItem
-                    class="mobile-ui:min-h-11"
-                    value="all"
-                    data-testid="organization-members-status-all"
-                    i18n="@@org.members.statusAll"
-                  >
-                    All
-                  </button>
-                  <button
-                    hlmToggleGroupItem
-                    class="mobile-ui:min-h-11"
-                    value="active"
-                    data-testid="organization-members-status-active"
-                    i18n="@@org.members.statusActive"
-                  >
-                    Active
-                  </button>
-                  <button
-                    hlmToggleGroupItem
-                    class="mobile-ui:min-h-11"
-                    value="inactive"
-                    data-testid="organization-members-status-inactive"
-                    i18n="@@org.members.statusInactive"
-                  >
-                    Inactive
-                  </button>
-                </hlm-toggle-group>
-                @if (canManageMembers()) {
-                  <button
-                    toolbarEnd
-                    hlmBtn
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    class="mobile-ui:min-h-11 desktop-ui:hidden"
-                    data-testid="organization-members-selection-mode"
-                    [attr.aria-pressed]="selectionMode()"
-                    (click)="toggleSelectionMode()"
-                  >
-                    <span i18n="@@org.members.selectRows">Select</span>
-                  </button>
+              <section class="flex shrink-0 flex-col gap-3">
+                @if (canManageMembers() && selectedIds().size > 0) {
+                  <div class="flex justify-end">
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      class="min-w-0 shrink mobile-ui:min-h-11"
+                      data-testid="organization-members-bulk-remove"
+                      (click)="requestBulkRemove()"
+                    >
+                      <ng-icon name="lucideTrash2" aria-hidden="true" />
+                      <span class="truncate">{{ bulkRemoveLabel() }}</span>
+                    </button>
+                  </div>
                 }
 
-                <ng-container toolbarEnd>
-                  @if (store.roles().length > 0) {
-                    @if (isMobileInteractionMode() || roleFilterDrawerVisible()) {
-                      <hlm-drawer
-                        [state]="roleFilterDrawerVisible() ? 'open' : 'closed'"
-                        (stateChanged)="roleFilterDrawerVisible.set($event === 'open')"
-                      >
-                        <button
-                          hlmBtn
-                          hlmDrawerTrigger
-                          variant="outline"
-                          type="button"
-                          class="min-h-11 max-w-full"
-                          data-testid="organization-members-role-filter-mobile"
-                          aria-label="Filter by role"
-                          i18n-aria-label="@@org.members.roleFilterAriaLabel"
+                <app-collection-toolbar>
+                  <app-collection-search-box
+                    toolbarStart
+                    testIdPrefix="organization-members"
+                    placeholder="Search by name or email..."
+                    i18n-placeholder="@@org.members.searchPlaceholder"
+                    ariaLabel="Search by name or email..."
+                    i18n-ariaLabel="@@org.members.searchPlaceholder"
+                    [value]="searchTerm()"
+                    (queryChanged)="onSearchQueryChanged($event)"
+                  />
+
+                  <hlm-toggle-group
+                    toolbarEnd
+                    type="single"
+                    [nullable]="false"
+                    variant="outline"
+                    size="sm"
+                    [value]="statusFilter()"
+                    data-testid="organization-members-status-filter"
+                    aria-label="Filter by status"
+                    i18n-aria-label="@@org.members.statusFilterAriaLabel"
+                    (valueChange)="onStatusFilterChanged($event)"
+                  >
+                    <button
+                      hlmToggleGroupItem
+                      class="mobile-ui:min-h-11"
+                      value="all"
+                      data-testid="organization-members-status-all"
+                      i18n="@@org.members.statusAll"
+                    >
+                      All
+                    </button>
+                    <button
+                      hlmToggleGroupItem
+                      class="mobile-ui:min-h-11"
+                      value="active"
+                      data-testid="organization-members-status-active"
+                      i18n="@@org.members.statusActive"
+                    >
+                      Active
+                    </button>
+                    <button
+                      hlmToggleGroupItem
+                      class="mobile-ui:min-h-11"
+                      value="inactive"
+                      data-testid="organization-members-status-inactive"
+                      i18n="@@org.members.statusInactive"
+                    >
+                      Inactive
+                    </button>
+                  </hlm-toggle-group>
+                  @if (canManageMembers()) {
+                    <button
+                      toolbarEnd
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      class="mobile-ui:min-h-11 desktop-ui:hidden"
+                      data-testid="organization-members-selection-mode"
+                      [attr.aria-pressed]="selectionMode()"
+                      (click)="toggleSelectionMode()"
+                    >
+                      <span i18n="@@org.members.selectRows">Select</span>
+                    </button>
+                  }
+
+                  <ng-container toolbarEnd>
+                    @if (store.roles().length > 0) {
+                      @if (isMobileInteractionMode() || roleFilterDrawerVisible()) {
+                        <hlm-drawer
+                          [state]="roleFilterDrawerVisible() ? 'open' : 'closed'"
+                          (stateChanged)="roleFilterDrawerVisible.set($event === 'open')"
                         >
-                          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
-                          <span class="truncate">{{
-                            roleFilterLabelOf(roleFilter() ?? 'all')
-                          }}</span>
-                        </button>
-                        <hlm-drawer-content
-                          *hlmDrawerPortal
-                          class="pb-[env(safe-area-inset-bottom)]"
-                          data-testid="organization-members-role-drawer"
-                        >
-                          <hlm-drawer-header>
-                            <div class="flex flex-col gap-1 text-start">
-                              <h3 hlmDrawerTitle i18n="@@org.members.roleFilterAriaLabel">
-                                Filter by role
-                              </h3>
-                              <p
-                                hlmDrawerDescription
-                                i18n="@@org.members.roleFilter.mobileDescription"
-                              >
-                                Choose a role to filter the member directory.
-                              </p>
-                            </div>
-                          </hlm-drawer-header>
-                          <hlm-command class="h-auto min-h-0 rounded-none">
-                            <div class="px-4 pb-2">
+                          <button
+                            hlmBtn
+                            hlmDrawerTrigger
+                            variant="outline"
+                            type="button"
+                            class="min-h-11 max-w-full"
+                            data-testid="organization-members-role-filter-mobile"
+                            aria-label="Filter by role"
+                            i18n-aria-label="@@org.members.roleFilterAriaLabel"
+                          >
+                            <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+                            <span class="truncate">{{
+                              roleFilterLabelOf(roleFilter() ?? 'all')
+                            }}</span>
+                          </button>
+                          <hlm-drawer-content
+                            *hlmDrawerPortal
+                            class="pb-[env(safe-area-inset-bottom)]"
+                            data-testid="organization-members-role-drawer"
+                          >
+                            <hlm-drawer-header>
+                              <div class="flex flex-col gap-1 text-start">
+                                <h3 hlmDrawerTitle i18n="@@org.members.roleFilterAriaLabel">
+                                  Filter by role
+                                </h3>
+                                <p
+                                  hlmDrawerDescription
+                                  i18n="@@org.members.roleFilter.mobileDescription"
+                                >
+                                  Choose a role to filter the member directory.
+                                </p>
+                              </div>
+                            </hlm-drawer-header>
+                            <hlm-command class="h-auto min-h-0 rounded-none">
+                              <div class="px-4 pb-2">
+                                <label
+                                  for="organization-members-role-search"
+                                  class="sr-only"
+                                  i18n="@@org.members.roleFilter.search"
+                                  >Search roles</label
+                                >
+                                <hlm-input-group class="min-h-11">
+                                  <input
+                                    hlmInputGroupInput
+                                    brnCommandInput
+                                    id="organization-members-role-search"
+                                    class="text-base"
+                                    placeholder="Search roles"
+                                    i18n-placeholder="@@org.members.roleFilter.search"
+                                  />
+                                  <hlm-input-group-addon
+                                    ><ng-icon name="lucideSearch" aria-hidden="true"
+                                  /></hlm-input-group-addon>
+                                </hlm-input-group>
+                              </div>
                               <label
-                                for="organization-members-role-search"
                                 class="sr-only"
+                                for="organization-members-role-search"
                                 i18n="@@org.members.roleFilter.search"
                                 >Search roles</label
                               >
-                              <hlm-input-group class="min-h-11">
-                                <input
-                                  hlmInputGroupInput
-                                  brnCommandInput
-                                  id="organization-members-role-search"
-                                  class="text-base"
-                                  placeholder="Search roles"
-                                  i18n-placeholder="@@org.members.roleFilter.search"
-                                />
-                                <hlm-input-group-addon
-                                  ><ng-icon name="lucideSearch" aria-hidden="true"
-                                /></hlm-input-group-addon>
-                              </hlm-input-group>
-                            </div>
-                            <label
-                              class="sr-only"
-                              for="organization-members-role-search"
-                              i18n="@@org.members.roleFilter.search"
-                              >Search roles</label
-                            >
-                            <div hlmCommandList class="min-h-0 overflow-y-auto overscroll-contain">
                               <div
-                                *hlmCommandEmptyState
-                                hlmCommandEmpty
-                                i18n="@@org.members.roleFilter.empty"
+                                hlmCommandList
+                                class="min-h-0 overflow-y-auto overscroll-contain"
                               >
-                                No matching roles.
-                              </div>
-                              <button
-                                hlmCommandItem
-                                type="button"
-                                class="min-h-11"
-                                value="all roles"
-                                data-testid="organization-members-role-all-mobile"
-                                (selected)="
-                                  onRoleFilterChanged('all'); roleFilterDrawerVisible.set(false)
-                                "
-                              >
-                                <ng-icon name="lucideUsersRound" aria-hidden="true" />
-                                <span i18n="@@org.members.roleFilterAll">All roles</span>
-                                @if (roleFilter() === null) {
-                                  <span
-                                    class="ms-auto text-xs"
-                                    i18n="@@org.members.roleFilter.selected"
-                                    >Selected</span
-                                  >
-                                }
-                              </button>
-                              @for (role of store.roles(); track role.id) {
+                                <div
+                                  *hlmCommandEmptyState
+                                  hlmCommandEmpty
+                                  i18n="@@org.members.roleFilter.empty"
+                                >
+                                  No matching roles.
+                                </div>
                                 <button
                                   hlmCommandItem
                                   type="button"
                                   class="min-h-11"
-                                  [value]="role.name"
-                                  [attr.data-testid]="'organization-members-role-mobile-' + role.id"
+                                  value="all roles"
+                                  data-testid="organization-members-role-all-mobile"
                                   (selected)="
-                                    onRoleFilterChanged(role.id); roleFilterDrawerVisible.set(false)
+                                    onRoleFilterChanged('all'); roleFilterDrawerVisible.set(false)
                                   "
                                 >
-                                  <ng-icon name="lucideShieldCheck" aria-hidden="true" />
-                                  <span class="min-w-0 wrap-anywhere whitespace-normal">{{
-                                    role.name
-                                  }}</span>
-                                  @if (roleFilter() === role.id) {
+                                  <ng-icon name="lucideUsersRound" aria-hidden="true" />
+                                  <span i18n="@@org.members.roleFilterAll">All roles</span>
+                                  @if (roleFilter() === null) {
                                     <span
                                       class="ms-auto text-xs"
                                       i18n="@@org.members.roleFilter.selected"
@@ -330,190 +313,108 @@
                                     >
                                   }
                                 </button>
-                              }
-                            </div>
-                          </hlm-command>
-                          <hlm-drawer-footer>
-                            <button
-                              hlmBtn
-                              hlmDrawerClose
-                              type="button"
-                              variant="outline"
-                              class="min-h-11"
-                              i18n="@@common.close"
-                            >
-                              Close
-                            </button>
-                          </hlm-drawer-footer>
-                        </hlm-drawer-content>
-                      </hlm-drawer>
-                    } @else {
-                      <hlm-select
-                        class="inline-block"
-                        [itemToString]="roleFilterLabelOf"
-                        [value]="roleFilter() ?? 'all'"
-                        (valueChange)="onRoleFilterChanged($event)"
-                      >
-                        <hlm-select-trigger
-                          class="inline-flex h-8 w-44 mobile-ui:h-11 mobile-ui:min-h-11"
-                          data-testid="organization-members-role-filter"
-                          aria-label="Filter by role"
-                          i18n-aria-label="@@org.members.roleFilterAriaLabel"
+                                @for (role of store.roles(); track role.id) {
+                                  <button
+                                    hlmCommandItem
+                                    type="button"
+                                    class="min-h-11"
+                                    [value]="role.name"
+                                    [attr.data-testid]="
+                                      'organization-members-role-mobile-' + role.id
+                                    "
+                                    (selected)="
+                                      onRoleFilterChanged(role.id);
+                                      roleFilterDrawerVisible.set(false)
+                                    "
+                                  >
+                                    <ng-icon name="lucideShieldCheck" aria-hidden="true" />
+                                    <span class="min-w-0 wrap-anywhere whitespace-normal">{{
+                                      role.name
+                                    }}</span>
+                                    @if (roleFilter() === role.id) {
+                                      <span
+                                        class="ms-auto text-xs"
+                                        i18n="@@org.members.roleFilter.selected"
+                                        >Selected</span
+                                      >
+                                    }
+                                  </button>
+                                }
+                              </div>
+                            </hlm-command>
+                            <hlm-drawer-footer>
+                              <button
+                                hlmBtn
+                                hlmDrawerClose
+                                type="button"
+                                variant="outline"
+                                class="min-h-11"
+                                i18n="@@common.close"
+                              >
+                                Close
+                              </button>
+                            </hlm-drawer-footer>
+                          </hlm-drawer-content>
+                        </hlm-drawer>
+                      } @else {
+                        <hlm-select
+                          class="inline-block"
+                          [itemToString]="roleFilterLabelOf"
+                          [value]="roleFilter() ?? 'all'"
+                          (valueChange)="onRoleFilterChanged($event)"
                         >
-                          <hlm-select-value />
-                        </hlm-select-trigger>
-                        <hlm-select-content *hlmSelectPortal>
-                          <hlm-select-group>
-                            <hlm-select-item
-                              class="mobile-ui:min-h-11"
-                              value="all"
-                              i18n="@@org.members.roleFilterAll"
-                              >All roles</hlm-select-item
-                            >
-                            @for (role of store.roles(); track role.id) {
-                              <hlm-select-item class="mobile-ui:min-h-11" [value]="role.id">{{
-                                role.name
-                              }}</hlm-select-item>
-                            }
-                          </hlm-select-group>
-                        </hlm-select-content>
-                      </hlm-select>
+                          <hlm-select-trigger
+                            class="inline-flex h-8 w-44 mobile-ui:h-11 mobile-ui:min-h-11"
+                            data-testid="organization-members-role-filter"
+                            aria-label="Filter by role"
+                            i18n-aria-label="@@org.members.roleFilterAriaLabel"
+                          >
+                            <hlm-select-value />
+                          </hlm-select-trigger>
+                          <hlm-select-content *hlmSelectPortal>
+                            <hlm-select-group>
+                              <hlm-select-item
+                                class="mobile-ui:min-h-11"
+                                value="all"
+                                i18n="@@org.members.roleFilterAll"
+                                >All roles</hlm-select-item
+                              >
+                              @for (role of store.roles(); track role.id) {
+                                <hlm-select-item class="mobile-ui:min-h-11" [value]="role.id">{{
+                                  role.name
+                                }}</hlm-select-item>
+                              }
+                            </hlm-select-group>
+                          </hlm-select-content>
+                        </hlm-select>
+                      }
                     }
-                  }
-                </ng-container>
-              </app-collection-toolbar>
+                  </ng-container>
+                </app-collection-toolbar>
 
-              @if (listForbidden()) {
-                <div hlmEmpty class="border border-border">
-                  <div hlmEmptyHeader>
-                    <div hlmEmptyMedia variant="icon">
-                      <ng-icon name="lucideLock" aria-hidden="true" />
-                    </div>
-                    <p hlmEmptyTitle i18n="@@org.members.forbiddenTitle">
-                      Not available with your permissions
-                    </p>
-                    <p hlmEmptyDescription i18n="@@org.members.forbiddenDesc">
-                      Ask an organization admin to grant you read access to the member directory.
-                    </p>
-                  </div>
-                </div>
-              } @else if (store.loadCallState().status === 'error') {
-                <div hlmEmpty class="border border-border" role="alert">
-                  <div hlmEmptyHeader>
-                    <div hlmEmptyMedia variant="icon" class="text-destructive">
-                      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-                    </div>
-                    <p hlmEmptyTitle i18n="@@org.members.errorTitle">Couldn't load members</p>
-                    <p hlmEmptyDescription i18n="@@org.members.errorText">
-                      The members could not be loaded. Check your connection and try again.
-                    </p>
-                  </div>
-                  <div hlmEmptyContent>
-                    <button
-                      hlmBtn
-                      variant="outline"
-                      class="mobile-ui:min-h-11"
-                      data-testid="organization-members-retry"
-                      (click)="reload()"
-                    >
-                      <span i18n="@@org.members.retry">Retry</span>
-                    </button>
-                  </div>
-                </div>
-              } @else if (!store.isLoading() && store.members().length === 0) {
-                @if (hasRosterFilters()) {
+                @if (listForbidden()) {
                   <div hlmEmpty class="border border-border">
                     <div hlmEmptyHeader>
                       <div hlmEmptyMedia variant="icon">
-                        <ng-icon name="lucideSearch" aria-hidden="true" />
+                        <ng-icon name="lucideLock" aria-hidden="true" />
                       </div>
-                      <p hlmEmptyTitle i18n="@@org.members.emptyFilteredTitle">No members match</p>
-                      <p hlmEmptyDescription i18n="@@org.members.emptyFilteredText">
-                        Adjust your search or the status filter.
+                      <p hlmEmptyTitle i18n="@@org.members.forbiddenTitle">
+                        Not available with your permissions
+                      </p>
+                      <p hlmEmptyDescription i18n="@@org.members.forbiddenDesc">
+                        Ask an organization admin to grant you read access to the member directory.
                       </p>
                     </div>
-                    <div hlmEmptyContent>
-                      <button
-                        hlmBtn
-                        variant="outline"
-                        class="mobile-ui:min-h-11"
-                        data-testid="organization-members-clear-filters"
-                        (click)="clearRosterFilters()"
-                      >
-                        <span i18n="@@common.clearFilters">Clear filters</span>
-                      </button>
-                    </div>
                   </div>
-                } @else {
-                  <div hlmEmpty class="border border-border">
-                    <div hlmEmptyHeader>
-                      @if (
-                        store.loadCallState().status === 'success' && store.membersTotal() === 0
-                      ) {
-                        <app-resource-illustration hlmEmptyMedia resource="member" />
-                      }
-                      <p hlmEmptyTitle i18n="@@org.members.emptyTitle">No members yet</p>
-                      <p hlmEmptyDescription i18n="@@org.members.emptyText">
-                        Invite someone to give them access to this organization.
-                      </p>
-                    </div>
-                    <div hlmEmptyContent>
-                      @if (canManageMembers()) {
-                        <button hlmBtn class="mobile-ui:min-h-11" (click)="openInviteDialog()">
-                          <ng-icon name="lucideMailPlus" aria-hidden="true" />
-                          <span i18n="@@org.members.inviteButton">Invite member</span>
-                        </button>
-                      }
-                    </div>
-                  </div>
-                }
-              } @else {
-                <app-organization-member-table
-                  [regionalFormatting]="regionalFormatting()"
-                  [items]="store.members()"
-                  [loading]="store.isLoading() && store.members().length === 0"
-                  [selectedIds]="selectedIds()"
-                  [canRemove]="canManageMembers()"
-                  [selectionMode]="selectionMode()"
-                  [canAssignRoles]="canManageRoles()"
-                  [detailRouteBase]="memberDetailRouteBase()"
-                  [sortOrder]="sortOrder()"
-                  [pending]="store.isMutating()"
-                  (selectionChanged)="onSelectionChanged($event)"
-                  (manageRolesRequested)="openRolesDialog($event)"
-                  (reactivateRequested)="reactivateMember($event)"
-                  (removeRequested)="requestRemove($event)"
-                  (sortChanged)="applySortField($event)"
-                />
-
-                <app-collection-pagination
-                  [page]="page()"
-                  [pageCount]="membersPageCount()"
-                  [pageSize]="pageSize()"
-                  [total]="store.membersTotal()"
-                  [shown]="store.members().length"
-                  testIdPrefix="organization-members"
-                  (pageChanged)="goToMembersPage($event)"
-                  (pageSizeChanged)="setPageSize($event)"
-                />
-              }
-            </section>
-
-            @if (canManageMembers()) {
-              <section class="flex flex-col gap-3 mobile-ui:gap-4">
-                <h2 hlmCardTitle>{{ pendingInvitationsHeading() }}</h2>
-
-                @if (store.loadCallState().status === 'error') {
+                } @else if (store.loadCallState().status === 'error') {
                   <div hlmEmpty class="border border-border" role="alert">
                     <div hlmEmptyHeader>
                       <div hlmEmptyMedia variant="icon" class="text-destructive">
                         <ng-icon name="lucideCircleAlert" aria-hidden="true" />
                       </div>
-                      <p hlmEmptyTitle i18n="@@org.invitations.errorTitle">
-                        Couldn't load invitations
-                      </p>
-                      <p hlmEmptyDescription i18n="@@org.invitations.errorText">
-                        The invitations could not be loaded. Check your connection and try again.
+                      <p hlmEmptyTitle i18n="@@org.members.errorTitle">Couldn't load members</p>
+                      <p hlmEmptyDescription i18n="@@org.members.errorText">
+                        The members could not be loaded. Check your connection and try again.
                       </p>
                     </div>
                     <div hlmEmptyContent>
@@ -521,98 +422,209 @@
                         hlmBtn
                         variant="outline"
                         class="mobile-ui:min-h-11"
-                        data-testid="organization-invitations-retry"
+                        data-testid="organization-members-retry"
                         (click)="reload()"
                       >
                         <span i18n="@@org.members.retry">Retry</span>
                       </button>
                     </div>
                   </div>
-                } @else if (!store.isLoading() && store.activeInvitations().length === 0) {
-                  <div hlmEmpty class="border border-border">
-                    <div hlmEmptyHeader>
-                      <div hlmEmptyMedia variant="icon">
-                        <ng-icon name="lucideMailQuestion" aria-hidden="true" />
+                } @else if (!store.isLoading() && store.members().length === 0) {
+                  @if (hasRosterFilters()) {
+                    <div hlmEmpty class="border border-border">
+                      <div hlmEmptyHeader>
+                        <div hlmEmptyMedia variant="icon">
+                          <ng-icon name="lucideSearch" aria-hidden="true" />
+                        </div>
+                        <p hlmEmptyTitle i18n="@@org.members.emptyFilteredTitle">
+                          No members match
+                        </p>
+                        <p hlmEmptyDescription i18n="@@org.members.emptyFilteredText">
+                          Adjust your search or the status filter.
+                        </p>
                       </div>
-                      <p hlmEmptyTitle i18n="@@org.invitations.emptyTitle">
-                        No pending invitations
-                      </p>
-                      <p hlmEmptyDescription i18n="@@org.invitations.emptyText">
-                        Invitations you send will appear here until they are accepted, revoked or
-                        expire.
-                      </p>
+                      <div hlmEmptyContent>
+                        <button
+                          hlmBtn
+                          variant="outline"
+                          class="mobile-ui:min-h-11"
+                          data-testid="organization-members-clear-filters"
+                          (click)="clearRosterFilters()"
+                        >
+                          <span i18n="@@common.clearFilters">Clear filters</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  } @else {
+                    <div hlmEmpty class="border border-border">
+                      <div hlmEmptyHeader>
+                        @if (
+                          store.loadCallState().status === 'success' && store.membersTotal() === 0
+                        ) {
+                          <app-resource-illustration hlmEmptyMedia resource="member" />
+                        }
+                        <p hlmEmptyTitle i18n="@@org.members.emptyTitle">No members yet</p>
+                        <p hlmEmptyDescription i18n="@@org.members.emptyText">
+                          Invite someone to give them access to this organization.
+                        </p>
+                      </div>
+                      <div hlmEmptyContent>
+                        @if (canManageMembers()) {
+                          <button hlmBtn class="mobile-ui:min-h-11" (click)="openInviteDialog()">
+                            <ng-icon name="lucideMailPlus" aria-hidden="true" />
+                            <span i18n="@@org.members.inviteButton">Invite member</span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
                 } @else {
-                  <app-organization-invitation-table
+                  <app-organization-member-table
                     [regionalFormatting]="regionalFormatting()"
-                    [items]="store.activeInvitations()"
-                    [roles]="store.roles()"
-                    [links]="store.invitationLinks()"
-                    [loading]="store.isLoading() && store.activeInvitations().length === 0"
-                    [canManage]="canManageMembers()"
+                    [items]="store.members()"
+                    [loading]="store.isLoading() && store.members().length === 0"
+                    [selectedIds]="selectedIds()"
+                    [canRemove]="canManageMembers()"
+                    [selectionMode]="selectionMode()"
+                    [canAssignRoles]="canManageRoles()"
+                    [detailRouteBase]="memberDetailRouteBase()"
+                    [sortOrder]="sortOrder()"
                     [pending]="store.isMutating()"
-                    (linkCopyRequested)="copyInvitationLink($event)"
-                    (resendRequested)="resendInvitation($event)"
-                    (revokeRequested)="requestRevoke($event)"
+                    (selectionChanged)="onSelectionChanged($event)"
+                    (manageRolesRequested)="openRolesDialog($event)"
+                    (reactivateRequested)="reactivateMember($event)"
+                    (removeRequested)="requestRemove($event)"
+                    (sortChanged)="applySortField($event)"
                   />
 
-                  @if (store.invitationsTotal() > invitationsPageSize) {
-                    <app-collection-pagination
-                      [page]="invitationsPage()"
-                      [pageCount]="invitationsPageCount()"
-                      [pageSize]="invitationsPageSize"
-                      [pageSizes]="[invitationsPageSize]"
-                      [total]="store.invitationsTotal()"
-                      [shown]="store.activeInvitations().length"
-                      testIdPrefix="organization-invitations"
-                      (pageChanged)="goToInvitationsPage($event)"
-                    />
-                  }
+                  <app-collection-pagination
+                    [page]="page()"
+                    [pageCount]="membersPageCount()"
+                    [pageSize]="pageSize()"
+                    [total]="store.membersTotal()"
+                    [shown]="store.members().length"
+                    testIdPrefix="organization-members"
+                    (pageChanged)="goToMembersPage($event)"
+                    (pageSizeChanged)="setPageSize($event)"
+                  />
                 }
               </section>
-            }
+
+              @if (canManageMembers()) {
+                <section class="flex flex-col gap-3 mobile-ui:gap-4">
+                  <h2 hlmCardTitle>{{ pendingInvitationsHeading() }}</h2>
+
+                  @if (store.loadCallState().status === 'error') {
+                    <div hlmEmpty class="border border-border" role="alert">
+                      <div hlmEmptyHeader>
+                        <div hlmEmptyMedia variant="icon" class="text-destructive">
+                          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                        </div>
+                        <p hlmEmptyTitle i18n="@@org.invitations.errorTitle">
+                          Couldn't load invitations
+                        </p>
+                        <p hlmEmptyDescription i18n="@@org.invitations.errorText">
+                          The invitations could not be loaded. Check your connection and try again.
+                        </p>
+                      </div>
+                      <div hlmEmptyContent>
+                        <button
+                          hlmBtn
+                          variant="outline"
+                          class="mobile-ui:min-h-11"
+                          data-testid="organization-invitations-retry"
+                          (click)="reload()"
+                        >
+                          <span i18n="@@org.members.retry">Retry</span>
+                        </button>
+                      </div>
+                    </div>
+                  } @else if (!store.isLoading() && store.activeInvitations().length === 0) {
+                    <div hlmEmpty class="border border-border">
+                      <div hlmEmptyHeader>
+                        <div hlmEmptyMedia variant="icon">
+                          <ng-icon name="lucideMailQuestion" aria-hidden="true" />
+                        </div>
+                        <p hlmEmptyTitle i18n="@@org.invitations.emptyTitle">
+                          No pending invitations
+                        </p>
+                        <p hlmEmptyDescription i18n="@@org.invitations.emptyText">
+                          Invitations you send will appear here until they are accepted, revoked or
+                          expire.
+                        </p>
+                      </div>
+                    </div>
+                  } @else {
+                    <app-organization-invitation-table
+                      [regionalFormatting]="regionalFormatting()"
+                      [items]="store.activeInvitations()"
+                      [roles]="store.roles()"
+                      [links]="store.invitationLinks()"
+                      [loading]="store.isLoading() && store.activeInvitations().length === 0"
+                      [canManage]="canManageMembers()"
+                      [pending]="store.isMutating()"
+                      (linkCopyRequested)="copyInvitationLink($event)"
+                      (resendRequested)="resendInvitation($event)"
+                      (revokeRequested)="requestRevoke($event)"
+                    />
+
+                    @if (store.invitationsTotal() > invitationsPageSize) {
+                      <app-collection-pagination
+                        [page]="invitationsPage()"
+                        [pageCount]="invitationsPageCount()"
+                        [pageSize]="invitationsPageSize"
+                        [pageSizes]="[invitationsPageSize]"
+                        [total]="store.invitationsTotal()"
+                        [shown]="store.activeInvitations().length"
+                        testIdPrefix="organization-invitations"
+                        (pageChanged)="goToInvitationsPage($event)"
+                      />
+                    }
+                  }
+                </section>
+              }
+            </div>
+
+            <app-organization-invite-dialog
+              [visible]="inviteDialogVisible()"
+              [pending]="store.isMutating()"
+              [serverError]="inviteServerError()"
+              [roleOptions]="store.roles()"
+              (visibleChange)="onInviteDialogVisibleChange($event)"
+              (submitted)="sendInvite($event)"
+            />
+
+            <app-organization-member-roles-dialog
+              [visible]="rolesDialogMember() !== null"
+              [member]="rolesDialogMember()"
+              [roles]="store.roles()"
+              [pending]="store.isMutating()"
+              (visibleChange)="onRolesDialogVisibleChange($event)"
+              (roleToggled)="onRoleToggled($event)"
+            />
+
+            <app-organization-member-remove-dialog
+              [visible]="removeDialogState() === 'open'"
+              [member]="pendingRemove()"
+              [bulkCount]="pendingBulkRemoveIds()?.length ?? null"
+              [pending]="removeDialogBusy()"
+              [error]="removeDialogError()?.message ?? null"
+              (visibleChange)="onRemoveDialogVisibleChange($event)"
+              (confirmed)="confirmRemove()"
+            />
+
+            <app-organization-invitation-revoke-dialog
+              [visible]="pendingRevoke() !== null"
+              [invitation]="pendingRevoke()"
+              [pending]="revokeDialogBusy()"
+              [error]="revokeDialogError()?.message ?? null"
+              (visibleChange)="onRevokeDialogVisibleChange($event)"
+              (confirmed)="confirmRevoke()"
+            />
           </div>
-
-          <app-organization-invite-dialog
-            [visible]="inviteDialogVisible()"
-            [pending]="store.isMutating()"
-            [serverError]="inviteServerError()"
-            [roleOptions]="store.roles()"
-            (visibleChange)="onInviteDialogVisibleChange($event)"
-            (submitted)="sendInvite($event)"
-          />
-
-          <app-organization-member-roles-dialog
-            [visible]="rolesDialogMember() !== null"
-            [member]="rolesDialogMember()"
-            [roles]="store.roles()"
-            [pending]="store.isMutating()"
-            (visibleChange)="onRolesDialogVisibleChange($event)"
-            (roleToggled)="onRoleToggled($event)"
-          />
-
-          <app-organization-member-remove-dialog
-            [visible]="removeDialogState() === 'open'"
-            [member]="pendingRemove()"
-            [bulkCount]="pendingBulkRemoveIds()?.length ?? null"
-            [pending]="removeDialogBusy()"
-            [error]="removeDialogError()?.message ?? null"
-            (visibleChange)="onRemoveDialogVisibleChange($event)"
-            (confirmed)="confirmRemove()"
-          />
-
-          <app-organization-invitation-revoke-dialog
-            [visible]="pendingRevoke() !== null"
-            [invitation]="pendingRevoke()"
-            [pending]="revokeDialogBusy()"
-            [error]="revokeDialogError()?.message ?? null"
-            (visibleChange)="onRevokeDialogVisibleChange($event)"
-            (confirmed)="confirmRevoke()"
-          />
-        </div>
-      </ng-template>
-    </div>
+        </ng-template>
+      </div>
+    }
 
     @if (canViewRolesTab()) {
       <div hlmTabsContent="roles">

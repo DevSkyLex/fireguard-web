@@ -9,7 +9,7 @@
 >
   <ng-container surfaceHead>
     <tr hlmTableRow>
-      <th hlmTableHead [attr.aria-sort]="ariaSort('performedAt')">
+      <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('performedAt')">
         <button
           hlmBtn
           type="button"
@@ -23,8 +23,8 @@
           <ng-icon [name]="sortIcon('performedAt')" aria-hidden="true" />
         </button>
       </th>
-      <th hlmTableHead i18n="@@inspection.table.colInspector">Inspector</th>
-      <th hlmTableHead [attr.aria-sort]="ariaSort('result')">
+      <th hlmTableHead scope="col" i18n="@@inspection.table.colInspector">Inspector</th>
+      <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('result')">
         <button
           hlmBtn
           type="button"
@@ -38,7 +38,7 @@
           <ng-icon [name]="sortIcon('result')" aria-hidden="true" />
         </button>
       </th>
-      <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
+      <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('status')">
         <button
           hlmBtn
           type="button"
@@ -52,7 +52,9 @@
           <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
         </button>
       </th>
-      <th hlmTableHead i18n="@@inspection.table.colNonConformities">Non-conformities</th>
+      <th hlmTableHead scope="col" i18n="@@inspection.table.colNonConformities">
+        Non-conformities
+      </th>
     </tr>
   </ng-container>
 

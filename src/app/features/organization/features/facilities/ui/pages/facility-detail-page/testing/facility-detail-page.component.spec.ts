@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
@@ -41,6 +41,7 @@ import {
 } from '@features/organization/features/facilities/state';
 import type { InspectionResult } from '@features/organization/features/inspections/models';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { FacilityDetailPage } from '../facility-detail-page.component';
@@ -972,6 +973,59 @@ describe('FacilityDetailPage', () => {
       expect(fixture.componentInstance['selectedEquipmentId']()).toBe('equipment-1');
     });
 
+    it('announces each selected plan item, including a repeated selection, and clears a stale announcement', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
+      planOverlay.set({
+        attachmentId: 'plan-1',
+        imageWidth: 1200,
+        imageHeight: 800,
+        zones: [
+          {
+            facilityId: 'facility-zone-1',
+            name: 'North Wing',
+            type: 'zone',
+            status: 'active',
+            points: [],
+          },
+        ],
+        equipment: [
+          {
+            equipmentId: 'equipment-1',
+            type: 'fire_extinguisher',
+            serialNumber: 'EXT-42',
+            locationLabel: 'West Stairwell',
+            status: 'operational',
+            x: 0.1,
+            y: 0.1,
+          },
+        ],
+      });
+      await createPage();
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      fixture.componentInstance['onZoneSelected']('facility-zone-1');
+      await fixture.whenStable();
+      const announcement = byTestId('facility-plan-selection-announcement');
+      const first = announcement?.textContent?.trim();
+      expect(first).toContain('North Wing');
+
+      fixture.componentInstance['onZoneSelected']('facility-zone-1');
+      await fixture.whenStable();
+      expect(announcement?.textContent?.trim()).toContain('North Wing');
+      expect(announcement?.textContent?.trim()).not.toBe(first);
+
+      fixture.componentInstance['onEquipmentSelected']('equipment-1');
+      await fixture.whenStable();
+      expect(announcement?.textContent).toContain('West Stairwell');
+
+      planOverlay.set(null);
+      await fixture.whenStable();
+      expect(announcement?.textContent?.trim()).toBe('');
+    });
+
     it('navigates to the zone facility only from the panel\'s explicit "View facility record" action', async () => {
       planOverlay.set({
         attachmentId: 'plan-1',
@@ -1165,6 +1219,28 @@ describe('FacilityDetailPage', () => {
       expect(byTestId('facility-plan-editor-place-pin-picker')).not.toBeNull();
     });
 
+    it('announces the current editing mode and the drawn vertex count', async () => {
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
+      await createPage();
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+      expect(byTestId('facility-plan-editor-status')).toBeNull();
+
+      planEditMode.set('draw-zone');
+      planDraftPoints.set([
+        [0.1, 0.1],
+        [0.2, 0.2],
+      ]);
+      await fixture.whenStable();
+      expect(byTestId('facility-plan-editor-status')?.textContent).toContain('2 placed');
+
+      planEditMode.set('place-pin');
+      await fixture.whenStable();
+      expect(byTestId('facility-plan-editor-status')?.textContent).toContain('place the equipment');
+    });
+
     it('should load the candidate lists when their picker is opened', async () => {
       orderedPlans.set([plan({ isPrimaryPlan: true })]);
       selectedPlan.set(plan({ isPrimaryPlan: true }));
@@ -1335,6 +1411,27 @@ describe('FacilityDetailPage', () => {
       fixture.componentInstance['onEnterPositionRequested']();
 
       expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBe('equipment-1');
+    });
+
+    it('names coordinate and position dialogs from unplaced candidates', async () => {
+      planAvailableZoneCandidates.set([facility({ id: 'zone-1', name: 'North Wing' })]);
+      planAvailableEquipmentCandidates.set([
+        {
+          id: 'equipment-1',
+          type: 'fire_extinguisher',
+          serialNumber: 'EXT-42',
+          locationLabel: 'West Stairwell',
+        } as EquipmentOutput,
+      ]);
+      await createPage();
+
+      fixture.componentInstance['openZoneGeometryDialog']('zone-1');
+      await fixture.whenStable();
+      expect(inBody('facility-plan-zone-geometry-dialog')?.textContent).toContain('North Wing');
+
+      fixture.componentInstance['openPinPositionDialog']('equipment-1');
+      await fixture.whenStable();
+      expect(inBody('facility-plan-pin-position-dialog')?.textContent).toContain('West Stairwell');
     });
 
     it('should route a first placement submitted from the dialog through placePin', async () => {
@@ -1541,5 +1638,275 @@ describe('FacilityDetailPage', () => {
       expect(feedbackError).toHaveBeenCalledWith('Too many geocoding requests.');
       expect(fixture.componentInstance['geocodeNotFound']()).toBe(false);
     });
+
+    it('coalesces address lookups while one is pending and allows a later lookup', async () => {
+      await createPage();
+      const match = {
+        '@id': '/api/organizations/org-1/facilities/geocode',
+        '@type': 'GeocodeAddress',
+        displayName: '1 Main Street',
+        latitude: 12.5,
+        longitude: -7.25,
+      };
+      const pending = new Subject<typeof match>();
+      geocode.mockReturnValueOnce(pending).mockReturnValue(of(match));
+
+      fixture.componentInstance['onGeocodeRequested']('1 Main Street');
+      fixture.componentInstance['onGeocodeRequested']('2 Main Street');
+      expect(geocode).toHaveBeenCalledOnce();
+      expect(fixture.componentInstance['geocodePending']()).toBe(true);
+
+      pending.next(match);
+      pending.complete();
+      expect(fixture.componentInstance['geocodePending']()).toBe(false);
+      expect(fixture.componentInstance['geocodeResult']()).toEqual(match);
+
+      fixture.componentInstance['onGeocodeRequested']('2 Main Street');
+      expect(geocode).toHaveBeenCalledTimes(2);
+      expect(geocode).toHaveBeenLastCalledWith('org-1', '2 Main Street');
+    });
+
+    it('uses a recoverable message when geocoding fails without an API response', async () => {
+      await createPage();
+      geocode.mockReturnValue(throwError(() => new Error('Network disconnected')));
+
+      await requestGeocode('1 Main Street');
+
+      expect(feedbackError).toHaveBeenCalledWith("Couldn't locate the address.");
+      expect(fixture.componentInstance['geocodePending']()).toBe(false);
+    });
+  });
+
+  it('ignores stale plan-item actions after the selected overlay is replaced', async () => {
+    planOverlay.set({
+      attachmentId: 'plan-1',
+      imageWidth: 1200,
+      imageHeight: 800,
+      zones: [
+        {
+          facilityId: 'zone-1',
+          name: 'Zone A',
+          type: 'zone',
+          status: 'active',
+          points: [],
+        },
+      ],
+      equipment: [
+        {
+          equipmentId: 'equipment-1',
+          type: 'fire_extinguisher',
+          serialNumber: null,
+          locationLabel: null,
+          status: 'operational',
+          x: 0.1,
+          y: 0.1,
+        },
+      ],
+    });
+    await createPage();
+    fixture.componentInstance['onZoneSelected']('zone-1');
+    planOverlay.set(null);
+    await fixture.whenStable();
+
+    fixture.componentInstance['onZoneRecordRequested']();
+    fixture.componentInstance['onZoneEditRequested']();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBeNull();
+
+    fixture.componentInstance['onEquipmentSelected']('equipment-1');
+    fixture.componentInstance['onEquipmentRecordRequested']();
+    fixture.componentInstance['onEquipmentEditRequested']();
+    fixture.componentInstance['onEquipmentRemoveRequested']();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBeNull();
+    expect(planRemovePinFromPlan).not.toHaveBeenCalled();
+  });
+
+  it('ignores editor commands when their keyboard target or dialog selection has disappeared', async () => {
+    await createPage();
+    planEditMode.set('draw-zone');
+    fixture.componentInstance['onEnterCoordinatesRequested']();
+    fixture.componentInstance['onZoneGeometrySubmitted']([
+      [0, 0],
+      [1, 0],
+      [1, 1],
+    ]);
+    fixture.componentInstance['onZoneGeometryCleared']();
+    expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBeNull();
+    expect(planSaveZoneGeometryFromDialog).not.toHaveBeenCalled();
+    expect(planClearZoneGeometry).not.toHaveBeenCalled();
+
+    planEditMode.set('place-pin');
+    fixture.componentInstance['onEnterPositionRequested']();
+    fixture.componentInstance['onPinPositionSubmitted']([0.5, 0.5]);
+    expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBeNull();
+    expect(planPlacePin).not.toHaveBeenCalled();
+    expect(planMovePin).not.toHaveBeenCalled();
+  });
+
+  it('ignores an unknown tab activation without changing the URL', async () => {
+    await createPage();
+    navigate.mockClear();
+
+    fixture.componentInstance['onLinkedTabActivated']('unknown');
+
+    expect(fixture.componentInstance['activeTab']()).toBe('overview');
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('reloads plans for each new facility context while the Plans tab stays active', async () => {
+    await createPage();
+    byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+    await fixture.whenStable();
+    expect(planLoad).toHaveBeenCalledWith({ organizationId: 'org-1', facilityId: 'facility-1' });
+    planLoad.mockClear();
+    const reset = vi.mocked(fixture.componentInstance['plans'].reset);
+    reset.mockClear();
+
+    fixture.componentRef.setInput('facilityId', 'facility-2');
+    await fixture.whenStable();
+    expect(reset).toHaveBeenCalledOnce();
+    expect(planLoad).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-2',
+    });
+
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    await fixture.whenStable();
+    expect(reset).toHaveBeenCalledTimes(2);
+    expect(planLoad).toHaveBeenLastCalledWith({
+      organizationId: 'org-2',
+      facilityId: 'facility-2',
+    });
+  });
+
+  it.each([
+    [ORGANIZATION_PERMISSION.FACILITIES_WRITE, true, false],
+    [ORGANIZATION_PERMISSION.EQUIPMENT_WRITE, false, true],
+  ])(
+    'grants only the plan editor actions backed by %s',
+    async (permission, mayDrawZones, mayPlacePins) => {
+      hasPermission.mockImplementation((requested: string) => requested === permission);
+      orderedPlans.set([plan({ isPrimaryPlan: true })]);
+      selectedPlan.set(plan({ isPrimaryPlan: true }));
+      planImageUrl.set('blob:test-plan');
+      await createPage();
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plan-editor-draw-zone-picker') !== null).toBe(mayDrawZones);
+      expect(byTestId('facility-plan-editor-place-pin-picker') !== null).toBe(mayPlacePins);
+    },
+  );
+
+  it('ignores a detached plan deletion confirmation without a selected plan', async () => {
+    await createPage();
+
+    fixture.componentInstance['onPlanDeleteConfirmed']();
+
+    expect(planRemove).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['planDeleteTarget']()).toBeNull();
+  });
+
+  it('retains dialog targets while open and clears them when each dialog closes', async () => {
+    await createPage();
+    fixture.componentInstance['openZoneGeometryDialog']('zone-1');
+    fixture.componentInstance['onZoneGeometryDialogVisibleChanged'](true);
+    expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBe('zone-1');
+    fixture.componentInstance['onZoneGeometryDialogVisibleChanged'](false);
+    expect(fixture.componentInstance['zoneGeometryDialogFacilityId']()).toBeNull();
+
+    fixture.componentInstance['openPinPositionDialog']('equipment-1');
+    fixture.componentInstance['onPinPositionDialogVisibleChanged'](true);
+    expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBe('equipment-1');
+    fixture.componentInstance['onPinPositionDialogVisibleChanged'](false);
+    expect(fixture.componentInstance['pinPositionDialogEquipmentId']()).toBeNull();
+
+    fixture.componentInstance['requestDelete']();
+    fixture.componentInstance['onDeleteDialogVisibleChanged'](true);
+    expect(fixture.componentInstance['pendingDelete']()).toBe(true);
+    fixture.componentInstance['onDeleteDialogVisibleChanged'](false);
+    expect(fixture.componentInstance['pendingDelete']()).toBe(false);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it('names a pin edit from the selected overlay and leaves an unknown target unnamed', async () => {
+    planOverlay.set({
+      attachmentId: 'plan-1',
+      imageWidth: 1200,
+      imageHeight: 800,
+      zones: [],
+      equipment: [
+        {
+          equipmentId: 'equipment-1',
+          type: 'fire_extinguisher',
+          serialNumber: 'EXT-42',
+          locationLabel: 'West Stairwell',
+          status: 'operational',
+          x: 0.2,
+          y: 0.4,
+        },
+      ],
+    });
+    await createPage();
+
+    fixture.componentInstance['openPinPositionDialog']('equipment-1');
+    expect(fixture.componentInstance['pinPositionDialogName']()).toContain('West Stairwell');
+    fixture.componentInstance['openPinPositionDialog']('unknown');
+    expect(fixture.componentInstance['pinPositionDialogName']()).toBe('');
+  });
+
+  it('moves focus into plan details and restores the keyboard opener on close', async () => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = vi.fn();
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+    orderedPlans.set([plan({ isPrimaryPlan: true })]);
+    selectedPlan.set(plan({ isPrimaryPlan: true }));
+    planImageUrl.set('blob:test-plan');
+    planOverlayHasContent.set(true);
+    planOverlay.set({
+      attachmentId: 'plan-1',
+      imageWidth: 1200,
+      imageHeight: 800,
+      zones: [
+        { facilityId: 'zone-1', name: 'North Wing', type: 'zone', status: 'active', points: [] },
+      ],
+      equipment: [],
+    });
+    try {
+      await createPage();
+      document.body.appendChild(root());
+      const opener = byTestId('facility-tab-plans');
+      opener?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+      opener?.focus();
+
+      fixture.componentInstance['onZoneSelected']('zone-1');
+      await fixture.whenStable();
+      expect(document.activeElement).toBe(byTestId('facility-plan-detail-close'));
+
+      fixture.componentInstance['onPlanDetailClosed']();
+      await fixture.whenStable();
+      expect(document.activeElement).toBe(opener);
+
+      const removedOpener = document.createElement('button');
+      document.body.appendChild(removedOpener);
+      removedOpener.focus();
+      fixture.componentInstance['onZoneSelected']('zone-1');
+      await fixture.whenStable();
+      expect(document.activeElement).toBe(byTestId('facility-plan-detail-close'));
+      removedOpener.remove();
+      fixture.componentInstance['onPlanDetailClosed']();
+      await fixture.whenStable();
+      expect(document.activeElement).toBe(fixture.componentInstance['pageRoot']()?.nativeElement);
+    } finally {
+      root().remove();
+      vi.unstubAllGlobals();
+    }
   });
 });

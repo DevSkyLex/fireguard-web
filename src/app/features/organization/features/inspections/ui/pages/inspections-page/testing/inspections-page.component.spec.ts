@@ -26,7 +26,10 @@ import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { ChecklistStore } from '@features/organization/features/checklists/state';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
-import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import type {
+  CreateInspectionInput,
+  InspectionOutput,
+} from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import { InspectionCreationOptionsStore } from '@features/organization/features/inspections/state/inspection-creation-options';
 import { InspectionsPage } from '../inspections-page.component';
@@ -77,6 +80,12 @@ describe('InspectionsPage', () => {
   let exportCsv: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
+  let createCallState: WritableSignal<CallState<InspectionOutput | null>>;
+  let isCreating: WritableSignal<boolean>;
+  let create: ReturnType<typeof vi.fn>;
+  let resetCreateOperation: ReturnType<typeof vi.fn>;
+  let loadEquipmentOptions: ReturnType<typeof vi.fn>;
+  let loadChecklistOptions: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     load = vi.fn();
@@ -87,6 +96,12 @@ describe('InspectionsPage', () => {
     exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
+    createCallState = signal<CallState<InspectionOutput | null>>(idleCallState());
+    isCreating = signal(false);
+    create = vi.fn();
+    resetCreateOperation = vi.fn();
+    loadEquipmentOptions = vi.fn();
+    loadChecklistOptions = vi.fn();
 
     TestBed.configureTestingModule({
       providers: [
@@ -109,11 +124,11 @@ describe('InspectionsPage', () => {
             listCallState,
             totalInspections,
             isLoadingInspections: signal(false),
-            createCallState: signal(idleCallState()),
-            isCreating: signal(false),
+            createCallState,
+            isCreating,
             createError: signal(null),
-            create: vi.fn(),
-            resetCreateOperation: vi.fn(),
+            create,
+            resetCreateOperation,
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
@@ -132,11 +147,14 @@ describe('InspectionsPage', () => {
         providers: [
           {
             provide: InspectionCreationOptionsStore,
-            useValue: { equipmentOptions: signal([]), loadEquipmentOptions: vi.fn() },
+            useValue: { equipmentOptions: signal([]), loadEquipmentOptions },
           },
           {
             provide: ChecklistStore,
-            useValue: { checklists: signal([]), ensureInspectionCreateOptionsLoaded: vi.fn() },
+            useValue: {
+              checklists: signal([]),
+              ensureInspectionCreateOptionsLoaded: loadChecklistOptions,
+            },
           },
         ],
       },
@@ -256,6 +274,72 @@ describe('InspectionsPage', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+    expect(loadEquipmentOptions).toHaveBeenCalledWith('org-1');
+    expect(loadChecklistOptions).toHaveBeenCalledWith('org-1');
+  });
+
+  it('should open an equipment-scoped creation deep link and clear its one-shot query params', async () => {
+    fixture = await createPage({ create: '1', equipment: 'equipment-2' });
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+    expect(fixture.componentInstance['pendingScopeId']()).toBe('equipment-2');
+    expect(loadEquipmentOptions).toHaveBeenCalledWith('org-1');
+    expect(loadChecklistOptions).toHaveBeenCalledWith('org-1');
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { create: null, equipment: null } }),
+    );
+
+    fixture.componentInstance['onCreateSheetVisibleChange'](false);
+    expect(fixture.componentInstance['pendingScopeId']()).toBeNull();
+  });
+
+  it('should consume a creation deep link without opening the sheet when write access is denied', async () => {
+    hasPermission.mockReturnValue(false);
+    fixture = await createPage({ create: '1', equipment: 'equipment-2' });
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(false);
+    expect(loadEquipmentOptions).not.toHaveBeenCalled();
+    expect(loadChecklistOptions).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { create: null, equipment: null } }),
+    );
+  });
+
+  it('should submit once while creation is idle, then ignore a repeat while it is pending', async () => {
+    fixture = await createPage();
+    const payload: CreateInspectionInput = {
+      equipmentId: 'equipment-2',
+      result: 'pass',
+      performedAt: '2026-09-23T10:00:00Z',
+      inspectorType: 'external',
+      inspectorName: 'Acme Safety',
+    };
+
+    fixture.componentInstance['onCreateSubmitted'](payload);
+    expect(create).toHaveBeenCalledWith({ organizationId: 'org-1', input: payload });
+
+    isCreating.set(true);
+    fixture.componentInstance['onCreateSubmitted'](payload);
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('should navigate to a created inspection and reset the operation', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['createSheetVisible'].set(true);
+
+    createCallState.set(successCallState({ id: 'new-inspection' } as InspectionOutput));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(false);
+    expect(navigate).toHaveBeenCalledWith([
+      '/organizations',
+      'org-1',
+      'inspections',
+      'new-inspection',
+    ]);
+    expect(resetCreateOperation).toHaveBeenCalledTimes(1);
   });
 
   it('should show the error state and let the operator retry', async () => {
@@ -322,6 +406,30 @@ describe('InspectionsPage', () => {
     );
   });
 
+  it('should keep one filter selector open and clear only the removed filter', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['applyFilter']({ status: 'submitted', result: 'fail' });
+    await fixture.whenStable();
+
+    fixture.componentInstance['onFieldPicked']('status');
+    expect(fixture.componentInstance['fieldPopoverState']('status')).toBe('open');
+    expect(fixture.componentInstance['fieldPopoverState']('result')).toBe('closed');
+    fixture.componentInstance['onFieldPopoverStateChanged']('result', 'closed');
+    expect(fixture.componentInstance['fieldPopoverState']('status')).toBe('open');
+    fixture.componentInstance['onFieldPopoverStateChanged']('result', 'open');
+    fixture.componentInstance['onFieldPopoverStateChanged']('result', 'closed');
+    expect(fixture.componentInstance['fieldPopoverState']('result')).toBe('closed');
+
+    fixture.componentInstance['onFieldRemoved']('status');
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0].options).toMatchObject({ result: 'fail' });
+    expect(load.mock.calls.at(-1)?.[0].options.status).toBeUndefined();
+
+    fixture.componentInstance['onFieldRemoved']('result');
+    await fixture.whenStable();
+    expect(load.mock.calls.at(-1)?.[0].options.result).toBeUndefined();
+  });
+
   describe('filters visibility', () => {
     function toggleButton(): HTMLButtonElement | null {
       return (fixture.nativeElement as HTMLElement).querySelector(
@@ -373,6 +481,15 @@ describe('InspectionsPage', () => {
     beforeEach(() => {
       URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
       URL.revokeObjectURL = vi.fn();
+    });
+
+    it('should skip a CSV export when the list is empty', async () => {
+      fixture = await createPage();
+
+      fixture.componentInstance['exportCsv']();
+
+      expect(exportCsv).not.toHaveBeenCalled();
+      expect(fixture.componentInstance['exportBusy']()).toBe(false);
     });
 
     it('should disable the button while the list is loading, busy or empty', async () => {

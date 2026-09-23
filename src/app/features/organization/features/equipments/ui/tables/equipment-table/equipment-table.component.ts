@@ -149,7 +149,7 @@ export class EquipmentTable {
   protected typeLabelOf(type: string): string {
     return (
       EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === (type as EquipmentType))?.label ??
-      type.replace(/_/g, ' ')
+      type.replaceAll('_', ' ')
     );
   }
 

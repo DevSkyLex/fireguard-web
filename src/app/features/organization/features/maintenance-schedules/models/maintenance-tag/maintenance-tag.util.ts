@@ -51,7 +51,7 @@ const DUE_STATUS: Record<MaintenanceDueStatus, MaintenanceTagDescriptor> = {
 export function resolveMaintenanceTag(value: string): MaintenanceTagDescriptor {
   return (
     DUE_STATUS[value as MaintenanceDueStatus] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideTag',
     }

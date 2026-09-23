@@ -561,6 +561,29 @@ describe('InterventionsPage', () => {
     expect(transition).not.toHaveBeenCalled();
   });
 
+  it('opens review on the intervention detail before a Board move to publication', async () => {
+    fixture = await createPage({ view: 'board' });
+    const row = intervention({
+      id: 'ready-to-publish',
+      status: 'submitted',
+      allowedTransitions: ['published'],
+      responsible: '/api/organizations/org-1/members/member-1',
+    });
+
+    fixture.componentInstance['onBoardMoveRequested']({
+      item: { intervention: row, isOverdue: false, responsible: null },
+      columnId: 'published',
+    });
+
+    expect(navigate).toHaveBeenCalledWith([
+      '/organizations',
+      'org-1',
+      'interventions',
+      'ready-to-publish',
+    ]);
+    expect(transition).not.toHaveBeenCalled();
+  });
+
   it('should open the creation sheet once for ?create=1, then drop the param', async () => {
     fixture = await createPage({ create: '1' });
 
@@ -620,6 +643,26 @@ describe('InterventionsPage', () => {
       "Couldn't load the interventions",
     );
     expect((fixture.nativeElement as HTMLElement).querySelector('table')).toBeNull();
+  });
+
+  it('retries a failed list load with the current page, search and status', async () => {
+    totalInterventions.set(500);
+    listError.set({ message: 'Temporary outage' });
+    fixture = await createPage({ status: 'planned', q: 'roof', p: '3' });
+    load.mockClear();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="interventions-retry"]')
+      ?.click();
+
+    expect(load).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      options: expect.objectContaining({
+        status: 'planned',
+        name: 'roof',
+        page: 3,
+      }),
+    });
   });
 
   it('should map the form values onto the store command, dropping the empty ones', async () => {
@@ -1236,6 +1279,25 @@ describe('InterventionsPage', () => {
       );
     });
 
+    it('restores URL narrowing when returning from the Board to the List', async () => {
+      fixture = await createPage({ view: 'board', status: 'submitted', due: 'overdue' });
+      expect(load).not.toHaveBeenCalled();
+
+      fixture.componentInstance['switchView']('list');
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { view: null }, queryParamsHandling: 'merge' }),
+      );
+
+      fixture.componentRef.setInput('view', 'list');
+      await fixture.whenStable();
+
+      expect(load).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        options: expect.objectContaining({ status: 'submitted', due: 'overdue' }),
+      });
+    });
+
     it("should carry no reason in the chip's accessible name even for a field the Board does not honour", async () => {
       fixture = await createPage({ status: 'planned', view: 'board' });
 
@@ -1510,6 +1572,23 @@ describe('InterventionsPage', () => {
   });
 
   describe('board', () => {
+    it('shows overdue only on active board cards with a past deadline', async () => {
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      interventionList.set([
+        intervention({ id: 'planned-overdue', status: 'planned', dueAt: yesterday }),
+        intervention({ id: 'published-past', status: 'published', dueAt: yesterday }),
+        intervention({ id: 'without-deadline', status: 'draft', dueAt: null }),
+      ]);
+      fixture = await createPage({ view: 'board' });
+
+      const cards = new Map(
+        fixture.componentInstance['boardItems']().map((card) => [card.intervention.id, card]),
+      );
+      expect(cards.get('planned-overdue')?.isOverdue).toBe(true);
+      expect(cards.get('published-past')?.isOverdue).toBe(false);
+      expect(cards.get('without-deadline')?.isOverdue).toBe(false);
+    });
+
     it('keeps selection, display and export reachable from the mobile tools drawer', async () => {
       mobile.set(true);
       fixture = await createPage();
@@ -1971,6 +2050,56 @@ describe('InterventionsPage', () => {
   });
 
   describe('list navigation and filter controls', () => {
+    it('marks only active work as overdue or due soon and keeps repeated people to one avatar', async () => {
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const unknownMember = '/api/organizations/org-1/members/unknown';
+      interventionList.set([
+        intervention({
+          id: 'overdue',
+          dueAt: yesterday,
+          responsible: unknownMember,
+          participants: [unknownMember],
+        }),
+        intervention({ id: 'soon', dueAt: tomorrow }),
+        intervention({ id: 'published', status: 'published', dueAt: yesterday }),
+        intervention({ id: 'unscheduled', dueAt: null }),
+      ]);
+      fixture = await createPage();
+
+      const rows = new Map(
+        fixture.componentInstance['items']().map((row) => [row.intervention.id, row]),
+      );
+      expect(rows.get('overdue')).toMatchObject({ isOverdue: true, isDueSoon: false });
+      expect(rows.get('overdue')?.people).toEqual([{ label: 'Member' }]);
+      expect(rows.get('soon')).toMatchObject({ isOverdue: false, isDueSoon: true });
+      expect(rows.get('published')).toMatchObject({ isOverdue: false, isDueSoon: false });
+      expect(rows.get('unscheduled')).toMatchObject({ isOverdue: false, isDueSoon: false });
+    });
+
+    it('writes debounced search changes to the URL and clears the query when the draft is emptied', async () => {
+      fixture = await createPage({ q: 'north' });
+      const page = fixture.componentInstance;
+      navigate.mockClear();
+
+      page['draftSearch'].set('south');
+      await new Promise<void>((resolve) => setTimeout(resolve, 400));
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ q: 'south' }) }),
+      );
+
+      fixture.componentRef.setInput('q', 'south');
+      await fixture.whenStable();
+      navigate.mockClear();
+      page['draftSearch'].set('');
+      await new Promise<void>((resolve) => setTimeout(resolve, 400));
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ q: null }) }),
+      );
+    });
+
     it('resets paging when clearing search, changing sort and choosing a page size', async () => {
       totalInterventions.set(500);
       fixture = await createPage({ q: 'north' });
@@ -2014,6 +2143,43 @@ describe('InterventionsPage', () => {
       expect(page['fieldPopoverState']('site')).toBe('open');
       page['onFieldPopoverStateChanged']('site', 'closed');
       expect(page['fieldPopoverState']('site')).toBe('closed');
+    });
+
+    it('removes only the chosen narrowing when a named filter chip is dismissed', async () => {
+      fixture = await createPage({
+        status: 'planned',
+        type: 'inventory',
+        priority: 'high',
+        site: 'site-1',
+        responsible: 'member-1',
+        label: 'label-1',
+        dueAfter: '2026-09-01',
+        plannedStartAfter: '2026-08-01',
+      });
+      const page = fixture.componentInstance;
+      const chips = [
+        ['status', 'status'],
+        ['type', 'type'],
+        ['priority', 'priority'],
+        ['site', 'site'],
+        ['responsible', 'responsible'],
+        ['label', 'label'],
+        ['dueRange', 'dueAfter'],
+        ['plannedStartRange', 'plannedStartAfter'],
+      ] as const;
+
+      for (const [chip, param] of chips) {
+        page['onFieldRemoved'](chip);
+        expect(navigate).toHaveBeenLastCalledWith(
+          [],
+          expect.objectContaining({
+            queryParams: expect.objectContaining({
+              [param]: null,
+              type: chip === 'type' ? null : 'inventory',
+            }),
+          }),
+        );
+      }
     });
 
     it('represents scalar and repeated filters without inventing a scalar for multiple values', async () => {
@@ -2118,6 +2284,56 @@ describe('InterventionsPage', () => {
         }),
       );
     });
+
+    it('clears an obsolete date range when its operator changes and ignores an unfinished date choice', async () => {
+      fixture = await createPage({
+        dueAfter: '2026-09-01',
+        plannedStartAfter: '2026-08-01',
+      });
+      const page = fixture.componentInstance;
+
+      page['onFilterOperatorChanged']({ key: 'dueRange', operator: 'lessThan' });
+      expect(page['dueRangeOperator']()).toBe('lessThan');
+      expect(page['openFilterKey']()).toBe('dueRange');
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ dueAfter: null, dueBefore: null }),
+        }),
+      );
+
+      page['onFilterOperatorChanged']({ key: 'plannedStartRange', operator: 'between' });
+      expect(page['plannedStartRangeOperator']()).toBe('between');
+      expect(page['openFilterKey']()).toBe('plannedStartRange');
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({
+            plannedStartAfter: null,
+            plannedStartBefore: null,
+          }),
+        }),
+      );
+
+      navigate.mockClear();
+      page['pickDueAfter'](null);
+      page['pickDueBefore'](null);
+      page['pickDueBetween'](null);
+      page['pickPlannedStartAfter'](null);
+      page['pickPlannedStartBefore'](null);
+      page['pickPlannedStartBetween'](null);
+      expect(navigate).not.toHaveBeenCalled();
+
+      fixture.componentRef.setInput('dueAfter', undefined);
+      fixture.componentRef.setInput('plannedStartAfter', undefined);
+      await fixture.whenStable();
+      navigate.mockClear();
+      page['onFilterOperatorChanged']({ key: 'dueRange', operator: 'between' });
+      page['onFilterOperatorChanged']({ key: 'plannedStartRange', operator: 'lessThan' });
+      expect(page['dueRangeOperator']()).toBe('between');
+      expect(page['plannedStartRangeOperator']()).toBe('lessThan');
+      expect(navigate).not.toHaveBeenCalled();
+    });
   });
 
   describe('retrying partial batch failures', () => {
@@ -2167,6 +2383,40 @@ describe('InterventionsPage', () => {
       page['retryFailedBatch']();
       expect(page['pendingBulkDeleteIds']()).toEqual(['i-1']);
       expect(deleteIntervention).not.toHaveBeenCalled();
+    });
+
+    it('retries a failed bulk assignment with the refreshed row revision', async () => {
+      interventionList.set([
+        intervention({ id: 'i-1', name: 'Roof', status: 'draft', revision: 1 }),
+        intervention({ id: 'i-2', name: 'Basement', status: 'planned', revision: 2 }),
+      ]);
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      page['onSelectionChanged'](new Set(['i-1', 'i-2']));
+      page['requestBulkAssign']();
+      page['submitAssign']({
+        interventionId: '',
+        responsible: '/api/organizations/org-1/members/member-2',
+      });
+      mutationCallStates.set({
+        'i-1': successCallState(null),
+        'i-2': errorCallState(toStoreError(new Error('Conflict'))),
+      });
+      await fixture.whenStable();
+      interventionList.update((items) =>
+        items.map((item) => (item.id === 'i-2' ? { ...item, revision: 7 } : item)),
+      );
+      assignResponsible.mockClear();
+
+      page['retryFailedBatch']();
+
+      expect(page['selectedIds']()).toEqual(new Set(['i-2']));
+      expect(assignResponsible).toHaveBeenCalledExactlyOnceWith({
+        interventionId: 'i-2',
+        responsible: '/api/organizations/org-1/members/member-2',
+        revision: 7,
+      });
+      expect(page['assignRequest']()).not.toBeNull();
     });
   });
 });

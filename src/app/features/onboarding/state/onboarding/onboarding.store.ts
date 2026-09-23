@@ -60,6 +60,9 @@ interface ExecuteStepPayload {
 
 const ONBOARDING_TRANSFER_KEY = makeStateKey<OnboardingOutput | null>('organization-onboarding');
 
+/** @description Default bootstrap payload when the creator does not request a reset. */
+const DEFAULT_START_INPUT: StartOnboardingInput = { reset: false };
+
 //#region Initial State
 /**
  * Constant INITIAL_ONBOARDING_STATE
@@ -314,7 +317,7 @@ export const OnboardingStore = signalStore(
          *
          * @returns {Promise<void>} Resolves when initialization is complete.
          */
-        async initialize(input: StartOnboardingInput = { reset: false }): Promise<void> {
+        async initialize(input: StartOnboardingInput = DEFAULT_START_INPUT): Promise<void> {
           if (store.onboarding() !== null) {
             return;
           }

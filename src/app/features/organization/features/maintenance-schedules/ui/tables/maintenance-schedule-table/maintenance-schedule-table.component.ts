@@ -275,7 +275,7 @@ export class MaintenanceScheduleTable {
   protected equipmentTypeLabelOf(equipmentType: string): string {
     return (
       EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === equipmentType)?.label ??
-      equipmentType.replace(/_/g, ' ')
+      equipmentType.replaceAll('_', ' ')
     );
   }
 

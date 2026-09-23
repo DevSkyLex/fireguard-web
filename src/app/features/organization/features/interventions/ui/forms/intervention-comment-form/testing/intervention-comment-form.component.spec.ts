@@ -12,6 +12,15 @@ const MEMBER: MemberSelectOption = {
   initials: 'MD',
 };
 
+const SECOND_MEMBER: MemberSelectOption = {
+  value: '/api/organizations/org-1/members/8f0b9fc5-49ad-4e6c-a2ba-7872e8217090',
+  label: 'Sofia Lambert',
+  displayName: 'Sofia Lambert',
+  roleLabel: 'Safety lead',
+  avatarUrl: null,
+  initials: 'SL',
+};
+
 describe('InterventionCommentForm', () => {
   let fixture: ComponentFixture<InterventionCommentForm>;
   let submissions: string[];
@@ -33,6 +42,16 @@ describe('InterventionCommentForm', () => {
     body().value = value;
     body().selectionStart = value.length;
     body().dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+  };
+  const selectTwoMentions = async (): Promise<void> => {
+    fixture.componentRef.setInput('members', [MEMBER, SECOND_MEMBER]);
+    await fixture.whenStable();
+    await type('@M');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
+    await fixture.whenStable();
+    await type('@Marc Dubois and @Sof');
+    mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
     await fixture.whenStable();
   };
   const submit = async (): Promise<void> => {
@@ -148,6 +167,60 @@ describe('InterventionCommentForm', () => {
     expect(mentionOptions()[0].textContent).toContain('Marc Dubois');
   });
 
+  it.each([
+    ['ArrowDown', 'Tab'],
+    ['ArrowUp', 'Enter'],
+  ] as const)(
+    'chooses the highlighted mention with %s then %s while keeping focus in the draft',
+    async (direction, accept) => {
+      fixture.componentRef.setInput('members', [MEMBER, SECOND_MEMBER]);
+      await fixture.whenStable();
+      await type('Notify @');
+
+      const move = new KeyboardEvent('keydown', {
+        key: direction,
+        bubbles: true,
+        cancelable: true,
+      });
+      body().dispatchEvent(move);
+      await fixture.whenStable();
+      expect(move.defaultPrevented).toBe(true);
+      expect(mentionOptions()[1].getAttribute('aria-selected')).toBe('true');
+      expect(body().getAttribute('aria-activedescendant')).toBe(mentionOptions()[1].id);
+
+      const choose = new KeyboardEvent('keydown', {
+        key: accept,
+        bubbles: true,
+        cancelable: true,
+      });
+      body().dispatchEvent(choose);
+      await fixture.whenStable();
+      expect(choose.defaultPrevented).toBe(true);
+      expect(body().value).toBe('Notify @Sofia Lambert ');
+      expect(document.activeElement).toBe(body());
+      expect(submissions).toEqual([]);
+    },
+  );
+
+  it('dismisses a mention query with Escape and reopens suggestions after the query changes', async () => {
+    await type('Notify @Ma');
+    expect(mentionOptions().length).toBe(1);
+
+    const escape = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    body().dispatchEvent(escape);
+    await fixture.whenStable();
+    expect(escape.defaultPrevented).toBe(true);
+    expect(mentionOptions().length).toBe(0);
+    expect(body().value).toBe('Notify @Ma');
+
+    await type('Notify @Mar');
+    expect(mentionOptions().length).toBe(1);
+  });
+
   it('should insert the readable member name at the caret when a suggestion is picked', async () => {
     await type('ping @');
     mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
@@ -233,5 +306,23 @@ describe('InterventionCommentForm', () => {
     await submit();
 
     expect(submissions).toEqual(['(@{3fa85f64-5717-4562-b3fc-2c963f66afa6})']);
+  });
+
+  it('keeps both selected recipients when text is inserted before their mentions', async () => {
+    await selectTwoMentions();
+    await type('Please notify @Marc Dubois and @Sofia Lambert ');
+    await submit();
+
+    expect(submissions).toEqual([
+      'Please notify @{3fa85f64-5717-4562-b3fc-2c963f66afa6} and @{8f0b9fc5-49ad-4e6c-a2ba-7872e8217090}',
+    ]);
+  });
+
+  it('drops only the edited recipient and keeps the other notification intent', async () => {
+    await selectTwoMentions();
+    await type('@Marc Duboi and @Sofia Lambert ');
+    await submit();
+
+    expect(submissions).toEqual(['@Marc Duboi and @{8f0b9fc5-49ad-4e6c-a2ba-7872e8217090}']);
   });
 });

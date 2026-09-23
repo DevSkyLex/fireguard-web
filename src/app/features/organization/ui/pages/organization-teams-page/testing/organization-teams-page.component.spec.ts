@@ -1,7 +1,8 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { PageActionsService } from '@core/page-actions';
 import type { CallState, StoreError } from '@core/request-state';
 import {
   errorCallState,
@@ -12,7 +13,11 @@ import {
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { ORGANIZATION_PERMISSION, type TeamOutput } from '@features/organization/models';
+import {
+  ORGANIZATION_PERMISSION,
+  type OrganizationMemberOutput,
+  type TeamOutput,
+} from '@features/organization/models';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationTeamsStore } from '@features/organization/state/organization-teams';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
@@ -51,11 +56,15 @@ describe('OrganizationTeamsPage', () => {
   let createTeam: ReturnType<typeof vi.fn>;
   let updateTeam: ReturnType<typeof vi.fn>;
   let removeTeam: ReturnType<typeof vi.fn>;
+  let addMember: ReturnType<typeof vi.fn>;
+  let removeMember: ReturnType<typeof vi.fn>;
+  let listAllMembers: ReturnType<typeof vi.fn>;
+  let selectedTeamId: WritableSignal<string | null>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
-  async function createPage(): Promise<void> {
+  async function createPage(organizationId = 'org-1'): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
         {
@@ -83,7 +92,7 @@ describe('OrganizationTeamsPage', () => {
         },
         {
           provide: OrganizationMemberService,
-          useValue: { listAll: () => of([]) },
+          useValue: { listAll: listAllMembers },
         },
         {
           provide: REGIONAL_FORMATTING_PORT,
@@ -101,7 +110,7 @@ describe('OrganizationTeamsPage', () => {
             useValue: {
               teams,
               members: signal([]),
-              selectedTeamId: signal<string | null>(null),
+              selectedTeamId,
               isLoading,
               isCreating: signal(false),
               isUpdating: signal(false),
@@ -125,8 +134,8 @@ describe('OrganizationTeamsPage', () => {
               updateTeam,
               removeTeam,
               loadMembers,
-              addMember: vi.fn(),
-              removeMember: vi.fn(),
+              addMember,
+              removeMember,
             },
           },
         ],
@@ -134,7 +143,7 @@ describe('OrganizationTeamsPage', () => {
     });
 
     fixture = TestBed.createComponent(OrganizationTeamsPage);
-    fixture.componentRef.setInput('organizationId', 'org-1');
+    fixture.componentRef.setInput('organizationId', organizationId);
     await fixture.whenStable();
   }
 
@@ -151,6 +160,10 @@ describe('OrganizationTeamsPage', () => {
     createTeam = vi.fn();
     updateTeam = vi.fn();
     removeTeam = vi.fn();
+    addMember = vi.fn();
+    removeMember = vi.fn();
+    listAllMembers = vi.fn().mockReturnValue(of([]));
+    selectedTeamId = signal<string | null>(null);
     permissions = signal<ReadonlyArray<string>>([
       ORGANIZATION_PERMISSION.TEAMS_WRITE,
       ORGANIZATION_PERMISSION.TEAMS_MANAGE,
@@ -163,6 +176,47 @@ describe('OrganizationTeamsPage', () => {
     await createPage();
 
     expect(loadTeams).toHaveBeenCalledWith({ organizationId: 'org-1' });
+    expect(listAllMembers).toHaveBeenCalledWith('org-1');
+  });
+
+  it('should contribute header actions only while its tab is active', async () => {
+    await createPage();
+    const pageActions = TestBed.inject(PageActionsService);
+    expect(pageActions.actions()).not.toBeNull();
+
+    fixture.componentRef.setInput('active', false);
+    await fixture.whenStable();
+    expect(pageActions.actions()).toBeNull();
+
+    fixture.componentRef.setInput('active', true);
+    await fixture.whenStable();
+    expect(pageActions.actions()).not.toBeNull();
+  });
+
+  it('should reload the team list and member directory for a new organization', async () => {
+    await createPage();
+    loadTeams.mockClear();
+    listAllMembers.mockClear();
+
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    await fixture.whenStable();
+
+    expect(loadTeams).toHaveBeenCalledExactlyOnceWith({ organizationId: 'org-2' });
+    expect(listAllMembers).toHaveBeenCalledExactlyOnceWith('org-2');
+  });
+
+  it('should discard the previous directory when the new organization member read fails', async () => {
+    const previousMember = { id: 'member-1' } as OrganizationMemberOutput;
+    listAllMembers
+      .mockReturnValueOnce(of([previousMember]))
+      .mockReturnValueOnce(throwError(() => new Error('Network down')));
+    await createPage();
+    expect(fixture.componentInstance['orgMembers']()).toEqual([previousMember]);
+
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['orgMembers']()).toEqual([]);
   });
 
   it('should render the team table once teams are loaded', async () => {
@@ -264,6 +318,18 @@ describe('OrganizationTeamsPage', () => {
     expect(fixture.componentInstance['canWrite']()).toBe(false);
   });
 
+  it('should distinguish team editing from the manage permission needed for deletion', async () => {
+    permissions.set([ORGANIZATION_PERMISSION.TEAMS_WRITE]);
+    await createPage();
+    expect(fixture.componentInstance['canWrite']()).toBe(true);
+    expect(fixture.componentInstance['canManage']()).toBe(false);
+
+    permissions.set([ORGANIZATION_PERMISSION.TEAMS_MANAGE]);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['canWrite']()).toBe(false);
+    expect(fixture.componentInstance['canManage']()).toBe(true);
+  });
+
   it('should open the create dialog and pass it through to createTeam', async () => {
     await createPage();
 
@@ -341,6 +407,26 @@ describe('OrganizationTeamsPage', () => {
     expect(fixture.componentInstance['editingTeam']()).toBeNull();
   });
 
+  it('should ignore an update after the edit dialog has closed', async () => {
+    await createPage();
+    fixture.componentInstance['openEditDialog'](TEAM);
+    fixture.componentInstance['onEditDialogVisibleChange'](false);
+
+    fixture.componentInstance['updateTeam']({ name: 'Stale change' });
+
+    expect(updateTeam).not.toHaveBeenCalled();
+  });
+
+  it('should keep the edit dialog open when the update fails', async () => {
+    await createPage();
+    fixture.componentInstance['openEditDialog'](TEAM);
+    updateCallState.set(errorCallState({ message: 'Conflict' } as StoreError));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['editingTeam']()).toBe(TEAM);
+    expect(fixture.componentInstance['editDialogState']()).toBe('open');
+  });
+
   it('should request delete confirmation and call removeTeam once confirmed', async () => {
     await createPage();
 
@@ -362,6 +448,19 @@ describe('OrganizationTeamsPage', () => {
     removeCallState.set(successCallState(null));
     await fixture.whenStable();
 
+    expect(fixture.componentInstance['pendingDeleteTeam']()).toBeNull();
+  });
+
+  it('should retain a pending deletion on failure and clear it on dismissal', async () => {
+    await createPage();
+    fixture.componentInstance['requestDelete'](TEAM);
+    removeCallState.set(errorCallState({ message: 'Conflict' } as StoreError));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['deleteDialogState']()).toBe('open');
+    fixture.componentInstance['onDeleteDialogVisibleChange'](true);
+    expect(fixture.componentInstance['pendingDeleteTeam']()).toBe(TEAM);
+    fixture.componentInstance['onDeleteDialogVisibleChange'](false);
     expect(fixture.componentInstance['pendingDeleteTeam']()).toBeNull();
   });
 
@@ -387,5 +486,43 @@ describe('OrganizationTeamsPage', () => {
     fixture.componentInstance['onMembersSheetVisibleChange'](false);
 
     expect(loadMembers).toHaveBeenCalledWith({ organizationId: 'org-1', teamId: null });
+  });
+
+  it('should resolve the selected team live and clear a stale selection after deletion', async () => {
+    await createPage();
+    expect(fixture.componentInstance['membersSheetTeam']()).toBeNull();
+
+    selectedTeamId.set('team-1');
+    expect(fixture.componentInstance['membersSheetTeam']()).toEqual(TEAM);
+
+    teams.set([]);
+    expect(fixture.componentInstance['membersSheetTeam']()).toBeNull();
+  });
+
+  it('should retry, add and remove members only while a team is selected', async () => {
+    await createPage();
+    fixture.componentInstance['retryLoadMembers']();
+    fixture.componentInstance['addMember']({ memberId: 'member-1' });
+    fixture.componentInstance['removeMember']('member-1');
+    expect(loadMembers).not.toHaveBeenCalled();
+    expect(addMember).not.toHaveBeenCalled();
+    expect(removeMember).not.toHaveBeenCalled();
+
+    selectedTeamId.set('team-1');
+    fixture.componentInstance['retryLoadMembers']();
+    fixture.componentInstance['addMember']({ memberId: 'member-1' });
+    fixture.componentInstance['removeMember']('member-1');
+
+    expect(loadMembers).toHaveBeenCalledWith({ organizationId: 'org-1', teamId: 'team-1' });
+    expect(addMember).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      teamId: 'team-1',
+      input: { memberId: 'member-1' },
+    });
+    expect(removeMember).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      teamId: 'team-1',
+      memberId: 'member-1',
+    });
   });
 });

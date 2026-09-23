@@ -17,7 +17,7 @@ import type { OrganizationAvatarSize } from './models';
  * same colour on every screen and across reloads, which is the whole point of
  * colouring an identity rather than decorating it.
  *
- * A plain character-code sum is enough here — the set is ten wide and the
+ * A plain code-point sum is enough here — the set is ten wide and the
  * inputs are organization names, so an even spread matters more than
  * avalanche behaviour, and a readable function beats a hash nobody can check.
  *
@@ -30,7 +30,7 @@ import type { OrganizationAvatarSize } from './models';
  */
 function toneIndex(value: string): number {
   let sum: number = 0;
-  for (let index: number = 0; index < value.length; index++) sum += value.charCodeAt(index);
+  for (const character of value) sum += character.codePointAt(0) ?? 0;
 
   return sum % ORGANIZATION_AVATAR_TONE_CLASSES.length;
 }

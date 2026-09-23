@@ -103,7 +103,7 @@ export abstract class IndexedDbService {
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<void>} A promise resolving once the database is empty.
+   * @returns {Promise<void>} A promise resolving once the database is empty.
    */
   public resetOwnerData(): Promise<void> {
     this.ownerUserId = null;
@@ -129,7 +129,7 @@ export abstract class IndexedDbService {
    *
    * @param {string | null} ownerId - User to bind the local stores to.
    *
-   * @return {Promise<void>} A promise resolving once the stores are bound.
+   * @returns {Promise<void>} A promise resolving once the stores are bound.
    */
   public ensureOwnerBound(ownerId: string | null): Promise<void> {
     if (!this.browser || !ownerId || this.ownerUserId === ownerId) return this.ownerBinding;
@@ -159,7 +159,7 @@ export abstract class IndexedDbService {
    *
    * @param {string} ownerId - Authenticated user identifier.
    *
-   * @return {Promise<void>} A promise resolving once the owner is recorded.
+   * @returns {Promise<void>} A promise resolving once the owner is recorded.
    */
   private async bindToOwner(ownerId: string): Promise<void> {
     const previousOwnerId = await this.get<string>(this.schema.ownerStoreName, OWNER_KEY);
@@ -187,7 +187,7 @@ export abstract class IndexedDbService {
    * @param {string} key - Record key.
    * @param {unknown} value - Record value.
    *
-   * @return {Promise<void>} A promise resolving once the value is stored.
+   * @returns {Promise<void>} A promise resolving once the value is stored.
    */
   public async put(storeName: string, key: string, value: unknown): Promise<void> {
     if (!this.browser) return;
@@ -198,7 +198,9 @@ export abstract class IndexedDbService {
         .objectStore(storeName)
         .put(value, key);
       request.addEventListener('success', () => resolve());
-      request.addEventListener('error', () => reject(request.error));
+      request.addEventListener('error', () =>
+        reject(request.error ?? new Error('IndexedDB request failed')),
+      );
     });
   }
 
@@ -216,7 +218,7 @@ export abstract class IndexedDbService {
    * @param {string} storeName - Target object store.
    * @param {readonly IndexedEntry<unknown>[]} entries - Key/value pairs to write.
    *
-   * @return {Promise<void>} A promise resolving once every value is stored.
+   * @returns {Promise<void>} A promise resolving once every value is stored.
    */
   public async putMany(
     storeName: string,
@@ -235,8 +237,12 @@ export abstract class IndexedDbService {
           store.put(entry.value, entry.key);
         }
         transaction.addEventListener('complete', () => resolve());
-        transaction.addEventListener('abort', () => reject(transaction.error));
-        transaction.addEventListener('error', () => reject(transaction.error));
+        transaction.addEventListener('abort', () =>
+          reject(transaction.error ?? new Error('IndexedDB transaction aborted')),
+        );
+        transaction.addEventListener('error', () =>
+          reject(transaction.error ?? new Error('IndexedDB transaction failed')),
+        );
       },
     );
   }
@@ -254,7 +260,7 @@ export abstract class IndexedDbService {
    *
    * @param {Readonly<Record<string, readonly IndexedEntry<unknown>[]>>} entries - Store name to entries.
    *
-   * @return {Promise<void>} A promise resolving once the transaction commits.
+   * @returns {Promise<void>} A promise resolving once the transaction commits.
    */
   public async putTransaction(
     entries: Readonly<Record<string, readonly IndexedEntry<unknown>[]>>,
@@ -275,8 +281,12 @@ export abstract class IndexedDbService {
         }
       }
       transaction.addEventListener('complete', () => resolve());
-      transaction.addEventListener('abort', () => reject(transaction.error));
-      transaction.addEventListener('error', () => reject(transaction.error));
+      transaction.addEventListener('abort', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction aborted')),
+      );
+      transaction.addEventListener('error', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction failed')),
+      );
     });
   }
 
@@ -294,7 +304,7 @@ export abstract class IndexedDbService {
    * @param {string} storeName - Target object store.
    * @param {string} key - Record key.
    *
-   * @return {Promise<T | null>} A promise resolving with the stored value, or `null`.
+   * @returns {Promise<T | null>} A promise resolving with the stored value, or `null`.
    */
   public async get<T>(storeName: string, key: string): Promise<T | null> {
     if (!this.browser) return null;
@@ -303,7 +313,9 @@ export abstract class IndexedDbService {
     return new Promise((resolve, reject) => {
       const request = database.transaction(storeName, 'readonly').objectStore(storeName).get(key);
       request.addEventListener('success', () => resolve(request.result ?? null));
-      request.addEventListener('error', () => reject(request.error));
+      request.addEventListener('error', () =>
+        reject(request.error ?? new Error('IndexedDB request failed')),
+      );
     });
   }
 
@@ -319,7 +331,7 @@ export abstract class IndexedDbService {
    *
    * @param {string} storeName - Target object store.
    *
-   * @return {Promise<readonly T[]>} A promise resolving with every stored value.
+   * @returns {Promise<readonly T[]>} A promise resolving with every stored value.
    */
   public async getAll<T>(storeName: string): Promise<readonly T[]> {
     if (!this.browser) return [];
@@ -332,7 +344,9 @@ export abstract class IndexedDbService {
       ): void => {
         const request = database.transaction(storeName, 'readonly').objectStore(storeName).getAll();
         request.addEventListener('success', () => resolve(request.result));
-        request.addEventListener('error', () => reject(request.error));
+        request.addEventListener('error', () =>
+          reject(request.error ?? new Error('IndexedDB request failed')),
+        );
       },
     );
   }
@@ -349,7 +363,7 @@ export abstract class IndexedDbService {
    *
    * @param {string} storeName - Target object store.
    *
-   * @return {Promise<number>} A promise resolving with the record count.
+   * @returns {Promise<number>} A promise resolving with the record count.
    */
   public async count(storeName: string): Promise<number> {
     if (!this.browser) return 0;
@@ -358,7 +372,9 @@ export abstract class IndexedDbService {
     return new Promise<number>((resolve, reject) => {
       const request = database.transaction(storeName, 'readonly').objectStore(storeName).count();
       request.addEventListener('success', () => resolve(request.result));
-      request.addEventListener('error', () => reject(request.error));
+      request.addEventListener('error', () =>
+        reject(request.error ?? new Error('IndexedDB request failed')),
+      );
     });
   }
 
@@ -375,7 +391,7 @@ export abstract class IndexedDbService {
    * @param {string} storeName - Target object store.
    * @param {string} key - Record key.
    *
-   * @return {Promise<void>} A promise resolving once the record is deleted.
+   * @returns {Promise<void>} A promise resolving once the record is deleted.
    */
   public async remove(storeName: string, key: string): Promise<void> {
     if (!this.browser) return;
@@ -386,7 +402,9 @@ export abstract class IndexedDbService {
         .objectStore(storeName)
         .delete(key);
       request.addEventListener('success', () => resolve());
-      request.addEventListener('error', () => reject(request.error));
+      request.addEventListener('error', () =>
+        reject(request.error ?? new Error('IndexedDB request failed')),
+      );
     });
   }
 
@@ -404,7 +422,7 @@ export abstract class IndexedDbService {
    * @param {string} storeName - Target object store.
    * @param {(value: T, key: IDBValidKey) => boolean} predicate - Whether to delete a record.
    *
-   * @return {Promise<void>} A promise resolving once the transaction commits.
+   * @returns {Promise<void>} A promise resolving once the transaction commits.
    */
   public async removeWhere<T>(
     storeName: string,
@@ -426,8 +444,12 @@ export abstract class IndexedDbService {
           cursor.continue();
         });
         transaction.addEventListener('complete', () => resolve());
-        transaction.addEventListener('abort', () => reject(transaction.error));
-        transaction.addEventListener('error', () => reject(transaction.error));
+        transaction.addEventListener('abort', () =>
+          reject(transaction.error ?? new Error('IndexedDB transaction aborted')),
+        );
+        transaction.addEventListener('error', () =>
+          reject(transaction.error ?? new Error('IndexedDB transaction failed')),
+        );
       },
     );
   }
@@ -443,7 +465,7 @@ export abstract class IndexedDbService {
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<void>} A promise resolving once every store is cleared.
+   * @returns {Promise<void>} A promise resolving once every store is cleared.
    */
   public async clearAll(): Promise<void> {
     if (!this.browser) return;
@@ -455,8 +477,12 @@ export abstract class IndexedDbService {
         transaction.objectStore(storeName).clear();
       }
       transaction.addEventListener('complete', () => resolve());
-      transaction.addEventListener('abort', () => reject(transaction.error));
-      transaction.addEventListener('error', () => reject(transaction.error));
+      transaction.addEventListener('abort', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction aborted')),
+      );
+      transaction.addEventListener('error', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction failed')),
+      );
     });
   }
   //#endregion
@@ -486,7 +512,7 @@ export abstract class IndexedDbService {
    * @access private
    * @since 1.0.0
    *
-   * @return {Promise<IDBDatabase>} A promise resolving with the open database handle.
+   * @returns {Promise<IDBDatabase>} A promise resolving with the open database handle.
    */
   private open(): Promise<IDBDatabase> {
     const schema: IndexedDbSchema = this.schema;
@@ -521,7 +547,9 @@ export abstract class IndexedDbService {
         database.addEventListener('versionchange', () => database.close());
         resolve(database);
       });
-      request.addEventListener('error', () => reject(request.error));
+      request.addEventListener('error', () =>
+        reject(request.error ?? new Error('IndexedDB request failed')),
+      );
     });
   }
   //#endregion

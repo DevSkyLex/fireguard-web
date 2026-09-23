@@ -9,7 +9,7 @@
 >
   <ng-container surfaceHead>
     <tr hlmTableRow>
-      <th hlmTableHead class="w-10 px-3">
+      <th hlmTableHead scope="col" class="w-10 px-3">
         <span class="flex items-center">
           <hlm-checkbox
             data-testid="intervention-table-select-all"
@@ -21,15 +21,17 @@
           />
         </span>
       </th>
-      <th hlmTableHead class="w-[100px]" i18n="@@intervention.list.columnReference">Ref.</th>
-      <th hlmTableHead i18n="@@intervention.list.columnIntervention">Intervention</th>
+      <th hlmTableHead scope="col" class="w-[100px]" i18n="@@intervention.list.columnReference">
+        Ref.
+      </th>
+      <th hlmTableHead scope="col" i18n="@@intervention.list.columnIntervention">Intervention</th>
 
       @if (isVisible(column.STATUS)) {
-        <th hlmTableHead i18n="@@intervention.list.columnStatus">Status</th>
+        <th hlmTableHead scope="col" i18n="@@intervention.list.columnStatus">Status</th>
       }
 
       @if (isVisible(column.PRIORITY)) {
-        <th hlmTableHead [attr.aria-sort]="ariaSort('priority')">
+        <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('priority')">
           <button
             hlmBtn
             type="button"
@@ -46,15 +48,15 @@
       }
 
       @if (isVisible(column.TYPE)) {
-        <th hlmTableHead i18n="@@intervention.list.columnType">Type</th>
+        <th hlmTableHead scope="col" i18n="@@intervention.list.columnType">Type</th>
       }
 
       @if (isVisible(column.SITE)) {
-        <th hlmTableHead i18n="@@intervention.list.columnSite">Site</th>
+        <th hlmTableHead scope="col" i18n="@@intervention.list.columnSite">Site</th>
       }
 
       @if (isVisible(column.DUE)) {
-        <th hlmTableHead class="text-right" [attr.aria-sort]="ariaSort('dueAt')">
+        <th hlmTableHead scope="col" class="text-right" [attr.aria-sort]="ariaSort('dueAt')">
           <button
             hlmBtn
             type="button"
@@ -70,7 +72,7 @@
         </th>
       }
 
-      <th hlmTableHead class="w-[52px]">
+      <th hlmTableHead scope="col" class="w-[52px]">
         <span class="sr-only" i18n="@@intervention.list.columnActions">Actions</span>
       </th>
     </tr>

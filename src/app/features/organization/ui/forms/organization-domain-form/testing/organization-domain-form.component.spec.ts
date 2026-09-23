@@ -6,7 +6,7 @@ describe('OrganizationDomainForm', () => {
     fixture.detectChanges();
     const emitted = vi.fn();
     fixture.componentInstance.submitted.subscribe(emitted);
-    for (const domain of ['', 'person@company.test', 'https://company.test']) {
+    for (const domain of ['', 'person@company.test', 'https://company.test', 'a'.repeat(4096)]) {
       fixture.componentInstance['model'].set({ domain });
       fixture.detectChanges();
       fixture.componentInstance['submit'](new Event('submit'));
@@ -16,5 +16,9 @@ describe('OrganizationDomainForm', () => {
     fixture.detectChanges();
     fixture.componentInstance['submit'](new Event('submit'));
     expect(emitted).toHaveBeenCalledWith('company.test');
+    fixture.componentInstance['model'].set({ domain: 'sub.company.test' });
+    fixture.detectChanges();
+    fixture.componentInstance['submit'](new Event('submit'));
+    expect(emitted).toHaveBeenLastCalledWith('sub.company.test');
   });
 });

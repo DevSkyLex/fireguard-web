@@ -33,6 +33,15 @@ function stubViewportRect(fixture: ComponentFixture<PlanViewer>): void {
   frame.getBoundingClientRect = (): DOMRect => VIEWPORT_RECT;
 }
 
+function pointerEvent(
+  type: string,
+  pointerId: number,
+  clientX: number,
+  clientY: number,
+): PointerEvent {
+  return new PointerEvent(type, { pointerId, clientX, clientY, bubbles: true });
+}
+
 /**
  * Fires the `<img>`'s `load` event with a fixed natural size, driving the
  * component out of its loading state the way the browser would.
@@ -133,6 +142,29 @@ describe('PlanViewer', () => {
       expect(stage.classList.contains('overflow-hidden')).toBe(true);
       expect(frame.classList.contains('overflow-hidden')).toBe(false);
       expect(frame.classList.contains('inset-1')).toBe(true);
+    });
+
+    it('should fit the image using its supplied natural size when metadata is available', async () => {
+      fixture.componentRef.setInput('naturalWidth', 1600);
+      fixture.componentRef.setInput('naturalHeight', 1200);
+      await fixture.whenStable();
+      await loadImage(fixture, { width: 200, height: 100 });
+
+      const content: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-content"]',
+      );
+      expect(content.style.transform).toContain('scale(0.5)');
+      expect(content.style.width).toBe('1600px');
+      expect(content.style.height).toBe('1200px');
+    });
+
+    it('should keep a neutral transform when the image reports no natural size', async () => {
+      await loadImage(fixture, { width: 0, height: 0 });
+
+      const content: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-content"]',
+      );
+      expect(content.style.transform).toContain('scale(1)');
     });
   });
 
@@ -307,6 +339,98 @@ describe('PlanViewer', () => {
         '[data-testid="plan-viewer-content"]',
       );
       expect(content.style.transform).toContain('translate(48px, 0px)');
+    });
+
+    it('should zoom out with minus and pan vertically with arrow keys', async () => {
+      const stage: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-stage"]',
+      );
+      stage.dispatchEvent(new KeyboardEvent('keydown', { key: '-' }));
+      await fixture.whenStable();
+      const content: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-content"]',
+      );
+      expect(content.style.transform).toContain(`scale(${1 / 1.25})`);
+
+      stage.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+      await fixture.whenStable();
+      expect(content.style.transform).toContain('translate(');
+      const afterDown = content.style.transform;
+      stage.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+      await fixture.whenStable();
+      expect(content.style.transform).not.toBe(afterDown);
+    });
+
+    it('should leave unrelated keyboard shortcuts unconsumed', async () => {
+      const stage: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-stage"]',
+      );
+      const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+      stage.dispatchEvent(event);
+      await fixture.whenStable();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(fixture.componentInstance['transform']()).toEqual({ x: 0, y: 0, scale: 1 });
+    });
+  });
+
+  describe('pointer interactions and viewport resize', () => {
+    let stage: HTMLElement;
+
+    beforeEach(async () => {
+      await loadImage(fixture);
+      stage = fixture.nativeElement.querySelector('[data-testid="plan-viewer-stage"]');
+      stage.setPointerCapture = vi.fn();
+    });
+
+    it('should pan while dragging one pointer and stop after release', async () => {
+      stage.dispatchEvent(pointerEvent('pointerdown', 1, 100, 100));
+      stage.dispatchEvent(pointerEvent('pointermove', 1, 180, 140));
+      await fixture.whenStable();
+      const content: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-content"]',
+      );
+      expect(content.style.transform).toContain('translate(80px, 40px)');
+
+      stage.dispatchEvent(pointerEvent('pointerup', 1, 180, 140));
+      stage.dispatchEvent(pointerEvent('pointermove', 1, 280, 240));
+      await fixture.whenStable();
+      expect(content.style.transform).toContain('translate(80px, 40px)');
+    });
+
+    it('should zoom around the midpoint of two active pointers', async () => {
+      stage.dispatchEvent(pointerEvent('pointerdown', 1, 100, 100));
+      stage.dispatchEvent(pointerEvent('pointerdown', 2, 300, 100));
+      stage.dispatchEvent(pointerEvent('pointermove', 2, 500, 100));
+      await fixture.whenStable();
+      const content: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-content"]',
+      );
+      expect(content.style.transform).toContain('scale(2)');
+
+      stage.dispatchEvent(pointerEvent('pointercancel', 2, 500, 100));
+      stage.dispatchEvent(pointerEvent('pointerup', 1, 100, 100));
+      stage.dispatchEvent(pointerEvent('pointermove', 2, 600, 100));
+      await fixture.whenStable();
+      expect(content.style.transform).toContain('scale(2)');
+    });
+
+    it('should refit an untouched image on resize and preserve a user zoom', async () => {
+      const frame: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="plan-viewer-frame"]',
+      );
+      frame.getBoundingClientRect = (): DOMRect => ({ ...VIEWPORT_RECT, width: 400, height: 300 });
+      fixture.componentInstance['refitToViewport']();
+      await fixture.whenStable();
+      expect(fixture.componentInstance['transform']().scale).toBe(0.5);
+
+      stage.dispatchEvent(new KeyboardEvent('keydown', { key: '+' }));
+      await fixture.whenStable();
+      const userScale = fixture.componentInstance['transform']().scale;
+      frame.getBoundingClientRect = (): DOMRect => ({ ...VIEWPORT_RECT, width: 600, height: 450 });
+      fixture.componentInstance['refitToViewport']();
+      await fixture.whenStable();
+      expect(fixture.componentInstance['transform']().scale).toBe(userScale);
     });
   });
 });

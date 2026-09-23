@@ -9,7 +9,7 @@
 >
   <ng-container surfaceHead>
     <tr hlmTableRow>
-      <th hlmTableHead [attr.aria-sort]="ariaSort('type')">
+      <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('type')">
         <button
           hlmBtn
           type="button"
@@ -23,7 +23,7 @@
           <ng-icon [name]="sortIcon('type')" aria-hidden="true" />
         </button>
       </th>
-      <th hlmTableHead [attr.aria-sort]="ariaSort('brand')">
+      <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('brand')">
         <button
           hlmBtn
           type="button"
@@ -37,7 +37,7 @@
           <ng-icon [name]="sortIcon('brand')" aria-hidden="true" />
         </button>
       </th>
-      <th hlmTableHead [attr.aria-sort]="ariaSort('status')">
+      <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('status')">
         <button
           hlmBtn
           type="button"
@@ -51,8 +51,8 @@
           <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
         </button>
       </th>
-      <th hlmTableHead i18n="@@equipment.table.colMaintenance">Maintenance</th>
-      <th hlmTableHead i18n="@@equipment.table.colLocation">Location</th>
+      <th hlmTableHead scope="col" i18n="@@equipment.table.colMaintenance">Maintenance</th>
+      <th hlmTableHead scope="col" i18n="@@equipment.table.colLocation">Location</th>
     </tr>
   </ng-container>
 

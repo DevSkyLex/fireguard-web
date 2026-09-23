@@ -273,4 +273,81 @@ describe('UserStore', () => {
     expect(store.profile()?.id).toBe('user-2');
     expect(mockUserProfileService.getCurrentProfile).toHaveBeenCalledTimes(1);
   });
+
+  it('uses the available legacy identity fields when a profile has no first and last name', () => {
+    store.setProfile({
+      ...profile,
+      firstName: null,
+      lastName: null,
+      name: 'Legacy Display',
+      given_name: 'Mina',
+      family_name: 'Smith',
+      username: 'legacy-user',
+    });
+    expect(store.displayName()).toBe('Legacy Display');
+    expect(store.initials()).toBe('MS');
+
+    store.setProfile({
+      ...profile,
+      firstName: null,
+      lastName: null,
+      name: null,
+      given_name: null,
+      family_name: null,
+      username: null,
+      preferred_username: 'preferred-user',
+    });
+    expect(store.displayName()).toBe('preferred-user');
+    expect(store.initials()).toBe('P');
+
+    store.setProfile({
+      ...profile,
+      firstName: null,
+      lastName: null,
+      name: null,
+      given_name: null,
+      family_name: null,
+      username: null,
+      preferred_username: null,
+    });
+    expect(store.displayName()).toBe('jane@example.com');
+    expect(store.initials()).toBe('J');
+  });
+
+  it('falls back to the legacy picture and clears derived identity on logout', () => {
+    store.setProfile({ ...profile, avatarUrl: null, avatarUrls: null, picture: '/legacy.png' });
+    expect(store.avatarUrl()).toBe('/legacy.png');
+    expect(store.avatarUrlMedium()).toBe('/legacy.png');
+    expect(store.avatarUrlSmall()).toBe('/legacy.png');
+    expect(store.roles()).toEqual(['ROLE_USER']);
+    expect(store.permissions()).toEqual([ACCOUNT_PERMISSION.PROFILE_READ]);
+
+    store.clear();
+    expect(store.displayName()).toBeNull();
+    expect(store.initials()).toBeNull();
+    expect(store.avatarUrl()).toBeNull();
+    expect(store.avatarUrlMedium()).toBeNull();
+    expect(store.avatarUrlSmall()).toBeNull();
+    expect(store.roles()).toEqual([]);
+    expect(store.permissions()).toEqual([]);
+  });
+
+  it('cancels a pending profile read when resetting only its load operation', async () => {
+    const oldRead = new Subject<UserProfileOutput>();
+    mockUserProfileService.getCurrentProfile
+      .mockReturnValueOnce(oldRead)
+      .mockReturnValueOnce(of({ ...profile, firstName: 'Current' }));
+
+    store.load();
+    expect(store.isLoading()).toBe(true);
+    store.resetLoadOperation();
+    expect(store.loadCallState().status).toBe('idle');
+    expect(oldRead.observed).toBe(false);
+
+    oldRead.next({ ...profile, firstName: 'Obsolete', locale: 'fr' });
+    store.load();
+    await flushEffects();
+    expect(store.displayName()).toBe('Current Doe');
+    expect(mockLocalePreference.applyPreference).toHaveBeenCalledExactlyOnceWith('system');
+  });
 });

@@ -89,4 +89,13 @@ describe('OrganizationAvatar', () => {
 
     expect(classesOf(fallback())).not.toEqual(alpha);
   });
+
+  it('derives the tone from a full Unicode code point', async () => {
+    await render({ name: '😀' });
+
+    const expectedTone =
+      ORGANIZATION_AVATAR_TONE_CLASSES[0x1f600 % ORGANIZATION_AVATAR_TONE_CLASSES.length];
+    const classes = classesOf(fallback());
+    expect(expectedTone?.split(' ').every((name) => classes.has(name))).toBe(true);
+  });
 });

@@ -120,7 +120,7 @@ export const InspectionCreationOptionsStore = signalStore(
                       (item: EquipmentOutput): EquipmentSelectOption => {
                         const typeLabel: string =
                           EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === item.type)
-                            ?.label ?? item.type.replace(/_/g, ' ');
+                            ?.label ?? item.type.replaceAll('_', ' ');
                         const secondary: string = [item.locationLabel, item.facilityName]
                           .filter((part): part is string => !!part)
                           .join(' · ');

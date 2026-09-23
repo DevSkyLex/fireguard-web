@@ -306,18 +306,22 @@ describe('InterventionService', () => {
   });
 
   it('forwards the name filter to the collection endpoint', () => {
-    service.list('organization-1', { name: 'Annual' }).subscribe();
+    const received = vi.fn();
+    service.list('organization-1', { name: 'Annual' }).subscribe(received);
 
     const request = httpMock.expectOne(
       (req) =>
         req.url === `${mockEnv.apiUrl}/api/interventions` && req.params.get('name') === 'Annual',
     );
-    request.flush({
+    expect(request.request.params.get('name')).toBe('Annual');
+    const response = {
       '@id': '/api/interventions',
       '@type': 'Collection',
       totalItems: 0,
       member: [],
-    });
+    };
+    request.flush(response);
+    expect(received).toHaveBeenCalledExactlyOnceWith(response);
   });
 
   it('sends the scalar equals form for a single status value', () => {
@@ -484,13 +488,14 @@ describe('InterventionService', () => {
   });
 
   it('forwards resource and status filters when listing changes', () => {
+    const received = vi.fn();
     service
       .listChanges('intervention-1', {
         resource: '/api/equipment/equipment-1',
         status: 'proposed',
         search: 'pressure',
       })
-      .subscribe();
+      .subscribe(received);
 
     const request = httpMock.expectOne(
       (req) =>
@@ -499,16 +504,27 @@ describe('InterventionService', () => {
         req.params.get('status') === 'proposed' &&
         req.params.get('search') === 'pressure',
     );
-    request.flush({
+    expect(request.request.params.get('resource')).toBe('/api/equipment/equipment-1');
+    expect(request.request.params.get('status')).toBe('proposed');
+    expect(request.request.params.get('search')).toBe('pressure');
+    const response = {
       '@id': '/api/intervention-changes',
       '@type': 'Collection',
       totalItems: 0,
       member: [],
-    });
+    };
+    request.flush(response);
+    expect(received).toHaveBeenCalledExactlyOnceWith(response);
   });
 
   it('loads every change page', () => {
-    service.listAllChanges('intervention-1').subscribe();
+    const received = vi.fn();
+    service.listAllChanges('intervention-1').subscribe(received);
+
+    const firstPage = Array.from({ length: 100 }, (_unused, index) => ({
+      id: `change-${index + 1}`,
+    }));
+    const finalChange = { id: 'change-101' };
 
     const firstRequest = httpMock.expectOne(
       (request) =>
@@ -518,9 +534,23 @@ describe('InterventionService', () => {
     firstRequest.flush({
       '@id': '/api/intervention-changes',
       '@type': 'Collection',
-      totalItems: 1,
-      member: [{ id: 'change-1' }],
+      totalItems: 101,
+      member: firstPage,
     });
+
+    const secondRequest = httpMock.expectOne(
+      (request) =>
+        request.url === `${mockEnv.apiUrl}/api/intervention-changes` &&
+        request.params.get('page') === '2',
+    );
+    secondRequest.flush({
+      '@id': '/api/intervention-changes',
+      '@type': 'Collection',
+      totalItems: 101,
+      member: [finalChange],
+    });
+
+    expect(received).toHaveBeenCalledExactlyOnceWith([...firstPage, finalChange]);
   });
 
   it('uses conditional PUT for offline change creation and POST otherwise', () => {

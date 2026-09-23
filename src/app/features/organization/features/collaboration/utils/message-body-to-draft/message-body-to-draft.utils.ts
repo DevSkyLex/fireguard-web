@@ -1,11 +1,10 @@
+import { splitHtmlSegments } from '../split-html-segments/split-html-segments.utils';
+
 /** Matches `@{memberUuid}` after entity decoding. Global for `replaceAll`. */
 const MENTION_MARKER = /@\{([0-9a-fA-F-]{36})\}/g;
 
 /** Tags whose end (or self-closing form) means a line break in plain text. */
 const LINE_BREAK_TAGS = /<br\s*\/?>|<\/p>|<\/div>/gi;
-
-/** Any remaining tag, dropped wholesale. */
-const ANY_TAG = /<[^>]*>/g;
 
 /**
  * Function messageBodyToDraft
@@ -45,9 +44,10 @@ export function messageBodyToDraft(
 ): string {
   if (body === undefined || body.length === 0) return '';
 
-  const text: string = body
-    .replaceAll(LINE_BREAK_TAGS, '\n')
-    .replaceAll(ANY_TAG, '')
+  const text: string = splitHtmlSegments(body.replaceAll(LINE_BREAK_TAGS, '\n'))
+    .filter(({ isTag }) => !isTag)
+    .map(({ value }) => value)
+    .join('')
     .replaceAll('&nbsp;', ' ')
     .replaceAll('&#64;', '@')
     .replaceAll('&#39;', "'")

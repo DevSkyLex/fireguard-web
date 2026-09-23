@@ -51,7 +51,7 @@ export function resolveOrganizationInvitationStatusTag(
 ): OrganizationInvitationStatusTagDescriptor {
   return (
     STATUS[value as OrganizationInvitationStatus] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideTag',
     }

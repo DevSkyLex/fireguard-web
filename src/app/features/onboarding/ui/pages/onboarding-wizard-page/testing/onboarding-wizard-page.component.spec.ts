@@ -184,8 +184,44 @@ describe('OnboardingWizardPage', () => {
     await fixture.whenStable();
   });
 
-  it('should bootstrap the onboarding record on construction', () => {
-    expect(storeMock.initialize).toHaveBeenCalled();
+  it('loads the onboarding record once on initialization', () => {
+    expect(storeMock.initialize).toHaveBeenCalledOnce();
+  });
+
+  it('shows the server block reason and permits rollback only while the server offers it', async () => {
+    storeMock.nextStep.set(null);
+    storeMock.isBlocked.set(true);
+    storeMock.blockedReason.set('The current organization could not be created.');
+    storeMock.canRollback.set(true);
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const blocked = root.querySelector('[data-testid="onboarding-wizard-blocked"]');
+    expect(blocked?.textContent).toContain('The current organization could not be created.');
+    const rollback = Array.from(blocked?.querySelectorAll('button') ?? []).find((button) =>
+      button.textContent?.includes('Go back a step'),
+    );
+    rollback?.click();
+    expect(storeMock.rollback).toHaveBeenCalledOnce();
+
+    storeMock.canRollback.set(false);
+    storeMock.blockedReason.set(null);
+    await fixture.whenStable();
+    expect(
+      root.querySelector('[data-testid="onboarding-wizard-blocked"]')?.textContent,
+    ).not.toContain('The current organization could not be created.');
+    expect(root.textContent).not.toContain('Go back a step');
+  });
+
+  it('waits for the server to identify an actionable step before showing a form', async () => {
+    storeMock.nextStep.set(null);
+    storeMock.steps.set([]);
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="onboarding-wizard-loading"]')).not.toBeNull();
+    expect(root.querySelector('app-onboarding-organization-form')).toBeNull();
+    expect(root.querySelector('[data-testid="onboarding-wizard-step-rail"]')).toBeNull();
   });
 
   it('scopes address searches to the current creation and clears short or orphaned queries', () => {
@@ -293,6 +329,27 @@ describe('OnboardingWizardPage', () => {
     catalog.complete();
   });
 
+  it('allows a paid Checkout retry only after the previous request has settled', () => {
+    const checkout = new Subject<{ organizationId: string; url: string }>();
+    storeMock.targetOrganizationId.set('org-1');
+    billingServiceMock.createCheckoutSession.mockReturnValue(checkout);
+    const selection = { planKey: 'pro', interval: 'month', pricingState: 'priced' } as const;
+
+    fixture.componentInstance['submitPlan'](selection);
+    fixture.componentInstance['submitPlan'](selection);
+    expect(billingServiceMock.createCheckoutSession).toHaveBeenCalledOnce();
+    expect(fixture.componentInstance['stepPending']()).toBe(true);
+
+    checkout.error(new Error('Checkout unavailable'));
+    expect(fixture.componentInstance['stepPending']()).toBe(false);
+    billingServiceMock.createCheckoutSession.mockReturnValue(
+      throwError(() => new Error('Offline')),
+    );
+    fixture.componentInstance['submitPlan'](selection);
+    expect(billingServiceMock.createCheckoutSession).toHaveBeenCalledTimes(2);
+    expect(storeMock.executeStep).not.toHaveBeenCalled();
+  });
+
   it('retries the failed lifecycle command and respects rollback permissions and busy state', () => {
     const failure = toStoreError(new Error('Offline'));
     storeMock.startCallState.set(errorCallState(failure));
@@ -311,6 +368,23 @@ describe('OnboardingWizardPage', () => {
     storeMock.isBusy.set(true);
     fixture.componentInstance['retryLifecycle']();
     expect(storeMock.load).toHaveBeenCalledOnce();
+  });
+
+  it('retries a failed skip only while the current step still permits it', () => {
+    const failure = toStoreError(new Error('Offline'));
+    storeMock.steps.set([
+      { ...stepOf('invite_members', 'pending'), skippable: true, skipAvailable: true },
+    ]);
+    storeMock.nextStep.set('invite_members');
+    storeMock.skipStepCallState.set(errorCallState(failure));
+    fixture.componentInstance['retryLifecycle']();
+    expect(storeMock.skipStep).toHaveBeenCalledExactlyOnceWith('invite_members');
+
+    storeMock.steps.set([
+      { ...stepOf('invite_members', 'pending'), skippable: true, skipAvailable: false },
+    ]);
+    fixture.componentInstance['retryLifecycle']();
+    expect(storeMock.skipStep).toHaveBeenCalledOnce();
   });
 
   it('opens workspace discovery without rolling back an existing creation', () => {
@@ -504,6 +578,22 @@ describe('OnboardingWizardPage', () => {
     ).toContain('Next: Choose a plan');
   });
 
+  it('names the next unfinished step after completed and skipped steps', async () => {
+    storeMock.steps.set([
+      stepOf('create_organization', 'pending'),
+      stepOf('select_plan', 'completed'),
+      stepOf('invite_members', 'skipped'),
+      stepOf('create_first_facility', 'pending'),
+    ]);
+    await fixture.whenStable();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="onboarding-wizard-next-step"]',
+      )?.textContent,
+    ).toContain('Next: First facility');
+  });
+
   it('should say when the active step is the last one', () => {
     expect(
       (fixture.nativeElement as HTMLElement).querySelector(
@@ -549,6 +639,29 @@ describe('OnboardingWizardPage', () => {
     await fixture.whenStable();
     expect(organizationSetupServiceMock.listFacilities).toHaveBeenCalledWith('org-1');
     expect(fixture.componentInstance['createdFacilities']()).toEqual(facilities);
+  });
+
+  it('waits for an organization before loading roles or persisted facilities', async () => {
+    storeMock.nextStep.set('invite_members');
+    storeMock.steps.set([stepOf('invite_members', 'pending')]);
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listRoles).not.toHaveBeenCalled();
+
+    storeMock.targetOrganizationId.set('org-1');
+    fixture.componentInstance['retryCatalog']();
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listRoles).toHaveBeenCalledExactlyOnceWith('org-1');
+
+    storeMock.targetOrganizationId.set(null);
+    storeMock.nextStep.set('create_first_equipment');
+    storeMock.steps.set([stepOf('create_first_equipment', 'pending')]);
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listFacilities).not.toHaveBeenCalled();
+
+    storeMock.targetOrganizationId.set('org-2');
+    fixture.componentInstance['retryCatalog']();
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listFacilities).toHaveBeenCalledExactlyOnceWith('org-2');
   });
 
   it('restores invitation roles and completed rows from persisted operations', () => {

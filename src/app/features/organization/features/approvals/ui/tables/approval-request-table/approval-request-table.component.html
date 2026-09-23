@@ -9,14 +9,14 @@
 >
   <ng-container surfaceHead>
     <tr hlmTableRow>
-      <th hlmTableHead i18n="@@approvals.table.colActionType">Action</th>
-      <th hlmTableHead i18n="@@approvals.table.colSubject">Subject</th>
-      <th hlmTableHead i18n="@@approvals.table.colRequester">Requested by</th>
-      <th hlmTableHead i18n="@@approvals.table.colRequested">Requested</th>
-      <th hlmTableHead i18n="@@approvals.table.colExpires">Expires</th>
-      <th hlmTableHead i18n="@@approvals.table.colStatus">Status</th>
+      <th hlmTableHead scope="col" i18n="@@approvals.table.colActionType">Action</th>
+      <th hlmTableHead scope="col" i18n="@@approvals.table.colSubject">Subject</th>
+      <th hlmTableHead scope="col" i18n="@@approvals.table.colRequester">Requested by</th>
+      <th hlmTableHead scope="col" i18n="@@approvals.table.colRequested">Requested</th>
+      <th hlmTableHead scope="col" i18n="@@approvals.table.colExpires">Expires</th>
+      <th hlmTableHead scope="col" i18n="@@approvals.table.colStatus">Status</th>
       @if (showActions()) {
-        <th hlmTableHead class="w-px">
+        <th hlmTableHead scope="col" class="w-px">
           <span class="sr-only" i18n="@@common.actions">Actions</span>
         </th>
       }

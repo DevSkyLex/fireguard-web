@@ -329,7 +329,7 @@ export function resolveInterventionTag(
 ): InterventionTagDescriptor {
   return (
     REGISTRY[kind][value] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideTag',
     }

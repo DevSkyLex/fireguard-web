@@ -38,7 +38,7 @@ const STATUS: Record<FacilityStatus, FacilityStatusTagDescriptor> = {
 export function resolveFacilityStatusTag(value: string): FacilityStatusTagDescriptor {
   return (
     STATUS[value as FacilityStatus] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideTag',
     }

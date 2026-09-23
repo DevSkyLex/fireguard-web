@@ -51,6 +51,55 @@ describe('InterventionLinkedResourcesStore', () => {
   });
 
   describe('ensureFacilitiesLoaded', () => {
+    it('reports an unavailable facility catalogue before its first offline read', () => {
+      store.setOnline(false);
+      store.ensureFacilitiesLoaded('A');
+
+      expect(store.facilitiesSource()).toBe('unavailable');
+      expect(store.facilities()).toEqual([]);
+      expect(store.facilitiesError()?.message).toContain('cannot be queried offline');
+      expect(facilityService.listByIntervention).not.toHaveBeenCalled();
+
+      store.setOnline(true);
+      store.refreshFacilities('A');
+      expect(store.facilitiesSource()).toBe('api');
+      expect(store.facilities()).toEqual([facility]);
+    });
+
+    it('cancels a pending facility read when connectivity drops and retries after reconnection', () => {
+      const pending = new Subject<{ member: FacilityOutput[]; totalItems: number }>();
+      facilityService.listByIntervention.mockReturnValueOnce(pending);
+      store.ensureFacilitiesLoaded('A');
+      expect(store.facilitiesLoading()).toBe(true);
+
+      store.setOnline(false);
+      expect(pending.observed).toBe(false);
+      expect(store.facilitiesSource()).toBe('unavailable');
+      expect(store.facilitiesError()?.message).toContain('cannot be queried offline');
+      pending.next({ member: [facility], totalItems: 1 });
+      expect(store.facilities()).toEqual([]);
+
+      store.setOnline(true);
+      store.ensureFacilitiesLoaded('A');
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(2);
+      expect(store.facilities()).toEqual([facility]);
+      expect(store.facilitiesSource()).toBe('api');
+    });
+
+    it('does not expose another intervention’s cached facilities after an offline route change', () => {
+      store.ensureFacilitiesLoaded('A');
+      expect(store.facilities()).toEqual([facility]);
+      store.setOnline(false);
+
+      store.ensureFacilitiesLoaded('B');
+
+      expect(store.loadedForInterventionId()).toBe('B');
+      expect(store.facilities()).toEqual([]);
+      expect(store.facilitiesSource()).toBe('unavailable');
+      expect(store.facilitiesError()?.message).toContain('cannot be queried offline');
+      expect(facilityService.listByIntervention).toHaveBeenCalledTimes(1);
+    });
+
     it('keeps memory provenance until a reconnect refresh succeeds', () => {
       store.ensureFacilitiesLoaded('A');
       store.setOnline(false);
@@ -435,6 +484,68 @@ describe('InterventionLinkedResourcesStore', () => {
   });
 
   describe('server queries', () => {
+    it('serializes equipment type and status independently', () => {
+      store.queryEquipment({
+        interventionId: 'int-1',
+        search: '',
+        type: null,
+        status: 'operational',
+      });
+      expect(equipmentService.listByIntervention).toHaveBeenLastCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        params: { status: 'operational' },
+      });
+
+      store.queryEquipment({
+        interventionId: 'int-1',
+        search: '',
+        type: 'hydrant',
+        status: null,
+      });
+      expect(equipmentService.listByIntervention).toHaveBeenLastCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        params: { type: 'hydrant' },
+      });
+      expect(store.equipmentQuery()).toEqual({
+        search: '',
+        type: 'hydrant',
+        status: null,
+      });
+    });
+
+    it('serializes inspection status and result independently', () => {
+      store.queryInspections({
+        interventionId: 'int-1',
+        search: '',
+        status: 'submitted',
+        result: null,
+      });
+      expect(inspectionService.listByIntervention).toHaveBeenLastCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        status: 'submitted',
+      });
+
+      store.queryInspections({
+        interventionId: 'int-1',
+        search: '',
+        status: null,
+        result: 'pass',
+      });
+      expect(inspectionService.listByIntervention).toHaveBeenLastCalledWith('int-1', {
+        page: 1,
+        itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+        result: 'pass',
+      });
+      expect(store.inspectionsQuery()).toEqual({
+        search: '',
+        status: null,
+        result: 'pass',
+      });
+    });
+
     it('debounces inspection searches, keeps server filters and avoids duplicate trimmed queries', async () => {
       vi.useFakeTimers();
       try {

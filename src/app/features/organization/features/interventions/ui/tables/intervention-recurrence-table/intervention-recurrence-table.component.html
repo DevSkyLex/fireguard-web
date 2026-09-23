@@ -11,14 +11,21 @@
 >
   <ng-container surfaceHead>
     <tr hlmTableRow>
-      <th hlmTableHead i18n="@@intervention.recurrences.nameLabel">Name</th>
-      <th hlmTableHead i18n="@@intervention.recurrences.templateLabel">Template</th>
-      <th hlmTableHead i18n="@@intervention.recurrences.cadenceColumn">Cadence</th>
-      <th hlmTableHead i18n="@@intervention.recurrences.nextOccurrenceColumn">Next occurrence</th>
-      <th hlmTableHead class="w-[90px] text-center" i18n="@@intervention.recurrences.activeColumn">
+      <th hlmTableHead scope="col" i18n="@@intervention.recurrences.nameLabel">Name</th>
+      <th hlmTableHead scope="col" i18n="@@intervention.recurrences.templateLabel">Template</th>
+      <th hlmTableHead scope="col" i18n="@@intervention.recurrences.cadenceColumn">Cadence</th>
+      <th hlmTableHead scope="col" i18n="@@intervention.recurrences.nextOccurrenceColumn">
+        Next occurrence
+      </th>
+      <th
+        hlmTableHead
+        scope="col"
+        class="w-[90px] text-center"
+        i18n="@@intervention.recurrences.activeColumn"
+      >
         Active
       </th>
-      <th hlmTableHead class="w-12">
+      <th hlmTableHead scope="col" class="w-12">
         <span class="sr-only" i18n="@@intervention.recurrences.columnActions">Actions</span>
       </th>
     </tr>

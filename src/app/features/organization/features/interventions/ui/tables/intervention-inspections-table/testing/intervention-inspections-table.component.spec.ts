@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import type { InterventionInspectionsTableQuery } from '@features/organization/features/interventions/models';
 import { InterventionInspectionsTable } from '../intervention-inspections-table.component';
 
 const inspection = (overrides: Partial<InspectionOutput> = {}): InspectionOutput =>
@@ -240,5 +241,122 @@ describe('InterventionInspectionsTable', () => {
 
     expect(button.disabled).toBe(true);
     expect(button.textContent).toContain('Loading…');
+  });
+
+  it('should combine status and result filters and retain the other criterion when one is removed', async () => {
+    const rows = (): NodeListOf<HTMLElement> =>
+      root().querySelectorAll('[data-testid="intervention-inspections-table-row"]');
+    const table = fixture.componentInstance as unknown as {
+      onStatusFilterChanged(value: string | null): void;
+      onResultFilterChanged(value: string | null): void;
+      onFieldRemoved(key: string): void;
+    };
+    fixture.componentRef.setInput('items', [
+      inspection({ id: 'passed-closed', status: 'closed', result: 'pass' }),
+      inspection({ id: 'failed-closed', status: 'closed', result: 'fail' }),
+      inspection({ id: 'failed-draft', status: 'draft', result: 'fail' }),
+    ]);
+    await fixture.whenStable();
+
+    table.onStatusFilterChanged('closed');
+    await fixture.whenStable();
+    expect(rows()).toHaveLength(2);
+
+    table.onResultFilterChanged('fail');
+    await fixture.whenStable();
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]?.textContent).toContain('Fail');
+
+    table.onFieldRemoved('status');
+    await fixture.whenStable();
+    expect(rows()).toHaveLength(2);
+    expect(fixture.componentInstance.query()).toEqual({
+      search: '',
+      status: null,
+      result: 'fail',
+    });
+  });
+
+  it('should ignore an unknown filter value and clear both selections together', async () => {
+    const table = fixture.componentInstance as unknown as {
+      onStatusFilterChanged(value: string | null): void;
+      onResultFilterChanged(value: string | null): void;
+      clearFilters(): void;
+    };
+    const emitted: InterventionInspectionsTableQuery[] = [];
+    fixture.componentInstance.queryChanged.subscribe((query) => emitted.push(query));
+
+    table.onStatusFilterChanged('invalid');
+    table.onResultFilterChanged('invalid');
+    expect(emitted).toEqual([
+      { search: '', status: null, result: null },
+      { search: '', status: null, result: null },
+    ]);
+
+    fixture.componentRef.setInput('query', { search: 'pump', status: 'closed', result: 'pass' });
+    await fixture.whenStable();
+    table.clearFilters();
+    expect(emitted.at(-1)).toEqual({ search: 'pump', status: null, result: null });
+  });
+
+  it('should preserve API rows while server filtering is active', async () => {
+    fixture.componentRef.setInput('items', [inspection({ id: 'inspection-1', result: 'pass' })]);
+    fixture.componentRef.setInput('query', { search: 'no match', status: 'draft', result: 'fail' });
+    fixture.componentRef.setInput('serverFiltering', true);
+    await fixture.whenStable();
+
+    expect(
+      root().querySelectorAll('[data-testid="intervention-inspections-table-row"]'),
+    ).toHaveLength(1);
+
+    fixture.componentRef.setInput('serverFiltering', false);
+    await fixture.whenStable();
+    expect(
+      root().querySelectorAll('[data-testid="intervention-inspections-table-row"]'),
+    ).toHaveLength(0);
+  });
+
+  it('should find inspections by inspector and notes across loaded rows', async () => {
+    fixture.componentRef.setInput('items', [
+      inspection({
+        id: 'inspection-1',
+        inspector: {
+          type: 'user',
+          id: 'user-1',
+          firstName: 'Jane',
+          lastName: 'Doe',
+          displayName: 'Jane Doe',
+          avatarUrl: null,
+          organizationName: null,
+        },
+      }),
+      inspection({ id: 'inspection-2', notes: 'Pump pressure too low' }),
+    ]);
+    fixture.componentRef.setInput('query', { search: 'jane', status: null, result: null });
+    await fixture.whenStable();
+    expect(
+      root().querySelectorAll('[data-testid="intervention-inspections-table-row"]'),
+    ).toHaveLength(1);
+    expect(root().textContent).toContain('Jane Doe');
+
+    fixture.componentRef.setInput('query', { search: 'pump pressure', status: null, result: null });
+    await fixture.whenStable();
+    expect(
+      root().querySelectorAll('[data-testid="intervention-inspections-table-row"]'),
+    ).toHaveLength(1);
+    expect(root().textContent).not.toContain('Jane Doe');
+  });
+
+  it('should emit a retry when the error action is activated', async () => {
+    const retry = vi.fn();
+    fixture.componentInstance.retryRequested.subscribe(retry);
+    fixture.componentRef.setInput('error', 'Unable to load linked inspections');
+    await fixture.whenStable();
+
+    const button = byTestId('intervention-inspections-error')?.querySelector(
+      'button',
+    ) as HTMLButtonElement;
+    button.click();
+    expect(retry).toHaveBeenCalledOnce();
   });
 });

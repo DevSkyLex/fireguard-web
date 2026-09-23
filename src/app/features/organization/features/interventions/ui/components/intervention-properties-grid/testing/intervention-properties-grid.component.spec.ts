@@ -1,4 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
+import type { WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type {
@@ -51,9 +52,11 @@ const intervention: InterventionOutput = {
   updatedAt: '2026-01-05T09:00:00Z',
 };
 
+const MEMBER_IRI = '/api/organizations/org-1/members/member-1';
+
 const members: readonly MemberSelectOption[] = [
   {
-    value: '/api/organizations/org-1/members/member-1',
+    value: MEMBER_IRI,
     label: 'Jane Doe',
     displayName: 'Jane Doe',
     initials: 'JD',
@@ -305,6 +308,119 @@ describe('InterventionPropertiesGrid', () => {
         dueAt: new Date('2026-09-04T00:00:00.000Z'),
       },
     ]);
+  });
+
+  it('should ignore repeated single-value picks and emit only actual changes', () => {
+    const grid = fixture.componentInstance as unknown as {
+      pickPriority(priority: 'normal' | 'urgent'): void;
+      pickSite(site: string | null): void;
+      pickResponsible(responsible: string | null): void;
+    };
+
+    grid.pickPriority('normal');
+    grid.pickSite(null);
+    grid.pickResponsible(null);
+    expect(patches).toEqual([]);
+
+    grid.pickPriority('urgent');
+    grid.pickSite('/api/facilities/facility-2');
+    grid.pickResponsible(MEMBER_IRI);
+    expect(patches).toEqual([
+      { priority: 'urgent' },
+      { site: '/api/facilities/facility-2' },
+      { responsible: MEMBER_IRI },
+    ]);
+  });
+
+  it('should clear a stored site and responsible while ignoring their current values', async () => {
+    fixture.componentRef.setInput('intervention', {
+      ...intervention,
+      site: '/api/facilities/facility-1',
+      responsible: MEMBER_IRI,
+    });
+    await fixture.whenStable();
+    const grid = fixture.componentInstance as unknown as {
+      pickSite(site: string | null): void;
+      pickResponsible(responsible: string | null): void;
+    };
+
+    grid.pickSite('/api/facilities/facility-1');
+    grid.pickResponsible(MEMBER_IRI);
+    expect(patches).toEqual([]);
+
+    grid.pickSite(null);
+    grid.pickResponsible(null);
+    expect(patches).toEqual([{ site: null }, { responsible: null }]);
+  });
+
+  it('should ignore the stored schedule and clear both dates together', async () => {
+    fixture.componentRef.setInput('intervention', {
+      ...intervention,
+      plannedStartAt: '2026-09-02T00:00:00.000Z',
+      dueAt: '2026-09-04T00:00:00.000Z',
+    });
+    await fixture.whenStable();
+    const grid = fixture.componentInstance as unknown as {
+      pickSchedule(range: [Date, Date] | null): void;
+    };
+
+    grid.pickSchedule([new Date(2026, 8, 2), new Date(2026, 8, 4)]);
+    expect(patches).toEqual([]);
+
+    grid.pickSchedule(null);
+    expect(patches).toEqual([{ plannedStartAt: null, dueAt: null }]);
+  });
+
+  it('should preserve a participant draft through a refresh and reseed it on reopen', async () => {
+    const grid = fixture.componentInstance as unknown as {
+      participantsDraft: WritableSignal<string[]>;
+      saveParticipants(): void;
+    };
+    fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'participants' });
+    await fixture.whenStable();
+    expect(grid.participantsDraft()).toEqual([MEMBER_IRI]);
+
+    grid.participantsDraft.set(['/api/organizations/org-1/members/member-2']);
+    fixture.componentRef.setInput('intervention', {
+      ...intervention,
+      participants: [MEMBER_IRI, '/api/organizations/org-1/members/member-3'],
+    });
+    await fixture.whenStable();
+    grid.saveParticipants();
+    expect(patches).toEqual([{ participants: ['/api/organizations/org-1/members/member-2'] }]);
+
+    fixture.componentRef.setInput('editState', IDLE_EDIT_STATE);
+    await fixture.whenStable();
+    fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'participants' });
+    await fixture.whenStable();
+    expect(grid.participantsDraft()).toEqual([
+      MEMBER_IRI,
+      '/api/organizations/org-1/members/member-3',
+    ]);
+  });
+
+  it('should save the selected label set and reseed it after the editor closes', async () => {
+    const grid = fixture.componentInstance as unknown as {
+      labelsDraft: WritableSignal<string[]>;
+      saveLabels(): void;
+    };
+    fixture.componentRef.setInput('intervention', {
+      ...intervention,
+      labels: [{ id: 'safety', name: 'Safety', color: '#ff0000' }],
+    });
+    fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'labels' });
+    await fixture.whenStable();
+    expect(grid.labelsDraft()).toEqual(['safety']);
+
+    grid.labelsDraft.set(['urgent']);
+    grid.saveLabels();
+    expect(patches).toEqual([{ labelIds: ['urgent'] }]);
+
+    fixture.componentRef.setInput('editState', IDLE_EDIT_STATE);
+    await fixture.whenStable();
+    fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'labels' });
+    await fixture.whenStable();
+    expect(grid.labelsDraft()).toEqual(['safety']);
   });
 
   it('should render every row when the wire payload omits its null fields entirely', async () => {

@@ -8,6 +8,12 @@ import { HlmDateRangePicker } from '@shared/ui/date-picker';
 import { InterventionWorkItemForm } from '../intervention-work-item-form.component';
 import type { InterventionWorkItemFormValues } from '../models';
 
+class ResizeObserverStub {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+}
+
 describe('InterventionWorkItemForm', () => {
   let fixture: ComponentFixture<InterventionWorkItemForm>;
   let submissions: InterventionWorkItemFormValues[];
@@ -30,6 +36,10 @@ describe('InterventionWorkItemForm', () => {
     input.dispatchEvent(new Event('blur'));
     await fixture.whenStable();
   };
+
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+  });
   const submit = async (): Promise<void> => {
     form().dispatchEvent(new Event('submit', { cancelable: true }));
     await fixture.whenStable();
@@ -292,5 +302,119 @@ describe('InterventionWorkItemForm', () => {
       true,
     );
     expect(root().querySelector<HTMLButtonElement>('#work-item-period')?.disabled).toBe(true);
+  });
+
+  it('stages mobile dates until Apply and restores the committed range after cancelling a new pick', async () => {
+    mobile.set(true);
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    const start = new Date(2026, 8, 14);
+    const end = new Date(2026, 8, 18);
+
+    component['changeCalendarState']('open');
+    component['calendarStart'].set(start);
+    component['calendarEnd'].set(end);
+    expect(component['calendarRangeComplete']()).toBe(true);
+    expect(component['workStartsOn']()).toBe('');
+
+    component['applyCalendarRange']();
+    await fixture.whenStable();
+    expect(component['calendarState']()).toBe('closed');
+    expect(component['workStartsOn']()).toBe('2026-09-14');
+    expect(component['workEndsOn']()).toBe('2026-09-18');
+
+    component['changeCalendarState']('open');
+    expect(component['calendarStart']()).toEqual(start);
+    expect(component['calendarEnd']()).toEqual(end);
+    component['calendarStart'].set(new Date(2026, 8, 20));
+    component['calendarEnd'].set(new Date(2026, 8, 21));
+    component['changeCalendarState']('closed');
+    component['changeCalendarState']('open');
+    expect(component['calendarStart']()).toEqual(start);
+    expect(component['calendarEnd']()).toEqual(end);
+
+    await submit();
+    expect(submissions[0]).toMatchObject({
+      workStartsOn: '2026-09-14',
+      workEndsOn: '2026-09-18',
+    });
+  });
+
+  it('rejects incomplete, reversed and out-of-bounds mobile periods before committing', async () => {
+    mobile.set(true);
+    fixture.componentRef.setInput('workloadStartsOn', '2026-09-14');
+    fixture.componentRef.setInput('workloadEndsOn', '2026-09-20');
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    component['changeCalendarState']('open');
+
+    component['calendarStart'].set(new Date(2026, 8, 14));
+    expect(component['calendarRangeComplete']()).toBe(false);
+    component['applyCalendarRange']();
+    expect(component['workStartsOn']()).toBe('');
+
+    component['calendarEnd'].set(new Date(2026, 8, 13));
+    expect(component['calendarRangeComplete']()).toBe(false);
+    component['calendarEnd'].set(new Date(2026, 8, 21));
+    expect(component['calendarRangeComplete']()).toBe(false);
+    component['calendarStart'].set(new Date(2026, 8, 13));
+    component['calendarEnd'].set(new Date(2026, 8, 18));
+    expect(component['calendarRangeComplete']()).toBe(false);
+    component['applyCalendarRange']();
+    expect(component['calendarState']()).toBe('open');
+    expect(component['workStartsOn']()).toBe('');
+  });
+
+  it('cannot apply a staged mobile range while the form is pending or disabled', async () => {
+    mobile.set(true);
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    component['changeCalendarState']('open');
+    component['calendarStart'].set(new Date(2026, 8, 14));
+    component['calendarEnd'].set(new Date(2026, 8, 18));
+    expect(component['calendarRangeComplete']()).toBe(true);
+
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    component['applyCalendarRange']();
+    expect(component['workStartsOn']()).toBe('');
+
+    fixture.componentRef.setInput('pending', false);
+    fixture.componentRef.setInput('disabled', true);
+    await fixture.whenStable();
+    component['applyCalendarRange']();
+    expect(component['workStartsOn']()).toBe('');
+
+    fixture.componentRef.setInput('disabled', false);
+    await fixture.whenStable();
+    component['changeCalendarState']('open');
+    component['calendarStart'].set(new Date(2026, 8, 14));
+    component['calendarEnd'].set(new Date(2026, 8, 18));
+    expect(component['calendarRangeComplete']()).toBe(true);
+    component['applyCalendarRange']();
+    expect(component['workStartsOn']()).toBe('2026-09-14');
+  });
+
+  it('keeps unresolved option labels explicit while still naming known targets and members', async () => {
+    fixture.componentRef.setInput('targetOptions', [
+      { value: '/api/equipment/equipment-1', label: 'Extinguisher A-12' },
+    ]);
+    fixture.componentRef.setInput('memberOptions', [
+      { value: '/api/organization-members/member-1', displayName: 'Alex Martin' },
+    ]);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['targetLabelOf']('/api/equipment/equipment-1')).toBe(
+      'Extinguisher A-12',
+    );
+    expect(fixture.componentInstance['targetLabelOf']('/api/equipment/missing')).toBe(
+      'Unknown target',
+    );
+    expect(fixture.componentInstance['memberLabelOf']('/api/organization-members/member-1')).toBe(
+      'Alex Martin',
+    );
+    expect(fixture.componentInstance['memberLabelOf']('/api/organization-members/missing')).toBe(
+      'Unknown member',
+    );
   });
 });

@@ -45,7 +45,7 @@ const IMPORT_STATUS: Record<ImportJobStatus, ImportStatusTagDescriptor> = {
 export function resolveImportStatusTag(value: string): ImportStatusTagDescriptor {
   return (
     IMPORT_STATUS[value as ImportJobStatus] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideTag',
     }

@@ -94,7 +94,12 @@ describe('MessageThreadStore', () => {
   let realtime: Subject<unknown>;
   let topicStatus: WritableSignal<ReadonlyMap<string, MercureConnectionStatus>>;
 
-  function createStore(): MessageThreadStoreType {
+  function createStore(
+    identityProfile: WritableSignal<{ sub?: string; id?: string } | null> = signal<{
+      sub?: string;
+      id?: string;
+    } | null>({ sub: 'user-1' }),
+  ): MessageThreadStoreType {
     TestBed.configureTestingModule({
       providers: [
         MessageThreadStore,
@@ -111,7 +116,7 @@ describe('MessageThreadStore', () => {
         // "unknown member" fallback the API's name would otherwise fill in.
         {
           provide: USER_IDENTITY_PORT,
-          useValue: { displayName: signal('Amélie Rousseau'), profile: signal({ sub: 'user-1' }) },
+          useValue: { displayName: signal('Amélie Rousseau'), profile: identityProfile },
         },
       ],
     });
@@ -202,6 +207,67 @@ describe('MessageThreadStore', () => {
     resolve([{ id: 'op', payload: { clientId: 'late', input: { body: 'Do not show' } } }]);
     await Promise.resolve();
     expect(store.messageEntities()).toEqual([]);
+  });
+
+  it('keeps confirmed messages visible when durable draft restoration fails', async () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    outbox.listForConversation.mockRejectedValueOnce(new Error('Device storage unavailable'));
+    const store = createStore();
+
+    store.load('conversation-1');
+    await vi.waitFor(() => expect(store.outboxCallState().status).toBe('error'));
+
+    expect(store.messageEntities()).toEqual([message()]);
+    expect(store.listCallState().status).toBe('success');
+    expect(store.loadError()?.message).toContain('Device storage unavailable');
+    expect(store.pendingMessageIds()).toEqual([]);
+  });
+
+  it('does not read account-scoped drafts without an identified user', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    const store = createStore(signal<{ sub?: string; id?: string } | null>(null));
+
+    store.load('conversation-1');
+
+    expect(store.listCallState().status).toBe('success');
+    expect(store.messageEntities()).toEqual([message()]);
+    expect(outbox.listForConversation).not.toHaveBeenCalled();
+    expect(store.pendingMessageIds()).toEqual([]);
+  });
+
+  it('restores queued sends as pending when replay has not failed', async () => {
+    service.list.mockReturnValue(of(collection([])));
+    outbox.listForConversation.mockResolvedValueOnce([
+      {
+        id: 'operation-1',
+        conversationId: 'conversation-1',
+        status: 'pending',
+        createdAt: '2026-09-20T10:00:00Z',
+        payload: { clientId: 'queued-message', input: { body: 'Queued text' } },
+      },
+    ]);
+    const store = createStore();
+
+    store.load('conversation-1');
+    await vi.waitFor(() => expect(store.pendingMessageIds()).toEqual(['queued-message']));
+
+    expect(store.failedMessageIds()).toEqual([]);
+    expect(store.messageEntityMap()['queued-message']).toMatchObject({
+      body: 'Queued text',
+      createdAt: '2026-09-20T10:00:00Z',
+    });
+  });
+
+  it('reports an initial read failure without restoring local drafts first', () => {
+    service.list.mockReturnValueOnce(throwError(() => new Error('Server unavailable')));
+    const store = createStore();
+
+    store.load('conversation-1');
+
+    expect(store.listCallState().status).toBe('error');
+    expect(store.loadError()?.message).toContain('Server unavailable');
+    expect(store.messageEntities()).toEqual([]);
+    expect(outbox.listForConversation).not.toHaveBeenCalled();
   });
 
   it('should start empty', () => {
@@ -453,6 +519,20 @@ describe('MessageThreadStore', () => {
     });
   });
 
+  it('keeps the conversation usable when moving the read marker fails', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    conversations.markRead.mockReturnValueOnce(throwError(() => new Error('offline')));
+    const store = createStore();
+    store.load('conversation-1');
+
+    store.markRead({ conversationId: 'conversation-1' });
+    store.markRead({ conversationId: 'conversation-1', lastReadMessageId: 'message-1' });
+
+    expect(conversations.markRead).toHaveBeenCalledTimes(2);
+    expect(store.messageEntities()).toEqual([message()]);
+    expect(store.loadError()).toBeNull();
+  });
+
   it('should withdraw a reaction the reader is part of, and add one they are not', () => {
     service.list.mockReturnValue(
       of(collection([message({ reactions: [{ emoji: '👍', count: 2, reactedByMe: true }] })])),
@@ -551,6 +631,30 @@ describe('MessageThreadStore', () => {
       expect(store.postError()).toBeNull();
     });
 
+    it('ignores an old conversation’s duplicate confirmation after navigating away', () => {
+      const inFlight = new Subject<MessageOutput>();
+      service.list.mockReturnValue(of(collection([])));
+      service.postMessageWithClientId.mockReturnValueOnce(inFlight);
+      const store = createStore();
+      store.load('conversation-1');
+      store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      store.load('conversation-2');
+
+      inFlight.error({
+        '@id': '',
+        '@type': 'Error',
+        status: 409,
+        type: '/problems/client-resource-already-exists',
+        title: 'Conflict',
+        detail: 'A resource with this client identifier already exists.',
+      });
+
+      expect(store.conversationId()).toBe('conversation-2');
+      expect(store.postCallState().status).toBe('idle');
+      expect(store.failedMessageIds()).toEqual([]);
+      expect(outbox.queue).not.toHaveBeenCalled();
+    });
+
     it('should keep a failed message on screen and queue it durably', () => {
       service.list.mockReturnValue(of(collection([])));
       service.postMessageWithClientId.mockReturnValue(throwError(() => new Error('offline')));
@@ -568,6 +672,22 @@ describe('MessageThreadStore', () => {
         clientId,
         input: { body: 'Bien reçu.' },
       });
+    });
+
+    it('keeps the failed message in memory when durable queueing also fails', async () => {
+      service.list.mockReturnValue(of(collection([])));
+      service.postMessageWithClientId.mockReturnValue(throwError(() => new Error('offline')));
+      outbox.queue.mockRejectedValueOnce(new Error('Device storage full'));
+      const store = createStore();
+      store.load('conversation-1');
+
+      store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      await Promise.resolve();
+
+      expect(store.failedMessageIds()).toEqual([sentClientId()]);
+      expect(store.messageEntities()[0]?.body).toBe('Bien reçu.');
+      expect(store.postError()?.message).toBe('offline');
+      expect(outbox.queue).toHaveBeenCalledTimes(1);
     });
 
     it('should not cancel an in-flight send when another is started', () => {
@@ -813,6 +933,41 @@ describe('MessageThreadStore', () => {
       const row = store.messageEntityMap()['message-1'];
       expect(row?.pinnedAt).toBeUndefined();
       expect(row?.pinnedBy).toBeUndefined();
+    });
+
+    it('keeps the row unchanged when pin and bookmark writes are rejected', () => {
+      const original = message({
+        pinnedAt: '2026-01-02T00:00:00+00:00',
+        pinnedBy: '/api/x/members/member-2',
+        isSaved: true,
+      });
+      const store = loadedStore(original);
+      const refusal = throwError(() => new Error('Permission changed'));
+      service.pinMessage.mockReturnValue(refusal);
+      service.unpinMessage.mockReturnValue(refusal);
+      service.saveMessage.mockReturnValue(refusal);
+      service.unsaveMessage.mockReturnValue(refusal);
+
+      store.pin(original.id);
+      expect(store.interactionCallState().status).toBe('error');
+      store.unpin(original.id);
+      expect(store.interactionCallState().status).toBe('error');
+      store.save(original.id);
+      expect(store.interactionCallState().status).toBe('error');
+      store.unsave(original.id);
+      expect(store.interactionCallState().status).toBe('error');
+      expect(store.messageEntityMap()[original.id]).toEqual(original);
+    });
+
+    it('accepts a successful reaction removal after the message leaves the loaded window', () => {
+      const store = loadedStore();
+      service.removeReaction.mockReturnValue(of(undefined));
+      store.reset();
+
+      store.removeReaction({ messageId: 'message-1', emoji: '👍' });
+
+      expect(store.messageEntities()).toEqual([]);
+      expect(store.interactionCallState().status).toBe('success');
     });
 
     it('should take only isSaved from a save response, and clear it on unsave', () => {

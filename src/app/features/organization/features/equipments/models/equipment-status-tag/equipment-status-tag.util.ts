@@ -88,7 +88,7 @@ export function resolveEquipmentStatusTag(
 ): EquipmentStatusTagDescriptor {
   return (
     REGISTRY[kind][value] ?? {
-      label: value.replace(/_/g, ' '),
+      label: value.replaceAll('_', ' '),
       severity: 'neutral',
       icon: 'lucideTag',
     }

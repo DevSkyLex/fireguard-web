@@ -305,4 +305,117 @@ describe('OrganizationSettingsStore', () => {
     expect(dispatcher.dispatch).not.toHaveBeenCalled();
     expect(store.saveCallState().status).toBe('idle');
   });
+
+  it('rejects every stale organization command after switching workspaces', () => {
+    selectedOrganization.set({ ...updatedOrg, id: 'org-2' });
+    TestBed.tick();
+    const file = new File(['image'], 'logo.png', { type: 'image/png' });
+
+    store.save({ organizationId: 'org-1', input: { name: 'Stale' } });
+    store.uploadLogo({ organizationId: 'org-1', file, fileName: file.name });
+    store.removeLogo({ organizationId: 'org-1' });
+    store.transferOwnership({
+      organizationId: 'org-1',
+      newOwnerUserId: 'user-2',
+      slug: updatedOrg.slug,
+    });
+    store.suspend({ organizationId: 'org-1' });
+    store.restore({ organizationId: 'org-1' });
+    store.leave({ organizationId: 'org-1' });
+    store.deleteOrganization({ organizationId: 'org-1', slug: updatedOrg.slug });
+
+    expect(mockOrganizationService.update).not.toHaveBeenCalled();
+    expect(mockOrganizationService.uploadLogo).not.toHaveBeenCalled();
+    expect(mockOrganizationService.removeLogo).not.toHaveBeenCalled();
+    expect(mockOrganizationService.transferOwnership).not.toHaveBeenCalled();
+    expect(mockOrganizationService.suspend).not.toHaveBeenCalled();
+    expect(mockOrganizationService.restore).not.toHaveBeenCalled();
+    expect(mockMemberService.leave).not.toHaveBeenCalled();
+    expect(mockOrganizationService.remove).not.toHaveBeenCalled();
+  });
+
+  it('does not accept organization writes after the auth session ends', () => {
+    isAuthenticated.set(false);
+    TestBed.tick();
+    const file = new File(['image'], 'logo.png', { type: 'image/png' });
+
+    store.save({ organizationId: 'org-1', input: { name: 'Stale' } });
+    store.uploadLogo({ organizationId: 'org-1', file, fileName: file.name });
+    store.removeLogo({ organizationId: 'org-1' });
+    store.transferOwnership({
+      organizationId: 'org-1',
+      newOwnerUserId: 'user-2',
+      slug: updatedOrg.slug,
+    });
+    store.suspend({ organizationId: 'org-1' });
+    store.restore({ organizationId: 'org-1' });
+    store.leave({ organizationId: 'org-1' });
+    store.deleteOrganization({ organizationId: 'org-1', slug: updatedOrg.slug });
+
+    expect(mockOrganizationService.update).not.toHaveBeenCalled();
+    expect(mockOrganizationService.uploadLogo).not.toHaveBeenCalled();
+    expect(mockOrganizationService.removeLogo).not.toHaveBeenCalled();
+    expect(mockOrganizationService.transferOwnership).not.toHaveBeenCalled();
+    expect(mockOrganizationService.suspend).not.toHaveBeenCalled();
+    expect(mockOrganizationService.restore).not.toHaveBeenCalled();
+    expect(mockMemberService.leave).not.toHaveBeenCalled();
+    expect(mockOrganizationService.remove).not.toHaveBeenCalled();
+  });
+
+  it('keeps a failed logo upload visible and allows a new upload', async () => {
+    const file = new File(['image'], 'logo.png', { type: 'image/png' });
+    mockOrganizationService.uploadLogo.mockReturnValueOnce(
+      throwError(() => new Error('Upload failed')),
+    );
+
+    store.uploadLogo({ organizationId: 'org-1', file, fileName: file.name });
+    await flushEffects();
+    expect(store.uploadLogoError()).not.toBeNull();
+    expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+
+    store.uploadLogo({ organizationId: 'org-1', file, fileName: file.name });
+    await flushEffects();
+    expect(store.uploadLogoSucceeded()).toBe(true);
+    expect(mockActiveOrganizationStore.setOrganization).toHaveBeenCalledWith(updatedOrg);
+  });
+
+  it('keeps the current logo when removal fails and succeeds on retry', async () => {
+    mockOrganizationService.removeLogo.mockReturnValueOnce(throwError(() => new Error('Offline')));
+
+    store.removeLogo({ organizationId: 'org-1' });
+    await flushEffects();
+    expect(store.removeLogoError()).not.toBeNull();
+    expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+
+    store.removeLogo({ organizationId: 'org-1' });
+    await flushEffects();
+    expect(store.removeLogoCallState().status).toBe('success');
+    expect(mockActiveOrganizationStore.setOrganization).toHaveBeenCalledWith({
+      ...updatedOrg,
+      logoUrl: null,
+    });
+  });
+
+  it('retains status and delete errors without publishing a successful mutation', async () => {
+    mockOrganizationService.suspend.mockReturnValueOnce(
+      throwError(() => new Error('Suspend failed')),
+    );
+    mockOrganizationService.restore.mockReturnValueOnce(
+      throwError(() => new Error('Restore failed')),
+    );
+    mockOrganizationService.remove.mockReturnValueOnce(
+      throwError(() => new Error('Delete failed')),
+    );
+
+    store.suspend({ organizationId: 'org-1' });
+    await flushEffects();
+    expect(store.statusError()).not.toBeNull();
+    store.restore({ organizationId: 'org-1' });
+    await flushEffects();
+    expect(store.statusError()).not.toBeNull();
+    store.deleteOrganization({ organizationId: 'org-1', slug: updatedOrg.slug });
+    await flushEffects();
+    expect(store.deleteError()).not.toBeNull();
+    expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+  });
 });

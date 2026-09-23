@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -33,10 +34,13 @@ import {
   type OrganizationRoleOutput,
 } from '@features/organization/models';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { OrganizationMemberListPreferencesService } from '@features/organization/services';
 import { OrganizationQuotaStore } from '@features/organization/state';
 import { OrganizationAccessAdminStore } from '@features/organization/state/organization-access-admin';
 import { OrganizationMembersStore } from '@features/organization/state/organization-members';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
+import { OrganizationTeamPage } from '../../organization-team-page/organization-team-page.component';
+import { OrganizationTeamsPage } from '../../organization-teams-page/organization-teams-page.component';
 import { OrganizationMembersPage } from '../organization-members-page.component';
 
 /**
@@ -51,6 +55,26 @@ import { OrganizationMembersPage } from '../organization-members-page.component'
 class PageActionsHost {
   public readonly template: InputSignal<TemplateRef<unknown> | null> =
     input<TemplateRef<unknown> | null>(null);
+}
+
+@Component({
+  selector: 'app-organization-team-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: '',
+})
+class OrganizationTeamPageStub {
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+  public readonly active: InputSignal<boolean> = input.required<boolean>();
+}
+
+@Component({
+  selector: 'app-organization-teams-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: '',
+})
+class OrganizationTeamsPageStub {
+  public readonly organizationId: InputSignal<string> = input.required<string>();
+  public readonly active: InputSignal<boolean> = input.required<boolean>();
 }
 
 const renderPageActions = (): HTMLElement => {
@@ -143,6 +167,7 @@ describe('OrganizationMembersPage', () => {
   let reactivateMember: ReturnType<typeof vi.fn>;
   let resendInvitation: ReturnType<typeof vi.fn>;
   let revokeInvitation: ReturnType<typeof vi.fn>;
+  let writeSort: ReturnType<typeof vi.fn>;
 
   const byTestId = (id: string): HTMLElement | null =>
     (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
@@ -198,12 +223,20 @@ describe('OrganizationMembersPage', () => {
           provide: OrganizationQuotaStore,
           useValue: { items: signal([]), isLoadingQuota: signal(false) },
         },
+        {
+          provide: OrganizationMemberListPreferencesService,
+          useValue: { readSort: () => ({ field: 'joinedAt', direction: 'asc' }), write: writeSort },
+        },
       ],
     });
 
     TestBed.overrideComponent(OrganizationMembersPage, {
-      remove: { providers: [OrganizationMembersStore, OrganizationAccessAdminStore] },
+      remove: {
+        providers: [OrganizationMembersStore, OrganizationAccessAdminStore],
+        imports: [OrganizationTeamPage, OrganizationTeamsPage],
+      },
       add: {
+        imports: [OrganizationTeamPageStub, OrganizationTeamsPageStub],
         providers: [
           {
             provide: OrganizationAccessAdminStore,
@@ -303,6 +336,7 @@ describe('OrganizationMembersPage', () => {
     reactivateMember = vi.fn();
     resendInvitation = vi.fn();
     revokeInvitation = vi.fn();
+    writeSort = vi.fn();
   });
 
   afterEach(() => TestBed.resetTestingModule());
@@ -436,6 +470,32 @@ describe('OrganizationMembersPage', () => {
     });
   });
 
+  it('shows a permission message without a futile retry for a forbidden roster', async () => {
+    loadCallState.set(errorCallState({ ...toStoreError(new Error('Forbidden')), code: 403 }));
+    await createPage();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Not available with your permissions',
+    );
+    expect(byTestId('organization-members-retry')).toBeNull();
+  });
+
+  it('retries a transient load failure with the current organization and permissions', async () => {
+    loadCallState.set(errorCallState(toStoreError(new Error('Service unavailable'))));
+    await createPage();
+    load.mockClear();
+
+    byTestId('organization-members-retry')?.click();
+
+    expect(load).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      includeMembers: true,
+      includeInvitations: true,
+      includeRoles: true,
+      sort: { field: 'joinedAt', direction: 'asc' },
+    });
+  });
+
   it('should show Invite only to a member holding members.manage', async () => {
     await createPage();
     expect(
@@ -480,6 +540,22 @@ describe('OrganizationMembersPage', () => {
     expect(fixture.componentInstance['inviteServerError']()).not.toBeNull();
   });
 
+  it('clears a failed invite when the dialog is dismissed and reopened', async () => {
+    await createPage();
+    fixture.componentInstance['openInviteDialog']();
+    fixture.componentInstance['sendInvite']({ email: 'new@example.com', roleIds: [] });
+    mutationCallState.set(errorCallState(toStoreError(new Error('quota exceeded'))));
+    await fixture.whenStable();
+    expect(fixture.componentInstance['inviteServerError']()).not.toBeNull();
+
+    fixture.componentInstance['onInviteDialogVisibleChange'](false);
+    expect(fixture.componentInstance['inviteDialogVisible']()).toBe(false);
+    expect(fixture.componentInstance['inviteServerError']()).toBeNull();
+
+    fixture.componentInstance['openInviteDialog']();
+    expect(fixture.componentInstance['inviteServerError']()).toBeNull();
+  });
+
   it('should assign a role on an assigning toggle and remove it on a clearing toggle', async () => {
     await createPage();
     fixture.componentInstance['openRolesDialog'](member());
@@ -497,6 +573,19 @@ describe('OrganizationMembersPage', () => {
       memberId: 'member-1',
       roleId: 'role-1',
     });
+  });
+
+  it('ignores stale role toggles after its member dialog closes', async () => {
+    await createPage();
+    fixture.componentInstance['openRolesDialog'](member());
+    expect(fixture.componentInstance['rolesDialogMember']()?.id).toBe('member-1');
+
+    fixture.componentInstance['onRolesDialogVisibleChange'](false);
+    fixture.componentInstance['onRoleToggled']({ roleId: 'role-1', assign: true });
+
+    expect(fixture.componentInstance['rolesDialogMember']()).toBeNull();
+    expect(assignRole).not.toHaveBeenCalled();
+    expect(removeRoleFromMember).not.toHaveBeenCalled();
   });
 
   it('should remove a single member on confirm and keep the dialog open until the write settles', async () => {
@@ -556,6 +645,35 @@ describe('OrganizationMembersPage', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
+  });
+
+  it('keeps a selected roster for a cancelled bulk removal', async () => {
+    await createPage();
+    fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
+    fixture.componentInstance['requestBulkRemove']();
+    expect(fixture.componentInstance['removeDialogState']()).toBe('open');
+
+    fixture.componentInstance['onRemoveDialogVisibleChange'](true);
+    expect(fixture.componentInstance['removeDialogState']()).toBe('open');
+    fixture.componentInstance['onRemoveDialogVisibleChange'](false);
+    fixture.componentInstance['confirmRemove']();
+
+    expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
+    expect(fixture.componentInstance['selectedIds']()).toEqual(new Set(['member-1']));
+    expect(removeMembers).not.toHaveBeenCalled();
+  });
+
+  it('clears a mobile card selection when selection mode ends', async () => {
+    mobileInteractionMode.set(true);
+    await createPage();
+    fixture.componentInstance['toggleSelectionMode']();
+    fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
+    expect(fixture.componentInstance['selectionMode']()).toBe(true);
+
+    fixture.componentInstance['toggleSelectionMode']();
+
+    expect(fixture.componentInstance['selectionMode']()).toBe(false);
+    expect(fixture.componentInstance['selectedIds']().size).toBe(0);
   });
 
   it('should reactivate a member through the store, scoped to the routed organization', async () => {
@@ -651,6 +769,25 @@ describe('OrganizationMembersPage', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance['pendingRevoke']()).toBeNull();
+  });
+
+  it('keeps a failed invitation revoke open until dismissal and ignores an unscoped confirm', async () => {
+    await createPage();
+    fixture.componentInstance['confirmRevoke']();
+    expect(revokeInvitation).not.toHaveBeenCalled();
+
+    fixture.componentInstance['requestRevoke'](invitation());
+    fixture.componentInstance['confirmRevoke']();
+    mutationCallState.set(errorCallState(toStoreError(new Error('Cannot revoke'))));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['pendingRevoke']()?.id).toBe('invitation-1');
+    expect(fixture.componentInstance['revokeDialogError']()).not.toBeNull();
+    fixture.componentInstance['onRevokeDialogVisibleChange'](true);
+    expect(fixture.componentInstance['pendingRevoke']()?.id).toBe('invitation-1');
+    fixture.componentInstance['onRevokeDialogVisibleChange'](false);
+    expect(fixture.componentInstance['pendingRevoke']()).toBeNull();
+    expect(fixture.componentInstance['revokeDialogError']()).toBeNull();
   });
 
   it('should show a page-level action error for a non-invite mutation failure, hidden while the invite dialog is open', async () => {
@@ -753,6 +890,79 @@ describe('OrganizationMembersPage', () => {
     });
   });
 
+  it('sorts the roster from its column header and reverses the current sort on a second click', async () => {
+    await createPage();
+    fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
+
+    byTestId('organization-member-table-sort-member')?.click();
+    await fixture.whenStable();
+    expect(loadMembers).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        page: 1,
+        sort: { field: 'displayName', direction: 'asc' },
+      }),
+    );
+    expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+    expect(writeSort).toHaveBeenLastCalledWith({ field: 'displayName', direction: 'asc' });
+
+    byTestId('organization-member-table-sort-member')?.click();
+    await fixture.whenStable();
+    expect(loadMembers).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sort: { field: 'displayName', direction: 'desc' } }),
+    );
+    expect(writeSort).toHaveBeenLastCalledWith({ field: 'displayName', direction: 'desc' });
+    expect(
+      byTestId('organization-member-table-sort-member')?.closest('th')?.getAttribute('aria-sort'),
+    ).toBe('descending');
+  });
+
+  it('pages invitations independently of the member roster', async () => {
+    invitationsTotal.set(65);
+    await createPage();
+
+    byTestId('organization-invitations-page-next')?.click();
+    await fixture.whenStable();
+
+    expect(loadInvitations).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      page: 2,
+      pageSize: 30,
+    });
+    expect(fixture.componentInstance['invitationsPage']()).toBe(2);
+    expect(loadMembers).not.toHaveBeenCalled();
+  });
+
+  it('resets local filters and selections when the routed organization changes', async () => {
+    invitationsTotal.set(65);
+    await createPage();
+    fixture.componentInstance['onStatusFilterChanged']('inactive');
+    fixture.componentInstance['onRoleFilterChanged']('role-7');
+    fixture.componentInstance['setPageSize'](60);
+    fixture.componentInstance['goToInvitationsPage'](2);
+    fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
+    fixture.componentInstance['onSearchQueryChanged']('amelie');
+    load.mockClear();
+
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    await fixture.whenStable();
+
+    expect(load).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-2',
+      includeMembers: true,
+      includeInvitations: true,
+      includeRoles: true,
+      sort: { field: 'joinedAt', direction: 'asc' },
+      roleId: null,
+    });
+    expect(fixture.componentInstance['page']()).toBe(1);
+    expect(fixture.componentInstance['pageSize']()).toBe(30);
+    expect(fixture.componentInstance['invitationsPage']()).toBe(1);
+    expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+    expect(fixture.componentInstance['searchTerm']()).toBe('');
+    expect(fixture.componentInstance['statusFilter']()).toBe('all');
+    expect(fixture.componentInstance['roleFilter']()).toBeNull();
+  });
+
   it('re-queries the roster on a debounced search keystroke, resetting to page one', async () => {
     await createPage();
 
@@ -848,6 +1058,55 @@ describe('OrganizationMembersPage', () => {
       await createPage();
 
       expect(byTestId('organization-members-tab-roles')).not.toBeNull();
+    });
+
+    it('hides the members tab when the member can read roles only', async () => {
+      permissions.set([ORGANIZATION_PERMISSION.ROLES_READ]);
+      await createPage();
+
+      expect(fixture.componentInstance['activeTab']()).toBe('roles');
+      expect(byTestId('organization-members-tab-members')).toBeNull();
+      expect(byTestId('organization-members-tab-roles')).not.toBeNull();
+      navigate.mockClear();
+      fixture.componentInstance['onTabActivated']('members');
+      expect(fixture.componentInstance['activeTab']()).toBe('roles');
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('falls back to Teams when it is the only readable people section', async () => {
+      permissions.set([ORGANIZATION_PERMISSION.TEAMS_READ]);
+      tabParam = 'members';
+      await createPage();
+
+      expect(fixture.componentInstance['activeTab']()).toBe('teams');
+      expect(byTestId('organization-members-tab-members')).toBeNull();
+      expect(byTestId('organization-members-tab-teams')).not.toBeNull();
+      expect(load).toHaveBeenCalledWith(
+        expect.objectContaining({
+          includeMembers: false,
+          includeInvitations: false,
+          includeRoles: false,
+        }),
+      );
+    });
+
+    it('recomputes the visible section and allowed reads after permissions change', async () => {
+      await createPage();
+      load.mockClear();
+
+      permissions.set([ORGANIZATION_PERMISSION.ROLES_READ]);
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['activeTab']()).toBe('roles');
+      expect(byTestId('organization-members-tab-members')).toBeNull();
+      expect(load).toHaveBeenCalledExactlyOnceWith({
+        organizationId: 'org-1',
+        includeMembers: false,
+        includeInvitations: false,
+        includeRoles: true,
+        sort: { field: 'joinedAt', direction: 'asc' },
+        roleId: null,
+      });
     });
 
     it('should drop the ?tab= query parameter when switching back to the default members tab', async () => {

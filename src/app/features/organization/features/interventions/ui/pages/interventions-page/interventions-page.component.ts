@@ -2894,8 +2894,9 @@ export class InterventionsPage {
     if (current === null) return;
 
     const values: unknown[] = Array.isArray(current) ? [...current] : [current];
-    const carried: unknown =
-      operator === 'isAnyOf' ? values : values[1] ? null : (values[0] ?? null);
+    let carried: unknown = values[0] ?? null;
+    if (operator === 'isAnyOf') carried = values;
+    else if (values[1]) carried = null;
 
     this.applyFilter({ [key]: carried } as Partial<InterventionListFilters>);
   }

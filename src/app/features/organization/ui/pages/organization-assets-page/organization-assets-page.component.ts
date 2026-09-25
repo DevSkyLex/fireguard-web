@@ -778,8 +778,9 @@ export class OrganizationAssetsPage {
    * @returns {void}
    */
   protected onAxisActivated(tab: string): void {
-    const axis: OrganizationAssetsAxis =
-      tab === 'everything' ? 'everything' : tab === 'compliance' ? 'compliance' : 'site';
+    let axis: OrganizationAssetsAxis = 'site';
+    if (tab === 'everything') axis = 'everything';
+    else if (tab === 'compliance') axis = 'compliance';
     this.axis.set(axis);
     this.writeUrlState();
 

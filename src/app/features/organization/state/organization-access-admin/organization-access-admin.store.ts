@@ -99,14 +99,13 @@ export const OrganizationAccessAdminStore = signalStore(
        */
       const invalidatePolicyQuery = (): void => {
         const query = store.policyCallState();
+        let policyCallState = query;
+        if (query.status === 'pending') {
+          policyCallState = query.data === null ? idleCallState() : successCallState(query.data);
+        }
         patchState(store, {
           policyRevision: store.policyRevision() + 1,
-          policyCallState:
-            query.status === 'pending'
-              ? query.data === null
-                ? idleCallState()
-                : successCallState(query.data)
-              : query,
+          policyCallState,
         });
       };
 
@@ -119,14 +118,13 @@ export const OrganizationAccessAdminStore = signalStore(
        */
       const invalidateRequestsQuery = (): void => {
         const query = store.requestsCallState();
+        let requestsCallState = query;
+        if (query.status === 'pending') {
+          requestsCallState = query.data === null ? idleCallState() : successCallState(query.data);
+        }
         patchState(store, {
           requestsRevision: store.requestsRevision() + 1,
-          requestsCallState:
-            query.status === 'pending'
-              ? query.data === null
-                ? idleCallState()
-                : successCallState(query.data)
-              : query,
+          requestsCallState,
         });
       };
 

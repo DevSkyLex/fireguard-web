@@ -140,16 +140,18 @@ export const WorkloadStore = signalStore(
       pipe(
         concatMap((command) => {
           patchState(store, { capacityWriteCallState: pendingCallState() });
-          const request: Observable<unknown> =
-            command.kind === 'week'
-              ? service.saveWeek(command.organizationId, command.memberId, command.input)
-              : command.kind === 'exception'
-                ? service.addException(command.organizationId, command.memberId, command.input)
-                : service.cancelException(
-                    command.organizationId,
-                    command.memberId,
-                    command.exceptionId,
-                  );
+          let request: Observable<unknown>;
+          if (command.kind === 'week') {
+            request = service.saveWeek(command.organizationId, command.memberId, command.input);
+          } else if (command.kind === 'exception') {
+            request = service.addException(command.organizationId, command.memberId, command.input);
+          } else {
+            request = service.cancelException(
+              command.organizationId,
+              command.memberId,
+              command.exceptionId,
+            );
+          }
           return request.pipe(
             tapResponse({
               next: () => {

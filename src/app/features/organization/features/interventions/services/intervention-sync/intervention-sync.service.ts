@@ -681,23 +681,36 @@ export class InterventionSyncService {
   }
 
   /**
+   * Method createdResource
+   * @method createdResource
+   *
+   * @description
    * Resolves the canonical resource created by an outbox operation.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {InterventionOutboxOperation} operation - Outbox entry with a client identifier.
+   * @returns {string | null} Canonical resource path when the operation creates one.
    */
   private createdResource(operation: InterventionOutboxOperation): string | null {
     const clientId = operation.payload['clientId'];
     if (typeof clientId !== 'string') return null;
 
-    return operation.type === 'facility.create'
-      ? `/api/facilities/${clientId}`
-      : operation.type === 'equipment.create'
-        ? `/api/equipment/${clientId}`
-        : operation.type === 'inspection.create'
-          ? `/api/inspections/${clientId}`
-          : operation.type === 'work-item.create'
-            ? `/api/intervention-work-items/${clientId}`
-            : operation.type === 'change.create'
-              ? `/api/intervention-changes/${clientId}`
-              : null;
+    switch (operation.type) {
+      case 'facility.create':
+        return `/api/facilities/${clientId}`;
+      case 'equipment.create':
+        return `/api/equipment/${clientId}`;
+      case 'inspection.create':
+        return `/api/inspections/${clientId}`;
+      case 'work-item.create':
+        return `/api/intervention-work-items/${clientId}`;
+      case 'change.create':
+        return `/api/intervention-changes/${clientId}`;
+      default:
+        return null;
+    }
   }
 
   /**

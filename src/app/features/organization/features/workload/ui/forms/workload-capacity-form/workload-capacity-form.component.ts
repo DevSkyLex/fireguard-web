@@ -370,8 +370,9 @@ export class WorkloadCapacityForm {
   protected readonly weekdays: Signal<
     readonly { readonly index: number; readonly date: string }[]
   > = computed(() => {
-    const first =
-      this.firstDayOfWeek() === 'sunday' ? 6 : this.firstDayOfWeek() === 'saturday' ? 5 : 0;
+    let first = 0;
+    if (this.firstDayOfWeek() === 'sunday') first = 6;
+    else if (this.firstDayOfWeek() === 'saturday') first = 5;
     return Array.from({ length: 7 }, (_, offset) => {
       const index = (first + offset) % 7;
       return { index, date: `2024-01-0${index + 1}T00:00:00Z` };

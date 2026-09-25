@@ -17,8 +17,9 @@ export function organizationAccessErrorMessage(error: StoreError | null): string
     typeof raw === 'object' && raw !== null && 'error' in raw ? raw.error : null;
   const nestedCode: unknown =
     typeof nested === 'object' && nested !== null && 'code' in nested ? nested.code : null;
-  const code: unknown =
-    typeof direct === 'string' ? direct : typeof nestedCode === 'string' ? nestedCode : error.code;
+  let code: unknown = error.code;
+  if (typeof direct === 'string') code = direct;
+  else if (typeof nestedCode === 'string') code = nestedCode;
   const messages: Readonly<Record<string, string>> = {
     organization_join_domain_invalid: $localize`:@@org.access.error.domainInvalid:Enter a valid company domain, without a URL or email address.`,
     organization_join_domain_generic: $localize`:@@org.access.error.domainGeneric:Public or disposable email providers cannot be used for organization discovery.`,

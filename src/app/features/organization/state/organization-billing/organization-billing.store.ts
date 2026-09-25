@@ -178,19 +178,22 @@ export const OrganizationBillingStore = signalStore(
        */
       loadSubscription: rxMethod<string | null>(
         pipe(
-          tap((organizationId) =>
+          tap((organizationId) => {
+            let subscriptionCallState: OrganizationBillingState['subscriptionCallState'];
+            if (organizationId === null) {
+              subscriptionCallState = idleCallState();
+            } else {
+              const previous =
+                organizationId === store.currentOrganizationId()
+                  ? store.subscriptionCallState().data
+                  : undefined;
+              subscriptionCallState = pendingCallState(previous);
+            }
             patchState(store, {
               currentOrganizationId: organizationId,
-              subscriptionCallState:
-                organizationId === null
-                  ? idleCallState()
-                  : pendingCallState(
-                      organizationId === store.currentOrganizationId()
-                        ? store.subscriptionCallState().data
-                        : undefined,
-                    ),
-            }),
-          ),
+              subscriptionCallState,
+            });
+          }),
           switchMap((organizationId: string | null) =>
             organizationId === null
               ? EMPTY

@@ -2299,19 +2299,22 @@ export class InterventionDetailPage {
       if (!this.canPublish() || intervention.status !== 'submitted') return null;
 
       const blockers: number = this.store.blockerCount();
-      const ready: boolean = this.online() && blockers === 0;
+      const online: boolean = this.online();
+      const ready: boolean = online && blockers === 0;
+      let disabledReason: string | null = null;
+      if (!online) {
+        disabledReason = $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`;
+      } else if (blockers === 1) {
+        disabledReason = $localize`:@@intervention.cta.reasonBlockersOne:1 blocking issue to clear.`;
+      } else if (blockers > 1) {
+        disabledReason = $localize`:@@intervention.cta.reasonBlockersMany:${blockers}:count: blocking issues to clear.`;
+      }
 
       return {
         label: $localize`:@@intervention.cta.publish:Publish intervention`,
         icon: 'lucideCircleCheckBig',
         disabled: !ready,
-        disabledReason: ready
-          ? null
-          : !this.online()
-            ? $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`
-            : blockers === 1
-              ? $localize`:@@intervention.cta.reasonBlockersOne:1 blocking issue to clear.`
-              : $localize`:@@intervention.cta.reasonBlockersMany:${blockers}:count: blocking issues to clear.`,
+        disabledReason: ready ? null : disabledReason,
         loading: this.store.saving() || this.publishing(),
       };
     });

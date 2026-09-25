@@ -688,15 +688,19 @@ export class ChannelsPanel {
     const target = element?.closest('[data-channel-parent]');
     const parentId = target ? target.getAttribute('data-channel-parent') || null : undefined;
     this.dropParentId.set(parentId);
-    this.moveStatus.set(
-      parentId === undefined
-        ? ''
-        : this.canMoveTo(event.source.data, parentId)
-          ? parentId === null
-            ? $localize`:@@channels.panel.dropRoot:Drop here to move to the top level`
-            : $localize`:@@channels.panel.dropInside:Drop here to move inside this channel`
-          : $localize`:@@channels.panel.dropBlocked:This channel cannot be moved here`,
-    );
+    if (parentId === undefined) {
+      this.moveStatus.set('');
+    } else if (!this.canMoveTo(event.source.data, parentId)) {
+      this.moveStatus.set(
+        $localize`:@@channels.panel.dropBlocked:This channel cannot be moved here`,
+      );
+    } else if (parentId === null) {
+      this.moveStatus.set($localize`:@@channels.panel.dropRoot:Drop here to move to the top level`);
+    } else {
+      this.moveStatus.set(
+        $localize`:@@channels.panel.dropInside:Drop here to move inside this channel`,
+      );
+    }
   }
 
   /**

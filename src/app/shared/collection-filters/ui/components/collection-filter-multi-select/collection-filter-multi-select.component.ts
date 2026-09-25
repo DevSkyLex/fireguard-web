@@ -473,13 +473,11 @@ export class CollectionFilterMultiSelect {
    */
   protected onStagedChanged(value: string, checked: boolean): void {
     if (this.disabled() || !this.mobileDrawerVisible) return;
-    this.stagedSelection.update((selection: readonly string[]): readonly string[] =>
-      checked
-        ? selection.includes(value)
-          ? selection
-          : [...selection, value]
-        : selection.filter((entry: string): boolean => entry !== value),
-    );
+    this.stagedSelection.update((selection: readonly string[]): readonly string[] => {
+      if (!checked) return selection.filter((entry: string): boolean => entry !== value);
+      if (selection.includes(value)) return selection;
+      return [...selection, value];
+    });
   }
 
   /**

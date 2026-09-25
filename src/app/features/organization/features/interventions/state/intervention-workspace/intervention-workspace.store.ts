@@ -985,17 +985,18 @@ export const InterventionWorkspaceStore = signalStore(
                           },
                         });
                       const storeError = toStoreError(error);
+                      let message = $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`;
+                      if (storeError.code === 412) {
+                        message = $localize`:@@intervention.store.transitionStale:This intervention changed since it was loaded. Refresh and try again.`;
+                      } else if (storeError.code === 403) {
+                        message = $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`;
+                      } else if (storeError.code === 422) {
+                        message = $localize`:@@intervention.store.transitionInvalid:This status change is not allowed from the intervention's current status.`;
+                      }
                       patchState(store, {
                         transitionCallState: errorCallState({
                           ...storeError,
-                          message:
-                            storeError.code === 412
-                              ? $localize`:@@intervention.store.transitionStale:This intervention changed since it was loaded. Refresh and try again.`
-                              : storeError.code === 403
-                                ? $localize`:@@intervention.store.transitionForbidden:You do not have permission to change this intervention's status.`
-                                : storeError.code === 422
-                                  ? $localize`:@@intervention.store.transitionInvalid:This status change is not allowed from the intervention's current status.`
-                                  : $localize`:@@intervention.workspace.transitionFailed:The intervention status could not be updated.`,
+                          message,
                         }),
                       });
                       return EMPTY;
@@ -1181,12 +1182,12 @@ export const InterventionWorkspaceStore = signalStore(
                   error: (error: unknown): void => {
                     if (!current()) return;
                     const storeError: StoreError = toStoreError(error);
-                    const message: string =
-                      storeError.code === 422
-                        ? $localize`:@@intervention.team.assign.error.noActiveMembers:This team has no active members.`
-                        : storeError.code === 409
-                          ? $localize`:@@intervention.team.assign.error.conflict:This intervention can no longer be assigned a team; refreshing its current state.`
-                          : $localize`:@@intervention.team.assign.error.generic:The team could not be assigned.`;
+                    let message: string = $localize`:@@intervention.team.assign.error.generic:The team could not be assigned.`;
+                    if (storeError.code === 422) {
+                      message = $localize`:@@intervention.team.assign.error.noActiveMembers:This team has no active members.`;
+                    } else if (storeError.code === 409) {
+                      message = $localize`:@@intervention.team.assign.error.conflict:This intervention can no longer be assigned a team; refreshing its current state.`;
+                    }
                     patchState(store, {
                       assignTeamCallState: errorCallState({ ...storeError, message }),
                     });
@@ -1268,15 +1269,16 @@ export const InterventionWorkspaceStore = signalStore(
                   next: (updated) => {
                     if (!current()) return;
                     const parent = store.intervention();
-                    const intervention = parent
-                      ? input.status
-                        ? optimistic.updateWorkItem(parent, item, {
-                            workItemId: item.id,
-                            status: input.status,
-                            skipReason: input.skipReason ?? undefined,
-                          }).intervention
-                        : optimistic.touch(parent)
-                      : null;
+                    let intervention: InterventionOutput | null = null;
+                    if (parent && input.status) {
+                      intervention = optimistic.updateWorkItem(parent, item, {
+                        workItemId: item.id,
+                        status: input.status,
+                        skipReason: input.skipReason ?? undefined,
+                      }).intervention;
+                    } else if (parent) {
+                      intervention = optimistic.touch(parent);
+                    }
                     patchState(store, {
                       intervention,
                       workItems: replaceWorkItem(store.workItems(), item.id, updated),
@@ -1848,16 +1850,18 @@ export const InterventionWorkspaceStore = signalStore(
                 }),
                 catchError((error: unknown) => {
                   const storeError = toStoreError(error);
+                  let message = $localize`:@@intervention.workspace.deleteFailed:The intervention could not be deleted.`;
+                  if (storeError.code === 409) {
+                    message =
+                      storeError.message ??
+                      $localize`:@@intervention.store.deleteConflict:Only draft or abandoned interventions can be deleted.`;
+                  } else if (storeError.code === 403) {
+                    message = $localize`:@@intervention.store.deleteForbidden:You do not have permission to delete this intervention.`;
+                  }
                   patchState(store, {
                     deleteCallState: errorCallState({
                       ...storeError,
-                      message:
-                        storeError.code === 409
-                          ? (storeError.message ??
-                            $localize`:@@intervention.store.deleteConflict:Only draft or abandoned interventions can be deleted.`)
-                          : storeError.code === 403
-                            ? $localize`:@@intervention.store.deleteForbidden:You do not have permission to delete this intervention.`
-                            : $localize`:@@intervention.workspace.deleteFailed:The intervention could not be deleted.`,
+                      message,
                     }),
                   });
                   return EMPTY;

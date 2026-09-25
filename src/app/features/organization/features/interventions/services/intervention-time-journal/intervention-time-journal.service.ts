@@ -179,33 +179,37 @@ export class InterventionTimeJournalService {
           if (!owner || owner !== this.offline.publicationOwner())
             throw new Error('The active account changed.');
           const shared = { workItemId: scope.workItemId, actorId: scope.actorId };
-          const operation =
-            command.kind === 'cancel'
-              ? this.offline.queue(scope.interventionId, 'time-entry.cancel', {
-                  ...shared,
-                  id: command.id,
-                  revision: command.revision,
-                })
-              : command.kind === 'correct'
-                ? this.offline.queue(scope.interventionId, 'time-entry.correct', {
-                    ...shared,
-                    ...command.input,
-                    revision: command.revision,
-                  })
-                : this.offline.queue(scope.interventionId, 'time-entry.create', {
-                    ...shared,
-                    ...command.input,
-                    clientId: command.input.id,
-                  });
+          let operation: Promise<void>;
+          if (command.kind === 'cancel') {
+            operation = this.offline.queue(scope.interventionId, 'time-entry.cancel', {
+              ...shared,
+              id: command.id,
+              revision: command.revision,
+            });
+          } else if (command.kind === 'correct') {
+            operation = this.offline.queue(scope.interventionId, 'time-entry.correct', {
+              ...shared,
+              ...command.input,
+              revision: command.revision,
+            });
+          } else {
+            operation = this.offline.queue(scope.interventionId, 'time-entry.create', {
+              ...shared,
+              ...command.input,
+              clientId: command.input.id,
+            });
+          }
           return from(operation).pipe(map(() => 'queued' as const));
         });
       const remote = (): Observable<'remote'> => {
-        const request: Observable<unknown> =
-          command.kind === 'cancel'
-            ? this.api.cancelEntry(scope.workItemId, command.id, command.revision)
-            : command.kind === 'correct'
-              ? this.api.correctEntry(scope.workItemId, command.input, command.revision)
-              : this.api.createEntry(scope.workItemId, command.input);
+        let request: Observable<unknown>;
+        if (command.kind === 'cancel') {
+          request = this.api.cancelEntry(scope.workItemId, command.id, command.revision);
+        } else if (command.kind === 'correct') {
+          request = this.api.correctEntry(scope.workItemId, command.input, command.revision);
+        } else {
+          request = this.api.createEntry(scope.workItemId, command.input);
+        }
         return request.pipe(map(() => 'remote' as const));
       };
       return from(this.offline.listOutbox(scope.interventionId)).pipe(

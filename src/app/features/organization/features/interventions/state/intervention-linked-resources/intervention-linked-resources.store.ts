@@ -20,6 +20,7 @@ import type {
   InterventionFacilitiesTableQuery,
   InterventionEquipmentTableQuery,
   InterventionInspectionsTableQuery,
+  InterventionTableSource,
 } from '@features/organization/features/interventions/models';
 import { interventionLinkedResourcesStoreEvents } from './events';
 import type { InterventionLinkedResourcesState } from './models';
@@ -493,23 +494,24 @@ export const InterventionLinkedResourcesStore = signalStore(
           requestFacilities(null);
           requestEquipment(null);
           requestInspections(null);
+          let facilitiesSource: InterventionTableSource;
+          let equipmentSource: InterventionTableSource;
+          let inspectionsSource: InterventionTableSource;
+          if (online) {
+            facilitiesSource = store.facilitiesSource();
+            equipmentSource = store.equipmentSource();
+            inspectionsSource = store.inspectionsSource();
+          } else {
+            facilitiesSource = store.facilitiesCallState().data === null ? 'unavailable' : 'memory';
+            equipmentSource = store.equipmentCallState().data === null ? 'unavailable' : 'memory';
+            inspectionsSource =
+              store.inspectionsCallState().data === null ? 'unavailable' : 'memory';
+          }
           patchState(store, {
             online,
-            facilitiesSource: online
-              ? store.facilitiesSource()
-              : store.facilitiesCallState().data === null
-                ? 'unavailable'
-                : 'memory',
-            equipmentSource: online
-              ? store.equipmentSource()
-              : store.equipmentCallState().data === null
-                ? 'unavailable'
-                : 'memory',
-            inspectionsSource: online
-              ? store.inspectionsSource()
-              : store.inspectionsCallState().data === null
-                ? 'unavailable'
-                : 'memory',
+            facilitiesSource,
+            equipmentSource,
+            inspectionsSource,
             facilitiesGeneration: store.facilitiesGeneration() + 1,
             equipmentGeneration: store.equipmentGeneration() + 1,
             inspectionsGeneration: store.inspectionsGeneration() + 1,

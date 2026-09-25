@@ -110,14 +110,18 @@ export const InterventionPlanningOptionsStore = signalStore(
           ...Object.values(store.catalogues()).map((value) => value.callState),
           labelsStatus,
         ];
+        let loadCallState: InterventionPlanningOptionsState['loadCallState'];
+        if (states.some((state) => state.status === 'pending')) {
+          loadCallState = pendingCallState();
+        } else if (states.every((state) => state.status === 'error')) {
+          loadCallState = errorCallState(
+            states[0].error ?? toStoreError(new Error('Planning options unavailable')),
+          );
+        } else {
+          loadCallState = successCallState(null);
+        }
         patchState(store, {
-          loadCallState: states.some((state) => state.status === 'pending')
-            ? pendingCallState()
-            : states.every((state) => state.status === 'error')
-              ? errorCallState(
-                  states[0].error ?? toStoreError(new Error('Planning options unavailable')),
-                )
-              : successCallState(null),
+          loadCallState,
         });
       };
       const loadLabels = rxMethod<string>(

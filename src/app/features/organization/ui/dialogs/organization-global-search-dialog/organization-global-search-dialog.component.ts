@@ -344,18 +344,24 @@ export class OrganizationGlobalSearchDialog {
     )
       return;
     const base: readonly string[] = ['/organizations', this.organizationId];
-    const route: readonly string[] =
-      hit.type === 'equipment'
-        ? [...base, 'equipments', hit.id]
-        : hit.type === 'facility'
-          ? [...base, 'facilities', hit.id]
-          : hit.type === 'intervention'
-            ? [...base, 'interventions', hit.id]
-            : hit.type === 'inspection'
-              ? [...base, 'inspections', hit.id]
-              : hit.parentId
-                ? [...base, 'inspections', hit.parentId]
-                : [...base, 'inspections'];
+    let route: readonly string[];
+    switch (hit.type) {
+      case 'equipment':
+        route = [...base, 'equipments', hit.id];
+        break;
+      case 'facility':
+        route = [...base, 'facilities', hit.id];
+        break;
+      case 'intervention':
+        route = [...base, 'interventions', hit.id];
+        break;
+      case 'inspection':
+        route = [...base, 'inspections', hit.id];
+        break;
+      default:
+        route = [...base, 'inspections'];
+        if (hit.parentId) route = [...route, hit.parentId];
+    }
     this.dialogRef.close();
     void this.router.navigate([...route]);
   }

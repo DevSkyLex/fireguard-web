@@ -51,8 +51,7 @@ export function formatInterventionScheduleLabel(
   intervention: InterventionOutput | null,
   locale: string,
 ): string | null {
-  if (!intervention || intervention.plannedStartAt == null || intervention.dueAt == null)
-    return null;
+  if (intervention?.plannedStartAt == null || intervention.dueAt == null) return null;
 
   const formatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' });
 

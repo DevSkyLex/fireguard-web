@@ -180,7 +180,7 @@ export const ActiveInspectionStore = signalStore(
             const current: InspectionOutput | null = store.selectedInspection();
 
             patchState(store, {
-              selectedInspection: current && current.id === inspectionId ? current : null,
+              selectedInspection: current?.id === inspectionId ? current : null,
               getCallState: pendingCallState(),
             });
           }),

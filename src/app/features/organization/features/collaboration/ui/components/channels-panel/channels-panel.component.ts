@@ -602,8 +602,7 @@ export class ChannelsPanel {
     const all = this.channels.channelEntities();
     const source = this.channels.channelEntityMap()[channelId];
     if (
-      !source ||
-      source.organization.split('/').at(-1) !== this.organizationContext.selectedOrganizationId()
+      source?.organization.split('/').at(-1) !== this.organizationContext.selectedOrganizationId()
     )
       return false;
     if ((source.parent?.split('/').at(-1) ?? null) === parentId) return false;
@@ -612,8 +611,7 @@ export class ChannelsPanel {
     const visited = new Set<string>([channelId]);
     while (ancestorId !== null) {
       const ancestor = this.channels.channelEntityMap()[ancestorId];
-      if (!ancestor || ancestor.organization !== source.organization || visited.has(ancestorId))
-        return false;
+      if (ancestor?.organization !== source.organization || visited.has(ancestorId)) return false;
       visited.add(ancestorId);
       if (++depth > 2) return false;
       ancestorId = ancestor.parent?.split('/').at(-1) ?? null;

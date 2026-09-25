@@ -128,7 +128,7 @@ export const ActiveInterventionStore = signalStore(
             const current: InterventionOutput | null = store.selectedIntervention();
 
             patchState(store, {
-              selectedIntervention: current && current.id === interventionId ? current : null,
+              selectedIntervention: current?.id === interventionId ? current : null,
               getCallState: pendingCallState(),
             });
           }),

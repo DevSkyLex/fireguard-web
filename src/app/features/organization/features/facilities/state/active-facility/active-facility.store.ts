@@ -180,7 +180,7 @@ export const ActiveFacilityStore = signalStore(
             const current: FacilityOutput | null = store.selectedFacility();
 
             patchState(store, {
-              selectedFacility: current && current.id === facilityId ? current : null,
+              selectedFacility: current?.id === facilityId ? current : null,
               getCallState: pendingCallState(),
             });
           }),

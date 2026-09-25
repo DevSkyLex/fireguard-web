@@ -1709,15 +1709,20 @@ export class InterventionsPage {
       : null;
   });
 
-  /** The applied `dueRange`'s bound pair, only while its operator is `between`. */
+  /**
+   * Property dueRangeBetween
+   * @readonly
+   * @description The applied deadline bounds when the operator is `between`.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<[Date, Date] | undefined>}
+   */
   protected readonly dueRangeBetween: Signal<[Date, Date] | undefined> = computed<
     [Date, Date] | undefined
   >(() => {
     const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
 
-    return dueRange && dueRange.operator === 'between'
-      ? [dueRange.after, dueRange.before]
-      : undefined;
+    return dueRange?.operator === 'between' ? [dueRange.after, dueRange.before] : undefined;
   });
 
   /**
@@ -1762,7 +1767,12 @@ export class InterventionsPage {
   });
 
   /**
-   * * The applied `plannedStartRange`'s bound pair, only while its operator is `between`. See {@link dueRangeBetween}.
+   * Property plannedStartRangeBetween
+   * @readonly
+   * @description The applied planned-start bounds when the operator is `between`.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<[Date, Date] | undefined>}
    */
   protected readonly plannedStartRangeBetween: Signal<[Date, Date] | undefined> = computed<
     [Date, Date] | undefined
@@ -1770,7 +1780,7 @@ export class InterventionsPage {
     const plannedStartRange: InterventionPlannedStartRangeFilter | null =
       this.filters().plannedStartRange;
 
-    return plannedStartRange && plannedStartRange.operator === 'between'
+    return plannedStartRange?.operator === 'between'
       ? [plannedStartRange.after, plannedStartRange.before]
       : undefined;
   });

@@ -29,7 +29,7 @@ export const equipmentTitleResolver: ResolveFn<string> = (
   const equipment: EquipmentOutput | null = activeEquipmentStore.selectedEquipment();
   const equipmentId: string | null = route.paramMap.get('equipmentId');
 
-  return equipment && equipment.id === equipmentId
+  return equipment?.id === equipmentId
     ? buildEquipmentTitle(equipment)
     : $localize`:@@route.equipment.detail:Equipment`;
 };

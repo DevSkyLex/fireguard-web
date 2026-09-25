@@ -54,7 +54,7 @@ export const interventionTitleResolver: ResolveFn<string> = (
   if (!interventionId) return INTERVENTION_TITLE_FALLBACK;
 
   const current: InterventionOutput | null = activeInterventionStore.selectedIntervention();
-  if (current && current.id === interventionId) return current.name;
+  if (current?.id === interventionId) return current.name;
 
   activeInterventionStore.resolveIntervention(interventionId);
 

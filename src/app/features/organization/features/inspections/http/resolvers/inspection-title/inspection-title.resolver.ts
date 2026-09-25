@@ -29,7 +29,7 @@ export const inspectionTitleResolver: ResolveFn<string> = (
   const inspection: InspectionOutput | null = activeInspectionStore.selectedInspection();
   const inspectionId: string | null = route.paramMap.get('inspectionId');
 
-  return inspection && inspection.id === inspectionId
+  return inspection?.id === inspectionId
     ? $localize`:@@inspection.titleResolver:Inspection ${inspection.performedAt.slice(0, 10)}:date:`
     : $localize`:@@route.inspection.detail:Inspection`;
 };

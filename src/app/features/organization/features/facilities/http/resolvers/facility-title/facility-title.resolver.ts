@@ -27,7 +27,5 @@ export const facilityTitleResolver: ResolveFn<string> = (
   const facility: FacilityOutput | null = activeFacilityStore.selectedFacility();
   const facilityId: string | null = route.paramMap.get('facilityId');
 
-  return facility && facility.id === facilityId
-    ? facility.name
-    : $localize`:@@route.facility.detail:Facility`;
+  return facility?.id === facilityId ? facility.name : $localize`:@@route.facility.detail:Facility`;
 };

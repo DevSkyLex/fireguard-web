@@ -3667,8 +3667,8 @@ export class InterventionDetailPage {
     const preferred: HTMLElement | undefined = this.propertiesRailVisible() ? desktop : mobile;
     const fallback: HTMLElement | undefined = this.propertiesRailVisible() ? mobile : desktop;
 
-    const preferredHidden: boolean = preferred !== undefined && preferred.offsetParent === null;
-    const fallbackVisible: boolean = fallback !== undefined && fallback.offsetParent !== null;
+    const preferredHidden: boolean = preferred?.offsetParent === null;
+    const fallbackVisible: boolean = fallback?.offsetParent != null;
 
     this.scrollToAndFocus(preferredHidden && fallbackVisible ? fallback : (preferred ?? fallback));
   }

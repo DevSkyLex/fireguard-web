@@ -1612,7 +1612,7 @@ export const InterventionWorkspaceStore = signalStore(
             mergeMap(({ interventionId, changeId }) => {
               const current = (): boolean => store.intervention()?.id === interventionId;
               const change = store.changes().find((row) => row.id === changeId);
-              if (!change || change.status !== 'proposed') return EMPTY;
+              if (change?.status !== 'proposed') return EMPTY;
 
               patchState(store, {
                 rejectChangeCallState: pendingCallState(),
@@ -2135,8 +2135,7 @@ export const InterventionWorkspaceStore = signalStore(
     confirmPlanning(token: string): void {
       const pending = store.planningConfirmation();
       if (
-        !pending ||
-        pending.assessment.confirmationToken !== token ||
+        pending?.assessment.confirmationToken !== token ||
         pending.command.interventionId !== store.contextId()
       )
         return;

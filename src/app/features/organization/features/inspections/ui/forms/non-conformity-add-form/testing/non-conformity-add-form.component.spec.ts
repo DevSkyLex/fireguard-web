@@ -30,7 +30,7 @@ describe('NonConformityAddForm', () => {
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(0);
+    expect(submitted).toHaveLength(0);
     expect(fixture.nativeElement.textContent).toContain('Describe what was found.');
   });
 
@@ -45,7 +45,7 @@ describe('NonConformityAddForm', () => {
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(1);
+    expect(submitted).toHaveLength(1);
     expect(submitted[0].description).toBe('Pressure gauge out of range');
     expect(submitted[0].severity).toBe('high');
     expect(submitted[0].dueAt).toBeUndefined();
@@ -70,7 +70,7 @@ describe('NonConformityAddForm', () => {
 
     document.querySelector<HTMLButtonElement>('[data-testid="non-conformity-add-cancel"]')?.click();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
   });
 
   it('should disable the submit button while pending', async () => {

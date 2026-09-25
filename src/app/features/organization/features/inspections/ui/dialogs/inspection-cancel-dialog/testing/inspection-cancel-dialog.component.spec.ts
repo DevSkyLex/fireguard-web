@@ -21,7 +21,7 @@ describe('InspectionCancelDialog', () => {
 
     document.querySelector<HTMLButtonElement>('[data-testid="inspection-cancel-confirm"]')?.click();
 
-    expect(confirmed.length).toBe(1);
+    expect(confirmed).toHaveLength(1);
   });
 
   it('should not emit confirmed while a cancel write is already pending', () => {
@@ -34,7 +34,7 @@ describe('InspectionCancelDialog', () => {
 
     (fixture.componentInstance as unknown as { confirm(): void }).confirm();
 
-    expect(confirmed.length).toBe(0);
+    expect(confirmed).toHaveLength(0);
   });
 
   it('should emit visibleChange false on dismissal', () => {

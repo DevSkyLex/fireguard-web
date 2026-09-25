@@ -302,7 +302,7 @@ describe('OrganizationSwitcher', () => {
     );
 
     expect(panel).not.toBeNull();
-    expect(panel?.querySelectorAll('a[hlmDropdownMenuItem]').length).toBe(5);
+    expect(panel?.querySelectorAll('a[hlmDropdownMenuItem]')).toHaveLength(5);
   });
 
   it('offers searchable organization choices in a drawer only for mobile interaction mode', async () => {

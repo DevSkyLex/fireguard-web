@@ -106,7 +106,7 @@ describe('MyOrganizationsStore', () => {
     );
     store.loadOrganizations();
     await flushEffects();
-    expect(store.organizations().length).toBe(2);
+    expect(store.organizations()).toHaveLength(2);
 
     mockMemberService.leave.mockReturnValue(of(undefined));
     mockOrganizationService.list.mockReturnValue(

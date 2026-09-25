@@ -102,7 +102,7 @@ describe('ImportJobTable', () => {
     await fixture.whenStable();
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(root().querySelectorAll('[data-testid="import-job-table-row"]').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="import-job-table-row"]')).toHaveLength(0);
   });
 
   it('should keep the rows on screen while a later page loads', async () => {
@@ -112,8 +112,8 @@ describe('ImportJobTable', () => {
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
-    expect(root().querySelectorAll('[data-testid="import-job-table-row"]').length).toBe(1);
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="import-job-table-row"]')).toHaveLength(1);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should pair each result count with a glyph, never colour alone', async () => {
@@ -134,7 +134,7 @@ describe('ImportJobTable', () => {
 
     const cards = root().querySelectorAll('[data-testid="import-job-table-card"]');
 
-    expect(cards.length).toBe(1);
+    expect(cards).toHaveLength(1);
     expect(cards[0].textContent).toContain('equipment.csv');
     expect(cards[0].textContent).toContain('View report');
   });

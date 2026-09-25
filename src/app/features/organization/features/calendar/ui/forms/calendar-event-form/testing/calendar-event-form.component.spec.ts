@@ -61,7 +61,7 @@ describe('CalendarEventForm', () => {
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(0);
+    expect(submitted).toHaveLength(0);
     expect(fixture.nativeElement.textContent).toContain('A start date is required.');
   });
 
@@ -77,7 +77,7 @@ describe('CalendarEventForm', () => {
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(1);
+    expect(submitted).toHaveLength(1);
     expect(submitted[0].title).toBe('Fire drill');
     expect(submitted[0].description).toBeNull();
     expect(submitted[0].facilityId).toBeNull();
@@ -134,7 +134,7 @@ describe('CalendarEventForm', () => {
       .querySelector<HTMLButtonElement>('[data-testid="calendar-event-dialog-cancel"]')
       ?.click();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
   });
 
   it('should disable the footer controls while pending', async () => {

@@ -74,7 +74,7 @@ describe('DashboardGlobalNav', () => {
   });
 
   it('should say why an unavailable destination does nothing', () => {
-    expect(fixture.nativeElement.querySelectorAll('[data-slot="sidebar-menu-badge"]').length).toBe(
+    expect(fixture.nativeElement.querySelectorAll('[data-slot="sidebar-menu-badge"]')).toHaveLength(
       1,
     );
   });

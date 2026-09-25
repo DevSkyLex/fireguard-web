@@ -36,7 +36,7 @@ describe('OtpForm', () => {
   it('should render one slot per digit of the code', () => {
     const slots = fixture.nativeElement.querySelectorAll('hlm-input-otp-slot');
 
-    expect(slots.length).toBe(6);
+    expect(slots).toHaveLength(6);
   });
 
   it('restarts an unchanged resend delay for a replacement mailbox challenge', async () => {
@@ -133,7 +133,7 @@ describe('OtpForm', () => {
     // repeat, so the resend is opt-in rather than opt-out.
     const buttons = fixture.nativeElement.querySelectorAll('button');
 
-    expect(buttons.length).toBe(1);
+    expect(buttons).toHaveLength(1);
   });
 
   it('should render the server error message when verification failed', async () => {

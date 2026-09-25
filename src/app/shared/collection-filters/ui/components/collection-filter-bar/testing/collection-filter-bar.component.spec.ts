@@ -275,7 +275,7 @@ describe('CollectionFilterBar', () => {
 
   it('should render one chip per active key, projecting the matching template', () => {
     expect(byTestId('status-value')).not.toBeNull();
-    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(1);
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]')).toHaveLength(1);
   });
 
   it('should center the add-filter control between the empty-state decorations', async () => {
@@ -307,7 +307,7 @@ describe('CollectionFilterBar', () => {
     await openAddList();
 
     const options = document.querySelectorAll('[data-testid="widgets-filters-add-option"]');
-    expect(options.length).toBe(2);
+    expect(options).toHaveLength(2);
     expect(Array.from(options).map((el) => el.textContent?.trim())).toEqual(['Type', 'Priority']);
   });
 
@@ -361,7 +361,7 @@ describe('CollectionFilterBar', () => {
     fixture.componentInstance.pendingKey.set('priority');
     await fixture.whenStable();
 
-    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(2);
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]')).toHaveLength(2);
   });
 
   it('should keep a picked field’s chip once its value control closes with nothing chosen', async () => {
@@ -372,12 +372,12 @@ describe('CollectionFilterBar', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance.picked).toEqual(['type']);
-    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(2);
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]')).toHaveLength(2);
 
     fixture.componentInstance.pendingKey.set(null);
     await fixture.whenStable();
 
-    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(2);
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]')).toHaveLength(2);
   });
 
   it('should stop offering a picked field in the "+ Filter" list while its chip is on screen', async () => {
@@ -413,7 +413,7 @@ describe('CollectionFilterBar', () => {
     await fixture.whenStable();
 
     expect(fixture.componentInstance.removed).toEqual(['type']);
-    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(1);
+    expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]')).toHaveLength(1);
   });
 
   it('should emit fieldRemoved with the chip’s key when its remove button is activated', async () => {
@@ -557,7 +557,7 @@ describe('CollectionFilterBar', () => {
       const remaining = document.querySelectorAll<HTMLButtonElement>(
         '[data-testid="widgets-filter-chip-remove"]',
       );
-      expect(remaining.length).toBe(1);
+      expect(remaining).toHaveLength(1);
       expect(document.activeElement).toBe(remaining[0]);
     });
 
@@ -573,7 +573,7 @@ describe('CollectionFilterBar', () => {
       const remaining = document.querySelectorAll<HTMLButtonElement>(
         '[data-testid="widgets-filter-chip-remove"]',
       );
-      expect(remaining.length).toBe(1);
+      expect(remaining).toHaveLength(1);
       expect(document.activeElement).toBe(remaining[0]);
     });
 
@@ -583,7 +583,7 @@ describe('CollectionFilterBar', () => {
         ?.click();
       await fixture.whenStable();
 
-      expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(0);
+      expect(document.querySelectorAll('[data-testid="widgets-filter-chip"]')).toHaveLength(0);
       expect(document.activeElement).toBe(byTestId('widgets-filters-add'));
     });
 
@@ -691,7 +691,7 @@ describe('CollectionFilterBar', () => {
       await unavailableFixture.whenStable();
 
       expect(unavailableFixture.componentInstance.picked).toEqual([]);
-      expect(root.querySelectorAll('[data-testid="widgets-filter-chip"]').length).toBe(0);
+      expect(root.querySelectorAll('[data-testid="widgets-filter-chip"]')).toHaveLength(0);
     });
   });
 

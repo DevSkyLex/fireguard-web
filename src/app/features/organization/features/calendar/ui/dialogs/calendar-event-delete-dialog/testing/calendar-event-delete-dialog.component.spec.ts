@@ -23,7 +23,7 @@ describe('CalendarEventDeleteDialog', () => {
       .querySelector<HTMLButtonElement>('[data-testid="calendar-event-delete-confirm"]')
       ?.click();
 
-    expect(confirmed.length).toBe(1);
+    expect(confirmed).toHaveLength(1);
   });
 
   it('should not emit confirmed while a delete write is already pending', () => {
@@ -36,7 +36,7 @@ describe('CalendarEventDeleteDialog', () => {
 
     (fixture.componentInstance as unknown as { confirm(): void }).confirm();
 
-    expect(confirmed.length).toBe(0);
+    expect(confirmed).toHaveLength(0);
   });
 
   it('should render the last rejection inline', async () => {

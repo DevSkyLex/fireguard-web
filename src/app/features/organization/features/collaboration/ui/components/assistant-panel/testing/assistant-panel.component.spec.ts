@@ -143,7 +143,7 @@ describe('AssistantPanel', () => {
     (hook('assistant-suggestion') as HTMLButtonElement).click();
     await fixture.whenStable();
 
-    expect(asked.length).toBe(1);
+    expect(asked).toHaveLength(1);
   });
 
   it('should refuse to send an empty question', async () => {

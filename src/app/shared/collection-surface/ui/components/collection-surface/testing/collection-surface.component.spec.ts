@@ -62,7 +62,7 @@ describe('CollectionSurface', () => {
 
   it('renders the projected rows and no skeleton once data has loaded', () => {
     expect(byTestId('widget-row')).not.toBeNull();
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
     expect(root().querySelector('[role="status"]')).toBeNull();
   });
 
@@ -98,7 +98,7 @@ describe('CollectionSurface', () => {
     await fixture.whenStable();
 
     expect(byTestId('widget-row')).not.toBeNull();
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('announces refresh without replacing the rows or changing table structure', async () => {

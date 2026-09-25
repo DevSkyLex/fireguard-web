@@ -77,7 +77,7 @@ describe('RegisterVerifyPage', () => {
   it('should offer the resend control, since an emailed code can be sent again', () => {
     const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
 
-    expect(buttons.length).toBe(2);
+    expect(buttons).toHaveLength(2);
   });
   it('should return to the invitation after account verification', async () => {
     const route = TestBed.inject(ActivatedRoute);

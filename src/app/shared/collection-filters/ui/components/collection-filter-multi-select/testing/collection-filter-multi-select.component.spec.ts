@@ -225,7 +225,7 @@ describe('CollectionFilterMultiSelect', () => {
       );
       const description = document.getElementById(valueId);
       expect(trigger().contains(description)).toBe(true);
-      expect(description?.querySelectorAll('[data-testid="collection-filter-value"]').length).toBe(
+      expect(description?.querySelectorAll('[data-testid="collection-filter-value"]')).toHaveLength(
         2,
       );
       expect(description?.textContent).toContain('Planned');
@@ -243,7 +243,7 @@ describe('CollectionFilterMultiSelect', () => {
       await fixture.whenStable();
 
       expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
-      expect(document.querySelectorAll(`[id="${valueId}"]`).length).toBe(1);
+      expect(document.querySelectorAll(`[id="${valueId}"]`)).toHaveLength(1);
       expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Status');
     },
   );
@@ -269,7 +269,7 @@ describe('CollectionFilterMultiSelect', () => {
       '[data-testid="collection-filter-value"]',
     );
 
-    expect(chips.length).toBe(2);
+    expect(chips).toHaveLength(2);
     expect(chips[0].textContent).toContain('Planned');
     expect(chips[1].textContent).toContain('In progress');
   });
@@ -278,7 +278,7 @@ describe('CollectionFilterMultiSelect', () => {
     fixture.componentInstance.values.set(['planned', 'in_progress', 'submitted', 'published']);
     await fixture.whenStable();
 
-    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]').length).toBe(2);
+    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]')).toHaveLength(2);
     expect(trigger().textContent).toContain('+2');
   });
 
@@ -287,7 +287,7 @@ describe('CollectionFilterMultiSelect', () => {
     fixture.componentInstance.values.set(['planned', 'in_progress']);
     await fixture.whenStable();
 
-    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]').length).toBe(1);
+    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]')).toHaveLength(1);
     expect(trigger().textContent).toContain('+1');
   });
 

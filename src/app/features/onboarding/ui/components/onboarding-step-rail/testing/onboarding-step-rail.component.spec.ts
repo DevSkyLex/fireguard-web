@@ -46,7 +46,7 @@ describe('OnboardingStepRail', () => {
 
     const rows: NodeListOf<HTMLLIElement> = element.querySelectorAll('li');
 
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(element.textContent).toContain('Create organization');
     expect(element.textContent).toContain('Choose a plan');
   });

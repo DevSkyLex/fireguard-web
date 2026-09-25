@@ -75,7 +75,7 @@ describe('SessionService', () => {
 
       service.list().subscribe((collection) => {
         expect(collection.totalItems).toBe(2);
-        expect(collection.member.length).toBe(2);
+        expect(collection.member).toHaveLength(2);
         expect(collection.member[0].isCurrent).toBe(true);
         expect(collection.member[1].isCurrent).toBe(false);
       });
@@ -118,7 +118,7 @@ describe('SessionService', () => {
 
       service.list().subscribe((collection) => {
         expect(collection.totalItems).toBe(0);
-        expect(collection.member.length).toBe(0);
+        expect(collection.member).toHaveLength(0);
       });
 
       const req = httpMock.expectOne(baseUrl);

@@ -222,14 +222,14 @@ describe('CollectionFilterSelect', () => {
       await fixture.whenStable();
 
       expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
-      expect(document.querySelectorAll(`[id="${valueId}"]`).length).toBe(1);
+      expect(document.querySelectorAll(`[id="${valueId}"]`)).toHaveLength(1);
       expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Status');
     },
   );
 
   it('should read as the field label while no value is set', () => {
     expect(trigger().textContent).toContain('Status');
-    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]').length).toBe(0);
+    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]')).toHaveLength(0);
   });
 
   it('should render the value as the same single filled chip its multi-value sibling uses', async () => {
@@ -240,7 +240,7 @@ describe('CollectionFilterSelect', () => {
       '[data-testid="collection-filter-value"]',
     );
 
-    expect(chips.length).toBe(1);
+    expect(chips).toHaveLength(1);
     expect(chips[0].textContent).toContain('In progress');
   });
 

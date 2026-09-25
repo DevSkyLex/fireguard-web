@@ -68,7 +68,7 @@ describe('ChannelInfoSheet', () => {
     );
 
     // The second row's reader neither pinned it nor manages — no control.
-    expect(buttons?.length).toBe(1);
+    expect(buttons).toHaveLength(1);
 
     buttons?.[0]?.click();
     await fixture.whenStable();

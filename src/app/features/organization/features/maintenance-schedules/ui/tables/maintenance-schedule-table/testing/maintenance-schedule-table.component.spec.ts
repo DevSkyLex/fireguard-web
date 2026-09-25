@@ -66,7 +66,7 @@ describe('MaintenanceScheduleTable', () => {
       '[data-testid="maintenance-schedule-table-row"]',
     );
 
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Fire extinguisher');
     expect(rows[1].textContent).toContain('Smoke detector');
   });
@@ -203,7 +203,7 @@ describe('MaintenanceScheduleTable', () => {
     await render([], { loading: true });
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(root().querySelectorAll('[data-testid="maintenance-schedule-table-row"]').length).toBe(
+    expect(root().querySelectorAll('[data-testid="maintenance-schedule-table-row"]')).toHaveLength(
       0,
     );
   });
@@ -213,10 +213,10 @@ describe('MaintenanceScheduleTable', () => {
     // table to skeletons on page 2 loses the operator's place for nothing.
     await render([schedule()], { loading: true });
 
-    expect(root().querySelectorAll('[data-testid="maintenance-schedule-table-row"]').length).toBe(
+    expect(root().querySelectorAll('[data-testid="maintenance-schedule-table-row"]')).toHaveLength(
       1,
     );
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should mirror every row as a card, the equipment link first and the facility demoted', async () => {
@@ -229,7 +229,7 @@ describe('MaintenanceScheduleTable', () => {
     );
     const cardLinks: NodeListOf<HTMLAnchorElement> = cards[0].querySelectorAll('a');
 
-    expect(cards.length).toBe(1);
+    expect(cards).toHaveLength(1);
     expect(cardLinks[0].getAttribute('href')).toBe('/organizations/org-1/equipments/equipment-1');
     expect(cardLinks[1].getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
   });

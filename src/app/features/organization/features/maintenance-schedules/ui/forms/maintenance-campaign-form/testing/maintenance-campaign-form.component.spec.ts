@@ -29,7 +29,7 @@ describe('MaintenanceCampaignForm', () => {
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(0);
+    expect(submitted).toHaveLength(0);
     expect(fixture.nativeElement.textContent).toContain('Name is required.');
   });
 
@@ -44,7 +44,7 @@ describe('MaintenanceCampaignForm', () => {
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(1);
+    expect(submitted).toHaveLength(1);
     expect(submitted[0].name).toBe('Q1 round');
     expect(submitted[0].facility).toBeUndefined();
     expect(submitted[0].equipmentType).toBeUndefined();
@@ -73,7 +73,7 @@ describe('MaintenanceCampaignForm', () => {
       .querySelector<HTMLButtonElement>('[data-testid="maintenance-campaign-cancel"]')
       ?.click();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
   });
 
   it('should disable the footer controls while pending', async () => {

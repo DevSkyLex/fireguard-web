@@ -70,6 +70,12 @@ describe('InterventionCommentForm', () => {
     fixture.componentInstance.submitted.subscribe((value) => submissions.push(value));
   });
 
+  it('keeps the mention action in the bottom Spartan input-group slot', () => {
+    const addon = mentionTrigger().closest('hlm-input-group-addon');
+    expect(addon?.getAttribute('data-slot')).toBe('input-group-addon');
+    expect(addon?.getAttribute('data-align')).toBe('block-end');
+  });
+
   it('should refuse an empty comment', async () => {
     await submit();
 

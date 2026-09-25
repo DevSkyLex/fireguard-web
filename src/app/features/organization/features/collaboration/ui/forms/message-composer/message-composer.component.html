@@ -81,8 +81,7 @@
         (click)="onFieldChanged()"
       ></textarea>
 
-      <div
-        hlmInputGroupAddon
+      <hlm-input-group-addon
         align="block-end"
         class="justify-between border-t border-border/60 px-3 py-2"
       >
@@ -123,7 +122,7 @@
           }
           <span class="hidden mobile-ui:inline" i18n="@@messages.composer.send">Send message</span>
         </button>
-      </div>
+      </hlm-input-group-addon>
     </div>
 
     @if (composerForm.body().touched() && composerForm.body().invalid()) {

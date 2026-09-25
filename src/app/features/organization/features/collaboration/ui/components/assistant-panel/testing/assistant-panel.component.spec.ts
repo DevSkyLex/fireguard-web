@@ -99,6 +99,12 @@ describe('AssistantPanel', () => {
     await fixture.whenStable();
   });
 
+  it('keeps the send action in the bottom Spartan input-group slot', () => {
+    const addon = hook('assistant-send')?.closest('hlm-input-group-addon');
+    expect(addon?.getAttribute('data-slot')).toBe('input-group-addon');
+    expect(addon?.getAttribute('data-align')).toBe('block-end');
+  });
+
   it('should offer the opening prompts only while the thread is empty', async () => {
     expect(hook('assistant-intro')).not.toBeNull();
     expect(count('assistant-suggestion')).toBeGreaterThan(0);

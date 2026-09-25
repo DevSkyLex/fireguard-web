@@ -83,6 +83,24 @@ describe('FacilityPlanList', () => {
     expect(buttons[1].getAttribute('aria-current')).toBeNull();
   });
 
+  it('names the icon-only plan menu in both idle and pending states', async () => {
+    fixture.componentRef.setInput('plans', [plan({ id: 'plan-1' })]);
+    await fixture.whenStable();
+
+    const menu = root().querySelector<HTMLButtonElement>(
+      '[data-testid="facility-plan-menu-trigger"]',
+    );
+    expect(menu?.getAttribute('aria-label')).toBe('Plan actions');
+    expect(menu?.textContent?.trim()).toBe('');
+    expect(menu?.querySelector('ng-icon')?.getAttribute('aria-hidden')).toBe('true');
+
+    fixture.componentRef.setInput('settingPrimaryId', 'plan-1');
+    await fixture.whenStable();
+    expect(menu?.getAttribute('aria-label')).toBe('Plan actions');
+    expect(menu?.textContent?.trim()).toBe('');
+    expect(menu?.querySelector('hlm-spinner')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('emits filePicked for an accepted image MIME type', async () => {
     fixture.componentRef.setInput('plans', []);
     fixture.componentRef.setInput('canManage', true);

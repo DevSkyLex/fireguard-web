@@ -88,6 +88,39 @@ class ResizeObserverStub {
 }
 
 describe('CollectionFilterSelect', () => {
+  const mobileInteractionMode = signal(false);
+  let fixture: ComponentFixture<CollectionFilterSelectHost>;
+
+  const trigger = (): HTMLElement =>
+    (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="interventions-filter-status"]',
+    ) as HTMLElement;
+
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+    HTMLElement.prototype.scrollIntoView ??= (): void => {};
+  });
+
+  beforeEach(async () => {
+    mobileInteractionMode.set(false);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobileInteractionMode },
+        },
+      ],
+    });
+
+    fixture = TestBed.createComponent(CollectionFilterSelectHost);
+    await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it.each([
     { value: 42 },
     { value: false },
@@ -140,39 +173,6 @@ describe('CollectionFilterSelect', () => {
     ).toEqual([['First', 'Third'], ['Second']]);
     expect(options.map((option) => option.value)).toEqual(['first', 'second', 'third']);
     selectFixture.destroy();
-  });
-
-  const mobileInteractionMode = signal(false);
-  let fixture: ComponentFixture<CollectionFilterSelectHost>;
-
-  const trigger = (): HTMLElement =>
-    (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-testid="interventions-filter-status"]',
-    ) as HTMLElement;
-
-  beforeAll(() => {
-    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
-    HTMLElement.prototype.scrollIntoView ??= (): void => {};
-  });
-
-  beforeEach(async () => {
-    mobileInteractionMode.set(false);
-    TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        {
-          provide: INTERACTION_CAPABILITIES_PORT,
-          useValue: { isMobileInteractionMode: mobileInteractionMode },
-        },
-      ],
-    });
-
-    fixture = TestBed.createComponent(CollectionFilterSelectHost);
-    await fixture.whenStable();
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
   });
 
   /**

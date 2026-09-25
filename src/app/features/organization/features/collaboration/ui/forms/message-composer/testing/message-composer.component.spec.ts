@@ -75,6 +75,23 @@ describe('MessageComposer', () => {
     expect(sendButton()?.disabled).toBe(true);
   });
 
+  it('keeps the mobile send caption in its accessible name across idle and pending states', async () => {
+    mobile.set(true);
+    await fixture.whenStable();
+
+    const button = sendButton();
+    expect(button?.closest('hlm-input-group-addon')?.getAttribute('data-align')).toBe('block-end');
+    expect(button?.textContent?.trim()).toBe('Send message');
+    expect(button?.getAttribute('aria-label')).toBe('Send message');
+    expect(button?.querySelector('ng-icon')?.getAttribute('aria-hidden')).toBe('true');
+
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    expect(button?.textContent?.trim()).toBe('Send message');
+    expect(button?.getAttribute('aria-label')).toBe('Send message');
+    expect(button?.querySelector('hlm-spinner')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('should refuse to send whitespace', async () => {
     await type('   ');
 

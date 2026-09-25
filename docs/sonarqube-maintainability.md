@@ -36,11 +36,12 @@ Le relevé de `fireguard-web-develop` compte 114 issues `Web:S6819` ouvertes.
 Ce lot examine les rôles `status` et `group`, puis les 14 autres rôles dans le
 complément ci-dessous. Les lignes indiquées sont celles du scan Sonar et peuvent
 avoir légèrement bougé dans le code local.
-Sur les **100 issues actives** de ces deux rôles, 24 sont corrigées dans le code,
-75 sont proposées **False Positive** avec une preuve par emplacement et une est
-proposée **Accepted**. Après vérification individuelle, la clé
-`4c5eba5e-5bf2-474b-8821-6278ce76c0c3` a été classée **False Positive**
-dans Sonar ; les autres propositions restent en attente de triage individuel.
+Sur les **100 issues actives** de ces deux rôles, 24 sont corrigées dans le code.
+Les 75 autres faux positifs ont été classés individuellement **False Positive**
+dans Sonar avec commentaire propre à chaque clé et statut vérifié. La clé
+`986b486f-099b-4172-b09d-d94f485db75c` a été classée **Accepted** après
+vérification individuelle du risque décrit ci-dessous. Les 24 corrections de
+code attendent le scan du commit exact de `develop`.
 
 La distinction sémantique est celle du [standard HTML pour `output`](https://html.spec.whatwg.org/multipage/form-elements.html#the-output-element) :
 un résultat d'action ou de calcul, avec seulement du contenu phrastique. Un
@@ -90,7 +91,7 @@ raison du remplacement. Les tests ciblés vérifient les composants concernés.
 
 ### Faux positifs `status` examinés individuellement
 
-Les clés de ce tableau sont proposées **False Positive**. Le comportement
+Les clés de ce tableau sont classées **False Positive**. Le comportement
 énoncé correspond à la branche du template ; `<output>` y désignerait un
 résultat d'action ou de calcul inexistant, ou recevrait des éléments de bloc et
 des contrôles interdits par son modèle de contenu. Le rôle `status` annonce
@@ -187,7 +188,7 @@ vraie page par son rôle et son nom accessibles, puis y placent le focus.
 | `44f7dc6f-3cf7-4186-a3c0-e2336589aa32` | `facility-detail-page.component.html:1`      | Chromium trouve `group` nommé « Facility record » dans la fiche réelle, et cette racine reçoit le focus. Le test de fiche vérifie aussi que ce point reçoit le focus de secours quand le contrôle d'ouverture du détail de plan a disparu.                                                                                                             |
 | `486d7258-91ac-4e43-b065-37b2af451569` | `plan-viewer.component.html:47`              | Chromium trouve `group` nommé par le fichier du plan, avec `aria-roledescription="floor plan viewer"`. Le test place le focus sur le viewport : `+` modifie la transformation du plan et `0` la réinitialise ; les tests unitaires couvrent les flèches de panoramique. Un `<fieldset>` qualifierait faussement cette surface graphique de formulaire. |
 
-### Issue proposée **Accepted**
+### Issue classée **Accepted**
 
 | Clé Sonar                              | Emplacement `Web:S6819`                | Preuve et risque d'une correction automatique                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -227,3 +228,37 @@ autorise un `textbox` à contrôler une `listbox` avec
 | `5719374b-f1ce-4a0f-b6cd-4384625dce89` | `intervention-comment-form.component.html:31`, `option`  | Le `<button role="option" tabindex="-1">` est choisi via `aria-activedescendant` sans sortir du champ ; le test vérifie `aria-selected` et l'insertion au curseur. `role="option"` sur `button` est autorisé ; `<option>` ne rendrait pas l'avatar ni l'action actuelle. Vérifier son nom et son état dans l'arbre accessible.          |
 | `34b1d722-b3f2-44c4-a5b0-4330b7c830b4` | `facility-building-3d-scene.component.html:3`, `img`     | Le `<canvas>` est la surface WebGL interactive et porte le nom « 3D view of … — N floor(s) » ; le test vérifie `role="img"` et ce nom. Un `<img>` figerait le rendu et supprimerait rotation/sélection. W3C autorise ce rôle sur `<canvas>`. Vérifier l'image nommée dans le navigateur.                                                |
 | `8a1791d0-06be-43f4-9dba-de844c5e8ecd` | `intervention-signature-dialog.component.html:22`, `img` | Le `<canvas>` collecte les traits au pointeur puis exporte un PNG par `toBlob()` ; le test vérifie dessin, effacement, confirmation et option de passer la signature. Un `<img>` ne capterait pas les traits. W3C autorise ce rôle sur `<canvas>`. Vérifier « Signature drawing area » dans l'arbre accessible.                         |
+
+## Relevé `Web:S1827` et `Web:S7927` du même scan
+
+Les six alertes `Web:S1827` ont été examinées une par une. Les trois inputs
+`HlmMessage`/`HlmBubble` sont des **candidats False Positive** : la directive
+Spartan retire l'attribut HTML `align` du DOM hôte et émet `data-align` pour
+le placement. `HlmInputGroupAddon` ne retire pas cet attribut sur un `<div>` :
+les trois autres alertes sont de vrais défauts. Leurs hôtes deviennent donc
+`<hlm-input-group-addon>`, sélecteur déjà fourni par Spartan, en conservant
+l'input `align="block-end"` et la même variante de placement. Les trois
+candidates attendent la vérification du DOM rendu dans le navigateur Codex.
+
+| Clé Sonar                              | Emplacement `Web:S1827`                       | Décision                 | Preuve propre à l'occurrence                                                                                                                                                                            |
+| -------------------------------------- | --------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `eb56af03-9414-4658-a11c-e86191d673a8` | `assistant-panel.component.html:45`           | Candidate False Positive | `[align]` choisit `end` pour un message utilisateur, `start` pour l'assistant. `HlmMessage` consomme cet input, émet `data-align` pour inverser l'ordre du message et retire l'attribut HTML.           |
+| `daf9e22e-b77e-43c0-9fe3-5ea9ee57bc71` | `assistant-panel.component.html:48`           | Candidate False Positive | `align="end"` est l'input `HlmBubble.align` de la bulle utilisateur ; sa classe `data-[align=end]:self-end` la place à droite, et la directive retire l'attribut HTML obsolète.                         |
+| `f80e1faa-2bf5-4039-a24d-7ba2e1d0043a` | `assistant-panel.component.html:161`          | Corrigée                 | L'input `HlmInputGroupAddon.align` reste `block-end`, mais il est porté par l'élément Spartan `<hlm-input-group-addon>` plutôt que par un `<div>` avec attribut HTML obsolète.                          |
+| `800a5f40-02ab-4015-b0a8-4ae41d3ee4e3` | `message-row.component.html:3`                | Candidate False Positive | `[align]` dépend de `entry.isOwn` pour placer l'auteur ou le destinataire. `HlmMessage` génère `data-align` et annule l'attribut HTML ; l'input ne peut être retiré sans inverser les messages envoyés. |
+| `44123ca5-930c-4e9e-bcd3-c0ffcd26ae0b` | `message-composer.component.html:85`          | Corrigée                 | Le pied multiligne passe de `<div hlmInputGroupAddon>` à `<hlm-input-group-addon>`, avec `align="block-end"`, `order-last w-full`, compteur et bouton inchangés.                                        |
+| `367f1f36-6311-4cf0-8c1b-0434f7d62536` | `intervention-comment-form.component.html:82` | Corrigée                 | Même correction sur le pied du commentaire : l'input Spartan garde le bouton de mention sous le champ sans attribuer `align` à un `<div>` natif.                                                        |
+
+Les quatre alertes `Web:S7927` sont également des **candidates False Positive**.
+Le [critère WCAG 2.5.3](https://www.w3.org/WAI/WCAG21/Understanding/label-in-name)
+exige que le nom accessible contienne un éventuel libellé textuel visible.
+Les tests des composants vérifient les deux branches du bouton d'envoi et les
+deux branches du menu de plan. La revue navigateur doit confirmer la visibilité
+et le nom calculé en modes bureau/mobile avant tout classement Sonar.
+
+| Clé Sonar                              | Emplacement `Web:S7927`                | Preuve propre à l'occurrence                                                                                                                                                                   |
+| -------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0e33ba29-297e-45d1-9e14-9f28de45dde9` | `message-composer.component.html:108`  | À l'état normal, le texte affiché sur mobile est « Send message », exactement le `aria-label` du bouton ; l'icône est `aria-hidden`. Sur bureau, le bouton n'affiche que l'icône.              |
+| `9d8d982d-de11-4149-aa03-30bd16df38ef` | `message-composer.component.html:108`  | Pendant l'envoi, le spinner remplace l'icône et reste `aria-hidden` ; le texte mobile « Send message » et le `aria-label` restent identiques.                                                  |
+| `35eaaae7-9a2c-4972-91ab-27d4ad9288e5` | `facility-plan-list.component.html:88` | Le bouton de menu au repos est uniquement une icône `aria-hidden`, sans texte visible ; `aria-label="Plan actions"` lui donne un nom accessible. Le nom du plan est dans le bouton voisin.     |
+| `887a8b80-8df8-4730-ba35-a13ed6f16776` | `facility-plan-list.component.html:88` | Pendant l'écriture, un spinner `aria-hidden` remplace l'icône ; le bouton reste sans texte visible, nommé « Plan actions » ; les libellés View/Set as primary/Delete sont dans le menu séparé. |

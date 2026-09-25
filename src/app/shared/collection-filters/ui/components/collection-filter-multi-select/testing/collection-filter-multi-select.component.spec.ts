@@ -125,38 +125,6 @@ function action(label: string): HTMLButtonElement {
 }
 
 describe('CollectionFilterMultiSelect', () => {
-  it.each([
-    { value: 'planned' },
-    { value: 42 },
-    { value: { value: ['planned'] } },
-    { value: ['planned', 42] },
-    { value: ['planned', null] },
-  ])(
-    'should reject malformed combobox output $value without partially applying it',
-    ({ value }) => {
-      fixture.componentInstance.lastSelection = ['sentinel'];
-      fixture.debugElement
-        .query(By.css('hlm-combobox-multiple'))
-        .triggerEventHandler('valueChange', value);
-      expect(fixture.componentInstance.lastSelection).toEqual(['sentinel']);
-    },
-  );
-
-  it.each([null, undefined])('should normalize empty combobox output %s', (value) => {
-    fixture.componentInstance.lastSelection = ['sentinel'];
-    fixture.debugElement
-      .query(By.css('hlm-combobox-multiple'))
-      .triggerEventHandler('valueChange', value);
-    expect(fixture.componentInstance.lastSelection).toEqual([]);
-  });
-
-  it('should accept a readonly string selection from the combobox', () => {
-    fixture.debugElement
-      .query(By.css('hlm-combobox-multiple'))
-      .triggerEventHandler('valueChange', Object.freeze(['planned', 'published']));
-    expect(fixture.componentInstance.lastSelection).toEqual(['planned', 'published']);
-  });
-
   const mobileInteractionMode = signal(false);
   let fixture: ComponentFixture<CollectionFilterMultiSelectHost>;
 
@@ -188,6 +156,38 @@ describe('CollectionFilterMultiSelect', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it.each([
+    { value: 'planned' },
+    { value: 42 },
+    { value: { value: ['planned'] } },
+    { value: ['planned', 42] },
+    { value: ['planned', null] },
+  ])(
+    'should reject malformed combobox output $value without partially applying it',
+    ({ value }) => {
+      fixture.componentInstance.lastSelection = ['sentinel'];
+      fixture.debugElement
+        .query(By.css('hlm-combobox-multiple'))
+        .triggerEventHandler('valueChange', value);
+      expect(fixture.componentInstance.lastSelection).toEqual(['sentinel']);
+    },
+  );
+
+  it.each([null, undefined])('should normalize empty combobox output %s', (value) => {
+    fixture.componentInstance.lastSelection = ['sentinel'];
+    fixture.debugElement
+      .query(By.css('hlm-combobox-multiple'))
+      .triggerEventHandler('valueChange', value);
+    expect(fixture.componentInstance.lastSelection).toEqual([]);
+  });
+
+  it('should accept a readonly string selection from the combobox', () => {
+    fixture.debugElement
+      .query(By.css('hlm-combobox-multiple'))
+      .triggerEventHandler('valueChange', Object.freeze(['planned', 'published']));
+    expect(fixture.componentInstance.lastSelection).toEqual(['planned', 'published']);
   });
 
   /**

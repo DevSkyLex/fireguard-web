@@ -6,53 +6,6 @@ import type { AddTeamMemberInput, MemberSelectOption } from '@features/organizat
 import { OrganizationTeamMemberAddForm } from '../organization-team-member-add-form.component';
 
 describe('OrganizationTeamMemberAddForm', () => {
-  it.each([
-    { value: 42 },
-    { value: false },
-    { value: { value: 'member-1' } },
-    { value: ['member-1'] },
-    { value: 'missing-member' },
-  ])('should reject malformed or unavailable member output $value', async ({ value }) => {
-    fixture.debugElement.query(By.css('hlm-combobox')).triggerEventHandler('valueChange', value);
-    await fixture.whenStable();
-    expect(submitButton().disabled).toBe(true);
-    submitButton().click();
-    expect(submissions).toEqual([]);
-  });
-
-  it.each([null, undefined])('should clear a member pick for empty output %s', async (value) => {
-    const picker = fixture.debugElement.query(By.css('hlm-combobox'));
-    picker.triggerEventHandler('valueChange', 'member-1');
-    await fixture.whenStable();
-    expect(submitButton().disabled).toBe(false);
-    picker.triggerEventHandler('valueChange', value);
-    await fixture.whenStable();
-    expect(submitButton().disabled).toBe(true);
-  });
-
-  it('should read the native role value and submit a narrowed combobox member', async () => {
-    fixture.debugElement
-      .query(By.css('hlm-combobox'))
-      .triggerEventHandler('valueChange', 'member-1');
-    roleInput().value = '  lead  ';
-    roleInput().dispatchEvent(new Event('input', { bubbles: true }));
-    await fixture.whenStable();
-    submitButton().click();
-    expect(submissions).toEqual([{ memberId: 'member-1', role: 'lead' }]);
-  });
-
-  it('should ignore picker output while submission is pending', async () => {
-    fixture.componentRef.setInput('pending', true);
-    await fixture.whenStable();
-    fixture.debugElement
-      .query(By.css('hlm-combobox'))
-      .triggerEventHandler('valueChange', 'member-1');
-    fixture.componentRef.setInput('pending', false);
-    await fixture.whenStable();
-    expect(submitButton().disabled).toBe(true);
-    expect(submissions).toEqual([]);
-  });
-
   const mobileInteractionMode = signal(false);
   beforeAll(() => {
     HTMLElement.prototype.scrollIntoView ??= (): void => {};
@@ -98,6 +51,53 @@ describe('OrganizationTeamMemberAddForm', () => {
 
     submissions = [];
     fixture.componentInstance.submitted.subscribe((value) => submissions.push(value));
+  });
+
+  it.each([
+    { value: 42 },
+    { value: false },
+    { value: { value: 'member-1' } },
+    { value: ['member-1'] },
+    { value: 'missing-member' },
+  ])('should reject malformed or unavailable member output $value', async ({ value }) => {
+    fixture.debugElement.query(By.css('hlm-combobox')).triggerEventHandler('valueChange', value);
+    await fixture.whenStable();
+    expect(submitButton().disabled).toBe(true);
+    submitButton().click();
+    expect(submissions).toEqual([]);
+  });
+
+  it.each([null, undefined])('should clear a member pick for empty output %s', async (value) => {
+    const picker = fixture.debugElement.query(By.css('hlm-combobox'));
+    picker.triggerEventHandler('valueChange', 'member-1');
+    await fixture.whenStable();
+    expect(submitButton().disabled).toBe(false);
+    picker.triggerEventHandler('valueChange', value);
+    await fixture.whenStable();
+    expect(submitButton().disabled).toBe(true);
+  });
+
+  it('should read the native role value and submit a narrowed combobox member', async () => {
+    fixture.debugElement
+      .query(By.css('hlm-combobox'))
+      .triggerEventHandler('valueChange', 'member-1');
+    roleInput().value = '  lead  ';
+    roleInput().dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    submitButton().click();
+    expect(submissions).toEqual([{ memberId: 'member-1', role: 'lead' }]);
+  });
+
+  it('should ignore picker output while submission is pending', async () => {
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    fixture.debugElement
+      .query(By.css('hlm-combobox'))
+      .triggerEventHandler('valueChange', 'member-1');
+    fixture.componentRef.setInput('pending', false);
+    await fixture.whenStable();
+    expect(submitButton().disabled).toBe(true);
+    expect(submissions).toEqual([]);
   });
 
   it('selects from an inline mobile command list and submits the same member payload', async () => {

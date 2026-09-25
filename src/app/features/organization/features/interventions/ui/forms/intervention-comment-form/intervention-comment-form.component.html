@@ -78,7 +78,7 @@
           (click)="onFieldChanged()"
         ></textarea>
 
-        <div hlmInputGroupAddon align="block-end">
+        <hlm-input-group-addon align="block-end">
           <button
             hlmInputGroupButton
             size="icon-sm"
@@ -92,7 +92,7 @@
           >
             <ng-icon name="lucideAtSign" aria-hidden="true" />
           </button>
-        </div>
+        </hlm-input-group-addon>
       </div>
 
       @if (commentForm.body().touched() && commentForm.body().invalid()) {

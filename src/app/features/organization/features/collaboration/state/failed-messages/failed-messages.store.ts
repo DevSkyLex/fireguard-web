@@ -4,19 +4,7 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import { removeAllEntities, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import {
-  catchError,
-  defer,
-  EMPTY,
-  from,
-  map,
-  mergeMap,
-  of,
-  pipe,
-  switchMap,
-  throwError,
-  toArray,
-} from 'rxjs';
+import { catchError, defer, EMPTY, from, map, mergeMap, of, pipe, switchMap, toArray } from 'rxjs';
 import { isApiError } from '@core/api/utils';
 import {
   resetQuery,
@@ -84,15 +72,14 @@ export const FailedMessagesStore = signalStore(
                 return from(ids).pipe(
                   mergeMap(
                     (id) =>
-                      conversations
-                        .get(id)
-                        .pipe(
-                          catchError((error: unknown) =>
-                            isApiError(error) && (error.status === 403 || error.status === 404)
-                              ? of(null)
-                              : throwError(() => error),
-                          ),
-                        ),
+                      conversations.get(id).pipe(
+                        catchError((error: unknown) => {
+                          if (isApiError(error) && (error.status === 403 || error.status === 404)) {
+                            return of(null);
+                          }
+                          throw error;
+                        }),
+                      ),
                     4,
                   ),
                   toArray(),

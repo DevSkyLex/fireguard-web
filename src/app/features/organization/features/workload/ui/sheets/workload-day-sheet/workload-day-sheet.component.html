@@ -76,7 +76,7 @@
             </p>
           }
           @if ((selected.day.overloadMinutes ?? 0) > 0) {
-            <div hlmAlert variant="destructive" role="none">
+            <div hlmAlert variant="destructive" role="presentation">
               <output class="flex flex-col gap-0.5">
                 <span hlmAlertTitle i18n="@@workload.dayOverload">
                   Over capacity by {{ duration(selected.day.overloadMinutes) }}

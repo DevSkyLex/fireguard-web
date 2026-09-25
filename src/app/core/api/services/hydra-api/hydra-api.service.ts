@@ -549,6 +549,10 @@ export abstract class HydraApiService {
       typeof body === 'object' && body !== null && 'code' in body && typeof body.code === 'string'
         ? body.code
         : undefined;
+    const fallbackTitle =
+      error.status === 0
+        ? $localize`:@@api.error.networkTitle:Network error`
+        : $localize`:@@api.error.requestTitle:Request failed`;
     const title =
       typeof body === 'object' &&
       body !== null &&
@@ -556,9 +560,7 @@ export abstract class HydraApiService {
       typeof body.title === 'string' &&
       body.title.trim()
         ? body.title
-        : error.status === 0
-          ? $localize`:@@api.error.networkTitle:Network error`
-          : $localize`:@@api.error.requestTitle:Request failed`;
+        : fallbackTitle;
     const apiError: ApiError = {
       ...(code ? { code } : {}),
       '@id': '',

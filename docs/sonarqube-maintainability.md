@@ -4,6 +4,13 @@ Le scan du commit `a8dd6e05508e8d18654e42d0e636128ef5a245b0` (23 septembre 2026)
 déjà classés **False Positive** ne font pas partie de ce total. Chaque fusion
 requiert un nouveau relevé sur le commit exact de `develop`.
 
+Le scan du commit de fusion `3661dc77c5edeec6cfbacf0d04907f3f6ce34bd4`
+(25 septembre 2026) en compte **22**, avec une note Maintenability **A** et une
+couverture globale de **90,9 %**. Le Quality Gate échoue encore sur six issues
+du nouveau code, incluses dans ces 22 ou dans la fiabilité. Le lot suivant
+corrige les alertes de code et classe les faux positifs confirmés par l'examen
+du DOM rendu et du clavier.
+
 Chaque PR de correction cite les clés des issues et les tests du comportement.
 Les décisions ci-dessous concernent les alertes qui restent dans le code :
 
@@ -16,6 +23,24 @@ Une note A, le nombre d'alertes et le coût de correction ne motivent aucune
 résolution. Les décisions s'appliquent uniquement aux clés examinées dans
 `fireguard-web-develop` ; elles ne désactivent pas la règle et n'en modifient pas
 la sévérité.
+
+## Corrections préparées après le scan `3661dc77`
+
+| Clé Sonar | Règle et emplacement | Correction vérifiée |
+| --- | --- | --- |
+| `f795e4c0-b832-43d1-8d02-cd7be9dcb24f` | Rôle ARIA invalide, `message-composer.component.html:19` | Le conteneur de l'option conserve sa présentation neutre avec le synonyme ARIA valide `presentation`. |
+| `bee448a3-4f18-486b-af46-b0f2bed11941` | Rôle ARIA invalide, `workload-day-sheet.component.html:79` | Le conteneur Spartan est `presentation` ; son `<output>` reste l'unique statut annoncé. |
+| `ca048007-e261-412e-bc64-36f0ffdd4616` | Rôle ARIA invalide, `organization-invitation-accept-page.component.html:89` | Même présentation neutre autour du résultat « Opening your workspace ». |
+| `1c27d39a-3671-49c3-8453-22f23cacb8d3` | Rôle ARIA invalide, `organization-settings-page.component.html:244` | Même présentation neutre autour de la confirmation du plan. |
+| `32e0d0e1-25ca-4002-a8a1-f5c165ba1429` | `typescript:S3358`, `hydra-api.service.ts:559` | Le titre de secours est calculé séparément ; le contenu, le statut HTTP et les identifiants i18n restent identiques. |
+| `45170d25-26c0-40f3-b0d4-d96bee1a758a` | `typescript:S3776`, `organization.service.ts:74` | Les clés de filtre autorisées sont parcourues dans un ordre fixe, avec exclusion explicite de `granularity` hors du dashboard concerné. |
+| `4f6fa184-1e08-4f2f-ad2e-d916e1465e80` | `typescript:S3776`, `intervention-workspace-projection.utils.ts:30` | Le rejeu des créations et mises à jour de travail et de changements est extrait en helpers typés, en gardant l'ordre, l'idempotence et les compteurs. |
+
+Les tests ciblés, `npm run quality` et `npm run test:coverage` passent sur ce
+lot de code. Les 15 dernières alertes ont désormais des preuves Chromium
+décrites ci-dessous. Leurs 15 clés ont été classées individuellement
+**False Positive** dans Sonar `fireguard-web-develop`, avec un commentaire
+propre à chacune et un statut vérifié.
 
 ## Décisions justifiées
 
@@ -199,10 +224,9 @@ vraie page par son rôle et son nom accessibles, puis y placent le focus.
 ### Complément : 14 autres rôles du même relevé
 
 Les 14 autres clés `Web:S6819` du scan ont été examinées séparément. Six sont
-corrigées. Huit restent des **candidates** False Positive : les tests unitaires
-et la norme étayent la sémantique, mais le classement Sonar attend la
-vérification de l'arbre accessible et du clavier dans le navigateur Codex.
-Aucune des huit candidates de ce complément n'est encore résolue dans Sonar.
+corrigées. Les huit autres ont été classées individuellement **False Positive**
+dans Sonar après vérification de l'arbre accessible et du clavier dans
+Chromium, avec les preuves propres à chaque clé ci-dessous.
 
 Le [tableau ARIA in HTML du W3C](https://www.w3.org/TR/html-aria/#docconformance)
 autorise `role="img"` sur `<canvas>` et `role="option"` sur `<button>`, mais
@@ -220,47 +244,55 @@ autorise un `textbox` à contrôler une `listbox` avec
 | `2d4f7531-62d1-4832-8493-a5680cc78969` | `board.component.html:47`, `region`                       | Le scroller du tableau devient `<section>` avec le même id, nom accessible, `tabindex="0"`, écouteur de défilement et styles ; le test vérifie cette surface et les commandes de défilement existantes.                                       |
 | `16dfe350-c71f-49fd-b49a-de4924eefb35` | `collection-surface.component.html:26`, `region`          | Le conteneur de tableau devient `<section hlmTableContainer>` ; le sélecteur de la directive locale accepte aussi `section`, sans changer les usages `div`. Le test vérifie `data-slot`, `tabindex="0"` et le nom issu du `<caption>`.        |
 
-| Clé Sonar                              | Emplacement `Web:S6819`                                  | Preuve dans le code et tests ; vérification navigateur encore requise                                                                                                                                                                                                                                                                   |
-| -------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `39873692-4c6d-43c7-8d6f-7ec1b79103d6` | `message-composer.component.html:10`, `listbox`          | Le popup de mentions présente nom, avatar et rôles, puis insère le membre au curseur d'un `<textarea>` ; `<datalist>` ne prend pas en charge ce contenu ni ce champ. Les tests vérifient le filtrage, la sélection par flèches/Entrée et la fermeture par Escape. Vérifier son nom « Members you can mention » dans l'arbre accessible. |
-| `1d3e86b2-ba48-4fbe-9fef-5a4e8536fcd2` | `message-composer.component.html:19`, `option`           | La ligne est désormais `<li role="none"><button role="option" tabindex="-1">` : le rôle est autorisé sur `button`, qui garde le clic ; l'option est liée par `aria-activedescendant` au champ. `<option>` natif ne peut représenter avatar/rôles ni cette insertion au curseur. Vérifier le nom et l'état sélectionné.                  |
-| `dbaa7ed7-628f-455c-9f4f-2d9de7d0bad6` | `facility-plan-item-list.component.html:1`, `listbox`    | Le registre partagé des zones, pièces et équipements distingue le parcours fléché de la sélection par Entrée/Espace, et projette un décorateur de statut ; un `<select>` fusionnerait ces états et ne pourrait rendre les statuts. Les tests vérifient le nom, le focus mobile et l'activation sans sélection anticipée.                |
-| `d241e2c1-39e4-4270-b8fd-b6288e5ced4d` | `facility-plan-item-list.component.html:9`, `option`     | Chaque `<button role="option">` reçoit le focus réel via un `tabindex` mobile, porte `aria-selected` uniquement pour le choix confirmé et garde Entrée/Espace natifs. `role="option"` sur `button` est autorisé ; `<option>` ne peut contenir les statuts projetés. Vérifier le nom et les changements de focus/état.                   |
-| `98767979-35c0-47e2-9690-94ce19373950` | `intervention-comment-form.component.html:21`, `listbox` | Le popup affiche les membres pendant la saisie d'un commentaire multiligne ; le test vérifie flèches, Tab/Entrée et retour du focus au `<textarea>`. `<datalist>` n'est pas une alternative pour ce champ et ces lignes riches. Vérifier le nom « Members you can mention ».                                                            |
-| `5719374b-f1ce-4a0f-b6cd-4384625dce89` | `intervention-comment-form.component.html:31`, `option`  | Le `<button role="option" tabindex="-1">` est choisi via `aria-activedescendant` sans sortir du champ ; le test vérifie `aria-selected` et l'insertion au curseur. `role="option"` sur `button` est autorisé ; `<option>` ne rendrait pas l'avatar ni l'action actuelle. Vérifier son nom et son état dans l'arbre accessible.          |
-| `34b1d722-b3f2-44c4-a5b0-4330b7c830b4` | `facility-building-3d-scene.component.html:3`, `img`     | Le `<canvas>` est la surface WebGL interactive et porte le nom « 3D view of … — N floor(s) » ; le test vérifie `role="img"` et ce nom. Un `<img>` figerait le rendu et supprimerait rotation/sélection. W3C autorise ce rôle sur `<canvas>`. Vérifier l'image nommée dans le navigateur.                                                |
-| `8a1791d0-06be-43f4-9dba-de844c5e8ecd` | `intervention-signature-dialog.component.html:22`, `img` | Le `<canvas>` collecte les traits au pointeur puis exporte un PNG par `toBlob()` ; le test vérifie dessin, effacement, confirmation et option de passer la signature. Un `<img>` ne capterait pas les traits. W3C autorise ce rôle sur `<canvas>`. Vérifier « Signature drawing area » dans l'arbre accessible.                         |
+Les huit alertes suivantes ont été classées individuellement **False Positive**
+dans Sonar. Leurs rôles et noms sont vérifiés dans le DOM Chromium local, avec
+l'API mockée ; les scénarios cités exercent aussi
+la commande au clavier lorsque la surface est interactive.
+
+| Clé Sonar | Emplacement `Web:S6819` | Décision et preuve propre à l'occurrence |
+| --- | --- | --- |
+| `39873692-4c6d-43c7-8d6f-7ec1b79103d6` | `message-composer.component.html:10`, `listbox` | **False Positive**. Dans `messages-sidebar.spec.ts`, le popup est exposé comme liste nommée « Members you can mention » après la saisie de `@In` ; le focus reste dans le champ multiligne et Entrée insère la mention sans envoyer. `<datalist>` ne permet pas ces lignes riches ni cette édition dans un `<textarea>`. |
+| `48b6befa-8c61-47ac-a63c-b630f8be6db7` | `message-composer.component.html:19`, `option` | **False Positive** du scan `3661dc77` (elle remplace la clé fermée `1d3e86b2-ba48-4fbe-9fef-5a4e8536fcd2`). Dans `messages-sidebar.spec.ts`, le bouton est exposé comme option nommée « Ines Pector » avec `aria-selected="true"` ; son id correspond à `aria-activedescendant` du champ, et Entrée insère au curseur. L'option native ne peut représenter avatar et rôles dans ce popup de `<textarea>`. |
+| `dbaa7ed7-628f-455c-9f4f-2d9de7d0bad6` | `facility-plan-item-list.component.html:1`, `listbox` | **False Positive**. `facilities.spec.ts` retrouve les listes nommées « Zones on this plan » et « Equipment on this plan », avec options nommées. Leur parcours au clavier précède la sélection effective ; un `<select>` natif fusionnerait ces états et ne pourrait rendre les statuts projetés. |
+| `d241e2c1-39e4-4270-b8fd-b6288e5ced4d` | `facility-plan-item-list.component.html:9`, `option` | **False Positive**. Dans `facilities.spec.ts`, « Server Room » a `tabindex="0"`, Flèche bas déplace le focus sur « Storage » sans le sélectionner (`aria-selected="false"`), puis Espace le sélectionne et ouvre son détail. Le bouton `role="option"` garde ce focus réel et les statuts que `<option>` ne peut afficher. |
+| `98767979-35c0-47e2-9690-94ce19373950` | `intervention-comment-form.component.html:21`, `listbox` | **False Positive**. `intervention-discussion.spec.ts` trouve la liste nommée « Members you can mention » pendant `@In` dans le commentaire ; le focus reste dans le champ multiligne. La liste riche permet l'insertion de mention qu'un `<datalist>` ne fournit pas pour ce champ. |
+| `5719374b-f1ce-4a0f-b6cd-4384625dce89` | `intervention-comment-form.component.html:31`, `option` | **False Positive**. Dans `intervention-discussion.spec.ts`, l'option « Ines Pector » est nommée et sélectionnée ; son id est lié par `aria-activedescendant` au champ. Entrée insère `@Ines Pector `, referme la liste et laisse le focus dans le commentaire, sans publication. Une option native ne porte pas cette action ni l'avatar. |
+| `34b1d722-b3f2-44c4-a5b0-4330b7c830b4` | `facility-building-3d-scene.component.html:3`, `img` | **False Positive**. `facilities.spec.ts` retrouve l'image nommée « 3D view of North Building — 1 floor(s) » sur le `<canvas>` WebGL ; le sélecteur d'étage reçoit le focus, répond à Entrée et garde `aria-current="true"`. Un `<img>` ne fournirait pas le rendu 3D ; le rôle `img` est autorisé sur `<canvas>`. |
+| `8a1791d0-06be-43f4-9dba-de844c5e8ecd` | `intervention-signature-dialog.component.html:22`, `img` | **False Positive**. `intervention-plan-regressions.spec.ts` retrouve l'image nommée « Signature drawing area » sur le `<canvas>` ; un trait au pointeur active « Clear », actionné par Entrée, et « Skip signature » est accessible au clavier. L'alternative clavier permet de poursuivre sans dessiner ; `<img>` ne capterait aucun trait. |
 
 ## Relevé `Web:S1827` et `Web:S7927` du même scan
 
-Les six alertes `Web:S1827` ont été examinées une par une. Les trois inputs
-`HlmMessage`/`HlmBubble` sont des **candidats False Positive** : la directive
-Spartan retire l'attribut HTML `align` du DOM hôte et émet `data-align` pour
-le placement. `HlmInputGroupAddon` ne retire pas cet attribut sur un `<div>` :
+Les six alertes `Web:S1827` ont été examinées une par une. Les trois alertes
+sur les inputs `HlmMessage`/`HlmBubble` sont des **False Positive** confirmés :
+la directive Spartan retire l'attribut HTML `align` du DOM hôte et émet `data-align` pour
+le placement. Les scénarios Chromium
+`assistant-attempts.spec.ts`/`.mobile.spec.ts` et `messages-sidebar.spec.ts`
+vérifient ces attributs sur les éléments rendus. `HlmInputGroupAddon` ne retire
+pas cet attribut sur un `<div>` :
 les trois autres alertes sont de vrais défauts. Leurs hôtes deviennent donc
 `<hlm-input-group-addon>`, sélecteur déjà fourni par Spartan, en conservant
 l'input `align="block-end"` et la même variante de placement. Les trois
-candidates attendent la vérification du DOM rendu dans le navigateur Codex.
+alertes ont été classées individuellement **False Positive** dans Sonar.
 
 | Clé Sonar                              | Emplacement `Web:S1827`                       | Décision                 | Preuve propre à l'occurrence                                                                                                                                                                            |
 | -------------------------------------- | --------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `eb56af03-9414-4658-a11c-e86191d673a8` | `assistant-panel.component.html:45`           | Candidate False Positive | `[align]` choisit `end` pour un message utilisateur, `start` pour l'assistant. `HlmMessage` consomme cet input, émet `data-align` pour inverser l'ordre du message et retire l'attribut HTML.           |
-| `daf9e22e-b77e-43c0-9fe3-5ea9ee57bc71` | `assistant-panel.component.html:48`           | Candidate False Positive | `align="end"` est l'input `HlmBubble.align` de la bulle utilisateur ; sa classe `data-[align=end]:self-end` la place à droite, et la directive retire l'attribut HTML obsolète.                         |
+| `eb56af03-9414-4658-a11c-e86191d673a8` | `assistant-panel.component.html:45`           | **False Positive** | `[align]` choisit `end` pour le message utilisateur et `start` pour l'assistant. `verifyAssistantAttempts()` dans `assistant-attempts.spec.ts` et `.mobile.spec.ts` constate `data-align` avec ces valeurs et l'absence de l'attribut HTML `align` sur les deux messages rendus. |
+| `daf9e22e-b77e-43c0-9fe3-5ea9ee57bc71` | `assistant-panel.component.html:48`           | **False Positive** | `align="end"` est l'input `HlmBubble.align` de la bulle utilisateur. Les mêmes scénarios vérifient `data-align="end"` sur cette bulle et l'absence d'attribut HTML `align` ; la classe Spartan `data-[align=end]:self-end` la place à droite. |
 | `f80e1faa-2bf5-4039-a24d-7ba2e1d0043a` | `assistant-panel.component.html:161`          | Corrigée                 | L'input `HlmInputGroupAddon.align` reste `block-end`, mais il est porté par l'élément Spartan `<hlm-input-group-addon>` plutôt que par un `<div>` avec attribut HTML obsolète.                          |
-| `800a5f40-02ab-4015-b0a8-4ae41d3ee4e3` | `message-row.component.html:3`                | Candidate False Positive | `[align]` dépend de `entry.isOwn` pour placer l'auteur ou le destinataire. `HlmMessage` génère `data-align` et annule l'attribut HTML ; l'input ne peut être retiré sans inverser les messages envoyés. |
+| `800a5f40-02ab-4015-b0a8-4ae41d3ee4e3` | `message-row.component.html:3`                | **False Positive** | `[align]` dépend de `entry.isOwn`. `messages-sidebar.spec.ts` vérifie `data-align="end"` sur le message propre, `data-align="start"` sur l'autre et l'absence d'attribut HTML `align` sur les deux hôtes rendus. Retirer l'input inverserait leur placement. |
 | `44123ca5-930c-4e9e-bcd3-c0ffcd26ae0b` | `message-composer.component.html:85`          | Corrigée                 | Le pied multiligne passe de `<div hlmInputGroupAddon>` à `<hlm-input-group-addon>`, avec `align="block-end"`, `order-last w-full`, compteur et bouton inchangés.                                        |
 | `367f1f36-6311-4cf0-8c1b-0434f7d62536` | `intervention-comment-form.component.html:82` | Corrigée                 | Même correction sur le pied du commentaire : l'input Spartan garde le bouton de mention sous le champ sans attribuer `align` à un `<div>` natif.                                                        |
 
-Les quatre alertes `Web:S7927` sont également des **candidates False Positive**.
+Les quatre alertes `Web:S7927` ont également été classées individuellement
+**False Positive** dans Sonar.
 Le [critère WCAG 2.5.3](https://www.w3.org/WAI/WCAG21/Understanding/label-in-name)
 exige que le nom accessible contienne un éventuel libellé textuel visible.
-Les tests des composants vérifient les deux branches du bouton d'envoi et les
-deux branches du menu de plan. La revue navigateur doit confirmer la visibilité
-et le nom calculé en modes bureau/mobile avant tout classement Sonar.
+Les scénarios Chromium vérifient le nom calculé et la présence ou l'absence
+du texte visible dans les états normal et occupé.
 
 | Clé Sonar                              | Emplacement `Web:S7927`                | Preuve propre à l'occurrence                                                                                                                                                                   |
 | -------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `0e33ba29-297e-45d1-9e14-9f28de45dde9` | `message-composer.component.html:108`  | À l'état normal, le texte affiché sur mobile est « Send message », exactement le `aria-label` du bouton ; l'icône est `aria-hidden`. Sur bureau, le bouton n'affiche que l'icône.              |
-| `9d8d982d-de11-4149-aa03-30bd16df38ef` | `message-composer.component.html:108`  | Pendant l'envoi, le spinner remplace l'icône et reste `aria-hidden` ; le texte mobile « Send message » et le `aria-label` restent identiques.                                                  |
-| `35eaaae7-9a2c-4972-91ab-27d4ad9288e5` | `facility-plan-list.component.html:88` | Le bouton de menu au repos est uniquement une icône `aria-hidden`, sans texte visible ; `aria-label="Plan actions"` lui donne un nom accessible. Le nom du plan est dans le bouton voisin.     |
-| `887a8b80-8df8-4730-ba35-a13ed6f16776` | `facility-plan-list.component.html:88` | Pendant l'écriture, un spinner `aria-hidden` remplace l'icône ; le bouton reste sans texte visible, nommé « Plan actions » ; les libellés View/Set as primary/Delete sont dans le menu séparé. |
+| `0e33ba29-297e-45d1-9e14-9f28de45dde9` | `message-composer.component.html:108`  | **False Positive**. `messages-send-label.mobile.spec.ts` trouve un bouton nommé « Send message » dont le texte « Send message » est visible avant l'envoi. La capture `mobile-send-ready.png` conserve cet état ; sur bureau, seule l'icône masquée à l'arbre accessible est affichée. |
+| `9d8d982d-de11-4149-aa03-30bd16df38ef` | `message-composer.component.html:108`  | **False Positive**. Le même scénario retient la requête d'envoi et vérifie simultanément `aria-busy="true"`, le texte visible « Send message » dans le bouton nommé « Send message » et le spinner `aria-hidden="true"`. La capture `mobile-send-pending.png` montre l'état occupé. |
+| `35eaaae7-9a2c-4972-91ab-27d4ad9288e5` | `facility-plan-list.component.html:88` | **False Positive**. `facilities.spec.ts` vérifie que le menu au repos a le nom accessible « Plan actions » et aucun texte visible correspondant. Le bouton n'affiche qu'une icône `aria-hidden` ; le nom du plan se trouve dans le bouton voisin. |
+| `887a8b80-8df8-4730-ba35-a13ed6f16776` | `facility-plan-list.component.html:88` | **False Positive**. Le même scénario retient la mise en primaire : pendant le spinner visible, le bouton garde le nom « Plan actions » et ne contient aucun texte visible correspondant. Les actions « View », « Set as primary » et « Delete » restent dans le menu distinct. |

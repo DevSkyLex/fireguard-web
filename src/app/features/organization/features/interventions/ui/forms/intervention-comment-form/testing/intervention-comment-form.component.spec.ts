@@ -292,7 +292,10 @@ describe('InterventionCommentForm', () => {
     await type(initialDraft);
     mentionOptions()[0].dispatchEvent(new MouseEvent('mousedown'));
     await fixture.whenStable();
-    for (const draft of followingDrafts) await type(draft);
+    await followingDrafts.reduce<Promise<void>>(
+      (previous, draft) => previous.then(() => type(draft)),
+      Promise.resolve(),
+    );
     await submit();
 
     expect(submissions).toEqual([expected]);

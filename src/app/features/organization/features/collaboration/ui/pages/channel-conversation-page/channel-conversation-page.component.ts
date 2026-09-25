@@ -464,7 +464,12 @@ export class ChannelConversationPage {
     this.participantViews()
       .slice(0, 3)
       .map((participant) => ({
-        ...participant,
+        memberId: participant.memberId,
+        displayName: participant.displayName,
+        avatarUrl: participant.avatarUrl,
+        isResolved: participant.isResolved,
+        role: participant.role,
+        source: participant.source,
         initials: participant.displayName
           .trim()
           .split(/\s+/)

@@ -241,7 +241,7 @@ export class ThemeService {
     }
 
     const changeId: number = this.themeChangeId;
-    this.document.documentElement.setAttribute('data-theme-transition', 'circle-blur');
+    this.document.documentElement.dataset['themeTransition'] = 'circle-blur';
 
     try {
       const transition: ViewTransition = this.document.startViewTransition(() => {
@@ -261,7 +261,7 @@ export class ThemeService {
         () => this.finishThemeTransition(transition),
       );
     } catch {
-      this.document.documentElement.removeAttribute('data-theme-transition');
+      delete this.document.documentElement.dataset['themeTransition'];
       this.commitTheme(mode);
     }
   }
@@ -325,7 +325,7 @@ export class ThemeService {
     if (this.activeTransition !== transition) return;
 
     this.activeTransition = null;
-    this.document.documentElement.removeAttribute('data-theme-transition');
+    delete this.document.documentElement.dataset['themeTransition'];
   }
 
   /**

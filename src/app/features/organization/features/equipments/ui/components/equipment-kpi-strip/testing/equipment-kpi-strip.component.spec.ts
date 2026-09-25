@@ -66,8 +66,8 @@ describe('EquipmentKpiStrip', () => {
         .querySelector('[data-testid="equipment-kpi-statistics-content"]')
         ?.getAttribute('data-state'),
     ).toBe('open');
-    expect(element.querySelectorAll('app-stat-tile').length).toBe(4);
-    expect(element.querySelectorAll('dl').length).toBe(0);
+    expect(element.querySelectorAll('app-stat-tile')).toHaveLength(4);
+    expect(element.querySelectorAll('dl')).toHaveLength(0);
   });
 
   it('starts mobile statistics closed and discloses every value with its exact scope caption', async () => {
@@ -85,8 +85,8 @@ describe('EquipmentKpiStrip', () => {
     trigger?.click();
     await fixture.whenStable();
     expect(trigger?.getAttribute('aria-expanded')).toBe('true');
-    expect(element.querySelectorAll('app-stat-tile').length).toBe(0);
-    expect(element.querySelectorAll('dl').length).toBe(4);
+    expect(element.querySelectorAll('app-stat-tile')).toHaveLength(0);
+    expect(element.querySelectorAll('dl')).toHaveLength(4);
     expect(element.textContent).toContain('Every recorded status');
     expect(element.textContent).toContain('Maintenance up to date');
     expect(element.textContent).toContain('Maintenance approaching');
@@ -121,7 +121,7 @@ describe('EquipmentKpiStrip', () => {
     await fixture.whenStable();
     mobile.set(false);
     await fixture.whenStable();
-    expect(element.querySelectorAll('app-stat-tile').length).toBe(4);
+    expect(element.querySelectorAll('app-stat-tile')).toHaveLength(4);
     mobile.set(true);
     await fixture.whenStable();
     expect(trigger?.getAttribute('aria-expanded')).toBe('true');
@@ -142,7 +142,7 @@ describe('EquipmentKpiStrip', () => {
       .querySelector<HTMLButtonElement>('[data-testid="equipment-kpi-statistics-toggle"]')
       ?.click();
     await fixture.whenStable();
-    expect(element.querySelectorAll('dl hlm-skeleton').length).toBe(4);
+    expect(element.querySelectorAll('dl hlm-skeleton')).toHaveLength(4);
     expect(element.querySelector('[role="status"]')?.textContent).toContain('Loading key figures');
   });
 
@@ -163,7 +163,7 @@ describe('EquipmentKpiStrip', () => {
   it('should render no anchors, since no tile has a matching filtered view to link to', async () => {
     const element: HTMLElement = await render(KPIS, false);
 
-    expect(element.querySelectorAll('a').length).toBe(0);
+    expect(element.querySelectorAll('a')).toHaveLength(0);
   });
 
   it('should render zero-filled tiles when statistics is null and not loading', async () => {

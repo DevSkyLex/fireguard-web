@@ -75,8 +75,8 @@ describe('OrganizationMemberProfilePage', () => {
     expect(element.textContent).not.toContain('Email');
     expect(element.textContent).not.toContain('Last sign-in');
     expect(element.textContent).not.toContain('Two-factor');
-    expect(element.querySelectorAll('button').length).toBe(0);
-    expect(element.querySelectorAll('input').length).toBe(0);
+    expect(element.querySelectorAll('button')).toHaveLength(0);
+    expect(element.querySelectorAll('input')).toHaveLength(0);
   });
 
   it('should name an inactive membership', async () => {

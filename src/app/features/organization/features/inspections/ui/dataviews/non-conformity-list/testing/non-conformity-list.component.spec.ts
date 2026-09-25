@@ -68,7 +68,7 @@ describe('NonConformityList', () => {
     await createList([nonConformity(), nonConformity({ id: 'nc-2', description: 'Second' })]);
 
     const rows = root().querySelectorAll('[data-testid="non-conformity-row"]');
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(rows[1].textContent).toContain('Second');
   });
 
@@ -135,7 +135,7 @@ describe('NonConformityList', () => {
     const links = root().querySelectorAll<HTMLAnchorElement>(
       '[data-testid="non-conformity-pending-approval-link"]',
     );
-    expect(links.length).toBe(2);
+    expect(links).toHaveLength(2);
     const labels = Array.from(links).map((link) => link.getAttribute('aria-label'));
     expect(new Set(labels).size).toBe(2);
     expect(labels[0]).toContain('Pressure gauge out of range');
@@ -152,7 +152,7 @@ describe('NonConformityList', () => {
     );
 
     const labels = root().querySelectorAll('label[for^="non-conformity-status-"]');
-    expect(labels.length).toBe(2);
+    expect(labels).toHaveLength(2);
     const texts = Array.from(labels).map((label) => label.textContent?.trim());
     expect(new Set(texts).size).toBe(2);
     expect(texts[0]).toContain('Pressure gauge out of range');

@@ -39,7 +39,7 @@ describe('EquipmentTags', () => {
   it('should render one chip per attached tag', async () => {
     await create([tag('1', 'critical'), tag('2', 'exterior')]);
 
-    expect(root().querySelectorAll('[data-testid="equipment-tag-chip"]').length).toBe(2);
+    expect(root().querySelectorAll('[data-testid="equipment-tag-chip"]')).toHaveLength(2);
   });
 
   it('should hide the remove buttons and the combobox when not editable', async () => {

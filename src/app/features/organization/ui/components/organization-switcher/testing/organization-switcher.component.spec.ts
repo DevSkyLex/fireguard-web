@@ -204,7 +204,7 @@ describe('OrganizationSwitcher', () => {
     const fixture = await render();
     await openMenu(fixture);
 
-    expect(document.querySelectorAll('[aria-current="true"]').length).toBe(1);
+    expect(document.querySelectorAll('[aria-current="true"]')).toHaveLength(1);
   });
 
   it('renders all five admin shortcuts when every permission is granted', async () => {
@@ -281,8 +281,8 @@ describe('OrganizationSwitcher', () => {
     const fixture = await render();
     await openMenu(fixture);
 
-    expect(document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]').length).toBe(0);
-    expect(document.querySelectorAll('hlm-dropdown-menu-separator').length).toBe(2);
+    expect(document.querySelectorAll('a[hlmDropdownMenuItem][href*="/org-1/"]')).toHaveLength(0);
+    expect(document.querySelectorAll('hlm-dropdown-menu-separator')).toHaveLength(2);
   });
 
   it('caps the organization list panel to a bounded height and scrolls the rest', async () => {

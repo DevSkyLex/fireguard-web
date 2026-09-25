@@ -82,11 +82,11 @@ describe('WorkloadPlanningPanel', () => {
     });
     await fixture.whenStable();
     const triggers = root.querySelectorAll('[hlmCollapsibleTrigger]');
-    expect(triggers.length).toBe(6);
+    expect(triggers).toHaveLength(6);
     expect(
       [...triggers].every((trigger) => trigger.getAttribute('aria-expanded') === 'false'),
     ).toBe(true);
-    expect(root.querySelectorAll('li').length).toBe(0);
+    expect(root.querySelectorAll('li')).toHaveLength(0);
     expect(root.textContent).toContain('Members on this page');
     expect(root.textContent).not.toContain('0 min');
   });
@@ -102,7 +102,7 @@ describe('WorkloadPlanningPanel', () => {
     trigger?.click();
     await fixture.whenStable();
     expect(trigger?.getAttribute('aria-expanded')).toBe('true');
-    expect(root.querySelectorAll('li').length).toBe(1);
+    expect(root.querySelectorAll('li')).toHaveLength(1);
     expect(root.querySelector('a')?.getAttribute('href')).toBe(
       '/organizations/organization-1/interventions/intervention-1',
     );
@@ -130,8 +130,8 @@ describe('WorkloadPlanningPanel', () => {
     await fixture.whenStable();
     root.querySelector<HTMLButtonElement>('[hlmCollapsibleTrigger]')?.click();
     await fixture.whenStable();
-    expect(root.querySelectorAll('li').length).toBe(3);
-    expect(root.querySelectorAll('li [hlmBadge]').length).toBe(1);
+    expect(root.querySelectorAll('li')).toHaveLength(3);
+    expect(root.querySelectorAll('li [hlmBadge]')).toHaveLength(1);
     expect(root.querySelector('li [hlmBadge]')?.textContent?.trim()).toBe('Draft');
     expect(root.textContent).toContain('Julien Mercier');
   });
@@ -158,7 +158,7 @@ describe('WorkloadPlanningPanel', () => {
     root.querySelector<HTMLButtonElement>('[hlmCollapsibleTrigger]')?.click();
     await fixture.whenStable();
     const rows = root.querySelectorAll('li');
-    expect(rows.length).toBe(3);
+    expect(rows).toHaveLength(3);
     expect(rows[0].textContent).toContain('1 h 30 min remaining');
     expect(rows[1].textContent).toContain('0 min remaining');
     expect(rows[2].textContent).not.toContain('remaining');
@@ -179,13 +179,13 @@ describe('WorkloadPlanningPanel', () => {
     await fixture.whenStable();
     expect(triggers[0].getAttribute('aria-expanded')).toBe('false');
     expect(triggers[1].getAttribute('aria-expanded')).toBe('true');
-    expect(root.querySelectorAll('li').length).toBe(1);
+    expect(root.querySelectorAll('li')).toHaveLength(1);
     fixture.componentRef.setInput('projection', { ...projection });
     await fixture.whenStable();
     expect(root.querySelector('[hlmCollapsibleTrigger]')?.getAttribute('aria-expanded')).toBe(
       'false',
     );
-    expect(root.querySelectorAll('li').length).toBe(0);
+    expect(root.querySelectorAll('li')).toHaveLength(0);
   });
 
   it('emits the affected member only when capacity administration is authorized', async () => {

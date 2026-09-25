@@ -124,9 +124,25 @@ export async function verifyAssistantAttempts(page: Page, info: TestInfo): Promi
   if (info.project.name.includes('Mobile'))
     await page.getByTestId('dashboard-mobile-actions-trigger').click();
   await page.getByTestId('assistant-toggle').filter({ visible: true }).click();
+  await expect(page.getByTestId('assistant-intro')).toBeVisible();
   await page.getByTestId('assistant-input').fill(user.body);
+  await expect(page.getByTestId('assistant-send')).toBeEnabled();
   await page.getByTestId('assistant-send').click();
   await expect(page.getByTestId('assistant-cancel')).toBeVisible();
+  const userRow = page
+    .getByTestId('assistant-transcript')
+    .locator('[data-slot="message"]')
+    .filter({ hasText: user.body });
+  await expect(userRow).toHaveAttribute('data-align', 'end');
+  await expect(userRow).not.toHaveAttribute('align');
+  await expect(userRow.locator('[data-slot="bubble"]')).toHaveAttribute('data-align', 'end');
+  await expect(userRow.locator('[data-slot="bubble"]')).not.toHaveAttribute('align');
+  const assistantRow = page
+    .getByTestId('assistant-transcript')
+    .locator('[data-slot="message"]')
+    .filter({ has: page.getByTestId('assistant-thinking') });
+  await expect(assistantRow).toHaveAttribute('data-align', 'start');
+  await expect(assistantRow).not.toHaveAttribute('align');
   reply = { ...reply, status: 'streaming', body: 'The review is in progress.', attemptSequence: 2 };
   await page.evaluate(
     (frame) => window.dispatchEvent(new CustomEvent('assistant-test-frame', { detail: frame })),

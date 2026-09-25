@@ -7,7 +7,10 @@ import {
   subjectConversationOutput,
 } from '../support/fixtures/channel-fixtures';
 import { E2E_MEMBER_IRI, interventionOutput } from '../support/fixtures/intervention-fixtures';
-import { organizationMemberOutput } from '../support/fixtures/member-fixtures';
+import {
+  inspectorOrganizationMemberOutput,
+  organizationMemberOutput,
+} from '../support/fixtures/member-fixtures';
 import { ApiMock } from '../support/mocks/api-mock';
 import { InterventionDetailPage } from '../support/pages/intervention-detail.page';
 
@@ -51,11 +54,42 @@ async function mockDetailPage(api: ApiMock): Promise<void> {
   await api.mockInterventionEquipment(interventionId, []);
   await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
   await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
-  await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [organizationMemberOutput()]);
+  await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [
+    organizationMemberOutput(),
+    inspectorOrganizationMemberOutput(),
+  ]);
   await api.mockInterventionLabels(E2E_ORGANIZATION_ID, []);
 }
 
 test.describe('Intervention detail — live discussion', () => {
+  test('exposes named comment mention options and inserts the chosen member from the keyboard', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await mockDetailPage(api);
+
+    const detail = new InterventionDetailPage(page);
+    await detail.goto(E2E_ORGANIZATION_ID, interventionId);
+    await page.getByTestId('intervention-detail-menu').click();
+    await page.getByTestId('intervention-detail-discussion-trigger').click();
+
+    const comment = page.getByRole('textbox', { name: 'Comment' });
+    await comment.fill('@In');
+    const mentions = page.getByRole('listbox', { name: 'Members you can mention' });
+    const ines = mentions.getByRole('option', { name: 'Ines Pector' });
+    await expect(mentions).toBeVisible();
+    await expect(ines).toHaveAttribute('aria-selected', 'true');
+    const optionId = await ines.getAttribute('id');
+    if (!optionId) throw new Error('The mention option must have a stable DOM id.');
+    await expect(comment).toHaveAttribute('aria-activedescendant', optionId);
+    await expect(comment).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await expect(comment).toBeFocused();
+    await expect(comment).toHaveValue('@Ines Pector ');
+    await expect(mentions).toHaveCount(0);
+  });
+
   test('opens the discussion sheet, renders the mocked thread, and appends a sent message', async ({
     page,
   }) => {

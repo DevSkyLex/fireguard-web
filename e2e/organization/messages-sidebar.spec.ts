@@ -118,3 +118,38 @@ test('tablet alternates list and thread while preserving primary navigation', as
   await expect(page.locator('#dashboard-sidebar-extension')).toBeVisible();
   await expect(page.locator('#dashboard-main')).toBeHidden();
 });
+
+test('exposes rich mention options to assistive technology and selects one without sending', async ({
+  page,
+}) => {
+  await mockMessagesWorkspace(page);
+  await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/messages/e2e-direct-2`);
+
+  const ownMessage = page
+    .getByTestId('message-row')
+    .filter({ hasText: 'The north wing inspection' });
+  const otherMessage = page
+    .getByTestId('message-row')
+    .filter({ hasText: 'Thank you, I will review' });
+  await expect(ownMessage).toHaveAttribute('data-align', 'end');
+  await expect(otherMessage).toHaveAttribute('data-align', 'start');
+  await expect(ownMessage).not.toHaveAttribute('align');
+  await expect(otherMessage).not.toHaveAttribute('align');
+
+  const composer = page.getByRole('textbox', { name: 'Message' });
+  await composer.fill('@In');
+  const mentions = page.getByRole('listbox', { name: 'Members you can mention' });
+  const ines = mentions.getByRole('option', { name: /Ines Pector/ });
+  await expect(mentions).toBeVisible();
+  await expect(ines).toHaveAttribute('aria-selected', 'true');
+  const optionId = await ines.getAttribute('id');
+  if (!optionId) throw new Error('The mention option must have a stable DOM id.');
+  await expect(composer).toHaveAttribute('aria-activedescendant', optionId);
+  await expect(composer).toBeFocused();
+
+  await page.keyboard.press('Enter');
+  await expect(composer).toBeFocused();
+  await expect(composer).toHaveValue('@Ines Pector ');
+  await expect(mentions).toHaveCount(0);
+  await expect(page.getByTestId('message-thread').getByText('@Ines Pector')).toHaveCount(0);
+});

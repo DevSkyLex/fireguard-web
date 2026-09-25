@@ -59,6 +59,17 @@ type DurableOnboardingOutput = OnboardingOutput & {
 };
 
 /**
+ * Type PreparedSetupItem
+ * @type {PreparedSetupItem}
+ * @description Stable key and payload submitted together before any resource creation.
+ * @since 1.1.0
+ */
+type PreparedSetupItem = {
+  readonly itemKey: string;
+  readonly payload: OnboardingSetupPayload;
+};
+
+/**
  * Function requireJournal
  * @description Rejects incomplete or foreign recovery responses before any resource write or progression.
  * @access private
@@ -232,6 +243,202 @@ export const OnboardingSetupStore = signalStore(
         }
       }
 
+      /**
+       * Function prepareItems
+       * @description Reuses receipt keys for matching payloads without assigning one receipt twice.
+       * @access private
+       * @since 1.1.0
+       * @param {OnboardingSetupStep} stepKey - Current server step.
+       * @param {readonly OnboardingSetupPayload[]} payloads - Complete submitted batch.
+       * @returns {PreparedSetupItem[]} Items carrying stable journal keys.
+       */
+      function prepareItems(
+        stepKey: OnboardingSetupStep,
+        payloads: readonly OnboardingSetupPayload[],
+      ): PreparedSetupItem[] {
+        const used = new Set<string>();
+        return payloads.map((payload) => {
+          const prior = store
+            .operations()
+            .find(
+              (entry) =>
+                entry.stepKey === stepKey &&
+                !used.has(entry.itemKey) &&
+                setupPayloadKey(entry.payload) === setupPayloadKey(payload),
+            );
+          const itemKey = prior?.itemKey ?? crypto.randomUUID();
+          used.add(itemKey);
+          return { itemKey, payload };
+        });
+      }
+
+      /**
+       * Function requirePreparedItems
+       * @description Rejects a preparation response that omitted or changed a submitted receipt.
+       * @access private
+       * @since 1.1.0
+       * @param {OnboardingOutput} response - Server preparation response.
+       * @param {string} sessionId - Session that owns this batch.
+       * @param {OnboardingSetupStep} stepKey - Current server step.
+       * @param {readonly PreparedSetupItem[]} items - Submitted receipts and payloads.
+       * @returns {DurableOnboardingOutput} Validated journal snapshot.
+       */
+      function requirePreparedItems(
+        response: OnboardingOutput,
+        sessionId: string,
+        stepKey: OnboardingSetupStep,
+        items: readonly PreparedSetupItem[],
+      ): DurableOnboardingOutput {
+        const flow = requireJournal(response, sessionId);
+        if (
+          items.some(
+            (item) =>
+              !flow.setupOperations.some(
+                (operation) =>
+                  operation.stepKey === stepKey &&
+                  operation.itemKey === item.itemKey &&
+                  setupPayloadKey(operation.payload) === setupPayloadKey(item.payload),
+              ),
+          )
+        ) {
+          throw new Error(
+            $localize`:@@onboarding.setup.unavailable:Your setup could not be restored. Please refresh and try again.`,
+          );
+        }
+        return flow;
+      }
+
+      /**
+       * Function executePendingItems
+       * @description Creates only submitted prepared receipts and records failed keys for retry.
+       * @access private
+       * @since 1.1.0
+       * @param {DurableOnboardingOutput} flow - Validated prepared journal.
+       * @param {OnboardingSetupStep} stepKey - Current server step.
+       * @param {readonly PreparedSetupItem[]} items - Submitted receipts.
+       * @returns {Observable<(StoreError | null)[]>} Per-item failures in submission order.
+       */
+      function executePendingItems(
+        flow: DurableOnboardingOutput,
+        stepKey: OnboardingSetupStep,
+        items: readonly PreparedSetupItem[],
+      ): Observable<(StoreError | null)[]> {
+        const pending = flow.setupOperations.filter(
+          (entry) =>
+            entry.stepKey === stepKey &&
+            entry.status === 'prepared' &&
+            items.some((item) => item.itemKey === entry.itemKey),
+        );
+        return from(pending).pipe(
+          concatMap((operation) =>
+            defer(() => execute(operation, flow)).pipe(
+              map((): StoreError | null => null),
+              catchError((error: unknown) => {
+                patchState(store, {
+                  failedItemKeys: [...store.failedItemKeys(), operation.itemKey],
+                });
+                return of(toStoreError(error));
+              }),
+            ),
+          ),
+          toArray(),
+        );
+      }
+
+      /**
+       * Function refreshBatch
+       * @description Reconciles server receipts after writes, preserving a first failure when work remains.
+       * @access private
+       * @since 1.1.0
+       * @param {string} sessionId - Session that owns this batch.
+       * @param {OnboardingSetupStep} stepKey - Current server step.
+       * @param {readonly PreparedSetupItem[]} items - Submitted receipts.
+       * @param {readonly (StoreError | null)[]} errors - Resource command outcomes.
+       * @returns {Observable<{flow: DurableOnboardingOutput; failure: StoreError | null}>} Reconciled journal and failure.
+       */
+      function refreshBatch(
+        sessionId: string,
+        stepKey: OnboardingSetupStep,
+        items: readonly PreparedSetupItem[],
+        errors: readonly (StoreError | null)[],
+      ): Observable<{ flow: DurableOnboardingOutput; failure: StoreError | null }> {
+        return service.get().pipe(
+          map((response) => {
+            const flow = requireJournal(response, sessionId);
+            const incomplete = items.filter(
+              (item) =>
+                !flow.setupOperations.some(
+                  (operation) =>
+                    operation.stepKey === stepKey &&
+                    operation.itemKey === item.itemKey &&
+                    operation.status === 'completed',
+                ),
+            );
+            patchState(store, {
+              failedItemKeys: incomplete.map((item) => item.itemKey),
+            });
+            return {
+              flow,
+              failure: incomplete.length
+                ? (errors.find((error) => error !== null) ??
+                  toStoreError(
+                    new Error(
+                      $localize`:@@onboarding.setup.incomplete:Some items are still pending. Please try again to finish your setup.`,
+                    ),
+                  ))
+                : null,
+            };
+          }),
+        );
+      }
+
+      /**
+       * Function runBatch
+       * @description Prepares, creates and reconciles one durable batch before announcing completion.
+       * @access private
+       * @since 1.1.0
+       * @param {OnboardingSetupStep} stepKey - Current server step.
+       * @param {readonly OnboardingSetupPayload[]} payloads - Complete submitted batch.
+       * @returns {Observable<{flow: DurableOnboardingOutput; failure: StoreError | null}>} Reconciled result.
+       */
+      function runBatch(
+        stepKey: OnboardingSetupStep,
+        payloads: readonly OnboardingSetupPayload[],
+      ): Observable<{ flow: DurableOnboardingOutput; failure: StoreError | null }> {
+        const currentFlow = store.flow();
+        if (!currentFlow) return EMPTY;
+        const sessionId = currentFlow.sessionId;
+        const items = prepareItems(stepKey, payloads);
+        patchState(store, { batchCallState: pendingCallState(), failedItemKeys: [] });
+        return service.prepareSetup({ sessionId, stepKey, items }).pipe(
+          map((response) => requirePreparedItems(response, sessionId, stepKey, items)),
+          tap((flow) => {
+            patchState(store, { flow });
+            dispatcher.dispatch(onboardingSetupEvents.snapshotUpdated(flow));
+          }),
+          concatMap((flow) => executePendingItems(flow, stepKey, items)),
+          concatMap((errors) => refreshBatch(sessionId, stepKey, items, errors)),
+          tapResponse({
+            next: ({ flow, failure }) => {
+              patchState(store, {
+                flow,
+                batchCallState: failure ? errorCallState(failure) : successCallState(undefined),
+              });
+              dispatcher.dispatch(onboardingSetupEvents.snapshotUpdated(flow));
+              if (failure) {
+                fail(failure);
+                return;
+              }
+              dispatcher.dispatch(onboardingSetupEvents.completed({ stepKey }));
+            },
+            error: (error: unknown) =>
+              patchState(store, {
+                batchCallState: errorCallState(fail(toStoreError(error))),
+              }),
+          }),
+        );
+      }
+
       return {
         /**
          * Method load
@@ -290,123 +497,7 @@ export const OnboardingSetupStore = signalStore(
           pipe(
             filter(() => isPlatformBrowser(platformId) && store.ready() && !store.pending()),
             exhaustMap(({ stepKey, payloads }) =>
-              defer(() => {
-                const currentFlow = store.flow();
-                if (!currentFlow) return EMPTY;
-                const sessionId = currentFlow.sessionId;
-                const used = new Set<string>();
-                const items = payloads.map((payload) => {
-                  const prior = store
-                    .operations()
-                    .find(
-                      (entry) =>
-                        entry.stepKey === stepKey &&
-                        !used.has(entry.itemKey) &&
-                        setupPayloadKey(entry.payload) === setupPayloadKey(payload),
-                    );
-                  const itemKey = prior?.itemKey ?? crypto.randomUUID();
-                  used.add(itemKey);
-                  return { itemKey, payload };
-                });
-                patchState(store, { batchCallState: pendingCallState(), failedItemKeys: [] });
-                return service.prepareSetup({ sessionId, stepKey, items }).pipe(
-                  map((response) => {
-                    const flow = requireJournal(response, sessionId);
-                    if (
-                      items.some(
-                        (item) =>
-                          !flow.setupOperations.some(
-                            (operation) =>
-                              operation.stepKey === stepKey &&
-                              operation.itemKey === item.itemKey &&
-                              setupPayloadKey(operation.payload) === setupPayloadKey(item.payload),
-                          ),
-                      )
-                    ) {
-                      throw new Error(
-                        $localize`:@@onboarding.setup.unavailable:Your setup could not be restored. Please refresh and try again.`,
-                      );
-                    }
-                    return flow;
-                  }),
-                  tap((flow) => {
-                    patchState(store, { flow });
-                    dispatcher.dispatch(onboardingSetupEvents.snapshotUpdated(flow));
-                  }),
-                  concatMap((flow) => {
-                    const pending = (flow.setupOperations ?? []).filter(
-                      (entry) =>
-                        entry.stepKey === stepKey &&
-                        entry.status === 'prepared' &&
-                        items.some((item) => item.itemKey === entry.itemKey),
-                    );
-                    return from(pending).pipe(
-                      concatMap((operation) =>
-                        defer(() => execute(operation, flow)).pipe(
-                          map((): StoreError | null => null),
-                          catchError((error: unknown) => {
-                            patchState(store, {
-                              failedItemKeys: [...store.failedItemKeys(), operation.itemKey],
-                            });
-                            return of(toStoreError(error));
-                          }),
-                        ),
-                      ),
-                      toArray(),
-                    );
-                  }),
-                  concatMap((errors) =>
-                    service.get().pipe(
-                      map((response) => {
-                        const flow = requireJournal(response, sessionId);
-                        const incomplete = items.filter(
-                          (item) =>
-                            !flow.setupOperations.some(
-                              (operation) =>
-                                operation.stepKey === stepKey &&
-                                operation.itemKey === item.itemKey &&
-                                operation.status === 'completed',
-                            ),
-                        );
-                        patchState(store, {
-                          failedItemKeys: incomplete.map((item) => item.itemKey),
-                        });
-                        return {
-                          flow,
-                          failure: incomplete.length
-                            ? (errors.find((error) => error !== null) ??
-                              toStoreError(
-                                new Error(
-                                  $localize`:@@onboarding.setup.incomplete:Some items are still pending. Please try again to finish your setup.`,
-                                ),
-                              ))
-                            : null,
-                        };
-                      }),
-                    ),
-                  ),
-                  tapResponse({
-                    next: ({ flow, failure }) => {
-                      patchState(store, {
-                        flow,
-                        batchCallState: failure
-                          ? errorCallState(failure)
-                          : successCallState(undefined),
-                      });
-                      dispatcher.dispatch(onboardingSetupEvents.snapshotUpdated(flow));
-                      if (failure) {
-                        fail(failure);
-                        return;
-                      }
-                      dispatcher.dispatch(onboardingSetupEvents.completed({ stepKey }));
-                    },
-                    error: (error: unknown) =>
-                      patchState(store, {
-                        batchCallState: errorCallState(fail(toStoreError(error))),
-                      }),
-                  }),
-                );
-              }).pipe(
+              defer(() => runBatch(stepKey, payloads)).pipe(
                 catchError((error: unknown) => {
                   patchState(store, { batchCallState: errorCallState(fail(toStoreError(error))) });
                   return EMPTY;

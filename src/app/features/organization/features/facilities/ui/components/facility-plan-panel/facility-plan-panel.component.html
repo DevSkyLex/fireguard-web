@@ -26,9 +26,8 @@
     </hlm-sheet-content>
   </hlm-sheet>
 } @else {
-  <div
+  <section
     hlmCard
-    role="region"
     [attr.aria-label]="panelLabel"
     class="flex w-full max-w-full flex-col gap-4 overflow-y-auto sm:w-80"
     data-testid="facility-plan-panel"
@@ -40,7 +39,7 @@
     <div hlmCardContent class="flex flex-col gap-4">
       <ng-container *ngTemplateOutlet="body" />
     </div>
-  </div>
+  </section>
 }
 
 <ng-template #body>

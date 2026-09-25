@@ -56,7 +56,7 @@ describe('InterventionChangeTable', () => {
     await fixture.whenStable();
 
     expect(root().querySelector('[data-testid="intervention-changes-table"]')).not.toBeNull();
-    expect(root().querySelectorAll('[data-testid="intervention-change-row"]').length).toBe(1);
+    expect(root().querySelectorAll('[data-testid="intervention-change-row"]')).toHaveLength(1);
   });
 
   it('should name the resource kind from the change IRI', async () => {
@@ -244,7 +244,7 @@ describe('InterventionChangeTable', () => {
     const buttons = root().querySelectorAll<HTMLButtonElement>(
       '[data-testid="intervention-change-reject"]',
     );
-    expect(buttons.length).toBe(2);
+    expect(buttons).toHaveLength(2);
     expect(buttons[0]?.disabled).toBe(false);
     expect(buttons[1]?.disabled).toBe(true);
 

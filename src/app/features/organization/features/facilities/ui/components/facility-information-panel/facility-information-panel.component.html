@@ -250,7 +250,7 @@
             </button>
           }
         </div>
-        <p role="status" aria-live="polite" class="text-xs" data-testid="facility-geocode-status">
+        <output aria-live="polite" class="block text-xs" data-testid="facility-geocode-status">
           @if (geocodePending()) {
             <span class="text-muted-foreground" i18n="@@facility.form.locatingAddress"
               >Locating address…</span
@@ -262,7 +262,7 @@
           } @else if (geocodeResult(); as match) {
             <span class="text-muted-foreground">{{ match.displayName }}</span>
           }
-        </p>
+        </output>
         <p class="text-xs text-muted-foreground" i18n="@@facility.info.coordinatesManualHint">
           Or type them, if you already know the figures. Both are needed — a latitude alone is not
           half a location.

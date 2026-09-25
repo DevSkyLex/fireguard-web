@@ -57,7 +57,7 @@ describe('InterventionStatisticsAnalysis', () => {
     } as InterventionStatisticsOutput);
 
     const rows: NodeListOf<Element> = element.querySelectorAll('app-intervention-tag');
-    expect(rows.length).toBe(4);
+    expect(rows).toHaveLength(4);
   });
 
   it('should render the top-10 site list with its count, and link each row into the facility record', async () => {
@@ -67,7 +67,7 @@ describe('InterventionStatisticsAnalysis', () => {
       '[aria-labelledby="intervention-statistics-site-title"] a',
     );
 
-    expect(links.length).toBe(1);
+    expect(links).toHaveLength(1);
     expect(links[0]?.getAttribute('href')).toBe('/organizations/org-1/facilities/site-1');
     expect(links[0]?.textContent).toContain('Main warehouse');
   });
@@ -92,7 +92,7 @@ describe('InterventionStatisticsAnalysis', () => {
       '[aria-labelledby="intervention-statistics-responsible-title"] a',
     );
 
-    expect(links.length).toBe(2);
+    expect(links).toHaveLength(2);
     expect(links[0]?.getAttribute('href')).toBe('/organizations/org-1/members');
     expect(links[0]?.textContent).toContain('Ada Lovelace');
   });

@@ -330,11 +330,13 @@ test.describe('Facility detail', () => {
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
 
     await expect(facilities.detailLoading).toBeVisible();
+    await expect(facilities.detailLoading.getByRole('status')).toHaveText('Loading facility');
     await expect(facilities.overviewTab).toHaveCount(0);
 
     releaseDetail();
 
     await expect(facilities.overviewTab).toBeVisible();
+    await expect(facilities.detailLoading.getByRole('status')).toHaveCount(0);
     await expect(facilities.detailLoading).toHaveCount(0);
   });
 });
@@ -560,6 +562,8 @@ test.describe('Facility Plan Overlay', () => {
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
     await facilities.plansTab.click();
     await expect(facilities.overlayZones.first()).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Facility zones' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Zone Server Room/ })).toBeVisible();
 
     // Activating on the plan used to leave the page for the record. It now
     // selects, so a plan can be read without a round trip per glance; leaving

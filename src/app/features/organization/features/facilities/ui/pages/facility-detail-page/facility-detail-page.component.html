@@ -171,15 +171,13 @@
               </a>
             </h2>
             @if (overview.isLoadingEquipment()) {
-              <div
-                class="flex flex-col gap-3 px-2"
-                role="status"
-                aria-label="Loading equipment status"
-                i18n-aria-label="@@facility.equipmentBreakdown.loadingAria"
-              >
-                <hlm-skeleton class="h-3 w-full" />
-                <hlm-skeleton class="h-3 w-full" />
-                <hlm-skeleton class="h-3 w-full" />
+              <div class="flex flex-col gap-3 px-2">
+                <output class="sr-only" i18n="@@facility.equipmentBreakdown.loadingAria"
+                  >Loading equipment status</output
+                >
+                <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
               </div>
             } @else {
               <div class="flex flex-col gap-3 px-2">
@@ -219,14 +217,12 @@
               Recent inspections
             </h2>
             @if (overview.isLoadingInspections()) {
-              <div
-                class="flex flex-col gap-2 px-2"
-                role="status"
-                aria-label="Loading recent inspections"
-                i18n-aria-label="@@facility.recentInspections.loadingAria"
-              >
-                <hlm-skeleton class="h-4 w-full" />
-                <hlm-skeleton class="h-4 w-full" />
+              <div class="flex flex-col gap-2 px-2">
+                <output class="sr-only" i18n="@@facility.recentInspections.loadingAria"
+                  >Loading recent inspections</output
+                >
+                <hlm-skeleton class="h-4 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-4 w-full" aria-hidden="true" />
               </div>
             } @else {
               <div class="flex flex-col divide-y divide-border px-2">
@@ -280,14 +276,12 @@
             </a>
           </div>
           @if (overview.isLoadingInterventions()) {
-            <div
-              class="flex flex-col gap-2 px-2"
-              role="status"
-              aria-label="Loading interventions on this site"
-              i18n-aria-label="@@facility.recentInterventions.loadingAria"
-            >
-              <hlm-skeleton class="h-4 w-full" />
-              <hlm-skeleton class="h-4 w-full" />
+            <div class="flex flex-col gap-2 px-2">
+              <output class="sr-only" i18n="@@facility.recentInterventions.loadingAria"
+                >Loading interventions on this site</output
+              >
+              <hlm-skeleton class="h-4 w-full" aria-hidden="true" />
+              <hlm-skeleton class="h-4 w-full" aria-hidden="true" />
             </div>
           } @else if (overview.interventions().length === 0) {
             <p
@@ -356,16 +350,11 @@
         </div>
 
         @if (plans.listCallState().status === 'pending' && plans.orderedPlans().length === 0) {
-          <div
-            class="flex flex-col gap-4"
-            role="status"
-            aria-label="Loading floor plans"
-            i18n-aria-label="@@facility.plans.loadingAria"
-            data-testid="facility-plans-loading"
-          >
-            <hlm-skeleton class="h-8 w-40" />
-            <hlm-skeleton class="h-24 w-full" />
-            <hlm-skeleton class="h-24 w-full" />
+          <div class="flex flex-col gap-4" data-testid="facility-plans-loading">
+            <output class="sr-only" i18n="@@facility.plans.loadingAria">Loading floor plans</output>
+            <hlm-skeleton class="h-8 w-40" aria-hidden="true" />
+            <hlm-skeleton class="h-24 w-full" aria-hidden="true" />
+            <hlm-skeleton class="h-24 w-full" aria-hidden="true" />
           </div>
         } @else if (plans.listCallState().status === 'error' && plans.orderedPlans().length === 0) {
           <div hlmEmpty role="alert" data-testid="facility-plans-error">
@@ -593,12 +582,10 @@
                       />
                     </ng-template>
                   } @else {
-                    <div
-                      class="flex h-full items-center justify-center"
-                      role="status"
-                      aria-label="Loading floor plan image"
-                      i18n-aria-label="@@facility.plans.imageLoadingAria"
-                    >
+                    <div class="flex h-full items-center justify-center">
+                      <output class="sr-only" i18n="@@facility.plans.imageLoadingAria"
+                        >Loading floor plan image</output
+                      >
                       <hlm-spinner size="lg" aria-hidden="true" />
                     </div>
                   }
@@ -632,17 +619,12 @@
       </div>
     </hlm-tabs>
   } @else if (activeFacilityStore.isLoadingFacility()) {
-    <div
-      class="flex flex-col gap-4"
-      role="status"
-      aria-label="Loading facility"
-      i18n-aria-label="@@facility.detail.loadingAria"
-      data-testid="facility-detail-loading"
-    >
-      <hlm-skeleton class="h-8 w-64" />
-      <hlm-skeleton class="h-4 w-40" />
-      <hlm-skeleton class="h-9 w-full max-w-md" />
-      <hlm-skeleton class="h-64 w-full" />
+    <div class="flex flex-col gap-4" data-testid="facility-detail-loading">
+      <output class="sr-only" i18n="@@facility.detail.loadingAria">Loading facility</output>
+      <hlm-skeleton class="h-8 w-64" aria-hidden="true" />
+      <hlm-skeleton class="h-4 w-40" aria-hidden="true" />
+      <hlm-skeleton class="h-9 w-full max-w-md" aria-hidden="true" />
+      <hlm-skeleton class="h-64 w-full" aria-hidden="true" />
     </div>
   } @else {
     <div hlmEmpty role="alert" data-testid="facility-detail-load-failed">

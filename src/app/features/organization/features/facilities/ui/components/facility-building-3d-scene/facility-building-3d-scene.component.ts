@@ -889,7 +889,7 @@ export class FacilityBuilding3dScene {
   private buildSelectionOutline(mesh: ThreeMesh | undefined): ThreeLineSegments | null {
     const THREE: ThreeModule | null = this.threeModule;
     const palette: ScenePalette | null = this.palette;
-    if (!THREE || !palette || !mesh || !mesh.parent) return null;
+    if (!THREE || !palette || !mesh?.parent) return null;
 
     const edgesGeometry: InstanceType<ThreeModule['EdgesGeometry']> = new THREE.EdgesGeometry(
       mesh.geometry,

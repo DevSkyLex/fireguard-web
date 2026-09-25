@@ -121,9 +121,7 @@ export function buildOrganizationMobileNavigation(
     organizationLinks
       .filter((link) => link.id === id)
       .map((link) =>
-        link.id === 'dashboard'
-          ? Object.assign({}, link, { label: $localize`:@@org.mobileNav.home:Home` })
-          : link,
+        link.id === 'dashboard' ? { ...link, label: $localize`:@@org.mobileNav.home:Home` } : link,
       ),
   );
   if (canReadMessaging) {

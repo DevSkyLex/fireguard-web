@@ -89,7 +89,7 @@ export interface FacilityListFilter {
    *
    * @type {RequestOptions['params']}
    */
-  readonly params?: RequestOptions['params'];
+  readonly params?: NonNullable<RequestOptions['params']>;
   //#endregion
 }
 

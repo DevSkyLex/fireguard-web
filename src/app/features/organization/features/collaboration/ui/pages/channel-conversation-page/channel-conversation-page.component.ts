@@ -463,16 +463,15 @@ export class ChannelConversationPage {
   > = computed(() =>
     this.participantViews()
       .slice(0, 3)
-      .map((participant) =>
-        Object.assign({}, participant, {
-          initials: participant.displayName
-            .trim()
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((part) => part[0]?.toUpperCase() ?? '')
-            .join(''),
-        }),
-      ),
+      .map((participant) => ({
+        ...participant,
+        initials: participant.displayName
+          .trim()
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part[0]?.toUpperCase() ?? '')
+          .join(''),
+      })),
   );
 
   /**

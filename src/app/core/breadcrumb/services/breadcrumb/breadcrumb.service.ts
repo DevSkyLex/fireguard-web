@@ -249,11 +249,8 @@ export class BreadcrumbService {
     const config = route.routeConfig;
     const snapshot = route.snapshot;
     const routeData = config?.data ?? {};
-    const hasOwnBreadcrumbData = Object.prototype.hasOwnProperty.call(routeData, 'breadcrumb');
-    const hasOwnBreadcrumbResolver = Object.prototype.hasOwnProperty.call(
-      config?.resolve ?? {},
-      'breadcrumb',
-    );
+    const hasOwnBreadcrumbData = Object.hasOwn(routeData, 'breadcrumb');
+    const hasOwnBreadcrumbResolver = Object.hasOwn(config?.resolve ?? {}, 'breadcrumb');
 
     if (routeData['breadcrumb'] === false) return null;
 

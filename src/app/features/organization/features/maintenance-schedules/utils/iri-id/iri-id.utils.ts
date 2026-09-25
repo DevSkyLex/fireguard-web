@@ -17,5 +17,5 @@
 export function iriId(iri: string): string {
   const segments: readonly string[] = iri.split('/');
 
-  return segments[segments.length - 1] ?? iri;
+  return segments.at(-1) ?? iri;
 }

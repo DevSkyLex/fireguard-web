@@ -19,7 +19,7 @@ export interface InspectionListFilter {
   /** @type {InspectionStatus} */
   readonly status?: InspectionStatus;
   /** Additional API query parameters not covered by a typed field. */
-  readonly params?: RequestOptions['params'];
+  readonly params?: NonNullable<RequestOptions['params']>;
   //#endregion
 }
 

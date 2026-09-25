@@ -55,7 +55,7 @@ describe('ChecklistTable', () => {
       '[data-testid="checklist-table-row"]',
     );
 
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Fire Safety Inspection');
     expect(rows[0].textContent).toContain('1');
   });
@@ -64,7 +64,7 @@ describe('ChecklistTable', () => {
     await render([], true);
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(root().querySelectorAll('[data-testid="checklist-table-row"]').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="checklist-table-row"]')).toHaveLength(0);
   });
 
   it('should keep the rows on screen while a later page loads', async () => {
@@ -72,8 +72,8 @@ describe('ChecklistTable', () => {
     // table to skeletons on page 2 loses the operator's place for nothing.
     await render([checklist()], true);
 
-    expect(root().querySelectorAll('[data-testid="checklist-table-row"]').length).toBe(1);
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="checklist-table-row"]')).toHaveLength(1);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should mirror every row as a card, so the compact layout carries the same data', async () => {
@@ -83,7 +83,7 @@ describe('ChecklistTable', () => {
       '[data-testid="checklist-table-card"]',
     );
 
-    expect(cards.length).toBe(2);
+    expect(cards).toHaveLength(2);
     expect(cards[0].textContent).toContain('Fire Safety Inspection');
     expect(cards[0].textContent).toContain('items');
   });

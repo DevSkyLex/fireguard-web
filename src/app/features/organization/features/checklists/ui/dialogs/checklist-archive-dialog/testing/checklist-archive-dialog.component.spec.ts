@@ -32,7 +32,7 @@ describe('ChecklistArchiveDialog', () => {
 
     document.querySelector<HTMLButtonElement>('[data-testid="checklist-archive-confirm"]')?.click();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
   });
 
   it('should not confirm while a previous archive is still in flight', async () => {

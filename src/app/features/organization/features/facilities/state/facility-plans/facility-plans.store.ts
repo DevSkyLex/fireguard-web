@@ -1381,8 +1381,6 @@ export const FacilityPlansStore = signalStore(
                   attachmentId: selected.id,
                 });
               }
-
-              return;
             }
           });
         });

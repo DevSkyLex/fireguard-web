@@ -1415,9 +1415,10 @@ export class InterventionsPage {
       const state = this.store.mutationCallStates()[id];
       if (state?.status !== 'error') return [];
       const name = this.batchNames()[id] ?? this.assignRequest()?.interventionName ?? id;
-      return [
-        `${name}: ${state.error?.message ?? $localize`:@@intervention.assign.failed:Assignment could not be saved.`}`,
-      ];
+      const message =
+        state.error?.message ??
+        $localize`:@@intervention.assign.failed:Assignment could not be saved.`;
+      return [`${name}: ${message}`];
     }),
   );
 

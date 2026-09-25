@@ -67,24 +67,13 @@ export type OrganizationDashboardTrendSeriesPoint = Readonly<
 >;
 
 /**
- * Type OrganizationDashboardTrendComparisonScalarValue
- *
- * @description
- * Numeric scalar value supported inside one trend
- * comparison summary map.
- */
-export type OrganizationDashboardTrendComparisonScalarValue = number;
-
-/**
  * Type OrganizationDashboardTrendComparisonScalarMap
  *
  * @description
  * Named numeric values returned inside the trend
  * comparison block.
  */
-export type OrganizationDashboardTrendComparisonScalarMap = Readonly<
-  Record<string, OrganizationDashboardTrendComparisonScalarValue>
->;
+export type OrganizationDashboardTrendComparisonScalarMap = Readonly<Record<string, number>>;
 
 /**
  * Type OrganizationDashboardTrendComparisonValue

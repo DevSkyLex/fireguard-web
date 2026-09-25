@@ -685,8 +685,8 @@ export class ChannelsPanel {
       point.x - (this.document.defaultView?.scrollX ?? 0),
       point.y - (this.document.defaultView?.scrollY ?? 0),
     );
-    const target = element?.closest('[data-channel-parent]');
-    const parentId = target ? target.getAttribute('data-channel-parent') || null : undefined;
+    const target = element?.closest<HTMLElement>('[data-channel-parent]');
+    const parentId = target ? target.dataset['channelParent'] || null : undefined;
     this.dropParentId.set(parentId);
     if (parentId === undefined) {
       this.moveStatus.set('');

@@ -156,7 +156,7 @@ describe('AuditEventTable', () => {
     await fixture.whenStable();
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(root().querySelectorAll('[data-testid="audit-event-table-row"]').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="audit-event-table-row"]')).toHaveLength(0);
   });
 
   it('should keep the rows on screen while a later page loads', async () => {
@@ -166,8 +166,8 @@ describe('AuditEventTable', () => {
 
     // The shared surface's loading contract is "first load only": flashing the
     // journal to skeletons on page 2 loses the reader's place for nothing.
-    expect(root().querySelectorAll('[data-testid="audit-event-table-row"]').length).toBe(1);
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="audit-event-table-row"]')).toHaveLength(1);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should render the same event a second time as a card, under the row testid plus -card', async () => {
@@ -176,8 +176,8 @@ describe('AuditEventTable', () => {
 
     // Both layouts stay mounted — a container query, not an `@if`, picks the
     // visible one — so a card is a second render of the same row.
-    expect(root().querySelectorAll('[data-testid="audit-event-table-row-card"]').length).toBe(2);
-    expect(root().querySelectorAll('[data-testid="audit-event-table-row"]').length).toBe(2);
+    expect(root().querySelectorAll('[data-testid="audit-event-table-row-card"]')).toHaveLength(2);
+    expect(root().querySelectorAll('[data-testid="audit-event-table-row"]')).toHaveLength(2);
   });
 
   it('should point the row toggle and the card toggle at two distinct metadata panels', async () => {

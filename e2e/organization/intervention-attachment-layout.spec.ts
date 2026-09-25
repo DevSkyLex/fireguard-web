@@ -44,6 +44,19 @@ for (const width of [1562, 375]) {
       );
       await expect(page.getByTestId('intervention-attachment-row')).toBeVisible();
 
+      const downloadAction = page.getByRole('button', {
+        name: 'Download q1-campaign-report.pdf',
+      });
+      const deleteAction = page.getByRole('button', {
+        name: 'Delete q1-campaign-report.pdf',
+      });
+      await expect(downloadAction).toBeVisible();
+      await expect(deleteAction).toBeVisible();
+      await downloadAction.focus();
+      await expect(downloadAction).toBeFocused();
+      await page.keyboard.press('Tab');
+      await expect(deleteAction).toBeFocused();
+
       const dimensions = await page.getByTestId('intervention-tabs-list').evaluate((element) => ({
         height: element.clientHeight,
         overflowY: getComputedStyle(element).overflowY,

@@ -199,11 +199,12 @@
                   size="icon-sm"
                   class="text-muted-foreground hover:text-destructive mobile-ui:size-11 mobile-ui:min-h-11"
                   data-testid="intervention-attachment-queued-delete"
-                  i18n-aria-label="@@intervention.attachments.queuedDelete"
-                  aria-label="Remove this file from the sync queue"
                   (click)="queuedDeleteRequested.emit(queued)"
                 >
                   <ng-icon name="lucideTrash2" aria-hidden="true" />
+                  <span class="sr-only" i18n="@@intervention.attachments.queuedDeleteAria"
+                    >Remove {{ queued.fileName }} from the sync queue</span
+                  >
                 </button>
               }
             </div>
@@ -258,8 +259,6 @@
                 size="icon-sm"
                 class="text-muted-foreground mobile-ui:size-11 mobile-ui:min-h-11"
                 data-testid="intervention-attachment-download"
-                i18n-aria-label="@@intervention.attachments.download"
-                aria-label="Download this file"
                 [disabled]="!online() || isRowDownloading(attachment)"
                 [attr.aria-describedby]="
                   online() ? null : 'intervention-attachments-offline-reason'
@@ -272,6 +271,9 @@
                 } @else {
                   <ng-icon name="lucideDownload" aria-hidden="true" />
                 }
+                <span class="sr-only" i18n="@@intervention.attachments.downloadAria"
+                  >Download {{ attachment.fileName }}</span
+                >
               </button>
               @if (canManage()) {
                 <button
@@ -281,8 +283,6 @@
                   size="icon-sm"
                   class="text-muted-foreground hover:text-destructive mobile-ui:size-11 mobile-ui:min-h-11"
                   data-testid="intervention-attachment-delete"
-                  i18n-aria-label="@@intervention.attachments.delete"
-                  aria-label="Delete this file"
                   [disabled]="!online() || isRowPending(attachment)"
                   [attr.aria-describedby]="
                     online() ? null : 'intervention-attachments-offline-reason'
@@ -295,6 +295,9 @@
                   } @else {
                     <ng-icon name="lucideTrash2" aria-hidden="true" />
                   }
+                  <span class="sr-only" i18n="@@intervention.attachments.deleteAria"
+                    >Delete {{ attachment.fileName }}</span
+                  >
                 </button>
               }
             </div>

@@ -97,7 +97,7 @@ describe('ChecklistEditForm', () => {
     const rows: readonly HTMLElement[] = [
       ...root().querySelectorAll<HTMLElement>('[data-testid="checklist-edit-items"] li'),
     ];
-    expect(rows.length).toBe(1);
+    expect(rows).toHaveLength(1);
     expect(rows[0].querySelector('input')?.value).toBe('Check breakers');
   });
 
@@ -122,7 +122,7 @@ describe('ChecklistEditForm', () => {
     await render(checklist());
     root().querySelector<HTMLButtonElement>('[data-testid="checklist-edit-cancel"]')?.click();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
   });
   it('keeps in-use items read-only while permitting a reference change', async () => {
     const emitted: UpdateChecklistInput[] = [];

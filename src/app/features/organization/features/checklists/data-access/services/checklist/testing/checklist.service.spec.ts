@@ -133,7 +133,7 @@ describe('ChecklistService', () => {
     it('should send GET request and return single checklist', () => {
       service.get(orgId, checklistId).subscribe((checklist) => {
         expect(checklist).toEqual(mockChecklist);
-        expect(checklist.items.length).toBe(1);
+        expect(checklist.items).toHaveLength(1);
       });
 
       const req = httpMock.expectOne(`${checklistsUrl}/${checklistId}`);

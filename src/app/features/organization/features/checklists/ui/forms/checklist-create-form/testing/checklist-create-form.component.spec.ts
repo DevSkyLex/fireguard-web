@@ -122,7 +122,7 @@ describe('ChecklistCreateForm', () => {
 
     root().querySelector<HTMLButtonElement>('[data-testid="checklist-create-cancel"]')?.click();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
   });
 
   it('should clear the draft once the hosting overlay closes', async () => {

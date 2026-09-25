@@ -114,8 +114,8 @@ describe('InterventionTable', () => {
     // Scoped to the table: the card layout renders the same row a second time,
     // which is the point of the shared surface, not a duplicate to assert on.
     expect(
-      element.querySelectorAll('[data-testid="intervention-table"] app-intervention-tag').length,
-    ).toBe(3);
+      element.querySelectorAll('[data-testid="intervention-table"] app-intervention-tag'),
+    ).toHaveLength(3);
     expect(element.textContent).toContain('Planned');
     expect(element.textContent).toContain('High');
     expect(element.textContent).toContain('Inventory');
@@ -126,8 +126,8 @@ describe('InterventionTable', () => {
       (head: Element): string => head.getAttribute('aria-sort') ?? 'absent',
     );
 
-    expect(sorted.filter((value: string): boolean => value === 'ascending').length).toBe(1);
-    expect(sorted.filter((value: string): boolean => value === 'none').length).toBe(1);
+    expect(sorted.filter((value: string): boolean => value === 'ascending')).toHaveLength(1);
+    expect(sorted.filter((value: string): boolean => value === 'none')).toHaveLength(1);
   });
 
   it('should emit the field when a sortable head is activated', () => {
@@ -155,14 +155,14 @@ describe('InterventionTable', () => {
     );
     await fixture.whenStable();
 
-    expect(element.querySelectorAll('thead th').length).toBe(before - 2);
+    expect(element.querySelectorAll('thead th')).toHaveLength(before - 2);
     expect(element.querySelector('table')?.textContent).not.toContain('Warehouse B');
     expect(element.querySelector('[data-testid="intervention-table-card"]')?.textContent).toContain(
       'Warehouse B',
     );
     expect(
-      element.querySelectorAll('[data-testid="intervention-table"] app-intervention-tag').length,
-    ).toBe(2);
+      element.querySelectorAll('[data-testid="intervention-table"] app-intervention-tag'),
+    ).toHaveLength(2);
   });
 
   it('should mark an overdue deadline with an icon, never with red text', async () => {
@@ -196,8 +196,8 @@ describe('InterventionTable', () => {
     await openRowMenu();
 
     expect(
-      document.querySelectorAll('[data-testid="intervention-table-row-transition"]').length,
-    ).toBe(0);
+      document.querySelectorAll('[data-testid="intervention-table-row-transition"]'),
+    ).toHaveLength(0);
     expect(document.body.textContent).toContain('Copy reference');
   });
 
@@ -228,8 +228,8 @@ describe('InterventionTable', () => {
     await openRowMenu();
 
     expect(
-      document.querySelectorAll('[data-testid="intervention-table-row-transition"]').length,
-    ).toBe(0);
+      document.querySelectorAll('[data-testid="intervention-table-row-transition"]'),
+    ).toHaveLength(0);
     expect(document.body.textContent).toContain('Copy reference');
   });
 
@@ -252,7 +252,7 @@ describe('InterventionTable', () => {
       .querySelector<HTMLButtonElement>('[data-testid="intervention-table-row-transition"]')
       ?.click();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
     expect(emitted[0]?.intervention.id).toBe('i-9');
     expect(emitted[0]?.status).toBe('in_progress');
   });
@@ -296,7 +296,7 @@ describe('InterventionTable', () => {
     // The shared surface's loading contract is "first load only": flashing the
     // table to skeletons on page 2 loses the operator's place for nothing.
     expect(element.querySelector('[data-testid="intervention-table-row"]')).not.toBeNull();
-    expect(element.querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(element.querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   describe('selection', () => {
@@ -330,7 +330,7 @@ describe('InterventionTable', () => {
         ?.click();
       await fixture.whenStable();
 
-      expect(emitted.length).toBe(1);
+      expect(emitted).toHaveLength(1);
       expect([...(emitted[0] ?? [])]).toEqual(['a1b2']);
     });
 
@@ -410,7 +410,7 @@ describe('InterventionTable', () => {
         .querySelector<HTMLButtonElement>('[data-testid="intervention-table-row-delete"]')
         ?.click();
 
-      expect(emitted.length).toBe(1);
+      expect(emitted).toHaveLength(1);
       expect(emitted[0]?.id).toBe('i-del');
     });
   });
@@ -468,7 +468,7 @@ describe('InterventionTable', () => {
         .querySelector<HTMLButtonElement>('[data-testid="intervention-table-row-assign"]')
         ?.click();
 
-      expect(emitted.length).toBe(1);
+      expect(emitted).toHaveLength(1);
       expect(emitted[0]?.id).toBe('i-assign');
     });
   });
@@ -516,7 +516,7 @@ describe('InterventionTable', () => {
         .querySelector<HTMLButtonElement>('[data-testid="intervention-table-row-duplicate"]')
         ?.click();
 
-      expect(emitted.length).toBe(1);
+      expect(emitted).toHaveLength(1);
       expect(emitted[0]?.id).toBe('i-dup');
     });
   });
@@ -561,7 +561,7 @@ describe('InterventionTable', () => {
         },
       );
       target?.click();
-      expect(emitted.length).toBe(0);
+      expect(emitted).toHaveLength(0);
     });
 
     it('should enable the submitted target for the responsible', async () => {

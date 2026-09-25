@@ -65,7 +65,7 @@ describe('InterventionRecurrenceTable', () => {
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should show the empty state when there are no recurrences', () => {

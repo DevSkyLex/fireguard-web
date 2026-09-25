@@ -330,7 +330,10 @@ export class AccountMfaPanel {
     const secret: string | undefined = this.setupResult()?.secret;
     if (!secret) return '';
 
-    return (secret.match(new RegExp(`.{1,${SECRET_GROUP_SIZE}}`, 'g')) ?? []).join(' ');
+    return Array.from(
+      secret.matchAll(new RegExp(`.{1,${SECRET_GROUP_SIZE}}`, 'g')),
+      ([group]) => group,
+    ).join(' ');
   });
 
   /**

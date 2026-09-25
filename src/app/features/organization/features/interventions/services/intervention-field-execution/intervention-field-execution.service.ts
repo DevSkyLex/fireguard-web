@@ -298,7 +298,7 @@ export class InterventionFieldExecutionService {
    * @returns {string} Bare identifier extracted from the IRI.
    */
   private resourceId(value: string, resource: string): string {
-    const match = value.match(new RegExp(`^/api/${resource}/([^/?#]+)$`));
+    const match = new RegExp(`^/api/${resource}/([^/?#]+)$`).exec(value);
     if (!match?.[1]) throw new Error(`Invalid ${resource} resource`);
     return match[1];
   }

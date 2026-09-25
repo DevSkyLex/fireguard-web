@@ -13,7 +13,7 @@
  * @returns {Date} Parsed boundary, or an invalid Date for malformed input.
  */
 export function parseOrganizationDashboardPeriodBoundary(value: string): Date {
-  const dateOnly: RegExpMatchArray | null = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const dateOnly: RegExpExecArray | null = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (dateOnly === null) return new Date(value);
 
   const year: number = Number(dateOnly[1]);

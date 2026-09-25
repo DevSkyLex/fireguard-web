@@ -9,7 +9,7 @@ import type {
  * comment clients, capturing the member uuid in either representation.
  */
 const MENTION_TOKEN: RegExp =
-  /(?:@|&#64;|&#x40;)\{([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\}/gi;
+  /(?:@|&#64;|&#x40;)\{([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}/gi;
 
 /** Characters an `@` may follow and still open a mention. */
 const OPENERS: RegExp = /[\s([{<"']/;

@@ -239,7 +239,7 @@ export class InterventionAssignDialog {
    */
   protected readonly memberForm = form(this.selectedMember, (path) => {
     required(path);
-    disabled(path, () => this.busy());
+    disabled(path, { when: () => this.busy() });
   });
 
   /**

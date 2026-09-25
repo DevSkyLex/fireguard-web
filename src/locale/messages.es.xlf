@@ -12074,6 +12074,14 @@
         <source>The request could not be completed. Please try again.</source>
         <target>No se ha podido completar la solicitud. Vuelve a intentarlo.</target>
       </trans-unit>
+      <trans-unit id="api.error.networkTitle" datatype="html">
+        <source>Network error</source>
+        <target>Error de red</target>
+      </trans-unit>
+      <trans-unit id="api.error.requestTitle" datatype="html">
+        <source>Request failed</source>
+        <target>La solicitud ha fallado</target>
+      </trans-unit>
       <trans-unit id="intervention.assign.partialFailure" datatype="html">
         <source>Some assignments were not saved</source>
         <target>Algunas asignaciones no se han guardado</target>

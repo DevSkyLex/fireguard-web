@@ -125,7 +125,7 @@ export class OrganizationAutomationForm {
   protected readonly automationForm: FieldTree<OrganizationAutomationSettings> = form(
     this.model,
     (path): void => {
-      disabled(path, () => this.pending());
+      disabled(path, { when: () => this.pending() });
     },
   );
   //#endregion

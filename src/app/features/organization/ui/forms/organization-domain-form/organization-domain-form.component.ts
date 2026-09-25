@@ -68,7 +68,7 @@ export class OrganizationDomainForm {
    * @type {FieldTree<{domain:string}>}
    */
   protected readonly domainForm: FieldTree<{ domain: string }> = form(this.model, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     required(path.domain, {
       message: $localize`:@@org.access.domainRequired:Enter your company domain.`,
     });

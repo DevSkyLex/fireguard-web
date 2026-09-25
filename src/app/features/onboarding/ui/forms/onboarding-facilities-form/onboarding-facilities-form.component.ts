@@ -428,7 +428,7 @@ export class OnboardingFacilitiesForm {
    * @type {FieldTree<OnboardingFacilityDraft>}
    */
   protected readonly draftForm: FieldTree<OnboardingFacilityDraft> = form(this.model, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     required(path.address, {
       message: $localize`:@@onboarding.facilitiesForm.addressRequired:Select a suggested address.`,
     });

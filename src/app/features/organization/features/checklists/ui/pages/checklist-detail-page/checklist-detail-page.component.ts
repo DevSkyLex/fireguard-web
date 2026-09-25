@@ -354,7 +354,6 @@ export class ChecklistDetailPage implements UnsavedChangesAware {
   protected beforeUnload(event: BeforeUnloadEvent): void {
     if (this.hasUnsavedChanges()) {
       event.preventDefault();
-      event.returnValue = '';
     }
   }
 }

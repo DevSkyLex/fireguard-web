@@ -72,7 +72,11 @@ describe('HydraApiService', () => {
       .expectOne((r) => r.url === baseUrl)
       .flush({ detail: 'The intervention changed.' }, { status: 409, statusText: 'Conflict' });
     expect(failed).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 409, detail: 'The intervention changed.' }),
+      expect.objectContaining({
+        status: 409,
+        title: 'Request failed',
+        detail: 'The intervention changed.',
+      }),
     );
   });
 
@@ -83,8 +87,20 @@ describe('HydraApiService', () => {
     expect(failed).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 0,
+        title: 'Network error',
         detail: 'The connection is unavailable. Check your network and try again.',
       }),
+    );
+  });
+
+  it('uses a response title instead of the HTTP/2 status text for an unstructured error', () => {
+    const failed = vi.fn();
+    resourceService.list().subscribe({ error: failed });
+    httpMock
+      .expectOne(baseUrl)
+      .flush({ title: 'Capacity exceeded' }, { status: 429, statusText: 'OK' });
+    expect(failed).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 429, title: 'Capacity exceeded' }),
     );
   });
 

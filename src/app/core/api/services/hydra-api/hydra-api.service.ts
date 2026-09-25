@@ -549,13 +549,23 @@ export abstract class HydraApiService {
       typeof body === 'object' && body !== null && 'code' in body && typeof body.code === 'string'
         ? body.code
         : undefined;
+    const title =
+      typeof body === 'object' &&
+      body !== null &&
+      'title' in body &&
+      typeof body.title === 'string' &&
+      body.title.trim()
+        ? body.title
+        : error.status === 0
+          ? $localize`:@@api.error.networkTitle:Network error`
+          : $localize`:@@api.error.requestTitle:Request failed`;
     const apiError: ApiError = {
       ...(code ? { code } : {}),
       '@id': '',
       '@type': 'Error',
       status: error.status || 0,
       type: 'about:blank',
-      title: error.statusText || 'Network Error',
+      title,
       detail:
         detail ??
         (error.status === 0

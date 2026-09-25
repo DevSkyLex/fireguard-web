@@ -165,7 +165,7 @@ export class OrganizationNotificationsForm {
   protected readonly notificationsForm: FieldTree<OrganizationNotificationSettings> = form(
     this.model,
     (path): void => {
-      disabled(path, () => this.pending());
+      disabled(path, { when: () => this.pending() });
     },
   );
   //#endregion

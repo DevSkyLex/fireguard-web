@@ -95,11 +95,11 @@ describe('buildFloorGroup', () => {
       edgesColor: '#d4d4d8',
     });
 
-    expect(group.children.length).toBe(1);
+    expect(group.children).toHaveLength(1);
     expect(group.children[0].userData).toEqual({ kind: 'floor-placeholder', floorId: 'floor-2' });
 
     const intersections: THREE.Intersection[] = [];
     group.children[0].raycast(new THREE.Raycaster(), intersections);
-    expect(intersections.length).toBe(0);
+    expect(intersections).toHaveLength(0);
   });
 });

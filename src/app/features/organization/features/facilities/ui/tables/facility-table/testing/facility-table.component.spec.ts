@@ -60,7 +60,7 @@ describe('FacilityTable', () => {
       '[data-testid="facility-table-row"]',
     );
 
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Building');
     expect(rows[1].textContent).toContain('Floor');
   });
@@ -91,7 +91,7 @@ describe('FacilityTable', () => {
       '[data-testid="facility-table-card"]',
     );
 
-    expect(cards.length).toBe(2);
+    expect(cards).toHaveLength(2);
     expect(cards[1].textContent).toContain('HQ-02');
     expect(cards[0].querySelector('[data-testid="facility-table-row-menu"]')).not.toBeNull();
   });
@@ -108,14 +108,14 @@ describe('FacilityTable', () => {
     await render([], true);
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(root().querySelectorAll('[data-testid="facility-table-row"]').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="facility-table-row"]')).toHaveLength(0);
   });
 
   it('should keep the rows on screen while a later page loads', async () => {
     await render([facility()], true);
 
-    expect(root().querySelectorAll('[data-testid="facility-table-row"]').length).toBe(1);
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="facility-table-row"]')).toHaveLength(1);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should say so plainly when a page holds no rows', async () => {

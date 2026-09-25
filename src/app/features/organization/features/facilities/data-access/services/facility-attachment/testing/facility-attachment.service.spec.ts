@@ -91,7 +91,7 @@ describe('FacilityAttachmentService', () => {
       );
       expect(request.request.method).toBe('POST');
       const body = request.request.body as FormData;
-      expect(body instanceof FormData).toBe(true);
+      expect(body).toBeInstanceOf(FormData);
       expect(body.get('kind')).toBe('floor_plan');
       expect((body.get('file') as File).name).toBe('ground-floor.png');
       request.flush(mockAttachment);

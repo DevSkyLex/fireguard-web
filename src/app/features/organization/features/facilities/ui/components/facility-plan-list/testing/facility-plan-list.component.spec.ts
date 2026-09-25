@@ -37,7 +37,7 @@ describe('FacilityPlanList', () => {
     fixture.componentRef.setInput('canManage', false);
     await fixture.whenStable();
 
-    expect(root().querySelectorAll('[data-testid="facility-plan-row"]').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="facility-plan-row"]')).toHaveLength(0);
     expect(byTestId('facility-plans-upload')).toBeNull();
   });
 
@@ -50,7 +50,7 @@ describe('FacilityPlanList', () => {
     await fixture.whenStable();
 
     const rows = root().querySelectorAll('[data-testid="facility-plan-row"]');
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(byTestId('facility-plan-primary-badge')).not.toBeNull();
   });
 

@@ -268,7 +268,7 @@ describe('FacilityCreateForm', () => {
 
     element.querySelector<HTMLButtonElement>('[data-testid="facility-create-cancel"]')?.click();
 
-    expect(cancelled.length).toBe(1);
+    expect(cancelled).toHaveLength(1);
   });
 
   it('should clear the name control aria-invalid once a name is entered', async () => {

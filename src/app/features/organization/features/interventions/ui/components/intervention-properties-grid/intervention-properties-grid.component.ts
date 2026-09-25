@@ -22,8 +22,6 @@ import type {
   PlanningCatalogueKind,
   PlanningCatalogueState,
   PlanningCatalogueRequest,
-} from '@features/organization/features/interventions/models';
-import type {
   InterventionEditState,
   InterventionEditTarget,
   InterventionLabelOutput,

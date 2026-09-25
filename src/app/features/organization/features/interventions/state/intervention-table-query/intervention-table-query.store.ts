@@ -21,8 +21,8 @@ import type {
   InterventionChangeTableQuery,
   InterventionWorkItemOutput,
   InterventionWorkItemTableQuery,
+  InterventionWorkspaceData,
 } from '@features/organization/features/interventions/models';
-import type { InterventionWorkspaceData } from '@features/organization/features/interventions/models';
 import {
   projectInterventionWorkspace,
   searchSavedWorkItems,

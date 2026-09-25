@@ -57,8 +57,8 @@ import { InterventionWorkspaceOptimisticService } from '@features/organization/f
 import { projectInterventionWorkspace } from '@features/organization/features/interventions/utils';
 import { workloadAssessmentFromError } from '@features/organization/features/workload/utils';
 import { interventionWorkspaceStoreEvents } from './events';
-import type { InterventionWorkItemUpdateCommand } from './models';
 import type {
+  InterventionWorkItemUpdateCommand,
   InterventionAttachmentUploadCommand,
   InterventionChangeRejectCommand,
   InterventionCommentAddCommand,

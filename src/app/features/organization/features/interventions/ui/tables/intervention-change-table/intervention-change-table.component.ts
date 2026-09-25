@@ -15,12 +15,12 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideCircleDot, lucideHistory } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
-import type { InterventionTableSource } from '@features/organization/features/interventions/models';
-import {
-  type InterventionChangeOutput,
-  type InterventionChangeStatus,
-  type InterventionChangeTableQuery,
-  type InterventionWorkItemOutput,
+import type {
+  InterventionTableSource,
+  InterventionChangeOutput,
+  InterventionChangeStatus,
+  InterventionChangeTableQuery,
+  InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import {
   formatInterventionChangePatch,

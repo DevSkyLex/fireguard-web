@@ -4,8 +4,6 @@ import type {
   InspectionResult,
   InspectionStatus,
   InspectorType,
-} from '@features/organization/features/inspections/models';
-import type {
   NonConformitySeverity,
   NonConformityStatus,
 } from '@features/organization/features/inspections/models';

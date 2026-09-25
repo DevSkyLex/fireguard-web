@@ -1,5 +1,4 @@
-import { formatDate } from '@angular/common';
-import { NgTemplateOutlet } from '@angular/common';
+import { formatDate, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -31,8 +30,8 @@ import type {
   InspectionResult,
   InspectionStatus,
 } from '@features/organization/features/inspections/models';
-import type { InterventionTableSource } from '@features/organization/features/interventions/models';
 import {
+  type InterventionTableSource,
   resolveInterventionTag,
   type InterventionInspectionsTableQuery,
 } from '@features/organization/features/interventions/models';

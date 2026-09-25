@@ -27,12 +27,10 @@ import {
 } from '@angular/forms/signals';
 import { DateTime } from 'luxon';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
-import type { PlanningCatalogueRequest } from '@features/organization/features/interventions/models';
-import type {
-  PlanningCatalogueKind,
-  PlanningCatalogueState,
-} from '@features/organization/features/interventions/models';
 import {
+  type PlanningCatalogueRequest,
+  type PlanningCatalogueKind,
+  type PlanningCatalogueState,
   resolveInterventionTag,
   type InterventionWorkItemAction,
   type MemberSelectOption,

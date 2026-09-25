@@ -1,6 +1,6 @@
 import type { CallState } from '@core/request-state';
-import type { InterventionTableSource } from '@features/organization/features/interventions/models';
 import type {
+  InterventionTableSource,
   InterventionChangeOutput,
   InterventionChangeTableQuery,
   InterventionWorkItemTableQuery,

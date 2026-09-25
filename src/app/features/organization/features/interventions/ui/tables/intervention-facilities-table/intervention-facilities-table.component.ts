@@ -22,8 +22,8 @@ import type {
   FacilityStatus,
   FacilityType,
 } from '@features/organization/features/facilities/models';
-import type { InterventionTableSource } from '@features/organization/features/interventions/models';
 import {
+  type InterventionTableSource,
   resolveInterventionTag,
   type InterventionFacilitiesTableQuery,
 } from '@features/organization/features/interventions/models';

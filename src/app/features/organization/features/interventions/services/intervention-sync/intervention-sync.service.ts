@@ -9,8 +9,10 @@ import {
   InterventionService,
   InterventionTimeService,
 } from '@features/organization/features/interventions/data-access';
-import type { InterventionCollectionsChange } from '@features/organization/features/interventions/models';
-import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
+import type {
+  InterventionCollectionsChange,
+  InterventionOutboxOperation,
+} from '@features/organization/features/interventions/models';
 import { workloadAssessmentFromError } from '@features/organization/features/workload/utils';
 import {
   CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE,

@@ -23,8 +23,8 @@ import {
 import type {
   InterventionTimeDraft,
   InterventionTimeWrite,
+  MemberSelectOption,
 } from '@features/organization/features/interventions/models';
-import type { MemberSelectOption } from '@features/organization/features/interventions/models';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';

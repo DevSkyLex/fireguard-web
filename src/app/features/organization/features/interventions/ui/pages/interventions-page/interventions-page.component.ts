@@ -87,8 +87,8 @@ import {
   type MemberAvatar,
   type MemberSelectOption,
   type SelectOption,
+  type InterventionBoardCardViewModel,
 } from '@features/organization/features/interventions/models';
-import type { InterventionBoardCardViewModel } from '@features/organization/features/interventions/models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_FILTER_FIELDS,
@@ -106,8 +106,8 @@ import {
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
-import { buildInterventionDuplicatePrefill } from '@features/organization/features/interventions/utils';
 import {
+  buildInterventionDuplicatePrefill,
   buildInterventionExportOptions,
   buildInterventionListOptions,
   isInterventionBoardMoveAllowed,

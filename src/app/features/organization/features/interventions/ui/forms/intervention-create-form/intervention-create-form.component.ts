@@ -20,12 +20,10 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
-import type { PlanningCatalogueRequest } from '@features/organization/features/interventions/models';
-import type {
-  PlanningCatalogueKind,
-  PlanningCatalogueState,
-} from '@features/organization/features/interventions/models';
 import {
+  type PlanningCatalogueRequest,
+  type PlanningCatalogueKind,
+  type PlanningCatalogueState,
   resolveInterventionTag,
   type InterventionDuplicatePrefill,
   type InterventionPriority,

@@ -71,7 +71,7 @@ describe('OrganizationRoleGrid', () => {
 
     const sections: NodeListOf<HTMLElement> = root().querySelectorAll('section');
 
-    expect(sections.length).toBe(2);
+    expect(sections).toHaveLength(2);
     expect(sections[0].querySelector('h2')?.textContent).toContain('System roles (2)');
     expect(sections[1].querySelector('h2')?.textContent).toContain('Custom roles (1)');
   });
@@ -85,13 +85,13 @@ describe('OrganizationRoleGrid', () => {
 
     const sections: NodeListOf<HTMLElement> = root().querySelectorAll('section');
 
-    expect(cards().length).toBe(3);
-    expect(sections[0].querySelectorAll('[data-testid="organization-role-grid-card"]').length).toBe(
-      2,
-    );
-    expect(sections[1].querySelectorAll('[data-testid="organization-role-grid-card"]').length).toBe(
-      1,
-    );
+    expect(cards()).toHaveLength(3);
+    expect(
+      sections[0].querySelectorAll('[data-testid="organization-role-grid-card"]'),
+    ).toHaveLength(2);
+    expect(
+      sections[1].querySelectorAll('[data-testid="organization-role-grid-card"]'),
+    ).toHaveLength(1);
   });
 
   it('should preview permission groups, capping at 3 with a +N badge, in first-seen order', async () => {
@@ -184,8 +184,8 @@ describe('OrganizationRoleGrid', () => {
   it('should say so plainly when there are no roles at all', async () => {
     await render([]);
 
-    expect(root().querySelectorAll('section').length).toBe(0);
-    expect(cards().length).toBe(0);
+    expect(root().querySelectorAll('section')).toHaveLength(0);
+    expect(cards()).toHaveLength(0);
     expect(root().textContent).toContain('No roles found.');
   });
 
@@ -211,8 +211,8 @@ describe('OrganizationRoleGrid', () => {
     await render([role()], { loading: true });
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(cards().length).toBe(0);
-    expect(root().querySelectorAll('section').length).toBe(0);
+    expect(cards()).toHaveLength(0);
+    expect(root().querySelectorAll('section')).toHaveLength(0);
   });
 
   it('should offer the menu on a manageable custom role', async () => {

@@ -64,7 +64,7 @@ describe('OrganizationApprovalForm', () => {
 
   it('should group each row under a fieldset whose legend names the action type', async () => {
     const fieldsets = root().querySelectorAll('fieldset');
-    expect(fieldsets.length).toBe(ACTION_TYPES.length);
+    expect(fieldsets).toHaveLength(ACTION_TYPES.length);
 
     const legend = root()
       .querySelector('[data-testid="org-approval-enabled-nc_waiver"]')

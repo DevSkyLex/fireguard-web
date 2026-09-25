@@ -88,7 +88,7 @@ describe('OrganizationNav', () => {
     await fixture.whenStable();
 
     expect(rows()).toEqual(['Dashboard', 'Interventions', 'Workload']);
-    expect(fixture.nativeElement.querySelectorAll('[aria-disabled="true"]').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('[aria-disabled="true"]')).toHaveLength(0);
   });
 
   it('keeps personal workload available without a team-workload grant', () => {
@@ -139,7 +139,7 @@ describe('OrganizationNav', () => {
       '[data-slot="sidebar-menu-button"] [hlmbadge]',
     ) as NodeListOf<HTMLElement>;
 
-    expect(badges.length).toBe(1);
+    expect(badges).toHaveLength(1);
     expect(badges[0].textContent?.trim()).toBe('1');
     expect(badges[0].getAttribute('aria-label')).toBe('1 intervention awaiting review');
     expect(badges[0].closest('a')?.textContent).toContain('Interventions');
@@ -164,8 +164,8 @@ describe('OrganizationNav', () => {
     await fixture.whenStable();
 
     expect(
-      fixture.nativeElement.querySelectorAll('[data-slot="sidebar-menu-button"] [hlmbadge]').length,
-    ).toBe(0);
+      fixture.nativeElement.querySelectorAll('[data-slot="sidebar-menu-button"] [hlmbadge]'),
+    ).toHaveLength(0);
   });
 
   it('should never carry a badge on a row without a counterKey', async () => {
@@ -177,7 +177,7 @@ describe('OrganizationNav', () => {
       '[data-slot="sidebar-menu-button"] [hlmbadge]',
     ) as NodeListOf<HTMLElement>;
 
-    expect(badges.length).toBe(1);
+    expect(badges).toHaveLength(1);
     expect(badges[0].closest('a')?.textContent).toContain('Interventions');
   });
 

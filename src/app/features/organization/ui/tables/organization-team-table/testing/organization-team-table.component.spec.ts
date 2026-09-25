@@ -69,7 +69,7 @@ describe('OrganizationTeamTable', () => {
   it('should render skeleton placeholder rows while loading with nothing yet loaded', async () => {
     await create({ items: [], loading: true });
 
-    expect(rows().length).toBe(0);
+    expect(rows()).toHaveLength(0);
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
   });
 
@@ -78,8 +78,8 @@ describe('OrganizationTeamTable', () => {
 
     // The shared surface's loading contract is "first load only": a later page
     // fetch leaves the rows already on screen alone.
-    expect(rows().length).toBe(1);
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(rows()).toHaveLength(1);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should render the same team a second time as a card, under the row testid plus -card', async () => {
@@ -87,10 +87,10 @@ describe('OrganizationTeamTable', () => {
 
     // Both layouts stay mounted — a container query, not an `@if`, picks the
     // visible one — so a card is a second render of the same row.
-    expect(root().querySelectorAll('[data-testid="organization-team-table-row-card"]').length).toBe(
-      2,
-    );
-    expect(rows().length).toBe(2);
+    expect(
+      root().querySelectorAll('[data-testid="organization-team-table-row-card"]'),
+    ).toHaveLength(2);
+    expect(rows()).toHaveLength(2);
   });
 
   it('should render the empty-results row once loaded with no teams', async () => {

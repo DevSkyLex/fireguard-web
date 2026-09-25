@@ -45,6 +45,7 @@ import {
   ORGANIZATION_PERMISSION,
   type OrganizationDashboardGranularity,
   type OrganizationDashboardPeriod,
+  type OrganizationPermissionName,
 } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -274,6 +275,20 @@ export class OrganizationDashboardPage {
       'nonConformities',
       'inProgress',
     );
+    let nonConformityBadge: StatTileBadge | null = null;
+    if (overdueNonConformities !== null && overdueNonConformities > 0) {
+      nonConformityBadge = {
+        label: $localize`:@@org.today.kpi.openNonConformities.badge.overdue:${overdueNonConformities}:count: overdue`,
+        icon: 'lucideTriangleAlert',
+        tone: 'destructive',
+      };
+    } else if (overdueNonConformities === 0) {
+      nonConformityBadge = {
+        label: $localize`:@@org.today.kpi.openNonConformities.badge.onTrack:On track`,
+        icon: 'lucideCircleCheck',
+        tone: 'neutral',
+      };
+    }
     const tiles: OrganizationDashboardKpiTile[] = [];
 
     if (this.canReadInterventions()) {
@@ -302,20 +317,7 @@ export class OrganizationDashboardPage {
         delta: null,
         tone:
           overdueNonConformities !== null && overdueNonConformities > 0 ? 'destructive' : 'neutral',
-        badge:
-          overdueNonConformities !== null && overdueNonConformities > 0
-            ? {
-                label: $localize`:@@org.today.kpi.openNonConformities.badge.overdue:${overdueNonConformities}:count: overdue`,
-                icon: 'lucideTriangleAlert',
-                tone: 'destructive',
-              }
-            : overdueNonConformities === 0
-              ? {
-                  label: $localize`:@@org.today.kpi.openNonConformities.badge.onTrack:On track`,
-                  icon: 'lucideCircleCheck',
-                  tone: 'neutral',
-                }
-              : null,
+        badge: nonConformityBadge,
       },
       {
         id: 'inspections-completed',
@@ -790,29 +792,24 @@ export class OrganizationDashboardPage {
         .map((alert, index): OrganizationDashboardAlertRow => {
           const code = alert.code ?? '';
           const descriptor = resolveOrganizationDashboardAlertTag(code);
-          const permission =
-            code === 'equipment_under_maintenance'
-              ? ORGANIZATION_PERMISSION.EQUIPMENT_READ
-              : code === 'expired_invitations'
-                ? ORGANIZATION_PERMISSION.MEMBERS_MANAGE
-                : ORGANIZATION_PERMISSION.INSPECTION_READ;
-          const target =
-            code === 'equipment_under_maintenance'
-              ? 'equipments'
-              : code === 'expired_invitations'
-                ? 'members'
-                : 'inspections';
+          let permission: OrganizationPermissionName = ORGANIZATION_PERMISSION.INSPECTION_READ;
+          let target = 'inspections';
+          if (code === 'equipment_under_maintenance') {
+            permission = ORGANIZATION_PERMISSION.EQUIPMENT_READ;
+            target = 'equipments';
+          } else if (code === 'expired_invitations') {
+            permission = ORGANIZATION_PERMISSION.MEMBERS_MANAGE;
+            target = 'members';
+          }
+          let colorToken: OrganizationDashboardAlertRow['colorToken'] = 'muted-foreground';
+          if (descriptor.severity === 'danger') colorToken = 'destructive';
+          else if (descriptor.severity === 'warning') colorToken = 'warning';
           return {
             id: code + '-' + index,
             label:
               descriptor.label || $localize`:@@org.dashboard.attention.unknown:Unrecognized alert`,
             icon: descriptor.icon,
-            colorToken:
-              descriptor.severity === 'danger'
-                ? 'destructive'
-                : descriptor.severity === 'warning'
-                  ? 'warning'
-                  : 'muted-foreground',
+            colorToken,
             count:
               typeof alert.count === 'number' && Number.isFinite(alert.count) && alert.count >= 0
                 ? alert.count

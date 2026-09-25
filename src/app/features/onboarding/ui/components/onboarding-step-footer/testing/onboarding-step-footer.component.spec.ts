@@ -21,7 +21,7 @@ describe('OnboardingStepFooter', () => {
   it('should render the named primary action only, when the step cannot be skipped', () => {
     const buttons: NodeListOf<HTMLButtonElement> = element.querySelectorAll('button');
 
-    expect(buttons.length).toBe(1);
+    expect(buttons).toHaveLength(1);
     expect(buttons[0].getAttribute('data-testid')).toBe('onboarding-facilities-submit');
     expect(buttons[0].textContent).toContain('Create facility');
   });

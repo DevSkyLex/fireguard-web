@@ -137,6 +137,10 @@ describe('WorkloadDaySheet', () => {
     expect(text(sheet())).toContain('Planner');
     expect(text(sheet())).toContain('Wednesday, September 16, 2026');
     expect(text(sheet())).toContain('Over capacity by 1 h');
+    const overloadResult = sheet().querySelector('output');
+    expect(overloadResult?.textContent).toContain('Over capacity by 1 h');
+    expect(overloadResult?.textContent).toContain('Review the remaining work or availability');
+    expect(overloadResult?.parentElement?.getAttribute('role')).toBe('none');
     expect(sheet().querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe(
       '100',
     );
@@ -187,6 +191,9 @@ describe('WorkloadDaySheet', () => {
       sheet().querySelector('#workload-day-excluded-trigger')?.getAttribute('aria-expanded'),
     ).toBe('false');
     await expand();
+    const excludedRegion = sheet().querySelector('section[hlmCollapsibleContent]');
+    expect(excludedRegion?.getAttribute('role')).toBeNull();
+    expect(excludedRegion?.getAttribute('aria-labelledby')).toBe('workload-day-excluded-trigger');
     expect(text(sheet())).toContain("Across this member's work, not only this day.");
     expect(text(sheet())).toContain('Estimate missing');
     expect(text(sheet())).toContain('Remaining work not estimated');

@@ -595,11 +595,7 @@ export class OrganizationAssetsPage {
         if (this.axis() !== restored) {
           this.axis.set(restored);
 
-          if (restored === 'compliance' && !this.hasRequestedComplianceTree()) {
-            this.hasRequestedComplianceTree.set(true);
-            this.compliance.loadTree(this.organizationId());
-            if (this.canExportCompliance()) this.compliance.loadSnapshots(this.organizationId());
-          }
+          if (restored === 'compliance') this.ensureComplianceTreeLoaded();
         }
 
         const selected: string | null = facilityId ?? null;
@@ -778,8 +774,9 @@ export class OrganizationAssetsPage {
    * @returns {void}
    */
   protected onAxisActivated(tab: string): void {
-    const axis: OrganizationAssetsAxis =
-      tab === 'everything' ? 'everything' : tab === 'compliance' ? 'compliance' : 'site';
+    let axis: OrganizationAssetsAxis = 'site';
+    if (tab === 'everything') axis = 'everything';
+    else if (tab === 'compliance') axis = 'compliance';
     this.axis.set(axis);
     this.writeUrlState();
 
@@ -1187,6 +1184,20 @@ export class OrganizationAssetsPage {
   //#endregion
 
   //#region Private methods
+  /**
+   * Method ensureComplianceTreeLoaded
+   * @description Loads the compliance hierarchy and authorized archive list on first activation.
+   * @access private
+   * @since 1.0.0
+   * @returns {void}
+   */
+  private ensureComplianceTreeLoaded(): void {
+    if (this.hasRequestedComplianceTree()) return;
+    this.hasRequestedComplianceTree.set(true);
+    this.compliance.loadTree(this.organizationId());
+    if (this.canExportCompliance()) this.compliance.loadSnapshots(this.organizationId());
+  }
+
   /**
    * Method isLoadedDescendant
    * @description Whether `id` sits under `ancestorId` in the currently loaded part of the tree.

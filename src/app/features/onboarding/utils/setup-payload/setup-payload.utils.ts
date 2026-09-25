@@ -11,17 +11,15 @@ import type { OnboardingSetupPayload } from '@features/onboarding/models';
 export function setupPayloadKey(payload: OnboardingSetupPayload): string {
   return JSON.stringify(
     Object.entries(payload)
-      .map(
-        ([key, value]) =>
-          [
-            key,
-            key === 'email' && typeof value === 'string'
-              ? value.trim().toLowerCase()
-              : Array.isArray(value)
-                ? value.filter((item) => item !== null)
-                : value,
-          ] as const,
-      )
+      .map(([key, value]) => {
+        let normalized = value;
+        if (key === 'email' && typeof value === 'string') {
+          normalized = value.trim().toLowerCase();
+        } else if (Array.isArray(value)) {
+          normalized = value.filter((item) => item !== null);
+        }
+        return [key, normalized] as const;
+      })
       .filter(
         ([, value]) =>
           value !== undefined && value !== null && !(Array.isArray(value) && value.length === 0),

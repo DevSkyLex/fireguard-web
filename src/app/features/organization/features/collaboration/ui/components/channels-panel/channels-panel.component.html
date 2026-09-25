@@ -245,13 +245,12 @@
           }
         </ul>
       } @else {
-        <p
-          class="px-2 py-6 text-center text-sm text-muted-foreground"
-          role="status"
+        <output
+          class="block px-2 py-6 text-center text-sm text-muted-foreground"
           i18n="@@channels.panel.noResults"
         >
           No channels match your search.
-        </p>
+        </output>
       }
     } @else {
       @if (favoriteChannels().length > 0) {
@@ -306,13 +305,12 @@
       </section>
     }
   </nav>
-  <p
-    class="shrink-0 px-3 pb-2 text-xs text-muted-foreground empty:hidden"
-    role="status"
+  <output
+    class="block shrink-0 px-3 pb-2 text-xs text-muted-foreground empty:hidden"
     aria-live="polite"
   >
     {{ moveStatus() }}
-  </p>
+  </output>
 </div>
 
 <app-channel-create-dialog

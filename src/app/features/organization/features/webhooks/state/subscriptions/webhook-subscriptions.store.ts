@@ -233,12 +233,9 @@ export const WebhookSubscriptionsStore = signalStore(
                   next: (result) => {
                     if (revision !== scopeRevision) return;
                     patchState(store, { mutationCallState: successCallState(null) });
-                    const subscriptionId =
-                      result && 'id' in result
-                        ? result.id
-                        : action.kind !== 'create'
-                          ? action.id
-                          : null;
+                    let subscriptionId: string | null = null;
+                    if (result && 'id' in result) subscriptionId = result.id;
+                    else if (action.kind !== 'create') subscriptionId = action.id;
                     dispatcher.dispatch(
                       webhookSubscriptionsEvents.completed({
                         organizationId,

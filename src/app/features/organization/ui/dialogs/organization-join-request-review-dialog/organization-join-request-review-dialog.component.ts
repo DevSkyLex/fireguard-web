@@ -130,7 +130,7 @@ export class OrganizationJoinRequestReviewDialog {
    * @type {FieldTree<{roleIds:string[]}>}
    */
   protected readonly reviewForm: FieldTree<{ roleIds: string[] }> = form(this.model, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     required(path.roleIds, {
       message: $localize`:@@org.access.requests.roleRequired:Choose at least one role.`,
     });

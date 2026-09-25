@@ -33,13 +33,13 @@ export interface BarcodeDetectorInstance {
 }
 
 /**
- * Interface BarcodeDetectorConstructor
- * @interface BarcodeDetectorConstructor
+ * Type BarcodeDetectorConstructor
+ * @type BarcodeDetectorConstructor
  *
  * @description
  * Constructor signature of the experimental `BarcodeDetector` browser API,
  * typed locally because it is not part of the standard DOM lib yet.
  */
-export interface BarcodeDetectorConstructor {
-  new (options?: { formats?: readonly string[] }): BarcodeDetectorInstance;
-}
+export type BarcodeDetectorConstructor = new (options?: {
+  formats?: readonly string[];
+}) => BarcodeDetectorInstance;

@@ -311,14 +311,12 @@ export class Board<T, K extends string = string> {
       if (id === null) return new Map();
       const source = this.columns().find((column) => column.items.some((item) => item.id === id));
       return new Map(
-        this.columns().map((column) => [
-          column.id,
-          column.id === source?.id
-            ? 'source'
-            : this.allowedItem(id, column.id)
-              ? 'allowed'
-              : 'blocked',
-        ]),
+        this.columns().map((column) => {
+          let state: 'source' | 'allowed' | 'blocked' = 'blocked';
+          if (column.id === source?.id) state = 'source';
+          else if (this.allowedItem(id, column.id)) state = 'allowed';
+          return [column.id, state] as const;
+        }),
       );
     });
 

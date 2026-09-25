@@ -1,5 +1,4 @@
-import { inject } from '@angular/core';
-import { computed } from '@angular/core';
+import { inject, computed } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
@@ -187,7 +186,7 @@ export const ActiveEquipmentStore = signalStore(
             const current: EquipmentOutput | null = store.selectedEquipment();
 
             patchState(store, {
-              selectedEquipment: current && current.id === equipmentId ? current : null,
+              selectedEquipment: current?.id === equipmentId ? current : null,
               getCallState: pendingCallState(),
             });
           }),

@@ -273,7 +273,7 @@ describe('InterventionTable', () => {
   });
 
   it('should name the scrolling region from the table caption', () => {
-    const region: HTMLElement | null = element.querySelector('[role="region"]');
+    const region: HTMLElement | null = element.querySelector('section[hlmTableContainer]');
     const caption: HTMLElement | null = element.querySelector('caption');
 
     expect(region?.getAttribute('aria-labelledby')).toBe(caption?.id);

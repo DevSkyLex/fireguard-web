@@ -13,8 +13,7 @@ import type {
 import { InterventionDatabaseService } from './intervention-database.service';
 import { InterventionOutboxRepository } from './intervention-outbox.repository';
 import { InterventionWorkspaceRepository } from './intervention-workspace.repository';
-import type { InterventionScopedRecord } from './models';
-import type { InterventionWorkspaceSnapshot } from './models';
+import type { InterventionScopedRecord, InterventionWorkspaceSnapshot } from './models';
 
 /**
  * Service InterventionOfflineService

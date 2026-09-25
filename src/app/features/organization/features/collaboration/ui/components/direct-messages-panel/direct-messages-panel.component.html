@@ -102,13 +102,12 @@
           No conversations yet.
         </p>
       } @else if (filteredConversations().length === 0) {
-        <p
-          class="p-6 text-center text-sm text-muted-foreground"
-          role="status"
+        <output
+          class="block p-6 text-center text-sm text-muted-foreground"
           i18n="@@messages.panel.noResults"
         >
           No matching conversations.
-        </p>
+        </output>
       } @else {
         <ul aria-label="Conversations" i18n-aria-label="@@messages.panel.conversations">
           @for (conversation of filteredConversations(); track conversation.id) {

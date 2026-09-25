@@ -20,6 +20,7 @@ import type {
   InterventionFacilitiesTableQuery,
   InterventionEquipmentTableQuery,
   InterventionInspectionsTableQuery,
+  InterventionTableSource,
 } from '@features/organization/features/interventions/models';
 import { interventionLinkedResourcesStoreEvents } from './events';
 import type { InterventionLinkedResourcesState } from './models';
@@ -485,6 +486,20 @@ export const InterventionLinkedResourcesStore = signalStore(
           inspectionsGeneration: store.inspectionsGeneration() + 1,
         });
       }
+      /**
+       * Function loadCachedLinkedRows
+       * @description Re-evaluates only collections that had been read before switching offline.
+       * @access private
+       * @since 1.0.0
+       * @param {string | null} interventionId - Current intervention.
+       * @returns {void}
+       */
+      const loadCachedLinkedRows = (interventionId: string | null): void => {
+        if (!interventionId) return;
+        if (store.facilitiesCallState().status !== 'idle') loadFacilities(interventionId, 1);
+        if (store.equipmentCallState().status !== 'idle') loadEquipment(interventionId, 1);
+        if (store.inspectionsCallState().status !== 'idle') loadInspections(interventionId, 1);
+      };
       return {
         setContext,
         /** Keeps last available linked rows in memory; offline criteria are never evaluated locally. */
@@ -493,23 +508,24 @@ export const InterventionLinkedResourcesStore = signalStore(
           requestFacilities(null);
           requestEquipment(null);
           requestInspections(null);
+          let facilitiesSource: InterventionTableSource;
+          let equipmentSource: InterventionTableSource;
+          let inspectionsSource: InterventionTableSource;
+          if (online) {
+            facilitiesSource = store.facilitiesSource();
+            equipmentSource = store.equipmentSource();
+            inspectionsSource = store.inspectionsSource();
+          } else {
+            facilitiesSource = store.facilitiesCallState().data === null ? 'unavailable' : 'memory';
+            equipmentSource = store.equipmentCallState().data === null ? 'unavailable' : 'memory';
+            inspectionsSource =
+              store.inspectionsCallState().data === null ? 'unavailable' : 'memory';
+          }
           patchState(store, {
             online,
-            facilitiesSource: online
-              ? store.facilitiesSource()
-              : store.facilitiesCallState().data === null
-                ? 'unavailable'
-                : 'memory',
-            equipmentSource: online
-              ? store.equipmentSource()
-              : store.equipmentCallState().data === null
-                ? 'unavailable'
-                : 'memory',
-            inspectionsSource: online
-              ? store.inspectionsSource()
-              : store.inspectionsCallState().data === null
-                ? 'unavailable'
-                : 'memory',
+            facilitiesSource,
+            equipmentSource,
+            inspectionsSource,
             facilitiesGeneration: store.facilitiesGeneration() + 1,
             equipmentGeneration: store.equipmentGeneration() + 1,
             inspectionsGeneration: store.inspectionsGeneration() + 1,
@@ -517,12 +533,7 @@ export const InterventionLinkedResourcesStore = signalStore(
             equipmentInvalidated: store.equipmentCallState().status !== 'idle',
             inspectionsInvalidated: store.inspectionsCallState().status !== 'idle',
           });
-          const id = store.loadedForInterventionId();
-          if (!online && id) {
-            if (store.facilitiesCallState().status !== 'idle') loadFacilities(id, 1);
-            if (store.equipmentCallState().status !== 'idle') loadEquipment(id, 1);
-            if (store.inspectionsCallState().status !== 'idle') loadInspections(id, 1);
-          }
+          if (!online) loadCachedLinkedRows(store.loadedForInterventionId());
         },
         /**
          * Method deactivate

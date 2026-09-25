@@ -16,8 +16,6 @@ import type {
   PlanningCatalogueKind,
   PlanningCatalogueState,
   PlanningCatalogueRequest,
-} from '@features/organization/features/interventions/models';
-import type {
   InterventionRecurrenceFormTarget,
   InterventionRecurrenceFormValues,
   InterventionRecurrenceOutput,

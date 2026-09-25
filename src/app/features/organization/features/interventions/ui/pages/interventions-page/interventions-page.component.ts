@@ -87,8 +87,8 @@ import {
   type MemberAvatar,
   type MemberSelectOption,
   type SelectOption,
+  type InterventionBoardCardViewModel,
 } from '@features/organization/features/interventions/models';
-import type { InterventionBoardCardViewModel } from '@features/organization/features/interventions/models';
 import {
   INTERVENTION_DUE_WINDOW_OPTIONS,
   INTERVENTION_FILTER_FIELDS,
@@ -106,8 +106,8 @@ import {
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
 import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
-import { buildInterventionDuplicatePrefill } from '@features/organization/features/interventions/utils';
 import {
+  buildInterventionDuplicatePrefill,
   buildInterventionExportOptions,
   buildInterventionListOptions,
   isInterventionBoardMoveAllowed,
@@ -1415,9 +1415,10 @@ export class InterventionsPage {
       const state = this.store.mutationCallStates()[id];
       if (state?.status !== 'error') return [];
       const name = this.batchNames()[id] ?? this.assignRequest()?.interventionName ?? id;
-      return [
-        `${name}: ${state.error?.message ?? $localize`:@@intervention.assign.failed:Assignment could not be saved.`}`,
-      ];
+      const message =
+        state.error?.message ??
+        $localize`:@@intervention.assign.failed:Assignment could not be saved.`;
+      return [`${name}: ${message}`];
     }),
   );
 
@@ -1709,15 +1710,20 @@ export class InterventionsPage {
       : null;
   });
 
-  /** The applied `dueRange`'s bound pair, only while its operator is `between`. */
+  /**
+   * Property dueRangeBetween
+   * @readonly
+   * @description The applied deadline bounds when the operator is `between`.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<[Date, Date] | undefined>}
+   */
   protected readonly dueRangeBetween: Signal<[Date, Date] | undefined> = computed<
     [Date, Date] | undefined
   >(() => {
     const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
 
-    return dueRange && dueRange.operator === 'between'
-      ? [dueRange.after, dueRange.before]
-      : undefined;
+    return dueRange?.operator === 'between' ? [dueRange.after, dueRange.before] : undefined;
   });
 
   /**
@@ -1762,7 +1768,12 @@ export class InterventionsPage {
   });
 
   /**
-   * * The applied `plannedStartRange`'s bound pair, only while its operator is `between`. See {@link dueRangeBetween}.
+   * Property plannedStartRangeBetween
+   * @readonly
+   * @description The applied planned-start bounds when the operator is `between`.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<[Date, Date] | undefined>}
    */
   protected readonly plannedStartRangeBetween: Signal<[Date, Date] | undefined> = computed<
     [Date, Date] | undefined
@@ -1770,7 +1781,7 @@ export class InterventionsPage {
     const plannedStartRange: InterventionPlannedStartRangeFilter | null =
       this.filters().plannedStartRange;
 
-    return plannedStartRange && plannedStartRange.operator === 'between'
+    return plannedStartRange?.operator === 'between'
       ? [plannedStartRange.after, plannedStartRange.before]
       : undefined;
   });
@@ -2884,8 +2895,9 @@ export class InterventionsPage {
     if (current === null) return;
 
     const values: unknown[] = Array.isArray(current) ? [...current] : [current];
-    const carried: unknown =
-      operator === 'isAnyOf' ? values : values[1] ? null : (values[0] ?? null);
+    let carried: unknown = values[0] ?? null;
+    if (operator === 'isAnyOf') carried = values;
+    else if (values[1]) carried = null;
 
     this.applyFilter({ [key]: carried } as Partial<InterventionListFilters>);
   }

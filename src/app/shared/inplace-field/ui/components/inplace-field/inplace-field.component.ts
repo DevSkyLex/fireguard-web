@@ -337,7 +337,7 @@ export class InplaceField {
    * @since 1.0.0
    * @type {string}
    */
-  public readonly editorId: string = `inplace-field-editor-${(instanceCount += 1)}`;
+  public readonly editorId: string;
 
   /**
    * Property labelId
@@ -352,7 +352,7 @@ export class InplaceField {
    *
    * @type {string}
    */
-  public readonly labelId: string = `inplace-field-label-${instanceCount}`;
+  public readonly labelId: string;
 
   /**
    * Property trigger
@@ -379,6 +379,9 @@ export class InplaceField {
 
   //#region Constructor
   constructor() {
+    instanceCount += 1;
+    this.editorId = `inplace-field-editor-${instanceCount}`;
+    this.labelId = `inplace-field-label-${instanceCount}`;
     let wasEditing: boolean = false;
 
     effect((): void => {

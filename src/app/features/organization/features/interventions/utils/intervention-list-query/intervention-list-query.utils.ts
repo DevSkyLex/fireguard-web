@@ -1,5 +1,6 @@
 import type {
   InterventionDueRangeFilter,
+  InterventionEnumFilterValue,
   InterventionDueWindow,
   InterventionExportOptions,
   InterventionListFilters,
@@ -79,7 +80,7 @@ export function resolveDueWindow(
  *
  * @since 8.3.0
  */
-function hasEnumValue<T>(value: T | readonly T[] | null): value is T | readonly T[] {
+function hasEnumValue<T>(value: InterventionEnumFilterValue<T>): value is T | readonly T[] {
   return Array.isArray(value) ? value.length > 0 : value !== null;
 }
 
@@ -113,11 +114,30 @@ export function buildInterventionListOptions(
   now: Date,
   memberIri: string | null = null,
 ): InterventionListOptions {
+  return {
+    order: { [sort.field]: sort.direction },
+    ...(search ? { name: search } : {}),
+    ...enumFilterOptions(filters, memberIri),
+    ...dueFilterOptions(filters, now),
+    ...plannedStartFilterOptions(filters),
+  };
+}
+
+/**
+ * Function enumFilterOptions
+ * @description Omits cleared scalar and multi-value filters from the API request.
+ * @param {InterventionListFilters} filters - Active narrowing.
+ * @param {string | null} memberIri - Signed-in member for the Mine filter.
+ * @returns {Partial<InterventionListOptions>} Active enum and IRI filters.
+ */
+function enumFilterOptions(
+  filters: InterventionListFilters,
+  memberIri: string | null,
+): Partial<InterventionListOptions> {
   const options: {
     -readonly [Key in keyof InterventionListOptions]: InterventionListOptions[Key];
-  } = { order: { [sort.field]: sort.direction } };
+  } = {};
 
-  if (search) options.name = search;
   if (hasEnumValue(filters.status)) options.status = filters.status;
   if (hasEnumValue(filters.type)) options.type = filters.type;
   if (hasEnumValue(filters.priority)) options.priority = filters.priority;
@@ -126,6 +146,23 @@ export function buildInterventionListOptions(
   if (hasEnumValue(filters.label)) options.label = filters.label;
   if (filters.mine && memberIri) options.member = memberIri;
 
+  return options;
+}
+
+/**
+ * Function dueFilterOptions
+ * @description Combines named and explicit due windows using the most restrictive bounds.
+ * @param {InterventionListFilters} filters - Active narrowing.
+ * @param {Date} now - Anchor for named windows.
+ * @returns {Partial<InterventionListOptions>} Due-date query fragment.
+ */
+function dueFilterOptions(
+  filters: InterventionListFilters,
+  now: Date,
+): Partial<InterventionListOptions> {
+  const options: {
+    -readonly [Key in keyof InterventionListOptions]: InterventionListOptions[Key];
+  } = {};
   if (filters.dueWindow) {
     const bounds = resolveDueWindow(filters.dueWindow, now);
     if (bounds.due) options.due = bounds.due;
@@ -143,6 +180,21 @@ export function buildInterventionListOptions(
     }
   }
 
+  return options;
+}
+
+/**
+ * Function plannedStartFilterOptions
+ * @description Serializes the independent planned-start range into API bounds.
+ * @param {InterventionListFilters} filters - Active narrowing.
+ * @returns {Partial<InterventionListOptions>} Planned-start query fragment.
+ */
+function plannedStartFilterOptions(
+  filters: InterventionListFilters,
+): Partial<InterventionListOptions> {
+  const options: {
+    -readonly [Key in keyof InterventionListOptions]: InterventionListOptions[Key];
+  } = {};
   if (filters.plannedStartRange) {
     const range: InterventionPlannedStartRangeFilter = filters.plannedStartRange;
     if (range.operator === 'greaterThan' || range.operator === 'between') {
@@ -279,7 +331,7 @@ function parseOption<T extends string>(
 function parseOptionSet<T extends string>(
   raw: string | undefined,
   options: readonly SelectOption<T>[],
-): T | readonly T[] | null {
+): InterventionEnumFilterValue<T> {
   if (!raw) return null;
 
   const values: T[] = raw
@@ -348,7 +400,7 @@ function lastIriSegment(iri: string | null): string | null {
  * @since 8.3.0
  */
 function serializeEnumFilter<T>(
-  value: T | readonly T[] | null,
+  value: InterventionEnumFilterValue<T>,
   toRaw: (item: T) => string | null,
 ): string | null {
   if (value === null) return null;

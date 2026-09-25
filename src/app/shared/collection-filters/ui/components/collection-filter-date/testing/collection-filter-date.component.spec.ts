@@ -141,14 +141,14 @@ describe('CollectionFilterDate', () => {
       await fixture.whenStable();
 
       expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
-      expect(document.querySelectorAll(`[id="${valueId}"]`).length).toBe(1);
+      expect(document.querySelectorAll(`[id="${valueId}"]`)).toHaveLength(1);
       expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Due date');
     },
   );
 
   it('should read as the field label while no value is set', () => {
     expect(trigger().textContent).toContain('Due date');
-    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]').length).toBe(0);
+    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]')).toHaveLength(0);
   });
 
   it('should render the picked date in the value pastille', async () => {

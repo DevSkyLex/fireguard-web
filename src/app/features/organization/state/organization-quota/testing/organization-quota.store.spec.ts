@@ -66,7 +66,7 @@ describe('OrganizationQuotaStore', () => {
     await flushEffects();
 
     expect(organizationService.getQuota).toHaveBeenCalledWith('org-1');
-    expect(store.items().length).toBe(2);
+    expect(store.items()).toHaveLength(2);
     expect(store.isLoadingQuota()).toBe(false);
   });
 
@@ -85,7 +85,7 @@ describe('OrganizationQuotaStore', () => {
   it('should clear the quota usage when the active organization is cleared', async () => {
     selectedOrganizationId.set('org-1');
     await flushEffects();
-    expect(store.items().length).toBe(2);
+    expect(store.items()).toHaveLength(2);
 
     selectedOrganizationId.set(null);
     await flushEffects();

@@ -29,8 +29,8 @@ import type {
   EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
-import type { InterventionTableSource } from '@features/organization/features/interventions/models';
 import {
+  type InterventionTableSource,
   resolveInterventionTag,
   type InterventionEquipmentTableQuery,
 } from '@features/organization/features/interventions/models';

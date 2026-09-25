@@ -4,8 +4,6 @@ import type {
   InspectionResult,
   InspectionStatus,
   InspectorType,
-} from '@features/organization/features/inspections/models';
-import type {
   NonConformitySeverity,
   NonConformityStatus,
 } from '@features/organization/features/inspections/models';
@@ -69,24 +67,13 @@ export type OrganizationDashboardTrendSeriesPoint = Readonly<
 >;
 
 /**
- * Type OrganizationDashboardTrendComparisonScalarValue
- *
- * @description
- * Numeric scalar value supported inside one trend
- * comparison summary map.
- */
-export type OrganizationDashboardTrendComparisonScalarValue = number;
-
-/**
  * Type OrganizationDashboardTrendComparisonScalarMap
  *
  * @description
  * Named numeric values returned inside the trend
  * comparison block.
  */
-export type OrganizationDashboardTrendComparisonScalarMap = Readonly<
-  Record<string, OrganizationDashboardTrendComparisonScalarValue>
->;
+export type OrganizationDashboardTrendComparisonScalarMap = Readonly<Record<string, number>>;
 
 /**
  * Type OrganizationDashboardTrendComparisonValue

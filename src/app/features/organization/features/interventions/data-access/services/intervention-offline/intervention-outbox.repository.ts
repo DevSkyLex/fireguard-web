@@ -558,8 +558,7 @@ export class InterventionOutboxRepository {
     await this.database.ensureOwnerBound();
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
     if (this.database.currentOwnerId() !== owner) return;
-    if (!operation?.workloadAssessment || operation.workloadAssessment.confirmationToken !== token)
-      return;
+    if (operation?.workloadAssessment?.confirmationToken !== token) return;
     if (!['work-item.create', 'work-item.update', 'intervention.update'].includes(operation.type))
       return;
     await this.database.put('outbox', id, {

@@ -80,7 +80,7 @@ describe('ImportUploadForm', () => {
     submitForm();
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(0);
+    expect(submitted).toHaveLength(0);
     expect(root().textContent).toContain('Choose what the file imports.');
   });
 
@@ -92,7 +92,7 @@ describe('ImportUploadForm', () => {
     submitForm();
     await fixture.whenStable();
 
-    expect(submitted.length).toBe(0);
+    expect(submitted).toHaveLength(0);
     expect(byTestId('import-upload-file-error')?.textContent).toContain(
       'Choose a CSV file to upload.',
     );

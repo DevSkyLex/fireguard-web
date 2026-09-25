@@ -260,16 +260,25 @@ export class InterventionOperationsSheet {
     if ('reviewNote' in payload && payload.reviewNote) return payload.reviewNote;
     if ('skipReason' in payload && payload.skipReason) return payload.skipReason;
     if ('status' in payload && payload.status)
-      return resolveInterventionTag(
-        operation.type === 'work-item.update'
-          ? 'workItemStatus'
-          : operation.type === 'change.update'
-            ? 'changeStatus'
-            : 'status',
-        payload.status,
-      ).label;
+      return this.statusPreviewLabel(operation, payload.status);
     if ('description' in payload && payload.description) return payload.description;
     return this.labels[operation.type];
+  }
+
+  /**
+   * Method statusPreviewLabel
+   * @description Resolves the status catalog owned by the queued operation.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperation} operation - Queued entry.
+   * @param {string} status - Status carried by its payload.
+   * @returns {string} Localized catalog label.
+   */
+  private statusPreviewLabel(operation: InterventionOutboxOperation, status: string): string {
+    let kind: 'workItemStatus' | 'changeStatus' | 'status' = 'status';
+    if (operation.type === 'work-item.update') kind = 'workItemStatus';
+    else if (operation.type === 'change.update') kind = 'changeStatus';
+    return resolveInterventionTag(kind, status).label;
   }
 
   /** Method revision

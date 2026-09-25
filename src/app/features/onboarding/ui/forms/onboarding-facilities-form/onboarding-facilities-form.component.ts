@@ -428,15 +428,14 @@ export class OnboardingFacilitiesForm {
    * @type {FieldTree<OnboardingFacilityDraft>}
    */
   protected readonly draftForm: FieldTree<OnboardingFacilityDraft> = form(this.model, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     required(path.address, {
       message: $localize`:@@onboarding.facilitiesForm.addressRequired:Select a suggested address.`,
     });
     validate(path.address, ({ value }) => {
       const selected: SetupFacilityAddressMatch | null = this.selectedAddress();
       return value() &&
-        (!selected ||
-          selected.displayName !== value() ||
+        (selected?.displayName !== value() ||
           selected.city !== this.model().city ||
           (selected.country ?? '') !== this.model().country ||
           (selected.postalCode ?? '') !== this.model().postalCode)
@@ -562,7 +561,7 @@ export class OnboardingFacilitiesForm {
     const type: SetupFacilityType = draft.type;
     const name: string = draft.name.trim();
     const match: SetupFacilityAddressMatch | null = this.selectedAddress();
-    if (!match || match.displayName !== draft.address) return;
+    if (match?.displayName !== draft.address) return;
     this.stagedAddresses.set(match.displayName, match);
     this.staged.update((rows) => [
       ...rows,

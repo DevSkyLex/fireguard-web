@@ -241,19 +241,16 @@
                 </div>
               </div>
             } @else if (billingStore.checkoutConfirmed()) {
-              <div
-                hlmAlert
-                role="status"
-                aria-live="polite"
-                data-testid="org-settings-checkout-confirmed"
-              >
+              <div hlmAlert role="none" data-testid="org-settings-checkout-confirmed">
                 <ng-icon name="lucideCircleCheck" aria-hidden="true" />
-                <p hlmAlertTitle i18n="@@org.settings.subscription.confirmedTitle">
-                  Plan confirmed
-                </p>
-                <p hlmAlertDescription i18n="@@org.settings.subscription.confirmedDescription">
-                  Your subscription is active.
-                </p>
+                <output class="col-start-2 flex flex-col gap-0.5">
+                  <span hlmAlertTitle i18n="@@org.settings.subscription.confirmedTitle">
+                    Plan confirmed
+                  </span>
+                  <span hlmAlertDescription i18n="@@org.settings.subscription.confirmedDescription">
+                    Your subscription is active.
+                  </span>
+                </output>
               </div>
             }
             <div hlmCard>

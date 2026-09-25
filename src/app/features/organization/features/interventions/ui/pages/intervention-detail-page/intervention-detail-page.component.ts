@@ -2231,89 +2231,9 @@ export class InterventionDetailPage {
     computed<InterventionCommandAction | null>(() => {
       const intervention: InterventionOutput | null = this.store.intervention();
       if (!intervention) return null;
-
-      if (this.phase() === 'prepare') {
-        if (!this.canPlan() || intervention.status !== 'draft') return null;
-
-        const missing = this.readinessItems().filter(
-          (item) => item.id !== 'workItems' && !item.done,
-        );
-        const ready: boolean = missing.length === 0;
-
-        return {
-          label: $localize`:@@intervention.cta.plan:Plan intervention`,
-          icon: 'lucideCalendarCheck',
-          disabled: !ready,
-          disabledReason: ready ? null : missing.map((item) => item.label).join(' · '),
-          loading: this.store.saving(),
-        };
-      }
-
-      if (this.phase() === 'execute') {
-        if (!this.canExecute()) return null;
-
-        if (this.commandTransitionTarget() === 'in_progress')
-          return {
-            label: $localize`:@@intervention.cta.startWork:Start field work`,
-            icon: 'lucidePlay',
-            disabled: false,
-            disabledReason: null,
-            loading: this.store.saving(),
-          };
-
-        const total: number = this.store.workItems().length;
-        const remaining: number = this.remainingWorkItems();
-
-        if (total === 0)
-          return {
-            label: $localize`:@@intervention.cta.recordWork:Record field work`,
-            icon: 'lucideListChecks',
-            disabled: false,
-            disabledReason: null,
-            loading: this.store.saving(),
-          };
-
-        if (remaining > 0)
-          return {
-            label:
-              remaining === 1
-                ? $localize`:@@intervention.cta.completeOne:Complete 1 remaining item`
-                : $localize`:@@intervention.cta.completeMany:Complete ${remaining}:count: remaining items`,
-            icon: 'lucideListChecks',
-            disabled: false,
-            disabledReason: null,
-            loading: this.store.saving(),
-          };
-
-        return {
-          label: $localize`:@@intervention.cta.submit:Submit for review`,
-          icon: 'lucideSend',
-          disabled: !this.canSubmit(),
-          disabledReason: this.canSubmit()
-            ? null
-            : $localize`:@@intervention.cta.submissionUnavailable:Submission is not currently available. Check your access and the intervention requirements.`,
-          loading: this.store.saving(),
-        };
-      }
-
-      if (!this.canPublish() || intervention.status !== 'submitted') return null;
-
-      const blockers: number = this.store.blockerCount();
-      const ready: boolean = this.online() && blockers === 0;
-
-      return {
-        label: $localize`:@@intervention.cta.publish:Publish intervention`,
-        icon: 'lucideCircleCheckBig',
-        disabled: !ready,
-        disabledReason: ready
-          ? null
-          : !this.online()
-            ? $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`
-            : blockers === 1
-              ? $localize`:@@intervention.cta.reasonBlockersOne:1 blocking issue to clear.`
-              : $localize`:@@intervention.cta.reasonBlockersMany:${blockers}:count: blocking issues to clear.`,
-        loading: this.store.saving() || this.publishing(),
-      };
+      if (this.phase() === 'prepare') return this.prepareCommandAction(intervention);
+      if (this.phase() === 'execute') return this.executeCommandAction();
+      return this.publishCommandAction(intervention);
     });
 
   /**
@@ -2382,6 +2302,106 @@ export class InterventionDetailPage {
   }
 
   //#region Methods
+  /**
+   * Method prepareCommandAction
+   * @description Resolves the planning action from permissions and readiness.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutput} intervention - Current intervention.
+   * @returns {InterventionCommandAction | null} Available action.
+   */
+  private prepareCommandAction(intervention: InterventionOutput): InterventionCommandAction | null {
+    if (!this.canPlan() || intervention.status !== 'draft') return null;
+    const missing = this.readinessItems().filter((item) => item.id !== 'workItems' && !item.done);
+    const ready: boolean = missing.length === 0;
+    return {
+      label: $localize`:@@intervention.cta.plan:Plan intervention`,
+      icon: 'lucideCalendarCheck',
+      disabled: !ready,
+      disabledReason: ready ? null : missing.map((item) => item.label).join(' · '),
+      loading: this.store.saving(),
+    };
+  }
+
+  /**
+   * Method executeCommandAction
+   * @description Chooses the next field-work action from transition, remaining tasks and access.
+   * @access private
+   * @since 1.0.0
+   * @returns {InterventionCommandAction | null} Available action.
+   */
+  private executeCommandAction(): InterventionCommandAction | null {
+    if (!this.canExecute()) return null;
+    if (this.commandTransitionTarget() === 'in_progress')
+      return {
+        label: $localize`:@@intervention.cta.startWork:Start field work`,
+        icon: 'lucidePlay',
+        disabled: false,
+        disabledReason: null,
+        loading: this.store.saving(),
+      };
+    const total: number = this.store.workItems().length;
+    const remaining: number = this.remainingWorkItems();
+    if (total === 0)
+      return {
+        label: $localize`:@@intervention.cta.recordWork:Record field work`,
+        icon: 'lucideListChecks',
+        disabled: false,
+        disabledReason: null,
+        loading: this.store.saving(),
+      };
+    if (remaining > 0)
+      return {
+        label:
+          remaining === 1
+            ? $localize`:@@intervention.cta.completeOne:Complete 1 remaining item`
+            : $localize`:@@intervention.cta.completeMany:Complete ${remaining}:count: remaining items`,
+        icon: 'lucideListChecks',
+        disabled: false,
+        disabledReason: null,
+        loading: this.store.saving(),
+      };
+    return {
+      label: $localize`:@@intervention.cta.submit:Submit for review`,
+      icon: 'lucideSend',
+      disabled: !this.canSubmit(),
+      disabledReason: this.canSubmit()
+        ? null
+        : $localize`:@@intervention.cta.submissionUnavailable:Submission is not currently available. Check your access and the intervention requirements.`,
+      loading: this.store.saving(),
+    };
+  }
+
+  /**
+   * Method publishCommandAction
+   * @description Resolves publication blockers without changing the submitted record.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutput} intervention - Current intervention.
+   * @returns {InterventionCommandAction | null} Available action.
+   */
+  private publishCommandAction(intervention: InterventionOutput): InterventionCommandAction | null {
+    if (!this.canPublish() || intervention.status !== 'submitted') return null;
+    const blockers: number = this.store.blockerCount();
+    const online: boolean = this.online();
+    const ready: boolean = online && blockers === 0;
+    let disabledReason: string | null = null;
+    if (!online) {
+      disabledReason = $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`;
+    } else if (blockers === 1) {
+      disabledReason = $localize`:@@intervention.cta.reasonBlockersOne:1 blocking issue to clear.`;
+    } else if (blockers > 1) {
+      disabledReason = $localize`:@@intervention.cta.reasonBlockersMany:${blockers}:count: blocking issues to clear.`;
+    }
+    return {
+      label: $localize`:@@intervention.cta.publish:Publish intervention`,
+      icon: 'lucideCircleCheckBig',
+      disabled: !ready,
+      disabledReason: ready ? null : disabledReason,
+      loading: this.store.saving() || this.publishing(),
+    };
+  }
+
   /**
    * Method onEditTargetChanged
    *
@@ -3667,8 +3687,8 @@ export class InterventionDetailPage {
     const preferred: HTMLElement | undefined = this.propertiesRailVisible() ? desktop : mobile;
     const fallback: HTMLElement | undefined = this.propertiesRailVisible() ? mobile : desktop;
 
-    const preferredHidden: boolean = preferred !== undefined && preferred.offsetParent === null;
-    const fallbackVisible: boolean = fallback !== undefined && fallback.offsetParent !== null;
+    const preferredHidden: boolean = preferred?.offsetParent === null;
+    const fallbackVisible: boolean = fallback?.offsetParent != null;
 
     this.scrollToAndFocus(preferredHidden && fallbackVisible ? fallback : (preferred ?? fallback));
   }

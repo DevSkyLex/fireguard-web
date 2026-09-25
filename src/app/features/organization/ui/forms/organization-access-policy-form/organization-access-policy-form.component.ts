@@ -120,7 +120,7 @@ export class OrganizationAccessPolicyForm {
   protected readonly policyForm: FieldTree<{ mode: OrganizationJoinMode; roleId: string }> = form(
     this.model,
     (path) => {
-      disabled(path, () => this.pending());
+      disabled(path, { when: () => this.pending() });
       required(path.roleId, {
         when: ({ valueOf }) => valueOf(path.mode) === 'automatic',
         message: $localize`:@@org.access.roleRequired:Choose an eligible role.`,

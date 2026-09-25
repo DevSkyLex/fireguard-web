@@ -102,21 +102,25 @@ export class OrganizationService extends HydraApiService {
     const granularity: string | undefined =
       includeGranularity && 'granularity' in options ? options.granularity : undefined;
 
-    const params: NonNullable<RequestOptions['params']> = {
-      ...(options.from ? { from: options.from } : {}),
-      ...(options.to ? { to: options.to } : {}),
-      ...(options.compare !== undefined ? { compare: options.compare } : {}),
-      ...(options.timezone ? { timezone: options.timezone } : {}),
-      ...(facilityType ? { facilityType } : {}),
-      ...(equipmentType ? { equipmentType } : {}),
-      ...(equipmentStatus ? { equipmentStatus } : {}),
-      ...(inspectionStatus ? { inspectionStatus } : {}),
-      ...(inspectionResult ? { inspectionResult } : {}),
-      ...(inspectorType ? { inspectorType } : {}),
-      ...(nonConformityStatus ? { nonConformityStatus } : {}),
-      ...(nonConformitySeverity ? { nonConformitySeverity } : {}),
-      ...(granularity ? { granularity } : {}),
+    const candidates: Record<string, string | boolean | undefined> = {
+      from: options.from,
+      to: options.to,
+      compare: options.compare,
+      timezone: options.timezone,
+      facilityType,
+      equipmentType,
+      equipmentStatus,
+      inspectionStatus,
+      inspectionResult,
+      inspectorType,
+      nonConformityStatus,
+      nonConformitySeverity,
+      granularity,
     };
+    const params: NonNullable<RequestOptions['params']> = {};
+    for (const [key, value] of Object.entries(candidates)) {
+      if (value != null && value !== '') params[key] = value;
+    }
 
     return Object.keys(params).length > 0 ? { params } : undefined;
   }

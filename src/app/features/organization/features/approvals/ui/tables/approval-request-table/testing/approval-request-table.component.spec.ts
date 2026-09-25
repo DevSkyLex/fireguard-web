@@ -39,7 +39,7 @@ describe('ApprovalRequestTable', () => {
     await fixture.whenStable();
 
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelectorAll('[data-testid="approval-request-table-row"]').length).toBe(1);
+    expect(element.querySelectorAll('[data-testid="approval-request-table-row"]')).toHaveLength(1);
     expect(element.querySelector('[data-testid="approval-request-table-approve"]')).toBeNull();
   });
 
@@ -133,7 +133,7 @@ describe('ApprovalRequestTable', () => {
     // inbox to skeletons on page 2 loses the reader's place for nothing.
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('[data-testid="approval-request-table-row"]')).not.toBeNull();
-    expect(element.querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(element.querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should render the same request a second time as a card, under the row testid plus -card', async () => {
@@ -143,10 +143,10 @@ describe('ApprovalRequestTable', () => {
     // Both layouts stay mounted — a container query, not an `@if`, picks the
     // visible one — so a card is a second render of the same row.
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelectorAll('[data-testid="approval-request-table-row-card"]').length).toBe(
-      2,
-    );
-    expect(element.querySelectorAll('[data-testid="approval-request-table-row"]').length).toBe(2);
+    expect(
+      element.querySelectorAll('[data-testid="approval-request-table-row-card"]'),
+    ).toHaveLength(2);
+    expect(element.querySelectorAll('[data-testid="approval-request-table-row"]')).toHaveLength(2);
   });
 
   it('should link the subject for a known action type and render a bare reference otherwise', async () => {

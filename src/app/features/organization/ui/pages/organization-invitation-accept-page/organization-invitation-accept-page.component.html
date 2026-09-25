@@ -86,9 +86,11 @@
       "
     />
   } @else if (store.isAccepted()) {
-    <div hlmAlert role="status" data-testid="organization-invitation-accept-success">
+    <div hlmAlert role="none" data-testid="organization-invitation-accept-success">
       <hlm-spinner />
-      <p hlmAlertTitle i18n="@@org.invitationAccept.opening">Opening your workspace…</p>
+      <output hlmAlertTitle class="block" i18n="@@org.invitationAccept.opening"
+        >Opening your workspace…</output
+      >
     </div>
   } @else if (store.preview(); as preview) {
     @if (preview.status === 'pending') {

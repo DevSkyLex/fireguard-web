@@ -120,7 +120,7 @@ export function formatDashboardTrendBucket(
 ): string {
   if (!bucket) return '';
 
-  const weekMatch = bucket.match(/^(\d{4})-W(\d{2})$/);
+  const weekMatch = /^(\d{4})-W(\d{2})$/.exec(bucket);
 
   if (weekMatch) {
     const year = Number.parseInt(weekMatch[1], 10);
@@ -142,8 +142,8 @@ export function formatDashboardTrendBucket(
     return `${fromLabel} - ${toLabel}`;
   }
 
-  const monthMatch = bucket.match(/^(\d{4})-(\d{2})$/);
-  const dayMatch = bucket.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const monthMatch = /^(\d{4})-(\d{2})$/.exec(bucket);
+  const dayMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(bucket);
 
   let date: Date;
 

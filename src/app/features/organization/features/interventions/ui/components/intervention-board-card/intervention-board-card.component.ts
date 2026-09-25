@@ -18,8 +18,8 @@ import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import {
   resolveInterventionTag,
   type InterventionStatus,
+  type InterventionBoardCardViewModel,
 } from '@features/organization/features/interventions/models';
-import type { InterventionBoardCardViewModel } from '@features/organization/features/interventions/models';
 import { resolveInterventionBoardMoveReason } from '@features/organization/features/interventions/utils';
 import { GateReasonDirective } from '@shared/gate-reason';
 import {

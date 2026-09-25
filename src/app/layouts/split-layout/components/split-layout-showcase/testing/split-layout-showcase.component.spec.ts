@@ -70,7 +70,7 @@ describe('SplitLayoutShowcase', () => {
       (preview: HTMLImageElement): string => preview.getAttribute('src') ?? '',
     );
 
-    expect(previews.length).toBe(4);
+    expect(previews).toHaveLength(4);
     expect(sources).toEqual([
       'auth-showcase/dashboard-light.png',
       'auth-showcase/dashboard-dark.png',

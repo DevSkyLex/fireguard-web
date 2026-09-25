@@ -122,7 +122,14 @@ export function buildOrganizationMobileNavigation(
       .filter((link) => link.id === id)
       .map((link) =>
         link.id === 'dashboard'
-          ? Object.assign({}, link, { label: $localize`:@@org.mobileNav.home:Home` })
+          ? {
+              id: link.id,
+              label: $localize`:@@org.mobileNav.home:Home`,
+              icon: link.icon,
+              route: link.route,
+              counterKey: link.counterKey,
+              exact: link.exact,
+            }
           : link,
       ),
   );

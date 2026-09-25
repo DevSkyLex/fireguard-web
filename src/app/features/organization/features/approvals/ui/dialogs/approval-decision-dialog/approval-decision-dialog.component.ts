@@ -268,13 +268,13 @@ export class ApprovalDecisionDialog {
    * @since 1.1.0
    * @type {Signal<string>}
    */
-  protected readonly title: Signal<string> = computed<string>(() =>
-    this.target()?.mode === 'withdraw'
-      ? $localize`:@@approvals.decide.withdrawTitle:Withdraw your approval request?`
-      : this.target()?.mode === 'reject'
-        ? $localize`:@@approvals.decide.rejectTitle:Reject approval request?`
-        : $localize`:@@approvals.decide.approveTitle:Approve approval request?`,
-  );
+  protected readonly title: Signal<string> = computed<string>(() => {
+    if (this.target()?.mode === 'withdraw')
+      return $localize`:@@approvals.decide.withdrawTitle:Withdraw your approval request?`;
+    if (this.target()?.mode === 'reject')
+      return $localize`:@@approvals.decide.rejectTitle:Reject approval request?`;
+    return $localize`:@@approvals.decide.approveTitle:Approve approval request?`;
+  });
 
   /**
    * Property description
@@ -284,13 +284,13 @@ export class ApprovalDecisionDialog {
    * @since 1.1.0
    * @type {Signal<string>}
    */
-  protected readonly description: Signal<string> = computed<string>(() =>
-    this.target()?.mode === 'withdraw'
-      ? $localize`:@@approvals.decide.withdrawMessage:Your request will be closed without executing the action. The reason will remain in its history. This cannot be undone.`
-      : this.target()?.mode === 'reject'
-        ? $localize`:@@approvals.decide.rejectMessage:The gated action will never run. This cannot be undone.`
-        : $localize`:@@approvals.decide.approveMessage:Approving executes the gated action immediately — it does not queue for later. This cannot be undone.`,
-  );
+  protected readonly description: Signal<string> = computed<string>(() => {
+    if (this.target()?.mode === 'withdraw')
+      return $localize`:@@approvals.decide.withdrawMessage:Your request will be closed without executing the action. The reason will remain in its history. This cannot be undone.`;
+    if (this.target()?.mode === 'reject')
+      return $localize`:@@approvals.decide.rejectMessage:The gated action will never run. This cannot be undone.`;
+    return $localize`:@@approvals.decide.approveMessage:Approving executes the gated action immediately — it does not queue for later. This cannot be undone.`;
+  });
 
   /**
    * Property acceptLabel
@@ -300,13 +300,12 @@ export class ApprovalDecisionDialog {
    * @since 1.1.0
    * @type {Signal<string>}
    */
-  protected readonly acceptLabel: Signal<string> = computed<string>(() =>
-    this.target()?.mode === 'withdraw'
-      ? $localize`:@@approvals.decide.withdrawAccept:Withdraw request`
-      : this.target()?.mode === 'reject'
-        ? $localize`:@@approvals.decide.rejectAccept:Reject`
-        : $localize`:@@approvals.decide.approveAccept:Approve`,
-  );
+  protected readonly acceptLabel: Signal<string> = computed<string>(() => {
+    if (this.target()?.mode === 'withdraw')
+      return $localize`:@@approvals.decide.withdrawAccept:Withdraw request`;
+    if (this.target()?.mode === 'reject') return $localize`:@@approvals.decide.rejectAccept:Reject`;
+    return $localize`:@@approvals.decide.approveAccept:Approve`;
+  });
   //#endregion
 
   //#region Methods

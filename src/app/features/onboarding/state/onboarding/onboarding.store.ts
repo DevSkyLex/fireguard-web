@@ -49,8 +49,8 @@ import {
   organizationMembershipEvents,
   myOrganizationsStoreEvents,
   organizationSettingsStoreEvents,
+  organizationInvitationAcceptStoreEvents,
 } from '@features/organization/setup';
-import { organizationInvitationAcceptStoreEvents } from '@features/organization/setup';
 import { onboardingStoreEvents } from './events';
 import type { OnboardingStoreState } from './models';
 

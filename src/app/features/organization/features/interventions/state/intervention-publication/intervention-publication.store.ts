@@ -174,6 +174,12 @@ export const InterventionPublicationStore = signalStore(
               checkedAt: store.tracking()?.checkedAt ?? Date.now(),
             }
           : { publicationId: null, status: unknown ? 'unknown' : 'failed', checkedAt: Date.now() };
+        let message = normalized.message;
+        if (id) {
+          message = $localize`:@@intervention.publication.observationInterrupted:The result is not confirmed. Check the status of the existing publication.`;
+        } else if (unknown) {
+          message = $localize`:@@intervention.publication.unknownResult:The publication result is unknown. Refresh the intervention before taking further action.`;
+        }
         patchState(store, {
           tracking,
           publicationId: id,
@@ -181,11 +187,7 @@ export const InterventionPublicationStore = signalStore(
           timedOut: tracking !== null && tracking.status !== 'failed',
           publishCallState: errorCallState({
             ...normalized,
-            message: id
-              ? $localize`:@@intervention.publication.observationInterrupted:The result is not confirmed. Check the status of the existing publication.`
-              : unknown
-                ? $localize`:@@intervention.publication.unknownResult:The publication result is unknown. Refresh the intervention before taking further action.`
-                : normalized.message,
+            message,
           }),
         });
         if (tracking) void persist(tracking);

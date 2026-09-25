@@ -602,8 +602,7 @@ export class ChannelsPanel {
     const all = this.channels.channelEntities();
     const source = this.channels.channelEntityMap()[channelId];
     if (
-      !source ||
-      source.organization.split('/').at(-1) !== this.organizationContext.selectedOrganizationId()
+      source?.organization.split('/').at(-1) !== this.organizationContext.selectedOrganizationId()
     )
       return false;
     if ((source.parent?.split('/').at(-1) ?? null) === parentId) return false;
@@ -612,8 +611,7 @@ export class ChannelsPanel {
     const visited = new Set<string>([channelId]);
     while (ancestorId !== null) {
       const ancestor = this.channels.channelEntityMap()[ancestorId];
-      if (!ancestor || ancestor.organization !== source.organization || visited.has(ancestorId))
-        return false;
+      if (ancestor?.organization !== source.organization || visited.has(ancestorId)) return false;
       visited.add(ancestorId);
       if (++depth > 2) return false;
       ancestorId = ancestor.parent?.split('/').at(-1) ?? null;
@@ -687,18 +685,22 @@ export class ChannelsPanel {
       point.x - (this.document.defaultView?.scrollX ?? 0),
       point.y - (this.document.defaultView?.scrollY ?? 0),
     );
-    const target = element?.closest('[data-channel-parent]');
-    const parentId = target ? target.getAttribute('data-channel-parent') || null : undefined;
+    const target = element?.closest<HTMLElement>('[data-channel-parent]');
+    const parentId = target ? target.dataset['channelParent'] || null : undefined;
     this.dropParentId.set(parentId);
-    this.moveStatus.set(
-      parentId === undefined
-        ? ''
-        : this.canMoveTo(event.source.data, parentId)
-          ? parentId === null
-            ? $localize`:@@channels.panel.dropRoot:Drop here to move to the top level`
-            : $localize`:@@channels.panel.dropInside:Drop here to move inside this channel`
-          : $localize`:@@channels.panel.dropBlocked:This channel cannot be moved here`,
-    );
+    if (parentId === undefined) {
+      this.moveStatus.set('');
+    } else if (!this.canMoveTo(event.source.data, parentId)) {
+      this.moveStatus.set(
+        $localize`:@@channels.panel.dropBlocked:This channel cannot be moved here`,
+      );
+    } else if (parentId === null) {
+      this.moveStatus.set($localize`:@@channels.panel.dropRoot:Drop here to move to the top level`);
+    } else {
+      this.moveStatus.set(
+        $localize`:@@channels.panel.dropInside:Drop here to move inside this channel`,
+      );
+    }
   }
 
   /**

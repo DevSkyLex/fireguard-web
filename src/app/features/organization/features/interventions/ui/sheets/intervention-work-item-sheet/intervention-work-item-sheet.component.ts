@@ -14,12 +14,10 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { PlanningCatalogueRequest } from '@features/organization/features/interventions/models';
 import type {
+  PlanningCatalogueRequest,
   PlanningCatalogueKind,
   PlanningCatalogueState,
-} from '@features/organization/features/interventions/models';
-import type {
   MemberSelectOption,
   SelectOption,
 } from '@features/organization/features/interventions/models';

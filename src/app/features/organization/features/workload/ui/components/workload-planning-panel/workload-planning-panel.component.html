@@ -55,9 +55,8 @@
               />
             </button>
           </h3>
-          <div
+          <section
             hlmCollapsibleContent
-            role="region"
             [attr.aria-labelledby]="'workload-planning-trigger-' + group.reason"
           >
             @if (expandedReason() === group.reason) {
@@ -159,7 +158,7 @@
                 </ul>
               </div>
             }
-          </div>
+          </section>
         </div>
       }
     </div>

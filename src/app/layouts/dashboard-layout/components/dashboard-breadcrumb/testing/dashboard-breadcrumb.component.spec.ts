@@ -108,7 +108,7 @@ describe('DashboardBreadcrumb', () => {
     await fixture.whenStable();
 
     expect(steps()).toEqual(['Settings']);
-    expect(fixture.nativeElement.querySelectorAll('a').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('a')).toHaveLength(1);
   });
 
   it('should truncate rather than wrap', () => {

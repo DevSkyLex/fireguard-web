@@ -32,8 +32,20 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmInput } from '@shared/ui/input';
 import { FacilityMapPickerDialog } from '../../dialogs/facility-map-picker-dialog';
 
-/** Parses a coordinate draft, returning `null` for a blank string and `NaN` for anything unparsable. */
-function parseCoordinate(value: string): number | null {
+/**
+ * Function parseOptionalNumber
+ *
+ * @description
+ * Parses a numeric draft, returning `null` for a blank string and `NaN` for anything unparsable.
+ * Coordinate and level-index bounds are validated by their respective fields.
+ *
+ * @access private
+ * @since 1.0.0
+ *
+ * @param {string} value - The editable numeric draft.
+ * @returns {number | null} Its numeric value, or `null` when blank.
+ */
+function parseOptionalNumber(value: string): number | null {
   const trimmed: string = value.trim();
 
   return trimmed === '' ? null : Number(trimmed);
@@ -41,13 +53,6 @@ function parseCoordinate(value: string): number | null {
 
 /** The stacking order's own bounds, mirroring the backend's `FacilityLevelIndex` value object. */
 const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
-
-/** Parses a level-index draft, returning `null` for a blank string and `NaN` for anything unparsable. */
-function parseLevelIndex(value: string): number | null {
-  const trimmed: string = value.trim();
-
-  return trimmed === '' ? null : Number(trimmed);
-}
 
 /**
  * Component FacilityInformationPanel
@@ -257,8 +262,8 @@ export class FacilityInformationPanel {
    * @type {Signal<boolean>}
    */
   protected readonly canSaveCoordinates: Signal<boolean> = computed<boolean>(() => {
-    const latitude: number | null = parseCoordinate(this.latitudeDraft());
-    const longitude: number | null = parseCoordinate(this.longitudeDraft());
+    const latitude: number | null = parseOptionalNumber(this.latitudeDraft());
+    const longitude: number | null = parseOptionalNumber(this.longitudeDraft());
 
     if (latitude === null && longitude === null) {
       return this.facility().latitude != null || this.facility().longitude != null;
@@ -285,7 +290,7 @@ export class FacilityInformationPanel {
    * @type {Signal<boolean>}
    */
   protected readonly canSaveLevelIndex: Signal<boolean> = computed<boolean>(() => {
-    const parsed: number | null = parseLevelIndex(this.levelIndexDraft());
+    const parsed: number | null = parseOptionalNumber(this.levelIndexDraft());
     const stored: number | null = this.facility().levelIndex ?? null;
 
     if (parsed === null) return stored !== null;
@@ -321,8 +326,8 @@ export class FacilityInformationPanel {
       return $localize`:@@facility.info.coordinatesIncomplete:Enter both latitude and longitude, or leave both empty.`;
     }
 
-    const latitude: number | null = parseCoordinate(rawLatitude);
-    const longitude: number | null = parseCoordinate(rawLongitude);
+    const latitude: number | null = parseOptionalNumber(rawLatitude);
+    const longitude: number | null = parseOptionalNumber(rawLongitude);
 
     if (
       latitude === null ||
@@ -358,7 +363,7 @@ export class FacilityInformationPanel {
     const raw: string = this.levelIndexDraft().trim();
     if (raw === '') return null;
 
-    const parsed: number | null = parseLevelIndex(raw);
+    const parsed: number | null = parseOptionalNumber(raw);
     if (
       parsed === null ||
       !Number.isInteger(parsed) ||
@@ -390,8 +395,8 @@ export class FacilityInformationPanel {
   protected readonly pickerCenter: Signal<MapCoordinates | undefined> = computed<
     MapCoordinates | undefined
   >(() => {
-    const latitude: number | null = parseCoordinate(this.latitudeDraft());
-    const longitude: number | null = parseCoordinate(this.longitudeDraft());
+    const latitude: number | null = parseOptionalNumber(this.latitudeDraft());
+    const longitude: number | null = parseOptionalNumber(this.longitudeDraft());
     if (
       latitude !== null &&
       longitude !== null &&
@@ -551,8 +556,8 @@ export class FacilityInformationPanel {
    * @returns {void}
    */
   protected saveCoordinates(): void {
-    const latitude: number | null = parseCoordinate(this.latitudeDraft());
-    const longitude: number | null = parseCoordinate(this.longitudeDraft());
+    const latitude: number | null = parseOptionalNumber(this.latitudeDraft());
+    const longitude: number | null = parseOptionalNumber(this.longitudeDraft());
 
     this.detailsChanged.emit({ latitude, longitude });
   }
@@ -565,7 +570,7 @@ export class FacilityInformationPanel {
    * @returns {void}
    */
   protected saveLevelIndex(): void {
-    this.detailsChanged.emit({ levelIndex: parseLevelIndex(this.levelIndexDraft()) });
+    this.detailsChanged.emit({ levelIndex: parseOptionalNumber(this.levelIndexDraft()) });
   }
 
   /**

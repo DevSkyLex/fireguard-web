@@ -62,7 +62,7 @@ describe('CollectionSurface', () => {
 
   it('renders the projected rows and no skeleton once data has loaded', () => {
     expect(byTestId('widget-row')).not.toBeNull();
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
     expect(root().querySelector('[role="status"]')).toBeNull();
   });
 
@@ -98,7 +98,7 @@ describe('CollectionSurface', () => {
     await fixture.whenStable();
 
     expect(byTestId('widget-row')).not.toBeNull();
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('announces refresh without replacing the rows or changing table structure', async () => {
@@ -123,10 +123,11 @@ describe('CollectionSurface', () => {
   });
 
   it('gives the scroll container region/tabindex/labelledby wiring to the caption', () => {
-    const region: HTMLElement | null = root().querySelector('[role="region"]');
+    const region: HTMLElement | null = root().querySelector('section[hlmTableContainer]');
 
     expect(region).not.toBeNull();
-    expect(region?.getAttribute('role')).toBe('region');
+    expect(region?.getAttribute('data-slot')).toBe('table-container');
+    expect(region?.getAttribute('role')).toBeNull();
     expect(region?.getAttribute('tabindex')).toBe('0');
 
     const labelledBy: string | null = region?.getAttribute('aria-labelledby') ?? null;

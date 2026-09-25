@@ -33,8 +33,8 @@ export type InspectorType = 'user' | 'external';
  */
 export interface InspectorOutput {
   //#region Properties
-  /** @type {InspectorType | string} */
-  readonly type: InspectorType | string;
+  /** @type {string} Raw inspector origin, including values added by later API versions. */
+  readonly type: string;
   /** @type {string | null} */
   readonly id: string | null;
   /** @type {string | null} */

@@ -33,8 +33,8 @@ import {
   lucideTrash2,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
-import type { InterventionTableSource } from '@features/organization/features/interventions/models';
 import {
+  type InterventionTableSource,
   resolveInterventionTag,
   type InterventionWorkItemTableQuery,
   type InterventionWorkItemOutput,

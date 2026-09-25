@@ -57,7 +57,7 @@ describe('GateReasonDirective', () => {
     const tokens: string[] = (button.getAttribute('aria-describedby') ?? '').split(' ');
 
     expect(tokens).toContain('validation-error');
-    expect(tokens.length).toBe(2);
+    expect(tokens).toHaveLength(2);
   });
 
   it('removes only its own id when the reason clears, keeping the rest', async () => {

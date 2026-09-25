@@ -24,6 +24,20 @@
           <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="api.error.networkTitle" datatype="html">
+        <source>Network error</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/api/services/hydra-api/hydra-api.service.ts</context>
+          <context context-type="linenumber">560</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="api.error.requestTitle" datatype="html">
+        <source>Request failed</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/core/api/services/hydra-api/hydra-api.service.ts</context>
+          <context context-type="linenumber">561</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="route.accountProfile" datatype="html">
         <source>Your account</source>
         <context-group purpose="location">

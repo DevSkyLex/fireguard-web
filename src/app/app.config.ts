@@ -10,7 +10,6 @@ import {
   withHttpTransferCacheOptions,
   withNoIncrementalHydration,
 } from '@angular/platform-browser';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { APP_ROUTES } from '@app/app.routes';
@@ -37,10 +36,8 @@ import { provideSpartanHlm } from '@shared/ui/utils';
  *
  * @description
  * This configuration is used to provide the
- * application with the necessary providers. Registers Angular's animation
- * engine as a no-op (`provideNoopAnimations`): nothing in this codebase
- * declares an `animations:` trigger, kept registered so a future CDK-based
- * primitive that does needs no app-wide wiring change.
+ * application with the necessary providers. UI transitions use CSS and
+ * browser-native animations without Angular's legacy animation engine.
  *
  * @version 1.0.0
  *
@@ -59,7 +56,6 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
-    provideNoopAnimations(),
     provideRouter(
       APP_ROUTES,
       withComponentInputBinding(),

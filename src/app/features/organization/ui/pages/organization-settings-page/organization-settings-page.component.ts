@@ -49,19 +49,19 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
 import type { ApprovalActionTypeOutput } from '@features/organization/features/approvals/models';
-import type { OrganizationAccessPolicyInput } from '@features/organization/models';
-import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import type {
-  InvoiceOutput,
-  OrganizationApprovalSettings,
-  OrganizationAutomationSettings,
-  OrganizationComplianceSettings,
-  OrganizationMemberOutput,
-  OrganizationNotificationSettings,
-  OrganizationOutput,
-  OrganizationRegionalSettings,
-  OrganizationTransferOwnershipConfirmedEvent,
-  MemberSelectOption,
+import {
+  type OrganizationAccessPolicyInput,
+  ORGANIZATION_PERMISSION,
+  type InvoiceOutput,
+  type OrganizationApprovalSettings,
+  type OrganizationAutomationSettings,
+  type OrganizationComplianceSettings,
+  type OrganizationMemberOutput,
+  type OrganizationNotificationSettings,
+  type OrganizationOutput,
+  type OrganizationRegionalSettings,
+  type OrganizationTransferOwnershipConfirmedEvent,
+  type MemberSelectOption,
 } from '@features/organization/models';
 import {
   ActiveOrganizationStore,

@@ -160,20 +160,43 @@ export abstract class HydraApiService {
       params = params.set('search', options.search);
     }
     if (options?.params) {
-      for (const [key, value] of Object.entries(options.params)) {
-        if (value === undefined || value === null) continue;
+      params = this.appendPassThroughParams(params, options.params);
+    }
 
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            if (item !== undefined && item !== null) {
-              params = params.append(`${key}[]`, String(item));
-            }
+    return params;
+  }
+
+  /**
+   * Method appendPassThroughParams
+   *
+   * @description
+   * Adds scalar and repeated array query parameters without changing the
+   * caller-supplied keys or filtering valid false and zero values.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @param {HttpParams} params - Parameters already built from standard options.
+   * @param {NonNullable<ApiRequestOptions['params']>} values - Extra query parameters.
+   * @returns {HttpParams} Parameters with extra values appended.
+   */
+  private appendPassThroughParams(
+    params: HttpParams,
+    values: NonNullable<ApiRequestOptions['params']>,
+  ): HttpParams {
+    for (const [key, value] of Object.entries(values)) {
+      if (value === undefined || value === null) continue;
+
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item !== undefined && item !== null) {
+            params = params.append(`${key}[]`, String(item));
           }
-          continue;
         }
-
-        params = params.set(key, String(value));
+        continue;
       }
+
+      params = params.set(key, String(value));
     }
 
     return params;
@@ -526,13 +549,23 @@ export abstract class HydraApiService {
       typeof body === 'object' && body !== null && 'code' in body && typeof body.code === 'string'
         ? body.code
         : undefined;
+    const title =
+      typeof body === 'object' &&
+      body !== null &&
+      'title' in body &&
+      typeof body.title === 'string' &&
+      body.title.trim()
+        ? body.title
+        : error.status === 0
+          ? $localize`:@@api.error.networkTitle:Network error`
+          : $localize`:@@api.error.requestTitle:Request failed`;
     const apiError: ApiError = {
       ...(code ? { code } : {}),
       '@id': '',
       '@type': 'Error',
       status: error.status || 0,
       type: 'about:blank',
-      title: error.statusText || 'Network Error',
+      title,
       detail:
         detail ??
         (error.status === 0

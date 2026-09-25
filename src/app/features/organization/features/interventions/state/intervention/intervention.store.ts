@@ -36,8 +36,8 @@ import {
 import {
   InterventionService,
   InterventionTemplateService,
+  InterventionOfflineService,
 } from '@features/organization/features/interventions/data-access';
-import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionDuplicatePrefill,
   InterventionOutput,

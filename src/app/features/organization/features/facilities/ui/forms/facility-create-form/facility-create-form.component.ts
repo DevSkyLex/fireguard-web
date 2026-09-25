@@ -60,8 +60,19 @@ function trimmed(value: string): string | undefined {
   return trimmedValue === '' ? undefined : trimmedValue;
 }
 
-/** Parses a coordinate draft to a finite number, or `undefined` for a blank string. */
-function parsedCoordinate(value: string): number | undefined {
+/**
+ * Function parsedOptionalNumber
+ *
+ * @description
+ * Parses an optional numeric draft; coordinate and level-index validity are checked by their fields.
+ *
+ * @access private
+ * @since 1.0.0
+ *
+ * @param {string} value - The editable numeric draft.
+ * @returns {number | undefined} Its numeric value, or `undefined` when blank.
+ */
+function parsedOptionalNumber(value: string): number | undefined {
   const trimmedValue: string = value.trim();
 
   return trimmedValue === '' ? undefined : Number(trimmedValue);
@@ -94,13 +105,6 @@ function isLevelIndexInRange(value: string): boolean {
   return (
     Number.isInteger(parsed) && parsed >= LEVEL_INDEX_BOUNDS[0] && parsed <= LEVEL_INDEX_BOUNDS[1]
   );
-}
-
-/** Parses a level-index draft to an integer, or `undefined` for a blank string. */
-function parsedLevelIndex(value: string): number | undefined {
-  const trimmedValue: string = value.trim();
-
-  return trimmedValue === '' ? undefined : Number(trimmedValue);
 }
 
 /**
@@ -404,8 +408,8 @@ export class FacilityCreateForm {
     MapCoordinates | undefined
   >(() => {
     const draft: FacilityCreateFormDraft = this.model();
-    const latitude: number | undefined = parsedCoordinate(draft.latitude);
-    const longitude: number | undefined = parsedCoordinate(draft.longitude);
+    const latitude: number | undefined = parsedOptionalNumber(draft.latitude);
+    const longitude: number | undefined = parsedOptionalNumber(draft.longitude);
 
     return latitude !== undefined &&
       longitude !== undefined &&
@@ -496,9 +500,9 @@ export class FacilityCreateForm {
       parentFacilityId: draft.parentFacilityId === '' ? undefined : draft.parentFacilityId,
       code: trimmed(draft.code),
       address: trimmed(draft.address),
-      latitude: parsedCoordinate(draft.latitude),
-      longitude: parsedCoordinate(draft.longitude),
-      levelIndex: draft.type === 'floor' ? parsedLevelIndex(draft.levelIndex) : undefined,
+      latitude: parsedOptionalNumber(draft.latitude),
+      longitude: parsedOptionalNumber(draft.longitude),
+      levelIndex: draft.type === 'floor' ? parsedOptionalNumber(draft.levelIndex) : undefined,
     });
   }
 

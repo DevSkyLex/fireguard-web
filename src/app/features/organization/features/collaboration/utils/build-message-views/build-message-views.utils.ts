@@ -42,6 +42,9 @@ export function buildMessageViews(input: BuildMessageViewsInput): readonly Messa
     const authorEntry: MemberDirectoryEntry | undefined = input.directory?.get(authorId);
     const isOwn: boolean =
       input.ownMemberIri !== null && message.authorMember === input.ownMemberIri;
+    let status: MessageView['status'] = 'sent';
+    if (failed.has(message.id)) status = 'failed';
+    else if (pending.has(message.id)) status = 'pending';
 
     return {
       id: message.id,
@@ -53,7 +56,7 @@ export function buildMessageViews(input: BuildMessageViewsInput): readonly Messa
       editedAt: message.editedAt,
       isDeleted: message.isDeleted,
       isOwn,
-      status: failed.has(message.id) ? 'failed' : pending.has(message.id) ? 'pending' : 'sent',
+      status,
       isPinned: message.pinnedAt !== undefined,
       isSaved: message.isSaved,
       replyCount: message.replyCount,

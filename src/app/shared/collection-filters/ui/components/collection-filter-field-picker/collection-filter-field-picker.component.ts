@@ -146,7 +146,7 @@ export class CollectionFilterFieldPicker {
    */
   protected queueMobileField(key: string): void {
     const drawer = this.drawer();
-    if (!drawer || drawer.stateComputed() !== 'open' || this.queuedKey !== null) return;
+    if (drawer?.stateComputed() !== 'open' || this.queuedKey !== null) return;
     if (!this.isAvailable(key)) return;
 
     this.queuedKey = key;

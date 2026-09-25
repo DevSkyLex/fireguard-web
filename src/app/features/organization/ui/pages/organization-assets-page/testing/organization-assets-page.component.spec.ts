@@ -965,7 +965,7 @@ describe('OrganizationAssetsPage', () => {
     });
   });
 
-  it('switches the export button live-region label while exporting', async () => {
+  it('announces export and archive progress outside their buttons', async () => {
     fixture = await createPage();
     summarySignal.set(complianceSummary());
 
@@ -978,17 +978,40 @@ describe('OrganizationAssetsPage', () => {
     });
     await fixture.whenStable();
 
-    const liveRegion = (): HTMLElement | null =>
-      (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="assets-compliance-export"] [role="status"]',
-      );
-    expect(liveRegion()?.getAttribute('aria-live')).toBe('polite');
-    expect(liveRegion()?.textContent).toContain('Export safety register');
+    const exportButton: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="assets-compliance-export"]',
+    );
+    const archiveButton: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="assets-compliance-archive"]',
+    );
+    const exportStatus: HTMLOutputElement | null = fixture.nativeElement.querySelector(
+      'output[data-testid="assets-compliance-export-status"]',
+    );
+    const archiveStatus: HTMLOutputElement | null = fixture.nativeElement.querySelector(
+      'output[data-testid="assets-compliance-archive-status"]',
+    );
+    expect(exportStatus?.getAttribute('aria-live')).toBe('polite');
+    expect(archiveStatus?.getAttribute('aria-live')).toBe('polite');
+    expect(exportStatus?.textContent?.trim()).toBe('');
+    expect(archiveStatus?.textContent?.trim()).toBe('');
+    expect(exportButton?.querySelector('[role="status"]')).toBeNull();
+    expect(archiveButton?.querySelector('[role="status"]')).toBeNull();
+    expect(exportButton?.textContent).toContain('Export safety register');
 
     isExportingSignal.set(true);
     await fixture.whenStable();
 
-    expect(liveRegion()?.textContent).toContain('Exporting…');
+    expect(exportButton?.textContent).toContain('Exporting…');
+    expect(exportStatus?.textContent).toContain('Export safety register');
+    expect(exportStatus?.textContent).toContain('Exporting…');
+
+    isExportingSignal.set(false);
+    isArchivingSignal.set(true);
+    await fixture.whenStable();
+
+    expect(archiveButton?.textContent).toContain('Archiving…');
+    expect(archiveStatus?.textContent).toContain('Archive register');
+    expect(archiveStatus?.textContent).toContain('Archiving…');
   });
 
   it('keeps the export button in the accessibility tree while exporting', async () => {

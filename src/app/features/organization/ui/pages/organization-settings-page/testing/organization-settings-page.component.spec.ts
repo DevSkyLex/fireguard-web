@@ -118,6 +118,7 @@ describe('OrganizationSettingsPage', () => {
   let watchCheckout: ReturnType<typeof vi.fn>;
   let awaitingCheckout: WritableSignal<boolean>;
   let isCheckingCheckout: WritableSignal<boolean>;
+  let checkoutConfirmed: WritableSignal<boolean>;
   let resolveOrganization: ReturnType<typeof vi.fn>;
   let loadQuota: ReturnType<typeof vi.fn>;
   let reloadAccess: ReturnType<typeof vi.fn>;
@@ -261,7 +262,7 @@ describe('OrganizationSettingsPage', () => {
               watchCheckout,
               awaitingCheckout,
               isCheckingCheckout,
-              checkoutConfirmed: signal(false),
+              checkoutConfirmed,
               isLoadingSubscription: signal(false),
               pricing: signal([]),
               isLoadingPricing: signal(false),
@@ -351,6 +352,7 @@ describe('OrganizationSettingsPage', () => {
     watchCheckout = vi.fn();
     awaitingCheckout = signal(false);
     isCheckingCheckout = signal(false);
+    checkoutConfirmed = signal(false);
     resolveOrganization = vi.fn().mockReturnValue(of(organization()));
     loadQuota = vi.fn();
     reloadAccess = vi.fn();
@@ -393,6 +395,18 @@ describe('OrganizationSettingsPage', () => {
       planKey: 'pro',
       interval: 'year',
     });
+  });
+
+  it('announces both lines of the confirmed plan as one native status', async () => {
+    await createPage('subscription');
+    checkoutConfirmed.set(true);
+    await fixture.whenStable();
+
+    const notice = byTestId('org-settings-checkout-confirmed');
+    expect(notice?.getAttribute('role')).toBe('none');
+    const result = notice?.querySelector('output');
+    expect(result?.textContent).toContain('Plan confirmed');
+    expect(result?.textContent).toContain('Your subscription is active.');
   });
 
   it('refreshes the organization, quotas and access only after its server confirmation', async () => {

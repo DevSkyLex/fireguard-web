@@ -88,6 +88,39 @@ class ResizeObserverStub {
 }
 
 describe('CollectionFilterSelect', () => {
+  const mobileInteractionMode = signal(false);
+  let fixture: ComponentFixture<CollectionFilterSelectHost>;
+
+  const trigger = (): HTMLElement =>
+    (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="interventions-filter-status"]',
+    ) as HTMLElement;
+
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+    HTMLElement.prototype.scrollIntoView ??= (): void => {};
+  });
+
+  beforeEach(async () => {
+    mobileInteractionMode.set(false);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: mobileInteractionMode },
+        },
+      ],
+    });
+
+    fixture = TestBed.createComponent(CollectionFilterSelectHost);
+    await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it.each([
     { value: 42 },
     { value: false },
@@ -142,39 +175,6 @@ describe('CollectionFilterSelect', () => {
     selectFixture.destroy();
   });
 
-  const mobileInteractionMode = signal(false);
-  let fixture: ComponentFixture<CollectionFilterSelectHost>;
-
-  const trigger = (): HTMLElement =>
-    (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-testid="interventions-filter-status"]',
-    ) as HTMLElement;
-
-  beforeAll(() => {
-    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
-    HTMLElement.prototype.scrollIntoView ??= (): void => {};
-  });
-
-  beforeEach(async () => {
-    mobileInteractionMode.set(false);
-    TestBed.configureTestingModule({
-      providers: [
-        provideZonelessChangeDetection(),
-        {
-          provide: INTERACTION_CAPABILITIES_PORT,
-          useValue: { isMobileInteractionMode: mobileInteractionMode },
-        },
-      ],
-    });
-
-    fixture = TestBed.createComponent(CollectionFilterSelectHost);
-    await fixture.whenStable();
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   /**
    * Function useMobileFixture
    * @description Creates the host in the mobile interaction mode before its first render.
@@ -222,14 +222,14 @@ describe('CollectionFilterSelect', () => {
       await fixture.whenStable();
 
       expect(trigger().getAttribute('aria-describedby')).toBe(valueId);
-      expect(document.querySelectorAll(`[id="${valueId}"]`).length).toBe(1);
+      expect(document.querySelectorAll(`[id="${valueId}"]`)).toHaveLength(1);
       expect(document.getElementById(valueId)?.textContent?.trim()).toBe('Status');
     },
   );
 
   it('should read as the field label while no value is set', () => {
     expect(trigger().textContent).toContain('Status');
-    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]').length).toBe(0);
+    expect(trigger().querySelectorAll('[data-testid="collection-filter-value"]')).toHaveLength(0);
   });
 
   it('should render the value as the same single filled chip its multi-value sibling uses', async () => {
@@ -240,7 +240,7 @@ describe('CollectionFilterSelect', () => {
       '[data-testid="collection-filter-value"]',
     );
 
-    expect(chips.length).toBe(1);
+    expect(chips).toHaveLength(1);
     expect(chips[0].textContent).toContain('In progress');
   });
 

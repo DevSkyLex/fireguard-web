@@ -22,10 +22,11 @@ export function orderInterventionWorkItems(
     const priority = prioritizeAssignee
       ? Number(right.assignee === prioritizeAssignee) - Number(left.assignee === prioritizeAssignee)
       : 0;
-    return (
-      priority ||
-      Date.parse(right.updatedAt) - Date.parse(left.updatedAt) ||
-      (left.id < right.id ? -1 : left.id > right.id ? 1 : 0)
-    );
+    if (priority !== 0) return priority;
+    const recency = Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
+    if (recency !== 0 && !Number.isNaN(recency)) return recency;
+    if (left.id < right.id) return -1;
+    if (left.id > right.id) return 1;
+    return 0;
   });
 }

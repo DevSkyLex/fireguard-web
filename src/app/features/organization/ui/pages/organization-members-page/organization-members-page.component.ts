@@ -696,12 +696,11 @@ export class OrganizationMembersPage {
    */
   protected readonly kpiTiles: Signal<readonly OrganizationMembersKpiTile[]> = computed(() => {
     const quotaItem: OrganizationQuotaItemOutput | null = this.membersQuotaItem();
-    const seatsValue: string | number =
-      quotaItem === null
-        ? '—'
-        : quotaItem.limit === null
-          ? quotaItem.used
-          : `${quotaItem.used} / ${quotaItem.limit}`;
+    let seatsValue: string | number = '—';
+    if (quotaItem !== null) {
+      seatsValue =
+        quotaItem.limit === null ? quotaItem.used : `${quotaItem.used} / ${quotaItem.limit}`;
+    }
     const seatsProgress: number | null =
       quotaItem !== null && quotaItem.limit !== null && quotaItem.limit > 0
         ? Math.min(100, Math.round((quotaItem.used / quotaItem.limit) * 100))

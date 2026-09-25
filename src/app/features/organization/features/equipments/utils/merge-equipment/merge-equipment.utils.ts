@@ -25,7 +25,7 @@ export function mergeEquipment(
   existing: EquipmentOutput | null,
   incoming: EquipmentOutput,
 ): EquipmentOutput {
-  if (existing === null || existing.id !== incoming.id) return incoming;
+  if (existing?.id !== incoming.id) return incoming;
 
   const defined: Partial<EquipmentOutput> = Object.fromEntries(
     Object.entries(incoming).filter(([, value]) => value !== undefined),

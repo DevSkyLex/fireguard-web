@@ -169,7 +169,7 @@ describe('OnboardingMembersForm', () => {
     const list = element.querySelector('[data-testid="onboarding-members-staged"]');
     expect(list?.textContent).toContain('Reviewer');
     expect(list?.textContent).toContain('Default role');
-    expect(list?.querySelectorAll('[hlmItemSeparator]').length).toBe(1);
+    expect(list?.querySelectorAll('[hlmItemSeparator]')).toHaveLength(1);
   });
 
   it('blocks a duplicate on add and on submit after trimming and ignoring case', async () => {
@@ -184,8 +184,8 @@ describe('OnboardingMembersForm', () => {
     expect(submitted).not.toHaveBeenCalled();
     expect(element.textContent).toContain('This email is already in this invitation batch.');
     expect(
-      element.querySelectorAll('[data-testid="onboarding-members-staged"] [hlmItem]').length,
-    ).toBe(1);
+      element.querySelectorAll('[data-testid="onboarding-members-staged"] [hlmItem]'),
+    ).toHaveLength(1);
   });
 
   it('rejects an edited row changed to another prepared address without losing either draft', async () => {
@@ -219,8 +219,8 @@ describe('OnboardingMembersForm', () => {
     element.querySelector<HTMLButtonElement>('[aria-label="Edit second@example.com"]')?.click();
     await fixture.whenStable();
     expect(
-      element.querySelectorAll('[data-testid="onboarding-members-staged"] [hlmItem]').length,
-    ).toBe(2);
+      element.querySelectorAll('[data-testid="onboarding-members-staged"] [hlmItem]'),
+    ).toHaveLength(2);
     expect(
       element.querySelector<HTMLInputElement>('[data-testid="onboarding-member-email"]')?.value,
     ).toBe('FIRST@example.com');

@@ -146,7 +146,7 @@ describe('InterventionAttachments', () => {
     await pickFiles([pdf('a.pdf'), pdf('b.pdf')]);
 
     expect(picked).toHaveLength(1);
-    expect(picked[0]?.length).toBe(2);
+    expect(picked[0]).toHaveLength(2);
     expect(root().querySelector('[data-testid="intervention-attachments-error"]')).toBeNull();
   });
 

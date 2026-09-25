@@ -353,45 +353,19 @@ describe('FacilityCreateForm', () => {
       expect(emitted).toEqual([expect.objectContaining({ levelIndex: undefined })]);
     });
 
-    it('should refuse a level index below -100', async () => {
+    it.each([
+      ['below -100', 'Deep basement', '-101'],
+      ['above 200', 'Too high', '201'],
+      ['non-integer', 'Mezzanine', '1.5'],
+    ] as const)('should refuse a %s level index', async (_case, name, levelIndex) => {
       const emitted: CreateFacilityInput[] = [];
       fixture.componentInstance.submitted.subscribe((value: CreateFacilityInput): void => {
         emitted.push(value);
       });
 
       await setModel({ type: 'floor' });
-      await fill('facility-create-name', 'Deep basement');
-      await fill('facility-create-level-index', '-101');
-      await submit();
-
-      expect(emitted).toEqual([]);
-      expect(element.textContent).toContain('Enter a whole number between -100 and 200.');
-    });
-
-    it('should refuse a level index above 200', async () => {
-      const emitted: CreateFacilityInput[] = [];
-      fixture.componentInstance.submitted.subscribe((value: CreateFacilityInput): void => {
-        emitted.push(value);
-      });
-
-      await setModel({ type: 'floor' });
-      await fill('facility-create-name', 'Too high');
-      await fill('facility-create-level-index', '201');
-      await submit();
-
-      expect(emitted).toEqual([]);
-      expect(element.textContent).toContain('Enter a whole number between -100 and 200.');
-    });
-
-    it('should refuse a non-integer level index', async () => {
-      const emitted: CreateFacilityInput[] = [];
-      fixture.componentInstance.submitted.subscribe((value: CreateFacilityInput): void => {
-        emitted.push(value);
-      });
-
-      await setModel({ type: 'floor' });
-      await fill('facility-create-name', 'Mezzanine');
-      await fill('facility-create-level-index', '1.5');
+      await fill('facility-create-name', name);
+      await fill('facility-create-level-index', levelIndex);
       await submit();
 
       expect(emitted).toEqual([]);

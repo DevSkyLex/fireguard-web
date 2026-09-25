@@ -86,7 +86,7 @@
 
           <span>{{ kindLabelOf(item) }}</span>
           @if (progressLabelOf(item); as progress) {
-            <span role="status">{{ progress }}</span>
+            <output>{{ progress }}</output>
           }
 
           <ng-container [ngTemplateOutlet]="rowResults" [ngTemplateOutletContext]="{ item }" />

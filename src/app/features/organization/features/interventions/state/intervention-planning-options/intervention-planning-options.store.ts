@@ -110,14 +110,18 @@ export const InterventionPlanningOptionsStore = signalStore(
           ...Object.values(store.catalogues()).map((value) => value.callState),
           labelsStatus,
         ];
+        let loadCallState: InterventionPlanningOptionsState['loadCallState'];
+        if (states.some((state) => state.status === 'pending')) {
+          loadCallState = pendingCallState();
+        } else if (states.every((state) => state.status === 'error')) {
+          loadCallState = errorCallState(
+            states[0].error ?? toStoreError(new Error('Planning options unavailable')),
+          );
+        } else {
+          loadCallState = successCallState(null);
+        }
         patchState(store, {
-          loadCallState: states.some((state) => state.status === 'pending')
-            ? pendingCallState()
-            : states.every((state) => state.status === 'error')
-              ? errorCallState(
-                  states[0].error ?? toStoreError(new Error('Planning options unavailable')),
-                )
-              : successCallState(null),
+          loadCallState,
         });
       };
       const loadLabels = rxMethod<string>(
@@ -145,6 +149,90 @@ export const InterventionPlanningOptionsStore = signalStore(
           }),
         ),
       );
+      /**
+       * Function cataloguePageSource
+       * @description Selects the transport and normalizes one catalogue page for the shared paging flow.
+       * @access private
+       * @since 1.0.0
+       * @param {PlanningCatalogueKind} kind - Requested catalogue.
+       * @param {string} org - Active organization.
+       * @param {string} query - Current search.
+       * @param {{ page: number; itemsPerPage: number }} options - Pagination.
+       * @returns {Observable<object>} Normalized catalogue page.
+       */
+      const cataloguePageSource = (
+        kind: PlanningCatalogueKind,
+        org: string,
+        query: string,
+        options: { page: number; itemsPerPage: number },
+      ): Observable<{
+        total: number;
+        count: number;
+        values: readonly SelectOption[];
+        memberValues?: readonly MemberSelectOption[];
+        templateValues?: readonly InterventionTemplateOutput[];
+      }> => {
+        if (kind === 'sites' || kind === 'facilities')
+          return facilities
+            .list(org, {
+              ...options,
+              ...(query ? { search: query } : {}),
+              ...(kind === 'sites' ? { rootsOnly: true } : {}),
+            })
+            .pipe(
+              map((collection) => ({
+                total: collection.totalItems,
+                count: collection.member.length,
+                values: collection.member.map((item) => ({
+                  value: `/api/facilities/${item.id}`,
+                  label: item.name,
+                })),
+              })),
+            );
+        if (kind === 'equipment')
+          return equipment
+            .list(org, { ...options, ...(query ? { params: { search: query } } : {}) })
+            .pipe(
+              map((collection) => ({
+                total: collection.totalItems,
+                count: collection.member.length,
+                values: collection.member.map((item) => ({
+                  value: `/api/equipment/${item.id}`,
+                  label: [
+                    EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === item.type)?.label ??
+                      item.type,
+                    item.serialNumber,
+                  ]
+                    .filter(Boolean)
+                    .join(' · '),
+                })),
+              })),
+            );
+        if (kind === 'members')
+          return (
+            query ? members.list(org, options, { search: query }) : members.list(org, options)
+          ).pipe(
+            map((collection) => ({
+              total: collection.totalItems,
+              count: collection.member.length,
+              values: [],
+              memberValues: collection.member.map((item) => toMemberSelectOption(item, org)),
+            })),
+          );
+        return templates
+          .list(`/api/organizations/${org}`, {
+            ...options,
+            ...(query ? { search: query } : {}),
+          })
+          .pipe(
+            map((collection) => ({
+              total: collection.totalItems,
+              count: collection.member.length,
+              values: [],
+              templateValues: collection.member,
+            })),
+          );
+      };
       const loadPage = rxMethod<{
         kind: PlanningCatalogueKind;
         search?: string;
@@ -174,74 +262,7 @@ export const InterventionPlanningOptionsStore = signalStore(
               },
             });
             summarize();
-            let source: Observable<{
-              total: number;
-              count: number;
-              values: readonly SelectOption[];
-              memberValues?: readonly MemberSelectOption[];
-              templateValues?: readonly InterventionTemplateOutput[];
-            }>;
-            if (kind === 'sites' || kind === 'facilities')
-              source = facilities
-                .list(org, {
-                  ...options,
-                  ...(query ? { search: query } : {}),
-                  ...(kind === 'sites' ? { rootsOnly: true } : {}),
-                })
-                .pipe(
-                  map((collection) => ({
-                    total: collection.totalItems,
-                    count: collection.member.length,
-                    values: collection.member.map((item) => ({
-                      value: `/api/facilities/${item.id}`,
-                      label: item.name,
-                    })),
-                  })),
-                );
-            else if (kind === 'equipment')
-              source = equipment
-                .list(org, { ...options, ...(query ? { params: { search: query } } : {}) })
-                .pipe(
-                  map((collection) => ({
-                    total: collection.totalItems,
-                    count: collection.member.length,
-                    values: collection.member.map((item) => ({
-                      value: `/api/equipment/${item.id}`,
-                      label: [
-                        EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === item.type)
-                          ?.label ?? item.type,
-                        item.serialNumber,
-                      ]
-                        .filter(Boolean)
-                        .join(' · '),
-                    })),
-                  })),
-                );
-            else if (kind === 'members')
-              source = (
-                query ? members.list(org, options, { search: query }) : members.list(org, options)
-              ).pipe(
-                map((collection) => ({
-                  total: collection.totalItems,
-                  count: collection.member.length,
-                  values: [],
-                  memberValues: collection.member.map((item) => toMemberSelectOption(item, org)),
-                })),
-              );
-            else
-              source = templates
-                .list(`/api/organizations/${org}`, {
-                  ...options,
-                  ...(query ? { search: query } : {}),
-                })
-                .pipe(
-                  map((collection) => ({
-                    total: collection.totalItems,
-                    count: collection.member.length,
-                    values: [],
-                    templateValues: collection.member,
-                  })),
-                );
+            const source = cataloguePageSource(kind, org, query, options);
             return source.pipe(
               tapResponse({
                 next: (result) => {

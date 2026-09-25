@@ -343,21 +343,41 @@ export class OrganizationGlobalSearchDialog {
       this.organizationContext.selectedOrganizationId() !== this.organizationId
     )
       return;
-    const base: readonly string[] = ['/organizations', this.organizationId];
-    const route: readonly string[] =
-      hit.type === 'equipment'
-        ? [...base, 'equipments', hit.id]
-        : hit.type === 'facility'
-          ? [...base, 'facilities', hit.id]
-          : hit.type === 'intervention'
-            ? [...base, 'interventions', hit.id]
-            : hit.type === 'inspection'
-              ? [...base, 'inspections', hit.id]
-              : hit.parentId
-                ? [...base, 'inspections', hit.parentId]
-                : [...base, 'inspections'];
+    const route = this.routeForHit(hit, this.organizationId);
     this.dialogRef.close();
     void this.router.navigate([...route]);
+  }
+
+  /**
+   * Method routeForHit
+   * @description Builds a route from the trusted hit type and identifiers, never from a server URL.
+   * @access private
+   * @since 1.0.0
+   * @param {OrganizationSearchHitOutput} hit - Selected search result.
+   * @param {string} organizationId - Active organization.
+   * @returns {readonly string[]} Internal route segments.
+   */
+  private routeForHit(hit: OrganizationSearchHitOutput, organizationId: string): readonly string[] {
+    const base: readonly string[] = ['/organizations', organizationId];
+    let route: readonly string[];
+    switch (hit.type) {
+      case 'equipment':
+        route = [...base, 'equipments', hit.id];
+        break;
+      case 'facility':
+        route = [...base, 'facilities', hit.id];
+        break;
+      case 'intervention':
+        route = [...base, 'interventions', hit.id];
+        break;
+      case 'inspection':
+        route = [...base, 'inspections', hit.id];
+        break;
+      default:
+        route = [...base, 'inspections'];
+        if (hit.parentId) route = [...route, hit.parentId];
+    }
+    return route;
   }
   //#endregion
 }

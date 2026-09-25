@@ -2,6 +2,7 @@ import type { InterventionPriority } from '../intervention/intervention-priority
 import type { InterventionStatus } from '../intervention/intervention-status.type';
 import type { InterventionType } from '../intervention/intervention-type.type';
 import type { InterventionDueRangeFilter } from './intervention-due-range-filter.type';
+import type { InterventionEnumFilterValue } from './intervention-enum-filter-value.type';
 import type { InterventionPlannedStartRangeFilter } from './intervention-planned-start-range-filter.type';
 
 /**
@@ -28,22 +29,22 @@ export interface InterventionListFilters {
    * no separate operator field for these six, matching how the page already
    * modelled them before `isAnyOf` existed.
    */
-  readonly status: InterventionStatus | readonly InterventionStatus[] | null;
+  readonly status: InterventionEnumFilterValue<InterventionStatus>;
 
   /** Workflow type. See {@link status}. */
-  readonly type: InterventionType | readonly InterventionType[] | null;
+  readonly type: InterventionEnumFilterValue<InterventionType>;
 
   /** Priority. See {@link status}. */
-  readonly priority: InterventionPriority | readonly InterventionPriority[] | null;
+  readonly priority: InterventionEnumFilterValue<InterventionPriority>;
 
   /** IRI(s) of the site(s) the intervention concerns. See {@link status}. */
-  readonly site: string | readonly string[] | null;
+  readonly site: InterventionEnumFilterValue<string>;
 
   /** IRI(s) of the responsible agent(s). See {@link status}. */
-  readonly responsible: string | readonly string[] | null;
+  readonly responsible: InterventionEnumFilterValue<string>;
 
   /** IRI(s) of the intervention label(s) the collection is narrowed to. See {@link status}. */
-  readonly label: string | readonly string[] | null;
+  readonly label: InterventionEnumFilterValue<string>;
 
   /**
    * "My interventions" — matches the signed-in member as responsible OR

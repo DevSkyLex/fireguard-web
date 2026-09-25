@@ -1,5 +1,4 @@
-import { inject } from '@angular/core';
-import { computed } from '@angular/core';
+import { inject, computed } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { Observable, tap } from 'rxjs';

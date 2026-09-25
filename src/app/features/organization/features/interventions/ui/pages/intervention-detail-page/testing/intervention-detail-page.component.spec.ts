@@ -323,137 +323,6 @@ describe('InterventionDetailPage', () => {
     await fixture.whenStable();
   };
 
-  it('coordinates real activity invalidation without inventing work-item events', async () => {
-    fixture = await createPage();
-    const dispatcher = TestBed.inject(Dispatcher);
-    loadActivities.mockClear();
-    dispatcher.dispatch(
-      interventionWorkspaceStoreEvents.mutationSucceeded({
-        interventionId: 'intervention-1',
-        source: 'remote',
-        collections: ['workItems'],
-      }),
-    );
-    expect(loadActivities).not.toHaveBeenCalled();
-    dispatcher.dispatch(
-      interventionWorkspaceStoreEvents.mutationSucceeded({
-        interventionId: 'intervention-1',
-        source: 'remote',
-        collections: ['activity'],
-      }),
-    );
-    expect(loadActivities).toHaveBeenCalledTimes(1);
-    dispatcher.dispatch(
-      interventionWorkspaceStoreEvents.mutationSucceeded({
-        interventionId: 'other',
-        source: 'remote',
-        collections: ['activity'],
-      }),
-    );
-    expect(loadActivities).toHaveBeenCalledTimes(1);
-  });
-
-  it('reconciles queued row changes locally and closes the edited effort without fetching activity', async () => {
-    fixture = await createPage();
-    const page = fixture.componentInstance;
-    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
-    const linked = fixture.debugElement.injector.get(InterventionLinkedResourcesStore);
-    const setOffline = vi.spyOn(queries, 'setOffline');
-    const reconcileWorkItem = vi.spyOn(queries, 'reconcileWorkItem');
-    const reconcileChange = vi.spyOn(queries, 'reconcileChange');
-    const removeWorkItems = vi.spyOn(queries, 'removeWorkItems');
-    const updatedItem = workItem({ status: 'completed' });
-    const proposedChange = change();
-    page['effortItem'].set({ item: updatedItem, mode: 'planning' });
-    loadActivities.mockClear();
-
-    TestBed.inject(Dispatcher).dispatch(
-      interventionWorkspaceStoreEvents.mutationSucceeded({
-        interventionId: 'intervention-1',
-        source: 'queued',
-        collections: ['workItems', 'changes', 'activity'],
-        workItem: updatedItem,
-        change: proposedChange,
-        deletedWorkItemIds: ['wi-2'],
-      }),
-    );
-
-    expect(setOffline).toHaveBeenCalledWith(true, false);
-    expect(reconcileWorkItem).toHaveBeenCalledExactlyOnceWith(updatedItem);
-    expect(reconcileChange).toHaveBeenCalledExactlyOnceWith(proposedChange);
-    expect(removeWorkItems).toHaveBeenCalledExactlyOnceWith('intervention-1', ['wi-2']);
-    expect(linked.invalidate).toHaveBeenCalledWith('intervention-1', [
-      'workItems',
-      'changes',
-      'activity',
-    ]);
-    expect(page['effortItem']()).toBeNull();
-    expect(loadActivities).not.toHaveBeenCalled();
-  });
-
-  it('reloads the workspace before replay-invalidated queries and ignores a different intervention', async () => {
-    fixture = await createPage();
-    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
-    const invalidated = vi.spyOn(queries, 'invalidate');
-    const dispatcher = TestBed.inject(Dispatcher);
-    dispatcher.dispatch(
-      interventionSyncEvents.replaySucceeded({
-        interventionId: 'other',
-        source: 'replayed',
-        collections: ['changes'],
-      }),
-    );
-    expect(reload).not.toHaveBeenCalled();
-    dispatcher.dispatch(
-      interventionSyncEvents.replaySucceeded({
-        interventionId: 'intervention-1',
-        source: 'replayed',
-        collections: ['changes'],
-      }),
-    );
-    expect(reload).toHaveBeenCalledWith('intervention-1');
-    expect(invalidated).not.toHaveBeenCalled();
-    dispatcher.dispatch(
-      interventionWorkspaceStoreEvents.reloadSucceeded({ interventionId: 'intervention-1' }),
-    );
-    expect(invalidated).toHaveBeenCalledWith('intervention-1', ['changes']);
-  });
-
-  it('refreshes dependent collections after reconnecting before leaving offline query mode', async () => {
-    online.set(false);
-    fixture = await createPage();
-    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
-    const linked = fixture.debugElement.injector.get(InterventionLinkedResourcesStore);
-    const workspace = fixture.debugElement.injector.get(InterventionWorkspaceStore);
-    const queryOffline = vi.spyOn(queries, 'setOffline');
-    const queryInvalidated = vi.spyOn(queries, 'invalidate');
-    const linkedInvalidated = vi.mocked(linked.invalidate);
-    vi.mocked(workspace.loadAttachments).mockClear();
-    loadActivities.mockClear();
-    reload.mockClear();
-
-    online.set(true);
-    await fixture.whenStable();
-    expect(reload).toHaveBeenCalledExactlyOnceWith('intervention-1');
-    expect(queryOffline).toHaveBeenCalledWith(true, false);
-    expect(queryInvalidated).not.toHaveBeenCalled();
-
-    TestBed.inject(Dispatcher).dispatch(
-      interventionWorkspaceStoreEvents.reloadSucceeded({ interventionId: 'intervention-1' }),
-    );
-    expect(queryOffline).toHaveBeenLastCalledWith(false, false);
-    expect(queryInvalidated).toHaveBeenCalledWith(
-      'intervention-1',
-      expect.arrayContaining(['workItems', 'activity', 'attachments']),
-    );
-    expect(linkedInvalidated).toHaveBeenCalledWith(
-      'intervention-1',
-      expect.arrayContaining(['facilities', 'equipment', 'inspections']),
-    );
-    expect(loadActivities).toHaveBeenCalledExactlyOnceWith('intervention-1');
-    expect(workspace.loadAttachments).toHaveBeenCalledExactlyOnceWith('intervention-1');
-  });
-
   beforeAll(() => {
     globalThis.ResizeObserver ??= class {
       public observe(): void {}
@@ -838,6 +707,137 @@ describe('InterventionDetailPage', () => {
     });
 
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+  });
+
+  it('coordinates real activity invalidation without inventing work-item events', async () => {
+    fixture = await createPage();
+    const dispatcher = TestBed.inject(Dispatcher);
+    loadActivities.mockClear();
+    dispatcher.dispatch(
+      interventionWorkspaceStoreEvents.mutationSucceeded({
+        interventionId: 'intervention-1',
+        source: 'remote',
+        collections: ['workItems'],
+      }),
+    );
+    expect(loadActivities).not.toHaveBeenCalled();
+    dispatcher.dispatch(
+      interventionWorkspaceStoreEvents.mutationSucceeded({
+        interventionId: 'intervention-1',
+        source: 'remote',
+        collections: ['activity'],
+      }),
+    );
+    expect(loadActivities).toHaveBeenCalledTimes(1);
+    dispatcher.dispatch(
+      interventionWorkspaceStoreEvents.mutationSucceeded({
+        interventionId: 'other',
+        source: 'remote',
+        collections: ['activity'],
+      }),
+    );
+    expect(loadActivities).toHaveBeenCalledTimes(1);
+  });
+
+  it('reconciles queued row changes locally and closes the edited effort without fetching activity', async () => {
+    fixture = await createPage();
+    const page = fixture.componentInstance;
+    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
+    const linked = fixture.debugElement.injector.get(InterventionLinkedResourcesStore);
+    const setOffline = vi.spyOn(queries, 'setOffline');
+    const reconcileWorkItem = vi.spyOn(queries, 'reconcileWorkItem');
+    const reconcileChange = vi.spyOn(queries, 'reconcileChange');
+    const removeWorkItems = vi.spyOn(queries, 'removeWorkItems');
+    const updatedItem = workItem({ status: 'completed' });
+    const proposedChange = change();
+    page['effortItem'].set({ item: updatedItem, mode: 'planning' });
+    loadActivities.mockClear();
+
+    TestBed.inject(Dispatcher).dispatch(
+      interventionWorkspaceStoreEvents.mutationSucceeded({
+        interventionId: 'intervention-1',
+        source: 'queued',
+        collections: ['workItems', 'changes', 'activity'],
+        workItem: updatedItem,
+        change: proposedChange,
+        deletedWorkItemIds: ['wi-2'],
+      }),
+    );
+
+    expect(setOffline).toHaveBeenCalledWith(true, false);
+    expect(reconcileWorkItem).toHaveBeenCalledExactlyOnceWith(updatedItem);
+    expect(reconcileChange).toHaveBeenCalledExactlyOnceWith(proposedChange);
+    expect(removeWorkItems).toHaveBeenCalledExactlyOnceWith('intervention-1', ['wi-2']);
+    expect(linked.invalidate).toHaveBeenCalledWith('intervention-1', [
+      'workItems',
+      'changes',
+      'activity',
+    ]);
+    expect(page['effortItem']()).toBeNull();
+    expect(loadActivities).not.toHaveBeenCalled();
+  });
+
+  it('reloads the workspace before replay-invalidated queries and ignores a different intervention', async () => {
+    fixture = await createPage();
+    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
+    const invalidated = vi.spyOn(queries, 'invalidate');
+    const dispatcher = TestBed.inject(Dispatcher);
+    dispatcher.dispatch(
+      interventionSyncEvents.replaySucceeded({
+        interventionId: 'other',
+        source: 'replayed',
+        collections: ['changes'],
+      }),
+    );
+    expect(reload).not.toHaveBeenCalled();
+    dispatcher.dispatch(
+      interventionSyncEvents.replaySucceeded({
+        interventionId: 'intervention-1',
+        source: 'replayed',
+        collections: ['changes'],
+      }),
+    );
+    expect(reload).toHaveBeenCalledWith('intervention-1');
+    expect(invalidated).not.toHaveBeenCalled();
+    dispatcher.dispatch(
+      interventionWorkspaceStoreEvents.reloadSucceeded({ interventionId: 'intervention-1' }),
+    );
+    expect(invalidated).toHaveBeenCalledWith('intervention-1', ['changes']);
+  });
+
+  it('refreshes dependent collections after reconnecting before leaving offline query mode', async () => {
+    online.set(false);
+    fixture = await createPage();
+    const queries = fixture.debugElement.injector.get(InterventionTableQueryStore);
+    const linked = fixture.debugElement.injector.get(InterventionLinkedResourcesStore);
+    const workspace = fixture.debugElement.injector.get(InterventionWorkspaceStore);
+    const queryOffline = vi.spyOn(queries, 'setOffline');
+    const queryInvalidated = vi.spyOn(queries, 'invalidate');
+    const linkedInvalidated = vi.mocked(linked.invalidate);
+    vi.mocked(workspace.loadAttachments).mockClear();
+    loadActivities.mockClear();
+    reload.mockClear();
+
+    online.set(true);
+    await fixture.whenStable();
+    expect(reload).toHaveBeenCalledExactlyOnceWith('intervention-1');
+    expect(queryOffline).toHaveBeenCalledWith(true, false);
+    expect(queryInvalidated).not.toHaveBeenCalled();
+
+    TestBed.inject(Dispatcher).dispatch(
+      interventionWorkspaceStoreEvents.reloadSucceeded({ interventionId: 'intervention-1' }),
+    );
+    expect(queryOffline).toHaveBeenLastCalledWith(false, false);
+    expect(queryInvalidated).toHaveBeenCalledWith(
+      'intervention-1',
+      expect.arrayContaining(['workItems', 'activity', 'attachments']),
+    );
+    expect(linkedInvalidated).toHaveBeenCalledWith(
+      'intervention-1',
+      expect.arrayContaining(['facilities', 'equipment', 'inspections']),
+    );
+    expect(loadActivities).toHaveBeenCalledExactlyOnceWith('intervention-1');
+    expect(workspace.loadAttachments).toHaveBeenCalledExactlyOnceWith('intervention-1');
   });
 
   it('should load the workspace and its activity timeline on arrival', async () => {

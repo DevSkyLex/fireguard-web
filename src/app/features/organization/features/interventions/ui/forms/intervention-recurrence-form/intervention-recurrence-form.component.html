@@ -218,16 +218,15 @@
       </hlm-field>
     </div>
 
-    <p
-      class="text-sm text-muted-foreground"
-      role="status"
+    <output
+      class="block text-sm text-muted-foreground"
       i18n="@@intervention.recurrences.scheduleSummary"
     >
       {{ cadenceSummary() }} from {{ model().anchorDate | date: 'mediumDate' }} ({{
         model().timezone
       }}). Draft creation {{ model().leadTimeDays }} day(s) in advance. The next occurrence is
       confirmed by the server after saving.
-    </p>
+    </output>
     <h3 class="font-medium" i18n="@@intervention.recurrences.scopeSection">Scope and assignment</h3>
     <hlm-field>
       <label hlmFieldLabel for="intervention-recurrence-site" i18n="@@intervention.cf.site"

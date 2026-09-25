@@ -92,7 +92,7 @@ describe('AccountNotificationPreferencesForm', () => {
 
     const hosts: Element[] = Array.from(root().querySelectorAll('hlm-switch'));
 
-    expect(hosts.length).toBe(4);
+    expect(hosts).toHaveLength(4);
     for (const host of hosts) {
       expect(host.getAttribute('aria-disabled')).toBe('true');
     }

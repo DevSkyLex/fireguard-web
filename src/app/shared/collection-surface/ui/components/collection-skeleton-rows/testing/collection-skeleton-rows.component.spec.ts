@@ -17,7 +17,7 @@ describe('CollectionSkeletonRows', () => {
   it('draws the default five rows when nothing is configured', () => {
     const rows: NodeListOf<HTMLElement> = root().querySelectorAll('tr');
 
-    expect(rows.length).toBe(5);
+    expect(rows).toHaveLength(5);
   });
 
   it("keeps its rows in the parent table's formatting context", () => {
@@ -28,7 +28,7 @@ describe('CollectionSkeletonRows', () => {
     fixture.componentRef.setInput('rows', 3);
     await fixture.whenStable();
 
-    expect(root().querySelectorAll('tr').length).toBe(3);
+    expect(root().querySelectorAll('tr')).toHaveLength(3);
   });
 
   it('marks every row aria-hidden so a screen reader skips the placeholders', async () => {
@@ -49,7 +49,7 @@ describe('CollectionSkeletonRows', () => {
 
     const cells: NodeListOf<HTMLElement> = root().querySelectorAll('tr td');
 
-    expect(cells.length).toBe(3);
+    expect(cells).toHaveLength(3);
     expect(cells[0].querySelector('hlm-skeleton')?.className).toContain('w-14');
     expect(cells[1].querySelector('hlm-skeleton')?.className).toContain('w-56');
     expect(cells[2].querySelector('hlm-skeleton')?.className).toContain('w-24');
@@ -60,11 +60,11 @@ describe('CollectionSkeletonRows', () => {
     fixture.componentRef.setInput('columnCount', 4);
     await fixture.whenStable();
 
-    expect(root().querySelectorAll('tr td').length).toBe(4);
+    expect(root().querySelectorAll('tr td')).toHaveLength(4);
   });
 
   it('renders no cells when neither columns nor columnCount is given', () => {
-    expect(root().querySelectorAll('tr td').length).toBe(0);
+    expect(root().querySelectorAll('tr td')).toHaveLength(0);
   });
 
   it("does not render its own status announcement — that is the surface's job", () => {

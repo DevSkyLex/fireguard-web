@@ -320,8 +320,7 @@ export class AuditEventTable {
       return value ? $localize`:@@common.yes:Yes` : $localize`:@@common.no:No`;
     }
     if (typeof value === 'string' || typeof value === 'number') return String(value);
-    if (Array.isArray(value))
-      return value.map((entry: unknown): string => String(entry)).join(', ');
+    if (Array.isArray(value)) return value.map(String).join(', ');
 
     try {
       return JSON.stringify(value);

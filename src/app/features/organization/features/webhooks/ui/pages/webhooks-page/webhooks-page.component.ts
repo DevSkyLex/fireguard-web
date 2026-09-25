@@ -248,13 +248,13 @@ export class WebhooksPage {
    * @since 1.0.0
    * @type {Signal<string>}
    */
-  protected readonly confirmationTitle: Signal<string> = computed(() =>
-    this.confirmation()?.kind === 'delete'
-      ? $localize`:@@webhooks.deleteTitle:Delete this webhook?`
-      : this.confirmation()?.kind === 'rotate'
-        ? $localize`:@@webhooks.rotateTitle:Replace the signing secret?`
-        : $localize`:@@webhooks.redeliverTitle:Send this delivery again?`,
-  );
+  protected readonly confirmationTitle: Signal<string> = computed(() => {
+    if (this.confirmation()?.kind === 'delete')
+      return $localize`:@@webhooks.deleteTitle:Delete this webhook?`;
+    if (this.confirmation()?.kind === 'rotate')
+      return $localize`:@@webhooks.rotateTitle:Replace the signing secret?`;
+    return $localize`:@@webhooks.redeliverTitle:Send this delivery again?`;
+  });
   /**
    * Property confirmationDescription
    * @readonly
@@ -263,13 +263,13 @@ export class WebhooksPage {
    * @since 1.0.0
    * @type {Signal<string>}
    */
-  protected readonly confirmationDescription: Signal<string> = computed(() =>
-    this.confirmation()?.kind === 'delete'
-      ? $localize`:@@webhooks.deleteHint:The subscription and its delivery history will be permanently deleted.`
-      : this.confirmation()?.kind === 'rotate'
-        ? $localize`:@@webhooks.rotateHint:The current secret will stop working immediately. Update your receiver with the new secret after confirming.`
-        : $localize`:@@webhooks.redeliverHint:The same delivery will be sent again. Its identifier stays the same so your receiver can prevent duplicate processing.`,
-  );
+  protected readonly confirmationDescription: Signal<string> = computed(() => {
+    if (this.confirmation()?.kind === 'delete')
+      return $localize`:@@webhooks.deleteHint:The subscription and its delivery history will be permanently deleted.`;
+    if (this.confirmation()?.kind === 'rotate')
+      return $localize`:@@webhooks.rotateHint:The current secret will stop working immediately. Update your receiver with the new secret after confirming.`;
+    return $localize`:@@webhooks.redeliverHint:The same delivery will be sent again. Its identifier stays the same so your receiver can prevent duplicate processing.`;
+  });
   /**
    * Constructor
    * @constructor

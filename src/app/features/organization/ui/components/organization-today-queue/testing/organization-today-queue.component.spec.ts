@@ -49,7 +49,7 @@ describe('OrganizationTodayQueue', () => {
     fixture.componentRef.setInput('interventions', [intervention('i-1', 101, 'Check the riser')]);
     await fixture.whenStable();
 
-    expect(rows().length).toBe(1);
+    expect(rows()).toHaveLength(1);
     expect(fixture.nativeElement.textContent).toContain('42');
   });
 
@@ -61,7 +61,7 @@ describe('OrganizationTodayQueue', () => {
     ]);
     await fixture.whenStable();
 
-    expect(rows().length).toBe(2);
+    expect(rows()).toHaveLength(2);
     expect(fixture.nativeElement.textContent).toContain('FG-101');
     expect(fixture.nativeElement.textContent).toContain('Replace the extinguisher');
   });
@@ -121,7 +121,7 @@ describe('OrganizationTodayQueue', () => {
     expect(fixture.nativeElement.querySelector('section')).toBeNull();
     expect(fixture.nativeElement.querySelector('h2')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('See all');
-    expect(rows().length).toBe(1);
+    expect(rows()).toHaveLength(1);
   });
 
   it('should show a visible all-clear row in embedded mode instead of disappearing when empty', async () => {

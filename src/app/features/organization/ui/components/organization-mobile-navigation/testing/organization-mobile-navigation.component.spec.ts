@@ -47,8 +47,8 @@ describe('OrganizationMobileNavigation', () => {
         (link) => link.textContent?.trim() && link.querySelector('ng-icon[aria-hidden="true"]'),
       ),
     ).toBe(true);
-    expect(root.querySelectorAll('[aria-current="page"]').length).toBe(1);
-    expect(root.querySelectorAll('[data-testid="mobile-nav-active-indicator"]').length).toBe(1);
+    expect(root.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+    expect(root.querySelectorAll('[data-testid="mobile-nav-active-indicator"]')).toHaveLength(1);
     expect(
       root.querySelector('[aria-current="page"] [data-testid="mobile-nav-active-indicator"]'),
     ).not.toBeNull();

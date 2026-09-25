@@ -77,7 +77,7 @@ describe('OrganizationInvitationRevokeDialog', () => {
     confirmButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await fixture.whenStable();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
   });
 
   it('should refuse to confirm while pending', async () => {
@@ -88,7 +88,7 @@ describe('OrganizationInvitationRevokeDialog', () => {
     fixture.componentInstance['confirm']();
     await fixture.whenStable();
 
-    expect(emitted.length).toBe(0);
+    expect(emitted).toHaveLength(0);
   });
 
   it('should surface the store error', async () => {

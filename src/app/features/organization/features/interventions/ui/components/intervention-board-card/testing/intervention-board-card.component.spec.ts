@@ -273,7 +273,7 @@ describe('InterventionBoardCard', () => {
     await fixture.whenStable();
     await openMenu();
 
-    expect(document.querySelectorAll('[data-testid="intervention-board-card-move"]').length).toBe(
+    expect(document.querySelectorAll('[data-testid="intervention-board-card-move"]')).toHaveLength(
       0,
     );
   });

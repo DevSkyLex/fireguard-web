@@ -66,14 +66,14 @@ describe('InterventionKpiStrip', () => {
     const element: HTMLElement = await render(null, true);
 
     expect(element.querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(element.querySelectorAll('p[hlmCardTitle]').length).toBe(0);
+    expect(element.querySelectorAll('p[hlmCardTitle]')).toHaveLength(0);
     expect(element.textContent).toContain('Open');
   });
 
   it('should render a footer caption on every tile, stating a stable fact rather than a fabricated trend', async () => {
     const element: HTMLElement = await render(STATISTICS, false);
 
-    expect(element.querySelectorAll('[hlmCardFooter]').length).toBe(4);
+    expect(element.querySelectorAll('[hlmCardFooter]')).toHaveLength(4);
     expect(element.textContent).toContain('In progress work');
     expect(element.textContent).toContain('Past due date');
     expect(element.textContent).toContain('Due within 48h');
@@ -178,7 +178,7 @@ describe('InterventionKpiStrip', () => {
     const element: HTMLElement = await render(STATISTICS, false);
     const destructiveElements: NodeListOf<Element> = element.querySelectorAll('.text-destructive');
 
-    expect(destructiveElements.length).toBe(1);
+    expect(destructiveElements).toHaveLength(1);
     expect(destructiveElements[0]?.tagName.toLowerCase()).toBe('ng-icon');
   });
 
@@ -188,7 +188,7 @@ describe('InterventionKpiStrip', () => {
       false,
     );
 
-    expect(element.querySelectorAll('.text-destructive').length).toBe(0);
+    expect(element.querySelectorAll('.text-destructive')).toHaveLength(0);
   });
 
   it('should render zero-filled tiles when statistics is null and not loading', async () => {

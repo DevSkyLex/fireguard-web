@@ -182,7 +182,7 @@ describe('InterventionInspectionsTable', () => {
     fixture.componentRef.setInput('loading', true);
     await fixture.whenStable();
 
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should surface a fetch error as an alert', async () => {

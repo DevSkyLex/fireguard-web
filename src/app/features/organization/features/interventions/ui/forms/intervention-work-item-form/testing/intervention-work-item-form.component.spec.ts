@@ -110,7 +110,7 @@ describe('InterventionWorkItemForm', () => {
   it('should let the planner back out without a payload', () => {
     cancelButton().click();
 
-    expect(cancellations.length).toBe(1);
+    expect(cancellations).toHaveLength(1);
     expect(submissions).toEqual([]);
   });
 

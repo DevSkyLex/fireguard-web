@@ -145,7 +145,7 @@ describe('InterventionAttachments', () => {
 
     await pickFiles([pdf('a.pdf'), pdf('b.pdf')]);
 
-    expect(picked.length).toBe(1);
+    expect(picked).toHaveLength(1);
     expect(picked[0]?.length).toBe(2);
     expect(root().querySelector('[data-testid="intervention-attachments-error"]')).toBeNull();
   });
@@ -317,9 +317,9 @@ describe('InterventionAttachments', () => {
   it('should offer a download button on every row regardless of manage permission', async () => {
     await create(2, false);
 
-    expect(root().querySelectorAll('[data-testid="intervention-attachment-download"]').length).toBe(
-      2,
-    );
+    expect(
+      root().querySelectorAll('[data-testid="intervention-attachment-download"]'),
+    ).toHaveLength(2);
   });
 
   it('should emit downloadRequested for the clicked row', async () => {

@@ -1,4 +1,3 @@
-import type { EquipmentType } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 
 /**
@@ -22,14 +21,14 @@ import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipmen
  * @since 1.0.0
  *
  * @param {object} equipment - The pinned item's identity, in parts.
- * @param {EquipmentType | string} equipment.type - The raw enum value. Widened to `string` because `EquipmentOutput` types it that way; an unknown value falls through to itself rather than throwing.
+ * @param {string} equipment.type - The raw type. Unknown values fall through to themselves.
  * @param {string | null} equipment.serialNumber - Its serial number, if any.
  * @param {string | null} equipment.locationLabel - Where it sits, if recorded.
  *
  * @returns {string} A label safe to render to a user.
  */
 export function equipmentPlanLabel(equipment: {
-  readonly type: EquipmentType | string;
+  readonly type: string;
   readonly serialNumber: string | null;
   readonly locationLabel: string | null;
 }): string {
@@ -54,14 +53,14 @@ export function equipmentPlanLabel(equipment: {
  * @since 1.0.0
  *
  * @param {object} equipment - The pinned item's identity, in parts.
- * @param {EquipmentType | string} equipment.type - The raw enum value. Widened to `string` because `EquipmentOutput` types it that way; an unknown value falls through to itself rather than throwing.
+ * @param {string} equipment.type - The raw type. Unknown values fall through to themselves.
  * @param {string | null} equipment.serialNumber - Its serial number, if any.
  * @param {string | null} equipment.locationLabel - Where it sits, if recorded.
  *
  * @returns {string} The secondary line, or an empty string when there is nothing to add.
  */
 export function equipmentPlanDetail(equipment: {
-  readonly type: EquipmentType | string;
+  readonly type: string;
   readonly serialNumber: string | null;
   readonly locationLabel: string | null;
 }): string {

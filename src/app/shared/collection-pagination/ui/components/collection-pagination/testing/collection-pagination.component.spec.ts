@@ -174,40 +174,18 @@ describe('CollectionPagination', () => {
     expect((byTestId('widgets-page-prev') as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('should emit pageChanged with 1 when first is clicked', () => {
+  it.each([
+    ['first', 1],
+    ['prev', 1],
+    ['next', 3],
+    ['last', 5],
+  ] as const)('should emit pageChanged from %s to page %i', (control, expectedPage) => {
     const emitted: number[] = [];
     fixture.componentInstance.pageChanged.subscribe((value: number) => emitted.push(value));
 
-    byTestId('widgets-page-first')?.click();
+    byTestId(`widgets-page-${control}`)?.click();
 
-    expect(emitted).toEqual([1]);
-  });
-
-  it('should emit pageChanged with the previous page when prev is clicked', () => {
-    const emitted: number[] = [];
-    fixture.componentInstance.pageChanged.subscribe((value: number) => emitted.push(value));
-
-    byTestId('widgets-page-prev')?.click();
-
-    expect(emitted).toEqual([1]);
-  });
-
-  it('should emit pageChanged with the next page when next is clicked', () => {
-    const emitted: number[] = [];
-    fixture.componentInstance.pageChanged.subscribe((value: number) => emitted.push(value));
-
-    byTestId('widgets-page-next')?.click();
-
-    expect(emitted).toEqual([3]);
-  });
-
-  it('should emit pageChanged with the last page when last is clicked', () => {
-    const emitted: number[] = [];
-    fixture.componentInstance.pageChanged.subscribe((value: number) => emitted.push(value));
-
-    byTestId('widgets-page-last')?.click();
-
-    expect(emitted).toEqual([5]);
+    expect(emitted).toEqual([expectedPage]);
   });
 
   it('should emit pageSizeChanged with the picked value', () => {

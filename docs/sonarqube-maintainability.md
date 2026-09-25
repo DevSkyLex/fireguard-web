@@ -33,13 +33,14 @@ actifs.
 ## Relevé `Web:S6819` du 25 septembre 2026
 
 Le relevé de `fireguard-web-develop` compte 114 issues `Web:S6819` ouvertes.
-Ce lot examine les rôles `status` et `group` ; les autres rôles sont réservés à
-un examen de leur primitive native respective. Les lignes ci-dessous sont celles
-du scan Sonar et peuvent avoir légèrement bougé dans le code local.
+Ce lot examine les rôles `status` et `group`, puis les 14 autres rôles dans le
+complément ci-dessous. Les lignes indiquées sont celles du scan Sonar et peuvent
+avoir légèrement bougé dans le code local.
 Sur les **100 issues actives** de ces deux rôles, 24 sont corrigées dans le code,
 75 sont proposées **False Positive** avec une preuve par emplacement et une est
-proposée **Accepted**. Aucune résolution Sonar n'est appliquée
-avant la revue de ce relevé.
+proposée **Accepted**. Après vérification individuelle, la clé
+`4c5eba5e-5bf2-474b-8821-6278ce76c0c3` a été classée **False Positive**
+dans Sonar ; les autres propositions restent en attente de triage individuel.
 
 La distinction sémantique est celle du [standard HTML pour `output`](https://html.spec.whatwg.org/multipage/form-elements.html#the-output-element) :
 un résultat d'action ou de calcul, avec seulement du contenu phrastique. Un
@@ -198,7 +199,7 @@ Les 14 autres clés `Web:S6819` du scan ont été examinées séparément. Six s
 corrigées. Huit restent des **candidates** False Positive : les tests unitaires
 et la norme étayent la sémantique, mais le classement Sonar attend la
 vérification de l'arbre accessible et du clavier dans le navigateur Codex.
-Il n'y a pas de résolution Sonar appliquée par ce lot.
+Aucune des huit candidates de ce complément n'est encore résolue dans Sonar.
 
 Le [tableau ARIA in HTML du W3C](https://www.w3.org/TR/html-aria/#docconformance)
 autorise `role="img"` sur `<canvas>` et `role="option"` sur `<button>`, mais

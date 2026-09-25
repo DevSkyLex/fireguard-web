@@ -463,7 +463,7 @@ describe('OrganizationService', () => {
 
       const req = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body instanceof FormData).toBe(true);
+      expect(req.request.body).toBeInstanceOf(FormData);
       expect((req.request.body as FormData).has('logo')).toBe(true);
       expect(req.request.withCredentials).toBe(true);
       req.flush({
@@ -486,7 +486,7 @@ describe('OrganizationService', () => {
       };
 
       service.listPermissions('org-uuid-1').subscribe((response) => {
-        expect(response.member.length).toBe(1);
+        expect(response.member).toHaveLength(1);
         expect(response.member[0].name).toBe('facility:read');
       });
 

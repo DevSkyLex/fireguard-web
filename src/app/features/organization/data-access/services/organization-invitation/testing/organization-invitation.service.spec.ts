@@ -169,7 +169,7 @@ describe('OrganizationInvitationService', () => {
   describe('list', () => {
     it('should send GET request and return invitations collection', () => {
       service.list(orgId).subscribe((response) => {
-        expect(response.member.length).toBe(1);
+        expect(response.member).toHaveLength(1);
         expect(response.member[0].email).toBe('newmember@example.com');
       });
 

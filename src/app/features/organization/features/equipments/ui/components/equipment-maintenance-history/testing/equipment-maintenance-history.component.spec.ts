@@ -49,7 +49,7 @@ describe('EquipmentMaintenanceHistory', () => {
     ]);
 
     const rows = root().querySelectorAll('[data-testid="equipment-maintenance-log-row"]');
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Status change');
   });
 

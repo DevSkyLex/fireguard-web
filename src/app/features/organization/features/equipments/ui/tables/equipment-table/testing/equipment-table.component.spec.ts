@@ -56,7 +56,7 @@ describe('EquipmentTable', () => {
       '[data-testid="equipment-table-row"]',
     );
 
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Fire extinguisher');
     expect(rows[1].textContent).toContain('Smoke detector');
   });
@@ -101,7 +101,7 @@ describe('EquipmentTable', () => {
       '[data-testid="equipment-table-card"]',
     );
 
-    expect(cards.length).toBe(2);
+    expect(cards).toHaveLength(2);
     expect(cards[0].textContent).toContain('SN-1');
   });
 
@@ -111,7 +111,7 @@ describe('EquipmentTable', () => {
     const rows: NodeListOf<HTMLElement> = root().querySelectorAll('tbody tr');
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(root().querySelectorAll('[data-testid="equipment-table-row"]').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="equipment-table-row"]')).toHaveLength(0);
     expect(
       [...rows].every((row: HTMLElement): boolean => row.getAttribute('aria-hidden') === 'true'),
     ).toBe(true);
@@ -120,8 +120,8 @@ describe('EquipmentTable', () => {
   it('should keep the rows on screen while a later page loads', async () => {
     await render([equipment()], true);
 
-    expect(root().querySelectorAll('[data-testid="equipment-table-row"]').length).toBe(1);
-    expect(root().querySelectorAll('hlm-skeleton').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="equipment-table-row"]')).toHaveLength(1);
+    expect(root().querySelectorAll('hlm-skeleton')).toHaveLength(0);
   });
 
   it('should say so plainly when there is nothing to show', async () => {

@@ -75,11 +75,16 @@ export function projectInterventionWorkspace(
 
 /**
  * Function applyWorkItemCreation
- * @description Adds a new queued work item once and reports whether the item count changed.
+ *
+ * @description
+ * Adds a new queued work item once and reports whether the item count changed.
+ *
+ * @access private
+ * @since 6.2.0
+ *
  * @param {Map<string, InterventionWorkItemOutput>} workItems - Projected work items.
  * @param {InterventionOutboxOperationFor<'work-item.create'>} operation - Queued creation.
  * @returns {boolean} Whether a new row was added.
- * @since 6.2.0
  */
 function applyWorkItemCreation(
   workItems: Map<string, InterventionWorkItemOutput>,
@@ -93,12 +98,17 @@ function applyWorkItemCreation(
 
 /**
  * Function applyWorkItemUpdate
- * @description Replays a queued edit against a fresh row or its saved predecessor.
+ *
+ * @description
+ * Replays a queued edit against a fresh row or its saved predecessor.
+ *
+ * @access private
+ * @since 6.2.0
+ *
  * @param {Map<string, InterventionWorkItemOutput>} workItems - Projected work items.
  * @param {InterventionOutboxOperationFor<'work-item.update'>} operation - Queued update.
  * @param {InterventionWorkspaceData} saved - Saved rows and association labels.
  * @returns {boolean} Whether a row was updated or restored.
- * @since 6.2.0
  */
 function applyWorkItemUpdate(
   workItems: Map<string, InterventionWorkItemOutput>,
@@ -114,11 +124,16 @@ function applyWorkItemUpdate(
 
 /**
  * Function applyChangeCreation
- * @description Adds a queued change once, preserving an existing fresh or projected row.
+ *
+ * @description
+ * Adds a queued change once, preserving an existing fresh or projected row.
+ *
+ * @access private
+ * @since 6.2.0
+ *
  * @param {Map<string, InterventionChangeOutput>} changes - Projected changes.
  * @param {InterventionOutboxOperationFor<'change.create'>} operation - Queued creation.
  * @returns {void}
- * @since 6.2.0
  */
 function applyChangeCreation(
   changes: Map<string, InterventionChangeOutput>,
@@ -144,12 +159,17 @@ function applyChangeCreation(
 
 /**
  * Function applyChangeUpdate
- * @description Replays a queued change edit against a fresh or saved row.
+ *
+ * @description
+ * Replays a queued change edit against a fresh or saved row.
+ *
+ * @access private
+ * @since 6.2.0
+ *
  * @param {Map<string, InterventionChangeOutput>} changes - Projected changes.
  * @param {InterventionOutboxOperationFor<'change.update'>} operation - Queued update.
  * @param {InterventionWorkspaceData} saved - Saved rows available for restoration.
  * @returns {void}
- * @since 6.2.0
  */
 function applyChangeUpdate(
   changes: Map<string, InterventionChangeOutput>,

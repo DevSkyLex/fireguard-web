@@ -3044,21 +3044,21 @@
         <source>Pending sync</source>
         <target>Synchronisation en attente</target>
       </trans-unit>
-      <trans-unit id="intervention.attachments.queuedDelete" datatype="html">
-        <source>Remove this file from the sync queue</source>
-        <target>Retirer ce fichier de la file de synchronisation</target>
+      <trans-unit id="intervention.attachments.queuedDeleteAria" datatype="html">
+        <source>Remove <x id="INTERPOLATION" equiv-text="{{ queued.fileName }}"/> from the sync queue</source>
+        <target>Retirer <x id="INTERPOLATION" equiv-text="{{ queued.fileName }}"/> de la file de synchronisation</target>
       </trans-unit>
       <trans-unit id="intervention.workspace.attachmentQueueFull" datatype="html">
         <source>The offline file queue is full (25 files or 50 MB). Reconnect to sync your pending files before adding more.</source>
         <target>La file de fichiers hors ligne est pleine (25 fichiers ou 50 Mo). Reconnectez-vous pour synchroniser vos fichiers en attente avant d'en ajouter d'autres.</target>
       </trans-unit>
-      <trans-unit id="intervention.attachments.download" datatype="html">
-        <source>Download this file</source>
-        <target>Télécharger ce fichier</target>
+      <trans-unit id="intervention.attachments.downloadAria" datatype="html">
+        <source>Download <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></source>
+        <target>Télécharger <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></target>
       </trans-unit>
-      <trans-unit id="intervention.attachments.delete" datatype="html">
-        <source>Delete this file</source>
-        <target>Supprimer ce fichier</target>
+      <trans-unit id="intervention.attachments.deleteAria" datatype="html">
+        <source>Delete <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></source>
+        <target>Supprimer <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></target>
       </trans-unit>
       <trans-unit id="intervention.attachments.deleteTitle" datatype="html">
         <source>Delete this file?</source>

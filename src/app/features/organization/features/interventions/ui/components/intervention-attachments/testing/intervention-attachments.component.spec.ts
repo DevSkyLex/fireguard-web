@@ -322,6 +322,39 @@ describe('InterventionAttachments', () => {
     ).toHaveLength(2);
   });
 
+  it('should give each file action a distinct name that includes its visible filename', async () => {
+    await create(2);
+    fixture.componentRef.setInput('queuedAttachments', [queued(0)]);
+    fixture.componentRef.setInput('downloadingIds', new Set(['attachment-0']));
+    fixture.componentRef.setInput('pendingIds', new Set(['attachment-0']));
+    await fixture.whenStable();
+
+    const rows = root().querySelectorAll<HTMLElement>(
+      '[data-testid="intervention-attachment-row"]',
+    );
+    const downloads = Array.from(rows, (row) =>
+      row.querySelector<HTMLButtonElement>('[data-testid="intervention-attachment-download"]'),
+    );
+    const deletions = Array.from(rows, (row) =>
+      row.querySelector<HTMLButtonElement>('[data-testid="intervention-attachment-delete"]'),
+    );
+    const queuedDelete = root().querySelector<HTMLButtonElement>(
+      '[data-testid="intervention-attachment-queued-delete"]',
+    );
+
+    expect(downloads.map((button) => button?.textContent?.trim())).toEqual([
+      'Download evidence-0.pdf',
+      'Download evidence-1.pdf',
+    ]);
+    expect(deletions.map((button) => button?.textContent?.trim())).toEqual([
+      'Delete evidence-0.pdf',
+      'Delete evidence-1.pdf',
+    ]);
+    expect(queuedDelete?.textContent?.trim()).toBe('Remove queued-0.jpg from the sync queue');
+    expect(downloads[0]?.getAttribute('aria-label')).toBeNull();
+    expect(deletions[0]?.getAttribute('aria-label')).toBeNull();
+  });
+
   it('should emit downloadRequested for the clicked row', async () => {
     const downloads: InterventionAttachmentOutput[] = [];
     await create(2);

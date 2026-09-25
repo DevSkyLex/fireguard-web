@@ -163,7 +163,7 @@ describe('InterventionCommentForm', () => {
   it('should offer members from the picker once "@" is typed', async () => {
     await type('ping @');
 
-    expect(mentionOptions().length).toBe(1);
+    expect(mentionOptions()).toHaveLength(1);
     expect(mentionOptions()[0].textContent).toContain('Marc Dubois');
   });
 
@@ -227,7 +227,7 @@ describe('InterventionCommentForm', () => {
     await fixture.whenStable();
 
     expect(body().value).toBe('ping @Marc Dubois ');
-    expect(mentionOptions().length).toBe(0);
+    expect(mentionOptions()).toHaveLength(0);
     expect(root().querySelector('[data-testid="intervention-comment-mention-chips"]')).toBeNull();
   });
 
@@ -237,7 +237,7 @@ describe('InterventionCommentForm', () => {
     await fixture.whenStable();
 
     expect(body().value).toBe('@');
-    expect(mentionOptions().length).toBe(1);
+    expect(mentionOptions()).toHaveLength(1);
   });
 
   it('should serialize a selected readable mention to the API token on submit', async () => {

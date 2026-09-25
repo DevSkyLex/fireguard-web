@@ -127,7 +127,7 @@ describe('InterventionRecurrenceForm', () => {
     await setModel(validDraft);
     await submit();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
     expect(emitted[0]).toEqual({
       recurrenceId: null,
       name: 'Monthly extinguisher check',

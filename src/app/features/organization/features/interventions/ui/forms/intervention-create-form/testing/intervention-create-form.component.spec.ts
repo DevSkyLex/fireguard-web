@@ -62,7 +62,7 @@ describe('InterventionCreateForm', () => {
     await fillName('Autumn extinguisher round');
     await submit();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
     expect(emitted[0]).toEqual({
       name: 'Autumn extinguisher round',
       type: 'site_setup',

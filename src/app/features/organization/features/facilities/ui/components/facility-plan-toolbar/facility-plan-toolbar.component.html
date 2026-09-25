@@ -117,13 +117,12 @@
 
             <div hlmItemGroup class="min-h-0 overflow-y-auto px-3 py-2">
               @if (zoneCandidatesLoading()) {
-                <p
-                  class="px-3 py-8 text-center text-sm text-muted-foreground"
-                  role="status"
+                <output
+                  class="block px-3 py-8 text-center text-sm text-muted-foreground"
                   i18n="@@facility.plans.editor.loadingZones"
                 >
                   Loading zones…
-                </p>
+                </output>
               } @else if (zoneCandidatesFailed()) {
                 <div class="flex flex-col items-center gap-3 px-3 py-8 text-center">
                   <p
@@ -271,13 +270,12 @@
 
             <div hlmItemGroup class="min-h-0 overflow-y-auto px-3 py-2">
               @if (equipmentCandidatesLoading()) {
-                <p
-                  class="px-3 py-8 text-center text-sm text-muted-foreground"
-                  role="status"
+                <output
+                  class="block px-3 py-8 text-center text-sm text-muted-foreground"
                   i18n="@@facility.plans.editor.loadingEquipment"
                 >
                   Loading equipment…
-                </p>
+                </output>
               } @else if (equipmentCandidatesFailed()) {
                 <div class="flex flex-col items-center gap-3 px-3 py-8 text-center">
                   <p
@@ -368,10 +366,9 @@
     @if (editMode() !== 'none') {
       <div
         class="flex flex-wrap items-center gap-2 text-sm"
-        role="status"
         data-testid="facility-plan-editor-status"
       >
-        <span>{{ statusLabel() }}</span>
+        <output>{{ statusLabel() }}</output>
         @if (editMode() === 'draw-zone') {
           <button
             hlmBtn

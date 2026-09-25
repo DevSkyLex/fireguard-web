@@ -94,14 +94,14 @@
         @if (store.isLoadingCompliance()) {
           <div
             class="flex flex-col gap-3 md:w-72 md:shrink-0"
-            role="status"
-            aria-label="Loading compliance data"
-            i18n-aria-label="@@facility.map.compliance.loadingAria"
             data-testid="facility-map-compliance-loading"
           >
-            <hlm-skeleton class="h-3 w-full" />
-            <hlm-skeleton class="h-3 w-full" />
-            <hlm-skeleton class="h-3 w-full" />
+            <output class="sr-only" i18n="@@facility.map.compliance.loadingAria"
+              >Loading compliance data</output
+            >
+            <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
+            <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
+            <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
           </div>
         } @else {
           <app-facility-compliance-worst-sites

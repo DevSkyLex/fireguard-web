@@ -252,8 +252,7 @@ describe('FacilityMapPage', () => {
       '[data-testid="facility-map-compliance-loading"]',
     ) as HTMLElement | null;
     expect(status).not.toBeNull();
-    expect(status?.getAttribute('role')).toBe('status');
-    expect(status?.getAttribute('aria-label')).toBe('Loading compliance data');
+    expect(status?.querySelector('output')?.textContent).toContain('Loading compliance data');
     expect(fixture.nativeElement.querySelector('app-facility-compliance-worst-sites')).toBeNull();
   });
 

@@ -174,12 +174,7 @@
           <span i18n="@@facility.form.locateAddress">Locate address</span>
         </button>
       </div>
-      <p
-        role="status"
-        aria-live="polite"
-        class="text-xs"
-        data-testid="facility-create-geocode-status"
-      >
+      <output aria-live="polite" class="block text-xs" data-testid="facility-create-geocode-status">
         @if (geocodePending()) {
           <span class="text-muted-foreground" i18n="@@facility.form.locatingAddress"
             >Locating address…</span
@@ -191,7 +186,7 @@
         } @else if (geocodeResult(); as match) {
           <span class="text-muted-foreground">{{ match.displayName }}</span>
         }
-      </p>
+      </output>
     </hlm-field>
 
     <div class="flex flex-wrap items-center gap-2">

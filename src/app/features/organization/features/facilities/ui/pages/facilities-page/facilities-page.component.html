@@ -207,10 +207,9 @@
         (restoreRequested)="onRestoreRequested($event)"
       />
     } @else {
-      <div
+      <section
         class="min-h-0 flex-1 overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
         tabindex="0"
-        role="region"
         aria-label="Facilities grid"
         i18n-aria-label="@@facility.list.gridRegion"
       >
@@ -222,7 +221,7 @@
           (archiveRequested)="onArchiveRequested($event)"
           (restoreRequested)="onRestoreRequested($event)"
         />
-      </div>
+      </section>
     }
 
     <app-collection-pagination

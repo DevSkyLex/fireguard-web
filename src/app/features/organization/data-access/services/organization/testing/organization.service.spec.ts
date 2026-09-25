@@ -178,6 +178,25 @@ describe('OrganizationService', () => {
   // ── getDashboard ───────────────────────────────────────────────────────────
 
   describe('getDashboard', () => {
+    it('preserves false while excluding empty and unsupported dashboard parameters', () => {
+      const options = {
+        compare: false,
+        from: '',
+        granularity: 'week',
+        unsupported: 'ignored',
+      };
+      service.getDashboard('org-uuid-1', options).subscribe();
+
+      const req = httpMock.expectOne(
+        (request) => request.url === `${baseUrl}/org-uuid-1/dashboard`,
+      );
+      expect(req.request.params.get('compare')).toBe('false');
+      expect(req.request.params.has('from')).toBe(false);
+      expect(req.request.params.has('granularity')).toBe(false);
+      expect(req.request.params.has('unsupported')).toBe(false);
+      req.flush({});
+    });
+
     it('should send GET request and return organization dashboard', () => {
       const mockDashboard: OrganizationDashboardOutput = {
         '@id': '/api/organizations/org-uuid-1/dashboard',

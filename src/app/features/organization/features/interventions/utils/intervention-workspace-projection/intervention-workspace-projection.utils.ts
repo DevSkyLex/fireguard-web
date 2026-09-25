@@ -40,45 +40,19 @@ export function projectInterventionWorkspace(
     if (operation.interventionId !== intervention.id) continue;
     switch (operation.type) {
       case 'work-item.create': {
-        const id = operation.payload.clientId;
-        if (!id || workItems.has(id)) break;
-        workItems.set(id, projectedCreatedWorkItem(operation, id));
-        workChanged = true;
+        workChanged = applyWorkItemCreation(workItems, operation) || workChanged;
         break;
       }
       case 'work-item.update': {
-        const { workItemId } = operation.payload;
-        const item =
-          workItems.get(workItemId) ?? saved.workItems.find((row) => row.id === workItemId);
-        if (item) {
-          workItems.set(workItemId, projectedUpdatedWorkItem(operation, item, saved));
-          workChanged = true;
-        }
+        workChanged = applyWorkItemUpdate(workItems, operation, saved) || workChanged;
         break;
       }
       case 'change.create': {
-        const input = operation.payload;
-        const id = input.clientId;
-        if (!id || changes.has(id)) break;
-        changes.set(id, {
-          '@id': '/api/intervention-changes/' + id,
-          '@type': 'InterventionChange',
-          id,
-          intervention: input.intervention,
-          workItem: input.workItem ?? null,
-          resource: input.resource,
-          patch: input.patch,
-          status: 'proposed',
-          revision: 1,
-          createdAt: operation.createdAt,
-          updatedAt: operation.createdAt,
-        });
+        applyChangeCreation(changes, operation);
         break;
       }
       case 'change.update': {
-        const { changeId, clientId: _clientId, revision: _revision, ...fields } = operation.payload;
-        const change = changes.get(changeId) ?? saved.changes.find((row) => row.id === changeId);
-        if (change) changes.set(changeId, { ...change, ...fields });
+        applyChangeUpdate(changes, operation, saved);
         break;
       }
       case 'intervention.update': {
@@ -97,6 +71,114 @@ export function projectInterventionWorkspace(
       ).length,
     });
   return { ...base, intervention, workItems: items, changes: [...changes.values()] };
+}
+
+/**
+ * Function applyWorkItemCreation
+ *
+ * @description
+ * Adds a new queued work item once and reports whether the item count changed.
+ *
+ * @access private
+ * @since 6.2.0
+ *
+ * @param {Map<string, InterventionWorkItemOutput>} workItems - Projected work items.
+ * @param {InterventionOutboxOperationFor<'work-item.create'>} operation - Queued creation.
+ * @returns {boolean} Whether a new row was added.
+ */
+function applyWorkItemCreation(
+  workItems: Map<string, InterventionWorkItemOutput>,
+  operation: InterventionOutboxOperationFor<'work-item.create'>,
+): boolean {
+  const id = operation.payload.clientId;
+  if (!id || workItems.has(id)) return false;
+  workItems.set(id, projectedCreatedWorkItem(operation, id));
+  return true;
+}
+
+/**
+ * Function applyWorkItemUpdate
+ *
+ * @description
+ * Replays a queued edit against a fresh row or its saved predecessor.
+ *
+ * @access private
+ * @since 6.2.0
+ *
+ * @param {Map<string, InterventionWorkItemOutput>} workItems - Projected work items.
+ * @param {InterventionOutboxOperationFor<'work-item.update'>} operation - Queued update.
+ * @param {InterventionWorkspaceData} saved - Saved rows and association labels.
+ * @returns {boolean} Whether a row was updated or restored.
+ */
+function applyWorkItemUpdate(
+  workItems: Map<string, InterventionWorkItemOutput>,
+  operation: InterventionOutboxOperationFor<'work-item.update'>,
+  saved: InterventionWorkspaceData,
+): boolean {
+  const { workItemId } = operation.payload;
+  const item = workItems.get(workItemId) ?? saved.workItems.find((row) => row.id === workItemId);
+  if (!item) return false;
+  workItems.set(workItemId, projectedUpdatedWorkItem(operation, item, saved));
+  return true;
+}
+
+/**
+ * Function applyChangeCreation
+ *
+ * @description
+ * Adds a queued change once, preserving an existing fresh or projected row.
+ *
+ * @access private
+ * @since 6.2.0
+ *
+ * @param {Map<string, InterventionChangeOutput>} changes - Projected changes.
+ * @param {InterventionOutboxOperationFor<'change.create'>} operation - Queued creation.
+ * @returns {void}
+ */
+function applyChangeCreation(
+  changes: Map<string, InterventionChangeOutput>,
+  operation: InterventionOutboxOperationFor<'change.create'>,
+): void {
+  const input = operation.payload;
+  const id = input.clientId;
+  if (!id || changes.has(id)) return;
+  changes.set(id, {
+    '@id': '/api/intervention-changes/' + id,
+    '@type': 'InterventionChange',
+    id,
+    intervention: input.intervention,
+    workItem: input.workItem ?? null,
+    resource: input.resource,
+    patch: input.patch,
+    status: 'proposed',
+    revision: 1,
+    createdAt: operation.createdAt,
+    updatedAt: operation.createdAt,
+  });
+}
+
+/**
+ * Function applyChangeUpdate
+ *
+ * @description
+ * Replays a queued change edit against a fresh or saved row.
+ *
+ * @access private
+ * @since 6.2.0
+ *
+ * @param {Map<string, InterventionChangeOutput>} changes - Projected changes.
+ * @param {InterventionOutboxOperationFor<'change.update'>} operation - Queued update.
+ * @param {InterventionWorkspaceData} saved - Saved rows available for restoration.
+ * @returns {void}
+ */
+function applyChangeUpdate(
+  changes: Map<string, InterventionChangeOutput>,
+  operation: InterventionOutboxOperationFor<'change.update'>,
+  saved: InterventionWorkspaceData,
+): void {
+  const { changeId, clientId: _clientId, revision: _revision, ...fields } = operation.payload;
+  const change = changes.get(changeId) ?? saved.changes.find((row) => row.id === changeId);
+  if (change) changes.set(changeId, { ...change, ...fields });
 }
 
 /**

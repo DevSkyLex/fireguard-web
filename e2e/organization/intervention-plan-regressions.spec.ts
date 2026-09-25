@@ -152,12 +152,27 @@ test('cancels signature capture on Escape, backdrop and Cancel; submits only thr
     expect(writes).toHaveLength(0);
   }
   await command.click();
+  const canvas = page.getByRole('img', { name: 'Signature drawing area' });
+  const clear = page.getByTestId('intervention-signature-clear');
+  await expect(canvas).toBeVisible();
+  await expect(clear).toBeDisabled();
+  const canvasBox = await canvas.boundingBox();
+  if (!canvasBox) throw new Error('The signature canvas must have a visible drawing area.');
+  await page.mouse.move(canvasBox.x + 20, canvasBox.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + 90, canvasBox.y + 70);
+  await page.mouse.up();
+  await expect(clear).toBeEnabled();
+  await clear.focus();
+  await page.keyboard.press('Enter');
+  await expect(clear).toBeDisabled();
   const submitted = page.waitForRequest(
     (request) =>
       request.method() === 'PATCH' &&
       request.url().includes(`/api/interventions/${intervention.id}`),
   );
-  await page.getByTestId('intervention-signature-skip').click();
+  await page.getByTestId('intervention-signature-skip').focus();
+  await page.keyboard.press('Enter');
   expect((await submitted).postDataJSON()).toMatchObject({ status: 'submitted' });
   expect(writes).toHaveLength(1);
 });

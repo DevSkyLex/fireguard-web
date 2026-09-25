@@ -151,6 +151,52 @@ test.describe('Facility create', () => {
 });
 
 test.describe('Facility detail', () => {
+  test('exposes a named 3D canvas while keeping floor selection keyboard accessible', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await page.route('**/building-model', (route) =>
+      route.fulfill({
+        json: {
+          buildingId: E2E_FACILITY_ID,
+          buildingName: 'North Building',
+          floors: [
+            {
+              facilityId: E2E_FACILITY_CHILD_ID,
+              name: 'Ground Floor',
+              levelIndex: 0,
+              status: 'active',
+              plan: { attachmentId: E2E_FACILITY_PLAN_ID, imageWidth: 1200, imageHeight: 800 },
+              outline: {
+                source: 'plan_geometry',
+                points: [
+                  [0.1, 0.1],
+                  [0.9, 0.1],
+                  [0.9, 0.9],
+                  [0.1, 0.9],
+                ],
+              },
+              rooms: [],
+            },
+          ],
+        },
+      }),
+    );
+
+    await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/facilities/${E2E_FACILITY_ID}/3d`);
+    await expect(
+      page.getByRole('img', { name: '3D view of North Building — 1 floor(s)' }),
+    ).toBeVisible();
+    const floor = page.getByTestId('facility-3d-floor-selector-option').first();
+    await expect(floor).toBeVisible();
+    await floor.focus();
+    await expect(floor).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(floor).toHaveAttribute('aria-current', 'true');
+  });
+
   test('exposes a named focus fallback on the 3D building page', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
@@ -432,6 +478,14 @@ test.describe('Facility Plans tab', () => {
         isPrimaryPlan: true,
       }),
     );
+    let releasePrimary!: () => void;
+    const heldPrimary = new Promise<void>((resolve) => {
+      releasePrimary = resolve;
+    });
+    await page.route(`**/api/facility-attachments/${secondary.id}/primary`, async (route) => {
+      await heldPrimary;
+      await route.fallback();
+    });
     const facilities = new FacilitiesPage(page);
 
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
@@ -440,8 +494,19 @@ test.describe('Facility Plans tab', () => {
     await expect(facilities.planRows).toHaveCount(2);
     await expect(facilities.planPrimaryBadge).toHaveCount(1);
 
-    await facilities.planMenuTrigger.nth(1).click();
-    await facilities.planSetPrimary.click();
+    const secondaryActions = facilities.planMenuTrigger.nth(1);
+    await expect(secondaryActions).toHaveAccessibleName('Plan actions');
+    await expect(secondaryActions.getByText('Plan actions')).toHaveCount(0);
+
+    try {
+      await secondaryActions.click();
+      await facilities.planSetPrimary.click();
+      await expect(secondaryActions).toHaveAccessibleName('Plan actions');
+      await expect(secondaryActions.locator('hlm-spinner')).toBeVisible();
+      await expect(secondaryActions.getByText('Plan actions')).toHaveCount(0);
+    } finally {
+      releasePrimary();
+    }
 
     await expect(facilities.planPrimaryBadge).toHaveCount(1);
     await expect(facilities.planRows.filter({ hasText: 'level-2.png' })).toContainText('Primary');
@@ -561,6 +626,21 @@ test.describe('Facility Plan Overlay', () => {
     await expect(facilities.overlayToggles).toBeVisible();
     await expect(facilities.overlayZones).toHaveCount(2);
     await expect(facilities.overlayEquipment).toHaveCount(2);
+
+    const zones = page.getByRole('listbox', { name: 'Zones on this plan' });
+    const serverRoom = zones.getByRole('option', { name: /Server Room/ });
+    const storage = zones.getByRole('option', { name: /Storage/ });
+    const equipment = page.getByRole('listbox', { name: 'Equipment on this plan' });
+    await expect(zones).toBeVisible();
+    await expect(equipment.getByRole('option', { name: /Extinguisher A/ })).toBeVisible();
+    await expect(serverRoom).toHaveAttribute('tabindex', '0');
+    await serverRoom.focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(storage).toBeFocused();
+    await expect(storage).toHaveAttribute('aria-selected', 'false');
+    await page.keyboard.press('Space');
+    await expect(storage).toHaveAttribute('aria-selected', 'true');
+    await expect(facilities.planDetail).toBeVisible();
   });
 
   test('reaches a zone and a pin by keyboard, selects either, and only the detail action navigates', async ({

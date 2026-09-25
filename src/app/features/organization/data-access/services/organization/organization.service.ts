@@ -83,42 +83,26 @@ export class OrganizationService extends HydraApiService {
       return undefined;
     }
 
-    const facilityType: string | undefined =
-      'facilityType' in options ? options.facilityType : undefined;
-    const equipmentType: string | undefined =
-      'equipmentType' in options ? options.equipmentType : undefined;
-    const equipmentStatus: string | undefined =
-      'equipmentStatus' in options ? options.equipmentStatus : undefined;
-    const inspectionStatus: string | undefined =
-      'inspectionStatus' in options ? options.inspectionStatus : undefined;
-    const inspectionResult: string | undefined =
-      'inspectionResult' in options ? options.inspectionResult : undefined;
-    const inspectorType: string | undefined =
-      'inspectorType' in options ? options.inspectorType : undefined;
-    const nonConformityStatus: string | undefined =
-      'nonConformityStatus' in options ? options.nonConformityStatus : undefined;
-    const nonConformitySeverity: string | undefined =
-      'nonConformitySeverity' in options ? options.nonConformitySeverity : undefined;
-    const granularity: string | undefined =
-      includeGranularity && 'granularity' in options ? options.granularity : undefined;
-
-    const candidates: Record<string, string | boolean | undefined> = {
-      from: options.from,
-      to: options.to,
-      compare: options.compare,
-      timezone: options.timezone,
-      facilityType,
-      equipmentType,
-      equipmentStatus,
-      inspectionStatus,
-      inspectionResult,
-      inspectorType,
-      nonConformityStatus,
-      nonConformitySeverity,
-      granularity,
-    };
+    const allowedKeys = [
+      'from',
+      'to',
+      'compare',
+      'timezone',
+      'facilityType',
+      'equipmentType',
+      'equipmentStatus',
+      'inspectionStatus',
+      'inspectionResult',
+      'inspectorType',
+      'nonConformityStatus',
+      'nonConformitySeverity',
+      'granularity',
+    ] as const;
+    const values: Readonly<Record<string, string | boolean | undefined>> = { ...options };
     const params: NonNullable<RequestOptions['params']> = {};
-    for (const [key, value] of Object.entries(candidates)) {
+    for (const key of allowedKeys) {
+      if (key === 'granularity' && !includeGranularity) continue;
+      const value = values[key];
       if (value != null && value !== '') params[key] = value;
     }
 

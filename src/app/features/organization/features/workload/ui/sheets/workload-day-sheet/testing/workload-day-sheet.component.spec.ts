@@ -140,7 +140,7 @@ describe('WorkloadDaySheet', () => {
     const overloadResult = sheet().querySelector('output');
     expect(overloadResult?.textContent).toContain('Over capacity by 1 h');
     expect(overloadResult?.textContent).toContain('Review the remaining work or availability');
-    expect(overloadResult?.parentElement?.getAttribute('role')).toBe('none');
+    expect(overloadResult?.parentElement?.getAttribute('role')).toBe('presentation');
     expect(sheet().querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe(
       '100',
     );

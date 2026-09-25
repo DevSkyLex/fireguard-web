@@ -403,7 +403,7 @@ describe('OrganizationSettingsPage', () => {
     await fixture.whenStable();
 
     const notice = byTestId('org-settings-checkout-confirmed');
-    expect(notice?.getAttribute('role')).toBe('none');
+    expect(notice?.getAttribute('role')).toBe('presentation');
     const result = notice?.querySelector('output');
     expect(result?.textContent).toContain('Plan confirmed');
     expect(result?.textContent).toContain('Your subscription is active.');

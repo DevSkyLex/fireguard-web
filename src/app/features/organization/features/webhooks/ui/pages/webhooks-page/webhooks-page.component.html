@@ -30,9 +30,9 @@
     </div>
   </div>
   @if (notice(); as message) {
-    <p role="status" class="rounded-md border p-3 text-sm" data-testid="webhook-notice">
+    <output class="block rounded-md border p-3 text-sm" data-testid="webhook-notice">
       {{ message }}
-    </p>
+    </output>
   }
   @if (store.listCallState().error; as error) {
     <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
@@ -204,9 +204,8 @@
               Refresh
             </button>
           </div>
-          <div
+          <fieldset
             class="flex flex-wrap gap-2"
-            role="group"
             aria-label="Delivery status"
             i18n-aria-label="@@webhooks.deliveryStatus"
           >
@@ -224,7 +223,7 @@
                 {{ filter.label }}
               </button>
             }
-          </div>
+          </fieldset>
           @if (store.deliveryCallState().error; as error) {
             <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
           }

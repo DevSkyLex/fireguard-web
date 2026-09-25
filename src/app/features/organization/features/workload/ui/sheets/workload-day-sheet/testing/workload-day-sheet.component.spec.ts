@@ -137,6 +137,10 @@ describe('WorkloadDaySheet', () => {
     expect(text(sheet())).toContain('Planner');
     expect(text(sheet())).toContain('Wednesday, September 16, 2026');
     expect(text(sheet())).toContain('Over capacity by 1 h');
+    const overloadResult = sheet().querySelector('output');
+    expect(overloadResult?.textContent).toContain('Over capacity by 1 h');
+    expect(overloadResult?.textContent).toContain('Review the remaining work or availability');
+    expect(overloadResult?.parentElement?.getAttribute('role')).toBe('none');
     expect(sheet().querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe(
       '100',
     );

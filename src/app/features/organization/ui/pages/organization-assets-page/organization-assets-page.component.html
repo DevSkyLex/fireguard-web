@@ -776,10 +776,10 @@
           }
         </p>
         @if ((summary.totals.unevaluatedEquipmentCount ?? 0) > 0) {
-          <p role="status" data-testid="assets-compliance-unevaluated" class="text-foreground">
+          <output class="block text-foreground" data-testid="assets-compliance-unevaluated">
             <span i18n="@@org.assets.compliance.unevaluated">Equipment not yet evaluated</span> ·
             {{ summary.totals.unevaluatedEquipmentCount }}
-          </p>
+          </output>
         }
       </div>
       <div class="flex flex-wrap items-center justify-between gap-2">
@@ -827,7 +827,7 @@
             (click)="onExportSafetyRegister()"
           >
             <ng-icon name="lucideDownload" aria-hidden="true" />
-            <span role="status" aria-live="polite">
+            <span>
               @if (compliance.isExporting()) {
                 <span i18n="@@org.assets.compliance.exporting">Exporting…</span>
               } @else {
@@ -835,6 +835,12 @@
               }
             </span>
           </button>
+          <output class="sr-only" aria-live="polite" data-testid="assets-compliance-export-status">
+            @if (compliance.isExporting()) {
+              <span i18n="@@org.assets.compliance.export">Export safety register</span>:
+              <span i18n="@@org.assets.compliance.exporting">Exporting…</span>
+            }
+          </output>
           <button
             type="button"
             hlmBtn
@@ -847,7 +853,7 @@
             (click)="onArchiveRegister()"
           >
             <ng-icon name="lucideArchive" aria-hidden="true" />
-            <span role="status" aria-live="polite">
+            <span>
               @if (compliance.isArchiving()) {
                 <span i18n="@@org.assets.compliance.archiving">Archiving…</span>
               } @else {
@@ -855,6 +861,12 @@
               }
             </span>
           </button>
+          <output class="sr-only" aria-live="polite" data-testid="assets-compliance-archive-status">
+            @if (compliance.isArchiving()) {
+              <span i18n="@@org.assets.compliance.archive">Archive register</span>:
+              <span i18n="@@org.assets.compliance.archiving">Archiving…</span>
+            }
+          </output>
         }
       </div>
 

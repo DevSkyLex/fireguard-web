@@ -151,6 +151,24 @@ test.describe('Facility create', () => {
 });
 
 test.describe('Facility detail', () => {
+  test('exposes a named focus fallback on the 3D building page', async ({ page }) => {
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+    await page.route('**/building-model', (route) =>
+      route.fulfill({ status: 409, contentType: 'application/problem+json', body: '{}' }),
+    );
+
+    await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/facilities/${E2E_FACILITY_ID}/3d`);
+
+    const pageScope = page.getByRole('group', { name: '3D building view' });
+    await expect(pageScope).toBeVisible();
+    await pageScope.focus();
+    await expect(pageScope).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(pageScope).toBeFocused();
+  });
+
   test('renders the Overview hierarchy chart and navigates on node click', async ({ page }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
@@ -169,6 +187,10 @@ test.describe('Facility detail', () => {
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
 
     await expect(facilities.detailRoot).toBeVisible();
+    const detailScope = page.getByRole('group', { name: 'Facility record' });
+    await expect(detailScope).toBeVisible();
+    await detailScope.focus();
+    await expect(detailScope).toBeFocused();
     await expect(facilities.hierarchyNodes).toHaveCount(1);
     await expect(page.getByText('Equipment status')).toBeVisible();
     await expect(page.getByText('Recent inspections')).toBeVisible();
@@ -464,6 +486,19 @@ test.describe('Facility Plans tab', () => {
     await facilities.plansTab.click();
 
     await expect(facilities.planViewer).toBeVisible();
+    const viewport = facilities.planViewer.getByRole('group', { name: /Floor plan:/ });
+    await expect(viewport).toHaveAttribute('aria-roledescription', 'floor plan viewer');
+    await viewport.focus();
+    await expect(viewport).toBeFocused();
+    const content = facilities.planViewer.getByTestId('plan-viewer-content');
+    const initialTransform = await content.evaluate(
+      (element) => (element as HTMLElement).style.transform,
+    );
+    await page.keyboard.press('+');
+    await expect
+      .poll(() => content.evaluate((element) => (element as HTMLElement).style.transform))
+      .not.toBe(initialTransform);
+    await page.keyboard.press('0');
     const zoomIn = facilities.planViewer.getByRole('button', { name: /zoom in/i });
     await expect(zoomIn).toBeVisible();
     await zoomIn.click();

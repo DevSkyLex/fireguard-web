@@ -1,10 +1,9 @@
-<div
+<fieldset
   #barRoot
   class="flex shrink-0 flex-wrap items-center gap-2 overflow-hidden rounded-md border border-border p-2 outline-none focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid"
   [class.justify-center]="isEmpty()"
   [attr.id]="testId('filter-bar')"
   [attr.data-testid]="testId('filter-chips')"
-  role="group"
   tabindex="-1"
   [attr.aria-label]="regionLabel"
 >
@@ -70,4 +69,4 @@
       <span>{{ clearFiltersLabel }}</span>
     </button>
   }
-</div>
+</fieldset>

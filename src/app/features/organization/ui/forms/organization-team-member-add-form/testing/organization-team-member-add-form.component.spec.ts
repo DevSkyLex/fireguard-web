@@ -111,7 +111,9 @@ describe('OrganizationTeamMemberAddForm', () => {
     expect(choice.textContent).toContain('Ada Lovelace');
     choice.click();
     await fixture.whenStable();
-    expect(root().querySelector('[role="status"]')?.textContent).toContain('Ada Lovelace');
+    expect(root().querySelector('output[hlmFieldDescription]')?.textContent).toContain(
+      'Ada Lovelace',
+    );
     submitButton().click();
     expect(submissions).toEqual([{ memberId: 'member-1' }]);
   });

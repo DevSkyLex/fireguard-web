@@ -56,9 +56,9 @@
     }
   </div>
 
-  <span class="sr-only" role="status" aria-live="polite" data-testid="global-search-announce">
+  <output class="sr-only" aria-live="polite" data-testid="global-search-announce">
     {{ resultAnnouncement() }}
-  </span>
+  </output>
 
   <div hlmCommandList class="max-h-none min-h-0 flex-1 overflow-y-auto px-2 py-2">
     @if (!termLongEnough()) {

@@ -32,9 +32,9 @@
       } @else if (callState().status === 'pending' && operations().length === 0) {
         <p role="status" i18n="@@intervention.operations.loading">Reading saved operations…</p>
       } @else if (operations().length === 0) {
-        <p role="status" i18n="@@intervention.operations.empty">
+        <output class="block" i18n="@@intervention.operations.empty">
           No operations waiting to be sent for this intervention.
-        </p>
+        </output>
       }
       <ol class="divide-y divide-border">
         @for (operation of operations(); track operation.id) {

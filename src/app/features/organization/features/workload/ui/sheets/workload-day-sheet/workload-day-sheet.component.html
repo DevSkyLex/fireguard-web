@@ -76,13 +76,19 @@
             </p>
           }
           @if ((selected.day.overloadMinutes ?? 0) > 0) {
-            <div hlmAlert variant="destructive" role="status">
-              <p hlmAlertTitle i18n="@@workload.dayOverload">
-                Over capacity by {{ duration(selected.day.overloadMinutes) }}
-              </p>
-              <p hlmAlertDescription i18n="@@workload.dayOverloadHint">
-                Review the remaining work or availability for this day.
-              </p>
+            <div hlmAlert variant="destructive" role="none">
+              <output class="flex flex-col gap-0.5">
+                <span hlmAlertTitle i18n="@@workload.dayOverload">
+                  Over capacity by {{ duration(selected.day.overloadMinutes) }}
+                </span>
+                <span
+                  hlmAlertDescription
+                  class="text-destructive/90"
+                  i18n="@@workload.dayOverloadHint"
+                >
+                  Review the remaining work or availability for this day.
+                </span>
+              </output>
             </div>
           } @else if (selected.day.capacityMinutes === 0) {
             <div hlmAlert role="status">

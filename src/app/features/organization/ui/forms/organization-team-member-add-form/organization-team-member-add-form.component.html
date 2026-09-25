@@ -73,10 +73,10 @@
       </div>
     </hlm-command>
     @if (selectedMemberId()) {
-      <p hlmFieldDescription role="status" class="wrap-anywhere">
+      <output hlmFieldDescription class="block wrap-anywhere">
         <span i18n="@@org.teams.membersSheet.selectedMember">Selected</span>:
         {{ memberLabelOf(selectedMemberId()) }}
-      </p>
+      </output>
     }
   } @else {
     <hlm-combobox

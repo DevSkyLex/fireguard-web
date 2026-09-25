@@ -110,6 +110,20 @@ describe('InterventionWorkItemTable', () => {
     expect(rows()[0]?.textContent).toContain('Extinguisher A-12');
   });
 
+  it('exposes locally saved work as native output in the table and cards', async () => {
+    fixture.componentRef.setInput('queuedIds', new Set(['wi-1']));
+    await fixture.whenStable();
+
+    const outputs = root().querySelectorAll('output');
+    expect(outputs).toHaveLength(2);
+    for (const output of outputs) {
+      expect(output.textContent).toContain('Saved on this device');
+      expect(output.hasAttribute('role')).toBe(false);
+    }
+    expect(rows()[0]?.querySelector('output')).not.toBeNull();
+    expect(byTestId('intervention-work-item-table-card')?.querySelector('output')).not.toBeNull();
+  });
+
   it.each([
     { estimatedMinutes: null, remainingMinutes: null, spentMinutes: 0 },
     { estimatedMinutes: undefined, remainingMinutes: undefined, spentMinutes: undefined },

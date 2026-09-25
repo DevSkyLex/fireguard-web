@@ -22,9 +22,8 @@
   }
 
   @if (categories().length > 0) {
-    <div
+    <fieldset
       class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
-      role="group"
       aria-label="Filter by category"
       i18n-aria-label="@@account.notifications.filterLabel"
     >
@@ -52,7 +51,7 @@
           {{ category }}
         </button>
       }
-    </div>
+    </fieldset>
   }
 
   @if (hasError()) {

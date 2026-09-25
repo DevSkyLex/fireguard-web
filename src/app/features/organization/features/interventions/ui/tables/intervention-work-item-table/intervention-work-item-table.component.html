@@ -328,13 +328,12 @@
                     >
                   }
                   @if (queuedIds().has(item.id)) {
-                    <span
+                    <output
                       hlmTooltip="Saved on this device"
                       i18n-hlmTooltip="@@intervention.workItems.savedLocally"
                       class="min-w-0 truncate text-xs text-muted-foreground"
-                      role="status"
                       i18n="@@intervention.workItems.savedLocally"
-                      >Saved on this device</span
+                      >Saved on this device</output
                     >
                   }
                 </span>
@@ -507,11 +506,10 @@
                     {{ actionLabelOf(item) }}
                   }
                   @if (queuedIds().has(item.id)) {
-                    <span
+                    <output
                       class="block text-xs text-muted-foreground"
-                      role="status"
                       i18n="@@intervention.workItems.savedLocally"
-                      >Saved on this device</span
+                      >Saved on this device</output
                     >
                   }
                   @if (!item.required) {

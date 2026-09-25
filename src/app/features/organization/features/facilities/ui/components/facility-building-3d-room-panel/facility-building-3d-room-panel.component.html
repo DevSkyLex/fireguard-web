@@ -48,8 +48,7 @@
 }
 
 <ng-template #body>
-  <div
-    role="group"
+  <fieldset
     [attr.aria-label]="floorSelectorLabel"
     class="flex flex-wrap gap-1.5"
     data-testid="facility-3d-floor-selector"
@@ -68,7 +67,7 @@
         {{ floor.name }}
       </button>
     }
-  </div>
+  </fieldset>
 
   @if (room(); as selectedRoom) {
     <div class="flex flex-col gap-3 rounded-lg border border-border p-3">

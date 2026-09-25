@@ -165,6 +165,11 @@ describe('InterventionCommentForm', () => {
 
     expect(mentionOptions()).toHaveLength(1);
     expect(mentionOptions()[0].textContent).toContain('Marc Dubois');
+    expect(body().getAttribute('role')).toBeNull();
+    expect(body().getAttribute('aria-autocomplete')).toBe('list');
+    expect(body().getAttribute('aria-controls')).toBe('intervention-comment-mentions');
+    expect(body().getAttribute('aria-expanded')).toBe('true');
+    expect(body().getAttribute('aria-activedescendant')).toBe(mentionOptions()[0].id);
   });
 
   it.each([

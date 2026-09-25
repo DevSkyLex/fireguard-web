@@ -75,7 +75,7 @@ describe('OrganizationMemberTable', () => {
     it('should name the scrolling region from the table caption', async () => {
       await createTable([member({ id: 'a' })]);
 
-      const region: HTMLElement | null = root().querySelector('[role="region"]');
+      const region: HTMLElement | null = root().querySelector('section[hlmTableContainer]');
       const caption: HTMLElement | null = root().querySelector('caption');
 
       expect(region?.getAttribute('aria-labelledby')).toBe(caption?.id);

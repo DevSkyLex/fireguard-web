@@ -225,11 +225,7 @@
                 >
               </button>
             </h3>
-            <div
-              hlmCollapsibleContent
-              role="region"
-              aria-labelledby="workload-day-excluded-trigger"
-            >
+            <section hlmCollapsibleContent aria-labelledby="workload-day-excluded-trigger">
               @if (isExcludedExpanded()) {
                 <div class="flex flex-col gap-3 pt-3">
                   <p class="text-sm text-muted-foreground" i18n="@@workload.day.excludedScope">
@@ -269,7 +265,7 @@
                   </ul>
                 </div>
               }
-            </div>
+            </section>
           </div>
         }
       </div>

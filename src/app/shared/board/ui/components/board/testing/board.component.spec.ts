@@ -78,6 +78,11 @@ describe('Board', () => {
   });
 
   it('renders caller-ordered columns, typed card content, counts and empty states', () => {
+    const scrollRegion = root.querySelector<HTMLElement>('[data-testid="board"]');
+    expect(scrollRegion?.tagName).toBe('SECTION');
+    expect(scrollRegion?.getAttribute('role')).toBeNull();
+    expect(scrollRegion?.getAttribute('aria-label')).toBe('Board');
+    expect(scrollRegion?.getAttribute('tabindex')).toBe('0');
     expect(
       Array.from(root.querySelectorAll('[data-column-id]')).map((node) =>
         node.getAttribute('data-column-id'),

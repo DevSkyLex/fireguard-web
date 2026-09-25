@@ -191,6 +191,9 @@ describe('WorkloadDaySheet', () => {
       sheet().querySelector('#workload-day-excluded-trigger')?.getAttribute('aria-expanded'),
     ).toBe('false');
     await expand();
+    const excludedRegion = sheet().querySelector('section[hlmCollapsibleContent]');
+    expect(excludedRegion?.getAttribute('role')).toBeNull();
+    expect(excludedRegion?.getAttribute('aria-labelledby')).toBe('workload-day-excluded-trigger');
     expect(text(sheet())).toContain("Across this member's work, not only this day.");
     expect(text(sheet())).toContain('Estimate missing');
     expect(text(sheet())).toContain('Remaining work not estimated');

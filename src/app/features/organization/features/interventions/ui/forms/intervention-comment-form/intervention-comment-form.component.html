@@ -41,17 +41,17 @@
                 [class.bg-accent]="index === activeMention()"
                 (mousedown)="$event.preventDefault(); acceptMention(member)"
               >
-                <div hlmItemMedia variant="image">
+                <span hlmItemMedia variant="image">
                   <hlm-avatar size="sm">
                     @if (member.avatarUrl; as avatarUrl) {
                       <img hlmAvatarImage [src]="avatarUrl" alt="" />
                     }
                     <span hlmAvatarFallback class="text-[10px]">{{ member.initials }}</span>
                   </hlm-avatar>
-                </div>
-                <div hlmItemContent>
+                </span>
+                <span hlmItemContent>
                   <span hlmItemTitle class="truncate font-normal">{{ member.displayName }}</span>
-                </div>
+                </span>
               </button>
             </li>
           }
@@ -67,7 +67,6 @@
           data-testid="intervention-comment-body"
           placeholder="Add a comment…"
           i18n-placeholder="@@intervention.comment.placeholder"
-          role="combobox"
           aria-autocomplete="list"
           aria-controls="intervention-comment-mentions"
           [formField]="commentForm.body"

@@ -23,11 +23,10 @@
   }
   @default {
     <div [class]="tableWrapperClass()">
-      <div
+      <section
         hlmTableContainer
         [class]="containerClass()"
         tabindex="0"
-        role="region"
         [attr.aria-labelledby]="captionId()"
       >
         <table hlmTable [attr.data-testid]="testId()">
@@ -53,7 +52,7 @@
             }
           </tbody>
         </table>
-      </div>
+      </section>
     </div>
 
     <div [class]="cardsWrapperClass()" [attr.data-testid]="testId() + '-cards'">

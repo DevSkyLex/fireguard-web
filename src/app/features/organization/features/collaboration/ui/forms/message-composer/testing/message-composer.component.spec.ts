@@ -246,6 +246,13 @@ describe('MessageComposer', () => {
       await type('@');
 
       expect(mentions()).toHaveLength(2);
+      expect(textarea()?.getAttribute('role')).toBeNull();
+      expect(textarea()?.getAttribute('aria-autocomplete')).toBe('list');
+      expect(textarea()?.getAttribute('aria-controls')).toBe('message-composer-mentions');
+      expect(textarea()?.getAttribute('aria-expanded')).toBe('true');
+      expect(mentions()[0].getAttribute('role')).toBe('option');
+      expect(mentions()[0].getAttribute('tabindex')).toBe('-1');
+      expect(textarea()?.getAttribute('aria-activedescendant')).toBe(mentions()[0].id);
     });
 
     it('should narrow the list as the term is typed', async () => {

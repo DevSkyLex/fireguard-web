@@ -123,10 +123,11 @@ describe('CollectionSurface', () => {
   });
 
   it('gives the scroll container region/tabindex/labelledby wiring to the caption', () => {
-    const region: HTMLElement | null = root().querySelector('[role="region"]');
+    const region: HTMLElement | null = root().querySelector('section[hlmTableContainer]');
 
     expect(region).not.toBeNull();
-    expect(region?.getAttribute('role')).toBe('region');
+    expect(region?.getAttribute('data-slot')).toBe('table-container');
+    expect(region?.getAttribute('role')).toBeNull();
     expect(region?.getAttribute('tabindex')).toBe('0');
 
     const labelledBy: string | null = region?.getAttribute('aria-labelledby') ?? null;

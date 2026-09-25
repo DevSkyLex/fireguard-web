@@ -2,7 +2,7 @@ import { Directive } from '@angular/core';
 import { classes } from '@shared/ui/utils';
 
 @Directive({
-  selector: 'div[hlmTableContainer]',
+  selector: 'div[hlmTableContainer],section[hlmTableContainer]',
   host: { 'data-slot': 'table-container' },
 })
 export class HlmTableContainer {

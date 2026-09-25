@@ -102,6 +102,9 @@ describe('WorkloadPlanningPanel', () => {
     trigger?.click();
     await fixture.whenStable();
     expect(trigger?.getAttribute('aria-expanded')).toBe('true');
+    const region = root.querySelector('section[hlmCollapsibleContent]');
+    expect(region?.getAttribute('role')).toBeNull();
+    expect(region?.getAttribute('aria-labelledby')).toBe(trigger?.id);
     expect(root.querySelectorAll('li')).toHaveLength(1);
     expect(root.querySelector('a')?.getAttribute('href')).toBe(
       '/organizations/organization-1/interventions/intervention-1',

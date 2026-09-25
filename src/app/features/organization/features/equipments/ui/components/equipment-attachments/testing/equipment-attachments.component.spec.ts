@@ -46,7 +46,7 @@ describe('EquipmentAttachments', () => {
   it('should render one row per attachment', async () => {
     await create([attachment(1), attachment(2)]);
 
-    expect(root().querySelectorAll('[data-testid="equipment-attachment-row"]').length).toBe(2);
+    expect(root().querySelectorAll('[data-testid="equipment-attachment-row"]')).toHaveLength(2);
   });
 
   it('should hide the add and delete actions when not manageable', async () => {

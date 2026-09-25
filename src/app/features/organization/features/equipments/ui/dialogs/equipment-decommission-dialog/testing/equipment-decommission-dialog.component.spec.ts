@@ -34,7 +34,7 @@ describe('EquipmentDecommissionDialog', () => {
       .querySelector<HTMLButtonElement>('[data-testid="equipment-decommission-confirm"]')
       ?.click();
 
-    expect(emitted.length).toBe(1);
+    expect(emitted).toHaveLength(1);
   });
 
   it('should not confirm while a lifecycle write is still in flight', async () => {

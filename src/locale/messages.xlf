@@ -15998,11 +15998,11 @@
           <context context-type="linenumber">184,186</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="intervention.attachments.queuedDelete" datatype="html">
-        <source>Remove this file from the sync queue</source>
+      <trans-unit id="intervention.attachments.queuedDeleteAria" datatype="html">
+        <source>Remove <x id="INTERPOLATION" equiv-text="{{ queued.fileName }}"/> from the sync queue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-attachments/intervention-attachments.component.html</context>
-          <context context-type="linenumber">199,200</context>
+          <context context-type="linenumber">206,207</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.forWorkItem" datatype="html">
@@ -16019,18 +16019,18 @@
           <context context-type="linenumber">244,247</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="intervention.attachments.download" datatype="html">
-        <source>Download this file</source>
+      <trans-unit id="intervention.attachments.downloadAria" datatype="html">
+        <source>Download <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-attachments/intervention-attachments.component.html</context>
-          <context context-type="linenumber">258,259</context>
+          <context context-type="linenumber">275,276</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="intervention.attachments.delete" datatype="html">
-        <source>Delete this file</source>
+      <trans-unit id="intervention.attachments.deleteAria" datatype="html">
+        <source>Delete <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/components/intervention-attachments/intervention-attachments.component.html</context>
-          <context context-type="linenumber">281,282</context>
+          <context context-type="linenumber">299,300</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.emptyDesc" datatype="html">

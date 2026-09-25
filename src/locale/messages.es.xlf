@@ -3044,21 +3044,21 @@
         <source>Pending sync</source>
         <target>Sincronización pendiente</target>
       </trans-unit>
-      <trans-unit id="intervention.attachments.queuedDelete" datatype="html">
-        <source>Remove this file from the sync queue</source>
-        <target>Quitar este archivo de la cola de sincronización</target>
+      <trans-unit id="intervention.attachments.queuedDeleteAria" datatype="html">
+        <source>Remove <x id="INTERPOLATION" equiv-text="{{ queued.fileName }}"/> from the sync queue</source>
+        <target>Quitar <x id="INTERPOLATION" equiv-text="{{ queued.fileName }}"/> de la cola de sincronización</target>
       </trans-unit>
       <trans-unit id="intervention.workspace.attachmentQueueFull" datatype="html">
         <source>The offline file queue is full (25 files or 50 MB). Reconnect to sync your pending files before adding more.</source>
         <target>La cola de archivos sin conexión está llena (25 archivos o 50 MB). Reconéctese para sincronizar sus archivos pendientes antes de añadir más.</target>
       </trans-unit>
-      <trans-unit id="intervention.attachments.download" datatype="html">
-        <source>Download this file</source>
-        <target>Descargar este archivo</target>
+      <trans-unit id="intervention.attachments.downloadAria" datatype="html">
+        <source>Download <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></source>
+        <target>Descargar <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></target>
       </trans-unit>
-      <trans-unit id="intervention.attachments.delete" datatype="html">
-        <source>Delete this file</source>
-        <target>Eliminar este archivo</target>
+      <trans-unit id="intervention.attachments.deleteAria" datatype="html">
+        <source>Delete <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></source>
+        <target>Eliminar <x id="INTERPOLATION" equiv-text="{{ attachment.fileName }}"/></target>
       </trans-unit>
       <trans-unit id="intervention.attachments.deleteTitle" datatype="html">
         <source>Delete this file?</source>

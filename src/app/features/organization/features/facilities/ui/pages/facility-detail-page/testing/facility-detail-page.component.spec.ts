@@ -391,7 +391,9 @@ describe('FacilityDetailPage', () => {
     isLoadingFacility.set(true);
     await createPage();
 
-    expect(root().querySelector('[role="status"]')).not.toBeNull();
+    expect(byTestId('facility-detail-loading')?.querySelector('output')?.textContent).toContain(
+      'Loading facility',
+    );
   });
 
   it('should show the facility status, code and address once resolved', async () => {
@@ -722,7 +724,7 @@ describe('FacilityDetailPage', () => {
 
       const loading: HTMLElement | null = byTestId('facility-plans-loading');
       expect(loading).not.toBeNull();
-      expect(loading?.getAttribute('role')).toBe('status');
+      expect(loading?.querySelector('output')?.textContent).toContain('Loading floor plans');
       expect(byTestId('facility-plans-empty')).toBeNull();
     });
 
@@ -768,8 +770,8 @@ describe('FacilityDetailPage', () => {
       await fixture.whenStable();
 
       const spinner: HTMLElement | null =
-        byTestId('facility-plan-viewer')?.querySelector('[role="status"]') ?? null;
-      expect(spinner).not.toBeNull();
+        byTestId('facility-plan-viewer')?.querySelector('output') ?? null;
+      expect(spinner?.textContent).toContain('Loading floor plan image');
     });
 
     it('should show the empty state when there is no floor plan', async () => {

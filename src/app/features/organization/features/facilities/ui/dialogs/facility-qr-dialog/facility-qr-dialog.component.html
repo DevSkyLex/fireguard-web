@@ -22,12 +22,11 @@
             class="rounded-md border border-border bg-white p-2"
           />
         } @else {
-          <div
+          <output
             class="flex h-60 w-60 items-center justify-center rounded-md border border-border text-sm text-muted-foreground"
-            role="status"
           >
             <span i18n="@@facility.qr.generating">Generating…</span>
-          </div>
+          </output>
         }
 
         <div class="flex flex-col items-center gap-1 text-center">

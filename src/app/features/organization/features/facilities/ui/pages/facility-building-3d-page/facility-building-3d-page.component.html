@@ -13,14 +13,11 @@
   </div>
 
   @if (!store.isQueryLoaded() && !store.queryHasError()) {
-    <div
-      class="flex min-h-0 flex-1 flex-col gap-3"
-      role="status"
-      aria-label="Loading the building model"
-      i18n-aria-label="@@facility.building3d.loadingAria"
-      data-testid="facility-3d-loading"
-    >
-      <hlm-skeleton class="h-full w-full flex-1" />
+    <div class="flex min-h-0 flex-1 flex-col gap-3" data-testid="facility-3d-loading">
+      <output class="sr-only" i18n="@@facility.building3d.loadingAria"
+        >Loading the building model</output
+      >
+      <hlm-skeleton class="h-full w-full flex-1" aria-hidden="true" />
     </div>
   } @else if (store.queryHasError()) {
     <div

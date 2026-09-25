@@ -46,7 +46,7 @@ describe('FacilityPlanDeleteDialog', () => {
       .querySelector<HTMLButtonElement>('[data-testid="facility-plan-delete-confirm"]')
       ?.click();
 
-    expect(confirmed.length).toBe(1);
+    expect(confirmed).toHaveLength(1);
   });
 
   it('should not emit confirmed while a delete write is already pending', () => {
@@ -59,7 +59,7 @@ describe('FacilityPlanDeleteDialog', () => {
 
     (fixture.componentInstance as unknown as { confirm(): void }).confirm();
 
-    expect(confirmed.length).toBe(0);
+    expect(confirmed).toHaveLength(0);
   });
 
   it('should emit dismissed on a non-open state change', () => {
@@ -74,6 +74,6 @@ describe('FacilityPlanDeleteDialog', () => {
       }
     ).onStateChanged('closed');
 
-    expect(dismissed.length).toBe(1);
+    expect(dismissed).toHaveLength(1);
   });
 });

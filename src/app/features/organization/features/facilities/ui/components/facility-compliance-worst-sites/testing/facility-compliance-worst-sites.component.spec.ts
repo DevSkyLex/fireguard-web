@@ -52,7 +52,7 @@ describe('FacilityComplianceWorstSites', () => {
     ]);
 
     const rows = root().querySelectorAll('[data-testid="facility-map-worst-site"]');
-    expect(rows.length).toBe(2);
+    expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('North Building');
     expect(rows[0].textContent).toContain('42');
     expect(rows[1].textContent).toContain('15');

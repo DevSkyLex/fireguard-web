@@ -124,7 +124,7 @@ describe('FacilityPlanEditor', () => {
       await fixture.whenStable();
 
       expect(byTestId('facility-plan-editor-draft')).not.toBeNull();
-      expect(allByTestId('facility-plan-editor-draft').length).toBe(1);
+      expect(allByTestId('facility-plan-editor-draft')).toHaveLength(1);
     });
 
     it('requests closing the polygon on a double click with at least three vertices', async () => {
@@ -186,14 +186,14 @@ describe('FacilityPlanEditor', () => {
     it('renders no drag handles when canEditEquipment is false', async () => {
       await fixture.whenStable();
 
-      expect(allByTestId('facility-plan-editor-pin-handle').length).toBe(0);
+      expect(allByTestId('facility-plan-editor-pin-handle')).toHaveLength(0);
     });
 
     it('renders a drag handle per equipment pin when canEditEquipment is true and editMode is none', async () => {
       fixture.componentRef.setInput('canEditEquipment', true);
       await fixture.whenStable();
 
-      expect(allByTestId('facility-plan-editor-pin-handle').length).toBe(1);
+      expect(allByTestId('facility-plan-editor-pin-handle')).toHaveLength(1);
     });
 
     it('keeps the handle out of the accessibility tree — a pure pointer affordance', async () => {

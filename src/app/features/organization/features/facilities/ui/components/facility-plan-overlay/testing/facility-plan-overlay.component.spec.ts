@@ -55,15 +55,15 @@ describe('FacilityPlanOverlay', () => {
     await fixture.whenStable();
 
     expect(byTestId('facility-plan-overlay-zones')).toBeNull();
-    expect(allByTestId('facility-plan-overlay-equipment').length).toBe(0);
+    expect(allByTestId('facility-plan-overlay-equipment')).toHaveLength(0);
   });
 
   it('renders a polygon per zone and a button per equipment pin', async () => {
     fixture.componentRef.setInput('overlay', overlay());
     await fixture.whenStable();
 
-    expect(allByTestId('facility-plan-overlay-zone').length).toBe(1);
-    expect(allByTestId('facility-plan-overlay-equipment').length).toBe(1);
+    expect(allByTestId('facility-plan-overlay-zone')).toHaveLength(1);
+    expect(allByTestId('facility-plan-overlay-equipment')).toHaveLength(1);
   });
 
   it("positions an equipment pin at the normalized point scaled by the overlay's image size", async () => {
@@ -185,7 +185,7 @@ describe('FacilityPlanOverlay', () => {
     await fixture.whenStable();
 
     expect(byTestId('facility-plan-overlay-zones')).toBeNull();
-    expect(allByTestId('facility-plan-overlay-equipment').length).toBe(1);
+    expect(allByTestId('facility-plan-overlay-equipment')).toHaveLength(1);
   });
 
   it('hides the equipment layer when showEquipment is false', async () => {
@@ -194,6 +194,6 @@ describe('FacilityPlanOverlay', () => {
     await fixture.whenStable();
 
     expect(byTestId('facility-plan-overlay-zones')).not.toBeNull();
-    expect(allByTestId('facility-plan-overlay-equipment').length).toBe(0);
+    expect(allByTestId('facility-plan-overlay-equipment')).toHaveLength(0);
   });
 });

@@ -55,7 +55,7 @@ describe('FacilityGrid', () => {
       '[data-testid="facility-grid-card"]',
     );
 
-    expect(cards.length).toBe(2);
+    expect(cards).toHaveLength(2);
     expect(cards[0].textContent).toContain('Headquarters');
     expect(cards[0].textContent).toContain('Building');
     expect(cards[1].textContent).toContain('Loading dock');
@@ -85,7 +85,7 @@ describe('FacilityGrid', () => {
     await render([facility()], true);
 
     expect(root().querySelectorAll('hlm-skeleton').length).toBeGreaterThan(0);
-    expect(root().querySelectorAll('[data-testid="facility-grid-card"]').length).toBe(0);
+    expect(root().querySelectorAll('[data-testid="facility-grid-card"]')).toHaveLength(0);
   });
 
   it('should say so plainly when a page holds no rows', async () => {

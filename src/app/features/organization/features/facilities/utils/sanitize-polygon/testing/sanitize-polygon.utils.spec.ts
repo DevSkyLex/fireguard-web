@@ -11,7 +11,7 @@ describe('sanitizePolygon', () => {
 
     expect(result.status).toBe('accepted');
     if (result.status === 'accepted') {
-      expect(result.points.length).toBe(3);
+      expect(result.points).toHaveLength(3);
     }
   });
 
@@ -25,7 +25,7 @@ describe('sanitizePolygon', () => {
 
     expect(result.status).toBe('accepted');
     if (result.status === 'accepted') {
-      expect(result.points.length).toBe(3);
+      expect(result.points).toHaveLength(3);
     }
   });
 
@@ -39,7 +39,7 @@ describe('sanitizePolygon', () => {
 
     expect(result.status).toBe('accepted');
     if (result.status === 'accepted') {
-      expect(result.points.length).toBe(3);
+      expect(result.points).toHaveLength(3);
     }
   });
 
@@ -53,7 +53,7 @@ describe('sanitizePolygon', () => {
 
     expect(result.status).toBe('accepted');
     if (result.status === 'accepted') {
-      expect(result.points.length).toBe(3);
+      expect(result.points).toHaveLength(3);
       expect(result.points).not.toContainEqual([0.3, 0.1]);
     }
   });

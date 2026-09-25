@@ -41,7 +41,7 @@ describe('FacilityPlanZoneGeometryDialog', () => {
       [0.5, 0.9],
     ]);
 
-    expect(rows().length).toBe(3);
+    expect(rows()).toHaveLength(3);
     const first = rows()[0];
     expect(
       (first.querySelector('[data-testid="facility-plan-zone-geometry-row-x"]') as HTMLInputElement)
@@ -64,13 +64,13 @@ describe('FacilityPlanZoneGeometryDialog', () => {
       [0.4, 0.4],
     ]);
 
-    expect(rows().length).toBe(3);
+    expect(rows()).toHaveLength(3);
   });
 
   it('seeds three blank rows when the zone has no geometry yet — the creation path', async () => {
     await open([]);
 
-    expect(rows().length).toBe(3);
+    expect(rows()).toHaveLength(3);
     for (const row of rows()) {
       expect(
         (row.querySelector('[data-testid="facility-plan-zone-geometry-row-x"]') as HTMLInputElement)
@@ -85,17 +85,17 @@ describe('FacilityPlanZoneGeometryDialog', () => {
 
   it('adds and removes rows', async () => {
     await open([]);
-    expect(rows().length).toBe(3);
+    expect(rows()).toHaveLength(3);
 
     (byTestId('facility-plan-zone-geometry-add-row') as HTMLButtonElement).click();
     await fixture.whenStable();
-    expect(rows().length).toBe(4);
+    expect(rows()).toHaveLength(4);
 
     rows()[0]
       .querySelector<HTMLButtonElement>('[data-testid="facility-plan-zone-geometry-row-remove"]')
       ?.click();
     await fixture.whenStable();
-    expect(rows().length).toBe(3);
+    expect(rows()).toHaveLength(3);
   });
 
   it('carries the 1-based vertex index in every row label', async () => {

@@ -69,7 +69,7 @@ export class OrganizationService extends HydraApiService {
    * Optional dashboard filters.
    * @param {boolean} [includeGranularity=false] - Whether to serialize the trend-only granularity parameter.
    *
-   * @return {RequestOptions | undefined} Normalized request options, or undefined when no filters are provided.
+   * @returns {RequestOptions | undefined} Normalized request options, or undefined when no filters are provided.
    */
   private buildDashboardRequestOptions(
     options?:
@@ -83,22 +83,6 @@ export class OrganizationService extends HydraApiService {
       return undefined;
     }
 
-    const facilityType: string | undefined =
-      'facilityType' in options ? options.facilityType : undefined;
-    const equipmentType: string | undefined =
-      'equipmentType' in options ? options.equipmentType : undefined;
-    const equipmentStatus: string | undefined =
-      'equipmentStatus' in options ? options.equipmentStatus : undefined;
-    const inspectionStatus: string | undefined =
-      'inspectionStatus' in options ? options.inspectionStatus : undefined;
-    const inspectionResult: string | undefined =
-      'inspectionResult' in options ? options.inspectionResult : undefined;
-    const inspectorType: string | undefined =
-      'inspectorType' in options ? options.inspectorType : undefined;
-    const nonConformityStatus: string | undefined =
-      'nonConformityStatus' in options ? options.nonConformityStatus : undefined;
-    const nonConformitySeverity: string | undefined =
-      'nonConformitySeverity' in options ? options.nonConformitySeverity : undefined;
     const granularity: string | undefined =
       includeGranularity && 'granularity' in options ? options.granularity : undefined;
 
@@ -107,16 +91,30 @@ export class OrganizationService extends HydraApiService {
       ...(options.to ? { to: options.to } : {}),
       ...(options.compare !== undefined ? { compare: options.compare } : {}),
       ...(options.timezone ? { timezone: options.timezone } : {}),
-      ...(facilityType ? { facilityType } : {}),
-      ...(equipmentType ? { equipmentType } : {}),
-      ...(equipmentStatus ? { equipmentStatus } : {}),
-      ...(inspectionStatus ? { inspectionStatus } : {}),
-      ...(inspectionResult ? { inspectionResult } : {}),
-      ...(inspectorType ? { inspectorType } : {}),
-      ...(nonConformityStatus ? { nonConformityStatus } : {}),
-      ...(nonConformitySeverity ? { nonConformitySeverity } : {}),
-      ...(granularity ? { granularity } : {}),
     };
+
+    const filterKeys = [
+      'facilityType',
+      'equipmentType',
+      'equipmentStatus',
+      'inspectionStatus',
+      'inspectionResult',
+      'inspectorType',
+      'nonConformityStatus',
+      'nonConformitySeverity',
+    ] as const;
+
+    const filters: OrganizationDashboardQueryOptions = options;
+    for (const key of filterKeys) {
+      const value = filters[key];
+      if (value) {
+        params[key] = value;
+      }
+    }
+
+    if (granularity) {
+      params['granularity'] = granularity;
+    }
 
     return Object.keys(params).length > 0 ? { params } : undefined;
   }

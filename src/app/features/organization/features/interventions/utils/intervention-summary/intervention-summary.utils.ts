@@ -110,7 +110,7 @@ export function buildInterventionMetaLine(
   if (!intervention) return '';
 
   const revision: string = `v${intervention.revision}`;
-  const last = activities.length > 0 ? activities[activities.length - 1] : undefined;
+  const last = activities.at(-1);
 
   if (last === undefined) {
     const when: string = formatInterventionRelativeTime(intervention.updatedAt, locale);
@@ -124,6 +124,25 @@ export function buildInterventionMetaLine(
     members,
   )?.displayName;
 
+  return formatActivityMetaLine(last, actorName, when, revision);
+}
+
+/**
+ * Function formatActivityMetaLine
+ * @description Formats the latest timeline event with or without a resolved actor.
+ * @param {InterventionActivityOutput} activity - Latest loaded event.
+ * @param {string | undefined} actorName - Resolved display name.
+ * @param {string} when - Relative event time.
+ * @param {string} revision - Intervention revision label.
+ * @returns {string} Localized activity summary.
+ * @since 1.0.0
+ */
+function formatActivityMetaLine(
+  last: InterventionActivityOutput,
+  actorName: string | undefined,
+  when: string,
+  revision: string,
+): string {
   if (last.kind === 'system' && last.event === 'status_changed')
     return actorName === undefined
       ? $localize`:@@intervention.detail.metaStatusChangedNoActor:Status changed ${when}:when: · revision ${revision}:revision:`

@@ -486,6 +486,20 @@ export const InterventionLinkedResourcesStore = signalStore(
           inspectionsGeneration: store.inspectionsGeneration() + 1,
         });
       }
+      /**
+       * Function loadCachedLinkedRows
+       * @description Re-evaluates only collections that had been read before switching offline.
+       * @access private
+       * @since 1.0.0
+       * @param {string | null} interventionId - Current intervention.
+       * @returns {void}
+       */
+      const loadCachedLinkedRows = (interventionId: string | null): void => {
+        if (!interventionId) return;
+        if (store.facilitiesCallState().status !== 'idle') loadFacilities(interventionId, 1);
+        if (store.equipmentCallState().status !== 'idle') loadEquipment(interventionId, 1);
+        if (store.inspectionsCallState().status !== 'idle') loadInspections(interventionId, 1);
+      };
       return {
         setContext,
         /** Keeps last available linked rows in memory; offline criteria are never evaluated locally. */
@@ -519,12 +533,7 @@ export const InterventionLinkedResourcesStore = signalStore(
             equipmentInvalidated: store.equipmentCallState().status !== 'idle',
             inspectionsInvalidated: store.inspectionsCallState().status !== 'idle',
           });
-          const id = store.loadedForInterventionId();
-          if (!online && id) {
-            if (store.facilitiesCallState().status !== 'idle') loadFacilities(id, 1);
-            if (store.equipmentCallState().status !== 'idle') loadEquipment(id, 1);
-            if (store.inspectionsCallState().status !== 'idle') loadInspections(id, 1);
-          }
+          if (!online) loadCachedLinkedRows(store.loadedForInterventionId());
         },
         /**
          * Method deactivate

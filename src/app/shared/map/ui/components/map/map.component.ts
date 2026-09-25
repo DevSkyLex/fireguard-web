@@ -581,6 +581,23 @@ export class Map {
       this.upsertMarker(map, markerCtor, marker, [longitude, latitude]);
     }
 
+    const removedFocusAt = this.removeStaleMarkers(seenMarkerIds, seenClusterIds);
+    if (removedFocusAt) this.restoreFocus(map, removedFocusAt);
+  }
+
+  /**
+   * Method removeStaleMarkers
+   * @description Removes markers absent from the current source result and preserves a focused marker's position.
+   * @access private
+   * @since 1.0.0
+   * @param {ReadonlySet<string>} seenMarkerIds - Point ids still rendered.
+   * @param {ReadonlySet<number>} seenClusterIds - Cluster ids still rendered.
+   * @returns {[number, number] | null} Position from which keyboard focus should be restored.
+   */
+  private removeStaleMarkers(
+    seenMarkerIds: ReadonlySet<string>,
+    seenClusterIds: ReadonlySet<number>,
+  ): [number, number] | null {
     let removedFocusAt: [number, number] | null = null;
     for (const [id, marker] of Object.entries(this.markerElements)) {
       if (!seenMarkerIds.has(id)) {
@@ -596,7 +613,7 @@ export class Map {
         delete this.clusterElements[Number(id)];
       }
     }
-    if (removedFocusAt) this.restoreFocus(map, removedFocusAt);
+    return removedFocusAt;
   }
 
   /**

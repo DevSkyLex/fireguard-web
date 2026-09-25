@@ -343,7 +343,22 @@ export class OrganizationGlobalSearchDialog {
       this.organizationContext.selectedOrganizationId() !== this.organizationId
     )
       return;
-    const base: readonly string[] = ['/organizations', this.organizationId];
+    const route = this.routeForHit(hit, this.organizationId);
+    this.dialogRef.close();
+    void this.router.navigate([...route]);
+  }
+
+  /**
+   * Method routeForHit
+   * @description Builds a route from the trusted hit type and identifiers, never from a server URL.
+   * @access private
+   * @since 1.0.0
+   * @param {OrganizationSearchHitOutput} hit - Selected search result.
+   * @param {string} organizationId - Active organization.
+   * @returns {readonly string[]} Internal route segments.
+   */
+  private routeForHit(hit: OrganizationSearchHitOutput, organizationId: string): readonly string[] {
+    const base: readonly string[] = ['/organizations', organizationId];
     let route: readonly string[];
     switch (hit.type) {
       case 'equipment':
@@ -362,8 +377,7 @@ export class OrganizationGlobalSearchDialog {
         route = [...base, 'inspections'];
         if (hit.parentId) route = [...route, hit.parentId];
     }
-    this.dialogRef.close();
-    void this.router.navigate([...route]);
+    return route;
   }
   //#endregion
 }

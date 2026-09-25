@@ -12,6 +12,7 @@ import {
 import type {
   InterventionCollectionsChange,
   InterventionOutboxOperation,
+  InterventionOutboxOperationFor,
 } from '@features/organization/features/interventions/models';
 import { workloadAssessmentFromError } from '@features/organization/features/workload/utils';
 import {
@@ -316,29 +317,7 @@ export class InterventionSyncService {
     const advance = (next: number): Promise<number> =>
       this.replayOperations(organizationId, operations, index + 1, next, blocked, applied);
 
-    // A previously failed/conflicted operation keeps permanently blocking its
-    // dependents until the user retries or discards it.
-    if (operation.status === 'conflict' || operation.status === 'failed') {
-      this.block(operation, blocked.permanent);
-      return advance(replayed);
-    }
-
-    // A dependent of a permanently blocked resource can never succeed on its
-    // own: surface it as `failed` (so it is counted and actionable instead of
-    // sitting invisibly `pending`) and cascade the permanent block onward.
-    if (this.dependsOnBlockedResource(operation, blocked.permanent)) {
-      await this.offline.markOutboxFailed(operation.id, DEPENDENCY_UNAVAILABLE_DETAIL);
-      this.block(operation, blocked.permanent);
-      return advance(replayed);
-    }
-
-    // A dependent of a transiently blocked (5xx) resource must stay `pending`
-    // so it retries next cycle once the parent is created; cascade the
-    // transient block so its own dependents also wait rather than fail.
-    if (this.dependsOnBlockedResource(operation, blocked.transient)) {
-      this.block(operation, blocked.transient);
-      return advance(replayed);
-    }
+    if (await this.skipBlockedOperation(operation, blocked)) return advance(replayed);
 
     try {
       await this.replay(organizationId, operation);
@@ -346,77 +325,147 @@ export class InterventionSyncService {
       applied(operation);
       return advance(replayed + 1);
     } catch (error: unknown) {
-      const response = error as SyncProblemResponse;
-      const detail =
-        response.detail ??
-        response.error?.detail ??
-        (error instanceof Error ? error.message : 'The server rejected this operation.');
-      if (
-        this.isCreate(operation) &&
-        (response.status === HTTP_PRECONDITION_FAILED || response.status === HTTP_CONFLICT) &&
-        this.problemType(response) === CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE
-      ) {
-        await this.offline.removeOutbox(operation.id);
+      const outcome = await this.handleReplayFailure(operation, error, blocked);
+      if (outcome === 'applied') {
         applied(operation);
         return advance(replayed + 1);
       }
-      const assessment =
-        workloadAssessmentFromError(error) ?? workloadAssessmentFromError(response.error);
-      if (response.status === HTTP_CONFLICT && assessment) {
-        await this.offline.markOutboxConflict(operation.id, detail, assessment);
-        this.block(operation, blocked.permanent);
-        return advance(replayed);
-      }
-      if (response.status === HTTP_PRECONDITION_FAILED) {
-        if (
-          operation.type.startsWith('time-entry.') ||
-          (operation.type === 'intervention.update' &&
-            ('plannedStartAt' in operation.payload ||
-              'dueAt' in operation.payload ||
-              'status' in operation.payload ||
-              'responsible' in operation.payload ||
-              'participants' in operation.payload)) ||
-          (operation.type === 'work-item.update' &&
-            ('assignee' in operation.payload ||
-              'remainingMinutes' in operation.payload ||
-              'estimatedMinutes' in operation.payload ||
-              'workStartsOn' in operation.payload ||
-              'workEndsOn' in operation.payload))
-        ) {
-          const review = await this.currentValues(operation);
-          await this.offline.markOutboxConflict(operation.id, detail, null, review);
-          this.block(operation, blocked.permanent);
-          return advance(replayed);
-        }
-        // A stale-revision conflict would otherwise loop forever on retry (the
-        // same If-Match is re-sent). Re-fetch the current server revision and
-        // rebase the queued payload so a retry sends a valid If-Match; fall back
-        // to a plain conflict mark when the revision cannot be resolved (the
-        // re-fetch failed, or the operation carries no revision to rebase).
-        const rebasedRevision = await this.currentRevision(operation);
-        if (rebasedRevision !== null) {
-          await this.offline.rebaseOutboxRevision(operation.id, rebasedRevision, detail);
-        } else {
-          await this.offline.markOutboxConflict(operation.id, detail);
-        }
-        this.block(operation, blocked.permanent);
-        return advance(replayed);
-      }
-      if (this.isPermanentFailure(error, response)) {
-        await this.offline.markOutboxFailed(operation.id, detail);
-        this.block(operation, blocked.permanent);
-        return advance(replayed);
-      }
-      if (typeof response.status === 'number' && response.status >= HTTP_SERVER_ERROR) {
-        // A transient server error (5xx) on one operation must not freeze the
-        // rest of the queue: leave this one pending (it retries next cycle),
-        // transiently block its created resource so dependents wait without
-        // being failed, and keep replaying the others instead of aborting.
-        this.block(operation, blocked.transient);
-        return advance(replayed);
-      }
-      throw error;
+      return advance(replayed);
     }
+  }
+
+  /**
+   * Method skipBlockedOperation
+   * @description Keeps dependents of permanent failures actionable and those of transient failures pending.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperation} operation - Queued operation.
+   * @param {BlockedResources} blocked - Resource blockers for this replay cycle.
+   * @returns {Promise<boolean>} Whether replay must skip this operation.
+   */
+  private async skipBlockedOperation(
+    operation: InterventionOutboxOperation,
+    blocked: BlockedResources,
+  ): Promise<boolean> {
+    if (operation.status === 'conflict' || operation.status === 'failed') {
+      this.block(operation, blocked.permanent);
+      return true;
+    }
+    if (this.dependsOnBlockedResource(operation, blocked.permanent)) {
+      await this.offline.markOutboxFailed(operation.id, DEPENDENCY_UNAVAILABLE_DETAIL);
+      this.block(operation, blocked.permanent);
+      return true;
+    }
+    if (this.dependsOnBlockedResource(operation, blocked.transient)) {
+      this.block(operation, blocked.transient);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Method handleReplayFailure
+   * @description Classifies an API rejection while preserving outbox and dependent-resource state.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperation} operation - Rejected operation.
+   * @param {unknown} error - Transport failure.
+   * @param {BlockedResources} blocked - Resource blockers for this replay cycle.
+   * @returns {Promise<'applied' | 'blocked'>} Replay disposition.
+   */
+  private async handleReplayFailure(
+    operation: InterventionOutboxOperation,
+    error: unknown,
+    blocked: BlockedResources,
+  ): Promise<'applied' | 'blocked'> {
+    const response = error as SyncProblemResponse;
+    const detail =
+      response.detail ??
+      response.error?.detail ??
+      (error instanceof Error ? error.message : 'The server rejected this operation.');
+    if (
+      this.isCreate(operation) &&
+      (response.status === HTTP_PRECONDITION_FAILED || response.status === HTTP_CONFLICT) &&
+      this.problemType(response) === CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE
+    ) {
+      await this.offline.removeOutbox(operation.id);
+      return 'applied';
+    }
+    const assessment =
+      workloadAssessmentFromError(error) ?? workloadAssessmentFromError(response.error);
+    if (response.status === HTTP_CONFLICT && assessment) {
+      await this.offline.markOutboxConflict(operation.id, detail, assessment);
+      this.block(operation, blocked.permanent);
+      return 'blocked';
+    }
+    if (response.status === HTTP_PRECONDITION_FAILED) {
+      await this.handlePreconditionFailure(operation, detail, blocked.permanent);
+      return 'blocked';
+    }
+    if (this.isPermanentFailure(error, response)) {
+      await this.offline.markOutboxFailed(operation.id, detail);
+      this.block(operation, blocked.permanent);
+      return 'blocked';
+    }
+    if (typeof response.status === 'number' && response.status >= HTTP_SERVER_ERROR) {
+      this.block(operation, blocked.transient);
+      return 'blocked';
+    }
+    throw error;
+  }
+
+  /**
+   * Method handlePreconditionFailure
+   * @description Captures current values for human review or rebases the queued revision for retry.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperation} operation - Rejected operation.
+   * @param {string} detail - Server problem detail.
+   * @param {Set<string>} permanent - Resource blockers for this replay cycle.
+   * @returns {Promise<void>}
+   */
+  private async handlePreconditionFailure(
+    operation: InterventionOutboxOperation,
+    detail: string,
+    permanent: Set<string>,
+  ): Promise<void> {
+    if (this.requiresCurrentValueReview(operation)) {
+      const review = await this.currentValues(operation);
+      await this.offline.markOutboxConflict(operation.id, detail, null, review);
+      this.block(operation, permanent);
+      return;
+    }
+    const rebasedRevision = await this.currentRevision(operation);
+    if (rebasedRevision !== null)
+      await this.offline.rebaseOutboxRevision(operation.id, rebasedRevision, detail);
+    else await this.offline.markOutboxConflict(operation.id, detail);
+    this.block(operation, permanent);
+  }
+
+  /**
+   * Method requiresCurrentValueReview
+   * @description Identifies queued edits that need an explicit value comparison after a revision conflict.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperation} operation - Rejected operation.
+   * @returns {boolean} Whether current server values must be shown before retry.
+   */
+  private requiresCurrentValueReview(operation: InterventionOutboxOperation): boolean {
+    return (
+      operation.type.startsWith('time-entry.') ||
+      (operation.type === 'intervention.update' &&
+        ('plannedStartAt' in operation.payload ||
+          'dueAt' in operation.payload ||
+          'status' in operation.payload ||
+          'responsible' in operation.payload ||
+          'participants' in operation.payload)) ||
+      (operation.type === 'work-item.update' &&
+        ('assignee' in operation.payload ||
+          'remainingMinutes' in operation.payload ||
+          'estimatedMinutes' in operation.payload ||
+          'workStartsOn' in operation.payload ||
+          'workEndsOn' in operation.payload))
+    );
   }
 
   /**
@@ -502,130 +551,212 @@ export class InterventionSyncService {
         );
         break;
       case 'media.create': {
-        const file = operation.payload['file'];
-        const equipmentId = operation.payload['equipmentId'];
-        const fileName = operation.payload['fileName'];
-        if (
-          !(file instanceof Blob) ||
-          typeof equipmentId !== 'string' ||
-          typeof fileName !== 'string'
-        ) {
-          throw new Error('Invalid offline media operation');
-        }
-        await firstValueFrom(
-          this.equipment.uploadEvidence(
-            equipmentId,
-            file,
-            fileName,
-            operation.interventionId,
-            operation.payload.clientId,
-          ),
-        );
+        await this.replayMediaCreate(operation);
         break;
       }
       case 'attachment.upload': {
-        const file = operation.payload['file'];
-        const fileName = operation.payload['fileName'];
-        if (!(file instanceof Blob) || typeof fileName !== 'string') {
-          throw new Error('Invalid offline attachment operation');
-        }
-        await firstValueFrom(
-          this.service.uploadAttachment(
-            operation.interventionId,
-            file,
-            fileName,
-            operation.payload.label,
-            operation.payload.workItemId,
-            operation.payload.kind,
-            operation.payload.clientId, // multipart idempotency key: a crash replay returns the existing attachment
-          ),
-        );
+        await this.replayAttachmentUpload(operation);
         break;
       }
       case 'comment.create': {
-        const body = operation.payload['body'];
-        if (typeof body !== 'string') throw new Error('Invalid offline comment operation');
-        const clientId = operation.payload['clientId'];
-        await firstValueFrom(
-          this.service.addComment(
-            operation.interventionId,
-            body,
-            typeof clientId === 'string' ? clientId : undefined,
-          ),
-        );
+        await this.replayCommentCreate(operation);
         break;
       }
       case 'intervention.update': {
-        const revision = operation.payload['revision'];
-        const {
-          revision: _revision,
-          clientId: _clientId,
-          plannedStartAt,
-          dueAt,
-          ...input
-        } = operation.payload;
-        await firstValueFrom(
-          this.service.update(
-            operation.interventionId,
-            {
-              ...input,
-              // Outbox payloads persist dates as ISO strings; rehydrate them
-              // to `Date` for the typed update contract.
-              ...(plannedStartAt !== undefined
-                ? { plannedStartAt: plannedStartAt ? new Date(plannedStartAt) : null }
-                : {}),
-              ...(dueAt !== undefined ? { dueAt: dueAt ? new Date(dueAt) : null } : {}),
-            },
-            typeof revision === 'number' ? revision : undefined,
-          ),
-        );
+        await this.replayInterventionUpdate(operation);
         break;
       }
       case 'work-item.create':
         await firstValueFrom(this.service.createWorkItem(operation.payload));
         break;
       case 'work-item.update': {
-        const workItemId = operation.payload['workItemId'];
-        const revision = operation.payload['revision'];
-        if (typeof workItemId !== 'string') throw new Error('Invalid work item operation');
-        const {
-          workItemId: _workItemId,
-          revision: _revision,
-          clientId: _clientId,
-          ...input
-        } = operation.payload;
-        await firstValueFrom(
-          this.service.updateWorkItem(
-            workItemId,
-            input,
-            typeof revision === 'number' ? revision : undefined,
-          ),
-        );
+        await this.replayWorkItemUpdate(operation);
         break;
       }
       case 'change.create':
         await firstValueFrom(this.service.createChange(operation.payload));
         break;
       case 'change.update': {
-        const changeId = operation.payload['changeId'];
-        const revision = operation.payload['revision'];
-        if (typeof changeId !== 'string') throw new Error('Invalid intervention change operation');
-        const {
-          changeId: _changeId,
-          revision: _revision,
-          clientId: _clientId,
-          ...input
-        } = operation.payload;
-        await firstValueFrom(
-          this.service.updateChange(
-            changeId,
-            input,
-            typeof revision === 'number' ? revision : undefined,
-          ),
-        );
+        await this.replayChangeUpdate(operation);
         break;
       }
     }
+  }
+
+  /**
+   * Method replayMediaCreate
+   * @description Validates a persisted media payload before uploading its evidence.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperationFor<'media.create'>} operation - Queued media creation.
+   * @returns {Promise<void>}
+   */
+  private async replayMediaCreate(
+    operation: InterventionOutboxOperationFor<'media.create'>,
+  ): Promise<void> {
+    const file = operation.payload['file'];
+    const equipmentId = operation.payload['equipmentId'];
+    const fileName = operation.payload['fileName'];
+    if (
+      !(file instanceof Blob) ||
+      typeof equipmentId !== 'string' ||
+      typeof fileName !== 'string'
+    ) {
+      throw new TypeError('Invalid offline media operation');
+    }
+    await firstValueFrom(
+      this.equipment.uploadEvidence(
+        equipmentId,
+        file,
+        fileName,
+        operation.interventionId,
+        operation.payload.clientId,
+      ),
+    );
+  }
+
+  /**
+   * Method replayAttachmentUpload
+   * @description Validates an attachment before replaying the idempotent multipart upload.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperationFor<'attachment.upload'>} operation - Queued upload.
+   * @returns {Promise<void>}
+   */
+  private async replayAttachmentUpload(
+    operation: InterventionOutboxOperationFor<'attachment.upload'>,
+  ): Promise<void> {
+    const file = operation.payload['file'];
+    const fileName = operation.payload['fileName'];
+    if (!(file instanceof Blob) || typeof fileName !== 'string') {
+      throw new TypeError('Invalid offline attachment operation');
+    }
+    await firstValueFrom(
+      this.service.uploadAttachment(
+        operation.interventionId,
+        file,
+        fileName,
+        operation.payload.label,
+        operation.payload.workItemId,
+        operation.payload.kind,
+        operation.payload.clientId,
+      ),
+    );
+  }
+
+  /**
+   * Method replayCommentCreate
+   * @description Replays a text comment with its optional idempotency key.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperationFor<'comment.create'>} operation - Queued comment.
+   * @returns {Promise<void>}
+   */
+  private async replayCommentCreate(
+    operation: InterventionOutboxOperationFor<'comment.create'>,
+  ): Promise<void> {
+    const body = operation.payload['body'];
+    if (typeof body !== 'string') throw new TypeError('Invalid offline comment operation');
+    const clientId = operation.payload['clientId'];
+    await firstValueFrom(
+      this.service.addComment(
+        operation.interventionId,
+        body,
+        typeof clientId === 'string' ? clientId : undefined,
+      ),
+    );
+  }
+
+  /**
+   * Method replayInterventionUpdate
+   * @description Rehydrates persisted ISO dates for the typed update transport.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperationFor<'intervention.update'>} operation - Queued intervention edit.
+   * @returns {Promise<void>}
+   */
+  private async replayInterventionUpdate(
+    operation: InterventionOutboxOperationFor<'intervention.update'>,
+  ): Promise<void> {
+    const revision = operation.payload['revision'];
+    const {
+      revision: _revision,
+      clientId: _clientId,
+      plannedStartAt,
+      dueAt,
+      ...input
+    } = operation.payload;
+    await firstValueFrom(
+      this.service.update(
+        operation.interventionId,
+        {
+          ...input,
+          ...(plannedStartAt !== undefined
+            ? { plannedStartAt: plannedStartAt ? new Date(plannedStartAt) : null }
+            : {}),
+          ...(dueAt !== undefined ? { dueAt: dueAt ? new Date(dueAt) : null } : {}),
+        },
+        typeof revision === 'number' ? revision : undefined,
+      ),
+    );
+  }
+
+  /**
+   * Method replayWorkItemUpdate
+   * @description Removes outbox metadata before replaying one work-item edit.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperationFor<'work-item.update'>} operation - Queued work-item edit.
+   * @returns {Promise<void>}
+   */
+  private async replayWorkItemUpdate(
+    operation: InterventionOutboxOperationFor<'work-item.update'>,
+  ): Promise<void> {
+    const workItemId = operation.payload['workItemId'];
+    const revision = operation.payload['revision'];
+    if (typeof workItemId !== 'string') throw new TypeError('Invalid work item operation');
+    const {
+      workItemId: _workItemId,
+      revision: _revision,
+      clientId: _clientId,
+      ...input
+    } = operation.payload;
+    await firstValueFrom(
+      this.service.updateWorkItem(
+        workItemId,
+        input,
+        typeof revision === 'number' ? revision : undefined,
+      ),
+    );
+  }
+
+  /**
+   * Method replayChangeUpdate
+   * @description Removes outbox metadata before replaying one change edit.
+   * @access private
+   * @since 1.0.0
+   * @param {InterventionOutboxOperationFor<'change.update'>} operation - Queued change edit.
+   * @returns {Promise<void>}
+   */
+  private async replayChangeUpdate(
+    operation: InterventionOutboxOperationFor<'change.update'>,
+  ): Promise<void> {
+    const changeId = operation.payload['changeId'];
+    const revision = operation.payload['revision'];
+    if (typeof changeId !== 'string') throw new TypeError('Invalid intervention change operation');
+    const {
+      changeId: _changeId,
+      revision: _revision,
+      clientId: _clientId,
+      ...input
+    } = operation.payload;
+    await firstValueFrom(
+      this.service.updateChange(
+        changeId,
+        input,
+        typeof revision === 'number' ? revision : undefined,
+      ),
+    );
   }
 
   /**

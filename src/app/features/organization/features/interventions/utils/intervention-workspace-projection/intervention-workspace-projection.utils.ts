@@ -2,6 +2,7 @@ import {
   resolveInterventionTag,
   type InterventionWorkspaceData,
   type InterventionOutboxOperation,
+  type InterventionOutboxOperationFor,
   type InterventionWorkItemOutput,
   type InterventionChangeOutput,
   type InterventionWorkItemTableQuery,
@@ -39,64 +40,18 @@ export function projectInterventionWorkspace(
     if (operation.interventionId !== intervention.id) continue;
     switch (operation.type) {
       case 'work-item.create': {
-        const input = operation.payload;
-        const id = input.clientId;
+        const id = operation.payload.clientId;
         if (!id || workItems.has(id)) break;
-        workItems.set(id, {
-          '@id': '/api/intervention-work-items/' + id,
-          '@type': 'InterventionWorkItem',
-          id,
-          intervention: input.intervention,
-          action: input.action,
-          target: input.target ?? null,
-          resultResource: input.resultResource ?? null,
-          assignee: input.assignee ?? null,
-          source: input.source,
-          status: 'planned',
-          estimatedMinutes: input.estimatedMinutes ?? null,
-          remainingMinutes: input.estimatedMinutes ?? null,
-          spentMinutes: 0,
-          workStartsOn: input.workStartsOn ?? null,
-          workEndsOn: input.workEndsOn ?? null,
-          required: input.required,
-          skipReason: null,
-          evidenceCount: 0,
-          revision: 1,
-          createdAt: operation.createdAt,
-          updatedAt: operation.createdAt,
-        });
+        workItems.set(id, projectedCreatedWorkItem(operation, id));
         workChanged = true;
         break;
       }
       case 'work-item.update': {
-        const {
-          workItemId,
-          clientId: _clientId,
-          revision: _revision,
-          ...fields
-        } = operation.payload;
+        const { workItemId } = operation.payload;
         const item =
           workItems.get(workItemId) ?? saved.workItems.find((row) => row.id === workItemId);
         if (item) {
-          workItems.set(workItemId, {
-            ...item,
-            ...fields,
-            ...((item.status === 'completed' || item.status === 'skipped') &&
-            fields.status &&
-            fields.status !== 'completed' &&
-            fields.status !== 'skipped' &&
-            fields.remainingMinutes === undefined
-              ? { remainingMinutes: null }
-              : {}),
-            ...(fields.assignee !== undefined && fields.assignee !== item.assignee
-              ? {
-                  assigneeProfile:
-                    saved.workItems.find(
-                      (row) => row.id === workItemId && row.assignee === fields.assignee,
-                    )?.assigneeProfile ?? null,
-                }
-              : {}),
-          });
+          workItems.set(workItemId, projectedUpdatedWorkItem(operation, item, saved));
           workChanged = true;
         }
         break;
@@ -142,6 +97,79 @@ export function projectInterventionWorkspace(
       ).length,
     });
   return { ...base, intervention, workItems: items, changes: [...changes.values()] };
+}
+
+/**
+ * Function projectedCreatedWorkItem
+ * @description Builds the optimistic row for an outstanding work-item creation.
+ * @param {InterventionOutboxOperationFor<'work-item.create'>} operation - Queued creation.
+ * @param {string} id - Stable client-generated identifier.
+ * @returns {InterventionWorkItemOutput} Local projection.
+ * @since 6.2.0
+ */
+function projectedCreatedWorkItem(
+  operation: InterventionOutboxOperationFor<'work-item.create'>,
+  id: string,
+): InterventionWorkItemOutput {
+  const input = operation.payload;
+  return {
+    '@id': '/api/intervention-work-items/' + id,
+    '@type': 'InterventionWorkItem',
+    id,
+    intervention: input.intervention,
+    action: input.action,
+    target: input.target ?? null,
+    resultResource: input.resultResource ?? null,
+    assignee: input.assignee ?? null,
+    source: input.source,
+    status: 'planned',
+    estimatedMinutes: input.estimatedMinutes ?? null,
+    remainingMinutes: input.estimatedMinutes ?? null,
+    spentMinutes: 0,
+    workStartsOn: input.workStartsOn ?? null,
+    workEndsOn: input.workEndsOn ?? null,
+    required: input.required,
+    skipReason: null,
+    evidenceCount: 0,
+    revision: 1,
+    createdAt: operation.createdAt,
+    updatedAt: operation.createdAt,
+  };
+}
+
+/**
+ * Function projectedUpdatedWorkItem
+ * @description Applies a queued edit while retaining saved profile labels and clearing stale remaining effort.
+ * @param {InterventionOutboxOperationFor<'work-item.update'>} operation - Queued edit.
+ * @param {InterventionWorkItemOutput} item - Current projected row.
+ * @param {InterventionWorkspaceData} saved - Saved labels for existing associations.
+ * @returns {InterventionWorkItemOutput} Updated local row.
+ * @since 6.2.0
+ */
+function projectedUpdatedWorkItem(
+  operation: InterventionOutboxOperationFor<'work-item.update'>,
+  item: InterventionWorkItemOutput,
+  saved: InterventionWorkspaceData,
+): InterventionWorkItemOutput {
+  const { workItemId, clientId: _clientId, revision: _revision, ...fields } = operation.payload;
+  return {
+    ...item,
+    ...fields,
+    ...((item.status === 'completed' || item.status === 'skipped') &&
+    fields.status &&
+    fields.status !== 'completed' &&
+    fields.status !== 'skipped' &&
+    fields.remainingMinutes === undefined
+      ? { remainingMinutes: null }
+      : {}),
+    ...(fields.assignee !== undefined && fields.assignee !== item.assignee
+      ? {
+          assigneeProfile:
+            saved.workItems.find((row) => row.id === workItemId && row.assignee === fields.assignee)
+              ?.assigneeProfile ?? null,
+        }
+      : {}),
+  };
 }
 
 /**

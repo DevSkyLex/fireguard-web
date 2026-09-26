@@ -4,15 +4,15 @@ Le scan du commit `a8dd6e05508e8d18654e42d0e636128ef5a245b0` (23 septembre 2026)
 déjà classés **False Positive** ne font pas partie de ce total. Chaque fusion
 requiert un nouveau relevé sur le commit exact de `develop`.
 
-Le scan du commit de fusion `3661dc77c5edeec6cfbacf0d04907f3f6ce34bd4`
-(25 septembre 2026) en compte **22**, avec une note Maintenability **A** et une
-couverture globale de **90,9 %**. Le Quality Gate échoue encore sur six issues
-du nouveau code, incluses dans ces 22 ou dans la fiabilité. Le lot suivant
-corrige les alertes de code et classe les faux positifs confirmés par l'examen
-du DOM rendu et du clavier.
+Après les PR de correction, dont [#296](https://github.com/DevSkyLex/fireguard-web/pull/296)
+et [#297](https://github.com/DevSkyLex/fireguard-web/pull/297), le scan du
+commit `7cac841a2e32c6194b18645ed4bccd803e86a566` (26 septembre 2026)
+compte **zéro issue Maintenability active**. La note Maintenability est **A**,
+le Quality Gate passe et la couverture globale est de **90,9 %**. Les notes
+Security, Reliability et Security Review sont aussi **A**.
 
 Chaque PR de correction cite les clés des issues et les tests du comportement.
-Les décisions ci-dessous concernent les alertes qui restent dans le code :
+Les décisions ci-dessous documentent les alertes résolues sans modification du code :
 
 - **False Positive** : le conseil de la règle ne s'applique pas à la sémantique
   réelle de l'élément ou du code, avec une preuve reproductible.
@@ -24,7 +24,7 @@ résolution. Les décisions s'appliquent uniquement aux clés examinées dans
 `fireguard-web-develop` ; elles ne désactivent pas la règle et n'en modifient pas
 la sévérité.
 
-## Corrections préparées après le scan `3661dc77`
+## Corrections fusionnées après le scan `3661dc77`
 
 | Clé Sonar                              | Règle et emplacement                                                        | Correction vérifiée                                                                                                                                   |
 | -------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -53,14 +53,13 @@ propre à chacune et un statut vérifié.
 | `15a2f632-2a6d-443d-a24b-b38a949c23b3` | `typescript:S4144`, `intervention-list-query.utils.ts:430`, parsers de dates        | **Accepted**       | `parseDueRange()` et `parsePlannedStartRange()` ont bien des corps identiques et sont couverts par les tests, mais traduisent deux contrats de filtre distincts : échéance et début planifié. Un parseur générique pour deux usages masquerait ces types et couplerait leurs futures évolutions, contrairement à la règle de trois d'`ARCHITECTURE.md` §2.9 ; appeler l'un depuis l'autre créerait le même couplage. |
 | `932d875a-752b-49ea-ab3d-651259fdb250` | `typescript:S6551`, `format-intervention-change-patch.utils.ts:49`, `String(value)` | **False Positive** | `stringifyChangeValue()` retourne avant cette ligne pour `null`, `undefined`, booléens, chaînes, nombres, tableaux et tout `typeof value === 'object'` via une lecture récursive des entrées. Le `String(value)` final ne reçoit donc aucun objet et ne peut produire `[object Object]` ; Sonar ignore cette garde de flot.                                                                                          |
 
-Les scénarios Chromium utilisent l'API locale mockée du projet. Le relevé
-suivant poursuit l'examen individuel des groupes et rôles `status` encore
-actifs.
+Les scénarios Chromium utilisent l'API locale mockée du projet. Les décisions
+sur les groupes et rôles `status` sont détaillées ci-dessous.
 
 ## Relevé `Web:S6819` du 25 septembre 2026
 
-Le relevé de `fireguard-web-develop` compte 114 issues `Web:S6819` ouvertes.
-Ce lot examine les rôles `status` et `group`, puis les 14 autres rôles dans le
+Ce relevé historique de `fireguard-web-develop` comptait 114 issues `Web:S6819` ouvertes.
+Ce lot a examiné les rôles `status` et `group`, puis les 14 autres rôles dans le
 complément ci-dessous. Les lignes indiquées sont celles du scan Sonar et peuvent
 avoir légèrement bougé dans le code local.
 Sur les **100 issues actives** de ces deux rôles, 24 sont corrigées dans le code.
@@ -68,7 +67,7 @@ Les 75 autres faux positifs ont été classés individuellement **False Positive
 dans Sonar avec commentaire propre à chaque clé et statut vérifié. La clé
 `986b486f-099b-4172-b09d-d94f485db75c` a été classée **Accepted** après
 vérification individuelle du risque décrit ci-dessous. Les 24 corrections de
-code attendent le scan du commit exact de `develop`.
+code ont été prises en compte dans le scan final du commit exact de `develop`.
 
 La distinction sémantique est celle du [standard HTML pour `output`](https://html.spec.whatwg.org/multipage/form-elements.html#the-output-element) :
 un résultat d'action ou de calcul, avec seulement du contenu phrastique. Un

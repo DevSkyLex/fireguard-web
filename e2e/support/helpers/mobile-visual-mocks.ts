@@ -30,10 +30,25 @@ import {
   facilitiesCreatedTrendOutput,
 } from '../fixtures/dashboard-fixtures';
 import { directConversationOutput } from '../fixtures/direct-messages-fixtures';
-import { equipmentOutput, equipmentKpiOutput } from '../fixtures/equipment-fixtures';
-import { facilityOutput } from '../fixtures/facility-fixtures';
+import {
+  equipmentOutput,
+  equipmentKpiOutput,
+  equipmentAttachmentOutput,
+  equipmentMaintenanceLogOutput,
+  equipmentTagOutput,
+  E2E_EQUIPMENT_ID,
+} from '../fixtures/equipment-fixtures';
+import {
+  facilityOutput,
+  facilityBuildingModelOutput,
+  type FacilityOutputFixture,
+} from '../fixtures/facility-fixtures';
 import { importJobOutput } from '../fixtures/import-fixtures';
-import { inspectionOutput } from '../fixtures/inspection-fixtures';
+import {
+  inspectionOutput,
+  nonConformityStatisticsOutput,
+  type InspectionOutputFixture,
+} from '../fixtures/inspection-fixtures';
 import { maintenanceScheduleOutput } from '../fixtures/maintenance-fixtures';
 import {
   organizationMemberOutput,
@@ -48,6 +63,34 @@ import { visualCatalogFixtures } from '../fixtures/visual-catalog-fixtures';
 import { ApiMock } from '../mocks/api-mock';
 import { WorkloadApiMock } from '../mocks/workload-api-mock';
 import { INTERACTION_MODE_INTERVENTIONS } from './interaction-mode';
+
+/** A 1×1 transparent PNG, standing in for the OpenFreeMap sprite image — mirrors `facilities-map.spec.ts`. */
+const BLANK_PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
+/**
+ * Function installOpenFreeMapStubs
+ * @description Blocks every OpenFreeMap tile/glyph request and fulfils its sprite atlas with a
+ * blank stand-in, so the facility-map visual capture stays hermetic. Replicates
+ * `facilities-map.spec.ts`'s own route stubs rather than sharing them (single other consumer).
+ * @access public
+ * @since 1.0.0
+ * @param {Page} page - Isolated test page before navigation.
+ * @returns {Promise<void>} Tile/glyph requests blocked, sprite requests fulfilled.
+ */
+export async function installOpenFreeMapStubs(page: Page): Promise<void> {
+  await page.route('**tiles.openfreemap.org**', (route) => route.abort());
+  await page.route('**tiles.openfreemap.org/sprites/**.json', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+  });
+  await page.route('**tiles.openfreemap.org/sprites/**.png', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'image/png',
+      body: Buffer.from(BLANK_PNG_BASE64, 'base64'),
+    });
+  });
+}
 
 /**
  * Function mockMobileVisualWorkspace
@@ -112,11 +155,41 @@ export async function mockMobileVisualWorkspace(page: Page): Promise<void> {
   await api.mockDashboardNonConformitiesResolvedTrend(org, nonConformitiesResolvedTrendOutput());
   await api.mockDashboardEquipmentCreatedTrend(org, equipmentCreatedTrendOutput());
   await api.mockDashboardFacilitiesCreatedTrend(org, facilitiesCreatedTrendOutput());
-  await api.mockFacilityList(org, [facilityOutput()]);
+  const facility: FacilityOutputFixture = facilityOutput();
+  const facilityListRow: FacilityOutputFixture & { readonly equipmentCount: number } = {
+    ...facility,
+    equipmentCount: 12,
+  };
+  await api.mockFacilityList(org, [facilityListRow]);
+  await api.mockFacilityDetail(org, facility);
+  await api.mockFacilityOverview(org, facility.id, {
+    equipment: [equipmentOutput()],
+    inspections: [inspectionOutput()],
+  });
+  await installOpenFreeMapStubs(page);
+  await api.mockFacilityMap(org, [facility]);
+  await api.mockFacilityBuildingModel(org, facility.id, facilityBuildingModelOutput());
   await api.mockEquipmentList(org, [equipmentOutput()]);
   await api.mockEquipmentKpis(org, equipmentKpiOutput());
-  await api.mockInspectionList(org, [inspectionOutput()]);
+  await api.mockEquipmentDetail(org, equipmentOutput());
+  await api.mockEquipmentAttachments(org, E2E_EQUIPMENT_ID, [equipmentAttachmentOutput()]);
+  await api.mockEquipmentMaintenanceLogs(org, E2E_EQUIPMENT_ID, [equipmentMaintenanceLogOutput()]);
+  await api.mockEquipmentTags(org, [equipmentTagOutput()]);
+  const inspectionRow: InspectionOutputFixture & {
+    readonly equipmentSerialNumber: string;
+    readonly facilityName: string;
+    readonly checklistName: string;
+  } = {
+    ...inspectionOutput(),
+    equipmentSerialNumber: 'SN-2024-001',
+    facilityName: facility.name,
+    checklistName: 'Monthly extinguisher and evacuation-route inspection',
+  };
+  await api.mockInspectionList(org, [inspectionRow]);
+  await api.mockInspectionDetail(org, inspectionRow);
+  await api.mockNonConformityStatistics(org, nonConformityStatisticsOutput());
   await api.mockChecklistList(org, catalogs.checklists);
+  await api.mockChecklistDetail(org, catalogs.checklists[0]);
   await api.mockCalendarFeed(org, catalogs.calendar);
   await api.mockApprovalRequestList(org, [approvalRequestOutput()]);
   await api.mockApprovalActionTypes([approvalActionTypeOutput()]);

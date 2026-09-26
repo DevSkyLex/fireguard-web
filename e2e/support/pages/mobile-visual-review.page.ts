@@ -7,6 +7,12 @@ import { MOBILE_VISUAL_ROUTES, type MobileVisualRoute } from '../helpers/mobile-
 import { visualRun } from '../helpers/visual-run';
 
 /**
+ * The `facility-map` route's expected OpenFreeMap tile/glyph console errors — mirrors
+ * `facilities-map.spec.ts`'s own pattern. Matched only for that one route id, never blanket.
+ */
+const BLOCKED_TILE_ERROR = /tile|ajax|fetch|network|net::ERR_FAILED/i;
+
+/**
  * Interface VisualMode
  * @interface VisualMode
  * @description Capture identity and expected independent device/theme state.
@@ -73,7 +79,9 @@ export class MobileVisualReviewPage {
     });
     this.page.on('pageerror', (error) => errors.push(error.message));
     this.page.on('console', (message) => {
-      if (message.type() === 'error') errors.push(message.text());
+      if (message.type() !== 'error') return;
+      if (route.id === 'facility-map' && BLOCKED_TILE_ERROR.test(message.text())) return;
+      errors.push(message.text());
     });
     try {
       await this.page.goto(route.path);

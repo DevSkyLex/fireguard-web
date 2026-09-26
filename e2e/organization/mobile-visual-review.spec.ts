@@ -6,9 +6,17 @@ import { mockMobileVisualWorkspace } from '../support/helpers/mobile-visual-mock
 import { visualRun } from '../support/helpers/visual-run';
 import { MobileVisualReviewPage } from '../support/pages/mobile-visual-review.page';
 
+/**
+ * The android-tablet user agent `emulateMobilePlatform` pairs with — no Playwright device
+ * preset covers a 1024px Android tablet, so this string is hand-composed like the rest of
+ * this file's Chromium user agents.
+ */
+const ANDROID_TABLET_USER_AGENT =
+  'Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36';
+
 for (const mode of MOBILE_VISUAL_MODES) {
   test.describe(mode.name, () => {
-    test.skip(({ browserName }) => browserName !== 'chromium', 'Bounded Chromium visual review.');
+    test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
     test.use({
       viewport: { width: mode.width, height: mode.height },
       contextOptions: {
@@ -18,11 +26,22 @@ for (const mode of MOBILE_VISUAL_MODES) {
       isMobile: mode.mobile,
       hasTouch: mode.mobile,
       deviceScaleFactor: 1,
-      userAgent: mode.mobile
-        ? mode.width === 1024
-          ? 'Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36'
-          : devices['Pixel 5'].userAgent
-        : devices['Desktop Chrome'].userAgent,
+      userAgent: async ({ browserName }, use) => {
+        const value =
+          browserName === 'webkit'
+            ? mode.mobile
+              ? mode.width === 1024
+                ? devices['iPad (gen 7)'].userAgent
+                : devices['iPhone 12'].userAgent
+              : devices['Desktop Safari'].userAgent
+            : mode.mobile
+              ? mode.width === 1024
+                ? ANDROID_TABLET_USER_AGENT
+                : devices['Pixel 5'].userAgent
+              : devices['Desktop Chrome'].userAgent;
+
+        await use(value);
+      },
       colorScheme: mode.theme,
     });
 
@@ -33,14 +52,22 @@ for (const mode of MOBILE_VISUAL_MODES) {
         baseURL,
         browserName,
       }, info) => {
-        test.skip(browserName !== 'chromium', 'This bounded review runs in Chromium only.');
         test.setTimeout(45_000);
         expect(
           new URL(baseURL ?? 'http://localhost:4273').port,
           'Hermetic review must use port 4273.',
         ).toBe('4273');
         if (mode.mobile)
-          await emulateMobilePlatform(context, mode.width === 1024 ? 'android-tablet' : 'android');
+          await emulateMobilePlatform(
+            context,
+            browserName === 'webkit'
+              ? mode.width === 1024
+                ? 'ipad'
+                : 'ios'
+              : mode.width === 1024
+                ? 'android-tablet'
+                : 'android',
+          );
         await context.addCookies([
           {
             name: 'last-organization',

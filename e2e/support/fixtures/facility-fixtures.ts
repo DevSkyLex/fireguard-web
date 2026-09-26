@@ -233,6 +233,80 @@ export interface FacilityPlanOverlayOutputFixture {
   }>;
 }
 
+export interface FacilityBuildingModelOutputFixture {
+  readonly buildingId: string;
+  readonly buildingName: string;
+  readonly floors: ReadonlyArray<{
+    readonly facilityId: string;
+    readonly name: string;
+    readonly levelIndex: number | null;
+    readonly status: string;
+    readonly plan: {
+      readonly attachmentId: string;
+      readonly imageWidth: number | null;
+      readonly imageHeight: number | null;
+    } | null;
+    readonly outline: {
+      readonly source: 'plan_geometry' | 'rooms_bbox' | 'image_rect';
+      readonly points: ReadonlyArray<readonly [number, number]>;
+    } | null;
+    readonly rooms: ReadonlyArray<{
+      readonly facilityId: string;
+      readonly name: string;
+      readonly type: string;
+      readonly status: string;
+      readonly points: ReadonlyArray<readonly [number, number]>;
+    }>;
+  }>;
+}
+
+/**
+ * The 3D building view's model for {@link facilityOutput} — one floor with a
+ * drawn outline and a single room, enough to render the scene without an
+ * empty/no-geometry fallback.
+ */
+export function facilityBuildingModelOutput(
+  overrides: Partial<FacilityBuildingModelOutputFixture> = {},
+): FacilityBuildingModelOutputFixture {
+  return {
+    buildingId: E2E_FACILITY_ID,
+    buildingName: 'North Building',
+    floors: [
+      {
+        facilityId: E2E_FACILITY_CHILD_ID,
+        name: 'Ground Floor',
+        levelIndex: 0,
+        status: 'active',
+        plan: { attachmentId: E2E_FACILITY_PLAN_ID, imageWidth: 1200, imageHeight: 800 },
+        outline: {
+          source: 'image_rect',
+          points: [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+          ],
+        },
+        rooms: [
+          {
+            facilityId: E2E_FACILITY_PLAN_ZONE_ID,
+            name: 'Storage',
+            type: 'zone',
+            status: 'active',
+            points: [
+              [0.5, 0.5],
+              [0.8, 0.5],
+              [0.8, 0.8],
+              [0.5, 0.8],
+            ],
+          },
+        ],
+      },
+    ],
+    ...overrides,
+  };
+}
+
 /**
  * Two zones and two equipment pins on {@link facilityAttachmentOutput}'s tiny
  * 1×1 PNG — the `plan-overlay` e2e scenarios' overlay fixture.

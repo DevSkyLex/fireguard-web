@@ -100,3 +100,91 @@ export function equipmentKpiOutput(
     ...overrides,
   };
 }
+
+/** An attachment on {@link equipmentOutput}, for the equipment detail page's Attachments tab. */
+export interface EquipmentAttachmentOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly revision: number;
+  readonly equipmentId: string;
+  readonly fileName: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly label: string | null;
+  readonly uploadedAt: string;
+}
+
+export function equipmentAttachmentOutput(
+  overrides: Partial<EquipmentAttachmentOutputFixture> = {},
+): EquipmentAttachmentOutputFixture {
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/equipment/${E2E_EQUIPMENT_ID}/attachments/e2e-equipment-attachment-1`,
+    '@type': 'EquipmentAttachment',
+    id: 'e2e-equipment-attachment-1',
+    revision: 1,
+    equipmentId: E2E_EQUIPMENT_ID,
+    fileName: 'commissioning-report.pdf',
+    mimeType: 'application/pdf',
+    size: 20_480,
+    label: 'Commissioning report',
+    uploadedAt: '2025-03-05T00:00:00+00:00',
+    ...overrides,
+  };
+}
+
+/** A maintenance log entry on {@link equipmentOutput}, for the equipment detail page's Maintenance tab. */
+export interface EquipmentMaintenanceLogOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly equipmentId: string;
+  readonly organizationId: string;
+  readonly startedAt: string;
+  readonly completedAt?: string | null;
+  readonly source: 'status_transition' | 'intervention';
+  readonly interventionId?: string;
+  readonly interventionNumber?: number;
+  readonly workItemAction?: string;
+  readonly actorId?: string;
+  readonly summary?: string;
+}
+
+export function equipmentMaintenanceLogOutput(
+  overrides: Partial<EquipmentMaintenanceLogOutputFixture> = {},
+): EquipmentMaintenanceLogOutputFixture {
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/equipment/${E2E_EQUIPMENT_ID}/maintenance-logs/e2e-equipment-maintenance-1`,
+    '@type': 'EquipmentMaintenanceLog',
+    id: 'e2e-equipment-maintenance-1',
+    equipmentId: E2E_EQUIPMENT_ID,
+    organizationId: E2E_ORGANIZATION_ID,
+    startedAt: '2026-01-10T09:00:00+00:00',
+    completedAt: '2026-01-10T10:00:00+00:00',
+    source: 'status_transition',
+    summary: 'Commissioned after installation.',
+    ...overrides,
+  };
+}
+
+/** An organization equipment tag, for the equipment detail page's Tags tab. */
+export interface EquipmentTagOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly name: string;
+  readonly organizationId: string;
+}
+
+export function equipmentTagOutput(
+  overrides: Partial<EquipmentTagOutputFixture> = {},
+): EquipmentTagOutputFixture {
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/equipment/tags/e2e-equipment-tag-1`,
+    '@type': 'EquipmentTag',
+    id: 'e2e-equipment-tag-1',
+    name: 'North wing',
+    organizationId: E2E_ORGANIZATION_ID,
+    ...overrides,
+  };
+}

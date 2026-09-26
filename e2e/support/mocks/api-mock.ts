@@ -69,16 +69,25 @@ import {
   type OrganizationDashboardTrendOutputFixture,
 } from '../fixtures/dashboard-fixtures';
 import { equipmentKpiOutput, type EquipmentKpiFixture } from '../fixtures/equipment-fixtures';
-import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
+import type {
+  EquipmentAttachmentOutputFixture,
+  EquipmentMaintenanceLogOutputFixture,
+  EquipmentOutputFixture,
+  EquipmentTagOutputFixture,
+} from '../fixtures/equipment-fixtures';
 import { facilityAttachmentOutput } from '../fixtures/facility-fixtures';
 import type {
   ComplianceTreeNodeOutputFixture,
   FacilityAttachmentOutputFixture,
+  FacilityBuildingModelOutputFixture,
   FacilityOutputFixture,
   FacilityPlanOverlayOutputFixture,
 } from '../fixtures/facility-fixtures';
 import type { ImportJobOutputFixture } from '../fixtures/import-fixtures';
-import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
+import type {
+  InspectionOutputFixture,
+  NonConformityStatisticsOutputFixture,
+} from '../fixtures/inspection-fixtures';
 import type {
   InterventionIssueOutputFixture,
   InterventionLabelOutputFixture,
@@ -1195,6 +1204,66 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment/{equipmentId}/attachments` —
+   * the equipment detail page's Attachments tab, read on its first activation.
+   */
+  public async mockEquipmentAttachments(
+    organizationId: string,
+    equipmentId: string,
+    attachments: ReadonlyArray<EquipmentAttachmentOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/equipment/${equipmentId}/attachments(\\?.*)?$`,
+      ),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection(attachments));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment/{equipmentId}/maintenance-logs` —
+   * the equipment detail page's Maintenance tab, read on its first activation.
+   */
+  public async mockEquipmentMaintenanceLogs(
+    organizationId: string,
+    equipmentId: string,
+    logs: ReadonlyArray<EquipmentMaintenanceLogOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/equipment/${equipmentId}/maintenance-logs(\\?.*)?$`,
+      ),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection(logs));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment/tags` — the
+   * equipment detail page's Tags tab, read on its first activation.
+   */
+  public async mockEquipmentTags(
+    organizationId: string,
+    tags: ReadonlyArray<EquipmentTagOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment/tags(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection(tags));
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/legal-types` — the reference catalog behind
    * the settings Legal information type picker.
    */
@@ -1684,6 +1753,26 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/organizations/{organizationId}/facilities/{facilityId}/building-model` —
+   * the read-only 3D model `FacilityBuilding3dStore.loadModel` reads for the
+   * dedicated building 3D view.
+   */
+  public async mockFacilityBuildingModel(
+    organizationId: string,
+    facilityId: string,
+    model: FacilityBuildingModelOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${facilityId}/building-model`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, model);
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/inspections` — the
    * collection the inspections list page reads.
    */
@@ -1718,6 +1807,44 @@ export class ApiMock {
       async (route) => {
         if (options.holdUntil) await options.holdUntil;
         await fulfillJson(route, 200, inspection);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/non-conformities/statistics` —
+   * the KPI snapshot `NonConformityStatisticsStore.load` reads for the
+   * inspections analytics page, regardless of the requested period window.
+   */
+  public async mockNonConformityStatistics(
+    organizationId: string,
+    statistics: NonConformityStatisticsOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/non-conformities/statistics(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, statistics);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/checklists/{checklistId}` —
+   * the resource `ActiveChecklistStore.resolveChecklist` reads for the
+   * checklist detail route.
+   */
+  public async mockChecklistDetail(
+    organizationId: string,
+    checklist: { readonly id: string },
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/checklists/${checklist.id}`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, checklist);
       },
     );
   }

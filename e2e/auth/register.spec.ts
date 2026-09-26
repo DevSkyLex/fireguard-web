@@ -5,6 +5,8 @@ import {
   registerOutput,
 } from '../support/fixtures/api-fixtures';
 import { workspaceOptions } from '../support/fixtures/workspace-fixtures';
+import { expectNoHorizontalOverflow, setDarkTheme } from '../support/helpers/appearance';
+import { pagePolishScreenshotDir } from '../support/helpers/screenshot-dir';
 import { ApiMock } from '../support/mocks/api-mock';
 import { AuthPages } from '../support/pages/auth.page';
 
@@ -152,5 +154,45 @@ test.describe('Create an account', () => {
 
     await expect(page).toHaveURL(/\/onboarding\/workspace(?:\?.*)?$/, { timeout: 10_000 });
     await expect(page.getByRole('heading', { name: 'Your workspace' })).toBeVisible();
+  });
+});
+
+test.describe('visual evidence', () => {
+  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
+
+  test('renders the registration form à 375px en mode sombre', async ({
+    page,
+    context,
+    baseURL,
+  }, testInfo) => {
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 812 });
+    const api = new ApiMock(page);
+    await api.mockUnauthenticatedSession();
+    const auth = new AuthPages(page);
+
+    await auth.gotoRegister();
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(auth.registerRoot).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/register-375-dark.png`,
+    });
+  });
+
+  test('renders the registration form à 1280px en mode clair', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const api = new ApiMock(page);
+    await api.mockUnauthenticatedSession();
+    const auth = new AuthPages(page);
+
+    await auth.gotoRegister();
+
+    await expect(auth.registerRoot).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/register-1280-light.png`,
+    });
   });
 });

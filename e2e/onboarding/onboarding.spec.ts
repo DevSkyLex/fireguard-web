@@ -9,6 +9,7 @@ import {
   expectNoHorizontalOverflow,
   setDarkTheme,
 } from '../support/helpers/appearance';
+import { pagePolishScreenshotDir } from '../support/helpers/screenshot-dir';
 import { ApiMock } from '../support/mocks/api-mock';
 import { OnboardingPage } from '../support/pages/onboarding.page';
 
@@ -97,6 +98,48 @@ test.describe('Onboarding guard chain', () => {
 
     await expect(page).toHaveURL(new RegExp(`/organizations/${E2E_ORGANIZATION_ID}$`), {
       timeout: 10_000,
+    });
+  });
+});
+
+test.describe('visual evidence', () => {
+  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
+
+  test('renders the wizard first step à 375px en mode sombre', async ({
+    page,
+    context,
+    baseURL,
+  }, testInfo) => {
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 812 });
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOnboarding(inProgressOnboardingOutput());
+    const onboarding = new OnboardingPage(page);
+
+    await onboarding.goto();
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(onboarding.orgNameInput).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/onboarding-wizard-375-dark.png`,
+    });
+  });
+
+  test('renders the wizard first step à 1280px en mode clair', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockOnboarding(inProgressOnboardingOutput());
+    const onboarding = new OnboardingPage(page);
+
+    await onboarding.goto();
+
+    await expect(onboarding.shellRoot).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/onboarding-wizard-1280-light.png`,
     });
   });
 });

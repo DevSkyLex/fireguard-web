@@ -9,6 +9,18 @@ import type { WebhookSubscriptionOutput } from '../../../src/app/features/organi
 import type { TeamOutput } from '../../../src/app/features/organization/models/team/team-output.interface';
 import { E2E_ORGANIZATION_ID } from './api-fixtures';
 
+/** The checklist the visual review's checklist-detail route deep-links into. */
+export const E2E_VISUAL_CHECKLIST_ID = 'e2e-visual-checklist';
+
+/**
+ * Type VisualChecklistOutput
+ * @description {@link ChecklistOutput} plus `itemCount`, a column an upcoming
+ * design pass renders on the checklists list but which the backend contract
+ * does not carry yet — fixture-only, never added to the `src` interface.
+ * @since 1.0.0
+ */
+export type VisualChecklistOutput = ChecklistOutput & { readonly itemCount: number };
+
 /**
  * Function visualCatalogFixtures
  * @description Populates read-only catalogs with source-contract fixtures and a local-noon
@@ -19,7 +31,7 @@ import { E2E_ORGANIZATION_ID } from './api-fixtures';
  */
 export function visualCatalogFixtures(): {
   teams: TeamOutput[];
-  checklists: ChecklistOutput[];
+  checklists: VisualChecklistOutput[];
   calendar: CalendarFeedItemOutput[];
   automationPolicy: AutomationPolicyOutput;
   automationAttempts: AutomationAttemptOutput[];
@@ -99,9 +111,9 @@ export function visualCatalogFixtures(): {
     ],
     checklists: [
       {
-        '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/checklists/e2e-visual-checklist`,
+        '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/checklists/${E2E_VISUAL_CHECKLIST_ID}`,
         '@type': 'Checklist',
-        id: 'e2e-visual-checklist',
+        id: E2E_VISUAL_CHECKLIST_ID,
         organizationId: E2E_ORGANIZATION_ID,
         name: 'Monthly extinguisher and evacuation-route inspection',
         version: '2',
@@ -122,6 +134,7 @@ export function visualCatalogFixtures(): {
             position: 2,
           },
         ],
+        itemCount: 8,
         createdAt: noon,
         updatedAt: noon,
       },

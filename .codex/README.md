@@ -25,11 +25,12 @@ Having a specialist available does not make delegation mandatory.
 | Architecture / accessibility / design | `fg-web-arch-review` / `fg-web-a11y` / design reference            | `fg-web-architecture-reviewer` / `fg-web-a11y-auditor` / `fg-web-design-reviewer`  | Evidence and limits; read-only                                 |
 | API contract / i18n                   | `fg-web-service` API reference / [i18n](references/i18n-review.md) | `fg-web-api-contract-reviewer` / `fg-web-i18n-auditor`                             | Wire contracts / IDs and placeholders                          |
 | Requested second opinion              | `fg-web-codex-challenge`                                           | Targeted reviewer from the [catalog](references/agents.md)                         | Verified findings and stated independence                      |
+| SonarQube issue triage and remediation | `fg-web-sonarqube`                                                 | Parent or already assigned specialist                                              | Exact analyzed SHA, issue decisions, focused checks            |
 
 Commands, prerequisites, and limits for each check are in the
 [validation matrix](references/validation.md).
 
-The catalog contains **13 FireGuard skills**, **2 official skills** (`spartan` and
+The catalog contains **14 FireGuard skills**, **2 official skills** (`spartan` and
 `design-taste-frontend`), and **21 FireGuard agents**. Agent names and boundaries are
 described in the [catalog](references/agents.md). Taste operates within its declared
 scope, under the [third-party skill constraints](third-party-skills.md).

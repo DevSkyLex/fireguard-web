@@ -7,6 +7,10 @@ For Codex, read [.codex/workflow.md](.codex/workflow.md) and the matching entrie
 `.agents/skills/`; native subagents live in `.codex/agents/`. Setup and validation are
 documented in [.codex/README.md](.codex/README.md). Codex does not need `.claude/` procedures.
 
+For SonarQube issue triage or remediation, load
+[fg-web-sonarqube](.agents/skills/fg-web-sonarqube/SKILL.md). Record issue-specific
+False Positive and Accepted evidence in SonarQube and the PR, not in a repository issue ledger.
+
 For every task that creates, changes, reviews, or tests presentation code, load the official
 `spartan` skill from [.agents/skills/spartan/SKILL.md](.agents/skills/spartan/SKILL.md) together
 with the applicable FireGuard skill. This includes components, forms, overlays, navigation,

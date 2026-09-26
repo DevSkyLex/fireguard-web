@@ -1,0 +1,4 @@
+interface:
+  display_name: "FireGuard Web SonarQube"
+  short_description: "Triage web SonarQube findings with issue evidence"
+  default_prompt: "Use $fg-web-sonarqube to triage the requested FireGuard Web SonarQube findings."

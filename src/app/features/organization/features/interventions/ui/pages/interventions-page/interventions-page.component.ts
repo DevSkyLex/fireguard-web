@@ -126,6 +126,7 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import { DashboardPanelRegistry } from '@layouts/dashboard-layout';
 import {
   Board,
   BoardCardDirective,
@@ -147,7 +148,13 @@ import {
   type CollectionFilterOperatorChangedEvent,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import {
+  CollectionSearchBox,
+  CollectionSelectionBar,
+  CollectionToolbar,
+  type CollectionSelectionAction,
+  type CollectionSelectionCommand,
+} from '@shared/collection-toolbar';
 import { GateReasonDirective } from '@shared/gate-reason';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
@@ -437,6 +444,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     CollectionFilterToggle,
     CollectionPagination,
     CollectionSearchBox,
+    CollectionSelectionBar,
     CollectionToolbar,
     ...HlmCheckboxImports,
     ...HlmDropdownMenuImports,
@@ -700,6 +708,27 @@ export class InterventionsPage {
    * @type {PageTabsService}
    */
   private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property calendarView
+   * @readonly
+   * @description Lazily mounted calendar owning the selected-day template and selection signals.
+   * @access private
+   * @since 14.0.0
+   * @type {Signal<InterventionCalendar | undefined>}
+   */
+  private readonly calendarView: Signal<InterventionCalendar | undefined> =
+    viewChild(InterventionCalendar);
+
+  /**
+   * Property panelRegistry
+   * @readonly
+   * @description Shell-scoped registry for the active Calendar tab's day panel.
+   * @access private
+   * @since 14.0.0
+   * @type {DashboardPanelRegistry}
+   */
+  private readonly panelRegistry: DashboardPanelRegistry = inject(DashboardPanelRegistry);
 
   /** The signed-in member, resolving the "my interventions" chip and the List tab's identity gates. */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
@@ -1378,6 +1407,70 @@ export class InterventionsPage {
   );
 
   /**
+   * Property selectionActions
+   * @readonly
+   * @description Current permission- and row-eligible bulk commands for the shared selection bar.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CollectionSelectionAction[]>}
+   */
+  protected readonly selectionActions: Signal<readonly CollectionSelectionAction[]> = computed(
+    () => {
+      const actions: CollectionSelectionAction[] = [];
+      const pending = this.batchPending();
+
+      if (this.canTransition()) {
+        const transitions: CollectionSelectionCommand[] = this.bulkTransitionTargets()
+          .filter((target) => this.transitionableSelectedIds(target).length > 0)
+          .map((target) => ({
+            kind: 'command',
+            id: `transition:${target}`,
+            label: `${this.statusLabelOf(target)} (${this.transitionableSelectedIds(target).length})`,
+            icon: 'lucideFlag',
+            disabled: pending,
+          }));
+        if (transitions.length > 0) {
+          actions.push({
+            kind: 'group',
+            id: 'transitions',
+            label: $localize`:@@intervention.list.bulkMoveToLabel:Move to`,
+            icon: 'lucideFlag',
+            actions: transitions,
+          });
+        }
+      }
+
+      if (this.canAssign() && this.assignableSelectedIds().length > 0) {
+        actions.push({
+          kind: 'command',
+          id: 'assign',
+          label: this.bulkAssignLabel(),
+          icon: 'lucideUserCog',
+          disabled: pending || this.assignDialogBusy(),
+        });
+      }
+
+      if (this.canDelete()) {
+        const deletable = this.deletableSelectedIds().length;
+        actions.push({
+          kind: 'command',
+          id: 'delete',
+          label: this.bulkDeleteLabel(),
+          icon: 'lucideTrash2',
+          disabled: pending || deletable === 0,
+          disabledReason:
+            deletable === 0
+              ? $localize`:@@intervention.list.noSelectedRowsDeletable:No selected intervention can be deleted.`
+              : undefined,
+          destructive: true,
+        });
+      }
+
+      return actions;
+    },
+  );
+
+  /**
    * Property assignAttemptIds
    * @readonly
    * @description Resources in the current assignment attempt; successful rows are excluded from retries.
@@ -1816,6 +1909,17 @@ export class InterventionsPage {
    * @since 1.0.0
    */
   public constructor() {
+    effect((onCleanup): void => {
+      const template =
+        this.activeView() === 'calendar' ? this.calendarView()?.dayPanelTemplate() : undefined;
+      if (!template) return;
+      this.panelRegistry.register(
+        template,
+        $localize`:@@intervention.calendar.selectedDayPanelLabel:Selected day interventions`,
+      );
+      onCleanup(() => this.panelRegistry.clear(template));
+    });
+
     effect(() => {
       const organizationIri = `/api/organizations/${this.organizationId()}`;
       untracked(() => {
@@ -2147,6 +2251,8 @@ export class InterventionsPage {
         return $localize`:@@intervention.list.columnType:Type`;
       case 'site':
         return $localize`:@@intervention.list.columnSite:Site`;
+      case 'responsible':
+        return $localize`:@@intervention.list.columnResponsible:Responsible`;
       default:
         return $localize`:@@intervention.list.columnDue:Due`;
     }
@@ -2258,6 +2364,31 @@ export class InterventionsPage {
   /** Records the List table's next row selection. */
   protected onSelectionChanged(ids: ReadonlySet<string>): void {
     this.selectedIds.set(ids);
+  }
+
+  /**
+   * Method onSelectionActionRequested
+   * @method onSelectionActionRequested
+   * @description Routes a shared bar command through the existing permission-checked bulk handlers.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} id - Command id emitted after any mobile drawer closes.
+   * @returns {void}
+   */
+  protected onSelectionActionRequested(id: string): void {
+    if (this.activeView() !== 'list' || this.selectedIds().size === 0 || this.batchPending())
+      return;
+    if (id === 'assign') {
+      if (this.canAssign()) this.requestBulkAssign();
+      return;
+    }
+    if (id === 'delete') {
+      if (this.canDelete()) this.requestBulkDelete();
+      return;
+    }
+    if (!this.canTransition()) return;
+    const target = this.bulkTransitionTargets().find((status) => id === `transition:${status}`);
+    if (target) this.confirmBulkTransition(target);
   }
 
   /** Opens the confirm dialog for a single row's Delete entry. */
@@ -3242,6 +3373,9 @@ export class InterventionsPage {
       isOverdue,
       isDueSoon,
       siteName: intervention.site ? (this.siteDisplayMap().get(intervention.site) ?? null) : null,
+      responsible: intervention.responsible
+        ? (this.memberDisplayMap().get(intervention.responsible) ?? null)
+        : null,
       people: memberIris.map((iri: string): MemberAvatar => this.toPerson(iri)),
     };
   }
@@ -3374,22 +3508,4 @@ export class InterventionsPage {
   }
 
   //#endregion
-
-  /**
-   * Method onMobileToolsClosed
-   * @method onMobileToolsClosed
-   * @description Opens an eligible bulk action overlay after the tools drawer has finished closing.
-   * @access protected
-   * @since 1.0.0
-   * @param {unknown} action - The explicit native drawer close result.
-   * @returns {void}
-   */
-  protected onMobileToolsClosed(action: unknown): void {
-    if (this.batchPending()) return;
-
-    if (action === 'assign' && this.canAssign() && this.assignableSelectedIds().length > 0)
-      this.requestBulkAssign();
-    if (action === 'delete' && this.canDelete() && this.deletableSelectedIds().length > 0)
-      this.requestBulkDelete();
-  }
 }

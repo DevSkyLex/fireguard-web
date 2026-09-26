@@ -44,6 +44,9 @@
                 <span hlmAvatarFallback class="text-[10px]">
                   {{ initialsOf(participant.displayName) }}
                 </span>
+                <app-member-presence-indicator
+                  [status]="presences()[participant.memberId] ?? null"
+                />
               </hlm-avatar>
 
               <span class="flex min-w-0 flex-1 flex-col">

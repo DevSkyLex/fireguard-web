@@ -64,16 +64,34 @@
 
     @if (items().length > 0 || loading() || error() !== null) {
       <app-collection-toolbar>
-        <app-collection-search-box
-          toolbarStart
-          testIdPrefix="intervention-work-items"
-          placeholder="Search work items..."
-          i18n-placeholder="@@intervention.wit.searchPlaceholder"
-          ariaLabel="Search work items..."
-          i18n-ariaLabel="@@intervention.wit.searchPlaceholder"
-          [value]="searchTerm()"
-          (queryChanged)="onSearchQueryChanged($event)"
-        />
+        <div toolbarStart class="flex flex-wrap items-center gap-2">
+          <app-collection-search-box
+            testIdPrefix="intervention-work-items"
+            placeholder="Search work items..."
+            i18n-placeholder="@@intervention.wit.searchPlaceholder"
+            ariaLabel="Search work items..."
+            i18n-ariaLabel="@@intervention.wit.searchPlaceholder"
+            [value]="searchTerm()"
+            (queryChanged)="onSearchQueryChanged($event)"
+          />
+
+          @if (showMineFirstToggle()) {
+            <button
+              hlmToggle
+              type="button"
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              data-testid="intervention-work-items-mine-first"
+              [state]="mineFirst() ? 'on' : 'off'"
+              (stateChange)="
+                emitQuery({ prioritizeAssignee: $event === 'on' ? currentMemberId() : null })
+              "
+            >
+              <span i18n="@@intervention.wit.mineFirst">Mine first</span>
+            </button>
+          }
+        </div>
 
         <div toolbarEnd class="flex flex-wrap items-center gap-2">
           <app-collection-filter-toggle
@@ -98,25 +116,6 @@
           (fieldRemoved)="onFieldRemoved($event)"
           (filtersCleared)="clearFilter()"
         />
-      }
-
-      @if (showMineFirstToggle()) {
-        <div class="flex flex-wrap items-center gap-3">
-          <button
-            hlmToggle
-            type="button"
-            variant="outline"
-            size="sm"
-            class="mobile-ui:min-h-11"
-            data-testid="intervention-work-items-mine-first"
-            [state]="mineFirst() ? 'on' : 'off'"
-            (stateChange)="
-              emitQuery({ prioritizeAssignee: $event === 'on' ? currentMemberId() : null })
-            "
-          >
-            <span i18n="@@intervention.wit.mineFirst">Mine first</span>
-          </button>
-        </div>
       }
 
       <ng-template #statusFilter>

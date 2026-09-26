@@ -14,7 +14,7 @@ belongs to.
 ## Purpose
 
 Owns the organization's conversational surface: direct conversations, channels, subject threads,
-messages and their reactions and attachments, plus presence and the AI assistant.
+messages and their reactions and attachments, plus the AI assistant. Organization owns presence.
 
 **Direct conversations, channels, the assistant, and the per-message surfaces all have a UI
 today.** The pin/save/edit/tombstone-delete, threaded-replies, saved-messages and
@@ -229,24 +229,11 @@ well-formed whatever surrounds it.
 
 ## Presence
 
-Poll-only. Nothing pushes presence — no Mercure topic carries it — and the server keeps it in a
-cache that forgets a member after 90 seconds, so `MemberPresenceService` runs two timers: one
-announcing us (60 s), one reading the tracked set (45 s). Both stop when the tab is hidden or the
-browser is offline, because `POST /presence/ping` allows **6 requests per minute** per user and
-organization and a member with four background tabs would otherwise spend the whole budget. A `429`
-pauses pinging for three minutes rather than retrying sooner: being limited means other tabs are
-already announcing us.
-
-Three server constraints are absorbed by `chunkMemberIds`: `memberIds` must be **bare** UUIDs (the
-provider parses IRIs for `organization` only), duplicates are removed **before** the cap is checked,
-and the list is split at 100 — exceeding it is a `400`, not a truncation.
-
-The organization is a **parameter**, like everywhere else a root-provided unit needs it:
-`ORGANIZATION_CONTEXT_PORT` is bound by the shell route and a root injector cannot see it.
-
-**Typing indicators do not exist and cannot be built client-side.** There is no endpoint, no topic
-and no cache key, and the subscriber JWT is minted with `publish: []`, so a browser physically
-cannot fan out its own signal. This needs backend work before any UI is worth designing.
+Presence belongs to the parent organization feature. Conversation and saved-message pages, the
+active subject discussion, the direct-message panel and reply sheets register displayed members
+through its public helper. Rows, threads and participant/info sheets consume status inputs.
+Opening channel information also tracks its visible roster and pinned-message authors. A counterpart id stays in the row model even when their name is unavailable.
+Unknown status hides the dot. Do-not-disturb never suspends messaging, unread counts or inbox updates.
 
 ## Assistant
 
@@ -338,7 +325,11 @@ Currently consumed by `features/interventions` (its own `FEATURE.md` records the
 ## Cross-Feature Dependencies
 
 - Consumes the parent feature's `ORGANIZATION_CONTEXT_PORT` wherever a unit needs the active
-  organization as a parameter — messaging navigation and panel, presence pinging, the assistant store.
+  organization as a parameter — messaging navigation and panel, the assistant store.
+- Consumes `MEMBER_PRESENCE_PORT`, `registerMemberPresence` from `services/member-presence`,
+  `PresenceStatus` from `models`, and `MemberPresenceIndicator` from `ui/components/member-presence-indicator`.
+  Pages and the visible direct-message panel register only displayed members; presentational threads,
+  rows and participant sheets receive snapshots as inputs. Closing a surface releases its registration.
 - Consumes the parent's published `matchesOrganizationPermission` navigation helper for
   identical leaf and namespace-wildcard checks in the messaging link and slot factory.
 - Consumes `MEMBER_DIRECTORY_PORT` to resolve member ids to names and avatars. It is bound in

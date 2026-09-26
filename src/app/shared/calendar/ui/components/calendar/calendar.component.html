@@ -81,7 +81,7 @@
                 brnCalendarCellButton
                 hlmBtn
                 variant="ghost"
-                class="group/day relative flex h-full min-h-16 w-full flex-col items-stretch justify-start gap-1 rounded-none border-0 p-1 text-start font-normal whitespace-normal focus-visible:z-10 data-[outside=true]:text-muted-foreground data-[selected-single=true]:bg-muted sm:min-h-24 sm:gap-1.5 sm:p-1.5 md:min-h-28"
+                class="group/day relative flex h-full min-h-16 w-full flex-col items-stretch justify-start gap-1 rounded-none border-0 p-1 text-start font-normal whitespace-normal focus-visible:z-30 data-[outside=true]:text-muted-foreground data-[selected-single=true]:bg-muted sm:min-h-24 sm:gap-1.5 sm:p-1.5 md:min-h-28"
                 data-testid="calendar-day"
                 [date]="day"
                 [attr.data-day]="iso"
@@ -112,32 +112,39 @@
                       <span class="size-1.5 rounded-full bg-muted-foreground"></span>
                     }
                   </span>
+                }
 
+                @for (segment of segmentsStartingOn(iso); track segment.event.id) {
                   <span
-                    class="hidden min-w-0 flex-col items-start gap-0.5 sm:flex"
+                    hlmBadge
+                    [variant]="segment.event.tone"
+                    class="absolute left-1.5 z-20 hidden min-w-0 justify-start sm:inline-flex"
+                    [class.cursor-grab]="segment.event.draggable === true"
+                    [class.rounded-s-none]="segment.continuesBefore"
+                    [class.rounded-e-none]="segment.continuesAfter"
+                    [style.top.rem]="2.15 + segment.lane * 1.4"
+                    [style.width]="
+                      'calc(' + segment.days * 100 + '% + ' + (segment.days - 1) + 'px - 0.75rem)'
+                    "
+                    [title]="segment.event.label"
+                    [attr.data-event-id]="segment.event.id"
+                    [attr.data-span-days]="segment.days"
+                    [attr.data-lane]="segment.lane"
+                    [attr.draggable]="segment.event.draggable === true ? 'true' : null"
+                    [attr.data-draggable]="segment.event.draggable === true ? 'true' : null"
                     aria-hidden="true"
+                    (dragstart)="onChipDragStart($event, segment.event)"
+                    (dragend)="onChipDragEnd()"
                   >
-                    @for (event of summary.chips; track event.id) {
-                      <span
-                        hlmBadge
-                        [variant]="event.tone"
-                        class="max-w-full"
-                        [class.cursor-grab]="event.draggable === true"
-                        [title]="event.label"
-                        [attr.draggable]="event.draggable === true ? 'true' : null"
-                        [attr.data-draggable]="event.draggable === true ? 'true' : null"
-                        (dragstart)="onChipDragStart($event, event)"
-                        (dragend)="onChipDragEnd()"
-                      >
-                        <span class="truncate">{{ event.label }}</span>
-                      </span>
-                    }
-                    @if (summary.overflow > 0) {
-                      <span class="ps-1 text-xs text-muted-foreground"
-                        >+{{ summary.overflow }}</span
-                      >
-                    }
+                    <span class="truncate">{{ segment.event.label }}</span>
                   </span>
+                }
+                @if (summary.overflow > 0) {
+                  <span
+                    class="absolute top-20 left-1.5 hidden text-xs text-muted-foreground sm:inline"
+                    aria-hidden="true"
+                    >+{{ summary.overflow }}</span
+                  >
                 }
               </button>
 

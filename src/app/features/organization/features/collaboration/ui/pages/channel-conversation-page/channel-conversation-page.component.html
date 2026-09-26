@@ -163,6 +163,7 @@
               <img hlmAvatarImage [src]="url" alt="" />
             }
             <span hlmAvatarFallback class="text-[10px]">{{ participant.initials }}</span>
+            <app-member-presence-indicator [status]="presences()[participant.memberId] ?? null" />
           </hlm-avatar>
         } @empty {
           <ng-icon name="lucideUsers" class="text-base" />
@@ -270,6 +271,7 @@
 </header>
 
 <app-message-thread
+  [presences]="presences()"
   [messages]="messages()"
   [loading]="thread.isLoading()"
   [hasMore]="thread.hasMore()"
@@ -309,6 +311,7 @@
 />
 
 <app-channel-participants-sheet
+  [presences]="presences()"
   [visible]="participantsSheetVisible()"
   [participants]="participantViews()"
   [candidates]="addableMembers()"
@@ -329,6 +332,7 @@
 />
 
 <app-channel-info-sheet
+  [presences]="presences()"
   [visible]="infoSheetVisible()"
   [channelName]="channelName()"
   [participants]="participantViews()"

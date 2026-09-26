@@ -33,6 +33,7 @@ import {
   buildMessageViews,
   memberIriOf,
 } from '@features/organization/features/collaboration/utils';
+import type { PresenceStatus } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
@@ -43,6 +44,8 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { MessageThread } from '../../components/message-thread';
@@ -79,6 +82,7 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
 @Component({
   selector: 'app-direct-conversation-page',
   imports: [
+    MemberPresenceIndicator,
     RouterLink,
     NgIcon,
     HlmAvatar,
@@ -97,6 +101,35 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DirectConversationPage {
+  /**
+   * Property presences
+   * @readonly
+   * @description Live availability for the counterpart and authors rendered in this conversation.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() => [
+      ...this.messages().map((message) => message.authorId),
+      ...(this.counterpart() ? [this.counterpart() ?? ''] : []),
+    ]);
+
+  /**
+   * Property counterpartPresence
+   * @readonly
+   * @description Confirmed availability of the conversation counterpart.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<PresenceStatus | null>}
+   */
+  protected readonly counterpartPresence: Signal<PresenceStatus | null> = computed(() => {
+    const reference = this.counterpart();
+    return reference
+      ? (this.presences()[reference.slice(reference.lastIndexOf('/') + 1)] ?? null)
+      : null;
+  });
+
   //#region Inputs
   /**
    * Property conversationId

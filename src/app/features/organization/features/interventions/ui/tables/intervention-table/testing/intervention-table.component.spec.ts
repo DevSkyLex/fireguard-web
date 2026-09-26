@@ -6,6 +6,7 @@ import type {
   InterventionOutput,
   InterventionSortField,
 } from '@features/organization/features/interventions/models';
+import type { MemberSelectOption } from '@features/organization/models';
 import type { InterventionListItemViewModel } from '../../../pages/interventions-page/models';
 import { InterventionTable } from '../intervention-table.component';
 import type { InterventionTableColumn, InterventionTransitionRequest } from '../models';
@@ -68,6 +69,7 @@ const row = (
   isOverdue: false,
   isDueSoon: false,
   siteName: 'Warehouse B',
+  responsible: null,
   people: [],
   ...overrides,
 });
@@ -119,6 +121,40 @@ describe('InterventionTable', () => {
     expect(element.textContent).toContain('Planned');
     expect(element.textContent).toContain('High');
     expect(element.textContent).toContain('Inventory');
+  });
+
+  it('should render the responsible member with an avatar and an accessible unknown fallback', async () => {
+    const responsible: MemberSelectOption = {
+      value: '/api/organizations/1/members/member-1',
+      label: 'Ada Lovelace',
+      displayName: 'Ada Lovelace',
+      roleLabel: 'Admin',
+      avatarUrl: null,
+      initials: 'AL',
+    };
+
+    fixture.componentRef.setInput('items', [row({ responsible })]);
+    await fixture.whenStable();
+
+    const assignedCell: Element | null = element.querySelector(
+      '[data-testid="intervention-table"] tbody tr td:nth-child(8)',
+    );
+
+    expect(assignedCell?.textContent).toContain('Ada Lovelace');
+    expect(assignedCell?.querySelector('hlm-avatar')).not.toBeNull();
+    expect(assignedCell?.textContent).toContain('AL');
+
+    fixture.componentRef.setInput('items', [row()]);
+    await fixture.whenStable();
+
+    const unknown: HTMLElement | null = element.querySelector(
+      '[data-testid="intervention-table"] tbody tr td:nth-child(8) [role="img"]',
+    );
+
+    expect(unknown?.getAttribute('aria-label')).toBe('No responsible assigned');
+    expect(unknown?.className).toContain('size-8');
+    expect(unknown?.className).toContain('border-dotted');
+    expect(unknown?.textContent?.trim()).toBe('—');
   });
 
   it('should announce the active ordering on the sorted head only', () => {

@@ -28,6 +28,8 @@ import type {
   MessageReactionToggle,
   MessageView,
 } from '@features/organization/features/collaboration/models';
+import type { PresenceStatus } from '@features/organization/models';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBubble, HlmBubbleContent, type BubbleVariants } from '@shared/ui/bubble';
 import { HlmButton } from '@shared/ui/button';
@@ -99,6 +101,7 @@ import { MessageReactions } from '../message-reactions';
     HlmMessageFooter,
     HlmMessageHeader,
     MessageReactions,
+    MemberPresenceIndicator,
   ],
   providers: [
     provideIcons({
@@ -132,6 +135,16 @@ export class MessageRow {
   ).isMobileInteractionMode;
 
   //#region Inputs
+  /**
+   * Property presence
+   * @readonly
+   * @description Confirmed author availability passed by the owning conversation.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<PresenceStatus | null>}
+   */
+  public readonly presence: InputSignal<PresenceStatus | null> = input<PresenceStatus | null>(null);
+
   /**
    * Property message
    * @readonly

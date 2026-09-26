@@ -67,7 +67,7 @@
               <span class="size-1.5 shrink-0 rounded-full bg-foreground" aria-hidden="true"></span
               ><span class="sr-only" i18n="@@account.notificationBell.unread">Unread</span>
             }
-            {{ item.title }}
+            {{ inboxTitle(item) }}
           </p>
           @if (item.snippet) {
             <p hlmItemDescription class="break-words">{{ item.snippet }}</p>

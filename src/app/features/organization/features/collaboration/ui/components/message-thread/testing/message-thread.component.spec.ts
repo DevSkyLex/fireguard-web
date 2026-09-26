@@ -173,4 +173,13 @@ describe('MessageThread', () => {
     expect(liveRegion()?.textContent).toBe(beforeOwnMessage);
     expect(liveRegion()?.textContent).not.toContain('Léo Martin');
   });
+
+  it('maps the supplied member presence to its authors and leaves missing authors unknown', async () => {
+    await setMessages([view(), view({ id: 'message-2', authorId: 'member-2' })]);
+    fixture.componentRef.setInput('presences', { 'member-1': 'do_not_disturb' });
+    await fixture.whenStable();
+    const badges = fixture.nativeElement.querySelectorAll('[data-slot="avatar-badge"]');
+    expect(badges.length).toBe(1);
+    expect(badges[0].getAttribute('aria-label')).toBe('Do not disturb');
+  });
 });

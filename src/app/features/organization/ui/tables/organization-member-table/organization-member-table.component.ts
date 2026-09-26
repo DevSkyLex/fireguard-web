@@ -22,11 +22,13 @@ import {
   lucideTrash2,
   lucideUserCheck,
 } from '@ng-icons/lucide';
+import type { PresenceStatus } from '@features/organization/models';
 import type {
   OrganizationMemberListSort,
   OrganizationMemberOutput,
   OrganizationMemberSortField,
 } from '@features/organization/models';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
@@ -79,6 +81,7 @@ import { HlmTableImports } from '@shared/ui/table';
 @Component({
   selector: 'app-organization-member-table',
   imports: [
+    MemberPresenceIndicator,
     NgTemplateOutlet,
     OrgDatePipe,
     RouterLink,
@@ -112,6 +115,18 @@ import { HlmTableImports } from '@shared/ui/table';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMemberTable {
+  /**
+   * Property presences
+   * @readonly
+   * @description Confirmed availability supplied by the page, independent of administrative membership state.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  public readonly presences: InputSignal<Readonly<Record<string, PresenceStatus>>> = input<
+    Readonly<Record<string, PresenceStatus>>
+  >({});
+
   //#region Inputs
   /**
    * Property items

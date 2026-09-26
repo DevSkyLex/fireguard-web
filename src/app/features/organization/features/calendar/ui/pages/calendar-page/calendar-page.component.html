@@ -1,4 +1,33 @@
 <div id="calendar-page" class="flex min-h-0 w-full flex-1 flex-col gap-4">
+  <ng-template #dayPanel>
+    <section class="flex h-full min-h-0 flex-col" data-testid="calendar-selected-day-panel">
+      <div class="flex h-12 shrink-0 items-center border-b border-border px-4">
+        <h2 class="truncate text-sm font-semibold" data-testid="calendar-day-heading">
+          {{ selectedDayLabel() }}
+        </h2>
+      </div>
+      <div class="min-h-0 flex-1 overflow-y-auto p-2" data-testid="calendar-day-scroll-region">
+        @if (dayItems().length === 0 && store.isComplete() && !store.isQueryLoading()) {
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <div hlmEmptyMedia variant="icon">
+                <ng-icon name="lucideCalendarDays" aria-hidden="true" />
+              </div>
+              <p hlmEmptyTitle i18n="@@calendar.dayEmpty">Nothing scheduled this day.</p>
+            </div>
+          </div>
+        } @else {
+          <app-calendar-entry-list
+            [items]="dayItems()"
+            [organizationId]="organizationId()"
+            [canWrite]="canWriteEvents()"
+            (editRequested)="openEditDialog($event)"
+            (deleteRequested)="requestDelete($event)"
+          />
+        }
+      </div>
+    </section>
+  </ng-template>
   <div aria-live="polite" class="sr-only" data-testid="calendar-move-live-region">
     {{ moveAnnouncement() }}
   </div>
@@ -204,9 +233,7 @@
         @case ('month') {
           <div hlmTabsContent="month" class="flex min-h-0 flex-1 flex-col">
             @if (!isMobileInteractionMode()) {
-              <div
-                class="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-auto lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]"
-              >
+              <div class="hidden min-h-0 w-full min-w-0 flex-1 flex-col desktop-ui:lg:flex">
                 @if (store.isQueryLoading() && events().length === 0) {
                   <hlm-skeleton class="h-96 w-full" />
                 } @else {
@@ -222,73 +249,34 @@
                     (eventDropped)="onEventDropped($event)"
                   />
                 }
-
-                <div
-                  hlmCard
-                  size="sm"
-                  class="min-w-0 gap-0 bg-transparent py-0 shadow-none lg:h-full lg:min-h-0"
-                  data-testid="calendar-selected-day-panel"
-                >
-                  <div hlmCardHeader class="shrink-0 border-b border-border pt-3">
-                    <h2 hlmCardTitle data-testid="calendar-day-heading">
-                      {{ selectedDayLabel() }}
-                    </h2>
-                  </div>
-                  <div
-                    hlmCardContent
-                    class="flex flex-col p-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto"
-                  >
-                    @if (dayItems().length === 0 && store.isComplete() && !store.isQueryLoading()) {
-                      <div hlmEmpty>
-                        <div hlmEmptyHeader>
-                          <div hlmEmptyMedia variant="icon">
-                            <ng-icon name="lucideCalendarDays" aria-hidden="true" />
-                          </div>
-                          <p hlmEmptyTitle i18n="@@calendar.dayEmpty">
-                            Nothing scheduled this day.
-                          </p>
-                        </div>
-                      </div>
-                    } @else {
-                      <app-calendar-entry-list
-                        [items]="dayItems()"
-                        [organizationId]="organizationId()"
-                        [canWrite]="canWriteEvents()"
-                        (editRequested)="openEditDialog($event)"
-                        (deleteRequested)="requestDelete($event)"
-                      />
-                    }
-                  </div>
-                </div>
-              </div>
-            } @else {
-              <div
-                id="calendar-agenda"
-                data-testid="calendar-agenda"
-                class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto"
-              >
-                @if (store.isQueryLoading() && events().length === 0) {
-                  <hlm-skeleton class="h-48 w-full" />
-                } @else if (agendaGroups().length === 0 && store.isComplete()) {
-                  <p class="py-3 text-sm text-muted-foreground" i18n="@@calendar.agendaEmpty">
-                    Nothing scheduled in this period.
-                  </p>
-                } @else {
-                  @for (group of agendaGroups(); track group.day) {
-                    <div class="flex flex-col gap-2" data-testid="calendar-agenda-group">
-                      <h2 class="text-base font-semibold text-foreground">{{ group.label }}</h2>
-                      <app-calendar-entry-list
-                        [items]="group.items"
-                        [organizationId]="organizationId()"
-                        [canWrite]="canWriteEvents()"
-                        (editRequested)="openEditDialog($event)"
-                        (deleteRequested)="requestDelete($event)"
-                      />
-                    </div>
-                  }
-                }
               </div>
             }
+            <div
+              id="calendar-agenda"
+              data-testid="calendar-agenda"
+              class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto desktop-ui:lg:hidden"
+            >
+              @if (store.isQueryLoading() && events().length === 0) {
+                <hlm-skeleton class="h-48 w-full" />
+              } @else if (agendaGroups().length === 0 && store.isComplete()) {
+                <p class="py-3 text-sm text-muted-foreground" i18n="@@calendar.agendaEmpty">
+                  Nothing scheduled in this period.
+                </p>
+              } @else {
+                @for (group of agendaGroups(); track group.day) {
+                  <div class="flex flex-col gap-2" data-testid="calendar-agenda-group">
+                    <h2 class="text-base font-semibold text-foreground">{{ group.label }}</h2>
+                    <app-calendar-entry-list
+                      [items]="group.items"
+                      [organizationId]="organizationId()"
+                      [canWrite]="canWriteEvents()"
+                      (editRequested)="openEditDialog($event)"
+                      (deleteRequested)="requestDelete($event)"
+                    />
+                  </div>
+                }
+              }
+            </div>
           </div>
         }
         @case ('week') {

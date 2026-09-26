@@ -1,5 +1,9 @@
 # Organization Feature
 
+Invisible accounts are projected by the API as offline with no last-seen timestamp.
+Organization never receives the private invisible preference. Heartbeats and polling continue
+while visible and online so restoring availability works across devices.
+
 Account consumes the published `ORGANIZATION_CONTEXT_PORT` for its workspace-scoped unified inbox.
 Switching that context invalidates the account-owned inbox cache before new reads.
 
@@ -627,6 +631,9 @@ in-card and in-section empty slots. Collection-table replacement states use the 
 neutral dashed border; spacing and other optional borders belong to the owning surface.
 Failures use `role="alert"`, a destructive media treatment and an optional retry action while
 keeping the native anatomy.
+Checkbox collections may render `app-collection-selection-bar` from `@shared/collection-toolbar`.
+The page owns selected IDs, permissions and bulk handlers; the bar only presents supplied commands.
+Its selected-row count is distinct from the filtered result total.
 
 **The five collection components moved to `shared/` on a deliberate uniformity bet, not on
 today's locality.** At the time of the move every consumer still lived under
@@ -913,3 +920,29 @@ in the mobile directory. See `features/automations/FEATURE.md` for recovery and 
 The nested webhooks feature owns `/organizations/:organizationId/integrations/webhooks`,
 with read-gated administration links in the organization switcher and More. Management
 uses a separate permission and one-time secrets remain local to its transient dialog.
+
+## Member presence
+
+Organization owns the ephemeral member-presence state, transport and browser coordinator. Bootstrap
+initializes the coordinator through `provideOrganizationFeature()` after hydration. Active membership
+allows heartbeats; reading additionally requires members.read or messaging.read. No presence request
+runs during SSR and no presence or subscription credential enters TransferState.
+
+`MEMBER_PRESENCE_PORT` publishes confirmed snapshots and consumer registrations. The public
+`services/member-presence` helper `registerMemberPresence` registers rendered member ids and releases
+them on destruction. Concurrent surfaces are merged and reads are deduplicated in batches of 100.
+Account consumes only the port's own status; collaboration consumes the port/helper and the public
+`MemberPresenceIndicator` component. `PresenceStatus` is published through `models`.
+
+Visible online sessions ping every 60 seconds and read every 45 seconds. A 90-second backend lease
+expires independently of the browser; another device may keep it alive. Mercure ordinary private
+`presence.changed` messages invalidate tracked members after a 300 ms coalescing window. Opening,
+reconnecting, becoming visible or returning online reconciles immediately. Subscriber credentials
+renew before expiry; polling remains available during Mercure failure and detects offline status
+within 135 seconds of the last heartbeat. A 429 backs heartbeat attempts off for three minutes.
+Session or organization changes cancel requests and clear snapshots. Unknown or unverifiable states
+hide the indicator; pausing never deletes a lease shared by other devices.
+
+Account owns the persistent global do-not-disturb preference. Presence decoration does not change
+administrative membership status, notification delivery, unread counts, email or existing action
+feedback. Avatar indicators use accessible labels and native semantic success/destructive/muted tokens.

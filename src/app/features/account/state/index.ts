@@ -2,6 +2,7 @@ export type { UserState } from './user';
 export { InboxStore, inboxStoreEvents } from './inbox';
 export type { InboxStoreType } from './inbox';
 export { UserStore } from './user';
+export { PresencePreferenceStore, presencePreferenceStoreEvents } from './presence-preference';
 export type { UserStoreType } from './user';
 export { userStoreEvents } from './user';
 export type { NotificationStoreState } from './notifications';

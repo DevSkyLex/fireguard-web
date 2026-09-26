@@ -23,12 +23,7 @@ import { BreadcrumbService } from '@core/breadcrumb';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY } from '@core/routing';
 import { TitleService } from '@core/title';
-import {
-  type ExclusiveSlotContribution,
-  resolveExclusiveSlot,
-  type SlotContribution,
-  SlotOutlet,
-} from '@shared/layout-slot';
+import { resolveExclusiveSlot, type SlotContribution, SlotOutlet } from '@shared/layout-slot';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawer, HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmItemGroup } from '@shared/ui/item';
@@ -45,9 +40,10 @@ import {
 } from '@shared/ui/sidebar';
 import { hlm } from '@shared/ui/utils';
 import { DashboardPageHeader } from './components';
-import type { SidebarExtensionContribution } from './models';
+import type { DashboardPanelContribution, SidebarExtensionContribution } from './models';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
+  DASHBOARD_MOBILE_ACTIONS_SLOT,
   DASHBOARD_MOBILE_NAVIGATION_SLOT,
   DASHBOARD_HEADER_SLOT,
   DASHBOARD_PANEL_SLOT,
@@ -113,6 +109,17 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardLayout {
+  /**
+   * Property mobileActions
+   * @readonly
+   * @description Feature tools rendered only in the mobile quick-actions drawer.
+   * @access protected
+   * @since 1.0.0
+   * @type {readonly SlotContribution[]}
+   */
+  protected readonly mobileActions: readonly SlotContribution[] =
+    inject(DASHBOARD_MOBILE_ACTIONS_SLOT, { optional: true }) ?? [];
+
   //#region Properties
   /**
    * Property document
@@ -510,10 +517,10 @@ export class DashboardLayout {
    * @access private
    * @since 1.0.0
    *
-   * @type {readonly ExclusiveSlotContribution[]}
+   * @type {readonly DashboardPanelContribution[]}
    */
-  private readonly panelContributions: readonly ExclusiveSlotContribution[] =
-    inject<ExclusiveSlotContribution[]>(DASHBOARD_PANEL_SLOT, { optional: true }) ?? [];
+  private readonly panelContributions: readonly DashboardPanelContribution[] =
+    inject<DashboardPanelContribution[]>(DASHBOARD_PANEL_SLOT, { optional: true }) ?? [];
 
   /**
    * Property panel
@@ -525,11 +532,24 @@ export class DashboardLayout {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<ExclusiveSlotContribution | null>}
+   * @type {Signal<DashboardPanelContribution | null>}
    */
-  protected readonly panel: Signal<ExclusiveSlotContribution | null> = computed(
-    (): ExclusiveSlotContribution | null => resolveExclusiveSlot(this.panelContributions),
+  protected readonly panel: Signal<DashboardPanelContribution | null> = computed(
+    (): DashboardPanelContribution | null => resolveExclusiveSlot(this.panelContributions),
   );
+
+  /**
+   * Property panelLabel
+   * @readonly
+   * @description Accessible name of the active right-hand complementary region.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly panelLabel: Signal<string> = computed(() => {
+    const label = this.panel()?.label;
+    return typeof label === 'function' ? label() : (label ?? '');
+  });
 
   /**
    * Property content

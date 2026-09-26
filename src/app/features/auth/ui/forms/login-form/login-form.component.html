@@ -1,23 +1,5 @@
 <form class="mobile-ui:[&_input]:text-base" novalidate (submit)="submit($event)">
   <hlm-field-group>
-    @if (!pending() && serverError(); as error) {
-      <div
-        hlmAlert
-        variant="destructive"
-        class="break-words"
-        aria-atomic="true"
-        data-testid="login-server-error"
-      >
-        <p hlmAlertDescription>
-          @if (error.message; as message) {
-            {{ message }}
-          } @else {
-            <span i18n="@@auth.login.failed">Sign-in failed. Check your credentials.</span>
-          }
-        </p>
-      </div>
-    }
-
     <hlm-field>
       <label hlmFieldLabel for="login-email"
         ><span i18n="@@auth.email.label">Email address</span><app-required-marker

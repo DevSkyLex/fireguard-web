@@ -224,6 +224,7 @@
       <img hlmAvatarImage [src]="avatarUrl" alt="" />
     }
     <span hlmAvatarFallback class="text-[10px]">{{ initialsOf(member) }}</span>
+    <app-member-presence-indicator [status]="presences()[member.id] ?? null" />
   </hlm-avatar>
 </ng-template>
 

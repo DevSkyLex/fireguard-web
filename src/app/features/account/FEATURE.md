@@ -1,5 +1,12 @@
 # Account Feature
 
+Invisible is an account-wide persisted preference synchronized through
+the same revisioned private stream. Enabling Invisible disables NPD and vice versa in one write. The account
+menu opens the presence submenu from its identity header, with colored Active/NPD/Invisible choices. Each selection applies that mode directly and closes
+the menu; selecting the current mode never toggles it off.
+The mobile drawer exposes the existing switches; its gray avatar badge is privately labeled Invisible.
+The two modes are mutually exclusive. Disabling the selected mode restores normal presence.
+
 ## Purpose
 
 Owns authenticated user account data exposed to the shell and account-facing pages.
@@ -7,6 +14,8 @@ Owns authenticated user account data exposed to the shell and account-facing pag
 This feature is responsible for:
 
 - user profile state, its editable fields and the avatar,
+- the account-wide persistent Do not disturb preference and its private realtime subscription,
+  available through the desktop sidebar menu and the mobile Quick actions account drawer,
 - the authenticated password change and the authenticator-app (TOTP) enrollment lifecycle,
 - the authenticated half of the sign-in email change (request and cancel; the public
   confirmation page belongs to `features/auth`),
@@ -87,6 +96,13 @@ primitives with this one; no application wrapper sits between the pages and thos
 
 Root-provided stores:
 
+- `PresencePreferenceStore` — the confirmed global NPD setting and revision, with separate load,
+  save and subscription request states. It ignores older revisions and results from departed
+  sessions. Writes are explicit, never optimistic or queued offline; save failures emit
+  `presencePreferenceStoreEvents.saveFailed` for application feedback. Background failures stay
+  silent and the latest confirmed preference survives them. Presence does not alter inbox, unread
+  counts, e-mails, Mercure delivery or action feedback; no incoming sound/toast exists to mute.
+
 - `UserStore` — the profile, its derived identity, and the SSR/`TransferState` handoff.
   Bootstrap and reactive consumers share one profile request. Clearing the session or applying
   an authoritative profile invalidates older reads, including locale reconciliation and handoffs;
@@ -158,6 +174,12 @@ Services:
 - `NotificationService` — `/api/notifications*` (including the bulk `/read-all` and
   `/notifications/preferences`), `/api/notification-types`
 - `TotpService` — `/api/otp/totp/{setup,confirm,disable}`
+- `PresencePreferenceService` — `GET/PATCH /api/me/presence-preference` and its private subscription.
+  `PresencePreferenceCoordinatorService` starts from `provideAccountFeature()` after browser
+  hydration, once an authenticated profile exists. Visible online applications poll every 45 s,
+  refresh on resume/reconnect, and renew expiring Mercure tokens. A failed renewal keeps the live
+  socket; hiding the document, losing the network or changing session closes it. No presence
+  preference or subscriber credential enters `TransferState` or local persistence.
 
 Every workflow store dispatches typed outcome events (`accountProfileEditStoreEvents`,
 `accountPasswordChangeStoreEvents`, `accountTotpEnrollmentStoreEvents`,
@@ -177,6 +199,8 @@ rejected save is a whole-request failure rather than a field problem (`ARCHITECT
 - `withAccountMenu()`
 - `withNotificationBell()`
 - `provideAccountFeature()`
+- `PresencePreferenceStore` and `presencePreferenceStoreEvents` through the account state surface;
+  the application feedback listener consumes its `state/presence-preference/events` barrel.
 
 `AccountMenu` (`ui/components/account-menu/`) is account-owned even though it only ever renders
 inside a layout: it reads user identity, and rendering location does not transfer ownership
@@ -201,6 +225,12 @@ plus approved external workflows that need to bootstrap or clear the authenticat
 gating **global** (non-organization-scoped) permissions outside this feature.
 
 ## Cross-Feature Dependencies
+
+- `AccountMenu` consumes organization's `MEMBER_PRESENCE_PORT`, `PresenceStatus` model and published
+  `ui/components/member-presence-indicator` component to show acknowledged workspace presence.
+  A confirmed NPD change immediately updates a known live status; absent workspace/presence hides
+  the dot. Account owns the global toggle independently of organization selection or profile-edit
+  permission. It consumes auth's `AUTH_SESSION_PORT.sessionRevision` for preference ownership.
 
 - Consumes `ORGANIZATION_CONTEXT_PORT` for inbox scope and Collaboration's published
   `state/message-thread/events` barrel (`conversationRead`) for invalidation. Inbox destinations use
@@ -248,6 +278,11 @@ windows. Interaction-mode changes preserve the profile Signal Form and locale re
 - Layouts should consume account ports instead of injecting account stores directly.
 
 ## Approved Exceptions
+
+- **`AccountMenu` injects `PresencePreferenceStore`.** As the shell slot root it orchestrates its
+  own account command, with a native desktop menu checkbox and a mobile Signal Forms switch.
+  Both wait for a confirmed initial value, preserve focus while a save is pending, and retain the
+  confirmed setting on rejection. This does not give the layout knowledge of account state.
 
 - **`NotificationBell` injects `InboxStore` directly.** The component rules reserve
   store injection for pages. A slot-root component is the orchestrator of its own surface, with no

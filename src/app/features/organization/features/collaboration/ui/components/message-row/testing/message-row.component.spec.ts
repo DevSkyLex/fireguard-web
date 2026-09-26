@@ -210,4 +210,15 @@ describe('MessageRow', () => {
     fixture.componentInstance['onMobileActionsClosed']('edit');
     expect(edited).not.toHaveBeenCalled();
   });
+
+  it('renders the supplied author presence without reading feature state', async () => {
+    fixture.componentRef.setInput('presence', 'do_not_disturb');
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('[data-slot="avatar-badge"]')?.getAttribute('aria-label'),
+    ).toBe('Do not disturb');
+    fixture.componentRef.setInput('presence', null);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[data-slot="avatar-badge"]')).toBeNull();
+  });
 });

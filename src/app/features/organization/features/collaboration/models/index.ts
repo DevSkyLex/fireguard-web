@@ -56,12 +56,6 @@ export type {
 } from './message';
 export type { MentionQuery } from './composer';
 export type {
-  ListPresenceQuery,
-  PingPresenceInput,
-  PingPresenceOutput,
-  PresenceOutput,
-} from './presence';
-export type {
   MessagingOutboxOperation,
   MessagingOutboxOperationFor,
   MessagingOutboxPayloadMap,

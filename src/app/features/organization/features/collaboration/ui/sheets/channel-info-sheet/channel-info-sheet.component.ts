@@ -13,6 +13,8 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePin, lucidePinOff, lucideUsers } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import type { PresenceStatus } from '@features/organization/models';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
@@ -61,6 +63,7 @@ import type { PinnedMessageItem } from './models';
 @Component({
   selector: 'app-channel-info-sheet',
   imports: [
+    MemberPresenceIndicator,
     NgIcon,
     ...HlmEmptyImports,
     HlmAvatar,
@@ -75,6 +78,18 @@ import type { PinnedMessageItem } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChannelInfoSheet {
+  /**
+   * Property presences
+   * @readonly
+   * @description Confirmed statuses supplied by the owning conversation page.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  public readonly presences: InputSignal<Readonly<Record<string, PresenceStatus>>> = input<
+    Readonly<Record<string, PresenceStatus>>
+  >({});
+
   //#region Inputs
   /**
    * Property visible

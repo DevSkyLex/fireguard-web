@@ -13,6 +13,7 @@ import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { provideOrganizationFeature } from '@features/organization/organization.feature';
 import { withGlobalSearch } from '@features/organization/providers/global-search';
+import { MemberPresenceCoordinatorService } from '@features/organization/services/member-presence';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { OrganizationGlobalSearch } from '@features/organization/ui/components/organization-global-search';
 import { OrganizationGlobalSearchDialog } from '@features/organization/ui/dialogs/organization-global-search-dialog';
@@ -90,6 +91,7 @@ describe('OrganizationGlobalSearchService', () => {
           useValue: { shortcutModifier: signal<'Ctrl'>('Ctrl') },
         },
         provideOrganizationFeature(),
+        { provide: MemberPresenceCoordinatorService, useValue: {} },
         { provide: PLATFORM_ID, useValue: platform },
         { provide: ActiveOrganizationStore, useValue: { selectedOrganizationId } },
         { provide: HlmDialogService, useValue: dialogs },

@@ -33,6 +33,7 @@ import {
   type OrganizationMemberOutput,
   type OrganizationRoleOutput,
 } from '@features/organization/models';
+import { MEMBER_PRESENCE_PORT } from '@features/organization/ports';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationMemberListPreferencesService } from '@features/organization/services';
 import { OrganizationQuotaStore } from '@features/organization/state';
@@ -183,6 +184,15 @@ describe('OrganizationMembersPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
         {
           provide: THEME_PORT,
           useValue: {
@@ -637,6 +647,25 @@ describe('OrganizationMembersPage', () => {
       memberIds: ['member-1', 'member-2'],
     });
     expect(fixture.componentInstance['selectedIds']().size).toBe(0);
+  });
+
+  it('opens the existing confirmation from the floating selection bar and hides it when cleared', async () => {
+    await createPage();
+    fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="organization-members-selection-bar"]'),
+    ).not.toBeNull();
+    fixture.componentInstance['onSelectionActionRequested']('remove');
+    expect(fixture.componentInstance['removeDialogState']()).toBe('open');
+
+    fixture.componentInstance['onRemoveDialogVisibleChange'](false);
+    fixture.componentInstance['onSelectionChanged'](new Set());
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="organization-members-selection-bar"]'),
+    ).toBeNull();
   });
 
   it('should no-op a bulk-remove request when nothing is selected', async () => {

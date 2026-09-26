@@ -230,7 +230,6 @@
                 direction="bottom"
                 class="ms-auto"
                 (stateChanged)="mobileToolsVisible.set($event === 'open')"
-                (closed)="onMobileToolsClosed($event)"
               >
                 <button
                   hlmDrawerTrigger
@@ -263,10 +262,7 @@
                   <div
                     class="flex min-h-0 flex-col items-stretch gap-4 overflow-y-auto overscroll-contain px-4 pb-4"
                   >
-                    <ng-container
-                      [ngTemplateOutlet]="mobileListTools"
-                      [ngTemplateOutletContext]="{ $implicit: drawer }"
-                    />
+                    <ng-container [ngTemplateOutlet]="mobileListTools" />
                   </div>
                   <hlm-drawer-footer>
                     <button
@@ -298,7 +294,7 @@
           />
         </div>
 
-        <ng-template #mobileListTools let-drawer>
+        <ng-template #mobileListTools>
           @if (canTransition() || canAssign() || canDelete()) {
             <button
               hlmBtn
@@ -314,81 +310,6 @@
                 <hlm-badge variant="secondary" class="ms-auto">{{ selectedIds().size }}</hlm-badge>
               }
             </button>
-          }
-
-          @if (selectedIds().size > 0) {
-            <section
-              class="flex flex-col gap-2 border-t border-border pt-4"
-              aria-labelledby="interventions-mobile-bulk-actions-label"
-            >
-              <h4
-                id="interventions-mobile-bulk-actions-label"
-                class="text-sm font-medium text-foreground"
-                i18n="@@intervention.list.bulkActionsButton"
-              >
-                Actions
-              </h4>
-              <div hlmItemGroup class="gap-0">
-                @if (canTransition() && bulkTransitionTargets().length > 0) {
-                  @for (target of bulkTransitionTargets(); track target) {
-                    @if (transitionableSelectedIds(target).length > 0) {
-                      <button
-                        hlmItem
-                        type="button"
-                        class="min-h-11"
-                        data-testid="interventions-bulk-transition"
-                        [disabled]="batchPending()"
-                        (click)="confirmBulkTransition(target) && drawer.close()"
-                      >
-                        <span hlmItemContent>
-                          <span hlmItemTitle>
-                            <span i18n="@@intervention.list.bulkMoveToLabel">Move to</span>
-                            {{ statusLabelOf(target) }}
-                          </span>
-                        </span>
-                        <span hlmItemActions class="tabular-nums">
-                          {{ transitionableSelectedIds(target).length }}
-                        </span>
-                      </button>
-                    }
-                  }
-                }
-                @if (canAssign() && assignableSelectedIds().length > 0) {
-                  <button
-                    hlmItem
-                    type="button"
-                    class="min-h-11"
-                    data-testid="interventions-bulk-assign"
-                    [disabled]="batchPending()"
-                    (click)="drawer.close('assign')"
-                  >
-                    <span hlmItemMedia variant="icon">
-                      <ng-icon name="lucideUserCog" aria-hidden="true" />
-                    </span>
-                    <span hlmItemContent>
-                      <span hlmItemTitle>{{ bulkAssignLabel() }}</span>
-                    </span>
-                  </button>
-                }
-                @if (canDelete()) {
-                  <button
-                    hlmItem
-                    type="button"
-                    class="min-h-11 text-destructive"
-                    data-testid="interventions-bulk-delete"
-                    [disabled]="deletableSelectedIds().length === 0"
-                    (click)="drawer.close('delete')"
-                  >
-                    <span hlmItemMedia variant="icon">
-                      <ng-icon name="lucideTrash2" aria-hidden="true" />
-                    </span>
-                    <span hlmItemContent>
-                      <span hlmItemTitle>{{ bulkDeleteLabel() }}</span>
-                    </span>
-                  </button>
-                }
-              </div>
-            </section>
           }
 
           <section
@@ -507,72 +428,6 @@
           }
 
           @if (activeView() === 'list') {
-            @if ((canTransition() || canAssign() || canDelete()) && selectedIds().size > 0) {
-              <button
-                hlmBtn
-                type="button"
-                variant="outline"
-                size="sm"
-                class="max-sm:grow mobile-ui:min-h-11"
-                data-testid="interventions-bulk-actions"
-                [hlmDropdownMenuTrigger]="bulkMenu"
-                align="start"
-              >
-                <span i18n="@@intervention.list.bulkActionsButton">Actions</span>
-                <hlm-badge variant="secondary" class="ms-1">{{ selectedIds().size }}</hlm-badge>
-              </button>
-            }
-
-            <ng-template #bulkMenu>
-              <hlm-dropdown-menu class="w-56">
-                @if (canTransition() && bulkTransitionTargets().length > 0) {
-                  <hlm-dropdown-menu-label i18n="@@intervention.list.bulkMoveToLabel"
-                    >Move to</hlm-dropdown-menu-label
-                  >
-                  @for (target of bulkTransitionTargets(); track target) {
-                    @if (transitionableSelectedIds(target).length > 0) {
-                      <button
-                        class="mobile-ui:min-h-11"
-                        hlmDropdownMenuItem
-                        data-testid="interventions-bulk-transition"
-                        (click)="confirmBulkTransition(target)"
-                      >
-                        {{ statusLabelOf(target) }} ({{ transitionableSelectedIds(target).length }})
-                      </button>
-                    }
-                  }
-                  <hlm-dropdown-menu-separator />
-                }
-
-                @if (canAssign() && assignableSelectedIds().length > 0) {
-                  <button
-                    class="mobile-ui:min-h-11"
-                    hlmDropdownMenuItem
-                    data-testid="interventions-bulk-assign"
-                    (click)="requestBulkAssign()"
-                  >
-                    <ng-icon name="lucideUserCog" aria-hidden="true" />
-                    {{ bulkAssignLabel() }}
-                  </button>
-                  <hlm-dropdown-menu-separator />
-                }
-
-                @if (canDelete()) {
-                  <button
-                    class="mobile-ui:min-h-11"
-                    hlmDropdownMenuItem
-                    variant="destructive"
-                    data-testid="interventions-bulk-delete"
-                    [disabled]="deletableSelectedIds().length === 0"
-                    (click)="requestBulkDelete()"
-                  >
-                    <ng-icon name="lucideTrash2" aria-hidden="true" />
-                    {{ bulkDeleteLabel() }}
-                  </button>
-                }
-              </hlm-dropdown-menu>
-            </ng-template>
-
             <hlm-popover sideOffset="5" align="end">
               <button
                 hlmPopoverTrigger
@@ -1108,7 +963,13 @@
       />
     </ng-template>
 
-    <section hlmTabsContent="list" class="flex min-h-0 flex-1 flex-col gap-4 mobile-ui:flex-none">
+    <section
+      hlmTabsContent="list"
+      class="flex min-h-0 flex-1 flex-col gap-4 mobile-ui:flex-none"
+      [style.padding-bottom]="
+        selectedIds().size > 0 ? 'calc(var(--mobile-navigation-height, 0px) + 6rem)' : null
+      "
+    >
       @if (listForbidden()) {
         <div hlmEmpty class="border border-border">
           <div hlmEmptyHeader>
@@ -1370,6 +1231,17 @@
     }
   </div>
 </hlm-tabs>
+
+@if (activeView() === 'list') {
+  <app-collection-selection-bar
+    [selectedCount]="selectedIds().size"
+    [totalResults]="store.totalInterventions()"
+    [mobileMode]="isMobileInteractionMode()"
+    [actions]="selectionActions()"
+    testIdPrefix="interventions"
+    (actionRequested)="onSelectionActionRequested($event)"
+  />
+}
 
 <app-intervention-create-sheet
   [catalogues]="planningOptions.catalogues()"

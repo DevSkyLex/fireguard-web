@@ -75,11 +75,14 @@ the structured `rate_limit_exceeded` / `retryAfterSeconds` contract on a refused
 The workspace proof form passes an opaque `challengeKey` in memory so a replacement challenge
 restarts its resend cooldown even when the API returns the same delay. The key is never rendered.
 
-**Backend submit failures surface inline in the owning form.** Each auth form takes a
+**Login failures use the app-wide feedback queue only**, through `authStoreEvents.loginFailed`.
+The Hydra client sends the active interface language to the API; a login validation toast uses
+the localized violation text without the technical field path from the API's aggregate detail.
+Other auth forms retain inline submit feedback. Each of those forms takes a
 `serverError` input (`StoreError | null`) bound by its page to the store's error signal and
 renders a native `hlmAlert` above the fields. Recovery request and new-password failures are also wired inline. The stores still dispatch
 `StoreFailureEventPayload` events for the app-wide feedback queue, but the auth screens do not
-rely on it: a sign-in rejection must be visible exactly where the user is looking. Field-level
+rely on it for those other flows. Field-level
 errors stay next to the input that has to change.
 
 ## Password policy

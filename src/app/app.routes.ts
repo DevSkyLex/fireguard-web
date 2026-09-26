@@ -19,9 +19,11 @@ import {
 } from '@features/organization';
 import {
   DashboardLayout,
+  DashboardPanelRegistry,
   provideDashboardLayoutSlots,
   withDashboardBreadcrumb,
   withDashboardGlobalNav,
+  withDashboardPagePanel,
 } from '@layouts/dashboard-layout';
 import { FocusedLayout, provideFocusedLayoutSlots } from '@layouts/focused-layout';
 import {
@@ -130,6 +132,7 @@ export const APP_ROUTES: Routes = [
     canActivate: [authGuard],
     runGuardsAndResolvers: 'always',
     providers: [
+      DashboardPanelRegistry,
       provideCollaborationAssistant(),
       provideChannelsWorkspace(),
       provideDashboardLayoutSlots({
@@ -137,7 +140,9 @@ export const APP_ROUTES: Routes = [
         sidebarNav: [withOrganizationNav()],
         mobileNavigation: [withOrganizationMobileNavigation()],
         sidebarExtension: [withDirectMessagesSidebarExtension(), withChannelsSidebarExtension()],
+        panel: [withDashboardPagePanel()],
         sidebarFooter: [withCollaborationNav(), withDashboardGlobalNav(), withAccountMenu()],
+        mobileActions: [withAccountMenu()],
         header: [withDashboardBreadcrumb()],
         headerActions: [
           withGlobalSearch(),

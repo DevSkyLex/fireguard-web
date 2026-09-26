@@ -43,6 +43,7 @@ import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, CallStatus, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import type { PresenceStatus } from '@features/organization/models';
 import {
   ORGANIZATION_PERMISSION,
   ORGANIZATION_QUOTA_RESOURCE,
@@ -63,6 +64,7 @@ import {
   SubmissionGateService,
   type SubmissionGate,
 } from '@features/organization/services';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
 import {
   OrganizationQuotaStore,
   type OrganizationQuotaStoreType,
@@ -80,7 +82,12 @@ import {
 import { StatTile } from '@features/organization/ui/components';
 import { OrganizationJoinRequestPanel } from '@features/organization/ui/components/organization-join-request-panel';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import {
+  CollectionSearchBox,
+  CollectionSelectionBar,
+  CollectionToolbar,
+  type CollectionSelectionAction,
+} from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
@@ -247,6 +254,7 @@ type OrganizationMembersKpiTile = {
     ...HlmDrawerImports,
     CollectionPagination,
     CollectionSearchBox,
+    CollectionSelectionBar,
     ...HlmSelectImports,
     CollectionToolbar,
     OrganizationInvitationRevokeDialog,
@@ -285,6 +293,20 @@ type OrganizationMembersKpiTile = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMembersPage {
+  /**
+   * Property presences
+   * @readonly
+   * @description Presence for the currently rendered roster; the other member-management tabs do not poll.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() => {
+      this.organizationId();
+      return this.activeTab() === 'members' ? this.store.members().map((member) => member.id) : [];
+    });
+
   /**
    * Property isMobileInteractionMode
    * @readonly
@@ -805,6 +827,30 @@ export class OrganizationMembersPage {
     () => $localize`:@@org.members.bulkRemoveButton:Remove (${this.selectedIds().size}:count:)`,
   );
 
+  /**
+   * Property selectionActions
+   * @readonly
+   * @description Permission-gated roster command rendered by the shared selection bar.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CollectionSelectionAction[]>}
+   */
+  protected readonly selectionActions: Signal<readonly CollectionSelectionAction[]> = computed(
+    (): readonly CollectionSelectionAction[] =>
+      this.canManageMembers() && this.selectedIds().size > 0
+        ? [
+            {
+              kind: 'command',
+              id: 'remove',
+              label: this.bulkRemoveLabel(),
+              icon: 'lucideTrash2',
+              destructive: true,
+              disabled: this.store.isMutating() || this.removeDialogBusy(),
+            },
+          ]
+        : [],
+  );
+
   /** The member the role-assignment dialog is open for, resolved reactively so a toggle's own result is reflected immediately. */
   protected readonly rolesDialogMember: Signal<OrganizationMemberOutput | null> = computed(() => {
     const id: string | null = this.rolesDialogMemberId();
@@ -1143,6 +1189,27 @@ export class OrganizationMembersPage {
    */
   protected onSelectionChanged(ids: ReadonlySet<string>): void {
     this.selectedIds.set(ids);
+  }
+
+  /**
+   * Method onSelectionActionRequested
+   * @method onSelectionActionRequested
+   * @description Rechecks roster access before opening the existing bulk-remove confirmation.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} id - Shared selection command id.
+   * @returns {void}
+   */
+  protected onSelectionActionRequested(id: string): void {
+    if (
+      id === 'remove' &&
+      this.activeTab() === 'members' &&
+      this.canManageMembers() &&
+      !this.store.isMutating() &&
+      !this.removeDialogBusy()
+    ) {
+      this.requestBulkRemove();
+    }
   }
 
   /**

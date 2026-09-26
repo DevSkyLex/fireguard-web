@@ -534,6 +534,81 @@ export class ApiMock {
    * `/api/auth/refresh` so it composes with either `mockAuthenticatedSession`
    * (session already restored on boot) or a post-login flow.
    */
+  /**
+   * Installs the additive presence endpoints for one authenticated session.
+   * Scenario overrides registered later may share authoritative state across browser contexts.
+   */
+  public async mockPresence(
+    organizationIds: readonly string[] = [E2E_ORGANIZATION_ID],
+    userId = 'e2e-user-1',
+  ): Promise<void> {
+    await this.installSafetyNet();
+    let preference = { doNotDisturb: false, revision: 0 };
+    await this.page.route(/\/api\/me\/presence-preference$/, async (route) => {
+      const method = route.request().method();
+      if (method === 'PATCH') {
+        const input = route.request().postDataJSON() as { doNotDisturb: boolean };
+        if (input.doNotDisturb !== preference.doNotDisturb)
+          preference = { doNotDisturb: input.doNotDisturb, revision: preference.revision + 1 };
+      } else if (method !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        '@id': '/api/me/presence-preference',
+        '@type': 'PresencePreference',
+        ...preference,
+      });
+    });
+    await this.page.route(/\/api\/me\/presence-preference\/subscription$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        topic: `/users/${userId}/presence-preference`,
+        token: 'e2e-private-presence',
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      });
+    });
+    await this.page.route(/\/api\/presence\/ping$/, async (route) => {
+      if (route.request().method() !== 'POST') return route.fallback();
+      const input = route.request().postDataJSON() as { organization: string };
+      if (!organizationIds.includes(input.organization)) return route.fallback();
+      await fulfillJson(route, 200, {
+        memberId: 'e2e-member-1',
+        lastSeenAt: new Date().toISOString(),
+      });
+    });
+    await this.page.route(/\/api\/presence\/subscription(\?.*)?$/, async (route) => {
+      const organization = new URL(route.request().url()).searchParams.get('organization') ?? '';
+      if (route.request().method() !== 'GET' || !organizationIds.includes(organization))
+        return route.fallback();
+      await fulfillJson(route, 200, {
+        topic: `/organizations/${organization}/presence`,
+        token: 'e2e-private-presence',
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      });
+    });
+    await this.page.route(/\/api\/presence(\?.*)?$/, async (route) => {
+      const query = new URL(route.request().url()).searchParams;
+      if (
+        route.request().method() !== 'GET' ||
+        !organizationIds.includes(query.get('organization') ?? '')
+      )
+        return route.fallback();
+      const members = (query.get('memberIds') ?? '')
+        .split(',')
+        .filter(Boolean)
+        .map((memberId) => ({
+          memberId,
+          status:
+            memberId === 'e2e-member-1'
+              ? preference.doNotDisturb
+                ? 'do_not_disturb'
+                : 'active'
+              : 'offline',
+          online: memberId === 'e2e-member-1',
+          lastSeenAt: memberId === 'e2e-member-1' ? new Date().toISOString() : null,
+        }));
+      await fulfillJson(route, 200, hydraCollection(members));
+    });
+  }
+
   public async mockSessionData(options?: {
     profile?: Partial<UserProfileOutputFixture>;
     onboarding?: Partial<OnboardingOutputFixture>;
@@ -624,9 +699,10 @@ export class ApiMock {
         return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
-    await this.page.route(`${API_BASE_URL}/api/presence`, async (route) => {
-      await fulfillJson(route, 200, {});
-    });
+    await this.mockPresence(
+      organizations.map((organization) => organization.id),
+      profile.id,
+    );
     // `provideInterventionsFeature()` starts `InterventionPrefetchService` at
     // app boot, browser-only and independent of the visited route — it reads
     // the current member profile then lists interventions `responsible=` them

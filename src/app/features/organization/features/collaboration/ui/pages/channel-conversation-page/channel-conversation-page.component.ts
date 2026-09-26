@@ -59,6 +59,7 @@ import {
   type MemberDirectoryEntry,
   type OrganizationPermissionName,
 } from '@features/organization/models';
+import type { PresenceStatus } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_CONTEXT_PORT,
@@ -68,6 +69,8 @@ import {
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarGroup, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
@@ -155,6 +158,7 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
     MessageEditDialog,
     MessageReplySheet,
     MessageThread,
+    MemberPresenceIndicator,
   ],
   providers: [
     MessageThreadStore,
@@ -175,6 +179,26 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChannelConversationPage {
+  /**
+   * Property presences
+   * @readonly
+   * @description Tracks displayed message authors, the desktop avatar group and the open roster.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() => [
+      ...this.messages().map((message) => message.authorId),
+      ...(this.infoSheetVisible() ? this.pinnedItems().map((item) => item.authorMemberId) : []),
+      ...(this.isMobileInteractionMode()
+        ? []
+        : this.participantAvatars().map((participant) => participant.memberId)),
+      ...(this.participantsSheetVisible() || this.infoSheetVisible()
+        ? this.participantViews().map((participant) => participant.memberId)
+        : []),
+    ]);
+
   //#region Inputs
   /**
    * Property channelId
@@ -683,6 +707,7 @@ export class ChannelConversationPage {
 
       return this.pinnedStore.sortedPins().map((message: MessageOutput): PinnedMessageItem => ({
         id: message.id,
+        authorMemberId: message.authorMember.slice(message.authorMember.lastIndexOf('/') + 1),
         authorName: message.authorDisplayName ?? this.unknownMemberLabel,
         createdAt: message.createdAt,
         bodyHtml: renderMessageBodyHtml(

@@ -60,7 +60,9 @@ test.describe('Interventions list — bulk "Move to" with a mixed selection', ()
     await interventions.selectRow('Move B eligible fails');
     await interventions.selectRow('Move C not eligible');
 
-    await interventions.openBulkActions();
+    await expect(interventions.selectionBar).toContainText('Selected: 3');
+    await interventions.bulkMoveTrigger.focus();
+    await page.keyboard.press('Enter');
     await expect(interventions.bulkTransitionEntry('In progress')).toContainText('(2)');
 
     await interventions.chooseBulkTransition('In progress');

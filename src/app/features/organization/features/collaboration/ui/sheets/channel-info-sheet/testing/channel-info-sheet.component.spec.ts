@@ -6,6 +6,7 @@ import type { PinnedMessageItem } from '../models';
 function pinnedItem(overrides: Partial<PinnedMessageItem> = {}): PinnedMessageItem {
   return {
     id: 'message-1',
+    authorMemberId: 'member-1',
     authorName: 'Amélie Rousseau',
     createdAt: '2026-01-01T09:00:00+00:00',
     bodyHtml: '<p>Consigne importante.</p>',

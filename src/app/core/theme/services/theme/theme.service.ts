@@ -232,7 +232,7 @@ export class ThemeService {
    *
    * @returns {void} - Nothing.
    */
-  public setTheme(mode: ThemeMode): void {
+  public setTheme(mode: ThemeMode, origin?: { x: number; y: number }): void {
     this.cancelThemeTransition();
 
     if (this.resolveTheme(mode) === this.resolvedTheme() || !this.canAnimateThemeChange()) {
@@ -241,6 +241,14 @@ export class ThemeService {
     }
 
     const changeId: number = this.themeChangeId;
+    this.document.documentElement.style.setProperty(
+      '--theme-origin-x',
+      origin ? `${origin.x}px` : '50%',
+    );
+    this.document.documentElement.style.setProperty(
+      '--theme-origin-y',
+      origin ? `${origin.y}px` : '50%',
+    );
     this.document.documentElement.dataset['themeTransition'] = 'circle-blur';
 
     try {

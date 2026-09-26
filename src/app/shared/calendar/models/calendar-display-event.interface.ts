@@ -3,8 +3,8 @@
  * @interface CalendarDisplayEvent
  *
  * @description
- * One chip on the month grid, as the generic shape the shared calendar
- * renders: a stable id, the ISO day it lands on, a short label and the
+ * One event on the month grid, as the generic shape the shared calendar
+ * renders: a stable id, its start and optional end, a short label and the
  * `hlm-badge` variant carrying its tone. Deliberately domain-free — a feature
  * maps its own records onto this before handing them over
  * (ARCHITECTURE.md §2.7: the calendar is a shared concept precisely because
@@ -18,8 +18,14 @@ export interface CalendarDisplayEvent {
   /** Stable identity, used for tracking only — the calendar emits days, not events. */
   readonly id: string;
 
-  /** ISO date (`yyyy-MM-dd` or a full ISO string) of the day the chip lands on. */
+  /** ISO date (`yyyy-MM-dd` or a full ISO string) at which the event begins. */
   readonly date: string;
+
+  /** Optional ISO end; a timed event ending at midnight excludes that final day. */
+  readonly endDate?: string | null;
+
+  /** All-day ends are inclusive, including an end at local midnight. */
+  readonly allDay?: boolean;
 
   /** Short label shown inside the chip, truncated by the cell. */
   readonly label: string;

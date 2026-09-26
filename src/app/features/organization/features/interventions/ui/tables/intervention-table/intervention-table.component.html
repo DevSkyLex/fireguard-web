@@ -55,6 +55,10 @@
         <th hlmTableHead scope="col" i18n="@@intervention.list.columnSite">Site</th>
       }
 
+      @if (isVisible(column.RESPONSIBLE)) {
+        <th hlmTableHead scope="col" i18n="@@intervention.list.columnResponsible">Responsible</th>
+      }
+
       @if (isVisible(column.DUE)) {
         <th hlmTableHead scope="col" class="text-right" [attr.aria-sort]="ariaSort('dueAt')">
           <button
@@ -132,6 +136,15 @@
           </td>
         }
 
+        @if (isVisible(column.RESPONSIBLE)) {
+          <td hlmTableCell class="max-w-48">
+            <ng-container
+              [ngTemplateOutlet]="responsibleIdentity"
+              [ngTemplateOutletContext]="{ responsible: item.responsible }"
+            />
+          </td>
+        }
+
         @if (isVisible(column.DUE)) {
           <td hlmTableCell class="text-right text-muted-foreground tabular-nums">
             <span class="inline-flex items-center justify-end gap-1.5">
@@ -201,6 +214,12 @@
             <span aria-hidden="true">—</span>
           }
         </p>
+        <div class="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+          <ng-container
+            [ngTemplateOutlet]="responsibleIdentity"
+            [ngTemplateOutletContext]="{ responsible: item.responsible }"
+          />
+        </div>
         <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span class="font-mono tabular-nums">FG-{{ item.intervention.number }}</span>
           <app-intervention-tag kind="status" [value]="item.intervention.status" asOption />
@@ -236,6 +255,31 @@
     No results.
   </p>
 </app-collection-surface>
+
+<ng-template #responsibleIdentity let-responsible="responsible">
+  @if (responsible) {
+    <span class="inline-flex min-w-0 items-center gap-2">
+      <hlm-avatar size="sm" class="shrink-0" aria-hidden="true">
+        @if (responsible.avatarUrl; as avatarUrl) {
+          <img hlmAvatarImage [src]="avatarUrl" alt="" />
+        }
+        <span hlmAvatarFallback class="text-[10px]">{{ responsible.initials }}</span>
+      </hlm-avatar>
+      <span class="min-w-0 truncate" [title]="responsible.displayName">
+        {{ responsible.displayName }}
+      </span>
+    </span>
+  } @else {
+    <span
+      role="img"
+      class="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-dotted border-muted-foreground/50 text-muted-foreground"
+      aria-label="No responsible assigned"
+      i18n-aria-label="@@intervention.list.noResponsible"
+    >
+      <span aria-hidden="true">—</span>
+    </span>
+  }
+</ng-template>
 
 <ng-template #rowActions let-item="item">
   <button

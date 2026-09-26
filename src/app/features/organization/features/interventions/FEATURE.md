@@ -8,6 +8,11 @@ Calendar and Recurrences query parameters. Mobile Board stacks status sections w
 the same bounded per-status data, pending/error states and permission-checked move
 requests; its card drawer is the touch alternative to desktop dragging and menus.
 The intervention calendar presents the same month as an agenda on mobile.
+At desktop widths of at least 1024px, the Calendar tab projects its
+selected-day template into the dashboard's resizable right slot. The page
+releases it on another tab or route; below 1024px the existing agenda replaces
+the grid and panel. Projection keeps `InterventionCalendar` presentational and
+does not add a calendar request.
 
 The detail has one live workflow action template: in the desktop page header or a
 mobile footer above `--mobile-navigation-height`. Reserved content space and a bounded
@@ -84,7 +89,9 @@ the active view applies. Unused filter values survive view changes in the URL.
 The collection starts directly with its toolbar because its view selector lives in the header, and has no metric cards,
 statistics request, Analysis disclosure or separate queue-count shortcuts. Long intervention
 and site labels stay within their columns so the due date and row menu remain
-visible. Detail properties adapt to the content container; the secondary details
+visible. The List includes a Responsible column with the member avatar and full
+display name, or a dotted placeholder when no responsible member is resolved.
+Detail properties adapt to the content container; the secondary details
 disclosure starts collapsed at every width so the actionable rail stays compact.
 Opening it reveals participants, labels, description and audit metadata in that
 order; resizing preserves the user's disclosure choice and any active description
@@ -2249,6 +2256,8 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   account, organization or intervention cannot initiate publication.
 - Bulk results preserve failed selections and readable identities. Retry only failed eligible
   rows. Publication always goes through the individual confirmation.
+- The list's floating selection bar offers eligible status moves, assignment and deletion.
+  The page owns selection and action eligibility; CSV export remains scoped to filtered results.
 - Errors reading issues, attachments or local operations must not render as verified absence.
 
 Assignment dialogs retain their Signal Form draft until every submitted resource

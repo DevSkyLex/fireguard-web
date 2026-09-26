@@ -83,6 +83,7 @@
               @for (entry of group.entries; track entry.message.id) {
                 <app-message-row
                   [message]="entry.message"
+                  [presence]="presences()[entry.message.authorId] ?? null"
                   [continuation]="entry.continuation"
                   [canReact]="canReact()"
                   [canWrite]="canWrite()"

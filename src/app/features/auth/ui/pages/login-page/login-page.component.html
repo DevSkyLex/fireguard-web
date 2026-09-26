@@ -9,7 +9,6 @@
   <app-login-form
     [pending]="authStore.isLoggingIn() || federatedStore.startPending()"
     [returnUrl]="returnUrl"
-    [serverError]="authStore.loginError()"
     (submitted)="login($event)"
   />
 

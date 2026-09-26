@@ -128,6 +128,13 @@
                     <img hlmAvatarImage [src]="avatarUrl" alt="" />
                   }
                   <span hlmAvatarFallback>{{ initialsOf(conversation.counterpartName) }}</span>
+                  <app-member-presence-indicator
+                    [status]="
+                      conversation.counterpartMemberId
+                        ? (presences()[conversation.counterpartMemberId] ?? null)
+                        : null
+                    "
+                  />
                 </hlm-avatar>
                 <div class="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div class="flex items-baseline gap-2">

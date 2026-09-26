@@ -8,7 +8,7 @@ import type { Locator, Page } from '@playwright/test';
  * behind named locators and one method per user intent: navigating with a raw
  * query string (a shared/bookmarked filtered URL, including the KPI strip's
  * own `?due=overdue`/`?status=submitted` tile links), reading a row,
- * selecting rows, driving the bulk-actions dropdown, adding a filter from the
+ * selecting rows, driving the floating bulk-action bar, adding a filter from the
  * "+ Filter" menu, reading/changing/removing a filter chip, and switching to
  * the "Recurrences" tab to open its create/edit form sheet.
  */
@@ -20,7 +20,10 @@ export class InterventionsPage {
   public readonly addFilterTrigger: Locator = this.page.getByTestId('interventions-filters-add');
   public readonly mineToggle: Locator = this.page.getByTestId('interventions-mine-toggle');
   public readonly rowCount: Locator = this.page.getByTestId('interventions-row-count');
-  public readonly bulkActionsTrigger: Locator = this.page.getByTestId('interventions-bulk-actions');
+  public readonly selectionBar: Locator = this.page.getByTestId('interventions-selection-bar');
+  public readonly bulkMoveTrigger: Locator = this.page.getByTestId(
+    'interventions-selection-group-transitions',
+  );
   public readonly tableRows: Locator = this.page.getByTestId('intervention-table-row');
   public readonly createSheet: Locator = this.page.getByTestId('intervention-create-sheet');
   public readonly selectAll: Locator = this.page.getByTestId('intervention-table-select-all');
@@ -78,22 +81,21 @@ export class InterventionsPage {
     return this.row(name).locator('app-intervention-tag').first();
   }
 
-  /** Opens the bulk toolbar's "Actions" dropdown. */
-  public async openBulkActions(): Promise<void> {
-    await this.bulkActionsTrigger.click();
+  /** Opens the floating bar's native "Move to" dropdown. */
+  public async openBulkTransitions(): Promise<void> {
+    await this.bulkMoveTrigger.click();
   }
 
   /** Clicks a bulk "Move to" entry naming `statusLabel`, e.g. `"In progress"`. */
   public async chooseBulkTransition(statusLabel: string): Promise<void> {
-    await this.page
-      .getByTestId('interventions-bulk-transition')
-      .filter({ hasText: statusLabel })
-      .click();
+    await this.bulkTransitionEntry(statusLabel).click();
   }
 
   /** The bulk "Move to" entry naming `statusLabel`, for reading its eligible count. */
   public bulkTransitionEntry(statusLabel: string): Locator {
-    return this.page.getByTestId('interventions-bulk-transition').filter({ hasText: statusLabel });
+    return this.page
+      .locator('[data-testid^="interventions-selection-action-transition:"]')
+      .filter({ hasText: statusLabel });
   }
 
   /** The app-wide toast deck's visible entries (spartan's sonner, `role="status"`). */

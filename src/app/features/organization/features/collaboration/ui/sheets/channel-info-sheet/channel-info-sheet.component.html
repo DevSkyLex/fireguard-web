@@ -34,6 +34,9 @@
                   <span hlmAvatarFallback class="text-[10px]">
                     {{ initialsOf(participant.displayName) }}
                   </span>
+                  <app-member-presence-indicator
+                    [status]="presences()[participant.memberId] ?? null"
+                  />
                 </hlm-avatar>
 
                 <span class="flex min-w-0 flex-1 flex-col">
@@ -84,6 +87,10 @@
                 <div class="flex min-w-0 flex-1 flex-col gap-0.5">
                   <div class="flex items-baseline gap-2 text-xs text-muted-foreground">
                     <span class="truncate font-medium text-foreground">{{ item.authorName }}</span>
+                    <app-member-presence-indicator
+                      [status]="presences()[item.authorMemberId] ?? null"
+                      [showLabel]="true"
+                    />
                     <span class="shrink-0">{{ dateOf(item.createdAt) }}</span>
                   </div>
                   @if (item.isDeleted) {

@@ -80,7 +80,12 @@ import {
 import { StatTile } from '@features/organization/ui/components';
 import { OrganizationJoinRequestPanel } from '@features/organization/ui/components/organization-join-request-panel';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import {
+  CollectionSearchBox,
+  CollectionSelectionBar,
+  CollectionToolbar,
+  type CollectionSelectionAction,
+} from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
@@ -249,6 +254,7 @@ type OrganizationMembersKpiTile = {
     CollectionSearchBox,
     ...HlmSelectImports,
     CollectionToolbar,
+    CollectionSelectionBar,
     OrganizationInvitationRevokeDialog,
     OrganizationInvitationTable,
     OrganizationInviteDialog,
@@ -822,6 +828,30 @@ export class OrganizationMembersPage {
   protected readonly revokeDialogError: Signal<StoreError | null> = this.revokeGate.error;
 
   /**
+   * Property selectionActions
+   * @readonly
+   * @description Permission-gated roster command rendered by the shared selection bar.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CollectionSelectionAction[]>}
+   */
+  protected readonly selectionActions: Signal<readonly CollectionSelectionAction[]> = computed(
+    (): readonly CollectionSelectionAction[] =>
+      this.canManageMembers() && this.selectedIds().size > 0
+        ? [
+            {
+              kind: 'command',
+              id: 'remove',
+              label: this.bulkRemoveLabel(),
+              icon: 'lucideTrash2',
+              destructive: true,
+              disabled: this.store.isMutating() || this.removeDialogBusy(),
+            },
+          ]
+        : [],
+  );
+
+  /**
    * Property actionError
    * @readonly
    * @description A resend/role-toggle mutation's error, shown as a page-level banner and hidden while the invite, remove-confirm or revoke-confirm dialog is showing its own copy.
@@ -1161,6 +1191,27 @@ export class OrganizationMembersPage {
    * Method onInviteDialogVisibleChange
    * @description Keeps the dialog's error scope in sync with whether it is actually open.
    * @access protected
+  /**
+   * Method onSelectionActionRequested
+   * @method onSelectionActionRequested
+   * @description Rechecks roster access before opening the existing bulk-remove confirmation.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} id - Shared selection command id.
+   * @returns {void}
+   */
+  protected onSelectionActionRequested(id: string): void {
+    if (
+      id === 'remove' &&
+      this.activeTab() === 'members' &&
+      this.canManageMembers() &&
+      !this.store.isMutating() &&
+      !this.removeDialogBusy()
+    ) {
+      this.requestBulkRemove();
+    }
+  }
+
    * @since 1.0.0
    * @param {boolean} visible - The dialog's next visibility.
    * @returns {void}

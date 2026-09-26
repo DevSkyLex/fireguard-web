@@ -631,6 +631,9 @@ keeping the native anatomy.
 **The five collection components moved to `shared/` on a deliberate uniformity bet, not on
 today's locality.** At the time of the move every consumer still lived under
 `features/organization/` (this feature's own roster page plus the four nested subfeatures'
+Checkbox collections may render `app-collection-selection-bar` from `@shared/collection-toolbar`.
+The page owns selected IDs, permissions and bulk handlers; the bar only presents supplied commands.
+Its selected-row count is distinct from the filtered result total.
 list pages), which by §2.8 usage locality alone would keep them at
 `features/organization/ui/components/`. They moved anyway because the goal driving the
 extraction was uniforming every list surface across the app, including ones this feature does

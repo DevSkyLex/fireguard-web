@@ -649,6 +649,25 @@ describe('OrganizationMembersPage', () => {
 
   it('keeps a selected roster for a cancelled bulk removal', async () => {
     await createPage();
+  it('opens the existing confirmation from the floating selection bar and hides it when cleared', async () => {
+    await createPage();
+    fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="organization-members-selection-bar"]'),
+    ).not.toBeNull();
+    fixture.componentInstance['onSelectionActionRequested']('remove');
+    expect(fixture.componentInstance['removeDialogState']()).toBe('open');
+
+    fixture.componentInstance['onRemoveDialogVisibleChange'](false);
+    fixture.componentInstance['onSelectionChanged'](new Set());
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="organization-members-selection-bar"]'),
+    ).toBeNull();
+  });
+
     fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
     fixture.componentInstance['requestBulkRemove']();
     expect(fixture.componentInstance['removeDialogState']()).toBe('open');

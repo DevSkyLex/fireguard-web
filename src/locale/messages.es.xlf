@@ -3928,6 +3928,10 @@
         <source>Move to</source>
         <target>Mover a</target>
       </trans-unit>
+      <trans-unit id="intervention.list.noSelectedRowsDeletable" datatype="html">
+        <source>No selected intervention can be deleted.</source>
+        <target>No se puede eliminar ninguna intervención seleccionada.</target>
+      </trans-unit>
       <trans-unit id="intervention.list.bulkAssignButton" datatype="html">
         <source>Assign responsible… (<x id="count" equiv-text="this.assignableSelectedIds().length"/>)</source>
         <target>Asignar un responsable… (<x id="count" equiv-text="this.assignableSelectedIds().length"/>)</target>
@@ -7953,6 +7957,30 @@
       <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
         <source>Filter</source>
         <target>Filtrar</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.countWithTotal" datatype="html">
+        <source> Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Results: <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </source>
+        <target> Seleccionadas: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Resultados: <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.count" datatype="html">
+        <source>Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/></source>
+        <target>Seleccionadas: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/></target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.actions" datatype="html">
+        <source> Actions </source>
+        <target> Acciones </target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.drawerTitle" datatype="html">
+        <source> Selected row actions </source>
+        <target> Acciones para las filas seleccionadas </target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.drawerDescription" datatype="html">
+        <source> Choose an action for the selected rows. </source>
+        <target> Elige una acción para las filas seleccionadas. </target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.label" datatype="html">
+        <source>Selection actions</source>
+        <target>Acciones de selección</target>
       </trans-unit>
       <trans-unit id="shared.collectionFilterBar.addFilterMenuLabel" datatype="html">
         <source>Filter by</source>

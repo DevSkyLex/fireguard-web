@@ -1038,6 +1038,35 @@ describe('InterventionsPage', () => {
   describe('bulk transition', () => {
     it('should only count selected rows whose allowedTransitions include the target', async () => {
       interventionList.set([
+    it('routes a selected status command from the floating bar through the existing transition handler', async () => {
+      interventionList.set([
+        intervention({
+          id: 'i-1',
+          responsible: '/api/organizations/org-1/members/member-1',
+          allowedTransitions: ['abandoned'],
+          revision: 4,
+        }),
+      ]);
+      fixture = await createPage();
+      fixture.componentInstance['onSelectionChanged'](new Set(['i-1']));
+      await fixture.whenStable();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="interventions-selection-bar"]'),
+      ).not.toBeNull();
+      expect(
+        fixture.componentInstance['selectionActions']().some(
+          (action) => action.id === 'transitions',
+        ),
+      ).toBe(true);
+
+      fixture.componentInstance['onSelectionActionRequested']('transition:abandoned');
+
+      expect(transition).toHaveBeenCalledWith({ id: 'i-1', status: 'abandoned', revision: 4 });
+      fixture.componentInstance['onSelectionActionRequested']('transition:published');
+      expect(transition).toHaveBeenCalledTimes(1);
+    });
+
         intervention({
           id: 'i-1',
           responsible: '/api/organizations/org-1/members/member-1',
@@ -1867,7 +1896,7 @@ describe('InterventionsPage', () => {
       expect(options.dueAtBefore).toBeUndefined();
     });
   });
-  it('opens bulk deletion only after the tools drawer closes and does not delete yet', async () => {
+  it('opens bulk deletion only after the selection drawer closes and does not delete yet', async () => {
     mobile.set(true);
     interventionList.set([
       intervention({ id: 'i-draft', status: 'draft', allowedActions: serverActions('draft') }),
@@ -1875,11 +1904,13 @@ describe('InterventionsPage', () => {
     fixture = await createPage();
     fixture.componentInstance['onSelectionChanged'](new Set(['i-draft']));
     await fixture.whenStable();
-    fixture.nativeElement.querySelector('[data-testid="interventions-tools"]').click();
+    fixture.nativeElement
+      .querySelector('[data-testid="interventions-selection-actions-trigger"]')
+      .click();
     await fixture.whenStable();
 
     const action = document.querySelector<HTMLButtonElement>(
-      'hlm-drawer-content [data-testid="interventions-bulk-delete"]',
+      'hlm-drawer-content [data-testid="interventions-selection-action-delete"]',
     );
     expect(action?.disabled).toBe(false);
     action?.click();

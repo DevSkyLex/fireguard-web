@@ -19595,6 +19595,13 @@
           <context context-type="linenumber">1284</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.list.noSelectedRowsDeletable" datatype="html">
+        <source>No selected intervention can be deleted.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/interventions-page/interventions-page.component.ts</context>
+          <context context-type="linenumber">1463</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.list.bulkAssignButton" datatype="html">
         <source>Assign responsible… (<x id="count" equiv-text="this.assignableSelectedIds().length"/>)</source>
         <context-group purpose="location">
@@ -30138,6 +30145,48 @@
           <context context-type="sourcefile">src/app/shared/collection-filters/options/collection-filter-operator.constants.ts</context>
           <context context-type="linenumber">42</context>
         </context-group>
+      <trans-unit id="shared.collectionSelection.countWithTotal" datatype="html">
+        <source> Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Results: <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.html</context>
+          <context context-type="linenumber">17,19</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.count" datatype="html">
+        <source>Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/></source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.html</context>
+          <context context-type="linenumber">20,21</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.actions" datatype="html">
+        <source> Actions </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.html</context>
+          <context context-type="linenumber">40,43</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.drawerTitle" datatype="html">
+        <source> Selected row actions </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.html</context>
+          <context context-type="linenumber">51,53</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.drawerDescription" datatype="html">
+        <source> Choose an action for the selected rows. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.html</context>
+          <context context-type="linenumber">54,56</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.label" datatype="html">
+        <source>Selection actions</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.ts</context>
+          <context context-type="linenumber">123</context>
+        </context-group>
+      </trans-unit>
       </trans-unit>
       <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
         <source>Filter</source>

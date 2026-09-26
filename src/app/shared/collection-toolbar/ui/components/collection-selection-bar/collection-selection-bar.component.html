@@ -1,0 +1,191 @@
+@if (selectedCount() > 0) {
+  <div
+    class="pointer-events-none fixed inset-x-4 bottom-4 z-20 flex justify-center mobile-ui:bottom-[calc(var(--mobile-navigation-height,0px)+0.75rem)] desktop-ui:left-[calc(var(--sidebar-width)+1rem)] group-has-data-[collapsible=icon]/sidebar-wrapper:desktop-ui:left-[calc(var(--sidebar-width-icon)+1rem)]"
+    [attr.data-testid]="testId('bar')"
+  >
+    <div
+      class="pointer-events-auto flex max-w-full min-w-0 items-center gap-2 rounded-full border border-border bg-popover px-3 py-2 text-popover-foreground shadow-xl"
+      role="region"
+      [attr.aria-label]="selectionActionsLabel"
+    >
+      <span
+        class="shrink-0 px-1 text-sm font-medium whitespace-nowrap tabular-nums"
+        aria-live="polite"
+      >
+        @if (totalResults() !== null) {
+          <span i18n="@@shared.collectionSelection.countWithTotal">
+            Selected: {{ selectedCount() }} · Results: {{ totalResults() }}
+          </span>
+        } @else {
+          <span i18n="@@shared.collectionSelection.count">Selected: {{ selectedCount() }}</span>
+        }
+      </span>
+
+      @if (actions().length > 0) {
+        <hlm-separator orientation="vertical" class="h-6" />
+      }
+
+      @if (mobileMode()) {
+        @if (actions().length > 0) {
+          <hlm-drawer direction="bottom" (closed)="completeMobileAction()">
+            <button
+              hlmDrawerTrigger
+              hlmBtn
+              type="button"
+              variant="secondary"
+              class="min-h-11"
+              [attr.data-testid]="testId('actions-trigger')"
+              i18n="@@shared.collectionSelection.actions"
+            >
+              Actions
+            </button>
+
+            <hlm-drawer-content
+              *hlmDrawerPortal
+              class="overflow-hidden pb-[env(safe-area-inset-bottom)]"
+              [attr.data-testid]="testId('drawer')"
+            >
+              <hlm-drawer-header>
+                <div class="text-start">
+                  <h2 hlmDrawerTitle i18n="@@shared.collectionSelection.drawerTitle">
+                    Selected row actions
+                  </h2>
+                  <p hlmDrawerDescription i18n="@@shared.collectionSelection.drawerDescription">
+                    Choose an action for the selected rows.
+                  </p>
+                </div>
+              </hlm-drawer-header>
+
+              <div class="flex min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain px-4 pb-3">
+                @for (entry of actions(); track entry.id) {
+                  @if (entry.kind === 'group') {
+                    <section class="flex flex-col gap-1" [attr.aria-label]="entry.label">
+                      <h3
+                        class="px-2 text-xs font-medium text-muted-foreground"
+                        [class.text-destructive]="entry.destructive === true"
+                      >
+                        {{ entry.label }}
+                      </h3>
+                      @if (entry.disabledReason; as reason) {
+                        <p class="px-2 text-xs text-muted-foreground">{{ reason }}</p>
+                      }
+                      <div hlmItemGroup class="gap-0">
+                        @for (command of entry.actions; track command.id) {
+                          <button
+                            hlmItem
+                            type="button"
+                            class="min-h-11 text-start"
+                            [class.text-destructive]="
+                              entry.destructive === true || command.destructive === true
+                            "
+                            [disabled]="entry.disabled === true || command.disabled === true"
+                            [attr.data-testid]="testId('action-' + command.id)"
+                            (click)="queueMobileAction(command.id)"
+                          >
+                            <span hlmItemMedia variant="icon">
+                              <ng-icon [name]="command.icon" aria-hidden="true" />
+                            </span>
+                            <span hlmItemContent>
+                              <span hlmItemTitle>{{ command.label }}</span>
+                              @if (command.disabledReason; as reason) {
+                                <span hlmItemDescription>{{ reason }}</span>
+                              }
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    </section>
+                  } @else {
+                    <div hlmItemGroup class="gap-0">
+                      <button
+                        hlmItem
+                        type="button"
+                        class="min-h-11 text-start"
+                        [class.text-destructive]="entry.destructive === true"
+                        [disabled]="entry.disabled === true"
+                        [attr.data-testid]="testId('action-' + entry.id)"
+                        (click)="queueMobileAction(entry.id)"
+                      >
+                        <span hlmItemMedia variant="icon">
+                          <ng-icon [name]="entry.icon" aria-hidden="true" />
+                        </span>
+                        <span hlmItemContent>
+                          <span hlmItemTitle>{{ entry.label }}</span>
+                          @if (entry.disabledReason; as reason) {
+                            <span hlmItemDescription>{{ reason }}</span>
+                          }
+                        </span>
+                      </button>
+                    </div>
+                  }
+                }
+              </div>
+
+              <hlm-drawer-footer class="border-t border-border">
+                <button hlmDrawerClose hlmBtn type="button" variant="outline" class="min-h-11">
+                  <span i18n="@@common.close">Close</span>
+                </button>
+              </hlm-drawer-footer>
+            </hlm-drawer-content>
+          </hlm-drawer>
+        }
+      } @else {
+        <div class="min-w-0 overflow-x-auto">
+          <div class="flex w-max items-center gap-1">
+            @for (entry of actions(); track entry.id) {
+              @if (entry.kind === 'group') {
+                <button
+                  hlmBtn
+                  type="button"
+                  [variant]="entry.destructive ? 'destructive' : 'ghost'"
+                  size="sm"
+                  [disabled]="!groupEnabled(entry)"
+                  [attr.title]="entry.disabledReason ?? null"
+                  [hlmDropdownMenuTrigger]="actionMenu"
+                  [attr.data-testid]="testId('group-' + entry.id)"
+                >
+                  <ng-icon [name]="entry.icon" aria-hidden="true" />
+                  {{ entry.label }}
+                </button>
+                <ng-template #actionMenu>
+                  <hlm-dropdown-menu class="w-64">
+                    <hlm-dropdown-menu-label>{{ entry.label }}</hlm-dropdown-menu-label>
+                    @for (command of entry.actions; track command.id) {
+                      <button
+                        hlmDropdownMenuItem
+                        [variant]="
+                          entry.destructive || command.destructive ? 'destructive' : 'default'
+                        "
+                        [disabled]="entry.disabled === true || command.disabled === true"
+                        [attr.title]="command.disabledReason ?? null"
+                        [attr.data-testid]="testId('action-' + command.id)"
+                        (click)="requestDesktopAction(command.id)"
+                      >
+                        <ng-icon [name]="command.icon" aria-hidden="true" />
+                        {{ command.label }}
+                      </button>
+                    }
+                  </hlm-dropdown-menu>
+                </ng-template>
+              } @else {
+                <button
+                  hlmBtn
+                  type="button"
+                  [variant]="entry.destructive ? 'destructive' : 'ghost'"
+                  size="sm"
+                  [disabled]="entry.disabled === true"
+                  [attr.title]="entry.disabledReason ?? null"
+                  [attr.data-testid]="testId('action-' + entry.id)"
+                  (click)="requestDesktopAction(entry.id)"
+                >
+                  <ng-icon [name]="entry.icon" aria-hidden="true" />
+                  {{ entry.label }}
+                </button>
+              }
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

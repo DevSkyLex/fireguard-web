@@ -55,8 +55,8 @@ for (const mode of [
     await collection.goto(E2E_ORGANIZATION_ID);
     await collection.selectRow(first.name);
     await collection.selectRow(second.name);
-    await collection.openBulkActions();
-    await page.getByTestId('interventions-bulk-assign').click();
+    await expect(collection.selectionBar).toContainText('Selected: 2');
+    await page.getByTestId('interventions-selection-action-assign').click();
     await page.setViewportSize({ width: mode.width, height: 900 });
     const dialog = page.getByTestId('intervention-assign-dialog');
     await expect(dialog).toBeVisible();

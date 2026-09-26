@@ -2256,6 +2256,8 @@ succeeds. Partial failures remain visible and retries exclude successful rows.
 Selected sites and members may be resolved by scoped individual reads independently
 of catalogue coverage; unresolved labels never clear the saved references.
 Outbox conflicts preserve the original local revision separately from the last
+- The list's floating selection bar offers eligible status moves, assignment and deletion.
+  The page owns selection and action eligibility; CSV export remains scoped to filtered results.
 verified server revision. An unsuccessful revision read is explicitly unknown.
 
 Bootstrap consumers import `provideInterventionsFeature` through `providers/bootstrap`, a narrow public barrel

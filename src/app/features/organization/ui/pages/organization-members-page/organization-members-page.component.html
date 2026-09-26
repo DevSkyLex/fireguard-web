@@ -1,4 +1,12 @@
-<div id="organization-members" class="flex h-full flex-col gap-6">
+<div
+  id="organization-members"
+  class="flex h-full flex-col gap-6"
+  [style.padding-bottom]="
+    activeTab() === 'members' && selectedIds().size > 0
+      ? 'calc(var(--mobile-navigation-height, 0px) + 6rem)'
+      : null
+  "
+>
   <hlm-tabs [tab]="activeTab()" class="contents" (tabActivated)="onTabActivated($event)">
     <ng-template #pageTabs>
       <hlm-paginated-tabs-list
@@ -129,23 +137,6 @@
               }
 
               <section class="flex shrink-0 flex-col gap-3">
-                @if (canManageMembers() && selectedIds().size > 0) {
-                  <div class="flex justify-end">
-                    <button
-                      hlmBtn
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      class="min-w-0 shrink mobile-ui:min-h-11"
-                      data-testid="organization-members-bulk-remove"
-                      (click)="requestBulkRemove()"
-                    >
-                      <ng-icon name="lucideTrash2" aria-hidden="true" />
-                      <span class="truncate">{{ bulkRemoveLabel() }}</span>
-                    </button>
-                  </div>
-                }
-
                 <app-collection-toolbar>
                   <app-collection-search-box
                     toolbarStart
@@ -649,6 +640,17 @@
     }
   </hlm-tabs>
 </div>
+
+  @if (activeTab() === 'members' && canManageMembers()) {
+    <app-collection-selection-bar
+      [selectedCount]="selectedIds().size"
+      [totalResults]="store.membersTotal()"
+      [mobileMode]="isMobileInteractionMode()"
+      [actions]="selectionActions()"
+      testIdPrefix="organization-members"
+      (actionRequested)="onSelectionActionRequested($event)"
+    />
+  }
 
 <ng-template #pageActions>
   @if (canManageMembers()) {

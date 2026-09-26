@@ -147,7 +147,13 @@ import {
   type CollectionFilterOperatorChangedEvent,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import {
+  CollectionSearchBox,
+  CollectionSelectionBar,
+  CollectionToolbar,
+  type CollectionSelectionAction,
+  type CollectionSelectionCommand,
+} from '@shared/collection-toolbar';
 import { GateReasonDirective } from '@shared/gate-reason';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
@@ -438,6 +444,7 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     CollectionPagination,
     CollectionSearchBox,
     CollectionToolbar,
+    CollectionSelectionBar,
     ...HlmCheckboxImports,
     ...HlmDropdownMenuImports,
     ...HlmPopoverImports,
@@ -1399,6 +1406,70 @@ export class InterventionsPage {
     this.assignAttemptIds().some((id) => {
       const status = this.store.mutationCallStates()[id]?.status;
       return status !== 'success' && status !== 'error';
+  /**
+   * Property selectionActions
+   * @readonly
+   * @description Current permission- and row-eligible bulk commands for the shared selection bar.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CollectionSelectionAction[]>}
+   */
+  protected readonly selectionActions: Signal<readonly CollectionSelectionAction[]> = computed(
+    () => {
+      const actions: CollectionSelectionAction[] = [];
+      const pending = this.batchPending();
+
+      if (this.canTransition()) {
+        const transitions: CollectionSelectionCommand[] = this.bulkTransitionTargets()
+          .filter((target) => this.transitionableSelectedIds(target).length > 0)
+          .map((target) => ({
+            kind: 'command',
+            id: `transition:${target}`,
+            label: `${this.statusLabelOf(target)} (${this.transitionableSelectedIds(target).length})`,
+            icon: 'lucideFlag',
+            disabled: pending,
+          }));
+        if (transitions.length > 0) {
+          actions.push({
+            kind: 'group',
+            id: 'transitions',
+            label: $localize`:@@intervention.list.bulkMoveToLabel:Move to`,
+            icon: 'lucideFlag',
+            actions: transitions,
+          });
+        }
+      }
+
+      if (this.canAssign() && this.assignableSelectedIds().length > 0) {
+        actions.push({
+          kind: 'command',
+          id: 'assign',
+          label: this.bulkAssignLabel(),
+          icon: 'lucideUserCog',
+          disabled: pending || this.assignDialogBusy(),
+        });
+      }
+
+      if (this.canDelete()) {
+        const deletable = this.deletableSelectedIds().length;
+        actions.push({
+          kind: 'command',
+          id: 'delete',
+          label: this.bulkDeleteLabel(),
+          icon: 'lucideTrash2',
+          disabled: pending || deletable === 0,
+          disabledReason:
+            deletable === 0
+              ? $localize`:@@intervention.list.noSelectedRowsDeletable:No selected intervention can be deleted.`
+              : undefined,
+          destructive: true,
+        });
+      }
+
+      return actions;
+    },
+  );
+
     }),
   );
 
@@ -2295,6 +2366,31 @@ export class InterventionsPage {
       );
 
       this.batchSettled.set(false);
+  /**
+   * Method onSelectionActionRequested
+   * @method onSelectionActionRequested
+   * @description Routes a shared bar command through the existing permission-checked bulk handlers.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} id - Command id emitted after any mobile drawer closes.
+   * @returns {void}
+   */
+  protected onSelectionActionRequested(id: string): void {
+    if (this.activeView() !== 'list' || this.selectedIds().size === 0 || this.batchPending())
+      return;
+    if (id === 'assign') {
+      if (this.canAssign()) this.requestBulkAssign();
+      return;
+    }
+    if (id === 'delete') {
+      if (this.canDelete()) this.requestBulkDelete();
+      return;
+    }
+    if (!this.canTransition()) return;
+    const target = this.bulkTransitionTargets().find((status) => id === `transition:${status}`);
+    if (target) this.confirmBulkTransition(target);
+  }
+
       this.batchSelectedCount.set(this.selectedIds().size);
       this.batchNames.set(
         Object.fromEntries(
@@ -3374,22 +3470,4 @@ export class InterventionsPage {
   }
 
   //#endregion
-
-  /**
-   * Method onMobileToolsClosed
-   * @method onMobileToolsClosed
-   * @description Opens an eligible bulk action overlay after the tools drawer has finished closing.
-   * @access protected
-   * @since 1.0.0
-   * @param {unknown} action - The explicit native drawer close result.
-   * @returns {void}
-   */
-  protected onMobileToolsClosed(action: unknown): void {
-    if (this.batchPending()) return;
-
-    if (action === 'assign' && this.canAssign() && this.assignableSelectedIds().length > 0)
-      this.requestBulkAssign();
-    if (action === 'delete' && this.canDelete() && this.deletableSelectedIds().length > 0)
-      this.requestBulkDelete();
-  }
 }

@@ -22,6 +22,7 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
+import { isConstraintViolation } from '@core/api/utils';
 import {
   errorCallState,
   idleCallState,
@@ -485,7 +486,13 @@ export const AuthStore = signalStore(
                     }
                   },
                   error: (error: unknown) => {
-                    const storeError: StoreError = toStoreError(error);
+                    const normalizedError = toStoreError(error);
+                    const validationMessage = isConstraintViolation(error)
+                      ? error.violations.map((violation) => violation.message).join(' ')
+                      : null;
+                    const storeError: StoreError = validationMessage
+                      ? { ...normalizedError, message: validationMessage }
+                      : normalizedError;
                     patchState(store, { loginCallState: errorCallState(storeError) });
                     dispatcher.dispatch(
                       authStoreEvents.loginFailed(

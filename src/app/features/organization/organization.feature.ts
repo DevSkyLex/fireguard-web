@@ -6,11 +6,13 @@ import {
 } from '@angular/core';
 import {
   MEMBER_DIRECTORY_PORT,
+  MEMBER_PRESENCE_PORT,
   MY_ORGANIZATIONS_PORT,
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
   REGIONAL_FORMATTING_PORT,
 } from '@features/organization/ports';
+import { MemberPresenceCoordinatorService } from '@features/organization/services/member-presence';
 import { OrganizationGlobalSearchService } from '@features/organization/services/organization-global-search';
 import {
   ActiveOrganizationStore,
@@ -48,7 +50,12 @@ export function provideOrganizationFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
     provideEnvironmentInitializer(() => {
       inject(OrganizationGlobalSearchService);
+      inject(MemberPresenceCoordinatorService);
     }),
+    {
+      provide: MEMBER_PRESENCE_PORT,
+      useExisting: MemberPresenceCoordinatorService,
+    },
     {
       provide: ORGANIZATION_CONTEXT_PORT,
       useExisting: ActiveOrganizationStore,

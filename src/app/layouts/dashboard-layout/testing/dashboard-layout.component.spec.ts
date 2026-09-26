@@ -15,7 +15,6 @@ import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY } from '@core/routing';
 import { TitleService } from '@core/title';
 import {
-  type ExclusiveSlotContribution,
   SLOT_PRESENTATION,
   type SlotContribution,
   type SlotPresentation,
@@ -24,9 +23,10 @@ import { HlmDialogService } from '@shared/ui/dialog';
 import { HlmDrawer } from '@shared/ui/drawer';
 import { HlmSidebarService } from '@shared/ui/sidebar';
 import { DashboardLayout } from '../dashboard-layout.component';
-import type { SidebarExtensionContribution } from '../models';
+import type { DashboardPanelContribution, SidebarExtensionContribution } from '../models';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
+  DASHBOARD_MOBILE_ACTIONS_SLOT,
   DASHBOARD_MOBILE_NAVIGATION_SLOT,
   DASHBOARD_HEADER_SLOT,
   DASHBOARD_PANEL_SLOT,
@@ -55,11 +55,12 @@ function additive(id: string, component: Type<unknown>): SlotContribution {
   return { id, order: 10, component };
 }
 
-function panel(priority: number, active: boolean): ExclusiveSlotContribution {
+function panel(priority: number, active: boolean): DashboardPanelContribution {
   return {
     id: `panel-${priority}`,
     priority,
     component: PanelStub as Type<unknown>,
+    label: 'Contextual panel',
     active: signal(active),
   };
 }
@@ -87,6 +88,27 @@ async function render(
 }
 
 describe('DashboardLayout', () => {
+  it('renders mobile-only feature actions without requiring desktop header tools', async () => {
+    const fixture = await render([
+      {
+        provide: INTERACTION_CAPABILITIES_PORT,
+        useValue: { isMobileInteractionMode: signal(true) },
+      },
+      {
+        provide: DASHBOARD_MOBILE_ACTIONS_SLOT,
+        useValue: [additive('account-tools', PresentationStub)],
+      },
+    ]);
+    const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="dashboard-mobile-actions-trigger"]',
+    );
+    expect(trigger).not.toBeNull();
+    trigger?.click();
+    await fixture.whenStable();
+    const drawer = document.querySelector('[data-testid="dashboard-mobile-actions-drawer"]');
+    expect(drawer?.querySelector('#presentation-stub')?.textContent).toBe('menu');
+  });
+
   afterEach(() => vi.unstubAllGlobals());
 
   it('hides back navigation on mobile roots and restores it on their detail routes', async () => {
@@ -549,11 +571,16 @@ describe('DashboardLayout', () => {
       fixture.nativeElement.querySelector('#dashboard-panel');
 
     expect(contextualPanel?.querySelector('#panel-stub')).not.toBeNull();
+    expect(contextualPanel?.getAttribute('aria-label')).toBe('Contextual panel');
+    expect(contextualPanel?.getAttribute('data-panel-size')).toBe('24');
     expect(
-      contextualPanel?.classList.contains('mobile-ui:top-[calc(4rem+env(safe-area-inset-top))]'),
-    ).toBe(true);
-    expect(contextualPanel?.classList.contains('desktop-ui:lg:static')).toBe(true);
-    expect(contextualPanel?.classList.contains('lg:static')).toBe(false);
+      fixture.nativeElement.querySelector('#dashboard-main-panel')?.getAttribute('data-panel-size'),
+    ).toBe('76');
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="dashboard-panel-resize-handle"]')
+        ?.getAttribute('role'),
+    ).toBe('separator');
   });
 
   it('dismisses mobile quick actions on successful navigation but not a rejected guard', async () => {
@@ -658,6 +685,29 @@ describe('DashboardLayout', () => {
     expect(mainPanel?.querySelector('#dashboard-main')?.classList.contains('overflow-y-auto')).toBe(
       true,
     );
+  });
+
+  it('shares the workspace among both side panels and keeps a bounded main region', async () => {
+    const extension: SidebarExtensionContribution = {
+      id: 'messages',
+      component: NavStub,
+      priority: 20,
+      active: signal(true),
+      label: 'Messages',
+      mobileVisible: signal(false),
+    };
+    const fixture = await render([
+      { provide: DASHBOARD_SIDEBAR_EXTENSION_SLOT, useValue: [extension] },
+      { provide: DASHBOARD_PANEL_SLOT, useValue: [panel(10, true)] },
+    ]);
+    await fixture.whenStable();
+
+    const root: HTMLElement = fixture.nativeElement;
+    expect(
+      root.querySelector('#dashboard-sidebar-extension')?.getAttribute('data-panel-size'),
+    ).toBe('24');
+    expect(root.querySelector('#dashboard-main-panel')?.getAttribute('data-panel-size')).toBe('52');
+    expect(root.querySelector('#dashboard-panel')?.getAttribute('data-panel-size')).toBe('24');
   });
 
   it('moves focus to the routed content column from the skip link without navigating', async () => {

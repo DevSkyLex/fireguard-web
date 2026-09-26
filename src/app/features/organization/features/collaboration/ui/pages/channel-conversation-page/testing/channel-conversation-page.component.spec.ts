@@ -40,6 +40,7 @@ import type { MemberDirectoryEntry } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
+  MEMBER_PRESENCE_PORT,
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
@@ -143,6 +144,10 @@ describe('ChannelConversationPage', () => {
         },
         provideZonelessChangeDetection(),
         provideRouter([]),
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: { byId: signal({}), register: vi.fn(), unregister: vi.fn() },
+        },
         { provide: ActivatedRoute, useValue: {} },
         {
           provide: ChannelsStore,
@@ -863,6 +868,7 @@ describe('ChannelConversationPage', () => {
       {
         id: 'message-1',
         authorDisplayName: 'Ada Lovelace',
+        authorMember: '/api/organizations/org-1/members/member-1',
         body: 'Safety update',
         mentionNames: {},
         isDeleted: false,
@@ -872,6 +878,7 @@ describe('ChannelConversationPage', () => {
       {
         id: 'message-2',
         body: 'Follow-up',
+        authorMember: '/api/organizations/org-1/members/member-2',
         mentionNames: {},
         isDeleted: false,
         createdAt: '2026-01-02T00:00:00Z',

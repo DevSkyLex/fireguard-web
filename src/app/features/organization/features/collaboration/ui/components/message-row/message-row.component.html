@@ -8,13 +8,14 @@
   [class.pb-4]="entry.reactions.length > 0"
 >
   @if (!entry.isOwn) {
-    <div hlmMessageAvatar [class.invisible]="continuation()">
+    <div hlmMessageAvatar class="overflow-visible" [class.invisible]="continuation()">
       @if (!continuation()) {
         <hlm-avatar>
           @if (entry.authorAvatarUrl; as avatarUrl) {
             <img hlmAvatarImage [src]="avatarUrl" alt="" />
           }
           <span hlmAvatarFallback class="text-[10px]">{{ initials() }}</span>
+          <app-member-presence-indicator [status]="presence()" />
         </hlm-avatar>
       }
     </div>

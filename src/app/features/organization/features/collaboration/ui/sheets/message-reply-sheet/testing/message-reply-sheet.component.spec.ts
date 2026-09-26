@@ -9,6 +9,8 @@ import type {
 } from '@features/organization/features/collaboration/models';
 import {
   MEMBER_DIRECTORY_PORT,
+  MEMBER_PRESENCE_PORT,
+  ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
 import { MessageReplySheet } from '../message-reply-sheet.component';
@@ -72,6 +74,14 @@ describe('MessageReplySheet', () => {
       providers: [
         provideInteractionCapabilities(),
         provideZonelessChangeDetection(),
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: { byId: signal({}), register: vi.fn(), unregister: vi.fn() },
+        },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganizationId: signal('org-1') },
+        },
         { provide: MessageService, useValue: service },
         {
           provide: MEMBER_DIRECTORY_PORT,
@@ -151,5 +161,16 @@ describe('MessageReplySheet', () => {
     await fixture.whenStable();
 
     expect(service.listReplies).toHaveBeenCalledTimes(1);
+  });
+
+  it('registers only an open reply thread and releases its presence registration on destruction', async () => {
+    await open();
+    const presence = TestBed.inject(MEMBER_PRESENCE_PORT);
+    expect(presence.register).toHaveBeenCalledWith(expect.any(Object), ['member-1', 'member-2']);
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+    expect(presence.register).toHaveBeenLastCalledWith(expect.any(Object), []);
+    fixture.destroy();
+    expect(presence.unregister).toHaveBeenCalledTimes(1);
   });
 });

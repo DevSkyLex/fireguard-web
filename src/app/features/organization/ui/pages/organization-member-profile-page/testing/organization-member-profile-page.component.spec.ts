@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { MemberDirectoryEntry } from '@features/organization/models';
+import { MEMBER_PRESENCE_PORT } from '@features/organization/ports';
 import { MEMBER_DIRECTORY_PORT, ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationMemberProfilePage } from '../organization-member-profile-page.component';
 
@@ -27,6 +28,15 @@ describe('OrganizationMemberProfilePage', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
         provideZonelessChangeDetection(),
         provideRouter([]),
         {

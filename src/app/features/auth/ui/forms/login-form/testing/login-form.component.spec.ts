@@ -125,35 +125,6 @@ describe('LoginForm', () => {
     expect(submitted).not.toHaveBeenCalled();
   });
 
-  it('should drop the alert while retrying so an identical failure announces again', async () => {
-    const failure = {
-      error: new Error('Invalid credentials.'),
-      message: 'Invalid credentials.',
-      code: 401,
-      retryable: false,
-      timestamp: Date.now(),
-    };
-
-    fixture.componentRef.setInput('serverError', failure);
-    await fixture.whenStable();
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="login-server-error"]'),
-    ).not.toBeNull();
-
-    // role="alert" only announces on insertion or text mutation. Two identical
-    // failures in a row would rewrite the same string into a mounted node and
-    // stay silent, so the region unmounts for the duration of the retry.
-    fixture.componentRef.setInput('pending', true);
-    await fixture.whenStable();
-    expect(fixture.nativeElement.querySelector('[data-testid="login-server-error"]')).toBeNull();
-
-    fixture.componentRef.setInput('pending', false);
-    await fixture.whenStable();
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="login-server-error"]'),
-    ).not.toBeNull();
-  });
-
   it('should give the remember-me id to the control the label points at', () => {
     const control = fixture.nativeElement.querySelector('#login-remember') as HTMLElement;
 
@@ -161,42 +132,6 @@ describe('LoginForm', () => {
     // non-rendering wrapper instead of the real <button role="checkbox">.
     expect(control).not.toBeNull();
     expect(control.getAttribute('role')).toBe('checkbox');
-  });
-
-  it('should render the server error message when a sign-in attempt failed', async () => {
-    fixture.componentRef.setInput('serverError', {
-      error: new Error('Invalid credentials.'),
-      message: 'Invalid credentials.',
-      code: 401,
-      retryable: false,
-      timestamp: Date.now(),
-    });
-    await fixture.whenStable();
-
-    const alert = fixture.nativeElement.querySelector(
-      '[data-testid="login-server-error"]',
-    ) as HTMLElement;
-
-    expect(alert).not.toBeNull();
-    expect(alert.getAttribute('role')).toBe('alert');
-    expect(alert.textContent).toContain('Invalid credentials.');
-  });
-
-  it('should fall back to a generic sentence when the server error has no message', async () => {
-    fixture.componentRef.setInput('serverError', {
-      error: new Error('boom'),
-      message: null,
-      code: null,
-      retryable: false,
-      timestamp: Date.now(),
-    });
-    await fixture.whenStable();
-
-    const alert = fixture.nativeElement.querySelector(
-      '[data-testid="login-server-error"]',
-    ) as HTMLElement;
-
-    expect(alert.textContent).toContain('Sign-in failed. Check your credentials.');
   });
 
   it('should render no server error region while nothing has failed', () => {

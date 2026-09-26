@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { InboxItemOutput } from '@features/account/models';
+import { displayInboxTitle } from '@features/account/utils/inbox-item-title';
 import { inboxConversationLink } from '@features/account/utils/inbox-link';
 import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
@@ -127,4 +128,14 @@ export class AccountInboxList {
    * @type {typeof inboxConversationLink}
    */
   protected readonly conversationLink: typeof inboxConversationLink = inboxConversationLink;
+
+  /**
+   * Property inboxTitle
+   * @readonly
+   * @description Localized title for known source-owned inbox entries.
+   * @access protected
+   * @since 1.0.0
+   * @type {typeof displayInboxTitle}
+   */
+  protected readonly inboxTitle: typeof displayInboxTitle = displayInboxTitle;
 }

@@ -9,9 +9,11 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -29,7 +31,6 @@ import {
   type CalendarFirstDayOfWeek,
 } from '@shared/calendar';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { InterventionCalendarEntryList } from '../intervention-calendar-entry-list';
@@ -105,7 +106,6 @@ type InterventionCalendarAgendaGroup = {
     InterventionCalendarEntryList,
     HlmButton,
     HlmSkeleton,
-    ...HlmCardImports,
   ],
   providers: [provideIcons({ lucideChevronLeft, lucideChevronRight, lucideCircleAlert })],
   templateUrl: './intervention-calendar.component.html',
@@ -113,6 +113,17 @@ type InterventionCalendarAgendaGroup = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionCalendar {
+  /**
+   * Property dayPanelTemplate
+   * @readonly
+   * @description Selected-day template projected into the dashboard's contextual slot by the owning page.
+   * @access public
+   * @since 1.0.0
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  public readonly dayPanelTemplate: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('dayPanel');
+
   //#region Inputs
   /** The bounded-window dataset the page's `InterventionCalendarStore` loaded. */
   public readonly interventions: InputSignal<readonly InterventionOutput[]> = input<

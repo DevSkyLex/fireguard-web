@@ -5,7 +5,7 @@ import {
   type HttpErrorResponse,
   type HttpResponse,
 } from '@angular/common/http';
-import { inject, Service } from '@angular/core';
+import { inject, LOCALE_ID, Service } from '@angular/core';
 import { type Observable, catchError, map, throwError } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { EnvironmentConfig } from '@core/config/environment/environment-config.interface';
@@ -86,13 +86,16 @@ export abstract class HydraApiService {
    */
   protected readonly env: EnvironmentConfig = inject<EnvironmentConfig>(ENV_CONFIG);
 
+  /** Active Angular bundle locale, shared by all Hydra requests. */
+  protected readonly localeId: string = inject<string>(LOCALE_ID);
+
   /**
    * Property defaultHeaders
    * @readonly
    *
    * @description
    * Default HTTP headers for JSON-LD/Hydra API requests.
-   * Sets Content-Type and Accept to application/ld+json.
+   * Sets JSON-LD media types and the active interface language.
    *
    * @access protected
    * @since 1.0.0
@@ -102,6 +105,7 @@ export abstract class HydraApiService {
   protected readonly defaultHeaders: HttpHeaders = new HttpHeaders({
     'Content-Type': 'application/ld+json',
     Accept: 'application/ld+json',
+    'Accept-Language': this.localeId.toLowerCase().split(/[-_]/)[0],
   });
   //#endregion
 

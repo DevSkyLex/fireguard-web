@@ -80,6 +80,9 @@ The logo and name sit above the organization switcher; the collapsed sidebar kee
 the logo, while the compact desktop drawer keeps the full lockup. Its main content
 has no outer gutter, corner radius or card shadow. Desktop contextual panels
 also meet the shell edges, separated by a border; mobile panels remain overlays.
+The dashboard's right contextual column resizes beside the routed content on
+wide desktop; calendar day lists use it without an enclosing card. At narrow
+widths those calendars use their agenda presentation.
 Page-owned spacing keeps headings, controls and data readable.
 
 Mobile interaction mode is selected centrally by `InteractionCapabilitiesService`, not by viewport

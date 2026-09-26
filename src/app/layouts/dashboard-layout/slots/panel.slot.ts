@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import type { ExclusiveSlotContribution } from '@shared/layout-slot';
+import type { DashboardPanelContribution } from '../models';
 
 /**
  * Constant DASHBOARD_PANEL_SLOT
@@ -11,16 +11,12 @@ import type { ExclusiveSlotContribution } from '@shared/layout-slot';
  * contribution is on screen: the highest-priority one whose `active` signal is
  * true.
  *
- * **No route contributes to it today.** It is reserved rather than dead: a
- * right-hand column belongs here, never in a page-local grid, so the first
- * surface that needs one has a single place to put it. The assistant carries
- * its own sheet instead, which is why the slot has stayed empty this long.
- * Read that emptiness as "not claimed yet", not as "unused, delete me".
+ * The shell owns its responsive, resizable geometry; the active feature owns
+ * the content and its accessible label.
  *
  * @since 1.0.0
  *
- * @type {InjectionToken<ExclusiveSlotContribution[]>}
+ * @type {InjectionToken<DashboardPanelContribution[]>}
  */
-export const DASHBOARD_PANEL_SLOT: InjectionToken<ExclusiveSlotContribution[]> = new InjectionToken<
-  ExclusiveSlotContribution[]
->('DASHBOARD_PANEL_SLOT');
+export const DASHBOARD_PANEL_SLOT: InjectionToken<DashboardPanelContribution[]> =
+  new InjectionToken<DashboardPanelContribution[]>('DASHBOARD_PANEL_SLOT');

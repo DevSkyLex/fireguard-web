@@ -68,6 +68,16 @@ export class InterventionCalendarEntryList {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property compact
+   * @readonly
+   * @description Stacks the status under the title inside a narrow contextual panel.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly compact: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Properties

@@ -13,7 +13,8 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideUserMinus, lucideUserPlus, lucideUsers } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { MemberDirectoryEntry } from '@features/organization/models';
+import type { PresenceStatus, MemberDirectoryEntry } from '@features/organization/models';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
@@ -68,6 +69,7 @@ import type { ChannelParticipantView } from './models';
   selector: 'app-channel-participants-sheet',
   imports: [
     NgIcon,
+    MemberPresenceIndicator,
     ...HlmEmptyImports,
     HlmAvatar,
     HlmAvatarFallback,
@@ -85,6 +87,16 @@ import type { ChannelParticipantView } from './models';
 })
 export class ChannelParticipantsSheet {
   //#region Inputs
+  /**
+   * Property presences
+   * @readonly
+   * @description Confirmed organization presence keyed by bare member id; missing entries are unknown.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  public readonly presences: InputSignal<Readonly<Record<string, PresenceStatus>>> = input({});
+
   /**
    * Property visible
    * @readonly

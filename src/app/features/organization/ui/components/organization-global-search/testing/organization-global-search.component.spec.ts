@@ -9,6 +9,7 @@ import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationSearchOutput } from '@features/organization/models';
 import { provideOrganizationFeature } from '@features/organization/organization.feature';
 import { withGlobalSearch } from '@features/organization/providers/global-search';
+import { MemberPresenceCoordinatorService } from '@features/organization/services/member-presence';
 import { OrganizationGlobalSearchService } from '@features/organization/services/organization-global-search';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import { DashboardLayout } from '@layouts/dashboard-layout';
@@ -255,6 +256,7 @@ describe('OrganizationGlobalSearch', () => {
         providers: [
           provideRouter([]),
           provideOrganizationFeature(),
+          { provide: MemberPresenceCoordinatorService, useValue: {} },
           { provide: ENV_CONFIG, useValue: { appName: 'Fireguard' } },
           {
             provide: INTERACTION_CAPABILITIES_PORT,

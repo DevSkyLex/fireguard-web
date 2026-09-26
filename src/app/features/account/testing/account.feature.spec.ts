@@ -1,10 +1,12 @@
 import { ApplicationInitStatus, PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NOTIFICATION_CENTER_PORT, USER_IDENTITY_PORT } from '@features/account/ports';
+import { PresencePreferenceCoordinatorService } from '@features/account/services/presence-preference-coordinator';
 import { provideAccountFeature } from '../account.feature';
 
 const configure = (platform: 'browser' | 'server') => {
   const profile = signal<{ id: string } | null>(null);
+  const presenceStarted = vi.fn(() => ({}));
   const notifications = {
     initialize: vi.fn().mockResolvedValue(undefined),
     load: vi.fn(),
@@ -13,18 +15,20 @@ const configure = (platform: 'browser' | 'server') => {
   TestBed.configureTestingModule({
     providers: [
       provideAccountFeature(),
+      { provide: PresencePreferenceCoordinatorService, useFactory: presenceStarted },
       { provide: PLATFORM_ID, useValue: platform },
       { provide: USER_IDENTITY_PORT, useValue: { profile } },
       { provide: NOTIFICATION_CENTER_PORT, useValue: notifications },
     ],
   });
   TestBed.inject(ApplicationInitStatus);
-  return { profile, notifications };
+  return { profile, notifications, presenceStarted };
 };
 
 describe('provideAccountFeature', () => {
   it('should start browser realtime when a profile arrives without preloading the feed', () => {
-    const { profile, notifications } = configure('browser');
+    const { profile, notifications, presenceStarted } = configure('browser');
+    expect(presenceStarted).toHaveBeenCalledTimes(1);
     TestBed.tick();
     expect(notifications.connectMercure).not.toHaveBeenCalled();
 
@@ -37,7 +41,8 @@ describe('provideAccountFeature', () => {
   });
 
   it('should not schedule a delayed realtime continuation after the profile is cleared', async () => {
-    const { profile, notifications } = configure('browser');
+    const { profile, notifications, presenceStarted } = configure('browser');
+    expect(presenceStarted).toHaveBeenCalledTimes(1);
     profile.set({ id: 'user-1' });
     TestBed.tick();
     notifications.connectMercure.mockClear();
@@ -51,7 +56,8 @@ describe('provideAccountFeature', () => {
   });
 
   it('should keep notification startup out of SSR with an authenticated profile', () => {
-    const { profile, notifications } = configure('server');
+    const { profile, notifications, presenceStarted } = configure('server');
+    expect(presenceStarted).not.toHaveBeenCalled();
     profile.set({ id: 'user-1' });
     TestBed.tick();
 

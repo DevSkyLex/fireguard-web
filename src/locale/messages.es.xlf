@@ -4192,10 +4192,6 @@
         <source>Toggle sidebar</source>
         <target>Mostrar u ocultar la barra lateral</target>
       </trans-unit>
-      <trans-unit id="dashboard.panel.aria" datatype="html">
-        <source>Contextual panel</source>
-        <target>Panel contextual</target>
-      </trans-unit>
       <trans-unit id="dashboard.sidebarExtension.resize" datatype="html">
         <source>Resize navigation panel</source>
         <target>Redimensionar el panel de navegación</target>
@@ -4942,6 +4938,10 @@
         <source>Priority</source>
         <target>Prioridad</target>
       </trans-unit>
+      <trans-unit id="intervention.list.columnResponsible" datatype="html">
+        <source>Responsible</source>
+        <target>Responsable</target>
+      </trans-unit>
       <trans-unit id="intervention.list.columnSite" datatype="html">
         <source> Site </source>
         <target>Sitio</target>
@@ -5053,6 +5053,10 @@
       <trans-unit id="intervention.list.noResults" datatype="html">
         <source> No results. </source>
         <target>Sin resultados.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.noResponsible" datatype="html">
+        <source>No responsible assigned</source>
+        <target>No hay responsable asignado</target>
       </trans-unit>
       <trans-unit id="intervention.list.rowCopyRef" datatype="html">
         <source>Copy reference</source>
@@ -7954,10 +7958,6 @@
         <source>Facility record</source>
         <target>Ficha de la instalación</target>
       </trans-unit>
-      <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
-        <source>Filter</source>
-        <target>Filtrar</target>
-      </trans-unit>
       <trans-unit id="shared.collectionSelection.countWithTotal" datatype="html">
         <source> Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Results: <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </source>
         <target> Seleccionadas: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Resultados: <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </target>
@@ -7981,6 +7981,10 @@
       <trans-unit id="shared.collectionSelection.label" datatype="html">
         <source>Selection actions</source>
         <target>Acciones de selección</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
+        <source>Filter</source>
+        <target>Filtrar</target>
       </trans-unit>
       <trans-unit id="shared.collectionFilterBar.addFilterMenuLabel" datatype="html">
         <source>Filter by</source>
@@ -14292,8 +14296,8 @@
         </context-group>
       </trans-unit>
       <trans-unit id="org.search.visibleDescription" datatype="html">
-        <source> Find operational records and open their detail page without leaving your current work. </source>
-        <target>Encuentra registros operativos y consulta sus detalles sin salir de tu trabajo actual.</target>
+        <source> Search your organization's operational records. </source>
+        <target>Busca los datos operativos de tu organización.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
           <context context-type="linenumber">52,55</context>
@@ -16901,6 +16905,42 @@
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-switcher-quick-link.config.ts</context>
           <context context-type="linenumber">47</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="presence.active" datatype="html">
+        <source>Active</source>
+        <target>Activo</target>
+      </trans-unit>
+      <trans-unit id="presence.doNotDisturb" datatype="html">
+        <source>Do not disturb</source>
+        <target>No molestar</target>
+      </trans-unit>
+      <trans-unit id="presence.offline" datatype="html">
+        <source>Offline</source>
+        <target>Desconectado</target>
+      </trans-unit>
+      <trans-unit id="account.presence.doNotDisturb" datatype="html">
+        <source>Do not disturb</source>
+        <target>No molestar</target>
+      </trans-unit>
+      <trans-unit id="account.presence.saveError" datatype="html">
+        <source>Your presence preference could not be saved.</source>
+        <target>No se pudo guardar tu preferencia de presencia.</target>
+      </trans-unit>
+      <trans-unit id="presence.invisible" datatype="html">
+        <source>Invisible</source>
+        <target>Invisible</target>
+      </trans-unit>
+      <trans-unit id="dashboard.panel.resize" datatype="html">
+        <source>Resize contextual panel</source>
+        <target>Cambiar el tamaño del panel contextual</target>
+      </trans-unit>
+      <trans-unit id="calendar.selectedDayPanelLabel" datatype="html">
+        <source>Selected day events</source>
+        <target>Eventos del día seleccionado</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.selectedDayPanelLabel" datatype="html">
+        <source>Selected day interventions</source>
+        <target>Intervenciones del día seleccionado</target>
       </trans-unit>
     </body>
   </file>

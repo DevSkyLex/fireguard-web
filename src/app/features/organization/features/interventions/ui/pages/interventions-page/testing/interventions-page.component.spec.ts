@@ -47,6 +47,7 @@ import { InterventionStore } from '@features/organization/features/interventions
 import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationMemberAccessStore } from '@features/organization/state';
+import { DashboardPanelRegistry } from '@layouts/dashboard-layout';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { InterventionPlanningOptionsStore } from '../../../../state/intervention-planning-options';
 import { InterventionRecurrenceDeleteDialog } from '../../../dialogs/intervention-recurrence-delete-dialog';
@@ -240,6 +241,7 @@ describe('InterventionsPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        DashboardPanelRegistry,
         {
           provide: THEME_PORT,
           useValue: {
@@ -1036,8 +1038,6 @@ describe('InterventionsPage', () => {
   });
 
   describe('bulk transition', () => {
-    it('should only count selected rows whose allowedTransitions include the target', async () => {
-      interventionList.set([
     it('routes a selected status command from the floating bar through the existing transition handler', async () => {
       interventionList.set([
         intervention({
@@ -1067,6 +1067,8 @@ describe('InterventionsPage', () => {
       expect(transition).toHaveBeenCalledTimes(1);
     });
 
+    it('should only count selected rows whose allowedTransitions include the target', async () => {
+      interventionList.set([
         intervention({
           id: 'i-1',
           responsible: '/api/organizations/org-1/members/member-1',
@@ -1753,6 +1755,10 @@ describe('InterventionsPage', () => {
       const calendarService = TestBed.inject(InterventionService);
       expect(calendarService.listCalendarWindow).toHaveBeenCalledTimes(1);
       expect(fixture.componentInstance['calendarMonth']()).not.toBeNull();
+      expect(TestBed.inject(DashboardPanelRegistry).panel()).not.toBeNull();
+      fixture.componentRef.setInput('view', 'list');
+      await fixture.whenStable();
+      expect(TestBed.inject(DashboardPanelRegistry).panel()).toBeNull();
     });
 
     it('should re-fetch the calendar window on calendarReload', async () => {

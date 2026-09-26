@@ -15,6 +15,9 @@ and safe-area changes update that measurement; the band can grow beyond its init
 Workflow footers must fit
 inside the remaining content area; they must not reserve the navigation band twice.
 The root integration places mobile toasts at the top center.
+The additive `mobileActions` slot renders feature tools inside Quick actions only on mobile.
+The application supplies `withAccountMenu()` there so its account drawer and presence preference
+remain accessible when the desktop sidebar is absent.
 Only one routed outlet exists and remains mounted when the interaction mode changes.
 Primary mobile destinations mark their own route with the typed
 `dashboardMobileNavigationRoot` data key. The shell suppresses contextual back navigation only
@@ -84,3 +87,21 @@ mobile visibility. Contributors must defer secondary data loading until the brow
 
 Use `@layouts/dashboard-layout` for the public contract and
 `DASHBOARD_SIDEBAR_EXTENSION_SLOT`; do not inject feature state into the shell.
+
+## Right contextual panel
+
+`provideDashboardLayoutSlots({ panel: [...] })` accepts labeled
+`SlotFeature<DashboardPanelContribution>` factories. The highest-priority active
+component owns the right column. Pages can instead register a `TemplateRef`
+through the shell-scoped `DashboardPanelRegistry`; `withDashboardPagePanel()`
+adapts that registration to the same slot. The template keeps its declaring
+component's signals, injector and handlers. Clearing is conditional on the
+registering template, so a departing page cannot clear its successor.
+
+At 1024px and wider the right column joins the same Spartan resizable group as
+the left extension and routed content. Each side starts at 24% and is bounded
+to 16–40%. Main starts at 76% with one side or 52% with both, and keeps at least
+60% or 40% respectively. No active right contribution means no right column or
+resize handle. Below 1024px the right column takes no space; contributors must
+offer their content in the routed page's narrow-screen presentation. The
+layout owns geometry and accessible resize handles, never feature data.

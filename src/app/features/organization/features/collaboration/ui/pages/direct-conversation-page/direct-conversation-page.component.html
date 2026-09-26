@@ -23,6 +23,7 @@
       <span hlmAvatarFallback class="text-[10px]">
         {{ isCounterpartResolved() ? counterpartName().charAt(0) : '?' }}
       </span>
+      <app-member-presence-indicator [status]="counterpartPresence()" />
     </hlm-avatar>
 
     <span
@@ -36,7 +37,14 @@
   </header>
 }
 
+@if (isMobileInteractionMode() && counterpartPresence()) {
+  <div class="px-4 py-2 text-xs text-muted-foreground">
+    <app-member-presence-indicator [status]="counterpartPresence()" [showLabel]="true" />
+  </div>
+}
+
 <app-message-thread
+  [presences]="presences()"
   [messages]="messages()"
   [loading]="thread.isLoading()"
   [hasMore]="thread.hasMore()"

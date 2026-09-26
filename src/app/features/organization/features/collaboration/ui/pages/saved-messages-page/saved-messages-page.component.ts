@@ -19,10 +19,13 @@ import {
   type SavedMessagesStoreType,
 } from '@features/organization/features/collaboration/state';
 import { renderMessageBodyHtml } from '@features/organization/features/collaboration/utils';
+import type { PresenceStatus } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
   type OrganizationContextPort,
 } from '@features/organization/ports';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -48,7 +51,14 @@ import type { SavedMessageItem } from './models';
  */
 @Component({
   selector: 'app-saved-messages-page',
-  imports: [NgIcon, ...HlmEmptyImports, RouterLink, HlmButton, HlmSkeleton],
+  imports: [
+    MemberPresenceIndicator,
+    NgIcon,
+    ...HlmEmptyImports,
+    RouterLink,
+    HlmButton,
+    HlmSkeleton,
+  ],
   providers: [
     SavedMessagesStore,
     provideIcons({ lucideArrowLeft, lucideBookmark, lucideBookmarkX }),
@@ -58,6 +68,17 @@ import type { SavedMessageItem } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SavedMessagesPage {
+  /**
+   * Property presences
+   * @readonly
+   * @description Visible bookmark authors registered independently of the open conversation.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() => this.items().map((item) => item.authorMemberId));
+
   //#region Properties
   /**
    * Property saved
@@ -100,6 +121,7 @@ export class SavedMessagesPage {
 
         return {
           id: message.id,
+          authorMemberId: message.authorMember.slice(message.authorMember.lastIndexOf('/') + 1),
           authorName: message.authorDisplayName ?? this.unknownLabel,
           createdAt: message.createdAt,
           bodyHtml: renderMessageBodyHtml(message.body, message.mentionNames, this.unknownLabel),

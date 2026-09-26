@@ -43,6 +43,7 @@ import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, CallStatus, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import type { PresenceStatus } from '@features/organization/models';
 import {
   ORGANIZATION_PERMISSION,
   ORGANIZATION_QUOTA_RESOURCE,
@@ -63,6 +64,7 @@ import {
   SubmissionGateService,
   type SubmissionGate,
 } from '@features/organization/services';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
 import {
   OrganizationQuotaStore,
   type OrganizationQuotaStoreType,
@@ -252,9 +254,9 @@ type OrganizationMembersKpiTile = {
     ...HlmDrawerImports,
     CollectionPagination,
     CollectionSearchBox,
+    CollectionSelectionBar,
     ...HlmSelectImports,
     CollectionToolbar,
-    CollectionSelectionBar,
     OrganizationInvitationRevokeDialog,
     OrganizationInvitationTable,
     OrganizationInviteDialog,
@@ -291,6 +293,20 @@ type OrganizationMembersKpiTile = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMembersPage {
+  /**
+   * Property presences
+   * @readonly
+   * @description Presence for the currently rendered roster; the other member-management tabs do not poll.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() => {
+      this.organizationId();
+      return this.activeTab() === 'members' ? this.store.members().map((member) => member.id) : [];
+    });
+
   /**
    * Property isMobileInteractionMode
    * @readonly
@@ -811,22 +827,6 @@ export class OrganizationMembersPage {
     () => $localize`:@@org.members.bulkRemoveButton:Remove (${this.selectedIds().size}:count:)`,
   );
 
-  /** The member the role-assignment dialog is open for, resolved reactively so a toggle's own result is reflected immediately. */
-  protected readonly rolesDialogMember: Signal<OrganizationMemberOutput | null> = computed(() => {
-    const id: string | null = this.rolesDialogMemberId();
-
-    return id === null ? null : (this.store.memberEntityMap()[id] ?? null);
-  });
-
-  /** The invite dialog's error banner, scoped to an invite actually attempted this session. */
-  protected readonly inviteServerError: Signal<StoreError | null> = this.inviteGate.error;
-
-  /** Whether the revoke-confirm dialog's own write is in flight — busy-disables its footer and blocks Escape/backdrop dismissal. */
-  protected readonly revokeDialogBusy: Signal<boolean> = this.revokeGate.isBusy;
-
-  /** The revoke-confirm dialog's own error, scoped to a revoke actually attempted this session — never a stale or unrelated mutation's failure. */
-  protected readonly revokeDialogError: Signal<StoreError | null> = this.revokeGate.error;
-
   /**
    * Property selectionActions
    * @readonly
@@ -850,6 +850,22 @@ export class OrganizationMembersPage {
           ]
         : [],
   );
+
+  /** The member the role-assignment dialog is open for, resolved reactively so a toggle's own result is reflected immediately. */
+  protected readonly rolesDialogMember: Signal<OrganizationMemberOutput | null> = computed(() => {
+    const id: string | null = this.rolesDialogMemberId();
+
+    return id === null ? null : (this.store.memberEntityMap()[id] ?? null);
+  });
+
+  /** The invite dialog's error banner, scoped to an invite actually attempted this session. */
+  protected readonly inviteServerError: Signal<StoreError | null> = this.inviteGate.error;
+
+  /** Whether the revoke-confirm dialog's own write is in flight — busy-disables its footer and blocks Escape/backdrop dismissal. */
+  protected readonly revokeDialogBusy: Signal<boolean> = this.revokeGate.isBusy;
+
+  /** The revoke-confirm dialog's own error, scoped to a revoke actually attempted this session — never a stale or unrelated mutation's failure. */
+  protected readonly revokeDialogError: Signal<StoreError | null> = this.revokeGate.error;
 
   /**
    * Property actionError
@@ -1176,22 +1192,6 @@ export class OrganizationMembersPage {
   }
 
   /**
-   * Method openInviteDialog
-   * @description Opens the invite dialog for a fresh session.
-   * @access protected
-   * @since 1.0.0
-   * @returns {void}
-   */
-  protected openInviteDialog(): void {
-    this.inviteGate.reset();
-    this.inviteDialogVisible.set(true);
-  }
-
-  /**
-   * Method onInviteDialogVisibleChange
-   * @description Keeps the dialog's error scope in sync with whether it is actually open.
-   * @access protected
-  /**
    * Method onSelectionActionRequested
    * @method onSelectionActionRequested
    * @description Rechecks roster access before opening the existing bulk-remove confirmation.
@@ -1212,6 +1212,22 @@ export class OrganizationMembersPage {
     }
   }
 
+  /**
+   * Method openInviteDialog
+   * @description Opens the invite dialog for a fresh session.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected openInviteDialog(): void {
+    this.inviteGate.reset();
+    this.inviteDialogVisible.set(true);
+  }
+
+  /**
+   * Method onInviteDialogVisibleChange
+   * @description Keeps the dialog's error scope in sync with whether it is actually open.
+   * @access protected
    * @since 1.0.0
    * @param {boolean} visible - The dialog's next visibility.
    * @returns {void}

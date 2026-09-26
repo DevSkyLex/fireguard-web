@@ -126,6 +126,7 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import { DashboardPanelRegistry } from '@layouts/dashboard-layout';
 import {
   Board,
   BoardCardDirective,
@@ -443,8 +444,8 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     CollectionFilterToggle,
     CollectionPagination,
     CollectionSearchBox,
-    CollectionToolbar,
     CollectionSelectionBar,
+    CollectionToolbar,
     ...HlmCheckboxImports,
     ...HlmDropdownMenuImports,
     ...HlmPopoverImports,
@@ -707,6 +708,27 @@ export class InterventionsPage {
    * @type {PageTabsService}
    */
   private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property calendarView
+   * @readonly
+   * @description Lazily mounted calendar owning the selected-day template and selection signals.
+   * @access private
+   * @since 14.0.0
+   * @type {Signal<InterventionCalendar | undefined>}
+   */
+  private readonly calendarView: Signal<InterventionCalendar | undefined> =
+    viewChild(InterventionCalendar);
+
+  /**
+   * Property panelRegistry
+   * @readonly
+   * @description Shell-scoped registry for the active Calendar tab's day panel.
+   * @access private
+   * @since 14.0.0
+   * @type {DashboardPanelRegistry}
+   */
+  private readonly panelRegistry: DashboardPanelRegistry = inject(DashboardPanelRegistry);
 
   /** The signed-in member, resolving the "my interventions" chip and the List tab's identity gates. */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
@@ -1385,28 +1407,6 @@ export class InterventionsPage {
   );
 
   /**
-   * Property assignAttemptIds
-   * @readonly
-   * @description Resources in the current assignment attempt; successful rows are excluded from retries.
-   * @access private
-   * @since 1.0.0
-   * @type {WritableSignal<readonly string[]>}
-   */
-  private readonly assignAttemptIds: WritableSignal<readonly string[]> = signal([]);
-
-  /**
-   * Property assignDialogBusy
-   * @readonly
-   * @description Keeps the assignment draft locked until every resource has a confirmed result.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<boolean>}
-   */
-  protected readonly assignDialogBusy: Signal<boolean> = computed(() =>
-    this.assignAttemptIds().some((id) => {
-      const status = this.store.mutationCallStates()[id]?.status;
-      return status !== 'success' && status !== 'error';
-  /**
    * Property selectionActions
    * @readonly
    * @description Current permission- and row-eligible bulk commands for the shared selection bar.
@@ -1470,6 +1470,28 @@ export class InterventionsPage {
     },
   );
 
+  /**
+   * Property assignAttemptIds
+   * @readonly
+   * @description Resources in the current assignment attempt; successful rows are excluded from retries.
+   * @access private
+   * @since 1.0.0
+   * @type {WritableSignal<readonly string[]>}
+   */
+  private readonly assignAttemptIds: WritableSignal<readonly string[]> = signal([]);
+
+  /**
+   * Property assignDialogBusy
+   * @readonly
+   * @description Keeps the assignment draft locked until every resource has a confirmed result.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly assignDialogBusy: Signal<boolean> = computed(() =>
+    this.assignAttemptIds().some((id) => {
+      const status = this.store.mutationCallStates()[id]?.status;
+      return status !== 'success' && status !== 'error';
     }),
   );
 
@@ -1887,6 +1909,17 @@ export class InterventionsPage {
    * @since 1.0.0
    */
   public constructor() {
+    effect((onCleanup): void => {
+      const template =
+        this.activeView() === 'calendar' ? this.calendarView()?.dayPanelTemplate() : undefined;
+      if (!template) return;
+      this.panelRegistry.register(
+        template,
+        $localize`:@@intervention.calendar.selectedDayPanelLabel:Selected day interventions`,
+      );
+      onCleanup(() => this.panelRegistry.clear(template));
+    });
+
     effect(() => {
       const organizationIri = `/api/organizations/${this.organizationId()}`;
       untracked(() => {
@@ -2218,6 +2251,8 @@ export class InterventionsPage {
         return $localize`:@@intervention.list.columnType:Type`;
       case 'site':
         return $localize`:@@intervention.list.columnSite:Site`;
+      case 'responsible':
+        return $localize`:@@intervention.list.columnResponsible:Responsible`;
       default:
         return $localize`:@@intervention.list.columnDue:Due`;
     }
@@ -2331,6 +2366,31 @@ export class InterventionsPage {
     this.selectedIds.set(ids);
   }
 
+  /**
+   * Method onSelectionActionRequested
+   * @method onSelectionActionRequested
+   * @description Routes a shared bar command through the existing permission-checked bulk handlers.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} id - Command id emitted after any mobile drawer closes.
+   * @returns {void}
+   */
+  protected onSelectionActionRequested(id: string): void {
+    if (this.activeView() !== 'list' || this.selectedIds().size === 0 || this.batchPending())
+      return;
+    if (id === 'assign') {
+      if (this.canAssign()) this.requestBulkAssign();
+      return;
+    }
+    if (id === 'delete') {
+      if (this.canDelete()) this.requestBulkDelete();
+      return;
+    }
+    if (!this.canTransition()) return;
+    const target = this.bulkTransitionTargets().find((status) => id === `transition:${status}`);
+    if (target) this.confirmBulkTransition(target);
+  }
+
   /** Opens the confirm dialog for a single row's Delete entry. */
   protected requestDelete(intervention: InterventionOutput): void {
     this.store.resetDeleteState();
@@ -2366,31 +2426,6 @@ export class InterventionsPage {
       );
 
       this.batchSettled.set(false);
-  /**
-   * Method onSelectionActionRequested
-   * @method onSelectionActionRequested
-   * @description Routes a shared bar command through the existing permission-checked bulk handlers.
-   * @access protected
-   * @since 1.0.0
-   * @param {string} id - Command id emitted after any mobile drawer closes.
-   * @returns {void}
-   */
-  protected onSelectionActionRequested(id: string): void {
-    if (this.activeView() !== 'list' || this.selectedIds().size === 0 || this.batchPending())
-      return;
-    if (id === 'assign') {
-      if (this.canAssign()) this.requestBulkAssign();
-      return;
-    }
-    if (id === 'delete') {
-      if (this.canDelete()) this.requestBulkDelete();
-      return;
-    }
-    if (!this.canTransition()) return;
-    const target = this.bulkTransitionTargets().find((status) => id === `transition:${status}`);
-    if (target) this.confirmBulkTransition(target);
-  }
-
       this.batchSelectedCount.set(this.selectedIds().size);
       this.batchNames.set(
         Object.fromEntries(
@@ -3338,6 +3373,9 @@ export class InterventionsPage {
       isOverdue,
       isDueSoon,
       siteName: intervention.site ? (this.siteDisplayMap().get(intervention.site) ?? null) : null,
+      responsible: intervention.responsible
+        ? (this.memberDisplayMap().get(intervention.responsible) ?? null)
+        : null,
       people: memberIris.map((iri: string): MemberAvatar => this.toPerson(iri)),
     };
   }

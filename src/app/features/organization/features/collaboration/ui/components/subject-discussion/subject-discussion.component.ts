@@ -30,6 +30,7 @@ import {
   buildMessageViews,
   memberIriOf,
 } from '@features/organization/features/collaboration/utils';
+import type { PresenceStatus } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
@@ -37,6 +38,7 @@ import {
   type MemberDirectoryPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
 import { MessageComposer } from '../../forms/message-composer';
 import { MessageThread } from '../message-thread';
 
@@ -109,6 +111,19 @@ import { MessageThread } from '../message-thread';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SubjectDiscussion {
+  /**
+   * Property presences
+   * @readonly
+   * @description Only displayed authors are registered while the embedded discussion is open.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() =>
+      this.active() ? this.messages().map((message) => message.authorId) : [],
+    );
+
   //#region Inputs
   /** The owning organization, bare UUID. */
   public readonly organizationId: InputSignal<string> = input.required<string>();

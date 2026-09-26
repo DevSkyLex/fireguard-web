@@ -19,6 +19,7 @@ import {
 } from '@features/organization/features/collaboration/state';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { MEMBER_PRESENCE_PORT } from '@features/organization/ports';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_CONTEXT_PORT,
@@ -85,6 +86,15 @@ describe('DirectConversationPage', () => {
   async function createPage(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
         provideInteractionCapabilities(),
         {
           provide: INTERACTION_CAPABILITIES_PORT,

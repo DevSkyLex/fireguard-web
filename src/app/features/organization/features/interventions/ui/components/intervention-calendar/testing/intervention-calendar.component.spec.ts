@@ -1,9 +1,26 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  type InputSignal,
+  type TemplateRef,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { StoreError } from '@core/request-state';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionCalendar } from '../intervention-calendar.component';
+
+@Component({
+  selector: 'app-intervention-day-panel-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class InterventionDayPanelHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
 
 const intervention = (overrides: Partial<InterventionOutput> = {}): InterventionOutput =>
   ({
@@ -100,7 +117,12 @@ describe('InterventionCalendar', () => {
     fixture.componentInstance['selectedDay'].set(today);
     await fixture.whenStable();
 
-    const panel = root().querySelector('[data-testid="intervention-calendar-day-panel"]');
+    const host = TestBed.createComponent(InterventionDayPanelHost);
+    host.componentRef.setInput('template', fixture.componentInstance.dayPanelTemplate());
+    host.detectChanges();
+    const panel = (host.nativeElement as HTMLElement).querySelector(
+      '[data-testid="intervention-calendar-day-panel"]',
+    );
     const rows = panel?.querySelectorAll('[data-testid="intervention-calendar-entry"]');
     expect(rows).toHaveLength(2);
     expect(panel?.textContent).toContain('Riser check');

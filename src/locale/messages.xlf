@@ -19702,6 +19702,9 @@
           <context context-type="linenumber">42,43</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.list.columnResponsible" datatype="html">
+        <source>Responsible</source>
+      </trans-unit>
       <trans-unit id="intervention.list.columnSite" datatype="html">
         <source>Site</source>
         <context-group purpose="location">
@@ -21154,6 +21157,9 @@
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-table/intervention-table.component.html</context>
           <context context-type="linenumber">234,238</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.list.noResponsible" datatype="html">
+        <source>No responsible assigned</source>
       </trans-unit>
       <trans-unit id="intervention.list.rowMenu" datatype="html">
         <source>Open menu</source>
@@ -25363,7 +25369,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="org.search.visibleDescription" datatype="html">
-        <source> Find operational records and open their detail page without leaving your current work. </source>
+        <source> Search your organization's operational records. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/dialogs/organization-global-search-dialog/organization-global-search-dialog.component.html</context>
           <context context-type="linenumber">25,30</context>
@@ -29901,13 +29907,6 @@
           <context context-type="linenumber">102,103</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="dashboard.panel.aria" datatype="html">
-        <source>Contextual panel</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/layouts/dashboard-layout/dashboard-layout.component.html</context>
-          <context context-type="linenumber">155,157</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="dashboard.mobileActions.open" datatype="html">
         <source>Open quick actions</source>
         <context-group purpose="location">
@@ -30145,6 +30144,7 @@
           <context context-type="sourcefile">src/app/shared/collection-filters/options/collection-filter-operator.constants.ts</context>
           <context context-type="linenumber">42</context>
         </context-group>
+      </trans-unit>
       <trans-unit id="shared.collectionSelection.countWithTotal" datatype="html">
         <source> Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Results: <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </source>
         <context-group purpose="location">
@@ -30186,7 +30186,6 @@
           <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.ts</context>
           <context context-type="linenumber">123</context>
         </context-group>
-      </trans-unit>
       </trans-unit>
       <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
         <source>Filter</source>
@@ -30563,6 +30562,57 @@
           <context context-type="sourcefile">src/app/shared/tree/ui/components/tree/tree.component.ts</context>
           <context context-type="linenumber">276</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="presence.active" datatype="html">
+        <source>Active</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/member-presence-indicator/member-presence-indicator.component.ts</context>
+          <context context-type="linenumber">50</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="presence.doNotDisturb" datatype="html">
+        <source>Do not disturb</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/member-presence-indicator/member-presence-indicator.component.ts</context>
+          <context context-type="linenumber">51</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="presence.offline" datatype="html">
+        <source>Offline</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/ui/components/member-presence-indicator/member-presence-indicator.component.ts</context>
+          <context context-type="linenumber">52</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.presence.doNotDisturb" datatype="html">
+        <source>Do not disturb</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
+          <context context-type="linenumber">50,52</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/ui/components/account-menu/account-menu.component.html</context>
+          <context context-type="linenumber">200,201</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="account.presence.saveError" datatype="html">
+        <source>Your presence preference could not be saved.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/account/state/presence-preference/presence-preference.store.ts</context>
+          <context context-type="linenumber">246</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="presence.invisible" datatype="html">
+        <source>Invisible</source>
+      </trans-unit>
+      <trans-unit id="dashboard.panel.resize" datatype="html">
+        <source>Resize contextual panel</source>
+      </trans-unit>
+      <trans-unit id="calendar.selectedDayPanelLabel" datatype="html">
+        <source>Selected day events</source>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.selectedDayPanelLabel" datatype="html">
+        <source>Selected day interventions</source>
       </trans-unit>
     </body>
   </file>

@@ -24,10 +24,15 @@
               class="rounded-full bg-muted text-sm font-semibold text-foreground"
               >{{ '' }}</span
             >
+            <app-member-presence-indicator [status]="presences()[person.memberId] ?? null" />
           </hlm-avatar>
         </div>
         <div hlmItemContent class="min-w-0">
           <div hlmItemTitle class="truncate text-base font-semibold">{{ person.displayName }}</div>
+          <app-member-presence-indicator
+            [status]="presences()[person.memberId] ?? null"
+            [showLabel]="true"
+          />
           @if (roles().length > 0 ? roles().join(', ') : null; as line) {
             <div hlmItemDescription class="truncate text-sm break-all">{{ line }}</div>
           }

@@ -36,6 +36,9 @@ import type { CalendarDisplayEvent } from '../../../models/calendar-display-even
 import type { CalendarEventDrop } from '../../../models/calendar-event-drop.interface';
 import type { CalendarFirstDayOfWeek } from '../../../models/calendar-first-day-of-week.type';
 import type { CalendarDaySummary } from './models/calendar-day-summary.interface';
+import type { CalendarMonthLayout } from './models/calendar-month-layout.interface';
+import type { CalendarWeekSegment } from './models/calendar-week-segment.interface';
+import { buildCalendarMonthLayout } from './utils/calendar-layout/calendar-layout.utils';
 import {
   buildCalendarMonthDays,
   startOfMonth,
@@ -43,19 +46,9 @@ import {
 } from './utils/calendar-month/calendar-month.utils';
 
 /**
- * How many chips a day cell shows before collapsing the rest into a "+N".
- */
-const MAX_CHIPS_PER_DAY = 2;
-
-/**
- * How many density dots the compact (phone) layout shows in place of chips.
- */
-const MAX_DOTS_PER_DAY = 3;
-
-/**
  * The summary shared by every day that carries no event.
  */
-const EMPTY_DAY: CalendarDaySummary = { count: 0, chips: [], dots: [], overflow: 0 };
+const EMPTY_DAY: CalendarDaySummary = { count: 0, dots: [], overflow: 0 };
 
 /**
  * A Sunday, so adding a JavaScript weekday index lands on that weekday.
@@ -91,7 +84,9 @@ const WEEKDAY_REFERENCE = new Date(2024, 0, 7);
  *   revealed on cell hover and on its own keyboard focus, whose dated
  *   `aria-label` keeps repeated cells distinguishable; activating it emits
  *   `createRequested` with the cell's `yyyy-MM-dd` day.
- * - **Chip drag** (`CalendarDisplayEvent.draggable`): a flagged chip can be
+ * - **Week bars** (`CalendarDisplayEvent.endDate`): multi-day events occupy
+ *   one uninterrupted bar per week, with matching lanes across week rows.
+ * - **Bar drag** (`CalendarDisplayEvent.draggable`): a flagged bar can be
  *   pointer-dragged onto another day cell, emitting `eventDropped`.
  *   **Accessibility contract**: HTML5 drag-and-drop is pointer-only by
  *   construction — no browser exposes a keyboard equivalent — and the chips
@@ -268,28 +263,10 @@ export class Calendar implements BrnCalendarBase<Date> {
     new Intl.DateTimeFormat(this.locale, { month: 'long', year: 'numeric' }).format(this.month()),
   );
 
-  /** What each day of the grid renders, keyed by its ISO day. */
-  private readonly summaries: Signal<ReadonlyMap<string, CalendarDaySummary>> = computed(() => {
-    const grouped = new Map<string, CalendarDisplayEvent[]>();
-    for (const event of this.events()) {
-      const day: string = toIsoDay(new Date(event.date));
-      const bucket: CalendarDisplayEvent[] = grouped.get(day) ?? [];
-      bucket.push(event);
-      grouped.set(day, bucket);
-    }
-
-    const summaries = new Map<string, CalendarDaySummary>();
-    for (const [day, bucket] of grouped) {
-      summaries.set(day, {
-        count: bucket.length,
-        chips: bucket.slice(0, MAX_CHIPS_PER_DAY),
-        dots: Array.from({ length: Math.min(bucket.length, MAX_DOTS_PER_DAY) }, (unused, i) => i),
-        overflow: Math.max(0, bucket.length - MAX_CHIPS_PER_DAY),
-      });
-    }
-
-    return summaries;
-  });
+  /** The grid's per-day counts and uninterrupted bars, resolved once per input change. */
+  private readonly layout: Signal<CalendarMonthLayout> = computed(() =>
+    buildCalendarMonthLayout(this.days(), this.events()),
+  );
   //#endregion
 
   //#region Spartan calendar contract
@@ -488,7 +465,19 @@ export class Calendar implements BrnCalendarBase<Date> {
    * @returns {CalendarDaySummary} The day's chips, dots and counts.
    */
   protected summaryOf(iso: string): CalendarDaySummary {
-    return this.summaries().get(iso) ?? EMPTY_DAY;
+    return this.layout().summaries.get(iso) ?? EMPTY_DAY;
+  }
+
+  /**
+   * Method segmentsStartingOn
+   * @description Returns the week segments whose visible bar begins in this cell.
+   * @access protected
+   * @since 2.4.0
+   * @param {string} iso - The cell's local ISO day.
+   * @returns {readonly CalendarWeekSegment[]} Bars anchored in the cell.
+   */
+  protected segmentsStartingOn(iso: string): readonly CalendarWeekSegment[] {
+    return this.layout().segmentsByStart.get(iso) ?? [];
   }
 
   /**

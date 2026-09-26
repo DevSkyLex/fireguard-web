@@ -1,3 +1,42 @@
+<ng-template #dayPanel>
+  <section class="flex h-full min-h-0 flex-col" data-testid="intervention-calendar-day-panel">
+    <div class="flex h-12 shrink-0 items-center border-b border-border px-4">
+      <h2 class="truncate text-sm font-semibold" data-testid="intervention-calendar-day-heading">
+        {{ selectedDayLabel() }}
+      </h2>
+    </div>
+    <div class="min-h-0 flex-1 overflow-y-auto p-3" aria-live="polite" aria-atomic="true">
+      @if (dayItems().length === 0) {
+        <p class="text-sm text-muted-foreground" i18n="@@intervention.calendar.dayEmpty">
+          Nothing scheduled this day.
+        </p>
+      } @else {
+        <app-intervention-calendar-entry-list
+          [items]="dayItems()"
+          [organizationId]="organizationId()"
+          [compact]="true"
+        />
+
+        @if (selectedDayOverflow() > 0 && selectedDay(); as day) {
+          <a
+            hlmBtn
+            variant="link"
+            size="sm"
+            class="self-start px-0 text-foreground"
+            data-testid="intervention-calendar-see-all"
+            [routerLink]="detailRouteBase()"
+            [queryParams]="dayListQueryParams(day)"
+          >
+            <span i18n="@@intervention.calendar.seeAllInList"
+              >See all {{ dayItems().length }} in list</span
+            >
+          </a>
+        }
+      }
+    </div>
+  </section>
+</ng-template>
+
 <div id="interventions-calendar" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   <div
     class="flex shrink-0 flex-wrap items-center gap-3"
@@ -77,9 +116,7 @@
       </div>
     </div>
   } @else {
-    <div
-      class="min-h-0 flex-1 flex-col gap-4 lg:grid-cols-[2fr_1fr] lg:grid-rows-[minmax(0,1fr)] mobile-ui:hidden desktop-ui:flex desktop-ui:lg:grid"
-    >
+    <div class="hidden min-h-0 flex-1 flex-col desktop-ui:lg:flex">
       @if (loading() && events().length === 0) {
         <hlm-skeleton class="h-96 w-full" />
       } @else {
@@ -92,53 +129,13 @@
           [events]="events()"
         />
       }
-
-      <div
-        hlmCard
-        class="self-start lg:sticky lg:top-4"
-        data-testid="intervention-calendar-day-panel"
-      >
-        <div hlmCardHeader>
-          <h2 hlmCardTitle data-testid="intervention-calendar-day-heading">
-            {{ selectedDayLabel() }}
-          </h2>
-        </div>
-        <div hlmCardContent class="flex flex-col gap-2" aria-live="polite" aria-atomic="true">
-          @if (dayItems().length === 0) {
-            <p class="text-sm text-muted-foreground" i18n="@@intervention.calendar.dayEmpty">
-              Nothing scheduled this day.
-            </p>
-          } @else {
-            <app-intervention-calendar-entry-list
-              [items]="dayItems()"
-              [organizationId]="organizationId()"
-            />
-
-            @if (selectedDayOverflow() > 0 && selectedDay(); as day) {
-              <a
-                hlmBtn
-                variant="link"
-                size="sm"
-                class="self-start px-0 text-foreground"
-                data-testid="intervention-calendar-see-all"
-                [routerLink]="detailRouteBase()"
-                [queryParams]="dayListQueryParams(day)"
-              >
-                <span i18n="@@intervention.calendar.seeAllInList"
-                  >See all {{ dayItems().length }} in list</span
-                >
-              </a>
-            }
-          }
-        </div>
-      </div>
     </div>
 
     <div
       id="interventions-calendar-agenda"
       data-testid="intervention-calendar-agenda"
       aria-live="polite"
-      class="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto desktop-ui:hidden"
+      class="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto desktop-ui:lg:hidden"
     >
       @if (loading() && events().length === 0) {
         <hlm-skeleton class="h-48 w-full" />

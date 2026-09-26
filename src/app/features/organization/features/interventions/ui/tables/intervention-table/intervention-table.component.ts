@@ -36,6 +36,7 @@ import {
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
@@ -101,6 +102,7 @@ import {
     HlmCheckbox,
     GateReasonDirective,
     InterventionTag,
+    ...HlmAvatarImports,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
     ...HlmItemImports,
@@ -470,6 +472,7 @@ export class InterventionTable {
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.PRIORITY)) widths.push('w-20');
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.TYPE)) widths.push('w-28');
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.SITE)) widths.push('w-32');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.RESPONSIBLE)) widths.push('w-40');
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.DUE)) widths.push('ms-auto w-20');
 
       widths.push('ms-auto size-6');
@@ -518,6 +521,7 @@ export class InterventionTable {
       this.column.PRIORITY,
       this.column.TYPE,
       this.column.SITE,
+      this.column.RESPONSIBLE,
       this.column.DUE,
     ].filter((id: InterventionTableColumn): boolean => this.isVisible(id)).length;
 

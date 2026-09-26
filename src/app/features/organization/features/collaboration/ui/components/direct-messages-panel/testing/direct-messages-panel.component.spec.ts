@@ -12,6 +12,7 @@ import {
   directConversationsStoreEvents,
 } from '@features/organization/features/collaboration/state';
 import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
+import { MEMBER_PRESENCE_PORT } from '@features/organization/ports';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_CONTEXT_PORT,
@@ -81,6 +82,15 @@ describe('DirectMessagesPanel', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
         provideZonelessChangeDetection(),
         {
           provide: INTERACTION_CAPABILITIES_PORT,

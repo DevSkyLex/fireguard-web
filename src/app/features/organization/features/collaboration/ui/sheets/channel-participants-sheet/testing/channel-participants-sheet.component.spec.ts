@@ -244,5 +244,16 @@ describe('ChannelParticipantsSheet', () => {
 
     expect(visibility).toEqual([false]);
   });
+
+  it('decorates confirmed participant presence independently of administrative role', async () => {
+    await open();
+    fixture.componentRef.setInput('participants', [participant({ role: 'owner' })]);
+    fixture.componentRef.setInput('presences', { 'member-1': 'offline' });
+    await fixture.whenStable();
+    expect(panel()?.querySelector('[data-slot="avatar-badge"]')?.getAttribute('aria-label')).toBe(
+      'Offline',
+    );
+    expect(panel()?.textContent).toContain('owner');
+  });
 });
 import { provideInteractionCapabilities } from '@core/interaction-capabilities';

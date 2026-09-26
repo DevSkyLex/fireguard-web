@@ -473,6 +473,7 @@
                   <app-organization-member-table
                     [regionalFormatting]="regionalFormatting()"
                     [items]="store.members()"
+                    [presences]="presences()"
                     [loading]="store.isLoading() && store.members().length === 0"
                     [selectedIds]="selectedIds()"
                     [canRemove]="canManageMembers()"
@@ -639,7 +640,6 @@
       </div>
     }
   </hlm-tabs>
-</div>
 
   @if (activeTab() === 'members' && canManageMembers()) {
     <app-collection-selection-bar
@@ -651,6 +651,7 @@
       (actionRequested)="onSelectionActionRequested($event)"
     />
   }
+</div>
 
 <ng-template #pageActions>
   @if (canManageMembers()) {

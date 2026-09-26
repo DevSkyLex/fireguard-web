@@ -33,6 +33,7 @@ import {
   type OrganizationMemberOutput,
   type OrganizationRoleOutput,
 } from '@features/organization/models';
+import { MEMBER_PRESENCE_PORT } from '@features/organization/ports';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationMemberListPreferencesService } from '@features/organization/services';
 import { OrganizationQuotaStore } from '@features/organization/state';
@@ -183,6 +184,15 @@ describe('OrganizationMembersPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
         {
           provide: THEME_PORT,
           useValue: {
@@ -639,16 +649,6 @@ describe('OrganizationMembersPage', () => {
     expect(fixture.componentInstance['selectedIds']().size).toBe(0);
   });
 
-  it('should no-op a bulk-remove request when nothing is selected', async () => {
-    await createPage();
-    fixture.componentInstance['requestBulkRemove']();
-    await fixture.whenStable();
-
-    expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
-  });
-
-  it('keeps a selected roster for a cancelled bulk removal', async () => {
-    await createPage();
   it('opens the existing confirmation from the floating selection bar and hides it when cleared', async () => {
     await createPage();
     fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
@@ -668,6 +668,16 @@ describe('OrganizationMembersPage', () => {
     ).toBeNull();
   });
 
+  it('should no-op a bulk-remove request when nothing is selected', async () => {
+    await createPage();
+    fixture.componentInstance['requestBulkRemove']();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['removeDialogState']()).toBe('closed');
+  });
+
+  it('keeps a selected roster for a cancelled bulk removal', async () => {
+    await createPage();
     fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
     fixture.componentInstance['requestBulkRemove']();
     expect(fixture.componentInstance['removeDialogState']()).toBe('open');

@@ -10,6 +10,7 @@ import type {
   ConversationOutput,
   MessageOutput,
 } from '@features/organization/features/collaboration/models';
+import { MEMBER_PRESENCE_PORT } from '@features/organization/ports';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { SavedMessagesPage } from '../saved-messages-page.component';
 
@@ -47,6 +48,16 @@ describe('SavedMessagesPage', () => {
   async function createPage(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
+
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: MessageService, useValue: service },

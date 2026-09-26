@@ -18,6 +18,7 @@ import type {
   OrganizationSearchOutput,
 } from '@features/organization/models';
 import { provideOrganizationFeature } from '@features/organization/organization.feature';
+import { MemberPresenceCoordinatorService } from '@features/organization/services/member-presence';
 import { ActiveOrganizationStore } from '@features/organization/state';
 import {
   OrganizationSearchStore,
@@ -126,6 +127,7 @@ describe('OrganizationGlobalSearchDialog', () => {
           },
         },
         provideOrganizationFeature(),
+        { provide: MemberPresenceCoordinatorService, useValue: {} },
         { provide: APP_BASE_HREF, useValue: '/fr/' },
         { provide: LOCALE_ID, useValue: 'fr' },
         { provide: ActiveOrganizationStore, useValue: { selectedOrganizationId } },

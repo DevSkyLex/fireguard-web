@@ -119,6 +119,66 @@ describe('Calendar', () => {
     expect(day?.textContent).toContain('+1');
   });
 
+  it('should draw one continuous segment per week for an event crossing a week boundary', async () => {
+    await create([
+      event({
+        id: 'long',
+        date: '2026-08-07T09:00:00',
+        endDate: '2026-08-12T17:00:00',
+      }),
+    ]);
+
+    const segments = root().querySelectorAll('[data-event-id="long"]');
+    expect(segments).toHaveLength(2);
+    expect(segments[0]?.closest('[data-day]')?.getAttribute('data-day')).toBe('2026-08-07');
+    expect(segments[0]?.getAttribute('data-span-days')).toBe('3');
+    expect(segments[1]?.closest('[data-day]')?.getAttribute('data-day')).toBe('2026-08-10');
+    expect(segments[1]?.getAttribute('data-span-days')).toBe('3');
+    expect(segments[0]?.classList.contains('rounded-e-none')).toBe(true);
+    expect(segments[1]?.classList.contains('rounded-s-none')).toBe(true);
+    expect(dayCell('2026-08-12')?.textContent).toContain('1 event');
+  });
+
+  it('should keep all-day midnight ends inclusive and timed midnight ends exclusive', async () => {
+    await create([
+      event({
+        id: 'timed',
+        date: '2026-08-10T10:00:00',
+        endDate: '2026-08-11T00:00:00',
+      }),
+      event({
+        id: 'all-day',
+        date: '2026-08-10T00:00:00',
+        endDate: '2026-08-11T00:00:00',
+        allDay: true,
+      }),
+    ]);
+
+    expect(dayCell('2026-08-10')?.textContent).toContain('2 events');
+    expect(dayCell('2026-08-11')?.textContent).toContain('1 event');
+    expect(root().querySelector('[data-event-id="all-day"]')?.getAttribute('data-span-days')).toBe(
+      '2',
+    );
+    expect(root().querySelector('[data-event-id="timed"]')?.getAttribute('data-span-days')).toBe(
+      '1',
+    );
+  });
+
+  it('should preserve lanes across weeks and count overlapping events hidden by the lane limit', async () => {
+    await create([
+      event({ id: 'long', date: '2026-08-07T09:00:00', endDate: '2026-08-12T17:00:00' }),
+      event({ id: 'second', date: '2026-08-08T09:00:00', endDate: '2026-08-10T17:00:00' }),
+      event({ id: 'hidden', date: '2026-08-09T09:00:00' }),
+    ]);
+
+    expect(root().querySelectorAll('[data-event-id="long"]')).toHaveLength(2);
+    expect(root().querySelectorAll('[data-event-id="long"][data-lane="0"]')).toHaveLength(2);
+    expect(root().querySelectorAll('[data-event-id="second"][data-lane="1"]')).toHaveLength(2);
+    expect(root().querySelector('[data-event-id="hidden"]')).toBeNull();
+    expect(dayCell('2026-08-09')?.textContent).toContain('3 events');
+    expect(dayCell('2026-08-09')?.textContent).toContain('+1');
+  });
+
   it('should mark today with a non-colour affordance', async () => {
     await create();
     fixture.componentRef.setInput('month', new Date(1999, 4, 15));

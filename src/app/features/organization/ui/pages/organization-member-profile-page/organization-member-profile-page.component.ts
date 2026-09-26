@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLock } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
+import type { PresenceStatus } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
@@ -19,6 +20,8 @@ import {
   type MemberDirectoryPort,
   type OrganizationContextPort,
 } from '@features/organization/ports';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -61,6 +64,7 @@ import { HlmItemImports } from '@shared/ui/item';
 @Component({
   selector: 'app-organization-member-profile-page',
   imports: [
+    MemberPresenceIndicator,
     ...HlmAvatarImports,
     ...HlmItemImports,
     NgIcon,
@@ -74,6 +78,17 @@ import { HlmItemImports } from '@shared/ui/item';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMemberProfilePage implements OnInit {
+  /**
+   * Property presences
+   * @readonly
+   * @description Presence for this resolved member; no directory or presence data is invented for unknown members.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() => (this.member() ? [this.memberId()] : []));
+
   //#region Inputs
   /**
    * Property memberId

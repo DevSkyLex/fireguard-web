@@ -10,10 +10,8 @@ import {
 } from '@angular/core';
 import { email, form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
-import type { StoreError } from '@core/request-state';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
-import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -45,7 +43,6 @@ import type { LoginFormValues } from './models';
 @Component({
   selector: 'app-login-form',
   imports: [
-    ...HlmAlertImports,
     RequiredMarker,
     RouterLink,
     FormField,
@@ -70,9 +67,7 @@ export class LoginForm {
    *
    * @description
    * Whether a sign-in attempt is in flight. It marks the submit control
-   * `aria-disabled` and `aria-busy` — never natively `disabled` — and hides the
-   * server error until the attempt completes, so an identical repeated failure
-   * remounts the alert and is announced again.
+   * `aria-disabled` and `aria-busy` — never natively `disabled` — while the request runs. Server failures use the app feedback system.
    *
    * @access public
    * @since 1.0.0
@@ -81,20 +76,6 @@ export class LoginForm {
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
 
-  /**
-   * Property serverError
-   * @readonly
-   *
-   * @description
-   * Whatever the store's sign-in call failed with, rendered above the fields
-   * so a rejected attempt is never silent. `null` while nothing has failed.
-   *
-   * @access public
-   * @since 1.1.0
-   *
-   * @type {InputSignal<StoreError | null>}
-   */
-  public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
   //#endregion
 
   //#region Outputs

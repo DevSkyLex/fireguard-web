@@ -8,15 +8,20 @@
       hlmItem
       size="sm"
       class="rounded-md mobile-ui:min-h-11 mobile-ui:rounded-none mobile-ui:px-0"
+      [class.flex-col]="compact()"
+      [class.items-start]="compact()"
       data-testid="intervention-calendar-entry"
       [routerLink]="detailLinkOf(item)"
       queryParamsHandling="preserve"
     >
-      <div hlmItemContent>
+      <div hlmItemContent [class.w-full]="compact()">
         <span
           hlmItemTitle
-          class="line-clamp-1 mobile-ui:line-clamp-none mobile-ui:text-base mobile-ui:wrap-anywhere"
-          ><span class="mobile-ui:hidden">{{ numberLabelOf(item) }} </span>{{ item.name }}</span
+          class="mobile-ui:line-clamp-none mobile-ui:text-base mobile-ui:wrap-anywhere"
+          [class.line-clamp-1]="!compact()"
+          [class.line-clamp-2]="compact()"
+          ><span class="whitespace-nowrap mobile-ui:hidden">{{ numberLabelOf(item) }} </span
+          >{{ item.name }}</span
         >
         <span hlmItemDescription
           ><span class="desktop-ui:hidden">{{ numberLabelOf(item) }} · </span

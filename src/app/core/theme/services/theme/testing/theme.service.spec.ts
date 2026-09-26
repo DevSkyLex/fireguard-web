@@ -107,7 +107,9 @@ describe('ThemeService', () => {
 
   it('should update the preference and DOM inside the snapshot callback and release styles on finish', async () => {
     const { start, pending } = installViewTransitions();
-    service.setTheme('dark');
+    service.setTheme('dark', { x: 1216, y: 36 });
+    expect(document.documentElement.style.getPropertyValue('--theme-origin-x')).toBe('1216px');
+    expect(document.documentElement.style.getPropertyValue('--theme-origin-y')).toBe('36px');
 
     expect(start).toHaveBeenCalledOnce();
     expect(service.theme()).toBe('light');

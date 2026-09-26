@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Service } from '@angular/core';
+import { LOCALE_ID, Service } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { Observable } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
@@ -50,6 +50,7 @@ describe('HydraApiService', () => {
         HydraApiService,
         TestResourceService,
         { provide: ENV_CONFIG, useValue: mockEnv },
+        { provide: LOCALE_ID, useValue: 'fr-CA' },
       ],
     });
     service = TestBed.inject(HydraApiService);
@@ -63,6 +64,18 @@ describe('HydraApiService', () => {
 
   it('should create', () => {
     expect(service).toBeTruthy();
+  });
+
+  it('sends the interface language and allows a request to override it', () => {
+    resourceService.list().subscribe();
+    const defaultRequest = httpMock.expectOne(baseUrl);
+    expect(defaultRequest.request.headers.get('Accept-Language')).toBe('fr');
+    defaultRequest.flush(mockCollection);
+
+    resourceService.list({ headers: { 'Accept-Language': 'es' } }).subscribe();
+    const overriddenRequest = httpMock.expectOne(baseUrl);
+    expect(overriddenRequest.request.headers.get('Accept-Language')).toBe('es');
+    overriddenRequest.flush(mockCollection);
   });
 
   it('preserves a problem detail when the response omits optional error metadata', () => {

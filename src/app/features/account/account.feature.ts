@@ -16,6 +16,7 @@ import {
   type NotificationCenterPort,
   type UserIdentityPort,
 } from '@features/account/ports';
+import { PresencePreferenceCoordinatorService } from '@features/account/services/presence-preference-coordinator';
 import { NotificationStore, UserStore } from '@features/account/state';
 
 /**
@@ -56,6 +57,7 @@ export function provideAccountFeature(): EnvironmentProviders {
     },
     provideAppInitializer((): void => {
       if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
+      inject(PresencePreferenceCoordinatorService);
       /**
        * Constant userIdentityPort
        * @const userIdentityPort

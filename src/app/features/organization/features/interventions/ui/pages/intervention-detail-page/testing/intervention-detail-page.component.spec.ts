@@ -67,6 +67,7 @@ import {
 } from '@features/organization/features/interventions/state';
 import { InterventionTableQueryStore } from '@features/organization/features/interventions/state/intervention-table-query';
 import { allowedTransitions } from '@features/organization/features/interventions/utils';
+import { MEMBER_PRESENCE_PORT, ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -394,6 +395,19 @@ describe('InterventionDetailPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganizationId: signal('org-1') },
+        },
         provideZonelessChangeDetection(),
         provideInteractionCapabilities(),
         {

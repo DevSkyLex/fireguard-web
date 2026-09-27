@@ -3,8 +3,8 @@ import type {
   InterventionOutput,
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
+import { formatRelativeTime } from '@shared/relative-time';
 import { resolveInterventionActivityActor } from '../intervention-activity-actor/intervention-activity-actor.utils';
-import { formatInterventionRelativeTime } from '../intervention-relative-time/intervention-relative-time.utils';
 
 /**
  * Function resolveInterventionResponsibleLabel
@@ -113,12 +113,12 @@ export function buildInterventionMetaLine(
   const last = activities.at(-1);
 
   if (last === undefined) {
-    const when: string = formatInterventionRelativeTime(intervention.updatedAt, locale);
+    const when: string = formatRelativeTime(intervention.updatedAt, locale);
 
     return $localize`:@@intervention.detail.metaUpdated:Updated ${when}:when: · revision ${revision}:revision:`;
   }
 
-  const when: string = formatInterventionRelativeTime(last.createdAt, locale);
+  const when: string = formatRelativeTime(last.createdAt, locale);
   const actorName: string | undefined = resolveInterventionActivityActor(
     last.actor,
     members,

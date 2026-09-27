@@ -19,11 +19,11 @@ import type {
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
 import {
-  formatInterventionRelativeTime,
   parseInterventionMentions,
   resolveInterventionActivityActor,
   resolveInterventionMentionMember,
 } from '@features/organization/features/interventions/utils';
+import { formatRelativeTime } from '@shared/relative-time';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBubbleImports } from '@shared/ui/bubble';
@@ -268,7 +268,7 @@ export class InterventionActivityThread {
           actor?.displayName ?? $localize`:@@intervention.list.unknownMember:Unknown member`,
         actorInitials: actor?.initials ?? '?',
         actorAvatar: actor?.avatarUrl ?? null,
-        relativeTime: formatInterventionRelativeTime(activity.createdAt, this.locale),
+        relativeTime: formatRelativeTime(activity.createdAt, this.locale),
         statusChange: activity.event === 'status_changed' ? this.statusChangeOf(activity) : null,
         rescheduleLabel: reschedule === null ? null : this.rescheduleWindowLabelOf(reschedule),
         icon:

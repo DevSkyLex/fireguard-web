@@ -28,25 +28,32 @@ const DEFAULT_PAGE_SIZES: readonly number[] = [30, 60, 100];
  * @class CollectionPagination
  *
  * @description
- * The pagination band shared by every collection surface's list page: a
- * "N of M row(s) shown" status, a rows-per-page `hlm-select`, a "Page X of Y"
- * indicator, numbered pages, and first/previous/next/last navigation built on the vendored
- * `hlmPagination` primitives. Presentational (`ARCHITECTURE.md` §10.3) — it
- * injects no store and calls no service; the host page owns pagination state
- * and reacts to `pageChanged`/`pageSizeChanged`. Native `hlmPaginationLink`
- * buttons mark the current page without supplying a router link. Five page
- * numbers surround the current page in the desktop interaction mode; three remain in
- * the mobile interaction mode, where first/last shortcuts are hidden to retain
- * comfortable touch targets. Mobile hides the indicator and navigation when there
- * is at most one page, keeping the live row count and page-size selector available.
- * The band itself wraps by available width.
- * Both ranges render identically during SSR and hydration; CSS selects their
+ * The pagination band shared by every collection surface's list page: a live
+ * "N of M row(s) shown" status, pluralized on {@link total} through a template ICU, a
+ * rows-per-page `hlm-select`, a "Page X of Y" indicator, numbered pages, and
+ * first/previous/next/last navigation built on the vendored `hlmPagination`
+ * primitives. Presentational (`ARCHITECTURE.md` §10.3) — it injects no store
+ * and calls no service; the host page owns pagination state and reacts to
+ * `pageChanged`/`pageSizeChanged`. Native `hlmPaginationLink` buttons mark the
+ * current page without supplying a router link. Five page numbers surround the
+ * current page in the desktop interaction mode; three remain in the mobile
+ * interaction mode, where first/last shortcuts are hidden to retain comfortable
+ * touch targets.
+ *
+ * The indicator and navigation are hidden entirely, in every interaction mode,
+ * once {@link pageCount} is at most one — a single page has nothing to page
+ * through. The rows-per-page select is hidden only once {@link total} cannot
+ * fill even the smallest offered size, or only one size is offered
+ * ({@link hidePageSizeSelector}): a member who already chose a larger page
+ * size must still be able to page back to a smaller one. The row count stays
+ * visible in every case. The band itself wraps by available width.
+ * Every range renders identically during SSR and hydration; CSS selects its
  * visibility. Moved from `features/organization` to `shared` as a
  * deliberate uniformity bet, recorded in `organization/FEATURE.md` § UI
  * Conventions — the folder held only organization consumers at the time of
  * the move.
  *
- * @version 2.1.0
+ * @version 2.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -187,18 +194,21 @@ export class CollectionPagination {
   );
 
   /**
-   * Property rowCountLabel
+   * Property hidePageSizeSelector
    * @readonly
-   * @description The localized "N of M row(s) shown" status text.
+   * @description
+   * Whether the rows-per-page select should be hidden: either only one size
+   * is offered, or {@link total} cannot fill even the smallest offered size.
+   * Never tied to {@link pageCount}, so a member who already picked a larger
+   * page size can still page back down to a smaller one.
    * @access protected
-   * @since 1.0.0
-   * @type {Signal<string>}
+   * @since 2.2.0
+   * @type {Signal<boolean>}
    */
-  protected readonly rowCountLabel: Signal<string> = computed<string>(() => {
-    const shown: number = this.shown();
-    const total: number = this.total();
+  protected readonly hidePageSizeSelector: Signal<boolean> = computed<boolean>(() => {
+    const sizes: readonly number[] = this.pageSizes();
 
-    return $localize`:@@org.listPagination.rowCount:${shown}:shown: of ${total}:total: row(s) shown`;
+    return sizes.length <= 1 || this.total() <= Math.min(...sizes);
   });
 
   /**

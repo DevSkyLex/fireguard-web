@@ -382,6 +382,8 @@ export class DashboardLayout {
    *
    * @description
    * The shared routed-content container and its standard vertical page spacing.
+   * Its horizontal gutter matches the page header and toolbar containers in every
+   * interaction mode, so the content edge never drifts from the title on tablet.
    * Sidebar workspaces such as messaging can request a flush, full-height canvas.
    *
    * @access protected
@@ -391,7 +393,7 @@ export class DashboardLayout {
    */
   protected readonly contentClass: Signal<string> = computed((): string =>
     hlm(
-      'container mx-auto flex min-h-0 flex-1 flex-col max-sm:px-4',
+      'container mx-auto flex min-h-0 flex-1 flex-col max-sm:px-4 mobile-ui:px-4 mobile-ui:md:px-6',
       this.sidebarExtension()?.contentPadding === false ? null : 'py-4 md:py-6',
     ),
   );

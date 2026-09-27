@@ -8,7 +8,7 @@
   >
     @if (showTitle() || pageActions.actions()) {
       <div
-        class="flex min-h-12 flex-wrap items-center justify-between gap-3 py-4 mobile-ui:pt-0 mobile-ui:pb-3"
+        class="flex min-h-12 flex-wrap items-center justify-between gap-3 py-4 mobile-ui:pt-0 mobile-ui:pb-3 mobile-ui:has-[app-dashboard-page-actions:empty]:hidden"
       >
         @if (showTitle() && title(); as pageTitle) {
           <h1

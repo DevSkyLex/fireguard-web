@@ -14,10 +14,11 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowRight, lucideAtSign, lucideBell } from '@ng-icons/lucide';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { InboxItemOutput } from '@features/account/models';
-import { displayInboxTitle } from '@features/account/utils/inbox-item-title';
 import { InboxStore, type InboxStoreType } from '@features/account/state';
+import { displayInboxTitle } from '@features/account/utils/inbox-item-title';
 import { inboxConversationLink } from '@features/account/utils/inbox-link';
 import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
+import { formatRelativeTime } from '@shared/relative-time';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
@@ -42,27 +43,6 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * @since 1.0.0
  */
 const UNREAD_DISPLAY_CEILING: number = 99;
-
-/**
- * Constant RELATIVE_UNITS
- *
- * @description
- * Thresholds for the relative timestamp, coarsest first. The first whose count
- * reaches 1 wins.
- *
- * @since 1.0.0
- */
-const RELATIVE_UNITS: ReadonlyArray<{
-  readonly unit: Intl.RelativeTimeFormatUnit;
-  readonly seconds: number;
-}> = [
-  { unit: 'year', seconds: 31_536_000 },
-  { unit: 'month', seconds: 2_592_000 },
-  { unit: 'week', seconds: 604_800 },
-  { unit: 'day', seconds: 86_400 },
-  { unit: 'hour', seconds: 3_600 },
-  { unit: 'minute', seconds: 60 },
-];
 
 /**
  * Component NotificationBell
@@ -383,9 +363,8 @@ export class NotificationBell {
    * @method relativeTime
    *
    * @description
-   * Turns a timestamp into "3 hours ago", through `Intl.RelativeTimeFormat`.
-   * Anything under a rounded minute reads "Just now": comparing against the raw
-   * threshold let 59.7s miss the minute branch and render as "60 seconds ago".
+   * Turns a timestamp into "3 hours ago", through the shared
+   * {@link formatRelativeTime} helper.
    *
    * @access protected
    * @since 1.0.0
@@ -395,19 +374,7 @@ export class NotificationBell {
    * @returns {string} A localized relative label, or the raw value if unparsable.
    */
   protected relativeTime(iso: string): string {
-    const parsed: number = Date.parse(iso);
-    if (Number.isNaN(parsed)) return iso;
-
-    const elapsed: number = (parsed - Date.now()) / 1000;
-    const format = new Intl.RelativeTimeFormat(this.locale, { numeric: 'auto' });
-
-    for (const { unit, seconds } of RELATIVE_UNITS) {
-      if (Math.round(Math.abs(elapsed) / seconds) >= 1) {
-        return format.format(Math.round(elapsed / seconds), unit);
-      }
-    }
-
-    return $localize`:@@account.notificationBell.justNow:Just now`;
+    return formatRelativeTime(iso, this.locale);
   }
   //#endregion
 }

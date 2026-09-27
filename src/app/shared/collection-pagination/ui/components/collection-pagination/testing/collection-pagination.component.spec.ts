@@ -4,8 +4,19 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { CollectionPagination } from '../collection-pagination.component';
 
+/** Minimal ResizeObserver stand-in: the select observes its trigger, and the test environment provides no implementation. */
+class ResizeObserverStub {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+}
+
 describe('CollectionPagination', () => {
   let fixture: ComponentFixture<CollectionPagination>;
+
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= ResizeObserverStub as unknown as typeof ResizeObserver;
+  });
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
@@ -25,6 +36,16 @@ describe('CollectionPagination', () => {
   function byTestId(testId: string): HTMLElement | null {
     return fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
   }
+
+  function pageSizeWrapper(): HTMLElement | null {
+    return byTestId('widgets-page-size')?.closest('.gap-2') ?? null;
+  }
+
+  it('should label the rows-per-page trigger through a rendered for attribute', () => {
+    const label: HTMLLabelElement | null = fixture.nativeElement.querySelector('label');
+
+    expect(label?.getAttribute('for')).toBe('widgets-page-size');
+  });
 
   it('should render the page indicator', () => {
     expect(byTestId('widgets-page-indicator')?.textContent).toContain('Page 2 of 5');
@@ -71,42 +92,86 @@ describe('CollectionPagination', () => {
     expect(fixture.componentInstance.page()).toBe(2);
   });
 
-  it('should render the row count', () => {
-    expect(byTestId('widgets-row-count')?.textContent).toContain('30 of 120 row(s) shown');
+  it('should render the row count, pluralized on the total row count', () => {
+    expect(byTestId('widgets-row-count')?.textContent?.trim()).toBe('30 of 120 rows shown');
+  });
+
+  it('should keep the plural form when a single row is shown out of a larger total', async () => {
+    fixture.componentRef.setInput('shown', 1);
+    await fixture.whenStable();
+
+    expect(byTestId('widgets-row-count')?.textContent?.trim()).toBe('1 of 120 rows shown');
+  });
+
+  it('should use the singular form when the total is a single row', async () => {
+    fixture.componentRef.setInput('total', 1);
+    fixture.componentRef.setInput('shown', 1);
+    await fixture.whenStable();
+
+    expect(byTestId('widgets-row-count')?.textContent?.trim()).toBe('1 of 1 row shown');
   });
 
   it.each([0, 1])(
-    'marks redundant paging for mobile-only hiding at %i pages and preserves collection controls',
+    'hides the page indicator and navigation entirely, in every mode, at %i page(s)',
     async (pageCount: number) => {
       const root: HTMLElement = fixture.nativeElement;
-      const pageSize = byTestId('widgets-page-size');
-      const emitted: number[] = [];
-      fixture.componentInstance.pageSizeChanged.subscribe((value) => emitted.push(value));
       fixture.componentRef.setInput('page', 1);
       fixture.componentRef.setInput('pageCount', pageCount);
       fixture.componentRef.setInput('total', pageCount === 0 ? 0 : 12);
       fixture.componentRef.setInput('shown', pageCount === 0 ? 0 : 12);
       await fixture.whenStable();
 
-      expect(byTestId('widgets-page-indicator')?.classList.contains('mobile-ui:hidden')).toBe(true);
-      expect(root.querySelector('nav')?.classList.contains('mobile-ui:hidden')).toBe(true);
-      expect(root.querySelector('nav')?.classList.contains('hidden')).toBe(false);
-      expect(byTestId('widgets-row-count')?.textContent?.trim()).toBe(
-        pageCount === 0 ? '0 of 0 row(s) shown' : '12 of 12 row(s) shown',
-      );
-      expect(byTestId('widgets-page-size')).toBe(pageSize);
-      fixture.debugElement.query(By.css('hlm-select')).triggerEventHandler('valueChange', 60);
-      expect(emitted).toEqual([60]);
-
-      fixture.componentRef.setInput('pageCount', 2);
-      await fixture.whenStable();
-      expect(byTestId('widgets-page-indicator')?.classList.contains('mobile-ui:hidden')).toBe(
-        false,
-      );
-      expect(root.querySelector('nav')?.classList.contains('mobile-ui:hidden')).toBe(false);
-      expect(byTestId('widgets-page-size')).toBe(pageSize);
+      expect(byTestId('widgets-page-indicator')?.classList.contains('hidden')).toBe(true);
+      expect(root.querySelector('nav')?.classList.contains('hidden')).toBe(true);
     },
   );
+
+  it('shows the page indicator and navigation once there is more than one page', async () => {
+    const root: HTMLElement = fixture.nativeElement;
+    fixture.componentRef.setInput('pageCount', 2);
+    await fixture.whenStable();
+
+    expect(byTestId('widgets-page-indicator')?.classList.contains('hidden')).toBe(false);
+    expect(root.querySelector('nav')?.classList.contains('hidden')).toBe(false);
+  });
+
+  it('keeps the rows-per-page selector reachable when there is only a single page', async () => {
+    const pageSize = byTestId('widgets-page-size');
+    const emitted: number[] = [];
+    fixture.componentInstance.pageSizeChanged.subscribe((value) => emitted.push(value));
+    fixture.componentRef.setInput('page', 1);
+    fixture.componentRef.setInput('pageCount', 1);
+    fixture.componentRef.setInput('total', 60);
+    fixture.componentRef.setInput('shown', 60);
+    await fixture.whenStable();
+
+    expect(pageSizeWrapper()?.classList.contains('hidden')).toBe(false);
+    expect(byTestId('widgets-page-size')).toBe(pageSize);
+    fixture.debugElement.query(By.css('hlm-select')).triggerEventHandler('valueChange', 30);
+    expect(emitted).toEqual([30]);
+  });
+
+  it('hides the rows-per-page selector once the total cannot fill the smallest offered size', async () => {
+    fixture.componentRef.setInput('total', 30);
+    await fixture.whenStable();
+
+    expect(pageSizeWrapper()?.classList.contains('hidden')).toBe(true);
+  });
+
+  it('shows the rows-per-page selector once the total exceeds the smallest offered size', async () => {
+    fixture.componentRef.setInput('total', 31);
+    await fixture.whenStable();
+
+    expect(pageSizeWrapper()?.classList.contains('hidden')).toBe(false);
+  });
+
+  it('hides the rows-per-page selector when only one size is offered, whatever the total', async () => {
+    fixture.componentRef.setInput('pageSizes', [30]);
+    fixture.componentRef.setInput('total', 1000);
+    await fixture.whenStable();
+
+    expect(pageSizeWrapper()?.classList.contains('hidden')).toBe(true);
+  });
 
   it('should localize the pagination nav accessible name', () => {
     const nav = fixture.nativeElement.querySelector('nav');

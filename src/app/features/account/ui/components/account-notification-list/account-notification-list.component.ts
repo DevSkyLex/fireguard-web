@@ -11,31 +11,11 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBell, lucideCheck, lucideCheckCheck, lucideTriangleAlert } from '@ng-icons/lucide';
 import type { NotificationOutput } from '@features/account/models';
+import { formatRelativeTime } from '@shared/relative-time';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-
-/**
- * Constant RELATIVE_UNITS
- *
- * @description
- * Thresholds for the relative timestamp, coarsest last. Each entry is the
- * number of seconds in one unit, so the first whose count reaches 1 wins.
- *
- * @since 1.0.0
- */
-const RELATIVE_UNITS: ReadonlyArray<{
-  readonly unit: Intl.RelativeTimeFormatUnit;
-  readonly seconds: number;
-}> = [
-  { unit: 'year', seconds: 31_536_000 },
-  { unit: 'month', seconds: 2_592_000 },
-  { unit: 'week', seconds: 604_800 },
-  { unit: 'day', seconds: 86_400 },
-  { unit: 'hour', seconds: 3_600 },
-  { unit: 'minute', seconds: 60 },
-];
 
 /**
  * Component AccountNotificationList
@@ -320,10 +300,8 @@ export class AccountNotificationList {
    * @method relativeTime
    *
    * @description
-   * Turns a timestamp into "3 hours ago". Uses the platform's
-   * `Intl.RelativeTimeFormat` rather than a date library: nothing else in the
-   * app formats dates yet, and this is the one place that needs it
-   * (`ARCHITECTURE.md` §2.9).
+   * Turns a timestamp into "3 hours ago", through the shared
+   * {@link formatRelativeTime} helper.
    *
    * @access protected
    * @since 1.0.0
@@ -333,19 +311,7 @@ export class AccountNotificationList {
    * @returns {string} A localized relative label, or the raw value if unparsable.
    */
   protected relativeTime(iso: string): string {
-    const parsed: number = Date.parse(iso);
-    if (Number.isNaN(parsed)) return iso;
-
-    const elapsed: number = (parsed - Date.now()) / 1000;
-    const format = new Intl.RelativeTimeFormat(this.locale, { numeric: 'auto' });
-
-    for (const { unit, seconds } of RELATIVE_UNITS) {
-      if (Math.abs(elapsed) >= seconds) {
-        return format.format(Math.round(elapsed / seconds), unit);
-      }
-    }
-
-    return format.format(Math.round(elapsed), 'second');
+    return formatRelativeTime(iso, this.locale);
   }
   //#endregion
 }

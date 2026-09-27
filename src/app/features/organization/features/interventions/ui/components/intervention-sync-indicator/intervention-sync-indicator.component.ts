@@ -27,8 +27,8 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { InterventionSyncCoordinatorService } from '@features/organization/features/interventions/services';
 import { InterventionOperationsStore } from '@features/organization/features/interventions/state/intervention-operations';
-import { formatInterventionRelativeTime } from '@features/organization/features/interventions/utils';
 import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
+import { formatRelativeTime } from '@shared/relative-time';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
@@ -371,9 +371,8 @@ export class InterventionSyncIndicator {
    *
    * @description
    * "Last synced <relative time>", or a neutral "Up to date" line before the
-   * first clean replay cycle. Reuses {@link formatInterventionRelativeTime},
-   * the same relative-time formatter the detail page's meta line and its
-   * activity thread already share — this indicator is its third consumer.
+   * first clean replay cycle. Reuses the shared {@link formatRelativeTime}
+   * helper.
    *
    * @access protected
    * @since 1.0.0
@@ -386,10 +385,7 @@ export class InterventionSyncIndicator {
       return $localize`:@@intervention.sync.upToDate:Up to date`;
     }
 
-    const relative: string = formatInterventionRelativeTime(
-      lastSyncedAt.toISOString(),
-      this.locale,
-    );
+    const relative: string = formatRelativeTime(lastSyncedAt.toISOString(), this.locale);
 
     return $localize`:@@intervention.sync.lastSynced:Last synced ${relative}:when:`;
   });

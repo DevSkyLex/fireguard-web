@@ -48,4 +48,12 @@ describe('CollectionSkeletonCards', () => {
     expect(root.querySelectorAll('hlm-skeleton')).toHaveLength(3);
     expect(root.querySelectorAll('hlm-item-separator')).toHaveLength(0);
   });
+
+  it('uses the default item variant, not a bordered box per item, per the flat-list norm', () => {
+    const root: HTMLElement = fixture.nativeElement as HTMLElement;
+    const items: NodeListOf<HTMLElement> = root.querySelectorAll('[data-slot="item"]');
+
+    expect(items.length).toBe(3);
+    items.forEach((item: HTMLElement) => expect(item.getAttribute('data-variant')).toBe('default'));
+  });
 });

@@ -2385,15 +2385,17 @@ export class ApiMock {
         await fulfillJson(route, 200, { receipts: [] });
       },
     );
-    for (const signal of ['delivery', 'typing']) {
-      await this.page.route(
-        `${API_BASE_URL}/api/conversations/${conversationId}/${signal}`,
-        async (route) => {
-          if (route.request().method() !== 'POST') return route.fallback();
-          await fulfillJson(route, 200, { accepted: true });
-        },
-      );
-    }
+    await Promise.all(
+      ['delivery', 'typing'].map((signal) =>
+        this.page.route(
+          `${API_BASE_URL}/api/conversations/${conversationId}/${signal}`,
+          async (route) => {
+            if (route.request().method() !== 'POST') return route.fallback();
+            await fulfillJson(route, 200, { accepted: true });
+          },
+        ),
+      ),
+    );
   }
 
   /**

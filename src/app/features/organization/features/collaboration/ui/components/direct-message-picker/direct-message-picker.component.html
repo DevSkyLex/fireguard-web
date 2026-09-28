@@ -64,7 +64,7 @@
 }
 <ng-template #recipientChoices>
   <hlm-command
-    class="gap-2 rounded-none p-0"
+    class="gap-2 rounded-none"
     [search]="query()"
     [filter]="passThroughFilter"
     (searchChange)="query.set($event)"
@@ -87,9 +87,11 @@
     @if (matches().length === 0) {
       <div hlmEmpty>
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideUsers" aria-hidden="true" />
-          </div>
+          @if (query().trim()) {
+            <app-state-illustration hlmEmptyMedia state="no-matches" size="sm" />
+          } @else {
+            <app-resource-illustration hlmEmptyMedia resource="member" size="sm" />
+          }
           <p hlmEmptyTitle i18n="@@messages.picker.emptyTitle">No one to message</p>
           <p hlmEmptyDescription i18n="@@messages.picker.emptyDescription">
             No active member of this organization matches.

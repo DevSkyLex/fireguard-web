@@ -44,9 +44,7 @@
       <div class="my-auto">
         <div hlmEmpty>
           <div hlmEmptyHeader>
-            <div hlmEmptyMedia variant="icon">
-              <ng-icon name="lucideMessageSquare" aria-hidden="true" />
-            </div>
+            <app-state-illustration hlmEmptyMedia state="no-messages" />
             <p hlmEmptyTitle i18n="@@messages.thread.emptyTitle">No messages yet</p>
             <p hlmEmptyDescription i18n="@@messages.thread.emptyDescription">
               Say hello to start the conversation.
@@ -83,6 +81,7 @@
               @for (entry of group.entries; track entry.message.id) {
                 <app-message-row
                   [message]="entry.message"
+                  [presence]="presences()[entry.message.authorId] ?? null"
                   [continuation]="entry.continuation"
                   [canReact]="canReact()"
                   [canWrite]="canWrite()"
@@ -100,6 +99,12 @@
             </div>
           }
         }
+      </div>
+    }
+
+    @if (typingLabel(); as label) {
+      <div hlmMarker class="py-1.5" role="status" data-testid="message-typing-indicator">
+        <span hlmMarkerContent class="shimmer text-muted-foreground">{{ label }}</span>
       </div>
     }
 

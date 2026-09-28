@@ -73,9 +73,16 @@
             <ng-icon [name]="provider" size="16" aria-hidden="true" />
           </span>
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-medium">{{ providerName(provider) }}</p>
+            <p class="text-sm font-medium">{{ providerLabel(provider) }}</p>
             @if (connection(provider); as connection) {
               <p class="truncate text-xs text-muted-foreground">{{ connection.email }}</p>
+              <p class="truncate text-xs text-muted-foreground">
+                <span i18n="@@account.signInMethods.connectedAt">Connected</span>
+                {{ connection.connected_at | date: 'mediumDate' }}
+                &middot;
+                <span i18n="@@account.signInMethods.lastUsedAt">Last used</span>
+                {{ connection.last_used_at | date: 'mediumDate' }}
+              </p>
             } @else {
               <p class="text-xs text-muted-foreground" i18n="@@account.signInMethods.notConnected">
                 Not connected

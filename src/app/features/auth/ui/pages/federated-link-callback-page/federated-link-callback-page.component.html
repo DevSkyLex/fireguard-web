@@ -1,46 +1,52 @@
-<div class="flex min-h-48 min-w-0 flex-col items-center justify-center gap-4 text-center">
+<div class="flex w-full max-w-md min-w-0 flex-col items-center gap-5 text-center">
   @if (callbackInvalid()) {
-    <div class="flex flex-col gap-2" role="alert">
-      <h1
-        class="text-xl font-semibold tracking-tight"
-        i18n="@@account.signInMethods.linkFailedTitle"
-      >
-        Provider couldn't be connected
-      </h1>
-      <p class="text-sm text-muted-foreground" i18n="@@account.signInMethods.linkFailedDescription">
-        The provider response is no longer valid. Start the connection again.
-      </p>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@account.signInMethods.linkFailedTitle">
+          Provider couldn't be connected
+        </p>
+        <p hlmEmptyDescription i18n="@@account.signInMethods.linkFailedDescription">
+          The provider response is no longer valid. Start the connection again.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <a
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          routerLink="/account/security"
+          i18n="@@account.signInMethods.back"
+        >
+          Back to Security
+        </a>
+      </div>
     </div>
-    <a
-      class="mobile-ui:min-h-11"
-      hlmBtn
-      variant="outline"
-      routerLink="/account/security"
-      i18n="@@account.signInMethods.back"
-    >
-      Back to Security
-    </a>
   } @else if (federatedStore.completeLinkError(); as error) {
-    <div class="flex flex-col gap-2" role="alert">
-      <h1
-        class="text-xl font-semibold tracking-tight"
-        i18n="@@account.signInMethods.linkFailedTitle"
-      >
-        Provider couldn't be connected
-      </h1>
-      <p class="text-sm text-muted-foreground">
-        {{ federatedErrorMessage(error.message) }}
-      </p>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@account.signInMethods.linkFailedTitle">
+          Provider couldn't be connected
+        </p>
+        <p hlmEmptyDescription>{{ federatedErrorMessage(error.message) }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <a
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          routerLink="/account/security"
+          i18n="@@account.signInMethods.back"
+        >
+          Back to Security
+        </a>
+      </div>
     </div>
-    <a
-      class="mobile-ui:min-h-11"
-      hlmBtn
-      variant="outline"
-      routerLink="/account/security"
-      i18n="@@account.signInMethods.back"
-    >
-      Back to Security
-    </a>
   } @else {
     <hlm-spinner
       class="text-primary"

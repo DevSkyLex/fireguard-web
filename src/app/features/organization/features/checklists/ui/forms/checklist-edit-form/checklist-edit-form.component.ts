@@ -21,6 +21,8 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideArrowDown, lucideArrowUp, lucideCircleAlert, lucidePlus } from '@ng-icons/lucide';
 import type {
   CreateChecklistInput,
   ChecklistItemDraft,
@@ -29,10 +31,13 @@ import type {
   UpdateChecklistInput,
 } from '@features/organization/features/checklists/models';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /** Matches `UpdateChecklistInput.name`'s server-side bound (`Assert\Length(max: 255)`). */
 const NAME_MAX_LENGTH: number = 255;
@@ -61,7 +66,12 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
  * {@link submitted}; the hosting dialog calls `ChecklistStore.update`
  * (`ARCHITECTURE.md` §10.5).
  *
- * @version 1.0.0
+ * The metadata and the item list sit in their own `hlmFieldSet`, separated by
+ * an `hlm-field-separator`, so the items zone is visually introduced instead
+ * of running on from the name field; the staged rows are numbered
+ * `hlmItem`s rather than a hand-rolled list.
+ *
+ * @version 2.0.0
  *
  * @example
  * ```html
@@ -78,7 +88,19 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
  */
 @Component({
   selector: 'app-checklist-edit-form',
-  imports: [RequiredMarker, FormField, HlmButton, HlmCheckbox, HlmInput, ...HlmFieldImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    NgIcon,
+    HlmButton,
+    HlmCheckbox,
+    HlmInput,
+    ...HlmAlertImports,
+    ...HlmFieldImports,
+    ...HlmItemImports,
+    ...HlmTooltipImports,
+  ],
+  providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideCircleAlert, lucidePlus })],
   templateUrl: './checklist-edit-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -13,7 +13,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { pickAvatarUrl } from '@core/api/utils';
 import type {
   InspectionEditState,
   InspectionEditTarget,
@@ -22,8 +22,16 @@ import type {
   UpdateInspectionInput,
 } from '@features/organization/features/inspections/models';
 import { InplaceField } from '@shared/inplace-field';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import { InspectionStatusTag } from '../inspection-status-tag';
 
@@ -40,40 +48,47 @@ function toDateInputValue(iso: string): string {
  * @class InspectionInformationPanel
  *
  * @description
- * The inspection's own record — result, performed date, notes and signature
- * — each edited where it is displayed (`ARCHITECTURE.md` §10.5,
- * `FEATURE.md` "The record is the edit surface"); the page owns the
- * draft-only edit gate (only a `draft` inspection may be edited) through the
- * {@link editable} input. Equipment, facility, checklist and the inspector
- * render as plain read-only rows: `UpdateInspectionInput` only accepts the
- * four editable properties, and `FEATURE.md` deliberately keeps the
- * remaining three out of this panel rather than open a picker with nothing
- * to pick from. The checklist row renders {@link checklistName} — resolved
- * by the page, since this panel takes inputs only — falling back to a
- * neutral "unknown" label when the id is set but the name could not be
- * resolved (e.g. the checklist was deleted).
+ * The inspection's own record, in two groups separated by `hlm-separator`:
+ * "Context" (checklist, inspector — equipment and facility already lead the
+ * page's own identity summary, so they are not repeated here) and
+ * "Findings" (result, performed date, notes, signature), each edited where
+ * it is displayed (`ARCHITECTURE.md` §10.5, `FEATURE.md` "The record is the
+ * edit surface"); the page owns the draft-only edit gate (only a `draft`
+ * inspection may be edited) through the {@link editable} input. The
+ * checklist and inspector render as plain read-only rows:
+ * `UpdateInspectionInput` only accepts the four editable properties, and
+ * `FEATURE.md` deliberately keeps the rest out of this panel rather than
+ * open a picker with nothing to pick from. The checklist row reads
+ * `inspection().checklistName` directly — filled on the single-resource GET
+ * — falling back to a neutral "unknown" label when the id is set but the
+ * name did not resolve (e.g. the checklist was deleted).
  *
  * `result` commits on selection (`pick`); the three free-value fields keep
  * an explicit Save (`confirm`) since none has a single "done" gesture. Only
  * one field is ever open at a time (`editState`), so `notes` and
  * `signature` share one text draft while `performedAt` keeps its own,
- * date-shaped one, mirroring `EquipmentInformationPanel`.
+ * date-shaped one, mirroring `EquipmentInformationPanel`. The two groups sit
+ * side by side once the content is wide enough (`@container`).
  *
- * @version 1.1.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-inspection-information-panel',
   imports: [
-    RouterLink,
+    OrgDatePipe,
     InplaceField,
     InspectionStatusTag,
+    ...HlmAvatarImports,
+    HlmBadge,
     HlmInput,
     ...HlmSelectImports,
+    ...HlmSeparatorImports,
     ...HlmTextareaImports,
   ],
   templateUrl: './inspection-information-panel.component.html',
+  host: { class: '@container block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InspectionInformationPanel {
@@ -113,31 +128,15 @@ export class InspectionInformationPanel {
     input.required<InspectionEditState>();
 
   /**
-   * Property organizationId
+   * Property regionalFormatting
    * @readonly
-   * @description The workspace owning the inspection, so the equipment/facility rows can link into their own records.
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
    * @access public
-   * @since 1.0.0
-   * @type {InputSignal<string>}
+   * @since 2.0.0
+   * @type {InputSignal<RegionalFormatSettings>}
    */
-  public readonly organizationId: InputSignal<string> = input.required<string>();
-
-  /**
-   * Property checklistName
-   * @readonly
-   *
-   * @description
-   * The inspection's checklist template name, resolved by the page. `null`
-   * either means no checklist is assigned (when {@link inspection}'s
-   * `checklistId` is also null) or that the name could not be resolved
-   * (e.g. the checklist was deleted) — the template tells the two apart by
-   * checking `checklistId` itself.
-   *
-   * @access public
-   * @since 1.1.0
-   * @type {InputSignal<string | null>}
-   */
-  public readonly checklistName: InputSignal<string | null> = input<string | null>(null);
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs
@@ -364,6 +363,39 @@ export class InspectionInformationPanel {
     if (target !== 'notes' && target !== 'signature') return null;
 
     return this.inspection()[target];
+  }
+
+  /**
+   * Method inspectorInitialsOf
+   * @description Avatar fallback initials derived from the inspector's display name.
+   * @access protected
+   * @since 2.0.0
+   * @returns {string} Up to two uppercase initials, or an empty string when there is no inspector.
+   */
+  protected inspectorInitialsOf(): string {
+    const name: string | undefined = this.inspection().inspector?.displayName;
+    if (!name) return '';
+
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part: string): string => part.charAt(0).toUpperCase())
+      .join('');
+  }
+
+  /**
+   * Method inspectorAvatarUrlOf
+   * @description The inspector's best-fit avatar URL for a small avatar, or `null` when none is available.
+   * @access protected
+   * @since 2.0.0
+   * @returns {string | null} The resolved avatar URL, or `null`.
+   */
+  protected inspectorAvatarUrlOf(): string | null {
+    const inspector = this.inspection().inspector;
+    if (!inspector) return null;
+
+    return pickAvatarUrl(inspector.avatarUrls, '64', inspector.avatarUrl);
   }
   //#endregion
 }

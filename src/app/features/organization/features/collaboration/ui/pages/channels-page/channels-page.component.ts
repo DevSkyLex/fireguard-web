@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal, type WritableSignal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideHash } from '@ng-icons/lucide';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmEmptyImports } from '@shared/ui/empty';
 
 /**
@@ -19,8 +18,7 @@ import { HlmEmptyImports } from '@shared/ui/empty';
  */
 @Component({
   selector: 'app-channels-page',
-  imports: [NgIcon, ...HlmEmptyImports, RouterOutlet],
-  providers: [provideIcons({ lucideHash })],
+  imports: [...HlmEmptyImports, RouterOutlet, StateIllustration],
   templateUrl: './channels-page.component.html',
   host: { class: 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden' },
   changeDetection: ChangeDetectionStrategy.OnPush,

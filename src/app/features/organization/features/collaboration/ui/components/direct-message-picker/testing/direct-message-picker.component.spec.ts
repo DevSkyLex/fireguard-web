@@ -2,6 +2,7 @@ import { computed, signal } from '@angular/core';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { DirectMessagePicker } from '../direct-message-picker.component';
 
@@ -62,7 +63,19 @@ describe('DirectMessagePicker', () => {
       configurable: true,
       value: vi.fn(),
     });
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
+    });
 
     mobile.set(false);
     TestBed.overrideProvider(INTERACTION_CAPABILITIES_PORT, {

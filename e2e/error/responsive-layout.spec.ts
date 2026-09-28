@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { expectNoHorizontalOverflow, setDarkTheme } from '../support/helpers/appearance';
+import { pagePolishScreenshotDir } from '../support/helpers/screenshot-dir';
 import { ApiMock } from '../support/mocks/api-mock';
 
 for (const viewport of [
@@ -57,3 +58,39 @@ for (const viewport of [
     });
   }
 }
+
+test.describe('visual evidence', () => {
+  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
+
+  test('renders the not-found page à 375px en mode sombre', async ({
+    page,
+    context,
+    baseURL,
+  }, testInfo) => {
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 812 });
+    await new ApiMock(page).mockUnauthenticatedSession();
+
+    await page.goto('/error/404');
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('#not-found-page')).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/error-404-375-dark.png`,
+    });
+  });
+
+  test('renders the not-found page à 1280px en mode clair', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await new ApiMock(page).mockUnauthenticatedSession();
+
+    await page.goto('/error/404');
+
+    await expect(page.locator('#not-found-page')).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/error-404-1280-light.png`,
+    });
+  });
+});

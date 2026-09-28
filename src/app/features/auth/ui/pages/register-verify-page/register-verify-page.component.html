@@ -1,10 +1,19 @@
-<div id="register-verify-page" class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8">
-  <app-page-heading
-    heading="Confirm your email"
-    i18n-heading="@@auth.registerVerify.title"
-    description="Enter the code we just sent you."
-    i18n-description="@@auth.registerVerify.subtitle"
-  />
+<div
+  id="register-verify-page"
+  class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8 mobile-ui:gap-6"
+>
+  <app-page-heading heading="Confirm your email" i18n-heading="@@auth.registerVerify.title">
+    @if (registerStore.maskedRecipient(); as sentTo) {
+      <p class="text-sm text-muted-foreground">
+        <span i18n="@@auth.registerVerify.sentTo">We sent a code to</span>
+        <span class="mt-1 block font-medium break-all text-foreground">{{ sentTo }}</span>
+      </p>
+    } @else {
+      <p class="text-sm text-muted-foreground" i18n="@@auth.registerVerify.subtitle">
+        Enter the code we just sent you.
+      </p>
+    }
+  </app-page-heading>
 
   <app-otp-form
     [pending]="registerStore.isVerifying()"

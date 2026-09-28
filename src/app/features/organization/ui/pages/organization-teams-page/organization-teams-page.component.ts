@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  LOCALE_ID,
   computed,
   effect,
   inject,
@@ -155,6 +156,9 @@ export class OrganizationTeamsPage {
   /** Registers {@link pageActions} on the shell header. */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
+  /** Selects the plural form for {@link subtitle}, deciding 0 correctly for locales (French included) where it takes the singular form. */
+  private readonly pluralRules: Intl.PluralRules = new Intl.PluralRules(inject(LOCALE_ID));
+
   /** The "New team" button, registered on the shell header instead of an in-page title band. */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
@@ -190,8 +194,8 @@ export class OrganizationTeamsPage {
   protected readonly subtitle: Signal<string> = computed<string>(() => {
     const total: number = this.store.teams().length;
 
-    return total === 1
-      ? $localize`:@@org.teams.countOne:1 team`
+    return this.pluralRules.select(total) === 'one'
+      ? $localize`:@@org.teams.countSingular:${total}:count: team`
       : $localize`:@@org.teams.countMany:${total}:count: teams`;
   });
 

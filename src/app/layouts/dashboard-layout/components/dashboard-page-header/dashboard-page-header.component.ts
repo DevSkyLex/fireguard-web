@@ -33,13 +33,16 @@ import { DashboardPageTabs } from '../dashboard-page-tabs';
  * `DashboardPageActions` itself renders nothing when the activated page
  * registered none — a route always sets a title in this app, but the guard
  * keeps the band from showing a bare heading tag for one that does not.
+ * In mobile interaction mode, where the title lives in the toolbar instead,
+ * the row collapses to nothing (`mobile-ui:has-[app-dashboard-page-actions:empty]:hidden`)
+ * rather than reserving an empty band for a member with no registered action.
  *
  * Its inner `container` is the same one used by routed content, so the title
  * starts on the same vertical line without a second horizontal inset. A bottom
  * border separates the subtle neutral background from content, using the muted
  * surface token at quarter opacity to gently lift the band in dark mode.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @example
  * ```html

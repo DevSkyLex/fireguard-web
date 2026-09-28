@@ -11,7 +11,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideCircleAlert, lucideHistory } from '@ng-icons/lucide';
+import { lucideArrowRight, lucideCircleAlert } from '@ng-icons/lucide';
 import type {
   InterventionActivityOutput,
   InterventionMentionSegment,
@@ -19,11 +19,17 @@ import type {
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
 import {
-  formatInterventionRelativeTime,
   parseInterventionMentions,
   resolveInterventionActivityActor,
   resolveInterventionMentionMember,
 } from '@features/organization/features/interventions/utils';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { formatRelativeDays, formatRelativeTime } from '@shared/relative-time';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBubbleImports } from '@shared/ui/bubble';
@@ -32,6 +38,7 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmMessageImports } from '@shared/ui/message';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { InterventionTag } from '../intervention-tag';
 import {
   INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON,
@@ -75,7 +82,12 @@ const SKELETON_ROW_COUNT: number = 3;
  * displayed by name with their role as supporting context; malformed or
  * unknown tokens use the same neutral fallback as unattributed actors.
  *
- * @version 3.1.0
+ * A row's relative timestamp carries the absolute instant as an
+ * `hlmTooltip`, read in the organization's timezone, on a focusable host so
+ * it reaches keyboard users too; a day separator marks the first row of each
+ * new calendar day, in the same timezone.
+ *
+ * @version 3.2.0
  *
  * @example
  * ```html
@@ -93,6 +105,7 @@ const SKELETON_ROW_COUNT: number = 3;
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    StateIllustration,
     HlmSkeleton,
     InterventionTag,
     ...HlmAvatarImports,
@@ -100,13 +113,14 @@ const SKELETON_ROW_COUNT: number = 3;
     ...HlmMessageImports,
     ...HlmBubbleImports,
     ...HlmAlertImports,
+    ...HlmTooltipImports,
     HlmButton,
+    OrgDatePipe,
   ],
   providers: [
     provideIcons({
       lucideArrowRight,
       lucideCircleAlert,
-      lucideHistory,
       ...INTERVENTION_ACTIVITY_EVENT_ICONS,
     }),
   ],
@@ -176,6 +190,17 @@ export class InterventionActivityThread {
    * @type {InputSignal<boolean>}
    */
   public readonly hasOlder: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, driving each row's absolute-time tooltip and the day separators' "today"/"yesterday" reference. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 3.2.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs
@@ -254,6 +279,9 @@ export class InterventionActivityThread {
     readonly InterventionActivityRowViewModel[]
   >(() => {
     const members: readonly MemberSelectOption[] = this.members();
+    const timezone: string = this.regionalFormatting().timezone;
+    const todayKey: string = this.dayKeyOf(new Date().toISOString(), timezone);
+    let previousDayKey: string | null = null;
 
     return this.activities().map((activity: InterventionActivityOutput) => {
       const actor: MemberSelectOption | null = resolveInterventionActivityActor(
@@ -261,6 +289,10 @@ export class InterventionActivityThread {
         members,
       );
       const reschedule = activity.event === 'rescheduled' ? this.rescheduleOf(activity) : null;
+      const dayKey: string = this.dayKeyOf(activity.createdAt, timezone);
+      const dayLabel: string | null =
+        dayKey === previousDayKey ? null : this.dayLabelOf(dayKey, todayKey);
+      previousDayKey = dayKey;
 
       return {
         activity,
@@ -268,7 +300,7 @@ export class InterventionActivityThread {
           actor?.displayName ?? $localize`:@@intervention.list.unknownMember:Unknown member`,
         actorInitials: actor?.initials ?? '?',
         actorAvatar: actor?.avatarUrl ?? null,
-        relativeTime: formatInterventionRelativeTime(activity.createdAt, this.locale),
+        relativeTime: formatRelativeTime(activity.createdAt, this.locale),
         statusChange: activity.event === 'status_changed' ? this.statusChangeOf(activity) : null,
         rescheduleLabel: reschedule === null ? null : this.rescheduleWindowLabelOf(reschedule),
         icon:
@@ -278,6 +310,7 @@ export class InterventionActivityThread {
           INTERVENTION_ACTIVITY_EVENT_ICON_CLASS[activity.event] ??
           INTERVENTION_ACTIVITY_EVENT_FALLBACK_ICON_CLASS,
         bodySegments: activity.kind === 'system' ? [] : this.bodySegmentsOf(activity.body, members),
+        dayLabel,
       };
     });
   });
@@ -395,6 +428,52 @@ export class InterventionActivityThread {
       iso === null ? '—' : this.dateFormat.format(new Date(iso));
 
     return `${label(window.plannedStartAt)} → ${label(window.dueAt)}`;
+  }
+
+  /**
+   * Method dayKeyOf
+   *
+   * @description
+   * The calendar day of an ISO instant in `timezone`, as `'YYYY-MM-DD'` — the
+   * key {@link rows} groups entries by and compares against
+   * {@link dayLabelOf}'s reference day. Falls back to the runtime's own
+   * timezone for an unresolvable IANA name, the same degradation
+   * `appOrgDate` already accepts.
+   *
+   * @access private
+   * @since 3.2.0
+   *
+   * @param {string} iso - The instant to resolve.
+   * @param {string} timezone - The organization's configured timezone.
+   *
+   * @returns {string} The instant's calendar day in that timezone.
+   */
+  private dayKeyOf(iso: string, timezone: string): string {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(iso));
+    } catch {
+      return new Intl.DateTimeFormat('en-CA').format(new Date(iso));
+    }
+  }
+
+  /**
+   * Method dayLabelOf
+   * @description Phrases a calendar day as "Today", "Yesterday", or an absolute date once it is further back.
+   * @access private
+   * @since 3.2.0
+   * @param {string} dayKey - The row's calendar day, as `'YYYY-MM-DD'`.
+   * @param {string} todayKey - Today's calendar day in the same timezone.
+   * @returns {string} The localized day separator label.
+   */
+  private dayLabelOf(dayKey: string, todayKey: string): string {
+    const diffDays: number = Math.round(
+      (Date.parse(`${dayKey}T00:00:00.000Z`) - Date.parse(`${todayKey}T00:00:00.000Z`)) /
+        86_400_000,
+    );
+
+    return diffDays >= -1 && diffDays <= 0
+      ? formatRelativeDays(dayKey, todayKey, this.locale)
+      : this.dateFormat.format(new Date(`${dayKey}T00:00:00.000Z`));
   }
   //#endregion
 }

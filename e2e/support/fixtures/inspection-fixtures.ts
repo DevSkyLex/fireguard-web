@@ -88,3 +88,47 @@ export function draftInspectionOutput(
     ...overrides,
   });
 }
+
+export interface NonConformityStatisticsOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly bySeverity: Readonly<
+    Record<
+      'low' | 'medium' | 'high' | 'critical',
+      { readonly open: number; readonly resolved: number }
+    >
+  >;
+  readonly byFacility: ReadonlyArray<{
+    readonly id: string;
+    readonly name?: string | null;
+    readonly open: number;
+    readonly critical: number;
+  }>;
+  readonly byEquipmentType: ReadonlyArray<{ readonly type: string; readonly open: number }>;
+  readonly resolution: {
+    readonly averageDays?: number | null;
+    readonly medianDays?: number | null;
+  };
+  readonly slaBreachedOpen: number;
+}
+
+/** The organization-wide non-conformity KPI snapshot behind the inspections analytics page. */
+export function nonConformityStatisticsOutput(
+  overrides: Partial<NonConformityStatisticsOutputFixture> = {},
+): NonConformityStatisticsOutputFixture {
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/non-conformities/statistics`,
+    '@type': 'NonConformityStatistics',
+    bySeverity: {
+      low: { open: 1, resolved: 2 },
+      medium: { open: 2, resolved: 1 },
+      high: { open: 1, resolved: 0 },
+      critical: { open: 1, resolved: 1 },
+    },
+    byFacility: [{ id: E2E_FACILITY_ID, name: 'North Building', open: 3, critical: 1 }],
+    byEquipmentType: [{ type: 'fire_extinguisher', open: 3 }],
+    resolution: { averageDays: 4.5, medianDays: 3 },
+    slaBreachedOpen: 1,
+    ...overrides,
+  };
+}

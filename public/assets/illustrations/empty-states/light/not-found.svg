@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-state-not-found-light-title fg-state-not-found-light-description" class="fg-state-not-found-light">
+  <title id="fg-state-not-found-light-title">Not found</title>
+  <desc id="fg-state-not-found-light-description">A signpost whose lit board only asks a question.</desc>
+  <defs>
+    <linearGradient id="fg-state-not-found-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
+
+
+  </defs>
+  <style>
+    .fg-state-not-found-light { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-state-not-found-light path { vector-effect: non-scaling-stroke; }
+    .fg-state-not-found-light .t { fill: #ffffff; }
+    .fg-state-not-found-light .l { fill: #f6f6f7; }
+    .fg-state-not-found-light .r { fill: #efeff1; }
+    .fg-state-not-found-light .hole { fill: #ececef; }
+    .fg-state-not-found-light .cy { fill: url(#fg-state-not-found-light-cy); }
+    .fg-state-not-found-light .af { fill: #5f5f68; }
+    .fg-state-not-found-light .kf { fill: #85858e; }
+    .fg-state-not-found-light .eo { fill-rule: evenodd; }
+    .fg-state-not-found-light .o { stroke: #8a8a93; stroke-width: 1.35; }
+    .fg-state-not-found-light .o2 { stroke: #a8a8b0; stroke-width: 1.1; }
+    .fg-state-not-found-light .e { stroke: #dcdce0; stroke-width: 1; }
+    .fg-state-not-found-light .d { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-not-found-light .dh { stroke: #dcdce0; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-not-found-light .g { stroke: #a8a8b0; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-state-not-found-light .k { stroke: #85858e; stroke-width: 1.2; }
+    .fg-state-not-found-light .ka, .fg-state-not-found-light .oa { stroke: #5f5f68; stroke-width: 1.35; }
+    .fg-state-not-found-light .da { stroke: #5f5f68; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-not-found-light .ga { stroke: #5f5f68; stroke-width: 1; stroke-dasharray: 3 3; }
+  </style>
+  <path class="r" d="M211.8 254.6C211.8 262.8 206.2 270.7 196.1 276.5C186 282.3 172.4 285.6 158.2 285.6L158.2 296C172.4 296 186 292.7 196.1 286.9C206.2 281.1 211.8 273.2 211.8 265Z"/>
+  <path class="l" d="M158.2 285.6C143.9 285.6 130.3 282.3 120.2 276.5C110.1 270.7 104.5 262.8 104.5 254.6L104.5 265C104.5 273.2 110.1 281.1 120.2 286.9C130.3 292.7 143.9 296 158.2 296Z"/>
+  <path class="t" d="M104.5 254.6C104.5 246.4 110.1 238.5 120.2 232.7C130.3 226.9 143.9 223.6 158.2 223.6C172.4 223.6 186 226.9 196.1 232.7C206.2 238.5 211.8 246.4 211.8 254.6C211.8 262.8 206.2 270.7 196.1 276.5C186 282.3 172.4 285.6 158.2 285.6C143.9 285.6 130.3 282.3 120.2 276.5C110.1 270.7 104.5 262.8 104.5 254.6Z"/>
+  <path class="e" d="M211.8 254.6C211.8 262.8 206.2 270.7 196.1 276.5C186 282.3 172.4 285.6 158.2 285.6C143.9 285.6 130.3 282.3 120.2 276.5C110.1 270.7 104.5 262.8 104.5 254.6M158.2 285.6L158.2 296M104.5 254.6L104.5 265"/>
+  <path class="o" d="M104.5 254.6C104.5 246.4 110.1 238.5 120.2 232.7C130.3 226.9 143.9 223.6 158.2 223.6C172.4 223.6 186 226.9 196.1 232.7C206.2 238.5 211.8 246.4 211.8 254.6L211.8 265C211.8 273.2 206.2 281.1 196.1 286.9C186 292.7 172.4 296 158.2 296C143.9 296 130.3 292.7 120.2 286.9C110.1 281.1 104.5 273.2 104.5 265Z"/>
+  <path class="l" d="M150.9 96L257.6 34.4L250.3 30.3L143.7 91.8ZM257.6 34.4L281 45.9L273.8 41.7L250.3 30.3ZM281 45.9L257.6 84.5L250.3 80.3L273.8 41.7ZM257.6 84.5L150.9 146.1L143.7 141.9L250.3 80.3ZM150.9 146.1L150.9 96L143.7 91.8L143.7 141.9Z"/>
+  <path class="o2" d="M143.7 91.8L250.3 30.3L273.8 41.7L250.3 80.3L143.7 141.9ZM281 45.9L273.8 41.7M150.9 146.1L143.7 141.9"/>
+  <path class="t" d="M150.9 96L257.6 34.4L281 45.9L257.6 84.5L150.9 146.1Z"/>
+  <path class="o2" d="M150.9 96L257.6 34.4L281 45.9L257.6 84.5L150.9 146.1Z"/>
+  <path class="r" d="M167.1 29.2C167.1 30.6 166.2 31.9 164.5 32.9C162.8 33.8 160.5 34.4 158.2 34.4L158.2 259.7C160.5 259.7 162.8 259.2 164.5 258.2C166.2 257.3 167.1 256 167.1 254.6Z"/>
+  <path class="l" d="M158.2 34.4C155.8 34.4 153.5 33.8 151.8 32.9C150.2 31.9 149.2 30.6 149.2 29.2L149.2 254.6C149.2 256 150.2 257.3 151.8 258.2C153.5 259.2 155.8 259.7 158.2 259.7Z"/>
+  <path class="t" d="M149.2 29.2C149.2 27.8 150.2 26.5 151.8 25.6C153.5 24.6 155.8 24.1 158.2 24.1C160.5 24.1 162.8 24.6 164.5 25.6C166.2 26.5 167.1 27.8 167.1 29.2C167.1 30.6 166.2 31.9 164.5 32.9C162.8 33.8 160.5 34.4 158.2 34.4C155.8 34.4 153.5 33.8 151.8 32.9C150.2 31.9 149.2 30.6 149.2 29.2Z"/>
+  <path class="e" d="M167.1 29.2C167.1 30.6 166.2 31.9 164.5 32.9C162.8 33.8 160.5 34.4 158.2 34.4C155.8 34.4 153.5 33.8 151.8 32.9C150.2 31.9 149.2 30.6 149.2 29.2M158.2 34.4L158.2 259.7M149.2 29.2L149.2 254.6"/>
+  <path class="o" d="M149.2 29.2C149.2 27.8 150.2 26.5 151.8 25.6C153.5 24.6 155.8 24.1 158.2 24.1C160.5 24.1 162.8 24.6 164.5 25.6C166.2 26.5 167.1 27.8 167.1 29.2L167.1 254.6C167.1 256 166.2 257.3 164.5 258.2C162.8 259.2 160.5 259.7 158.2 259.7C155.8 259.7 153.5 259.2 151.8 258.2C150.2 257.3 149.2 256 149.2 254.6Z"/>
+  <path class="l" d="M141.9 28.2L264.8 99.1L272 94.9L149.1 24ZM264.8 99.1L288.3 137.7L295.5 133.6L272 94.9ZM288.3 137.7L264.8 149.2L272 145L295.5 133.6ZM264.8 149.2L141.9 78.3L149.1 74.1L272 145ZM141.9 78.3L141.9 28.2L149.1 24L149.1 74.1Z"/>
+  <path class="oa" d="M149.1 24L272 94.9L295.5 133.6L272 145L149.1 74.1ZM288.3 137.7L295.5 133.6"/>
+  <path class="t" d="M141.9 28.2L264.8 99.1L288.3 137.7L264.8 149.2L141.9 78.3Z"/>
+  <path class="oa" d="M141.9 28.2L264.8 99.1L288.3 137.7L264.8 149.2L141.9 78.3Z"/>
+  <path class="ka" d="M199 80.9C199.1 76.3 202.1 72.4 206 71.8C210 71.1 213.8 73.9 214.9 78.3C216.1 82.7 214.4 87.4 210.8 89.5C208.3 90.8 207 93.1 207 96L207 99.1"/>
+  <path class="af" d="M209.9 108C209.9 109.9 208.6 111.4 207 111.4C205.3 111.4 204 109.9 204 108C204 106.1 205.3 104.6 207 104.6C208.6 104.6 209.9 106.1 209.9 108Z"/>
+</svg>

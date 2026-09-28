@@ -3,6 +3,8 @@ import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
+  ConversationReceiptsOutput,
+  ConversationSignalOutput,
   ConversationOutput,
   GetOrCreateConversationInput,
   GetOrCreateDirectConversationInput,
@@ -207,6 +209,33 @@ export class ConversationService extends HydraApiService {
   public getSubscription(conversationId: string): Observable<MessagingSubscriptionOutput> {
     return this.getOne<MessagingSubscriptionOutput>(
       `${this.endpoint}/${conversationId}/subscription`,
+    );
+  }
+
+  /** Reads confirmed delivery and read positions for current participants. */
+  public getReceipts(conversationId: string): Observable<ConversationReceiptsOutput> {
+    return this.getOne<ConversationReceiptsOutput>(`${this.endpoint}/${conversationId}/receipts`);
+  }
+
+  /** Acknowledges the last message this browser actually received. */
+  public acknowledgeDelivery(
+    conversationId: string,
+    messageId: string,
+  ): Observable<ConversationSignalOutput> {
+    return this.post<{ messageId: string }, ConversationSignalOutput>(
+      `${this.endpoint}/${conversationId}/delivery`,
+      { messageId },
+    );
+  }
+
+  /** Broadcasts an ephemeral typing state on the conversation's private topic. */
+  public publishTyping(
+    conversationId: string,
+    active: boolean,
+  ): Observable<ConversationSignalOutput> {
+    return this.post<{ active: boolean }, ConversationSignalOutput>(
+      `${this.endpoint}/${conversationId}/typing`,
+      { active },
     );
   }
 

@@ -112,14 +112,13 @@ describe('OrganizationTeamTable', () => {
     expect(requested).toBe(TEAM);
   });
 
-  it('should emit membersRequested from the row menu', async () => {
+  it('should emit membersRequested when the team name is activated', async () => {
     await create();
     let requested: TeamOutput | undefined;
     fixture.componentInstance.membersRequested.subscribe((team) => (requested = team));
 
-    const menu = await openRowMenu();
     (
-      menu.querySelector('[data-testid="organization-team-table-row-members"]') as HTMLButtonElement
+      root().querySelector('[data-testid="organization-team-table-row-name"]') as HTMLButtonElement
     ).dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(requested).toBe(TEAM);
@@ -139,7 +138,7 @@ describe('OrganizationTeamTable', () => {
   });
 
   it('should hide the Edit menu entry without canEdit', async () => {
-    await create({ canEdit: false });
+    await create({ canEdit: false, canDelete: true });
 
     const menu = await openRowMenu();
 
@@ -147,26 +146,37 @@ describe('OrganizationTeamTable', () => {
   });
 
   it('should hide the Delete menu entry without canDelete', async () => {
-    await create({ canDelete: false });
+    await create({ canEdit: true, canDelete: false });
 
     const menu = await openRowMenu();
 
     expect(menu.querySelector('[data-testid="organization-team-table-row-delete"]')).toBeNull();
   });
 
-  it('should always offer the Members action regardless of write permissions', async () => {
+  it('should keep the name link active for viewing members regardless of write permissions', async () => {
     await create({ canEdit: false, canDelete: false });
 
-    const menu = await openRowMenu();
+    expect(root().querySelector('[data-testid="organization-team-table-row-name"]')).not.toBeNull();
+  });
 
-    expect(
-      menu.querySelector('[data-testid="organization-team-table-row-members"]'),
-    ).not.toBeNull();
+  it('should render no `…` menu once neither Edit nor Delete is granted', async () => {
+    await create({ canEdit: false, canDelete: false });
+
+    expect(root().querySelector('[data-testid="organization-team-table-row-menu"]')).toBeNull();
   });
 
   it('should render a placeholder dash for a team with no description', async () => {
     await create({ items: [{ ...TEAM, description: '' }] });
 
     expect(rows()[0].querySelectorAll('td')[1]?.textContent?.trim()).toBe('—');
+  });
+
+  it('should let a long description wrap instead of truncating it', async () => {
+    await create();
+
+    const descriptionCell: HTMLElement | null = rows()[0]?.querySelectorAll('td')[1] ?? null;
+
+    expect(descriptionCell?.className).not.toContain('truncate');
+    expect(descriptionCell?.className).toContain('whitespace-normal');
   });
 });

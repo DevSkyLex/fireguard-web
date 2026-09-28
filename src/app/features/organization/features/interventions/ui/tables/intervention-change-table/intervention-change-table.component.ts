@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
+  LOCALE_ID,
   output,
   signal,
   viewChild,
@@ -13,7 +15,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideCircleDot, lucideHistory } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideCircleDot } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import type {
   InterventionTableSource,
@@ -36,14 +38,40 @@ import {
 } from '@shared/collection-filters';
 import { CollectionSurface } from '@shared/collection-surface';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { formatRelativeTime } from '@shared/relative-time';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { InterventionTableFeedback } from '../../components/intervention-table-feedback';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionChangeRowViewModel } from './models';
 import type { InterventionChangeGroup } from './models/intervention-change-group.interface';
+
+/**
+ * Constant ISO_DATETIME_PATTERN
+ * @const ISO_DATETIME_PATTERN
+ * @description Matches an ISO 8601 instant with a time part, distinguishing a formattable date value from an IRI or a plain scalar in a patch line.
+ * @since 2.1.0
+ * @type {RegExp}
+ */
+const ISO_DATETIME_PATTERN: RegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+
+/**
+ * Constant RESOURCE_IRI_PATTERN
+ * @const RESOURCE_IRI_PATTERN
+ * @description Matches a bare API Platform IRI left unresolved in a patch line, so it can be replaced with a readable target label instead of a technical path.
+ * @since 2.1.0
+ * @type {RegExp}
+ */
+const RESOURCE_IRI_PATTERN: RegExp = /^\/api\//;
 
 /**
  * Component InterventionChangeTable
@@ -61,7 +89,14 @@ import type { InterventionChangeGroup } from './models/intervention-change-group
  * says so. A row locks and spins on **its own** write through
  * `pendingChangeIds`, mirroring the work-item table's per-row rule.
  *
- * @version 2.0.0
+ * A patch line's value is resolved further where the raw patch is not
+ * self-explanatory: an ISO datetime is reformatted through `OrgDatePipe`, and
+ * a bare resource IRI is replaced with the matching work item's target label
+ * (or a neutral "Linked resource" when none resolves) — never shown as the
+ * technical path. Each row also states when the change was proposed, as a
+ * relative label with the absolute instant in an adjacent tooltip.
+ *
+ * @version 2.1.0
  *
  * @example
  * ```html
@@ -81,10 +116,13 @@ import type { InterventionChangeGroup } from './models/intervention-change-group
     InterventionTableFeedback,
     InterventionTag,
     NgIcon,
+    OrgDatePipe,
     HlmButton,
     ...HlmEmptyImports,
+    StateIllustration,
     ...HlmSpinnerImports,
     ...HlmTableImports,
+    ...HlmTooltipImports,
     CollectionFilterBar,
     CollectionFilterSelect,
     CollectionFilterToggle,
@@ -92,11 +130,42 @@ import type { InterventionChangeGroup } from './models/intervention-change-group
     CollectionToolbar,
     CollectionSurface,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideCircleDot, lucideHistory })],
+  providers: [provideIcons({ lucideCircleAlert, lucideCircleDot })],
   templateUrl: './intervention-change-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionChangeTable {
+  /**
+   * Property locale
+   * @readonly
+   * @description The active locale, for a change's "Proposed …" relative label.
+   * @access private
+   * @since 2.1.0
+   * @type {string}
+   */
+  private readonly locale: string = inject<string>(LOCALE_ID);
+
+  /**
+   * Property dateFormatter
+   * @readonly
+   * @description A standalone `OrgDatePipe` instance, reused to reformat an ISO datetime value found inside a patch line — the pipe takes no dependencies, so a template binding is unnecessary for this one internal use.
+   * @access private
+   * @since 2.1.0
+   * @type {OrgDatePipe}
+   */
+  private readonly dateFormatter: OrgDatePipe = new OrgDatePipe();
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern, applied to an ISO datetime value resolved inside a patch line and to a row's "Proposed …" tooltip. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 2.1.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+
   /**
    * Property source
    * @readonly
@@ -698,7 +767,10 @@ export class InterventionChangeTable {
     return (serverChanges ?? (this.query() ? [] : this.changes())).map(
       (change: InterventionChangeOutput) => {
         const resourceKind: string = interventionChangeResourceKind(change.resource);
-        const patchLines = formatInterventionChangePatch(change.patch);
+        const patchLines = formatInterventionChangePatch(change.patch).map((line) => ({
+          field: line.field,
+          value: this.resolvePatchValue(line.value),
+        }));
 
         return {
           change,
@@ -709,5 +781,60 @@ export class InterventionChangeTable {
       },
     );
   });
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method resolvePatchValue
+   *
+   * @description
+   * Refines one already-stringified patch value: an ISO datetime is
+   * reformatted through the organization's date pattern, a bare resource IRI
+   * is replaced with the matching work item's target label (or a neutral
+   * fallback), and anything else passes through unchanged.
+   *
+   * @access private
+   * @since 2.1.0
+   *
+   * @param {string} value - The patch line's stringified value.
+   *
+   * @returns {string} The refined display value.
+   */
+  private resolvePatchValue(value: string): string {
+    if (ISO_DATETIME_PATTERN.test(value)) {
+      const formatted: string = this.dateFormatter.transform(
+        value,
+        'date',
+        this.regionalFormatting(),
+      );
+      return formatted || value;
+    }
+
+    if (RESOURCE_IRI_PATTERN.test(value)) {
+      const workItem: InterventionWorkItemOutput | undefined = this.workItems().find(
+        (work: InterventionWorkItemOutput): boolean =>
+          work.target === value || work.resultResource === value,
+      );
+
+      return (
+        workItem?.targetSummary?.label ??
+        $localize`:@@intervention.changes.linkedResource:Linked resource`
+      );
+    }
+
+    return value;
+  }
+
+  /**
+   * Method proposedRelativeOf
+   * @description When a change was proposed, as a relative label — the absolute instant reads in an adjacent tooltip.
+   * @access protected
+   * @since 2.1.0
+   * @param {InterventionChangeOutput} change - The change being rendered.
+   * @returns {string} A localized relative label.
+   */
+  protected proposedRelativeOf(change: InterventionChangeOutput): string {
+    return formatRelativeTime(change.createdAt, this.locale);
+  }
   //#endregion
 }

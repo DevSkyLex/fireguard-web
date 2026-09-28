@@ -24,7 +24,7 @@ test.describe('Illustrated resource empty states on mobile', () => {
       await mockEmptyResources(page);
       await new EquipmentsPage(page).gotoList(E2E_ORGANIZATION_ID);
       await expectResourceIllustration(page, 'equipment', theme);
-      await expect(page.getByText('No equipment found', { exact: true })).toBeInViewport();
+      await expect(page.getByText('No equipment registered yet', { exact: true })).toBeInViewport();
       await page.screenshot({
         path: `e2e/artifacts/resource-empty-states/equipment-mobile-${theme}-${browserName}.png`,
         animations: 'disabled',

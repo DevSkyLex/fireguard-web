@@ -8,6 +8,11 @@ Calendar and Recurrences query parameters. Mobile Board stacks status sections w
 the same bounded per-status data, pending/error states and permission-checked move
 requests; its card drawer is the touch alternative to desktop dragging and menus.
 The intervention calendar presents the same month as an agenda on mobile.
+At desktop widths of at least 1024px, the Calendar tab projects its
+selected-day template into the dashboard's resizable right slot. The page
+releases it on another tab or route; below 1024px the existing agenda replaces
+the grid and panel. Projection keeps `InterventionCalendar` presentational and
+does not add a calendar request.
 
 The detail has one live workflow action template: in the desktop page header or a
 mobile footer above `--mobile-navigation-height`. Reserved content space and a bounded
@@ -84,7 +89,12 @@ the active view applies. Unused filter values survive view changes in the URL.
 The collection starts directly with its toolbar because its view selector lives in the header, and has no metric cards,
 statistics request, Analysis disclosure or separate queue-count shortcuts. Long intervention
 and site labels stay within their columns so the due date and row menu remain
-visible. Detail properties adapt to the content container; the secondary details
+visible. The List includes a Responsible column with the member avatar and full
+display name, or a dotted placeholder when no responsible member is resolved.
+Participants occupy a separate hideable column. Each intervention row keeps its
+title and compact work summary; the due date shows urgency without a repeated
+relative date.
+Detail properties use one field per row; the secondary details
 disclosure starts collapsed at every width so the actionable rail stays compact.
 Opening it reveals participants, labels, description and audit metadata in that
 order; resizing preserves the user's disclosure choice and any active description
@@ -989,10 +999,22 @@ Internal code imports deep paths directly.
   (`@features/organization/features/{facilities,equipments,inspections}/data-access`) — the same
   established pattern `intervention-sync.service.ts` and
   `InterventionPlanningOptionsStore` already use for the same three siblings, extended with one
-  read-only method per service (`listByIntervention`). Read-only: this feature lists a sibling's
-  records scoped to one intervention and renders them through its own tables; it creates, edits and
-  deletes nothing on their behalf, and owns no facility/equipment/inspection state beyond the three
-  call states in `InterventionLinkedResourcesStore`.
+  read-only method per service (`listByIntervention`). Read-only for equipment and inspections:
+  this feature lists a sibling's records scoped to one intervention and renders them through its
+  own tables; it creates, edits and deletes nothing on their behalf, and owns no
+  equipment/inspection state beyond the two call states in `InterventionLinkedResourcesStore`.
+  **Facilities are the one write exception (8.0):** the "Add facility" sheet
+  (`ui/sheets/intervention-facility-sheet`) cross-imports `FacilityCreateForm` from
+  `@features/organization/features/facilities/ui/forms/facility-create-form` and calls
+  `FacilityService.createForIntervention` — already exposed by facilities' `data-access` barrel —
+  through `InterventionWorkspaceStore.createFacility`. This exists to clear the backend's "At
+  least one facility is required" `site_setup` publication blocker directly from the workspace.
+  Ownership of the form (its fields, its validation, its type catalog) stays with facilities; this
+  feature only enriches the emitted `CreateFacilityInput` with the organization and intervention
+  IRIs and refreshes its own workspace (`reload`) and `InterventionLinkedResourcesStore`
+  (`reloadFacilities`) on success. No parent-facility picker, map center or address geocoding is
+  wired from here — the form's own optional fields are simply left at their defaults, so a
+  facility created this way starts a bare root facility completed later from its own record.
 - The detail page's Discussion sheet (6.2) embeds `SubjectDiscussion` from
   `@features/organization/features/collaboration/ui/components` — an approved cross-feature
   dependency, recorded in collaboration's own `FEATURE.md` under Published Contracts. This feature
@@ -1419,7 +1441,7 @@ ghost button behind a popover — an agent whose field work failed to replay
 learned nothing on the very workspace holding the data at risk, while the
 popover's `role="alert"` live region told a screen-reader user. So
 `InterventionDetailPage` renders `app-intervention-sync-blocked-alert`
-(`ui/components/intervention-sync-blocked-alert/`) above the meta line
+(`ui/components/intervention-sync-blocked-alert/`) above the work content
 whenever this intervention has queued operations left `failed` or `conflict`.
 It **names them** — `INTERVENTION_OUTBOX_LABEL` (lifted to the feature's
 `constants/`, the indicator being its other consumer) plus each operation's
@@ -1458,8 +1480,7 @@ confirm-gated because it is data loss), **syncing** (spinner), **pending**
 (neutral glyph plus a count badge, popover offers Sync now), **synced**
 (quiet, no badge, popover states "Last synced `<relative time>`" via
 `InterventionSyncCoordinatorService.lastSyncedAt`, reusing
-`formatInterventionRelativeTime` — this indicator is its third consumer
-alongside the detail page's meta line and its activity thread). Resolves to
+`formatInterventionRelativeTime` — the activity thread also uses it). Resolves to
 `synced` server-side without an explicit SSR guard:
 `ConnectivityService.online` is optimistic-online there, and the coordinator
 and outbox signals default to their empty values before any IndexedDB access
@@ -2030,11 +2051,10 @@ overflow-y-auto`), and the footer sits outside that scroll region as the
   still-working variant so a long publication reads as long, not frozen. A
   genuine `failed` result still reports inline as before.
 - **The page's fixed elements never reorder (WCAG 2.4.3).** Header line tabs →
-  meta → status band → error alert → active panel → properties rail → desktop
-  issues checklist → prev/next never changes with phase — the properties rail and
-  the issues checklist are the second column's own top-to-bottom order,
-  unaffected by which of the six tabs is active. The band's position is fixed
-  at every width; only its content follows the phase.
+  error alert → active panel → properties rail → desktop issues checklist →
+  prev/next never changes with phase. The properties rail and issues checklist
+  retain their order in the second column, while the workflow action stays in
+  the header on desktop and the footer on mobile.
 - **Rejection is the only client action on a proposed change.**
   `UpdateInterventionChangeInput.status` only accepts `'proposed' | 'rejected'`,
   never `'applied'` — acceptance happens automatically at publication, not
@@ -2249,6 +2269,8 @@ Rules from earlier detail-page designs that are **retired**, not merely unimplem
   account, organization or intervention cannot initiate publication.
 - Bulk results preserve failed selections and readable identities. Retry only failed eligible
   rows. Publication always goes through the individual confirmation.
+- The list's floating selection bar offers eligible status moves, assignment and deletion.
+  The page owns selection and action eligibility; CSV export remains scoped to filtered results.
 - Errors reading issues, attachments or local operations must not render as verified absence.
 
 Assignment dialogs retain their Signal Form draft until every submitted resource

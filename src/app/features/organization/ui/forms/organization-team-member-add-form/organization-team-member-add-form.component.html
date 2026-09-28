@@ -1,12 +1,12 @@
 @if (serverMessages().length > 0) {
-  <div
-    role="alert"
-    data-testid="organization-team-member-add-error"
-    class="text-sm text-destructive"
-  >
-    @for (message of serverMessages(); track message) {
-      <p>{{ message }}</p>
-    }
+  <div hlmAlert variant="destructive" role="alert" data-testid="organization-team-member-add-error">
+    <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+    <p hlmAlertTitle i18n="@@org.teams.membersSheet.addErrorTitle">Couldn't add the member</p>
+    <div hlmAlertDescription>
+      @for (message of serverMessages(); track message) {
+        <p>{{ message }}</p>
+      }
+    </div>
   </div>
 }
 

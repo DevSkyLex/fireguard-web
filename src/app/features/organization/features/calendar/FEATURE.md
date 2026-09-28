@@ -31,6 +31,15 @@ each of the three panels wired through `hlmTabsContent`.
 Today/prev/next controls — the grid's own month title stays in the DOM,
 `sr-only`, because `brnCalendarGrid`'s accessible name is `aria-labelledby`
 that title regardless of whether it is visible.
+The month grid draws an item with `endsAt` as a continuous bar over its covered
+days, split only at week boundaries. A timed end exactly at local midnight
+excludes that final day; all-day ends are inclusive. The selected-day panel and
+week/day agendas include an item on every day it covers.
+On desktop widths of at least 1024px, the Month view registers its selected-day
+list as a page-owned template in the dashboard's resizable right slot. The
+template uses this page's existing feed and actions; switching to Week/Day or
+leaving the route releases it. Narrow desktop windows and mobile interaction
+mode show the existing month agenda instead of the grid and right panel.
 
 The granularity selector is independent of the period label, so label length
 does not change its position.
@@ -38,12 +47,11 @@ The header groups New event and the Subscribe menu in a native Spartan split
 button. Read-only viewers retain a direct Subscribe action.
 
 **Three granularities**, all reading the same date-windowed feed: **month**
-is the shared grid plus the selected-day panel; **week** is deliberately a
-seven-day agenda list — every day of the week rendered as a heading plus its
-entries through `CalendarEntryList`, empty days included — rather than an
-hour-by-column grid, because the feed carries day-anchored entries (many
-all-day) for which an hours grid would be mostly whitespace, and the agenda
-form reuses the exact row renderer the rest of the page already trusts;
+is the shared grid plus the shell's selected-day panel on wide desktop; **week**
+shows seven day columns when the page is wide enough and stacks those days on
+narrow surfaces. Every day, including empty days, retains a heading and its
+entries through `CalendarEntryList`. This day-column grid uses the feed's
+day-anchored entries without inventing hourly slots for mostly all-day data;
 **day** is the anchored day's list full-page with prev/next stepping one
 day. Week honours the same `firstDayOfWeek` preference as the grid. The
 feed window follows the granularity: month ± one week (the grid's filler

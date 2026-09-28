@@ -13,11 +13,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePenLine, lucideSearch, lucideUsers } from '@ng-icons/lucide';
+import { lucidePenLine } from '@ng-icons/lucide';
 import { BrnCommandInput, type CommandFilter } from '@spartan-ng/brain/command';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { MemberDirectoryEntry } from '@features/organization/models';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCommand, HlmCommandItem, HlmCommandList } from '@shared/ui/command';
@@ -58,6 +60,8 @@ import { HlmPopoverImports } from '@shared/ui/popover';
     HlmDrawerImports,
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
+    StateIllustration,
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarImage,
@@ -67,7 +71,7 @@ import { HlmPopoverImports } from '@shared/ui/popover';
     HlmCommandList,
     HlmCommandItem,
   ],
-  providers: [provideIcons({ lucidePenLine, lucideSearch, lucideUsers })],
+  providers: [provideIcons({ lucidePenLine })],
   templateUrl: './direct-message-picker.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

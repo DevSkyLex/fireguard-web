@@ -7,7 +7,7 @@ import {
   untracked,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { toast } from '@spartan-ng/brain/sonner';
+import { toast, type ToastOptions } from '@spartan-ng/brain/sonner';
 import { FeedbackService, type FeedbackMessage } from '@core/feedback';
 import {
   INTERACTION_CAPABILITIES_PORT,
@@ -51,6 +51,23 @@ export class App {
   protected readonly interactionCapabilities: InteractionCapabilitiesPort = inject(
     INTERACTION_CAPABILITIES_PORT,
   );
+
+  /**
+   * Property toastOptions
+   * @readonly
+   * @description Colors each severity icon with its semantic status token while keeping neutral toast surfaces.
+   * @access protected
+   * @since 3.1.0
+   * @type {ToastOptions}
+   */
+  protected readonly toastOptions: ToastOptions = {
+    classes: {
+      success: '[&_[data-icon]]:text-success',
+      info: '[&_[data-icon]]:text-info',
+      warning: '[&_[data-icon]]:text-warning',
+      error: '[&_[data-icon]]:text-destructive',
+    },
+  };
 
   /**
    * Property feedback

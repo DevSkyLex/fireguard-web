@@ -2,11 +2,13 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import type { MockInstance } from 'vitest';
+import type { PasswordResetRequestOutput } from '@features/auth/models';
 import { PasswordResetStore } from '@features/auth/state';
 import { PasswordResetVerifyPage } from '../password-reset-verify-page.component';
 
 describe('PasswordResetVerifyPage', () => {
   let challengeToken: WritableSignal<string | null>;
+  let currentRequest: WritableSignal<PasswordResetRequestOutput | null>;
   let mockPasswordResetStore: {
     setChallengeToken: ReturnType<typeof vi.fn>;
     setVerificationCode: ReturnType<typeof vi.fn>;
@@ -15,6 +17,7 @@ describe('PasswordResetVerifyPage', () => {
     resendError: WritableSignal<null>;
     resendAvailableIn: WritableSignal<number>;
     challengeToken: WritableSignal<string | null>;
+    currentRequest: WritableSignal<PasswordResetRequestOutput | null>;
   };
   let navigate: MockInstance;
 
@@ -49,6 +52,7 @@ describe('PasswordResetVerifyPage', () => {
 
   beforeEach(() => {
     challengeToken = signal<string | null>(null);
+    currentRequest = signal<PasswordResetRequestOutput | null>(null);
 
     mockPasswordResetStore = {
       setChallengeToken: vi.fn(),
@@ -58,6 +62,7 @@ describe('PasswordResetVerifyPage', () => {
       resendError: signal(null),
       resendAvailableIn: signal(0),
       challengeToken,
+      currentRequest,
     };
   });
 
@@ -81,6 +86,35 @@ describe('PasswordResetVerifyPage', () => {
     await createPage(null);
 
     expect(mockPasswordResetStore.setChallengeToken).not.toHaveBeenCalled();
+  });
+
+  it('shows a generic subtitle when no address is known yet (anti-enumeration)', async () => {
+    const fixture = await createPage('link-token');
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Check your inbox for the code we just sent.',
+    );
+  });
+
+  it('names the address the code was sent to, once known', async () => {
+    const fixture = await createPage('link-token');
+    currentRequest.set({
+      '@id': '/api/.well-known/genid/abc123',
+      '@type': 'RequestPasswordResetOutput',
+      success: true,
+      message: 'If an account exists with this email, you will receive a password reset code.',
+      challengeToken: 'abc123',
+      maskedRecipient: 'j***e@e****e.com',
+      expiresAt: null,
+      maxAttempts: 5,
+      canResendIn: 60,
+    });
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('j***e@e****e.com');
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Check your inbox for the code we just sent.',
+    );
   });
 
   it('should record the code and move on without calling the API', async () => {

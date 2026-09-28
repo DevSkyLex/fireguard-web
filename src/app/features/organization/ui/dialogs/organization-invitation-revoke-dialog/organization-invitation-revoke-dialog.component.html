@@ -16,13 +16,16 @@
     </hlm-alert-dialog-header>
 
     @if (error(); as message) {
-      <p
+      <div
+        hlmAlert
+        variant="destructive"
         role="alert"
-        class="text-sm text-destructive"
         data-testid="organization-invitation-revoke-error"
       >
-        {{ message }}
-      </p>
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@org.invitations.revokeErrorTitle">Couldn't revoke invitation</p>
+        <p hlmAlertDescription>{{ message }}</p>
+      </div>
     }
 
     <hlm-alert-dialog-footer>

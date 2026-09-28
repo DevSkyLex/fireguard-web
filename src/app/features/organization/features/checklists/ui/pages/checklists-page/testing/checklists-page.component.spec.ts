@@ -57,6 +57,7 @@ const checklist = (overrides: Partial<ChecklistOutput> = {}): ChecklistOutput =>
     name: 'Fire Safety Inspection',
     version: '1.0',
     status: 'active',
+    itemCount: 0,
     items: [],
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
@@ -79,6 +80,7 @@ describe('ChecklistsPage', () => {
   let listCallState: WritableSignal<CallState>;
   let loadedPage: WritableSignal<number | null>;
   let totalChecklists: WritableSignal<number>;
+  let checklists: WritableSignal<readonly ChecklistOutput[]>;
 
   const createPage = async (): Promise<void> => {
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -102,6 +104,7 @@ describe('ChecklistsPage', () => {
     listCallState = signal<CallState>(idleCallState());
     loadedPage = signal<number | null>(null);
     totalChecklists = signal(1);
+    checklists = signal<readonly ChecklistOutput[]>([checklist()]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -129,7 +132,7 @@ describe('ChecklistsPage', () => {
           {
             provide: ChecklistStore,
             useValue: {
-              checklists: signal<readonly ChecklistOutput[]>([checklist()]),
+              checklists,
               totalChecklists,
               listCallState,
               loadedPage,
@@ -308,5 +311,39 @@ describe('ChecklistsPage', () => {
       [],
       expect.objectContaining({ queryParams: { page: null } }),
     );
+  });
+
+  it('shows a neutral fallback, not the create illustration, on an empty page of a non-empty library', async () => {
+    checklists.set([]);
+    totalChecklists.set(5);
+    listCallState.set(successCallState(null));
+    await createPage();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('No checklists to show');
+    expect(root.textContent).not.toContain('No checklist templates yet');
+    expect(root.querySelector('app-resource-illustration')).toBeNull();
+  });
+
+  it('shows the create illustration only for a genuinely empty library', async () => {
+    checklists.set([]);
+    totalChecklists.set(0);
+    listCallState.set(successCallState(null));
+    await createPage();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('No checklist templates yet');
+  });
+
+  it('describes the genuinely empty library without a create action for a read-only member', async () => {
+    hasPermission.mockReturnValue(false);
+    checklists.set([]);
+    totalChecklists.set(0);
+    listCallState.set(successCallState(null));
+    await createPage();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('will appear here');
+    expect(root.querySelector('[data-testid="checklists-empty-new"]')).toBeNull();
   });
 });

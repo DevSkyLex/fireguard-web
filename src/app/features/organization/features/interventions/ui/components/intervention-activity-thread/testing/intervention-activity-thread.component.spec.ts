@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   InterventionActivityOutput,
   MemberSelectOption,
@@ -47,7 +48,19 @@ describe('InterventionActivityThread', () => {
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   const create = async (): Promise<void> => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
+    });
     fixture = TestBed.createComponent(InterventionActivityThread);
     await fixture.whenStable();
   };
@@ -135,7 +148,7 @@ describe('InterventionActivityThread', () => {
 
     const icon = root().querySelector('[data-testid="intervention-activity-system-icon"]');
     const markerIcon = icon?.querySelector('[data-slot="marker-icon"]');
-    const markerContent = root().querySelector('[data-slot="marker-content"]');
+    const markerContent = icon?.parentElement?.querySelector('[data-slot="marker-content"]');
     const glyph = icon?.querySelector('ng-icon');
 
     expect(icon?.classList.contains('size-6')).toBe(true);

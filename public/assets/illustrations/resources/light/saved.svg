@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-saved-light-title fg-saved-light-description" class="fg-saved-light">
+  <title id="fg-saved-light-title">Saved</title>
+  <desc id="fg-saved-light-description">A standing bookmark over a saved message card.</desc>
+  <defs>
+    <linearGradient id="fg-saved-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
+    <linearGradient id="fg-saved-light-mark" gradientUnits="userSpaceOnUse" x1="219" y1="69.1" x2="219" y2="201.7"><stop offset="0" stop-color="#18181b" stop-opacity="0.12"/><stop offset="1" stop-color="#18181b" stop-opacity="0.05"/></linearGradient>
+
+  </defs>
+  <style>
+    .fg-saved-light { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-saved-light path { vector-effect: non-scaling-stroke; }
+    .fg-saved-light .t { fill: #ffffff; }
+    .fg-saved-light .l { fill: #f6f6f7; }
+    .fg-saved-light .r { fill: #efeff1; }
+    .fg-saved-light .hole { fill: #ececef; }
+    .fg-saved-light .cy { fill: url(#fg-saved-light-cy); }
+    .fg-saved-light .af { fill: #5f5f68; }
+    .fg-saved-light .kf { fill: #85858e; }
+    .fg-saved-light .eo { fill-rule: evenodd; }
+    .fg-saved-light .o { stroke: #8a8a93; stroke-width: 1.35; }
+    .fg-saved-light .o2 { stroke: #a8a8b0; stroke-width: 1.1; }
+    .fg-saved-light .e { stroke: #dcdce0; stroke-width: 1; }
+    .fg-saved-light .d { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-saved-light .dh { stroke: #dcdce0; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-saved-light .g { stroke: #a8a8b0; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-saved-light .k { stroke: #85858e; stroke-width: 1.2; }
+    .fg-saved-light .ka, .fg-saved-light .oa { stroke: #5f5f68; stroke-width: 1.35; }
+    .fg-saved-light .da { stroke: #5f5f68; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-saved-light .ga { stroke: #5f5f68; stroke-width: 1; stroke-dasharray: 3 3; }
+  </style>
+  <path class="r" d="M376 192.7C376 194.6 374.7 196.4 372.4 197.7L243.1 272.4C240.8 273.7 237.7 274.4 234.5 274.4L234.5 279.4C237.7 279.4 240.8 278.6 243.1 277.3L372.4 202.7C374.7 201.3 376 199.6 376 197.7Z"/>
+  <path class="l" d="M234.5 274.4C231.3 274.4 228.2 273.7 225.9 272.4L27.6 157.9C25.3 156.5 24 154.8 24 152.9L24 157.9C24 159.7 25.3 161.5 27.6 162.8L225.9 277.3C228.2 278.6 231.3 279.4 234.5 279.4Z"/>
+  <path class="t" d="M24 152.9C24 151 25.3 149.2 27.6 147.9L156.9 73.2C159.2 71.9 162.3 71.2 165.5 71.2C168.7 71.2 171.8 71.9 174.1 73.2L372.4 187.7C374.7 189.1 376 190.8 376 192.7C376 194.6 374.7 196.4 372.4 197.7L243.1 272.4C240.8 273.7 237.7 274.4 234.5 274.4C231.3 274.4 228.2 273.7 225.9 272.4L27.6 157.9C25.3 156.5 24 154.8 24 152.9Z"/>
+  <path class="e" d="M376 192.7C376 194.6 374.7 196.4 372.4 197.7L243.1 272.4C240.8 273.7 237.7 274.4 234.5 274.4C231.3 274.4 228.2 273.7 225.9 272.4L27.6 157.9C25.3 156.5 24 154.8 24 152.9M234.5 274.4L234.5 279.4M24 152.9L24 157.9"/>
+  <path class="o" d="M24 152.9C24 151 25.3 149.2 27.6 147.9L156.9 73.2C159.2 71.9 162.3 71.2 165.5 71.2C168.7 71.2 171.8 71.9 174.1 73.2L372.4 187.7C374.7 189.1 376 190.8 376 192.7L376 197.7C376 199.6 374.7 201.3 372.4 202.7L243.1 277.3C240.8 278.6 237.7 279.4 234.5 279.4C231.3 279.4 228.2 278.6 225.9 277.3L27.6 162.8C25.3 161.5 24 159.7 24 157.9Z"/>
+  <path class="o2" d="M175 113.6C172 115.3 168 116.2 163.8 116.2C159.6 116.2 155.6 115.3 152.6 113.6C149.6 111.9 147.9 109.5 147.9 107.1C147.9 104.7 149.6 102.3 152.6 100.6C155.6 98.9 159.6 97.9 163.8 97.9C168 97.9 172 98.9 175 100.6C178 102.3 179.6 104.7 179.6 107.1C179.6 109.5 178 111.9 175 113.6Z"/>
+  <path class="e" d="M189.7 116.1L265.5 159.9M175.9 124L224.1 151.9M103.4 128L251.7 213.6M81 140.9L201.7 210.6"/>
+  <path class="l" d="M263.6 227.5L219 172.2L229.3 166.2L274 221.5ZM219 172.2L174.3 175.9L184.7 169.9L229.3 166.2ZM174.3 175.9L174.3 58L184.7 52L184.7 169.9ZM174.3 58C174.3 49.9 180 46.6 187.1 50.7L197.4 44.7C190.4 40.6 184.7 43.9 184.7 52ZM187.1 50.7L250.9 87.5L261.2 81.5L197.4 44.7ZM250.9 87.5C257.9 91.6 263.6 101.4 263.6 109.6L274 103.6C274 95.5 268.3 85.6 261.2 81.5ZM263.6 109.6L263.6 227.5L274 221.5L274 103.6Z"/>
+  <path class="oa" d="M274 221.5L229.3 166.2L184.7 169.9L184.7 52C184.7 43.9 190.4 40.6 197.4 44.7L261.2 81.5C268.3 85.6 274 95.5 274 103.6ZM178.9 49.3L189.3 43.4"/>
+  <path class="t" d="M263.6 227.5L219 172.2L174.3 175.9L174.3 58C174.3 49.9 180 46.6 187.1 50.7L250.9 87.5C257.9 91.6 263.6 101.4 263.6 109.6Z"/>
+  <path class="oa" d="M263.6 227.5L219 172.2L174.3 175.9L174.3 58C174.3 49.9 180 46.6 187.1 50.7L250.9 87.5C257.9 91.6 263.6 101.4 263.6 109.6Z"/>
+  <path fill="url(#fg-saved-light-mark)" d="M263.6 227.5L219 172.2L174.3 175.9L174.3 58C174.3 49.9 180 46.6 187.1 50.7L250.9 87.5C257.9 91.6 263.6 101.4 263.6 109.6Z"/>
+</svg>

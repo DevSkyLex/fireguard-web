@@ -216,12 +216,12 @@ html[data-theme-transition='circle-blur']::view-transition-new(root) {
 
 @keyframes theme-circle-blur-reveal {
   from {
-    clip-path: circle(0% at 50% 100%);
+    clip-path: circle(0% at var(--theme-origin-x, 50%) var(--theme-origin-y, 50%));
     filter: blur(8px);
   }
 
   to {
-    clip-path: circle(150% at 50% 100%);
+    clip-path: circle(150% at var(--theme-origin-x, 50%) var(--theme-origin-y, 50%));
     filter: blur(0);
   }
 }

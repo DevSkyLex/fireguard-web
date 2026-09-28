@@ -6,12 +6,16 @@
     aria-live="polite"
     aria-atomic="true"
     [attr.data-testid]="testId('row-count')"
-    >{{ rowCountLabel() }}</span
+    i18n="@@shared.collectionPagination.rowCount"
+    >{total(), plural,
+      =1 {{{ shown() }} of 1 row shown}
+      other {{{ shown() }} of {{ total() }} rows shown}
+    }</span
   >
 
   <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-    <div class="flex items-center gap-2">
-      <label [attr.for]="testId('page-size')" hlmLabel>{{ pageSizeLabel }}</label>
+    <div class="flex items-center gap-2" [class.hidden]="hidePageSizeSelector()">
+      <label [for]="testId('page-size')" hlmLabel>{{ pageSizeLabel }}</label>
       <hlm-select class="inline-block" [value]="pageSize()" (valueChange)="changePageSize($event)">
         <hlm-select-trigger
           [buttonId]="testId('page-size')"
@@ -34,18 +38,12 @@
 
     <span
       hlmLabel
-      [class.max-sm:hidden]="pageCount() <= 1"
-      [class.mobile-ui:hidden]="pageCount() <= 1"
+      [class.hidden]="pageCount() <= 1"
       [attr.data-testid]="testId('page-indicator')"
       >{{ pageIndicatorLabel() }}</span
     >
 
-    <nav
-      hlmPagination
-      [aria-label]="ariaNav"
-      class="mx-0 w-auto"
-      [class.mobile-ui:hidden]="pageCount() <= 1"
-    >
+    <nav hlmPagination [aria-label]="ariaNav" class="mx-0 w-auto" [class.hidden]="pageCount() <= 1">
       <ul hlmPaginationContent>
         <li hlmPaginationItem class="max-sm:hidden mobile-ui:hidden">
           <button

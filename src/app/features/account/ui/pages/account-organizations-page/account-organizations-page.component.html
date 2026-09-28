@@ -12,17 +12,20 @@
   } @else if (isEmpty()) {
     <div hlmEmpty>
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideBuilding2" aria-hidden="true" />
-        </div>
+        <app-resource-illustration hlmEmptyMedia resource="organization" />
         <p hlmEmptyTitle i18n="@@account.organizations.emptyTitle">No organizations</p>
         <p hlmEmptyDescription i18n="@@account.organizations.emptyDescription">
           You are not a member of any organization yet.
         </p>
       </div>
+      <div hlmEmptyContent>
+        <a hlmBtn class="mobile-ui:min-h-11" routerLink="/onboarding/workspace">
+          <span i18n="@@account.organizations.findWorkspace">Find a workspace</span>
+        </a>
+      </div>
     </div>
   } @else {
-    <ul hlmItemGroup>
+    <ul hlmItemGroup class="gap-3">
       @for (organization of myOrganizations.organizations(); track organization.id) {
         <li
           hlmItem
@@ -38,22 +41,38 @@
           />
 
           <div hlmItemContent>
-            <span hlmItemTitle class="flex items-center gap-2">
+            <span hlmItemTitle class="flex flex-wrap items-center gap-2">
               {{ organization.name }}
               @if (isActive(organization)) {
                 <span hlmBadge variant="outline" data-testid="account-organizations-active-badge">
                   <span i18n="@@account.organizations.activeBadge">Currently open</span>
                 </span>
               }
+              @if (organization.isOwner) {
+                <span
+                  hlmBadge
+                  variant="outline"
+                  class="gap-1"
+                  data-testid="account-organizations-owner-badge"
+                >
+                  <ng-icon name="lucideCrown" class="text-muted-foreground" aria-hidden="true" />
+                  <span i18n="@@account.organizations.owner">Owner</span>
+                </span>
+              }
             </span>
+            <p hlmItemDescription>
+              <span i18n="@@account.organizations.memberCount">{organization.memberCount, plural,
+                =1 {1 member}
+                other {{{ organization.memberCount }} members}
+              }</span>
+              @if (organization.planName; as plan) {
+                <span> &middot; {{ plan }}</span>
+              }
+            </p>
           </div>
 
-          <div hlmItemActions>
-            @if (organization.isOwner) {
-              <span class="text-xs text-muted-foreground" i18n="@@account.organizations.ownerNote">
-                You own this organization
-              </span>
-            } @else {
+          @if (!organization.isOwner) {
+            <div hlmItemActions>
               <button
                 hlmBtn
                 type="button"
@@ -65,8 +84,8 @@
               >
                 <span i18n="@@account.organizations.leaveOpen">Leave</span>
               </button>
-            }
-          </div>
+            </div>
+          }
         </li>
       }
     </ul>

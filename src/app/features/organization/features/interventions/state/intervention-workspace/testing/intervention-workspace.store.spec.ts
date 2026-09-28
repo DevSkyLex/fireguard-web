@@ -3,6 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
   InterventionOfflineService,
   InterventionService,
@@ -112,6 +114,7 @@ describe('InterventionWorkspaceStore offline field work', () => {
         InterventionWorkspaceStore,
         { provide: InterventionService, useValue: mockService },
         { provide: InterventionOfflineService, useValue: mockOffline },
+        { provide: FacilityService, useValue: { createForIntervention: vi.fn() } },
       ],
     });
 
@@ -484,6 +487,7 @@ describe('InterventionWorkspaceStore activity timeline', () => {
         { provide: InterventionService, useValue: mockService },
         { provide: InterventionOfflineService, useValue: mockOffline },
         { provide: Dispatcher, useValue: { dispatch } },
+        { provide: FacilityService, useValue: { createForIntervention: vi.fn() } },
       ],
     });
 
@@ -803,6 +807,7 @@ describe('InterventionWorkspaceStore activity timeline', () => {
 describe('InterventionWorkspaceStore call state', () => {
   let store: InstanceType<typeof InterventionWorkspaceStore>;
   let mockService: Record<string, ReturnType<typeof vi.fn>>;
+  let mockFacilityService: { createForIntervention: ReturnType<typeof vi.fn> };
 
   /** A 422 as API Platform reports a rejected planning update. */
   const violation = {
@@ -847,11 +852,13 @@ describe('InterventionWorkspaceStore call state', () => {
       remove: vi.fn().mockReturnValue(of(undefined)),
       assignTeam: vi.fn(),
     };
+    mockFacilityService = { createForIntervention: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
         InterventionWorkspaceStore,
         { provide: InterventionService, useValue: mockService },
+        { provide: FacilityService, useValue: mockFacilityService },
         {
           provide: InterventionOfflineService,
           useValue: {
@@ -1113,6 +1120,99 @@ describe('InterventionWorkspaceStore call state', () => {
     await vi.waitFor(() => expect(mockService['get']).toHaveBeenCalledWith('intervention-1'));
   });
 
+  describe('createFacility', () => {
+    const createdFacility = { id: 'facility-1', name: 'Warehouse' } as unknown as FacilityOutput;
+
+    it('creates the facility through FacilityService and reloads the workspace on success', async () => {
+      store.load('intervention-1');
+      await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+      mockFacilityService.createForIntervention.mockReturnValue(of(createdFacility));
+      mockService['get'].mockClear();
+      mockService['get'].mockReturnValue(
+        of({ ...intervention, facilitiesCount: 1 } as InterventionOutput),
+      );
+
+      store.createFacility({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        input: { type: 'building', name: 'Warehouse' },
+      });
+      await vi.waitFor(() => expect(store.createFacilityCallState().status).toBe('success'));
+
+      expect(mockFacilityService.createForIntervention).toHaveBeenCalledWith(
+        'org-1',
+        'intervention-1',
+        {
+          type: 'building',
+          name: 'Warehouse',
+        },
+      );
+      expect(
+        store.createFacilityCallState().status === 'success' &&
+          store.createFacilityCallState().data,
+      ).toEqual(createdFacility);
+      await vi.waitFor(() => expect(mockService['get']).toHaveBeenCalledWith('intervention-1'));
+      expect(store.intervention()?.facilitiesCount).toBe(1);
+    });
+
+    it('normalizes a 409 conflict into createFacilityCallState without reloading', async () => {
+      store.load('intervention-1');
+      await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+      mockFacilityService.createForIntervention.mockReturnValue(
+        throwError(() => ({
+          '@id': '',
+          '@type': 'Error',
+          status: 409,
+          type: 'about:blank',
+          title: 'Conflict',
+          detail: 'A facility with this code already exists.',
+        })),
+      );
+      mockService['get'].mockClear();
+
+      store.createFacility({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        input: { type: 'building', name: 'Warehouse', code: 'HQ-01' },
+      });
+      await vi.waitFor(() => expect(store.createFacilityCallState().status).toBe('error'));
+
+      expect(store.createFacilityCallState().error?.message).toBe(
+        'A facility with this code already exists.',
+      );
+      expect(mockService['get']).not.toHaveBeenCalled();
+    });
+
+    it('keeps the 422 violations so the sheet can place each one', async () => {
+      store.load('intervention-1');
+      await vi.waitFor(() => expect(store.loading()).toBe(false));
+
+      const facilityViolation = {
+        '@id': '',
+        '@type': 'ConstraintViolation',
+        status: 422,
+        type: 'https://tools.ietf.org/html/rfc4918#section-11.2',
+        title: 'Unprocessable Entity',
+        detail: 'name: This value is already used.',
+        violations: [{ propertyPath: 'name', message: 'This value is already used.' }],
+      };
+      mockFacilityService.createForIntervention.mockReturnValue(
+        throwError(() => facilityViolation),
+      );
+
+      store.createFacility({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        input: { type: 'building', name: 'Warehouse' },
+      });
+      await vi.waitFor(() => expect(store.createFacilityCallState().status).toBe('error'));
+
+      expect(store.createFacilityCallState().error?.error).toEqual(facilityViolation);
+    });
+  });
+
   it('rejects a proposed change in place and unlocks its row', async () => {
     mockService['listAllChanges'].mockReturnValue(of([proposedChange]));
     store.load('intervention-1');
@@ -1372,6 +1472,7 @@ describe('InterventionWorkspaceStore evidence upload', () => {
             attachmentQueueUsage: vi.fn().mockResolvedValue({ count: 0, bytes: 0 }),
           },
         },
+        { provide: FacilityService, useValue: { createForIntervention: vi.fn() } },
       ],
     });
 
@@ -1560,6 +1661,7 @@ describe('InterventionWorkspaceStore offline attachment queue', () => {
         InterventionWorkspaceStore,
         { provide: InterventionService, useValue: mockService },
         { provide: InterventionOfflineService, useValue: mockOffline },
+        { provide: FacilityService, useValue: { createForIntervention: vi.fn() } },
       ],
     });
 
@@ -1776,6 +1878,7 @@ describe('InterventionWorkspaceStore', () => {
       providers: [
         InterventionWorkspaceStore,
         { provide: InterventionService, useValue: service },
+        { provide: FacilityService, useValue: { createForIntervention: vi.fn() } },
         { provide: InterventionOfflineService, useValue: offline },
         { provide: ConnectivityService, useValue: connectivity },
         { provide: Dispatcher, useValue: { dispatch } },

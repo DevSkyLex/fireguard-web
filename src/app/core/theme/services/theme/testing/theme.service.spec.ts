@@ -107,7 +107,9 @@ describe('ThemeService', () => {
 
   it('should update the preference and DOM inside the snapshot callback and release styles on finish', async () => {
     const { start, pending } = installViewTransitions();
-    service.setTheme('dark');
+    service.setTheme('dark', { x: 1216, y: 36 });
+    expect(document.documentElement.style.getPropertyValue('--theme-origin-x')).toBe('1216px');
+    expect(document.documentElement.style.getPropertyValue('--theme-origin-y')).toBe('36px');
 
     expect(start).toHaveBeenCalledOnce();
     expect(service.theme()).toBe('light');
@@ -260,6 +262,23 @@ describe('ThemeService', () => {
 
     logo.remove();
     onboardingLogo.remove();
+    icon.remove();
+  });
+
+  it('should preserve a favicon override through theme changes and restore the default', () => {
+    const icon: HTMLLinkElement = document.createElement('link');
+    icon.setAttribute('data-theme-icon', '');
+    document.head.appendChild(icon);
+
+    service.setFaviconOverride('fireguard-logo-primary-unread.svg');
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-primary-unread.svg');
+
+    service.setTheme('dark');
+    TestBed.tick();
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-primary-unread.svg');
+
+    service.setFaviconOverride(null);
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-primary.svg');
     icon.remove();
   });
 });

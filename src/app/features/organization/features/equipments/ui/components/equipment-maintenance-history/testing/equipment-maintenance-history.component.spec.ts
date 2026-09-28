@@ -1,6 +1,7 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { EquipmentMaintenanceLogOutput } from '@features/organization/features/equipments/models';
 import { EquipmentMaintenanceHistory } from '../equipment-maintenance-history.component';
 
@@ -26,7 +27,18 @@ describe('EquipmentMaintenanceHistory', () => {
 
   const create = async (logs: readonly EquipmentMaintenanceLogOutput[]): Promise<void> => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
     fixture = TestBed.createComponent(EquipmentMaintenanceHistory);
     fixture.componentRef.setInput('organizationId', 'org-1');

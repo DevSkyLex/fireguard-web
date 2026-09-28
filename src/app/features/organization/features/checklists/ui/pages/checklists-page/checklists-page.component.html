@@ -62,9 +62,7 @@
   @if (listForbidden()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideLock" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="access-denied" />
         <p hlmEmptyTitle i18n="@@checklists.list.forbiddenTitle">
           Not available with your permissions
         </p>
@@ -100,25 +98,46 @@
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         @if (searchTerm().trim() !== '' || status() !== null) {
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideListChecks" aria-hidden="true" />
-          </div>
+          <app-state-illustration hlmEmptyMedia state="no-matches" />
+          <p hlmEmptyTitle i18n="@@checklists.list.filterEmptyTitle">No checklists match</p>
+          <p hlmEmptyDescription i18n="@@checklists.list.filterEmptyDesc">
+            Try a different search term or status.
+          </p>
         } @else if (store.listCallState().status === 'success' && store.totalChecklists() === 0) {
           <app-resource-illustration hlmEmptyMedia resource="checklist" />
+          <p hlmEmptyTitle i18n="@@checklists.list.emptyTitle">No checklist templates yet</p>
+          @if (canWrite()) {
+            <p hlmEmptyDescription i18n="@@checklists.list.emptyDesc">
+              A checklist template lists the checks an inspection walks through.
+            </p>
+          } @else {
+            <p hlmEmptyDescription i18n="@@checklists.list.emptyDescReadOnly">
+              The checklist templates your organization defines will appear here.
+            </p>
+          }
+        } @else {
+          <p hlmEmptyTitle i18n="@@checklists.list.emptyFallbackTitle">No checklists to show</p>
         }
-        <p hlmEmptyTitle i18n="@@checklists.list.emptyTitle">No checklists</p>
-        <p hlmEmptyDescription i18n="@@checklists.list.emptyDesc">
-          No checklist templates match this filter.
-        </p>
       </div>
       <div hlmEmptyContent>
-        @if (canWrite()) {
+        @if (searchTerm().trim() !== '' || status() !== null) {
+          <button
+            hlmBtn
+            variant="outline"
+            data-testid="checklists-empty-clear"
+            (click)="clearFilters()"
+            class="mobile-ui:min-h-11"
+          >
+            <span i18n="@@checklists.list.clearFilters">Clear filters</span>
+          </button>
+        } @else if (canWrite()) {
           <button
             hlmBtn
             data-testid="checklists-empty-new"
             (click)="openCreateDialog()"
             class="mobile-ui:min-h-11"
           >
+            <ng-icon name="lucidePlus" aria-hidden="true" />
             <span i18n="@@checklists.list.new">New checklist</span>
           </button>
         }
@@ -130,8 +149,7 @@
       [items]="items()"
       [loading]="store.isLoadingChecklists()"
       [canWrite]="canWrite()"
-      (editRequested)="requestEdit($event)"
-      (viewRequested)="requestEdit($event)"
+      [detailRouteBase]="detailRouteBase()"
       (archiveRequested)="requestArchive($event)"
     />
 

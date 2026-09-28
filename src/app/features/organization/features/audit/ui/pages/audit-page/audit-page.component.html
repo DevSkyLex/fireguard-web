@@ -73,9 +73,7 @@
   @if (store.isForbidden()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideLock" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="access-denied" />
         <p hlmEmptyTitle i18n="@@audit.list.forbiddenTitle">You need the audit permission</p>
         <p hlmEmptyDescription i18n="@@audit.list.forbiddenDesc">
           Ask an organization admin to grant you read access to the audit journal.
@@ -94,21 +92,44 @@
         </p>
       </div>
       <div hlmEmptyContent>
-        <button hlmBtn variant="outline" data-testid="audit-retry" (click)="reload()">
+        <button
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          data-testid="audit-retry"
+          (click)="reload()"
+        >
           <span i18n="@@audit.list.retry">Retry</span>
+        </button>
+      </div>
+    </div>
+  } @else if (!store.isLoading() && items().length === 0 && hasActiveNarrowing()) {
+    <div hlmEmpty class="border border-border">
+      <div hlmEmptyHeader>
+        <app-state-illustration hlmEmptyMedia state="no-results" />
+        <p hlmEmptyTitle i18n="@@audit.list.filteredEmptyTitle">No events match these filters</p>
+        <p hlmEmptyDescription i18n="@@audit.list.filteredEmptyDesc">
+          Try a different action, date range or search term.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          data-testid="audit-clear-filters"
+          (click)="clearFilters()"
+        >
+          <span i18n="@@audit.list.clearFilters">Clear filters</span>
         </button>
       </div>
     </div>
   } @else if (!store.isLoading() && items().length === 0) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideHistory" aria-hidden="true" />
-        </div>
+        <app-resource-illustration hlmEmptyMedia resource="audit" />
         <p hlmEmptyTitle i18n="@@audit.list.emptyTitle">No audit events</p>
-        <p hlmEmptyDescription i18n="@@audit.list.emptyDesc">
-          No activity matches this filter yet.
-        </p>
+        <p hlmEmptyDescription i18n="@@audit.list.emptyDesc">No audit events yet.</p>
       </div>
     </div>
   } @else {

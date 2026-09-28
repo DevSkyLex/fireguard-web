@@ -27,6 +27,7 @@ import type {
   WebhookSubscriptionInput,
   WebhookEventOutput,
 } from '@features/organization/features/webhooks/models';
+import { resolveWebhookEventLabel } from '@features/organization/features/webhooks/utils';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
@@ -210,6 +211,19 @@ export class WebhookSubscriptionForm {
       );
     });
     effect(() => this.dirtyChanged.emit(this.fields().dirty()));
+  }
+  /**
+   * Method eventLabelOf
+   * @description The curated localized label for one catalog event row, falling back to the loaded catalog's own label, then to its raw key.
+   * @access protected
+   * @since 1.1.0
+   * @param {number} index - The row's position in {@link model}'s `events` array.
+   * @returns {string} The resolved label.
+   */
+  protected eventLabelOf(index: number): string {
+    const entry: { value: string; label: string; checked: boolean } = this.model().events[index];
+
+    return resolveWebhookEventLabel(entry.value, entry.label);
   }
   /**
    * Method submit

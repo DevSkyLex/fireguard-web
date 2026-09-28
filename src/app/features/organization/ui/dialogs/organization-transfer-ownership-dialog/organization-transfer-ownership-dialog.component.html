@@ -102,9 +102,13 @@
         (input)="onTypedNameInput($event)"
       />
       @if (error(); as message) {
-        <p role="alert" class="text-sm text-destructive" data-testid="organization-transfer-error">
-          {{ message }}
-        </p>
+        <div hlmAlert variant="destructive" role="alert" data-testid="organization-transfer-error">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@org.settings.danger.transferErrorTitle">
+            Couldn't transfer ownership
+          </p>
+          <p hlmAlertDescription>{{ message }}</p>
+        </div>
       }
     </div>
 

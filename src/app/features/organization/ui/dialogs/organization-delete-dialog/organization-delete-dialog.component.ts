@@ -10,7 +10,10 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmFieldLabel } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -50,7 +53,8 @@ import { HlmInput } from '@shared/ui/input';
  */
 @Component({
   selector: 'app-organization-delete-dialog',
-  imports: [HlmFieldLabel, HlmInput, ...HlmAlertDialogImports],
+  imports: [NgIcon, HlmFieldLabel, HlmInput, ...HlmAlertDialogImports, ...HlmAlertImports],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-delete-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

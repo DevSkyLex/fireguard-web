@@ -1,22 +1,39 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT } from '@features/auth/ports';
 import { ForbiddenPage } from '../forbidden-page.component';
 
 describe('ForbiddenPage', () => {
   let logout: ReturnType<typeof vi.fn>;
   let isLoggingOut: WritableSignal<boolean>;
+  let identityProfile: WritableSignal<ShellUserProfile | null>;
 
   async function createPage(): Promise<ComponentFixture<ForbiddenPage>> {
     logout = vi.fn();
     isLoggingOut = signal<boolean>(false);
+    identityProfile = signal<ShellUserProfile | null>({
+      name: 'Amélie Rousseau',
+      email: 'amelie.rousseau@example.com',
+    });
 
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AUTH_LOGOUT_PORT, useValue: { isLoggingOut, logout } },
+        {
+          provide: USER_IDENTITY_PORT,
+          useValue: {
+            profile: identityProfile,
+            displayName: signal<string | null>('Amélie Rousseau'),
+            initials: signal<string | null>('AR'),
+            avatarUrl: signal<string | null>(null),
+            avatarUrlSmall: signal<string | null>(null),
+            isLoading: signal<boolean>(false),
+          },
+        },
       ],
     });
 
@@ -55,5 +72,13 @@ describe('ForbiddenPage', () => {
     const fixture = await createPage();
 
     expect(fixture.nativeElement.querySelector('a[href="/"]')).not.toBeNull();
+  });
+
+  it('should name the blocked account so a member can tell it apart from another one', async () => {
+    const fixture = await createPage();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Amélie Rousseau (amelie.rousseau@example.com)',
+    );
   });
 });

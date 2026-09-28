@@ -49,5 +49,12 @@ export interface InterventionActivityRowViewModel {
 
   /** A comment's body, split into text and resolved-mention runs; empty for a system entry. */
   readonly bodySegments: readonly InterventionActivityBodySegment[];
+
+  /**
+   * A day separator label ("Today", "Yesterday", or an absolute date) shown
+   * immediately above this row when its calendar day differs from the row
+   * before it, `null` on every other row of the same day.
+   */
+  readonly dayLabel: string | null;
   //#endregion
 }

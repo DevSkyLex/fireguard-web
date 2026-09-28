@@ -230,17 +230,26 @@ export class FacilityService extends HydraApiService {
    * so this bypasses it and queries the bare resource directly, the same way
    * {@link getCanonical} already does.
    *
+   * `CanonicalFacilityProvider` defaults `recordStatus` to `'draft'` whenever
+   * the `intervention` filter is present, so an intervention published after
+   * `FacilityInterventionResourceAdapter::publishDrafts` flips its linked
+   * facilities to `'published'` would otherwise read back empty. Pass the
+   * caller's known `recordStatus` explicitly once the intervention itself is
+   * published; the parameter is optional and omitted entirely rather than
+   * sent as `undefined` so the provider's own `'draft'` default still applies
+   * everywhere else.
+   *
    * @access public
    * @since 4.5.0
    *
    * @param {string} interventionId - The intervention to scope the query to.
-   * @param {FacilityListOptions} [options] - Optional pagination, search and filters.
+   * @param {FacilityListOptions & { readonly recordStatus?: FacilityOutput['recordStatus'] }} [options] - Optional pagination, search, filters and record status.
    *
    * @returns {Observable<HydraCollection<FacilityOutput>>} An observable emitting the linked facilities.
    */
   public listByIntervention(
     interventionId: string,
-    options?: FacilityListOptions,
+    options?: FacilityListOptions & { readonly recordStatus?: FacilityOutput['recordStatus'] },
   ): Observable<HydraCollection<FacilityOutput>> {
     return this.getCollection<FacilityOutput>('/api/facilities', {
       page: options?.page,
@@ -251,6 +260,7 @@ export class FacilityService extends HydraApiService {
         ...options?.params,
         intervention: `/api/interventions/${interventionId}`,
         ...(options?.status ? { status: options.status } : {}),
+        ...(options?.recordStatus ? { recordStatus: options.recordStatus } : {}),
       },
     });
   }

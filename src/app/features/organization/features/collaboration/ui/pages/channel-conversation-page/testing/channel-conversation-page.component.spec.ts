@@ -20,6 +20,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import {
   ConversationService,
   MessageService,
@@ -40,6 +41,7 @@ import type { MemberDirectoryEntry } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
+  MEMBER_PRESENCE_PORT,
   ORGANIZATION_CONTEXT_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
 } from '@features/organization/ports';
@@ -70,12 +72,17 @@ describe('ChannelConversationPage', () => {
     reset: ReturnType<typeof vi.fn>;
     load: ReturnType<typeof vi.fn>;
     connect: ReturnType<typeof vi.fn>;
+    loadReceipts: ReturnType<typeof vi.fn>;
+    acknowledgeDelivery: ReturnType<typeof vi.fn>;
+    publishTyping: ReturnType<typeof vi.fn>;
     markRead: ReturnType<typeof vi.fn>;
     send: ReturnType<typeof vi.fn>;
     loadOlder: ReturnType<typeof vi.fn>;
     retryFailed: ReturnType<typeof vi.fn>;
     toggleReaction: ReturnType<typeof vi.fn>;
     sortedMessages: ReturnType<typeof vi.fn>;
+    receiptPositions: ReturnType<typeof vi.fn>;
+    typingMemberIds: ReturnType<typeof vi.fn>;
     pendingMessageIds: ReturnType<typeof vi.fn>;
     failedMessageIds: ReturnType<typeof vi.fn>;
     isLoading: ReturnType<typeof vi.fn>;
@@ -143,6 +150,10 @@ describe('ChannelConversationPage', () => {
         },
         provideZonelessChangeDetection(),
         provideRouter([]),
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: { byId: signal({}), register: vi.fn(), unregister: vi.fn() },
+        },
         { provide: ActivatedRoute, useValue: {} },
         {
           provide: ChannelsStore,
@@ -191,6 +202,14 @@ describe('ChannelConversationPage', () => {
             selectedOrganization: signal(null),
             isLoadingOrganization: signal(false),
           },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
       ],
     });
@@ -271,12 +290,17 @@ describe('ChannelConversationPage', () => {
       reset: vi.fn(),
       load: vi.fn(),
       connect: vi.fn(),
+      loadReceipts: vi.fn(),
+      acknowledgeDelivery: vi.fn(),
+      publishTyping: vi.fn(),
       markRead: vi.fn(),
       send: vi.fn(),
       loadOlder: vi.fn(),
       retryFailed: vi.fn(),
       toggleReaction: vi.fn(),
       sortedMessages: vi.fn(() => []),
+      receiptPositions: vi.fn(() => []),
+      typingMemberIds: vi.fn(() => []),
       pendingMessageIds: vi.fn(() => []),
       failedMessageIds: vi.fn(() => []),
       isLoading: vi.fn(() => false),
@@ -306,7 +330,8 @@ describe('ChannelConversationPage', () => {
     expect(thread.reset).toHaveBeenCalled();
     expect(thread.load).toHaveBeenCalledWith('channel-1');
     expect(thread.connect).toHaveBeenCalledWith('channel-1');
-    expect(thread.markRead).toHaveBeenCalledWith({ conversationId: 'channel-1' });
+    expect(thread.loadReceipts).toHaveBeenCalledWith('channel-1');
+    expect(thread.markRead).not.toHaveBeenCalled();
     expect(channelsLoadOne).toHaveBeenCalledWith('channel-1');
     expect(participantsReset).toHaveBeenCalled();
     expect(participantsLoad).toHaveBeenCalledWith('channel-1');
@@ -863,6 +888,7 @@ describe('ChannelConversationPage', () => {
       {
         id: 'message-1',
         authorDisplayName: 'Ada Lovelace',
+        authorMember: '/api/organizations/org-1/members/member-1',
         body: 'Safety update',
         mentionNames: {},
         isDeleted: false,
@@ -872,6 +898,7 @@ describe('ChannelConversationPage', () => {
       {
         id: 'message-2',
         body: 'Follow-up',
+        authorMember: '/api/organizations/org-1/members/member-2',
         mentionNames: {},
         isDeleted: false,
         createdAt: '2026-01-02T00:00:00Z',
@@ -900,6 +927,26 @@ describe('ChannelConversationPage', () => {
 
   it('marks the channel read only while its document is visible', async () => {
     const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    thread.sortedMessages.mockReturnValue([
+      {
+        '@id': '/api/messages/message-1',
+        '@type': 'Message',
+        id: 'message-1',
+        conversation: '/api/conversations/channel-1',
+        authorMember: '/api/organizations/org-1/members/member-2',
+        body: 'Update',
+        mentions: [],
+        mentionNames: {},
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+        isDeleted: false,
+        attachments: [],
+        isSaved: false,
+        replyCount: 0,
+        reactions: [],
+        references: [],
+      } satisfies MessageOutput,
+    ]);
     await createPage();
     thread.markRead.mockClear();
 
@@ -908,7 +955,10 @@ describe('ChannelConversationPage', () => {
 
     visibility.mockReturnValue('visible');
     fixture.componentInstance['markRead']();
-    expect(thread.markRead).toHaveBeenCalledExactlyOnceWith({ conversationId: 'channel-1' });
+    expect(thread.markRead).toHaveBeenCalledExactlyOnceWith({
+      conversationId: 'channel-1',
+      lastReadMessageId: 'message-1',
+    });
     visibility.mockRestore();
   });
 

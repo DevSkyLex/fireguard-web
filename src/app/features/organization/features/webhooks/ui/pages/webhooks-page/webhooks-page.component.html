@@ -1,126 +1,190 @@
-<div class="flex min-w-0 flex-col gap-6">
-  <div class="flex flex-wrap items-start justify-between gap-3">
-    <p class="max-w-2xl text-sm text-muted-foreground" i18n="@@webhooks.intro">
-      Send organization events to your integrations and follow each delivery.
-    </p>
-    <div class="flex flex-wrap gap-2">
-      <button
-        hlmBtn
-        variant="outline"
-        class="mobile-ui:min-h-11"
-        [disabled]="store.isLoading() || store.isMutating()"
-        (click)="refresh(store.page())"
-        data-testid="webhooks-refresh"
-        i18n="@@common.refresh"
-      >
-        Refresh
-      </button>
-      @if (canManage()) {
-        <button
-          hlmBtn
-          class="mobile-ui:min-h-11"
-          [disabled]="store.isLoading() || store.isMutating()"
-          (click)="openEditor(null)"
-          data-testid="webhook-create"
-          i18n="@@webhooks.create"
-        >
-          Add webhook
-        </button>
-      }
-    </div>
-  </div>
+<div class="@container flex min-w-0 flex-col gap-6">
   @if (notice(); as message) {
-    <output class="block rounded-md border p-3 text-sm" data-testid="webhook-notice">
-      {{ message }}
-    </output>
+    <div hlmAlert data-testid="webhook-notice">
+      <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
   }
   @if (store.listCallState().error; as error) {
-    <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+    <div hlmAlert variant="destructive" role="alert" data-testid="webhook-list-error">
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <p hlmAlertTitle i18n="@@webhooks.listErrorTitle">Couldn't load webhooks</p>
+      <p hlmAlertDescription>{{ error.message }}</p>
+      <button
+        hlmAlertAction
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        (click)="refresh(store.page())"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
   }
   @if (!editorOpen() && !confirmation() && store.mutationCallState().error; as error) {
-    <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+    <div hlmAlert variant="destructive" role="alert" data-testid="webhook-mutation-error">
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
   }
   @if (store.isLoading()) {
-    <hlm-skeleton class="h-36 w-full" />
+    <div hlmItemGroup class="gap-0 rounded-lg border" data-testid="webhooks-loading">
+      @for (row of [1, 2, 3]; track row) {
+        @if (!$first) {
+          <hlm-item-separator class="my-0" />
+        }
+        <div hlmItem size="sm">
+          <div hlmItemContent class="gap-2">
+            <hlm-skeleton class="h-4 w-48" />
+            <hlm-skeleton class="h-3 w-24" />
+          </div>
+        </div>
+      }
+    </div>
   } @else if (store.subscriptionEntities().length === 0 && !store.listCallState().error) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
+        <app-resource-illustration hlmEmptyMedia resource="webhook" />
         <h2 hlmEmptyTitle i18n="@@webhooks.empty">No webhooks yet</h2>
         <p hlmEmptyDescription i18n="@@webhooks.emptyHint">
           Webhooks notify another service when selected events happen in this organization.
         </p>
       </div>
+      @if (canManage()) {
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            [disabled]="store.isMutating()"
+            (click)="openEditor(null)"
+            data-testid="webhook-create-empty"
+            i18n="@@webhooks.create"
+          >
+            Add webhook
+          </button>
+        </div>
+      }
     </div>
   } @else if (store.subscriptionEntities().length > 0) {
-    <div class="grid min-w-0 gap-6 xl:grid-cols-[minmax(15rem,1fr)_minmax(0,2fr)]">
+    <div class="grid min-w-0 gap-6 @4xl:grid-cols-[minmax(15rem,1fr)_minmax(0,2fr)]">
       <section class="min-w-0 space-y-3" aria-labelledby="webhook-subscriptions-title">
-        <h2 id="webhook-subscriptions-title" class="font-semibold" i18n="@@webhooks.subscriptions">
+        <h2
+          id="webhook-subscriptions-title"
+          class="text-sm font-semibold"
+          i18n="@@webhooks.subscriptions"
+        >
           Subscriptions
         </h2>
-        <div class="divide-y rounded-lg border">
+        <div hlmItemGroup class="gap-0" data-testid="webhook-subscription-list">
           @for (subscription of store.subscriptionEntities(); track subscription.id) {
+            @if (!$first) {
+              <hlm-item-separator class="my-0" />
+            }
             <button
               type="button"
-              class="flex w-full min-w-0 flex-col gap-2 px-4 py-3 text-start outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
-              [class.bg-muted]="subscription.id === store.selectedId()"
+              hlmItem
+              [variant]="subscription.id === store.selectedId() ? 'muted' : 'default'"
+              class="w-full min-w-0 items-start text-start hover:bg-muted"
               [attr.aria-pressed]="subscription.id === store.selectedId()"
               [disabled]="store.isMutating()"
               (click)="store.select(subscription.id)"
               [attr.data-testid]="'webhook-row-' + subscription.id"
             >
-              <span class="text-sm font-medium break-all">{{
-                subscription.description || subscription.url
-              }}</span>
-              @if (subscription.description) {
-                <span class="text-xs break-all text-muted-foreground">{{ subscription.url }}</span>
-              }
-              <span hlmBadge variant="outline" class="self-start">
-                @if (subscription.isActive) {
-                  <span i18n="@@webhooks.active">Active</span>
-                } @else {
-                  <span i18n="@@webhooks.paused">Paused</span>
+              <span hlmItemContent class="min-w-0 gap-1">
+                <span class="text-sm font-medium break-all">{{
+                  subscription.description || subscription.url
+                }}</span>
+                @if (subscription.description) {
+                  <span class="text-xs break-all text-muted-foreground">{{
+                    subscription.url
+                  }}</span>
                 }
+                <span hlmBadge variant="outline" class="mt-1 self-start px-1.5 leading-none">
+                  <ng-icon
+                    [name]="subscription.isActive ? 'lucideCircleCheck' : 'lucideCirclePause'"
+                    [class]="
+                      subscription.isActive
+                        ? 'shrink-0 text-success'
+                        : 'shrink-0 text-muted-foreground'
+                    "
+                    aria-hidden="true"
+                  />
+                  @if (subscription.isActive) {
+                    <span i18n="@@webhooks.active">Active</span>
+                  } @else {
+                    <span i18n="@@webhooks.paused">Paused</span>
+                  }
+                </span>
               </span>
             </button>
           }
         </div>
-        <p class="text-xs text-muted-foreground" i18n="@@webhooks.subscriptionTotal">
-          Subscriptions: {{ store.total() }}
-        </p>
-        @if (store.pageCount() > 1) {
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              hlmBtn
-              variant="outline"
-              size="sm"
-              class="mobile-ui:min-h-11"
-              [disabled]="store.page() <= 1 || store.isMutating()"
-              (click)="refresh(store.page() - 1)"
-              i18n="@@common.previous"
-            >
-              Previous
-            </button>
-            <span class="text-xs">{{ store.page() }} / {{ store.pageCount() }}</span>
-            <button
-              hlmBtn
-              variant="outline"
-              size="sm"
-              class="mobile-ui:min-h-11"
-              [disabled]="store.page() >= store.pageCount() || store.isMutating()"
-              (click)="refresh(store.page() + 1)"
-              i18n="@@common.next"
-            >
-              Next
-            </button>
-          </div>
-        }
+        <app-collection-pagination
+          [page]="store.page()"
+          [pageCount]="store.pageCount()"
+          [pageSize]="pageSizes[0]"
+          [pageSizes]="pageSizes"
+          [total]="store.total()"
+          [shown]="store.subscriptionEntities().length"
+          testIdPrefix="webhook-subscriptions"
+          (pageChanged)="refresh($event)"
+          (pageSizeChanged)="refresh(store.page())"
+        />
       </section>
       @if (store.selected(); as subscription) {
         <section class="min-w-0 space-y-5" aria-labelledby="webhook-detail-title">
           <div class="space-y-3 rounded-lg border p-4">
-            <h2 id="webhook-detail-title" class="font-semibold break-all">
-              {{ subscription.description || subscription.url }}
-            </h2>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <h2 id="webhook-detail-title" class="min-w-0 font-semibold break-all">
+                {{ subscription.description || subscription.url }}
+              </h2>
+              @if (canManage()) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  align="end"
+                  class="shrink-0 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
+                  [disabled]="store.isMutating()"
+                  [attr.aria-label]="rowMenuLabel"
+                  [hlmTooltip]="rowMenuLabel"
+                  [hlmDropdownMenuTrigger]="webhookRowMenu"
+                  data-testid="webhook-row-menu"
+                >
+                  <ng-icon name="lucideEllipsis" aria-hidden="true" />
+                </button>
+                <ng-template #webhookRowMenu>
+                  <hlm-dropdown-menu class="w-56">
+                    <button
+                      class="mobile-ui:min-h-11"
+                      hlmDropdownMenuItem
+                      [disabled]="store.isMutating()"
+                      data-testid="webhook-rotate"
+                      (click)="request({ kind: 'rotate', id: subscription.id })"
+                    >
+                      <ng-icon name="lucideKeyRound" aria-hidden="true" />
+                      <span i18n="@@webhooks.rotate">Rotate secret</span>
+                    </button>
+                    <hlm-dropdown-menu-separator />
+                    <button
+                      class="mobile-ui:min-h-11"
+                      hlmDropdownMenuItem
+                      variant="destructive"
+                      [disabled]="store.isMutating()"
+                      data-testid="webhook-delete"
+                      (click)="request({ kind: 'delete', id: subscription.id })"
+                    >
+                      <ng-icon name="lucideTrash2" aria-hidden="true" />
+                      <span i18n="@@common.delete">Delete</span>
+                    </button>
+                  </hlm-dropdown-menu>
+                </ng-template>
+              }
+            </div>
             <p class="text-sm break-all text-muted-foreground">{{ subscription.url }}</p>
             <div
               class="flex flex-wrap gap-1.5"
@@ -131,9 +195,10 @@
                 <span
                   hlmBadge
                   variant="secondary"
-                  class="max-w-full font-mono text-xs break-all whitespace-normal"
-                  >{{ event }}</span
+                  class="max-w-full text-xs break-words whitespace-normal"
                 >
+                  {{ eventLabelOf(event) }}
+                </span>
               }
             </div>
             @if (canManage()) {
@@ -162,35 +227,11 @@
                 >
                   Send test
                 </button>
-                <button
-                  hlmBtn
-                  variant="outline"
-                  size="sm"
-                  class="mobile-ui:min-h-11"
-                  [disabled]="store.isMutating()"
-                  (click)="request({ kind: 'rotate', id: subscription.id })"
-                  data-testid="webhook-rotate"
-                  i18n="@@webhooks.rotate"
-                >
-                  Rotate secret
-                </button>
-                <button
-                  hlmBtn
-                  variant="ghost"
-                  size="sm"
-                  class="text-destructive mobile-ui:min-h-11"
-                  [disabled]="store.isMutating()"
-                  (click)="request({ kind: 'delete', id: subscription.id })"
-                  data-testid="webhook-delete"
-                  i18n="@@common.delete"
-                >
-                  Delete
-                </button>
               </div>
             }
           </div>
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <h3 class="font-semibold" i18n="@@webhooks.deliveries">Delivery history</h3>
+            <h3 class="text-sm font-semibold" i18n="@@webhooks.deliveries">Delivery history</h3>
             <button
               hlmBtn
               variant="outline"
@@ -204,133 +245,187 @@
               Refresh
             </button>
           </div>
-          <fieldset
-            class="flex flex-wrap gap-2"
+          <hlm-toggle-group
+            type="single"
+            [nullable]="false"
+            variant="outline"
+            size="sm"
+            [value]="store.status()"
+            data-testid="webhook-status-filter"
             aria-label="Delivery status"
             i18n-aria-label="@@webhooks.deliveryStatus"
+            (valueChange)="onStatusFilterChanged($event)"
           >
             @for (filter of filters; track filter.value) {
               <button
-                hlmBtn
-                [variant]="store.status() === filter.value ? 'secondary' : 'outline'"
-                size="sm"
+                hlmToggleGroupItem
                 class="mobile-ui:min-h-11"
-                [attr.aria-pressed]="store.status() === filter.value"
-                [disabled]="store.isMutating()"
-                (click)="store.loadDeliveries(1, filter.value)"
-                [attr.data-testid]="'webhook-filter-' + filter.value"
+                [value]="filter.value"
+                [attr.data-testid]="'webhook-filter-' + (filter.value || 'all')"
               >
                 {{ filter.label }}
               </button>
             }
-          </fieldset>
+          </hlm-toggle-group>
           @if (store.deliveryCallState().error; as error) {
-            <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+            <div hlmAlert variant="destructive" role="alert" data-testid="webhook-delivery-error">
+              <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+              <p hlmAlertTitle i18n="@@webhooks.deliveryErrorTitle">
+                Couldn't load delivery history
+              </p>
+              <p hlmAlertDescription>{{ error.message }}</p>
+              <button
+                hlmAlertAction
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="mobile-ui:min-h-11"
+                (click)="store.loadDeliveries(store.deliveryPage(), store.status())"
+                i18n="@@common.retry"
+              >
+                Retry
+              </button>
+            </div>
           }
           @if (store.isLoadingDeliveries()) {
-            <hlm-skeleton class="h-32 w-full" />
-          } @else if (store.deliveryEntities().length === 0 && !store.deliveryCallState().error) {
-            <p
-              class="rounded-lg border border-dashed p-6 text-sm text-muted-foreground"
-              i18n="@@webhooks.noDeliveries"
+            <div
+              hlmItemGroup
+              class="gap-0 rounded-lg border"
+              data-testid="webhook-deliveries-loading"
             >
-              No deliveries match this view.
-            </p>
-          } @else {
-            <ol class="divide-y rounded-lg border">
-              @for (delivery of store.deliveryEntities(); track delivery.id) {
-                <li class="space-y-2 p-4" [attr.data-testid]="'webhook-delivery-' + delivery.id">
-                  <div class="flex flex-wrap items-start justify-between gap-2">
-                    <div class="min-w-0 space-y-1">
-                      <p class="font-mono text-sm break-all">{{ delivery.eventType }}</p>
-                      <p class="text-xs text-muted-foreground">
-                        {{ delivery.createdAt | date: 'medium' }}
-                      </p>
-                    </div>
-                    <span hlmBadge variant="outline">{{ statusLabel(delivery.status) }}</span>
+              @for (row of [1, 2, 3]; track row) {
+                @if (!$first) {
+                  <hlm-item-separator class="my-0" />
+                }
+                <div hlmItem size="sm">
+                  <div hlmItemContent class="gap-2">
+                    <hlm-skeleton class="h-4 w-40" />
+                    <hlm-skeleton class="h-3 w-64" />
                   </div>
-                  <p class="font-mono text-xs break-all text-muted-foreground">{{ delivery.id }}</p>
-                  <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span i18n="@@webhooks.attempts">Attempts: {{ delivery.attempts }}</span>
-                    @if (delivery.httpStatus; as status) {
-                      <span>HTTP {{ status }}</span>
-                    }
-                    @if (delivery.nextRetryAt; as retryAt) {
-                      <span i18n="@@webhooks.nextRetry"
-                        >Next retry: {{ retryAt | date: 'medium' }}</span
-                      >
-                    }
-                  </div>
-                  @if (delivery.errorCode; as code) {
-                    <p class="text-sm text-destructive">{{ failureLabel(code) }}</p>
-                  }
-                  @if (canManage()) {
-                    <button
-                      hlmBtn
-                      variant="outline"
-                      size="sm"
-                      class="mobile-ui:min-h-11"
-                      [disabled]="store.isMutating()"
-                      (click)="
-                        request({ kind: 'redeliver', id: subscription.id, deliveryId: delivery.id })
-                      "
-                      [attr.data-testid]="'webhook-redeliver-' + delivery.id"
-                      i18n="@@webhooks.redeliver"
-                    >
-                      Redeliver
-                    </button>
-                  }
-                </li>
+                </div>
               }
-            </ol>
-          }
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <p class="text-xs text-muted-foreground" i18n="@@webhooks.deliveryTotal">
-              Deliveries: {{ store.deliveryTotal() }}
-            </p>
-            @if (store.deliveryPageCount() > 1) {
-              <div class="flex items-center gap-2">
-                <button
-                  hlmBtn
-                  variant="outline"
-                  size="sm"
-                  class="mobile-ui:min-h-11"
-                  [disabled]="
-                    store.deliveryPage() <= 1 || store.isLoadingDeliveries() || store.isMutating()
-                  "
-                  (click)="store.loadDeliveries(store.deliveryPage() - 1, store.status())"
-                  data-testid="webhook-deliveries-previous"
-                  i18n="@@common.previous"
-                >
-                  Previous
-                </button>
-                <span class="text-xs"
-                  >{{ store.deliveryPage() }} / {{ store.deliveryPageCount() }}</span
-                >
-                <button
-                  hlmBtn
-                  variant="outline"
-                  size="sm"
-                  class="mobile-ui:min-h-11"
-                  [disabled]="
-                    store.deliveryPage() >= store.deliveryPageCount() ||
-                    store.isLoadingDeliveries() ||
-                    store.isMutating()
-                  "
-                  (click)="store.loadDeliveries(store.deliveryPage() + 1, store.status())"
-                  data-testid="webhook-deliveries-next"
-                  i18n="@@common.next"
-                >
-                  Next
-                </button>
+            </div>
+          } @else if (store.deliveryEntities().length === 0 && !store.deliveryCallState().error) {
+            <div hlmEmpty class="border border-border">
+              <div hlmEmptyHeader>
+                <app-state-illustration hlmEmptyMedia state="no-history" />
+                <p hlmEmptyTitle i18n="@@webhooks.noDeliveries">No deliveries match this view.</p>
               </div>
-            }
-          </div>
+            </div>
+          } @else {
+            <div hlmItemGroup class="gap-0 rounded-lg border" data-testid="webhook-delivery-list">
+              @for (delivery of store.deliveryEntities(); track delivery.id) {
+                @if (!$first) {
+                  <hlm-item-separator class="my-0" />
+                }
+                <div hlmItem size="sm" [attr.data-testid]="'webhook-delivery-' + delivery.id">
+                  <div hlmItemContent class="min-w-0 gap-1">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                      <p class="min-w-0 text-sm font-medium break-words">
+                        {{ eventLabelOf(delivery.eventType) }}
+                      </p>
+                      <app-webhook-delivery-status-tag [value]="delivery.status" />
+                    </div>
+                    <p class="font-mono text-xs break-all text-muted-foreground">
+                      {{ delivery.id }}
+                    </p>
+                    <p class="text-xs text-muted-foreground tabular-nums">
+                      {{ delivery.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                    </p>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span i18n="@@webhooks.attempts">Attempts: {{ delivery.attempts }}</span>
+                      @if (delivery.httpStatus; as status) {
+                        <span>HTTP {{ status }}</span>
+                      }
+                      @if (delivery.deliveredAt; as deliveredAt) {
+                        <span class="tabular-nums" i18n="@@webhooks.deliveredAt"
+                          >Delivered
+                          {{ deliveredAt | appOrgDate: 'datetime' : regionalFormatting() }}</span
+                        >
+                      }
+                      @if (delivery.nextRetryAt; as retryAt) {
+                        <span class="tabular-nums" i18n="@@webhooks.nextRetry"
+                          >Next retry:
+                          {{ retryAt | appOrgDate: 'datetime' : regionalFormatting() }}</span
+                        >
+                      }
+                    </div>
+                    @if (delivery.errorCode; as code) {
+                      <p class="text-sm text-destructive">{{ failureLabel(code) }}</p>
+                    }
+                  </div>
+                  @if (canManage()) {
+                    <div hlmItemActions>
+                      <button
+                        hlmBtn
+                        variant="outline"
+                        size="sm"
+                        class="mobile-ui:min-h-11"
+                        [disabled]="store.isMutating()"
+                        (click)="
+                          request({
+                            kind: 'redeliver',
+                            id: subscription.id,
+                            deliveryId: delivery.id,
+                          })
+                        "
+                        [attr.data-testid]="'webhook-redeliver-' + delivery.id"
+                        i18n="@@webhooks.redeliver"
+                      >
+                        Redeliver
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          <app-collection-pagination
+            [page]="store.deliveryPage()"
+            [pageCount]="store.deliveryPageCount()"
+            [pageSize]="pageSizes[0]"
+            [pageSizes]="pageSizes"
+            [total]="store.deliveryTotal()"
+            [shown]="store.deliveryEntities().length"
+            testIdPrefix="webhook-deliveries"
+            (pageChanged)="store.loadDeliveries($event, store.status())"
+            (pageSizeChanged)="store.loadDeliveries(store.deliveryPage(), store.status())"
+          />
         </section>
       }
     </div>
   }
 </div>
+<ng-template #pageActions>
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="icon"
+    class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
+    [disabled]="store.isLoading() || store.isMutating()"
+    (click)="refresh(store.page())"
+    data-testid="webhooks-refresh"
+    [attr.aria-label]="refreshLabel"
+    [hlmTooltip]="refreshLabel"
+  >
+    <ng-icon name="lucideRefreshCw" aria-hidden="true" />
+  </button>
+  @if (canManage()) {
+    <button
+      hlmBtn
+      type="button"
+      class="min-w-0 shrink mobile-ui:min-h-11"
+      [disabled]="store.isLoading() || store.isMutating()"
+      (click)="openEditor(null)"
+      data-testid="webhook-create"
+    >
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@webhooks.create">Add webhook</span>
+    </button>
+  }
+</ng-template>
 <hlm-sheet
   [side]="side()"
   [state]="editorOpen() ? 'open' : 'closed'"
@@ -360,11 +455,30 @@
         <hlm-skeleton class="h-40 w-full" />
       }
       @if (store.catalogCallState().error; as error) {
-        <p role="alert" class="mb-3 text-sm text-destructive">{{ error.message }}</p>
-        <button hlmBtn variant="outline" (click)="store.loadCatalog()" i18n="@@common.retry">
-          Retry
-        </button>
-        <button hlmBtn variant="ghost" (click)="closeEditor()" i18n="@@common.cancel">
+        <div hlmAlert variant="destructive" role="alert" class="mb-3">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@webhooks.catalogErrorTitle">Couldn't load the event catalog</p>
+          <p hlmAlertDescription>{{ error.message }}</p>
+          <button
+            hlmAlertAction
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="mobile-ui:min-h-11"
+            (click)="store.loadCatalog()"
+            i18n="@@common.retry"
+          >
+            Retry
+          </button>
+        </div>
+        <button
+          hlmBtn
+          variant="ghost"
+          class="mobile-ui:min-h-11"
+          (click)="closeEditor()"
+          i18n="@@common.cancel"
+        >
           Cancel
         </button>
       }
@@ -402,7 +516,10 @@
       <p hlmAlertDialogDescription>{{ confirmationDescription() }}</p>
     </hlm-alert-dialog-header>
     @if (store.mutationCallState().error; as error) {
-      <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+      <div hlmAlert variant="destructive" role="alert">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
     }
     <hlm-alert-dialog-footer>
       <button

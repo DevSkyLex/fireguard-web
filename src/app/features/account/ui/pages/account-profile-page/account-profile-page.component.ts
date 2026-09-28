@@ -115,8 +115,10 @@ export class AccountProfilePage implements OnInit {
    * @readonly
    *
    * @description
-   * Localized labels for the account's granted global roles. Unrecognized metadata
-   * uses a neutral label without inferring permissions or exposing transport codes.
+   * Localized, deduplicated labels for the account's granted global roles.
+   * Unrecognized metadata uses a shared neutral label without inferring
+   * permissions or exposing transport codes; deduplication keeps two such
+   * roles from rendering the same badge twice.
    *
    * @access protected
    * @since 1.0.0
@@ -124,13 +126,17 @@ export class AccountProfilePage implements OnInit {
    * @type {Signal<ReadonlyArray<string>>}
    */
   protected readonly roles: Signal<ReadonlyArray<string>> = computed((): ReadonlyArray<string> =>
-    this.userStore
-      .roles()
-      .map((role: string): string =>
-        role === 'ROLE_USER'
-          ? $localize`:@@account.profile.role.user:User`
-          : $localize`:@@account.profile.role.assigned:Assigned role`,
+    Array.from(
+      new Set(
+        this.userStore
+          .roles()
+          .map((role: string): string =>
+            role === 'ROLE_USER'
+              ? $localize`:@@account.profile.role.user:User`
+              : $localize`:@@account.profile.role.assigned:Assigned role`,
+          ),
       ),
+    ),
   );
 
   /**

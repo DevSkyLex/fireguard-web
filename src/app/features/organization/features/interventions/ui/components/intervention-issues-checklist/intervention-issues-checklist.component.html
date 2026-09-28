@@ -1,23 +1,35 @@
 @if (loading()) {
-  <p
-    class="flex items-center gap-2 py-2 text-sm text-muted-foreground"
-    role="status"
-    i18n="@@intervention.issues.checking"
-  >
+  <span class="sr-only" role="status" i18n="@@intervention.issues.checking">
     Checking publication requirements…
-  </p>
+  </span>
+  <ul
+    hlmItemGroup
+    class="gap-2"
+    aria-hidden="true"
+    data-testid="intervention-issues-checklist-skeleton"
+  >
+    @for (row of [1, 2]; track row) {
+      <li hlmItem class="h-auto min-h-11 w-full gap-2">
+        <hlm-skeleton class="h-5 w-16 shrink-0 rounded-full" />
+        <hlm-skeleton class="h-4 w-48" />
+      </li>
+    }
+  </ul>
 }
 @if (error(); as message) {
-  <div
-    class="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3"
-    role="alert"
-  >
-    <p class="text-sm text-destructive">{{ message }}</p>
+  <div hlmAlert variant="destructive" role="alert">
+    <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+    <p hlmAlertTitle i18n="@@intervention.issues.errorTitle">
+      Publication requirements could not be checked
+    </p>
+    <p hlmAlertDescription>{{ message }}</p>
     <button
-      class="mobile-ui:min-h-11"
+      hlmAlertAction
       hlmBtn
+      type="button"
       variant="outline"
       size="sm"
+      class="mobile-ui:min-h-11"
       (click)="retryRequested.emit()"
       i18n="@@intervention.issues.retry"
     >
@@ -45,14 +57,13 @@
     </div>
 
     @if (blockers().length > 0) {
-      <ul hlmItemGroup class="gap-2">
-        @for (issue of blockers(); track issue['@id']) {
+      <ul hlmItemGroup class="gap-0">
+        @for (issue of blockers(); track issue['@id']; let last = $last) {
           <li>
             <button
               hlmItem
               type="button"
-              variant="outline"
-              class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 bg-muted/25 text-start hover:bg-muted/40 mobile-ui:min-h-11"
+              class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 rounded-none px-0 text-start mobile-ui:min-h-11"
               data-testid="intervention-issues-checklist-blocker-item"
               (click)="activate(issue)"
             >
@@ -60,9 +71,7 @@
                 <app-intervention-tag kind="issueSeverity" [value]="issue.severity" />
                 <span class="flex min-w-0 flex-col gap-1"
                   ><span class="text-sm">{{ issue.message }}</span>
-                  @if (issue.field) {
-                    <span class="text-xs text-muted-foreground">{{ issue.field }}</span>
-                  }
+                  <span class="text-xs text-muted-foreground">{{ contextLineOf(issue) }}</span>
                 </span>
               </span>
               <ng-icon
@@ -72,11 +81,14 @@
               />
             </button>
           </li>
+          @if (!last) {
+            <hlm-item-separator />
+          }
         }
       </ul>
     } @else if (showClearNotice()) {
       <p
-        class="flex items-center gap-2 rounded-lg border border-border bg-muted/25 px-3 py-2.5 text-sm text-foreground"
+        class="flex items-center gap-2 text-sm text-foreground"
         data-testid="intervention-issues-checklist-clear"
       >
         <ng-icon name="lucideCircleCheck" class="text-success" aria-hidden="true" />
@@ -85,14 +97,13 @@
     }
 
     @if (secondaryIssues().length > 0) {
-      <ul hlmItemGroup class="gap-2">
-        @for (issue of secondaryIssues(); track issue['@id']) {
+      <ul hlmItemGroup class="gap-0">
+        @for (issue of secondaryIssues(); track issue['@id']; let last = $last) {
           <li>
             <button
               hlmItem
               type="button"
-              variant="outline"
-              class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 bg-muted/25 text-start hover:bg-muted/40 mobile-ui:min-h-11"
+              class="h-auto min-h-11 w-full flex-nowrap justify-between gap-2 rounded-none px-0 text-start mobile-ui:min-h-11"
               data-testid="intervention-issues-checklist-secondary-item"
               (click)="activate(issue)"
             >
@@ -100,9 +111,7 @@
                 <app-intervention-tag kind="issueSeverity" [value]="issue.severity" />
                 <span class="flex min-w-0 flex-col gap-1"
                   ><span class="text-sm">{{ issue.message }}</span>
-                  @if (issue.field) {
-                    <span class="text-xs text-muted-foreground">{{ issue.field }}</span>
-                  }
+                  <span class="text-xs text-muted-foreground">{{ contextLineOf(issue) }}</span>
                 </span>
               </span>
               <ng-icon
@@ -112,6 +121,9 @@
               />
             </button>
           </li>
+          @if (!last) {
+            <hlm-item-separator />
+          }
         }
       </ul>
     }

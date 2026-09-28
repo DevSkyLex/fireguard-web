@@ -1,8 +1,10 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { MemberDirectoryEntry } from '@features/organization/models';
+import { MEMBER_PRESENCE_PORT } from '@features/organization/ports';
 import { MEMBER_DIRECTORY_PORT, ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { OrganizationMemberProfilePage } from '../organization-member-profile-page.component';
 
@@ -27,6 +29,15 @@ describe('OrganizationMemberProfilePage', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
         provideZonelessChangeDetection(),
         provideRouter([]),
         {
@@ -42,6 +53,14 @@ describe('OrganizationMemberProfilePage', () => {
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('system'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
       ],
     });
 
@@ -63,7 +82,24 @@ describe('OrganizationMemberProfilePage', () => {
     await render();
 
     expect(fixture.nativeElement.textContent).toContain('Ada Lovelace');
-    expect(fixture.nativeElement.textContent).toContain('Inspector, Reviewer');
+    expect(fixture.nativeElement.textContent).toContain('Inspector');
+    expect(fixture.nativeElement.textContent).toContain('Reviewer');
+  });
+
+  it('should show the person’s initials while no picture is set', async () => {
+    byId.set(new Map([[ADA.memberId, { ...ADA, avatarUrl: undefined }]]));
+    await render();
+
+    const fallback: HTMLElement | null = fixture.nativeElement.querySelector('[hlmAvatarFallback]');
+
+    expect(fallback?.textContent?.trim()).toBe('AL');
+  });
+
+  it('should show an Owner badge for the organization owner, and none otherwise', async () => {
+    byId.set(new Map([[ADA.memberId, { ...ADA, isOwner: true }]]));
+    await render();
+
+    expect(fixture.nativeElement.textContent).toContain('Owner');
   });
 
   it('should show nothing private and no way to change anything', async () => {
@@ -115,6 +151,11 @@ describe('OrganizationMemberProfilePage', () => {
     await render('member-unknown');
 
     expect(fixture.nativeElement.textContent).toContain("We don't know who that is");
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="state-illustration"] img')
+        ?.getAttribute('src'),
+    ).toBe('/assets/illustrations/empty-states/light/not-found.svg');
   });
 
   it('should show placeholders rather than a missing state while loading', async () => {

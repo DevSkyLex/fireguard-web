@@ -28,8 +28,6 @@ import {
   lucideClipboardCheck,
   lucideDownload,
   lucideGauge,
-  lucideListFilter,
-  lucideLock,
   lucidePlus,
   lucideSearch,
 } from '@ng-icons/lucide';
@@ -58,6 +56,10 @@ import {
 } from '@features/organization/features/inspections/state';
 import { InspectionCreationOptionsStore } from '@features/organization/features/inspections/state/inspection-creation-options';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import {
@@ -70,7 +72,9 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroup } from '@shared/ui/button-group';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
@@ -135,6 +139,7 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     NgIcon,
     ...HlmEmptyImports,
     ResourceIllustration,
+    StateIllustration,
     RouterLink,
     InspectionCreateSheet,
     InspectionStatusTag,
@@ -154,7 +159,6 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     ChecklistStore,
     InspectionCreationOptionsStore,
     provideIcons({
-      lucideLock,
       lucideChartColumn,
       lucideChevronDown,
       lucideCircleAlert,
@@ -162,7 +166,6 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
       lucideClipboardCheck,
       lucideDownload,
       lucideGauge,
-      lucideListFilter,
       lucidePlus,
       lucideSearch,
     }),
@@ -237,6 +240,21 @@ export class InspectionsPage {
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
+
+  /** Publishes the active organization's date pattern and timezone for the table's `appOrgDate` rendering. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound to the table.
+   * @access protected
+   * @since 1.8.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
 
   /** Remembers the active ordering across visits. */
   private readonly preferences: InspectionListPreferencesService =

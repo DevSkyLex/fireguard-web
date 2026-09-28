@@ -2,8 +2,10 @@
   <fieldset class="min-w-0" [disabled]="pending()">
     <hlm-field-group class="mobile-ui:gap-4">
       @if (error(); as message) {
-        <div role="alert" data-testid="import-upload-error" class="text-sm text-destructive">
-          <p>{{ message }}</p>
+        <div hlmAlert variant="destructive" role="alert" data-testid="import-upload-error">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@imports.upload.errorTitle">The import could not be submitted</p>
+          <p hlmAlertDescription>{{ message }}</p>
         </div>
       }
 
@@ -118,7 +120,13 @@
         <span i18n="@@imports.template.download">Download CSV template</span>
       </button>
       @if (templateError(); as message) {
-        <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+        <div hlmAlert variant="destructive" role="alert" data-testid="import-template-error">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@imports.template.errorTitle">
+            The template could not be downloaded
+          </p>
+          <p hlmAlertDescription>{{ message }}</p>
+        </div>
       }
 
       <hlm-collapsible [expanded]="helpExpanded()" (expandedChange)="helpExpanded.set($event)">

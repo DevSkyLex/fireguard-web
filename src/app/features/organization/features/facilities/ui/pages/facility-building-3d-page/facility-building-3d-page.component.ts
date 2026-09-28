@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -13,6 +14,7 @@ import {
   viewChild,
   type InputSignal,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
@@ -28,6 +30,7 @@ import {
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   FacilityBuildingModelFloor,
@@ -38,9 +41,11 @@ import {
   type FacilityBuilding3dStoreType,
 } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmToggleImports } from '@shared/ui/toggle';
 import { FacilityBuilding3dRoomPanel } from '../../components/facility-building-3d-room-panel';
 import { FacilityBuilding3dScene } from '../../components/facility-building-3d-scene';
 
@@ -79,10 +84,14 @@ import { FacilityBuilding3dScene } from '../../components/facility-building-3d-s
  * per-frame `patchState` would be a store misuse `FacilityBuilding3dStore`'s
  * own `@description` already rules out).
  *
- * The empty state's "Go to Plans" call to action links to this facility's
- * record with `?tab=plans`, gated on `FACILITIES_WRITE` — floors are added
- * from that tab, not from here. `FacilityDetailPage.activeTab` follows that
- * query parameter, so arriving there lands on the Plans tab.
+ * The empty state's "Add a floor" call to action opens the facility list's
+ * creation sheet pre-scoped to this building (`?create=1&parent=`), gated on
+ * `FACILITIES_WRITE` — floors are sub-facilities created there, not from the
+ * record's Plans tab. "Back to facility" registers on the shell header
+ * (`PageActionsService`) instead of sitting beside the scene toolbar's own
+ * controls, and the room panel's "View on 2D plan" ({@link onPlan2dRequested})
+ * opens the *selected room's floor* record, since a room is drawn on its
+ * floor's own plan.
  *
  * `app-facility-building-3d-room-panel` (P2) is this feature's **only**
  * keyboard/screen-reader entry path, since the canvas is pointer-only. It
@@ -112,10 +121,12 @@ import { FacilityBuilding3dScene } from '../../components/facility-building-3d-s
     NgIcon,
     ...HlmEmptyImports,
     RouterLink,
+    ResourceIllustration,
     FacilityBuilding3dScene,
     FacilityBuilding3dRoomPanel,
     HlmButton,
     HlmSkeleton,
+    ...HlmToggleImports,
   ],
   providers: [
     provideIcons({
@@ -161,7 +172,7 @@ export class FacilityBuilding3dPage {
   protected readonly store: FacilityBuilding3dStoreType =
     inject<FacilityBuilding3dStoreType>(FacilityBuilding3dStore);
 
-  /** Organization permission checks gating the empty state's "Go to Plans" call to action. */
+  /** Organization permission checks gating the empty state's "Add a floor" call to action. */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
@@ -193,7 +204,7 @@ export class FacilityBuilding3dPage {
    */
   protected readonly webglSupported: WritableSignal<boolean> = signal<boolean>(true);
 
-  /** Where the toolbar's "View 2D plan" and the empty state's call to action point. */
+  /** Where the header's "Back to facility" link and the unsupported-WebGL call to action point. */
   protected readonly plansTabRoute: Signal<readonly string[]> = computed<readonly string[]>(() => [
     '/organizations',
     this.organizationId(),
@@ -324,6 +335,13 @@ export class FacilityBuilding3dPage {
 
   /** Injects `Router` for {@link onPlan2dRequested}'s navigation — the panel itself only emits. */
   private readonly router: Router = inject(Router);
+
+  /** Registers {@link pageActions} on the shell header. */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
+  /** The "Back to facility" link, registered on the shell header instead of the toolbar. */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
 
   //#region Constructor
@@ -340,6 +358,8 @@ export class FacilityBuilding3dPage {
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+
     effect((): void => {
       const organizationId: string = this.organizationId();
       const facilityId: string = this.facilityId();
@@ -399,13 +419,18 @@ export class FacilityBuilding3dPage {
 
   /**
    * Method onPlan2dRequested
-   * @description The room panel's "View on 2D plan" action — navigates to this facility's record on its Plans tab, the same destination the toolbar's own link already points to.
+   * @description The room panel's "View on 2D plan" action — navigates to the *selected room's own floor* record on its Plans tab, since a room is drawn on its floor's plan, not on this building facility's own (which may carry none).
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    * @returns {void}
    */
   protected onPlan2dRequested(): void {
-    void this.router.navigate(this.plansTabRoute(), { queryParams: { tab: 'plans' } });
+    const floorId: string | null = this.store.selectedFloorId();
+    if (!floorId) return;
+
+    void this.router.navigate(['/organizations', this.organizationId(), 'facilities', floorId], {
+      queryParams: { tab: 'plans' },
+    });
   }
 
   /**

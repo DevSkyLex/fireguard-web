@@ -8,7 +8,7 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideEllipsis, lucidePencil, lucideTrash2, lucideUsersRound } from '@ng-icons/lucide';
+import { lucideEllipsis, lucidePencil, lucideTrash2 } from '@ng-icons/lucide';
 import type { TeamOutput } from '@features/organization/models';
 import { CollectionSurface } from '@shared/collection-surface';
 import {
@@ -20,6 +20,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /** How many cells a row carries, so the shared surface can size its first-load skeleton. */
 const COLUMN_COUNT: number = 5;
@@ -41,14 +42,17 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
  * The teams grid, built the way this codebase's other permission-aware
  * tables are (`OrganizationMemberTable`): `hlmTable` inside a bordered,
  * scrollable shell, name/description/member-count/created columns, and a
- * trailing `…` menu carrying Edit (`organization.teams.write`), Members
- * (always — the page itself is gated on `organization.teams.read`), and
- * Delete (`organization.teams.manage`).
+ * trailing `…` menu carrying Edit (`organization.teams.write`) and Delete
+ * (`organization.teams.manage`). Viewing a team's members — the main read
+ * action, and available to every viewer since the page itself is gated on
+ * `organization.teams.read` — is the team name itself, a text link in both
+ * the row and the card; the `…` menu renders at all only once at least one
+ * of Edit or Delete is granted.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service; the page owns the actual edit/delete/members workflows.
  *
- * @since 1.0.0
+ * @since 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -63,8 +67,9 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
     ...HlmDropdownMenuImports,
     ...HlmItemImports,
     ...HlmTableImports,
+    ...HlmTooltipImports,
   ],
-  providers: [provideIcons({ lucideEllipsis, lucidePencil, lucideTrash2, lucideUsersRound })],
+  providers: [provideIcons({ lucideEllipsis, lucidePencil, lucideTrash2 })],
   templateUrl: './organization-team-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -7,9 +6,12 @@ import {
   inject,
   signal,
   untracked,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert, lucideCircleCheck, lucideCirclePause } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { AutomationAttemptOutput } from '@features/organization/features/automations/models';
 import {
@@ -19,23 +21,62 @@ import {
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
+  REGIONAL_FORMATTING_PORT,
   type OrganizationContextPort,
+  type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { CollectionPagination } from '@shared/collection-pagination';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmLarge } from '@shared/ui/typography';
+import { AutomationStatusTag } from '../../components/automation-status-tag';
+
+/** The execution history's fixed, server-set page size — the store exposes no other. */
+const PAGE_SIZE: number = 20;
 
 /**
  * Component AutomationsPage
  * @class AutomationsPage
- * @description Shows the effective rule and server-counted execution history with explicit recovery actions.
- * @version 1.0.0
+ *
+ * @description
+ * Shows the effective automation policy and its server-counted execution
+ * history: a flat `hlmItem` for the policy row, an `hlmItemGroup` for the
+ * attempts, `app-collection-pagination` for paging, and `hlmAlert` for the
+ * list and retry error boundaries. Each attempt names its subject by its
+ * fixed domain label rather than a raw UUID, resolves its status through
+ * `app-automation-status-tag`, and shows `finishedAt` once it exists.
+ *
+ * @version 1.1.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-automations-page',
-  imports: [DatePipe, RouterLink, HlmButton, HlmBadge, HlmSkeleton, ...HlmEmptyImports],
-  providers: [AutomationExecutionsStore],
+  imports: [
+    NgIcon,
+    OrgDatePipe,
+    RouterLink,
+    AutomationStatusTag,
+    CollectionPagination,
+    HlmBadge,
+    HlmButton,
+    HlmSkeleton,
+    HlmLarge,
+    ResourceIllustration,
+    ...HlmAlertImports,
+    ...HlmEmptyImports,
+    ...HlmItemImports,
+  ],
+  providers: [
+    AutomationExecutionsStore,
+    provideIcons({ lucideCircleAlert, lucideCircleCheck, lucideCirclePause }),
+  ],
   templateUrl: './automations-page.component.html',
   host: { class: 'block w-full min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +91,7 @@ export class AutomationsPage {
    * @type {AutomationExecutionsStoreType}
    */
   protected readonly store: AutomationExecutionsStoreType = inject(AutomationExecutionsStore);
+
   /**
    * Property context
    * @readonly
@@ -59,6 +101,7 @@ export class AutomationsPage {
    * @type {OrganizationContextPort}
    */
   protected readonly context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
+
   /**
    * Property permissions
    * @readonly
@@ -70,6 +113,7 @@ export class AutomationsPage {
   protected readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
+
   /**
    * Property permission
    * @readonly
@@ -79,6 +123,28 @@ export class AutomationsPage {
    * @type {typeof ORGANIZATION_PERMISSION}
    */
   protected readonly permission: typeof ORGANIZATION_PERMISSION = ORGANIZATION_PERMISSION;
+
+  /**
+   * Property pageSizes
+   * @readonly
+   * @description The single, fixed page size {@link PAGE_SIZE} offers `app-collection-pagination`, which hides its rows-per-page selector for a one-entry list.
+   * @access protected
+   * @since 1.1.0
+   * @type {readonly [number]}
+   */
+  protected readonly pageSizes: readonly [number] = [PAGE_SIZE];
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT).regionalFormatting;
+
   /**
    * Property ready
    * @readonly
@@ -88,6 +154,7 @@ export class AutomationsPage {
    * @type {WritableSignal<boolean>}
    */
   private readonly ready: WritableSignal<boolean> = signal(false);
+
   /**
    * Constructor
    * @constructor
@@ -103,6 +170,7 @@ export class AutomationsPage {
       untracked(() => this.store.load({ organizationId: ready ? organizationId : null, page: 1 }));
     });
   }
+
   /**
    * Method load
    * @description Reads the requested page or refreshes current progress.
@@ -114,26 +182,16 @@ export class AutomationsPage {
   protected load(page: number): void {
     this.store.refresh(page);
   }
+
   /**
-   * Method statusLabel
-   * @description Localized persisted execution state.
+   * Method showsProgressHint
+   * @description Whether an attempt is still running on the server, so the row should point to a refresh rather than a result.
    * @access protected
-   * @since 1.0.0
-   * @param {AutomationAttemptOutput['status']} status - Server state.
-   * @returns {string} Visible state label.
+   * @since 1.2.0
+   * @param {AutomationAttemptOutput} attempt - The rendered attempt.
+   * @returns {boolean}
    */
-  protected statusLabel(status: AutomationAttemptOutput['status']): string {
-    switch (status) {
-      case 'pending':
-        return $localize`:@@automation.pending:Queued`;
-      case 'running':
-        return $localize`:@@automation.running:Running`;
-      case 'failed':
-        return $localize`:@@automation.failed:Failed`;
-      case 'succeeded':
-        return $localize`:@@automation.succeeded:Completed`;
-      case 'skipped':
-        return $localize`:@@automation.skipped:Skipped`;
-    }
+  protected showsProgressHint(attempt: AutomationAttemptOutput): boolean {
+    return attempt.status === 'pending' || attempt.status === 'running';
   }
 }

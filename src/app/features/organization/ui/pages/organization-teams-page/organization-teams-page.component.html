@@ -1,5 +1,9 @@
-<div id="organization-teams" class="flex h-full flex-col gap-6">
-  <p class="shrink-0 text-sm text-muted-foreground">{{ subtitle() }}</p>
+<div id="organization-teams" class="flex min-h-0 w-full flex-1 flex-col gap-4">
+  @if (store.listCallState().status === 'success' && store.teams().length > 0) {
+    <p class="shrink-0 text-sm text-muted-foreground" data-testid="organization-teams-subtitle">
+      {{ subtitle() }}
+    </p>
+  }
 
   <p class="sr-only" aria-live="polite" aria-atomic="true" data-testid="organization-teams-status">
     {{ listAnnouncement() }}

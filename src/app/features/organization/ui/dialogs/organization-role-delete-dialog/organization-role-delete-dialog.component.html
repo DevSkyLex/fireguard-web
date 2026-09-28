@@ -16,9 +16,11 @@
     </hlm-alert-dialog-header>
 
     @if (error(); as message) {
-      <p role="alert" class="text-sm text-destructive" data-testid="organization-team-delete-error">
-        {{ message }}
-      </p>
+      <div hlmAlert variant="destructive" role="alert" data-testid="organization-team-delete-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@org.team.deleteErrorTitle">Couldn't delete role</p>
+        <p hlmAlertDescription>{{ message }}</p>
+      </div>
     }
 
     <hlm-alert-dialog-footer>

@@ -34,6 +34,15 @@ describe('WebhookSubscriptionForm', () => {
     fixture.componentInstance.submitted.subscribe(submitted);
     return { fixture, submitted };
   }
+  it('shows the curated localized label with the raw key as a muted description', async () => {
+    const { fixture } = await setup();
+    const label = fixture.nativeElement.querySelector('label[for="webhook-event-0"]');
+    const description = fixture.nativeElement.querySelector('label[for="webhook-event-0"] + p');
+    expect(label?.textContent).toContain('Inspection submitted');
+    expect(label?.textContent).not.toContain('inspection.submitted');
+    expect(fixture.nativeElement.textContent).toContain('inspection.submitted');
+    expect(description?.className).toContain('font-mono');
+  });
   it('submits only modified metadata without replacing the selected event structure', async () => {
     const { fixture, submitted } = await setup();
     const description = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;

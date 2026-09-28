@@ -43,15 +43,25 @@
         </td>
 
         <td hlmTableCell class="whitespace-normal text-muted-foreground">
-          {{ memberLabelOf()(item.requestedByMemberId) }}
+          <span class="flex items-center gap-2">
+            <hlm-avatar size="sm" class="shrink-0">
+              @if (memberAvatarOf()(item.requestedByMemberId); as avatarUrl) {
+                <img hlmAvatarImage [src]="avatarUrl" alt="" />
+              }
+              <span hlmAvatarFallback class="text-[10px]">{{
+                initialsOf(item.requestedByMemberId)
+              }}</span>
+            </hlm-avatar>
+            {{ memberLabelOf()(item.requestedByMemberId) }}
+          </span>
         </td>
 
         <td hlmTableCell class="whitespace-normal">
           {{ item.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}
         </td>
 
-        <td hlmTableCell class="whitespace-normal">
-          {{ item.expiresAt | appOrgDate: 'datetime' : regionalFormatting() }}
+        <td hlmTableCell class="whitespace-normal tabular-nums">
+          <ng-container [ngTemplateOutlet]="expiresCell" [ngTemplateOutletContext]="{ item }" />
         </td>
 
         <td hlmTableCell>
@@ -69,52 +79,78 @@
   </ng-container>
 
   <ng-container surfaceCards>
-    @for (item of items(); track item.id) {
-      <div
-        class="flex flex-col gap-1.5 rounded-md border border-border p-3"
-        data-testid="approval-request-table-row-card"
-      >
-        <div class="flex items-start gap-2">
-          <span class="min-w-0 flex-1 font-medium text-foreground">
-            {{ actionTypeLabelOf()(item.actionType) }}
-          </span>
+    <div hlmItemGroup class="gap-0">
+      @for (item of items(); track item.id) {
+        @if (!$first) {
+          <hlm-item-separator class="my-0" />
+        }
+        <div hlmItem size="sm" data-testid="approval-request-table-row-card">
+          <div hlmItemContent class="min-w-0 gap-1.5">
+            <div class="flex items-start gap-2">
+              <span class="min-w-0 flex-1 font-medium text-foreground">
+                {{ actionTypeLabelOf()(item.actionType) }}
+              </span>
 
-          @if (showActions()) {
-            <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
-          }
-        </div>
+              @if (showActions()) {
+                <ng-container
+                  [ngTemplateOutlet]="rowActions"
+                  [ngTemplateOutletContext]="{ item }"
+                />
+              }
+            </div>
 
-        <div class="text-sm" data-testid="approval-request-mobile-subject">
-          @if (subjectRouteOf(item); as route) {
-            <a
-              class="rounded-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
-              [routerLink]="route"
-              >{{ subjectLabelOf(item) }}</a
+            <div class="text-sm" data-testid="approval-request-mobile-subject">
+              @if (subjectRouteOf(item); as route) {
+                <a
+                  class="rounded-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring"
+                  [routerLink]="route"
+                  >{{ subjectLabelOf(item) }}</a
+                >
+              } @else {
+                <span>{{ subjectLabelOf(item) }}</span>
+              }
+            </div>
+
+            <p
+              class="flex items-center gap-2 text-sm text-muted-foreground"
+              data-testid="approval-request-mobile-requester"
             >
-          } @else {
-            <span>{{ subjectLabelOf(item) }}</span>
-          }
-        </div>
-        <p class="text-sm text-muted-foreground" data-testid="approval-request-mobile-requester">
-          <span i18n="@@approvals.table.colRequester">Requested by</span>
-          {{ memberLabelOf()(item.requestedByMemberId) }}
-        </p>
-        <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
-          <app-approval-status-tag [value]="item.status" />
+              <hlm-avatar size="sm" class="shrink-0">
+                @if (memberAvatarOf()(item.requestedByMemberId); as avatarUrl) {
+                  <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                }
+                <span hlmAvatarFallback class="text-[10px]">{{
+                  initialsOf(item.requestedByMemberId)
+                }}</span>
+              </hlm-avatar>
+              <span>
+                <span i18n="@@approvals.table.colRequester">Requested by</span>
+                {{ memberLabelOf()(item.requestedByMemberId) }}
+              </span>
+            </p>
 
-          <span class="inline-flex items-center gap-1 truncate">
-            <span i18n="@@approvals.table.colExpires">Expires</span>
-            <span class="tabular-nums">{{
-              item.expiresAt | appOrgDate: 'datetime' : regionalFormatting()
-            }}</span>
-          </span>
-        </div>
+            <div class="flex flex-wrap items-center gap-2 ps-1 text-xs text-muted-foreground">
+              <app-approval-status-tag [value]="item.status" />
 
-        <div class="ps-1">
-          <ng-container [ngTemplateOutlet]="decisionDetail" [ngTemplateOutletContext]="{ item }" />
+              <span class="inline-flex items-center gap-1 truncate tabular-nums">
+                <span i18n="@@approvals.table.colExpires">Expires</span>
+                <ng-container
+                  [ngTemplateOutlet]="expiresCell"
+                  [ngTemplateOutletContext]="{ item }"
+                />
+              </span>
+            </div>
+
+            <div class="ps-1">
+              <ng-container
+                [ngTemplateOutlet]="decisionDetail"
+                [ngTemplateOutletContext]="{ item }"
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    }
+      }
+    </div>
   </ng-container>
 
   <p
@@ -125,6 +161,19 @@
     No results.
   </p>
 </app-collection-surface>
+
+<ng-template #expiresCell let-item="item">
+  @if (expiresVisible(item)) {
+    <span class="tabular-nums">{{
+      item.expiresAt | appOrgDate: 'datetime' : regionalFormatting()
+    }}</span>
+    @if (expiresRelativeVisible(item)) {
+      <span class="text-muted-foreground"> · {{ expiresRelativeOf(item) }}</span>
+    }
+  } @else {
+    <span class="text-muted-foreground" aria-hidden="true">—</span>
+  }
+</ng-template>
 
 <ng-template #decisionDetail let-item="item">
   @if (isDecided(item)) {
@@ -138,11 +187,20 @@
       @if (item.decidedAt) {
         <span>{{ item.decidedAt | appOrgDate: 'datetime' : regionalFormatting() }}</span>
       }
+      @if (item.executedAt) {
+        <span
+          ><span i18n="@@approvals.table.executedAt">Executed</span>
+          {{ item.executedAt | appOrgDate: 'datetime' : regionalFormatting() }}</span
+        >
+      }
       @if (item.decisionNote) {
         <span class="italic">"{{ item.decisionNote }}"</span>
       }
       @if (item.executionError) {
-        <span class="text-destructive">{{ item.executionError }}</span>
+        <span class="inline-flex items-center gap-1 text-destructive">
+          <ng-icon name="lucideCircleAlert" class="shrink-0" aria-hidden="true" />
+          {{ item.executionError }}
+        </span>
       }
     </div>
   }
@@ -157,26 +215,32 @@
           type="button"
           variant="ghost"
           size="sm"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
           data-testid="approval-request-table-approve"
           [disabled]="item.allowedActions && !item.allowedActions.includes('approve')"
           [attr.aria-label]="approveAriaLabelOf(item)"
+          [hlmTooltip]="approveAriaLabelOf(item)"
           (click)="approveRequested.emit(item)"
         >
           <ng-icon name="lucideCheck" aria-hidden="true" />
+          <span class="hidden mobile-ui:inline" i18n="@@approvals.decide.approveAccept"
+            >Approve</span
+          >
         </button>
         <button
           hlmBtn
           type="button"
           variant="ghost"
           size="sm"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
           data-testid="approval-request-table-reject"
           [disabled]="item.allowedActions && !item.allowedActions.includes('reject')"
           [attr.aria-label]="rejectAriaLabelOf(item)"
+          [hlmTooltip]="rejectAriaLabelOf(item)"
           (click)="rejectRequested.emit(item)"
         >
           <ng-icon name="lucideX" aria-hidden="true" />
+          <span class="hidden mobile-ui:inline" i18n="@@approvals.decide.rejectAccept">Reject</span>
         </button>
       }
       @if (item.allowedActions?.includes('withdraw')) {
@@ -185,7 +249,7 @@
           type="button"
           variant="outline"
           size="sm"
-          class="max-sm:min-h-11"
+          class="mobile-ui:min-h-11"
           data-testid="approval-request-table-withdraw"
           (click)="withdrawRequested.emit(item)"
         >

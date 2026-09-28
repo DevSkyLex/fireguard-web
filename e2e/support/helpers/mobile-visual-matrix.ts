@@ -1,4 +1,9 @@
 import { E2E_ORGANIZATION_ID } from '../fixtures/api-fixtures';
+import { E2E_EQUIPMENT_ID } from '../fixtures/equipment-fixtures';
+import { E2E_FACILITY_ID } from '../fixtures/facility-fixtures';
+import { E2E_INSPECTION_ID } from '../fixtures/inspection-fixtures';
+import { E2E_MEMBER_ID } from '../fixtures/member-fixtures';
+import { E2E_VISUAL_CHECKLIST_ID } from '../fixtures/visual-catalog-fixtures';
 import { INTERACTION_MODE_INTERVENTIONS } from './interaction-mode';
 import type { VisualPass } from './visual-run';
 
@@ -29,6 +34,15 @@ export const MOBILE_VISUAL_MODES = [
     theme: 'dark',
     full: false,
   },
+  {
+    name: 'desktop-1280-light',
+    width: 1280,
+    height: 800,
+    mobile: false,
+    theme: 'light',
+    full: true,
+  },
+  { name: 'phone-375-dark', width: 375, height: 812, mobile: true, theme: 'dark', full: true },
 ] as const;
 
 /**
@@ -93,16 +107,56 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
   },
   { id: 'equipment', path: `${org}/equipments`, root: '#equipments', endpoint: `${api}/equipment` },
   {
+    id: 'equipment-detail',
+    path: `${org}/equipments/${E2E_EQUIPMENT_ID}`,
+    root: '#equipment-detail',
+    endpoint: `${api}/equipment/${E2E_EQUIPMENT_ID}`,
+    limit:
+      'Overview tab only — the Attachments/Maintenance/Tags tabs have no `?tab=` query support to deep-link into.',
+  },
+  {
     id: 'facilities',
     path: `${org}/facilities`,
     root: '#facilities',
     endpoint: `${api}/facilities`,
   },
   {
+    id: 'facility-detail',
+    path: `${org}/facilities/${E2E_FACILITY_ID}`,
+    root: '#facility-detail',
+    endpoint: `${api}/facilities/${E2E_FACILITY_ID}`,
+  },
+  {
+    id: 'facility-map',
+    path: `${org}/facilities/map`,
+    root: '#facility-map',
+    endpoint: `${api}/facilities`,
+  },
+  {
+    id: 'facility-3d',
+    path: `${org}/facilities/${E2E_FACILITY_ID}/3d`,
+    root: '#facility-building-3d',
+    endpoint: `${api}/facilities/${E2E_FACILITY_ID}/building-model`,
+    limit:
+      'WebGL support is environment-dependent; the empty/unsupported states are legitimate captures.',
+  },
+  {
     id: 'inspections',
     path: `${org}/inspections`,
     root: '#inspections',
     endpoint: `${api}/inspections`,
+  },
+  {
+    id: 'inspection-detail',
+    path: `${org}/inspections/${E2E_INSPECTION_ID}`,
+    root: '#inspection-detail',
+    endpoint: `${api}/inspections/${E2E_INSPECTION_ID}`,
+  },
+  {
+    id: 'inspection-analytics',
+    path: `${org}/inspections/analytics`,
+    root: '#inspection-analytics',
+    endpoint: `${api}/non-conformities/statistics`,
   },
   {
     id: 'workload',
@@ -118,6 +172,12 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
     endpoint: `${api}/checklists`,
     text: 'Monthly extinguisher and evacuation-route inspection',
     limit: 'One populated template with two items; editing and archiving are not exercised.',
+  },
+  {
+    id: 'checklist-detail',
+    path: `${org}/checklists/${E2E_VISUAL_CHECKLIST_ID}`,
+    root: '[data-testid="checklist-detail-page"]',
+    endpoint: `${api}/checklists/${E2E_VISUAL_CHECKLIST_ID}`,
   },
   {
     id: 'maintenance',
@@ -202,6 +262,13 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
     endpoint: `${api}/members`,
   },
   {
+    id: 'member-profile',
+    path: `${org}/members/${E2E_MEMBER_ID}`,
+    root: '#organization-member-profile',
+    endpoint: `${api}/members`,
+    text: 'Ella Uzer',
+  },
+  {
     id: 'teams',
     path: `${org}/members?tab=teams`,
     root: '#organization-teams',
@@ -260,6 +327,13 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
     id: 'account-organizations',
     path: '/account/organizations',
     root: '#account-organizations',
+    endpoint: '/api/organizations',
+    text: 'E2E Organization',
+  },
+  {
+    id: 'organization-select',
+    path: '/organizations/select',
+    root: 'section[aria-label="Choose an organization"]',
     endpoint: '/api/organizations',
     text: 'E2E Organization',
   },

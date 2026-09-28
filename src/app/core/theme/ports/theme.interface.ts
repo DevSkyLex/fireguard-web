@@ -23,5 +23,5 @@ export interface ThemePort {
    */
   readonly resolvedTheme: Signal<'light' | 'dark'>;
 
-  setTheme(mode: ThemeMode): void;
+  setTheme(mode: ThemeMode, origin?: { x: number; y: number }): void;
 }

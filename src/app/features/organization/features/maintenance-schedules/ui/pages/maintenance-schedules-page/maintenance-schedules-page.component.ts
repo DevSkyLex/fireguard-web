@@ -16,14 +16,13 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCalendar,
   lucideCircleAlert,
   lucideClock,
   lucideDownload,
-  lucideLock,
   lucideMapPin,
   lucidePackage,
   lucideSparkles,
@@ -69,6 +68,7 @@ import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
@@ -157,8 +157,10 @@ interface MaintenanceScheduleFilters {
   selector: 'app-maintenance-schedules-page',
   imports: [
     NgIcon,
+    RouterLink,
     ...HlmEmptyImports,
     ResourceIllustration,
+    StateIllustration,
     MaintenanceDueStatusTag,
     MaintenanceScheduleTable,
     MaintenanceOverrideDialog,
@@ -175,7 +177,6 @@ interface MaintenanceScheduleFilters {
   ],
   providers: [
     provideIcons({
-      lucideLock,
       lucideCalendar,
       lucideCircleAlert,
       lucideClock,

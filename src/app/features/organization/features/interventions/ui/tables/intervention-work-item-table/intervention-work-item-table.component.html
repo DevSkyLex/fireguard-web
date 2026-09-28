@@ -19,8 +19,8 @@
 
     <div class="flex items-center gap-3">
       @if (items().length > 0 && !showProgress()) {
-        <span class="text-sm text-muted-foreground tabular-nums"
-          >{{ doneCount() }}/{{ items().length }}</span
+        <span class="text-sm text-muted-foreground tabular-nums" i18n="@@intervention.wit.doneRatio"
+          >{{ doneCount() }} of {{ items().length }} done</span
         >
       }
       @if (canAdd() && items().length > 0) {
@@ -64,16 +64,34 @@
 
     @if (items().length > 0 || loading() || error() !== null) {
       <app-collection-toolbar>
-        <app-collection-search-box
-          toolbarStart
-          testIdPrefix="intervention-work-items"
-          placeholder="Search work items..."
-          i18n-placeholder="@@intervention.wit.searchPlaceholder"
-          ariaLabel="Search work items..."
-          i18n-ariaLabel="@@intervention.wit.searchPlaceholder"
-          [value]="searchTerm()"
-          (queryChanged)="onSearchQueryChanged($event)"
-        />
+        <div toolbarStart class="flex flex-wrap items-center gap-2">
+          <app-collection-search-box
+            testIdPrefix="intervention-work-items"
+            placeholder="Search work items..."
+            i18n-placeholder="@@intervention.wit.searchPlaceholder"
+            ariaLabel="Search work items..."
+            i18n-ariaLabel="@@intervention.wit.searchPlaceholder"
+            [value]="searchTerm()"
+            (queryChanged)="onSearchQueryChanged($event)"
+          />
+
+          @if (showMineFirstToggle()) {
+            <button
+              hlmToggle
+              type="button"
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              data-testid="intervention-work-items-mine-first"
+              [state]="mineFirst() ? 'on' : 'off'"
+              (stateChange)="
+                emitQuery({ prioritizeAssignee: $event === 'on' ? currentMemberId() : null })
+              "
+            >
+              <span i18n="@@intervention.wit.mineFirst">Mine first</span>
+            </button>
+          }
+        </div>
 
         <div toolbarEnd class="flex flex-wrap items-center gap-2">
           <app-collection-filter-toggle
@@ -98,25 +116,6 @@
           (fieldRemoved)="onFieldRemoved($event)"
           (filtersCleared)="clearFilter()"
         />
-      }
-
-      @if (showMineFirstToggle()) {
-        <div class="flex flex-wrap items-center gap-3">
-          <button
-            hlmToggle
-            type="button"
-            variant="outline"
-            size="sm"
-            class="mobile-ui:min-h-11"
-            data-testid="intervention-work-items-mine-first"
-            [state]="mineFirst() ? 'on' : 'off'"
-            (stateChange)="
-              emitQuery({ prioritizeAssignee: $event === 'on' ? currentMemberId() : null })
-            "
-          >
-            <span i18n="@@intervention.wit.mineFirst">Mine first</span>
-          </button>
-        </div>
       }
 
       <ng-template #statusFilter>
@@ -167,17 +166,20 @@
             <p hlmEmptyDescription>{{ error() }}</p>
           </div>
 
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            [disabled]="loading()"
-            (click)="retryRequested.emit()"
-            i18n="@@intervention.tables.retry"
-          >
-            Retry
-          </button>
+          <div hlmEmptyContent>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              [disabled]="loading()"
+              (click)="retryRequested.emit()"
+              i18n="@@intervention.tables.retry"
+            >
+              Retry
+            </button>
+          </div>
         </div>
         <ng-container surfaceHead>
           <tr hlmTableRow>
@@ -469,10 +471,11 @@
           }
         </ng-container>
 
-        <ng-container surfaceCards>
-          @for (item of viewItems(); track item.id) {
+        <div surfaceCards hlmItemGroup class="gap-0 border-y border-border">
+          @for (item of viewItems(); track item.id; let last = $last) {
             <div
-              class="flex gap-3 border-b border-border py-4 focus-visible:outline-2 focus-visible:outline-ring"
+              hlmItem
+              class="flex items-start gap-3 rounded-none px-0 focus-visible:outline-2 focus-visible:outline-ring"
               [attr.aria-current]="isNext(item) ? 'step' : null"
               data-testid="intervention-work-item-table-card"
               [attr.data-work-item-id]="item.id"
@@ -501,7 +504,7 @@
                     <span hlmBadge variant="outline" i18n="@@intervention.wit.next">Next</span>
                   }
                 </div>
-                <span class="inline-flex flex-wrap items-center gap-2 font-medium text-foreground">
+                <span hlmItemDescription class="line-clamp-none flex-wrap items-center gap-2">
                   @if (targetLabelOf(item)) {
                     {{ actionLabelOf(item) }}
                   }
@@ -524,9 +527,9 @@
                   [ngTemplateOutletContext]="{ $implicit: item }"
                 />
 
-                <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <app-intervention-tag kind="workItemStatus" [value]="item.status" />
-                  @if (item.assigneeProfile; as assignee) {
+                @if (item.assigneeProfile; as assignee) {
+                  <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <app-intervention-tag kind="workItemStatus" [value]="item.status" />
                     <div class="flex max-w-full min-w-0 items-center gap-2">
                       <hlm-avatar size="sm" class="shrink-0">
                         @if (assignee.avatarUrl; as avatarUrl) {
@@ -538,10 +541,12 @@
                       </hlm-avatar>
                       <span class="truncate text-foreground">{{ assignee.displayName }}</span>
                     </div>
-                  } @else {
-                    <span aria-hidden="true">—</span>
-                  }
-                </div>
+                  </div>
+                } @else {
+                  <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <app-intervention-tag kind="workItemStatus" [value]="item.status" />
+                  </div>
+                }
 
                 <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   @if (item.status === 'skipped' && item.skipReason) {
@@ -677,14 +682,15 @@
                 }
               </div>
             </div>
+            @if (!last) {
+              <hlm-item-separator />
+            }
           }
-        </ng-container>
+        </div>
 
         <div hlmEmpty surfaceEmpty data-testid="intervention-work-items-filtered-empty">
           <div hlmEmptyHeader>
-            <div hlmEmptyMedia variant="icon">
-              <ng-icon name="lucideFilterX" aria-hidden="true" />
-            </div>
+            <app-state-illustration hlmEmptyMedia state="no-matches" />
             <p hlmEmptyTitle i18n="@@intervention.wit.filteredEmptyTitle">
               No work items match this filter
             </p>
@@ -714,9 +720,7 @@
         data-testid="intervention-work-items-empty"
       >
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideListChecks" aria-hidden="true" />
-          </div>
+          <app-resource-illustration hlmEmptyMedia resource="work-item" />
           <p hlmEmptyTitle i18n="@@intervention.wit.emptyTitle">No work items yet</p>
           <p hlmEmptyDescription>{{ emptyDescription() }}</p>
         </div>
@@ -751,6 +755,21 @@
       <span [class.mr-3]="compact" i18n="@@intervention.wit.notEstimated">Not estimated</span>
     }
     <dl [class]="compact ? 'inline' : 'flex min-w-0 flex-wrap gap-x-3 gap-y-1'">
+      @if (item.workStartsOn || item.workEndsOn) {
+        <div [class]="compact ? 'mr-3 inline last:mr-0' : 'inline-flex flex-wrap gap-x-1'">
+          <dt class="inline" i18n="@@intervention.wit.planned">Planned</dt>
+          <dd class="inline font-medium text-foreground tabular-nums" [class.ml-1]="compact">
+            @if (item.workStartsOn && item.workEndsOn) {
+              {{ item.workStartsOn | appOrgDate: 'dateOnly' : regionalFormatting() }} –
+              {{ item.workEndsOn | appOrgDate: 'dateOnly' : regionalFormatting() }}
+            } @else {
+              {{
+                item.workStartsOn ?? item.workEndsOn | appOrgDate: 'dateOnly' : regionalFormatting()
+              }}
+            }
+          </dd>
+        </div>
+      }
       @if (item.estimatedMinutes != null) {
         <div [class]="compact ? 'mr-3 inline last:mr-0' : 'inline-flex flex-wrap gap-x-1'">
           <dt class="inline" i18n="@@intervention.wit.estimated">Estimated</dt>

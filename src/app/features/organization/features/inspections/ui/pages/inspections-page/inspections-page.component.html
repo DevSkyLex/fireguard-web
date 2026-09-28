@@ -115,9 +115,7 @@
   @if (listForbidden()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideLock" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="access-denied" />
         <p hlmEmptyTitle i18n="@@inspection.list.forbiddenTitle">
           Not available with your permissions
         </p>
@@ -147,16 +145,22 @@
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         @if (hasSearchOrFilters()) {
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideListFilter" aria-hidden="true" />
-          </div>
-        } @else if (store.listCallState().status === 'success' && store.totalInspections() === 0) {
-          <app-resource-illustration hlmEmptyMedia resource="inspection" />
+          <app-state-illustration hlmEmptyMedia state="no-matches" />
+          <p hlmEmptyTitle i18n="@@inspection.table.emptyFilteredTitle">
+            No inspections match these filters
+          </p>
+          <p hlmEmptyDescription i18n="@@inspection.table.emptyFilteredDesc">
+            Try a different search term or narrow the filters differently.
+          </p>
+        } @else {
+          @if (store.listCallState().status === 'success' && store.totalInspections() === 0) {
+            <app-resource-illustration hlmEmptyMedia resource="inspection" />
+          }
+          <p hlmEmptyTitle i18n="@@inspection.table.emptyTitle">No inspections yet</p>
+          <p hlmEmptyDescription i18n="@@inspection.table.emptyDesc">
+            An inspection records what was checked, when, and by whom.
+          </p>
         }
-        <p hlmEmptyTitle i18n="@@inspection.table.emptyTitle">No inspections found</p>
-        <p hlmEmptyDescription i18n="@@inspection.table.emptyDesc">
-          Adjust your filters, or open the inspections your team carries out.
-        </p>
       </div>
       <div hlmEmptyContent>
         @if (hasSearchOrFilters()) {
@@ -177,6 +181,7 @@
       [loading]="store.isLoadingInspections()"
       [detailRouteBase]="listRouteBase()"
       [sortOrder]="sortOrder()"
+      [regionalFormatting]="regionalFormatting()"
       (sortChanged)="applySortField($event)"
     />
 

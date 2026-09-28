@@ -5,20 +5,25 @@
 >
   @if (!complete() || hasError()) {
     <div
-      role="status"
-      class="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
+      hlmAlert
+      [variant]="hasError() ? 'destructive' : 'default'"
+      [attr.role]="hasError() ? 'alert' : 'status'"
       data-testid="inbox-partial"
     >
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
       @if (!complete()) {
-        <p class="text-sm" i18n="@@account.inbox.partial">
+        <p hlmAlertTitle i18n="@@account.inbox.partialTitle">Some updates are missing</p>
+        <p hlmAlertDescription i18n="@@account.inbox.partial">
           Some updates are unavailable. Retry to see the complete inbox.
         </p>
       } @else {
-        <p class="text-sm" i18n="@@account.inbox.error">
+        <p hlmAlertTitle i18n="@@account.inbox.errorTitle">Couldn't refresh your inbox</p>
+        <p hlmAlertDescription i18n="@@account.inbox.error">
           Your inbox could not be refreshed. Previously loaded updates are still shown.
         </p>
       }
       <button
+        hlmAlertAction
         hlmBtn
         variant="outline"
         size="sm"
@@ -33,32 +38,54 @@
     </div>
   }
   @if (readFailed()) {
-    <p role="alert" class="text-sm text-destructive" i18n="@@account.inbox.readFailed">
-      This update could not be marked as read. Select it to try again.
-    </p>
+    <div hlmAlert variant="destructive">
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <p hlmAlertTitle i18n="@@account.inbox.readFailedTitle">Couldn't mark this as read</p>
+      <p hlmAlertDescription i18n="@@account.inbox.readFailed">
+        This update could not be marked as read. Select it to try again.
+      </p>
+    </div>
   }
   @if (loading() && items().length === 0) {
     <div
+      hlmItemGroup
+      class="gap-2"
       role="status"
       aria-label="Loading inbox"
       i18n-aria-label="@@account.inbox.loading"
-      class="flex flex-col gap-3"
     >
       @for (placeholder of [1, 2, 3]; track placeholder) {
-        <hlm-skeleton class="h-20 w-full" />
+        <div hlmItem variant="outline" size="sm" class="rounded-lg">
+          <div hlmItemContent class="gap-1.5">
+            <hlm-skeleton class="h-4 w-1/3" />
+            <hlm-skeleton class="h-3 w-2/3" />
+          </div>
+        </div>
       }
     </div>
   } @else if (items().length === 0 && complete() && !hasError()) {
-    <p class="py-8 text-center text-muted-foreground" i18n="@@account.inbox.empty">
-      No updates yet.
-    </p>
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <app-state-illustration hlmEmptyMedia state="empty-inbox" />
+        <p hlmEmptyTitle i18n="@@account.inbox.empty">No updates yet.</p>
+        <p hlmEmptyDescription i18n="@@account.inbox.emptyDescription">
+          Updates about your organizations and your conversations will show up here.
+        </p>
+      </div>
+    </div>
   }
-  <ul class="flex min-w-0 flex-col gap-2">
-    @for (item of items(); track item.sourceKey + ':' + item.id) {
-      <li
+  <div hlmItemGroup class="gap-2">
+    @for (item of items(); track item.sourceKey + ':' + item.id; let index = $index) {
+      @if (isDayBoundary(item, items()[index - 1])) {
+        <div hlmMarker variant="separator" class="py-3 text-xs font-medium">
+          <span hlmMarkerContent>{{ dayHeadingOf(item) }}</span>
+        </div>
+      }
+      <div
         hlmItem
         variant="outline"
-        class="min-w-0 max-sm:flex-col max-sm:items-stretch"
+        size="sm"
+        class="min-w-0 rounded-lg mobile-ui:flex-col mobile-ui:items-stretch"
         data-testid="inbox-item"
       >
         <div hlmItemContent class="min-w-0">
@@ -67,14 +94,21 @@
               <span class="size-1.5 shrink-0 rounded-full bg-foreground" aria-hidden="true"></span
               ><span class="sr-only" i18n="@@account.notificationBell.unread">Unread</span>
             }
-            {{ item.title }}
+            {{ inboxTitle(item) }}
           </p>
           @if (item.snippet) {
-            <p hlmItemDescription class="break-words">{{ item.snippet }}</p>
+            <p hlmItemDescription class="break-words">{{ notificationBody(item.snippet) }}</p>
           }
-          <time class="text-xs text-muted-foreground" [attr.datetime]="item.occurredAt">{{
-            item.occurredAt | date: 'medium'
-          }}</time>
+          <span
+            tabindex="0"
+            class="inline-flex w-fit rounded-sm text-xs text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [hlmTooltip]="item.occurredAt | date: 'medium'"
+          >
+            <time [attr.datetime]="item.occurredAt">{{ relativeTime(item.occurredAt) }}</time>
+            <span class="ml-1 hidden mobile-ui:inline"
+              >({{ item.occurredAt | date: 'medium' }})</span
+            >
+          </span>
         </div>
         <div hlmItemActions>
           @if (conversationLink(item); as link) {
@@ -101,9 +135,9 @@
             </button>
           }
         </div>
-      </li>
+      </div>
     }
-  </ul>
+  </div>
   @if (hasMore()) {
     <button
       hlmBtn

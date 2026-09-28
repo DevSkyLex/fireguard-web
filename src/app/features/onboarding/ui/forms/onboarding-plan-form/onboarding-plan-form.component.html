@@ -55,7 +55,7 @@
                     }}</span>
                   </div>
                   @if (row.quotas.length > 0) {
-                    <hlm-separator />
+                    <hlm-separator class="my-3" />
                     <ul class="flex flex-col gap-2 text-sm text-muted-foreground">
                       @for (quota of row.quotas; track quota.resource) {
                         <li class="flex items-start gap-2">

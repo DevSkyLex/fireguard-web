@@ -1781,8 +1781,8 @@
         <target>Chargement de l'équipement</target>
       </trans-unit>
       <trans-unit id="equipment.detail.metaUpdated" datatype="html">
-        <source>Updated <x id="when" equiv-text="when"/></source>
-        <target>Mis à jour <x id="when" equiv-text="when"/></target>
+        <source>Updated <x id="INTERPOLATION" equiv-text="{{ updatedRelativeLabel(equipment.updatedAt) }}"/></source>
+        <target>Mis à jour <x id="INTERPOLATION" equiv-text="{{ updatedRelativeLabel(equipment.updatedAt) }}"/></target>
       </trans-unit>
       <trans-unit id="equipment.attachments.title" datatype="html">
         <source>Attachments</source>
@@ -3348,6 +3348,18 @@
         <source> Choose the operational objective first. The workspace will then guide scope preparation and assignment. </source>
         <target>Choisissez d'abord l'objectif opérationnel. L'espace de travail guidera ensuite la préparation de la portée et l'affectation.</target>
       </trans-unit>
+      <trans-unit id="intervention.facilitySheet.header" datatype="html">
+        <source>Add facility</source>
+        <target>Ajouter un établissement</target>
+      </trans-unit>
+      <trans-unit id="intervention.facilitySheet.hint" datatype="html">
+        <source> Attach a facility to this intervention. Only the type and name are required — the rest can be filled in later from the facility's own record. </source>
+        <target> Rattachez un établissement à cette intervention. Seuls le type et le nom sont requis — le reste pourra être complété plus tard depuis la fiche de l'établissement. </target>
+      </trans-unit>
+      <trans-unit id="intervention.facility.addButton" datatype="html">
+        <source>Add facility</source>
+        <target>Ajouter un établissement</target>
+      </trans-unit>
       <trans-unit id="intervention.workItemDrawer.header" datatype="html">
         <source>Add work item</source>
         <target>Ajouter un élément de travail</target>
@@ -3928,6 +3940,10 @@
         <source>Move to</source>
         <target>Déplacer vers</target>
       </trans-unit>
+      <trans-unit id="intervention.list.noSelectedRowsDeletable" datatype="html">
+        <source>No selected intervention can be deleted.</source>
+        <target>Aucune intervention sélectionnée ne peut être supprimée.</target>
+      </trans-unit>
       <trans-unit id="intervention.list.bulkAssignButton" datatype="html">
         <source>Assign responsible… (<x id="count" equiv-text="this.assignableSelectedIds().length"/>)</source>
         <target>Affecter un responsable… (<x id="count" equiv-text="this.assignableSelectedIds().length"/>)</target>
@@ -4187,10 +4203,6 @@
       <trans-unit id="dashboard.toggleSidebar" datatype="html">
         <source>Toggle sidebar</source>
         <target>Afficher ou masquer la barre latérale</target>
-      </trans-unit>
-      <trans-unit id="dashboard.panel.aria" datatype="html">
-        <source>Contextual panel</source>
-        <target>Panneau contextuel</target>
       </trans-unit>
       <trans-unit id="dashboard.sidebarExtension.resize" datatype="html">
         <source>Resize navigation panel</source>
@@ -4938,6 +4950,14 @@
         <source>Priority</source>
         <target>Priorité</target>
       </trans-unit>
+      <trans-unit id="intervention.list.columnResponsible" datatype="html">
+        <source>Responsible</source>
+        <target>Responsable</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.columnParticipants" datatype="html">
+        <source>Participants</source>
+        <target>Participants</target>
+      </trans-unit>
       <trans-unit id="intervention.list.columnSite" datatype="html">
         <source> Site </source>
         <target>Site</target>
@@ -5049,6 +5069,10 @@
       <trans-unit id="intervention.list.noResults" datatype="html">
         <source> No results. </source>
         <target>Aucun résultat.</target>
+      </trans-unit>
+      <trans-unit id="intervention.list.noResponsible" datatype="html">
+        <source>No responsible assigned</source>
+        <target>Aucun responsable attribué</target>
       </trans-unit>
       <trans-unit id="intervention.list.rowCopyRef" datatype="html">
         <source>Copy reference</source>
@@ -7949,6 +7973,26 @@
       <trans-unit id="facility.detail.pageRootLabel" datatype="html">
         <source>Facility record</source>
         <target>Fiche de l'installation</target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.countWithTotal" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> selected </source>
+        <target> <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> sélectionnés </target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.actions" datatype="html">
+        <source> Actions </source>
+        <target> Actions </target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.drawerTitle" datatype="html">
+        <source> Selected row actions </source>
+        <target> Actions sur les lignes sélectionnées </target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.drawerDescription" datatype="html">
+        <source> Choose an action for the selected rows. </source>
+        <target> Choisissez une action pour les lignes sélectionnées. </target>
+      </trans-unit>
+      <trans-unit id="shared.collectionSelection.label" datatype="html">
+        <source>Selection actions</source>
+        <target>Actions sur la sélection</target>
       </trans-unit>
       <trans-unit id="shared.collectionFilterBar.addFilterButton" datatype="html">
         <source>Filter</source>
@@ -11679,8 +11723,8 @@
         <target>Ordonnez les contrôles dans leur ordre d’exécution sur le terrain. Les flèches fonctionnent aussi au clavier. Un nouvel élément entièrement renseigné est inclus à l’enregistrement.</target>
       </trans-unit>
       <trans-unit id="checklists.detail.itemCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ checklist.items.length }}"/> items</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ checklist.items.length }}"/> éléments</target>
+        <source>{VAR_PLURAL, plural, =0 {0 items} =1 {1 item} other {<x id="INTERPOLATION"/> items}}</source>
+        <target>{VAR_PLURAL, plural, =0 {0 élément} =1 {1 élément} other {<x id="INTERPOLATION"/> éléments}}</target>
       </trans-unit>
       <trans-unit id="checklists.detail.readOnly" datatype="html">
         <source> This checklist is available for consultation. </source>
@@ -12792,8 +12836,8 @@
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.workspace.noOrganizationDescription" datatype="html">
-        <source>Ask your administrator for an invitation, or create a workspace for your team. Personal email addresses can join by invitation.</source>
-        <target>Demandez une invitation à votre administrateur ou créez un espace pour votre équipe. Les adresses personnelles peuvent rejoindre sur invitation.</target>
+        <source>Ask for an invitation or create a workspace. Personal emails need an invitation.</source>
+        <target>Demandez une invitation ou créez un espace. Une adresse personnelle nécessite une invitation.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
           <context context-type="linenumber">87,93</context>
@@ -14264,8 +14308,8 @@
         </context-group>
       </trans-unit>
       <trans-unit id="org.search.visibleDescription" datatype="html">
-        <source> Find operational records and open their detail page without leaving your current work. </source>
-        <target>Trouvez des données opérationnelles et consultez leurs détails sans quitter votre travail en cours.</target>
+        <source> Search your organization's operational records. </source>
+        <target>Recherchez les données opérationnelles de votre organisation.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-global-search/organization-global-search.component.html</context>
           <context context-type="linenumber">52,55</context>
@@ -16873,6 +16917,74 @@
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-switcher-quick-link.config.ts</context>
           <context context-type="linenumber">47</context>
         </context-group>
+      </trans-unit>
+      <trans-unit id="presence.active" datatype="html">
+        <source>Active</source>
+        <target>Actif</target>
+      </trans-unit>
+      <trans-unit id="presence.doNotDisturb" datatype="html">
+        <source>Do not disturb</source>
+        <target>Ne pas déranger</target>
+      </trans-unit>
+      <trans-unit id="presence.offline" datatype="html">
+        <source>Offline</source>
+        <target>Déconnecté</target>
+      </trans-unit>
+      <trans-unit id="account.presence.doNotDisturb" datatype="html">
+        <source>Do not disturb</source>
+        <target>Ne pas déranger</target>
+      </trans-unit>
+      <trans-unit id="account.presence.saveError" datatype="html">
+        <source>Your presence preference could not be saved.</source>
+        <target>Votre préférence de présence n&apos;a pas pu être enregistrée.</target>
+      </trans-unit>
+      <trans-unit id="presence.invisible" datatype="html">
+        <source>Invisible</source>
+        <target>Invisible</target>
+      </trans-unit>
+      <trans-unit id="dashboard.panel.resize" datatype="html">
+        <source>Resize contextual panel</source>
+        <target>Redimensionner le panneau contextuel</target>
+      </trans-unit>
+      <trans-unit id="calendar.selectedDayPanelLabel" datatype="html">
+        <source>Selected day events</source>
+        <target>Événements du jour sélectionné</target>
+      </trans-unit>
+      <trans-unit id="intervention.calendar.selectedDayPanelLabel" datatype="html">
+        <source>Selected day interventions</source>
+        <target>Interventions du jour sélectionné</target>
+      </trans-unit>
+      <trans-unit id="messages.typing.named" datatype="html">
+        <source><x id="name"/> is typing…</source>
+        <target><x id="name"/> est en train d’écrire…</target>
+      </trans-unit>
+      <trans-unit id="messages.typing.someone" datatype="html">
+        <source>Someone is typing…</source>
+        <target>Quelqu’un est en train d’écrire…</target>
+      </trans-unit>
+      <trans-unit id="messages.typing.multiple" datatype="html">
+        <source><x id="count"/> members are typing…</source>
+        <target><x id="count"/> membres sont en train d’écrire…</target>
+      </trans-unit>
+      <trans-unit id="messages.row.sent" datatype="html">
+        <source>Sent</source>
+        <target>Envoyé</target>
+      </trans-unit>
+      <trans-unit id="messages.row.received" datatype="html">
+        <source>Received</source>
+        <target>Reçu</target>
+      </trans-unit>
+      <trans-unit id="messages.row.seen" datatype="html">
+        <source>Seen</source>
+        <target>Vu</target>
+      </trans-unit>
+      <trans-unit id="messages.row.receivedBy" datatype="html">
+        <source>Received by <x id="INTERPOLATION"/></source>
+        <target>Reçu par <x id="INTERPOLATION"/></target>
+      </trans-unit>
+      <trans-unit id="messages.row.seenBy" datatype="html">
+        <source>Seen by <x id="INTERPOLATION"/></source>
+        <target>Vu par <x id="INTERPOLATION"/></target>
       </trans-unit>
     </body>
   </file>

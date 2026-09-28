@@ -1,5 +1,5 @@
-<div id="inspection-analytics" class="flex min-h-0 w-full flex-1 flex-col gap-6">
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+<div id="inspection-analytics" class="@container flex min-h-0 w-full flex-1 flex-col gap-6">
+  <div class="flex flex-col gap-4 @xl:flex-row @xl:items-center @xl:justify-between">
     <p class="text-sm text-muted-foreground" i18n="@@inspection.analytics.subtitle">
       Organization-wide, windowed on when non-conformities were opened
     </p>
@@ -59,31 +59,38 @@
   </div>
 
   @if (store.queryHasError()) {
-    <div class="flex flex-col items-center gap-3 py-10" data-testid="inspection-analytics-error">
-      <div hlmEmpty role="alert">
-        <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon" class="text-destructive">
-            <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
-          </div>
-          <p hlmEmptyTitle i18n="@@inspection.analytics.loadError">
-            The analytics could not be loaded.
-          </p>
+    <div
+      hlmEmpty
+      role="alert"
+      class="border border-border"
+      data-testid="inspection-analytics-error"
+    >
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
         </div>
+        <p hlmEmptyTitle i18n="@@inspection.analytics.loadError">
+          The analytics could not be loaded
+        </p>
+        <p hlmEmptyDescription i18n="@@inspection.analytics.loadErrorDesc">
+          Check your connection and try again.
+        </p>
       </div>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="inspection-analytics-retry"
-        (click)="retry()"
-        i18n="@@inspection.analytics.retry"
-      >
-        Retry
-      </button>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          data-testid="inspection-analytics-retry"
+          (click)="retry()"
+          i18n="@@common.tryAgain"
+        >
+          Try again
+        </button>
+      </div>
     </div>
   } @else {
-    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-4 @max-[22.5rem]:grid-cols-1 @[60rem]:grid-cols-4">
       @if (store.isQueryLoading()) {
         <span
           class="sr-only"
@@ -102,8 +109,9 @@
           i18n-label="@@inspection.analytics.kpi.open"
           icon="lucideCircleAlert"
           [tone]="totalOpen() > 0 ? 'destructive' : 'neutral'"
-          caption="Unresolved in the selected period"
-          i18n-caption="@@inspection.analytics.kpi.open.caption"
+          [caption]="openResolvedCaption()"
+          description="Unresolved in the selected period"
+          i18n-description="@@inspection.analytics.kpi.open.caption"
           [loading]="store.isQueryLoading()"
         />
       </div>
@@ -116,8 +124,8 @@
           i18n-label="@@inspection.analytics.kpi.slaBreached"
           icon="lucideTriangleAlert"
           [tone]="(store.queryData()?.slaBreachedOpen ?? 0) > 0 ? 'destructive' : 'neutral'"
-          caption="Past their resolution deadline"
-          i18n-caption="@@inspection.analytics.kpi.slaBreached.caption"
+          description="Past their resolution deadline"
+          i18n-description="@@inspection.analytics.kpi.slaBreached.caption"
           [loading]="store.isQueryLoading()"
         />
       </div>
@@ -130,8 +138,8 @@
           i18n-label="@@inspection.analytics.kpi.averageDays"
           icon="lucideClock"
           tone="neutral"
-          caption="From opening to resolution"
-          i18n-caption="@@inspection.analytics.kpi.averageDays.caption"
+          description="From opening to resolution"
+          i18n-description="@@inspection.analytics.kpi.averageDays.caption"
           [loading]="store.isQueryLoading()"
         />
       </div>
@@ -144,8 +152,8 @@
           i18n-label="@@inspection.analytics.kpi.medianDays"
           icon="lucideGauge"
           tone="neutral"
-          caption="Half resolve faster than this"
-          i18n-caption="@@inspection.analytics.kpi.medianDays.caption"
+          description="Half resolve faster than this"
+          i18n-description="@@inspection.analytics.kpi.medianDays.caption"
           [loading]="store.isQueryLoading()"
         />
       </div>
@@ -153,7 +161,7 @@
 
     <div hlmCard>
       <div hlmCardHeader>
-        <h3 hlmCardTitle i18n="@@inspection.analytics.severity.title">By severity</h3>
+        <h2 hlmCardTitle i18n="@@inspection.analytics.severity.title">By severity</h2>
         <p hlmCardDescription i18n="@@inspection.analytics.severity.subtitle">
           Open share per severity, with resolved counts alongside
         </p>
@@ -176,9 +184,7 @@
         } @else if (isSnapshotEmpty()) {
           <div hlmEmpty>
             <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucideCircleCheck" aria-hidden="true" />
-              </div>
+              <app-state-illustration hlmEmptyMedia state="all-clear" size="sm" />
               <p hlmEmptyTitle i18n="@@inspection.analytics.severity.empty">
                 No non-conformities in this period.
               </p>
@@ -199,16 +205,11 @@
                   />
                   {{ row.descriptor.label }}
                 </span>
-                <span class="flex items-baseline gap-2 tabular-nums">
-                  <span class="font-medium text-foreground">{{ row.open }}</span>
-                  <span class="text-xs text-muted-foreground">
-                    <ng-container i18n="@@inspection.analytics.severity.resolvedCount"
-                      >{{ row.resolved }} resolved</ng-container
-                    >
-                  </span>
+                <span class="tabular-nums" i18n="@@inspection.analytics.severity.openResolved">
+                  {{ row.open }} open · {{ row.resolved }} resolved
                 </span>
               </div>
-              <hlm-progress [value]="row.percent" [attr.aria-label]="row.descriptor.label">
+              <hlm-progress [value]="row.percent" [attr.aria-label]="severityAriaLabelOf(row)">
                 <hlm-progress-indicator />
               </hlm-progress>
             </div>
@@ -217,17 +218,17 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 @3xl:grid-cols-2">
       <div hlmCard data-testid="inspection-analytics-facilities">
         <div hlmCardHeader>
-          <h3 hlmCardTitle i18n="@@inspection.analytics.facilities.title">Top facilities</h3>
+          <h2 hlmCardTitle i18n="@@inspection.analytics.facilities.title">Top facilities</h2>
           <p hlmCardDescription i18n="@@inspection.analytics.facilities.subtitle">
             Up to 10 facilities, by open non-conformities
           </p>
         </div>
-        <div hlmCardContent>
+        <div hlmCardContent class="px-0">
           @if (store.isQueryLoading()) {
-            <div class="w-full overflow-x-auto rounded-md border border-border" aria-hidden="true">
+            <div class="w-full overflow-x-auto" aria-hidden="true">
               <table hlmTable data-testid="inspection-analytics-facilities-loading-table">
                 <thead hlmTableHeader>
                   <tr hlmTableRow>
@@ -268,16 +269,14 @@
           } @else if ((store.queryData()?.byFacility ?? []).length === 0) {
             <div hlmEmpty>
               <div hlmEmptyHeader>
-                <div hlmEmptyMedia variant="icon">
-                  <ng-icon name="lucideCircleCheck" aria-hidden="true" />
-                </div>
+                <app-state-illustration hlmEmptyMedia state="all-clear" size="sm" />
                 <p hlmEmptyTitle i18n="@@inspection.analytics.facilities.empty">
                   No facility has open non-conformities.
                 </p>
               </div>
             </div>
           } @else {
-            <div class="w-full overflow-x-auto rounded-md border border-border">
+            <div class="w-full overflow-x-auto">
               <table hlmTable data-testid="inspection-analytics-facilities-table">
                 <caption class="sr-only" i18n="@@inspection.analytics.facilities.caption">
                   Facilities with the most open non-conformities.
@@ -299,18 +298,35 @@
                   @for (facility of store.queryData()?.byFacility ?? []; track facility.id) {
                     <tr hlmTableRow>
                       <td hlmTableCell class="max-w-56 truncate">
-                        @if (facility.name) {
-                          {{ facility.name }}
-                        } @else {
-                          <span
-                            class="text-muted-foreground"
-                            i18n="@@inspection.analytics.facilities.unnamed"
-                            >Unnamed facility</span
-                          >
-                        }
+                        <a
+                          class="underline underline-offset-4 hover:decoration-2"
+                          [routerLink]="[
+                            '/organizations',
+                            organizationId(),
+                            'facilities',
+                            facility.id,
+                          ]"
+                        >
+                          @if (facility.name) {
+                            {{ facility.name }}
+                          } @else {
+                            <span i18n="@@inspection.analytics.facilities.unnamed"
+                              >Unnamed facility</span
+                            >
+                          }
+                        </a>
                       </td>
                       <td hlmTableCell class="text-right tabular-nums">{{ facility.open }}</td>
-                      <td hlmTableCell class="text-right tabular-nums">{{ facility.critical }}</td>
+                      <td hlmTableCell class="text-right tabular-nums">
+                        @if (facility.critical > 0) {
+                          <span class="inline-flex items-center gap-1 text-destructive">
+                            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                            {{ facility.critical }}
+                          </span>
+                        } @else {
+                          {{ facility.critical }}
+                        }
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -322,16 +338,16 @@
 
       <div hlmCard data-testid="inspection-analytics-equipment-types">
         <div hlmCardHeader>
-          <h3 hlmCardTitle i18n="@@inspection.analytics.equipmentTypes.title">
+          <h2 hlmCardTitle i18n="@@inspection.analytics.equipmentTypes.title">
             Top equipment types
-          </h3>
+          </h2>
           <p hlmCardDescription i18n="@@inspection.analytics.equipmentTypes.subtitle">
             Up to 10 types, by open non-conformities
           </p>
         </div>
-        <div hlmCardContent>
+        <div hlmCardContent class="px-0">
           @if (store.isQueryLoading()) {
-            <div class="w-full overflow-x-auto rounded-md border border-border" aria-hidden="true">
+            <div class="w-full overflow-x-auto" aria-hidden="true">
               <table hlmTable data-testid="inspection-analytics-equipment-types-loading-table">
                 <thead hlmTableHeader>
                   <tr hlmTableRow>
@@ -364,16 +380,14 @@
           } @else if ((store.queryData()?.byEquipmentType ?? []).length === 0) {
             <div hlmEmpty>
               <div hlmEmptyHeader>
-                <div hlmEmptyMedia variant="icon">
-                  <ng-icon name="lucideCircleCheck" aria-hidden="true" />
-                </div>
+                <app-state-illustration hlmEmptyMedia state="all-clear" size="sm" />
                 <p hlmEmptyTitle i18n="@@inspection.analytics.equipmentTypes.empty">
                   No equipment type has open non-conformities.
                 </p>
               </div>
             </div>
           } @else {
-            <div class="w-full overflow-x-auto rounded-md border border-border">
+            <div class="w-full overflow-x-auto">
               <table hlmTable data-testid="inspection-analytics-equipment-types-table">
                 <caption class="sr-only" i18n="@@inspection.analytics.equipmentTypes.caption">
                   Equipment types with the most open non-conformities.
@@ -391,7 +405,7 @@
                 <tbody hlmTableBody>
                   @for (entry of store.queryData()?.byEquipmentType ?? []; track entry.type) {
                     <tr hlmTableRow>
-                      <td hlmTableCell class="max-w-56 truncate">{{ entry.type }}</td>
+                      <td hlmTableCell class="max-w-56 truncate">{{ typeLabelOf(entry.type) }}</td>
                       <td hlmTableCell class="text-right tabular-nums">{{ entry.open }}</td>
                     </tr>
                   }

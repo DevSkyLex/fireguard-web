@@ -9,18 +9,20 @@
 >
   <ng-container surfaceHead>
     <tr hlmTableRow>
-      <th hlmTableHead scope="col" class="w-10 px-3">
-        <span class="flex items-center">
-          <hlm-checkbox
-            data-testid="intervention-table-select-all"
-            aria-label="Select all interventions"
-            i18n-aria-label="@@intervention.list.selectAllLabel"
-            [checked]="allSelected()"
-            [indeterminate]="someSelected()"
-            (checkedChange)="toggleAll($event)"
-          />
-        </span>
-      </th>
+      @if (selectable()) {
+        <th hlmTableHead scope="col" class="w-10 px-3">
+          <span class="flex items-center">
+            <hlm-checkbox
+              data-testid="intervention-table-select-all"
+              aria-label="Select all interventions"
+              i18n-aria-label="@@intervention.list.selectAllLabel"
+              [checked]="allSelected()"
+              [indeterminate]="someSelected()"
+              (checkedChange)="toggleAll($event)"
+            />
+          </span>
+        </th>
+      }
       <th hlmTableHead scope="col" class="w-[100px]" i18n="@@intervention.list.columnReference">
         Ref.
       </th>
@@ -55,6 +57,31 @@
         <th hlmTableHead scope="col" i18n="@@intervention.list.columnSite">Site</th>
       }
 
+      @if (isVisible(column.RESPONSIBLE)) {
+        <th hlmTableHead scope="col" i18n="@@intervention.list.columnResponsible">Responsible</th>
+      }
+
+      @if (isVisible(column.PARTICIPANTS)) {
+        <th hlmTableHead scope="col" i18n="@@intervention.list.columnParticipants">Participants</th>
+      }
+
+      @if (isVisible(column.START)) {
+        <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('plannedStartAt')">
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
+            data-testid="intervention-table-sort-start"
+            (click)="sortChanged.emit('plannedStartAt')"
+          >
+            <span i18n="@@intervention.list.columnStart">Start</span>
+            <ng-icon [name]="sortIcon('plannedStartAt')" aria-hidden="true" />
+          </button>
+        </th>
+      }
+
       @if (isVisible(column.DUE)) {
         <th hlmTableHead scope="col" class="text-right" [attr.aria-sort]="ariaSort('dueAt')">
           <button
@@ -72,6 +99,23 @@
         </th>
       }
 
+      @if (isVisible(column.UPDATED)) {
+        <th hlmTableHead scope="col" class="text-right" [attr.aria-sort]="ariaSort('updatedAt')">
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="ms-auto -me-2 h-8 px-2 mobile-ui:min-h-11"
+            data-testid="intervention-table-sort-updated"
+            (click)="sortChanged.emit('updatedAt')"
+          >
+            <span i18n="@@intervention.list.columnUpdated">Updated</span>
+            <ng-icon [name]="sortIcon('updatedAt')" aria-hidden="true" />
+          </button>
+        </th>
+      }
+
       <th hlmTableHead scope="col" class="w-[52px]">
         <span class="sr-only" i18n="@@intervention.list.columnActions">Actions</span>
       </th>
@@ -81,27 +125,56 @@
   <ng-container surfaceRows>
     @for (item of items(); track item.intervention.id) {
       <tr hlmTableRow data-testid="intervention-table-row">
-        <td hlmTableCell>
-          <span class="flex items-center">
-            <hlm-checkbox
-              data-testid="intervention-table-row-select"
-              [checked]="isSelected(item.intervention.id)"
-              [aria-label]="selectRowLabel(item.intervention.name)"
-              (checkedChange)="toggleRow(item.intervention.id, $event)"
-            />
-          </span>
-        </td>
+        @if (selectable()) {
+          <td hlmTableCell>
+            <span class="flex items-center">
+              <hlm-checkbox
+                data-testid="intervention-table-row-select"
+                [checked]="isSelected(item.intervention.id)"
+                [aria-label]="selectRowLabel(item.intervention.name)"
+                (checkedChange)="toggleRow(item.intervention.id, $event)"
+              />
+            </span>
+          </td>
+        }
 
         <td hlmTableCell class="font-medium tabular-nums">FG-{{ item.intervention.number }}</td>
 
         <td hlmTableCell>
           <a
-            class="block max-w-64 truncate rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="inline-flex max-w-64 min-w-0 items-center gap-1 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             [title]="item.intervention.name"
             queryParamsHandling="preserve"
             [routerLink]="[...detailRouteBase(), item.intervention.id]"
-            >{{ item.intervention.name }}</a
           >
+            <span class="truncate">{{ item.intervention.name }}</span>
+            @if (item.intervention.blockersCount > 0) {
+              <ng-icon
+                name="lucideCircleAlert"
+                class="shrink-0 text-destructive"
+                aria-hidden="true"
+              />
+              <span
+                class="sr-only"
+                i18n="@@intervention.list.blockersCount"
+                >{item.intervention.blockersCount, plural,
+                  =1 {1 blocking issue}
+                  other {{{ item.intervention.blockersCount }} blocking issues}
+                }</span
+              >
+            }
+          </a>
+          @if (item.intervention.workItemsCount > 0) {
+            <div class="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+              <span
+                class="shrink-0 tabular-nums"
+                [attr.aria-label]="progressLabelOf(item.intervention)"
+                >{{ item.intervention.completedWorkItemsCount }}/{{
+                  item.intervention.workItemsCount
+                }}</span
+              >
+            </div>
+          }
         </td>
 
         @if (isVisible(column.STATUS)) {
@@ -117,8 +190,8 @@
         }
 
         @if (isVisible(column.TYPE)) {
-          <td hlmTableCell>
-            <app-intervention-tag kind="type" [value]="item.intervention.type" />
+          <td hlmTableCell class="text-sm text-muted-foreground">
+            <app-intervention-tag kind="type" [value]="item.intervention.type" asOption />
           </td>
         }
 
@@ -132,23 +205,50 @@
           </td>
         }
 
+        @if (isVisible(column.RESPONSIBLE)) {
+          <td hlmTableCell class="max-w-48">
+            <ng-container
+              [ngTemplateOutlet]="responsibleIdentity"
+              [ngTemplateOutletContext]="{ responsible: item.responsible }"
+            />
+          </td>
+        }
+
+        @if (isVisible(column.PARTICIPANTS)) {
+          <td hlmTableCell>
+            @if (participantsOf(item).length > 0) {
+              <ng-container
+                [ngTemplateOutlet]="participantAvatars"
+                [ngTemplateOutletContext]="{ item }"
+              />
+            } @else {
+              <span class="text-muted-foreground" aria-hidden="true">—</span>
+            }
+          </td>
+        }
+
+        @if (isVisible(column.START)) {
+          <td hlmTableCell class="text-muted-foreground tabular-nums">
+            @if (item.intervention.plannedStartAt; as plannedStartAt) {
+              {{ plannedStartAt | appOrgDate: 'dateOnly' : regionalFormatting() }}
+            } @else {
+              <span aria-hidden="true">—</span>
+            }
+          </td>
+        }
+
         @if (isVisible(column.DUE)) {
           <td hlmTableCell class="text-right text-muted-foreground tabular-nums">
-            <span class="inline-flex items-center justify-end gap-1.5">
-              @if (item.intervention.dueAt; as dueAt) {
-                @if (item.isOverdue) {
-                  <ng-icon
-                    name="lucideCircleAlert"
-                    class="text-destructive"
-                    i18n-aria-label="@@intervention.list.overdueLabel"
-                    aria-label="Overdue"
-                  />
-                }
-                {{ dueAt | appOrgDate: 'date' : regionalFormatting() }}
-              } @else {
-                <span aria-hidden="true">—</span>
-              }
-            </span>
+            <ng-container
+              [ngTemplateOutlet]="dueCell"
+              [ngTemplateOutletContext]="{ item, compact: true }"
+            />
+          </td>
+        }
+
+        @if (isVisible(column.UPDATED)) {
+          <td hlmTableCell class="text-right text-muted-foreground tabular-nums">
+            {{ item.intervention.updatedAt | appOrgDate: 'date' : regionalFormatting() }}
           </td>
         }
 
@@ -167,7 +267,7 @@
         data-testid="intervention-table-card"
       >
         <div class="flex items-start gap-2">
-          @if (selectionMode()) {
+          @if (selectable() && selectionMode()) {
             <label
               class="flex size-11 shrink-0 items-center justify-center"
               [for]="'intervention-mobile-select-' + item.intervention.id"
@@ -194,32 +294,39 @@
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </div>
 
-        <p class="text-sm wrap-anywhere text-muted-foreground">
+        <div
+          class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-muted-foreground"
+        >
           @if (item.siteName; as siteName) {
-            {{ siteName }}
-          } @else {
-            <span aria-hidden="true">—</span>
+            <span class="min-w-0 truncate">{{ siteName }}</span>
+            <span aria-hidden="true">·</span>
           }
-        </p>
+          <ng-container
+            [ngTemplateOutlet]="responsibleIdentity"
+            [ngTemplateOutletContext]="{ responsible: item.responsible }"
+          />
+          @if (participantsOf(item).length > 0) {
+            <ng-container
+              [ngTemplateOutlet]="participantAvatars"
+              [ngTemplateOutletContext]="{ item }"
+            />
+          }
+        </div>
+
+        @if (item.intervention.labels.length > 0) {
+          <ng-container [ngTemplateOutlet]="labelsRow" [ngTemplateOutletContext]="{ item }" />
+        }
+        @if (item.intervention.workItemsCount > 0) {
+          <ng-container [ngTemplateOutlet]="progressRow" [ngTemplateOutletContext]="{ item }" />
+        }
+
         <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span class="font-mono tabular-nums">FG-{{ item.intervention.number }}</span>
           <app-intervention-tag kind="status" [value]="item.intervention.status" asOption />
-
-          @if (item.intervention.dueAt; as dueAt) {
-            <span class="inline-flex items-center gap-1.5 truncate tabular-nums">
-              @if (item.isOverdue) {
-                <ng-icon
-                  name="lucideCircleAlert"
-                  class="text-destructive"
-                  i18n-aria-label="@@intervention.list.overdueLabel"
-                  aria-label="Overdue"
-                />
-              }
-              {{ dueAt | appOrgDate: 'date' : regionalFormatting() }}
-            </span>
-          } @else {
-            <span aria-hidden="true">—</span>
+          @if (item.intervention.priority !== 'normal') {
+            <app-intervention-tag kind="priority" [value]="item.intervention.priority" />
           }
+          <ng-container [ngTemplateOutlet]="dueCell" [ngTemplateOutletContext]="{ item }" />
         </div>
       </div>
       @if (!$last) {
@@ -236,6 +343,148 @@
     No results.
   </p>
 </app-collection-surface>
+
+<ng-template #responsibleIdentity let-responsible="responsible">
+  @if (responsible) {
+    <span class="inline-flex min-w-0 items-center gap-2">
+      <hlm-avatar size="sm" class="shrink-0" aria-hidden="true">
+        @if (responsible.avatarUrl; as avatarUrl) {
+          <img hlmAvatarImage [src]="avatarUrl" alt="" />
+        }
+        <span hlmAvatarFallback class="text-[10px]">{{ responsible.initials }}</span>
+      </hlm-avatar>
+      <span class="min-w-0 truncate" [title]="responsible.displayName">
+        {{ responsible.displayName }}
+      </span>
+    </span>
+  } @else {
+    <span
+      role="img"
+      class="inline-flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-dotted border-muted-foreground/50 text-muted-foreground"
+      aria-label="No responsible assigned"
+      i18n-aria-label="@@intervention.list.noResponsible"
+    >
+      <span aria-hidden="true">—</span>
+    </span>
+  }
+</ng-template>
+
+<ng-template #participantAvatars let-item="item">
+  <span hlmAvatarGroup class="shrink-0">
+    @for (person of participantsOf(item).slice(0, 3); track $index) {
+      <hlm-avatar size="sm" [hlmTooltip]="person.tooltip ?? person.label" aria-hidden="true">
+        @if (person.image; as image) {
+          <img hlmAvatarImage [src]="image" alt="" />
+        }
+        <span hlmAvatarFallback class="text-[10px]">{{ initialsOf(person.label) }}</span>
+      </hlm-avatar>
+    }
+    @if (participantsOf(item).length > 3) {
+      <span hlmAvatarGroupCount class="size-6 text-[10px]"
+        >+{{ participantsOf(item).length - 3 }}</span
+      >
+    }
+  </span>
+  <span class="sr-only">
+    @for (person of participantsOf(item); track $index) {
+      {{ person.label }}
+      @if (!$last) {
+        ,
+      }
+    }
+  </span>
+</ng-template>
+
+<ng-template #labelsRow let-item="item">
+  <div
+    class="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground"
+  >
+    @for (label of item.intervention.labels.slice(0, 2); track label.id) {
+      <span class="inline-flex min-w-0 items-center gap-1">
+        <span
+          class="size-2 shrink-0 rounded-full ring-1 ring-foreground/20"
+          [style.background-color]="label.color"
+          aria-hidden="true"
+        ></span>
+        <span class="truncate">{{ label.name }}</span>
+      </span>
+    }
+    @if (item.intervention.labels.length > 2) {
+      <span
+        tabindex="0"
+        class="shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        [hlmTooltip]="extraLabelsOf(item.intervention)"
+        >+{{ item.intervention.labels.length - 2 }}</span
+      >
+    }
+  </div>
+</ng-template>
+
+<ng-template #progressRow let-item="item">
+  <div class="mt-1 flex items-center gap-2">
+    <hlm-progress
+      class="h-1 max-w-24 flex-1"
+      [value]="progressPercentOf(item.intervention)"
+      [attr.aria-label]="progressLabelOf(item.intervention)"
+    >
+      <hlm-progress-indicator />
+    </hlm-progress>
+    <span class="shrink-0 text-xs text-muted-foreground tabular-nums"
+      >{{ item.intervention.completedWorkItemsCount }}/{{ item.intervention.workItemsCount }}</span
+    >
+    @if (item.intervention.blockersCount > 0) {
+      <span class="inline-flex shrink-0 items-center gap-1 text-xs text-destructive">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <span i18n="@@intervention.list.blockersCount">{item.intervention.blockersCount, plural,
+          =1 {1 blocking issue}
+          other {{{ item.intervention.blockersCount }} blocking issues}
+        }</span>
+      </span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #dueCell let-item="item" let-compact="compact">
+  @if (item.intervention.dueAt; as dueAt) {
+    @if (compact) {
+      <span class="inline-flex flex-col items-end gap-1 tabular-nums">
+        <span>{{ dueAt | appOrgDate: 'dateOnly' : regionalFormatting() }}</span>
+        @if (item.isOverdue) {
+          <span hlmBadge variant="destructive">
+            <ng-icon name="lucideCircleAlert" class="text-destructive" aria-hidden="true" />
+            <span i18n="@@intervention.list.overdue">Overdue</span>
+          </span>
+        } @else if (item.isDueSoon) {
+          <span hlmBadge variant="secondary">
+            <ng-icon name="lucideTimer" class="text-warning" aria-hidden="true" />
+            <span i18n="@@intervention.list.dueSoon">Due soon</span>
+          </span>
+        }
+      </span>
+    } @else {
+      <span class="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 tabular-nums">
+        @if (item.isOverdue) {
+          <ng-icon name="lucideCircleAlert" class="text-destructive" aria-hidden="true" />
+        } @else if (item.isDueSoon) {
+          <ng-icon name="lucideTimer" class="text-warning" aria-hidden="true" />
+        }
+        <span>
+          {{ dueAt | appOrgDate: 'dateOnly' : regionalFormatting() }}
+          @if (item.dueRelativeLabel; as relative) {
+            <span class="text-muted-foreground/70">· {{ relative }}</span>
+          }
+        </span>
+        @if (item.isOverdue) {
+          <span class="text-destructive" i18n="@@intervention.list.overdue">Overdue</span>
+        } @else if (item.isDueSoon) {
+          <span class="text-warning" i18n="@@intervention.list.dueSoon">Due soon</span>
+        }
+      </span>
+    }
+  } @else {
+    <span aria-hidden="true">—</span>
+  }
+</ng-template>
 
 <ng-template #rowActions let-item="item">
   <button
@@ -256,6 +505,7 @@
     <hlm-dropdown-menu class="w-52">
       <a
         hlmDropdownMenuItem
+        class="mobile-ui:min-h-11"
         queryParamsHandling="preserve"
         [routerLink]="[...detailRouteBase(), item.intervention.id]"
       >
@@ -279,7 +529,7 @@
           data-testid="intervention-table-row-duplicate"
           (click)="duplicateRequested.emit(item.intervention)"
         >
-          <ng-icon name="lucideCopy" aria-hidden="true" />
+          <ng-icon name="lucideCopyPlus" aria-hidden="true" />
           <span i18n="@@intervention.duplicate.action">Duplicate</span>
         </button>
       }
@@ -322,7 +572,7 @@
             "
           >
             <span class="flex flex-col items-start gap-0.5">
-              <span>{{ statusLabelOf(target) }}</span>
+              <app-intervention-tag kind="status" [value]="target" asOption />
               @if (transitionGate.reasonId(); as reasonId) {
                 <span [id]="reasonId" class="text-xs text-muted-foreground">
                   {{ responsibleOnlyReason }}

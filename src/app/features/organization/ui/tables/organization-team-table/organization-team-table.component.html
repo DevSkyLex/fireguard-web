@@ -22,9 +22,18 @@
   <ng-container surfaceRows>
     @for (team of items(); track team.id) {
       <tr hlmTableRow data-testid="organization-team-table-row">
-        <td hlmTableCell class="font-medium text-foreground">{{ team.name }}</td>
+        <td hlmTableCell class="font-medium text-foreground">
+          <button
+            type="button"
+            class="rounded-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+            data-testid="organization-team-table-row-name"
+            (click)="membersRequested.emit(team)"
+          >
+            {{ team.name }}
+          </button>
+        </td>
 
-        <td hlmTableCell class="max-w-xs truncate text-muted-foreground">
+        <td hlmTableCell class="max-w-sm wrap-anywhere whitespace-normal text-muted-foreground">
           @if (team.description) {
             {{ team.description }}
           } @else {
@@ -59,9 +68,15 @@
         <div hlmItem size="sm" data-testid="organization-team-table-row-card">
           <div hlmItemContent class="min-w-0 gap-2">
             <div class="flex items-start gap-2">
-              <span hlmItemTitle class="line-clamp-none min-h-11 min-w-0 flex-1 wrap-anywhere">{{
-                team.name
-              }}</span>
+              <button
+                type="button"
+                hlmItemTitle
+                class="line-clamp-none min-h-11 min-w-0 flex-1 text-start wrap-anywhere underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                data-testid="organization-team-table-row-name"
+                (click)="membersRequested.emit(team)"
+              >
+                {{ team.name }}
+              </button>
 
               <ng-container
                 [ngTemplateOutlet]="rowActions"
@@ -101,19 +116,23 @@
 </app-collection-surface>
 
 <ng-template #rowActions let-team="item">
-  <button
-    hlmBtn
-    type="button"
-    variant="ghost"
-    size="icon-sm"
-    align="end"
-    class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
-    data-testid="organization-team-table-row-menu"
-    [hlmDropdownMenuTrigger]="rowMenu"
-  >
-    <ng-icon name="lucideEllipsis" aria-hidden="true" />
-    <span class="sr-only" i18n="@@org.teams.table.rowMenu">Open menu</span>
-  </button>
+  @if (canEdit() || canDelete()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      align="end"
+      class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
+      data-testid="organization-team-table-row-menu"
+      [hlmDropdownMenuTrigger]="rowMenu"
+      hlmTooltip="Open menu"
+      i18n-hlmTooltip="@@org.teams.table.rowMenu"
+    >
+      <ng-icon name="lucideEllipsis" aria-hidden="true" />
+      <span class="sr-only" i18n="@@org.teams.table.rowMenu">Open menu</span>
+    </button>
+  }
 
   <ng-template #rowMenu>
     <hlm-dropdown-menu class="w-48">
@@ -129,18 +148,10 @@
         </button>
       }
 
-      <button
-        class="mobile-ui:min-h-11"
-        hlmDropdownMenuItem
-        data-testid="organization-team-table-row-members"
-        (click)="membersRequested.emit(team)"
-      >
-        <ng-icon name="lucideUsersRound" aria-hidden="true" />
-        <span i18n="@@org.teams.table.rowMembers">Members</span>
-      </button>
-
       @if (canDelete()) {
-        <hlm-dropdown-menu-separator />
+        @if (canEdit()) {
+          <hlm-dropdown-menu-separator />
+        }
         <button
           class="mobile-ui:min-h-11"
           hlmDropdownMenuItem

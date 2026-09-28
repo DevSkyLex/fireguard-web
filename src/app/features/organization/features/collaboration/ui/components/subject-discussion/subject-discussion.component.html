@@ -1,4 +1,5 @@
 <app-message-thread
+  [presences]="presences()"
   [messages]="messages()"
   [loading]="opening() || thread.isLoading()"
   [hasMore]="thread.hasMore()"

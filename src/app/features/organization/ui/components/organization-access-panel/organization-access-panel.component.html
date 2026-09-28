@@ -1,4 +1,4 @@
-<div class="flex min-w-0 flex-col gap-8" data-testid="organization-access-panel">
+<div class="@container/access flex min-w-0 flex-col gap-8" data-testid="organization-access-panel">
   @if (error(); as message) {
     <div hlmAlert variant="destructive">
       <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -27,12 +27,12 @@
     </div>
   }
   @if (policy(); as current) {
-    <section class="grid min-w-0 gap-6 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]">
+    <section
+      class="grid min-w-0 gap-6 @4xl/access:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)] mobile-ui:gap-4"
+    >
       <header>
-        <h2 class="text-xl font-semibold tracking-tight" i18n="@@org.access.policyTitle">
-          Organization access
-        </h2>
-        <p class="mt-1 text-sm text-muted-foreground" i18n="@@org.access.policyDescription">
+        <h2 hlmH4 i18n="@@org.access.policyTitle">Organization access</h2>
+        <p class="mt-1" hlmMuted i18n="@@org.access.policyDescription">
           Choose how people with a verified company email can join your organization.
         </p>
       </header>
@@ -44,13 +44,11 @@
       />
     </section>
     <section
-      class="grid min-w-0 gap-6 border-t border-border pt-8 lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)]"
+      class="grid min-w-0 gap-6 border-t border-border pt-8 @4xl/access:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)] mobile-ui:gap-4 mobile-ui:pt-6"
     >
       <header>
-        <h2 class="text-xl font-semibold tracking-tight" i18n="@@org.access.domainsTitle">
-          Company domains
-        </h2>
-        <p class="mt-1 text-sm text-muted-foreground" i18n="@@org.access.domainsDescription">
+        <h2 hlmH4 i18n="@@org.access.domainsTitle">Company domains</h2>
+        <p class="mt-1" hlmMuted i18n="@@org.access.domainsDescription">
           Prove ownership using a DNS TXT record. Only the exact verified email domain matches.
         </p>
       </header>
@@ -70,11 +68,9 @@
           </div>
         }
         @if (current.domains.length === 0) {
-          <div hlmEmpty>
+          <div hlmEmpty class="border border-border">
             <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucideGlobe" aria-hidden="true" />
-              </div>
+              <app-resource-illustration hlmEmptyMedia resource="domain" />
               <h3 hlmEmptyTitle i18n="@@org.access.domainsEmpty">No company domain yet</h3>
               <p hlmEmptyDescription i18n="@@org.access.domainsEmptyHelp">
                 Add a domain above to receive your organization's DNS verification record.
@@ -82,122 +78,170 @@
             </div>
           </div>
         }
-        <ul hlmItemGroup class="gap-3">
-          @for (domain of current.domains; track domain.id) {
-            <li hlmItem variant="outline" class="min-w-0">
-              <div hlmItemContent class="min-w-0 gap-4">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h3 hlmItemTitle class="break-all">{{ domain.domain }}</h3>
-                  <span hlmBadge variant="secondary">{{ statusLabels[domain.status] }}</span>
-                </div>
-                <p hlmItemDescription i18n="@@org.access.dnsInstructions">
-                  Add this TXT record in your domain's DNS settings, then verify.
-                </p>
-                <dl class="grid min-w-0 gap-3 text-sm">
-                  <div class="min-w-0">
-                    <dt class="text-muted-foreground" i18n="@@org.access.dnsName">
-                      TXT record name
-                    </dt>
-                    <dd class="flex min-w-0 items-start gap-2">
-                      <code class="min-w-0 flex-1 break-all select-all">{{ domain.dnsName }}</code
-                      ><button
-                        hlmBtn
-                        variant="ghost"
-                        size="icon"
-                        class="shrink-0 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
-                        [cdkCopyToClipboard]="domain.dnsName"
-                        (cdkCopyToClipboardCopied)="copied($event)"
-                        aria-label="Copy TXT record name"
-                        i18n-aria-label="@@org.access.copyName"
-                      >
-                        <ng-icon name="lucideCopy" aria-hidden="true" />
-                      </button>
-                    </dd>
+        @if (current.domains.length > 0) {
+          <div hlmItemGroup class="gap-0 rounded-lg border" role="list">
+            @for (domain of current.domains; track domain.id) {
+              @if (!$first) {
+                <hlm-item-separator class="my-0" />
+              }
+              <div hlmItem size="sm" class="min-w-0" role="listitem">
+                <div hlmItemContent class="min-w-0 gap-3">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 hlmItemTitle class="break-all">{{ domain.domain }}</h3>
+                    <span
+                      hlmBadge
+                      variant="outline"
+                      class="shrink-0 px-1.5 leading-none text-muted-foreground"
+                    >
+                      <ng-icon
+                        [name]="statusDescriptors[domain.status].icon"
+                        [class]="statusDescriptors[domain.status].iconClass"
+                        class="shrink-0"
+                        aria-hidden="true"
+                      />
+                      {{ statusDescriptors[domain.status].label }}
+                    </span>
                   </div>
-                  <div class="min-w-0">
-                    <dt class="text-muted-foreground" i18n="@@org.access.dnsValue">
-                      TXT record value
-                    </dt>
-                    <dd class="flex min-w-0 items-start gap-2">
-                      <code class="min-w-0 flex-1 break-all select-all">{{ domain.dnsValue }}</code
-                      ><button
-                        hlmBtn
-                        variant="ghost"
-                        size="icon"
-                        class="shrink-0 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
-                        [cdkCopyToClipboard]="domain.dnsValue"
-                        (cdkCopyToClipboardCopied)="copied($event)"
-                        aria-label="Copy TXT record value"
-                        i18n-aria-label="@@org.access.copyValue"
-                      >
-                        <ng-icon name="lucideCopy" aria-hidden="true" />
-                      </button>
-                    </dd>
+                  @if (checkStatusLineOf(domain); as checkStatusLine) {
+                    <p hlmItemDescription>{{ checkStatusLine }}</p>
+                  }
+
+                  <hlm-collapsible
+                    class="block"
+                    [expanded]="isDnsExpanded(domain)"
+                    (expandedChange)="setDnsExpanded(domain.id, $event)"
+                  >
+                    <button
+                      hlmBtn
+                      hlmCollapsibleTrigger
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      class="-ms-2 mobile-ui:min-h-11"
+                    >
+                      <span i18n="@@org.access.dnsRecordToggle">Show DNS record</span>
+                      <ng-icon
+                        name="lucideChevronDown"
+                        aria-hidden="true"
+                        [class.rotate-180]="isDnsExpanded(domain)"
+                      />
+                    </button>
+                    <div hlmCollapsibleContent class="flex flex-col gap-4 pt-3">
+                      <p hlmItemDescription i18n="@@org.access.dnsInstructions">
+                        Add this TXT record in your domain's DNS settings, then verify.
+                      </p>
+                      <dl class="grid min-w-0 gap-3 text-sm">
+                        <div class="min-w-0">
+                          <dt class="text-muted-foreground" i18n="@@org.access.dnsName">
+                            TXT record name
+                          </dt>
+                          <dd class="flex min-w-0 items-start gap-2">
+                            <code class="min-w-0 flex-1 break-all select-all">{{
+                              domain.dnsName
+                            }}</code
+                            ><button
+                              hlmBtn
+                              variant="ghost"
+                              size="icon"
+                              class="shrink-0 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
+                              [cdkCopyToClipboard]="domain.dnsName"
+                              (cdkCopyToClipboardCopied)="copied($event)"
+                              [attr.aria-label]="copyNameLabel"
+                              [hlmTooltip]="copyNameLabel"
+                            >
+                              <ng-icon name="lucideCopy" aria-hidden="true" />
+                            </button>
+                          </dd>
+                        </div>
+                        <div class="min-w-0">
+                          <dt class="text-muted-foreground" i18n="@@org.access.dnsValue">
+                            TXT record value
+                          </dt>
+                          <dd class="flex min-w-0 items-start gap-2">
+                            <code class="min-w-0 flex-1 break-all select-all">{{
+                              domain.dnsValue
+                            }}</code
+                            ><button
+                              hlmBtn
+                              variant="ghost"
+                              size="icon"
+                              class="shrink-0 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
+                              [cdkCopyToClipboard]="domain.dnsValue"
+                              (cdkCopyToClipboardCopied)="copied($event)"
+                              [attr.aria-label]="copyValueLabel"
+                              [hlmTooltip]="copyValueLabel"
+                            >
+                              <ng-icon name="lucideCopy" aria-hidden="true" />
+                            </button>
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </hlm-collapsible>
+
+                  <div hlmItemActions class="flex-wrap">
+                    <button
+                      hlmBtn
+                      variant="outline"
+                      class="mobile-ui:min-h-11"
+                      [disabled]="pending()"
+                      (click)="domainVerified.emit(domain.id)"
+                    >
+                      {{ statusDescriptors[domain.status].checkActionLabel }}</button
+                    ><button
+                      hlmBtn
+                      variant="ghost"
+                      class="mobile-ui:min-h-11"
+                      [disabled]="pending()"
+                      (click)="removing.set(domain)"
+                      i18n="@@org.access.removeDomain"
+                    >
+                      Remove domain
+                    </button>
                   </div>
-                </dl>
-                <div hlmItemActions class="flex-wrap">
-                  <button
-                    hlmBtn
-                    variant="outline"
-                    class="mobile-ui:min-h-11"
-                    [disabled]="pending()"
-                    (click)="domainVerified.emit(domain.id)"
-                    i18n="@@org.access.verifyDomain"
-                  >
-                    Verify domain</button
-                  ><button
-                    hlmBtn
-                    variant="ghost"
-                    class="mobile-ui:min-h-11"
-                    [disabled]="pending()"
-                    (click)="removing.set(domain)"
-                    i18n="@@org.access.removeDomain"
-                  >
-                    Remove domain
-                  </button>
                 </div>
               </div>
-            </li>
-          }
-        </ul>
+            }
+          </div>
+        }
         <output class="block text-sm text-muted-foreground">{{ clipboardMessage() }}</output>
       </div>
     </section>
   }
 </div>
-<hlm-dialog
+<hlm-alert-dialog
   [state]="removing() ? 'open' : 'closed'"
+  [disableClose]="pending()"
   (stateChanged)="$event === 'closed' && removing.set(null)"
 >
-  <hlm-dialog-content
-    class="mobile-ui:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] mobile-ui:overflow-y-auto mobile-ui:overscroll-contain"
-    *hlmDialogPortal
-    ><hlm-dialog-header
-      ><h2 hlmDialogTitle i18n="@@org.access.removeTitle">Remove this domain?</h2>
-      <p hlmDialogDescription i18n="@@org.access.removeDescription">
+  <hlm-alert-dialog-content *hlmAlertDialogPortal>
+    <hlm-alert-dialog-header>
+      <h2 hlmAlertDialogTitle i18n="@@org.access.removeTitle">Remove this domain?</h2>
+      <p hlmAlertDialogDescription i18n="@@org.access.removeDescription">
         People will no longer discover this organization using this domain. Existing members keep
         their access.
-      </p></hlm-dialog-header
-    >
-    <p class="text-sm font-medium break-all">{{ removing()?.domain }}</p>
-    <hlm-dialog-footer
-      ><button
-        hlmBtn
-        hlmDialogClose
-        variant="outline"
+      </p>
+      <p class="text-sm font-medium break-all">{{ removing()?.domain }}</p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button
+        hlmAlertDialogCancel
         class="mobile-ui:min-h-11"
+        [disabled]="pending()"
         i18n="@@org.access.cancel"
       >
-        Cancel</button
-      ><button
-        hlmBtn
+        Cancel
+      </button>
+      <button
+        hlmAlertDialogAction
         variant="destructive"
         class="mobile-ui:min-h-11"
+        [disabled]="pending()"
         (click)="remove()"
         i18n="@@org.access.removeDomain"
       >
         Remove domain
-      </button></hlm-dialog-footer
-    >
-  </hlm-dialog-content></hlm-dialog
->
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

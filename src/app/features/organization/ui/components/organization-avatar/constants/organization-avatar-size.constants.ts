@@ -39,6 +39,11 @@ export interface OrganizationAvatarSizeClasses {
 export const ORGANIZATION_AVATAR_SIZE_CLASSES: Readonly<
   Record<OrganizationAvatarSize, OrganizationAvatarSizeClasses>
 > = {
+  '2xs': {
+    root: 'size-5 rounded-sm after:rounded-sm',
+    media: 'rounded-sm',
+    fallback: 'rounded-sm text-[10px]',
+  },
   xs: {
     root: 'size-6 rounded-md after:rounded-md',
     media: 'rounded-md',

@@ -13,6 +13,8 @@ const flushEffects = async (): Promise<void> => {
   await Promise.resolve();
 };
 
+const daysAgo = (days: number): string => new Date(Date.now() - days * 86_400_000).toISOString();
+
 const apiError = (status: number, detail: string): ApiError => ({
   '@id': '',
   '@type': 'Error',
@@ -114,6 +116,8 @@ describe('FacilityOverviewStore', () => {
     expect(store.complianceRate()).toBeNull();
     expect(store.complianceDisplay()).toBe('—');
     expect(store.equipmentCount()).toBe(0);
+    expect(store.equipmentTotal()).toBe(0);
+    expect(store.inspectionsTotal()).toBe(0);
   });
 
   describe('loadInspections', () => {
@@ -132,7 +136,56 @@ describe('FacilityOverviewStore', () => {
       expect(store.overdueInspectionsCount()).toBe(1);
       expect(store.nextInspectionAt()).not.toBeNull();
       expect(store.nextInspectionInDays()).toBeGreaterThanOrEqual(0);
-      expect(store.recentInspections()).toHaveLength(3);
+      expect(store.recentInspections()).toHaveLength(2);
+    });
+
+    it('keeps the collection totalItems as inspectionsTotal', async () => {
+      mockInspectionService.list.mockReturnValueOnce(
+        of({ ...inspectionsCollection, totalItems: 412 }),
+      );
+
+      store.loadInspections({ organizationId: 'org-1', facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(store.inspections()).toHaveLength(3);
+      expect(store.inspectionsTotal()).toBe(412);
+    });
+
+    it('lists the most recent past inspections first, excluding future ones, capped to six', async () => {
+      const pastInspections: InspectionOutput[] = [8, 3, 1, 7, 2, 5, 4, 6].map(
+        (days) =>
+          ({
+            id: `past-${days}`,
+            result: 'pass',
+            status: 'closed',
+            performedAt: daysAgo(days),
+          }) as unknown as InspectionOutput,
+      );
+      const futureInspection = {
+        id: 'future-1',
+        result: 'pass',
+        status: 'scheduled',
+        performedAt: new Date(Date.now() + 3_600_000).toISOString(),
+      } as unknown as InspectionOutput;
+      mockInspectionService.list.mockReturnValueOnce(
+        of({
+          ...inspectionsCollection,
+          totalItems: 9,
+          member: [futureInspection, ...pastInspections],
+        }),
+      );
+
+      store.loadInspections({ organizationId: 'org-1', facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(store.recentInspections().map((inspection) => inspection.id)).toEqual([
+        'past-1',
+        'past-2',
+        'past-3',
+        'past-4',
+        'past-5',
+        'past-6',
+      ]);
     });
 
     it('clears inspections and reports a normalized error on failure', async () => {
@@ -144,6 +197,7 @@ describe('FacilityOverviewStore', () => {
       await flushEffects();
 
       expect(store.inspections()).toEqual([]);
+      expect(store.inspectionsTotal()).toBe(0);
       expect(store.isLoadingInspections()).toBe(false);
       expect(store.complianceRate()).toBeNull();
     });
@@ -166,9 +220,46 @@ describe('FacilityOverviewStore', () => {
 
       const rows = store.equipmentStatusRows();
       expect(rows).toHaveLength(4);
-      const commissionedRow = rows.find((row) => row.label.includes('Commissioned'));
-      expect(commissionedRow?.count).toBe(1);
-      expect(commissionedRow?.ratio).toBe(0.5);
+      const operationalRow = rows.find((row) => row.label.includes('Operational'));
+      expect(operationalRow?.count).toBe(1);
+      expect(operationalRow?.ratio).toBe(0.5);
+      expect(operationalRow?.icon).toBe('lucideCircleCheck');
+    });
+
+    it('orders the status breakdown Operational, In stock, Under maintenance, Decommissioned', async () => {
+      store.loadEquipment({ organizationId: 'org-1', facilityId: 'facility-1' });
+      await flushEffects();
+
+      const labels: readonly string[] = store.equipmentStatusRows().map((row) => row.label);
+      expect(labels[0]).toContain('Operational');
+      expect(labels[1]).toContain('In stock');
+      expect(labels[2]).toContain('Under maintenance');
+      expect(labels[3]).toContain('Decommissioned');
+    });
+
+    it('counts equipment from the collection totalItems, not the first page', async () => {
+      mockEquipmentService.list.mockReturnValueOnce(
+        of({ ...equipmentCollection, totalItems: 250 }),
+      );
+
+      store.loadEquipment({ organizationId: 'org-1', facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(store.equipment()).toHaveLength(2);
+      expect(store.equipmentTotal()).toBe(250);
+      expect(store.equipmentCount()).toBe(250);
+    });
+
+    it('flags the equipment preview as partial once the server total exceeds the loaded page', async () => {
+      mockEquipmentService.list.mockReturnValueOnce(
+        of({ ...equipmentCollection, totalItems: 250 }),
+      );
+
+      expect(store.isEquipmentPreviewPartial()).toBe(false);
+      store.loadEquipment({ organizationId: 'org-1', facilityId: 'facility-1' });
+      await flushEffects();
+
+      expect(store.isEquipmentPreviewPartial()).toBe(true);
     });
 
     it('clears equipment and resets counts on failure', async () => {
@@ -180,6 +271,7 @@ describe('FacilityOverviewStore', () => {
       await flushEffects();
 
       expect(store.equipment()).toEqual([]);
+      expect(store.equipmentTotal()).toBe(0);
       expect(store.isLoadingEquipment()).toBe(false);
       expect(store.equipmentCount()).toBe(0);
       expect(store.equipmentStatusRows().every((row) => row.total === 0)).toBe(true);

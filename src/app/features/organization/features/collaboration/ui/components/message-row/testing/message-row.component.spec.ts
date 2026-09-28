@@ -105,6 +105,38 @@ describe('MessageRow', () => {
     expect(text()).toContain('Edited');
   });
 
+  it('shows direct receipt only after another browser confirms it', async () => {
+    await render(
+      view({ isOwn: true, receipt: { kind: 'direct', deliveredCount: 0, readCount: 0 } }),
+    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="message-receipt"]')?.textContent,
+    ).toContain('Sent');
+
+    await render(
+      view({ isOwn: true, receipt: { kind: 'direct', deliveredCount: 1, readCount: 0 } }),
+    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="message-receipt"]')?.textContent,
+    ).toContain('Received');
+
+    await render(
+      view({ isOwn: true, receipt: { kind: 'direct', deliveredCount: 1, readCount: 1 } }),
+    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="message-receipt"]')?.textContent,
+    ).toContain('Seen');
+  });
+
+  it('shows distinct delivery and reader counts for a channel', async () => {
+    await render(
+      view({ isOwn: true, receipt: { kind: 'channel', deliveredCount: 3, readCount: 2 } }),
+    );
+    const receipt = fixture.nativeElement.querySelector('[data-testid="message-receipt"]');
+    expect(receipt?.textContent).toContain('Received by 3');
+    expect(receipt?.textContent).toContain('Seen by 2');
+  });
+
   it('should mark a pinned message', async () => {
     await render(view({ isPinned: true }));
 
@@ -209,5 +241,16 @@ describe('MessageRow', () => {
     await render(view({ canEdit: false }));
     fixture.componentInstance['onMobileActionsClosed']('edit');
     expect(edited).not.toHaveBeenCalled();
+  });
+
+  it('renders the supplied author presence without reading feature state', async () => {
+    fixture.componentRef.setInput('presence', 'do_not_disturb');
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('[data-slot="avatar-badge"]')?.getAttribute('aria-label'),
+    ).toBe('Do not disturb');
+    fixture.componentRef.setInput('presence', null);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[data-slot="avatar-badge"]')).toBeNull();
   });
 });

@@ -25,6 +25,7 @@ import {
   directConversationsStoreEvents,
   type DirectConversationsStoreType,
 } from '@features/organization/features/collaboration/state';
+import type { PresenceStatus } from '@features/organization/models';
 import {
   ORGANIZATION_PERMISSION,
   type MemberDirectoryEntry,
@@ -38,6 +39,8 @@ import {
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -69,6 +72,7 @@ import { DirectMessagePicker } from '../direct-message-picker';
 @Component({
   selector: 'app-direct-messages-panel',
   imports: [
+    MemberPresenceIndicator,
     NgIcon,
     RouterLink,
     RouterLinkActive,
@@ -91,6 +95,23 @@ import { DirectMessagePicker } from '../direct-message-picker';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DirectMessagesPanel {
+  /**
+   * Property presences
+   * @readonly
+   * @description Presence for visible conversation counterparts; the sidebar registers independently of the active thread.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() =>
+      this.isVisible()
+        ? this.filteredConversations()
+            .map((row) => row.counterpartMemberId)
+            .filter((id): id is string => id !== null)
+        : [],
+    );
+
   //#region Dependencies
   /**
    * Property store
@@ -262,6 +283,9 @@ export class DirectMessagesPanel {
 
         return {
           id: row.id,
+          counterpartMemberId: row.counterpartMember
+            ? this.memberIdOf(row.counterpartMember)
+            : null,
           counterpartName: entry?.displayName ?? this.unknownLabel,
           counterpartAvatarUrl: entry?.avatarUrl,
           isResolved: entry !== undefined,

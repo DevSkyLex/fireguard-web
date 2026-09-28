@@ -147,9 +147,7 @@
   @if (listForbidden()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideLock" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="access-denied" />
         <p hlmEmptyTitle i18n="@@maintenance.list.forbiddenTitle">
           Not available with your permissions
         </p>
@@ -177,27 +175,37 @@
         </button>
       </div>
     </div>
-  } @else if (!store.isLoading() && items().length === 0) {
+  } @else if (!store.isLoading() && items().length === 0 && hasFilters()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        @if (hasFilters()) {
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-          </div>
-        } @else if (store.listCallState().status === 'success' && store.totalSchedules() === 0) {
-          <app-resource-illustration hlmEmptyMedia resource="maintenance" />
-        }
-        <p hlmEmptyTitle i18n="@@maintenance.list.emptyTitle">No maintenance schedules found</p>
-        <p hlmEmptyDescription i18n="@@maintenance.list.emptyDesc">
-          Adjust your search or filters, or track equipment to see its schedule here.
+        <app-state-illustration hlmEmptyMedia state="no-matches" />
+        <p hlmEmptyTitle i18n="@@maintenance.list.filterMissTitle">
+          No schedules match these filters
+        </p>
+        <p hlmEmptyDescription i18n="@@maintenance.list.filterMissDesc">
+          Adjust your search or filters and try again.
         </p>
       </div>
       <div hlmEmptyContent>
-        @if (hasFilters()) {
-          <button hlmBtn variant="outline" (click)="clearFilters()">
-            <span i18n="@@common.clearFilters">Clear filters</span>
-          </button>
-        }
+        <button hlmBtn variant="outline" (click)="clearFilters()">
+          <span i18n="@@common.clearFilters">Clear filters</span>
+        </button>
+      </div>
+    </div>
+  } @else if (store.listCallState().status === 'success' && store.totalSchedules() === 0) {
+    <div hlmEmpty class="border border-border">
+      <div hlmEmptyHeader>
+        <app-resource-illustration hlmEmptyMedia resource="maintenance" />
+        <p hlmEmptyTitle i18n="@@maintenance.list.emptyTitle">No maintenance schedules yet</p>
+        <p hlmEmptyDescription i18n="@@maintenance.list.emptyDesc">
+          Track equipment to see its maintenance schedule here.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <a hlmBtn variant="outline" [routerLink]="equipmentRouteBase()">
+          <ng-icon name="lucidePackage" aria-hidden="true" />
+          <span i18n="@@maintenance.list.goToEquipment">Go to equipment</span>
+        </a>
       </div>
     </div>
   } @else {

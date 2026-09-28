@@ -19,10 +19,13 @@ import {
   lucideLogOut,
   lucideMonitor,
   lucideShieldCheck,
+  lucideSmartphone,
+  lucideTablet,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { SessionOutput } from '@features/auth/models';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -77,10 +80,18 @@ import { HlmSpinner } from '@shared/ui/spinner';
     HlmButton,
     HlmSkeleton,
     HlmSpinner,
+    ResourceIllustration,
     ...HlmAlertDialogImports,
   ],
   providers: [
-    provideIcons({ lucideLogOut, lucideMonitor, lucideShieldCheck, lucideTriangleAlert }),
+    provideIcons({
+      lucideLogOut,
+      lucideMonitor,
+      lucideShieldCheck,
+      lucideSmartphone,
+      lucideTablet,
+      lucideTriangleAlert,
+    }),
   ],
   templateUrl: './account-sessions-panel.component.html',
   host: { class: 'block' },
@@ -380,6 +391,28 @@ export class AccountSessionsPanel {
     if (this.revokingOthers()) return;
 
     this.othersRevoked.emit();
+  }
+
+  /**
+   * Method deviceIcon
+   * @method deviceIcon
+   *
+   * @description
+   * Picks the glyph matching a session's detected device family, defaulting to
+   * a desktop monitor for anything else or unreported.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string | null | undefined} deviceType - The session's detected device type.
+   *
+   * @returns {string} An `ng-icon` name.
+   */
+  protected deviceIcon(deviceType: string | null | undefined): string {
+    if (deviceType === 'mobile') return 'lucideSmartphone';
+    if (deviceType === 'tablet') return 'lucideTablet';
+
+    return 'lucideMonitor';
   }
   //#endregion
 }

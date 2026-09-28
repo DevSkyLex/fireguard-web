@@ -15,13 +15,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleDot,
-  lucideLock,
-  lucideShieldCheck,
-  lucideTag,
-} from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideCircleDot, lucideTag } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -52,6 +46,8 @@ import {
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { ApprovalStatusTag } from '../../components/approval-status-tag';
@@ -110,7 +106,7 @@ type ApprovalFilterKey = 'status' | 'actionType';
  * `decideErrorText`, and silently re-reads the row (`store.refresh`) so the
  * table is correct the moment the dialog closes.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -129,9 +125,15 @@ type ApprovalFilterKey = 'status' | 'actionType';
     CollectionSearchBox,
     CollectionToolbar,
     HlmButton,
+    ResourceIllustration,
+    StateIllustration,
   ],
   providers: [
-    provideIcons({ lucideCircleAlert, lucideCircleDot, lucideLock, lucideShieldCheck, lucideTag }),
+    provideIcons({
+      lucideCircleAlert,
+      lucideCircleDot,
+      lucideTag,
+    }),
   ],
   templateUrl: './approvals-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -187,6 +189,20 @@ export class ApprovalsPage {
    */
   protected readonly memberLabelOf: (memberId: string) => string = (memberId: string): string =>
     this.memberDirectory.displayNameFor(memberId);
+
+  /**
+   * Property memberAvatarOf
+   * @readonly
+   *
+   * @description Resolves an approval requester to their directory avatar URL, when set.
+   *
+   * @access protected
+   * @since 1.3.0
+   * @type {(memberId: string) => string | undefined}
+   */
+  protected readonly memberAvatarOf: (memberId: string) => string | undefined = (
+    memberId: string,
+  ): string | undefined => this.memberDirectory.byId().get(memberId)?.avatarUrl;
 
   /** The list and decision dataset, provided by this route. */
   protected readonly store: ApprovalRequestsStoreType =
@@ -285,6 +301,32 @@ export class ApprovalsPage {
   /** Which field's value control currently renders forced open — `null` when none is. */
   protected readonly openFilterKey: WritableSignal<ApprovalFilterKey | null> =
     signal<ApprovalFilterKey | null>(null);
+
+  /**
+   * Property isDefaultPendingView
+   * @readonly
+   * @description Whether the page sits on its arrival narrowing — `pending` status, no action-type chip, no search — the actionable "nothing to decide yet" view rather than a filtered miss.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isDefaultPendingView: Signal<boolean> = computed<boolean>(
+    () => this.status() === 'pending' && this.actionType() === null && this.searchTerm() === '',
+  );
+
+  /**
+   * Property isFilteredMiss
+   * @readonly
+   * @description Whether an empty result comes from a narrowing other than the default arrival view — status cleared or changed, an action-type chip, or a search term — so the empty state should offer to clear filters rather than repeat the default copy.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isFilteredMiss: Signal<boolean> = computed<boolean>(
+    () =>
+      !this.isDefaultPendingView() &&
+      (this.status() !== null || this.actionType() !== null || this.searchTerm() !== ''),
+  );
 
   /**
    * Property filtersVisible
@@ -449,6 +491,17 @@ export class ApprovalsPage {
     this.page.set(1);
     this.status.set(value as ApprovalStatus | null);
     if (this.openFilterKey() === 'status') this.openFilterKey.set(null);
+  }
+
+  /**
+   * Method showAllStatuses
+   * @description Clears the default `pending` status narrowing only, leaving any action-type or search narrowing untouched — the empty state's arrival-view action.
+   * @access protected
+   * @since 1.3.0
+   * @returns {void}
+   */
+  protected showAllStatuses(): void {
+    this.applyStatus(null);
   }
 
   /**

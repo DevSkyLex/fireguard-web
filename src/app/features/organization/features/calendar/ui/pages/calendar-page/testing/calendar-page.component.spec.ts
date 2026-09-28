@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
+  inject,
   input as inputSignal,
   provideZonelessChangeDetection,
   signal,
@@ -21,6 +22,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
 import type {
@@ -30,6 +32,7 @@ import type {
 import { CalendarFeedStore } from '@features/organization/features/calendar/state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DashboardPanelRegistry } from '@layouts/dashboard-layout';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { CalendarPage } from '../calendar-page.component';
 
@@ -62,6 +65,21 @@ class PageActionsHost {
   public readonly template: InputSignal<TemplateRef<unknown> | null> =
     inputSignal<TemplateRef<unknown> | null>(null);
 }
+
+@Component({
+  selector: 'app-calendar-day-panel-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="registry.panel()?.template ?? null" />',
+})
+class CalendarDayPanelHost {
+  protected readonly registry: DashboardPanelRegistry = inject(DashboardPanelRegistry);
+}
+
+const renderDayPanel = (): HTMLElement => {
+  const host = TestBed.createComponent(CalendarDayPanelHost);
+  host.detectChanges();
+  return host.nativeElement as HTMLElement;
+};
 
 const renderPageActions = (): HTMLElement => {
   const hostFixture: ComponentFixture<PageActionsHost> = TestBed.createComponent(PageActionsHost);
@@ -141,6 +159,7 @@ describe('CalendarPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        DashboardPanelRegistry,
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: {
@@ -159,6 +178,14 @@ describe('CalendarPage', () => {
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
         {
           provide: CalendarService,
@@ -312,6 +339,30 @@ describe('CalendarPage', () => {
 
     expect(groups).toHaveLength(2);
     expect(agenda?.querySelectorAll('[data-testid="calendar-day-item"]')).toHaveLength(3);
+  });
+
+  it('shows a multi-day item on each covered day in the month detail and mobile agenda', async () => {
+    await render();
+    fixture.componentInstance['month'].set(new Date(2026, 7, 15));
+    items.set([
+      feedItem({
+        id: 'multi-day',
+        startsAt: '2026-08-09T09:00:00+02:00',
+        endsAt: '2026-08-11T17:00:00+02:00',
+      }),
+    ]);
+    fixture.componentInstance['selectedDay'].set('2026-08-10');
+    await fixture.whenStable();
+
+    expect(
+      renderDayPanel().querySelectorAll(
+        '[data-testid="calendar-selected-day-panel"] [data-testid="calendar-day-item"]',
+      ),
+    ).toHaveLength(1);
+
+    mobile.set(true);
+    await fixture.whenStable();
+    expect(root().querySelectorAll('[data-testid="calendar-agenda-group"]')).toHaveLength(3);
   });
 
   it('shows the empty agenda message once loaded with nothing scheduled', async () => {
@@ -575,12 +626,14 @@ describe('CalendarPage', () => {
     it('switches to the week view and reloads a seven-day window', async () => {
       await render();
       load.mockClear();
+      expect(TestBed.inject(DashboardPanelRegistry).panel()).not.toBeNull();
 
       root().querySelector<HTMLButtonElement>('[data-testid="calendar-granularity-week"]')?.click();
       await fixture.whenStable();
 
       expect(root().querySelector('[data-testid="calendar-week"]')).not.toBeNull();
       expect(root().querySelector('[data-testid="calendar-agenda"]')).toBeNull();
+      expect(TestBed.inject(DashboardPanelRegistry).panel()).toBeNull();
       expect(load).toHaveBeenCalledTimes(1);
 
       const command = load.mock.calls[0]?.[0] as { from: string; to: string };

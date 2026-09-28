@@ -21,7 +21,7 @@ import {
   type ValidationError,
 } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideMapPin } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideMapPin } from '@ng-icons/lucide';
 import type {
   FacilityOption,
   CreateFacilityInput,
@@ -32,6 +32,7 @@ import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilitie
 import { serverMessagesOf } from '@shared/form-feedback';
 import type { MapCoordinates } from '@shared/map';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -146,12 +147,13 @@ function isLevelIndexInRange(value: string): boolean {
     NgIcon,
     HlmButton,
     HlmInput,
+    ...HlmAlertImports,
     ...HlmComboboxImports,
     ...HlmFieldImports,
     ...HlmSelectImports,
     HlmSheetFooter,
   ],
-  providers: [provideIcons({ lucideMapPin })],
+  providers: [provideIcons({ lucideCircleAlert, lucideMapPin })],
   templateUrl: './facility-create-form.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -384,6 +386,9 @@ export class FacilityCreateForm {
       $localize`:@@facility.cf.createFailed:The facility could not be created.`,
     ),
   );
+
+  /** The rejected-request alert's fixed title, distinct from the lines {@link serverMessages} renders below it. */
+  protected readonly errorTitle: string = $localize`:@@facility.cf.createErrorTitle:Couldn't create the facility`;
 
   /** Names a facility type on the closed select trigger. */
   protected readonly typeLabelOf: (value: FacilityType | '') => string = (value) =>

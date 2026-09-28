@@ -3,7 +3,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
+  LOCALE_ID,
   output,
   type InputSignal,
   type OutputEmitterRef,
@@ -21,11 +23,13 @@ import {
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { formatRelativeDays } from '@shared/relative-time';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICONS } from './constants/organization-invitation-status-tag-icons.constants';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS } from './constants/organization-invitation-status-tag-severity.constants';
 import {
@@ -38,8 +42,9 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
   'w-40',
   'w-24',
   'w-20',
+  'w-28',
   'w-20',
-  'w-20',
+  'w-24',
   'ms-auto size-6',
 ];
 
@@ -60,7 +65,7 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
  * page's single `mutationCallState` is in flight, since the store carries no
  * per-invitation request state.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -76,6 +81,7 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
     ...HlmDropdownMenuImports,
     ...HlmItemImports,
     ...HlmTableImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
@@ -91,6 +97,9 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationInvitationTable {
+  /** The application's active locale, for the pending-row relative-expiry suffix. */
+  private readonly locale: string = inject<string>(LOCALE_ID);
+
   //#region Inputs
   /**
    * Property items
@@ -240,12 +249,51 @@ export class OrganizationInvitationTable {
             statusLabel: descriptor.label,
             statusIcon: descriptor.icon,
             statusIconClass: ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS[descriptor.severity],
+            expiresRelativeSuffix:
+              invitation.status === 'pending' ? this.expiresRelativeSuffixOf(invitation) : null,
             acceptUrl: links[invitation.id] ?? null,
           };
         },
       );
     },
   );
+  //#endregion
+
+  //#region Internals
+  /**
+   * Method orgCalendarDayOf
+   * @description The `YYYY-MM-DD` calendar day `instant` falls on in the organization's timezone, or `null` when the configured timezone is not a valid IANA identifier — the free-text regional setting is not validated on save.
+   * @access private
+   * @since 1.3.0
+   * @param {Date} instant - The instant to resolve.
+   * @returns {string | null} The organization-local calendar day, or null on an invalid timezone.
+   */
+  private orgCalendarDayOf(instant: Date): string | null {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: this.regionalFormatting().timezone })
+        .format(instant)
+        .slice(0, 10);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Method expiresRelativeSuffixOf
+   * @description A pending invitation's `expiresAt`, as a localized whole-day relative label ("in 3 days") counted from today in the organization's timezone, or `null` when the timezone cannot be resolved.
+   * @access private
+   * @since 1.3.0
+   * @param {OrganizationInvitationOutput} invitation - The row's invitation.
+   * @returns {string | null} The relative label, or null on an invalid timezone.
+   */
+  private expiresRelativeSuffixOf(invitation: OrganizationInvitationOutput): string | null {
+    const expiresDay: string | null = this.orgCalendarDayOf(new Date(invitation.expiresAt));
+    const today: string | null = this.orgCalendarDayOf(new Date());
+
+    if (expiresDay === null || today === null) return null;
+
+    return formatRelativeDays(expiresDay, today, this.locale);
+  }
   //#endregion
 
   //#region Methods
@@ -257,7 +305,7 @@ export class OrganizationInvitationTable {
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
-    return 6;
+    return 7;
   }
   //#endregion
 }

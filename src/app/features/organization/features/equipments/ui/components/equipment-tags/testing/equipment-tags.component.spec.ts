@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { EquipmentTagOutput } from '@features/organization/features/equipments/models';
 import { EquipmentTags } from '../equipment-tags.component';
 
@@ -22,7 +23,19 @@ describe('EquipmentTags', () => {
     catalog: readonly EquipmentTagOutput[] = [],
     editable = true,
   ): Promise<void> => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
+    });
     fixture = TestBed.createComponent(EquipmentTags);
     fixture.componentRef.setInput('tags', tags);
     fixture.componentRef.setInput('catalog', catalog);

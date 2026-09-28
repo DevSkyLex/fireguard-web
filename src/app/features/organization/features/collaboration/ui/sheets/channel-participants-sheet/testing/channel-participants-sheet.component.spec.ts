@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { MemberDirectoryEntry } from '@features/organization/models';
 import { ChannelParticipantsSheet } from '../channel-participants-sheet.component';
 import type { ChannelParticipantView } from '../models';
@@ -39,7 +40,18 @@ describe('ChannelParticipantsSheet', () => {
 
   async function open(): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideInteractionCapabilities(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(ChannelParticipantsSheet);
@@ -58,7 +70,18 @@ describe('ChannelParticipantsSheet', () => {
 
   it('should render nothing until the page opens it', async () => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideInteractionCapabilities(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
     fixture = TestBed.createComponent(ChannelParticipantsSheet);
     await fixture.whenStable();
@@ -243,6 +266,17 @@ describe('ChannelParticipantsSheet', () => {
     await fixture.whenStable();
 
     expect(visibility).toEqual([false]);
+  });
+
+  it('decorates confirmed participant presence independently of administrative role', async () => {
+    await open();
+    fixture.componentRef.setInput('participants', [participant({ role: 'owner' })]);
+    fixture.componentRef.setInput('presences', { 'member-1': 'offline' });
+    await fixture.whenStable();
+    expect(panel()?.querySelector('[data-slot="avatar-badge"]')?.getAttribute('aria-label')).toBe(
+      'Offline',
+    );
+    expect(panel()?.textContent).toContain('owner');
   });
 });
 import { provideInteractionCapabilities } from '@core/interaction-capabilities';

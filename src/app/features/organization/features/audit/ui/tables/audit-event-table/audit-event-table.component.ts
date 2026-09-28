@@ -2,7 +2,9 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   input,
+  LOCALE_ID,
   signal,
   type InputSignal,
   type WritableSignal,
@@ -19,14 +21,17 @@ import {
   lucideCompass,
   lucideGavel,
   lucideHash,
+  lucideServer,
   lucideShieldCheck,
   lucideTag,
   lucideUpload,
+  lucideUserX,
   lucideWebhook,
   lucideWrench,
 } from '@ng-icons/lucide';
 import type {
   AuditActionTagDescriptor,
+  AuditActorType,
   AuditEventOutput,
 } from '@features/organization/features/audit/models';
 import { resolveAuditActionTag } from '@features/organization/features/audit/models';
@@ -34,15 +39,26 @@ import {
   resolveAuditActorLabel,
   resolveAuditSubjectRoute,
 } from '@features/organization/features/audit/utils';
+import { getOrganizationInitials } from '@features/organization/utils';
 import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmTableImports } from '@shared/ui/table';
+
+/** Muted glyph shown instead of an avatar for a non-`'user'` actor type. */
+const AUDIT_ACTOR_ICON: Readonly<Record<Exclude<AuditActorType, 'user'>, string>> = {
+  client: 'lucideBot',
+  system: 'lucideServer',
+  anonymous: 'lucideUserX',
+};
 
 /** How many columns a summary row carries — the expanded metadata row spans this. */
 const COLUMN_COUNT: number = 5;
@@ -50,28 +66,38 @@ const COLUMN_COUNT: number = 5;
 /** One literal Tailwind width per rendered column, for the shared surface's first-load skeleton. */
 const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = ['size-6', 'w-32', 'w-28', 'w-36', 'w-24'];
 
+/** Metadata keys carrying a raw UUID with no reader-facing destination — dropped rather than shown raw, per `FEATURE.md`'s UUID rule. */
+const OPAQUE_ID_METADATA_KEYS: ReadonlySet<string> = new Set([
+  'attachment_id',
+  'previous_attachment_id',
+]);
+
 /**
  * Component AuditEventTable
  * @class AuditEventTable
  *
  * @description
- * The audit journal grid: `hlmTable` inside a bordered, scrollable shell,
- * one summary row per event — occurred-at timestamp (`recordedAt` carried
- * only as a native `title` tooltip, since the two are usually equal),
- * actor (resolved name or a neutral per-actor-type fallback), the action's
- * module icon and label, and the subject (linked to its record when the
- * subject type has a known route, plain otherwise). Each row's own trailing
- * button expands a second row holding the event's `metadata` as a compact
- * key/value list, collapsed by default. Events without metadata render no
- * disclosure control, and technical identifiers are humanized before they
- * reach the reader.
+ * The audit journal grid: `hlmTable` inside a bordered, scrollable shell (a
+ * flat `hlmItemGroup` with `hlm-item-separator` on the compact card layout),
+ * a day separator (`hlmMarker`/a full-width row, in the organization's
+ * timezone) before the first event of each calendar day, then one summary
+ * row per event — occurred-at timestamp (with a visible muted "Recorded …"
+ * line when `recordedAt` differs), actor (an initials avatar for a `'user'`
+ * actor, a muted type glyph for `client`/`system`/`anonymous`), the
+ * action's module icon and label, and the subject (linked to its record
+ * when the subject type has a known route, plain otherwise). Each row's own
+ * trailing button expands a second row holding the event's `metadata` as a
+ * compact key/value list, collapsed by default. Events without metadata
+ * render no disclosure control; opaque id fields with no destination are
+ * dropped, a linked id renders as a named link, and every other value is
+ * humanized — never raw JSON.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service; the page owns loading, filtering and paging. Which rows are
  * expanded is local, ephemeral UI state, not fetched data, so it stays in
  * this component rather than round-tripping through the page.
  *
- * @version 1.1.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -85,6 +111,9 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = ['size-6', 'w-32', 'w-28',
     NgIcon,
     HlmBadge,
     HlmButton,
+    ...HlmAvatarImports,
+    ...HlmItemImports,
+    ...HlmMarkerImports,
     ...HlmTableImports,
   ],
   providers: [
@@ -98,9 +127,11 @@ const SKELETON_COLUMN_WIDTHS: ReadonlyArray<string> = ['size-6', 'w-32', 'w-28',
       lucideCompass,
       lucideGavel,
       lucideHash,
+      lucideServer,
       lucideShieldCheck,
       lucideTag,
       lucideUpload,
+      lucideUserX,
       lucideWebhook,
       lucideWrench,
     }),
@@ -168,6 +199,9 @@ export class AuditEventTable {
   private readonly expandedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
     new Set(),
   );
+
+  /** The application's active locale, for {@link dayHeadingOf}. */
+  private readonly locale: string = inject<string>(LOCALE_ID);
   //#endregion
 
   //#region Methods
@@ -193,6 +227,30 @@ export class AuditEventTable {
    */
   protected actorLabelOf(item: AuditEventOutput): string {
     return resolveAuditActorLabel(item.actorType, item.actorDisplayName);
+  }
+
+  /**
+   * Method actorIconOf
+   * @description The muted glyph standing in for a non-`'user'` actor's avatar, or `null` when a `'user'` actor should render an initials avatar instead.
+   * @access protected
+   * @since 1.3.0
+   * @param {AuditEventOutput} item - The rendered event.
+   * @returns {string | null} The icon name, or `null`.
+   */
+  protected actorIconOf(item: AuditEventOutput): string | null {
+    return item.actorType === 'user' ? null : AUDIT_ACTOR_ICON[item.actorType];
+  }
+
+  /**
+   * Method actorInitialsOf
+   * @description The `'user'` actor's avatar-fallback initials, derived from their resolved label.
+   * @access protected
+   * @since 1.3.0
+   * @param {AuditEventOutput} item - The rendered event.
+   * @returns {string} A 1–2 letter uppercase initials string.
+   */
+  protected actorInitialsOf(item: AuditEventOutput): string {
+    return getOrganizationInitials(this.actorLabelOf(item));
   }
 
   /**
@@ -229,14 +287,36 @@ export class AuditEventTable {
 
   /**
    * Method metadataEntriesOf
-   * @description The event's `metadata` object, flattened to renderable key/value pairs.
+   *
+   * @description
+   * The event's `metadata` object, flattened to renderable key/value pairs.
+   * Opaque id fields with no reader-facing destination
+   * ({@link OPAQUE_ID_METADATA_KEYS}) are dropped rather than shown as a raw
+   * UUID; a linked id field (`intervention_id`) stays, rendered as a link by
+   * {@link metadataLinkRouteOf} rather than its raw value.
+   *
    * @access protected
    * @since 1.0.0
    * @param {AuditEventOutput} item - The rendered event.
    * @returns {ReadonlyArray<[string, unknown]>} The metadata entries, in insertion order.
    */
   protected metadataEntriesOf(item: AuditEventOutput): ReadonlyArray<[string, unknown]> {
-    return Object.entries(item.metadata);
+    return Object.entries(item.metadata).filter(([key]) => !OPAQUE_ID_METADATA_KEYS.has(key));
+  }
+
+  /**
+   * Method metadataLinkRouteOf
+   * @description The gated record's own detail route for a linked id metadata field, or `null` when the field is not one.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} key - The metadata entry's key.
+   * @param {unknown} value - The metadata entry's value.
+   * @returns {readonly string[] | null} Route commands for `[routerLink]`, or `null` to render the value plainly.
+   */
+  protected metadataLinkRouteOf(key: string, value: unknown): readonly string[] | null {
+    if (key !== 'intervention_id' || typeof value !== 'string' || value.length === 0) return null;
+
+    return ['/organizations', this.organizationId(), 'interventions', value];
   }
 
   /**
@@ -294,7 +374,9 @@ export class AuditEventTable {
    *
    * @description
    * Formats the backend's allowlisted scalar metadata without exposing
-   * JavaScript placeholders such as `null` or `[object Object]`.
+   * JavaScript placeholders such as `null` or `[object Object]`, and never
+   * a raw JSON dump — an unallowlisted shape renders a neutral fallback
+   * instead.
    *
    * @access protected
    * @since 1.2.0
@@ -322,11 +404,7 @@ export class AuditEventTable {
     if (typeof value === 'string' || typeof value === 'number') return String(value);
     if (Array.isArray(value)) return value.map(String).join(', ');
 
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return '—';
-    }
+    return $localize`:@@audit.metadata.unsupportedValue:Unsupported value`;
   }
 
   /**
@@ -383,6 +461,88 @@ export class AuditEventTable {
     return this.isExpanded(item.id)
       ? $localize`:@@audit.table.collapseNamed:Hide details for ${label}:label: at ${occurredAt}:occurredAt:`
       : $localize`:@@audit.table.expandNamed:Show details for ${label}:label: at ${occurredAt}:occurredAt:`;
+  }
+
+  /**
+   * Method isDayBoundary
+   * @description Whether a row opens a new calendar day in the organization's timezone, so a day separator should render before it.
+   * @access protected
+   * @since 1.3.0
+   * @param {AuditEventOutput} item - The row being rendered.
+   * @param {AuditEventOutput | undefined} previous - The preceding row, or `undefined` for the first row.
+   * @returns {boolean} `true` when a separator belongs before `item`.
+   */
+  protected isDayBoundary(item: AuditEventOutput, previous: AuditEventOutput | undefined): boolean {
+    return previous === undefined || this.dayKeyOf(item) !== this.dayKeyOf(previous);
+  }
+
+  /**
+   * Method dayHeadingOf
+   * @description The localized day heading ("Monday, September 27, 2026") for a row's separator, in the organization's timezone.
+   * @access protected
+   * @since 1.3.0
+   * @param {AuditEventOutput} item - The row opening the day.
+   * @returns {string} The formatted day heading.
+   */
+  protected dayHeadingOf(item: AuditEventOutput): string {
+    const date: Date = new Date(item.occurredAt);
+    if (Number.isNaN(date.getTime())) return item.occurredAt;
+
+    return this.dayFormatter().format(date);
+  }
+
+  /**
+   * Method dayKeyOf
+   * @description A sortable `'YYYY-MM-DD'` calendar-day key for `item`, resolved in the organization's timezone — falls back to UTC for an unresolvable zone.
+   * @access private
+   * @since 1.3.0
+   * @param {AuditEventOutput} item - The rendered event.
+   * @returns {string} The calendar-day key, or the raw timestamp when it does not parse.
+   */
+  private dayKeyOf(item: AuditEventOutput): string {
+    const date: Date = new Date(item.occurredAt);
+    if (Number.isNaN(date.getTime())) return item.occurredAt;
+
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: this.regionalFormatting().timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(date);
+    } catch {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'UTC',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(date);
+    }
+  }
+
+  /**
+   * Method dayFormatter
+   * @description The localized, organization-timezone day-heading formatter, falling back to UTC for an unresolvable zone.
+   * @access private
+   * @since 1.3.0
+   * @returns {Intl.DateTimeFormat} The formatter for {@link dayHeadingOf}.
+   */
+  private dayFormatter(): Intl.DateTimeFormat {
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+
+    try {
+      return new Intl.DateTimeFormat(this.locale, {
+        ...options,
+        timeZone: this.regionalFormatting().timezone,
+      });
+    } catch {
+      return new Intl.DateTimeFormat(this.locale, { ...options, timeZone: 'UTC' });
+    }
   }
 
   /**

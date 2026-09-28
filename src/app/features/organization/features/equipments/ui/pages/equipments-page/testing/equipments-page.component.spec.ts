@@ -89,11 +89,15 @@ describe('EquipmentsPage', () => {
   let create: ReturnType<typeof vi.fn>;
   let resetCreateOperation: ReturnType<typeof vi.fn>;
   let ensureFacilitiesLoaded: ReturnType<typeof vi.fn>;
+  let kpisLoad: ReturnType<typeof vi.fn>;
+  let kpisHasError: WritableSignal<boolean>;
   let platformId: string;
 
   beforeEach(() => {
     const mobile: WritableSignal<boolean> = signal(false);
     load = vi.fn();
+    kpisLoad = vi.fn();
+    kpisHasError = signal(false);
     equipmentList = signal<readonly EquipmentOutput[]>([]);
     listCallState = signal<CallState>(idleCallState());
     totalEquipment = signal<number>(0);
@@ -147,9 +151,10 @@ describe('EquipmentsPage', () => {
         {
           provide: EquipmentKpisStore,
           useValue: {
-            load: vi.fn(),
+            load: kpisLoad,
             queryData: signal(null),
             isQueryLoading: signal(false),
+            queryHasError: kpisHasError,
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
@@ -338,12 +343,28 @@ describe('EquipmentsPage', () => {
     expect(load).toHaveBeenCalledTimes(2);
   });
 
+  it('should reload the KPI snapshot when the strip retries', async () => {
+    kpisHasError.set(true);
+    fixture = await createPage();
+    kpisLoad.mockClear();
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="equipment-kpi-strip-retry"]',
+      ) as HTMLButtonElement | null
+    )?.dispatchEvent(new Event('click'));
+
+    expect(kpisLoad).toHaveBeenCalledWith('org-1');
+  });
+
   it('should show the empty state once loaded with nothing to show', async () => {
     listCallState.set(successCallState(null));
     equipmentList.set([]);
     fixture = await createPage();
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No equipment found');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'No equipment registered yet',
+    );
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('app-resource-illustration img'),
     ).not.toBeNull();
@@ -368,10 +389,10 @@ describe('EquipmentsPage', () => {
     expect(element.querySelector('app-resource-illustration img')).toBeNull();
   });
 
-  it('should default the ordering to createdAt/asc and toggle its direction on a re-picked field', async () => {
+  it('should default the ordering to type/asc and toggle its direction on a re-picked field', async () => {
     fixture = await createPage();
 
-    expect(load.mock.calls[0][0].options.sort).toEqual({ field: 'createdAt', direction: 'asc' });
+    expect(load.mock.calls[0][0].options.sort).toEqual({ field: 'type', direction: 'asc' });
 
     fixture.componentInstance['applySortField']('brand');
     await fixture.whenStable();

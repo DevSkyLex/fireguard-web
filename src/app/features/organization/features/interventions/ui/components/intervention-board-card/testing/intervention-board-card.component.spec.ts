@@ -145,11 +145,12 @@ describe('InterventionBoardCard', () => {
     expect(anchor?.textContent).toContain('Quarterly extinguisher sweep');
   });
 
-  it('should mark an overdue deadline with an icon, never with colour alone', () => {
+  it('should mark an overdue deadline with an icon and a visible label, never with colour alone', () => {
     const icon: Element | null = element.querySelector('ng-icon[name="lucideCircleAlert"]');
 
     expect(icon).not.toBeNull();
-    expect(icon?.getAttribute('aria-label')).toBe('Overdue');
+    expect(icon?.getAttribute('aria-hidden')).toBe('true');
+    expect(element.textContent).toContain('Overdue');
   });
 
   it('should offer a server-illegal move disabled, with its reason visible and linked', async () => {
@@ -297,6 +298,58 @@ describe('InterventionBoardCard', () => {
     expect(element.textContent).toContain('Alex Dupont');
     expect(element.textContent).toContain('AD');
   });
+  it('shows work-item progress and blocking issues when the intervention has work items', async () => {
+    fixture.componentRef.setInput(
+      'item',
+      item({
+        intervention: intervention({
+          workItemsCount: 4,
+          completedWorkItemsCount: 1,
+          blockersCount: 2,
+        }),
+      }),
+    );
+    await fixture.whenStable();
+
+    expect(element.querySelector('hlm-progress')).not.toBeNull();
+    expect(element.textContent).toContain('1/4');
+    expect(element.textContent).toContain('2 blocking issues');
+  });
+
+  it('renders no progress row when the intervention has no work items', () => {
+    expect(element.querySelector('hlm-progress')).toBeNull();
+  });
+
+  it('marks a deadline inside the due-soon window with an icon and a visible label', async () => {
+    const inADay = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    fixture.componentRef.setInput(
+      'item',
+      item({ isOverdue: false, intervention: intervention({ dueAt: inADay }) }),
+    );
+    await fixture.whenStable();
+
+    expect(element.querySelector('ng-icon[name="lucideTimer"]')).not.toBeNull();
+    expect(element.textContent).toContain('Due soon');
+  });
+
+  it('shows a colour dot before each label name', async () => {
+    fixture.componentRef.setInput(
+      'item',
+      item({
+        intervention: intervention({
+          labels: [{ id: 'l-1', name: 'Urgent', color: '#ff0000' }],
+        }),
+      }),
+    );
+    await fixture.whenStable();
+
+    const label: HTMLElement | null = element.querySelector(
+      '[data-testid="intervention-board-card-label"]',
+    );
+    expect(label?.textContent).toContain('Urgent');
+    expect(label?.querySelector('span[style*="background-color"]')).not.toBeNull();
+  });
+
   it('keeps a disabled mobile move open without dispatching a command', async () => {
     mobile.set(true);
     await fixture.whenStable();

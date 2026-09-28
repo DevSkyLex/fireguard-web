@@ -23,4 +23,6 @@ export interface MemberDirectoryEntry {
   /** Resolved role names, in API order. Empty when the member has no role. */
   readonly roleNames: readonly string[];
   readonly isActive: boolean;
+  /** Whether the member owns the organization; optional so hand-built entries may omit it. */
+  readonly isOwner?: boolean;
 }

@@ -24,6 +24,8 @@ import {
 } from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmTableImports } from '@shared/ui/table';
 
 /** Human labels for the job kinds, matching `IMPORT_JOB_KIND_OPTIONS`. */
@@ -38,12 +40,15 @@ const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
  * @class ImportJobTable
  *
  * @description
- * The import jobs grid: `hlmTable` inside a bordered, scrollable shell, one
- * row per job — filename, kind, status, a dry-run badge when applicable,
- * live `processedRows`/`totalRows` progress while `processing`, the
- * successful/failed counts, and the created/completed dates. Every row
- * carries a "View report" action, always enabled — a `pending`/`processing`
- * row opens the same report view showing progress so far.
+ * The import jobs grid: `hlmTable` inside a bordered, scrollable shell (a
+ * flat `hlmItemGroup` with `hlm-item-separator` on the compact card layout),
+ * one row per job — filename, kind, status, a dry-run badge when applicable,
+ * live `processedRows`/`totalRows` progress while `processing` (an
+ * `hlm-progress` bar with a caption once the total is known, plain text
+ * otherwise), the successful/failed counts, and the created/completed dates.
+ * Every row carries a "View report" action, always enabled — a
+ * `pending`/`processing` row opens the same report view showing progress so
+ * far.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service; the page owns loading and polling, this component only
@@ -59,9 +64,11 @@ const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
  * a green `45` and a red `5` carried status by colour alone, which neither a
  * colour-blind operator nor a screen reader could read — hence the
  * check/cross icons and the visually hidden "rows imported"/"rows failed"
- * labels.
+ * labels. A `pending` row shows a muted dash instead, and a zero failed
+ * count stays muted rather than destructive red, which would misleadingly
+ * read as a problem.
  *
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -75,6 +82,8 @@ const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
     ImportStatusTag,
     HlmBadge,
     HlmButton,
+    ...HlmItemImports,
+    ...HlmProgressImports,
     ...HlmTableImports,
   ],
   providers: [provideIcons({ lucideCircleCheck, lucideCircleX, lucideEye })],
@@ -189,6 +198,37 @@ export class ImportJobTable {
     return item.totalRows === undefined
       ? `${item.processedRows}`
       : `${item.processedRows} / ${item.totalRows}`;
+  }
+
+  /**
+   * Method progressRatioOf
+   * @description The processing job's completion ratio for `hlm-progress`, or `null` while the total row count is not yet known.
+   * @access protected
+   * @since 2.1.0
+   * @param {ImportJobOutput} item - The rendered job.
+   * @returns {number | null} A `0`–`100` percentage, or `null` outside `processing` or with an unknown total.
+   */
+  protected progressRatioOf(item: ImportJobOutput): number | null {
+    if (item.status !== 'processing' || item.totalRows === undefined || item.totalRows <= 0) {
+      return null;
+    }
+
+    return Math.min(100, (item.processedRows / item.totalRows) * 100);
+  }
+
+  /**
+   * Method progressCaptionOf
+   * @description The localized "x of y rows" caption paired with {@link progressRatioOf}'s bar.
+   * @access protected
+   * @since 2.1.0
+   * @param {ImportJobOutput} item - The rendered job, with a known `totalRows`.
+   * @returns {string} The caption text.
+   */
+  protected progressCaptionOf(item: ImportJobOutput): string {
+    const processed: number = item.processedRows;
+    const total: number | undefined = item.totalRows;
+
+    return $localize`:@@imports.table.progressCaption:${processed}:processed: of ${total}:total: rows`;
   }
 
   /**

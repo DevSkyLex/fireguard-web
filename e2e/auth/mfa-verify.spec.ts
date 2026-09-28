@@ -4,6 +4,8 @@ import {
   trustDeviceOutput,
   type LoginOutputFixture,
 } from '../support/fixtures/api-fixtures';
+import { expectNoHorizontalOverflow, setDarkTheme } from '../support/helpers/appearance';
+import { pagePolishScreenshotDir } from '../support/helpers/screenshot-dir';
 import { ApiMock } from '../support/mocks/api-mock';
 import { AuthPages } from '../support/pages/auth.page';
 
@@ -109,5 +111,41 @@ test.describe('MFA verification', () => {
     await auth.otpResend.click();
 
     await resendRequest;
+  });
+});
+
+test.describe('visual evidence', () => {
+  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
+
+  test('renders the MFA verify form à 375px en mode sombre', async ({
+    page,
+    context,
+    baseURL,
+  }, testInfo) => {
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 812 });
+    const api = new ApiMock(page);
+    const auth = new AuthPages(page);
+    await reachMfaVerify(api, auth);
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(auth.mfaVerifyRoot).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/mfa-verify-375-dark.png`,
+    });
+  });
+
+  test('renders the MFA verify form à 1280px en mode clair', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const api = new ApiMock(page);
+    const auth = new AuthPages(page);
+    await reachMfaVerify(api, auth);
+
+    await expect(auth.mfaVerifyRoot).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/mfa-verify-1280-light.png`,
+    });
   });
 });

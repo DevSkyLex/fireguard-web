@@ -25,16 +25,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideBan,
   lucideCircleAlert,
+  lucideCircleCheck,
   lucideLayers,
   lucideMap,
+  lucideMapPin,
+  lucidePackage,
   lucidePlus,
   lucideQrCode,
   lucideTrash2,
+  lucideTriangleAlert,
+  lucideWrench,
   lucideEllipsis,
 } from '@ng-icons/lucide';
 import { take } from 'rxjs';
-import { isApiError } from '@core/api/utils';
+import { isApiError, pickAvatarUrl } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -51,8 +57,10 @@ import type {
   FacilityOutput,
   FacilityPlanOverlayEquipment,
   FacilityPlanOverlayZone,
+  FacilityType,
   UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
+import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
 import {
   ActiveFacilityStore,
   FacilityOverviewStore,
@@ -62,25 +70,34 @@ import {
   type FacilityPlansStoreType,
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
-import type { InspectionResult } from '@features/organization/features/inspections/models';
 import { InterventionTag } from '@features/organization/features/interventions/ui/components';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   REGIONAL_FORMATTING_PORT,
   type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { getOrganizationInitials } from '@features/organization/utils';
 import { PlanViewer } from '@shared/plan-viewer';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { formatRelativeDays, formatRelativeTime } from '@shared/relative-time';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmBreadcrumbImports } from '@shared/ui/breadcrumb';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmPopoverImports } from '@shared/ui/popover';
+import { HlmProgressImports } from '@shared/ui/progress';
+import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { HlmLarge } from '@shared/ui/typography';
 import { equipmentPlanLabel } from '../../../utils';
 import { FacilityHierarchyChart } from '../../components/facility-hierarchy-chart';
 import { FacilityInformationPanel } from '../../components/facility-information-panel';
@@ -187,7 +204,7 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * `facility.type === 'building'` (the endpoint's own 409 is the filet, this
  * gate is the real guard).
  *
- * @version 1.13.0
+ * @version 1.14.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -215,23 +232,37 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     FacilityStatusTag,
     InterventionTag,
     PlanViewer,
+    ResourceIllustration,
     HlmButton,
     HlmSkeleton,
+    ...HlmAlertImports,
+    ...HlmAvatarImports,
+    ...HlmBadgeImports,
     ...HlmBreadcrumbImports,
+    ...HlmItemImports,
+    ...HlmProgressImports,
+    ...HlmSeparatorImports,
     ...HlmSpinnerImports,
-    ...HlmCardImports,
     ...HlmTabsImports,
+    ...HlmTooltipImports,
+    HlmLarge,
   ],
   providers: [
     FacilityOverviewStore,
     FacilityPlansStore,
     provideIcons({
+      lucideBan,
       lucideCircleAlert,
+      lucideCircleCheck,
       lucideLayers,
       lucideMap,
+      lucideMapPin,
+      lucidePackage,
       lucidePlus,
       lucideQrCode,
       lucideTrash2,
+      lucideTriangleAlert,
+      lucideWrench,
       lucideEllipsis,
     }),
   ],
@@ -658,26 +689,37 @@ export class FacilityDetailPage {
   });
 
   /**
-   * Property metaLine
+   * Property pickAvatarUrl
    * @readonly
-   * @description The header's metadata line — when the record was last touched.
+   * @description Resolves an avatar's variant map to the display size the recent-inspection rows want. Exposed for the template's direct call ({@link https://angular.dev} template expressions cannot call a bare imported function).
    * @access protected
-   * @since 1.1.0
-   * @type {Signal<string>}
+   * @since 2.1.0
+   * @type {typeof pickAvatarUrl}
    */
-  protected readonly metaLine: Signal<string> = computed<string>(() => {
-    const facility: FacilityOutput | null = this.activeFacilityStore.selectedFacility();
-    if (!facility) return '';
+  protected readonly pickAvatarUrl: typeof pickAvatarUrl = pickAvatarUrl;
 
-    const formatter = new Intl.DateTimeFormat(this.locale, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-    const when: string = formatter.format(new Date(facility.updatedAt));
+  /**
+   * Property getOrganizationInitials
+   * @readonly
+   * @description Resolves a display name to its initials for an avatar fallback.
+   * @access protected
+   * @since 2.1.0
+   * @type {typeof getOrganizationInitials}
+   */
+  protected readonly getOrganizationInitials: typeof getOrganizationInitials =
+    getOrganizationInitials;
 
-    return $localize`:@@facility.detail.metaUpdated:Updated ${when}:when:`;
-  });
+  /**
+   * Property hierarchyLoadingIds
+   * @readonly
+   * @description {@link FacilityStoreType.loadingParentIds} as the `ReadonlySet` `FacilityHierarchyChart.loadingIds` expects.
+   * @access protected
+   * @since 2.1.0
+   * @type {Signal<ReadonlySet<string>>}
+   */
+  protected readonly hierarchyLoadingIds: Signal<ReadonlySet<string>> = computed<
+    ReadonlySet<string>
+  >(() => new Set(this.store.loadingParentIds()));
 
   /** Registers {@link pageActions} on the shell header. */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
@@ -1420,6 +1462,103 @@ export class FacilityDetailPage {
   }
 
   /**
+   * Method typeLabelOf
+   * @description The facility's type, humanized through the shared type catalog.
+   * @access protected
+   * @since 2.1.0
+   * @param {FacilityType} type - The raw type value.
+   * @returns {string} The localized label, or the raw value when unknown.
+   */
+  protected typeLabelOf(type: FacilityType): string {
+    return FACILITY_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
+  }
+
+  /**
+   * Method updatedRelativeLabel
+   * @description The record's `updatedAt`, as a localized relative label ("3 days ago") — the identity header's visible text, paired with the absolute value in a tooltip.
+   * @access protected
+   * @since 2.1.0
+   * @param {string} updatedAt - The record's `updatedAt` timestamp.
+   * @returns {string} The localized relative label.
+   */
+  protected updatedRelativeLabel(updatedAt: string): string {
+    return formatRelativeTime(updatedAt, this.locale);
+  }
+
+  /**
+   * Method nextInspectionRelativeLabel
+   *
+   * @description
+   * `overview.nextInspectionAt()` as a localized "today"/"tomorrow"/"in N
+   * days" label, the calendar day computed against the organization's own
+   * timezone rather than the runtime's — a due date resolved in UTC can read
+   * a day off from what the org's clock shows. `null` while no upcoming
+   * inspection is loaded.
+   *
+   * @access protected
+   * @since 2.2.0
+   * @returns {string | null} The localized relative label, or `null`.
+   */
+  protected nextInspectionRelativeLabel(): string | null {
+    const nextAt: string | null = this.overview.nextInspectionAt();
+    if (nextAt === null) return null;
+
+    return this.relativeDayLabel(nextAt);
+  }
+
+  /**
+   * Method dueRelativeLabel
+   * @description An intervention's `dueAt` as a localized "today"/"in N days"/"N days ago" suffix — read alongside the visible absolute date, never behind a tooltip, since a deadline must be readable without hover. `dueAt` is a date-only value (`'YYYY-MM-DD'` or a UTC-midnight instant), so it is compared as written, never converted through the organization's timezone — only "today" is resolved there, matching the visible `'dateOnly'` date it sits beside.
+   * @access protected
+   * @since 2.2.0
+   * @param {string} dueAt - The intervention's due date.
+   * @returns {string} The localized relative label.
+   */
+  protected dueRelativeLabel(dueAt: string): string {
+    const timezone: string = this.regionalFormatting().timezone;
+    return formatRelativeDays(
+      dueAt,
+      this.calendarDateIn(new Date().toISOString(), timezone),
+      this.locale,
+    );
+  }
+
+  /**
+   * Method relativeDayLabel
+   * @description Calendar-day math behind {@link nextInspectionRelativeLabel} — resolves both the target instant and "today" to the organization's own timezone before comparing, since `nextInspectionAt` carries a real time of day rather than a date-only value.
+   * @access private
+   * @since 2.2.0
+   * @param {string} instantIso - The ISO instant to compare against today.
+   * @returns {string} The localized relative label.
+   */
+  private relativeDayLabel(instantIso: string): string {
+    const timezone: string = this.regionalFormatting().timezone;
+
+    return formatRelativeDays(
+      this.calendarDateIn(instantIso, timezone),
+      this.calendarDateIn(new Date().toISOString(), timezone),
+      this.locale,
+    );
+  }
+
+  /**
+   * Method calendarDateIn
+   * @description The `YYYY-MM-DD` calendar day an instant falls on within the given timezone, falling back to the instant's own written date when the timezone identifier is not one `Intl.DateTimeFormat` accepts (a fixed `+HHMM` offset).
+   * @access private
+   * @since 2.2.0
+   * @param {string} instantIso - The ISO instant to resolve.
+   * @param {string} timezone - An IANA timezone name, `'UTC'`, or a fixed offset.
+   * @returns {string} The resolved `YYYY-MM-DD` calendar day.
+   */
+  private calendarDateIn(instantIso: string, timezone: string): string {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(instantIso));
+    } catch {
+      return instantIso.slice(0, 10);
+    }
+  }
+
+  /**
    * Method onEditTargetChanged
    * @description Opens or closes an in-place field, clearing any rejection left from the previous attempt.
    * @access protected
@@ -1559,25 +1698,6 @@ export class FacilityDetailPage {
     if (visible) return;
 
     this.pendingDelete.set(false);
-  }
-
-  /**
-   * Method resultLabelOf
-   * @description Localizes a recent-inspection's result, read read-only from the sibling `inspections` subfeature for this preview only.
-   * @access protected
-   * @since 1.0.0
-   * @param {InspectionResult} result - The inspection's result.
-   * @returns {string} The localized label.
-   */
-  protected resultLabelOf(result: InspectionResult): string {
-    switch (result) {
-      case 'pass':
-        return $localize`:@@facility.recentInspections.pass:Pass`;
-      case 'fail':
-        return $localize`:@@facility.recentInspections.fail:Fail`;
-      case 'partial':
-        return $localize`:@@facility.recentInspections.partial:Partial`;
-    }
   }
 
   /**

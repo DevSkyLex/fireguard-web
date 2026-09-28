@@ -17,16 +17,20 @@ import {
   lucideChevronsUpDown,
   lucideCircleCheck,
   lucideCircleDot,
+  lucideCrown,
   lucideEllipsis,
   lucideShieldCheck,
   lucideTrash2,
   lucideUserCheck,
 } from '@ng-icons/lucide';
+import type { PresenceStatus } from '@features/organization/models';
 import type {
   OrganizationMemberListSort,
   OrganizationMemberOutput,
   OrganizationMemberSortField,
+  OrganizationRoleOutput,
 } from '@features/organization/models';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
@@ -40,6 +44,7 @@ import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /**
  * Component OrganizationMemberTable
@@ -79,6 +84,7 @@ import { HlmTableImports } from '@shared/ui/table';
 @Component({
   selector: 'app-organization-member-table',
   imports: [
+    MemberPresenceIndicator,
     NgTemplateOutlet,
     OrgDatePipe,
     RouterLink,
@@ -93,6 +99,7 @@ import { HlmTableImports } from '@shared/ui/table';
     ...HlmDropdownMenuImports,
     ...HlmItemImports,
     ...HlmTableImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
@@ -101,6 +108,7 @@ import { HlmTableImports } from '@shared/ui/table';
       lucideChevronsUpDown,
       lucideCircleCheck,
       lucideCircleDot,
+      lucideCrown,
       lucideEllipsis,
       lucideShieldCheck,
       lucideTrash2,
@@ -112,6 +120,18 @@ import { HlmTableImports } from '@shared/ui/table';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationMemberTable {
+  /**
+   * Property presences
+   * @readonly
+   * @description Confirmed availability supplied by the page, independent of administrative membership state.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  public readonly presences: InputSignal<Readonly<Record<string, PresenceStatus>>> = input<
+    Readonly<Record<string, PresenceStatus>>
+  >({});
+
   //#region Inputs
   /**
    * Property items
@@ -123,6 +143,11 @@ export class OrganizationMemberTable {
    */
   public readonly items: InputSignal<readonly OrganizationMemberOutput[]> =
     input.required<readonly OrganizationMemberOutput[]>();
+
+  /** Loaded role catalog used when a member response omits its display names. */
+  public readonly roles: InputSignal<readonly OrganizationRoleOutput[]> = input<
+    readonly OrganizationRoleOutput[]
+  >([]);
 
   /**
    * Property loading
@@ -407,6 +432,19 @@ export class OrganizationMemberTable {
     if (composed) return composed;
 
     return member.email ?? $localize`:@@org.members.table.unnamed:Member`;
+  }
+
+  /** Resolve assigned role IDs against the catalog when the list omits role names. */
+  protected roleNamesOf(member: OrganizationMemberOutput): readonly string[] {
+    if (member.roleNames?.length) return member.roleNames;
+
+    const namesById: Map<string, string> = new Map(
+      this.roles().map((role: OrganizationRoleOutput): [string, string] => [role.id, role.name]),
+    );
+    return member.roleIds.flatMap((roleId: string): string[] => {
+      const name: string | undefined = namesById.get(roleId);
+      return name ? [name] : [];
+    });
   }
 
   /**

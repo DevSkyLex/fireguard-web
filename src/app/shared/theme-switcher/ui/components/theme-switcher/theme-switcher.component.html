@@ -2,6 +2,7 @@
   <hlm-drawer direction="bottom" autoFocus="first-heading">
     <button
       hlmItem
+      #themeTrigger
       hlmDrawerTrigger
       type="button"
       class="min-h-12 w-full cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
@@ -84,6 +85,7 @@
     type="button"
     class="min-h-12 cursor-pointer text-start hover:bg-muted focus-visible:bg-muted"
     [attr.aria-label]="triggerLabel()"
+    #themeTrigger
     [hlmDropdownMenuTrigger]="menu"
     align="end"
   >
@@ -101,6 +103,7 @@
     size="icon-sm"
     id="theme-switcher-trigger"
     [attr.aria-label]="triggerLabel()"
+    #themeTrigger
     [hlmDropdownMenuTrigger]="menu"
     align="end"
   >

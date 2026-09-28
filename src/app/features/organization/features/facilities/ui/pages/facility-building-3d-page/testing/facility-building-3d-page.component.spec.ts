@@ -5,7 +5,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { StoreError } from '@core/request-state';
 import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
@@ -311,7 +311,7 @@ describe('FacilityBuilding3dPage', () => {
     });
   });
 
-  it('shows the empty state, with the "Go to Plans" action, when the building has no floors', async () => {
+  it('shows the empty state, with the "Add a floor" action, when the building has no floors', async () => {
     fixture = await createPage();
     store.isQueryLoaded.set(true);
     store.isEmpty.set(true);
@@ -321,7 +321,11 @@ describe('FacilityBuilding3dPage', () => {
       '[data-testid="facility-3d-empty"]',
     ) as HTMLElement;
     expect(emptyState).not.toBeNull();
-    expect(emptyState.querySelector('a')).not.toBeNull();
+    const link = emptyState.querySelector('a');
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe(
+      '/organizations/org-1/facilities?create=1&parent=facility-1',
+    );
   });
 
   it('offers a toolbar control to bring the dismissed compact sheet back', async () => {
@@ -372,7 +376,7 @@ describe('FacilityBuilding3dPage', () => {
     expect(fixture.nativeElement.querySelector('canvas')).toBeNull();
   });
 
-  it('hides the "Go to Plans" action from a read-only member', async () => {
+  it('hides the "Add a floor" action from a read-only member, with a neutral description', async () => {
     hasPermission.mockReturnValue(false);
     fixture = await createPage();
     store.isQueryLoaded.set(true);
@@ -383,6 +387,7 @@ describe('FacilityBuilding3dPage', () => {
       '[data-testid="facility-3d-empty"]',
     ) as HTMLElement;
     expect(emptyState.querySelector('a')).toBeNull();
+    expect(emptyState.textContent).not.toContain('Add the floors');
   });
 
   it('shows an unsupported-device state when WebGL is unavailable', async () => {
@@ -414,16 +419,36 @@ describe('FacilityBuilding3dPage', () => {
     ).click();
     expect(store.resetCamera).toHaveBeenCalled();
 
-    (
-      fixture.nativeElement.querySelector(
-        '[data-testid="facility-3d-explode-toggle"]',
-      ) as HTMLButtonElement
-    ).click();
+    const explodeToggle = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-explode-toggle"]',
+    ) as HTMLButtonElement;
+
+    expect(explodeToggle.getAttribute('data-state')).toBe('off');
+
+    explodeToggle.click();
     expect(store.toggleExploded).toHaveBeenCalled();
+
+    store.exploded.set(true);
+    await fixture.whenStable();
+
+    expect(explodeToggle.getAttribute('data-state')).toBe('on');
+    expect(explodeToggle.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('holds no navigation link in the scene toolbar, once the model is ready', async () => {
+    const getContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue({} as RenderingContext);
+
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    await fixture.whenStable();
+
+    getContextSpy.mockRestore();
 
     expect(
       fixture.nativeElement.querySelector('[data-testid="facility-3d-plan-2d-link"]'),
-    ).not.toBeNull();
+    ).toBeNull();
   });
 
   it('shows the room panel as soon as a floor is selected — reachable with no prior room selection', async () => {
@@ -500,6 +525,30 @@ describe('FacilityBuilding3dPage', () => {
 
     expect(store.selectRoom).toHaveBeenCalledWith(null);
     expect(store.clearSelection).not.toHaveBeenCalled();
+  });
+
+  it("navigates to the selected room's own floor record, not the building, when its 2D plan is requested", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.selectedFloorId.set('floor-9');
+    store.selectedRoomId.set('room-1');
+    store.selectedRoom.set(ROOM);
+    store.selectedFloor.set(FLOOR);
+    await fixture.whenStable();
+
+    const router: Router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="facility-3d-room-panel-plan-2d"]',
+      ) as HTMLButtonElement
+    ).click();
+
+    expect(navigate).toHaveBeenCalledWith(['/organizations', 'org-1', 'facilities', 'floor-9'], {
+      queryParams: { tab: 'plans' },
+    });
   });
 
   it('announces the selected room and floor through the aria-live region', async () => {

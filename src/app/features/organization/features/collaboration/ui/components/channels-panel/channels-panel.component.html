@@ -213,9 +213,7 @@
     } @else if (channels.channelEntities().length === 0) {
       <div hlmEmpty>
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideHash" aria-hidden="true" />
-          </div>
+          <app-resource-illustration hlmEmptyMedia resource="channel" size="sm" />
           <p hlmEmptyTitle i18n="@@channels.page.emptyTitle">No channels yet</p>
           <p hlmEmptyDescription i18n="@@channels.page.emptyDescription">
             Create one to start a group conversation.

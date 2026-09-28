@@ -38,7 +38,6 @@ import {
   lucideChevronRight,
   lucideCircleAlert,
   lucideCloudOff,
-  lucideCompass,
   lucideCopy,
   lucideEllipsis,
   lucideFileDown,
@@ -70,6 +69,10 @@ import {
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { TeamService } from '@features/organization/data-access';
+import type {
+  CreateFacilityInput,
+  FacilityOutput,
+} from '@features/organization/features/facilities/models';
 import {
   InterventionOfflineService,
   InterventionService,
@@ -146,9 +149,6 @@ import {
 import {
   buildInterventionDuplicatePrefill,
   createInterventionCapabilities,
-  formatInterventionScheduleLabel,
-  resolveInterventionResponsibleLabel,
-  summarizeInterventionLabels,
 } from '@features/organization/features/interventions/utils';
 import { WorkloadConfirmationDialog } from '@features/organization/features/workload/ui/dialogs/workload-confirmation-dialog';
 import {
@@ -164,8 +164,11 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import { CollectionSkeletonCards } from '@shared/collection-surface';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { formatRelativeDays } from '@shared/relative-time';
 import { sheetSide } from '@shared/sheet-side';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -202,6 +205,7 @@ import { InterventionCommentForm } from '../../forms/intervention-comment-form';
 import type { InterventionWorkItemFormValues } from '../../forms/intervention-work-item-form';
 import { InterventionDiscussionSheet } from '../../sheets/intervention-discussion-sheet';
 import { InterventionEffortSheet } from '../../sheets/intervention-effort-sheet';
+import { InterventionFacilitySheet } from '../../sheets/intervention-facility-sheet';
 import { InterventionOperationsSheet } from '../../sheets/intervention-operations-sheet';
 import { InterventionTimeSheet } from '../../sheets/intervention-time-sheet';
 import { InterventionWorkItemSheet } from '../../sheets/intervention-work-item-sheet';
@@ -270,15 +274,10 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  *
  * Four decisions a reviewer should know about.
  *
- * The phase's forward action (Plan / Submit / Publish) keeps its one address
- * on the page, `app-intervention-status-band`, a sticky band directly under
- * the title row that serves every viewport — retiring the earlier split
- * between a desktop-only action box and a mobile-only command bar, along
- * with both components. The band reads the same blocker count the desktop
- * issues checklist does: an earlier design tucked proposed changes and
- * blockers inside tab panels with no outside indicator, and `FEATURE.md`
- * records why that was retired — nothing that gates publication may be
- * visible only inside a section the operator has to scroll to.
+ * The properties rail owns intervention identity and planning metadata. The
+ * phase's forward action (Plan / Submit / Publish) remains in the shell
+ * header on desktop and the fixed footer on mobile, both driven by the
+ * `workflowActions` template and `commandAction`.
  *
  * The store exposes one named call state per write concern, so nothing here
  * approximates attribution anymore: the in-place fields settle on
@@ -297,8 +296,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  *
  * The intervention's name is the shell breadcrumb's title, resolved by
  * `interventionTitleResolver`. Status, recording state and the split command
- * register on the shell header through `PageActionsService`; the meta line
- * belongs to the secondary information rail.
+ * register on the shell header through `PageActionsService`.
  *
  * @version 5.1.0
  *
@@ -307,12 +305,14 @@ const IDLE_EDIT_STATE: InterventionEditState = {
 @Component({
   selector: 'app-intervention-detail-page',
   imports: [
+    CollectionSkeletonCards,
     ...HlmDrawerImports,
     ...HlmItemImports,
     NgTemplateOutlet,
     ...HlmSheetImports,
     NgIcon,
     ...HlmEmptyImports,
+    StateIllustration,
     InterventionDiscussionSheet,
     HlmKbd,
     HlmButton,
@@ -328,6 +328,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionChangeTable,
     InterventionAbandonDialog,
     InterventionConfirmDialog,
+    InterventionFacilitySheet,
     InterventionLabelManageDialog,
     InterventionPublishDialog,
     InterventionSignatureDialog,
@@ -374,7 +375,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideChevronRight,
       lucideCircleAlert,
       lucideCloudOff,
-      lucideCompass,
       lucideCopy,
       lucideEllipsis,
       lucideFileDown,
@@ -1120,6 +1120,7 @@ export class InterventionDetailPage {
       const tab: InterventionLinkedResourceTabId = this.activeLinkedTab();
       if (!this.tableQueriesReady()) return;
       const interventionId: string = this.interventionId();
+      const facilitiesRecordStatus: FacilityOutput['recordStatus'] = this.facilitiesRecordStatus();
 
       const intervention = this.store.intervention();
       const phase = this.phase();
@@ -1136,7 +1137,8 @@ export class InterventionDetailPage {
             status: intervention.status === 'published' ? 'applied' : 'proposed',
           });
         else this.tableQueries.deactivate();
-        if (tab === 'facilities') this.linkedResources.ensureFacilitiesLoaded(interventionId);
+        if (tab === 'facilities')
+          this.linkedResources.ensureFacilitiesLoaded(interventionId, facilitiesRecordStatus);
         else if (tab === 'equipment') this.linkedResources.ensureEquipmentLoaded(interventionId);
         else if (tab === 'inspections')
           this.linkedResources.ensureInspectionsLoaded(interventionId);
@@ -1192,6 +1194,17 @@ export class InterventionDetailPage {
       if (this.store.assignTeamCallState().status !== 'success') return;
 
       untracked((): void => this.teamAssignVisible.set(false));
+    });
+
+    effect((): void => {
+      if (this.store.createFacilityCallState().status !== 'success') return;
+
+      const facilitiesRecordStatus: FacilityOutput['recordStatus'] = this.facilitiesRecordStatus();
+
+      untracked((): void => {
+        this.facilitySheetVisible.set(false);
+        this.linkedResources.reloadFacilities(this.interventionId(), facilitiesRecordStatus);
+      });
     });
 
     effect((): void => {
@@ -1720,6 +1733,9 @@ export class InterventionDetailPage {
   /** Whether the add-work-item panel is open. */
   protected readonly workItemSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
+  /** Whether the add-facility panel is open. */
+  protected readonly facilitySheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
   /** Whether the live discussion sheet is open — also what defers `SubjectDiscussion`'s own load. */
   protected readonly discussionSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
@@ -1904,6 +1920,32 @@ export class InterventionDetailPage {
   /** Whether the scope may still grow. */
   protected readonly canAddWorkItem: Signal<boolean> = this.caps.canAddWorkItem;
 
+  /** Whether a facility may be attached to this intervention — the same mutable-window gate the backend enforces on `POST /api/facilities`. */
+  protected readonly canAddFacility: Signal<boolean> = this.caps.canAddFacility;
+
+  /**
+   * Property facilitiesRecordStatus
+   * @readonly
+   *
+   * @description
+   * The `recordStatus` to request when listing this intervention's linked
+   * facilities. `CanonicalFacilityProvider` defaults to `'draft'` server-side
+   * whenever the `intervention` filter is present, but
+   * `FacilityInterventionResourceAdapter::publishDrafts` flips those
+   * facilities to `'published'` the moment the intervention itself
+   * publishes — reading back with the provider's default afterward returns
+   * an empty collection. `undefined` before that point leaves the
+   * provider's own default in place.
+   *
+   * @access protected
+   * @since 8.1.0
+   *
+   * @type {Signal<FacilityOutput['recordStatus']>}
+   */
+  protected readonly facilitiesRecordStatus: Signal<FacilityOutput['recordStatus']> = computed<
+    FacilityOutput['recordStatus']
+  >(() => (this.store.intervention()?.status === 'published' ? 'published' : undefined));
+
   /** Whether an item may be skipped with a reason. */
   protected readonly canSkipWorkItem: Signal<boolean> = this.caps.canSkipWorkItem;
 
@@ -2085,6 +2127,16 @@ export class InterventionDetailPage {
     () => this.store.createWorkItemCallState().error,
   );
 
+  /** Whether the add-facility sheet's own write is in flight. */
+  protected readonly facilityCreatePending: Signal<boolean> = computed<boolean>(() =>
+    isCallPending(this.store.createFacilityCallState()),
+  );
+
+  /** The add-facility sheet's own write error, if any. */
+  protected readonly facilityCreateError: Signal<StoreError | null> = computed<StoreError | null>(
+    () => this.store.createFacilityCallState().error,
+  );
+
   /** Whether the request-changes sheet's own transition is in flight. */
   protected readonly requestChangesPending: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.transitionCallState()),
@@ -2135,20 +2187,73 @@ export class InterventionDetailPage {
     () => this.store.intervention()?.status === 'submitted' && this.store.blockerCount() === 0,
   );
 
-  /** The responsible agent's display name, resolved from its IRI, for the details chip row. */
-  protected readonly responsibleLabel: Signal<string | null> = computed<string | null>(() =>
-    resolveInterventionResponsibleLabel(this.store.intervention(), this.planningOptions.members()),
-  );
+  /**
+   * Property todayIsoInOrgTimezone
+   * @readonly
+   *
+   * @description
+   * Today's calendar day in the organization's timezone, as `'YYYY-MM-DD'` —
+   * the reference {@link dueSchedule} compares `dueAt` against, per the norm
+   * that a due-date's "today" is the organization's, not the browser's. Falls
+   * back to the runtime's own timezone for an unresolvable IANA name, the
+   * same degradation `appOrgDate` already accepts.
+   *
+   * @access private
+   * @since 7.0.0
+   *
+   * @type {Signal<string>}
+   */
+  private readonly todayIsoInOrgTimezone: Signal<string> = computed<string>(() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: this.regionalFormatting().timezone,
+      }).format(new Date());
+    } catch {
+      return new Intl.DateTimeFormat('en-CA').format(new Date());
+    }
+  });
 
-  /** The planned window as a short date range, for the details chip row. */
-  protected readonly scheduleLabel: Signal<string | null> = computed<string | null>(() =>
-    formatInterventionScheduleLabel(this.store.intervention(), this.locale),
-  );
+  /**
+   * Property dueSchedule
+   * @readonly
+   *
+   * @description
+   * The due date's urgency for the properties grid's
+   * schedule field, or `null` while there is no due date or the intervention
+   * has reached a terminal status (`published`, `abandoned`) where lateness
+   * no longer applies. Compares whole calendar days on `dueAt`'s own UTC
+   * date part against {@link todayIsoInOrgTimezone}, never through a
+   * timezone conversion of the UTC-midnight instant itself.
+   *
+   * @access protected
+   * @since 7.0.0
+   *
+   * @type {Signal<{ readonly overdue: boolean; readonly label: string } | null>}
+   */
+  protected readonly dueSchedule: Signal<{
+    readonly overdue: boolean;
+    readonly label: string;
+  } | null> = computed(() => {
+    const intervention: InterventionOutput | null = this.store.intervention();
+    const dueAt: string | null | undefined = intervention?.dueAt;
+    if (
+      !intervention ||
+      !dueAt ||
+      intervention.status === 'published' ||
+      intervention.status === 'abandoned'
+    )
+      return null;
 
-  /** The intervention's labels, joined for the details chip row. */
-  protected readonly labelsSummary: Signal<string | null> = computed<string | null>(() =>
-    summarizeInterventionLabels(this.store.intervention()),
-  );
+    const todayIso: string = this.todayIsoInOrgTimezone();
+    const overdue: boolean = Date.parse(dueAt) < Date.parse(`${todayIso}T00:00:00.000Z`);
+
+    return {
+      overdue,
+      label: overdue
+        ? $localize`:@@intervention.detail.overdue:Overdue`
+        : formatRelativeDays(dueAt, todayIso, this.locale),
+    };
+  });
 
   /**
    * Property readinessItems
@@ -2989,6 +3094,30 @@ export class InterventionDetailPage {
         source: 'planned',
         required: true,
       },
+    });
+  }
+
+  /**
+   * Method createFacility
+   *
+   * @description
+   * Attaches a facility to this intervention. The form emits only the
+   * fields it owns; `FacilityService.createForIntervention` adds the
+   * organization and intervention IRIs, so `FacilityCreateForm` stays a
+   * general-purpose facility form with no intervention-specific branch.
+   *
+   * @access protected
+   * @since 8.0.0
+   *
+   * @param {CreateFacilityInput} values - The form's validated payload.
+   *
+   * @returns {void}
+   */
+  protected createFacility(values: CreateFacilityInput): void {
+    this.store.createFacility({
+      organizationId: this.organizationId(),
+      interventionId: this.interventionId(),
+      input: values,
     });
   }
 

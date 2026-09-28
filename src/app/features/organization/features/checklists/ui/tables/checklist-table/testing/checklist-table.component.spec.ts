@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { ChecklistTable } from '../checklist-table.component';
 
@@ -12,6 +13,7 @@ const checklist = (overrides: Partial<ChecklistOutput> = {}): ChecklistOutput =>
     name: 'Fire Safety Inspection',
     version: '1.0',
     status: 'active',
+    itemCount: 1,
     items: [
       {
         id: 'item-1',
@@ -34,6 +36,7 @@ describe('ChecklistTable', () => {
   const render = async (items: readonly ChecklistOutput[], loading = false): Promise<void> => {
     fixture.componentRef.setInput('items', items);
     fixture.componentRef.setInput('loading', loading);
+    fixture.componentRef.setInput('detailRouteBase', ['/organizations', 'org-1', 'checklists']);
     await fixture.whenStable();
   };
 
@@ -43,7 +46,9 @@ describe('ChecklistTable', () => {
   };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), provideRouter([])],
+    });
 
     fixture = TestBed.createComponent(ChecklistTable);
   });
@@ -58,6 +63,18 @@ describe('ChecklistTable', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Fire Safety Inspection');
     expect(rows[0].textContent).toContain('1');
+  });
+
+  it('should render the server-reported item count even though the list response leaves items empty (chk-01)', async () => {
+    await render([checklist({ itemCount: 3, items: [] })]);
+
+    const row: HTMLElement | null = root().querySelector('[data-testid="checklist-table-row"]');
+    const card: HTMLElement | null = root().querySelector('[data-testid="checklist-table-card"]');
+
+    expect(row?.textContent).toContain('3');
+    expect(row?.textContent).not.toContain('0 items');
+    expect(card?.textContent).toContain('3');
+    expect(card?.textContent).not.toContain('0 items');
   });
 
   it('should draw skeleton rows on a first load, and no data rows', async () => {
@@ -85,7 +102,7 @@ describe('ChecklistTable', () => {
 
     expect(cards).toHaveLength(2);
     expect(cards[0].textContent).toContain('Fire Safety Inspection');
-    expect(cards[0].textContent).toContain('items');
+    expect(cards[0].textContent).toContain('1 item');
   });
 
   it('should say so plainly when a page holds no rows', async () => {
@@ -101,33 +118,25 @@ describe('ChecklistTable', () => {
     expect(root().querySelector('[data-testid="checklist-table-row-menu"]')).toBeNull();
   });
 
-  it('should offer Edit and Archive for an active checklist, with write permission', async () => {
+  it('should offer Archive for an active checklist, with write permission', async () => {
     fixture.componentRef.setInput('canWrite', true);
     await render([checklist({ status: 'active' })]);
     await openRowMenu();
 
-    expect(document.querySelector('[data-testid="checklist-table-row-edit"]')).not.toBeNull();
     expect(document.querySelector('[data-testid="checklist-table-row-archive"]')).not.toBeNull();
   });
 
   it('should keep archived checklists readable without write actions', async () => {
     await render([checklist({ status: 'archived' })]);
-    expect(document.querySelector('[data-testid="checklist-table-row-edit"]')).toBeNull();
     expect(document.querySelector('[data-testid="checklist-table-row-archive"]')).toBeNull();
   });
 
-  it('should emit the row checklist when Edit is chosen', async () => {
-    const emitted: ChecklistOutput[] = [];
-    fixture.componentInstance.editRequested.subscribe((value: ChecklistOutput): void => {
-      emitted.push(value);
-    });
-
-    fixture.componentRef.setInput('canWrite', true);
+  it('should link the checklist name to its detail record', async () => {
     await render([checklist()]);
-    await openRowMenu();
-    document.querySelector<HTMLButtonElement>('[data-testid="checklist-table-row-edit"]')?.click();
 
-    expect(emitted).toEqual([checklist()]);
+    const link = root().querySelector<HTMLAnchorElement>('[data-testid="checklist-table-row"] a');
+
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/checklists/checklist-1');
   });
 
   it('should emit the row checklist when Archive is chosen', async () => {

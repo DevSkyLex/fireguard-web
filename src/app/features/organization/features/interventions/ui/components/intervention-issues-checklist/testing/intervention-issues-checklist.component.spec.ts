@@ -73,8 +73,6 @@ describe('InterventionIssuesChecklist', () => {
 
     expect(blockerItems()).toHaveLength(1);
     expect(blockerItems()[0]?.textContent).toContain('Equipment must be assigned to a facility.');
-    expect(blockerItems()[0]?.classList.contains('bg-muted/25')).toBe(true);
-    expect(blockerItems()[0]?.classList.contains('hover:bg-muted/40')).toBe(true);
     expect(secondaryItems()).toHaveLength(2);
     expect(secondaryItems()[0]?.textContent).toContain('No equipment has been inventoried yet.');
   });
@@ -86,7 +84,13 @@ describe('InterventionIssuesChecklist', () => {
       root().querySelector('[data-testid="intervention-issues-checklist-secondary-toggle"]'),
     ).toBeNull();
     expect(secondaryItems()).toHaveLength(2);
-    expect(secondaryItems()[0]?.classList.contains('border-border')).toBe(true);
+    expect(secondaryItems()[0]?.textContent).toContain('No equipment has been inventoried yet.');
+  });
+
+  it('should replace a raw field key with the resource kind and a humanized field', async () => {
+    await setup([blocker]);
+
+    expect(blockerItems()[0]?.textContent).toContain('Equipment · Facility');
   });
 
   it('should emit the resolved target when a blocker is activated', async () => {

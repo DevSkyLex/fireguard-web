@@ -1,11 +1,9 @@
-<div id="organization-member-profile" class="flex h-full flex-col gap-6">
+<div id="organization-member-profile" class="flex min-w-0 flex-col gap-6">
   <div class="flex max-w-2xl flex-col gap-6">
     @if (!directory.isAvailable()) {
       <div hlmEmpty>
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideLock" aria-hidden="true" />
-          </div>
+          <app-state-illustration hlmEmptyMedia state="access-denied" />
           <p hlmEmptyTitle i18n="@@org.memberProfile.forbiddenTitle">You can't view members here</p>
           <p hlmEmptyDescription i18n="@@org.memberProfile.forbiddenDescription">
             Seeing who someone is requires permission to read this organization's members.
@@ -22,15 +20,56 @@
             <span
               hlmAvatarFallback
               class="rounded-full bg-muted text-sm font-semibold text-foreground"
-              >{{ '' }}</span
+              >{{ initials() }}</span
             >
+            <app-member-presence-indicator [status]="presences()[person.memberId] ?? null" />
           </hlm-avatar>
         </div>
         <div hlmItemContent class="min-w-0">
-          <div hlmItemTitle class="truncate text-base font-semibold">{{ person.displayName }}</div>
-          @if (roles().length > 0 ? roles().join(', ') : null; as line) {
-            <div hlmItemDescription class="truncate text-sm break-all">{{ line }}</div>
-          }
+          <div class="flex flex-wrap items-center gap-2">
+            <div hlmItemTitle class="truncate text-base font-semibold">
+              {{ person.displayName }}
+            </div>
+            @if (person.isOwner) {
+              <span hlmBadge variant="outline" class="shrink-0 px-1.5 leading-none">
+                <ng-icon name="lucideCrown" class="text-muted-foreground" aria-hidden="true" />
+                <span i18n="@@org.memberProfile.owner">Owner</span>
+              </span>
+            }
+            @if (person.isActive) {
+              <span
+                hlmBadge
+                variant="outline"
+                class="shrink-0 px-1.5 leading-none text-muted-foreground"
+              >
+                <ng-icon
+                  name="lucideCircleCheck"
+                  class="shrink-0 text-success"
+                  aria-hidden="true"
+                />
+                <span i18n="@@org.memberProfile.active">Active</span>
+              </span>
+            } @else {
+              <span
+                hlmBadge
+                variant="outline"
+                class="shrink-0 px-1.5 leading-none text-muted-foreground"
+              >
+                <ng-icon
+                  name="lucideCircleDot"
+                  class="shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span i18n="@@org.memberProfile.inactive">Inactive</span>
+              </span>
+            }
+          </div>
+          <div hlmItemDescription>
+            <app-member-presence-indicator
+              [status]="presences()[person.memberId] ?? null"
+              [showLabel]="true"
+            />
+          </div>
         </div>
       </div>
 
@@ -41,22 +80,13 @@
           </dt>
           <dd class="text-foreground">
             @if (roles().length > 0) {
-              {{ roles().join(', ') }}
+              <span class="flex flex-wrap gap-1">
+                @for (role of roles(); track role) {
+                  <span hlmBadge variant="secondary">{{ role }}</span>
+                }
+              </span>
             } @else {
               <span class="text-muted-foreground" i18n="@@org.memberProfile.noRoles">None</span>
-            }
-          </dd>
-        </div>
-
-        <div class="flex flex-col gap-0.5">
-          <dt class="text-xs text-muted-foreground" i18n="@@org.memberProfile.statusLabel">
-            Membership
-          </dt>
-          <dd>
-            @if (person.isActive) {
-              <span hlmBadge variant="secondary" i18n="@@org.memberProfile.active">Active</span>
-            } @else {
-              <span hlmBadge variant="outline" i18n="@@org.memberProfile.inactive">Inactive</span>
             }
           </dd>
         </div>
@@ -64,21 +94,24 @@
 
       @if (canReadInterventions() && organizationId(); as orgId) {
         <a
-          class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground hover:underline mobile-ui:min-h-11"
+          hlmBtn
+          variant="outline"
+          size="sm"
+          class="w-fit mobile-ui:min-h-11"
           data-testid="organization-member-profile-interventions"
           [routerLink]="['/organizations', orgId, 'interventions']"
           [queryParams]="{ responsible: memberId() }"
-          i18n="@@org.memberProfile.responsibleInterventions"
         >
-          Interventions they are responsible for
+          <span i18n="@@org.memberProfile.responsibleInterventions"
+            >Interventions they are responsible for</span
+          >
+          <ng-icon name="lucideArrowRight" aria-hidden="true" />
         </a>
       }
     } @else if (isMissing()) {
       <div hlmEmpty>
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideUserRound" aria-hidden="true" />
-          </div>
+          <app-state-illustration hlmEmptyMedia state="not-found" />
           <p hlmEmptyTitle i18n="@@org.memberProfile.missingTitle">We don't know who that is</p>
           <p hlmEmptyDescription i18n="@@org.memberProfile.missingDescription">
             This person is not a member of the organization you have open.

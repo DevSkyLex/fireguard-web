@@ -19,13 +19,24 @@ import {
   type SavedMessagesStoreType,
 } from '@features/organization/features/collaboration/state';
 import { renderMessageBodyHtml } from '@features/organization/features/collaboration/utils';
+import type { PresenceStatus } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
+  REGIONAL_FORMATTING_PORT,
   type OrganizationContextPort,
+  type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
+import { getOrganizationInitials } from '@features/organization/utils';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTooltip } from '@shared/ui/tooltip';
 import type { SavedMessageItem } from './models';
 
 /**
@@ -48,7 +59,19 @@ import type { SavedMessageItem } from './models';
  */
 @Component({
   selector: 'app-saved-messages-page',
-  imports: [NgIcon, ...HlmEmptyImports, RouterLink, HlmButton, HlmSkeleton],
+  imports: [
+    MemberPresenceIndicator,
+    NgIcon,
+    ...HlmEmptyImports,
+    ...HlmItemImports,
+    ...HlmAvatarImports,
+    RouterLink,
+    HlmButton,
+    HlmSkeleton,
+    HlmTooltip,
+    OrgDatePipe,
+    ResourceIllustration,
+  ],
   providers: [
     SavedMessagesStore,
     provideIcons({ lucideArrowLeft, lucideBookmark, lucideBookmarkX }),
@@ -58,6 +81,17 @@ import type { SavedMessageItem } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SavedMessagesPage {
+  /**
+   * Property presences
+   * @readonly
+   * @description Visible bookmark authors registered independently of the open conversation.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() => this.items().map((item) => item.authorMemberId));
+
   //#region Properties
   /**
    * Property saved
@@ -100,7 +134,9 @@ export class SavedMessagesPage {
 
         return {
           id: message.id,
+          authorMemberId: message.authorMember.slice(message.authorMember.lastIndexOf('/') + 1),
           authorName: message.authorDisplayName ?? this.unknownLabel,
+          isAuthorResolved: message.authorDisplayName !== undefined,
           createdAt: message.createdAt,
           bodyHtml: renderMessageBodyHtml(message.body, message.mentionNames, this.unknownLabel),
           isDeleted: message.isDeleted,
@@ -136,6 +172,39 @@ export class SavedMessagesPage {
 
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
+
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   * @description Source of the open organization's date pattern and timezone, for {@link OrgDatePipe}.
+   * @access private
+   * @since 1.1.0
+   * @type {RegionalFormattingPort}
+   */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The open organization's date pattern and timezone, read by the template for each bookmark's timestamp.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
+  /**
+   * Property getOrganizationInitials
+   * @readonly
+   * @description Template-bound reference to the shared initials util, used for an authorless-avatar fallback.
+   * @access protected
+   * @since 1.1.0
+   * @type {typeof getOrganizationInitials}
+   */
+  protected readonly getOrganizationInitials: typeof getOrganizationInitials =
+    getOrganizationInitials;
 
   /** Stands in wherever a member cannot be named. Never a raw id. */
   private readonly unknownLabel: string = $localize`:@@messages.unknownMember:Unknown member`;

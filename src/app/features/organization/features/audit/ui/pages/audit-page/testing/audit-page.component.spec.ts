@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { AuditEventOutput } from '@features/organization/features/audit/models';
 import { AuditEventsStore } from '@features/organization/features/audit/state';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
@@ -51,6 +52,14 @@ describe('AuditPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },

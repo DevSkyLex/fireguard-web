@@ -19,7 +19,7 @@
           </hlm-avatar>
           <div class="min-w-0">
             <h2 hlmSheetTitle class="wrap-anywhere">
-              {{ selected.member.displayName || selected.member.memberId }}
+              {{ identityName() }}
             </h2>
             <p class="text-xs wrap-anywhere text-muted-foreground">{{ identity()?.roleLabel }}</p>
           </div>
@@ -183,9 +183,7 @@
           } @else {
             <div hlmEmpty class="border border-dashed" data-testid="workload-day-empty">
               <div hlmEmptyHeader>
-                <div hlmEmptyMedia variant="icon">
-                  <ng-icon name="lucideCalendarDays" aria-hidden="true" />
-                </div>
+                <app-state-illustration hlmEmptyMedia state="no-events" size="sm" />
                 <p hlmEmptyDescription i18n="@@workload.noContributions">
                   No recorded or allocated work for this day.
                 </p>
@@ -249,6 +247,9 @@
                           >{{ unallocatedLabel(task) }}
                           @if (task.remainingMinutes != null) {
                             · {{ duration(task.remainingMinutes) }}
+                          }
+                          @if (periodLabel(task); as period) {
+                            · <span class="tabular-nums">{{ period }}</span>
                           }
                         </span>
                         @if (task.commitment === 'draft') {

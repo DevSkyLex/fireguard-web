@@ -13,18 +13,21 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBuilding2, lucideMail, lucideClock3 } from '@ng-icons/lucide';
+import { lucideMail, lucideClock3, lucideCircleAlert } from '@ng-icons/lucide';
 import { NOTIFICATION_CENTER_PORT } from '@features/account';
 import { OtpForm } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';
 import { WorkspaceStore, OnboardingStore } from '@features/onboarding/state';
 import type { OrganizationJoinRequestOutput } from '@features/organization/models';
-import { HlmAlertImports } from '@shared/ui/alert';
-import { HlmButton } from '@shared/ui/button';
-import { HlmItemImports } from '@shared/ui/item';
-import { HlmSpinner } from '@shared/ui/spinner';
-
+import { getOrganizationInitials } from '@features/organization/utils';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmBadge } from '@shared/ui/badge';
+import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmLarge, HlmMuted } from '@shared/ui/typography';
 /**
  * Component OnboardingWorkspacePage
  * @class OnboardingWorkspacePage
@@ -41,11 +44,15 @@ import { HlmAvatarImports } from '@shared/ui/avatar';
     OtpForm,
     HlmButton,
     HlmItemImports,
-    HlmAlertImports,
-    HlmSpinner,
+    HlmEmptyImports,
     HlmAvatarImports,
+    HlmBadge,
+    HlmSkeleton,
+    HlmLarge,
+    HlmMuted,
+    ResourceIllustration,
   ],
-  providers: [WorkspaceStore, provideIcons({ lucideBuilding2, lucideMail, lucideClock3 })],
+  providers: [WorkspaceStore, provideIcons({ lucideMail, lucideClock3, lucideCircleAlert })],
   templateUrl: './onboarding-workspace-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -119,6 +126,47 @@ export class OnboardingWorkspacePage {
   protected readonly hasRequests: Signal<boolean> = computed(
     () => (this.store.options()?.requests.length ?? 0) > 0,
   );
+  /** Property isOrganizationsEmpty
+   * @readonly
+   * @description Whether the "no organization available" empty state is the one being rendered, so its Create action moves into it and the footer's copy hides.
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isOrganizationsEmpty: Signal<boolean> = computed(() => {
+    const options = this.store.options();
+    return (
+      !this.requestsOnly &&
+      options !== null &&
+      !options.emailProofRequired &&
+      options.organizations.length === 0 &&
+      options.invitations.length === 0 &&
+      !this.store.optionsCallState().error
+    );
+  });
+  /** Property isRequestsEmpty
+   * @readonly
+   * @description Whether the "no membership requests" empty state is the one being rendered, so its Choose-a-workspace action moves into it and the footer's copy hides.
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isRequestsEmpty: Signal<boolean> = computed(
+    () =>
+      this.requestsOnly &&
+      this.store.options() !== null &&
+      !this.hasRequests() &&
+      !this.store.optionsCallState().error,
+  );
+  /** Property getOrganizationInitials
+   * @readonly
+   * @description Template-bound reference to the shared organization initials util, used for a logo-less avatar fallback.
+   * @access protected
+   * @since 1.1.0
+   * @type {typeof getOrganizationInitials}
+   */
+  protected readonly getOrganizationInitials: typeof getOrganizationInitials =
+    getOrganizationInitials;
   /** Constructor
    * @constructor
    * @description Loads private choices after hydration and navigates only after confirmed admission.

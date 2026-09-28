@@ -1,5 +1,5 @@
 @if (isLoading()) {
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+  <div class="grid gap-4 @lg/plans:grid-cols-2 @4xl/plans:grid-cols-3" aria-hidden="true">
     @for (i of [1, 2, 3]; track i) {
       <div hlmCard class="gap-3">
         <div hlmCardHeader class="gap-2">
@@ -14,18 +14,31 @@
     }
   </div>
 } @else if (loadError(); as error) {
-  <p role="alert" class="text-sm text-destructive">
-    {{ error.message }}
-  </p>
+  <div hlmAlert variant="destructive" role="alert">
+    <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+    <p hlmAlertTitle i18n="@@org.settings.plan.loadErrorTitle">Couldn't load plans</p>
+    <p hlmAlertDescription>{{ error.message }}</p>
+  </div>
 } @else {
   @if (changeError(); as error) {
-    <p role="alert" class="mb-4 text-sm text-destructive" data-testid="organization-plan-error">
-      {{ error.message }}
-    </p>
+    <div
+      hlmAlert
+      variant="destructive"
+      role="alert"
+      class="mb-4"
+      data-testid="organization-plan-error"
+    >
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <p hlmAlertTitle i18n="@@org.settings.plan.changeErrorTitle">Couldn't switch plan</p>
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
   } @else if (changeSucceeded()) {
-    <p class="mb-4 text-sm text-muted-foreground" i18n="@@org.settings.plan.changed">
-      The organization's plan has been updated.
-    </p>
+    <div hlmAlert class="mb-4" data-testid="organization-plan-success">
+      <ng-icon name="lucideCircleCheck" class="text-success" aria-hidden="true" />
+      <p hlmAlertDescription i18n="@@org.settings.plan.changed">
+        The organization's plan has been updated.
+      </p>
+    </div>
   }
 
   <div class="mb-4 flex justify-end">
@@ -59,7 +72,7 @@
     </hlm-toggle-group>
   </div>
 
-  <div class="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
+  <div class="grid items-stretch gap-4 @lg/plans:grid-cols-2 @4xl/plans:grid-cols-3">
     @for (row of rows(); track row.id) {
       <div
         hlmCard

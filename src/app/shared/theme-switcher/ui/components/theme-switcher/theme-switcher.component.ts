@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  viewChild,
+  ElementRef,
+  type Signal,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideMonitor, lucideMoon, lucideSun } from '@ng-icons/lucide';
 import {
@@ -72,6 +80,9 @@ import type { ThemeOption } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThemeSwitcher {
+  /** @description The rendered trigger anchors pointer and keyboard theme transitions. */
+  private readonly trigger = viewChild<ElementRef<HTMLElement>>('themeTrigger');
+
   //#region Properties
   /**
    * Property interactionCapabilities
@@ -222,7 +233,11 @@ export class ThemeSwitcher {
    * @returns {void}
    */
   protected select(mode: ThemeMode): void {
-    this.themePort.setTheme(mode);
+    const rect = this.trigger()?.nativeElement.getBoundingClientRect();
+    this.themePort.setTheme(
+      mode,
+      rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : undefined,
+    );
   }
 
   /**

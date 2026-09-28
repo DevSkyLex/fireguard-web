@@ -34,7 +34,7 @@
   <section
     hlmCard
     [attr.aria-label]="panelLabel"
-    class="flex w-full max-w-full flex-col gap-4 overflow-y-auto sm:w-80"
+    class="flex w-full max-w-full flex-col gap-4 overflow-y-auto @3xl:w-80"
     data-testid="facility-3d-room-panel"
   >
     <div hlmCardHeader>
@@ -48,29 +48,38 @@
 }
 
 <ng-template #body>
-  <fieldset
+  <hlm-toggle-group
+    type="single"
+    [nullable]="false"
+    variant="outline"
+    size="sm"
+    [value]="selectedFloorId()"
     [attr.aria-label]="floorSelectorLabel"
-    class="flex flex-wrap gap-1.5"
     data-testid="facility-3d-floor-selector"
+    class="flex-wrap"
+    (valueChange)="onFloorPicked($event)"
   >
     @for (floor of floors(); track floor.facilityId) {
       <button
-        hlmBtn
-        type="button"
-        size="sm"
-        [variant]="floor.facilityId === selectedFloorId() ? 'secondary' : 'outline'"
+        hlmToggleGroupItem
+        [value]="floor.facilityId"
         [attr.aria-current]="floor.facilityId === selectedFloorId() ? 'true' : null"
         data-testid="facility-3d-floor-selector-option"
-        (click)="floorActivated.emit(floor.facilityId)"
         class="mobile-ui:min-h-11"
       >
-        {{ floor.name }}
+        <span>{{ floor.name }}</span>
+        <span class="text-muted-foreground tabular-nums">{{ floor.rooms.length }}</span>
+        <span
+          class="sr-only"
+          i18n="@@facility.building3d.roomPanel.floorRoomCount"
+          >{floor.rooms.length, plural, one {room} other {rooms}}</span
+        >
       </button>
     }
-  </fieldset>
+  </hlm-toggle-group>
 
   @if (room(); as selectedRoom) {
-    <div class="flex flex-col gap-3 rounded-lg border border-border p-3">
+    <div class="flex flex-col gap-3">
       <div class="flex flex-row items-start justify-between gap-2">
         <div class="flex flex-col gap-1">
           <h4 class="text-sm font-semibold">{{ selectedRoom.name }}</h4>
@@ -83,6 +92,7 @@
           variant="ghost"
           size="icon"
           [attr.aria-label]="closeLabel"
+          [hlmTooltip]="closeLabel"
           data-testid="facility-3d-room-panel-close"
           (click)="roomClosed.emit()"
           class="mobile-ui:min-h-11 mobile-ui:min-w-11"
@@ -98,6 +108,7 @@
         type="button"
         variant="outline"
         size="sm"
+        data-testid="facility-3d-room-panel-plan-2d"
         (click)="plan2dRequested.emit()"
         class="mobile-ui:min-h-11"
       >
@@ -105,6 +116,7 @@
         {{ plan2dLabel }}
       </button>
     </div>
+    <hlm-separator />
   }
 
   <section class="flex flex-col gap-2">

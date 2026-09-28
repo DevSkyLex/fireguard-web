@@ -4,16 +4,19 @@ import type { InterventionChangePatchLine } from '@features/organization/feature
  * Function humanizeChangeField
  *
  * @description
- * Turns a patch key such as `locationLabel` into `Location label`.
+ * Turns a patch key such as `locationLabel` into `Location label`. English
+ * only — a mechanical regex over the camelCase key, not a translated label —
+ * shared as-is between the change patch lines and the issues checklist's
+ * context line rather than duplicated.
  *
- * @access private
+ * @access public
  * @since 1.0.0
  *
  * @param {string} field - The raw camelCase field name.
  *
  * @returns {string} A capitalized, space-separated label.
  */
-function humanizeChangeField(field: string): string {
+export function humanizeChangeField(field: string): string {
   const spaced: string = field.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
 
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);

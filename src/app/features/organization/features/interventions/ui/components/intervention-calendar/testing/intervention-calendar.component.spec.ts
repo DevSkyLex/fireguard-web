@@ -1,9 +1,38 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  input,
+  provideZonelessChangeDetection,
+  signal,
+  type InputSignal,
+  type TemplateRef,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { StoreError } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { InterventionCalendar } from '../intervention-calendar.component';
+
+/** A `ThemePort` test double resolving `light` for every rendered illustration. */
+const THEME_PORT_PROVIDER = {
+  provide: THEME_PORT,
+  useValue: {
+    theme: signal('light'),
+    resolvedTheme: signal('light'),
+    setTheme: vi.fn(),
+  } satisfies ThemePort,
+};
+
+@Component({
+  selector: 'app-intervention-day-panel-host',
+  imports: [NgTemplateOutlet],
+  template: '<ng-container *ngTemplateOutlet="template()" />',
+})
+class InterventionDayPanelHost {
+  public readonly template: InputSignal<TemplateRef<unknown> | null> =
+    input<TemplateRef<unknown> | null>(null);
+}
 
 const intervention = (overrides: Partial<InterventionOutput> = {}): InterventionOutput =>
   ({
@@ -52,7 +81,7 @@ describe('InterventionCalendar', () => {
     } = {},
   ): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [provideZonelessChangeDetection(), provideRouter([]), THEME_PORT_PROVIDER],
     });
 
     fixture = TestBed.createComponent(InterventionCalendar);
@@ -66,7 +95,7 @@ describe('InterventionCalendar', () => {
 
   it('reports the displayed anchor once on creation', async () => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [provideZonelessChangeDetection(), provideRouter([]), THEME_PORT_PROVIDER],
     });
     fixture = TestBed.createComponent(InterventionCalendar);
     fixture.componentRef.setInput('organizationId', 'org-1');
@@ -100,7 +129,12 @@ describe('InterventionCalendar', () => {
     fixture.componentInstance['selectedDay'].set(today);
     await fixture.whenStable();
 
-    const panel = root().querySelector('[data-testid="intervention-calendar-day-panel"]');
+    const host = TestBed.createComponent(InterventionDayPanelHost);
+    host.componentRef.setInput('template', fixture.componentInstance.dayPanelTemplate());
+    host.detectChanges();
+    const panel = (host.nativeElement as HTMLElement).querySelector(
+      '[data-testid="intervention-calendar-day-panel"]',
+    );
     const rows = panel?.querySelectorAll('[data-testid="intervention-calendar-entry"]');
     expect(rows).toHaveLength(2);
     expect(panel?.textContent).toContain('Riser check');
@@ -123,6 +157,85 @@ describe('InterventionCalendar', () => {
         (item: InterventionOutput) => item.id,
       ),
     ).toEqual(['mine']);
+  });
+
+  it('excludes neighbouring-month entries from the agenda, which shows only the displayed month', async () => {
+    const now = new Date();
+    const displayedMonthDay = new Date(now.getFullYear(), now.getMonth(), 15)
+      .toISOString()
+      .slice(0, 10);
+    const nextMonthDay = new Date(now.getFullYear(), now.getMonth() + 1, 3)
+      .toISOString()
+      .slice(0, 10);
+    await render({
+      interventions: [
+        intervention({ id: 'this-month', dueAt: `${displayedMonthDay}T09:00:00+00:00` }),
+        intervention({ id: 'next-month', dueAt: `${nextMonthDay}T09:00:00+00:00` }),
+      ],
+    });
+
+    const groups = fixture.componentInstance['agendaGroups']();
+    expect(groups.map((group) => group.day)).toEqual([displayedMonthDay]);
+  });
+
+  it("marks today's agenda group and no other", async () => {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    await render({
+      interventions: [intervention({ id: 'today', dueAt: `${todayIso}T09:00:00+00:00` })],
+    });
+
+    const groups = fixture.componentInstance['agendaGroups']();
+    expect(groups.find((group) => group.day === todayIso)?.isToday).toBe(true);
+  });
+
+  it('narrows the "See all" link with the anchor the day actually used, not always dueAfter/dueBefore', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await render({
+      interventions: [
+        intervention({ id: 'a', plannedStartAt: `${today}T09:00:00+00:00`, dueAt: null }),
+        intervention({ id: 'b', plannedStartAt: `${today}T10:00:00+00:00`, dueAt: null }),
+      ],
+    });
+
+    expect(fixture.componentInstance['isDayStartAnchored'](today)).toBe(true);
+    expect(fixture.componentInstance['dayListQueryParams'](today)).toEqual({
+      plannedStartAfter: today,
+      plannedStartBefore: today,
+    });
+  });
+
+  it('falls back to dueAfter/dueBefore when the day is not wholly start-anchored', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await render({
+      interventions: [
+        intervention({ id: 'a', plannedStartAt: null, dueAt: `${today}T09:00:00+00:00` }),
+      ],
+    });
+
+    expect(fixture.componentInstance['isDayStartAnchored'](today)).toBe(false);
+    expect(fixture.componentInstance['dayListQueryParams'](today)).toEqual({
+      dueAfter: today,
+      dueBefore: today,
+    });
+  });
+
+  it('treats an absent plannedStartAt (not sent by the API) the same as null, never as start-anchored', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await render({
+      interventions: [
+        intervention({
+          id: 'a',
+          plannedStartAt: undefined,
+          dueAt: `${today}T09:00:00+00:00`,
+        }),
+      ],
+    });
+
+    expect(fixture.componentInstance['isDayStartAnchored'](today)).toBe(false);
+    expect(fixture.componentInstance['dayListQueryParams'](today)).toEqual({
+      dueAfter: today,
+      dueBefore: today,
+    });
   });
 
   it('renders the error state and emits reloadRequested on demand', async () => {

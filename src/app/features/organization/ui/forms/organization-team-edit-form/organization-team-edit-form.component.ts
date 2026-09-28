@@ -13,9 +13,12 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { TeamOutput, UpdateTeamInput } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -53,13 +56,16 @@ const DESCRIPTION_MAX_LENGTH: number = 500;
 @Component({
   selector: 'app-organization-team-edit-form',
   imports: [
+    NgIcon,
     RequiredMarker,
     FormField,
     HlmButton,
     HlmInput,
     ...HlmFieldImports,
     ...HlmTextareaImports,
+    ...HlmAlertImports,
   ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-team-edit-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

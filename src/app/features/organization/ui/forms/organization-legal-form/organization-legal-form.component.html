@@ -1,6 +1,6 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 @sm/settings:grid-cols-2">
       <hlm-field>
         <label hlmFieldLabel for="org-legal-country" i18n="@@org.settings.legal.countryLabel"
           >Country</label
@@ -67,7 +67,7 @@
       }
     </hlm-field>
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 @sm/settings:grid-cols-2">
       <hlm-field>
         <label
           hlmFieldLabel

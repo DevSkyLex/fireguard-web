@@ -87,4 +87,26 @@ describe('InterventionCalendarEntryList', () => {
 
     expect(root().querySelectorAll('[data-testid="intervention-calendar-entry"]')).toHaveLength(0);
   });
+
+  it('names its planned start as a date, never a time of day', async () => {
+    await render([
+      intervention({ id: 'a', plannedStartAt: '2026-08-10T00:00:00+00:00', dueAt: null }),
+    ]);
+
+    const row: Element | null = root().querySelector('[data-testid="intervention-calendar-entry"]');
+
+    expect(row?.textContent).toContain('Starts');
+    expect(row?.textContent).not.toMatch(/\d{1,2}:\d{2}/);
+  });
+
+  it('falls back to its due date when there is no planned start', async () => {
+    await render([
+      intervention({ id: 'b', plannedStartAt: null, dueAt: '2026-08-12T00:00:00+00:00' }),
+    ]);
+
+    const row: Element | null = root().querySelector('[data-testid="intervention-calendar-entry"]');
+
+    expect(row?.textContent).toContain('Due');
+    expect(row?.textContent).not.toMatch(/\d{1,2}:\d{2}/);
+  });
 });

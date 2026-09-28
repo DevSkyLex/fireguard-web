@@ -1,35 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-empty-no-attachments-dark-title fg-empty-no-attachments-dark-description" class="fg-empty-no-attachments-dark">
-  <title id="fg-empty-no-attachments-dark-title">No attachments</title>
-  <desc id="fg-empty-no-attachments-dark-description">An open tabbed folder with a visible empty interior.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-state-no-attachments-dark-title fg-state-no-attachments-dark-description" class="fg-state-no-attachments-dark">
+  <title id="fg-state-no-attachments-dark-title">No attachments</title>
+  <desc id="fg-state-no-attachments-dark-description">A paperclip resting on the dotted outline of a missing file.</desc>
   <defs>
-    <linearGradient id="fg-empty-no-attachments-dark-plane" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#141416"/>
-      <stop offset="1" stop-color="#101012"/>
-    </linearGradient>
+    <linearGradient id="fg-state-no-attachments-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
+
+
   </defs>
   <style>
-    .fg-empty-no-attachments-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
-    .fg-empty-no-attachments-dark .edge, .fg-empty-no-attachments-dark .seam { stroke: #a1a1aa; }
-    .fg-empty-no-attachments-dark .seam { stroke: #51515c; }
-    .fg-empty-no-attachments-dark .seam { stroke-width: 1.35; }
-    .fg-empty-no-attachments-dark .shade { fill: #000000; fill-opacity: .28; }
-    .fg-empty-no-attachments-dark .soft { stroke: #46464f; stroke-width: 1.1; }
-    .fg-empty-no-attachments-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
-    .fg-empty-no-attachments-dark .accent { stroke: #ff7043; }
-    .fg-empty-no-attachments-dark .accent { stroke-width: 1.1; }
-    .fg-empty-no-attachments-dark .accent-fill { fill: #ff7043; }
-    .fg-empty-no-attachments-dark .tf { fill: url(#fg-empty-no-attachments-dark-plane); }
-    .fg-empty-no-attachments-dark .lf { fill: #141417; }
-    .fg-empty-no-attachments-dark .rf { fill: #0d0d0f; }
-    .fg-empty-no-attachments-dark .accent { stroke-opacity: 1; }
+    .fg-state-no-attachments-dark { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-state-no-attachments-dark path { vector-effect: non-scaling-stroke; }
+    .fg-state-no-attachments-dark .t { fill: #0c0c0f; }
+    .fg-state-no-attachments-dark .l { fill: #121215; }
+    .fg-state-no-attachments-dark .r { fill: #0f0f12; }
+    .fg-state-no-attachments-dark .hole { fill: #060607; }
+    .fg-state-no-attachments-dark .cy { fill: url(#fg-state-no-attachments-dark-cy); }
+    .fg-state-no-attachments-dark .af { fill: #bdbdc5; }
+    .fg-state-no-attachments-dark .kf { fill: #8e8e97; }
+    .fg-state-no-attachments-dark .eo { fill-rule: evenodd; }
+    .fg-state-no-attachments-dark .o { stroke: #a1a1aa; stroke-width: 1.35; }
+    .fg-state-no-attachments-dark .o2 { stroke: #71717a; stroke-width: 1.1; }
+    .fg-state-no-attachments-dark .e { stroke: #3f3f46; stroke-width: 1; }
+    .fg-state-no-attachments-dark .d { stroke: #71717a; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-no-attachments-dark .dh { stroke: #3f3f46; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-no-attachments-dark .g { stroke: #71717a; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-state-no-attachments-dark .k { stroke: #8e8e97; stroke-width: 1.2; }
+    .fg-state-no-attachments-dark .ka, .fg-state-no-attachments-dark .oa { stroke: #bdbdc5; stroke-width: 1.35; }
+    .fg-state-no-attachments-dark .da { stroke: #bdbdc5; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-no-attachments-dark .ga { stroke: #bdbdc5; stroke-width: 1; stroke-dasharray: 3 3; }
   </style>
-  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M67 53L82.6 62L67 71L51.4 62ZM51.4 66L67 75L82.6 66M337.7 92.5L346.3 97.5M337.7 97.5L346.3 92.5M312.5 284a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM319.5 288a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM64 244.5L60 251.5M96 263L92 270"/><path class="guide" d="M51.4 62L51.4 66L67 75M62 248L94 266.5"/><path class="accent" d="M64.6 249.5L71.5 253.5"/><path class="accent-fill" d="M305.4 280a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 37.5)">
-<polygon class="shade" points="168,106.5 306.5,186.5 232,229.5 93.5,149.5"/>
-<g data-part="folded-panel"><polygon class="rf" points="283.1,192 158.4,120 158.4,123 283.1,195"/><polygon class="tf" points="158.4,22 169.7,15.5 220.8,45 228.6,62.5 283.1,94 283.1,192 158.4,120"/><polyline class="seam" points="283.1,192 158.4,120"/><polygon class="edge" points="158.4,22 169.7,15.5 169.7,15.5 220.8,45 220.8,45 228.6,62.5 228.6,62.5 283.1,94 283.1,94 283.1,192 283.1,195 158.4,123 158.4,120 158.4,22"/></g>
-<g data-part="volume"><polygon class="lf" points="158.4,117 283.1,189 283.1,192 238.1,218 113.4,146 113.4,143"/><polygon class="rf" points="283.1,189 238.1,215 238.1,218 283.1,192"/><polygon class="tf" points="158.4,117 283.1,189 238.1,215 113.4,143"/><path class="seam" d="M238.1 215L283.1 189M238.1 215L113.4 143M238.1 215L238.1 218"/><polygon class="edge" points="158.4,117 283.1,189 283.1,192 238.1,218 113.4,146 113.4,143"/></g>
-<g data-part="detail"><path class="accent" d="M173.1 27.5L204.3 45.5"/></g>
-<polygon class="rf" points="283.1,192 283.1,98 226,147 241.6,216"/>
-<polyline class="seam" points="283.1,98 226,147"/>
-<g data-part="folded-panel"><polygon class="rf" points="241.6,216 116.9,144 116.9,147 241.6,219"/><polygon class="rf" points="116.9,144 101.3,75 101.3,78 116.9,147"/><polygon class="tf" points="101.3,75 226,147 241.6,216 116.9,144"/><polyline class="seam" points="241.6,216 116.9,144"/><polyline class="seam" points="116.9,144 101.3,75"/><polyline class="seam" points="116.9,144 116.9,147"/><polygon class="edge" points="101.3,75 226,147 226,147 241.6,216 241.6,219 116.9,147 116.9,147 101.3,78"/></g>
-  </g></g></g>
+  <path class="d" d="M184.2 260.4C182.9 261.2 181.1 261.6 179.2 261.6C177.3 261.6 175.5 261.2 174.2 260.4L26.1 174.9C24.7 174.1 24 173.1 24 172C24 170.9 24.7 169.9 26.1 169.1L215.8 59.6C217.1 58.8 218.9 58.4 220.8 58.4C222.7 58.4 224.5 58.8 225.8 59.6L373.9 145.1C375.3 145.9 376 146.9 376 148C376 149.1 375.3 150.1 373.9 150.9L184.2 260.4ZM184.2 102.8L270.7 152.8M159.2 117.2L274.1 183.5M134.3 131.7L237.4 191.2"/>
+  <path class="t" d="M289.7 83L189.5 83.6L186.9 83.7L184.4 84L182 84.5L179.7 85.2L177.6 86L175.6 87L173.7 88.2L172.1 89.6L170.7 91.3L169.5 93.2L168.8 95.3L168.5 97.6L168.8 99.9L169.5 102L170.7 103.9L172.1 105.5L173.7 106.9L175.6 108.1L177.6 109.2L179.7 110L182 110.7L184.4 111.1L186.9 111.4L189.5 111.5L289.8 110.9L294.6 110.8L299.3 110.2L303.7 109.3L308 108.1L311.9 106.6L315.5 104.7L318.7 102.6L321.6 100.2L324 97.4L325.8 94.3L327 91L327.4 87.4L327 83.8L325.8 80.4L324 77.3L321.6 74.6L318.7 72.1L315.5 70L311.9 68.2L308 66.7L303.7 65.4L299.3 64.5L294.6 64L289.7 63.8L189.9 64.4L185.3 64.5L180.7 64.8L176.2 65.4L171.8 66.2L167.5 67.2L163.4 68.4L159.5 69.8L155.8 71.4L152.2 73.3L149 75.3L146 77.6L143.2 80L140.9 82.6L138.9 85.4L137.3 88.3L136.1 91.3L135.4 94.4L135.2 97.6L135.4 100.7L136.1 103.8L137.3 106.8L138.9 109.8L140.9 112.5L143.2 115.2L146 117.6L149 119.8L152.2 121.9L155.8 123.7L159.5 125.4L163.4 126.8L167.5 128L171.8 129L176.2 129.8L180.7 130.4L185.3 130.7L190 130.8L289.8 130.2L291.4 129.9L292.8 128.9L293.7 127.5L294.1 125.8L293.7 124.2L292.8 122.8L291.4 121.9L289.7 121.5L189.9 122.1L185.7 122L181.5 121.7L177.5 121.2L173.5 120.5L169.7 119.6L166.1 118.6L162.7 117.3L159.5 115.9L156.5 114.4L153.8 112.7L151.4 110.9L149.3 109L147.6 107.1L146.2 105.1L145.1 103.2L144.4 101.3L144 99.4L143.8 97.6L144 95.7L144.4 93.8L145.1 91.9L146.2 90L147.6 88.1L149.3 86.1L151.4 84.3L153.8 82.5L156.5 80.8L159.5 79.2L162.7 77.8L166.1 76.6L169.7 75.5L173.5 74.6L177.5 73.9L181.5 73.4L185.7 73.1L190 73L289.8 72.4L293.9 72.6L297.9 73.1L301.7 73.8L305.2 74.8L308.4 76.1L311.2 77.5L313.6 79.1L315.5 80.7L317 82.4L318 84.1L318.6 85.7L318.8 87.4L318.6 89L318 90.6L317 92.3L315.5 94L313.6 95.7L311.2 97.2L308.4 98.7L305.2 99.9L301.7 100.9L297.9 101.7L293.9 102.1L289.7 102.3L189.5 102.9L187.6 102.8L185.8 102.6L184.1 102.3L182.5 101.8L181.1 101.3L179.9 100.6L178.9 100L178.2 99.4L177.7 98.8L177.4 98.3L177.2 97.9L177.2 97.6L177.2 97.3L177.4 96.9L177.7 96.4L178.2 95.8L178.9 95.2L179.9 94.5L181.1 93.9L182.5 93.4L184.1 92.9L185.8 92.6L187.6 92.4L189.6 92.3L289.8 91.7L288.1 83.4L286.7 84.3L285.7 85.7L285.4 87.4L285.8 89L286.7 90.4L288.1 91.4Z"/>
+  <path class="oa" d="M289.7 83L189.5 83.6L186.9 83.7L184.4 84L182 84.5L179.7 85.2L177.6 86L175.6 87L173.7 88.2L172.1 89.6L170.7 91.3L169.5 93.2L168.8 95.3L168.5 97.6L168.8 99.9L169.5 102L170.7 103.9L172.1 105.5L173.7 106.9L175.6 108.1L177.6 109.2L179.7 110L182 110.7L184.4 111.1L186.9 111.4L189.5 111.5L289.8 110.9L294.6 110.8L299.3 110.2L303.7 109.3L308 108.1L311.9 106.6L315.5 104.7L318.7 102.6L321.6 100.2L324 97.4L325.8 94.3L327 91L327.4 87.4L327 83.8L325.8 80.4L324 77.3L321.6 74.6L318.7 72.1L315.5 70L311.9 68.2L308 66.7L303.7 65.4L299.3 64.5L294.6 64L289.7 63.8L189.9 64.4L185.3 64.5L180.7 64.8L176.2 65.4L171.8 66.2L167.5 67.2L163.4 68.4L159.5 69.8L155.8 71.4L152.2 73.3L149 75.3L146 77.6L143.2 80L140.9 82.6L138.9 85.4L137.3 88.3L136.1 91.3L135.4 94.4L135.2 97.6L135.4 100.7L136.1 103.8L137.3 106.8L138.9 109.8L140.9 112.5L143.2 115.2L146 117.6L149 119.8L152.2 121.9L155.8 123.7L159.5 125.4L163.4 126.8L167.5 128L171.8 129L176.2 129.8L180.7 130.4L185.3 130.7L190 130.8L289.8 130.2L291.4 129.9L292.8 128.9L293.7 127.5L294.1 125.8L293.7 124.2L292.8 122.8L291.4 121.9L289.7 121.5L189.9 122.1L185.7 122L181.5 121.7L177.5 121.2L173.5 120.5L169.7 119.6L166.1 118.6L162.7 117.3L159.5 115.9L156.5 114.4L153.8 112.7L151.4 110.9L149.3 109L147.6 107.1L146.2 105.1L145.1 103.2L144.4 101.3L144 99.4L143.8 97.6L144 95.7L144.4 93.8L145.1 91.9L146.2 90L147.6 88.1L149.3 86.1L151.4 84.3L153.8 82.5L156.5 80.8L159.5 79.2L162.7 77.8L166.1 76.6L169.7 75.5L173.5 74.6L177.5 73.9L181.5 73.4L185.7 73.1L190 73L289.8 72.4L293.9 72.6L297.9 73.1L301.7 73.8L305.2 74.8L308.4 76.1L311.2 77.5L313.6 79.1L315.5 80.7L317 82.4L318 84.1L318.6 85.7L318.8 87.4L318.6 89L318 90.6L317 92.3L315.5 94L313.6 95.7L311.2 97.2L308.4 98.7L305.2 99.9L301.7 100.9L297.9 101.7L293.9 102.1L289.7 102.3L189.5 102.9L187.6 102.8L185.8 102.6L184.1 102.3L182.5 101.8L181.1 101.3L179.9 100.6L178.9 100L178.2 99.4L177.7 98.8L177.4 98.3L177.2 97.9L177.2 97.6L177.2 97.3L177.4 96.9L177.7 96.4L178.2 95.8L178.9 95.2L179.9 94.5L181.1 93.9L182.5 93.4L184.1 92.9L185.8 92.6L187.6 92.4L189.6 92.3L289.8 91.7L288.1 83.4L286.7 84.3L285.7 85.7L285.4 87.4L285.8 89L286.7 90.4L288.1 91.4Z"/>
 </svg>

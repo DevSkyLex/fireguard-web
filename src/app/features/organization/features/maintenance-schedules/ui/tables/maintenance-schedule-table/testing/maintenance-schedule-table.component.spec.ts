@@ -110,7 +110,7 @@ describe('MaintenanceScheduleTable', () => {
     );
 
     expect(rows[0].textContent).toContain('Every 6 months');
-    expect(rows[1].textContent).toContain('—');
+    expect(rows[1].textContent).toContain('Organization default');
   });
 
   it('should render no unassigned marker link when a schedule carries a facility', async () => {
@@ -239,5 +239,104 @@ describe('MaintenanceScheduleTable', () => {
 
     expect(root().querySelector('[data-testid="maintenance-schedule-table-row"]')).toBeNull();
     expect(root().textContent).toContain('No results.');
+  });
+
+  it('should render the last inspection date when the schedule carries one, or a dash otherwise', async () => {
+    await render([
+      schedule({ id: 'schedule-1', lastInspectionClosedAt: '2026-05-01T00:00:00+00:00' }),
+      schedule({ id: 'schedule-2', lastInspectionClosedAt: undefined }),
+    ]);
+
+    const rows: NodeListOf<HTMLElement> = root().querySelectorAll(
+      '[data-testid="maintenance-schedule-table-row"]',
+    );
+
+    expect(rows[0].textContent).toContain('2026-05-01');
+    expect(rows[1].querySelectorAll('td')[2]?.textContent).toContain('—');
+  });
+
+  it('should show a muted relative suffix next to the next-due date', async () => {
+    const inTwoDays: string = new Date(Date.now() + 2 * 86_400_000).toISOString();
+    await render([schedule({ nextDueAt: inTwoDays })]);
+
+    const row: HTMLElement = root().querySelector(
+      '[data-testid="maintenance-schedule-table-row"]',
+    ) as HTMLElement;
+
+    expect(row.textContent).toMatch(/in 2 days/);
+  });
+
+  it('should render the next-due date in the organization timezone, not the raw UTC characters', async () => {
+    await render([schedule({ nextDueAt: '2026-06-15T23:00:00+00:00' })]);
+    fixture.componentRef.setInput('regionalFormatting', {
+      dateFormat: 'yyyy-MM-dd',
+      timezone: 'Pacific/Auckland',
+    });
+    await fixture.whenStable();
+
+    const row: HTMLElement = root().querySelector(
+      '[data-testid="maintenance-schedule-table-row"]',
+    ) as HTMLElement;
+
+    expect(row.textContent).toContain('2026-06-16');
+    expect(row.textContent).not.toContain('2026-06-15');
+  });
+
+  it('should reveal the evaluation line without hovering in mobile-ui', async () => {
+    await render([schedule({ evaluatedAt: '2026-09-20T08:00:00+00:00' })]);
+
+    const host: HTMLElement | null = root().querySelector(
+      '[data-testid="maintenance-schedule-table-row"] app-maintenance-due-status-tag',
+    )?.parentElement as HTMLElement | null;
+    const line: Element | undefined = host ? host.children[1] : undefined;
+
+    expect(line?.tagName).toBe('SPAN');
+    expect(line?.className).toContain('mobile-ui:not-sr-only');
+  });
+
+  it('should expose the evaluation timestamp on a focusable host next to the status tag, readable without hover', async () => {
+    await render([schedule({ evaluatedAt: '2026-09-20T08:00:00+00:00' })]);
+
+    const host: HTMLElement | null = root().querySelector(
+      '[data-testid="maintenance-schedule-table-row"] app-maintenance-due-status-tag',
+    )?.parentElement as HTMLElement | null;
+
+    expect(host?.getAttribute('tabindex')).toBe('0');
+    expect(host?.textContent).toContain('2026-09-20');
+  });
+
+  it('should surface a reminder line only for a due_soon or overdue schedule that was reminded', async () => {
+    await render([
+      schedule({
+        id: 'schedule-1',
+        dueStatus: 'due_soon',
+        lastRemindedAt: '2026-09-10T00:00:00+00:00',
+      }),
+      schedule({ id: 'schedule-2', dueStatus: 'unscheduled', lastRemindedAt: undefined }),
+    ]);
+
+    const rows: NodeListOf<HTMLElement> = root().querySelectorAll(
+      '[data-testid="maintenance-schedule-table-row"]',
+    );
+
+    expect(rows[0].textContent).toContain('Reminder sent');
+    expect(rows[1].textContent).not.toContain('Reminder sent');
+  });
+
+  it('should mirror the last-inspected date and the reminder line on the mobile card', async () => {
+    await render([
+      schedule({
+        dueStatus: 'overdue',
+        lastInspectionClosedAt: '2026-05-01T00:00:00+00:00',
+        lastRemindedAt: '2026-09-10T00:00:00+00:00',
+      }),
+    ]);
+
+    const card: HTMLElement = root().querySelector(
+      '[data-testid="maintenance-schedule-table-card"]',
+    ) as HTMLElement;
+
+    expect(card.textContent).toContain('2026-05-01');
+    expect(card.textContent).toContain('Reminder sent');
   });
 });

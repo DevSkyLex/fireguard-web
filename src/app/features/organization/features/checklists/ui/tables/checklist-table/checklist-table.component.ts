@@ -9,8 +9,9 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArchive, lucideEllipsis, lucidePencil } from '@ng-icons/lucide';
+import { lucideArchive, lucideEllipsis } from '@ng-icons/lucide';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { CollectionSurface } from '@shared/collection-surface';
 import {
@@ -20,7 +21,9 @@ import {
 } from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { ChecklistStatusTag } from '../../components/checklist-status-tag';
 
 /**
@@ -29,18 +32,20 @@ import { ChecklistStatusTag } from '../../components/checklist-status-tag';
  *
  * @description
  * The checklist template library's row grid: `hlmTable` inside a bordered,
- * scrollable shell, one row per checklist (name, status through
- * `ChecklistStatusTag`, item count, last update), and a trailing `…` menu
- * offering Edit and Archive — the two row actions this list-scoped feature
- * owns, since there is no detail route (`FEATURE.md`).
+ * scrollable shell, one row per checklist — a real link to the detail record
+ * (name, plus version and reference code), status through
+ * `ChecklistStatusTag`, item count and last update — and a trailing `…` menu
+ * offering Archive, the one row action this table still owns; editing opens
+ * the same detail record the name already links to, so the menu no longer
+ * duplicates it (`FEATURE.md`).
  *
  * Built on the shared `CollectionSurface`, which owns the bordered scroll
  * shell, the first-load skeleton and the table/card switch. Below the
- * surface's container breakpoint each checklist reads as a card: the name,
- * then its status and item count — the count being what tells two
- * similarly named templates apart. The `…` menu is the card's only
- * affordance, and without {@link canWrite} the card carries none, since
- * there is no record to open.
+ * surface's container breakpoint each checklist reads as a flat
+ * `hlmItemGroup` row: the name link, then its status, item count, version
+ * and reference code, then the last update. The `…` menu is the row's only
+ * further affordance, and without {@link canWrite} it carries none, since
+ * there is no write action to offer.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load and paginate; a menu choice only
@@ -48,7 +53,7 @@ import { ChecklistStatusTag } from '../../components/checklist-status-tag';
  * `active` row — an archived checklist has no further row action, since the
  * backend exposes no restore endpoint.
  *
- * @version 2.0.0
+ * @version 3.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -56,29 +61,23 @@ import { ChecklistStatusTag } from '../../components/checklist-status-tag';
   selector: 'app-checklist-table',
   imports: [
     NgTemplateOutlet,
+    RouterLink,
     OrgDatePipe,
     CollectionSurface,
     NgIcon,
     ChecklistStatusTag,
     HlmButton,
     ...HlmDropdownMenuImports,
+    ...HlmItemImports,
     ...HlmTableImports,
+    ...HlmTooltipImports,
   ],
-  providers: [provideIcons({ lucideArchive, lucideEllipsis, lucidePencil })],
+  providers: [provideIcons({ lucideArchive, lucideEllipsis })],
   templateUrl: './checklist-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecklistTable {
-  /**
-   * Property viewRequested
-   * @readonly
-   * @description Requests consultation of the selected checklist, including archived templates.
-   * @access public
-   * @since 1.0.0
-   * @type {OutputEmitterRef<ChecklistOutput>}
-   */
-  public readonly viewRequested = output<ChecklistOutput>();
   //#region Inputs
   /**
    * Property items
@@ -90,6 +89,17 @@ export class ChecklistTable {
    */
   public readonly items: InputSignal<readonly ChecklistOutput[]> =
     input.required<readonly ChecklistOutput[]>();
+
+  /**
+   * Property detailRouteBase
+   * @readonly
+   * @description Path segments the name link appends the checklist id to.
+   * @access public
+   * @since 3.0.0
+   * @type {InputSignal<readonly string[]>}
+   */
+  public readonly detailRouteBase: InputSignal<readonly string[]> =
+    input.required<readonly string[]>();
 
   /**
    * Property loading
@@ -104,7 +114,7 @@ export class ChecklistTable {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the row menu may offer Edit/Archive. False hides both rather than showing controls that would be refused.
+   * @description Whether the row menu may offer Archive. False hides it rather than showing a control that would be refused.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<boolean>}
@@ -124,16 +134,6 @@ export class ChecklistTable {
   //#endregion
 
   //#region Outputs
-  /**
-   * Property editRequested
-   * @readonly
-   * @description A row menu asked to edit the checklist. The table never edits: the page opens the edit dialog.
-   * @access public
-   * @since 1.0.0
-   * @type {OutputEmitterRef<ChecklistOutput>}
-   */
-  public readonly editRequested: OutputEmitterRef<ChecklistOutput> = output<ChecklistOutput>();
-
   /**
    * Property archiveRequested
    * @readonly
@@ -177,6 +177,18 @@ export class ChecklistTable {
    */
   protected columnCount(): number {
     return 5;
+  }
+
+  /**
+   * Method canArchive
+   * @description Whether the row menu may offer Archive for this row — write access, and an `active` checklist, since an archived one has no restore endpoint to pair with it.
+   * @access protected
+   * @since 3.1.0
+   * @param {ChecklistOutput} item - The row being rendered.
+   * @returns {boolean} Whether the menu should render for this row.
+   */
+  protected canArchive(item: ChecklistOutput): boolean {
+    return this.canWrite() && item.status === 'active';
   }
   //#endregion
 }

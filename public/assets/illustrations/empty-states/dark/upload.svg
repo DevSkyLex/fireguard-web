@@ -1,36 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-empty-upload-dark-title fg-empty-upload-dark-description" class="fg-empty-upload-dark">
-  <title id="fg-empty-upload-dark-title">Upload files</title>
-  <desc id="fg-empty-upload-dark-description">A document above a receiving tray, marked with a surface-aligned upload arrow.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-state-upload-dark-title fg-state-upload-dark-description" class="fg-state-upload-dark">
+  <title id="fg-state-upload-dark-title">Upload</title>
+  <desc id="fg-state-upload-dark-description">A file rising from a dashed, softly lit drop zone.</desc>
   <defs>
-    <linearGradient id="fg-empty-upload-dark-plane" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#141416"/>
-      <stop offset="1" stop-color="#101012"/>
-    </linearGradient>
+    <linearGradient id="fg-state-upload-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
+    <linearGradient id="fg-state-upload-dark-zone" gradientUnits="userSpaceOnUse" x1="179.5" y1="81.9" x2="220.5" y2="295.1"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.22"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.02"/></linearGradient>
+
   </defs>
   <style>
-    .fg-empty-upload-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
-    .fg-empty-upload-dark .edge, .fg-empty-upload-dark .seam { stroke: #a1a1aa; }
-    .fg-empty-upload-dark .seam { stroke: #51515c; }
-    .fg-empty-upload-dark .seam { stroke-width: 1.35; }
-    .fg-empty-upload-dark .shade { fill: #000000; fill-opacity: .28; }
-    .fg-empty-upload-dark .soft { stroke: #46464f; stroke-width: 1.1; }
-    .fg-empty-upload-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
-    .fg-empty-upload-dark .accent { stroke: #ff7043; }
-    .fg-empty-upload-dark .accent { stroke-width: 1.1; }
-    .fg-empty-upload-dark .accent-fill { fill: #ff7043; }
-    .fg-empty-upload-dark .tf { fill: url(#fg-empty-upload-dark-plane); }
-    .fg-empty-upload-dark .lf { fill: #141417; }
-    .fg-empty-upload-dark .rf { fill: #0d0d0f; }
-    .fg-empty-upload-dark .accent { stroke-opacity: 1; }
+    .fg-state-upload-dark { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-state-upload-dark path { vector-effect: non-scaling-stroke; }
+    .fg-state-upload-dark .t { fill: #0c0c0f; }
+    .fg-state-upload-dark .l { fill: #121215; }
+    .fg-state-upload-dark .r { fill: #0f0f12; }
+    .fg-state-upload-dark .hole { fill: #060607; }
+    .fg-state-upload-dark .cy { fill: url(#fg-state-upload-dark-cy); }
+    .fg-state-upload-dark .af { fill: #bdbdc5; }
+    .fg-state-upload-dark .kf { fill: #8e8e97; }
+    .fg-state-upload-dark .eo { fill-rule: evenodd; }
+    .fg-state-upload-dark .o { stroke: #a1a1aa; stroke-width: 1.35; }
+    .fg-state-upload-dark .o2 { stroke: #71717a; stroke-width: 1.1; }
+    .fg-state-upload-dark .e { stroke: #3f3f46; stroke-width: 1; }
+    .fg-state-upload-dark .d { stroke: #71717a; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-upload-dark .dh { stroke: #3f3f46; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-upload-dark .g { stroke: #71717a; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-state-upload-dark .k { stroke: #8e8e97; stroke-width: 1.2; }
+    .fg-state-upload-dark .ka, .fg-state-upload-dark .oa { stroke: #bdbdc5; stroke-width: 1.35; }
+    .fg-state-upload-dark .da { stroke: #bdbdc5; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-upload-dark .ga { stroke: #bdbdc5; stroke-width: 1; stroke-dasharray: 3 3; }
   </style>
-  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M72 72L82.4 78L82.4 88.8L72 94.8L61.6 88.8L61.6 78ZM82.4 78L72 84L61.6 78M72 84L72 94.8M321.7 108.5L330.3 113.5M321.7 113.5L330.3 108.5M296.5 272a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM303.5 276a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM67 220.5L63 227.5M99 239L95 246"/><path class="guide" d="M61.6 88.8L72 82.8L82.4 88.8M65 224L97 242.5"/><path class="accent" d="M67.6 225.5L74.5 229.5"/><path class="accent-fill" d="M289.4 268a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 62.5)">
-<polygon class="shade" points="185.3,100.5 316.9,176.5 214.7,235.5 83.1,159.5"/>
-<g data-part="plate"><path class="lf" d="M99.5 153.5Q99.5 152 102.1 150.5L180.1 105.5Q185.3 102.5 190.5 105.5L297.9 167.5Q300.5 169 300.5 170.5L300.5 176.5Q300.5 178 297.9 179.5L219.9 224.5Q214.7 227.5 209.5 224.5L102.1 162.5Q99.5 161 99.5 159.5Z"/><path class="tf" d="M180.1 105.5Q185.3 102.5 190.5 105.5L297.9 167.5Q303.1 170.5 297.9 173.5L219.9 218.5Q214.7 221.5 209.5 218.5L102.1 156.5Q96.9 153.5 102.1 150.5Z"/><path class="seam" d="M300.5 170.5Q300.5 172 297.9 173.5L219.9 218.5Q214.7 221.5 209.5 218.5L102.1 156.5Q99.5 155 99.5 153.5"/><path class="edge" d="M99.5 153.5Q99.5 152 102.1 150.5L180.1 105.5Q185.3 102.5 190.5 105.5L297.9 167.5Q300.5 169 300.5 170.5L300.5 176.5Q300.5 178 297.9 179.5L219.9 224.5Q214.7 227.5 209.5 224.5L102.1 162.5Q99.5 161 99.5 159.5Z"/></g>
-<g data-part="volume"><polygon class="rf" points="185.3,87.5 101.3,136 101.3,156 185.3,107.5"/><path class="seam" d="M185.3 107.5L101.3 156"/><polygon class="lf" points="294.4,150.5 185.3,87.5 185.3,107.5 294.4,170.5"/><path class="seam" d="M294.4 170.5L185.3 107.5M294.4 150.5L294.4 170.5M185.3 87.5L185.3 107.5"/><polygon class="lf" points="101.3,136 96.9,133.5 96.9,153.5 101.3,156"/><path class="seam" d="M101.3 156L96.9 153.5M101.3 136L101.3 156M96.9 133.5L96.9 153.5"/><polygon class="rf" points="303.1,150.5 214.7,201.5 214.7,221.5 303.1,170.5"/><path class="seam" d="M303.1 170.5L214.7 221.5M303.1 150.5L303.1 170.5"/><polygon class="lf" points="214.7,201.5 210.4,199 210.4,219 214.7,221.5"/><path class="seam" d="M214.7 221.5L210.4 219M214.7 201.5L214.7 221.5M210.4 199L210.4 219"/><polygon class="tf" points="185.3,82.5 303.1,150.5 214.7,201.5 210.4,199 294.4,150.5 185.3,87.5 101.3,136 96.9,133.5"/><polyline class="edge" points="185.3,82.5 303.1,150.5"/><polyline class="edge" points="303.1,150.5 214.7,201.5"/><polyline class="edge" points="214.7,201.5 210.4,199"/><polyline class="seam" points="210.4,199 294.4,150.5"/><polyline class="seam" points="294.4,150.5 185.3,87.5"/><polyline class="seam" points="185.3,87.5 101.3,136"/><polyline class="edge" points="101.3,136 96.9,133.5"/><polyline class="edge" points="96.9,133.5 185.3,82.5"/></g>
-<g data-part="volume"><polygon class="lf" points="101.3,141.8 219.1,209.8 219.1,219 214.7,221.5 96.9,153.5 96.9,144.3"/><polygon class="rf" points="219.1,209.8 214.7,212.3 214.7,221.5 219.1,219"/><polygon class="tf" points="101.3,141.8 219.1,209.8 214.7,212.3 96.9,144.3"/><path class="seam" d="M214.7 212.3L219.1 209.8M214.7 212.3L96.9 144.3M214.7 212.3L214.7 221.5"/><polygon class="edge" points="101.3,141.8 219.1,209.8 219.1,219 214.7,221.5 96.9,153.5 96.9,144.3"/></g>
-<polyline class="guide" points="178.3,103.5 178.3,70.5"/>
-<polyline class="guide" points="245.9,142.5 245.9,109.5"/>
-<g data-part="volume"><polygon class="lf" points="180.1,-40.5 247.6,-1.5 247.6,106.5 244.2,108.5 176.6,69.5 176.6,-38.5"/><polygon class="rf" points="247.6,-1.5 244.2,0.5 244.2,108.5 247.6,106.5"/><polygon class="tf" points="180.1,-40.5 247.6,-1.5 244.2,0.5 176.6,-38.5"/><path class="seam" d="M244.2 0.5L247.6 -1.5M244.2 0.5L176.6 -38.5M244.2 0.5L244.2 108.5"/><polygon class="edge" points="180.1,-40.5 247.6,-1.5 247.6,106.5 244.2,108.5 176.6,69.5 176.6,-38.5"/></g>
-<g data-part="detail"><path class="accent" d="M210.4 51L210.4 17M197.4 24.5L210.4 17L223.4 39.5"/></g>
-  </g></g></g>
+  <path fill="url(#fg-state-upload-dark-zone)" d="M235.3 286.6C231.4 288.8 226.1 290.1 220.5 290.1C215 290.1 209.7 288.8 205.7 286.6L30.1 185.2C26.2 182.9 24 179.8 24 176.6C24 173.4 26.2 170.4 30.1 168.1L164.7 90.4C168.6 88.1 173.9 86.9 179.5 86.9C185 86.9 190.3 88.1 194.3 90.4L369.9 191.8C373.8 194.1 376 197.1 376 200.3C376 203.5 373.8 206.6 369.9 208.9L235.3 286.6Z"/>
+  <path class="ga" d="M235.3 286.6C231.4 288.8 226.1 290.1 220.5 290.1C215 290.1 209.7 288.8 205.7 286.6L30.1 185.2C26.2 182.9 24 179.8 24 176.6C24 173.4 26.2 170.4 30.1 168.1L164.7 90.4C168.6 88.1 173.9 86.9 179.5 86.9C185 86.9 190.3 88.1 194.3 90.4L369.9 191.8C373.8 194.1 376 197.1 376 200.3C376 203.5 373.8 206.6 369.9 208.9L235.3 286.6Z"/>
+  <path class="d" d="M192.6 251.5C191.7 252 190.6 252.3 189.3 252.3C188.1 252.3 186.9 252 186 251.5L90.8 196.5C90 196 89.5 195.3 89.5 194.6C89.5 193.9 90 193.2 90.8 192.7L207.4 125.5C208.3 125 209.4 124.7 210.7 124.7C211.9 124.7 213.1 125 214 125.5L309.2 180.4C310 180.9 310.5 181.6 310.5 182.3C310.5 183 310 183.7 309.2 184.2L192.6 251.5ZM89.5 103.7L89.5 194.6M189.3 161.3L189.3 252.3M310.5 91.3L310.5 182.3"/>
+  <path class="r" d="M310.5 87.6C310.5 88.3 310 88.9 309.2 89.4L192.6 156.7C191.7 157.2 190.6 157.5 189.3 157.5L189.3 161.3C190.6 161.3 191.7 161 192.6 160.5L309.2 93.2C310 92.7 310.5 92.1 310.5 91.3Z"/>
+  <path class="l" d="M189.3 157.5C188.1 157.5 186.9 157.2 186 156.7L90.8 101.8C90 101.3 89.5 100.6 89.5 99.9L89.5 103.7C89.5 104.4 90 105.1 90.8 105.6L186 160.5C186.9 161 188.1 161.3 189.3 161.3Z"/>
+  <path class="t" d="M89.5 99.9C89.5 99.2 90 98.5 90.8 98L207.4 30.7C208.3 30.2 209.4 29.9 210.7 29.9C211.9 29.9 213.1 30.2 214 30.7L309.2 85.7C310 86.2 310.5 86.8 310.5 87.6C310.5 88.3 310 88.9 309.2 89.4L192.6 156.7C191.7 157.2 190.6 157.5 189.3 157.5C188.1 157.5 186.9 157.2 186 156.7L90.8 101.8C90 101.3 89.5 100.6 89.5 99.9Z"/>
+  <path class="e" d="M310.5 87.6C310.5 88.3 310 88.9 309.2 89.4L192.6 156.7C191.7 157.2 190.6 157.5 189.3 157.5C188.1 157.5 186.9 157.2 186 156.7L90.8 101.8C90 101.3 89.5 100.6 89.5 99.9M189.3 157.5L189.3 161.3M89.5 99.9L89.5 103.7"/>
+  <path class="o" d="M89.5 99.9C89.5 99.2 90 98.5 90.8 98L207.4 30.7C208.3 30.2 209.4 29.9 210.7 29.9C211.9 29.9 213.1 30.2 214 30.7L309.2 85.7C310 86.2 310.5 86.8 310.5 87.6L310.5 91.3C310.5 92.1 310 92.7 309.2 93.2L192.6 160.5C191.7 161 190.6 161.3 189.3 161.3C188.1 161.3 186.9 161 186 160.5L90.8 105.6C90 105.1 89.5 104.4 89.5 103.7Z"/>
+  <path class="ka" d="M171.6 93.7L200 77.3L228.4 93.7M200 110.1L200 77.3"/>
 </svg>

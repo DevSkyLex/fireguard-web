@@ -12,12 +12,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideSearch } from '@ng-icons/lucide';
+import { lucideCheck, lucideCircleAlert, lucideSearch } from '@ng-icons/lucide';
 import { BrnCommandInput } from '@spartan-ng/brain/command';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { AddTeamMemberInput, MemberSelectOption } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
 
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmCommandImports } from '@shared/ui/command';
@@ -66,8 +67,9 @@ const NO_PICK_VALUE: string = '';
     HlmInput,
     ...HlmComboboxImports,
     ...HlmFieldImports,
+    ...HlmAlertImports,
   ],
-  providers: [provideIcons({ lucideCheck, lucideSearch })],
+  providers: [provideIcons({ lucideCheck, lucideCircleAlert, lucideSearch })],
   templateUrl: './organization-team-member-add-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -17,6 +17,15 @@
  */
 export interface DirectConversationView {
   readonly id: string;
+  /**
+   * Property counterpartMemberId
+   * @readonly
+   * @description Bare member reference supplied by the conversation API, independent of directory access.
+   * @access public
+   * @since 1.0.0
+   * @type {string | null}
+   */
+  readonly counterpartMemberId: string | null;
   readonly counterpartName: string;
   readonly counterpartAvatarUrl?: string;
   /** Whether the counterpart resolved, so the row can show a placeholder instead. */

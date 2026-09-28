@@ -107,9 +107,9 @@
       <div
         hlmResizablePanel
         id="dashboard-main-panel"
-        [defaultSize]="sidebarExtension() ? 76 : 100"
-        [minSize]="sidebarExtension() ? 60 : 100"
-        [maxSize]="sidebarExtension() ? 84 : 100"
+        [defaultSize]="sidebarExtension() ? (panel() ? 52 : 76) : panel() ? 76 : 100"
+        [minSize]="sidebarExtension() && panel() ? 40 : sidebarExtension() || panel() ? 60 : 100"
+        [maxSize]="sidebarExtension() && panel() ? 68 : sidebarExtension() || panel() ? 84 : 100"
         class="flex h-full min-h-0 min-w-0 flex-col max-lg:w-full! max-lg:flex-none!"
       >
         <main
@@ -145,18 +145,28 @@
           </div>
         </main>
       </div>
+      @if (panel(); as contribution) {
+        <hlm-resizable-handle
+          withHandle
+          class="touch-none max-lg:hidden"
+          data-testid="dashboard-panel-resize-handle"
+          aria-label="Resize contextual panel"
+          i18n-aria-label="@@dashboard.panel.resize"
+        />
+        <aside
+          hlmResizablePanel
+          id="dashboard-panel"
+          defaultSize="24"
+          minSize="16"
+          maxSize="40"
+          tabindex="-1"
+          [attr.aria-label]="panelLabel()"
+          class="hidden h-full min-w-0 flex-col overflow-hidden border-l border-border bg-background outline-none lg:flex"
+        >
+          <ng-container *ngComponentOutlet="contribution.component" />
+        </aside>
+      }
     </div>
-
-    @if (panel(); as contribution) {
-      <aside
-        id="dashboard-panel"
-        class="fixed inset-y-2 right-2 z-30 flex w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col overflow-hidden rounded-xl bg-background shadow-lg mobile-ui:top-[calc(4rem+env(safe-area-inset-top))] mobile-ui:bottom-[var(--mobile-navigation-height)] desktop-ui:lg:static desktop-ui:lg:inset-auto desktop-ui:lg:z-auto desktop-ui:lg:max-w-none desktop-ui:lg:rounded-none desktop-ui:lg:border-l desktop-ui:lg:border-border desktop-ui:lg:shadow-none"
-        i18n-aria-label="@@dashboard.panel.aria"
-        aria-label="Contextual panel"
-      >
-        <ng-container *ngComponentOutlet="contribution.component" />
-      </aside>
-    }
   </div>
   @if (isMobileInteractionMode() && mobileNavigation.length > 0) {
     <div
@@ -226,7 +236,7 @@
         }
       </div>
 
-      @if (headerActions.length > 0) {
+      @if (headerActions.length > 0 || (isMobileInteractionMode() && mobileActions.length > 0)) {
         @if (isMobileInteractionMode()) {
           <hlm-drawer
             #mobileActionsDrawer="hlmDrawer"
@@ -275,6 +285,7 @@
                 data-testid="dashboard-mobile-actions"
               >
                 <app-slot-outlet [contributions]="headerActions" presentation="menu" />
+                <app-slot-outlet [contributions]="mobileActions" presentation="menu" />
               </hlm-item-group>
 
               <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">

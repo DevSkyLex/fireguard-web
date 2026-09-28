@@ -10,3 +10,4 @@ export {
   equipmentPlanLabel,
 } from './equipment-plan-label/equipment-plan-label.utils';
 export { toFacilityOption } from './facility-option/facility-option.utils';
+export { facilityTypeLabel } from './facility-type-label/facility-type-label.utils';

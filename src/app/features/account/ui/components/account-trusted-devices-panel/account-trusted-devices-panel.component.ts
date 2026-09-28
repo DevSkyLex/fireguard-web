@@ -15,9 +15,15 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideShieldOff, lucideTrash2, lucideTriangleAlert } from '@ng-icons/lucide';
+import {
+  lucideMonitor,
+  lucideShieldOff,
+  lucideTrash2,
+  lucideTriangleAlert,
+} from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { TrustedDeviceOutput } from '@features/auth/models';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -38,7 +44,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * sits behind a local alert-dialog confirmation that stays open and
  * busy-locked until {@link revokingAll} settles, then closes on its own.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -65,9 +71,10 @@ import { HlmSpinner } from '@shared/ui/spinner';
     HlmButton,
     HlmSkeleton,
     HlmSpinner,
+    ResourceIllustration,
     ...HlmAlertDialogImports,
   ],
-  providers: [provideIcons({ lucideShieldOff, lucideTrash2, lucideTriangleAlert })],
+  providers: [provideIcons({ lucideMonitor, lucideShieldOff, lucideTrash2, lucideTriangleAlert })],
   templateUrl: './account-trusted-devices-panel.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

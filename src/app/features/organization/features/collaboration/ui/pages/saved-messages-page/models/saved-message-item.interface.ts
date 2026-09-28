@@ -13,8 +13,20 @@
  */
 export interface SavedMessageItem {
   readonly id: string;
+  /**
+   * Property authorMemberId
+   * @readonly
+   * @description Bare member identity retained for organizational presence.
+   * @access public
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly authorMemberId: string;
+
   /** Never blank — the API's own `authorDisplayName`, or a neutral label. */
   readonly authorName: string;
+  /** Whether {@link authorName} is a real name, so the avatar draws a placeholder rather than initials of the neutral label. */
+  readonly isAuthorResolved: boolean;
   /** ISO instant the message was written. */
   readonly createdAt: string;
   /** Rendered HTML. Empty on a tombstone, which draws a placeholder instead. */

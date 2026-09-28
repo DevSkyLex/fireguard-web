@@ -3,18 +3,13 @@
   data-testid="intervention-change-table"
   aria-labelledby="intervention-change-table-title"
 >
-  <div class="flex flex-col gap-1">
-    <h2
-      id="intervention-change-table-title"
-      class="text-lg font-semibold"
-      i18n="@@intervention.changes.historyTitle"
-    >
-      Resource changes
-    </h2>
-    <p class="text-sm text-muted-foreground" i18n="@@intervention.changes.historyHint">
-      Review proposed values and consult rejected or applied changes.
-    </p>
-  </div>
+  <h2
+    id="intervention-change-table-title"
+    class="sr-only"
+    i18n="@@intervention.changes.historyTitle"
+  >
+    Resource changes
+  </h2>
   <app-collection-toolbar>
     <app-collection-search-box
       toolbarStart
@@ -102,17 +97,20 @@
         <p hlmEmptyDescription>{{ error() }}</p>
       </div>
 
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        [disabled]="loading()"
-        (click)="retryRequested.emit()"
-        i18n="@@intervention.tables.retry"
-      >
-        Retry
-      </button>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="mobile-ui:min-h-11"
+          [disabled]="loading()"
+          (click)="retryRequested.emit()"
+          i18n="@@intervention.tables.retry"
+        >
+          Retry
+        </button>
+      </div>
     </div>
     <ng-container surfaceHead>
       <tr hlmTableRow>
@@ -168,6 +166,15 @@
                   class="align-middle whitespace-nowrap"
                 >
                   <app-intervention-tag kind="changeStatus" [value]="row.change.status" />
+                  <span
+                    class="mt-1 block rounded-sm text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    tabindex="0"
+                    [hlmTooltip]="
+                      row.change.createdAt | appOrgDate: 'datetime' : regionalFormatting()
+                    "
+                    i18n="@@intervention.changes.proposedRelative"
+                    >Proposed {{ proposedRelativeOf(row.change) }}</span
+                  >
                 </td>
                 @if (showActionsColumn()) {
                   <td
@@ -211,7 +218,18 @@
           >
             <div class="flex min-w-0 items-start justify-between gap-3">
               <span class="min-w-0 font-medium break-words text-foreground">{{ group.label }}</span>
-              <app-intervention-tag kind="changeStatus" [value]="row.change.status" />
+              <div class="flex shrink-0 flex-col items-end gap-1">
+                <app-intervention-tag kind="changeStatus" [value]="row.change.status" />
+                <span
+                  class="rounded-sm text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  tabindex="0"
+                  [hlmTooltip]="
+                    row.change.createdAt | appOrgDate: 'datetime' : regionalFormatting()
+                  "
+                  i18n="@@intervention.changes.proposedRelative"
+                  >Proposed {{ proposedRelativeOf(row.change) }}</span
+                >
+              </div>
             </div>
             <dl
               class="grid min-w-0 gap-x-4 gap-y-2 text-sm sm:grid-cols-[minmax(8rem,0.75fr)_minmax(0,2fr)]"
@@ -253,48 +271,57 @@
 
     <div hlmEmpty surfaceEmpty class="min-h-32" data-testid="intervention-changes-empty">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideHistory" aria-hidden="true" />
-        </div>
         @if (searchTerm().trim()) {
+          <app-state-illustration hlmEmptyMedia state="no-results" />
           <p hlmEmptyTitle i18n="@@intervention.changes.searchEmptyTitle">
             No changes match this search
           </p>
           <p hlmEmptyDescription i18n="@@intervention.changes.searchEmptyHint">
             Try another term or clear the search.
           </p>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            (click)="onSearchQueryChanged('')"
-            i18n="@@intervention.tables.clearSearch"
-          >
-            Clear search
-          </button>
         } @else if (changes().length === 0) {
+          <app-state-illustration hlmEmptyMedia state="no-history" />
           <p hlmEmptyTitle i18n="@@intervention.changes.noDataTitle">No resource changes yet</p>
           <p hlmEmptyDescription i18n="@@intervention.changes.noDataHint">
             Proposed changes will appear here as work progresses.
           </p>
         } @else {
+          <app-state-illustration hlmEmptyMedia state="no-matches" />
           <p hlmEmptyTitle i18n="@@intervention.changes.emptyTitle">No changes in this state</p>
           <p hlmEmptyDescription i18n="@@intervention.changes.emptyHint">
             Choose another status to consult the intervention history.
           </p>
+        }
+      </div>
+      @if (searchTerm().trim()) {
+        <div hlmEmptyContent>
           <button
             hlmBtn
             type="button"
             variant="outline"
             size="sm"
+            class="mobile-ui:min-h-11"
+            (click)="onSearchQueryChanged('')"
+            i18n="@@intervention.tables.clearSearch"
+          >
+            Clear search
+          </button>
+        </div>
+      } @else if (changes().length > 0) {
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="mobile-ui:min-h-11"
             (click)="clearFilter()"
             i18n="@@intervention.tables.clearFilters"
           >
             Clear filters
           </button>
-        }
-      </div>
+        </div>
+      }
     </div>
   </app-collection-surface>
 </section>

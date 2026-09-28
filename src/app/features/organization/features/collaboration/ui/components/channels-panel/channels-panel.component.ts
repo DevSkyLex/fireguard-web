@@ -41,6 +41,7 @@ import {
   type OrganizationContextPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
@@ -91,6 +92,7 @@ import { ChannelCreateDialog, type ChannelCreateDraft } from '../../dialogs/chan
     HlmInputGroupAddon,
     HlmInputGroupInput,
     ...HlmCollapsibleImports,
+    ResourceIllustration,
   ],
   providers: [
     provideIcons({

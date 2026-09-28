@@ -29,11 +29,9 @@ import {
   lucideDownload,
   lucideLayoutGrid,
   lucideList,
-  lucideLock,
   lucideMap,
   lucideNetwork,
   lucidePlus,
-  lucideSearch,
 } from '@ng-icons/lucide';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { isApiError } from '@core/api/utils';
@@ -56,6 +54,10 @@ import {
   type FacilityStoreType,
 } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
 import {
@@ -66,13 +68,16 @@ import {
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmLabel } from '@shared/ui/label';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { FacilityGrid } from '../../dataviews/facility-grid';
 import { FacilityCreateSheet } from '../../sheets/facility-create-sheet';
 import { FacilityTable } from '../../tables/facility-table';
@@ -126,6 +131,7 @@ type FacilityLayout = 'list' | 'grid';
     NgIcon,
     ...HlmEmptyImports,
     ResourceIllustration,
+    StateIllustration,
     RouterLink,
     FacilityCreateSheet,
     FacilityGrid,
@@ -140,11 +146,11 @@ type FacilityLayout = 'list' | 'grid';
     HlmLabel,
     HlmSpinner,
     ...HlmToggleGroupImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     FacilityOptionsStore,
     provideIcons({
-      lucideLock,
       lucideArchive,
       lucideCircleAlert,
       lucideDownload,
@@ -153,7 +159,6 @@ type FacilityLayout = 'list' | 'grid';
       lucideMap,
       lucideNetwork,
       lucidePlus,
-      lucideSearch,
     }),
   ],
   templateUrl: './facilities-page.component.html',
@@ -221,6 +226,21 @@ export class FacilitiesPage {
   //#region Properties
   /** The list dataset, provided by this route. */
   protected readonly store: FacilityStoreType = inject<FacilityStoreType>(FacilityStore);
+
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, forwarded to {@link FacilityTable}'s Updated column.
+   * @access protected
+   * @since 1.7.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
 
   /** Organization permission checks gating the "New facility" action and the row actions. */
   private readonly permissions: OrganizationPermissionService = inject(

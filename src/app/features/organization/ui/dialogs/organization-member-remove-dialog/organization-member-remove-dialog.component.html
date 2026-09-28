@@ -14,13 +14,16 @@
     </hlm-alert-dialog-header>
 
     @if (error(); as message) {
-      <p
+      <div
+        hlmAlert
+        variant="destructive"
         role="alert"
-        class="text-sm text-destructive"
         data-testid="organization-members-remove-error"
       >
-        {{ message }}
-      </p>
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@org.members.removeErrorTitle">Couldn't remove member</p>
+        <p hlmAlertDescription>{{ message }}</p>
+      </div>
     }
 
     <hlm-alert-dialog-footer>

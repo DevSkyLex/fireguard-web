@@ -27,9 +27,7 @@
       } @else if (participants().length === 0) {
         <div hlmEmpty>
           <div hlmEmptyHeader>
-            <div hlmEmptyMedia variant="icon">
-              <ng-icon name="lucideUsers" aria-hidden="true" />
-            </div>
+            <app-resource-illustration hlmEmptyMedia resource="member" size="sm" />
             <p hlmEmptyTitle i18n="@@channels.participants.emptyTitle">No participants</p>
           </div>
         </div>
@@ -44,6 +42,9 @@
                 <span hlmAvatarFallback class="text-[10px]">
                   {{ initialsOf(participant.displayName) }}
                 </span>
+                <app-member-presence-indicator
+                  [status]="presences()[participant.memberId] ?? null"
+                />
               </hlm-avatar>
 
               <span class="flex min-w-0 flex-1 flex-col">

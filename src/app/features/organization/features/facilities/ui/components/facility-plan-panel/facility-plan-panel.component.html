@@ -29,7 +29,7 @@
   <section
     hlmCard
     [attr.aria-label]="panelLabel"
-    class="flex w-full max-w-full flex-col gap-4 overflow-y-auto sm:w-80"
+    class="flex w-full max-w-full flex-col gap-4 overflow-y-auto @4xl/plans:w-80"
     data-testid="facility-plan-panel"
   >
     <div hlmCardHeader>
@@ -46,19 +46,14 @@
   @if (hasNoContent()) {
     <div hlmEmpty data-testid="facility-plan-no-content">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideShapes" aria-hidden="true" />
-        </div>
+        <app-resource-illustration hlmEmptyMedia resource="zone" />
         <p hlmEmptyTitle>{{ noContentTitle }}</p>
-        <p hlmEmptyDescription>{{ noContentDescription }}</p>
+        <p hlmEmptyDescription>{{ noContentDescription() }}</p>
       </div>
     </div>
   } @else {
     @if (selectedZone(); as zone) {
-      <div
-        class="flex flex-col gap-3 rounded-lg border border-border p-3"
-        data-testid="facility-plan-detail"
-      >
+      <div class="flex flex-col gap-3" data-testid="facility-plan-detail">
         <div class="flex flex-row items-start justify-between gap-2">
           <div class="flex flex-col gap-1">
             <h4 class="text-sm font-semibold">{{ zone.name }}</h4>
@@ -71,6 +66,7 @@
             variant="ghost"
             size="icon"
             [attr.aria-label]="closeLabel"
+            [hlmTooltip]="closeLabel"
             data-testid="facility-plan-detail-close"
             (click)="zoneClosed.emit()"
             class="mobile-ui:min-h-11 mobile-ui:min-w-11"
@@ -110,10 +106,7 @@
         </div>
       </div>
     } @else if (selectedEquipment(); as pin) {
-      <div
-        class="flex flex-col gap-3 rounded-lg border border-border p-3"
-        data-testid="facility-plan-detail"
-      >
+      <div class="flex flex-col gap-3" data-testid="facility-plan-detail">
         <div class="flex flex-row items-start justify-between gap-2">
           <div class="flex min-w-0 flex-col gap-1">
             <h4 class="truncate text-sm font-semibold">{{ equipmentLabel(pin) }}</h4>
@@ -128,6 +121,7 @@
             variant="ghost"
             size="icon"
             [attr.aria-label]="closeLabel"
+            [hlmTooltip]="closeLabel"
             data-testid="facility-plan-detail-close"
             (click)="equipmentClosed.emit()"
             class="mobile-ui:min-h-11 mobile-ui:min-w-11"
@@ -183,8 +177,15 @@
       </div>
     }
 
+    @if (selectedZone() || selectedEquipment()) {
+      <hlm-separator />
+    }
+
     <section class="flex flex-col gap-2">
-      <h4 class="text-sm font-medium text-muted-foreground">{{ zoneListHeading }}</h4>
+      <h4 class="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+        <span>{{ zoneListHeading }}</span>
+        <span hlmBadge variant="secondary" class="tabular-nums">{{ zones().length }}</span>
+      </h4>
       <app-facility-plan-item-list
         [items]="zoneOptions()"
         [selectedId]="selectedZone()?.facilityId ?? null"
@@ -199,7 +200,10 @@
     </section>
 
     <section class="flex flex-col gap-2">
-      <h4 class="text-sm font-medium text-muted-foreground">{{ equipmentListHeading }}</h4>
+      <h4 class="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+        <span>{{ equipmentListHeading }}</span>
+        <span hlmBadge variant="secondary" class="tabular-nums">{{ equipment().length }}</span>
+      </h4>
       <app-facility-plan-item-list
         [items]="equipmentOptions()"
         [selectedId]="selectedEquipment()?.equipmentId ?? null"

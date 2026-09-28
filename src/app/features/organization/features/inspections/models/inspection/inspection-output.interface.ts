@@ -91,6 +91,44 @@ export interface InspectionOutput extends HydraItem {
   readonly inspector: InspectorOutput | null;
   /** @type {string | null} */
   readonly checklistId: string | null;
+
+  /**
+   * Property equipmentSerialNumber
+   * @readonly
+   *
+   * @description
+   * The inspected equipment's serial number. Filled on the list and the
+   * single-resource reads; a canonical collection read that does not join
+   * equipment leaves it unset.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly equipmentSerialNumber?: string | null;
+
+  /**
+   * Property facilityName
+   * @readonly
+   *
+   * @description
+   * The inspected equipment's facility name, following the same resolution
+   * rule as {@link equipmentSerialNumber}.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly facilityName?: string | null;
+
+  /**
+   * Property checklistName
+   * @readonly
+   *
+   * @description
+   * The assigned checklist's name, following the same resolution rule as
+   * {@link equipmentSerialNumber}. `null` when no checklist is assigned.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly checklistName?: string | null;
+
   /** @type {string | null} */
   readonly notes: string | null;
   /** @type {string | null} */

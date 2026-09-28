@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { TrustedDeviceOutput } from '@features/auth/models';
 import { AccountTrustedDevicesPanel } from '../account-trusted-devices-panel.component';
 
@@ -13,6 +14,16 @@ const DEVICE: TrustedDeviceOutput = {
   createdAt: '2026-01-01T00:00:00+00:00',
 };
 
+const OTHER_DEVICE: TrustedDeviceOutput = {
+  '@id': '/api/trusted-devices/device-2',
+  '@type': 'TrustedDevice',
+  id: 'device-2',
+  name: 'Safari on iPhone',
+  lastUsedAt: '2026-01-03T00:00:00+00:00',
+  expiresAt: '2026-06-02T00:00:00+00:00',
+  createdAt: '2026-01-02T00:00:00+00:00',
+};
+
 const confirmDialog = (): HTMLElement | null =>
   document.querySelector('[data-testid="account-devices-revoke-all-dialog"]');
 const confirmAction = (): HTMLButtonElement | null =>
@@ -22,7 +33,19 @@ describe('AccountTrustedDevicesPanel', () => {
   let fixture: ComponentFixture<AccountTrustedDevicesPanel>;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(AccountTrustedDevicesPanel);
     await fixture.whenStable();
@@ -91,8 +114,17 @@ describe('AccountTrustedDevicesPanel', () => {
     ).toBeNull();
   });
 
-  it('should ask for confirmation before revoking every device', async () => {
+  it('should hide "Revoke all devices" when only one device remains', async () => {
     fixture.componentRef.setInput('devices', [DEVICE]);
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="account-devices-revoke-all"]'),
+    ).toBeNull();
+  });
+
+  it('should ask for confirmation before revoking every device', async () => {
+    fixture.componentRef.setInput('devices', [DEVICE, OTHER_DEVICE]);
     await fixture.whenStable();
 
     expect(confirmDialog()).toBeNull();
@@ -110,7 +142,7 @@ describe('AccountTrustedDevicesPanel', () => {
   it('should emit only once confirmed', async () => {
     const allRevoked = vi.fn();
     fixture.componentInstance.allRevoked.subscribe(allRevoked);
-    fixture.componentRef.setInput('devices', [DEVICE]);
+    fixture.componentRef.setInput('devices', [DEVICE, OTHER_DEVICE]);
     await fixture.whenStable();
 
     (
@@ -129,7 +161,7 @@ describe('AccountTrustedDevicesPanel', () => {
   });
 
   it('should close the confirmation once the revoke-all write settles', async () => {
-    fixture.componentRef.setInput('devices', [DEVICE]);
+    fixture.componentRef.setInput('devices', [DEVICE, OTHER_DEVICE]);
     fixture.componentRef.setInput('revokingAll', true);
     await fixture.whenStable();
 

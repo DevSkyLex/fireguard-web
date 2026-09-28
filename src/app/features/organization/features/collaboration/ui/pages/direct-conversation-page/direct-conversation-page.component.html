@@ -11,6 +11,8 @@
       data-testid="direct-conversation-back"
       i18n-aria-label="@@messages.conversation.back"
       aria-label="Back to conversations"
+      hlmTooltip="Back to conversations"
+      i18n-hlmTooltip="@@messages.conversation.back"
       [routerLink]="messagesRouteBase()"
     >
       <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
@@ -21,8 +23,9 @@
         <img hlmAvatarImage [src]="avatarUrl" alt="" />
       }
       <span hlmAvatarFallback class="text-[10px]">
-        {{ isCounterpartResolved() ? counterpartName().charAt(0) : '?' }}
+        {{ isCounterpartResolved() ? getOrganizationInitials(counterpartName()) : '?' }}
       </span>
+      <app-member-presence-indicator [status]="counterpartPresence()" />
     </hlm-avatar>
 
     <span
@@ -36,7 +39,15 @@
   </header>
 }
 
+@if (isMobileInteractionMode() && counterpartPresence()) {
+  <div class="px-4 py-2 text-xs text-muted-foreground">
+    <app-member-presence-indicator [status]="counterpartPresence()" [showLabel]="true" />
+  </div>
+}
+
 <app-message-thread
+  [presences]="presences()"
+  [typingLabel]="typingLabel()"
   [messages]="messages()"
   [loading]="thread.isLoading()"
   [hasMore]="thread.hasMore()"
@@ -62,6 +73,7 @@
     [placeholder]="composerPlaceholder()"
     [members]="mentionCandidates()"
     (sent)="send($event)"
+    (typingActivity)="onTypingActivity($event)"
   />
 </app-message-thread>
 

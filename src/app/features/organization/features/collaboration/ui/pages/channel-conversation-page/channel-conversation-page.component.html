@@ -1,5 +1,5 @@
 <header
-  class="flex h-12 shrink-0 items-center gap-1 border-b px-2 sm:gap-2 sm:px-4 mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:justify-end"
+  class="flex h-12 shrink-0 items-center gap-1 border-b px-2 mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:justify-end desktop-ui:gap-2 desktop-ui:px-4"
   data-testid="channel-conversation-header"
 >
   @if (!isMobileInteractionMode()) {
@@ -11,6 +11,8 @@
       data-testid="channel-conversation-back"
       i18n-aria-label="@@channels.room.back"
       aria-label="Back to channels"
+      hlmTooltip="Back to channels"
+      i18n-hlmTooltip="@@channels.room.back"
       [routerLink]="['..']"
     >
       <ng-icon name="lucideArrowLeft" class="text-base" aria-hidden="true" />
@@ -22,8 +24,18 @@
       [attr.title]="channelName()"
       >{{ channelName() }}</span
     >
+    @if (channel()?.isArchived) {
+      <span hlmBadge variant="secondary" class="shrink-0" i18n="@@channels.room.archived"
+        >Archived</span
+      >
+    }
   }
   @if (isMobileInteractionMode()) {
+    @if (channel()?.isArchived) {
+      <span hlmBadge variant="secondary" class="mr-auto shrink-0" i18n="@@channels.room.archived"
+        >Archived</span
+      >
+    }
     <hlm-drawer (closed)="onMobileActionsClosed($event)">
       <button
         hlmBtn
@@ -156,21 +168,24 @@
         @for (participant of participantAvatars(); track participant.memberId) {
           <hlm-avatar
             size="sm"
-            [attr.title]="participant.displayName"
+            [hlmTooltip]="participant.displayName"
             data-testid="channel-header-avatar"
           >
             @if (participant.avatarUrl; as url) {
               <img hlmAvatarImage [src]="url" alt="" />
             }
             <span hlmAvatarFallback class="text-[10px]">{{ participant.initials }}</span>
+            <app-member-presence-indicator [status]="presences()[participant.memberId] ?? null" />
           </hlm-avatar>
         } @empty {
           <ng-icon name="lucideUsers" class="text-base" />
         }
+        @if (participantCount() > 3) {
+          <hlm-avatar-group-count class="size-6 text-[10px]"
+            >+{{ participantCount() - 3 }}</hlm-avatar-group-count
+          >
+        }
       </span>
-      @if (participantCount() > 3) {
-        <span class="text-xs tabular-nums" aria-hidden="true">+{{ participantCount() - 3 }}</span>
-      }
     </button>
 
     <button
@@ -181,6 +196,7 @@
       class="shrink-0 mobile-ui:size-11"
       data-testid="channel-conversation-favorite"
       [attr.aria-label]="isFavorite() ? favoriteOnLabel : favoriteOffLabel"
+      [hlmTooltip]="isFavorite() ? favoriteOnLabel : favoriteOffLabel"
       [attr.aria-pressed]="isFavorite()"
       [attr.aria-busy]="favoritePending() ? 'true' : null"
       [disabled]="favoritePending()"
@@ -210,6 +226,8 @@
       align="end"
       i18n-aria-label="@@channels.room.actionsAria"
       aria-label="Channel actions"
+      hlmTooltip="Channel actions"
+      i18n-hlmTooltip="@@channels.room.actionsAria"
     >
       <ng-icon name="lucideEllipsisVertical" class="text-base" aria-hidden="true" />
     </button>
@@ -270,6 +288,8 @@
 </header>
 
 <app-message-thread
+  [presences]="presences()"
+  [typingLabel]="typingLabel()"
   [messages]="messages()"
   [loading]="thread.isLoading()"
   [hasMore]="thread.hasMore()"
@@ -295,6 +315,7 @@
     [placeholder]="composerPlaceholder()"
     [members]="mentionCandidates()"
     (sent)="send($event)"
+    (typingActivity)="onTypingActivity($event)"
   />
 </app-message-thread>
 
@@ -309,6 +330,7 @@
 />
 
 <app-channel-participants-sheet
+  [presences]="presences()"
   [visible]="participantsSheetVisible()"
   [participants]="participantViews()"
   [candidates]="addableMembers()"
@@ -329,6 +351,7 @@
 />
 
 <app-channel-info-sheet
+  [presences]="presences()"
   [visible]="infoSheetVisible()"
   [channelName]="channelName()"
   [participants]="participantViews()"

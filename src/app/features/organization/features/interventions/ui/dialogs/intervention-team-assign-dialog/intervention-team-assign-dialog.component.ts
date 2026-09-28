@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { MemberSelectOption, TeamOutput } from '@features/organization/models';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDialogImports } from '@shared/ui/dialog';
@@ -47,6 +48,7 @@ import { HlmRadioGroupImports } from '@shared/ui/radio-group';
   imports: [
     ...HlmAvatarImports,
     ...HlmEmptyImports,
+    ResourceIllustration,
     HlmButton,
     ...HlmDialogImports,
     ...HlmRadioGroupImports,

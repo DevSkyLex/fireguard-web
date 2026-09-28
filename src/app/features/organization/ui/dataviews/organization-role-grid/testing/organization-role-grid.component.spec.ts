@@ -1,10 +1,18 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { LOCALE_ID, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   OrganizationRoleOutput,
   OrganizationRolePermissionEntry,
 } from '@features/organization/models';
 import { OrganizationRoleGrid } from '../organization-role-grid.component';
+
+/** Applied-light theme stub, satisfying `StateIllustration`/`ResourceIllustration` without a real `ThemeService`. */
+const THEME_PORT_STUB = {
+  theme: signal('system'),
+  resolvedTheme: signal('light'),
+  setTheme: vi.fn(),
+} satisfies ThemePort;
 
 /** One permission entry, as the API embeds it inside a role's `permissions` list. */
 function permission(name: string): OrganizationRolePermissionEntry {
@@ -57,7 +65,12 @@ describe('OrganizationRoleGrid', () => {
   };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: THEME_PORT, useValue: THEME_PORT_STUB },
+      ],
+    });
 
     fixture = TestBed.createComponent(OrganizationRoleGrid);
   });
@@ -94,7 +107,7 @@ describe('OrganizationRoleGrid', () => {
     ).toHaveLength(1);
   });
 
-  it('should preview permission groups, capping at 3 with a +N badge, in first-seen order', async () => {
+  it('should preview every permission group, uncapped, in first-seen order', async () => {
     await render([
       role({
         permissions: [
@@ -114,10 +127,10 @@ describe('OrganizationRoleGrid', () => {
       (element: Element): string => (element.textContent ?? '').trim(),
     );
 
-    expect(labels).toEqual(['Dashboard', 'Events', 'Members', '+2']);
+    expect(labels).toEqual(['Dashboard', 'Events', 'Members', 'Roles', 'Facilities']);
   });
 
-  it('should dedupe repeated groups before capping the badge preview', async () => {
+  it('should dedupe repeated groups in the badge preview', async () => {
     await render([
       role({
         permissions: [
@@ -181,6 +194,32 @@ describe('OrganizationRoleGrid', () => {
     ).toContain('5 members');
   });
 
+  it('should show the real zero count, not a hardcoded one, in a locale where zero takes the singular form', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: LOCALE_ID, useValue: 'fr' },
+        { provide: THEME_PORT, useValue: THEME_PORT_STUB },
+      ],
+    });
+    fixture = TestBed.createComponent(OrganizationRoleGrid);
+
+    await render([role({ permissions: [], memberCount: 0 })]);
+
+    const permissionCount: string | undefined = root().querySelector(
+      '.text-sm.text-muted-foreground.tabular-nums',
+    )?.textContent;
+    expect(permissionCount).toContain('0 permission');
+    expect(permissionCount).not.toContain('1 permission');
+
+    const memberCount: string | undefined = root().querySelector(
+      '[data-testid="organization-role-grid-card-member-count"]',
+    )?.textContent;
+    expect(memberCount).toContain('0 member');
+    expect(memberCount).not.toContain('1 member');
+  });
+
   it('should say so plainly when there are no roles at all', async () => {
     await render([]);
 
@@ -189,7 +228,7 @@ describe('OrganizationRoleGrid', () => {
     expect(root().textContent).toContain('No roles found.');
   });
 
-  it('should show a button-less custom empty-state only when custom roles are manageable', async () => {
+  it('should offer a New role action from the empty custom-roles state to a manager', async () => {
     await render([role({ id: 'role-1', isSystem: true, name: 'Owner' })], { canManage: true });
 
     const emptyState: HTMLElement | null = root().querySelector(
@@ -198,13 +237,31 @@ describe('OrganizationRoleGrid', () => {
 
     expect(emptyState).not.toBeNull();
     expect(emptyState?.textContent).toContain('No custom roles yet');
-    expect(emptyState?.querySelector('button')).toBeNull();
+    expect(root().querySelector('[data-testid="organization-role-grid-create"]')).not.toBeNull();
   });
 
-  it('should show no custom empty-state when the caller cannot manage roles', async () => {
+  it('should emit createRequested when the empty-state New role action is activated', async () => {
+    const emitted: void[] = [];
+    fixture.componentInstance.createRequested.subscribe(() => emitted.push(undefined));
+
+    await render([role({ id: 'role-1', isSystem: true, name: 'Owner' })], { canManage: true });
+    root()
+      .querySelector<HTMLButtonElement>('[data-testid="organization-role-grid-create"]')
+      ?.click();
+
+    expect(emitted).toHaveLength(1);
+  });
+
+  it('should show a neutral explanation and no action for a read-only viewer', async () => {
     await render([role({ id: 'role-1', isSystem: true, name: 'Owner' })], { canManage: false });
 
-    expect(root().querySelector('[data-slot="empty"]:not([role="alert"])')).toBeNull();
+    const emptyState: HTMLElement | null = root().querySelector(
+      '[data-slot="empty"]:not([role="alert"])',
+    );
+
+    expect(emptyState).not.toBeNull();
+    expect(emptyState?.textContent).toContain('This organization uses built-in roles only.');
+    expect(emptyState?.querySelector('button')).toBeNull();
   });
 
   it('should draw skeleton cards while loading, and no data cards or sections', async () => {

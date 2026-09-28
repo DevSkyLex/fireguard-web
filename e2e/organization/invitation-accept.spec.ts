@@ -10,6 +10,7 @@ import {
   expectNoHorizontalOverflow,
   setDarkTheme,
 } from '../support/helpers/appearance';
+import { pagePolishScreenshotDir } from '../support/helpers/screenshot-dir';
 import { ApiMock } from '../support/mocks/api-mock';
 import { OrganizationInvitationAcceptPage } from '../support/pages/organization-invitation-accept.page';
 
@@ -177,5 +178,47 @@ test.describe('Invitation accept appearance', () => {
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/invitation-accept-pending-dark-mobile.png` });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+  });
+});
+
+test.describe('visual evidence', () => {
+  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
+
+  test('renders the pending card à 375px en mode sombre', async ({
+    page,
+    context,
+    baseURL,
+  }, testInfo) => {
+    await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    await page.setViewportSize({ width: 375, height: 812 });
+    const api = new ApiMock(page);
+    await api.mockUnauthenticatedSession();
+    await api.mockInvitationPreview(E2E_INVITATION_TOKEN, invitationPreviewOutput());
+    const invitationAccept = new OrganizationInvitationAcceptPage(page);
+
+    await invitationAccept.goto(E2E_INVITATION_TOKEN);
+
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(invitationAccept.card).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/invitation-accept-375-dark.png`,
+    });
+  });
+
+  test('renders the pending card à 1280px en mode clair', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const api = new ApiMock(page);
+    await api.mockUnauthenticatedSession();
+    await api.mockInvitationPreview(E2E_INVITATION_TOKEN, invitationPreviewOutput());
+    const invitationAccept = new OrganizationInvitationAcceptPage(page);
+
+    await invitationAccept.goto(E2E_INVITATION_TOKEN);
+
+    await expect(invitationAccept.card).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `${pagePolishScreenshotDir(testInfo.project.name)}/invitation-accept-1280-light.png`,
+    });
   });
 });

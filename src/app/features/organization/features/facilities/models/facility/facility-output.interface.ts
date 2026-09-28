@@ -237,6 +237,22 @@ export interface FacilityOutput extends HydraItem {
   readonly path: ReadonlyArray<FacilityPathSegment>;
 
   /**
+   * Property equipmentCount
+   * @readonly
+   *
+   * @description
+   * Count of active equipment attached to this facility. The list, children
+   * and descendants reads set it themselves server-side
+   * (`ListFacilitiesProvider`, `ListFacilityChildrenProvider`,
+   * `ListFacilityDescendantsProvider`); only the detail read routes it
+   * through `FacilityDetailOutputFactory`. `0` only on the canonical
+   * `/api/facilities` collection read, which does not compute it.
+   *
+   * @type {number}
+   */
+  readonly equipmentCount: number;
+
+  /**
    * Property createdAt
    * @readonly
    *

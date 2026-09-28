@@ -1,10 +1,14 @@
 <form novalidate (submit)="submit($event)" class="flex min-h-0 flex-1 flex-col">
   <hlm-field-group class="min-h-0 flex-1 overflow-y-auto px-4">
     @if (serverMessages().length > 0) {
-      <div role="alert" data-testid="facility-create-error" class="text-sm text-destructive">
-        @for (message of serverMessages(); track message) {
-          <p>{{ message }}</p>
-        }
+      <div hlmAlert variant="destructive" data-testid="facility-create-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <h2 hlmAlertTitle>{{ errorTitle }}</h2>
+        <div hlmAlertDescription>
+          @for (message of serverMessages(); track message) {
+            <p>{{ message }}</p>
+          }
+        </div>
       </div>
     }
 

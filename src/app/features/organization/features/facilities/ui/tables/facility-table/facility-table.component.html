@@ -65,6 +65,23 @@
           <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
         </button>
       </th>
+      <th hlmTableHead scope="col" class="text-right">
+        <span i18n="@@facility.list.columnEquipment">Equipment</span>
+      </th>
+      <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('updatedAt')">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="-ms-2 h-8 px-2 mobile-ui:min-h-11"
+          data-testid="facility-table-sort-updated"
+          (click)="sortChanged.emit('updatedAt')"
+        >
+          <span i18n="@@facility.list.columnUpdated">Updated</span>
+          <ng-icon [name]="sortIcon('updatedAt')" aria-hidden="true" />
+        </button>
+      </th>
       <th hlmTableHead scope="col" class="w-[52px]">
         <span class="sr-only" i18n="@@facility.list.columnActions">Actions</span>
       </th>
@@ -74,12 +91,12 @@
   <ng-container surfaceRows>
     @for (item of items(); track item.id) {
       <tr hlmTableRow data-testid="facility-table-row">
-        <td hlmTableCell>
+        <td hlmTableCell class="whitespace-normal">
           <a
-            class="inline-flex max-w-56 items-center gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
+            class="inline-flex items-start gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
             [routerLink]="[...detailRouteBase(), item.id]"
           >
-            <span class="truncate">{{ item.name }}</span>
+            <span class="break-words">{{ item.name }}</span>
             @if (item.hasChildren) {
               <ng-icon
                 name="lucideNetwork"
@@ -89,6 +106,9 @@
               />
             }
           </a>
+          @if (item.address; as address) {
+            <span class="block text-sm text-muted-foreground">{{ address }}</span>
+          }
         </td>
 
         <td hlmTableCell class="text-muted-foreground">{{ typeLabelOf(item.type) }}</td>
@@ -105,6 +125,14 @@
           <app-facility-status-tag [value]="item.status" />
         </td>
 
+        <td hlmTableCell class="text-right tabular-nums">{{ item.equipmentCount }}</td>
+
+        <td hlmTableCell class="text-muted-foreground tabular-nums">
+          <time [attr.datetime]="item.updatedAt">{{
+            item.updatedAt | appOrgDate: 'date' : regionalFormatting()
+          }}</time>
+        </td>
+
         <td hlmTableCell class="text-right">
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </td>
@@ -113,43 +141,48 @@
   </ng-container>
 
   <ng-container surfaceCards>
-    @for (item of items(); track item.id) {
-      <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3 mobile-ui:gap-2 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:p-4"
-        data-testid="facility-table-card"
-      >
-        <div class="flex items-start gap-2">
-          <a
-            class="flex min-w-0 flex-1 items-start gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
-            [routerLink]="[...detailRouteBase(), item.id]"
-          >
-            <span class="text-base leading-snug break-words">{{ item.name }}</span>
-            @if (item.hasChildren) {
-              <ng-icon
-                name="lucideNetwork"
-                class="mt-0.5 shrink-0 text-muted-foreground"
-                i18n-aria-label="@@facility.list.hasChildrenLabel"
-                aria-label="Has sub-facilities"
-              />
-            }
-          </a>
+    <div hlmItemGroup class="gap-0">
+      @for (item of items(); track item.id; let first = $first) {
+        @if (!first) {
+          <hlm-item-separator class="my-0" />
+        }
+        <div hlmItem size="sm" data-testid="facility-table-card">
+          <hlm-item-content class="min-w-0 gap-1">
+            <div class="flex items-start gap-2">
+              <a
+                class="flex min-w-0 flex-1 items-start gap-1.5 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
+                [routerLink]="[...detailRouteBase(), item.id]"
+              >
+                <span hlmItemTitle class="text-base leading-snug break-words">{{ item.name }}</span>
+                @if (item.hasChildren) {
+                  <ng-icon
+                    name="lucideNetwork"
+                    class="mt-0.5 shrink-0 text-muted-foreground"
+                    i18n-aria-label="@@facility.list.hasChildrenLabel"
+                    aria-label="Has sub-facilities"
+                  />
+                }
+              </a>
 
-          <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
-        </div>
+              <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
+            </div>
 
-        <p class="text-sm text-muted-foreground">{{ typeLabelOf(item.type) }}</p>
-        <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <app-facility-status-tag [value]="item.status" />
-          <span class="break-words tabular-nums">
-            @if (item.code; as code) {
-              {{ code }}
-            } @else {
-              <span aria-hidden="true">—</span>
-            }
-          </span>
+            <p hlmItemDescription class="truncate">
+              {{ typeLabelOf(item.type) }}
+              @if (item.address; as address) {
+                · {{ address }}
+              }
+            </p>
+            <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <app-facility-status-tag [value]="item.status" />
+              @if (item.code; as code) {
+                <span class="break-words tabular-nums">{{ code }}</span>
+              }
+            </div>
+          </hlm-item-content>
         </div>
-      </div>
-    }
+      }
+    </div>
   </ng-container>
 
   <p
@@ -171,6 +204,8 @@
     class="mobile-ui:size-11"
     data-testid="facility-table-row-menu"
     [hlmDropdownMenuTrigger]="rowMenu"
+    hlmTooltip="Open menu"
+    i18n-hlmTooltip="@@facility.list.rowMenu"
   >
     <ng-icon name="lucideEllipsis" aria-hidden="true" />
     <span class="sr-only" i18n="@@facility.list.rowMenu">Open menu</span>

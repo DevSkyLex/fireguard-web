@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  LOCALE_ID,
   PLATFORM_ID,
   computed,
   effect,
@@ -36,10 +37,9 @@ import {
   lucideFlag,
   lucideLayoutTemplate,
   lucideList,
-  lucideLock,
+  lucideListChecks,
   lucideMapPin,
   lucidePlus,
-  lucideSearch,
   lucideSlidersHorizontal,
   lucideTag,
   lucideTimer,
@@ -126,6 +126,7 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import { DashboardPanelRegistry } from '@layouts/dashboard-layout';
 import {
   Board,
   BoardCardDirective,
@@ -147,10 +148,20 @@ import {
   type CollectionFilterOperatorChangedEvent,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
-import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
+import { CollectionSkeletonCards } from '@shared/collection-surface';
+import {
+  CollectionSearchBox,
+  CollectionSelectionBar,
+  CollectionToolbar,
+  type CollectionSelectionAction,
+  type CollectionSelectionCommand,
+} from '@shared/collection-toolbar';
 import { GateReasonDirective } from '@shared/gate-reason';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { formatRelativeDays } from '@shared/relative-time';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -163,6 +174,7 @@ import { HlmItemImports } from '@shared/ui/item';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSeparatorImports } from '@shared/ui/separator';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggle } from '@shared/ui/toggle';
@@ -191,6 +203,7 @@ import { InterventionRecurrenceSheet } from '../../sheets/intervention-recurrenc
 import { InterventionRecurrenceTable } from '../../tables/intervention-recurrence-table';
 import {
   INTERVENTION_TABLE_COLUMNS,
+  INTERVENTION_TABLE_DEFAULT_HIDDEN_COLUMNS,
   InterventionTable,
   type InterventionTableColumn,
   type InterventionTransitionRequest,
@@ -402,18 +415,21 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
 @Component({
   selector: 'app-interventions-page',
   imports: [
+    ...HlmAlertImports,
     HlmAvatarImports,
     NgTemplateOutlet,
     ...HlmDrawerImports,
     NgIcon,
     ...HlmEmptyImports,
     ResourceIllustration,
+    StateIllustration,
     ...HlmItemImports,
     HlmButtonGroup,
     ...HlmTabsImports,
     GateReasonDirective,
     HlmBadge,
     HlmButton,
+    HlmSkeleton,
     HlmSpinner,
     HlmToggle,
     InterventionAssignDialog,
@@ -436,7 +452,9 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
+    CollectionSkeletonCards,
     CollectionSearchBox,
+    CollectionSelectionBar,
     CollectionToolbar,
     ...HlmCheckboxImports,
     ...HlmDropdownMenuImports,
@@ -449,7 +467,6 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
     InterventionBoardStore,
     InterventionRecurrenceStore,
     provideIcons({
-      lucideLock,
       lucideArrowDown,
       lucideArrowUp,
       lucideCalendarClock,
@@ -464,9 +481,9 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
       lucideFlag,
       lucideLayoutTemplate,
       lucideList,
+      lucideListChecks,
       lucideMapPin,
       lucidePlus,
-      lucideSearch,
       lucideSlidersHorizontal,
       lucideTag,
       lucideTrash2,
@@ -656,6 +673,9 @@ export class InterventionsPage {
   /** Whether the app runs in the browser — gates the Calendar's fetch, a dated authenticated read that would immediately refetch after hydration. */
   private readonly platformId: object = inject(PLATFORM_ID);
 
+  /** The active locale, resolving each row's day-granular due label. */
+  private readonly locale: string = inject(LOCALE_ID);
+
   /** Router used to open a created intervention's detail page and to round-trip every `?q=`/filter/`?view=` query param. */
   private readonly router: Router = inject(Router);
 
@@ -700,6 +720,27 @@ export class InterventionsPage {
    * @type {PageTabsService}
    */
   private readonly pageTabsService: PageTabsService = inject(PageTabsService);
+
+  /**
+   * Property calendarView
+   * @readonly
+   * @description Lazily mounted calendar owning the selected-day template and selection signals.
+   * @access private
+   * @since 14.0.0
+   * @type {Signal<InterventionCalendar | undefined>}
+   */
+  private readonly calendarView: Signal<InterventionCalendar | undefined> =
+    viewChild(InterventionCalendar);
+
+  /**
+   * Property panelRegistry
+   * @readonly
+   * @description Shell-scoped registry for the active Calendar tab's day panel.
+   * @access private
+   * @since 14.0.0
+   * @type {DashboardPanelRegistry}
+   */
+  private readonly panelRegistry: DashboardPanelRegistry = inject(DashboardPanelRegistry);
 
   /** The signed-in member, resolving the "my interventions" chip and the List tab's identity gates. */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
@@ -1226,6 +1267,28 @@ export class InterventionsPage {
     this.boardStore.move({ intervention: event.item.intervention, status: event.columnId });
   }
 
+  /**
+   * Method boardColumnCountLabel
+   * @method boardColumnCountLabel
+   *
+   * @description
+   * Names a mobile board column's count badge for screen-reader navigation —
+   * the mobile grid's own count badge, mirroring the shared `Board`
+   * component's `countLabel`.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {BoardColumn<InterventionBoardCardViewModel, InterventionStatus>} column - The counted column.
+   *
+   * @returns {string} The localized accessible name.
+   */
+  protected boardColumnCountLabel(
+    column: BoardColumn<InterventionBoardCardViewModel, InterventionStatus>,
+  ): string {
+    return $localize`:@@intervention.board.columnItemCount:${column.total ?? column.items.length}:count: items in ${column.label}:column:`;
+  }
+
   /** How many pages the whole server-side List collection fills — at least one, so the footer never reads "Page 1 of 0". */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
     Math.max(1, Math.ceil(this.store.totalInterventions() / this.pageSize())),
@@ -1374,6 +1437,70 @@ export class InterventionsPage {
       }
 
       return [...targets];
+    },
+  );
+
+  /**
+   * Property selectionActions
+   * @readonly
+   * @description Current permission- and row-eligible bulk commands for the shared selection bar.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CollectionSelectionAction[]>}
+   */
+  protected readonly selectionActions: Signal<readonly CollectionSelectionAction[]> = computed(
+    () => {
+      const actions: CollectionSelectionAction[] = [];
+      const pending = this.batchPending();
+
+      if (this.canTransition()) {
+        const transitions: CollectionSelectionCommand[] = this.bulkTransitionTargets()
+          .filter((target) => this.transitionableSelectedIds(target).length > 0)
+          .map((target) => ({
+            kind: 'command',
+            id: `transition:${target}`,
+            label: `${this.statusLabelOf(target)} (${this.transitionableSelectedIds(target).length})`,
+            icon: 'lucideFlag',
+            disabled: pending,
+          }));
+        if (transitions.length > 0) {
+          actions.push({
+            kind: 'group',
+            id: 'transitions',
+            label: $localize`:@@intervention.list.bulkMoveToLabel:Move to`,
+            icon: 'lucideFlag',
+            actions: transitions,
+          });
+        }
+      }
+
+      if (this.canAssign() && this.assignableSelectedIds().length > 0) {
+        actions.push({
+          kind: 'command',
+          id: 'assign',
+          label: this.bulkAssignLabel(),
+          icon: 'lucideUserCog',
+          disabled: pending || this.assignDialogBusy(),
+        });
+      }
+
+      if (this.canDelete()) {
+        const deletable = this.deletableSelectedIds().length;
+        actions.push({
+          kind: 'command',
+          id: 'delete',
+          label: this.bulkDeleteLabel(),
+          icon: 'lucideTrash2',
+          disabled: pending || deletable === 0,
+          disabledReason:
+            deletable === 0
+              ? $localize`:@@intervention.list.noSelectedRowsDeletable:No selected intervention can be deleted.`
+              : undefined,
+          destructive: true,
+        });
+      }
+
+      return actions;
     },
   );
 
@@ -1816,6 +1943,17 @@ export class InterventionsPage {
    * @since 1.0.0
    */
   public constructor() {
+    effect((onCleanup): void => {
+      const template =
+        this.activeView() === 'calendar' ? this.calendarView()?.dayPanelTemplate() : undefined;
+      if (!template) return;
+      this.panelRegistry.register(
+        template,
+        $localize`:@@intervention.calendar.selectedDayPanelLabel:Selected day interventions`,
+      );
+      onCleanup(() => this.panelRegistry.clear(template));
+    });
+
     effect(() => {
       const organizationIri = `/api/organizations/${this.organizationId()}`;
       untracked(() => {
@@ -2147,6 +2285,14 @@ export class InterventionsPage {
         return $localize`:@@intervention.list.columnType:Type`;
       case 'site':
         return $localize`:@@intervention.list.columnSite:Site`;
+      case 'responsible':
+        return $localize`:@@intervention.list.columnResponsible:Responsible`;
+      case 'participants':
+        return $localize`:@@intervention.list.columnParticipants:Participants`;
+      case 'start':
+        return $localize`:@@intervention.list.columnStart:Start`;
+      case 'updated':
+        return $localize`:@@intervention.list.columnUpdated:Updated`;
       default:
         return $localize`:@@intervention.list.columnDue:Due`;
     }
@@ -2167,9 +2313,17 @@ export class InterventionsPage {
     this.persistListPreferences();
   }
 
-  /** Narrows the cookie's raw hidden-column ids to the columns this build offers. */
+  /**
+   * Narrows the cookie's raw hidden-column ids to the columns this build
+   * offers. An operator who has never touched the Display popover has no
+   * cookie at all, so this falls back to {@link INTERVENTION_TABLE_DEFAULT_HIDDEN_COLUMNS}
+   * rather than showing every optional column.
+   */
   private restoreHiddenColumns(): ReadonlySet<InterventionTableColumn> {
     const stored: ReadonlySet<string> = this.preferences.readHiddenColumns();
+
+    if (stored.size === 0)
+      return new Set<InterventionTableColumn>(INTERVENTION_TABLE_DEFAULT_HIDDEN_COLUMNS);
 
     return new Set<InterventionTableColumn>(
       INTERVENTION_TABLE_COLUMNS.filter((column) => stored.has(column)),
@@ -2258,6 +2412,31 @@ export class InterventionsPage {
   /** Records the List table's next row selection. */
   protected onSelectionChanged(ids: ReadonlySet<string>): void {
     this.selectedIds.set(ids);
+  }
+
+  /**
+   * Method onSelectionActionRequested
+   * @method onSelectionActionRequested
+   * @description Routes a shared bar command through the existing permission-checked bulk handlers.
+   * @access protected
+   * @since 1.0.0
+   * @param {string} id - Command id emitted after any mobile drawer closes.
+   * @returns {void}
+   */
+  protected onSelectionActionRequested(id: string): void {
+    if (this.activeView() !== 'list' || this.selectedIds().size === 0 || this.batchPending())
+      return;
+    if (id === 'assign') {
+      if (this.canAssign()) this.requestBulkAssign();
+      return;
+    }
+    if (id === 'delete') {
+      if (this.canDelete()) this.requestBulkDelete();
+      return;
+    }
+    if (!this.canTransition()) return;
+    const target = this.bulkTransitionTargets().find((status) => id === `transition:${status}`);
+    if (target) this.confirmBulkTransition(target);
   }
 
   /** Opens the confirm dialog for a single row's Delete entry. */
@@ -2671,6 +2850,13 @@ export class InterventionsPage {
     this.recurrenceStore.update({
       recurrenceId: event.recurrenceId,
       input: { isActive: event.isActive },
+    });
+  }
+
+  /** Re-runs the Recurrences tab's fetch after the table's own load failure. */
+  protected retryRecurrences(): void {
+    this.recurrenceStore.load({
+      organizationIri: `/api/organizations/${this.organizationId()}`,
     });
   }
 
@@ -3241,7 +3427,13 @@ export class InterventionsPage {
       intervention,
       isOverdue,
       isDueSoon,
+      dueRelativeLabel: intervention.dueAt
+        ? formatRelativeDays(intervention.dueAt, new Date().toISOString(), this.locale)
+        : null,
       siteName: intervention.site ? (this.siteDisplayMap().get(intervention.site) ?? null) : null,
+      responsible: intervention.responsible
+        ? (this.memberDisplayMap().get(intervention.responsible) ?? null)
+        : null,
       people: memberIris.map((iri: string): MemberAvatar => this.toPerson(iri)),
     };
   }
@@ -3374,22 +3566,4 @@ export class InterventionsPage {
   }
 
   //#endregion
-
-  /**
-   * Method onMobileToolsClosed
-   * @method onMobileToolsClosed
-   * @description Opens an eligible bulk action overlay after the tools drawer has finished closing.
-   * @access protected
-   * @since 1.0.0
-   * @param {unknown} action - The explicit native drawer close result.
-   * @returns {void}
-   */
-  protected onMobileToolsClosed(action: unknown): void {
-    if (this.batchPending()) return;
-
-    if (action === 'assign' && this.canAssign() && this.assignableSelectedIds().length > 0)
-      this.requestBulkAssign();
-    if (action === 'delete' && this.canDelete() && this.deletableSelectedIds().length > 0)
-      this.requestBulkDelete();
-  }
 }

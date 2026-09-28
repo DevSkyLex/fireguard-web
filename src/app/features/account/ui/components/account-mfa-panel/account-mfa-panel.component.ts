@@ -65,7 +65,11 @@ const SECRET_GROUP_SIZE: number = 4;
  * convenience, not the mechanism: the key is printed beside it, so enrollment
  * still works if the image never renders.
  *
- * @version 1.0.0
+ * Renders only the state row and its expanding steps — the section title and
+ * description are the owning page's `<header>`, in the two-column grid every
+ * other security section uses.
+ *
+ * @version 1.1.0
  *
  * @example
  * ```html

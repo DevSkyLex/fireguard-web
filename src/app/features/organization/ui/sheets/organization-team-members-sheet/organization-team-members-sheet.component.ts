@@ -9,7 +9,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideTrash2, lucideUsersRound } from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideTrash2 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
   MemberSelectOption,
@@ -24,13 +24,16 @@ import {
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { OrganizationTeamMemberAddForm } from '../../forms/organization-team-member-add-form';
 
 /**
@@ -92,11 +95,14 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
     HlmAvatarImage,
     HlmBadge,
     HlmButton,
+    ...HlmItemImports,
     HlmSkeleton,
+    ...HlmTooltipImports,
     OrganizationTeamMemberAddForm,
     ...HlmSheetImports,
+    ResourceIllustration,
   ],
-  providers: [provideIcons({ lucideCircleAlert, lucideTrash2, lucideUsersRound })],
+  providers: [provideIcons({ lucideCircleAlert, lucideTrash2 })],
   templateUrl: './organization-team-members-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

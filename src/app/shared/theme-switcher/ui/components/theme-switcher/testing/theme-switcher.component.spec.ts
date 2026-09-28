@@ -98,7 +98,13 @@ describe('ThemeSwitcher', () => {
     expect(document.querySelector('[role="menu"]')?.textContent).not.toContain('Appearance');
   });
 
-  it('should apply the mode the user picked', async () => {
+  it('should apply the mode from the trigger center', async () => {
+    vi.spyOn(trigger(), 'getBoundingClientRect').mockReturnValue({
+      left: 1200,
+      top: 20,
+      width: 32,
+      height: 32,
+    } as DOMRect);
     trigger().click();
     await fixture.whenStable();
 
@@ -108,7 +114,7 @@ describe('ThemeSwitcher', () => {
     items[1].click();
     await fixture.whenStable();
 
-    expect(setTheme).toHaveBeenCalledWith('dark');
+    expect(setTheme).toHaveBeenCalledWith('dark', { x: 1216, y: 36 });
   });
 
   it('should use one native appearance radio group in the mobile interaction mode', async () => {

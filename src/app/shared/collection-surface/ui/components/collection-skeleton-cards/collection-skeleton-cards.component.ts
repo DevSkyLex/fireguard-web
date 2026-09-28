@@ -13,8 +13,10 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * Component CollectionSkeletonCards
  * @class CollectionSkeletonCards
  * @description Shared mobile collection placeholder using the installed Spartan item and skeleton
- * primitives. It renders structure only; the parent announces request state and owns the real data.
- * @version 1.0.0
+ * primitives, one default-variant `hlmItem` per row inside a flat `hlmItemGroup` with separators
+ * rather than a bordered box per row. It renders structure only; the parent announces request
+ * state and owns the real data.
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({

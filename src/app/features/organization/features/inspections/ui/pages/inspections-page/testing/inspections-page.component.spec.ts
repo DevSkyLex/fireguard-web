@@ -32,6 +32,8 @@ import type {
 } from '@features/organization/features/inspections/models';
 import { InspectionStore } from '@features/organization/features/inspections/state';
 import { InspectionCreationOptionsStore } from '@features/organization/features/inspections/state/inspection-creation-options';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { InspectionsPage } from '../inspections-page.component';
 
 const createPage = async (
@@ -139,6 +141,10 @@ describe('InspectionsPage', () => {
           useValue: { getCookie: vi.fn().mockReturnValue(null), setCookie: vi.fn() },
         },
         { provide: ActivatedRoute, useValue: {} },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
       ],
     });
 
@@ -367,7 +373,7 @@ describe('InspectionsPage', () => {
     inspectionList.set([]);
     fixture = await createPage();
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No inspections found');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No inspections yet');
   });
 
   it('should keep a requested page within bounds', async () => {

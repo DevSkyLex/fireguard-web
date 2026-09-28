@@ -2,7 +2,7 @@ import type {
   FacilityOption,
   FacilityOutput,
 } from '@features/organization/features/facilities/models';
-import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
+import { facilityTypeLabel } from '../facility-type-label/facility-type-label.utils';
 
 /**
  * Function toFacilityOption
@@ -22,8 +22,7 @@ import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilitie
  * @returns {FacilityOption} The picker option.
  */
 export function toFacilityOption(facility: FacilityOutput): FacilityOption {
-  const typeLabel: string =
-    FACILITY_TYPE_OPTIONS.find((option) => option.value === facility.type)?.label ?? '';
+  const typeLabel: string = facilityTypeLabel(facility.type);
   const ancestors: readonly string[] = (facility.path ?? [])
     .filter((segment) => segment.id !== facility.id)
     .map((segment) => segment.name);

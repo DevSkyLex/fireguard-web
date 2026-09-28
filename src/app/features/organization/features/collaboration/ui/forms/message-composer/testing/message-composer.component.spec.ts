@@ -80,7 +80,7 @@ describe('MessageComposer', () => {
     await fixture.whenStable();
 
     const button = sendButton();
-    expect(button?.closest('hlm-input-group-addon')?.getAttribute('data-align')).toBe('block-end');
+    expect(button?.closest('hlm-input-group-addon')?.getAttribute('data-align')).toBe('inline-end');
     expect(button?.textContent?.trim()).toBe('Send message');
     expect(button?.getAttribute('aria-label')).toBe('Send message');
     expect(button?.querySelector('ng-icon')?.getAttribute('aria-hidden')).toBe('true');
@@ -105,6 +105,22 @@ describe('MessageComposer', () => {
 
     expect(sent).toEqual(['Bien reçu.']);
     expect(textarea()?.value).toBe(''); // The send is optimistic, so nothing waits on the server.
+  });
+
+  it('emits only typing activity and stops on blur or send', async () => {
+    const activity: boolean[] = [];
+    fixture.componentInstance.typingActivity.subscribe((active: boolean) => activity.push(active));
+
+    await type('Hello');
+    expect(activity).toEqual([true]);
+
+    textarea()?.dispatchEvent(new Event('blur'));
+    expect(activity.at(-1)).toBe(false);
+
+    await type('Again');
+    sendButton()?.click();
+    await fixture.whenStable();
+    expect(activity.at(-1)).toBe(false);
   });
 
   it('should refuse a body past the length the domain accepts', async () => {

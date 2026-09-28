@@ -67,12 +67,14 @@ import {
   type SetupOrganizationRole,
 } from '@features/organization/setup';
 import { PageHeading } from '@shared/page-heading';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
-import { HlmSpinner } from '@shared/ui/spinner';
+import { HlmMuted } from '@shared/ui/typography';
 
 /**
  * Function redirectToStripe
@@ -127,10 +129,11 @@ export function redirectToStripe(documentRef: Document, url: string): void {
     NgIcon,
     ...HlmAlertImports,
     ...HlmCollapsibleImports,
+    ...HlmEmptyImports,
     ...HlmProgressImports,
     HlmSkeleton,
     HlmButton,
-    HlmSpinner,
+    HlmMuted,
     OnboardingStepRail,
     OnboardingEquipmentForm,
     OnboardingFacilitiesForm,
@@ -138,6 +141,7 @@ export function redirectToStripe(documentRef: Document, url: string): void {
     OnboardingOrganizationForm,
     OnboardingPlanForm,
     PageHeading,
+    ResourceIllustration,
   ],
   providers: [
     provideIcons({ lucideChevronDown }),
@@ -189,6 +193,34 @@ export class OnboardingWizardPage implements OnInit {
       this.store.skipStepCallState().error ??
       this.store.rollbackCallState().error,
   );
+
+  /**
+   * Property lifecycleErrorMessage
+   * @readonly
+   *
+   * @description
+   * A persistent, neutral one-line explanation shown beside "Try again" for
+   * a lifecycle failure — the same wording already used for the transient
+   * toast, kept visible after the toast dismisses. `null` while nothing has
+   * failed.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly lifecycleErrorMessage: Signal<string | null> = computed(() => {
+    if (this.store.startCallState().error || this.store.loadError()) {
+      return $localize`:@@onboarding.wizard.startFailed:Your activation could not be loaded. Try again to continue.`;
+    }
+    if (this.store.skipStepCallState().error) {
+      return $localize`:@@onboarding.wizard.lifecycleFailed:This step could not be updated. Your saved information is still available.`;
+    }
+    if (this.store.rollbackCallState().error) {
+      return $localize`:@@onboarding.wizard.rollbackFailed:The previous step could not be restored. Try again.`;
+    }
+    return null;
+  });
   protected readonly planCatalogCallState: WritableSignal<CallState<void>> =
     signal(idleCallState());
   protected readonly rolesCallState: WritableSignal<CallState<void>> = signal(idleCallState());

@@ -25,11 +25,12 @@ import { PageActionsService } from '@core/page-actions';
 import { PageTabsService } from '@core/page-tabs';
 import {
   errorCallState,
-  successCallState,
   idleCallState,
   pendingCallState,
+  successCallState,
   type CallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { TeamService } from '@features/organization/data-access';
@@ -37,6 +38,8 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import { FacilityCreateForm } from '@features/organization/features/facilities/ui/forms/facility-create-form';
 import {
   InterventionLabelService,
   InterventionOfflineService,
@@ -67,6 +70,7 @@ import {
 } from '@features/organization/features/interventions/state';
 import { InterventionTableQueryStore } from '@features/organization/features/interventions/state/intervention-table-query';
 import { allowedTransitions } from '@features/organization/features/interventions/utils';
+import { MEMBER_PRESENCE_PORT, ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -278,6 +282,7 @@ describe('InterventionDetailPage', () => {
   let updateDetailsCallState: WritableSignal<CallState>;
   let workItemWriteCallState: WritableSignal<CallState>;
   let attachmentWriteCallState: WritableSignal<CallState>;
+  let createFacilityCallState: WritableSignal<CallState<FacilityOutput>>;
   let loadError: WritableSignal<string | null>;
   let loadFailed: WritableSignal<boolean>;
   let hasOlderActivities: WritableSignal<boolean>;
@@ -300,6 +305,9 @@ describe('InterventionDetailPage', () => {
   let setWorkItemStatus: ReturnType<typeof vi.fn>;
   let deleteWorkItems: ReturnType<typeof vi.fn>;
   let createWorkItem: ReturnType<typeof vi.fn>;
+  let createFacility: ReturnType<typeof vi.fn>;
+  let ensureFacilitiesLoaded: ReturnType<typeof vi.fn>;
+  let reloadFacilities: ReturnType<typeof vi.fn>;
   let workspaceDelete: ReturnType<typeof vi.fn>;
   let listDelete: ReturnType<typeof vi.fn>;
   let setPendingDuplicatePrefill: ReturnType<typeof vi.fn>;
@@ -344,6 +352,7 @@ describe('InterventionDetailPage', () => {
     updateDetailsCallState = signal<CallState>(idleCallState());
     workItemWriteCallState = signal<CallState>(idleCallState());
     attachmentWriteCallState = signal<CallState>(idleCallState());
+    createFacilityCallState = signal<CallState<FacilityOutput>>(idleCallState());
     loadError = signal<string | null>(null);
     loadFailed = signal(false);
     hasOlderActivities = signal(false);
@@ -373,6 +382,9 @@ describe('InterventionDetailPage', () => {
     setWorkItemStatus = vi.fn();
     deleteWorkItems = vi.fn();
     createWorkItem = vi.fn();
+    createFacility = vi.fn();
+    ensureFacilitiesLoaded = vi.fn();
+    reloadFacilities = vi.fn();
     workspaceDelete = vi.fn();
     listDelete = vi.fn();
     setPendingDuplicatePrefill = vi.fn();
@@ -394,6 +406,19 @@ describe('InterventionDetailPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganizationId: signal('org-1') },
+        },
         provideZonelessChangeDetection(),
         provideInteractionCapabilities(),
         {
@@ -406,6 +431,14 @@ describe('InterventionDetailPage', () => {
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
         {
           provide: InterventionStore,
@@ -615,6 +648,8 @@ describe('InterventionDetailPage', () => {
               deleteCallState: signal(idleCallState()),
               assignTeamCallState: signal(idleCallState()),
               assignTeam: vi.fn(),
+              createFacilityCallState,
+              createFacility,
               addCommentCallState: signal(idleCallState()),
               attachments,
               queuedAttachments: signal([]),
@@ -697,7 +732,8 @@ describe('InterventionDetailPage', () => {
               inspectionsError: signal(null),
               queryInspections: vi.fn(),
               loadMoreInspections: vi.fn(),
-              ensureFacilitiesLoaded: vi.fn(),
+              ensureFacilitiesLoaded,
+              reloadFacilities,
               ensureEquipmentLoaded: vi.fn(),
               ensureInspectionsLoaded: vi.fn(),
             },
@@ -896,20 +932,33 @@ describe('InterventionDetailPage', () => {
     expect(detail?.classList.contains('md:-mt-6')).toBe(false);
   });
 
-  it('should use the compact rhythm between overview sections', async () => {
+  it('should separate the overview tab into major sections, denser inside each one', async () => {
     fixture = await createPage();
 
     const overview = root().querySelector('#brn-tabs-content-overview > div');
 
-    expect(overview?.classList.contains('gap-4')).toBe(true);
-    expect(overview?.classList.contains('gap-6')).toBe(false);
+    expect(overview?.classList.contains('gap-8')).toBe(true);
+    expect(overview?.classList.contains('gap-4')).toBe(false);
   });
 
-  it('should keep activity metadata out of the properties surface', async () => {
+  it('should keep metadata in the properties rail without a duplicate identity row', async () => {
     fixture = await createPage();
 
+    expect(root().querySelector('[data-testid="intervention-detail-identity"]')).toBeNull();
     expect(byTestId('intervention-detail-meta')).toBeNull();
+    expect(byTestId('intervention-field-revision').textContent).toContain('v');
     expect(byTestId('intervention-detail-about')).toBeNull();
+  });
+
+  describe('the properties rail', () => {
+    it('caps its own height and scrolls internally once it is sticky', async () => {
+      fixture = await createPage();
+
+      const aside: HTMLElement | null = root().querySelector('aside');
+
+      expect(aside?.className).toContain('@4xl/detail:max-h-');
+      expect(aside?.className).toContain('@4xl/detail:overflow-y-auto');
+    });
   });
 
   describe('the phase action', () => {
@@ -954,7 +1003,15 @@ describe('InterventionDetailPage', () => {
       expect(byTestId('intervention-detail-status-band').textContent).not.toContain(
         'Set a due date',
       );
-      expect(root().querySelector('#intervention-command-reason')).toBeNull();
+
+      const reason = root().querySelector('#intervention-command-reason');
+
+      expect(reason?.textContent?.trim()).toBe('Set a due date');
+      expect(
+        (byTestId('intervention-detail-command') as HTMLButtonElement).getAttribute(
+          'aria-describedby',
+        ),
+      ).toBe('intervention-command-reason');
     });
 
     it('should send the operator to the work rather than to a submit they cannot use', async () => {
@@ -1884,7 +1941,10 @@ describe('InterventionDetailPage', () => {
 
       page['onLinkedTabActivated']('facilities');
       await fixture.whenStable();
-      expect(linked.ensureFacilitiesLoaded).toHaveBeenCalledExactlyOnceWith('intervention-1');
+      expect(linked.ensureFacilitiesLoaded).toHaveBeenCalledExactlyOnceWith(
+        'intervention-1',
+        'published',
+      );
       page['onLinkedTabActivated']('equipment');
       await fixture.whenStable();
       expect(linked.ensureEquipmentLoaded).toHaveBeenCalledExactlyOnceWith('intervention-1');
@@ -2096,11 +2156,145 @@ describe('InterventionDetailPage', () => {
     });
   });
 
-  describe('proposed changes', () => {
-    it('should show zero on the changes tab trigger and mount nothing until that tab activates', async () => {
+  describe('adding a facility', () => {
+    it('should offer the affordance while the server advertises mutable work items', async () => {
       fixture = await createPage();
 
-      expect(byTestId('intervention-tab-changes').textContent).toContain('0');
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="intervention-add-facility"]')).not.toBeNull();
+    });
+
+    it('should offer no add affordance once the server stops advertising mutable work items', async () => {
+      current.set(
+        intervention({
+          status: 'in_progress',
+          allowedActions: { ...actionsFor('in_progress'), canMutateWorkItems: false },
+        }),
+      );
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="intervention-add-facility"]')).toBeNull();
+    });
+
+    it('should open the sheet from the Facilities tab CTA', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      (byTestId('intervention-add-facility') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      expect(inBody('intervention-facility-sheet')).not.toBeNull();
+    });
+
+    it('should call the store with the organization and intervention IRIs on submit', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      (byTestId('intervention-add-facility') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      const facilityForm = fixture.debugElement.query(By.directive(FacilityCreateForm))
+        .componentInstance as unknown as { model: WritableSignal<Record<string, string>> };
+      facilityForm.model.set({
+        type: 'building',
+        name: 'Warehouse',
+        parentFacilityId: '',
+        code: '',
+        address: '',
+        latitude: '',
+        longitude: '',
+        levelIndex: '',
+      });
+      await fixture.whenStable();
+      (
+        inBody('intervention-facility-sheet').querySelector('form') as HTMLFormElement
+      ).dispatchEvent(new Event('submit'));
+
+      expect(createFacility).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        input: expect.objectContaining({ type: 'building', name: 'Warehouse' }),
+      });
+    });
+
+    it('should request the draft default recordStatus while the intervention is not published', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+
+      expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('intervention-1', undefined);
+    });
+
+    it('should request the published recordStatus once the intervention is published', async () => {
+      current.set(intervention({ status: 'published' }));
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+
+      expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('intervention-1', 'published');
+    });
+
+    it('should re-fetch with the published recordStatus when the intervention publishes while the tab is already open', async () => {
+      fixture = await createPage();
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      ensureFacilitiesLoaded.mockClear();
+
+      current.set(intervention({ status: 'published' }));
+      await fixture.whenStable();
+
+      expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('intervention-1', 'published');
+    });
+
+    it('should reload the linked facilities with the current recordStatus once a facility is created', async () => {
+      fixture = await createPage();
+      createFacility.mockImplementation(() => {
+        createFacilityCallState.set(successCallState({ id: 'facility-new' } as FacilityOutput));
+      });
+
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      (byTestId('intervention-add-facility') as HTMLButtonElement).click();
+      await fixture.whenStable();
+
+      const facilityForm = fixture.debugElement.query(By.directive(FacilityCreateForm))
+        .componentInstance as unknown as { model: WritableSignal<Record<string, string>> };
+      facilityForm.model.set({
+        type: 'building',
+        name: 'Warehouse',
+        parentFacilityId: '',
+        code: '',
+        address: '',
+        latitude: '',
+        longitude: '',
+        levelIndex: '',
+      });
+      await fixture.whenStable();
+      (
+        inBody('intervention-facility-sheet').querySelector('form') as HTMLFormElement
+      ).dispatchEvent(new Event('submit'));
+      await fixture.whenStable();
+
+      expect(reloadFacilities).toHaveBeenCalledWith('intervention-1', undefined);
+      expect(inBody('intervention-facility-sheet')).toBeNull();
+    });
+  });
+
+  describe('proposed changes', () => {
+    it('should show no badge on the changes tab trigger while nothing is pending, and mount nothing until that tab activates', async () => {
+      fixture = await createPage();
+
+      expect(byTestId('intervention-tab-changes').querySelector('[data-slot="badge"]')).toBeNull();
       expect(root().querySelector('[data-testid="intervention-change-table"]')).toBeNull();
 
       byTestId('intervention-tab-changes').click();
@@ -2136,23 +2330,24 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('linked tabs', () => {
-    it('should render linked resource totals as secondary badges on their triggers', async () => {
+    it('should render a linked resource total as a secondary badge only once it is above zero', async () => {
       fixture = await createPage();
 
-      const expectedCounts: Readonly<Record<string, number>> = {
-        'intervention-tab-changes': 0,
-        'intervention-tab-attachments': 0,
-        'intervention-tab-facilities': 0,
-        'intervention-tab-equipment': 0,
-        'intervention-tab-inspections': 4,
-      };
-
-      for (const [testId, expectedCount] of Object.entries(expectedCounts)) {
-        const badge: HTMLElement | null = byTestId(testId).querySelector('[data-slot="badge"]');
-
-        expect(badge?.getAttribute('data-variant')).toBe('secondary');
-        expect(badge?.textContent?.trim()).toBe(String(expectedCount));
+      for (const testId of [
+        'intervention-tab-changes',
+        'intervention-tab-attachments',
+        'intervention-tab-facilities',
+        'intervention-tab-equipment',
+      ]) {
+        expect(byTestId(testId).querySelector('[data-slot="badge"]')).toBeNull();
       }
+
+      const inspectionsBadge: HTMLElement | null = byTestId(
+        'intervention-tab-inspections',
+      ).querySelector('[data-slot="badge"]');
+
+      expect(inspectionsBadge?.getAttribute('data-variant')).toBe('secondary');
+      expect(inspectionsBadge?.textContent?.trim()).toBe('4');
     });
 
     it('should mount attachments only once its tab activates, and show the total count on the trigger', async () => {
@@ -2859,6 +3054,21 @@ describe('InterventionDetailPage', () => {
         expect.stringContaining('North riser'),
       );
       expect(page['workItemTable']()?.['focusedItemId']()).toBe(matched.id);
+    });
+  });
+
+  describe('the scan control', () => {
+    it('should give the scan trigger a touch-sized target, not the sr-only file input', async () => {
+      vi.spyOn(TestBed.inject(InterventionFieldExecutionService), 'scanSupported').mockReturnValue(
+        true,
+      );
+      current.set(intervention({ status: 'planned' }));
+      fixture = await createPage();
+
+      const scan: HTMLElement = byTestId('intervention-detail-scan');
+
+      expect(scan.className).toContain('mobile-ui:min-h-11');
+      expect(scan.parentElement?.querySelector('input')?.getAttribute('tabindex')).toBe('-1');
     });
   });
 

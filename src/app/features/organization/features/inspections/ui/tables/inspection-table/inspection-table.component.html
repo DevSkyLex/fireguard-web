@@ -23,6 +23,7 @@
           <ng-icon [name]="sortIcon('performedAt')" aria-hidden="true" />
         </button>
       </th>
+      <th hlmTableHead scope="col" i18n="@@inspection.table.colEquipment">Equipment</th>
       <th hlmTableHead scope="col" i18n="@@inspection.table.colInspector">Inspector</th>
       <th hlmTableHead scope="col" [attr.aria-sort]="ariaSort('result')">
         <button
@@ -52,7 +53,7 @@
           <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
         </button>
       </th>
-      <th hlmTableHead scope="col" i18n="@@inspection.table.colNonConformities">
+      <th hlmTableHead scope="col" class="text-right" i18n="@@inspection.table.colNonConformities">
         Non-conformities
       </th>
     </tr>
@@ -65,15 +66,43 @@
           <a
             class="rounded-sm font-medium text-foreground tabular-nums hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             [routerLink]="[...detailRouteBase(), item.id]"
-            >{{ item.performedAt.slice(0, 10) }}</a
+            >{{ item.performedAt | appOrgDate: 'date' : regionalFormatting() }}</a
           >
         </td>
 
-        <td hlmTableCell class="whitespace-normal text-muted-foreground">
-          @if (item.inspector; as inspector) {
-            {{ inspector.displayName }}
+        <td hlmTableCell class="whitespace-normal">
+          @if (equipmentLabelOf(item); as serial) {
+            <span class="font-medium text-foreground">{{ serial }}</span>
+            @if (item.facilityName; as facilityName) {
+              <span class="block text-xs text-muted-foreground">{{ facilityName }}</span>
+            }
           } @else {
-            <span i18n="@@inspection.notSpecified">Not specified</span>
+            <span class="text-muted-foreground" i18n="@@inspection.notSpecified"
+              >Not specified</span
+            >
+          }
+        </td>
+
+        <td hlmTableCell class="whitespace-normal">
+          @if (item.inspector; as inspector) {
+            <div class="flex min-w-0 items-center gap-2">
+              <hlm-avatar size="sm" class="shrink-0">
+                @if (inspectorAvatarUrlOf(item); as avatarUrl) {
+                  <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                }
+                <span hlmAvatarFallback class="text-[10px]">{{ inspectorInitialsOf(item) }}</span>
+              </hlm-avatar>
+              <span class="min-w-0">
+                <span class="block truncate text-foreground">{{ inspector.displayName }}</span>
+                @if (inspector.type === 'external' && inspector.organizationName; as orgName) {
+                  <span class="block truncate text-xs text-muted-foreground">{{ orgName }}</span>
+                }
+              </span>
+            </div>
+          } @else {
+            <span class="text-muted-foreground" i18n="@@inspection.notSpecified"
+              >Not specified</span
+            >
           }
         </td>
 
@@ -85,8 +114,15 @@
           <app-inspection-status-tag kind="status" [value]="item.status" />
         </td>
 
-        <td hlmTableCell class="text-muted-foreground tabular-nums">
-          {{ item.nonConformitiesCount }}
+        <td hlmTableCell class="text-right tabular-nums">
+          @if (item.nonConformitiesCount > 0) {
+            <span class="inline-flex items-center gap-1 text-foreground">
+              <ng-icon name="lucideTriangleAlert" class="text-warning" aria-hidden="true" />
+              {{ item.nonConformitiesCount }}
+            </span>
+          } @else {
+            <span class="text-muted-foreground">0</span>
+          }
         </td>
       </tr>
     }
@@ -101,24 +137,43 @@
         [routerLink]="[...detailRouteBase(), item.id]"
       >
         <span class="text-base leading-snug font-semibold wrap-anywhere">
-          @if (item.inspector; as inspector) {
-            {{ inspector.displayName }}
+          @if (equipmentLabelOf(item); as serial) {
+            {{ serial }}
           } @else {
             <span i18n="@@inspection.table.unnamedInspection">Inspection</span>
           }
+          ·
+          {{ item.performedAt | appOrgDate: 'date' : regionalFormatting() }}
         </span>
-        <span class="text-sm text-muted-foreground tabular-nums">
-          <span i18n="@@inspection.table.colPerformedAt">Performed on</span> ·
-          {{ item.performedAt.slice(0, 10) }}
+
+        <span class="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+          @if (item.inspector; as inspector) {
+            <hlm-avatar size="sm" class="shrink-0">
+              @if (inspectorAvatarUrlOf(item); as avatarUrl) {
+                <img hlmAvatarImage [src]="avatarUrl" alt="" />
+              }
+              <span hlmAvatarFallback class="text-[10px]">{{ inspectorInitialsOf(item) }}</span>
+            </hlm-avatar>
+            <span class="truncate">{{ inspector.displayName }}</span>
+          } @else {
+            <span i18n="@@inspection.notSpecified">Not specified</span>
+          }
         </span>
 
         <span class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <app-inspection-status-tag kind="result" [value]="item.result" asOption />
           <app-inspection-status-tag kind="status" [value]="item.status" asOption />
 
-          <span class="tabular-nums">
-            <span i18n="@@inspection.table.colNonConformities">Non-conformities</span>:
-            {{ item.nonConformitiesCount }}
+          <span class="ms-auto inline-flex items-center gap-1 tabular-nums">
+            <span class="sr-only" i18n="@@inspection.table.colNonConformities"
+              >Non-conformities</span
+            >
+            @if (item.nonConformitiesCount > 0) {
+              <ng-icon name="lucideTriangleAlert" class="text-warning" aria-hidden="true" />
+              <span class="text-foreground">{{ item.nonConformitiesCount }}</span>
+            } @else {
+              0
+            }
           </span>
         </span>
       </a>

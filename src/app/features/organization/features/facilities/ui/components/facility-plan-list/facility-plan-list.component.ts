@@ -1,7 +1,10 @@
+import { formatNumber } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   input,
+  LOCALE_ID,
   output,
   signal,
   type InputSignal,
@@ -11,17 +14,25 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCheck,
+  lucideCircleAlert,
   lucideEllipsisVertical,
   lucideMap,
   lucidePlus,
   lucideTrash2,
 } from '@ng-icons/lucide';
 import type { FacilityAttachmentOutput } from '@features/organization/features/facilities/models';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /** The MIME types the backend accepts for a floor plan, byte for byte. */
 const ACCEPTED_MIME_TYPES: readonly string[] = [
@@ -43,7 +54,7 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
  * (`FacilityPlanDeleteDialog`, `ARCHITECTURE.md` §10.3): this component only
  * requests a delete from the row menu through {@link deleteRequested}.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -52,13 +63,23 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
   imports: [
     NgIcon,
     HlmButton,
+    OrgDatePipe,
+    ...HlmAlertImports,
     ...HlmBadgeImports,
     ...HlmDropdownMenuImports,
     ...HlmItemImports,
     ...HlmSpinnerImports,
+    ...HlmTooltipImports,
   ],
   providers: [
-    provideIcons({ lucideCheck, lucideEllipsisVertical, lucideMap, lucidePlus, lucideTrash2 }),
+    provideIcons({
+      lucideCheck,
+      lucideCircleAlert,
+      lucideEllipsisVertical,
+      lucideMap,
+      lucidePlus,
+      lucideTrash2,
+    }),
   ],
   templateUrl: './facility-plan-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,6 +105,27 @@ export class FacilityPlanList {
 
   /** Id of the plan whose delete write is in flight. */
   public readonly deletingId: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by each row's upload-date `appOrgDate` binding.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+
+  /**
+   * Property showHeading
+   * @readonly
+   * @description Whether to render this list's own "Floor plans" heading. `false` when a caller's own surface already names it — the genuinely empty state's `hlmEmptyTitle`, for one — so the two headings never repeat.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly showHeading: InputSignal<boolean> = input<boolean>(true);
   //#endregion
 
   //#region Outputs
@@ -103,6 +145,9 @@ export class FacilityPlanList {
   //#endregion
 
   //#region Properties
+  /** The application's active locale, for {@link sizeLabelOf}'s locale-aware decimal formatting. */
+  private readonly locale: string = inject<string>(LOCALE_ID);
+
   /** The `accept` attribute, straight from the whitelist. */
   protected readonly acceptedTypes: string = ACCEPTED_MIME_TYPES.join(',');
 
@@ -161,6 +206,25 @@ export class FacilityPlanList {
     if (plan.imageWidth === null || plan.imageHeight === null) return null;
 
     return $localize`:@@facility.plans.dimensions:${plan.imageWidth}:width: × ${plan.imageHeight}:height: px`;
+  }
+
+  /**
+   * Method sizeLabelOf
+   * @description The plan's file size, in the largest whole unit that keeps at least one significant digit — bytes below 1 KB, kilobytes below 1 MB, megabytes above.
+   * @access protected
+   * @since 1.2.0
+   * @param {FacilityAttachmentOutput} plan - The row's plan.
+   * @returns {string} e.g. "2.4 MB", "480 KB", "512 B".
+   */
+  protected sizeLabelOf(plan: FacilityAttachmentOutput): string {
+    if (plan.size >= 1_048_576) {
+      return $localize`:@@facility.plans.sizeMb:${formatNumber(plan.size / 1_048_576, this.locale, '1.1-1')}:size: MB`;
+    }
+    if (plan.size >= 1_024) {
+      return $localize`:@@facility.plans.sizeKb:${Math.round(plan.size / 1_024)}:size: KB`;
+    }
+
+    return $localize`:@@facility.plans.sizeBytes:${plan.size}:size: B`;
   }
 
   /**

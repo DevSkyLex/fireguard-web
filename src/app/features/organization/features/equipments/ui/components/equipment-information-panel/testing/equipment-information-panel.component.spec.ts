@@ -80,6 +80,37 @@ describe('EquipmentInformationPanel', () => {
     expect(byTestId('equipment-field-subtype')?.textContent).toContain('Not specified');
   });
 
+  it('should show "Not recorded" when installedAt and commissionedAt are unset', () => {
+    expect(byTestId('equipment-field-installedAt')?.textContent).toContain('Not recorded');
+    expect(byTestId('equipment-field-commissionedAt')?.textContent).toContain('Not recorded');
+  });
+
+  it('should render installedAt and commissionedAt with the org regional format', async () => {
+    fixture.componentRef.setInput('equipment', {
+      ...EQUIPMENT,
+      installedAt: '2026-03-12T00:00:00Z',
+      commissionedAt: '2026-03-15T00:00:00Z',
+    });
+    await fixture.whenStable();
+
+    expect(byTestId('equipment-field-installedAt')?.textContent).not.toContain('Not recorded');
+    expect(byTestId('equipment-field-commissionedAt')?.textContent).not.toContain('Not recorded');
+  });
+
+  it('should preserve the installed calendar day across organization timezones', async () => {
+    fixture.componentRef.setInput('equipment', {
+      ...EQUIPMENT,
+      installedAt: '2026-03-12T00:00:00Z',
+    });
+    fixture.componentRef.setInput('regionalFormatting', {
+      dateFormat: 'dd/MM/yyyy',
+      timezone: 'America/Los_Angeles',
+    });
+    await fixture.whenStable();
+
+    expect(byTestId('equipment-field-installedAt')?.textContent).toContain('12/03/2026');
+  });
+
   it('should ask the page to open the brand editor', () => {
     byTestId('equipment-field-brand')?.querySelector<HTMLButtonElement>('button')?.click();
 

@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
 import { collectConsoleErrors } from '../support/helpers/appearance';
 import {
+  expectIllustration,
   expectResourceIllustration,
   mockEmptyResources,
 } from '../support/helpers/resource-empty-states';
@@ -80,7 +81,7 @@ test.describe('Illustrated resource empty states', () => {
     await expectResourceIllustration(page, 'equipment', 'dark');
   });
 
-  test('keeps search and filter misses unillustrated without adding a forbidden create action', async ({
+  test('swaps the resource artwork for the miss artwork on search and filter misses without adding a forbidden create action', async ({
     page,
   }) => {
     const api = await mockEmptyResources(page);
@@ -93,13 +94,18 @@ test.describe('Illustrated resource empty states', () => {
     await expect(equipment.newLink).toHaveCount(0);
     await equipment.search.fill('no-such-extinguisher');
     await expect(page.getByTestId('resource-illustration')).toHaveCount(0);
-    await expect(page.getByText('No equipment found', { exact: true })).toBeVisible();
+    await expectIllustration(page, { catalog: 'state', name: 'no-results', theme: 'light' });
+    await expect(
+      page.getByText('No equipment matches these filters', { exact: true }),
+    ).toBeVisible();
     await equipment.search.clear();
     await expectResourceIllustration(page, 'equipment', 'light');
+    await expect(page.getByTestId('state-illustration')).toHaveCount(0);
     await equipment.openFilters();
     await equipment.addFilter('Status');
     await page.getByRole('option', { name: 'Operational', exact: true }).click();
     await expect(page.getByTestId('resource-illustration')).toHaveCount(0);
+    await expectIllustration(page, { catalog: 'state', name: 'no-results', theme: 'light' });
     await expect(equipment.newLink).toHaveCount(0);
   });
 });

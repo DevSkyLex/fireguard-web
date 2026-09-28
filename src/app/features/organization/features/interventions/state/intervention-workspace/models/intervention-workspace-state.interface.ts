@@ -1,4 +1,5 @@
 import type { CallState } from '@core/request-state';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import type {
   InterventionActivityOutput,
   InterventionAttachmentOutput,
@@ -78,6 +79,15 @@ export interface InterventionWorkspaceState {
 
   /** Lifecycle of a work-item creation (`createWorkItem`). */
   readonly createWorkItemCallState: CallState;
+
+  /**
+   * Lifecycle of a facility creation (`createFacility`). A `409` means the
+   * intervention has left the mutable window
+   * (draft/planned/in_progress/changes_requested); both it and any `422`
+   * violation are rendered inline by the facility sheet through this field's
+   * `error`, mirroring {@link assignTeamCallState}.
+   */
+  readonly createFacilityCallState: CallState<FacilityOutput>;
 
   /**
    * Lifecycle of the **last** work-item status write (`setWorkItemStatus`).

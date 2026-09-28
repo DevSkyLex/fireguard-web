@@ -8,6 +8,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
 import type { StoreError } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { ChannelOutput } from '@features/organization/features/collaboration/models';
 import {
   channelsStoreEvents,
@@ -69,6 +70,14 @@ describe('ChannelsPanel', () => {
           useValue: { selectedOrganizationId },
         },
         { provide: ORGANIZATION_MEMBER_ACCESS_PORT, useValue: { permissions } },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
       ],
     });
 

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal, type WritableSignal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmEmptyImports } from '@shared/ui/empty';
 
 /**
@@ -17,7 +18,7 @@ import { HlmEmptyImports } from '@shared/ui/empty';
  */
 @Component({
   selector: 'app-direct-messages-page',
-  imports: [...HlmEmptyImports, RouterOutlet],
+  imports: [...HlmEmptyImports, RouterOutlet, StateIllustration],
   templateUrl: './direct-messages-page.component.html',
   host: { class: 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden' },
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -11,6 +11,7 @@ import {
   lucideChevronRight,
   lucideCircleCheck,
 } from '@ng-icons/lucide';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
@@ -31,6 +32,7 @@ import type { OrganizationDashboardAlertRow } from './models/organization-dashbo
     RouterLink,
     NgIcon,
     HlmSkeleton,
+    StateIllustration,
     ...HlmItemImports,
     ...HlmCardImports,
     ...HlmEmptyImports,

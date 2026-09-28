@@ -69,6 +69,8 @@ describe('MaintenanceSchedulesPage', () => {
   let hasPermission: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let totalSchedules: WritableSignal<number>;
+  let listCallState: WritableSignal<CallState>;
+  let schedules: WritableSignal<readonly MaintenanceScheduleOutput[]>;
   let exportCsv: ReturnType<typeof vi.fn>;
   let feedbackWarn: ReturnType<typeof vi.fn>;
   let feedbackError: ReturnType<typeof vi.fn>;
@@ -96,6 +98,8 @@ describe('MaintenanceSchedulesPage', () => {
     campaignResult = signal<MaintenanceCampaignOutput | null>(null);
     hasPermission = vi.fn().mockReturnValue(true);
     totalSchedules = signal<number>(1);
+    listCallState = signal<CallState>(successCallState(null));
+    schedules = signal<readonly MaintenanceScheduleOutput[]>([schedule]);
     exportCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
     feedbackWarn = vi.fn();
     feedbackError = vi.fn();
@@ -132,9 +136,9 @@ describe('MaintenanceSchedulesPage', () => {
             generateCampaign,
             resetOverrideOperation,
             resetCampaignOperation,
-            schedules: signal<readonly MaintenanceScheduleOutput[]>([schedule]),
+            schedules,
             totalSchedules,
-            listCallState: signal<CallState>(successCallState(null)),
+            listCallState,
             isLoading: signal(false),
             hasListError: signal(false),
             isListForbidden: signal(false),
@@ -517,6 +521,30 @@ describe('MaintenanceSchedulesPage', () => {
       expect(fixture.componentInstance['exportBusy']()).toBe(false);
       expect(feedbackError).toHaveBeenCalledTimes(1);
       expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('empty states', () => {
+    it('should not show the genuinely-empty illustration before the first load has succeeded', async () => {
+      listCallState.set(idleCallState());
+      totalSchedules.set(0);
+      schedules.set([]);
+      fixture = await createPage();
+
+      const root: HTMLElement = fixture.nativeElement as HTMLElement;
+      expect(root.textContent).not.toContain('No maintenance schedules yet');
+      expect(root.querySelector('app-maintenance-schedule-table')).not.toBeNull();
+    });
+
+    it('should show the genuinely-empty illustration once the load succeeds with no schedules', async () => {
+      listCallState.set(successCallState(null));
+      totalSchedules.set(0);
+      schedules.set([]);
+      fixture = await createPage();
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'No maintenance schedules yet',
+      );
     });
   });
 });

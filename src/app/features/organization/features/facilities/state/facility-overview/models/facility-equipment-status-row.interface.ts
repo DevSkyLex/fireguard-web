@@ -17,7 +17,7 @@ export interface FacilityEquipmentStatusRow {
    * Property label
    *
    * @description
-   * Human-readable status label (e.g. "Commissioned").
+   * Human-readable status label (e.g. "Operational").
    *
    * @type {string}
    */
@@ -63,5 +63,29 @@ export interface FacilityEquipmentStatusRow {
    * @type {string}
    */
   readonly colorClass: string;
+
+  /**
+   * Property iconColorClass
+   *
+   * @description
+   * Tailwind text-color token matching {@link colorClass}'s severity, used
+   * on the row's leading glyph so the icon carries the same success/warning/
+   * danger/neutral meaning as the bar it sits beside (status is never
+   * colour-only — the label text stays the primary signal).
+   *
+   * @type {string}
+   */
+  readonly iconColorClass: string;
+
+  /**
+   * Property icon
+   *
+   * @description
+   * The registered lucide icon name matching this status's own tag glyph,
+   * from `resolveEquipmentStatusTag`.
+   *
+   * @type {string}
+   */
+  readonly icon: string;
   //#endregion
 }

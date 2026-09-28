@@ -1,6 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
+  computed,
   input,
   provideZonelessChangeDetection,
   signal,
@@ -23,6 +24,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
@@ -39,11 +41,13 @@ import {
   FacilityPlansStore,
   FacilityStore,
 } from '@features/organization/features/facilities/state';
-import type { InspectionResult } from '@features/organization/features/inspections/models';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
-import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { FacilityDetailPage } from '../facility-detail-page.component';
 
 const inBody = (id: string): HTMLElement | null => document.querySelector(`[data-testid="${id}"]`);
@@ -139,6 +143,9 @@ describe('FacilityDetailPage', () => {
   let overviewLoad: ReturnType<typeof vi.fn>;
   let overviewInterventions: WritableSignal<readonly InterventionOutput[]>;
   let overviewIsLoadingInterventions: WritableSignal<boolean>;
+  let overviewEquipmentCallState: WritableSignal<CallState>;
+  let overviewComplianceRate: WritableSignal<number | null>;
+  let regionalFormatting: WritableSignal<RegionalFormatSettings>;
   let navigate: ReturnType<typeof vi.fn>;
   let setTitle: ReturnType<typeof vi.fn>;
   let selectedFacility: WritableSignal<FacilityOutput | null>;
@@ -215,6 +222,9 @@ describe('FacilityDetailPage', () => {
     overviewLoad = vi.fn();
     overviewInterventions = signal<readonly InterventionOutput[]>([]);
     overviewIsLoadingInterventions = signal<boolean>(false);
+    overviewEquipmentCallState = signal<CallState>(idleCallState());
+    overviewComplianceRate = signal<number | null>(null);
+    regionalFormatting = signal<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
     setTitle = vi.fn();
     selectedFacility = signal<FacilityOutput | null>(facility());
     getError = signal<StoreError | null>(null);
@@ -270,6 +280,14 @@ describe('FacilityDetailPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+        {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: {
             interactionMode: signal('desktop'),
@@ -278,7 +296,7 @@ describe('FacilityDetailPage', () => {
         },
         {
           provide: REGIONAL_FORMATTING_PORT,
-          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+          useValue: { regionalFormatting },
         },
         provideRouter([]),
         {
@@ -295,6 +313,7 @@ describe('FacilityDetailPage', () => {
             updateCallState,
             deleteCallState,
             childFacilitiesByParent: signal({}),
+            loadingParentIds: signal<readonly string[]>([]),
           },
         },
         {
@@ -313,17 +332,33 @@ describe('FacilityDetailPage', () => {
           {
             provide: FacilityOverviewStore,
             useValue: {
-              complianceDisplay: signal('—'),
-              equipmentCount: signal(0),
+              complianceDisplay: computed(() =>
+                overviewComplianceRate() === null ? '—' : `${overviewComplianceRate()}%`,
+              ),
+              complianceRate: overviewComplianceRate,
+              equipmentCount: signal(3),
               equipmentDescription: signal('0 to monitor'),
+              equipment: signal([]),
+              equipmentTotal: signal(0),
+              isEquipmentPreviewPartial: signal(false),
               nextInspectionInDays: signal<number | null>(null),
+              nextInspectionAt: signal<string | null>(null),
               equipmentStatusRows: signal([]),
               recentInspections: signal([]),
+              inspections: signal([]),
+              inspectionsTotal: signal(0),
+              isInspectionsPreviewPartial: signal(false),
               interventions: overviewInterventions,
               isLoadingEquipment: signal(false),
               isLoadingInspections: signal(false),
               isLoadingInterventions: overviewIsLoadingInterventions,
+              equipmentCallState: overviewEquipmentCallState,
+              inspectionsCallState: signal(idleCallState()),
+              interventionsCallState: signal(idleCallState()),
               load: overviewLoad,
+              loadEquipment: vi.fn(),
+              loadInspections: vi.fn(),
+              loadInterventions: vi.fn(),
             },
           },
           {
@@ -402,6 +437,24 @@ describe('FacilityDetailPage', () => {
     expect(root().textContent).toContain('HQ-01');
     expect(root().textContent).toContain('1 Main Street');
     expect(root().querySelector('app-facility-status-tag')).not.toBeNull();
+  });
+
+  describe('key metrics', () => {
+    it('still shows the compliance progress bar at a 0% rate', async () => {
+      overviewComplianceRate.set(0);
+      await createPage();
+
+      expect(byTestId('facility-detail-metrics')?.querySelector('hlm-progress')).not.toBeNull();
+    });
+
+    it('shows an em dash instead of a misleading zero when the equipment load fails', async () => {
+      overviewEquipmentCallState.set(errorCallState({ message: 'Server error' } as StoreError));
+      await createPage();
+
+      const metrics: HTMLElement | null = byTestId('facility-detail-metrics');
+      expect(metrics?.textContent).not.toContain('0 to monitor');
+      expect(metrics?.textContent).toContain('—');
+    });
   });
 
   describe('ancestor breadcrumb', () => {
@@ -791,6 +844,16 @@ describe('FacilityDetailPage', () => {
       await fixture.whenStable();
 
       expect(byTestId('facility-plans-upload')).toBeNull();
+    });
+
+    it('should show a neutral empty description, with no upload instruction, for a read-only member', async () => {
+      hasPermission.mockReturnValue(false);
+      await createPage();
+
+      byTestId('facility-tab-plans')?.dispatchEvent(new MouseEvent('click'));
+      await fixture.whenStable();
+
+      expect(byTestId('facility-plans-empty')?.textContent).not.toContain('Upload an image');
     });
 
     it('should show the plan viewer, and the plan list behind the toolbar picker, once a plan exists', async () => {
@@ -1558,17 +1621,30 @@ describe('FacilityDetailPage', () => {
 
       expect(link?.getAttribute('href')).toBe('/organizations/org-1/interventions?site=facility-1');
     });
-  });
 
-  describe('resultLabelOf', () => {
-    it.each<[InspectionResult, string]>([
-      ['pass', 'Pass'],
-      ['fail', 'Fail'],
-      ['partial', 'Partial'],
-    ])('should localize %s as %s', async (result: InspectionResult, label: string) => {
+    it('reads a date-only due date as written, comparing only "today" through the organization timezone', async () => {
+      const timezone = 'Pacific/Honolulu';
+      const todayInTimezone: string = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+      }).format(new Date());
+      regionalFormatting.set({ dateFormat: 'yyyy-MM-dd', timezone });
+      overviewInterventions.set([intervention({ dueAt: todayInTimezone })]);
       await createPage();
 
-      expect(fixture.componentInstance['resultLabelOf'](result)).toBe(label);
+      const row: HTMLElement | null = byTestId('facility-detail-intervention-row');
+
+      expect(row?.textContent).toContain('today');
+      expect(row?.textContent).not.toContain('yesterday');
+    });
+  });
+
+  describe('equipment status', () => {
+    it('should link "See all" to the equipment list pre-filtered by this facility', async () => {
+      await createPage();
+
+      const link: HTMLElement | null = byTestId('facility-detail-equipment-status-link');
+
+      expect(link?.getAttribute('href')).toBe('/organizations/org-1/assets?facility=facility-1');
     });
   });
 

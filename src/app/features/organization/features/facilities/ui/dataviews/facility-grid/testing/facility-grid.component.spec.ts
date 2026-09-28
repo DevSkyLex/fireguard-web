@@ -98,6 +98,9 @@ describe('FacilityGrid', () => {
   it('should offer neither Archive nor Restore without the write permission', async () => {
     fixture.componentRef.setInput('canWrite', false);
     await render([facility({ status: 'active' })]);
+
+    expect(root().querySelector('[data-testid="facility-grid-card-menu"]')).toBeNull();
+
     await openCardMenu();
 
     expect(document.querySelector('[data-testid="facility-grid-card-archive"]')).toBeNull();

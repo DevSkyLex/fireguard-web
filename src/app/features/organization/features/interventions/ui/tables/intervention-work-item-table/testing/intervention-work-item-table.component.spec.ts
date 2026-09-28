@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   InterventionWorkItemOutput,
   InterventionWorkItemStatusChange,
@@ -69,6 +70,14 @@ describe('InterventionWorkItemTable', () => {
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: { isMobileInteractionMode: signal(false) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
       ],
     });
@@ -463,9 +472,7 @@ describe('InterventionWorkItemTable', () => {
     expect(emptyState?.textContent).toContain(
       'List the tasks to complete during this intervention.',
     );
-    expect(emptyState?.classList.contains('border-dashed')).toBe(true);
-    expect(emptyState?.classList.contains('border-border')).toBe(true);
-    expect(emptyState?.querySelector('ng-icon[name="lucideListChecks"]')).not.toBeNull();
+    expect(emptyState?.querySelector('app-resource-illustration')).not.toBeNull();
     expect(byTestId('intervention-work-items-empty-add')).not.toBeNull();
   });
 

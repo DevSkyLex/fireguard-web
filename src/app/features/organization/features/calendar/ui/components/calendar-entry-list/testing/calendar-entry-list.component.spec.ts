@@ -113,4 +113,87 @@ describe('CalendarEntryList', () => {
     expect(editRequested).toEqual([target]);
     expect(deleteRequested).toEqual([target]);
   });
+
+  it('renders a time range when the entry carries an end time', async () => {
+    await render([item({ startsAt: '2026-08-09T09:00:00Z', endsAt: '2026-08-09T17:00:00Z' })]);
+
+    expect(root().querySelector('[data-testid="calendar-day-item"]')?.textContent).toMatch(
+      /9:00.*5:00/,
+    );
+  });
+
+  it("reads 'Until {date}' on a continuation day of a multi-day entry, not the start time", async () => {
+    await render([
+      item({
+        startsAt: '2026-08-09T09:00:00Z',
+        endsAt: '2026-08-11T17:00:00Z',
+      }),
+    ]);
+    fixture.componentRef.setInput('day', '2026-08-10');
+    await fixture.whenStable();
+
+    const text: string | null | undefined = root().querySelector(
+      '[data-testid="calendar-day-item"]',
+    )?.textContent;
+    expect(text).toContain('Until');
+    expect(text).not.toMatch(/9:00/);
+  });
+
+  it('does not throw when the organization timezone is not one Intl accepts', async () => {
+    await render([item({ startsAt: '2026-08-09T09:00:00Z', endsAt: '2026-08-09T17:00:00Z' })]);
+    fixture.componentRef.setInput('regionalFormatting', {
+      dateFormat: 'yyyy-MM-dd',
+      timezone: 'Not/AZone',
+    });
+
+    await fixture.whenStable();
+    expect(root().querySelector('[data-testid="calendar-day-item"]')?.textContent).toBeTruthy();
+  });
+
+  it('shows the entry description, when set', async () => {
+    await render([item({ description: 'Checked the pressure gauge.' })]);
+
+    expect(root().querySelector('[data-testid="calendar-day-item"]')?.textContent).toContain(
+      'Checked the pressure gauge.',
+    );
+  });
+
+  it('renders no description line when the entry carries none', async () => {
+    await render([item({ description: undefined })]);
+
+    expect(
+      root().querySelectorAll('[data-testid="calendar-day-item"] [hlmItemDescription]'),
+    ).toHaveLength(1);
+  });
+
+  it('resolves the facility name through facilityLabelOf, when the entry carries a facility id', async () => {
+    await render([item({ facilityId: 'facility-1' })]);
+    fixture.componentRef.setInput('facilityLabelOf', (facilityId: string) =>
+      facilityId === 'facility-1' ? 'Building A' : null,
+    );
+    await fixture.whenStable();
+
+    expect(root().querySelector('[data-testid="calendar-day-item"]')?.textContent).toContain(
+      'Building A',
+    );
+  });
+
+  it('links an inspection entry to its detail page, under the given organization', async () => {
+    await render([
+      item({ sourceKey: 'inspection', targetType: 'inspection', targetId: 'insp-42' }),
+    ]);
+
+    const row: HTMLAnchorElement | null = root().querySelector('[data-testid="calendar-day-item"]');
+
+    expect(row?.tagName).toBe('A');
+    expect(row?.getAttribute('href')).toBe('/organizations/org-1/inspections/insp-42');
+  });
+
+  it('renders each source badge with an aria-hidden leading glyph', async () => {
+    await render([item({ sourceKey: 'maintenance' })]);
+
+    const icon: Element | null = root().querySelector('[data-testid="calendar-day-item"] ng-icon');
+
+    expect(icon?.getAttribute('aria-hidden')).toBe('true');
+  });
 });

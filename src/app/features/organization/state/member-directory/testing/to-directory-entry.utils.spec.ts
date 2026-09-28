@@ -57,4 +57,9 @@ describe('toDirectoryEntry', () => {
     expect(entry.avatarUrl).toBeUndefined();
     expect(entry.roleNames).toEqual([]);
   });
+
+  it('should carry the owner flag from the member', () => {
+    expect(toDirectoryEntry(member({ isOwner: true })).isOwner).toBe(true);
+    expect(toDirectoryEntry(member({ isOwner: false })).isOwner).toBe(false);
+  });
 });

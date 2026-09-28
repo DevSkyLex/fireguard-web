@@ -11,19 +11,18 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideArchive,
   lucideArchiveRestore,
-  lucideBuilding2,
+  lucideBox,
   lucideEllipsis,
   lucideNetwork,
 } from '@ng-icons/lucide';
-import type {
-  FacilityOutput,
-  FacilityType,
-} from '@features/organization/features/facilities/models';
-import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { hlm } from '@shared/ui/utils';
+import { facilityTypeLabel } from '../../../utils';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
 
 /** Placeholder cards drawn while the first page loads. */
@@ -58,21 +57,32 @@ const SKELETON_CARDS: ReadonlyArray<number> = [1, 2, 3, 4, 5, 6];
     HlmSkeleton,
     ...HlmCardImports,
     ...HlmDropdownMenuImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
       lucideArchive,
       lucideArchiveRestore,
-      lucideBuilding2,
+      lucideBox,
       lucideEllipsis,
       lucideNetwork,
     }),
   ],
   templateUrl: './facility-grid.component.html',
-  host: { class: 'block w-full' },
+  host: { class: 'block w-full @container' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityGrid {
+  /**
+   * Property hlm
+   * @readonly
+   * @description The Tailwind class-merge helper, exposed for the template's conditional card-title padding.
+   * @access protected
+   * @since 2.2.0
+   * @type {typeof hlm}
+   */
+  protected readonly hlm: typeof hlm = hlm;
+
   //#region Inputs
   /**
    * Property items
@@ -151,13 +161,10 @@ export class FacilityGrid {
    * @access protected
    * @since 1.0.0
    * @param {string} type - The raw type value.
-   * @returns {string} The localized label, or the raw value humanized if unknown.
+   * @returns {string} The localized label, or a localized "Unknown type" fallback.
    */
   protected typeLabelOf(type: string): string {
-    return (
-      FACILITY_TYPE_OPTIONS.find((option) => option.value === (type as FacilityType))?.label ??
-      type.replaceAll('_', ' ')
-    );
+    return facilityTypeLabel(type);
   }
   //#endregion
 }

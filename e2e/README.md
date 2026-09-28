@@ -199,11 +199,49 @@ npm run e2e:ssr         # local API stub + real SSR server on ports 4275/4274
 
 `FG_VISUAL_PASS=inspection|confirmation` selects the scenarios. `FG_VISUAL_RUN` only
 names their durable output directory; naming a run `confirmation` does not select that pass.
-The inspection selects 100 cases, the bounded confirmation 28. Inspection covers all 30 routes
-at 390px light/dark plus eight representative routes in five complementary modes: phone
+The counts are derived from the matrix itself (`e2e/harness/visual-pass.spec.ts`), not
+hand-maintained here, so they cannot drift silently when a route or mode is added — as of this
+writing the inspection pass selects 218 cases, the bounded confirmation 30. Inspection covers
+every route in each `full` mode — `phone-390-light`, `phone-390-dark`, `desktop-1280-light` and
+`phone-375-dark` — plus ten representative routes in the five complementary modes: phone
 375×812/light, phone 458×915/dark, tablet 1024×1366/dark, narrow desktop 375×844/light and
 desktop 1440×1000/dark. Use a distinct run name and
 runner output directory for each authorized run; do not overwrite prior visual evidence.
+
+**WebKit runs the same matrix as Chromium** — `mobile-visual-review.spec.ts` only skips
+Firefox, which is broken in this environment. Each mode's platform emulation
+(`emulateMobilePlatform`) and user agent are chosen per engine: WebKit gets `ios`/`ipad` with
+`devices['iPhone 12']`/`devices['iPad (gen 7)']`/`devices['Desktop Safari']` user agents;
+Chromium keeps its existing `android`/`android-tablet` emulation and user agents. The example
+commands below still pass only `--project=chromium`; add `--project=webkit` to cover both
+engines in one run.
+
+New routes since the 33-route baseline: `facility-detail`, `facility-map`, `facility-3d`,
+`equipment-detail`, `inspection-detail`, `inspection-analytics`, `checklist-detail`,
+`member-profile` and `organization-select`. `equipment-detail` captures its Overview tab only —
+the page has no `?tab=` query support for Attachments/Maintenance/Tags, so a route deep-linking
+into those tabs would silently render the same Overview state. `facility-map` replicates
+(not shares) `facilities-map.spec.ts`'s OpenFreeMap tile/sprite stubs
+(`installOpenFreeMapStubs`, `mobile-visual-mocks.ts`), and `MobileVisualReviewPage` ignores that
+one route's expected blocked-tile console errors specifically, never blanket. `facility-3d`'s
+WebGL scene renders only where the browser supports it; its empty/no-geometry/unsupported
+fallback states are legitimate captures elsewhere. Fixture rows served to the visual workspace
+now also carry fields an upcoming design pass will render but the wire contract does not declare
+yet — `equipmentCount`, `equipmentSerialNumber`/`facilityName`/`checklistName` and `itemCount` —
+added only to the e2e fixture types, never to `src`.
+
+Pages reached through a different shell than the dashboard matrix — `invitation-accept` (public,
+`FocusedLayout`, unauthenticated) and the non-organization areas with their own specs (`auth`
+login/register/mfa-verify, `onboarding` wizard/workspace, `error`, `maintenance`) — are not
+dashboard routes and are not added to `MOBILE_VISUAL_ROUTES`. Instead, each of their existing
+spec files carries a `visual evidence` describe with two render tests, 375px dark and 1280px
+light, screenshotting into `FG_SCREENSHOT_DIR/<project>` (default
+`e2e/artifacts/page-polish/default/<project>`, `pagePolishScreenshotDir`,
+`screenshot-dir.ts`) — namespaced by `testInfo.project.name` so Chromium and WebKit running the
+same test in parallel never overwrite each other's capture — and skipped under Firefox like the
+dashboard matrix. Account's profile/security/notifications/
+organizations pages have no dedicated spec files yet (`e2e/README.md`'s own coverage note) and
+were left out rather than given a new spec file outside this task's scope.
 
 ```powershell
 $env:FG_VISUAL_PASS = 'inspection'

@@ -22,6 +22,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   ORGANIZATION_PERMISSION,
@@ -94,6 +95,14 @@ describe('OrganizationTeamPage', () => {
   async function createPage(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('system'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: {
@@ -220,6 +229,16 @@ describe('OrganizationTeamPage', () => {
     fixture.componentInstance['createRole'](payload);
 
     expect(createRole).toHaveBeenCalledWith({ organizationId: 'org-1', input: payload });
+  });
+
+  it('should open the create dialog from the role grid’s empty-state New role action', async () => {
+    roles.set([role({ isSystem: true, id: 'role-system' })]);
+    await createPage();
+
+    byTestId('organization-role-grid-create')?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['createDialogVisible']()).toBe(true);
   });
 
   it('should close the create dialog once its own mutation resolves, but leave a differently-attributed success alone', async () => {

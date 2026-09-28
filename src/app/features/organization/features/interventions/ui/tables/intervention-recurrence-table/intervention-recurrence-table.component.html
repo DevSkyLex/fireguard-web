@@ -1,5 +1,4 @@
 <app-collection-surface
-  maxHeight="max-h-[50vh]"
   caption="The organization's recurring intervention schedules."
   i18n-caption="@@intervention.recurrences.caption"
   testId="intervention-recurrences-table"
@@ -49,10 +48,13 @@
           {{ templateNameOf(recurrence.template) }}
         </td>
         <td hlmTableCell>
-          {{ recurrence.interval }}× {{ frequencyLabelOf(recurrence.frequency) }}
+          {{ frequencyLabelOf(recurrence.frequency, recurrence.interval) }}
         </td>
         <td hlmTableCell [attr.data-testid]="'intervention-recurrence-next-' + recurrence.id">
-          {{ recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting() }}
+          <ng-container
+            [ngTemplateOutlet]="nextOccurrence"
+            [ngTemplateOutletContext]="{ recurrence }"
+          />
         </td>
         <td hlmTableCell class="text-center">
           <ng-container
@@ -95,10 +97,11 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span>{{ recurrence.interval }}× {{ frequencyLabelOf(recurrence.frequency) }}</span>
-          <span>{{
-            recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting()
-          }}</span>
+          <span>{{ frequencyLabelOf(recurrence.frequency, recurrence.interval) }}</span>
+          <ng-container
+            [ngTemplateOutlet]="nextOccurrence"
+            [ngTemplateOutletContext]="{ recurrence }"
+          />
         </div>
 
         <span class="text-sm wrap-anywhere text-muted-foreground">{{
@@ -121,20 +124,73 @@
       </p>
       <p hlmEmptyDescription>{{ error() ?? '' }}</p>
     </div>
+    <div hlmEmptyContent>
+      <button
+        class="mobile-ui:min-h-11"
+        hlmBtn
+        variant="outline"
+        data-testid="intervention-recurrences-retry"
+        (click)="retryRequested.emit()"
+      >
+        <span i18n="@@common.tryAgain">Try again</span>
+      </button>
+    </div>
   </div>
 
   <div hlmEmpty surfaceEmpty data-testid="intervention-recurrences-empty">
     <div hlmEmptyHeader>
-      <div hlmEmptyMedia variant="icon">
-        <ng-icon name="lucideCalendarClock" aria-hidden="true" />
-      </div>
+      <app-resource-illustration hlmEmptyMedia resource="calendar" />
       <p hlmEmptyTitle i18n="@@intervention.recurrences.empty">No recurrences yet.</p>
       <p hlmEmptyDescription i18n="@@intervention.recurrences.emptyDesc">
         Recurring schedules periodically draft a new intervention from a template.
       </p>
     </div>
+    @if (canWrite()) {
+      <div hlmEmptyContent>
+        <button
+          class="mobile-ui:min-h-11"
+          hlmBtn
+          data-testid="intervention-recurrences-create"
+          (click)="createRequested.emit()"
+        >
+          <span i18n="@@intervention.recurrences.newButton">New recurrence</span>
+        </button>
+      </div>
+    }
   </div>
 </app-collection-surface>
+
+<ng-template #nextOccurrence let-recurrence="recurrence">
+  <div class="flex flex-col gap-0.5">
+    @if (recurrence.isActive) {
+      {{ recurrence.nextOccurrenceAt | appOrgDate: 'datetime' : regionalFormatting() }}
+    } @else {
+      <span class="inline-flex items-center gap-1.5 text-muted-foreground">
+        <ng-icon name="lucidePause" aria-hidden="true" />
+        <span i18n="@@intervention.recurrences.paused">Paused</span>
+      </span>
+    }
+    @if (recurrence.lastMaterializedAt; as lastMaterializedAt) {
+      <span
+        tabindex="0"
+        class="w-fit rounded-sm text-xs text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        [hlmTooltip]="lastMaterializedAt | appOrgDate: 'datetime' : regionalFormatting()"
+      >
+        {{ lastDraftedLabelOf(lastMaterializedAt) }}
+        @if (recurrence.endAt; as endAt) {
+          ·
+          <span i18n="@@intervention.recurrences.until"
+            >until {{ endAt | appOrgDate: 'date' : regionalFormatting() }}</span
+          >
+        }
+      </span>
+    } @else if (recurrence.endAt; as endAt) {
+      <span class="text-xs text-muted-foreground" i18n="@@intervention.recurrences.until"
+        >until {{ endAt | appOrgDate: 'date' : regionalFormatting() }}</span
+      >
+    }
+  </div>
+</ng-template>
 
 <ng-template #activeToggle let-recurrence="recurrence" let-suffix="suffix">
   <span class="inline-flex min-h-11 min-w-11 items-center justify-center">

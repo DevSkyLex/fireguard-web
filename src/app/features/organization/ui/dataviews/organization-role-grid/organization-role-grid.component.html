@@ -1,59 +1,77 @@
-<div class="flex flex-col gap-6" data-testid="organization-role-grid">
+<div class="flex flex-col gap-4" data-testid="organization-role-grid">
   @if (loading()) {
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      @for (card of skeletonCards; track card) {
-        <div hlmCard aria-hidden="true">
-          <div hlmCardHeader>
-            <hlm-skeleton class="h-5 w-32 max-w-full" />
-            <hlm-skeleton class="mt-2 h-4 w-20" />
-          </div>
-          <div hlmCardContent>
-            <hlm-skeleton class="h-4 w-24" />
+    <div hlmItemGroup class="gap-0 rounded-lg border" aria-hidden="true">
+      @for (row of skeletonRows; track row) {
+        @if (!$first) {
+          <hlm-item-separator class="my-0" />
+        }
+        <div hlmItem size="sm">
+          <div hlmItemContent class="gap-2">
+            <hlm-skeleton class="h-4 w-32 max-w-full" />
+            <hlm-skeleton class="h-3 w-48" />
           </div>
         </div>
       }
     </div>
   } @else if (items().length === 0) {
-    <div hlmEmpty>
+    <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideShieldPlus" aria-hidden="true" />
-        </div>
+        <app-resource-illustration hlmEmptyMedia resource="role" />
         <p hlmEmptyTitle i18n="@@org.team.noResults">No roles found.</p>
       </div>
     </div>
   } @else {
     <section class="flex flex-col gap-3">
-      <h2 hlmCardTitle>{{ systemRolesHeading() }}</h2>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <h2 hlmLarge>{{ systemRolesHeading() }}</h2>
+      <div hlmItemGroup class="gap-0 rounded-lg border">
         @for (item of systemItems(); track item.id) {
-          <ng-container *ngTemplateOutlet="roleCard; context: { $implicit: item }" />
+          @if (!$first) {
+            <hlm-item-separator class="my-0" />
+          }
+          <ng-container *ngTemplateOutlet="roleItem; context: { $implicit: item }" />
         }
       </div>
     </section>
 
-    <hlm-separator />
-
     <section class="flex flex-col gap-3">
-      <h2 hlmCardTitle>{{ customRolesHeading() }}</h2>
+      <h2 hlmLarge>{{ customRolesHeading() }}</h2>
       @if (customItems().length === 0) {
-        @if (canManage()) {
-          <div hlmEmpty>
-            <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucideShieldPlus" aria-hidden="true" />
-              </div>
-              <p hlmEmptyTitle i18n="@@org.team.noCustomRolesTitle">No custom roles yet</p>
+        <div hlmEmpty class="border border-border">
+          <div hlmEmptyHeader>
+            <app-resource-illustration hlmEmptyMedia resource="role" />
+            <p hlmEmptyTitle i18n="@@org.team.noCustomRolesTitle">No custom roles yet</p>
+            @if (canManage()) {
               <p hlmEmptyDescription i18n="@@org.team.noCustomRolesDescription">
                 Create a role to grant a tailored set of permissions beyond the built-in roles.
               </p>
-            </div>
+            } @else {
+              <p hlmEmptyDescription i18n="@@org.team.noCustomRolesReadOnlyDescription">
+                This organization uses built-in roles only.
+              </p>
+            }
           </div>
-        }
+          @if (canManage()) {
+            <div hlmEmptyContent>
+              <button
+                hlmBtn
+                variant="outline"
+                class="mobile-ui:min-h-11"
+                data-testid="organization-role-grid-create"
+                (click)="createRequested.emit()"
+              >
+                <ng-icon name="lucidePlus" aria-hidden="true" />
+                <span i18n="@@org.team.createRole">New role</span>
+              </button>
+            </div>
+          }
+        </div>
       } @else {
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div hlmItemGroup class="gap-0 rounded-lg border">
           @for (item of customItems(); track item.id) {
-            <ng-container *ngTemplateOutlet="roleCard; context: { $implicit: item }" />
+            @if (!$first) {
+              <hlm-item-separator class="my-0" />
+            }
+            <ng-container *ngTemplateOutlet="roleItem; context: { $implicit: item }" />
           }
         </div>
       }
@@ -61,84 +79,29 @@
   }
 </div>
 
-<ng-template #roleCard let-item>
-  <div hlmCard data-testid="organization-role-grid-card" class="relative">
-    @if (canManage() && !item.isSystem) {
-      <button
-        hlmBtn
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        class="absolute end-2 top-2 mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
-        data-testid="organization-role-grid-card-menu"
-        [hlmDropdownMenuTrigger]="roleMenu"
-      >
-        <ng-icon name="lucideEllipsis" aria-hidden="true" />
-        <span class="sr-only" i18n="@@org.team.rowMenu">Open menu</span>
-      </button>
-
-      <ng-template #roleMenu>
-        <hlm-dropdown-menu class="w-48">
-          <button
-            class="mobile-ui:min-h-11"
-            hlmDropdownMenuItem
-            data-testid="organization-role-grid-card-edit-permissions"
-            (click)="editPermissionsRequested.emit(item)"
-          >
-            <ng-icon name="lucidePencil" aria-hidden="true" />
-            <span i18n="@@org.team.editPermissions">Edit permissions</span>
-          </button>
-          <button
-            class="mobile-ui:min-h-11"
-            hlmDropdownMenuItem
-            data-testid="organization-role-grid-card-delete"
-            (click)="deleteRequested.emit(item)"
-          >
-            <ng-icon name="lucideTrash2" aria-hidden="true" />
-            <span i18n="@@org.team.delete">Delete</span>
-          </button>
-        </hlm-dropdown-menu>
-      </ng-template>
-    }
-
-    <div hlmCardHeader>
-      <p hlmCardTitle class="flex items-center gap-1.5 pe-8 mobile-ui:flex-wrap mobile-ui:pe-12">
-        <span class="truncate mobile-ui:wrap-anywhere mobile-ui:whitespace-normal">{{
-          item.name
-        }}</span>
+<ng-template #roleItem let-item>
+  <div hlmItem size="sm" data-testid="organization-role-grid-card">
+    <div hlmItemContent class="min-w-0 gap-1.5">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span hlmItemTitle class="line-clamp-none wrap-anywhere">{{ item.name }}</span>
         @if (item.isSystem) {
           <span hlmBadge variant="secondary" class="shrink-0">
             <ng-icon name="lucideShieldCheck" aria-hidden="true" />
             <span i18n="@@org.team.systemBadge">System</span>
           </span>
         }
-      </p>
+      </div>
       @if (item.description; as description) {
-        <p
-          hlmCardDescription
-          class="truncate mobile-ui:pe-12 mobile-ui:wrap-anywhere mobile-ui:whitespace-normal"
-        >
-          {{ description }}
-        </p>
+        <p hlmItemDescription class="line-clamp-2 whitespace-normal">{{ description }}</p>
       }
-    </div>
-    <div hlmCardContent class="flex flex-col gap-2">
       @let groups = permissionGroupsOf(item);
-      @if (groups.shown.length > 0) {
+      @if (groups.length > 0) {
         <div
           class="flex flex-wrap items-center gap-1.5"
           data-testid="organization-role-grid-card-permission-groups"
         >
-          @for (label of groups.shown; track label) {
+          @for (label of groups; track label) {
             <span hlmBadge variant="outline">{{ label }}</span>
-          }
-          @if (groups.remaining > 0) {
-            <span
-              hlmBadge
-              variant="outline"
-              [attr.aria-label]="remainingGroupsLabelOf(groups.remaining)"
-              >+{{ groups.remaining }}</span
-            >
           }
         </div>
       }
@@ -166,5 +129,47 @@
         }
       </div>
     </div>
+
+    @if (canManage() && !item.isSystem) {
+      <div hlmItemActions>
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
+          data-testid="organization-role-grid-card-menu"
+          [hlmDropdownMenuTrigger]="roleMenu"
+          hlmTooltip="Open menu"
+          i18n-hlmTooltip="@@org.team.rowMenu"
+        >
+          <ng-icon name="lucideEllipsis" aria-hidden="true" />
+          <span class="sr-only" i18n="@@org.team.rowMenu">Open menu</span>
+        </button>
+
+        <ng-template #roleMenu>
+          <hlm-dropdown-menu class="w-48">
+            <button
+              class="mobile-ui:min-h-11"
+              hlmDropdownMenuItem
+              data-testid="organization-role-grid-card-edit-permissions"
+              (click)="editPermissionsRequested.emit(item)"
+            >
+              <ng-icon name="lucidePencil" aria-hidden="true" />
+              <span i18n="@@org.team.editPermissions">Edit permissions</span>
+            </button>
+            <button
+              class="mobile-ui:min-h-11"
+              hlmDropdownMenuItem
+              data-testid="organization-role-grid-card-delete"
+              (click)="deleteRequested.emit(item)"
+            >
+              <ng-icon name="lucideTrash2" aria-hidden="true" />
+              <span i18n="@@org.team.delete">Delete</span>
+            </button>
+          </hlm-dropdown-menu>
+        </ng-template>
+      </div>
+    }
   </div>
 </ng-template>

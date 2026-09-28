@@ -8,3 +8,5 @@ export { REGIONAL_FORMATTING_PORT } from './regional-formatting';
 export type { RegionalFormattingPort } from './regional-formatting';
 export { MY_ORGANIZATIONS_PORT } from './my-organizations';
 export type { MyOrganizationsPort } from './my-organizations';
+export { MEMBER_PRESENCE_PORT } from './member-presence';
+export type { MemberPresencePort } from './member-presence';

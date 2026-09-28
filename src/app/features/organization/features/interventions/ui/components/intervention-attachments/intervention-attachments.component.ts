@@ -15,6 +15,8 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCamera,
+  lucideCircleAlert,
+  lucideCloudOff,
   lucideCloudUpload,
   lucideDownload,
   lucideFileText,
@@ -28,11 +30,21 @@ import {
   type InterventionQueuedAttachment,
   type InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { formatRelativeTime } from '@shared/relative-time';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAttachmentImports } from '@shared/ui/attachment';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /**
  * The backend's hard ceiling (`AttachmentConstraints::MAX_SIZE_BYTES`),
@@ -93,9 +105,13 @@ interface AttachmentFileMeta {
  * the pickers close at the ceiling — the alternative is an enabled button
  * that can only ever answer 422. Presentational — the page owns the store
  * calls, the photo compression, and the fetch-then-save that a download
- * requires.
+ * requires. A synced row's description also states when it was added, as a
+ * relative label with the absolute instant in an adjacent tooltip. Loading
+ * renders three attachment-shaped skeleton rows, the load failure and a pick
+ * rejection both render as `hlmAlert variant="destructive"`, and the offline
+ * and offline-queue hints merge into one `hlmAlert`.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @example
  * ```html
@@ -118,15 +134,22 @@ interface AttachmentFileMeta {
   selector: 'app-intervention-attachments',
   imports: [
     NgIcon,
+    OrgDatePipe,
+    ResourceIllustration,
+    ...HlmAlertImports,
     ...HlmEmptyImports,
     HlmButton,
+    HlmSkeleton,
     ...HlmBadgeImports,
     ...HlmAttachmentImports,
     ...HlmSpinnerImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
       lucideCamera,
+      lucideCircleAlert,
+      lucideCloudOff,
       lucideCloudUpload,
       lucideDownload,
       lucideFileText,
@@ -256,6 +279,17 @@ export class InterventionAttachments {
    * @type {InputSignal<boolean>}
    */
   public readonly online: InputSignal<boolean> = input<boolean>(true);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, driving a row's "added" tooltip. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.4.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs
@@ -553,6 +587,18 @@ export class InterventionAttachments {
     const formatted: string = format?.format(Math.max(megabytes, 0.1)) ?? megabytes.toFixed(1);
 
     return `${formatted} MB`;
+  }
+
+  /**
+   * Method uploadedRelativeOf
+   * @description When a synced attachment was added, as a relative label — the absolute instant reads in an adjacent tooltip.
+   * @access protected
+   * @since 1.4.0
+   * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   * @returns {string} A localized relative label.
+   */
+  protected uploadedRelativeOf(attachment: InterventionAttachmentOutput): string {
+    return formatRelativeTime(attachment.uploadedAt, this.locale);
   }
   //#endregion
 }

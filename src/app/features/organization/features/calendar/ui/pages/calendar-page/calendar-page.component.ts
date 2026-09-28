@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -20,16 +20,20 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCalendar,
   lucideCalendar1,
+  lucideCalendarClock,
   lucideCalendarDays,
   lucideCalendarRange,
   lucideChevronDown,
   lucideChevronLeft,
   lucideChevronRight,
   lucideCircleAlert,
-  lucideLock,
+  lucideClipboardCheck,
   lucidePlus,
   lucideRss,
+  lucideTriangleAlert,
+  lucideWrench,
 } from '@ng-icons/lucide';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
@@ -37,7 +41,7 @@ import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, StoreError } from '@core/request-state';
 import { isCallPending } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { SOURCE_TONE } from '@features/organization/features/calendar/constants';
+import { SOURCE_ICON, SOURCE_TONE } from '@features/organization/features/calendar/constants';
 import type {
   CalendarEventOutput,
   CalendarFeedItemOutput,
@@ -49,7 +53,10 @@ import {
   CalendarFeedStore,
   type CalendarFeedStoreType,
 } from '@features/organization/features/calendar/state';
-import { toApiDateTime } from '@features/organization/features/calendar/utils';
+import {
+  calendarSourceLabelOf,
+  toApiDateTime,
+} from '@features/organization/features/calendar/utils';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
@@ -58,6 +65,7 @@ import {
   type OrganizationContextPort,
   type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { DashboardPanelRegistry } from '@layouts/dashboard-layout';
 import {
   Calendar,
   toIsoDay,
@@ -66,13 +74,17 @@ import {
   type CalendarFirstDayOfWeek,
 } from '@shared/calendar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { StateIllustration } from '@shared/state-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmButtonGroup } from '@shared/ui/button-group';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { CalendarEntryList } from '../../components/calendar-entry-list';
 import { CalendarEventDeleteDialog } from '../../dialogs/calendar-event-delete-dialog';
 import {
@@ -103,15 +115,15 @@ type CalendarGranularity = 'month' | 'week' | 'day';
  * Type CalendarPageAgendaGroup
  *
  * @description
- * One day's worth of the agenda the page renders below `md` — the same
- * window the month grid shows above it, grouped by local day since the
- * shrunken grid does not render there (`FEATURE.md`).
+ * One day's entries for the narrow month agenda or the week view. Week
+ * groups also carry a compact heading for the seven-column layout.
  *
  * @since 1.1.0
  */
 type CalendarPageAgendaGroup = {
   readonly day: string;
   readonly label: string;
+  readonly shortLabel?: string;
   readonly items: readonly CalendarFeedItemOutput[];
 };
 
@@ -161,32 +173,41 @@ type CalendarPageAgendaGroup = {
   selector: 'app-calendar-page',
   imports: [
     NgIcon,
+    NgTemplateOutlet,
+    ...HlmAlertImports,
     ...HlmEmptyImports,
+    ...HlmMarkerImports,
+    ...HlmTooltipImports,
     Calendar,
     CalendarEntryList,
     CalendarEventDeleteDialog,
     CalendarEventDialog,
     CalendarFeedSubscribeDialog,
+    HlmBadge,
     HlmButton,
     HlmButtonGroup,
     ...HlmDropdownMenuImports,
     HlmSkeleton,
-    ...HlmCardImports,
     ...HlmTabsImports,
+    StateIllustration,
   ],
   providers: [
     CalendarFeedStore,
     provideIcons({
-      lucideLock,
       lucideChevronLeft,
       lucideChevronRight,
       lucideCircleAlert,
       lucidePlus,
+      lucideCalendar,
       lucideCalendar1,
+      lucideCalendarClock,
       lucideCalendarDays,
       lucideCalendarRange,
       lucideChevronDown,
+      lucideClipboardCheck,
       lucideRss,
+      lucideTriangleAlert,
+      lucideWrench,
     }),
   ],
   templateUrl: './calendar-page.component.html',
@@ -296,6 +317,9 @@ export class CalendarPage {
     ReadonlyArray<{ readonly value: string; readonly label: string }>
   > = signal([]);
 
+  /** Today's local day, resolved once, for the week view's "Today" badge. */
+  protected readonly todayIso: string = toIsoDay(new Date());
+
   /** Whether the create/edit dialog is open. */
   protected readonly eventDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
@@ -372,7 +396,14 @@ export class CalendarPage {
   /** The `aria-live="polite"` announcement text — reflects the last drag-reschedule's outcome. */
   protected readonly moveAnnouncement: WritableSignal<string> = signal<string>('');
 
-  /** Feed items mapped onto the shared calendar's generic chips — only a writable standalone event is flagged draggable. */
+  /**
+   * Property events
+   * @readonly
+   * @description Feed items mapped onto shared calendar chips; only writable standalone events are draggable.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CalendarDisplayEvent[]>}
+   */
   protected readonly events: Signal<readonly CalendarDisplayEvent[]> = computed(() =>
     this.store.items().map((item: CalendarFeedItemOutput): CalendarDisplayEvent => {
       const key: CalendarSourceKey = item.sourceKey;
@@ -380,8 +411,12 @@ export class CalendarPage {
       return {
         id: `${item.sourceKey}:${item.id}`,
         date: item.startsAt,
+        endDate: item.endsAt,
+        allDay: item.allDay,
         label: item.title,
         tone: SOURCE_TONE[key] ?? 'outline',
+        icon: SOURCE_ICON[key],
+        sourceLabel: calendarSourceLabelOf(key),
         draggable: item.sourceKey === 'calendar_event' && this.canWriteEvents(),
       };
     }),
@@ -462,10 +497,8 @@ export class CalendarPage {
    *
    * @description
    * The anchored week's seven days — empty days included, so the week always
-   * reads as a full week — each with its localized heading and its entries,
-   * earliest first. The week starts on {@link firstDayOfWeek}. This is the
-   * week view's whole body: a 7-day agenda list reusing `CalendarEntryList`
-   * rather than an hour-by-column grid (`FEATURE.md` documents the choice).
+   * reads as a full week — each with localized full and compact headings and
+   * its entries, earliest first. The week starts on {@link firstDayOfWeek}.
    *
    * @access protected
    * @since 2.2.0
@@ -483,8 +516,12 @@ export class CalendarPage {
       return {
         day,
         label: new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(date),
+        shortLabel: new Intl.DateTimeFormat(this.locale, {
+          weekday: 'short',
+          day: 'numeric',
+        }).format(date),
         items: items
-          .filter((item: CalendarFeedItemOutput) => toIsoDay(new Date(item.startsAt)) === day)
+          .filter((item: CalendarFeedItemOutput) => this.itemCoversDay(item, day))
           .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt)),
       };
     });
@@ -493,24 +530,38 @@ export class CalendarPage {
   /** The day view's `yyyy-MM-dd` day — the anchor itself. */
   protected readonly dayViewIso: Signal<string> = computed<string>(() => toIsoDay(this.month()));
 
-  /** The day view's entries, earliest first. */
+  /**
+   * Property dayViewItems
+   * @readonly
+   * @description Entries for the day view, earliest first.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CalendarFeedItemOutput[]>}
+   */
   protected readonly dayViewItems: Signal<readonly CalendarFeedItemOutput[]> = computed(() => {
     const day: string = this.dayViewIso();
 
     return this.store
       .items()
-      .filter((item: CalendarFeedItemOutput) => toIsoDay(new Date(item.startsAt)) === day)
+      .filter((item: CalendarFeedItemOutput) => this.itemCoversDay(item, day))
       .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt));
   });
 
-  /** The selected day's entries, earliest first. */
+  /**
+   * Property dayItems
+   * @readonly
+   * @description Entries for the selected day in the contextual panel, earliest first.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<readonly CalendarFeedItemOutput[]>}
+   */
   protected readonly dayItems: Signal<readonly CalendarFeedItemOutput[]> = computed(() => {
     const day: string | null = this.selectedDay();
     if (day === null) return [];
 
     return this.store
       .items()
-      .filter((item) => toIsoDay(new Date(item.startsAt)) === day)
+      .filter((item) => this.itemCoversDay(item, day))
       .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt));
   });
 
@@ -541,20 +592,36 @@ export class CalendarPage {
   protected readonly agendaGroups: Signal<readonly CalendarPageAgendaGroup[]> = computed(() => {
     const grouped = new Map<string, CalendarFeedItemOutput[]>();
     for (const item of this.store.items()) {
-      const day: string = toIsoDay(new Date(item.startsAt));
-      const bucket: CalendarFeedItemOutput[] = grouped.get(day) ?? [];
+      const day = toIsoDay(new Date(item.startsAt));
+      const bucket = grouped.get(day) ?? [];
       bucket.push(item);
       grouped.set(day, bucket);
     }
 
+    const anchor = this.month();
+    const first = this.startOfWeekOf(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
+    const finalWeek = this.startOfWeekOf(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0));
+    const last = new Date(finalWeek.getFullYear(), finalWeek.getMonth(), finalWeek.getDate() + 6);
+    let date = new Date(first);
+    while (date <= last) {
+      const day = toIsoDay(date);
+      for (const item of this.store.items()) {
+        if (toIsoDay(new Date(item.startsAt)) === day || !this.itemCoversDay(item, day)) continue;
+        const bucket = grouped.get(day) ?? [];
+        bucket.push(item);
+        grouped.set(day, bucket);
+      }
+      date = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    }
+
     return [...grouped.entries()]
       .toSorted(([dayA], [dayB]) => dayA.localeCompare(dayB))
-      .map(([day, items]): CalendarPageAgendaGroup => ({
+      .map(([day, daily]): CalendarPageAgendaGroup => ({
         day,
         label: new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(
           new Date(`${day}T00:00:00`),
         ),
-        items: items.toSorted((a, b) => a.startsAt.localeCompare(b.startsAt)),
+        items: daily.toSorted((a, b) => a.startsAt.localeCompare(b.startsAt)),
       }));
   });
 
@@ -598,6 +665,27 @@ export class CalendarPage {
    */
   private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageTabs');
+
+  /**
+   * Property dayPanel
+   * @readonly
+   * @description Month view's selected-day template, rendered in the dashboard's right slot.
+   * @access private
+   * @since 2.4.0
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly dayPanel: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('dayPanel');
+
+  /**
+   * Property panelRegistry
+   * @readonly
+   * @description Shell-scoped registry retaining this page template's declaration context.
+   * @access private
+   * @since 2.4.0
+   * @type {DashboardPanelRegistry}
+   */
+  private readonly panelRegistry: DashboardPanelRegistry = inject(DashboardPanelRegistry);
   //#endregion
 
   //#region Constructor
@@ -613,6 +701,7 @@ export class CalendarPage {
    *
    * Also registers {@link pageActions}.
    *
+   * @constructor
    * @access public
    * @since 2.2.0
    */
@@ -620,6 +709,16 @@ export class CalendarPage {
     const destroyRef: DestroyRef = inject(DestroyRef);
     registerPageActions(this.pageActions, this.pageActionsService, destroyRef);
     registerPageTabs(this.pageTabs, this.pageTabsService, destroyRef);
+
+    effect((onCleanup): void => {
+      const template = this.dayPanel();
+      if (this.granularity() !== 'month' || !template) return;
+      this.panelRegistry.register(
+        template,
+        $localize`:@@calendar.selectedDayPanelLabel:Selected day events`,
+      );
+      onCleanup(() => this.panelRegistry.clear(template));
+    });
 
     effect((): void => {
       const organizationId: string = this.organizationId();
@@ -779,6 +878,37 @@ export class CalendarPage {
   }
 
   /**
+   * Method itemCoversDay
+   * @description Includes every local day of a feed item, excluding a timed end exactly at midnight.
+   * @access private
+   * @since 2.4.0
+   * @param {CalendarFeedItemOutput} item - The feed item to inspect.
+   * @param {string} day - The local ISO day being displayed.
+   * @returns {boolean} Whether the item occurs on that day.
+   */
+  private itemCoversDay(item: CalendarFeedItemOutput, day: string): boolean {
+    const start = new Date(item.startsAt);
+    if (Number.isNaN(start.getTime())) return false;
+    const startDay = toIsoDay(start);
+    if (day < startDay) return false;
+
+    if (!item.endsAt) return day === startDay;
+    const end = new Date(item.endsAt);
+    if (Number.isNaN(end.getTime()) || end <= start) return day === startDay;
+    if (
+      !item.allDay &&
+      end.getHours() === 0 &&
+      end.getMinutes() === 0 &&
+      end.getSeconds() === 0 &&
+      end.getMilliseconds() === 0
+    ) {
+      end.setMilliseconds(-1);
+    }
+
+    return day <= toIsoDay(end);
+  }
+
+  /**
    * Method windowOf
    *
    * @description
@@ -874,6 +1004,43 @@ export class CalendarPage {
     this.createDefaultStart.set(`${day}T${QUICK_CREATE_DEFAULT_TIME}`);
     this.editingEvent.set(null);
     this.eventDialogVisible.set(true);
+  }
+
+  /**
+   * Method sourceLabelOf
+   * @description Names a feed source for the "Partial results" banner, through the same resolver `CalendarEntryList` renders its row badges with.
+   * @access protected
+   * @since 2.5.0
+   * @param {CalendarSourceKey} sourceKey - The partial source to name.
+   * @returns {string} A short localized source name.
+   */
+  protected sourceLabelOf(sourceKey: CalendarSourceKey): string {
+    return calendarSourceLabelOf(sourceKey);
+  }
+
+  /**
+   * Method entryFacilityLabelOf
+   * @description Resolves a bare facility id — as `CalendarFeedItemOutput.facilityId` and {@link facilityOptions} both already are — to its name, passed to `CalendarEntryList` as its `facilityLabelOf` input.
+   * @access protected
+   * @since 2.5.0
+   * @param {string} facilityId - The bare facility id.
+   * @returns {string | null} The facility's name, or `null` when it does not resolve.
+   */
+  protected readonly entryFacilityLabelOf: (facilityId: string) => string | null = (
+    facilityId: string,
+  ): string | null =>
+    this.facilityOptions().find((option) => option.value === facilityId)?.label ?? null;
+
+  /**
+   * Method isToday
+   * @description Whether a `yyyy-MM-dd` day is today, for the week view's "Today" badge.
+   * @access protected
+   * @since 2.5.0
+   * @param {string} day - The day to check.
+   * @returns {boolean} Whether the day is today.
+   */
+  protected isToday(day: string): boolean {
+    return day === this.todayIso;
   }
 
   /**

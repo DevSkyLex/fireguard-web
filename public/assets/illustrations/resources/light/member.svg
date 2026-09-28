@@ -1,33 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-member-light-title fg-member-light-description" class="fg-member-light">
   <title id="fg-member-light-title">Member</title>
-  <desc id="fg-member-light-description">A standing identity badge with a fine vermilion portrait frame and an outlined access-card chip.</desc>
+  <desc id="fg-member-light-description">A single person standing on a round base.</desc>
   <defs>
-    <linearGradient id="fg-member-light-plane" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#fafafb"/>
-    </linearGradient>
+    <linearGradient id="fg-member-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
+
+
   </defs>
   <style>
-    .fg-member-light { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; }
-    .fg-member-light .edge, .fg-member-light .seam { stroke: #777781; }
-    .fg-member-light .seam { stroke-width: 1.35; }
-    .fg-member-light .shade { fill: #1b1b24; fill-opacity: .055; }
-    .fg-member-light .soft { stroke: #a1a1ab; stroke-width: 1.1; }
-    .fg-member-light .guide { stroke: #85858f; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
-    .fg-member-light .accent { stroke: #f4511e; }
-    .fg-member-light .accent { stroke-width: 1.1; }
-    .fg-member-light .accent-fill { fill: #f4511e; }
-    .fg-member-light .tf { fill: url(#fg-member-light-plane); }
-    .fg-member-light .lf { fill: #eeeef1; }
-    .fg-member-light .rf { fill: #dddde3; }
+    .fg-member-light { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-member-light path { vector-effect: non-scaling-stroke; }
+    .fg-member-light .t { fill: #ffffff; }
+    .fg-member-light .l { fill: #f6f6f7; }
+    .fg-member-light .r { fill: #efeff1; }
+    .fg-member-light .hole { fill: #ececef; }
+    .fg-member-light .cy { fill: url(#fg-member-light-cy); }
+    .fg-member-light .af { fill: #5f5f68; }
+    .fg-member-light .kf { fill: #85858e; }
+    .fg-member-light .eo { fill-rule: evenodd; }
+    .fg-member-light .o { stroke: #8a8a93; stroke-width: 1.35; }
+    .fg-member-light .o2 { stroke: #a8a8b0; stroke-width: 1.1; }
+    .fg-member-light .e { stroke: #dcdce0; stroke-width: 1; }
+    .fg-member-light .d { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-member-light .dh { stroke: #dcdce0; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-member-light .g { stroke: #a8a8b0; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-member-light .k { stroke: #85858e; stroke-width: 1.2; }
+    .fg-member-light .ka, .fg-member-light .oa { stroke: #5f5f68; stroke-width: 1.35; }
+    .fg-member-light .da { stroke: #5f5f68; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-member-light .ga { stroke: #5f5f68; stroke-width: 1; stroke-dasharray: 3 3; }
   </style>
-  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M89 99L81 99M89 197L81 197M87 131.7L83 131.7M87 164.3L83 164.3M315 84L330.6 93L330.6 109.2L315 118.2L299.4 109.2L299.4 93ZM330.6 93L315 102L299.4 93M315 102L315 118.2M319.7 219.5L328.3 224.5M319.7 224.5L328.3 219.5M99.5 261a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM106.5 265a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0Z"/><path class="guide" d="M85 99L85 197M299.4 109.2L315 100.2L330.6 109.2"/><path class="accent" d="M85 102L85 110"/><path class="accent-fill" d="M92.4 257a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 63.4)">
-<polygon class="shade" points="175.8,113 295.3,182 224.2,223 104.7,154"/>
-<g data-part="plate"><path class="lf" d="M121.2 136Q121.2 134.5 123.8 133L170.6 106Q175.8 103 180.9 106L276.2 161Q278.8 162.5 278.8 164L278.8 182Q278.8 183.5 276.2 185L229.4 212Q224.2 215 219.1 212L123.8 157Q121.2 155.5 121.2 154Z"/><path class="tf" d="M170.6 106Q175.8 103 180.9 106L276.2 161Q281.4 164 276.2 167L229.4 194Q224.2 197 219.1 194L123.8 139Q118.6 136 123.8 133Z"/><path class="seam" d="M278.8 164Q278.8 165.5 276.2 167L229.4 194Q224.2 197 219.1 194L123.8 139Q121.2 137.5 121.2 136"/><path class="edge" d="M121.2 136Q121.2 134.5 123.8 133L170.6 106Q175.8 103 180.9 106L276.2 161Q278.8 162.5 278.8 164L278.8 182Q278.8 183.5 276.2 185L229.4 212Q224.2 215 219.1 212L123.8 157Q121.2 155.5 121.2 154Z"/></g>
-<g data-part="volume"><polygon class="lf" points="156.3,-29.8 251.5,25.2 251.5,175.2 243.7,179.8 148.5,124.8 148.5,-25.2"/><polygon class="rf" points="251.5,25.2 243.7,29.8 243.7,179.8 251.5,175.2"/><polygon class="tf" points="156.3,-29.8 251.5,25.2 243.7,29.8 148.5,-25.2"/><path class="seam" d="M243.7 29.8L251.5 25.2M243.7 29.8L148.5 -25.2M243.7 29.8L243.7 179.8"/><polygon class="edge" points="156.3,-29.8 251.5,25.2 251.5,175.2 243.7,179.8 148.5,124.8 148.5,-25.2"/></g>
-<g data-part="volume"><polygon class="lf" points="190,-19.2 217.8,-3.2 217.8,5.8 210,10.2 182.2,-5.8 182.2,-14.8"/><polygon class="rf" points="217.8,-3.2 210,1.2 210,10.2 217.8,5.8"/><polygon class="tf" points="190,-19.2 217.8,-3.2 210,1.2 182.2,-14.8"/><path class="seam" d="M210 1.2L217.8 -3.2M210 1.2L182.2 -14.8M210 1.2L210 10.2"/><polygon class="edge" points="190,-19.2 217.8,-3.2 217.8,5.8 210,10.2 182.2,-5.8 182.2,-14.8"/></g>
-<g data-part="detail"><path class="soft" d="M187.5 9.3L204.8 19.3L204.8 27.3L187.5 17.3Z"/><path class="accent" d="M163.2 37.3L229 75.3L229 146.3L163.2 108.3Z"/><path class="accent" d="M210 88.3C210 97.1 203.8 100.7 196.1 96.3C188.5 91.9 182.3 81.1 182.3 72.3C182.3 63.5 188.5 59.9 196.1 64.3C203.8 68.7 210 79.5 210 88.3Z"/><path class="accent" d="M173.6 106.3C173.6 95.3 183.7 95.1 196.1 102.3C208.6 109.5 218.6 121.3 218.6 132.3"/></g>
-<g data-part="volume"><polygon class="lf" points="197.4,150.5 235.5,172.5 235.5,175.5 209.5,190.5 171.4,168.5 171.4,165.5"/><polygon class="rf" points="235.5,172.5 209.5,187.5 209.5,190.5 235.5,175.5"/><polygon class="tf" points="197.4,150.5 235.5,172.5 209.5,187.5 171.4,165.5"/><path class="seam" d="M209.5 187.5L235.5 172.5M209.5 187.5L171.4 165.5M209.5 187.5L209.5 190.5"/><polygon class="edge" points="197.4,150.5 235.5,172.5 235.5,175.5 209.5,190.5 171.4,168.5 171.4,165.5"/></g>
-<g data-part="detail"><path class="accent" d="M197.4 158.5L207.8 164.5L195.7 171.5L185.3 165.5Z"/></g>
-  </g></g></g>
+  <path class="r" d="M350.4 189.8C350.4 212.8 334.6 234.9 306.4 251.2C278.2 267.5 239.9 276.6 200 276.6L200 296C239.9 296 278.2 286.9 306.4 270.6C334.6 254.3 350.4 232.2 350.4 209.2Z"/>
+  <path class="l" d="M200 276.6C160.1 276.6 121.8 267.5 93.6 251.2C65.4 234.9 49.6 212.8 49.6 189.8L49.6 209.2C49.6 232.2 65.4 254.3 93.6 270.6C121.8 286.9 160.1 296 200 296Z"/>
+  <path class="t" d="M49.6 189.8C49.6 166.7 65.4 144.6 93.6 128.4C121.8 112.1 160.1 102.9 200 102.9C239.9 102.9 278.2 112.1 306.4 128.4C334.6 144.6 350.4 166.7 350.4 189.8C350.4 212.8 334.6 234.9 306.4 251.2C278.2 267.5 239.9 276.6 200 276.6C160.1 276.6 121.8 267.5 93.6 251.2C65.4 234.9 49.6 212.8 49.6 189.8Z"/>
+  <path class="e" d="M350.4 189.8C350.4 212.8 334.6 234.9 306.4 251.2C278.2 267.5 239.9 276.6 200 276.6C160.1 276.6 121.8 267.5 93.6 251.2C65.4 234.9 49.6 212.8 49.6 189.8M200 276.6L200 296M49.6 189.8L49.6 209.2"/>
+  <path class="o2" d="M49.6 189.8C49.6 166.7 65.4 144.6 93.6 128.4C121.8 112.1 160.1 102.9 200 102.9C239.9 102.9 278.2 112.1 306.4 128.4C334.6 144.6 350.4 166.7 350.4 189.8L350.4 209.2C350.4 232.2 334.6 254.3 306.4 270.6C278.2 286.9 239.9 296 200 296C160.1 296 121.8 286.9 93.6 270.6C65.4 254.3 49.6 232.2 49.6 209.2Z"/>
+  <path class="e" d="M286.8 239.9C263.8 253.1 232.5 260.6 200 260.6C167.5 260.6 136.2 253.1 113.2 239.9C90.2 226.6 77.3 208.6 77.3 189.8C77.3 171 90.2 153 113.2 139.7C136.2 126.4 167.5 118.9 200 118.9C232.5 118.9 263.8 126.4 286.8 139.7C309.8 153 322.7 171 322.7 189.8C322.7 208.6 309.8 226.6 286.8 239.9Z"/>
+  <path class="cy" d="M200 91.9L205.4 92L212 92.4L217.7 93L223.2 93.8L228.6 94.7L234.3 96L239.8 97.4L245.3 99.2L250.7 101.1L255.7 103.2L260.7 105.5L265.5 108L270.1 110.7L274.6 113.6L278.9 116.7L282.9 119.9L286.8 123.3L290.4 126.9L293.9 130.7L297.1 134.6L300.1 138.5L302.9 142.8L305.4 147.1L307.7 151.5L309.7 156.1L311.5 160.7L313 165.5L314.2 170.2L315.1 175.1L315.8 179.9L316.2 184.9L316.4 189.8L316.2 193.1L315.8 196.4L315.1 199.7L314.1 202.9L312.9 206.1L311.4 209.3L309.6 212.4L307.5 215.5L305.2 218.5L302.6 221.5L299.8 224.3L296.7 227.1L293.4 229.8L289.9 232.4L286.1 235L282.3 237.3L278 239.6L273.7 241.7L269.2 243.8L264.7 245.6L259.9 247.4L254.9 249L249.9 250.5L244.6 251.8L239.4 253L233.9 254L228.4 254.9L222.4 255.7L216.5 256.3L210.8 256.7L206.2 256.9L200 257L200 257L193.8 256.9L189.2 256.7L183.5 256.3L177.6 255.7L171.6 254.9L166.1 254L160.6 253L155.4 251.8L150.1 250.5L145.1 249L140.1 247.4L135.3 245.6L130.8 243.8L126.3 241.7L122 239.6L117.7 237.3L113.9 235L110.1 232.4L106.6 229.8L103.3 227.1L100.2 224.3L97.4 221.5L94.8 218.5L92.5 215.5L90.4 212.4L88.6 209.3L87.1 206.1L85.9 202.9L84.9 199.7L84.2 196.4L83.8 193.1L83.6 189.8L83.8 184.9L84.2 179.9L84.9 175.1L85.8 170.2L87 165.5L88.5 160.7L90.3 156.1L92.3 151.5L94.6 147.1L97.1 142.8L99.9 138.5L102.9 134.6L106.1 130.7L109.6 126.9L113.2 123.3L117.1 119.9L121.1 116.7L125.4 113.6L129.9 110.7L134.5 108L139.3 105.5L144.3 103.2L149.3 101.1L154.7 99.2L160.2 97.4L165.7 96L171.4 94.7L176.8 93.8L182.3 93L188 92.4L194.6 92L200 91.9Z"/>
+  <path class="oa" d="M200 91.9L205.4 92L212 92.4L217.7 93L223.2 93.8L228.6 94.7L234.3 96L239.8 97.4L245.3 99.2L250.7 101.1L255.7 103.2L260.7 105.5L265.5 108L270.1 110.7L274.6 113.6L278.9 116.7L282.9 119.9L286.8 123.3L290.4 126.9L293.9 130.7L297.1 134.6L300.1 138.5L302.9 142.8L305.4 147.1L307.7 151.5L309.7 156.1L311.5 160.7L313 165.5L314.2 170.2L315.1 175.1L315.8 179.9L316.2 184.9L316.4 189.8L316.2 193.1L315.8 196.4L315.1 199.7L314.1 202.9L312.9 206.1L311.4 209.3L309.6 212.4L307.5 215.5L305.2 218.5L302.6 221.5L299.8 224.3L296.7 227.1L293.4 229.8L289.9 232.4L286.1 235L282.3 237.3L278 239.6L273.7 241.7L269.2 243.8L264.7 245.6L259.9 247.4L254.9 249L249.9 250.5L244.6 251.8L239.4 253L233.9 254L228.4 254.9L222.4 255.7L216.5 256.3L210.8 256.7L206.2 256.9L200 257L200 257L193.8 256.9L189.2 256.7L183.5 256.3L177.6 255.7L171.6 254.9L166.1 254L160.6 253L155.4 251.8L150.1 250.5L145.1 249L140.1 247.4L135.3 245.6L130.8 243.8L126.3 241.7L122 239.6L117.7 237.3L113.9 235L110.1 232.4L106.6 229.8L103.3 227.1L100.2 224.3L97.4 221.5L94.8 218.5L92.5 215.5L90.4 212.4L88.6 209.3L87.1 206.1L85.9 202.9L84.9 199.7L84.2 196.4L83.8 193.1L83.6 189.8L83.8 184.9L84.2 179.9L84.9 175.1L85.8 170.2L87 165.5L88.5 160.7L90.3 156.1L92.3 151.5L94.6 147.1L97.1 142.8L99.9 138.5L102.9 134.6L106.1 130.7L109.6 126.9L113.2 123.3L117.1 119.9L121.1 116.7L125.4 113.6L129.9 110.7L134.5 108L139.3 105.5L144.3 103.2L149.3 101.1L154.7 99.2L160.2 97.4L165.7 96L171.4 94.7L176.8 93.8L182.3 93L188 92.4L194.6 92L200 91.9Z"/>
+  <path class="t" d="M252.6 76.6C252.6 105.7 229.1 129.3 200 129.3C170.9 129.3 147.4 105.7 147.4 76.6C147.4 47.6 170.9 24 200 24C229.1 24 252.6 47.6 252.6 76.6Z"/>
+  <path class="oa" d="M252.6 76.6C252.6 105.7 229.1 129.3 200 129.3C170.9 129.3 147.4 105.7 147.4 76.6C147.4 47.6 170.9 24 200 24C229.1 24 252.6 47.6 252.6 76.6Z"/>
 </svg>

@@ -13,6 +13,7 @@ import type {
   OrganizationMemberOutput,
   OrganizationRoleOutput,
 } from '@features/organization/models';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import {
   HlmDialog,
@@ -58,6 +59,7 @@ import type { OrganizationMemberRoleToggle } from './models';
     HlmDialogHeader,
     HlmDialogPortal,
     HlmDialogTitle,
+    ResourceIllustration,
   ],
   templateUrl: './organization-member-roles-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

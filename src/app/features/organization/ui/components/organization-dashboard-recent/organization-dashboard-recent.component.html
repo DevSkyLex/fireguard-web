@@ -88,6 +88,7 @@
       </div>
       <div hlmEmpty class="mobile-ui:hidden">
         <div hlmEmptyHeader>
+          <app-resource-illustration hlmEmptyMedia resource="intervention" size="sm" />
           <p hlmEmptyTitle i18n="@@org.dashboard.recent.empty">No recent interventions</p>
           <p hlmEmptyDescription i18n="@@org.dashboard.recent.emptyDescription">
             Interventions will appear here when your team creates or updates them.
@@ -118,14 +119,31 @@
             @for (row of visibleRows(); track row.id) {
               <tr hlmTr>
                 <td hlmTd>
-                  <a
-                    class="flex min-h-10 min-w-0 items-center gap-3 rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                    [routerLink]="['/organizations', organizationId(), 'interventions', row.id]"
-                    [title]="row.name"
-                    ><span class="shrink-0 font-mono text-xs text-muted-foreground"
-                      >FG-{{ row.number }}</span
-                    ><span class="truncate">{{ row.name }}</span></a
-                  >
+                  <div class="flex min-w-0 flex-col gap-0.5">
+                    <a
+                      class="flex min-h-10 min-w-0 items-center gap-3 rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                      [routerLink]="['/organizations', organizationId(), 'interventions', row.id]"
+                      [title]="row.name"
+                      ><span class="shrink-0 font-mono text-xs text-muted-foreground"
+                        >FG-{{ row.number }}</span
+                      ><span class="truncate">{{ row.name }}</span>
+                      @if (isPriorityNotable(row.priority)) {
+                        <app-intervention-tag kind="priority" [value]="row.priority" asOption />
+                      }
+                    </a>
+                    <span
+                      class="w-fit rounded-sm text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring mobile-ui:hidden"
+                      tabindex="0"
+                      [hlmTooltip]="row.updatedAt | appOrgDate: 'datetime' : regionalFormatting()"
+                      ><span i18n="@@org.dashboard.recent.updatedAt">Updated</span>
+                      {{ formatUpdated(row.updatedAt) }}</span
+                    >
+                    <span class="hidden text-xs text-muted-foreground mobile-ui:block">
+                      <span i18n="@@org.dashboard.recent.updatedAt">Updated</span>
+                      {{ formatUpdated(row.updatedAt) }} ·
+                      {{ row.updatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                    </span>
+                  </div>
                 </td>
                 <td hlmTd><app-intervention-tag kind="status" [value]="row.status" /></td>
                 <td hlmTd>
@@ -140,7 +158,7 @@
                         @if (row.responsibleAvatarUrl; as avatar) {
                           <img hlmAvatarImage [src]="avatar" alt="" />
                         }
-                        <span hlmAvatarFallback>{{ name.slice(0, 1) }}</span></hlm-avatar
+                        <span hlmAvatarFallback>{{ getInitials(name) }}</span></hlm-avatar
                       ><span class="truncate">{{ name }}</span>
                     } @else {
                       <span class="text-muted-foreground" i18n="@@org.dashboard.recent.unassigned"
@@ -150,9 +168,14 @@
                   </span>
                 </td>
                 <td hlmTd class="tabular-nums">
-                  <span class="whitespace-nowrap text-muted-foreground">{{
-                    row.dueAt ? (row.dueAt | date: 'mediumDate') : '—'
-                  }}</span>
+                  <span class="whitespace-nowrap text-muted-foreground">
+                    @if (row.dueAt; as dueAt) {
+                      {{ dueAt | appOrgDate: 'dateOnly' : regionalFormatting() }} ·
+                      {{ formatDueRelative(dueAt) }}
+                    } @else {
+                      —
+                    }
+                  </span>
                 </td>
               </tr>
             }
@@ -175,6 +198,9 @@
                 <span hlmItemTitle class="line-clamp-none wrap-anywhere">{{ row.name }}</span>
                 <span class="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <app-intervention-tag kind="status" [value]="row.status" />
+                  @if (isPriorityNotable(row.priority)) {
+                    <app-intervention-tag kind="priority" [value]="row.priority" asOption />
+                  }
                   <span class="font-mono text-xs text-muted-foreground">FG-{{ row.number }}</span>
                 </span>
                 <span
@@ -182,11 +208,39 @@
                   class="line-clamp-none flex flex-wrap justify-between gap-x-3 gap-y-1 wrap-anywhere"
                 >
                   <span>{{ row.siteName ?? '—' }}</span>
-                  <span>{{ row.dueAt ? (row.dueAt | date: 'mediumDate') : '—' }}</span>
+                  <span class="whitespace-nowrap">
+                    @if (row.dueAt; as dueAt) {
+                      {{ dueAt | appOrgDate: 'dateOnly' : regionalFormatting() }} ·
+                      {{ formatDueRelative(dueAt) }}
+                    } @else {
+                      —
+                    }
+                  </span>
                 </span>
-                @if (row.responsibleName; as name) {
-                  <span class="text-xs wrap-anywhere text-muted-foreground">{{ name }}</span>
-                }
+                <span class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  @if (row.responsibleName; as name) {
+                    <span class="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                      <hlm-avatar size="sm" class="size-5">
+                        @if (row.responsibleAvatarUrl; as avatar) {
+                          <img hlmAvatarImage [src]="avatar" alt="" />
+                        }
+                        <span hlmAvatarFallback class="text-[10px]">{{ getInitials(name) }}</span>
+                      </hlm-avatar>
+                      <span class="wrap-anywhere">{{ name }}</span>
+                    </span>
+                  } @else {
+                    <span
+                      class="text-xs text-muted-foreground"
+                      i18n="@@org.dashboard.recent.unassigned"
+                      >Unassigned</span
+                    >
+                  }
+                  <span class="text-xs text-muted-foreground">
+                    <span i18n="@@org.dashboard.recent.updatedAt">Updated</span>
+                    {{ formatUpdated(row.updatedAt) }} ·
+                    {{ row.updatedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                  </span>
+                </span>
               </span>
             </a>
           </li>

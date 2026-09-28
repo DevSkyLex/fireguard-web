@@ -6,17 +6,23 @@ import {
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { InterventionTableSource } from '@features/organization/features/interventions/models';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 
 /**
  * Component InterventionTableFeedback
- * @description Non-blocking provenance and retry feedback for intervention tables. Owns no data access.
- * @since 6.2.0
+ * @description Non-blocking provenance and retry feedback for intervention tables — a refresh
+ * failure renders as `hlmAlert variant="destructive"` with its Retry inside `hlmAlertAction`,
+ * the same anatomy every other failure in this feature uses. Owns no data access.
+ * @since 6.3.0
  */
 @Component({
   selector: 'app-intervention-table-feedback',
-  imports: [HlmButton],
+  imports: [NgIcon, ...HlmAlertImports, HlmButton],
+  providers: [provideIcons({ lucideCircleAlert })],
   host: { class: 'contents' },
   templateUrl: './intervention-table-feedback.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -2,6 +2,12 @@
   <div hlmCardHeader>
     <h3 hlmCardTitle i18n="@@org.dashboard.risk.title">Non-conformity follow-up</h3>
     <p hlmCardDescription i18n="@@org.dashboard.risk.description">Current distribution by status</p>
+    <p
+      class="text-xs text-muted-foreground @[960px]/dashboard:hidden"
+      i18n="@@org.dashboard.risks.scope"
+    >
+      Current snapshot, independent of the selected period
+    </p>
   </div>
   <div hlmCardContent class="@container/risk flex flex-1 flex-col justify-center">
     @if (loading()) {
@@ -10,9 +16,12 @@
       >
         <hlm-skeleton class="size-40 shrink-0 rounded-full" />
         <div class="flex flex-col gap-5">
-          <hlm-skeleton class="h-4 w-24" /><hlm-skeleton class="h-4 w-24" /><hlm-skeleton
-            class="h-4 w-24"
-          />
+          @for (row of legendSkeletonRows; track row) {
+            <div class="flex justify-between gap-4">
+              <hlm-skeleton class="h-4 w-24" />
+              <hlm-skeleton class="h-4 w-10" />
+            </div>
+          }
         </div>
       </div>
     } @else if (segments(); as data) {
@@ -48,6 +57,7 @@
       } @else {
         <div hlmEmpty class="min-h-64">
           <div hlmEmptyHeader>
+            <app-state-illustration hlmEmptyMedia state="all-clear" size="sm" />
             <p hlmEmptyTitle i18n="@@org.dashboard.risk.empty">No non-conformities recorded</p>
             <p hlmEmptyDescription i18n="@@org.dashboard.risk.emptyDescription">
               Recorded issues will appear here as inspections are completed.

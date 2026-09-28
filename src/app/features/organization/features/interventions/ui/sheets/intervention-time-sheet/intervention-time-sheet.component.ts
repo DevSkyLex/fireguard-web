@@ -23,6 +23,7 @@ import type {
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
 import { formatDurationMinutes } from '@shared/duration-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
@@ -56,6 +57,7 @@ import { InterventionTimeForm } from '../../forms/intervention-time-form';
     HlmBadge,
     HlmSkeleton,
     HlmEmptyImports,
+    ResourceIllustration,
     HlmCollapsibleImports,
     InterventionTimeForm,
     UnsavedChangesDialog,

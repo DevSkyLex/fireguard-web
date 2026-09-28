@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -7,9 +6,12 @@ import {
   inject,
   signal,
   untracked,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import {
   FailedMessagesStore,
@@ -17,11 +19,17 @@ import {
 } from '@features/organization/features/collaboration/state/failed-messages';
 import {
   ORGANIZATION_CONTEXT_PORT,
+  REGIONAL_FORMATTING_PORT,
   type OrganizationContextPort,
+  type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmMuted } from '@shared/ui/typography';
 
 /**
  * Component FailedMessagesPage
@@ -31,8 +39,18 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-failed-messages-page',
-  imports: [DatePipe, RouterLink, HlmButton, HlmSkeleton, ...HlmEmptyImports],
-  providers: [FailedMessagesStore],
+  imports: [
+    NgIcon,
+    RouterLink,
+    HlmButton,
+    HlmSkeleton,
+    HlmMuted,
+    OrgDatePipe,
+    ...HlmEmptyImports,
+    ...HlmItemImports,
+    StateIllustration,
+  ],
+  providers: [FailedMessagesStore, provideIcons({ lucideCircleAlert })],
   templateUrl: './failed-messages-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col overflow-y-auto' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +74,26 @@ export class FailedMessagesPage {
    * @type {OrganizationContextPort}
    */
   private readonly context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   * @description Source of the open organization's date pattern and timezone, for {@link OrgDatePipe}.
+   * @access private
+   * @since 1.1.0
+   * @type {RegionalFormattingPort}
+   */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject(REGIONAL_FORMATTING_PORT);
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The open organization's date pattern and timezone, read by the template for each failed send's timestamp.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
   /**
    * Property identity
    * @readonly

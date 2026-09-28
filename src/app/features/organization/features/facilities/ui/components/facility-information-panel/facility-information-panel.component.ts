@@ -1,4 +1,5 @@
 import type { BooleanInput } from '@angular/cdk/coercion';
+import { DecimalPipe } from '@angular/common';
 import {
   booleanAttribute,
   ChangeDetectionStrategy,
@@ -25,11 +26,12 @@ import type {
   FacilityOutput,
   UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
-import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
 import { InplaceField } from '@shared/inplace-field';
 import type { MapCoordinates } from '@shared/map';
 import { HlmButton } from '@shared/ui/button';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSeparatorImports } from '@shared/ui/separator';
+import { facilityTypeLabel } from '../../../utils';
 import { FacilityMapPickerDialog } from '../../dialogs/facility-map-picker-dialog';
 
 /**
@@ -79,13 +81,22 @@ const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
  * text fields: blank clears it, an integer outside `[-100, 200]` is refused
  * client-side.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-facility-information-panel',
-  imports: [RouterLink, InplaceField, FacilityMapPickerDialog, HlmButton, HlmInput, NgIcon],
+  imports: [
+    RouterLink,
+    InplaceField,
+    FacilityMapPickerDialog,
+    HlmButton,
+    HlmInput,
+    NgIcon,
+    DecimalPipe,
+    ...HlmSeparatorImports,
+  ],
   providers: [provideIcons({ lucideLocateFixed, lucideMapPin })],
   templateUrl: './facility-information-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -202,9 +213,6 @@ export class FacilityInformationPanel {
   //#endregion
 
   //#region Properties
-  /** The facility types offered, for the read-only type row's label. */
-  protected readonly typeOptions: typeof FACILITY_TYPE_OPTIONS = FACILITY_TYPE_OPTIONS;
-
   /**
    * Property textDraft
    * @readonly
@@ -377,9 +385,21 @@ export class FacilityInformationPanel {
   });
 
   /** Names a facility type for the read-only type row. */
-  protected readonly typeLabelOf: (value: string) => string = (value) =>
-    this.typeOptions.find((option) => option.value === value)?.label ??
-    $localize`:@@common.unknownType:Unknown type`;
+  protected readonly typeLabelOf: (value: string) => string = (value) => facilityTypeLabel(value);
+
+  /**
+   * Property parentName
+   * @readonly
+   * @description The direct parent's own name — {@link facility}'s `path` last segment — for the Parent row's link text, so it names the record rather than a generic "View parent facility". Falls back to that generic label only if `path` (detail-read only) is unexpectedly empty while a `parentFacilityId` is set.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<string>}
+   */
+  protected readonly parentName: Signal<string> = computed<string>(
+    () =>
+      this.facility().path.at(-1)?.name ??
+      $localize`:@@facility.info.viewParent:View parent facility`,
+  );
 
   /** Whether the "Pick on map" dialog is open. */
   protected readonly mapPickerVisible: WritableSignal<boolean> = signal<boolean>(false);

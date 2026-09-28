@@ -1,4 +1,3 @@
-import { isPlatformBrowser } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -8,8 +7,6 @@ import {
   effect,
   inject,
   input,
-  LOCALE_ID,
-  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
@@ -23,6 +20,7 @@ import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBan,
+  lucideChevronDown,
   lucideCircleAlert,
   lucideDownload,
   lucideWrench,
@@ -30,13 +28,12 @@ import {
   lucideSend,
 } from '@ng-icons/lucide';
 import { take } from 'rxjs';
+import { pickAvatarUrl } from '@core/api/utils';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallPending, isCallSuccess, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { ChecklistService } from '@features/organization/features/checklists/data-access';
-import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
   AddNonConformityInput,
@@ -52,10 +49,19 @@ import {
   type InspectionStoreType,
 } from '@features/organization/features/inspections/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { buildCsvExportFilename, resolveCsvExportErrorDetail } from '@features/organization/utils';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardTitle } from '@shared/ui/card';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
+import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
@@ -81,11 +87,15 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * Route entry page for one inspection record
  * (`/organizations/:organizationId/inspections/:inspectionId`). Everything
  * writable is edited right here — there is no edit page (`FEATURE.md` "The
- * record is the edit surface"): a header naming the record with its status
- * and non-conformity count, a lifecycle band naming the single relevant
+ * record is the edit surface"): a lead identity block (status/result tags,
+ * a compact equipment · facility · date · inspector summary, and a
+ * created/updated meta line), a lifecycle band naming the single relevant
  * action for the current status (Submit while `draft`, Close while
  * `submitted`, none once terminal) plus a confirm-gated Cancel while
  * `draft`, and {@link InspectionInformationPanel} for the editable fields.
+ * The equipment and facility rows use `InspectionOutput.equipmentSerialNumber`
+ * and `.facilityName` directly — both filled on the single-resource GET, so
+ * no extra lookup is needed to name them.
  *
  * Only a `draft` inspection may be edited, submitted or cancelled
  * (`FEATURE.md` "Only draft inspections can be edited, submitted, or
@@ -99,34 +109,33 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  * the Spartan `hlmEmpty` error composition with a retry that re-runs {@link ActiveInspectionStore}'s
  * resolve (`DESIGN.md` "Detail-page gating") rather than leaving the operator
  * on an eternal skeleton or navigating them away silently. A route-scoped
- * {@link InspectionStore} carries the update and lifecycle writes.
+ * {@link InspectionStore} carries the update and lifecycle writes. Every
+ * date on the lead block and the meta line renders through {@link RegionalFormattingPort},
+ * the same organization timezone and pattern the rest of the organization's
+ * pages honor.
  *
  * The record's name is the shell breadcrumb's title, resolved by
- * `inspectionTitleResolver`; the status tags, non-conformity count and meta
- * line stay as a lead group at content top, and the lifecycle band registers
- * on the shell header through `PageActionsService`. The Cancel confirmation
- * is {@link InspectionCancelDialog} (`DESIGN.md` § Action Surfaces rule 5). A
- * quiet "Interventions on this site" proxy link — shown only when the
- * inspection carries a `facilityId` — points at the interventions list
- * pre-filtered by that facility's `site`; it is a proxy by site, not a
- * filter by inspection, and is labelled as such.
+ * `inspectionTitleResolver`; "Export report" registers alongside the
+ * lifecycle band on the shell header through `PageActionsService`. The
+ * Cancel confirmation is {@link InspectionCancelDialog} (`DESIGN.md` §
+ * Action Surfaces rule 5). A quiet "Interventions on this site" proxy link —
+ * shown only when the inspection carries a `facilityId` — points at the
+ * interventions list pre-filtered by that facility's `site`; it is a proxy
+ * by site, not a filter by inspection, and is labelled as such.
  *
- * The header's non-conformity count is also the anchor that expands
- * {@link NonConformityList} below it — collapsed by default, its list loads
- * only on that first expansion (`AGENTS.md` "Secondary UI data"). Writing to
- * a row (a status change or {@link NonConformityAddDialog}) is gated on
- * {@link canWrite}; adding one is further hidden on a `closed` inspection
- * through {@link canAddNonConformity}, while a status change stays available
- * regardless of the inspection's own status — the backend blocks only the
- * add endpoint on `closed` (`FEATURE.md`).
+ * The non-conformities section is its own `hlm-collapsible`, collapsed by
+ * default — its list loads only on that first expansion (`AGENTS.md`
+ * "Secondary UI data"). Writing to a row (a status change or
+ * {@link NonConformityAddDialog}) is gated on {@link canWrite}; adding one is
+ * further hidden on a `closed` inspection through {@link canAddNonConformity},
+ * while a status change stays available regardless of the inspection's own
+ * status — the backend blocks only the add endpoint on `closed`
+ * (`FEATURE.md`). {@link nonConformitiesLabel} reads the freshest count
+ * available: the store's own running total once the section has loaded at
+ * least once, the record's own snapshot count otherwise — so an added row
+ * is reflected immediately rather than waiting on a re-fetch.
  *
- * When the record carries a `checklistId`, this page also resolves the
- * checklist's name directly through `ChecklistService` (browser-only) and
- * feeds it to {@link InspectionInformationPanel} as {@link checklistName} —
- * secondary UI data, so no fetch happens during a request-less server
- * render.
- *
- * @version 1.6.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -134,9 +143,14 @@ const IDLE_EDIT_STATE: InspectionEditState = {
   selector: 'app-inspection-detail-page',
   imports: [
     NgIcon,
+    OrgDatePipe,
     ...HlmEmptyImports,
-    HlmCardTitle,
     RouterLink,
+    ...HlmAlertImports,
+    ...HlmAvatarImports,
+    HlmBadge,
+    ...HlmCollapsibleImports,
+    ...HlmDropdownMenuImports,
     InspectionCancelDialog,
     InspectionInformationPanel,
     InspectionStatusTag,
@@ -149,6 +163,7 @@ const IDLE_EDIT_STATE: InspectionEditState = {
   providers: [
     provideIcons({
       lucideBan,
+      lucideChevronDown,
       lucideCircleAlert,
       lucideDownload,
       lucideWrench,
@@ -233,46 +248,30 @@ export class InspectionDetailPage {
   /** Router used to return to the list once a cancellation succeeds. */
   private readonly router: Router = inject(Router);
 
-  /** The application's language, used to phrase the header's metadata line. */
-  private readonly locale: string = inject<string>(LOCALE_ID);
+  /** Publishes the active organization's date pattern and timezone for every date on this page. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
-   * Property checklistService
-   *
-   * @description
-   * Fetches the checklist named by {@link checklistName} directly — the
-   * checklist name is a single read-only label, so a full component-scoped
-   * store (`ChecklistStore`) would be disproportionate. Called browser-only:
-   * this is secondary UI data (`AGENTS.md` "Routing, SSR, and hydration"),
-   * so a request-less server render leaves the row blank rather than
-   * seeding a second resolver for it.
-   *
-   * @access private
-   * @since 1.6.0
-   * @type {ChecklistService}
-   */
-  private readonly checklistService: ChecklistService = inject<ChecklistService>(ChecklistService);
-
-  /** Whether this page is running in the browser — gates the checklist name fetch. */
-  private readonly platformId: object = inject<object>(PLATFORM_ID);
-
-  /** The id last resolved into {@link checklistName}, so it is fetched at most once per record. */
-  private resolvedChecklistId: string | null = null;
-
-  /**
-   * Property checklistName
+   * Property regionalFormatting
    * @readonly
-   *
-   * @description
-   * The resolved name of the inspection's checklist template, or `null`
-   * while unset or unresolved (deleted, or not yet fetched) — the panel
-   * tells the two apart from the record's own `checklistId`.
-   *
+   * @description The active organization's date pattern and timezone.
    * @access protected
-   * @since 1.6.0
-   * @type {WritableSignal<string | null>}
+   * @since 2.0.0
+   * @type {Signal<RegionalFormatSettings>}
    */
-  protected readonly checklistName: WritableSignal<string | null> = signal<string | null>(null);
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
+  /**
+   * Property orgDatePipe
+   * @readonly
+   * @description A directly instantiated, dependency-free `OrgDatePipe`, reused to format the title and meta line the same way the template does — the pipe needs no injection to run.
+   * @access private
+   * @since 2.0.0
+   * @type {OrgDatePipe}
+   */
+  private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
 
   /** Which in-place field is open, writing, or showing a rejection. */
   protected readonly editState: WritableSignal<InspectionEditState> =
@@ -383,23 +382,36 @@ export class InspectionDetailPage {
    */
   protected readonly title: Signal<string> = computed<string>(() => {
     const inspection: InspectionOutput | null = this.activeInspectionStore.selectedInspection();
+    if (!inspection) return '';
 
-    return inspection
-      ? $localize`:@@inspection.titleResolver:Inspection ${inspection.performedAt.slice(0, 10)}:date:`
-      : '';
+    const when: string = this.orgDatePipe.transform(
+      inspection.performedAt,
+      'date',
+      this.regionalFormatting(),
+    );
+
+    return $localize`:@@inspection.titleResolver:Inspection ${when}:date:`;
   });
 
   /**
    * Property nonConformitiesLabel
    * @readonly
-   * @description The header's non-conformity count, correctly pluralized.
+   *
+   * @description
+   * The header's non-conformity count, correctly pluralized. Reads the
+   * store's own running total once the non-conformities section has loaded
+   * at least once — which stays current through an add — falling back to
+   * the record's own snapshot count before that first load.
+   *
    * @access protected
    * @since 1.0.0
    * @type {Signal<string>}
    */
   protected readonly nonConformitiesLabel: Signal<string> = computed<string>(() => {
     const count: number =
-      this.activeInspectionStore.selectedInspection()?.nonConformitiesCount ?? 0;
+      this.store.nonConformitiesListCallState().status === 'success'
+        ? this.store.totalNonConformities()
+        : (this.activeInspectionStore.selectedInspection()?.nonConformitiesCount ?? 0);
 
     return count === 1
       ? $localize`:@@inspection.detail.nonConformitiesCountOne:1 non-conformity`
@@ -409,23 +421,20 @@ export class InspectionDetailPage {
   /**
    * Property metaLine
    * @readonly
-   * @description The header's metadata line — when the record was last touched.
+   * @description The header's metadata line — when the record was created and last touched.
    * @access protected
-   * @since 1.1.0
+   * @since 2.0.0
    * @type {Signal<string>}
    */
   protected readonly metaLine: Signal<string> = computed<string>(() => {
     const inspection: InspectionOutput | null = this.activeInspectionStore.selectedInspection();
     if (!inspection) return '';
 
-    const formatter = new Intl.DateTimeFormat(this.locale, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-    const when: string = formatter.format(new Date(inspection.updatedAt));
+    const settings: RegionalFormatSettings = this.regionalFormatting();
+    const created: string = this.orgDatePipe.transform(inspection.createdAt, 'date', settings);
+    const updated: string = this.orgDatePipe.transform(inspection.updatedAt, 'date', settings);
 
-    return $localize`:@@inspection.detail.metaUpdated:Updated ${when}:when:`;
+    return $localize`:@@inspection.detail.metaCreatedUpdated:Created ${created}:created: · Updated ${updated}:updated:`;
   });
 
   /** Registers {@link pageActions} on the shell header. */
@@ -450,8 +459,7 @@ export class InspectionDetailPage {
    * a cancellation succeeds — `InspectionStore.cancel` removes the record,
    * so there is nothing left here to show — clears {@link pendingNonConformityId}
    * once its status write settles, closes the add-non-conformity dialog on a
-   * successful add, resolves {@link checklistName} once per checklist id,
-   * and registers {@link pageActions}.
+   * successful add, and registers {@link pageActions}.
    *
    * @access public
    * @since 1.5.0
@@ -463,13 +471,6 @@ export class InspectionDetailPage {
       const callState: CallState<InspectionOutput | null> = this.store.updateCallState();
 
       untracked((): void => this.settleUpdateWrite(callState));
-    });
-
-    effect((): void => {
-      const checklistId: string | null =
-        this.activeInspectionStore.selectedInspection()?.checklistId ?? null;
-
-      untracked((): void => this.resolveChecklistName(checklistId));
     });
 
     effect((): void => {
@@ -749,28 +750,38 @@ export class InspectionDetailPage {
   }
 
   /**
-   * Method toggleNonConformities
+   * Method onNonConformitiesExpandedChanged
    *
    * @description
-   * Expands or collapses the non-conformities section — the header count's
-   * anchor. The list is secondary UI data (`AGENTS.md` "Routing, SSR, and
-   * hydration"), so it loads only on this first expansion rather than on
-   * page load.
+   * Reacts to the `hlm-collapsible` section's own `expandedChange`. The list
+   * is secondary UI data (`AGENTS.md` "Routing, SSR, and hydration"), so it
+   * loads only on the first expansion, or a re-expansion after a failed load
+   * — never on page load.
    *
    * @access protected
-   * @since 1.5.0
+   * @since 2.0.0
+   * @param {boolean} expanded - Whether the section is now expanded.
    * @returns {void}
    */
-  protected toggleNonConformities(): void {
-    const expanding: boolean = !this.nonConformitiesExpanded();
-    this.nonConformitiesExpanded.set(expanding);
+  protected onNonConformitiesExpandedChanged(expanded: boolean): void {
+    this.nonConformitiesExpanded.set(expanded);
 
-    if (expanding && this.store.nonConformitiesListCallState().status === 'idle') {
-      this.store.loadNonConformities({
-        organizationId: this.organizationId(),
-        inspectionId: this.inspectionId(),
-      });
-    }
+    const status: string = this.store.nonConformitiesListCallState().status;
+    if (expanded && (status === 'idle' || status === 'error')) this.loadNonConformities();
+  }
+
+  /**
+   * Method loadNonConformities
+   * @description Loads (or retries) the non-conformities section, for {@link onNonConformitiesExpandedChanged} and the section's own error-state retry.
+   * @access protected
+   * @since 2.0.0
+   * @returns {void}
+   */
+  protected loadNonConformities(): void {
+    this.store.loadNonConformities({
+      organizationId: this.organizationId(),
+      inspectionId: this.inspectionId(),
+    });
   }
 
   /**
@@ -861,39 +872,38 @@ export class InspectionDetailPage {
   }
 
   /**
-   * Method resolveChecklistName
-   *
-   * @description
-   * Fetches the checklist named by {@link checklistName}, at most once per
-   * `checklistId` value. A `null` id clears it; a 404 or any other failure
-   * leaves it `null` too — the panel's own fallback text covers that case,
-   * so no toast is raised for what is an expected outcome (a deleted
-   * checklist), not an operator-facing error.
-   *
-   * @access private
-   * @since 1.6.0
-   * @param {string | null} checklistId - The inspection's checklist id, or null.
-   * @returns {void}
+   * Method inspectorInitialsOf
+   * @description Avatar fallback initials derived from the inspector's display name, for the lead summary's avatar.
+   * @access protected
+   * @since 2.0.0
+   * @param {InspectionOutput} inspection - The loaded record.
+   * @returns {string} Up to two uppercase initials, or an empty string when there is no inspector.
    */
-  private resolveChecklistName(checklistId: string | null): void {
-    if (checklistId === this.resolvedChecklistId) return;
+  protected inspectorInitialsOf(inspection: InspectionOutput): string {
+    const name: string | undefined = inspection.inspector?.displayName;
+    if (!name) return '';
 
-    this.resolvedChecklistId = checklistId;
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part: string): string => part.charAt(0).toUpperCase())
+      .join('');
+  }
 
-    if (checklistId === null) {
-      this.checklistName.set(null);
+  /**
+   * Method inspectorAvatarUrlOf
+   * @description The inspector's best-fit avatar URL for a small avatar, or `null` when none is available.
+   * @access protected
+   * @since 2.0.0
+   * @param {InspectionOutput} inspection - The loaded record.
+   * @returns {string | null} The resolved avatar URL, or `null`.
+   */
+  protected inspectorAvatarUrlOf(inspection: InspectionOutput): string | null {
+    const inspector = inspection.inspector;
+    if (!inspector) return null;
 
-      return;
-    }
-
-    this.checklistName.set(null);
-
-    if (!isPlatformBrowser(this.platformId)) return;
-
-    this.checklistService.get(this.organizationId(), checklistId).subscribe({
-      next: (checklist: ChecklistOutput): void => this.checklistName.set(checklist.name),
-      error: (): void => this.checklistName.set(null),
-    });
+    return pickAvatarUrl(inspector.avatarUrls, '64', inspector.avatarUrl);
   }
   //#endregion
 }

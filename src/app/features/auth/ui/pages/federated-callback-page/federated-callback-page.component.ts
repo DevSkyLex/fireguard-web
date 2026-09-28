@@ -11,11 +11,14 @@ import {
   type EffectRef,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideTriangleAlert } from '@ng-icons/lucide';
 import type { FederatedProvider, LoginOutput } from '@features/auth/models';
 import { FederatedReturnContextService } from '@features/auth/services';
 import { AuthStore, FederatedAuthStore } from '@features/auth/state';
 import { resolveFederatedAuthErrorMessage } from '@features/auth/utils';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
@@ -26,12 +29,13 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * Exchanges a provider callback code and hands the result to the existing
  * session store, preserving MFA and onboarding navigation.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-federated-callback-page',
-  imports: [RouterLink, HlmButton, HlmSpinner],
+  imports: [RouterLink, NgIcon, ...HlmEmptyImports, HlmButton, HlmSpinner],
+  providers: [provideIcons({ lucideTriangleAlert })],
   templateUrl: './federated-callback-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

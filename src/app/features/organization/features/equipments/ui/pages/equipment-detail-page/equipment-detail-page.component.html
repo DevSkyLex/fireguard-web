@@ -1,90 +1,131 @@
-<div id="equipment-detail" class="flex w-full flex-col gap-4">
+<div id="equipment-detail" class="flex w-full min-w-0 flex-col gap-6">
   @if (activeEquipmentStore.selectedEquipment(); as equipment) {
-    <div class="flex flex-wrap items-center gap-2">
-      <app-equipment-status-tag kind="status" [value]="equipment.status" />
-      <app-equipment-status-tag
-        kind="maintenanceDueStatus"
-        [value]="equipment.maintenanceDueStatus"
-      />
-      <span class="inline-flex items-center gap-1 text-sm text-muted-foreground">
-        @if (equipment.facilityName; as facility) {
+    <div class="flex flex-col gap-1.5">
+      <div class="flex flex-wrap items-center gap-2">
+        <app-equipment-status-tag kind="status" [value]="equipment.status" />
+        <app-equipment-status-tag
+          kind="maintenanceDueStatus"
+          [value]="equipment.maintenanceDueStatus"
+        />
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="ms-auto mobile-ui:min-h-11"
+          data-testid="equipment-detail-export-report"
+          [disabled]="reportExporting()"
+          [attr.aria-busy]="reportExporting() ? 'true' : null"
+          (click)="exportReport()"
+        >
+          @if (reportExporting()) {
+            <hlm-spinner class="size-4" aria-hidden="true" />
+          } @else {
+            <ng-icon name="lucideDownload" aria-hidden="true" />
+          }
+          <span i18n="@@equipment.report.exportButton">Export equipment sheet</span>
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        <span class="inline-flex items-center gap-1">
+          <ng-icon name="lucideMapPin" aria-hidden="true" />
           @if (equipment.facilityId; as facilityId) {
             <a
-              class="inline-flex items-center hover:underline mobile-ui:min-h-11"
+              class="inline-flex items-center text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11"
               data-testid="equipment-detail-facility-link"
               [routerLink]="['/organizations', organizationId(), 'facilities', facilityId]"
             >
-              {{ facility }}
+              @if (equipment.facilityName; as facility) {
+                {{ facility }}
+              } @else {
+                <span i18n="@@equipment.facilityUnavailable">Facility deleted or unavailable</span>
+              }
             </a>
           } @else {
-            {{ facility }}
+            <span i18n="@@equipment.unassigned">Unassigned</span>
           }
-        } @else {
-          <span i18n="@@equipment.unassigned">Unassigned</span>
+          @if (equipment.locationLabel; as location) {
+            <span data-testid="equipment-detail-location">&rsaquo; {{ location }}</span>
+          }
+          @if (canWrite()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              class="size-6 mobile-ui:min-h-11 mobile-ui:w-auto mobile-ui:gap-2 mobile-ui:px-3"
+              data-testid="equipment-detail-facility-edit"
+              i18n-aria-label="@@equipment.facility.editAria"
+              aria-label="Change the assigned facility"
+              i18n-hlmTooltip="@@equipment.facility.editAria"
+              hlmTooltip="Change the assigned facility"
+              (click)="assignFacilityDialogVisible.set(true)"
+            >
+              <ng-icon name="lucidePencil" aria-hidden="true" />
+              <span class="hidden mobile-ui:inline" i18n="@@common.edit">Edit</span>
+            </button>
+          }
+        </span>
+        @if (equipment.serialNumber; as serial) {
+          <hlm-separator orientation="vertical" class="h-4" />
+          <span class="tabular-nums">{{ serial }}</span>
         }
-        @if (canWrite()) {
-          <button
-            hlmBtn
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            class="size-6 mobile-ui:size-11"
-            data-testid="equipment-detail-facility-edit"
-            i18n-aria-label="@@equipment.facility.editAria"
-            aria-label="Change the assigned facility"
-            (click)="assignFacilityDialogVisible.set(true)"
-          >
-            <ng-icon name="lucidePencil" aria-hidden="true" />
-          </button>
-        }
-      </span>
-      @if (equipment.planPosition != null) {
-        @if (equipment.facilityId; as pinnedFacilityId) {
-          <a
-            [routerLink]="['/organizations', organizationId(), 'facilities', pinnedFacilityId]"
-            class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground mobile-ui:min-h-11"
-            data-testid="equipment-detail-pinned"
-          >
-            <ng-icon name="lucideMapPin" class="text-sm" aria-hidden="true" />
-            <span i18n="@@equipment.detail.pinnedOnPlan">Pinned on floor plan</span>
-          </a>
-        }
-      }
-      @if (equipment.facilityId; as siteFacilityId) {
-        <a
-          class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground mobile-ui:min-h-11"
-          data-testid="equipment-detail-site-interventions"
-          [routerLink]="['/organizations', organizationId(), 'interventions']"
-          [queryParams]="{ site: siteFacilityId }"
+        <hlm-separator orientation="vertical" class="h-4" />
+        <span
+          tabindex="0"
+          data-testid="equipment-detail-meta"
+          class="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          [hlmTooltip]="equipment.updatedAt | appOrgDate: 'datetime' : regionalFormatting()"
         >
-          <ng-icon name="lucideWrench" class="text-sm" aria-hidden="true" />
-          <span i18n="@@equipment.detail.siteInterventions">
-            Interventions on this equipment's site
-          </span>
-        </a>
+          <span i18n="@@equipment.detail.metaUpdated"
+            >Updated {{ updatedRelativeLabel(equipment.updatedAt) }}</span
+          >
+          <span class="hidden text-xs mobile-ui:inline"
+            >({{ equipment.updatedAt | appOrgDate: 'datetime' : regionalFormatting() }})</span
+          >
+        </span>
+      </div>
+
+      @if (equipment.planPosition != null || equipment.facilityId) {
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          @if (equipment.planPosition != null) {
+            @if (equipment.facilityId; as pinnedFacilityId) {
+              <a
+                [routerLink]="['/organizations', organizationId(), 'facilities', pinnedFacilityId]"
+                [queryParams]="{ tab: 'plans' }"
+                class="inline-flex items-center gap-1 text-sm text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11"
+                data-testid="equipment-detail-pinned"
+              >
+                <ng-icon
+                  name="lucideMapPin"
+                  class="text-sm text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span i18n="@@equipment.detail.pinnedOnPlan">Pinned on floor plan</span>
+              </a>
+            }
+          }
+          @if (equipment.facilityId; as siteFacilityId) {
+            <a
+              class="inline-flex items-center gap-1 text-sm text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11"
+              data-testid="equipment-detail-site-interventions"
+              [routerLink]="['/organizations', organizationId(), 'interventions']"
+              [queryParams]="{ site: siteFacilityId }"
+            >
+              <ng-icon
+                name="lucideWrench"
+                class="text-sm text-muted-foreground"
+                aria-hidden="true"
+              />
+              <span i18n="@@equipment.detail.siteInterventions">
+                Interventions on this equipment's site
+              </span>
+            </a>
+          }
+        </div>
       }
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="ms-auto mobile-ui:min-h-11"
-        data-testid="equipment-detail-export-report"
-        [disabled]="reportExporting()"
-        [attr.aria-busy]="reportExporting() ? 'true' : null"
-        (click)="exportReport()"
-      >
-        @if (reportExporting()) {
-          <hlm-spinner class="size-4" aria-hidden="true" />
-        } @else {
-          <ng-icon name="lucideDownload" aria-hidden="true" />
-        }
-        <span i18n="@@equipment.report.exportButton">Export equipment sheet</span>
-      </button>
     </div>
-    <p class="text-sm text-muted-foreground" data-testid="equipment-detail-meta">
-      {{ metaLine() }}
-    </p>
 
     <hlm-tabs [tab]="activeTab()" class="contents" (tabActivated)="onTabActivated($event)">
       <ng-template #pageTabs>
@@ -118,28 +159,29 @@
           </button>
           <button hlmTabsTrigger="tags" class="mobile-ui:min-h-11" data-testid="equipment-tab-tags">
             <span i18n="@@equipment.detail.tabs.tags">Tags</span>
+            @if (equipment.tags.length) {
+              <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
+                equipment.tags.length
+              }}</span>
+            }
           </button>
         </hlm-paginated-tabs-list>
       </ng-template>
 
       <div hlmTabsContent="overview" class="flex flex-col gap-4">
         <section
-          class="flex max-w-2xl flex-col gap-1"
+          class="flex max-w-4xl flex-col gap-1"
           aria-labelledby="equipment-detail-info-title"
           data-testid="equipment-detail-info"
         >
-          <h2
-            hlmCardTitle
-            id="equipment-detail-info-title"
-            class="px-2"
-            i18n="@@equipment.info.title"
-          >
+          <h2 class="sr-only" id="equipment-detail-info-title" i18n="@@equipment.info.title">
             Equipment information
           </h2>
           <app-equipment-information-panel
             [equipment]="equipment"
             [editable]="canWrite()"
             [editState]="editState()"
+            [regionalFormatting]="regionalFormatting()"
             (detailsChanged)="onDetailsChanged($event)"
             (editTargetChanged)="onEditTargetChanged($event)"
           />
@@ -150,12 +192,16 @@
         <app-equipment-attachments
           [attachments]="store.attachments()"
           [canManage]="canWrite()"
+          [loading]="store.isLoadingAttachments()"
+          [error]="store.attachmentsListCallState().status === 'error'"
+          [regionalFormatting]="regionalFormatting()"
           [pendingIds]="pendingAttachmentDeleteIds()"
           [downloadingIds]="pendingAttachmentDownloadIds()"
           [uploading]="store.addAttachmentCallState().status === 'pending'"
           (filesPicked)="onAttachmentFilesPicked($event)"
           (deleteRequested)="onAttachmentDeleteRequested($event)"
           (downloadRequested)="onAttachmentDownloadRequested($event)"
+          (retried)="onAttachmentsRetried()"
         />
       </div>
 
@@ -164,6 +210,9 @@
           [organizationId]="organizationId()"
           [logs]="store.maintenanceLogs()"
           [loading]="store.isLoadingMaintenanceLogs()"
+          [error]="store.maintenanceLogsListCallState().status === 'error'"
+          [regionalFormatting]="regionalFormatting()"
+          (retried)="onMaintenanceLogsRetried()"
         />
       </div>
 
@@ -188,9 +237,17 @@
       i18n-aria-label="@@equipment.detail.loadingAria"
       data-testid="equipment-detail-loading"
     >
-      <hlm-skeleton class="h-8 w-64" />
-      <hlm-skeleton class="h-4 w-40" />
-      <hlm-skeleton class="h-64 w-full max-w-2xl" />
+      <div class="flex flex-wrap items-center gap-2">
+        <hlm-skeleton class="h-5 w-24" />
+        <hlm-skeleton class="h-5 w-24" />
+        <hlm-skeleton class="h-4 w-40" />
+      </div>
+      <hlm-skeleton class="h-4 w-32" />
+      <div class="flex max-w-2xl flex-col gap-3">
+        @for (row of skeletonFieldRows; track row) {
+          <hlm-skeleton class="h-9 w-full" />
+        }
+      </div>
     </div>
   } @else {
     <div hlmEmpty role="alert" data-testid="equipment-detail-load-failed">

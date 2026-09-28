@@ -25,20 +25,26 @@
     @for (item of items(); track item.id) {
       <tr hlmTableRow data-testid="checklist-table-row">
         <td hlmTableCell class="font-medium text-foreground">
-          <button
-            type="button"
-            class="rounded-sm text-start underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring mobile-ui:min-h-11"
-            (click)="viewRequested.emit(item)"
+          <a
+            class="rounded-sm text-start underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+            [routerLink]="[...detailRouteBase(), item.id]"
+            >{{ item.name }}</a
           >
-            {{ item.name }}
-          </button>
+          <p class="text-xs font-normal text-muted-foreground">
+            <span i18n="@@checklists.list.version">v{{ item.version }}</span>
+            @if (item.referenceCode) {
+              <span> · </span><span class="font-mono">{{ item.referenceCode }}</span>
+            }
+          </p>
         </td>
 
         <td hlmTableCell>
           <app-checklist-status-tag [value]="item.status" />
         </td>
 
-        <td hlmTableCell class="text-right tabular-nums">{{ item.items.length }}</td>
+        <td hlmTableCell class="text-right tabular-nums" i18n="@@checklists.list.itemCount">
+          {item.itemCount, plural, =0 {0 items} =1 {1 item} other {{{ item.itemCount }} items}}
+        </td>
 
         <td hlmTableCell class="text-muted-foreground">
           {{ item.updatedAt | appOrgDate: 'date' : regionalFormatting() }}
@@ -51,39 +57,45 @@
     }
   </ng-container>
 
-  <ng-container surfaceCards>
+  <div surfaceCards hlmItemGroup>
     @for (item of items(); track item.id) {
-      <div
-        class="flex flex-col gap-1 rounded-md border border-border p-3 mobile-ui:gap-2 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:p-4"
-        data-testid="checklist-table-card"
-      >
+      <div hlmItem class="flex flex-col items-stretch gap-1" data-testid="checklist-table-card">
         <div class="flex items-start gap-2">
-          <button
-            type="button"
-            class="min-w-0 flex-1 rounded-sm text-start text-base font-medium break-words text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring mobile-ui:min-h-11"
-            (click)="viewRequested.emit(item)"
+          <a
+            class="flex min-h-11 min-w-0 flex-1 items-center rounded-sm text-base font-medium wrap-anywhere text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [routerLink]="[...detailRouteBase(), item.id]"
+            >{{ item.name }}</a
           >
-            {{ item.name }}
-          </button>
 
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <app-checklist-status-tag [value]="item.status" />
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <app-checklist-status-tag [value]="item.status" asOption />
 
-          <span class="truncate tabular-nums">
-            {{ item.items.length }}
-            <span i18n="@@checklists.list.cardItems">items</span>
-          </span>
+          <span class="tabular-nums" i18n="@@checklists.list.itemCount">{item.itemCount, plural,
+            =0 {0 items}
+            =1 {1 item}
+            other {{{ item.itemCount }} items}
+          }</span>
+
+          <span i18n="@@checklists.list.version">v{{ item.version }}</span>
+
+          @if (item.referenceCode) {
+            <span class="font-mono">{{ item.referenceCode }}</span>
+          }
         </div>
-        <p class="text-sm text-muted-foreground">
+
+        <p class="text-xs text-muted-foreground">
           <span i18n="@@checklists.list.columnUpdated">Updated</span>
           {{ item.updatedAt | appOrgDate: 'date' : regionalFormatting() }}
         </p>
       </div>
+      @if (!$last) {
+        <hlm-item-separator />
+      }
     }
-  </ng-container>
+  </div>
 
   <p
     surfaceEmpty
@@ -95,7 +107,7 @@
 </app-collection-surface>
 
 <ng-template #rowActions let-item="item">
-  @if (canWrite() && item.status === 'active') {
+  @if (canArchive(item)) {
     <button
       hlmBtn
       type="button"
@@ -105,6 +117,8 @@
       class="mobile-ui:size-11"
       data-testid="checklist-table-row-menu"
       [hlmDropdownMenuTrigger]="rowMenu"
+      hlmTooltip="Open menu"
+      i18n-hlmTooltip="@@checklists.list.rowMenu"
     >
       <ng-icon name="lucideEllipsis" aria-hidden="true" />
       <span class="sr-only" i18n="@@checklists.list.rowMenu">Open menu</span>
@@ -114,26 +128,13 @@
       <hlm-dropdown-menu class="w-52">
         <button
           hlmDropdownMenuItem
-          data-testid="checklist-table-row-edit"
-          (click)="editRequested.emit(item)"
+          data-testid="checklist-table-row-archive"
+          (click)="archiveRequested.emit(item)"
           class="mobile-ui:min-h-11"
         >
-          <ng-icon name="lucidePencil" aria-hidden="true" />
-          <span i18n="@@checklists.list.rowEdit">Edit</span>
+          <ng-icon name="lucideArchive" aria-hidden="true" />
+          <span i18n="@@checklists.list.rowArchive">Archive</span>
         </button>
-
-        @if (item.status === 'active') {
-          <hlm-dropdown-menu-separator />
-          <button
-            hlmDropdownMenuItem
-            data-testid="checklist-table-row-archive"
-            (click)="archiveRequested.emit(item)"
-            class="mobile-ui:min-h-11"
-          >
-            <ng-icon name="lucideArchive" aria-hidden="true" />
-            <span i18n="@@checklists.list.rowArchive">Archive</span>
-          </button>
-        }
       </hlm-dropdown-menu>
     </ng-template>
   }

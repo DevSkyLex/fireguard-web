@@ -23,6 +23,8 @@ import type {
   MessageThreadEntry,
   MessageView,
 } from '@features/organization/features/collaboration/models';
+import type { PresenceStatus } from '@features/organization/models';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmMarker, HlmMarkerContent } from '@shared/ui/marker';
@@ -87,6 +89,7 @@ const BOTTOM_SLACK_PX = 64;
     HlmMessageGroup,
     HlmSkeleton,
     MessageRow,
+    StateIllustration,
   ],
   providers: [provideIcons({ lucideMessageSquare })],
   templateUrl: './message-thread.component.html',
@@ -95,6 +98,16 @@ const BOTTOM_SLACK_PX = 64;
 })
 export class MessageThread {
   //#region Inputs
+  /**
+   * Property presences
+   * @readonly
+   * @description Confirmed organization presence keyed by bare member id; missing entries are unknown.
+   * @access public
+   * @since 1.0.0
+   * @type {InputSignal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  public readonly presences: InputSignal<Readonly<Record<string, PresenceStatus>>> = input({});
+
   /**
    * Property messages
    * @readonly
@@ -211,6 +224,9 @@ export class MessageThread {
    * @type {InputSignal<boolean>}
    */
   public readonly actionsBusy: InputSignal<boolean> = input<boolean>(false);
+
+  /** Label for other participants currently typing, or null when quiet. */
+  public readonly typingLabel: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs

@@ -101,6 +101,7 @@ export function createInterventionCapabilities(
     ),
     canAssignTeam: computed<boolean>(() => actions()?.canAssignTeam === true),
     canAddWorkItem: computed<boolean>(() => actions()?.canMutateWorkItems === true),
+    canAddFacility: computed<boolean>(() => actions()?.canMutateWorkItems === true),
     canSkipWorkItem: computed<boolean>(
       () => actions()?.canMutateWorkItems === true && phase() === 'execute',
     ),

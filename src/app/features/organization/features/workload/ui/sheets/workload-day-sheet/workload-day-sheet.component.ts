@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
@@ -13,14 +14,20 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCalendarDays, lucideChevronDown } from '@ng-icons/lucide';
+import { lucideChevronDown } from '@ng-icons/lucide';
 import type {
   UnallocatedWorkOutput,
   WorkloadDaySelection,
 } from '@features/organization/features/workload/models';
 import type { MemberSelectOption } from '@features/organization/models';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
 import { formatDurationMinutes } from '@shared/duration-format';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { sheetSide } from '@shared/sheet-side';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
@@ -57,11 +64,12 @@ import type { WorkloadDayIntervention } from './models/workload-day-intervention
     HlmButton,
     HlmCollapsibleImports,
     HlmEmptyImports,
+    StateIllustration,
     HlmItemImports,
     HlmProgressImports,
     HlmSheetImports,
   ],
-  providers: [provideIcons({ lucideCalendarDays, lucideChevronDown })],
+  providers: [provideIcons({ lucideChevronDown })],
 })
 export class WorkloadDaySheet {
   /**
@@ -151,6 +159,52 @@ export class WorkloadDaySheet {
   protected readonly duration: typeof formatDurationMinutes = formatDurationMinutes;
 
   /**
+   * Property unknownMemberLabel
+   * @readonly
+   * @description Accessible fallback when neither the authorized directory nor the projection row carries a name — never the raw member id.
+   * @access protected
+   * @since 1.1.0
+   * @type {string}
+   */
+  protected readonly unknownMemberLabel: string = $localize`:@@workload.unknownMember:Unknown member`;
+
+  /**
+   * Property untitledTaskLabel
+   * @readonly
+   * @description Fallback contribution label when the server sent none — never the raw task id.
+   * @access protected
+   * @since 1.1.0
+   * @type {string}
+   */
+  protected readonly untitledTaskLabel: string = $localize`:@@workload.untitledTask:Untitled task`;
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern, read while resolving each excluded task's {@link periodLabel}.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT).regionalFormatting;
+
+  /**
+   * Property identityName
+   * @readonly
+   * @description The header's resolved member name — the authorized directory first, then the projected row, never the raw member id.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly identityName: Signal<string> = computed(
+    () =>
+      this.identity()?.displayName ||
+      this.selection()?.member.displayName ||
+      this.unknownMemberLabel,
+  );
+
+  /**
    * Property isExcludedExpanded
    * @readonly
    *
@@ -210,7 +264,7 @@ export class WorkloadDaySheet {
       const group: WorkloadDayIntervention = previous ?? {
         key,
         interventionId: entry.interventionId ?? null,
-        label: entry.label || entry.taskId,
+        label: entry.label || this.untitledTaskLabel,
         actualMinutes: null,
         remainingMinutes: null,
         draftMinutes: null,
@@ -231,6 +285,41 @@ export class WorkloadDaySheet {
     }
     return [...groups.values()];
   });
+
+  /**
+   * Property datePipe
+   * @readonly
+   * @description Dependency-free date-only formatter, called directly so the resolved period stays a plain string the template never branches to build.
+   * @access private
+   * @since 1.2.0
+   * @type {OrgDatePipe}
+   */
+  private readonly datePipe: OrgDatePipe = new OrgDatePipe();
+
+  /**
+   * Method periodLabel
+   * @method periodLabel
+   * @description Resolves an excluded task's work-period fact into one formatted string, so the template renders it without branching on the reason itself. A single known bound renders alone instead of a dangling range separator.
+   * @access protected
+   * @since 1.2.0
+   * @param {UnallocatedWorkOutput} task - Server-classified contribution.
+   * @returns {string | null} The formatted period, or `null` when the reason carries no period fact.
+   */
+  protected periodLabel(task: UnallocatedWorkOutput): string | null {
+    const settings: RegionalFormatSettings = this.regionalFormatting();
+    if (task.reason === 'overdue' && task.endsOn) {
+      return $localize`:@@workload.planning.ended:Ended ${this.datePipe.transform(task.endsOn, 'dateOnly', settings)}:date:`;
+    }
+    if (
+      (task.reason === 'no_available_day' || task.reason === 'unknown_capacity') &&
+      (task.startsOn || task.endsOn)
+    ) {
+      if (task.startsOn && task.endsOn)
+        return $localize`:@@workload.planning.period:${this.datePipe.transform(task.startsOn, 'dateOnly', settings)}:start: – ${this.datePipe.transform(task.endsOn, 'dateOnly', settings)}:end:`;
+      return this.datePipe.transform(task.startsOn ?? task.endsOn, 'dateOnly', settings);
+    }
+    return null;
+  }
 
   /**
    * Method unallocatedLabel

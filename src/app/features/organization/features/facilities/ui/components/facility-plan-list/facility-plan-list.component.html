@@ -1,8 +1,10 @@
 <div class="flex flex-col gap-3" data-testid="facility-plan-list">
   <div class="flex items-center justify-between gap-2">
-    <h3 class="text-sm font-medium text-muted-foreground" i18n="@@facility.plans.listTitle">
-      Floor plans
-    </h3>
+    @if (showHeading()) {
+      <h3 class="text-sm font-medium text-muted-foreground" i18n="@@facility.plans.listTitle">
+        Floor plans
+      </h3>
+    }
     @if (canManage()) {
       <button
         hlmBtn
@@ -37,19 +39,23 @@
   </div>
 
   @if (pickError(); as message) {
-    <p class="text-xs text-destructive" role="alert" data-testid="facility-plans-pick-error">
-      {{ message }}
-    </p>
+    <div hlmAlert variant="destructive" data-testid="facility-plans-pick-error">
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <p hlmAlertTitle i18n="@@facility.plans.pickErrorTitle">Couldn't use this file</p>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
   }
 
   @if (plans().length > 0) {
-    <ul hlmItemGroup>
-      @for (plan of plans(); track plan.id) {
+    <ul hlmItemGroup class="gap-0">
+      @for (plan of plans(); track plan.id; let first = $first) {
+        @if (!first) {
+          <hlm-item-separator class="my-0" />
+        }
         <li
           hlmItem
-          variant="outline"
           size="sm"
-          class="rounded-md transition-colors hover:bg-muted/50 motion-reduce:transition-none"
+          class="transition-colors hover:bg-muted/50 motion-reduce:transition-none"
           [class.bg-muted]="selectedPlanId() === plan.id"
           data-testid="facility-plan-row"
         >
@@ -67,8 +73,10 @@
               <span hlmItemTitle class="line-clamp-1">{{ plan.fileName }}</span>
               <span hlmItemDescription>
                 @if (dimensionsLabelOf(plan); as dimensions) {
-                  {{ dimensions }}
+                  {{ dimensions }} ·
                 }
+                {{ sizeLabelOf(plan) }} ·
+                {{ plan.uploadedAt | appOrgDate: 'date' : regionalFormatting() }}
                 @if (plan.isPrimaryPlan) {
                   ·
                   <span
@@ -93,6 +101,8 @@
               class="text-muted-foreground mobile-ui:size-11"
               i18n-aria-label="@@facility.plans.rowMenu"
               aria-label="Plan actions"
+              hlmTooltip="Plan actions"
+              i18n-hlmTooltip="@@facility.plans.rowMenu"
               data-testid="facility-plan-menu-trigger"
               [hlmDropdownMenuTrigger]="menu"
             >

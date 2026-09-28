@@ -1,16 +1,6 @@
-<div class="flex min-w-0 flex-col gap-5" data-testid="workload-page">
+<div class="flex min-w-0 flex-col gap-6" data-testid="workload-page">
   <div class="flex flex-wrap items-center gap-3">
-    <button
-      hlmBtn
-      variant="outline"
-      size="sm"
-      class="mobile-ui:min-h-11"
-      (click)="currentWeek()"
-      i18n="@@workload.currentWeek"
-    >
-      This week
-    </button>
-    <div class="flex items-center gap-1">
+    <div hlmButtonGroup>
       <button
         hlmBtn
         variant="outline"
@@ -18,9 +8,23 @@
         class="mobile-ui:size-11"
         aria-label="Previous week"
         i18n-aria-label="@@workload.previousWeek"
+        hlmTooltip="Previous week"
+        i18n-hlmTooltip="@@workload.previousWeek"
         (click)="stepWeek(-1)"
       >
         <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+      </button>
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        [disabled]="weekOffset() === 0"
+        [attr.aria-pressed]="weekOffset() === 0"
+        (click)="currentWeek()"
+        i18n="@@workload.currentWeek"
+      >
+        This week
       </button>
       <button
         hlmBtn
@@ -29,14 +33,15 @@
         class="mobile-ui:size-11"
         aria-label="Next week"
         i18n-aria-label="@@workload.nextWeek"
+        hlmTooltip="Next week"
+        i18n-hlmTooltip="@@workload.nextWeek"
         (click)="stepWeek(1)"
       >
         <ng-icon name="lucideChevronRight" aria-hidden="true" />
       </button>
     </div>
-    <p class="text-base font-semibold" aria-live="polite">
-      {{ query().from + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }} –
-      {{ query().to + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }}
+    <p class="text-base font-semibold tabular-nums" aria-live="polite">
+      {{ weekRangeLabel() }}
     </p>
     <div
       class="ml-auto flex flex-wrap items-center gap-2 mobile-ui:w-full mobile-ui:justify-between"
@@ -140,74 +145,173 @@
         capacity.
       </p>
     </div>
-  } @else if (store.projectionCallState().status === 'error') {
-    <div hlmAlert variant="destructive" role="alert">
-      <p hlmAlertTitle i18n="@@workload.loadError">Workload could not be loaded</p>
-      <p hlmAlertDescription>{{ store.projectionCallState().error?.message }}</p>
-      <button
-        hlmBtn
-        variant="outline"
-        class="mt-3 mobile-ui:min-h-11"
-        (click)="reload()"
-        i18n="@@common.tryAgain"
-      >
-        Try again
-      </button>
+  } @else if (store.projectionCallState().status === 'error' && !data()) {
+    <div hlmEmpty role="alert" data-testid="workload-load-error">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@workload.loadError">Workload could not be loaded</p>
+        <p hlmEmptyDescription>{{ store.projectionCallState().error?.message }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          (click)="reload()"
+          i18n="@@common.tryAgain"
+        >
+          Try again
+        </button>
+      </div>
     </div>
-  } @else if (store.projectionCallState().status === 'pending') {
+  } @else if (store.projectionCallState().status === 'pending' && !data()) {
     <div role="status" aria-label="Loading workload" i18n-aria-label="@@workload.loading">
-      <hlm-skeleton class="h-72 w-full" />
+      @if (interaction.isMobileInteractionMode()) {
+        <div class="flex flex-col gap-6">
+          @for (row of skeletonMemberRows; track row; let lastRow = $last) {
+            <div class="min-w-0">
+              <div class="mb-2 flex items-center gap-2">
+                <hlm-skeleton class="size-10 rounded-full" />
+                <div class="flex flex-1 flex-col gap-1.5">
+                  <hlm-skeleton class="h-4 w-32" />
+                  <hlm-skeleton class="h-3 w-20" />
+                </div>
+              </div>
+              <ul hlmItemGroup>
+                @for (day of skeletonDayColumns; track day) {
+                  <li>
+                    @if (!$first) {
+                      <hlm-item-separator />
+                    }
+                    <div hlmItem class="min-h-16 justify-between gap-4">
+                      <hlm-skeleton class="h-4 w-12" />
+                      <hlm-skeleton class="h-4 w-16" />
+                    </div>
+                  </li>
+                }
+              </ul>
+            </div>
+            @if (!lastRow) {
+              <hlm-separator />
+            }
+          }
+        </div>
+      } @else {
+        <div hlmTableContainer class="rounded-lg border">
+          <table hlmTable class="min-w-4xl table-fixed">
+            <thead hlmTableHeader>
+              <tr hlmTableRow>
+                <th hlmTableHead scope="col" class="w-52"><hlm-skeleton class="h-4 w-24" /></th>
+                @for (day of skeletonDayColumns; track day) {
+                  <th hlmTableHead scope="col"><hlm-skeleton class="mx-auto h-4 w-10" /></th>
+                }
+              </tr>
+            </thead>
+            <tbody hlmTableBody>
+              <app-collection-skeleton-rows [rows]="5" [columnCount]="8" />
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   } @else if (data(); as result) {
-    @if (result.projection.completeness !== 'complete') {
-      <div hlmAlert role="status">
-        <p hlmAlertTitle i18n="@@workload.partialTitle">Some work cannot be quantified</p>
-        <p hlmAlertDescription i18n="@@workload.partialDescription">
-          Missing capacity, estimates or dates are listed below. The displayed totals do not
-          establish availability.
-        </p>
-      </div>
-    }
-    @if (result.projection.members.length) {
-      <p class="text-sm text-muted-foreground" i18n="@@workload.matrixLegend">
-        Recorded + remaining / capacity. Open a day for details; draft work is separate.
-      </p>
-      <app-workload-table
-        [projection]="result.projection"
-        [members]="memberOptions()"
-        (dayOpened)="selectedDay.set($event)"
-      />
-    } @else {
-      <div hlmEmpty class="border border-dashed">
-        <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideCalendarDays" aria-hidden="true" />
-          </div>
-          <p hlmEmptyTitle i18n="@@workload.empty">No members match these filters</p>
-        </div>
-        @if (activeFilterKeys().length) {
+    <div
+      class="flex flex-col gap-3"
+      [attr.aria-busy]="store.projectionCallState().status === 'pending' ? 'true' : null"
+    >
+      @if (store.projectionCallState().status === 'error') {
+        <div hlmAlert variant="destructive" role="alert" data-testid="workload-refresh-error">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@workload.loadError">Workload could not be loaded</p>
+          <p hlmAlertDescription>{{ store.projectionCallState().error?.message }}</p>
           <button
             hlmBtn
             variant="outline"
-            (click)="clearFilters()"
-            i18n="@@workload.clearFiltersAction"
+            class="mt-3 mobile-ui:min-h-11"
+            (click)="reload()"
+            i18n="@@common.tryAgain"
           >
-            Clear filters
+            Try again
           </button>
+        </div>
+      }
+      @if (result.projection.completeness !== 'complete') {
+        <div hlmAlert role="status">
+          <p hlmAlertTitle i18n="@@workload.partialTitle">Some work cannot be quantified</p>
+          <p hlmAlertDescription i18n="@@workload.partialDescription">
+            Missing capacity, estimates or dates are listed below. The displayed totals do not
+            establish availability.
+          </p>
+        </div>
+      }
+      <p class="text-sm text-muted-foreground">
+        @if (result.projection.members.length) {
+          <span i18n="@@workload.matrixLegend"
+            >Recorded + remaining / capacity. Open a day for details; draft work is separate.</span
+          >
+          @if (calculatedAt(); as calculated) {
+            <span aria-hidden="true"> · </span>
+            <span i18n="@@workload.calculatedAtShort">Calculated {{ calculated }}</span>
+          }
+        } @else if (calculatedAt(); as calculated) {
+          <span i18n="@@workload.calculatedAtShort">Calculated {{ calculated }}</span>
         }
-      </div>
-    }
-    <app-collection-pagination
-      [page]="result.page"
-      [pageSize]="result.pageSize"
-      [pageSizes]="[10, 20, 50]"
-      [pageCount]="pageCount()"
-      [total]="result.totalItems"
-      [shown]="result.projection.members.length"
-      testIdPrefix="workload"
-      (pageChanged)="changePage($event)"
-      (pageSizeChanged)="changePageSize($event)"
-    />
+      </p>
+      @if (store.projectionCallState().status === 'pending') {
+        <p role="status" class="text-xs text-muted-foreground" i18n="@@workload.refreshing">
+          Updating… Previous data remains visible.
+        </p>
+      }
+      @if (result.projection.members.length) {
+        <app-workload-table
+          [projection]="result.projection"
+          [members]="memberOptions()"
+          (dayOpened)="selectedDay.set($event)"
+        />
+      } @else if (activeFilterKeys().length) {
+        <div hlmEmpty>
+          <div hlmEmptyHeader>
+            <app-state-illustration hlmEmptyMedia state="no-matches" />
+            <p hlmEmptyTitle i18n="@@workload.empty">No members match these filters</p>
+          </div>
+          <div hlmEmptyContent>
+            <button
+              hlmBtn
+              variant="outline"
+              (click)="clearFilters()"
+              i18n="@@workload.clearFiltersAction"
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div hlmEmpty>
+          <div hlmEmptyHeader>
+            <app-resource-illustration hlmEmptyMedia resource="workload" />
+            <p hlmEmptyTitle i18n="@@workload.emptyWeek">No members to show for this week</p>
+            <p hlmEmptyDescription i18n="@@workload.emptyWeekDescription">
+              No member workload is available for this week.
+            </p>
+          </div>
+        </div>
+      }
+      @if (result.totalItems > 0) {
+        <app-collection-pagination
+          [page]="result.page"
+          [pageSize]="result.pageSize"
+          [pageSizes]="[10, 20, 50]"
+          [pageCount]="pageCount()"
+          [total]="result.totalItems"
+          [shown]="result.projection.members.length"
+          testIdPrefix="workload"
+          (pageChanged)="changePage($event)"
+          (pageSizeChanged)="changePageSize($event)"
+        />
+      }
+    </div>
     <app-workload-planning-panel
       [organizationId]="organizationId()"
       [projection]="result.projection"
@@ -215,9 +319,6 @@
       [canManageCapacity]="result.canManageCapacity && connectivity.online()"
       (capacityRequested)="openCapacity($event)"
     />
-    <p class="text-xs text-muted-foreground" i18n="@@workload.calculatedAt">
-      Calculated {{ calculatedAt() }}. Draft work is shown separately.
-    </p>
   }
 </div>
 <app-workload-day-sheet

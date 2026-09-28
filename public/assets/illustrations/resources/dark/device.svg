@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-device-dark-title fg-device-dark-description" class="fg-device-dark">
+  <title id="fg-device-dark-title">Device</title>
+  <desc id="fg-device-dark-description">A trusted phone, its lit screen showing a checked shield.</desc>
+  <defs>
+    <linearGradient id="fg-device-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
+    <linearGradient id="fg-device-dark-screen" gradientUnits="userSpaceOnUse" x1="248.6" y1="61.1" x2="151.4" y2="244.2"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.26"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.05"/></linearGradient>
+
+  </defs>
+  <style>
+    .fg-device-dark { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-device-dark path { vector-effect: non-scaling-stroke; }
+    .fg-device-dark .t { fill: #0c0c0f; }
+    .fg-device-dark .l { fill: #121215; }
+    .fg-device-dark .r { fill: #0f0f12; }
+    .fg-device-dark .hole { fill: #060607; }
+    .fg-device-dark .cy { fill: url(#fg-device-dark-cy); }
+    .fg-device-dark .af { fill: #bdbdc5; }
+    .fg-device-dark .kf { fill: #8e8e97; }
+    .fg-device-dark .eo { fill-rule: evenodd; }
+    .fg-device-dark .o { stroke: #a1a1aa; stroke-width: 1.35; }
+    .fg-device-dark .o2 { stroke: #71717a; stroke-width: 1.1; }
+    .fg-device-dark .e { stroke: #3f3f46; stroke-width: 1; }
+    .fg-device-dark .d { stroke: #71717a; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-device-dark .dh { stroke: #3f3f46; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-device-dark .g { stroke: #71717a; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-device-dark .k { stroke: #8e8e97; stroke-width: 1.2; }
+    .fg-device-dark .ka, .fg-device-dark .oa { stroke: #bdbdc5; stroke-width: 1.35; }
+    .fg-device-dark .da { stroke: #bdbdc5; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-device-dark .ga { stroke: #bdbdc5; stroke-width: 1; stroke-dasharray: 3 3; }
+  </style>
+  <path class="r" d="M376 120.3C376 124.4 373.2 128.4 368.1 131.3L163 249.7C157.9 252.7 151.1 254.3 144 254.3L144 268.9C151.1 268.9 157.9 267.3 163 264.4L368.1 146C373.2 143 376 139.1 376 135Z"/>
+  <path class="l" d="M144 254.3C136.8 254.3 130 252.7 124.9 249.7L31.9 196C26.8 193.1 24 189.1 24 185L24 199.7C24 203.8 26.8 207.8 31.9 210.7L124.9 264.4C130 267.3 136.8 268.9 144 268.9Z"/>
+  <path class="t" d="M24 185C24 180.9 26.8 177 31.9 174L237 55.6C242.1 52.7 248.9 51.1 256 51.1C263.2 51.1 270 52.7 275.1 55.6L368.1 109.3C373.2 112.2 376 116.2 376 120.3C376 124.4 373.2 128.4 368.1 131.3L163 249.7C157.9 252.7 151.1 254.3 144 254.3C136.8 254.3 130 252.7 124.9 249.7L31.9 196C26.8 193.1 24 189.1 24 185Z"/>
+  <path class="e" d="M376 120.3C376 124.4 373.2 128.4 368.1 131.3L163 249.7C157.9 252.7 151.1 254.3 144 254.3C136.8 254.3 130 252.7 124.9 249.7L31.9 196C26.8 193.1 24 189.1 24 185M144 254.3L144 268.9M24 185L24 199.7"/>
+  <path class="o" d="M24 185C24 180.9 26.8 177 31.9 174L237 55.6C242.1 52.7 248.9 51.1 256 51.1C263.2 51.1 270 52.7 275.1 55.6L368.1 109.3C373.2 112.2 376 116.2 376 120.3L376 135C376 139.1 373.2 143 368.1 146L163 264.4C157.9 267.3 151.1 268.9 144 268.9C136.8 268.9 130 267.3 124.9 264.4L31.9 210.7C26.8 207.8 24 203.8 24 199.7Z"/>
+  <path class="hole" d="M161.9 238.1C159.1 239.8 155.3 240.7 151.4 240.7C147.4 240.7 143.6 239.8 140.8 238.1L52 186.9C49.2 185.2 47.6 183 47.6 180.8C47.6 178.5 49.2 176.3 52 174.7L238.1 67.2C240.9 65.6 244.7 64.7 248.6 64.7C252.6 64.7 256.4 65.6 259.2 67.2L348 118.5C350.8 120.1 352.4 122.3 352.4 124.6C352.4 126.9 350.8 129.1 348 130.7L161.9 238.1Z"/>
+  <path fill="url(#fg-device-dark-screen)" d="M161.9 238.1C159.1 239.8 155.3 240.7 151.4 240.7C147.4 240.7 143.6 239.8 140.8 238.1L52 186.9C49.2 185.2 47.6 183 47.6 180.8C47.6 178.5 49.2 176.3 52 174.7L238.1 67.2C240.9 65.6 244.7 64.7 248.6 64.7C252.6 64.7 256.4 65.6 259.2 67.2L348 118.5C350.8 120.1 352.4 122.3 352.4 124.6C352.4 126.9 350.8 129.1 348 130.7L161.9 238.1Z"/>
+  <path class="e" d="M161.9 238.1C159.1 239.8 155.3 240.7 151.4 240.7C147.4 240.7 143.6 239.8 140.8 238.1L52 186.9C49.2 185.2 47.6 183 47.6 180.8C47.6 178.5 49.2 176.3 52 174.7L238.1 67.2C240.9 65.6 244.7 64.7 248.6 64.7C252.6 64.7 256.4 65.6 259.2 67.2L348 118.5C350.8 120.1 352.4 122.3 352.4 124.6C352.4 126.9 350.8 129.1 348 130.7L161.9 238.1Z"/>
+  <path class="o2" d="M325.8 98.3C325 98.8 323.8 99.1 322.7 99.1C321.5 99.1 320.3 98.8 319.5 98.3L294.1 83.7C293.3 83.2 292.8 82.5 292.8 81.9C292.8 81.2 293.3 80.5 294.1 80C294.9 79.5 296.1 79.3 297.3 79.3C298.5 79.3 299.6 79.5 300.4 80L325.8 94.7C326.7 95.2 327.1 95.8 327.1 96.5C327.1 97.2 326.7 97.9 325.8 98.3Z"/>
+  <path class="ka" d="M232.5 159.1C232.5 173.2 215.5 180.2 195.3 184.3C194.2 184.5 193.1 184.5 192.1 184.2C171.8 180.2 154.8 173.2 154.8 159.1L154.8 139.5C154.8 138 157 136.7 159.6 136.7C169.4 136.7 181.5 133.3 190 129.1C192.1 128 195.2 128 197.3 129.1C205.9 133.4 218 136.7 227.7 136.7C230.4 136.7 232.5 138 232.5 139.5ZM179.1 156.3L188.8 161.9L208.2 150.7"/>
+</svg>

@@ -33,6 +33,8 @@ import {
   FacilityOptionsStore,
   FacilityStore,
 } from '@features/organization/features/facilities/state';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { FacilitiesPage } from '../facilities-page.component';
 
 /**
@@ -144,6 +146,10 @@ describe('FacilitiesPage', () => {
             interactionMode: signal('desktop'),
             isMobileInteractionMode: signal(false),
           },
+        },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
         },
         provideRouter([]),
         {
@@ -392,7 +398,17 @@ describe('FacilitiesPage', () => {
     rootFacilities.set([]);
     fixture = await createPage();
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No facilities found');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No facilities yet');
+  });
+
+  it('should show the filtered-miss empty state when a search or filter narrows to nothing', async () => {
+    rootListCallState.set(successCallState(null));
+    rootFacilities.set([]);
+    fixture = await createPage({ q: 'nonexistent' });
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'No facility matches this search',
+    );
   });
 
   it('should render the loaded roots and the row count', async () => {

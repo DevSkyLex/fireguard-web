@@ -101,6 +101,7 @@ export function buildOrganizationMobileNavigation(
     id: 'account',
     label: $localize`:@@org.more.account:Your account`,
     links: ACCOUNT_LINKS,
+    includesSignOut: true,
   };
   if (organizationId === null) {
     return {

@@ -3,6 +3,8 @@
     class="shrink-0"
     [statistics]="kpisStore.queryData()"
     [loading]="kpisStore.isQueryLoading()"
+    [error]="kpisStore.queryHasError()"
+    (retried)="kpisStore.load(organizationId())"
   />
 
   <app-collection-toolbar>
@@ -146,9 +148,7 @@
   @if (listForbidden()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideLock" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="access-denied" />
         <p hlmEmptyTitle i18n="@@equipment.list.forbiddenTitle">
           Not available with your permissions
         </p>
@@ -184,16 +184,22 @@
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         @if (hasSearchOrFilters()) {
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideSearch" aria-hidden="true" />
-          </div>
-        } @else if (store.listCallState().status === 'success' && store.totalEquipment() === 0) {
-          <app-resource-illustration hlmEmptyMedia resource="equipment" />
+          <app-state-illustration hlmEmptyMedia state="no-results" />
+          <p hlmEmptyTitle i18n="@@equipment.table.emptyFilteredTitle">
+            No equipment matches these filters
+          </p>
+          <p hlmEmptyDescription i18n="@@equipment.table.emptyFilteredDesc">
+            Try another term or clear the filters.
+          </p>
+        } @else {
+          @if (store.listCallState().status === 'success' && store.totalEquipment() === 0) {
+            <app-resource-illustration hlmEmptyMedia resource="equipment" />
+          }
+          <p hlmEmptyTitle i18n="@@equipment.table.emptyTitle">No equipment registered yet</p>
+          <p hlmEmptyDescription i18n="@@equipment.table.emptyDesc">
+            Register the extinguishers, detectors and other assets you track.
+          </p>
         }
-        <p hlmEmptyTitle i18n="@@equipment.table.emptyTitle">No equipment found</p>
-        <p hlmEmptyDescription i18n="@@equipment.table.emptyDesc">
-          Adjust your search or filters, or register the assets you track.
-        </p>
       </div>
       <div hlmEmptyContent>
         @if (hasSearchOrFilters()) {
@@ -213,6 +219,7 @@
       [items]="items()"
       [loading]="store.isLoadingEquipment()"
       [detailRouteBase]="listRouteBase()"
+      [organizationId]="organizationId()"
       [sortOrder]="sortOrder()"
       (sortChanged)="applySortField($event)"
     />

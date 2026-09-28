@@ -1,4 +1,5 @@
 import type { CallState } from '@core/request-state';
+import type { ConversationReceiptPositionOutput } from '@features/organization/features/collaboration/models';
 
 /**
  * Interface MessageThreadState
@@ -51,6 +52,17 @@ export interface MessageThreadState {
    * reconnection — the hub replays nothing.
    */
   readonly realtimeTopic: string | null;
+  /** Browser-confirmed participant positions restored from the API. */
+  readonly receiptPositions: readonly ConversationReceiptPositionOutput[];
+  readonly receiptsCallState: CallState;
+  readonly deliveryCallState: CallState;
+  readonly typingCallState: CallState;
+  /** Avoids repeatedly acknowledging the same loaded message. */
+  readonly lastDeliveryAttemptId: string | null;
+  /** Avoids repeatedly moving the same visible read position. */
+  readonly lastReadAttemptId: string | null;
+  /** Other members with an unexpired typing signal. */
+  readonly typingMemberIds: readonly string[];
   /**
    * Messages shown optimistically that the server has not confirmed yet.
    *

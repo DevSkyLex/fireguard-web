@@ -39,11 +39,7 @@
 
         <td hlmTableCell>
           <app-import-status-tag [value]="item.status" />
-          @if (progressLabelOf(item); as progress) {
-            <div class="mt-1 text-xs text-muted-foreground" data-testid="import-job-table-progress">
-              {{ progress }}
-            </div>
-          }
+          <ng-container [ngTemplateOutlet]="progressBlock" [ngTemplateOutletContext]="{ item }" />
         </td>
 
         <td hlmTableCell class="text-sm whitespace-normal">
@@ -65,44 +61,43 @@
   </ng-container>
 
   <ng-container surfaceCards>
-    @for (item of items(); track item.id) {
-      <div
-        class="flex flex-col gap-2 rounded-md border border-border p-3 mobile-ui:gap-4 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:p-4"
-        data-testid="import-job-table-card"
-      >
-        <div class="flex min-w-0 flex-col">
-          <span class="text-base font-medium break-words text-foreground">
-            {{ item.originalFilename }}
-            @if (item.dryRun) {
-              <span hlmBadge variant="outline" class="ml-1.5 align-middle text-xs">
-                <span i18n="@@imports.table.dryRunBadge">Dry run</span>
-              </span>
-            }
-          </span>
+    <div hlmItemGroup class="gap-0">
+      @for (item of items(); track item.id) {
+        @if (!$first) {
+          <hlm-item-separator class="my-0" />
+        }
+        <div hlmItem size="sm" data-testid="import-job-table-card">
+          <div hlmItemContent class="min-w-0 gap-2">
+            <span hlmItemTitle class="line-clamp-none wrap-anywhere">
+              {{ item.originalFilename }}
+              @if (item.dryRun) {
+                <span hlmBadge variant="outline" class="ml-1.5 align-middle text-xs">
+                  <span i18n="@@imports.table.dryRunBadge">Dry run</span>
+                </span>
+              }
+            </span>
+
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+              <app-import-status-tag [value]="item.status" />
+              <span>{{ kindLabelOf(item) }}</span>
+              <ng-container [ngTemplateOutlet]="rowResults" [ngTemplateOutletContext]="{ item }" />
+            </div>
+
+            <ng-container [ngTemplateOutlet]="progressBlock" [ngTemplateOutletContext]="{ item }" />
+
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-sm text-muted-foreground">{{
+                item.createdAt | appOrgDate: 'datetime' : regionalFormatting()
+              }}</span>
+              <ng-container
+                [ngTemplateOutlet]="rowActions"
+                [ngTemplateOutletContext]="{ item, labelled: true }"
+              />
+            </div>
+          </div>
         </div>
-
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
-          <app-import-status-tag [value]="item.status" />
-
-          <span>{{ kindLabelOf(item) }}</span>
-          @if (progressLabelOf(item); as progress) {
-            <output>{{ progress }}</output>
-          }
-
-          <ng-container [ngTemplateOutlet]="rowResults" [ngTemplateOutletContext]="{ item }" />
-        </div>
-
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="text-sm text-muted-foreground">{{
-            item.createdAt | appOrgDate: 'datetime' : regionalFormatting()
-          }}</span>
-          <ng-container
-            [ngTemplateOutlet]="rowActions"
-            [ngTemplateOutletContext]="{ item, labelled: true }"
-          />
-        </div>
-      </div>
-    }
+      }
+    </div>
   </ng-container>
 
   <p
@@ -114,20 +109,52 @@
   </p>
 </app-collection-surface>
 
-<ng-template #rowResults let-item="item">
-  <span class="inline-flex items-center gap-3">
-    <span class="inline-flex items-center gap-1 text-success">
-      <ng-icon name="lucideCircleCheck" aria-hidden="true" />
-      <span class="tabular-nums">{{ item.successfulRows }}</span>
-      <span class="sr-only" i18n="@@imports.table.successfulRowsLabel">rows imported</span>
-    </span>
+<ng-template #progressBlock let-item="item">
+  @if (item.status === 'processing') {
+    @if (progressRatioOf(item); as ratio) {
+      <hlm-progress
+        [value]="ratio"
+        [attr.aria-label]="progressCaptionOf(item)"
+        class="mt-1 h-1.5 w-28"
+      >
+        <hlm-progress-indicator />
+      </hlm-progress>
+      <p
+        class="mt-1 text-xs text-muted-foreground tabular-nums"
+        data-testid="import-job-table-progress"
+      >
+        {{ progressCaptionOf(item) }}
+      </p>
+    } @else if (progressLabelOf(item); as progress) {
+      <p class="mt-1 text-xs text-muted-foreground" data-testid="import-job-table-progress">
+        {{ progress }}
+      </p>
+    }
+  }
+</ng-template>
 
-    <span class="inline-flex items-center gap-1 text-destructive">
-      <ng-icon name="lucideCircleX" aria-hidden="true" />
-      <span class="tabular-nums">{{ item.failedRows }}</span>
-      <span class="sr-only" i18n="@@imports.table.failedRowsLabel">rows failed</span>
+<ng-template #rowResults let-item="item">
+  @if (item.status === 'pending') {
+    <span class="text-muted-foreground" aria-hidden="true">—</span>
+  } @else {
+    <span class="inline-flex items-center gap-3">
+      <span class="inline-flex items-center gap-1 text-success">
+        <ng-icon name="lucideCircleCheck" aria-hidden="true" />
+        <span class="tabular-nums">{{ item.successfulRows }}</span>
+        <span class="sr-only" i18n="@@imports.table.successfulRowsLabel">rows imported</span>
+      </span>
+
+      <span
+        class="inline-flex items-center gap-1"
+        [class.text-destructive]="item.failedRows > 0"
+        [class.text-muted-foreground]="item.failedRows === 0"
+      >
+        <ng-icon name="lucideCircleX" aria-hidden="true" />
+        <span class="tabular-nums">{{ item.failedRows }}</span>
+        <span class="sr-only" i18n="@@imports.table.failedRowsLabel">rows failed</span>
+      </span>
     </span>
-  </span>
+  }
 </ng-template>
 
 <ng-template #rowActions let-item="item" let-labelled="labelled">

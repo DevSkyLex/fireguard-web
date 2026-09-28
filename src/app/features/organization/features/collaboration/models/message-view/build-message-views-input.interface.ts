@@ -1,4 +1,5 @@
 import type { MemberDirectoryEntry } from '@features/organization/models';
+import type { ConversationReceiptPositionOutput } from '../conversation';
 import type { MessageOutput } from '../message';
 
 /**
@@ -36,4 +37,7 @@ export interface BuildMessageViewsInput {
    * them delete another member's message.
    */
   readonly canManage: boolean;
+  /** Omitted for contextual subject threads, which do not expose receipts. */
+  readonly receiptKind?: 'direct' | 'channel';
+  readonly receiptPositions?: readonly ConversationReceiptPositionOutput[];
 }

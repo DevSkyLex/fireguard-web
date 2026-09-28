@@ -1,13 +1,13 @@
 import { type EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 import {
   type AdditiveSlotFeature,
-  type ExclusiveSlotFeature,
   type SlotFeature,
   provideSlotContributions,
 } from '@shared/layout-slot';
-import type { SidebarExtensionContribution } from '../../models';
+import type { DashboardPanelContribution, SidebarExtensionContribution } from '../../models';
 import {
   DASHBOARD_HEADER_ACTIONS_SLOT,
+  DASHBOARD_MOBILE_ACTIONS_SLOT,
   DASHBOARD_MOBILE_NAVIGATION_SLOT,
   DASHBOARD_HEADER_SLOT,
   DASHBOARD_PANEL_SLOT,
@@ -30,6 +30,15 @@ import {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface DashboardLayoutSlotsConfig {
+  /**
+   * Property mobileActions
+   * @readonly
+   * @description Feature tools available only in the mobile quick-actions drawer.
+   * @access public
+   * @since 1.0.0
+   * @type {readonly AdditiveSlotFeature[] | undefined}
+   */
+  readonly mobileActions?: readonly AdditiveSlotFeature[];
   /**
    * Property mobileNavigation
    * @readonly
@@ -63,7 +72,7 @@ export interface DashboardLayoutSlotsConfig {
   /** Tool cluster at the right of the header. */
   readonly headerActions?: readonly AdditiveSlotFeature[];
   /** Mono-active contextual column. */
-  readonly panel?: readonly ExclusiveSlotFeature[];
+  readonly panel?: readonly SlotFeature<DashboardPanelContribution>[];
 }
 
 /**
@@ -102,6 +111,7 @@ export function provideDashboardLayoutSlots(
     ...provideSlotContributions(DASHBOARD_SIDEBAR_FOOTER_SLOT, config.sidebarFooter),
     ...provideSlotContributions(DASHBOARD_HEADER_SLOT, config.header),
     ...provideSlotContributions(DASHBOARD_HEADER_ACTIONS_SLOT, config.headerActions),
+    ...provideSlotContributions(DASHBOARD_MOBILE_ACTIONS_SLOT, config.mobileActions),
     ...provideSlotContributions(DASHBOARD_MOBILE_NAVIGATION_SLOT, config.mobileNavigation),
     ...provideSlotContributions(DASHBOARD_PANEL_SLOT, config.panel),
     ...provideSlotContributions(DASHBOARD_SIDEBAR_EXTENSION_SLOT, config.sidebarExtension),

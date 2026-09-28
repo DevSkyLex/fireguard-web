@@ -1,6 +1,7 @@
 export { createInterventionCapabilities } from './intervention-capabilities/intervention-capabilities.utils';
 export {
   formatInterventionChangePatch,
+  humanizeChangeField,
   interventionChangeResourceKind,
 } from './format-intervention-change-patch/format-intervention-change-patch.utils';
 export { toUtcMidnight } from './intervention-date-only/intervention-date-only.utils';
@@ -19,7 +20,6 @@ export {
 } from './intervention-list-query/intervention-list-query.utils';
 export { buildInterventionDuplicatePrefill } from './intervention-duplicate-prefill/intervention-duplicate-prefill.utils';
 export { buildInterventionQueueRequests } from './intervention-queue-requests/intervention-queue-requests.utils';
-export { formatInterventionRelativeTime } from './intervention-relative-time/intervention-relative-time.utils';
 export { resolveInterventionActivityActor } from './intervention-activity-actor/intervention-activity-actor.utils';
 export {
   buildInterventionMetaLine,

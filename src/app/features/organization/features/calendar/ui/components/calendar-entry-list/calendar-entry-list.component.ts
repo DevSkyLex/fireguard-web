@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,16 +11,30 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucidePencil, lucideTrash2 } from '@ng-icons/lucide';
-import { SOURCE_TONE } from '@features/organization/features/calendar/constants';
+import {
+  lucideCalendar,
+  lucideCalendarClock,
+  lucideClipboardCheck,
+  lucideMapPin,
+  lucidePencil,
+  lucideTrash2,
+  lucideWrench,
+} from '@ng-icons/lucide';
+import { SOURCE_ICON, SOURCE_TONE } from '@features/organization/features/calendar/constants';
 import type {
   CalendarFeedItemOutput,
   CalendarSourceKey,
 } from '@features/organization/features/calendar/models';
-import type { CalendarDisplayEvent } from '@shared/calendar';
+import { calendarSourceLabelOf } from '@features/organization/features/calendar/utils';
+import { toIsoDay, type CalendarDisplayEvent } from '@shared/calendar';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /**
  * Component CalendarEntryList
@@ -27,10 +42,13 @@ import { HlmItemImports } from '@shared/ui/item';
  *
  * @description
  * The row rendering shared by the calendar's day panel (desktop sidebar) and
- * its agenda (mobile, grouped by day): title, time-of-day, source badge, and
- * — for an intervention entry only — a link to its workspace. A
+ * its agenda (mobile, grouped by day): title, time-of-day (a range through
+ * {@link endsAt}, in the organization's own timezone), an optional
+ * description and facility line, a source badge carrying a leading glyph
+ * (tone alone no longer distinguishes a source, `DESIGN.md`), and — for an
+ * intervention or inspection entry — a link to its record. A
  * `calendar_event`-source row additionally offers Edit/Delete icon buttons
- * when {@link canWrite} is set — the other three sources are projections of
+ * when {@link canWrite} is set — the other sources are projections of
  * records this feature does not own and never show them (`FEATURE.md`
  * "Writable events" invariant: this component, not the page, is where that
  * gate is enforced, since it is the single place a row renders). Purely
@@ -38,7 +56,7 @@ import { HlmItemImports } from '@shared/ui/item';
  * emits the two write intents, and injects no store or service
  * (`ARCHITECTURE.md` §10.3).
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @example
  * ```html
@@ -55,14 +73,35 @@ import { HlmItemImports } from '@shared/ui/item';
  */
 @Component({
   selector: 'app-calendar-entry-list',
-  imports: [RouterLink, NgIcon, HlmBadge, HlmButton, ...HlmItemImports],
-  providers: [provideIcons({ lucidePencil, lucideTrash2 })],
+  imports: [
+    NgTemplateOutlet,
+    RouterLink,
+    NgIcon,
+    HlmBadge,
+    HlmButton,
+    ...HlmItemImports,
+    ...HlmTooltipImports,
+  ],
+  providers: [
+    provideIcons({
+      lucideCalendar,
+      lucideCalendarClock,
+      lucideClipboardCheck,
+      lucideMapPin,
+      lucidePencil,
+      lucideTrash2,
+      lucideWrench,
+    }),
+  ],
   templateUrl: './calendar-entry-list.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalendarEntryList {
   //#region Inputs
+  /** Stacks entry details and source badge in narrow week columns. */
+  public readonly compact: InputSignal<boolean> = input<boolean>(false);
+
   /**
    * Property items
    * @readonly
@@ -93,6 +132,47 @@ export class CalendarEntryList {
    * @type {InputSignal<boolean>}
    */
   public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property day
+   *
+   * @description
+   * The `yyyy-MM-dd` day this list renders entries for — each call site
+   * scopes {@link items} to one day already. Lets {@link timeLabelOf} tell a
+   * multi-day item's start day from a continuation day, so the row reads
+   * "Until {date}" instead of repeating a start time that already passed.
+   * `null` keeps every item on its start-time label, for a caller that has
+   * no single day to report (there is none today, kept for a future
+   * cross-day list).
+   *
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<string | null>}
+   */
+  public readonly day: InputSignal<string | null> = input<string | null>(null);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's timezone, read by {@link timeLabelOf} so a time-of-day never reads in the wrong offset. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+
+  /**
+   * Property facilityLabelOf
+   * @readonly
+   * @description Resolves a bare facility id to its name, from the page's own facility catalog. Defaults to always resolving `null`, which drops the facility line.
+   * @access public
+   * @since 1.2.0
+   * @type {InputSignal<(facilityId: string) => string | null>}
+   */
+  public readonly facilityLabelOf: InputSignal<(facilityId: string) => string | null> = input<
+    (facilityId: string) => string | null
+  >(() => null);
   //#endregion
 
   //#region Outputs
@@ -126,23 +206,14 @@ export class CalendarEntryList {
   //#region Methods
   /**
    * Method sourceLabelOf
-   * @description Names a feed source for the row's badge.
+   * @description Names a feed source for the row's badge, through the resolver shared with the page's "Partial results" banner.
    * @access protected
    * @since 1.0.0
    * @param {CalendarFeedItemOutput} item - The entry in question.
    * @returns {string} A short localized source name.
    */
   protected sourceLabelOf(item: CalendarFeedItemOutput): string {
-    switch (item.sourceKey) {
-      case 'calendar_event':
-        return $localize`:@@calendar.source.event:Event`;
-      case 'inspection':
-        return $localize`:@@calendar.source.inspection:Inspection`;
-      case 'intervention':
-        return $localize`:@@calendar.source.intervention:Intervention`;
-      case 'maintenance':
-        return $localize`:@@calendar.source.maintenance:Maintenance`;
-    }
+    return calendarSourceLabelOf(item.sourceKey);
   }
 
   /**
@@ -160,33 +231,131 @@ export class CalendarEntryList {
   }
 
   /**
+   * Method sourceIconOf
+   * @description The `aria-hidden` glyph leading a feed entry's badge — every source's tone is now neutral, so this is what actually distinguishes one from another.
+   * @access protected
+   * @since 1.2.0
+   * @param {CalendarFeedItemOutput} item - The entry in question.
+   * @returns {string} The `ng-icon` name.
+   */
+  protected sourceIconOf(item: CalendarFeedItemOutput): string {
+    return SOURCE_ICON[item.sourceKey];
+  }
+
+  /**
    * Method timeLabelOf
-   * @description The entry's time-of-day, or the localized all-day label.
+   *
+   * @description
+   * The entry's time-of-day, the localized all-day label, or — on a
+   * continuation day of a multi-day item, per {@link day} — "Until {date}"
+   * rather than a start time that already passed on an earlier day. A timed
+   * range renders through `Intl.DateTimeFormat.formatRange`, in the
+   * organization's own timezone so a time-of-day never reads in the wrong
+   * offset.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry in question.
-   * @returns {string} A short time label.
+   *
+   * @returns {string} A short time or range label.
    */
   protected timeLabelOf(item: CalendarFeedItemOutput): string {
     if (item.allDay) return $localize`:@@calendar.allDay:All day`;
 
-    return new Intl.DateTimeFormat(this.locale, { timeStyle: 'short' }).format(
-      new Date(item.startsAt),
-    );
+    const timeZone: string = this.regionalFormatting().timezone;
+    const start: Date = new Date(item.startsAt);
+    const day: string | null = this.day();
+
+    if (day !== null && day !== toIsoDay(start)) {
+      const end: Date = item.endsAt ? new Date(item.endsAt) : start;
+      const until: string = this.resolveDateTimeFormat(
+        { weekday: 'short', day: 'numeric' },
+        timeZone,
+      ).format(end);
+
+      return $localize`:@@calendar.entry.until:Until ${until}:date:`;
+    }
+
+    if (item.endsAt) {
+      const end: Date = new Date(item.endsAt);
+      if (!Number.isNaN(end.getTime())) {
+        return this.resolveDateTimeFormat({ timeStyle: 'short' }, timeZone).formatRange(start, end);
+      }
+    }
+
+    return this.resolveDateTimeFormat({ timeStyle: 'short' }, timeZone).format(start);
   }
 
   /**
-   * Method interventionLinkOf
-   * @description The intervention workspace route for an intervention entry, null otherwise.
-   * @access protected
-   * @since 1.0.0
-   * @param {CalendarFeedItemOutput} item - The entry in question.
-   * @returns {readonly string[] | null} The router commands, or null.
+   * Method resolveDateTimeFormat
+   * @description Builds an `Intl.DateTimeFormat` for `timeZone`, falling back to the runtime's own timezone when `timeZone` is not one `Intl` accepts — an organization-configured value the browser rejects must not break the whole entry list, matching `OrgDatePipe`'s own fallback.
+   * @access private
+   * @since 1.3.0
+   * @param {Intl.DateTimeFormatOptions} options - The formatting options, without `timeZone`.
+   * @param {string} timeZone - An IANA timezone name, `'UTC'`, or a fixed offset.
+   * @returns {Intl.DateTimeFormat} The resolved formatter.
    */
-  protected interventionLinkOf(item: CalendarFeedItemOutput): readonly string[] | null {
-    return item.sourceKey === 'intervention'
-      ? ['/organizations', this.organizationId(), 'interventions', item.targetId]
-      : null;
+  private resolveDateTimeFormat(
+    options: Intl.DateTimeFormatOptions,
+    timeZone: string,
+  ): Intl.DateTimeFormat {
+    try {
+      return new Intl.DateTimeFormat(this.locale, { ...options, timeZone });
+    } catch {
+      return new Intl.DateTimeFormat(this.locale, options);
+    }
+  }
+
+  /**
+   * Method descriptionOf
+   * @description The entry's free-text description, when set — an inspection's notes or a standalone event's own description.
+   * @access protected
+   * @since 1.2.0
+   * @param {CalendarFeedItemOutput} item - The entry in question.
+   * @returns {string | null} The description, or `null`.
+   */
+  protected descriptionOf(item: CalendarFeedItemOutput): string | null {
+    return item.description ?? null;
+  }
+
+  /**
+   * Method facilityOf
+   * @description The entry's facility name, resolved through {@link facilityLabelOf}, when the entry carries a facility and it resolves.
+   * @access protected
+   * @since 1.2.0
+   * @param {CalendarFeedItemOutput} item - The entry in question.
+   * @returns {string | null} The facility name, or `null`.
+   */
+  protected facilityOf(item: CalendarFeedItemOutput): string | null {
+    return item.facilityId ? this.facilityLabelOf()(item.facilityId) : null;
+  }
+
+  /**
+   * Method linkOf
+   *
+   * @description
+   * The record route an entry's row links to — an intervention's workspace
+   * or an inspection's detail page — resolved by URL segments only, so this
+   * shared component never imports either owning feature. `null` for a
+   * source with no stable per-record route yet (`FEATURE.md`).
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {CalendarFeedItemOutput} item - The entry in question.
+   *
+   * @returns {readonly string[] | null} The router commands, or `null`.
+   */
+  protected linkOf(item: CalendarFeedItemOutput): readonly string[] | null {
+    switch (item.sourceKey) {
+      case 'intervention':
+        return ['/organizations', this.organizationId(), 'interventions', item.targetId];
+      case 'inspection':
+        return ['/organizations', this.organizationId(), 'inspections', item.targetId];
+      default:
+        return null;
+    }
   }
 
   /**

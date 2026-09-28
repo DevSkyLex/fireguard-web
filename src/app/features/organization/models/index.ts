@@ -139,3 +139,11 @@ export type { OrganizationSearchResultType } from './search/organization-search-
 export type { OrganizationSearchHitOutput } from './search/organization-search-hit-output.interface';
 export type { OrganizationSearchOutput } from './search/organization-search-output.interface';
 export type * from './access';
+export type {
+  ListPresenceQuery,
+  PingPresenceInput,
+  PingPresenceOutput,
+  PresenceOutput,
+  PresenceStatus,
+  PresenceSubscriptionOutput,
+} from './presence';

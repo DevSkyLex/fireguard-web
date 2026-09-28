@@ -69,16 +69,25 @@ import {
   type OrganizationDashboardTrendOutputFixture,
 } from '../fixtures/dashboard-fixtures';
 import { equipmentKpiOutput, type EquipmentKpiFixture } from '../fixtures/equipment-fixtures';
-import type { EquipmentOutputFixture } from '../fixtures/equipment-fixtures';
+import type {
+  EquipmentAttachmentOutputFixture,
+  EquipmentMaintenanceLogOutputFixture,
+  EquipmentOutputFixture,
+  EquipmentTagOutputFixture,
+} from '../fixtures/equipment-fixtures';
 import { facilityAttachmentOutput } from '../fixtures/facility-fixtures';
 import type {
   ComplianceTreeNodeOutputFixture,
   FacilityAttachmentOutputFixture,
+  FacilityBuildingModelOutputFixture,
   FacilityOutputFixture,
   FacilityPlanOverlayOutputFixture,
 } from '../fixtures/facility-fixtures';
 import type { ImportJobOutputFixture } from '../fixtures/import-fixtures';
-import type { InspectionOutputFixture } from '../fixtures/inspection-fixtures';
+import type {
+  InspectionOutputFixture,
+  NonConformityStatisticsOutputFixture,
+} from '../fixtures/inspection-fixtures';
 import type {
   InterventionIssueOutputFixture,
   InterventionLabelOutputFixture,
@@ -534,6 +543,81 @@ export class ApiMock {
    * `/api/auth/refresh` so it composes with either `mockAuthenticatedSession`
    * (session already restored on boot) or a post-login flow.
    */
+  /**
+   * Installs the additive presence endpoints for one authenticated session.
+   * Scenario overrides registered later may share authoritative state across browser contexts.
+   */
+  public async mockPresence(
+    organizationIds: readonly string[] = [E2E_ORGANIZATION_ID],
+    userId = 'e2e-user-1',
+  ): Promise<void> {
+    await this.installSafetyNet();
+    let preference = { doNotDisturb: false, revision: 0 };
+    await this.page.route(/\/api\/me\/presence-preference$/, async (route) => {
+      const method = route.request().method();
+      if (method === 'PATCH') {
+        const input = route.request().postDataJSON() as { doNotDisturb: boolean };
+        if (input.doNotDisturb !== preference.doNotDisturb)
+          preference = { doNotDisturb: input.doNotDisturb, revision: preference.revision + 1 };
+      } else if (method !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        '@id': '/api/me/presence-preference',
+        '@type': 'PresencePreference',
+        ...preference,
+      });
+    });
+    await this.page.route(/\/api\/me\/presence-preference\/subscription$/, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        topic: `/users/${userId}/presence-preference`,
+        token: 'e2e-private-presence',
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      });
+    });
+    await this.page.route(/\/api\/presence\/ping$/, async (route) => {
+      if (route.request().method() !== 'POST') return route.fallback();
+      const input = route.request().postDataJSON() as { organization: string };
+      if (!organizationIds.includes(input.organization)) return route.fallback();
+      await fulfillJson(route, 200, {
+        memberId: 'e2e-member-1',
+        lastSeenAt: new Date().toISOString(),
+      });
+    });
+    await this.page.route(/\/api\/presence\/subscription(\?.*)?$/, async (route) => {
+      const organization = new URL(route.request().url()).searchParams.get('organization') ?? '';
+      if (route.request().method() !== 'GET' || !organizationIds.includes(organization))
+        return route.fallback();
+      await fulfillJson(route, 200, {
+        topic: `/organizations/${organization}/presence`,
+        token: 'e2e-private-presence',
+        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      });
+    });
+    await this.page.route(/\/api\/presence(\?.*)?$/, async (route) => {
+      const query = new URL(route.request().url()).searchParams;
+      if (
+        route.request().method() !== 'GET' ||
+        !organizationIds.includes(query.get('organization') ?? '')
+      )
+        return route.fallback();
+      const members = (query.get('memberIds') ?? '')
+        .split(',')
+        .filter(Boolean)
+        .map((memberId) => ({
+          memberId,
+          status:
+            memberId === 'e2e-member-1'
+              ? preference.doNotDisturb
+                ? 'do_not_disturb'
+                : 'active'
+              : 'offline',
+          online: memberId === 'e2e-member-1',
+          lastSeenAt: memberId === 'e2e-member-1' ? new Date().toISOString() : null,
+        }));
+      await fulfillJson(route, 200, hydraCollection(members));
+    });
+  }
+
   public async mockSessionData(options?: {
     profile?: Partial<UserProfileOutputFixture>;
     onboarding?: Partial<OnboardingOutputFixture>;
@@ -624,15 +708,28 @@ export class ApiMock {
         return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
-    await this.page.route(`${API_BASE_URL}/api/presence`, async (route) => {
-      await fulfillJson(route, 200, {});
-    });
+    await this.mockPresence(
+      organizations.map((organization) => organization.id),
+      profile.id,
+    );
     // `provideInterventionsFeature()` starts `InterventionPrefetchService` at
     // app boot, browser-only and independent of the visited route — it reads
     // the current member profile then lists interventions `responsible=` them
     // for offline warm-caching. Every authenticated session hits this once.
+    // Scoped to the session's organizations, as `InterventionService.list`
+    // sends them: a list for any other organization, or none, falls through
+    // to the safety net instead of being swallowed here.
     await this.page.route(/\/api\/interventions(\?.*)?$/, async (route) => {
-      if (route.request().method() !== 'GET') return route.fallback();
+      const request = route.request();
+      if (
+        request.method() !== 'GET' ||
+        !organizations.some(
+          (organization) =>
+            new URL(request.url()).searchParams.get('organization') ===
+            `/api/organizations/${organization.id}`,
+        )
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
     // `MemberDirectoryStore` (bound to `MEMBER_DIRECTORY_PORT` by
@@ -1114,6 +1211,66 @@ export class ApiMock {
       new RegExp(`/api/organizations/${organizationId}/equipment/kpis(\\?.*)?$`),
       async (route) => {
         await fulfillJson(route, 200, equipmentKpiOutput(kpis));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment/{equipmentId}/attachments` —
+   * the equipment detail page's Attachments tab, read on its first activation.
+   */
+  public async mockEquipmentAttachments(
+    organizationId: string,
+    equipmentId: string,
+    attachments: ReadonlyArray<EquipmentAttachmentOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/equipment/${equipmentId}/attachments(\\?.*)?$`,
+      ),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection(attachments));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment/{equipmentId}/maintenance-logs` —
+   * the equipment detail page's Maintenance tab, read on its first activation.
+   */
+  public async mockEquipmentMaintenanceLogs(
+    organizationId: string,
+    equipmentId: string,
+    logs: ReadonlyArray<EquipmentMaintenanceLogOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(
+        `/api/organizations/${organizationId}/equipment/${equipmentId}/maintenance-logs(\\?.*)?$`,
+      ),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection(logs));
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/equipment/tags` — the
+   * equipment detail page's Tags tab, read on its first activation.
+   */
+  public async mockEquipmentTags(
+    organizationId: string,
+    tags: ReadonlyArray<EquipmentTagOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment/tags(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection(tags));
       },
     );
   }
@@ -1608,6 +1765,26 @@ export class ApiMock {
   }
 
   /**
+   * Mocks `GET /api/organizations/{organizationId}/facilities/{facilityId}/building-model` —
+   * the read-only 3D model `FacilityBuilding3dStore.loadModel` reads for the
+   * dedicated building 3D view.
+   */
+  public async mockFacilityBuildingModel(
+    organizationId: string,
+    facilityId: string,
+    model: FacilityBuildingModelOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${facilityId}/building-model`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, model);
+      },
+    );
+  }
+
+  /**
    * Mocks `GET /api/organizations/{organizationId}/inspections` — the
    * collection the inspections list page reads.
    */
@@ -1642,6 +1819,44 @@ export class ApiMock {
       async (route) => {
         if (options.holdUntil) await options.holdUntil;
         await fulfillJson(route, 200, inspection);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/non-conformities/statistics` —
+   * the KPI snapshot `NonConformityStatisticsStore.load` reads for the
+   * inspections analytics page, regardless of the requested period window.
+   */
+  public async mockNonConformityStatistics(
+    organizationId: string,
+    statistics: NonConformityStatisticsOutputFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/non-conformities/statistics(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, statistics);
+      },
+    );
+  }
+
+  /**
+   * Mocks `GET /api/organizations/{organizationId}/checklists/{checklistId}` —
+   * the resource `ActiveChecklistStore.resolveChecklist` reads for the
+   * checklist detail route.
+   */
+  public async mockChecklistDetail(
+    organizationId: string,
+    checklist: { readonly id: string },
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/checklists/${checklist.id}`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, checklist);
       },
     );
   }
@@ -1812,9 +2027,9 @@ export class ApiMock {
 
   /**
    * Mocks a successful `DELETE /api/organizations/{organizationId}/members/me`
-   * — the self-removal request `OrganizationSettingsStore.leave` sends from
-   * both the settings danger tab and the sidebar organization switcher's
-   * "Leave organization…" menu entry.
+   * — the self-removal request `MyOrganizationsStore.leave` sends, reached
+   * from `AccountOrganizationsPage`'s "Leave organization…" entry
+   * (`/account/organizations`, confirmed through `AccountLeaveOrganizationDialog`).
    */
   public async mockOrganizationMemberLeave(organizationId: string): Promise<void> {
     await this.installSafetyNet();
@@ -1833,8 +2048,8 @@ export class ApiMock {
   /**
    * Mocks a failing `DELETE /api/organizations/{organizationId}/members/me`
    * — the backend's owner-cannot-leave / last-administrator 409 refusals,
-   * surfaced inline on `OrganizationLeaveDialog` regardless of which call
-   * site opened it.
+   * surfaced inline on `AccountLeaveOrganizationDialog` as
+   * `MyOrganizationsStore.leaveError`.
    */
   public async mockOrganizationMemberLeaveError(
     organizationId: string,
@@ -2151,11 +2366,35 @@ export class ApiMock {
     messages: ReadonlyArray<MessageOutputFixture> = [],
   ): Promise<void> {
     await this.installSafetyNet();
+    await this.mockConversationSignals(channelId);
     await this.page.route(
       new RegExp(`/api/conversations/${channelId}/messages(\\?.*)?$`),
       async (route) => {
         await fulfillJson(route, 200, hydraCollection(messages));
       },
+    );
+  }
+
+  /** Mocks the participant receipt snapshot and transient conversation signals. */
+  public async mockConversationSignals(conversationId: string): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/conversations/${conversationId}/receipts`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, { receipts: [] });
+      },
+    );
+    await Promise.all(
+      ['delivery', 'typing'].map((signal) =>
+        this.page.route(
+          `${API_BASE_URL}/api/conversations/${conversationId}/${signal}`,
+          async (route) => {
+            if (route.request().method() !== 'POST') return route.fallback();
+            await fulfillJson(route, 200, { accepted: true });
+          },
+        ),
+      ),
     );
   }
 
@@ -2750,6 +2989,39 @@ export class ApiMock {
         return;
       }
       await fulfillJson(route, 200, intervention);
+    });
+  }
+
+  /**
+   * Mocks `GET /api/facilities?intervention=…` — the canonical collection
+   * `FacilityService.listByIntervention` queries, which
+   * `InterventionLinkedResourcesStore.loadFacilities` reads for the detail
+   * page's Facilities tab. Matches on the query string only, tolerant of
+   * either `HttpParams` encoding of the intervention IRI, so one matcher
+   * serves the tab's first load and any re-registration after a create.
+   */
+  public async mockInterventionFacilityList(
+    facilities: ReadonlyArray<FacilityOutputFixture> = [],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(/\/api\/facilities\?.*intervention=/, async (route) => {
+      await fulfillJson(route, 200, hydraCollection(facilities));
+    });
+  }
+
+  /**
+   * Mocks a successful `POST /api/facilities` — the request
+   * `FacilityService.createForIntervention` sends when the intervention
+   * detail page's "Add facility" sheet submits without a `clientId`.
+   */
+  public async mockInterventionFacilityCreate(facility: FacilityOutputFixture): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/facilities`, async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, 201, facility);
     });
   }
 

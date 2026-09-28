@@ -14,6 +14,16 @@
  */
 export interface PinnedMessageItem {
   readonly id: string;
+  /**
+   * Property authorMemberId
+   * @readonly
+   * @description Bare member identity retained for organizational presence.
+   * @access public
+   * @since 1.0.0
+   * @type {string}
+   */
+  readonly authorMemberId: string;
+
   /** Never blank — resolving it is the page's job. */
   readonly authorName: string;
   /** ISO instant the message was written. */

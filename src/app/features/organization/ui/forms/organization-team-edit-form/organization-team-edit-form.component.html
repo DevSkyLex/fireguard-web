@@ -1,10 +1,14 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
     @if (serverMessages().length > 0) {
-      <div role="alert" data-testid="organization-team-edit-error" class="text-sm text-destructive">
-        @for (message of serverMessages(); track message) {
-          <p>{{ message }}</p>
-        }
+      <div hlmAlert variant="destructive" role="alert" data-testid="organization-team-edit-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@org.teams.editForm.errorTitle">Couldn't save the team</p>
+        <div hlmAlertDescription>
+          @for (message of serverMessages(); track message) {
+            <p>{{ message }}</p>
+          }
+        </div>
       </div>
     }
 

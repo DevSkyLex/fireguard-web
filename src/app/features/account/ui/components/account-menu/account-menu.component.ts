@@ -1,7 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, type Signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  linkedSignal,
+  type Signal,
+  type WritableSignal,
+} from '@angular/core';
+import { disabled, form, FormField, type FieldTree } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCheck,
+  lucideChevronRight,
   lucideBell,
   lucideBuilding2,
   lucideEllipsisVertical,
@@ -15,8 +26,13 @@ import {
   type InteractionCapabilitiesPort,
   type ShortcutModifier,
 } from '@core/interaction-capabilities';
+import type { PresencePreferenceInput } from '@features/account/models/presence-preference';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
+import { PresencePreferenceStore } from '@features/account/state/presence-preference';
 import { AUTH_LOGOUT_PORT, type AuthLogoutPort } from '@features/auth';
+import type { PresenceStatus } from '@features/organization/models';
+import { MEMBER_PRESENCE_PORT, type MemberPresencePort } from '@features/organization/ports';
+import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
@@ -24,11 +40,13 @@ import {
   HlmDropdownMenu,
   HlmDropdownMenuGroup,
   HlmDropdownMenuItem,
-  HlmDropdownMenuLabel,
+  HlmDropdownMenuSub,
+  HlmDropdownMenuSubTrigger,
   HlmDropdownMenuSeparator,
   HlmDropdownMenuShortcut,
   HlmDropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
+import { HlmField, HlmFieldLabel } from '@shared/ui/field';
 import { HlmItemImports } from '@shared/ui/item';
 import {
   HlmSidebarMenu,
@@ -37,6 +55,7 @@ import {
   HlmSidebarService,
 } from '@shared/ui/sidebar';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmSwitch } from '@shared/ui/switch';
 
 /**
  * Component AccountMenu
@@ -69,6 +88,11 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   selector: 'app-account-menu',
   imports: [
     RouterLink,
+    FormField,
+    HlmSwitch,
+    HlmField,
+    HlmFieldLabel,
+    MemberPresenceIndicator,
     HlmButton,
     HlmItemImports,
     HlmDrawerImports,
@@ -79,7 +103,8 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
     HlmDropdownMenu,
     HlmDropdownMenuGroup,
     HlmDropdownMenuItem,
-    HlmDropdownMenuLabel,
+    HlmDropdownMenuSub,
+    HlmDropdownMenuSubTrigger,
     HlmDropdownMenuSeparator,
     HlmDropdownMenuShortcut,
     HlmDropdownMenuTrigger,
@@ -90,6 +115,8 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   ],
   providers: [
     provideIcons({
+      lucideCheck,
+      lucideChevronRight,
       lucideBell,
       lucideBuilding2,
       lucideEllipsisVertical,
@@ -138,6 +165,75 @@ export class AccountMenu {
     this.interactionCapabilities.shortcutModifier;
 
   //#region Properties
+  /**
+   * Property presencePreference
+   * @readonly
+   * @description Account-owned confirmed preference; the shell slot orchestrates its own control.
+   * @access protected
+   * @since 1.0.0
+   * @type {PresencePreferenceStore}
+   */
+  protected readonly presencePreference: PresencePreferenceStore = inject(PresencePreferenceStore);
+
+  /**
+   * Property memberPresence
+   * @readonly
+   * @description Current organization's acknowledged presence, consumed through its public port.
+   * @access private
+   * @since 1.0.0
+   * @type {MemberPresencePort}
+   */
+  private readonly memberPresence: MemberPresencePort = inject(MEMBER_PRESENCE_PORT);
+
+  /**
+   * Property presenceStatus
+   * @readonly
+   * @description An acknowledged live presence reflects a confirmed preference immediately.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<PresenceStatus | null>}
+   */
+  protected readonly presenceStatus: Signal<PresenceStatus | 'invisible' | null> = computed(() => {
+    const status = this.memberPresence.ownStatus();
+    if (status === null) return null;
+    if (this.presencePreference.preference() === null) return null;
+    if (this.presencePreference.invisible()) return 'invisible';
+    if (status === 'offline') return status;
+    return this.presencePreference.doNotDisturb() ? 'do_not_disturb' : 'active';
+  });
+
+  /**
+   * Property presenceModel
+   * @readonly
+   * @description Signal Form model restored to the confirmed value after every command outcome.
+   * @access protected
+   * @since 1.0.0
+   * @type {WritableSignal<PresencePreferenceInput>}
+   */
+  protected readonly presenceModel: WritableSignal<PresencePreferenceInput> = linkedSignal(() => {
+    this.presencePreference.saveCallState();
+    return {
+      doNotDisturb: this.presencePreference.doNotDisturb(),
+      invisible: this.presencePreference.invisible(),
+    };
+  });
+
+  /**
+   * Property presenceForm
+   * @readonly
+   * @description Mobile boolean field; pending writes use an ARIA lock to preserve keyboard focus.
+   * @access protected
+   * @since 1.0.0
+   * @type {FieldTree<PresencePreferenceInput>}
+   */
+  protected readonly presenceForm: FieldTree<PresencePreferenceInput> = form(
+    this.presenceModel,
+    (path) => {
+      disabled(path.doNotDisturb, () => !this.presencePreference.available());
+      disabled(path.invisible, () => !this.presencePreference.available());
+    },
+  );
+
   /**
    * Property identity
    * @readonly
@@ -293,6 +389,48 @@ export class AccountMenu {
   //#endregion
 
   //#region Methods
+
+  /** @description Restores normal presence with both special modes disabled atomically. */
+  protected changeActive(): void {
+    if (!this.presencePreference.available() || this.presencePreference.isSaving()) return;
+    this.presencePreference.setActive();
+  }
+
+  /**
+   * Method changeInvisible
+   * @method changeInvisible
+   * @description Commits an explicit choice without optimistic status or offline queued writes.
+   * @access protected
+   * @since 1.0.0
+   * @param {boolean} value - Desired global visibility preference.
+   * @returns {void}
+   */
+  protected changeInvisible(value: boolean): void {
+    this.presenceModel.set({
+      doNotDisturb: this.presencePreference.doNotDisturb(),
+      invisible: this.presencePreference.invisible(),
+    });
+    if (!this.presencePreference.available() || this.presencePreference.isSaving()) return;
+    this.presencePreference.setInvisible(value);
+  }
+
+  /**
+   * Method changePresencePreference
+   * @method changePresencePreference
+   * @description Commits the global NPD choice, disabling Invisible when NPD is enabled.
+   * @access protected
+   * @since 1.0.0
+   * @param {boolean} value - Desired global NPD setting.
+   * @returns {void}
+   */
+  protected changePresencePreference(value: boolean): void {
+    this.presenceModel.set({
+      doNotDisturb: this.presencePreference.doNotDisturb(),
+      invisible: this.presencePreference.invisible(),
+    });
+    if (!this.presencePreference.available() || this.presencePreference.isSaving()) return;
+    this.presencePreference.setDoNotDisturb(value);
+  }
 
   /**
    * Method formatShortcut

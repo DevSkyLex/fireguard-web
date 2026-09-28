@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { NOTIFICATION_CENTER_PORT } from '@features/account';
 import type { EmailOwnershipChallengeOutput, EmailOwnershipOutput } from '@features/auth/models';
 import { OtpForm } from '@features/auth/ui/forms';
@@ -90,6 +91,14 @@ describe('OnboardingWorkspacePage', () => {
         provideRouter([]),
         { provide: OnboardingStore, useValue: onboarding },
         { provide: NOTIFICATION_CENTER_PORT, useValue: notifications },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -226,6 +235,28 @@ describe('OnboardingWorkspacePage', () => {
     expect(host.textContent).toContain('You have no membership requests.');
     expect(host.querySelector('#workspace-organizations-title')).toBeNull();
     expect(host.querySelector('a')?.getAttribute('href')).toBe('/onboarding/workspace');
+  });
+
+  it('places the workspace-choice link inside the no-request empty state, not duplicated in the footer', async () => {
+    workspace.options.set(emptyOptions);
+    const fixture = await renderPage('', true);
+    const host = fixture.nativeElement as HTMLElement;
+    const links = Array.from(host.querySelectorAll('a')).filter(
+      (item) => item.getAttribute('href') === '/onboarding/workspace',
+    );
+    expect(links).toHaveLength(1);
+  });
+
+  it('places the create-organization action inside the no-organization empty state, not duplicated in the footer', async () => {
+    workspace.options.set(emptyOptions);
+    const fixture = await renderPage();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('No organization available for this email');
+    const createButtons = Array.from(host.querySelectorAll('button')).filter((item) =>
+      item.textContent?.includes('Create an organization'),
+    );
+    expect(createButtons).toHaveLength(1);
+    expect(host.querySelector('[hlmEmptyContent] button')).not.toBeNull();
   });
 
   it('binds the replacement mailbox challenge and delegates OTP confirmation to the store', async () => {

@@ -29,6 +29,8 @@
           data-testid="calendar-prev"
           i18n-aria-label="@@calendar.previousMonth"
           aria-label="Previous month"
+          i18n-hlmTooltip="@@calendar.previousMonth"
+          hlmTooltip="Previous month"
           (click)="stepMonth(-1)"
         >
           <ng-icon name="lucideChevronLeft" aria-hidden="true" />
@@ -41,6 +43,8 @@
           data-testid="calendar-next"
           i18n-aria-label="@@calendar.nextMonth"
           aria-label="Next month"
+          i18n-hlmTooltip="@@calendar.nextMonth"
+          hlmTooltip="Next month"
           (click)="stepMonth(1)"
         >
           <ng-icon name="lucideChevronRight" aria-hidden="true" />
@@ -50,115 +54,148 @@
   </div>
 
   <div class="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
-    <table brnCalendarGrid class="h-full w-full table-fixed border-separate border-spacing-0">
-      <thead class="sticky top-0 z-10 bg-background">
-        <tr>
-          <th
-            *brnCalendarWeekday="let weekday"
-            scope="col"
-            class="border-b border-border px-1 py-1.5 text-center text-xs font-medium text-muted-foreground capitalize"
-          >
-            <span aria-hidden="true">{{ shortWeekdayOf(weekday) }}</span>
-            <span class="sr-only">{{ longWeekdayOf(weekday) }}</span>
-          </th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr
-          *brnCalendarWeek="let week"
-          class="[&:last-child>td]:border-b-0 [&:last-child>td:first-child>button]:rounded-es-lg [&:last-child>td:last-child>button]:rounded-ee-lg"
-        >
-          @for (day of week; track day.getTime()) {
-            @let iso = isoOf(day);
-            @let summary = summaryOf(iso);
-
-            <td
-              brnCalendarCell
-              class="group/cell relative border-e border-b border-border p-0 align-top last:border-e-0"
-            >
-              <button
-                brnCalendarCellButton
-                hlmBtn
-                variant="ghost"
-                class="group/day relative flex h-full min-h-16 w-full flex-col items-stretch justify-start gap-1 rounded-none border-0 p-1 text-start font-normal whitespace-normal focus-visible:z-10 data-[outside=true]:text-muted-foreground data-[selected-single=true]:bg-muted sm:min-h-24 sm:gap-1.5 sm:p-1.5 md:min-h-28"
-                data-testid="calendar-day"
-                [date]="day"
-                [attr.data-day]="iso"
-                [attr.aria-current]="iso === todayIso ? 'date' : null"
-                [class.ring-2]="dragOverDay() === iso"
-                [class.ring-ring]="dragOverDay() === iso"
-                [class.ring-inset]="dragOverDay() === iso"
-                (dragover)="onCellDragOver($event, iso)"
-                (dragleave)="onCellDragLeave(iso)"
-                (drop)="onCellDrop($event, iso)"
-              >
-                <span
-                  class="flex size-6 shrink-0 items-center justify-center self-start rounded-full text-xs tabular-nums group-data-[selected-single=true]/day:bg-primary group-data-[selected-single=true]/day:font-semibold group-data-[selected-single=true]/day:text-primary-foreground group-data-[today=true]/day:font-semibold group-data-[today=true]/day:ring-1 group-data-[today=true]/day:ring-muted-foreground"
-                  aria-hidden="true"
-                  >{{ day.getDate() }}</span
-                >
-
-                <span class="sr-only">{{ dayLabelOf(day) }}</span>
-                <span class="sr-only" i18n="@@calendar.dayEventCount">{summary.count, plural,
-                  =0 {No events}
-                  =1 {1 event}
-                  other {{{ summary.count }} events}
-                }</span>
-
-                @if (summary.count > 0) {
-                  <span class="flex items-center gap-1 ps-1 sm:hidden" aria-hidden="true">
-                    @for (dot of summary.dots; track dot) {
-                      <span class="size-1.5 rounded-full bg-muted-foreground"></span>
-                    }
-                  </span>
-
-                  <span
-                    class="hidden min-w-0 flex-col items-start gap-0.5 sm:flex"
-                    aria-hidden="true"
-                  >
-                    @for (event of summary.chips; track event.id) {
-                      <span
-                        hlmBadge
-                        [variant]="event.tone"
-                        class="max-w-full"
-                        [class.cursor-grab]="event.draggable === true"
-                        [title]="event.label"
-                        [attr.draggable]="event.draggable === true ? 'true' : null"
-                        [attr.data-draggable]="event.draggable === true ? 'true' : null"
-                        (dragstart)="onChipDragStart($event, event)"
-                        (dragend)="onChipDragEnd()"
-                      >
-                        <span class="truncate">{{ event.label }}</span>
-                      </span>
-                    }
-                    @if (summary.overflow > 0) {
-                      <span class="ps-1 text-xs text-muted-foreground"
-                        >+{{ summary.overflow }}</span
-                      >
-                    }
-                  </span>
-                }
-              </button>
-
-              @if (canCreate()) {
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="outline"
-                  size="icon-sm"
-                  class="absolute top-0.5 right-0.5 z-10 size-6 opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100"
-                  data-testid="calendar-day-create"
-                  [attr.aria-label]="createAriaLabelOf(day)"
-                  (click)="createRequested.emit(iso)"
-                >
-                  <ng-icon name="lucidePlus" aria-hidden="true" />
-                </button>
-              }
-            </td>
+    @if (loading()) {
+      <div class="flex h-full flex-col gap-1 p-1" data-testid="calendar-skeleton">
+        <div class="grid grid-cols-7 gap-1">
+          @for (weekday of [0, 1, 2, 3, 4, 5, 6]; track weekday) {
+            <hlm-skeleton class="h-4 w-full" />
           }
-        </tr>
-      </tbody>
-    </table>
+        </div>
+        @for (week of skeletonWeeks(); track week) {
+          <div class="grid flex-1 grid-cols-7 gap-1">
+            @for (day of [0, 1, 2, 3, 4, 5, 6]; track day) {
+              <hlm-skeleton class="h-24 w-full" />
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <table brnCalendarGrid class="h-full w-full table-fixed border-separate border-spacing-0">
+        <thead class="sticky top-0 z-10 bg-background">
+          <tr>
+            <th
+              *brnCalendarWeekday="let weekday"
+              scope="col"
+              class="border-b border-border px-1 py-1.5 text-center text-xs font-medium text-muted-foreground capitalize"
+            >
+              <span aria-hidden="true">{{ shortWeekdayOf(weekday) }}</span>
+              <span class="sr-only">{{ longWeekdayOf(weekday) }}</span>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *brnCalendarWeek="let week"
+            class="[&:last-child>td]:border-b-0 [&:last-child>td:first-child>button]:rounded-es-lg [&:last-child>td:last-child>button]:rounded-ee-lg"
+          >
+            @for (day of week; track day.getTime()) {
+              @let iso = isoOf(day);
+              @let summary = summaryOf(iso);
+
+              <td
+                brnCalendarCell
+                class="group/cell relative border-e border-b border-border p-0 align-top last:border-e-0"
+              >
+                <button
+                  brnCalendarCellButton
+                  hlmBtn
+                  variant="ghost"
+                  class="group/day relative flex h-full min-h-16 w-full flex-col items-stretch justify-start gap-1 rounded-none border-0 p-1 text-start font-normal whitespace-normal focus-visible:z-30 data-[outside=true]:text-muted-foreground data-[selected-single=true]:bg-muted sm:min-h-24 sm:gap-1.5 sm:p-1.5 md:min-h-28"
+                  data-testid="calendar-day"
+                  [date]="day"
+                  [attr.data-day]="iso"
+                  [attr.aria-current]="iso === todayIso ? 'date' : null"
+                  [class.ring-2]="dragOverDay() === iso"
+                  [class.ring-ring]="dragOverDay() === iso"
+                  [class.ring-inset]="dragOverDay() === iso"
+                  (dragover)="onCellDragOver($event, iso)"
+                  (dragleave)="onCellDragLeave(iso)"
+                  (drop)="onCellDrop($event, iso)"
+                >
+                  <span
+                    class="flex size-6 shrink-0 items-center justify-center self-start rounded-full text-xs tabular-nums group-data-[selected-single=true]/day:bg-primary group-data-[selected-single=true]/day:font-semibold group-data-[selected-single=true]/day:text-primary-foreground group-data-[today=true]/day:font-semibold group-data-[today=true]/day:ring-1 group-data-[today=true]/day:ring-muted-foreground"
+                    aria-hidden="true"
+                    >{{ day.getDate() }}</span
+                  >
+
+                  <span class="sr-only">{{ dayLabelOf(day) }}</span>
+                  <span class="sr-only" i18n="@@calendar.dayEventCount">{summary.count, plural,
+                    =0 {No events}
+                    =1 {1 event}
+                    other {{{ summary.count }} events}
+                  }</span>
+                  @if (summary.sourceLabels.length > 0) {
+                    <span class="sr-only" i18n="@@calendar.daySources"
+                      >Includes {{ summary.sourceLabels.join(', ') }}</span
+                    >
+                  }
+
+                  @if (summary.count > 0) {
+                    <span class="flex items-center gap-1 ps-1 sm:hidden" aria-hidden="true">
+                      @for (dot of summary.dots; track dot) {
+                        <span class="size-1.5 rounded-full bg-muted-foreground"></span>
+                      }
+                    </span>
+                  }
+
+                  @for (segment of segmentsStartingOn(iso); track segment.event.id) {
+                    <span
+                      hlmBadge
+                      [variant]="segment.event.tone"
+                      class="absolute left-1.5 z-20 hidden min-w-0 justify-start sm:inline-flex"
+                      [class.cursor-grab]="segment.event.draggable === true"
+                      [class.rounded-s-none]="segment.continuesBefore"
+                      [class.rounded-e-none]="segment.continuesAfter"
+                      [style.top.rem]="2.15 + segment.lane * 1.4"
+                      [style.width]="
+                        'calc(' + segment.days * 100 + '% + ' + (segment.days - 1) + 'px - 0.75rem)'
+                      "
+                      [title]="segment.event.label"
+                      [attr.data-event-id]="segment.event.id"
+                      [attr.data-span-days]="segment.days"
+                      [attr.data-lane]="segment.lane"
+                      [attr.draggable]="segment.event.draggable === true ? 'true' : null"
+                      [attr.data-draggable]="segment.event.draggable === true ? 'true' : null"
+                      aria-hidden="true"
+                      (dragstart)="onChipDragStart($event, segment.event)"
+                      (dragend)="onChipDragEnd()"
+                    >
+                      @if (segment.event.icon) {
+                        <ng-icon [name]="segment.event.icon" size="0.75rem" aria-hidden="true" />
+                      }
+                      <span class="truncate">{{ segment.event.label }}</span>
+                    </span>
+                  }
+                  @if (summary.overflow > 0) {
+                    <span
+                      class="absolute top-20 left-1.5 hidden text-xs text-muted-foreground sm:inline"
+                      aria-hidden="true"
+                      >+{{ summary.overflow }}</span
+                    >
+                  }
+                </button>
+
+                @if (canCreate()) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    class="absolute top-0.5 right-0.5 z-10 size-6 opacity-0 group-hover/cell:opacity-100 focus-visible:opacity-100"
+                    data-testid="calendar-day-create"
+                    [attr.aria-label]="createAriaLabelOf(day)"
+                    [hlmTooltip]="createAriaLabelOf(day)"
+                    (click)="createRequested.emit(iso)"
+                  >
+                    <ng-icon name="lucidePlus" aria-hidden="true" />
+                  </button>
+                }
+              </td>
+            }
+          </tr>
+        </tbody>
+      </table>
+    }
   </div>
 </div>

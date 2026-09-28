@@ -23,6 +23,7 @@ const FACILITY: FacilityOutput = {
   status: 'active',
   address: null,
   metadata: {},
+  equipmentCount: 0,
   latitude: null,
   longitude: null,
   parentFacilityId: null,

@@ -53,6 +53,31 @@ describe('ResourceIllustration', () => {
     expect(image?.getAttribute('src')).toBe('/assets/illustrations/resources/dark/site.svg');
   });
 
+  it('keeps the 160/192 px media by default and narrows it for compact regions', async () => {
+    fixture = TestBed.createComponent(ResourceIllustration);
+    fixture.componentRef.setInput('resource', 'invitation');
+    await fixture.whenStable();
+    const image = (fixture.nativeElement as HTMLElement).querySelector('img');
+    expect(image?.getAttribute('src')).toBe('/assets/illustrations/resources/light/invitation.svg');
+    expect([...(image?.classList ?? [])].toSorted()).toEqual([
+      'block',
+      'h-auto',
+      'max-w-full',
+      'sm:w-48',
+      'w-40',
+    ]);
+
+    fixture.componentRef.setInput('size', 'sm');
+    await fixture.whenStable();
+    expect([...(image?.classList ?? [])].toSorted()).toEqual([
+      'block',
+      'h-auto',
+      'max-w-full',
+      'sm:w-32',
+      'w-28',
+    ]);
+  });
+
   it('renders from the theme port in a server platform without browser theme APIs', async () => {
     TestBed.overrideProvider(PLATFORM_ID, { useValue: 'server' });
     resolvedTheme.set('dark');

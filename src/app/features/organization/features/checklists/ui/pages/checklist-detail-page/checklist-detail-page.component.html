@@ -1,91 +1,101 @@
-<div class="mx-auto flex w-full max-w-4xl flex-col gap-6" data-testid="checklist-detail-page">
-  <div class="flex flex-wrap items-center justify-between gap-3">
-    <h1 class="text-xl font-semibold">
-      @if (revising()) {
-        <span i18n="@@checklists.detail.newRevision">New revision</span>
-      } @else if (checklistId()) {
-        {{ active.selectedChecklist()?.name }}
-      } @else {
-        <span i18n="@@checklists.list.new">New checklist</span>
-      }
-    </h1>
-    <button
-      hlmBtn
-      type="button"
-      variant="outline"
-      (click)="back()"
-      i18n="@@checklists.detail.back"
-      class="mobile-ui:min-h-11"
-    >
-      Back to checklists
-    </button>
-  </div>
-  @if (canCreateRevision() && !revising()) {
-    <button
-      hlmBtn
-      variant="outline"
-      class="self-start mobile-ui:min-h-11"
-      [disabled]="pending()"
-      (click)="startRevision()"
-      i18n="@@checklists.detail.createRevision"
-    >
-      Create a new revision
-    </button>
-  }
+<div class="flex min-w-0 flex-col gap-6" data-testid="checklist-detail-page">
   @if (revising()) {
-    <p class="text-sm text-muted-foreground" i18n="@@checklists.detail.revisionHelp">
+    <p class="max-w-2xl text-sm text-muted-foreground" i18n="@@checklists.detail.revisionHelp">
       This creates a new checklist. Existing inspections keep their original revision. Enter a new
       version and a distinct reference code if needed.
     </p>
   }
   @if (active.getCallState().status === 'error') {
-    <div role="alert" class="flex flex-col gap-3">
-      <p class="text-destructive">{{ active.getCallState().error?.message }}</p>
-      <button
-        hlmBtn
-        variant="outline"
-        (click)="reload()"
-        i18n="@@common.retry"
-        class="mobile-ui:min-h-11"
-      >
-        Retry
-      </button>
+    <div hlmEmpty role="alert" class="max-w-2xl border border-border">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        </div>
+        <p hlmEmptyTitle i18n="@@checklists.detail.errorTitle">
+          This checklist could not be opened
+        </p>
+        <p hlmEmptyDescription>{{ active.getCallState().error?.message }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          variant="outline"
+          (click)="reload()"
+          i18n="@@common.retry"
+          class="mobile-ui:min-h-11"
+        >
+          Retry
+        </button>
+      </div>
     </div>
   } @else if (checklistId() && !active.selectedChecklist()) {
-    <div hlmSkeleton class="h-32 w-full"></div>
+    <div class="flex max-w-2xl flex-col gap-4">
+      <div hlmSkeleton class="h-5 w-24 rounded-full"></div>
+      <div hlmSkeleton class="h-4 w-64"></div>
+      @for (row of skeletonFieldRows; track row) {
+        <div class="flex flex-col gap-1.5">
+          <div hlmSkeleton class="h-3 w-20"></div>
+          <div hlmSkeleton class="h-9 w-full"></div>
+        </div>
+      }
+      @for (row of skeletonItemRows; track row) {
+        <div hlmSkeleton class="h-9 w-full"></div>
+      }
+    </div>
   } @else {
     @if (active.selectedChecklist(); as checklist) {
-      <div class="flex flex-wrap items-center gap-3 text-sm">
-        <span i18n="@@checklists.detail.version">Version {{ checklist.version }}</span>
-        @if (checklist.referenceCode) {
-          <span>{{ checklist.referenceCode }}</span>
-        }
-        @if (checklist.previousChecklistId) {
-          <a
-            hlmBtn
-            variant="link"
-            [routerLink]="[
-              '/organizations',
-              organizationId(),
-              'checklists',
-              checklist.previousChecklistId,
-            ]"
-            i18n="@@checklists.detail.previous"
-            >Previous revision</a
+      <div class="flex max-w-2xl flex-col gap-2">
+        <app-checklist-status-tag [value]="checklist.status" />
+
+        <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          <span i18n="@@checklists.detail.version">Version {{ checklist.version }}</span>
+          @if (checklist.referenceCode) {
+            <span aria-hidden="true">·</span>
+            <span class="font-mono" i18n="@@checklists.detail.reference"
+              >Ref {{ checklist.referenceCode }}</span
+            >
+          }
+          <span aria-hidden="true">·</span>
+          <span i18n="@@checklists.detail.itemCount">{checklist.items.length, plural,
+            =0 {0 items}
+            =1 {1 item}
+            other {{{ checklist.items.length }} items}
+          }</span>
+          <span aria-hidden="true">·</span>
+          <span i18n="@@checklists.detail.requiredCount">{requiredItemCount(), plural,
+            =0 {0 required}
+            =1 {1 required}
+            other {{{ requiredItemCount() }} required}
+          }</span>
+          <span aria-hidden="true">·</span>
+          <span i18n="@@checklists.detail.updated"
+            >Updated {{ checklist.updatedAt | appOrgDate: 'date' : regionalFormatting() }}</span
           >
-        }
-        <app-checklist-status-tag [value]="checklist.status" /><span
-          i18n="@@checklists.detail.itemCount"
-          >{{ checklist.items.length }} items</span
-        >
+          @if (checklist.previousChecklistId) {
+            <span aria-hidden="true">·</span>
+            <a
+              class="inline-flex items-center text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11"
+              [routerLink]="[
+                '/organizations',
+                organizationId(),
+                'checklists',
+                checklist.previousChecklistId,
+              ]"
+              i18n="@@checklists.detail.previous"
+              >Previous revision</a
+            >
+          }
+        </p>
       </div>
     }
+
     @if (canWrite()) {
-      <p class="text-sm text-muted-foreground" i18n="@@checklists.detail.editorHelp">
+      <p class="max-w-2xl text-sm text-muted-foreground" i18n="@@checklists.detail.editorHelp">
         Order the checks as they should be performed in the field. Arrow buttons also work with the
         keyboard. A completed new item is included when you save.
       </p>
       <app-checklist-edit-form
+        class="block max-w-2xl"
         [visible]="true"
         [creating]="!checklistId() || revising()"
         [checklist]="active.selectedChecklist()"
@@ -96,20 +106,58 @@
         (dirtyChanged)="dirty.set($event)"
       />
     } @else if (active.selectedChecklist(); as checklist) {
-      <p class="text-sm text-muted-foreground" i18n="@@checklists.detail.readOnly">
-        This checklist is available for consultation.
-      </p>
-      <ol class="divide-y">
-        @for (item of checklist.items; track item.id) {
-          <li class="flex flex-col gap-1 py-4">
-            <span class="font-medium">{{ $index + 1 }}. {{ item.label }}</span>
-            <p class="text-sm text-muted-foreground">{{ item.description }}</p>
-            @if (item.required) {
-              <span class="text-xs" i18n="@@checklists.form.itemRequired">Required item</span>
-            }
-          </li>
+      <p class="max-w-2xl text-sm text-muted-foreground">
+        @if (archived()) {
+          <span i18n="@@checklists.detail.archivedReadOnly">Archived templates are read-only.</span>
+          @if (canCreateRevision()) {
+            <span i18n="@@checklists.detail.archivedReadOnlyRevisionHint">
+              Create a new revision to change it.</span
+            >
+          }
+        } @else {
+          <span i18n="@@checklists.detail.readOnly"
+            >This checklist is available for consultation.</span
+          >
         }
-      </ol>
+      </p>
+      @if (checklist.items.length > 0) {
+        <ol hlmItemGroup class="max-w-2xl gap-0" data-testid="checklist-detail-items">
+          @for (item of checklist.items; track item.id) {
+            <li>
+              @if (!$first) {
+                <hlm-item-separator />
+              }
+              <div hlmItem>
+                <span hlmItemMedia class="text-muted-foreground tabular-nums">{{
+                  $index + 1
+                }}</span>
+                <div hlmItemContent>
+                  <span hlmItemTitle>{{ item.label }}</span>
+                  @if (item.description) {
+                    <span hlmItemDescription>{{ item.description }}</span>
+                  }
+                </div>
+                @if (item.required) {
+                  <div hlmItemActions>
+                    <span hlmBadge variant="outline" i18n="@@checklists.form.itemRequired"
+                      >Required item</span
+                    >
+                  </div>
+                }
+              </div>
+            </li>
+          }
+        </ol>
+      } @else {
+        <div hlmEmpty class="max-w-2xl border border-border">
+          <div hlmEmptyHeader>
+            <app-resource-illustration hlmEmptyMedia resource="checklist" />
+            <p hlmEmptyTitle i18n="@@checklists.detail.itemsEmptyTitle">
+              This checklist has no items.
+            </p>
+          </div>
+        </div>
+      }
     }
   }
 </div>
@@ -118,3 +166,19 @@
   (confirmed)="resolveLeave(true)"
   (dismissed)="resolveLeave(false)"
 />
+
+<ng-template #pageActions>
+  @if (canCreateRevision() && !revising()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      (click)="startRevision()"
+    >
+      <ng-icon name="lucideGitBranch" aria-hidden="true" />
+      <span i18n="@@checklists.detail.createRevision">Create a new revision</span>
+    </button>
+  }
+</ng-template>

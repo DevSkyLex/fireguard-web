@@ -18,11 +18,14 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { PasswordSetupConfirmInput } from '@features/auth/models';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDialogImports } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -97,15 +100,18 @@ const CODE_PATTERN: RegExp = /^\d{6}$/;
 @Component({
   selector: 'app-federated-password-setup-dialog',
   imports: [
+    NgIcon,
     FormField,
     PasswordInput,
     RequiredMarker,
+    ...HlmAlertImports,
     HlmButton,
     HlmInput,
     HlmSpinner,
     ...HlmDialogImports,
     ...HlmFieldImports,
   ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './federated-password-setup-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

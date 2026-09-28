@@ -17,6 +17,7 @@ import type {
   EquipmentOutput,
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
+import { resolveEquipmentStatusTag } from '@features/organization/features/facilities/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InterventionService } from '@features/organization/features/interventions';
@@ -59,6 +60,22 @@ const RECENT_INTERVENTIONS_LIMIT: number = 5;
 const MILLISECONDS_PER_DAY: number = 86_400_000;
 
 /**
+ * Constant EQUIPMENT_STATUS_ROW_ORDER
+ *
+ * @description
+ * Display order of the equipment status breakdown rows — operational first
+ * as the reassuring majority case, then in-stock, under maintenance and
+ * decommissioned last. `Object.keys` on a per-status tally follows
+ * declaration order instead, which is not this order.
+ */
+const EQUIPMENT_STATUS_ROW_ORDER: ReadonlyArray<EquipmentStatus> = [
+  'operational',
+  'in_stock',
+  'under_maintenance',
+  'decommissioned',
+];
+
+/**
  * Constant INITIAL_STATE
  *
  * @description
@@ -68,6 +85,8 @@ const INITIAL_STATE: FacilityOverviewState = {
   inspections: [],
   equipment: [],
   interventions: [],
+  inspectionsTotal: 0,
+  equipmentTotal: 0,
   inspectionsCallState: idleCallState(),
   equipmentCallState: idleCallState(),
   interventionsCallState: idleCallState(),
@@ -167,19 +186,26 @@ export const FacilityOverviewStore = signalStore(
     }),
 
     /**
-     * Recent inspections, ascending by performed date, capped for preview.
+     * Most recent past inspections, newest first, capped for preview.
+     * Future-dated and unparseable rows are excluded before the cap applies.
      */
-    recentInspections: computed<ReadonlyArray<InspectionOutput>>(() =>
-      store
+    recentInspections: computed<ReadonlyArray<InspectionOutput>>(() => {
+      const nowTimestamp: number = Date.now();
+      return store
         .inspections()
-        .toSorted((left, right) => Date.parse(left.performedAt) - Date.parse(right.performedAt))
-        .slice(0, RECENT_INSPECTIONS_LIMIT),
-    ),
+        .filter((inspection) => {
+          const performedTimestamp: number = Date.parse(inspection.performedAt);
+          return Number.isFinite(performedTimestamp) && performedTimestamp <= nowTimestamp;
+        })
+        .toSorted((left, right) => Date.parse(right.performedAt) - Date.parse(left.performedAt))
+        .slice(0, RECENT_INSPECTIONS_LIMIT);
+    }),
 
     /**
-     * Total number of equipment items assigned to the facility.
+     * Total number of equipment items assigned to the facility, read from the
+     * collection `totalItems` rather than the length of the preview page.
      */
-    equipmentCount: computed<number>(() => store.equipment().length),
+    equipmentCount: computed<number>(() => store.equipmentTotal()),
 
     /**
      * Equipment items that require attention (maintenance or decommissioned).
@@ -196,9 +222,12 @@ export const FacilityOverviewStore = signalStore(
 
     /**
      * Per-status equipment breakdown rows used by the progress-bar summary.
-     * Colours mirror the severity this same status renders with elsewhere
-     * (`EQUIPMENT_STATUS_TAG_ICON_CLASS`): success for `operational`, warning
-     * for `under_maintenance`, danger for `decommissioned`, neutral for
+     * Label and icon come from the facility-owned
+     * {@link resolveEquipmentStatusTag} registry — the same one the plan
+     * overlay's equipment pins use — so this row never repeats a status
+     * label the registry already owns. Colours mirror the tag's own
+     * severity: success for `operational`, warning for
+     * `under_maintenance`, danger for `decommissioned`, neutral for
      * `in_stock` — the same literal light/dark rung pair, as a background
      * fill rather than a glyph colour.
      */
@@ -217,39 +246,59 @@ export const FacilityOverviewStore = signalStore(
         byStatus[item.status] += 1;
       }
 
-      return [
-        {
-          label: $localize`:@@facility.equipmentBreakdown.commissioned:Commissioned`,
-          count: byStatus.operational,
+      const colorClassOf: Record<EquipmentStatus, string> = {
+        operational: 'bg-success',
+        in_stock: 'bg-muted-foreground',
+        under_maintenance: 'bg-warning',
+        decommissioned: 'bg-destructive',
+      };
+
+      const iconColorClassOf: Record<EquipmentStatus, string> = {
+        operational: 'text-success',
+        in_stock: 'text-muted-foreground',
+        under_maintenance: 'text-warning',
+        decommissioned: 'text-destructive',
+      };
+
+      return EQUIPMENT_STATUS_ROW_ORDER.map((status) => {
+        const descriptor = resolveEquipmentStatusTag(status);
+        const count: number = byStatus[status];
+
+        return {
+          label: descriptor.label,
+          icon: descriptor.icon,
+          count,
           total,
-          ratio: total > 0 ? byStatus.operational / total : 0,
-          colorClass: 'bg-success',
-        },
-        {
-          label: $localize`:@@facility.equipmentBreakdown.inStock:In stock`,
-          count: byStatus.in_stock,
-          total,
-          ratio: total > 0 ? byStatus.in_stock / total : 0,
-          colorClass: 'bg-muted-foreground',
-        },
-        {
-          label: $localize`:@@facility.equipmentBreakdown.underMaintenance:Under maintenance`,
-          count: byStatus.under_maintenance,
-          total,
-          ratio: total > 0 ? byStatus.under_maintenance / total : 0,
-          colorClass: 'bg-warning',
-        },
-        {
-          label: $localize`:@@facility.equipmentBreakdown.decommissioned:Decommissioned`,
-          count: byStatus.decommissioned,
-          total,
-          ratio: total > 0 ? byStatus.decommissioned / total : 0,
-          colorClass: 'bg-destructive',
-        },
-      ];
+          ratio: total > 0 ? count / total : 0,
+          colorClass: colorClassOf[status],
+          iconColorClass: iconColorClassOf[status],
+        };
+      });
     }),
   })),
   withComputed((store) => ({
+    /**
+     * Whether the loaded inspection preview (capped at
+     * {@link PREVIEW_ITEMS_PER_PAGE}) is a partial sample of the facility's
+     * inspections — the compliance rate, overdue count and next-inspection
+     * metrics are all computed from this same preview, so a partial sample
+     * makes them approximate rather than exact.
+     */
+    isInspectionsPreviewPartial: computed<boolean>(
+      () => store.inspectionsTotal() > store.inspections().length,
+    ),
+
+    /**
+     * Whether the loaded equipment preview (capped at
+     * {@link PREVIEW_ITEMS_PER_PAGE}) is a partial sample of the facility's
+     * equipment — the equipment count, "to monitor" subtitle and status
+     * breakdown are all computed from this same preview, so a partial
+     * sample makes them approximate rather than exact.
+     */
+    isEquipmentPreviewPartial: computed<boolean>(
+      () => store.equipmentTotal() > store.equipment().length,
+    ),
+
     /**
      * Compliance rate formatted for display, or an em dash placeholder.
      */
@@ -296,12 +345,14 @@ export const FacilityOverviewStore = signalStore(
                 next: (response: HydraCollection<InspectionOutput>) =>
                   patchState(store, {
                     inspections: [...response.member],
+                    inspectionsTotal: response.totalItems,
                     inspectionsCallState: successCallState(null),
                   }),
                 error: (error: unknown) => {
                   const storeError: StoreError = toStoreError(error);
                   patchState(store, {
                     inspections: [],
+                    inspectionsTotal: 0,
                     inspectionsCallState: errorCallState(storeError),
                   });
                 },
@@ -322,12 +373,14 @@ export const FacilityOverviewStore = signalStore(
                 next: (response: HydraCollection<EquipmentOutput>) =>
                   patchState(store, {
                     equipment: [...response.member],
+                    equipmentTotal: response.totalItems,
                     equipmentCallState: successCallState(null),
                   }),
                 error: (error: unknown) => {
                   const storeError: StoreError = toStoreError(error);
                   patchState(store, {
                     equipment: [],
+                    equipmentTotal: 0,
                     equipmentCallState: errorCallState(storeError),
                   });
                 },

@@ -22,6 +22,11 @@ import type {
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { InplaceField } from '@shared/inplace-field';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 
@@ -38,15 +43,18 @@ import { HlmSelectImports } from '@shared/ui/select';
  * single "done" gesture.
  *
  * Only one field is ever open at a time (`editState`), so the five confirm
- * fields share a single draft signal rather than one each.
+ * fields share a single draft signal rather than one each. Grouped into an
+ * "Identification" and a "Placement & lifecycle" fieldset, the second
+ * carrying two read-only rows — Installed, Commissioned — since neither is
+ * an {@link EquipmentEditTarget}.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-equipment-information-panel',
-  imports: [InplaceField, HlmInput, ...HlmSelectImports],
+  imports: [InplaceField, OrgDatePipe, HlmInput, ...HlmSelectImports],
   templateUrl: './equipment-information-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -84,6 +92,17 @@ export class EquipmentInformationPanel {
    * @type {InputSignal<EquipmentEditState>}
    */
   public readonly editState: InputSignal<EquipmentEditState> = input.required<EquipmentEditState>();
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The organization's date pattern and timezone, for the Installed/Commissioned rows' `appOrgDate` binding.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs

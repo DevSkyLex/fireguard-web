@@ -161,4 +161,83 @@ describe('buildMessageViews', () => {
 
     expect(view.bodyHtml).toContain('Bob');
   });
+
+  it('counts only other participants whose confirmed positions cover an authored message', () => {
+    const [view] = buildMessageViews(
+      baseInput({
+        ownMemberIri: '/api/organizations/org-1/members/member-1',
+        receiptKind: 'channel',
+        receiptPositions: [
+          {
+            memberId: 'member-1',
+            deliveredMessageId: 'message-1',
+            deliveredThroughAt: '2026-01-01T00:00:00Z',
+            readMessageId: 'message-1',
+            readThroughAt: '2026-01-01T00:00:00Z',
+          },
+          {
+            memberId: 'member-2',
+            deliveredMessageId: 'message-1',
+            deliveredThroughAt: '2026-01-01T00:00:00Z',
+            readMessageId: 'message-1',
+            readThroughAt: '2026-01-01T00:00:00Z',
+          },
+          {
+            memberId: 'member-3',
+            deliveredMessageId: 'message-1',
+            deliveredThroughAt: '2026-01-01T00:00:00Z',
+            readMessageId: null,
+            readThroughAt: null,
+          },
+        ],
+      }),
+    );
+
+    expect(view.receipt).toEqual({ kind: 'channel', deliveredCount: 2, readCount: 1 });
+  });
+
+  it('does not turn an earlier position or an unsent row into a receipt', () => {
+    const input = baseInput({
+      ownMemberIri: '/api/organizations/org-1/members/member-1',
+      receiptKind: 'direct',
+      receiptPositions: [
+        {
+          memberId: 'member-2',
+          deliveredMessageId: 'message-0',
+          deliveredThroughAt: '2025-12-31T23:59:59Z',
+          readMessageId: null,
+          readThroughAt: null,
+        },
+      ],
+    });
+
+    expect(buildMessageViews(input)[0].receipt).toEqual({
+      kind: 'direct',
+      deliveredCount: 0,
+      readCount: 0,
+    });
+    expect(
+      buildMessageViews({ ...input, pendingMessageIds: ['message-1'] })[0].receipt,
+    ).toBeUndefined();
+  });
+
+  it('uses the API paging tie break for messages created in one second', () => {
+    const [view] = buildMessageViews(
+      baseInput({
+        ownMemberIri: '/api/organizations/org-1/members/member-1',
+        receiptKind: 'channel',
+        receiptPositions: [
+          {
+            memberId: 'member-2',
+            deliveredMessageId: 'message-2',
+            deliveredThroughAt: '2026-01-01T00:00:00Z',
+            readMessageId: null,
+            readThroughAt: null,
+          },
+        ],
+      }),
+    );
+
+    expect(view.receipt?.deliveredCount).toBe(1);
+  });
 });

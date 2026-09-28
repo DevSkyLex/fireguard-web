@@ -22,11 +22,13 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideArchive,
   lucideArrowRightLeft,
   lucideBan,
   lucideBell,
   lucideCircleAlert,
   lucideCircleCheck,
+  lucideCircleDot,
   lucideCircleX,
   lucideClock,
   lucideCreditCard,
@@ -34,10 +36,12 @@ import {
   lucideExternalLink,
   lucideGauge,
   lucideGlobe,
-  lucideReceipt,
+  lucideKeyRound,
+  lucidePencil,
   lucideRefreshCw,
   lucideSettings,
   lucideShieldCheck,
+  lucideTag,
   lucideTrash2,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
@@ -64,6 +68,10 @@ import {
   type MemberSelectOption,
 } from '@features/organization/models';
 import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
+import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
   OrganizationQuotaStore,
@@ -80,6 +88,8 @@ import {
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
 import { OrganizationAccessPanel } from '@features/organization/ui/components/organization-access-panel';
 import { toMemberSelectOption } from '@features/organization/utils';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -114,10 +124,16 @@ import {
 } from '../../forms/organization-legal-form';
 import { OrganizationNotificationsForm } from '../../forms/organization-notifications-form';
 import { OrganizationRegionalForm } from '../../forms/organization-regional-form';
+import { INVOICE_STATUS_TAG_ICON_CLASS } from './constants/invoice-status-tag-icon-class.constants';
+import { ORGANIZATION_STATUS_TAG_ICON_CLASS } from './constants/organization-status-tag-icon-class.constants';
 import { SUBSCRIPTION_STATUS_TAG_ICON_CLASS } from './constants/subscription-status-tag-icon-class.constants';
 import {
+  resolveInvoiceStatusTag,
+  resolveOrganizationStatusTag,
   resolveSubscriptionStatusTag,
+  type InvoiceStatusTagDescriptor,
   type OrganizationSettingsTabId,
+  type OrganizationStatusTagDescriptor,
   type SubscriptionStatusTagDescriptor,
 } from './models';
 
@@ -277,6 +293,8 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
     OrganizationSuspendDialog,
     OrganizationTransferOwnershipDialog,
     OrganizationUsagePanel,
+    OrgDatePipe,
+    ResourceIllustration,
     HlmBadge,
     HlmButton,
     HlmSkeleton,
@@ -290,11 +308,13 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
     OrganizationSettingsStore,
     OrganizationBillingStore,
     provideIcons({
+      lucideArchive,
       lucideArrowRightLeft,
       lucideBan,
       lucideBell,
       lucideCircleAlert,
       lucideCircleCheck,
+      lucideCircleDot,
       lucideCircleX,
       lucideClock,
       lucideCreditCard,
@@ -302,10 +322,12 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
       lucideExternalLink,
       lucideGauge,
       lucideGlobe,
-      lucideReceipt,
+      lucideKeyRound,
+      lucidePencil,
       lucideRefreshCw,
       lucideSettings,
       lucideShieldCheck,
+      lucideTag,
       lucideTrash2,
       lucideTriangleAlert,
     }),
@@ -418,6 +440,24 @@ export class OrganizationSettingsPage {
    */
   protected readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
+
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by the invoice list's `appOrgDate` bindings and by {@link formatDate}.
+   * @access protected
+   * @since 1.8.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+
+  /** Formats {@link renewalDate} in the organization's regional format and timezone; dependency-free by design (see {@link OrgDatePipe}). */
+  private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
 
   /**
    * Property quotaStore
@@ -666,6 +706,31 @@ export class OrganizationSettingsPage {
   });
 
   /**
+   * Property organizationStatusTag
+   * @readonly
+   * @description The active organization's status descriptor for the Danger zone's Suspend/restore row, or `null` before it has loaded.
+   * @access protected
+   * @since 1.9.0
+   * @type {Signal<OrganizationStatusTagDescriptor | null>}
+   */
+  protected readonly organizationStatusTag: Signal<OrganizationStatusTagDescriptor | null> =
+    computed((): OrganizationStatusTagDescriptor | null => {
+      const status: string | undefined = this.organization()?.status;
+      return status ? resolveOrganizationStatusTag(status) : null;
+    });
+
+  /**
+   * Property organizationStatusIconClass
+   * @readonly
+   * @description Maps the organization status severity to its icon colour.
+   * @access protected
+   * @since 1.9.0
+   * @type {typeof ORGANIZATION_STATUS_TAG_ICON_CLASS}
+   */
+  protected readonly organizationStatusIconClass: typeof ORGANIZATION_STATUS_TAG_ICON_CLASS =
+    ORGANIZATION_STATUS_TAG_ICON_CLASS;
+
+  /**
    * Property canTransferOwnership
    * @readonly
    *
@@ -840,6 +905,17 @@ export class OrganizationSettingsPage {
     SUBSCRIPTION_STATUS_TAG_ICON_CLASS;
 
   /**
+   * Property invoiceStatusTagIconClass
+   * @readonly
+   * @description Maps an invoice status severity to its icon colour.
+   * @access protected
+   * @since 1.8.0
+   * @type {typeof INVOICE_STATUS_TAG_ICON_CLASS}
+   */
+  protected readonly invoiceStatusTagIconClass: typeof INVOICE_STATUS_TAG_ICON_CLASS =
+    INVOICE_STATUS_TAG_ICON_CLASS;
+
+  /**
    * Property renewalDate
    * @readonly
    * @description The current subscription's renewal or expiry date, formatted for display.
@@ -873,6 +949,25 @@ export class OrganizationSettingsPage {
     return this.billingStore.subscription()?.cancelAtPeriodEnd
       ? $localize`:@@org.settings.subscription.endsOn:Ends on ${date}:date:`
       : $localize`:@@org.settings.subscription.renewsOn:Renews on ${date}:date:`;
+  });
+
+  /**
+   * Property billingIntervalText
+   * @readonly
+   * @description The current subscription's billing cadence ("Billed monthly"/"Billed annually"), or `null` while there is no subscription to describe.
+   * @access protected
+   * @since 1.8.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly billingIntervalText: Signal<string | null> = computed((): string | null => {
+    const interval: string | null | undefined = this.billingStore.subscription()?.interval;
+
+    if (interval === 'month')
+      return $localize`:@@org.settings.subscription.billedMonthly:Billed monthly`;
+    if (interval === 'year')
+      return $localize`:@@org.settings.subscription.billedAnnually:Billed annually`;
+
+    return null;
   });
 
   /**
@@ -1865,6 +1960,32 @@ export class OrganizationSettingsPage {
   }
 
   /**
+   * Method invoiceStatusTagOf
+   * @method invoiceStatusTagOf
+   * @description The presentation descriptor for an invoice's raw Stripe status.
+   * @access protected
+   * @since 1.8.0
+   * @param {InvoiceOutput} invoice - The invoice row.
+   * @returns {InvoiceStatusTagDescriptor} The matching descriptor.
+   */
+  protected invoiceStatusTagOf(invoice: InvoiceOutput): InvoiceStatusTagDescriptor {
+    return resolveInvoiceStatusTag(invoice.status);
+  }
+
+  /**
+   * Method invoiceNumberOf
+   * @method invoiceNumberOf
+   * @description The invoice's human number, or a neutral fallback for the rare row the provider sent none for.
+   * @access protected
+   * @since 1.8.0
+   * @param {InvoiceOutput} invoice - The invoice row.
+   * @returns {string} The invoice number to display.
+   */
+  protected invoiceNumberOf(invoice: InvoiceOutput): string {
+    return invoice.number ?? $localize`:@@org.settings.subscription.invoiceNumberFallback:Invoice`;
+  }
+
+  /**
    * Method formatInvoiceAmount
    * @method formatInvoiceAmount
    *
@@ -1891,25 +2012,24 @@ export class OrganizationSettingsPage {
    * @method formatDate
    *
    * @description
-   * Renders an API timestamp as a readable date. Uses the platform's `Intl`
-   * rather than a date library, matching `AccountProfilePage`'s
-   * `formatDate` — two call sites do not justify introducing one
-   * (`ARCHITECTURE.md` §2.9).
+   * Renders the subscription renewal timestamp through {@link OrgDatePipe},
+   * in the organization's regional date pattern and IANA timezone — the same
+   * treatment as the invoice list below it — rather than the runtime's own
+   * locale and timezone.
    *
    * @access protected
    * @since 1.0.0
    *
    * @param {string | null | undefined} iso - ISO-8601 timestamp, if any.
    *
-   * @returns {string | null} The formatted date, or `null` when there is none.
+   * @returns {string | null} The formatted date, or `null` when there is none or it does not parse.
    */
   protected formatDate(iso: string | null | undefined): string | null {
     if (!iso) return null;
 
-    const parsed: number = Date.parse(iso);
-    if (Number.isNaN(parsed)) return null;
+    const formatted: string = this.orgDatePipe.transform(iso, 'date', this.regionalFormatting());
 
-    return new Intl.DateTimeFormat(this.locale, { dateStyle: 'long' }).format(parsed);
+    return formatted === '' ? null : formatted;
   }
   //#endregion
   /**

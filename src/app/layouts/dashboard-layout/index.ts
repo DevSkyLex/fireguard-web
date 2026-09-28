@@ -1,9 +1,11 @@
 export { DashboardLayout } from './dashboard-layout.component';
-export type { SidebarExtensionContribution } from './models';
+export type { DashboardPanelContribution, SidebarExtensionContribution } from './models';
+export { DashboardPanelRegistry } from './services/dashboard-panel-registry/dashboard-panel-registry.service';
 export {
   provideDashboardLayoutSlots,
   withDashboardBreadcrumb,
   withDashboardGlobalNav,
+  withDashboardPagePanel,
   type DashboardLayoutSlotsConfig,
 } from './providers';
 export {

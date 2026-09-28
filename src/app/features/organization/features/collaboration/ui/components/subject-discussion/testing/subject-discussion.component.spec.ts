@@ -8,10 +8,12 @@ import {
   type InteractionCapabilitiesPort,
 } from '@core/interaction-capabilities';
 import type { StoreError } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { MEMBER_PRESENCE_PORT, ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
@@ -65,6 +67,20 @@ describe('SubjectDiscussion', () => {
   async function createComponent(): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: MEMBER_PRESENCE_PORT,
+          useValue: {
+            byId: signal({}),
+            ownStatus: signal(null),
+            register: vi.fn(),
+            unregister: vi.fn(),
+          },
+        },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganizationId: signal('org-1') },
+        },
+
         provideZonelessChangeDetection(),
         {
           provide: INTERACTION_CAPABILITIES_PORT,
@@ -95,6 +111,14 @@ describe('SubjectDiscussion', () => {
             isLoadingAccess: signal(false),
             accessError: signal(null),
           },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
       ],
     });

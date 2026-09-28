@@ -164,12 +164,12 @@
           @for (option of options(); track option.id) {
             <a
               hlmDropdownMenuItem
-              class="min-h-10 gap-2"
+              class="gap-2"
               [attr.aria-current]="option.active ? 'true' : null"
               [routerLink]="option.active ? null : ['/organizations', option.id]"
             >
               <app-organization-avatar
-                size="xs"
+                size="2xs"
                 [name]="option.name"
                 [logoUrl]="option.logoUrl"
                 [initials]="option.initials"

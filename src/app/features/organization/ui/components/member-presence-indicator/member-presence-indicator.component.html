@@ -1,0 +1,16 @@
+@if (status()) {
+  @if (showLabel()) {
+    <span class="inline-flex items-center gap-2 text-xs text-muted-foreground">
+      <span hlmAvatarBadge [class]="badgeClass()" aria-hidden="true"></span>
+      <span>{{ label() }}</span>
+    </span>
+  } @else {
+    <span
+      hlmAvatarBadge
+      [class]="badgeClass()"
+      role="img"
+      [attr.aria-label]="label()"
+      [attr.title]="label()"
+    ></span>
+  }
+}

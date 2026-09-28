@@ -70,21 +70,23 @@ describe('InterventionKpiStrip', () => {
     expect(element.textContent).toContain('Open');
   });
 
-  it('should render a footer caption on every tile, stating a stable fact rather than a fabricated trend', async () => {
+  it('should render a caption on every tile describing the metric', async () => {
     const element: HTMLElement = await render(STATISTICS, false);
 
-    expect(element.querySelectorAll('[hlmCardFooter]')).toHaveLength(4);
+    expect(element.querySelectorAll('[hlmCardContent]')).toHaveLength(4);
     expect(element.textContent).toContain('In progress work');
     expect(element.textContent).toContain('Past due date');
     expect(element.textContent).toContain('Due within 48h');
     expect(element.textContent).toContain('Submitted for review');
   });
 
-  it('should render no icon beside any footer caption, since the caption text already states it', async () => {
+  it('should render each caption without an additional icon', async () => {
     const element: HTMLElement = await render(STATISTICS, false);
 
-    for (const footer of Array.from(element.querySelectorAll('[hlmCardFooter]'))) {
-      expect(footer.querySelector('ng-icon')).toBeNull();
+    const captions = element.querySelectorAll('[hlmCardContent]');
+    expect(captions).toHaveLength(4);
+    for (const caption of Array.from(captions)) {
+      expect(caption.querySelector('ng-icon')).toBeNull();
     }
   });
 

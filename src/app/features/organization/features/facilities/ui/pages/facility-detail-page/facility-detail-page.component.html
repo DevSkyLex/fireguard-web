@@ -4,45 +4,67 @@
   tabindex="-1"
   role="group"
   [attr.aria-label]="pageRootLabel"
-  class="flex min-h-0 w-full flex-1 flex-col gap-4 focus-visible:ring-2 focus-visible:ring-ring"
+  class="flex min-h-0 w-full flex-1 flex-col gap-6 focus-visible:ring-2 focus-visible:ring-ring"
 >
   @if (activeFacilityStore.selectedFacility(); as facility) {
-    @if (facility.path.length > 0) {
-      <nav
-        hlmBreadcrumb
-        aria-label="Facility ancestors"
-        i18n-aria-label="@@facility.detail.ancestorsAriaLabel"
-        data-testid="facility-detail-ancestors"
-      >
-        <ol hlmBreadcrumbList>
-          @for (segment of facility.path; track segment.id; let last = $last) {
-            <li hlmBreadcrumbItem>
-              <a
-                hlmBreadcrumbLink
-                [routerLink]="['/organizations', organizationId(), 'facilities', segment.id]"
-                class="mobile-ui:min-h-11"
-                >{{ segment.name }}</a
-              >
-            </li>
-            @if (!last) {
-              <li hlmBreadcrumbSeparator></li>
+    <header class="flex flex-col gap-1.5">
+      @if (facility.path.length > 0) {
+        <nav
+          hlmBreadcrumb
+          aria-label="Facility ancestors"
+          i18n-aria-label="@@facility.detail.ancestorsAriaLabel"
+          data-testid="facility-detail-ancestors"
+        >
+          <ol hlmBreadcrumbList>
+            @for (segment of facility.path; track segment.id; let last = $last) {
+              <li hlmBreadcrumbItem>
+                <a
+                  hlmBreadcrumbLink
+                  [routerLink]="['/organizations', organizationId(), 'facilities', segment.id]"
+                  class="mobile-ui:min-h-11"
+                  >{{ segment.name }}</a
+                >
+              </li>
+              @if (!last) {
+                <li hlmBreadcrumbSeparator></li>
+              }
             }
-          }
-        </ol>
-      </nav>
-    }
-    <div class="flex flex-wrap items-center gap-2">
-      <app-facility-status-tag [value]="facility.status" />
-      @if (facility.code; as code) {
-        <span class="text-sm text-muted-foreground tabular-nums">{{ code }}</span>
+          </ol>
+        </nav>
       }
-      @if (facility.address; as address) {
-        <span class="text-sm text-muted-foreground">{{ address }}</span>
-      }
-    </div>
-    <p class="text-sm text-muted-foreground" data-testid="facility-detail-meta">
-      {{ metaLine() }}
-    </p>
+      <div
+        class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground"
+        data-testid="facility-detail-meta"
+      >
+        <app-facility-status-tag [value]="facility.status" />
+        <hlm-separator orientation="vertical" class="h-4" />
+        <span>{{ typeLabelOf(facility.type) }}</span>
+        @if (facility.code; as code) {
+          <hlm-separator orientation="vertical" class="h-4" />
+          <span class="tabular-nums">{{ code }}</span>
+        }
+        @if (facility.address; as address) {
+          <hlm-separator orientation="vertical" class="h-4" />
+          <span class="inline-flex items-center gap-1">
+            <ng-icon name="lucideMapPin" aria-hidden="true" />
+            {{ address }}
+          </span>
+        }
+        <hlm-separator orientation="vertical" class="h-4" />
+        <span
+          tabindex="0"
+          class="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          [hlmTooltip]="facility.updatedAt | appOrgDate: 'datetime' : regionalFormatting()"
+        >
+          <span i18n="@@facility.detail.metaUpdatedV2"
+            >Updated {{ updatedRelativeLabel(facility.updatedAt) }}</span
+          >
+          <span class="hidden text-xs mobile-ui:inline"
+            >({{ facility.updatedAt | appOrgDate: 'datetime' : regionalFormatting() }})</span
+          >
+        </span>
+      </div>
+    </header>
 
     <hlm-tabs [tab]="activeTab()" class="contents" (tabActivated)="onLinkedTabActivated($event)">
       <ng-template #pageTabs>
@@ -80,121 +102,193 @@
 
       <div hlmTabsContent="overview" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
         <section
-          class="flex flex-col gap-1"
-          aria-labelledby="facility-hierarchy-title"
-          data-testid="facility-detail-hierarchy"
+          class="@container flex flex-col gap-2"
+          aria-labelledby="facility-metrics-title"
+          data-testid="facility-detail-metrics"
         >
-          <h2
-            hlmCardTitle
-            id="facility-hierarchy-title"
-            class="px-2"
-            i18n="@@facility.detail.hierarchyTitle"
-          >
-            Hierarchy
+          <h2 id="facility-metrics-title" class="sr-only" i18n="@@facility.metric.sectionTitle">
+            Key metrics
           </h2>
-          @if (facility.hasChildren) {
-            <app-facility-hierarchy-chart
-              class="px-2"
-              [facility]="facility"
-              [childrenByParent]="store.childFacilitiesByParent()"
-              [activeFacilityId]="facilityId()"
-              (selected)="onHierarchyNodeSelected($event)"
-            />
-          } @else {
-            <p class="px-2 text-sm text-muted-foreground" i18n="@@facility.detail.noChildren">
-              This facility has no sub-facilities.
-            </p>
-          }
-          @if (canWrite()) {
-            <a
-              hlmBtn
-              variant="outline"
-              size="sm"
-              class="mx-2 mt-1 self-start mobile-ui:min-h-11"
-              data-testid="facility-detail-add-sub-facility"
-              [routerLink]="['/organizations', organizationId(), 'facilities']"
-              [queryParams]="{ create: 1, parent: facilityId() }"
+          @if (overview.isLoadingInspections() || overview.isLoadingEquipment()) {
+            <div
+              class="grid grid-cols-1 gap-4 @md:grid-cols-3"
+              aria-hidden="true"
+              data-testid="facility-detail-metrics-loading"
             >
-              <ng-icon name="lucidePlus" aria-hidden="true" />
-              <span i18n="@@facility.detail.addSubFacility">Add sub-facility</span>
-            </a>
+              @for (placeholder of [1, 2, 3]; track placeholder) {
+                <div class="flex flex-col gap-2">
+                  <hlm-skeleton class="h-3 w-20" />
+                  <hlm-skeleton class="h-6 w-14" />
+                </div>
+              }
+            </div>
+          } @else {
+            <dl class="grid grid-cols-1 gap-4 @md:grid-cols-3">
+              <div class="flex flex-col gap-1">
+                <dt class="text-sm text-muted-foreground" i18n="@@facility.metric.compliance.title">
+                  Compliance rate
+                </dt>
+                <dd class="flex flex-col gap-1">
+                  <span class="text-lg font-semibold tabular-nums">{{
+                    overview.complianceDisplay()
+                  }}</span>
+                  @let rate = overview.complianceRate();
+                  @if (rate !== null) {
+                    <hlm-progress
+                      [value]="rate"
+                      [attr.aria-label]="overview.complianceDisplay()"
+                      class="h-1.5"
+                    >
+                      <hlm-progress-indicator />
+                    </hlm-progress>
+                  }
+                </dd>
+              </div>
+              <div class="flex flex-col gap-1 @md:border-s @md:border-border @md:ps-4">
+                <dt class="text-sm text-muted-foreground" i18n="@@facility.metric.equipments.title">
+                  Equipment
+                </dt>
+                <dd class="flex flex-col gap-1">
+                  @if (overview.equipmentCallState().status === 'error') {
+                    <span class="text-lg font-semibold tabular-nums">—</span>
+                  } @else {
+                    <span class="text-lg font-semibold tabular-nums">{{
+                      overview.equipmentCount()
+                    }}</span>
+                    <span class="text-sm text-muted-foreground">{{
+                      overview.equipmentDescription()
+                    }}</span>
+                  }
+                </dd>
+              </div>
+              <div class="flex flex-col gap-1 @md:border-s @md:border-border @md:ps-4">
+                <dt
+                  class="text-sm text-muted-foreground"
+                  i18n="@@facility.metric.nextInspection.title"
+                >
+                  Next inspection
+                </dt>
+                <dd class="flex flex-col gap-1">
+                  @let relativeLabel = nextInspectionRelativeLabel();
+                  <span class="text-lg font-semibold tabular-nums">
+                    @if (relativeLabel !== null) {
+                      {{ relativeLabel }}
+                    } @else {
+                      <span>—</span>
+                    }
+                  </span>
+                  @if (overview.nextInspectionAt(); as nextAt) {
+                    <span class="text-sm text-muted-foreground">
+                      {{ nextAt | appOrgDate: 'date' : regionalFormatting() }}
+                    </span>
+                  }
+                </dd>
+              </div>
+            </dl>
+            @if (overview.isInspectionsPreviewPartial()) {
+              <p
+                class="text-sm text-muted-foreground"
+                data-testid="facility-detail-metrics-partial"
+                i18n="@@facility.metric.partialDataCaption"
+              >
+                Based on {{ overview.inspections().length }} of
+                {{ overview.inspectionsTotal() }} records
+              </p>
+            }
+            @if (overview.isEquipmentPreviewPartial()) {
+              <p
+                class="text-sm text-muted-foreground"
+                data-testid="facility-detail-equipment-metrics-partial"
+                i18n="@@facility.metric.equipmentPartialDataCaption"
+              >
+                Based on {{ overview.equipment().length }} of
+                {{ overview.equipmentTotal() }} records
+              </p>
+            }
           }
         </section>
 
-        <div hlmCard>
-          <div hlmCardContent class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div class="flex flex-col gap-1">
-              <p class="text-xs text-muted-foreground" i18n="@@facility.metric.compliance.title">
-                Compliance rate
-              </p>
-              <p class="text-2xl font-semibold tabular-nums">{{ overview.complianceDisplay() }}</p>
-            </div>
-            <div class="flex flex-col gap-1 sm:border-s sm:border-border sm:ps-4">
-              <p class="text-xs text-muted-foreground" i18n="@@facility.metric.equipments.title">
-                Equipment
-              </p>
-              <p class="text-2xl font-semibold tabular-nums">{{ overview.equipmentCount() }}</p>
-              <p class="text-xs text-muted-foreground">{{ overview.equipmentDescription() }}</p>
-            </div>
-            <div class="flex flex-col gap-1 sm:border-s sm:border-border sm:ps-4">
-              <p
-                class="text-xs text-muted-foreground"
-                i18n="@@facility.metric.nextInspection.title"
-              >
-                Next inspection
-              </p>
-              <p class="text-2xl font-semibold tabular-nums">
-                @if (overview.nextInspectionInDays(); as days) {
-                  <span i18n="@@facility.metric.nextInspection.days">{{ days }} day(s)</span>
-                } @else {
-                  <span>—</span>
-                }
-              </p>
-            </div>
+        @if (overview.equipmentCallState().status === 'error') {
+          <div hlmAlert variant="destructive" data-testid="facility-detail-equipment-status">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <h2 hlmAlertTitle i18n="@@facility.equipmentBreakdown.errorTitle">
+              Couldn't load equipment status
+            </h2>
+            <p hlmAlertDescription i18n="@@facility.equipmentBreakdown.errorDesc">
+              The equipment status breakdown could not be loaded.
+            </p>
+            <button
+              hlmAlertAction
+              hlmBtn
+              variant="outline"
+              size="sm"
+              (click)="
+                overview.loadEquipment({
+                  organizationId: organizationId(),
+                  facilityId: facilityId(),
+                })
+              "
+              class="mobile-ui:min-h-11"
+            >
+              <span i18n="@@facility.list.retry">Retry</span>
+            </button>
           </div>
-        </div>
-
-        @if (overview.isLoadingEquipment() || overview.equipmentCount() > 0) {
+        } @else if (overview.isLoadingEquipment() || overview.equipmentCount() > 0) {
           <section
-            class="flex flex-col gap-1"
+            class="flex flex-col gap-2"
             aria-labelledby="facility-equipment-status-title"
             data-testid="facility-detail-equipment-status"
           >
-            <h2 hlmCardTitle id="facility-equipment-status-title" class="px-2">
-              <a
-                class="inline-flex items-center hover:underline mobile-ui:min-h-11"
-                data-testid="facility-detail-equipment-status-link"
-                [routerLink]="['/organizations', organizationId(), 'assets']"
+            <div class="flex items-center justify-between gap-2">
+              <h2
+                id="facility-equipment-status-title"
+                hlmLarge
                 i18n="@@facility.equipmentBreakdown.title"
               >
                 Equipment status
+              </h2>
+              <a
+                class="inline-flex items-center text-sm text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11"
+                data-testid="facility-detail-equipment-status-link"
+                [routerLink]="['/organizations', organizationId(), 'assets']"
+                [queryParams]="{ facility: facilityId() }"
+                aria-label="See all equipment on this site"
+                i18n-aria-label="@@facility.equipmentBreakdown.seeAllAria"
+                i18n="@@facility.recentInterventions.seeAll"
+              >
+                See all
               </a>
-            </h2>
+            </div>
             @if (overview.isLoadingEquipment()) {
-              <div class="flex flex-col gap-3 px-2">
+              <div class="flex flex-col gap-3">
                 <output class="sr-only" i18n="@@facility.equipmentBreakdown.loadingAria"
                   >Loading equipment status</output
                 >
-                <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
-                <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
-                <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-8 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-8 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-8 w-full" aria-hidden="true" />
               </div>
             } @else {
-              <div class="flex flex-col gap-3 px-2">
+              <div class="flex flex-col gap-3">
                 @for (row of overview.equipmentStatusRows(); track row.label) {
                   <div class="flex flex-col gap-1">
-                    <div class="flex items-center justify-between text-sm">
-                      <span>{{ row.label }}</span>
+                    <div class="flex items-center gap-2 text-sm">
+                      <ng-icon
+                        [name]="row.icon"
+                        aria-hidden="true"
+                        [class]="'shrink-0 ' + row.iconColorClass"
+                      />
+                      <span class="flex-1">{{ row.label }}</span>
                       <span class="text-muted-foreground tabular-nums">{{ row.count }}</span>
                     </div>
-                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        class="h-full rounded-full"
-                        [class]="row.colorClass"
-                        [style.width.%]="row.ratio * 100"
-                        data-testid="facility-equipment-status-bar"
-                      ></div>
-                    </div>
+                    <hlm-progress
+                      [value]="row.ratio * 100"
+                      [attr.aria-label]="row.label"
+                      class="h-1.5"
+                      data-testid="facility-equipment-status-bar"
+                    >
+                      <hlm-progress-indicator [class]="row.colorClass" />
+                    </hlm-progress>
                   </div>
                 }
               </div>
@@ -202,33 +296,66 @@
           </section>
         }
 
-        @if (overview.isLoadingInspections() || overview.recentInspections().length > 0) {
+        @if (overview.inspectionsCallState().status === 'error') {
+          <div hlmAlert variant="destructive" data-testid="facility-detail-recent-inspections">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <h2 hlmAlertTitle i18n="@@facility.recentInspections.errorTitle">
+              Couldn't load recent inspections
+            </h2>
+            <p hlmAlertDescription i18n="@@facility.recentInspections.errorDesc">
+              The recent inspections could not be loaded.
+            </p>
+            <button
+              hlmAlertAction
+              hlmBtn
+              variant="outline"
+              size="sm"
+              (click)="
+                overview.loadInspections({
+                  organizationId: organizationId(),
+                  facilityId: facilityId(),
+                })
+              "
+              class="mobile-ui:min-h-11"
+            >
+              <span i18n="@@facility.list.retry">Retry</span>
+            </button>
+          </div>
+        } @else if (overview.isLoadingInspections() || overview.recentInspections().length > 0) {
           <section
-            class="flex flex-col gap-1"
+            class="flex flex-col gap-2"
             aria-labelledby="facility-recent-inspections-title"
             data-testid="facility-detail-recent-inspections"
           >
             <h2
-              hlmCardTitle
               id="facility-recent-inspections-title"
-              class="px-2"
+              hlmLarge
               i18n="@@facility.recentInspections.title"
             >
               Recent inspections
             </h2>
             @if (overview.isLoadingInspections()) {
-              <div class="flex flex-col gap-2 px-2">
+              <div class="flex flex-col gap-2">
                 <output class="sr-only" i18n="@@facility.recentInspections.loadingAria"
                   >Loading recent inspections</output
                 >
-                <hlm-skeleton class="h-4 w-full" aria-hidden="true" />
-                <hlm-skeleton class="h-4 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-11 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-11 w-full" aria-hidden="true" />
               </div>
             } @else {
-              <div class="flex flex-col divide-y divide-border px-2">
-                @for (inspection of overview.recentInspections(); track inspection.id) {
+              <div hlmItemGroup class="gap-0">
+                @for (
+                  inspection of overview.recentInspections();
+                  track inspection.id;
+                  let first = $first
+                ) {
+                  @if (!first) {
+                    <hlm-item-separator class="my-0" />
+                  }
                   <a
-                    class="flex min-h-11 items-center justify-between py-2 text-sm hover:underline sm:min-h-0"
+                    hlmItem
+                    size="sm"
+                    class="mobile-ui:min-h-11"
                     data-testid="facility-detail-recent-inspection-row"
                     [routerLink]="[
                       '/organizations',
@@ -237,12 +364,178 @@
                       inspection.id,
                     ]"
                   >
-                    <span>{{
-                      inspection.performedAt | appOrgDate: 'date' : regionalFormatting()
-                    }}</span>
-                    <span class="text-muted-foreground">{{
-                      resultLabelOf(inspection.result)
-                    }}</span>
+                    <hlm-item-media>
+                      <hlm-avatar size="sm">
+                        @if (
+                          pickAvatarUrl(
+                            inspection.inspector?.avatarUrls,
+                            '32',
+                            inspection.inspector?.avatarUrl
+                          );
+                          as avatarUrl
+                        ) {
+                          <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                        }
+                        <span hlmAvatarFallback>{{
+                          getOrganizationInitials(inspection.inspector?.displayName ?? '?')
+                        }}</span>
+                      </hlm-avatar>
+                    </hlm-item-media>
+                    <hlm-item-content>
+                      <span hlmItemTitle>{{
+                        inspection.performedAt | appOrgDate: 'date' : regionalFormatting()
+                      }}</span>
+                      <span hlmItemDescription>{{ inspection.inspector?.displayName }}</span>
+                    </hlm-item-content>
+                    <hlm-item-actions>
+                      @if (inspection.nonConformitiesCount > 0) {
+                        <span hlmBadge variant="outline" class="gap-1">
+                          <ng-icon
+                            name="lucideTriangleAlert"
+                            class="text-warning"
+                            aria-hidden="true"
+                          />
+                          <span
+                            >{{ inspection.nonConformitiesCount }}
+                            <span i18n="@@facility.recentInspections.ncAbbrev">NC</span></span
+                          >
+                        </span>
+                      }
+                      <app-intervention-tag kind="inspectionResult" [value]="inspection.result" />
+                    </hlm-item-actions>
+                  </a>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        @if (overview.interventionsCallState().status === 'error') {
+          <div hlmAlert variant="destructive" data-testid="facility-detail-interventions">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <h2 hlmAlertTitle i18n="@@facility.recentInterventions.errorTitle">
+              Couldn't load interventions on this site
+            </h2>
+            <p hlmAlertDescription i18n="@@facility.recentInterventions.errorDesc">
+              The interventions on this site could not be loaded.
+            </p>
+            <button
+              hlmAlertAction
+              hlmBtn
+              variant="outline"
+              size="sm"
+              (click)="
+                overview.loadInterventions({
+                  organizationId: organizationId(),
+                  facilityId: facilityId(),
+                })
+              "
+              class="mobile-ui:min-h-11"
+            >
+              <span i18n="@@facility.list.retry">Retry</span>
+            </button>
+          </div>
+        } @else {
+          <section
+            class="flex flex-col gap-2"
+            aria-labelledby="facility-detail-interventions-title"
+            data-testid="facility-detail-interventions"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <h2
+                id="facility-detail-interventions-title"
+                hlmLarge
+                i18n="@@facility.recentInterventions.title"
+              >
+                Interventions on this site
+              </h2>
+              <a
+                class="inline-flex shrink-0 items-center text-sm text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11 mobile-ui:min-w-11"
+                data-testid="facility-detail-interventions-see-all"
+                [routerLink]="['/organizations', organizationId(), 'interventions']"
+                [queryParams]="{ site: facilityId() }"
+                aria-label="See all interventions on this site"
+                i18n-aria-label="@@facility.recentInterventions.seeAllAria"
+                i18n="@@facility.recentInterventions.seeAll"
+              >
+                See all
+              </a>
+            </div>
+            @if (overview.isLoadingInterventions()) {
+              <div class="flex flex-col gap-2">
+                <output class="sr-only" i18n="@@facility.recentInterventions.loadingAria"
+                  >Loading interventions on this site</output
+                >
+                <hlm-skeleton class="h-11 w-full" aria-hidden="true" />
+                <hlm-skeleton class="h-11 w-full" aria-hidden="true" />
+              </div>
+            } @else if (overview.interventions().length === 0) {
+              <p
+                class="text-sm text-muted-foreground"
+                data-testid="facility-detail-interventions-empty"
+                i18n="@@facility.recentInterventions.empty"
+              >
+                No interventions on this site.
+              </p>
+            } @else {
+              <div hlmItemGroup class="gap-0">
+                @for (
+                  intervention of overview.interventions();
+                  track intervention.id;
+                  let first = $first
+                ) {
+                  @if (!first) {
+                    <hlm-item-separator class="my-0" />
+                  }
+                  <a
+                    hlmItem
+                    size="sm"
+                    class="mobile-ui:min-h-11"
+                    data-testid="facility-detail-intervention-row"
+                    [routerLink]="[
+                      '/organizations',
+                      organizationId(),
+                      'interventions',
+                      intervention.id,
+                    ]"
+                  >
+                    <hlm-item-content>
+                      <span hlmItemTitle>
+                        @if (intervention.number; as number) {
+                          <span class="text-muted-foreground tabular-nums">FG-{{ number }}</span>
+                        }
+                        {{ intervention.name }}
+                      </span>
+                      <span hlmItemDescription>
+                        @if (intervention.dueAt; as dueAt) {
+                          <span>
+                            <span i18n="@@facility.recentInterventions.dueLabel">Due</span>
+                            {{ dueAt | appOrgDate: 'dateOnly' : regionalFormatting() }}
+                            <span class="text-muted-foreground"
+                              >· {{ dueRelativeLabel(dueAt) }}</span
+                            >
+                          </span>
+                        }
+                        @if (intervention.workItemsCount; as total) {
+                          <hlm-progress
+                            [value]="(intervention.completedWorkItemsCount / total) * 100"
+                            class="h-1.5 w-16"
+                            aria-hidden="true"
+                          >
+                            <hlm-progress-indicator />
+                          </hlm-progress>
+                          <span
+                            class="sr-only"
+                            i18n="@@facility.recentInterventions.workItemsSrLabel"
+                            >{{ intervention.completedWorkItemsCount }} of {{ total }} work
+                            items</span
+                          >
+                        }
+                      </span>
+                    </hlm-item-content>
+                    <hlm-item-actions>
+                      <app-intervention-tag kind="status" [value]="intervention.status" />
+                    </hlm-item-actions>
                   </a>
                 }
               </div>
@@ -251,82 +544,50 @@
         }
 
         <section
-          class="flex flex-col gap-1"
-          aria-labelledby="facility-detail-interventions-title"
-          data-testid="facility-detail-interventions"
+          class="flex flex-col gap-2"
+          aria-labelledby="facility-hierarchy-title"
+          data-testid="facility-detail-hierarchy"
         >
-          <div class="flex items-center justify-between gap-2 px-2">
-            <h2
-              hlmCardTitle
-              id="facility-detail-interventions-title"
-              i18n="@@facility.recentInterventions.title"
-            >
-              Interventions on this site
-            </h2>
-            <a
-              class="inline-flex shrink-0 items-center text-sm text-muted-foreground hover:text-foreground hover:underline mobile-ui:min-h-11 mobile-ui:min-w-11"
-              data-testid="facility-detail-interventions-see-all"
-              [routerLink]="['/organizations', organizationId(), 'interventions']"
-              [queryParams]="{ site: facilityId() }"
-              aria-label="See all interventions on this site"
-              i18n-aria-label="@@facility.recentInterventions.seeAllAria"
-              i18n="@@facility.recentInterventions.seeAll"
-            >
-              See all
-            </a>
-          </div>
-          @if (overview.isLoadingInterventions()) {
-            <div class="flex flex-col gap-2 px-2">
-              <output class="sr-only" i18n="@@facility.recentInterventions.loadingAria"
-                >Loading interventions on this site</output
-              >
-              <hlm-skeleton class="h-4 w-full" aria-hidden="true" />
-              <hlm-skeleton class="h-4 w-full" aria-hidden="true" />
-            </div>
-          } @else if (overview.interventions().length === 0) {
-            <p
-              class="px-2 text-sm text-muted-foreground"
-              data-testid="facility-detail-interventions-empty"
-              i18n="@@facility.recentInterventions.empty"
-            >
-              No interventions on this site.
-            </p>
+          <h2 id="facility-hierarchy-title" hlmLarge i18n="@@facility.detail.hierarchyTitle">
+            Hierarchy
+          </h2>
+          @if (facility.hasChildren) {
+            <app-facility-hierarchy-chart
+              [facility]="facility"
+              [childrenByParent]="store.childFacilitiesByParent()"
+              [activeFacilityId]="facilityId()"
+              [loadingIds]="hierarchyLoadingIds()"
+              (selected)="onHierarchyNodeSelected($event)"
+            />
           } @else {
-            <div class="flex flex-col divide-y divide-border px-2">
-              @for (intervention of overview.interventions(); track intervention.id) {
-                <a
-                  class="flex min-h-11 items-center justify-between gap-2 py-2 text-sm hover:underline sm:min-h-0"
-                  data-testid="facility-detail-intervention-row"
-                  [routerLink]="[
-                    '/organizations',
-                    organizationId(),
-                    'interventions',
-                    intervention.id,
-                  ]"
-                >
-                  <span class="min-w-0 flex-1 truncate font-medium text-foreground">{{
-                    intervention.name
-                  }}</span>
-                  <app-intervention-tag kind="status" [value]="intervention.status" />
-                </a>
-              }
-            </div>
+            <p class="text-sm text-muted-foreground" i18n="@@facility.detail.noChildren">
+              This facility has no sub-facilities.
+            </p>
+            @if (canWrite()) {
+              <a
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="mt-1 self-start mobile-ui:min-h-11"
+                data-testid="facility-detail-add-sub-facility"
+                [routerLink]="['/organizations', organizationId(), 'facilities']"
+                [queryParams]="{ create: 1, parent: facilityId() }"
+              >
+                <ng-icon name="lucidePlus" aria-hidden="true" />
+                <span i18n="@@facility.detail.addSubFacility">Add sub-facility</span>
+              </a>
+            }
           }
         </section>
       </div>
 
-      <div hlmTabsContent="information" class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+      <div hlmTabsContent="information" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
         <section
-          class="flex max-w-2xl flex-col gap-1"
+          class="flex flex-col gap-1"
           aria-labelledby="facility-detail-info-title"
           data-testid="facility-detail-info"
         >
-          <h2
-            hlmCardTitle
-            id="facility-detail-info-title"
-            class="px-2"
-            i18n="@@facility.info.title"
-          >
+          <h2 id="facility-detail-info-title" class="sr-only" i18n="@@facility.info.title">
             Facility information
           </h2>
           <app-facility-information-panel
@@ -344,7 +605,7 @@
         </section>
       </div>
 
-      <div hlmTabsContent="plans" class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+      <div hlmTabsContent="plans" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
         <div class="sr-only" aria-live="polite" data-testid="facility-plan-selection-announcement">
           {{ planSelectionAnnouncement() }}
         </div>
@@ -374,16 +635,20 @@
         } @else if (plans.orderedPlans().length === 0) {
           <div hlmEmpty data-testid="facility-plans-empty">
             <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucideMap" aria-hidden="true" />
-              </div>
+              <app-resource-illustration hlmEmptyMedia resource="floor" />
               <p hlmEmptyTitle i18n="@@facility.plans.emptyTitle">No floor plan yet</p>
-              <p hlmEmptyDescription i18n="@@facility.plans.emptyDescription">
-                Upload an image to give this facility a floor plan.
-              </p>
-            </div>
-            <div hlmEmptyContent>
               @if (canWrite()) {
+                <p hlmEmptyDescription i18n="@@facility.plans.emptyDescription">
+                  Upload an image to give this facility a floor plan.
+                </p>
+              } @else {
+                <p hlmEmptyDescription i18n="@@facility.plans.emptyDescReadOnly">
+                  No floor plan has been added for this facility yet.
+                </p>
+              }
+            </div>
+            @if (canWrite()) {
+              <div hlmEmptyContent>
                 <app-facility-plan-list
                   [plans]="plans.orderedPlans()"
                   [selectedPlanId]="plans.selectedPlan()?.id ?? null"
@@ -391,16 +656,18 @@
                   [uploading]="plans.isUploading()"
                   [settingPrimaryId]="plans.settingPrimaryId()"
                   [deletingId]="plans.deletingId()"
+                  [regionalFormatting]="regionalFormatting()"
+                  [showHeading]="false"
                   (planSelected)="onPlanSelected($event)"
                   (filePicked)="onPlanFilePicked($event)"
                   (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
                   (deleteRequested)="onPlanDeleteRequested($event)"
                 />
-              }
-            </div>
+              </div>
+            }
           </div>
         } @else {
-          <div class="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
+          <div class="@container/plans flex min-h-0 flex-1 flex-col gap-4 @4xl/plans:flex-row">
             <div class="flex min-h-0 flex-1 flex-col gap-2">
               <app-facility-plan-toolbar
                 [is3dLinkVisible]="facility.type === 'building'"
@@ -486,6 +753,7 @@
                           [uploading]="plans.isUploading()"
                           [settingPrimaryId]="plans.settingPrimaryId()"
                           [deletingId]="plans.deletingId()"
+                          [regionalFormatting]="regionalFormatting()"
                           (planSelected)="onPlanSelected($event)"
                           (filePicked)="onPlanFilePicked($event)"
                           (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
@@ -538,6 +806,7 @@
                         [uploading]="plans.isUploading()"
                         [settingPrimaryId]="plans.settingPrimaryId()"
                         [deletingId]="plans.deletingId()"
+                        [regionalFormatting]="regionalFormatting()"
                         (planSelected)="onPlanSelected($event)"
                         (filePicked)="onPlanFilePicked($event)"
                         (setPrimaryRequested)="onPlanSetPrimaryRequested($event)"
@@ -619,12 +888,23 @@
       </div>
     </hlm-tabs>
   } @else if (activeFacilityStore.isLoadingFacility()) {
-    <div class="flex flex-col gap-4" data-testid="facility-detail-loading">
+    <div class="@container flex flex-col gap-6" data-testid="facility-detail-loading">
       <output class="sr-only" i18n="@@facility.detail.loadingAria">Loading facility</output>
-      <hlm-skeleton class="h-8 w-64" aria-hidden="true" />
-      <hlm-skeleton class="h-4 w-40" aria-hidden="true" />
-      <hlm-skeleton class="h-9 w-full max-w-md" aria-hidden="true" />
-      <hlm-skeleton class="h-64 w-full" aria-hidden="true" />
+      <div class="flex items-center gap-3" aria-hidden="true">
+        <hlm-skeleton class="h-5 w-20" />
+        <hlm-skeleton class="h-4 w-32" />
+        <hlm-skeleton class="h-4 w-48" />
+      </div>
+      <div class="grid grid-cols-1 gap-4 @md:grid-cols-3" aria-hidden="true">
+        <hlm-skeleton class="h-12 w-full" />
+        <hlm-skeleton class="h-12 w-full" />
+        <hlm-skeleton class="h-12 w-full" />
+      </div>
+      <div class="flex flex-col gap-2" aria-hidden="true">
+        <hlm-skeleton class="h-4 w-32" />
+        <hlm-skeleton class="h-11 w-full" />
+        <hlm-skeleton class="h-11 w-full" />
+      </div>
     </div>
   } @else {
     <div hlmEmpty role="alert" data-testid="facility-detail-load-failed">
@@ -727,6 +1007,8 @@
       class="mobile-ui:size-11"
       data-testid="facility-detail-menu"
       [hlmDropdownMenuTrigger]="moreMenu"
+      hlmTooltip="More actions"
+      i18n-hlmTooltip="@@facility.detail.moreActions"
     >
       <ng-icon name="lucideEllipsis" aria-hidden="true" />
       <span class="sr-only" i18n="@@facility.detail.moreActions">More actions</span>

@@ -208,6 +208,35 @@ describe('AuthStore', () => {
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
+  it('shows translated validation messages without the API property path', async () => {
+    mockAuthService.login.mockReturnValue(
+      throwError(() => ({
+        status: 422,
+        detail: 'password: Le mot de passe doit contenir au moins 8 caractères.',
+        violations: [
+          {
+            propertyPath: 'password',
+            message: 'Le mot de passe doit contenir au moins 8 caractères.',
+          },
+        ],
+      })),
+    );
+
+    store.login(credentials);
+    await flushEffects();
+
+    expect(store.loginError()?.message).toBe(
+      'Le mot de passe doit contenir au moins 8 caractères.',
+    );
+    expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          message: 'Le mot de passe doit contenir au moins 8 caractères.',
+        }),
+      }),
+    );
+  });
+
   it('should initialize and load user profile when refresh succeeds', async () => {
     mockAuthService.refresh.mockReturnValue(of(loginResponse));
 

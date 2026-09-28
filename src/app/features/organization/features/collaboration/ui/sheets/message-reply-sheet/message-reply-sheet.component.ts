@@ -24,13 +24,14 @@ import {
   buildMessageViews,
   memberIriOf,
 } from '@features/organization/features/collaboration/utils';
-import type { MemberDirectoryEntry } from '@features/organization/models';
+import type { PresenceStatus, MemberDirectoryEntry } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,
   type MemberDirectoryPort,
   type OrganizationMemberAccessPort,
 } from '@features/organization/ports';
+import { registerMemberPresence } from '@features/organization/services/member-presence';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -171,6 +172,24 @@ export class MessageReplySheet {
   //#endregion
 
   //#region Properties
+  /**
+   * Property presences
+   * @readonly
+   * @description Registers only the open reply thread's parent and displayed authors.
+   * @access protected
+   * @since 1.0.0
+   * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
+   */
+  protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
+    registerMemberPresence(() => {
+      if (!this.visible()) return [];
+      const parent = this.parent();
+      return [
+        ...(parent ? [parent.authorId] : []),
+        ...this.replyViews().map((reply) => reply.authorId),
+      ];
+    });
+
   /**
    * Property replies
    * @readonly

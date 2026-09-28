@@ -59,7 +59,9 @@ describe('ChecklistEditForm', () => {
       'Electrical audit',
     );
     const rows: readonly HTMLElement[] = [
-      ...root().querySelectorAll<HTMLElement>('[data-testid="checklist-edit-items"] li'),
+      ...root().querySelectorAll<HTMLElement>(
+        '[data-testid="checklist-edit-items"] [data-slot="item"]',
+      ),
     ];
     expect(rows[0].querySelector('input')?.value).toBe('Check panel');
     expect(rows[1].querySelector('input')?.value).toBe('Check breakers');
@@ -95,7 +97,9 @@ describe('ChecklistEditForm', () => {
     await fixture.whenStable();
 
     const rows: readonly HTMLElement[] = [
-      ...root().querySelectorAll<HTMLElement>('[data-testid="checklist-edit-items"] li'),
+      ...root().querySelectorAll<HTMLElement>(
+        '[data-testid="checklist-edit-items"] [data-slot="item"]',
+      ),
     ];
     expect(rows).toHaveLength(1);
     expect(rows[0].querySelector('input')?.value).toBe('Check breakers');

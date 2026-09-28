@@ -16,7 +16,8 @@ import type { ResourceIllustrationName } from './models/resource-illustration-na
  * @description
  * Decorative artwork following the application's applied theme through its SSR-safe port.
  * Consumers own empty-state semantics, headings and actions; this component only selects an asset.
- * @version 1.0.0
+ * @version 1.1.0
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-resource-illustration',
@@ -36,6 +37,16 @@ export class ResourceIllustration {
    */
   public readonly resource: InputSignal<ResourceIllustrationName> =
     input.required<ResourceIllustrationName>();
+
+  /**
+   * Property size
+   * @readonly
+   * @description `md` for page and section regions; `sm` for sheets, dialogs, side panels and cards.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<'sm' | 'md'>}
+   */
+  public readonly size: InputSignal<'sm' | 'md'> = input<'sm' | 'md'>('md');
 
   /**
    * Property themePort

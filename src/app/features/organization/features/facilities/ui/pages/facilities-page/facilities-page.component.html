@@ -68,6 +68,8 @@
         data-testid="facilities-layout-list"
         i18n-aria-label="@@facility.list.layoutList"
         aria-label="List view"
+        hlmTooltip="List view"
+        i18n-hlmTooltip="@@facility.list.layoutList"
         class="mobile-ui:min-h-11 mobile-ui:min-w-11"
       >
         <ng-icon name="lucideList" aria-hidden="true" />
@@ -78,6 +80,8 @@
         data-testid="facilities-layout-grid"
         i18n-aria-label="@@facility.list.layoutGrid"
         aria-label="Grid view"
+        hlmTooltip="Grid view"
+        i18n-hlmTooltip="@@facility.list.layoutGrid"
         class="mobile-ui:min-h-11 mobile-ui:min-w-11"
       >
         <ng-icon name="lucideLayoutGrid" aria-hidden="true" />
@@ -93,6 +97,8 @@
       data-testid="facilities-layout-map"
       i18n-aria-label="@@facility.map.layoutMap"
       aria-label="Map view"
+      hlmTooltip="Map view"
+      i18n-hlmTooltip="@@facility.map.layoutMap"
       [routerLink]="[...listRouteBase(), 'map']"
     >
       <ng-icon name="lucideMap" aria-hidden="true" />
@@ -130,9 +136,7 @@
   @if (listForbidden()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideLock" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="access-denied" />
         <p hlmEmptyTitle i18n="@@facility.list.forbiddenTitle">
           Not available with your permissions
         </p>
@@ -168,18 +172,30 @@
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
         @if (hasSearchOrFilters()) {
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideSearch" aria-hidden="true" />
-          </div>
+          <app-state-illustration hlmEmptyMedia state="no-results" />
+          <p hlmEmptyTitle i18n="@@facility.list.emptyFilteredTitle">
+            No facility matches this search
+          </p>
+          <p hlmEmptyDescription i18n="@@facility.list.emptyFilteredDesc">
+            Try another term or clear the filters.
+          </p>
         } @else if (
           store.rootListCallState().status === 'success' && store.totalRootFacilities() === 0
         ) {
           <app-resource-illustration hlmEmptyMedia resource="site" />
+          <p hlmEmptyTitle i18n="@@facility.list.emptyTitleV2">No facilities yet</p>
+          @if (canCreate()) {
+            <p hlmEmptyDescription i18n="@@facility.list.emptyDescV2">
+              Register the sites you track to organise equipment and inspections.
+            </p>
+          } @else {
+            <p hlmEmptyDescription i18n="@@facility.list.emptyDescReadOnly">
+              The sites your organization tracks will appear here.
+            </p>
+          }
+        } @else {
+          <p hlmEmptyTitle i18n="@@facility.list.emptyFallbackTitle">No facilities to show</p>
         }
-        <p hlmEmptyTitle i18n="@@facility.list.emptyTitle">No facilities found</p>
-        <p hlmEmptyDescription i18n="@@facility.list.emptyDesc">
-          Adjust your search or filters, or register the sites you track.
-        </p>
       </div>
       <div hlmEmptyContent>
         @if (hasSearchOrFilters()) {
@@ -202,6 +218,7 @@
         [canWrite]="canWrite()"
         [detailRouteBase]="listRouteBase()"
         [sortOrder]="sortOrder()"
+        [regionalFormatting]="regionalFormatting()"
         (sortChanged)="applySortField($event)"
         (archiveRequested)="onArchiveRequested($event)"
         (restoreRequested)="onRestoreRequested($event)"

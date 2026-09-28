@@ -38,6 +38,8 @@ export interface ChecklistOutput extends HydraItem {
   readonly canCreateRevision?: boolean;
   /** @type {ChecklistStatus} */
   readonly status: ChecklistStatus;
+  /** Populated on every read, including the list — even when {@link items} is left empty. @type {number} */
+  readonly itemCount: number;
   /** @type {ReadonlyArray<ChecklistItemOutput>} */
   readonly items: ReadonlyArray<ChecklistItemOutput>;
   /** @type {string} */

@@ -13,6 +13,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, disabled, required, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideMail, lucideShieldCheck, lucideUserCheck } from '@ng-icons/lucide';
 import type {
   OrganizationAccessPolicyInput,
   OrganizationAccessPolicyOutput,
@@ -34,12 +36,14 @@ import { HlmSelectImports } from '@shared/ui/select';
   selector: 'app-organization-access-policy-form',
   imports: [
     FormField,
+    NgIcon,
     HlmFieldImports,
     HlmRadioGroupImports,
     HlmSelectImports,
     HlmButton,
     HlmDialogImports,
   ],
+  providers: [provideIcons({ lucideMail, lucideShieldCheck, lucideUserCheck })],
   templateUrl: './organization-access-policy-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -185,27 +189,31 @@ export class OrganizationAccessPolicyForm {
    * @description Native radio options describing admission consequences.
    * @access protected
    * @since 1.0.0
-   * @type {ReadonlyArray<{value: OrganizationJoinMode; label: string; description: string}>}
+   * @type {ReadonlyArray<{value: OrganizationJoinMode; label: string; description: string; icon: string}>}
    */
   protected readonly options: ReadonlyArray<{
     value: OrganizationJoinMode;
     label: string;
     description: string;
+    icon: string;
   }> = [
     {
       value: 'invitation_only',
       label: $localize`:@@org.access.mode.invitation:Invitation only`,
       description: $localize`:@@org.access.mode.invitationHelp:Only people invited by a member can join.`,
+      icon: 'lucideMail',
     },
     {
       value: 'approval_required',
       label: $localize`:@@org.access.mode.approval:Administrator approval`,
       description: $localize`:@@org.access.mode.approvalHelp:People with a verified company email can request membership.`,
+      icon: 'lucideShieldCheck',
     },
     {
       value: 'automatic',
       label: $localize`:@@org.access.mode.automatic:Immediate membership`,
       description: $localize`:@@org.access.mode.automaticHelp:Eligible people can join with the selected role, without administrator approval.`,
+      icon: 'lucideUserCheck',
     },
   ];
   /**

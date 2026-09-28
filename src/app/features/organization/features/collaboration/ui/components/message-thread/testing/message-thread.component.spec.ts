@@ -4,6 +4,7 @@ import {
   INTERACTION_CAPABILITIES_PORT,
   type InteractionCapabilitiesPort,
 } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { MessageView } from '@features/organization/features/collaboration/models';
 import { MessageThread } from '../message-thread.component';
 
@@ -55,6 +56,14 @@ describe('MessageThread', () => {
             shortcutModifier: signal<'Ctrl'>('Ctrl'),
           } satisfies InteractionCapabilitiesPort,
         },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
       ],
     });
 
@@ -85,6 +94,24 @@ describe('MessageThread', () => {
     await setMessages([]);
 
     expect(text()).toContain('No messages yet');
+  });
+
+  it('shows a shimmer typing status supplied by the conversation page', async () => {
+    fixture.componentRef.setInput('typingLabel', 'Amélie is typing…');
+    await fixture.whenStable();
+
+    const indicator = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '[data-testid="message-typing-indicator"]',
+    );
+    expect(indicator?.textContent).toContain('Amélie is typing…');
+    expect(indicator?.querySelector('.shimmer')).not.toBeNull();
+    expect(indicator?.getAttribute('role')).toBe('status');
+
+    fixture.componentRef.setInput('typingLabel', null);
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="message-typing-indicator"]'),
+    ).toBeNull();
   });
 
   it('should show a skeleton only while the first page is on its way', async () => {
@@ -172,5 +199,14 @@ describe('MessageThread', () => {
 
     expect(liveRegion()?.textContent).toBe(beforeOwnMessage);
     expect(liveRegion()?.textContent).not.toContain('Léo Martin');
+  });
+
+  it('maps the supplied member presence to its authors and leaves missing authors unknown', async () => {
+    await setMessages([view(), view({ id: 'message-2', authorId: 'member-2' })]);
+    fixture.componentRef.setInput('presences', { 'member-1': 'do_not_disturb' });
+    await fixture.whenStable();
+    const badges = fixture.nativeElement.querySelectorAll('[data-slot="avatar-badge"]');
+    expect(badges.length).toBe(1);
+    expect(badges[0].getAttribute('aria-label')).toBe('Do not disturb');
   });
 });

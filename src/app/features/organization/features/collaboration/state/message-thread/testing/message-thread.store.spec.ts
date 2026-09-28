@@ -78,6 +78,9 @@ describe('MessageThreadStore', () => {
 
   let conversations: {
     getSubscription: ReturnType<typeof vi.fn>;
+    getReceipts: ReturnType<typeof vi.fn>;
+    acknowledgeDelivery: ReturnType<typeof vi.fn>;
+    publishTyping: ReturnType<typeof vi.fn>;
     markRead: ReturnType<typeof vi.fn>;
   };
   let mercure: {
@@ -155,6 +158,9 @@ describe('MessageThreadStore', () => {
     );
     conversations = {
       getSubscription: vi.fn().mockReturnValue(of({ topic: 'topic-1', token: 'token-1' })),
+      getReceipts: vi.fn().mockReturnValue(of({ receipts: [] })),
+      acknowledgeDelivery: vi.fn().mockReturnValue(of({ accepted: true })),
+      publishTyping: vi.fn().mockReturnValue(of({ accepted: true })),
       markRead: vi.fn().mockReturnValue(of({ id: 'conversation-1', unreadCount: 3 })),
     };
     mercure = {
@@ -517,6 +523,32 @@ describe('MessageThreadStore', () => {
     expect(conversations.markRead).toHaveBeenCalledWith('conversation-1', {
       lastReadMessageId: 'message-1',
     });
+  });
+
+  it('does not repeat a delivery acknowledgement for the same loaded message', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    const store = createStore();
+    store.load('conversation-1');
+
+    store.acknowledgeDelivery({ conversationId: 'conversation-1', messageId: 'message-1' });
+    store.acknowledgeDelivery({ conversationId: 'conversation-1', messageId: 'message-1' });
+
+    expect(conversations.acknowledgeDelivery).toHaveBeenCalledExactlyOnceWith(
+      'conversation-1',
+      'message-1',
+    );
+  });
+
+  it('retries a failed delivery acknowledgement', () => {
+    service.list.mockReturnValue(of(collection([message()])));
+    conversations.acknowledgeDelivery.mockReturnValueOnce(throwError(() => new Error('offline')));
+    const store = createStore();
+    store.load('conversation-1');
+
+    store.acknowledgeDelivery({ conversationId: 'conversation-1', messageId: 'message-1' });
+    store.acknowledgeDelivery({ conversationId: 'conversation-1', messageId: 'message-1' });
+
+    expect(conversations.acknowledgeDelivery).toHaveBeenCalledTimes(2);
   });
 
   it('keeps the conversation usable when moving the read marker fails', () => {
@@ -1036,6 +1068,45 @@ describe('MessageThreadStore', () => {
       // The frame is a signal, not data: it carries six fields where the
       // store needs twelve, so the page is re-read instead.
       expect(service.list).toHaveBeenCalledWith('conversation-1', pageOf(1));
+    });
+
+    it('keeps typing transient and does not refetch messages for a typing frame', () => {
+      service.list.mockReturnValue(of(collection([message()])));
+      const store = createStore();
+      store.load('conversation-1');
+      connectRealtime(store);
+      service.list.mockClear();
+
+      realtime.next({ type: 'typing.changed', memberId: 'member-2', active: true });
+      expect(store.typingMemberIds()).toEqual(['member-2']);
+      expect(service.list).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(5_000);
+      expect(store.typingMemberIds()).toEqual([]);
+    });
+
+    it('refreshes durable receipt positions without refetching messages', () => {
+      service.list.mockReturnValue(of(collection([message()])));
+      const receipts = [
+        {
+          memberId: 'member-2',
+          deliveredMessageId: 'message-1',
+          deliveredThroughAt: '2026-01-01T00:00:00Z',
+          readMessageId: null,
+          readThroughAt: null,
+        },
+      ];
+      conversations.getReceipts.mockReturnValue(of({ receipts }));
+      const store = createStore();
+      store.load('conversation-1');
+      connectRealtime(store);
+      service.list.mockClear();
+
+      realtime.next({ type: 'receipt.changed', memberId: 'member-2' });
+
+      expect(conversations.getReceipts).toHaveBeenCalledWith('conversation-1');
+      expect(store.receiptPositions()).toEqual(receipts);
+      expect(service.list).not.toHaveBeenCalled();
     });
 
     it('should coalesce a burst of frames into one refetch', () => {

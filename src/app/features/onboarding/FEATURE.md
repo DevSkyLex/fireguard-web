@@ -1,5 +1,7 @@
 # Onboarding Feature
 
+**Reading guide:** [Documentation index](../../../../docs/README.md) · [Related guide](../../../../docs/architecture/patterns-and-examples.md).
+
 ## Purpose
 
 Owns explicit workspace selection and creator activation: organization → plan → team → facility → equipment.

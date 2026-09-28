@@ -1,5 +1,7 @@
 # Imports Feature
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/architecture/patterns-and-examples.md).
+
 ## Purpose
 
 Owns the organization's bulk CSV import surface over the backend Import

@@ -1,13 +1,16 @@
 # VPS deployment
 
-The Angular SSR frontend is built once and configured when the container starts. `main`
-deploys production, while `develop` deploys the development environment on the same VPS
-as a separate Docker project.
+**Reading guide:** [Documentation index](docs/README.md) · [Related guide](docs/operations/current-installation.md).
 
-| GitHub environment | Branch    | Domain                                  | VPS directory                           | Docker project               | Channel tag |
-| ------------------ | --------- | --------------------------------------- | --------------------------------------- | ---------------------------- | ----------- |
-| `production`       | `main`    | `app.fireguard.valentin-fortin.pro`     | `/srv/apps/fireguard/production/front`  | `fireguard-production-front` | `latest`    |
-| `development`      | `develop` | `dev.app.fireguard.valentin-fortin.pro` | `/srv/apps/fireguard/development/front` | `fireguard-dev-front`        | `develop`   |
+The Angular SSR frontend is built once and configured when the container starts.
+`main` deploys production; `develop` deploys a separate development project.
+Configure the VPS directory and Docker identity for each environment; the current
+values are recorded in the [installation appendix](docs/operations/current-installation.md).
+
+| GitHub environment | Branch    | Installation values              | Channel   |
+| ------------------ | --------- | -------------------------------- | --------- |
+| `production`       | `main`    | Configured production variables  | `latest`  |
+| `development`      | `develop` | Configured development variables | `develop` |
 
 Each image gets a `sha-<full commit>` tag and OCI labels identifying its repository
 and commit. Deployment always resolves the image to a `sha256` digest and verifies
@@ -76,8 +79,9 @@ blocks delivery; a `develop` result never validates production. GitHub
 
 Ansible runs on the GitHub Actions runner. The VPS keeps its existing application
 directories, Docker projects, container names, port and external Traefik network.
-The production container remains `fireguard-web`; the development container remains
-`fireguard-dev-front`. No Docker, Traefik or DNS provisioning is performed.
+Preserve the container identities recorded in the
+[installation appendix](docs/operations/current-installation.md). Ansible manages
+application delivery; Docker, Traefik and DNS must already be provisioned.
 
 The GitHub environment variables remain the deployment contract. Before writing
 files, the playbook rejects an existing container whose Compose project or working
@@ -123,7 +127,7 @@ docker run --rm \
 
 Rerun `Deploy VPS` from the environment's branch with an older image reference,
 `ghcr.io/devskylex/fireguard-web:sha-<commit>`. A development rollback affects
-only `/srv/apps/fireguard/development/front` and the `fireguard-dev-front` project.
+only the development environment's configured `VPS_APP_DIR` and Docker project.
 
 Leave `source_run_id` empty for a manual rollback. The image must have provenance
 labels, and its commit must have passed CI and SonarQube on the environment's
@@ -133,3 +137,22 @@ verified digest; images without validation evidence are rejected.
 The workflow checks out its current commit for Ansible tooling and the verified
 image's commit separately for Compose files. Rollback therefore also works with
 images published before Ansible was added, using their original Compose definition.
+
+## Delivery verification flow
+
+Delivery follows a successful check of the exact source revision, its SonarQube gate and image provenance. Ansible then applies the immutable image using the selected installation identity and health checks.
+
+```mermaid
+flowchart TD
+  Source["Branch and source revision"] --> CI["Required CI and coverage"]
+  CI --> Sonar["Matching SonarQube gate"]
+  Sonar --> Image["Published immutable image and OCI provenance"]
+  Image --> Guard["Verify revision, branch and installation identity"]
+  Guard --> Ansible["Apply with Ansible"]
+  Ansible --> Health["Container, security and public HTTP checks"]
+```
+
+Arrows show delivery order. A validated development image never authorizes a
+production deployment. The workflow defines which events publish/deploy and how
+documentation-only changes are classified. Installation values are recorded in the
+[appendix](docs/operations/current-installation.md); runtime secrets stay private.

@@ -1,5 +1,7 @@
 # Equipments Feature
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/guides/facilities-and-spatial-views.md).
+
 ## Purpose
 
 Owns organization-scoped equipment workflows.

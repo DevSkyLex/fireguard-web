@@ -1,5 +1,7 @@
 # Frontend Architecture
 
+**Reading guide:** [Documentation index](docs/README.md) · [Related guide](docs/architecture/patterns-and-examples.md).
+
 This document defines the target frontend architecture for `fireguard-sso-web`.
 
 It is normative: new code must follow this document, and refactors move code toward it.
@@ -225,6 +227,24 @@ The frontend is organized into five top-level responsibilities under `src/app`.
 | `shared`    | generic, domain-agnostic primitives                           | business orchestration, feature state, API access                                   |
 
 ## 4. Dependency Direction
+
+Solid arrows are allowed imports toward a lower layer or public feature API. The dashed edge is the narrowly approved shared-to-owner port contract; it does not permit importing feature implementation.
+
+```mermaid
+flowchart TD
+  App["App composition"] --> Core["Core infrastructure"]
+  App --> Layouts["Layouts"]
+  App --> Features["Business features"]
+  Layouts -->|"public widgets and published ports"| Features
+  Layouts --> Core
+  Features --> Core
+  Features --> Shared["Generic shared primitives"]
+  Layouts --> Shared
+  Shared -.->|"owner-published port contracts only"| Ports["Owned ports"]
+```
+
+Arrows describe allowed imports, not runtime invocation. Approved sibling/nested
+feature public APIs and core-owned ports retain the detailed rules below.
 
 The allowed dependency direction is:
 
@@ -1623,98 +1643,11 @@ Rules:
 
 **Multi-action/workflow stores** (CRUD, multiple concurrent async operations):
 
-```typescript
-// state/<slice>/models/state.interface.ts
-export interface FeatureState {
-  createCallState: CallState<FeatureOutput>;
-  listCallState: CallState<FeatureOutput[]>;
-}
-
-const INITIAL_STATE: FeatureState = {
-  createCallState: idleCallState(),
-  listCallState: idleCallState(),
-};
-
-// state/<slice>/<slice>.store.ts
-export const FeatureStore = signalStore(
-  withEntities({ entity: type<FeatureOutput>(), collection: 'entity' }), // optional
-  withState<FeatureState>(INITIAL_STATE), // 1. raw state (CallState fields + filter state)
-
-  withComputed((store) => ({
-    // 2. derived signals
-    isLoading: computed(() => isCallPending(store.listCallState())),
-    items: computed(() => {
-      const state = store.listCallState();
-      return isCallSuccess(state) ? state.data : [];
-    }),
-  })),
-
-  withMethods((store, service = inject(FeatureService), dispatcher = inject(Dispatcher)) => ({
-    // 3. actions
-    load: rxMethod<RequestOptions>(
-      pipe(
-        tap(() =>
-          patchState(store, {
-            listCallState: pendingCallState(store.listCallState().data ?? []),
-          }),
-        ),
-        switchMap((options) =>
-          service.getAll(options).pipe(
-            tapResponse({
-              next: (res) =>
-                patchState(store, {
-                  listCallState: successCallState(res.member),
-                }),
-              error: (err: unknown) =>
-                patchState(store, {
-                  listCallState: errorCallState(
-                    toStoreError(err),
-                    store.listCallState().data ?? [],
-                  ),
-                }),
-            }),
-          ),
-        ),
-      ),
-    ),
-  })),
-
-  withHooks((store) => ({
-    // 4. lifecycle wiring
-    onInit(): void {
-      store.load({});
-    },
-  })),
-);
-```
+See [state example 1](docs/architecture/patterns-and-examples.md#state-example-1) for an illustrative implementation.
 
 **Single-query stores** (dashboard cards, chart stores, simple resource loaders):
 
-```typescript
-export const TrendStore = signalStore(
-  withQueryState<TrendResource>(), // 1. async query state
-  withState<TrendFilterState>(INITIAL_FILTER_STATE), // 2. local filter/UI state
-  withComputed((store) => ({/* 3. derived signals */})),
-  withMethods((store, service = inject(FeatureService)) => ({
-    // 4. actions
-    load: rxMethod<Params | undefined>(
-      pipe(
-        switchMap((params) => {
-          if (!params) return EMPTY;
-          patchState(store, setPendingQuery());
-          return service.get(params).pipe(
-            tapResponse({
-              next: (data) => patchState(store, setSuccessQuery(data)),
-              error: (err) => patchState(store, setErrorQuery(toStoreError(err))),
-            }),
-          );
-        }),
-      ),
-    ),
-  })),
-  withHooks((store) => ({/* 5. lifecycle wiring */})),
-);
-```
+See [state example 2](docs/architecture/patterns-and-examples.md#state-example-2) for an illustrative implementation.
 
 Rules:
 
@@ -1784,26 +1717,7 @@ export const authStoreEvents = eventGroup({
 
 Dispatch in the store via `inject(Dispatcher)`:
 
-```typescript
-withMethods((store, dispatcher = inject(Dispatcher)) => ({
-  login: rxMethod<LoginInput>(
-    pipe(
-      tapResponse({
-        next: () => {
-          /* … */
-        },
-        error: (err) => {
-          const storeError = toStoreError(err);
-          patchState(store, { loginCallState: errorCallState(storeError) });
-          dispatcher.dispatch(
-            authStoreEvents.loginFailed(toStoreFailureEventPayload(storeError, 'Login failed')),
-          );
-        },
-      }),
-    ),
-  ),
-}));
-```
+See [state example 3](docs/architecture/patterns-and-examples.md#state-example-3) for an illustrative implementation.
 
 Listen to events via `inject(EventDispatcher)` in a service, page, or in `withHooks` of a different store.
 

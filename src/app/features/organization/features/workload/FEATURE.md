@@ -1,5 +1,7 @@
 # Workload Feature
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/guides/interventions-and-offline.md).
+
 ## Purpose
 
 Owns organization-local capacity, daily workload projections and read-only assignment assessments.

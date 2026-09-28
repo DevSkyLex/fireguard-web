@@ -1,131 +1,93 @@
 # FireGuard Web
 
-Angular 21 frontend for FireGuard, an organization-scoped platform for planning,
-executing and publishing fire-safety field interventions (facilities,
-equipment, inspections, maintenance, checklists) with offline-first field
-support and organization collaboration (channels, direct messages, an AI
-assistant).
-
-Talks to [`fireguard-sso-api`](../fireguard-sso-api) (Symfony / API Platform,
-OAuth2/OIDC) as its backend.
+Angular frontend for FireGuard: organization-scoped fire-safety work, field
+interventions, offline workflows and collaboration. It uses the
+[FireGuard API](https://github.com/DevSkyLex/fireguard-api).
 
 ## Tech stack
 
-- **Angular 21** — standalone components, signals (`input()`, `computed()`,
-  `signal()`, `linkedSignal()`), `ChangeDetectionStrategy.OnPush`
-- **NgRx SignalStore** — `patchState`, `rxMethod` + `tapResponse`, typed
-  `CallState` async lifecycle (`@core/request-state`)
-- **spartan/ui** — headless `@spartan-ng/brain` primitives plus helm components
-  generated into `src/app/shared/ui/`, styled with Tailwind and theme tokens
-- **Tailwind CSS v4**
-- **SSR / hydration** via `@angular/ssr` and Express
-- **Strict TypeScript**, `oxlint` + `oxfmt` for lint/format, `vitest`/`ng test`
-  for unit tests, Playwright for hermetic end-to-end tests
+Standalone Angular, signals, Signal Forms, NgRx SignalStore, Spartan Brain/Helm,
+Tailwind, Hydra/JSON-LD transport, SSR and hydration. Exact dependency versions
+live in [package.json](package.json) and its lockfile; architectural requirements
+live in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Getting started
 
 ### Requirements
 
-- Node.js 22+ and npm
-- A running instance of [`fireguard-sso-api`](../fireguard-sso-api) (see that
-  repo's README for `make docker-up`) for real API calls in development
+- Node.js 22 and npm, matching the CI runtime.
+- A configured API for development against real data. Hermetic browser tests
+  use their own mocked API and need no backend or Mercure service.
 
 ### Install and run
 
-```bash
+```sh
 npm ci
 npm start
 ```
 
-`npm start` runs `ng serve` with SSR enabled by default. Localized dev servers
-are also available: `npm run start:fr`, `npm run start:es`.
-
-Environment configuration follows Angular's standard file-replacement
-pattern: application code imports `@env/environment`, and `angular.json`
-swaps in `src/environments/environment.ts` (production) or
-`environment.development.ts` (development) at build time — see
-`ARCHITECTURE.md` §11 and `DEPLOYMENT.md` for details.
+The development server uses SSR. See the [local development guide](docs/guides/local-development.md)
+for configuration and localized servers. Hosted containers resolve public runtime
+configuration at startup; [DEPLOYMENT.md](DEPLOYMENT.md) defines that contract.
 
 ## Available scripts
 
-SonarQube analyzes `main` and `develop` in separate projects and protects both
-deployment environments. See [SONARQUBE.md](SONARQUBE.md) for setup, baseline
-activation and quality-gate behavior.
+[package.json](package.json) is the command inventory. The usual entry points are:
 
-| Script                            | Description                                                                       |
-| --------------------------------- | --------------------------------------------------------------------------------- |
-| `npm start`                       | `ng serve` — dev server with SSR                                                  |
-| `npm run build`                   | Production build (strict templates, SSR)                                          |
-| `npm run watch`                   | Development build in watch mode                                                   |
-| `npm test`                        | `ng test` — unit tests, watch mode                                                |
-| `npm run test:ci`                 | `ng test --watch=false` — unit tests, single run                                  |
-| `npm run lint`                    | `oxlint` against the whole project                                                |
-| `npm run lint:fix`                | `oxlint --fix`                                                                    |
-| `npm run format`                  | `oxfmt` — apply formatting                                                        |
-| `npm run format:check`            | `oxfmt --check` — verify formatting                                               |
-| `npm run quality`                 | `format:check` + `lint` + `test:ci` + `build` (the CI gate, reproducible locally) |
-| `npm run i18n:extract`            | Extract i18n message catalogs to `src/locale`                                     |
-| `npm run e2e:install`             | Install Playwright browser binaries (once)                                        |
-| `npm run e2e:test`                | Run the full Playwright end-to-end suite                                          |
-| `npm run e2e:chromium`            | Run e2e tests on Chromium only (fastest feedback)                                 |
-| `npm run e2e:ui`                  | Playwright interactive UI mode                                                    |
-| `npm run serve:ssr:fireguard-web` | Run the built SSR server (`dist/fireguard-web/server/server.mjs`)                 |
+| Command                 | Purpose                                            |
+| ----------------------- | -------------------------------------------------- |
+| `npm start`             | Development server                                 |
+| `npm run build`         | Strict production build, including SSR             |
+| `npm run lint`          | Source and architecture lint                       |
+| `npm run format:check`  | Formatting without rewriting                       |
+| `npm run test:coverage` | Complete unit/integration suite and line threshold |
+| `npm run e2e:chromium`  | Hermetic Chromium scenarios                        |
+| `npm run quality`       | Formatting, lint, unit tests and build             |
+
+Coverage acceptance is defined in [COVERAGE.md](COVERAGE.md).
 
 ## Project structure
 
-Feature-first architecture with strict ownership rules — see `ARCHITECTURE.md`
-for the full normative reference (layer model, dependency direction, folder
-templates, state patterns) and `AGENTS.md` for the condensed working rules.
-
 ```text
 src/app/
-  core/       # app-wide infrastructure only (HTTP transport, SSR/hydration, theme, request-state, ...)
-  layouts/    # shell composition (dashboard, split, focused, workspace layouts)
-  features/   # owned business workflows end-to-end (see below)
-  shared/     # generic, domain-agnostic UI primitives and pure utilities
+  core/       # application infrastructure
+  layouts/    # shell composition
+  features/   # business owners and public contracts
+  shared/     # domain-agnostic building blocks
+docs/         # explanations, development guides and operational references
 ```
 
-Top-level features (each documented in its own `FEATURE.md`):
-
-| Feature         | Owns                                                                                                                                                                    |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth`          | Sign-in, MFA, registration, password reset, session/token bootstrap                                                                                                     |
-| `account`       | User profile, sessions, trusted devices, notifications, global permission helpers                                                                                       |
-| `onboarding`    | Mandatory guided organization activation wizard                                                                                                                         |
-| `main`          | Root landing route (`/`), redirects into the active organization workspace                                                                                              |
-| `organization`  | Organization context, members, roles, billing/subscription, dashboard, and nested subfeatures: `facilities`, `equipments`, `inspections`, `checklists`, `interventions` |
-| `collaboration` | Organization channels, direct conversations, messages, presence, and the AI assistant                                                                                   |
-| `error`         | Static error pages (404 / 403 / 500 / maintenance)                                                                                                                      |
+The entry features are `auth`, `account`, `onboarding`, `organization`, `error`
+and `maintenance`. Organization owns its nested business features, including
+collaboration. Root navigation belongs to the route configuration; it is not a
+separate business feature. See the [system overview](docs/architecture/system-overview.md)
+and each owner's `FEATURE.md` for boundaries and public APIs.
 
 ## Testing
 
-- **Unit / integration**: `npx ng test --watch=false` (never bare `vitest` —
-  it misses project globals). Specs target the architectural boundary the
-  unit owns: stores, data-access services, guards/resolvers, pages,
-  presentational components.
-- **End-to-end**: Playwright, fully hermetic — every backend call is mocked at
-  the network layer, so no API, database, or Mercure hub needs to run. See
-  `e2e/README.md` for suite layout, coverage scope, and how to add a test for
-  a new page.
+Use Angular's `ng test` builder for application specs. Browser modes have distinct
+boundaries: hermetic SPA, test harness, localized scenarios and real SSR smoke.
+Start with the [testing guide](docs/guides/testing.md); [e2e/README.md](e2e/README.md)
+contains the suite-specific procedures and limits.
 
 ## Documentation
 
-- `ARCHITECTURE.md` — normative frontend architecture (layers, dependency
-  direction, state patterns, HTTP transport, public APIs)
-- `AGENTS.md` — condensed working rules for AI coding agents
-- `PRODUCT.md` — product purpose, users, brand personality, design principles
-- `CLAUDE.md` — entry point for Claude Code in this repo
-- `DEPLOYMENT.md` — VPS deployment via GitHub Actions, Docker, and Traefik
-- `src/app/<layer>/README.md` and `src/app/features/**/FEATURE.md` —
-  per-concern and per-feature documentation
+Start at the [documentation index](docs/README.md).
+
+| Reference                       | Owns                                                   |
+| ------------------------------- | ------------------------------------------------------ |
+| [Architecture](ARCHITECTURE.md) | Dependencies, ownership, public APIs, state and SSR    |
+| [Design](DESIGN.md)             | Native Spartan composition and interaction conventions |
+| [Product](PRODUCT.md)           | Product purpose, users and constraints                 |
+| [Deployment](DEPLOYMENT.md)     | Image provenance, runtime configuration and Ansible    |
+| [SonarQube](SONARQUBE.md)       | Branch-specific analysis and deployment readiness      |
 
 ## Deployment
 
-Deployed to a VPS via GitHub Actions (CI → Docker image → GHCR → deploy) with
-Docker Compose and Traefik. `main` targets production and `develop` targets the
-isolated dev stack. See `DEPLOYMENT.md` for runtime SSR configuration, required
-GitHub environments, Basic Auth, and rollback instructions.
+The delivery chain is CI → validated image → GHCR → Ansible → health verification.
+`main` targets production and `develop` targets development. Actual domains and
+installation identities are recorded in the [installation appendix](docs/operations/current-installation.md).
 
 ## License
 
-Proprietary. See internal licensing guidance for distribution and use.
+Proprietary. Distribution and use follow the project's licensing agreement.

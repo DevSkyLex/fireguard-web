@@ -1,5 +1,7 @@
 # Product
 
+**Reading guide:** [Documentation index](docs/README.md) · [Related guide](docs/architecture/patterns-and-examples.md).
+
 <!-- impeccable:product-schema 1 -->
 
 ## Platform

@@ -1,6 +1,12 @@
 # Bounded E2E verification
 
+**Reading guide:** [Documentation index](../docs/README.md) · [Related guide](../docs/guides/testing.md).
+
 ## Final status — 2026-09-13
+
+This is a historical, bounded report for the revision described below. It does not establish current branch status or certify later changes.
+
+The artifact paths below identify ignored local evidence from the dated run. They are not versioned and are unavailable in a fresh checkout. Consult the artifacts attached to a current GitHub Actions run for current CI evidence.
 
 The planned interaction, contract, application-composition and test-harness corrections
 are implemented in the existing dirty branch. The latest intervention-detail polish adds
@@ -15,11 +21,11 @@ environment limits are documented in [README.md](README.md).
 | Check                                  | Executed result                                                                                   | Evidence                                                                                                                                                                                                                                                                                                                                                                         |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Angular unit/integration suite         | 6,035/6,035 tests, 591 suites; `npm run test:ci`                                                  | Terminal gate                                                                                                                                                                                                                                                                                                                                                                    |
-| Route inspection                       | 100/100 assertions and evidence generation passed; Chromium; source unchanged during the run      | [Gallery](artifacts/mobile-visual-review/branch-review/implementation-final-current-r2-100-20260913/index.html), [JSON](artifacts/mobile-visual-review/branch-review/implementation-final-current-r2-100-20260913/results.json)                                                                                                                                                  |
+| Route inspection                       | 100/100 assertions and evidence generation passed; Chromium; source unchanged during the run      | Gallery: `artifacts/mobile-visual-review/branch-review/implementation-final-current-r2-100-20260913/index.html`, JSON: `artifacts/mobile-visual-review/branch-review/implementation-final-current-r2-100-20260913/results.json`                                                                                                                                                  |
 | Intervention-detail and overlay replay | 24/24 passed in Chromium + WebKit; includes filter, overlay and discussion flows                  | Terminal gate                                                                                                                                                                                                                                                                                                                                                                    |
-| Isolated harness                       | 138/138 expected outcomes; Chromium + WebKit, including deliberately verified safety-net failures | [JSON](artifacts/mobile-visual-review/branch-review/implementation-harness-current-20260913/results.json)                                                                                                                                                                                                                                                                        |
-| Real SSR smoke                         | Build passed; 8/8 tests in Chromium + WebKit                                                      | [Build identity](artifacts/ssr-smoke/implementation-final-20260913/server/build.json), [request ledger](artifacts/ssr-smoke/implementation-final-20260913/server/server-requests.json), [Chromium mobile](artifacts/ssr-smoke/implementation-final-20260913/ssr-chromium/mobile.json), [WebKit mobile](artifacts/ssr-smoke/implementation-final-20260913/ssr-webkit/mobile.json) |
-| French and Spanish catalogs            | 1/1 per locale; compiled localized HTML at 390px/light                                            | [FR evidence](artifacts/mobile-visual-review/branch-review/implementation-localized-fr-20260913/locales/fr/evidence.json), [ES evidence](artifacts/mobile-visual-review/branch-review/implementation-localized-es-20260913/locales/es/evidence.json)                                                                                                                             |
+| Isolated harness                       | 138/138 expected outcomes; Chromium + WebKit, including deliberately verified safety-net failures | JSON: `artifacts/mobile-visual-review/branch-review/implementation-harness-current-20260913/results.json`                                                                                                                                                                                                                                                                        |
+| Real SSR smoke                         | Build passed; 8/8 tests in Chromium + WebKit                                                      | Build identity: `artifacts/ssr-smoke/implementation-final-20260913/server/build.json`, request ledger: `artifacts/ssr-smoke/implementation-final-20260913/server/server-requests.json`, Chromium mobile: `artifacts/ssr-smoke/implementation-final-20260913/ssr-chromium/mobile.json`, WebKit mobile: `artifacts/ssr-smoke/implementation-final-20260913/ssr-webkit/mobile.json` |
+| French and Spanish catalogs            | 1/1 per locale; compiled localized HTML at 390px/light                                            | FR evidence: `artifacts/mobile-visual-review/branch-review/implementation-localized-fr-20260913/locales/fr/evidence.json`, ES evidence: `artifacts/mobile-visual-review/branch-review/implementation-localized-es-20260913/locales/es/evidence.json`                                                                                                                             |
 | Local tooling                          | 38 hook tests, 13 review-check tests and 12 Python tests passed; integrity validation passed      | [.codex documentation](../.codex/README.md)                                                                                                                                                                                                                                                                                                                                      |
 
 Formatting, lint, E2E TypeScript, production build, i18n extraction and git whitespace
@@ -59,7 +65,7 @@ geometry or pins.
 
 ## Source identities and sequencing
 
-HEAD remains `204bf2f6f4aa8a605304436b3d9a96bb02ae37f0`; the reviewed `develop` baseline is
+The historical checkout HEAD was `204bf2f6f4aa8a605304436b3d9a96bb02ae37f0`; its reviewed `develop` baseline was
 `427c0ec161f17b29ee1333e5999c8835637e3e10`. Evidence records the dirty authored tree, not
 HEAD alone. Pre-existing unrelated changes are preserved.
 
@@ -126,12 +132,12 @@ SSR artifact tree. The user's app on 4200 was left untouched.
 
 ## Preserved failure history
 
-Earlier results remain on disk rather than being relabelled as current success:
+The earlier local evidence paths preserve the original failures alongside the successful run recorded above:
 
-- [First frozen mobile replay](artifacts/mobile-visual-review/branch-review/final-adaptive-20260913/results.json): 24 passed / 8 failed. It exposed the true parent-context and Appearance focus defects corrected above, alongside assertions tied to outdated internal structure.
-- [Focus diagnostic](artifacts/mobile-visual-review/branch-review/final-focus-diagnostic-20260913/results.json): 3 passed / 3 failed. Filter keyboard focus passed; iOS appearance containment required the later public-boundary correction.
-- [Changing-source Home/nav attempt](artifacts/mobile-visual-review/branch-review/ready-home-nav-20260913/results.json): transient Vite compile-overlay evidence, not a valid visual confirmation.
-- [Earlier strict harness](artifacts/mobile-visual-review/branch-review/ready-harness-scoped-20260913/results.json): exposed tolerant bootstrap mocks. The repaired hermetic harness rejects those requests.
+- First frozen mobile replay: `artifacts/mobile-visual-review/branch-review/final-adaptive-20260913/results.json`: 24 passed / 8 failed. It exposed the true parent-context and Appearance focus defects corrected above, alongside assertions tied to outdated internal structure.
+- Focus diagnostic: `artifacts/mobile-visual-review/branch-review/final-focus-diagnostic-20260913/results.json`: 3 passed / 3 failed. Filter keyboard focus passed; iOS appearance containment required the later public-boundary correction.
+- Changing-source Home/nav attempt: `artifacts/mobile-visual-review/branch-review/ready-home-nav-20260913/results.json`: transient Vite compile-overlay evidence, not a valid visual confirmation.
+- Earlier strict harness: `artifacts/mobile-visual-review/branch-review/ready-harness-scoped-20260913/results.json`: exposed tolerant bootstrap mocks. The repaired hermetic harness rejects those requests.
 - The first localized attempts retained routing/assertion-scope failures. Search's close button is a sibling of the command palette; the final assertion uses the native dialog's accessible name. This was a test-scope fix, not a product-code workaround.
 
 Missing/invalid expected images fail evidence generation independently of product test status.

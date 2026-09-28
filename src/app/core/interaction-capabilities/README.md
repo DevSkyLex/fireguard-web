@@ -1,5 +1,7 @@
 # Interaction capabilities
 
+**Reading guide:** [Documentation index](../../../../docs/README.md) · [Related guide](../../../../docs/architecture/patterns-and-examples.md).
+
 Consumers inject `INTERACTION_CAPABILITIES_PORT` and read `interactionMode`, `isMobileInteractionMode` or the shared
 `shortcutModifier` signal. The public barrel exposes that contract, its models and
 `provideInteractionCapabilities`; the concrete service is internal to this concern and has no

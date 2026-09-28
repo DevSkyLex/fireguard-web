@@ -1,5 +1,7 @@
 # Fireguard visual conventions
 
+**Reading guide:** [Documentation index](docs/README.md) · [Related guide](docs/architecture/patterns-and-examples.md).
+
 Fireguard uses a restrained **neutral gray** palette inspired by the Spartan palette, with a **vibrant orange primary**
 and **Nova** component style in light and dark mode. The installed helm primitives are the visual
 reference; their brain behavior remains authoritative. This document records

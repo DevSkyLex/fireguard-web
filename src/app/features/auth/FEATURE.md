@@ -1,5 +1,7 @@
 # Auth Feature
 
+**Reading guide:** [Documentation index](../../../../docs/README.md) · [Related guide](../../../../docs/guides/local-development.md).
+
 ## Purpose
 
 Owns authentication and session lifecycle for the application.

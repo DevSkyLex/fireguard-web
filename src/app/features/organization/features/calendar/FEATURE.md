@@ -1,5 +1,7 @@
 # Feature: Organization Calendar
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/architecture/patterns-and-examples.md).
+
 ## Purpose and ownership
 
 One page: the organization's **unified calendar** —

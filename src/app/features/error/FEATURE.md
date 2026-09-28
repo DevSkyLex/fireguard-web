@@ -1,5 +1,7 @@
 # Error
 
+**Reading guide:** [Documentation index](../../../../docs/README.md) · [Related guide](../../../../docs/architecture/patterns-and-examples.md).
+
 Top-level feature owning the full-screen error pages. No auth or onboarding
 guard applies here: an error page must stay reachable in exactly the states
 that produce one.

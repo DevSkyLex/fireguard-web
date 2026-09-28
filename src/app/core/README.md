@@ -1,5 +1,7 @@
 # Core
 
+**Reading guide:** [Documentation index](../../../docs/README.md) · [Related guide](../../../docs/architecture/patterns-and-examples.md).
+
 ## Purpose
 
 `core/` owns application-wide infrastructure — the concerns that are global to

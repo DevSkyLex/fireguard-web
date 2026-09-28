@@ -1,5 +1,7 @@
 # Collection filters
 
+**Reading guide:** [Documentation index](../../../../docs/README.md) · [Related guide](../../../../docs/architecture/patterns-and-examples.md).
+
 `CollectionFilterBar` composes a field catalog, active keys, operator values and
 projected value editors. Features own query mapping and declare only operators
 their API supports. The shared layer never infers additional query capabilities.

@@ -1,5 +1,7 @@
 # Maintenance Schedules Feature
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/architecture/patterns-and-examples.md).
+
 ## Adaptive maintenance interface
 
 The central interaction-capabilities contract controls mobile cards and 44px controls regardless of

@@ -1,5 +1,7 @@
 # E2E tests (Playwright)
 
+**Reading guide:** [Documentation index](../docs/README.md) · [Related guide](../docs/guides/testing.md).
+
 Hermetic browser tests: every backend call is mocked at the network layer
 (`e2e/support/mocks/api-mock.ts`), so no API, database, or Mercure hub needs
 to run. This keeps runs fast, deterministic, and safe to run repeatedly.

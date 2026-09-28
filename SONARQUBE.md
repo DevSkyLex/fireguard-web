@@ -1,27 +1,27 @@
 # SonarQube
 
+**Reading guide:** [Documentation index](docs/README.md) · [Related guide](docs/operations/current-installation.md).
+
 The hosted Community Build uses independent private projects
 `fireguard-web-main` and `fireguard-web-develop` at
-<https://sonarqube.valentin-fortin.pro/>. Each project analyzes one Git branch
+<https://sonarqube.example.com/>. Each project analyzes one Git branch
 as its main branch. Do not set `sonar.branch.name` or send pull request analyses.
 The API follows the same convention with `fireguard-api-main` and
 `fireguard-api-develop`; histories and issue triage are independent.
 
 ## GitHub configuration
 
-These repository settings were provisioned on 2026-09-22; never commit a token:
+Configure these repository settings for the selected installation; never commit a token:
 
 | Setting                        | Value                                              |
 | ------------------------------ | -------------------------------------------------- |
-| Variable `SONAR_HOST_URL`      | `https://sonarqube.valentin-fortin.pro/`           |
+| Variable `SONAR_HOST_URL`      | `https://sonarqube.example.com/`                   |
 | Secret `SONAR_TOKEN_MAIN`      | Project analysis token for `fireguard-web-main`    |
 | Secret `SONAR_TOKEN_DEVELOP`   | Project analysis token for `fireguard-web-develop` |
 | Variable `SONAR_READY_MAIN`    | `true` after the main baseline is verified         |
 | Variable `SONAR_READY_DEVELOP` | `true` after the develop baseline is verified      |
 
-The four project-scoped analysis tokens across the front and API expire on
-**2026-12-21**. Rotate each before that date and replace only its matching
-GitHub secret. The token is provided only to the analysis job,
+Rotate each project-scoped analysis token before its configured expiry and update only its matching GitHub secret. Installation-specific host and historical expiry metadata are recorded in the appendix. The token is provided only to the analysis job,
 selected by an explicit branch mapping. A missing main token never falls back
 to the develop token. Initialize both readiness variables to `false`. Check the
 current GitHub repository variables, branch CI runs and each SonarQube project's

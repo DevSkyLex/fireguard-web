@@ -1,5 +1,7 @@
 # Frontend coverage
 
+**Reading guide:** [Documentation index](docs/README.md) · [Related guide](docs/guides/testing.md).
+
 The acceptance threshold is **90% of executable application lines**, independently
 of backend coverage. Branches, statements and functions remain visible in reports
 but are not subject to that line threshold.

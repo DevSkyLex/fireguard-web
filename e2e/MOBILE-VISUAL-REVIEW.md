@@ -1,6 +1,10 @@
 # Bounded E2E verification
 
+**Reading guide:** [Documentation index](../docs/README.md) · [Related guide](../docs/guides/testing.md).
+
 ## Final status — 2026-09-13
+
+This is a historical, bounded report for the revision described below. It does not establish current branch status or certify later changes.
 
 The planned interaction, contract, application-composition and test-harness corrections
 are implemented in the existing dirty branch. The latest intervention-detail polish adds

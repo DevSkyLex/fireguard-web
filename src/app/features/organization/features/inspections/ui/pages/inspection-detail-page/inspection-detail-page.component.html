@@ -10,6 +10,7 @@
       data-testid="inspection-detail-summary"
     >
       <a
+        data-testid="inspection-detail-equipment-link"
         class="text-foreground underline underline-offset-4 hover:decoration-2"
         [routerLink]="['/organizations', organizationId(), 'equipments', inspection.equipmentId]"
       >
@@ -22,6 +23,7 @@
       @if (inspection.facilityId; as siteFacilityId) {
         <span aria-hidden="true">·</span>
         <a
+          data-testid="inspection-detail-facility-link"
           class="underline underline-offset-4 hover:decoration-2"
           [routerLink]="['/organizations', organizationId(), 'facilities', siteFacilityId]"
         >

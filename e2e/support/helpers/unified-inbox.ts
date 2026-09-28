@@ -1,6 +1,10 @@
 import { expect, type Page, type TestInfo } from '@playwright/test';
 import { E2E_ORGANIZATION_ID, hydraCollection } from '../fixtures/api-fixtures';
-import { channelOutput, E2E_CHANNEL_ID } from '../fixtures/channel-fixtures';
+import {
+  channelOutput,
+  E2E_CHANNEL_ID,
+  inspectorMessageOutput,
+} from '../fixtures/channel-fixtures';
 import { ApiMock } from '../mocks/api-mock';
 import { expectNoHorizontalOverflow } from './appearance';
 
@@ -11,7 +15,8 @@ export async function verifyUnifiedInbox(page: Page, info: TestInfo): Promise<vo
   await api.mockChannelList([channelOutput()]);
   await api.mockChannelDetail(channelOutput());
   await api.mockChannelParticipants(E2E_CHANNEL_ID, []);
-  await api.mockChannelMessages(E2E_CHANNEL_ID);
+  const incomingMessage = inspectorMessageOutput();
+  await api.mockChannelMessages(E2E_CHANNEL_ID, [incomingMessage]);
   await api.mockChannelSubscription(E2E_CHANNEL_ID);
   await page.route(/\/api\/notification-types(\?.*)?$/, (route) =>
     route.fulfill({ json: hydraCollection([]) }),
@@ -79,6 +84,8 @@ export async function verifyUnifiedInbox(page: Page, info: TestInfo): Promise<vo
     await route.fulfill({ json: { id: 'same-id', isRead: true } });
   });
   await page.route(new RegExp(`/api/conversations/${E2E_CHANNEL_ID}/read$`), async (route) => {
+    expect(route.request().method()).toBe('PATCH');
+    expect(route.request().postDataJSON()).toEqual({ lastReadMessageId: incomingMessage.id });
     conversationReads++;
     await route.fulfill({ json: { conversationId: E2E_CHANNEL_ID } });
   });

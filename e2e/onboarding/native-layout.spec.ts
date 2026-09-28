@@ -16,8 +16,8 @@ const CAPTURES = 'e2e/artifacts/corrections/native-layout';
 for (const mode of [
   { name: 'desktop-light', width: 1440, height: 1000, dark: false },
   { name: 'desktop-dark', width: 1440, height: 1000, dark: true },
-  { name: 'mobile-light', width: 375, height: 800, dark: false },
-  { name: 'mobile-dark', width: 375, height: 800, dark: true },
+  { name: 'narrow-desktop-light', width: 375, height: 800, dark: false },
+  { name: 'narrow-desktop-dark', width: 375, height: 800, dark: true },
 ]) {
   test(`keeps authentication and resumed activation immediately usable in ${mode.name}`, async ({
     page,
@@ -36,12 +36,13 @@ for (const mode of [
     const onboarding = new OnboardingPage(page);
     await page.goto(`${pathPrefix}/auth/login`);
     await expect(page.locator('html')).toHaveAttribute('lang', new RegExp(`^${locale}(?:-|$)`));
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'desktop');
     await expect(auth.loginEmail).toBeInViewport();
     await expect(auth.loginSubmit).toBeInViewport();
     await expectNoHorizontalOverflow(page);
     if (mode.width === 375) {
-      expect((await auth.loginEmail.boundingBox())?.height).toBeGreaterThanOrEqual(44);
-      expect((await auth.loginPassword.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+      expect((await auth.loginEmail.boundingBox())?.height).toBeGreaterThanOrEqual(32);
+      expect((await auth.loginPassword.boundingBox())?.height).toBeGreaterThanOrEqual(32);
     }
     await page.screenshot({ path: `${CAPTURES}/login-${captureName}.png` });
     const colors = await page.evaluate(() => {
@@ -137,7 +138,7 @@ for (const mode of [
         const box = await scene.field.boundingBox();
         if (mode.width === 375) {
           expect(box?.y).toBeLessThan(400);
-          expect(box?.height).toBeGreaterThanOrEqual(44);
+          expect(box?.height).toBeGreaterThanOrEqual(32);
         }
         if (scene.key === 'create_first_equipment') {
           await expect(page.getByTestId('onboarding-equipment-facility-summary')).toContainText(

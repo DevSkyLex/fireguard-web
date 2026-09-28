@@ -42,7 +42,7 @@ test.describe('Interventions — Recurrences tab', () => {
     await interventions.openRecurrences();
 
     await expect(interventions.recurrencesTable).toBeVisible();
-    await expect(interventions.recurrencesTable).toContainText('2× Quarterly');
+    await expect(interventions.recurrencesTable).toContainText('Every 2 quarters');
     await expect(interventions.recurrencesTable).not.toContainText('quarterly');
 
     await interventions.createMenu.click();

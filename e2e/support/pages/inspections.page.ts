@@ -43,12 +43,10 @@ export class InspectionsPage {
   public readonly nonConformitiesCount: Locator = this.page.getByTestId(
     'inspection-non-conformities-count',
   );
-  public readonly equipmentLink: Locator = this.page
-    .getByTestId('inspection-field-equipment')
-    .getByRole('link');
-  public readonly facilityLink: Locator = this.page
-    .getByTestId('inspection-field-facility')
-    .getByRole('link');
+  public readonly equipmentLink: Locator = this.page.getByTestId(
+    'inspection-detail-equipment-link',
+  );
+  public readonly facilityLink: Locator = this.page.getByTestId('inspection-detail-facility-link');
 
   public async gotoList(organizationId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/inspections`);

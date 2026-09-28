@@ -13,7 +13,7 @@ import { expectNoHorizontalOverflow, setDarkTheme } from '../support/helpers/app
 import { ApiMock } from '../support/mocks/api-mock';
 import { InterventionsPage } from '../support/pages/interventions.page';
 
-const CAPTURES = 'test-results/uiux-desktop-review-20260903/interventions';
+const CAPTURES = `${process.env['FG_SCREENSHOT_DIR'] ?? 'e2e/artifacts/corrections/e2e-regressions-20260928'}/interventions-desktop`;
 const facility = facilityOutput({
   name: 'Centre logistique Saint-Étienne — bâtiment de maintenance nord',
 });
@@ -68,6 +68,7 @@ test('keeps description editing and detail disclosure through desktop resize', a
 async function prepare(page: Page): Promise<void> {
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession();
+  await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facility);
   await api.mockFacilityList(E2E_ORGANIZATION_ID, [facility]);
   await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
   await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [member]);
@@ -140,6 +141,9 @@ for (const viewport of [
       }));
       await writeFile(`${CAPTURES}/${mode}-columns.json`, JSON.stringify(columns, null, 2));
       await expect(page.getByTestId('intervention-table-row-menu').first()).toBeInViewport();
+      await page.getByTestId('intervention-table-row-menu').first().click();
+      await expect(page.getByRole('menu')).toBeVisible();
+      await page.keyboard.press('Escape');
       for (const [index, header] of columns.header.entries()) {
         expect
           .soft(columns.body[index]?.x, `${header.text} column alignment`)

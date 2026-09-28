@@ -79,7 +79,10 @@
         (click)="onFieldChanged()"
       ></textarea>
 
-      <hlm-input-group-addon align="inline-end" class="gap-2 self-end py-1 pe-2">
+      <hlm-input-group-addon
+        [align]="isMobileInteractionMode() ? 'block-end' : 'inline-end'"
+        class="gap-2 self-end py-1 pe-2"
+      >
         @if (remaining() !== null) {
           <span
             class="text-xs tabular-nums"

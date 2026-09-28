@@ -98,7 +98,7 @@ for (const width of [390, 768, 1440]) {
         page.getByRole('alert').filter({ hasText: 'referenced by an inspection' }).first(),
       ).toBeVisible();
       await expect(page.locator('#checklist-row-label-0')).toHaveValue('Keep this edited label');
-      await page.getByRole('button', { name: 'Back to checklists' }).click();
+      await page.getByTestId('checklist-edit-cancel').click();
       await expect(page.getByRole('alertdialog')).toBeVisible();
     });
   }

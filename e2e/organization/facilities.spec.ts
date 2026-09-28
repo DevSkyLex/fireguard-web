@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
 import {
   E2E_EQUIPMENT_ID,
@@ -26,8 +26,24 @@ import {
 import { ApiMock } from '../support/mocks/api-mock';
 import { FacilitiesPage } from '../support/pages/facilities.page';
 
-const SCREENSHOT_DIR =
-  'C:/Users/valen/AppData/Local/Temp/claude/G--Projets-fireguard-fireguard-sso-web/f6620368-789f-4fb4-90d8-7b471cc33671/scratchpad/screenshots';
+const SCREENSHOT_DIR = `${process.env['FG_SCREENSHOT_DIR'] ?? 'e2e/artifacts/corrections/e2e-regressions-20260928'}/facilities`;
+
+async function expectPlanControlsSeparated(page: Page): Promise<void> {
+  await expect(page.getByTestId('plan-viewer-frame')).toBeVisible();
+  const [viewer, panel, frame] = await Promise.all([
+    page.getByTestId('facility-plan-viewer').boundingBox(),
+    page.getByTestId('facility-plan-panel').boundingBox(),
+    page.getByTestId('plan-viewer-frame').boundingBox(),
+  ]);
+  if (!viewer || !panel || !frame) throw new Error('The plan and its controls must be rendered.');
+  expect(viewer.height, 'The plan keeps its minimum working area.').toBeGreaterThanOrEqual(384);
+  expect(
+    viewer.x + viewer.width <= panel.x + 1 || viewer.y + viewer.height <= panel.y + 1,
+    'The plan must not overlap its zone controls.',
+  ).toBe(true);
+  expect(frame.y).toBeGreaterThanOrEqual(viewer.y);
+  expect(frame.y + frame.height).toBeLessThanOrEqual(viewer.y + viewer.height);
+}
 
 /** A 1×1 transparent PNG, small enough to inline as the Plans tab's upload fixture. */
 const TINY_PNG_BASE64 =
@@ -323,8 +339,10 @@ test.describe('Facility detail', () => {
 
     const swatches = await bars.evaluateAll((elements) =>
       elements.map((element) => ({
-        fill: getComputedStyle(element).backgroundColor,
-        track: getComputedStyle(element.parentElement as HTMLElement).backgroundColor,
+        fill: getComputedStyle(
+          element.querySelector('[data-slot="progress-indicator"]') as HTMLElement,
+        ).backgroundColor,
+        track: getComputedStyle(element).backgroundColor,
       })),
     );
 
@@ -757,8 +775,17 @@ test.describe('Facility Plan Overlay', () => {
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(facilities.overlayToggles).toBeVisible();
+    await expectPlanControlsSeparated(page);
     await expectNoHorizontalOverflow(page);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/facility-plan-overlay-dark-mobile.png` });
+    await page.getByTestId('facility-plan-panel').scrollIntoViewIfNeeded();
+    await facilities.selectZone();
+    await expect(facilities.zoneEditButton).toBeInViewport();
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/facility-plan-controls-dark-narrow.png` });
+    await facilities.zoneEditButton.click();
+    await expect(facilities.zoneGeometryDialog).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(facilities.zoneGeometryDialog).toBeHidden();
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 });
@@ -922,6 +949,11 @@ test.describe('Facility Plan Editor', () => {
     await expect(facilities.zoneList).toBeVisible();
 
     await facilities.selectZone();
+    await expectPlanControlsSeparated(page);
+    await page.screenshot({
+      path: `${SCREENSHOT_DIR}/facility-plan-zone-controls.png`,
+      animations: 'disabled',
+    });
     await facilities.zoneEditButton.click();
     await expect(facilities.zoneGeometryDialog).toBeVisible();
     await expect(facilities.zoneGeometryRows).toHaveCount(4);

@@ -80,7 +80,7 @@ describe('MessageComposer', () => {
     await fixture.whenStable();
 
     const button = sendButton();
-    expect(button?.closest('hlm-input-group-addon')?.getAttribute('data-align')).toBe('inline-end');
+    expect(button?.closest('hlm-input-group-addon')?.getAttribute('data-align')).toBe('block-end');
     expect(button?.textContent?.trim()).toBe('Send message');
     expect(button?.getAttribute('aria-label')).toBe('Send message');
     expect(button?.querySelector('ng-icon')?.getAttribute('aria-hidden')).toBe('true');

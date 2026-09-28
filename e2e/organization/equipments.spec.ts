@@ -31,7 +31,7 @@ test.describe('Equipment list', () => {
     await expect(equipments.listRoot).toBeVisible();
     await expect(equipments.search).toBeVisible();
     await expect(equipments.newLink).toBeVisible();
-    await expect(equipments.rowCount).toHaveText('2 of 2 row(s) shown');
+    await expect(equipments.rowCount).toHaveText('2 of 2 rows shown');
     await expect(equipments.pageIndicator).toHaveText('Page 1 of 1');
 
     await expect(equipments.filtersToggle).toHaveAttribute('aria-expanded', 'false');
@@ -68,7 +68,7 @@ test.describe('Equipment list', () => {
 
     await equipments.gotoList(E2E_ORGANIZATION_ID);
 
-    await expect(page.getByText('No equipment found')).toBeVisible();
+    await expect(page.getByText('No equipment registered yet', { exact: true })).toBeVisible();
     await expect(equipments.newLink).toHaveCount(0);
   });
 

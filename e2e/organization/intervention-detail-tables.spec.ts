@@ -158,7 +158,7 @@ test('filters the saved workspace offline and restores API queries on reconnect'
   await expect(page.getByTestId('intervention-work-item-table-row')).toHaveCount(1);
   await page.getByRole('tab', { name: /^Changes/ }).click();
   await expect(page.getByTestId('intervention-change-row')).toHaveCount(2);
-  await page.getByRole('tab', { name: /^Work$/ }).click();
+  await page.getByRole('tab', { name: /^Work(?:\s|$)/ }).click();
   await context.setOffline(true);
   await expect(page.getByTestId('intervention-table-saved')).toBeVisible();
   await page.getByTestId('intervention-work-items-search').fill('no-saved-match');

@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { expectNoHorizontalOverflow, setDarkTheme } from '../support/helpers/appearance';
+import { workloadDate } from '../support/helpers/workload-date';
 import { ApiMock } from '../support/mocks/api-mock';
 import { WorkloadApiMock } from '../support/mocks/workload-api-mock';
 import { WorkloadPage } from '../support/pages/workload.page';
@@ -84,7 +85,7 @@ for (const dark of [false, true]) {
         expect(Math.abs(bounds.bottomGap)).toBeLessThanOrEqual(1);
         expect(bounds.rowGaps.every((gap) => Math.abs(gap) <= 1)).toBe(true);
         const buttons = view.matrix.getByRole('button', {
-          name: new RegExp(`${date}, Unavailable$`),
+          name: new RegExp(`${workloadDate(date)}, Unavailable$`),
         });
         await expect(buttons).toHaveCount(4);
         await Promise.all(
@@ -106,14 +107,18 @@ for (const dark of [false, true]) {
         ),
       ),
     );
-    const personalAbsence = view.matrix
-      .getByRole('cell')
-      .filter({ has: page.getByRole('button', { name: /2026-09-15, Unavailable$/ }) });
+    const personalAbsence = view.matrix.getByRole('cell').filter({
+      has: page.getByRole('button', {
+        name: new RegExp(`${workloadDate('2026-09-15')}, Unavailable$`),
+      }),
+    });
     await expect(personalAbsence).toHaveCount(1);
     await expect(personalAbsence).toHaveCSS('background-image', /repeating-linear-gradient/);
-    await expect(view.matrix.getByRole('button', { name: /2026-09-20, Available$/ })).toHaveCount(
-      1,
-    );
+    await expect(
+      view.matrix.getByRole('button', {
+        name: new RegExp(`${workloadDate('2026-09-20')}, Available$`),
+      }),
+    ).toHaveCount(1);
     const directory = join(
       'e2e/artifacts/workload-columns',
       process.env['FG_WORKLOAD_RUN'] ?? 'inspection',
@@ -122,7 +127,9 @@ for (const dark of [false, true]) {
     );
     await mkdir(directory, { recursive: true });
     await page.screenshot({ path: join(directory, 'columns.png'), animations: 'disabled' });
-    const saturday = view.matrix.getByRole('button', { name: /2026-09-19, Unavailable$/ }).nth(1);
+    const saturday = view.matrix
+      .getByRole('button', { name: new RegExp(`${workloadDate('2026-09-19')}, Unavailable$`) })
+      .nth(1);
     await saturday.focus();
     await page.keyboard.press('Enter');
     await expect(

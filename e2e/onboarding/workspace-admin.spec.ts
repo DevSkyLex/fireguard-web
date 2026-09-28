@@ -63,10 +63,11 @@ for (const width of [390, 1440]) {
         path: `${CAPTURES}/admin-access-${width}-${dark ? 'dark' : 'light'}.png`,
         animations: 'disabled',
       });
-      const verify = access.getByRole('button', { name: 'Verify domain', exact: true });
+      const verify = access.getByRole('button', { name: 'Check again', exact: true });
       await verify.scrollIntoViewIfNeeded();
       await expect(verify).toBeInViewport();
       await expectNoInternalOverflow(access);
+      await access.getByRole('button', { name: 'Show DNS record', exact: true }).click();
       await page.screenshot({
         path: `${CAPTURES}/admin-dns-${width}-${dark ? 'dark' : 'light'}.png`,
         animations: 'disabled',

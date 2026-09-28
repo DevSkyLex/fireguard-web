@@ -1939,11 +1939,12 @@ export class ApiMock {
    * after `mockAuthenticatedSession`, whose bootstrap installs the same
    * route returning an empty collection.
    * Opt-in role filtering returns only existing fixture rows matching the requested roleId.
+   * Opt-in pagination preserves the full filtered total while returning only the requested page.
    */
   public async mockOrganizationMembers(
     organizationId: string,
     members: ReadonlyArray<OrganizationMemberOutputFixture> = [],
-    options: { filterByRole?: boolean } = {},
+    options: { filterByRole?: boolean; paginate?: boolean } = {},
   ): Promise<void> {
     await this.installSafetyNet();
     await Promise.all(
@@ -1961,12 +1962,18 @@ export class ApiMock {
       new RegExp(`/api/organizations/${organizationId}/members(\\?.*)?$`),
       async (route) => {
         if (route.request().method() !== 'GET') return route.fallback();
-        const roleId = new URL(route.request().url()).searchParams.get('roleId');
+        const query = new URL(route.request().url()).searchParams;
+        const roleId = query.get('roleId');
         const rows =
           options.filterByRole && roleId
             ? members.filter((member) => member.roleIds?.includes(roleId))
             : members;
-        await fulfillJson(route, 200, hydraCollection(rows));
+        const page = Number(query.get('page') ?? 1);
+        const pageSize = Number(query.get('itemsPerPage') ?? 30);
+        const pageRows = options.paginate
+          ? rows.slice((page - 1) * pageSize, page * pageSize)
+          : rows;
+        await fulfillJson(route, 200, hydraCollection(pageRows, { totalItems: rows.length }));
       },
     );
   }

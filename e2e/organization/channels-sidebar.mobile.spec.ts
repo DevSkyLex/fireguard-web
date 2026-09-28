@@ -14,7 +14,12 @@ import {
   expectNoInternalOverflow,
   setDarkTheme,
 } from '../support/helpers/appearance';
+import { emulateMobilePlatform } from '../support/helpers/interaction-mode';
 import { ApiMock } from '../support/mocks/api-mock';
+
+test.beforeEach(async ({ context, browserName }) => {
+  await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
+});
 
 for (const width of [320, 900]) {
   test(`channels at ${width}px alternate the sidebar list and the room`, async ({
@@ -38,6 +43,7 @@ for (const width of [320, 900]) {
     await api.mockConversationMarkRead(E2E_CHANNEL_ID);
     await api.mockChannelSubscription(E2E_CHANNEL_ID);
     await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/channels`);
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
     const extension = page.locator('#dashboard-sidebar-extension');
     const main = page.locator('#dashboard-main');
     await expect(page.getByTestId('channels-row')).toHaveCount(4);
@@ -53,11 +59,14 @@ for (const width of [320, 900]) {
       animations: 'disabled',
     });
     await page.getByTestId('channels-row').first().click();
-    await expect(page.getByTestId('channel-conversation-name')).toHaveText('#general');
+    await expect(
+      page.getByRole('banner').getByRole('heading', { name: '#general', exact: true }),
+    ).toBeVisible();
     await expect(extension).toBeHidden();
     await expect(main).toBeVisible();
-    const back = page.getByTestId('channel-conversation-back');
+    const back = page.getByTestId('dashboard-back');
     await expect(back).toBeVisible();
+    await expect(back).toHaveAttribute('href', `/organizations/${E2E_ORGANIZATION_ID}/channels`);
     expect((await back.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     await expectNoHorizontalOverflow(page);
     await expectNoInternalOverflow(main);
@@ -69,8 +78,14 @@ for (const width of [320, 900]) {
     await expect(extension).toBeVisible();
     await expect(main).toBeHidden();
     if (width === 320) {
-      await extension.getByRole('button', { name: 'Toggle sidebar', exact: true }).click();
-      await expect(page.getByTestId('direct-messages-nav-link')).toBeVisible();
+      const messages = page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('link', { name: 'Messages', exact: true });
+      await expect(messages).toBeVisible();
+      await expect(messages).toHaveAttribute(
+        'href',
+        `/organizations/${E2E_ORGANIZATION_ID}/messages`,
+      );
     }
     expect(errors).toEqual([]);
   });

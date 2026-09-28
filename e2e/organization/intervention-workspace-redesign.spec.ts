@@ -99,9 +99,9 @@ for (const width of [390, 768, 1440]) {
       await page.getByTestId('intervention-detail-menu').click();
       await page.getByTestId('intervention-detail-discussion-trigger').click();
       await expect(page.getByTestId('intervention-comment-body')).toBeFocused();
-      await page.getByRole('tab', { name: 'Work', exact: true }).focus();
+      await page.getByRole('tab', { name: /^Work(?:\s|$)/ }).focus();
       await page.keyboard.press('ArrowRight');
-      await expect(page.getByRole('tab', { name: 'Changes 0', exact: true })).toBeFocused();
+      await expect(page.getByRole('tab', { name: 'Changes', exact: true })).toBeFocused();
       expect(errors).toEqual([]);
     });
   }

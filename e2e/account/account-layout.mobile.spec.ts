@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { emulateMobilePlatform } from '../support/helpers/interaction-mode';
 import { ApiMock } from '../support/mocks/api-mock';
+
+test.beforeEach(async ({ context, browserName }) => {
+  await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
+});
 
 test.describe('Account layout', () => {
   test('keeps the account settings tabs usable without horizontal page overflow on mobile', async ({
@@ -7,8 +12,10 @@ test.describe('Account layout', () => {
   }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
+    await api.mockAccountVisualReads();
 
     await page.goto('/account/profile');
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
 
     const tabList = page.getByRole('tablist', { name: 'Account settings sections', exact: true });
     const profileTab = tabList.getByRole('tab', { name: 'Profile', exact: true });

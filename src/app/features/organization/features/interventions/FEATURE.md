@@ -999,10 +999,22 @@ Internal code imports deep paths directly.
   (`@features/organization/features/{facilities,equipments,inspections}/data-access`) — the same
   established pattern `intervention-sync.service.ts` and
   `InterventionPlanningOptionsStore` already use for the same three siblings, extended with one
-  read-only method per service (`listByIntervention`). Read-only: this feature lists a sibling's
-  records scoped to one intervention and renders them through its own tables; it creates, edits and
-  deletes nothing on their behalf, and owns no facility/equipment/inspection state beyond the three
-  call states in `InterventionLinkedResourcesStore`.
+  read-only method per service (`listByIntervention`). Read-only for equipment and inspections:
+  this feature lists a sibling's records scoped to one intervention and renders them through its
+  own tables; it creates, edits and deletes nothing on their behalf, and owns no
+  equipment/inspection state beyond the two call states in `InterventionLinkedResourcesStore`.
+  **Facilities are the one write exception (8.0):** the "Add facility" sheet
+  (`ui/sheets/intervention-facility-sheet`) cross-imports `FacilityCreateForm` from
+  `@features/organization/features/facilities/ui/forms/facility-create-form` and calls
+  `FacilityService.createForIntervention` — already exposed by facilities' `data-access` barrel —
+  through `InterventionWorkspaceStore.createFacility`. This exists to clear the backend's "At
+  least one facility is required" `site_setup` publication blocker directly from the workspace.
+  Ownership of the form (its fields, its validation, its type catalog) stays with facilities; this
+  feature only enriches the emitted `CreateFacilityInput` with the organization and intervention
+  IRIs and refreshes its own workspace (`reload`) and `InterventionLinkedResourcesStore`
+  (`reloadFacilities`) on success. No parent-facility picker, map center or address geocoding is
+  wired from here — the form's own optional fields are simply left at their defaults, so a
+  facility created this way starts a bare root facility completed later from its own record.
 - The detail page's Discussion sheet (6.2) embeds `SubjectDiscussion` from
   `@features/organization/features/collaboration/ui/components` — an approved cross-feature
   dependency, recorded in collaboration's own `FEATURE.md` under Published Contracts. This feature

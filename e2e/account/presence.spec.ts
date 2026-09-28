@@ -46,21 +46,22 @@ test('NPD synchronizes between isolated devices and incoming notifications remai
     );
     await openPresenceMenu(page, false);
     await openPresenceMenu(other, false);
-    const control = page.getByRole('menuitemcheckbox', { name: 'Do not disturb', exact: true });
-    const remote = other.getByRole('menuitemcheckbox', { name: 'Do not disturb', exact: true });
-    await expect(remote).not.toBeChecked();
+    const control = page.getByRole('menuitem', { name: 'Do not disturb', exact: true });
+    const remote = other.getByRole('menuitem', { name: 'Do not disturb', exact: true });
+    await expect(remote).not.toHaveAttribute('aria-current', 'true');
     await control.click();
-    await expect(control).toBeChecked();
+    await expect(control).toBeHidden();
+    await expect.poll(() => state.doNotDisturb).toBe(true);
     await deliverPresencePreference(other, state);
-    await expect(remote).toBeChecked();
+    await expect(remote).toHaveAttribute('aria-current', 'true');
     await capturePresence(other, info, 'second-device-synchronized');
     await verifyPresenceNotifications(page, state);
     await capturePresence(page, info, 'inbox-under-do-not-disturb');
-    await remote.click();
-    await expect(remote).not.toBeChecked();
+    await other.getByRole('menuitem', { name: 'Active', exact: true }).click();
+    await expect.poll(() => state.doNotDisturb).toBe(false);
     await deliverPresencePreference(page, state);
     await openPresenceMenu(page, false);
-    await expect(control).not.toBeChecked();
+    await expect(control).not.toHaveAttribute('aria-current', 'true');
   } finally {
     await second.close();
   }
@@ -93,7 +94,7 @@ test('a second user sees the colleague change from active to NPD and offline in 
       .filter({ hasText: 'Ella Uzer' });
     await expect(row.getByRole('img', { name: 'Active', exact: true })).toBeVisible();
     await openPresenceMenu(page, false);
-    await page.getByRole('menuitemcheckbox', { name: 'Do not disturb', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Do not disturb', exact: true }).click();
     await expect.poll(() => author.doNotDisturb).toBe(true);
     await deliverPresenceFrame(colleague, `/organizations/${E2E_ORGANIZATION_ID}/presence`, {
       type: 'presence.changed',

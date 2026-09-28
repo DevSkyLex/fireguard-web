@@ -844,6 +844,21 @@ Primary services:
   to populate its facility filter and campaign-scoping selects — read-only,
   the same direct cross-feature service dependency pattern
   `FacilityPlansStore` already takes on `equipments`' `EquipmentService`.
+- **interventions → facilities, in write (8.0):** the intervention detail
+  page's "Add facility" sheet cross-imports `FacilityCreateForm` from
+  `ui/forms/facility-create-form` and calls
+  `FacilityService.createForIntervention` — already public through this
+  feature's `data-access` barrel, used read-side by the "Linked" tabs'
+  `listByIntervention` — through `InterventionWorkspaceStore.createFacility`.
+  This is the reverse direction of every other interventions cross-import
+  recorded above and in `interventions/FEATURE.md`, all of which are
+  read-only: here interventions performs the create. Ownership stays with
+  this feature — the form's fields, its validation, and the `site_setup`
+  record itself all belong here, and `createForIntervention`'s `PUT`-with-
+  `clientId` idempotency guard already existed for exactly this kind of
+  retried write. Interventions only enriches the
+  emitted `CreateFacilityInput` with the `organization`/`intervention` IRIs
+  and refreshes its own workspace and linked-resources cache afterward.
 - May compose with sibling organization subfeatures in pages when the workflow requires it, but must not take ownership of their state.
 
 ### Deferred, not built

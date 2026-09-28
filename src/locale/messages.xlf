@@ -7191,7 +7191,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1385,1387</context>
+          <context context-type="linenumber">1411,1413</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-discussion-sheet/intervention-discussion-sheet.component.html</context>
@@ -7200,6 +7200,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-effort-sheet/intervention-effort-sheet.component.html</context>
           <context context-type="linenumber">58,59</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-facility-sheet/intervention-facility-sheet.component.html</context>
+          <context context-type="linenumber">23,24</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-operations-sheet/intervention-operations-sheet.component.html</context>
@@ -7598,7 +7602,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">710,712</context>
+          <context context-type="linenumber">728,730</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
@@ -16811,15 +16815,15 @@
         <source>Linked resources cannot be queried offline. Reconnect and retry.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-linked-resources/intervention-linked-resources.store.ts</context>
-          <context context-type="linenumber">219</context>
+          <context context-type="linenumber">223</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-linked-resources/intervention-linked-resources.store.ts</context>
-          <context context-type="linenumber">331</context>
+          <context context-type="linenumber">336</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-linked-resources/intervention-linked-resources.store.ts</context>
-          <context context-type="linenumber">441</context>
+          <context context-type="linenumber">446</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.publication.storageError" datatype="html">
@@ -16889,28 +16893,28 @@
         <source>This intervention has not been saved on this device, so it cannot be opened offline. Reconnect and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">464</context>
+          <context context-type="linenumber">470</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.loadFailed" datatype="html">
         <source>The intervention workspace could not be loaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">468</context>
+          <context context-type="linenumber">474</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.attachmentQueueFull" datatype="html">
         <source>The offline file queue is full (25 files or 50 MB). Reconnect to sync your pending files before adding more.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">729</context>
+          <context context-type="linenumber">735</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.commentAddFailed" datatype="html">
         <source>The comment could not be posted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">827</context>
+          <context context-type="linenumber">833</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-comment-form/intervention-comment-form.component.ts</context>
@@ -16921,14 +16925,14 @@
         <source>The intervention status could not be updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">988</context>
+          <context context-type="linenumber">994</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.store.transitionStale" datatype="html">
         <source>This intervention changed since it was loaded. Refresh and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">990</context>
+          <context context-type="linenumber">996</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -16939,7 +16943,7 @@
         <source>You do not have permission to change this intervention&apos;s status.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">992</context>
+          <context context-type="linenumber">998</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -16950,7 +16954,7 @@
         <source>This status change is not allowed from the intervention&apos;s current status.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">994</context>
+          <context context-type="linenumber">1000</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -16961,46 +16965,46 @@
         <source>Intervention planning details could not be saved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1075</context>
+          <context context-type="linenumber">1081</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1126</context>
+          <context context-type="linenumber">1132</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.toast.succeeded" datatype="html">
         <source>Team assigned</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1177</context>
+          <context context-type="linenumber">1183</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.error.generic" datatype="html">
         <source>The team could not be assigned.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1185</context>
+          <context context-type="linenumber">1191</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.error.noActiveMembers" datatype="html">
         <source>This team has no active members.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1187</context>
+          <context context-type="linenumber">1193</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.error.conflict" datatype="html">
         <source>This intervention can no longer be assigned a team; refreshing its current state.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1189</context>
+          <context context-type="linenumber">1195</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.workItemCreateFailed" datatype="html">
         <source>The work item could not be created.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1434</context>
+          <context context-type="linenumber">1481</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-work-item-form/intervention-work-item-form.component.ts</context>
@@ -17011,35 +17015,35 @@
         <source>The work item could not be updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1572</context>
+          <context context-type="linenumber">1619</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.rejectChangeFailed" datatype="html">
         <source>The proposed change could not be rejected.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1708</context>
+          <context context-type="linenumber">1755</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.workItemDeleteOffline" datatype="html">
         <source>Connect to the network to delete planned work items.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1751</context>
+          <context context-type="linenumber">1798</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.workItemDeleteFailed" datatype="html">
         <source>The work item could not be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1805</context>
+          <context context-type="linenumber">1852</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.delete.toast" datatype="html">
         <source>Intervention deleted</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1847</context>
+          <context context-type="linenumber">1894</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -17050,7 +17054,7 @@
         <source>The intervention could not be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1853</context>
+          <context context-type="linenumber">1900</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -17061,7 +17065,7 @@
         <source>Only draft or abandoned interventions can be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1857</context>
+          <context context-type="linenumber">1904</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -17072,7 +17076,7 @@
         <source>You do not have permission to delete this intervention.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1859</context>
+          <context context-type="linenumber">1906</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -17083,18 +17087,18 @@
         <source>The file could not be uploaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1988</context>
+          <context context-type="linenumber">2035</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.attachmentDeleteFailed" datatype="html">
         <source>The file could not be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">2026</context>
+          <context context-type="linenumber">2073</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">2072</context>
+          <context context-type="linenumber">2119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.store.transitionFailed" datatype="html">
@@ -20072,116 +20076,123 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1358,1359</context>
+          <context context-type="linenumber">1384,1385</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.facility.addButton" datatype="html">
+        <source>Add facility</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
+          <context context-type="linenumber">516,518</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.sidebar.title" datatype="html">
         <source> Properties </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">599,601</context>
+          <context context-type="linenumber">617,619</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.sidebar.description" datatype="html">
         <source> Planning, assignment and intervention status. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">605,607</context>
+          <context context-type="linenumber">623,625</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.prev" datatype="html">
         <source>Previous intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">663,664</context>
+          <context context-type="linenumber">681,682</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">668,669</context>
+          <context context-type="linenumber">686,687</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.next" datatype="html">
         <source>Next intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">680,681</context>
+          <context context-type="linenumber">698,699</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">685,686</context>
+          <context context-type="linenumber">703,704</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.loadFailedTitle" datatype="html">
         <source> This intervention could not be opened </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">697,699</context>
+          <context context-type="linenumber">715,717</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.backToList" datatype="html">
         <source>Back to interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">719,722</context>
+          <context context-type="linenumber">737,740</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">740,743</context>
+          <context context-type="linenumber">758,761</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.notFoundTitle" datatype="html">
         <source>Intervention not found</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">727,728</context>
+          <context context-type="linenumber">745,746</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.notFound" datatype="html">
         <source> This intervention does not exist, or you no longer have access to it. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">729,732</context>
+          <context context-type="linenumber">747,750</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.mobileWorkflowActions" datatype="html">
         <source>Intervention actions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">910,911</context>
+          <context context-type="linenumber">936,937</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">940,941</context>
+          <context context-type="linenumber">966,967</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.discussion.activityTrigger" datatype="html">
         <source><x id="START_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="&lt;ng-icon name=&quot;lucideActivity&quot; aria-hidden=&quot;true&quot; /&gt;"/><x id="CLOSE_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="&lt;ng-icon name=&quot;lucideActivity&quot; aria-hidden=&quot;true&quot; /&gt;"/><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span&gt;"/>Intervention activity<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">973,975</context>
+          <context context-type="linenumber">999,1001</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1017,1023</context>
+          <context context-type="linenumber">1043,1049</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1216,1218</context>
+          <context context-type="linenumber">1242,1244</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.moreActions" datatype="html">
         <source>More actions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">993,996</context>
+          <context context-type="linenumber">1019,1022</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1002,1003</context>
+          <context context-type="linenumber">1028,1029</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1203,1206</context>
+          <context context-type="linenumber">1229,1232</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.view" datatype="html">
@@ -20191,11 +20202,11 @@
                   /&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span hlmItemContent&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span hlmItemTitle&gt;"/>View saved operations<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1031,1037</context>
+          <context context-type="linenumber">1057,1063</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1225,1227</context>
+          <context context-type="linenumber">1251,1253</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.band.blockers" datatype="html">
@@ -20205,11 +20216,11 @@
                     /&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span hlmItemContent&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span hlmItemTitle&gt;"/><x id="INTERPOLATION" equiv-text="{{ store.blockerCount() }}"/> blocking issues<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1047,1053</context>
+          <context context-type="linenumber">1073,1079</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1236,1238</context>
+          <context context-type="linenumber">1262,1264</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.discussion.teamChat" datatype="html">
@@ -20219,44 +20230,44 @@
                     /&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span hlmItemContent&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span hlmItemTitle&gt;"/>Team chat<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1066,1072</context>
+          <context context-type="linenumber">1092,1098</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1250,1252</context>
+          <context context-type="linenumber">1276,1278</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.statusMenuLabel" datatype="html">
         <source> Send it to </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1081,1082</context>
+          <context context-type="linenumber">1107,1108</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1260,1262</context>
+          <context context-type="linenumber">1286,1288</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.menuEntry" datatype="html">
         <source>Assign team…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1113,1115</context>
+          <context context-type="linenumber">1139,1141</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1281,1284</context>
+          <context context-type="linenumber">1307,1310</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.duplicate.action" datatype="html">
         <source>Duplicate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1130,1132</context>
+          <context context-type="linenumber">1156,1158</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1291,1294</context>
+          <context context-type="linenumber">1317,1320</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-table/intervention-table.component.html</context>
@@ -20267,299 +20278,299 @@
         <source>Export report</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1148,1150</context>
+          <context context-type="linenumber">1174,1176</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1302,1304</context>
+          <context context-type="linenumber">1328,1330</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.abandon.action" datatype="html">
         <source>Abandon intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1165,1167</context>
+          <context context-type="linenumber">1191,1193</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1311,1314</context>
+          <context context-type="linenumber">1337,1340</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.delete.action" datatype="html">
         <source>Delete intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1183,1185</context>
+          <context context-type="linenumber">1209,1211</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1322,1324</context>
+          <context context-type="linenumber">1348,1350</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.proofs.viewAll" datatype="html">
         <source> View all intervention files </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1395,1397</context>
+          <context context-type="linenumber">1421,1423</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.actionRequired" datatype="html">
         <source>Action required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">804</context>
+          <context context-type="linenumber">810</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.synchronizing" datatype="html">
         <source>Synchronizing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">806</context>
+          <context context-type="linenumber">812</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.saved" datatype="html">
         <source>Saved on this device</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">808</context>
+          <context context-type="linenumber">814</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.checking" datatype="html">
         <source>Checking saved work…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">810</context>
+          <context context-type="linenumber">816</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.feedback.failed" datatype="html">
         <source>Action failed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1005</context>
+          <context context-type="linenumber">1011</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1025</context>
+          <context context-type="linenumber">1031</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.fieldSaved" datatype="html">
         <source>Change saved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1010</context>
+          <context context-type="linenumber">1016</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3647</context>
+          <context context-type="linenumber">3729</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.publication.succeeded" datatype="html">
         <source>Published to the compliance record</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">1310</context>
+          <context context-type="linenumber">1329</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.overdue" datatype="html">
         <source>Overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2195</context>
+          <context context-type="linenumber">2253</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.site" datatype="html">
         <source>Choose a site</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2228</context>
+          <context context-type="linenumber">2286</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.responsible" datatype="html">
         <source>Assign a responsible agent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2234</context>
+          <context context-type="linenumber">2292</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.start" datatype="html">
         <source>Set a planned start</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2240</context>
+          <context context-type="linenumber">2298</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.schedule" datatype="html">
         <source>Set a due date</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2246</context>
+          <context context-type="linenumber">2304</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.scope" datatype="html">
         <source>Prepare the field work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2252</context>
+          <context context-type="linenumber">2310</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.plan" datatype="html">
         <source>Plan intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2365</context>
+          <context context-type="linenumber">2423</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.startWork" datatype="html">
         <source>Start field work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2384</context>
+          <context context-type="linenumber">2442</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.recordWork" datatype="html">
         <source>Record field work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2394</context>
+          <context context-type="linenumber">2452</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.completeOne" datatype="html">
         <source>Complete 1 remaining item</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2404</context>
+          <context context-type="linenumber">2462</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.completeMany" datatype="html">
         <source>Complete <x id="count" equiv-text="remaining"/> remaining items</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2405</context>
+          <context context-type="linenumber">2463</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.submit" datatype="html">
         <source>Submit for review</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2412</context>
+          <context context-type="linenumber">2470</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.submissionUnavailable" datatype="html">
         <source>Submission is not currently available. Check your access and the intervention requirements.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2417</context>
+          <context context-type="linenumber">2475</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.reasonOffline" datatype="html">
         <source>Connect to the network to publish.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2437</context>
+          <context context-type="linenumber">2495</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3374</context>
+          <context context-type="linenumber">3456</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.reasonBlockersOne" datatype="html">
         <source>1 blocking issue to clear.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2439</context>
+          <context context-type="linenumber">2497</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.reasonBlockersMany" datatype="html">
         <source><x id="count" equiv-text="blockers"/> blocking issues to clear.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2441</context>
+          <context context-type="linenumber">2499</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.publish" datatype="html">
         <source>Publish intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2444</context>
+          <context context-type="linenumber">2502</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.prepareFailed" datatype="html">
         <source><x id="fileName" equiv-text="fileName"/> could not be prepared for upload.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2608</context>
+          <context context-type="linenumber">2666</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2673</context>
+          <context context-type="linenumber">2731</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.downloadFailed" datatype="html">
         <source>Couldn&apos;t download <x id="fileName" equiv-text="attachment.fileName"/>.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2756</context>
+          <context context-type="linenumber">2814</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.report.exportFailed" datatype="html">
         <source>Couldn&apos;t export the intervention report.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2792</context>
+          <context context-type="linenumber">2850</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.unreadable" datatype="html">
         <source>No QR code could be read from this capture.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2837</context>
+          <context context-type="linenumber">2895</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2840</context>
+          <context context-type="linenumber">2898</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2870</context>
+          <context context-type="linenumber">2928</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.noMatch" datatype="html">
         <source>No work item of this intervention matches the scanned code.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2848</context>
+          <context context-type="linenumber">2906</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2851</context>
+          <context context-type="linenumber">2909</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.matched" datatype="html">
         <source>Found: <x id="target" equiv-text="result.item.targetSummary?.label ?? result.item.id"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2864</context>
+          <context context-type="linenumber">2922</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.loadFailed" datatype="html">
         <source>Couldn&apos;t load the organization&apos;s teams.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3195</context>
+          <context context-type="linenumber">3277</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.publication.unsynced" datatype="html">
         <source>Resolve this intervention&apos;s local operations before publishing.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3395</context>
+          <context context-type="linenumber">3477</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.publication.preflightBlocked" datatype="html">
         <source>Publication is unavailable. Review the updated permissions, connection and blocking issues.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3417</context>
+          <context context-type="linenumber">3499</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.list.offlineNoticeTitle" datatype="html">
@@ -21432,6 +21443,20 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-effort-sheet/intervention-effort-sheet.component.html</context>
           <context context-type="linenumber">28,31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.facilitySheet.header" datatype="html">
+        <source>Add facility</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-facility-sheet/intervention-facility-sheet.component.html</context>
+          <context context-type="linenumber">28,29</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.facilitySheet.hint" datatype="html">
+        <source> Attach a facility to this intervention. Only the type and name are required — the rest can be filled in later from the facility&apos;s own record. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-facility-sheet/intervention-facility-sheet.component.html</context>
+          <context context-type="linenumber">30,33</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.title" datatype="html">

@@ -53,9 +53,39 @@ export class InterventionDetailPage {
     'button',
     { name: 'Cancel' },
   );
+  public readonly facilitiesTabTrigger: Locator = this.page.getByTestId(
+    'intervention-tab-facilities',
+  );
+  public readonly addFacilityButton: Locator = this.page.getByTestId('intervention-add-facility');
+  public readonly facilitiesTable: Locator = this.page.getByTestId('intervention-facilities-table');
+  public readonly facilityRows: Locator = this.page.getByTestId(
+    'intervention-facilities-table-row',
+  );
+  public readonly facilityDraftBadge: Locator = this.page
+    .getByTestId('intervention-facilities-draft-badge')
+    .locator('visible=true');
+  public readonly facilitySheet: Locator = this.page.getByTestId('intervention-facility-sheet');
+  public readonly facilityTypeSelect: Locator = this.page.getByTestId('facility-create-type');
+  public readonly facilityNameInput: Locator = this.page.getByTestId('facility-create-name');
+  public readonly facilitySubmitButton: Locator = this.page.getByTestId('facility-create-submit');
 
   public async goto(organizationId: string, interventionId: string): Promise<void> {
     await this.page.goto(`/organizations/${organizationId}/interventions/${interventionId}`);
+  }
+
+  /** Switches to the lazy Facilities tab. */
+  public async openFacilitiesTab(): Promise<void> {
+    await this.facilitiesTabTrigger.click();
+  }
+
+  /** Opens the "Add facility" sheet, fills the required type + name, and submits. */
+  public async createFacility(type: string, name: string): Promise<void> {
+    await this.addFacilityButton.click();
+    await this.facilitySheet.waitFor({ state: 'visible' });
+    await this.facilityTypeSelect.click();
+    await this.page.getByRole('option', { name: type }).click();
+    await this.facilityNameInput.fill(name);
+    await this.facilitySubmitButton.click();
   }
 
   /** Activates the first listed blocker, sending the operator to its resolving address. */

@@ -15,6 +15,7 @@ import {
 } from '@core/request-state';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
+import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
   InterventionFacilitiesTableQuery,
@@ -45,6 +46,7 @@ const INITIAL_STATE: InterventionLinkedResourcesState = {
   activeResource: null,
   facilitiesSource: 'api',
   facilitiesCallState: idleCallState(),
+  facilitiesRecordStatus: undefined,
   facilitiesPage: 0,
   facilitiesTotalItems: 0,
   facilitiesLoadingMore: false,
@@ -134,6 +136,7 @@ export const InterventionLinkedResourcesStore = signalStore(
       const requestFacilities = rxMethod<{
         interventionId: string;
         criteria: InterventionFacilitiesTableQuery;
+        recordStatus: FacilityOutput['recordStatus'];
         page: number;
         generation: number;
         delay: number;
@@ -141,7 +144,7 @@ export const InterventionLinkedResourcesStore = signalStore(
         pipe(
           switchMap((request) => {
             if (!request) return EMPTY;
-            const { interventionId, criteria, page, generation, delay } = request;
+            const { interventionId, criteria, recordStatus, page, generation, delay } = request;
             const current = (): boolean =>
               store.loadedForInterventionId() === interventionId &&
               store.facilitiesGeneration() === generation;
@@ -150,6 +153,7 @@ export const InterventionLinkedResourcesStore = signalStore(
                 facilityService.listByIntervention(interventionId, {
                   page,
                   itemsPerPage: LINKED_RESOURCES_PAGE_SIZE,
+                  ...(recordStatus ? { recordStatus } : {}),
                   ...(criteria.search.trim() ? { search: criteria.search.trim() } : {}),
                   ...(criteria.status ? { status: criteria.status } : {}),
                   ...(criteria.type ? { params: { type: criteria.type } } : {}),
@@ -234,6 +238,7 @@ export const InterventionLinkedResourcesStore = signalStore(
         requestFacilities({
           interventionId,
           criteria: store.facilitiesQuery(),
+          recordStatus: store.facilitiesRecordStatus(),
           page,
           generation,
           delay,
@@ -611,13 +616,38 @@ export const InterventionLinkedResourcesStore = signalStore(
          * @description Activates the table and reuses its criteria until the intervention changes.
          * @since 6.2.0
          * @param {string} interventionId - Current context.
+         * @param {FacilityOutput['recordStatus']} [recordStatus] - Linked draft or published records to request.
          * @returns {void}
          */
-        ensureFacilitiesLoaded(interventionId: string): void {
+        ensureFacilitiesLoaded(
+          interventionId: string,
+          recordStatus?: FacilityOutput['recordStatus'],
+        ): void {
           setContext(interventionId);
-          patchState(store, { activeResource: 'facilities' });
-          if (store.facilitiesCallState().status === 'idle' || store.facilitiesInvalidated())
+          const statusChanged = store.facilitiesRecordStatus() !== recordStatus;
+          patchState(store, { activeResource: 'facilities', facilitiesRecordStatus: recordStatus });
+          if (
+            statusChanged ||
+            store.facilitiesCallState().status === 'idle' ||
+            store.facilitiesInvalidated()
+          )
             loadFacilities(interventionId, 1);
+        },
+        /**
+         * Method reloadFacilities
+         * @description Reloads the first page after creation, preserving table filters and the requested record status.
+         * @since 8.0.0
+         * @param {string} interventionId - Current context.
+         * @param {FacilityOutput['recordStatus']} [recordStatus] - Linked draft or published records to request.
+         * @returns {void}
+         */
+        reloadFacilities(
+          interventionId: string,
+          recordStatus?: FacilityOutput['recordStatus'],
+        ): void {
+          setContext(interventionId);
+          patchState(store, { facilitiesRecordStatus: recordStatus });
+          loadFacilities(interventionId, 1);
         },
         /**
          * Method refreshFacilities

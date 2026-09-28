@@ -152,6 +152,7 @@ describe('createInterventionCapabilities', () => {
     ['canEditDetails', 'canEditDetails'],
     ['canAssignTeam', 'canAssignTeam'],
     ['canAddWorkItem', 'canMutateWorkItems'],
+    ['canAddFacility', 'canMutateWorkItems'],
     ['canManageAttachments', 'canManageAttachments'],
     ['canDeleteIntervention', 'canDelete'],
   ] as const)('should read %s from the server-advertised %s flag', (capability, flag) => {
@@ -178,6 +179,7 @@ describe('createInterventionCapabilities', () => {
     expect(capabilities.canEditDetails()).toBe(false);
     expect(capabilities.canAssignTeam()).toBe(false);
     expect(capabilities.canAddWorkItem()).toBe(false);
+    expect(capabilities.canAddFacility()).toBe(false);
     expect(capabilities.canManageAttachments()).toBe(false);
     expect(capabilities.canDeleteIntervention()).toBe(false);
   });

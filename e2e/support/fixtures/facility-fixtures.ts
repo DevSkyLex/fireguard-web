@@ -31,6 +31,7 @@ export interface FacilityOutputFixture {
   readonly metadata: Record<string, string | null>;
   readonly latitude?: number | null;
   readonly longitude?: number | null;
+  readonly recordStatus?: 'draft' | 'published';
   readonly path: ReadonlyArray<{
     readonly id: string;
     readonly name: string;

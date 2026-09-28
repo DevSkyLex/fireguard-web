@@ -196,6 +196,11 @@ export async function openPresenceMenu(page: Page, mobile: boolean): Promise<voi
     await page.getByTestId('dashboard-mobile-actions-trigger').click();
   }
   await page.locator('#account-menu-trigger').filter({ visible: true }).click();
+  if (!mobile) {
+    await page.getByTestId('account-presence-trigger').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('menuitem', { name: 'Do not disturb', exact: true })).toBeVisible();
+  }
 }
 
 /** Saves durable browser evidence after verifying no transient compile error or document overflow. */
@@ -215,15 +220,21 @@ export async function verifyPresenceControl(
 ): Promise<void> {
   await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/more`);
   await openPresenceMenu(page, mobile);
-  const control = page.getByRole(mobile ? 'switch' : 'menuitemcheckbox', {
+  const control = page.getByRole(mobile ? 'switch' : 'menuitem', {
     name: 'Do not disturb',
     exact: true,
   });
   await expect(control).toBeEnabled();
-  await expect(control).not.toBeChecked();
+  if (mobile) await expect(control).not.toBeChecked();
+  else await expect(control).not.toHaveAttribute('aria-current', 'true');
   await control.focus();
   await page.keyboard.press('Space');
-  await expect(control).toBeChecked();
+  if (mobile) await expect(control).toBeChecked();
+  else {
+    await expect(control).toBeHidden();
+    await openPresenceMenu(page, false);
+    await expect(control).toHaveAttribute('aria-current', 'true');
+  }
   await expect(
     page.getByRole('img', { name: 'Do not disturb', exact: true }).first(),
   ).toBeVisible();
@@ -233,11 +244,13 @@ export async function verifyPresenceControl(
     `${mobile ? 'drawer' : 'menu'}-${info.title.includes('dark') ? 'dark' : 'light'}`,
   );
   await page.keyboard.press('Escape');
+  if (!mobile) await page.keyboard.press('Escape');
   await expect(control).toBeHidden();
   await expect(page.locator('#account-menu-trigger').filter({ visible: true })).toBeFocused();
   await page.reload();
   await openPresenceMenu(page, mobile);
-  await expect(control).toBeChecked();
+  if (mobile) await expect(control).toBeChecked();
+  else await expect(control).toHaveAttribute('aria-current', 'true');
 }
 
 /** Verifies that incoming Mercure events still update the inbox and unread indicator under NPD. */

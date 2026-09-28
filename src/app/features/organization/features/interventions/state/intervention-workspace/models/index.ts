@@ -3,6 +3,7 @@ export type {
   InterventionChangeRejectCommand,
   InterventionCommentAddCommand,
   InterventionDetailsUpdateCommand,
+  InterventionFacilityCreateCommand,
   InterventionWorkItemCreateCommand,
   InterventionWorkItemDeleteCommand,
   InterventionWorkItemStatusCommand,

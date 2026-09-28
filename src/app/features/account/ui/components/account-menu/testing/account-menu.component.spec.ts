@@ -252,7 +252,7 @@ describe('AccountMenu', () => {
     await fixture.whenStable();
     expect(fixture.componentInstance['presenceStatus']()).toBe('invisible');
     const badge = fixture.nativeElement.querySelector('[data-slot="avatar-badge"]');
-    expect(badge.getAttribute('aria-label')).toBe('Invisible');
+    expect(badge.querySelector('svg')?.getAttribute('aria-label')).toBe('Invisible');
     expect(badge.classList.contains('bg-muted-foreground')).toBe(true);
   });
 

@@ -42,7 +42,6 @@ import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, CallStatus, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type { PresenceStatus } from '@features/organization/models';
 import {
   ORGANIZATION_PERMISSION,
   ORGANIZATION_QUOTA_RESOURCE,
@@ -53,6 +52,7 @@ import {
   type OrganizationMemberSortField,
   type OrganizationMemberStatusFilter,
   type OrganizationQuotaItemOutput,
+  type PresenceStatus,
 } from '@features/organization/models';
 import {
   REGIONAL_FORMATTING_PORT,

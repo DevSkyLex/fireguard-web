@@ -206,7 +206,7 @@ describe('MessageThread', () => {
     fixture.componentRef.setInput('presences', { 'member-1': 'do_not_disturb' });
     await fixture.whenStable();
     const badges = fixture.nativeElement.querySelectorAll('[data-slot="avatar-badge"]');
-    expect(badges.length).toBe(1);
-    expect(badges[0].getAttribute('aria-label')).toBe('Do not disturb');
+    expect(badges).toHaveLength(1);
+    expect(badges[0].querySelector('svg')?.getAttribute('aria-label')).toBe('Do not disturb');
   });
 });

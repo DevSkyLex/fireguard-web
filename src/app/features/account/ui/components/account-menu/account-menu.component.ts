@@ -229,8 +229,8 @@ export class AccountMenu {
   protected readonly presenceForm: FieldTree<PresencePreferenceInput> = form(
     this.presenceModel,
     (path) => {
-      disabled(path.doNotDisturb, () => !this.presencePreference.available());
-      disabled(path.invisible, () => !this.presencePreference.available());
+      disabled(path.doNotDisturb, { when: () => !this.presencePreference.available() });
+      disabled(path.invisible, { when: () => !this.presencePreference.available() });
     },
   );
 

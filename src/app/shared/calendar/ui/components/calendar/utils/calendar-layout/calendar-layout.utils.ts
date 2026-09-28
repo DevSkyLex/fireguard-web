@@ -1,7 +1,9 @@
 import type { CalendarDisplayEvent } from '../../../../../models/calendar-display-event.interface';
 import type { CalendarDaySummary } from '../../models/calendar-day-summary.interface';
+import type { CalendarEventSpan } from '../../models/calendar-event-span.interface';
 import type { CalendarMonthLayout } from '../../models/calendar-month-layout.interface';
 import type { CalendarWeekSegment } from '../../models/calendar-week-segment.interface';
+import type { CalendarWeekSpan } from '../../models/calendar-week-span.interface';
 import { toIsoDay } from '../calendar-month/calendar-month.utils';
 
 /**
@@ -17,32 +19,12 @@ export function buildCalendarMonthLayout(
   days: readonly Date[],
   events: readonly CalendarDisplayEvent[],
 ): CalendarMonthLayout {
-  const spans = events.flatMap((event) => {
-    const start = parseCalendarDate(event.date);
-    if (Number.isNaN(start.getTime())) return [];
-
-    const end = event.endDate ? parseCalendarDate(event.endDate) : start;
-    if (Number.isNaN(end.getTime()) || end <= start) {
-      return [{ event, startDay: toIsoDay(start), endDay: toIsoDay(start) }];
-    }
-
-    const effectiveEnd = new Date(end);
-    if (
-      event.allDay !== true &&
-      end.getHours() === 0 &&
-      end.getMinutes() === 0 &&
-      end.getSeconds() === 0 &&
-      end.getMilliseconds() === 0
-    ) {
-      effectiveEnd.setMilliseconds(-1);
-    }
-
-    return [{ event, startDay: toIsoDay(start), endDay: toIsoDay(effectiveEnd) }];
-  });
-
-  const counts = new Map<string, number>();
-  const shown = new Map<string, number>();
-  const sourceLabelsByDay = new Map<string, string[]>();
+  const spans: readonly CalendarEventSpan[] = events
+    .map(resolveCalendarEventSpan)
+    .filter((span): span is CalendarEventSpan => span !== null);
+  const summaries = new Map<string, CalendarDaySummary>(
+    days.map((day) => [toIsoDay(day), summarizeCalendarDay(toIsoDay(day), [], [], [])]),
+  );
   const segmentsByStart = new Map<string, CalendarWeekSegment[]>();
   const previousLane = new Map<string, number>();
 
@@ -52,7 +34,6 @@ export function buildCalendarMonthLayout(
     const last = weekDays[6];
     if (first === undefined || last === undefined) continue;
 
-    const occupied = Array.from({ length: 2 }, () => Array<boolean>(7).fill(false));
     const candidates = spans
       .filter(({ startDay, endDay }) => startDay <= last && endDay >= first)
       .toSorted(
@@ -62,69 +43,155 @@ export function buildCalendarMonthLayout(
           a.event.id.localeCompare(b.event.id),
       );
 
-    for (const span of candidates) {
-      const startColumn = span.startDay < first ? 0 : weekDays.indexOf(span.startDay);
-      const endColumn = span.endDay > last ? 6 : weekDays.indexOf(span.endDay);
-      if (startColumn < 0 || endColumn < startColumn) continue;
-      const startDay = weekDays[startColumn];
-      const endDay = weekDays[endColumn];
-      if (startDay === undefined || endDay === undefined) continue;
-
-      for (let column = startColumn; column <= endColumn; column += 1) {
-        const day = weekDays[column];
-        if (day === undefined) continue;
-
-        counts.set(day, (counts.get(day) ?? 0) + 1);
-        if (span.event.sourceLabel) {
-          const labels = sourceLabelsByDay.get(day) ?? [];
-          if (!labels.includes(span.event.sourceLabel)) labels.push(span.event.sourceLabel);
-          sourceLabelsByDay.set(day, labels);
-        }
-      }
-
-      const preferred = previousLane.get(span.event.id);
-      const lanes = preferred === undefined ? [0, 1] : [preferred, 1 - preferred];
-      const lane = lanes.find((candidate) =>
-        occupied[candidate]?.slice(startColumn, endColumn + 1).every((slot) => !slot),
-      );
-      if (lane === undefined) continue;
-      const laneSlots = occupied[lane];
-      if (laneSlots === undefined) continue;
-
-      for (let column = startColumn; column <= endColumn; column += 1) {
-        laneSlots[column] = true;
-        const day = weekDays[column];
-        if (day !== undefined) shown.set(day, (shown.get(day) ?? 0) + 1);
-      }
-
-      previousLane.set(span.event.id, lane);
-      const segment: CalendarWeekSegment = {
-        event: span.event,
-        startDay,
-        days: endColumn - startColumn + 1,
-        lane,
-        continuesBefore: span.startDay < startDay,
-        continuesAfter: span.endDay > endDay,
-      };
-      const bucket = segmentsByStart.get(startDay) ?? [];
+    const segments = placeCalendarWeekSpans(weekDays, candidates, previousLane);
+    for (const segment of segments) {
+      previousLane.set(segment.event.id, segment.lane);
+      const bucket = segmentsByStart.get(segment.startDay) ?? [];
       bucket.push(segment);
-      segmentsByStart.set(startDay, bucket);
+      segmentsByStart.set(segment.startDay, bucket);
+    }
+    for (const day of weekDays) {
+      summaries.set(day, summarizeCalendarDay(day, candidates, segments, weekDays));
     }
   }
+  return { summaries, segmentsByStart };
+}
 
-  const summaries = new Map<string, CalendarDaySummary>();
-  for (const day of days) {
-    const iso = toIsoDay(day);
-    const count = counts.get(iso) ?? 0;
-    summaries.set(iso, {
-      count,
-      dots: Array.from({ length: Math.min(count, 3) }, (unused, index) => index),
-      overflow: Math.max(0, count - (shown.get(iso) ?? 0)),
-      sourceLabels: sourceLabelsByDay.get(iso) ?? [],
+/**
+ * Function resolveCalendarEventSpan
+ * @description Normalizes valid event dates while keeping all-day ends inclusive and timed midnight ends exclusive.
+ * @access private
+ * @since 1.0.0
+ * @param {CalendarDisplayEvent} event - The owner's event to normalize without mutation.
+ * @returns {CalendarEventSpan | null} Its included local days, or null for an invalid start.
+ */
+function resolveCalendarEventSpan(event: CalendarDisplayEvent): CalendarEventSpan | null {
+  const start = parseCalendarDate(event.date);
+  if (Number.isNaN(start.getTime())) return null;
+  const startDay = toIsoDay(start);
+  const end = event.endDate ? parseCalendarDate(event.endDate) : start;
+  if (Number.isNaN(end.getTime()) || end <= start) {
+    return { event, startDay, endDay: startDay };
+  }
+  const effectiveEnd = new Date(end);
+  if (
+    event.allDay !== true &&
+    end.getHours() === 0 &&
+    end.getMinutes() === 0 &&
+    end.getSeconds() === 0 &&
+    end.getMilliseconds() === 0
+  ) {
+    effectiveEnd.setMilliseconds(-1);
+  }
+  return { event, startDay, endDay: toIsoDay(effectiveEnd) };
+}
+
+/**
+ * Function clipCalendarWeekSpan
+ * @description Clips an event to a complete displayed week and retains its continuation affordances.
+ * @access private
+ * @since 1.0.0
+ * @param {CalendarEventSpan} span - The normalized event range.
+ * @param {readonly string[]} weekDays - The displayed week in local ISO-day order.
+ * @returns {CalendarWeekSpan | null} Its visible columns, or null when the range cannot be placed.
+ */
+function clipCalendarWeekSpan(
+  span: CalendarEventSpan,
+  weekDays: readonly string[],
+): CalendarWeekSpan | null {
+  const first = weekDays[0];
+  const last = weekDays[6];
+  if (first === undefined || last === undefined) return null;
+  const startColumn = span.startDay < first ? 0 : weekDays.indexOf(span.startDay);
+  const endColumn = span.endDay > last ? 6 : weekDays.indexOf(span.endDay);
+  if (startColumn < 0 || endColumn < startColumn) return null;
+  const startDay = weekDays[startColumn];
+  const endDay = weekDays[endColumn];
+  if (startDay === undefined || endDay === undefined) return null;
+  return {
+    event: span.event,
+    startDay,
+    startColumn,
+    days: endColumn - startColumn + 1,
+    continuesBefore: span.startDay < startDay,
+    continuesAfter: span.endDay > endDay,
+  };
+}
+
+/**
+ * Function placeCalendarWeekSpans
+ * @description Assigns two non-overlapping lanes, preferring each event's previous-week lane without mutating inputs.
+ * @access private
+ * @since 1.0.0
+ * @param {readonly string[]} weekDays - The complete displayed week.
+ * @param {readonly CalendarEventSpan[]} candidates - Its events in stable placement order.
+ * @param {ReadonlyMap<string, number>} previousLane - Lane choices from preceding weeks.
+ * @returns {readonly CalendarWeekSegment[]} The visible event segments in placement order.
+ */
+function placeCalendarWeekSpans(
+  weekDays: readonly string[],
+  candidates: readonly CalendarEventSpan[],
+  previousLane: ReadonlyMap<string, number>,
+): readonly CalendarWeekSegment[] {
+  const occupied = Array.from({ length: 2 }, () => Array.from({ length: 7 }, () => false));
+  const remembered = new Map(previousLane);
+  const segments: CalendarWeekSegment[] = [];
+  for (const candidate of candidates) {
+    const span = clipCalendarWeekSpan(candidate, weekDays);
+    if (span === null) continue;
+    const preferred = remembered.get(span.event.id);
+    const lanes = preferred === undefined ? [0, 1] : [preferred, 1 - preferred];
+    const lane = lanes.find((choice) =>
+      occupied[choice]
+        ?.slice(span.startColumn, span.startColumn + span.days)
+        .every((slot) => !slot),
+    );
+    if (lane === undefined) continue;
+    occupied[lane]?.fill(true, span.startColumn, span.startColumn + span.days);
+    remembered.set(span.event.id, lane);
+    segments.push({
+      event: span.event,
+      startDay: span.startDay,
+      days: span.days,
+      lane,
+      continuesBefore: span.continuesBefore,
+      continuesAfter: span.continuesAfter,
     });
   }
+  return segments;
+}
 
-  return { summaries, segmentsByStart };
+/**
+ * Function summarizeCalendarDay
+ * @description Counts every covered event, including hidden lanes, with stable distinct source labels.
+ * @access private
+ * @since 1.0.0
+ * @param {string} day - The local ISO day to summarize.
+ * @param {readonly CalendarEventSpan[]} candidates - Its week's normalized events.
+ * @param {readonly CalendarWeekSegment[]} segments - Its week's visible lane segments.
+ * @param {readonly string[]} weekDays - The displayed week used to resolve segment ends.
+ * @returns {CalendarDaySummary} The total, capped dots, hidden count and source labels.
+ */
+function summarizeCalendarDay(
+  day: string,
+  candidates: readonly CalendarEventSpan[],
+  segments: readonly CalendarWeekSegment[],
+  weekDays: readonly string[],
+): CalendarDaySummary {
+  const active = candidates.filter((span) => span.startDay <= day && span.endDay >= day);
+  const shown = segments.filter((segment) => {
+    const endDay = weekDays[weekDays.indexOf(segment.startDay) + segment.days - 1];
+    return segment.startDay <= day && endDay !== undefined && endDay >= day;
+  }).length;
+  const sourceLabels = active
+    .map((span) => span.event.sourceLabel)
+    .filter((label): label is string => typeof label === 'string' && label.length > 0);
+  return {
+    count: active.length,
+    dots: Array.from({ length: Math.min(active.length, 3) }, (unused, index) => index),
+    overflow: Math.max(0, active.length - shown),
+    sourceLabels: [...new Set(sourceLabels)],
+  };
 }
 
 /**

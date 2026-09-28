@@ -17,8 +17,11 @@ import {
   lucideCrown,
 } from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
-import type { PresenceStatus } from '@features/organization/models';
-import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
+import {
+  ORGANIZATION_PERMISSION,
+  type MemberDirectoryEntry,
+  type PresenceStatus,
+} from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_CONTEXT_PORT,

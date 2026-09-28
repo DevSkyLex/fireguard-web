@@ -53,7 +53,7 @@ describe('CollectionSkeletonCards', () => {
     const root: HTMLElement = fixture.nativeElement as HTMLElement;
     const items: NodeListOf<HTMLElement> = root.querySelectorAll('[data-slot="item"]');
 
-    expect(items.length).toBe(3);
+    expect(items).toHaveLength(3);
     items.forEach((item: HTMLElement) => expect(item.getAttribute('data-variant')).toBe('default'));
   });
 });

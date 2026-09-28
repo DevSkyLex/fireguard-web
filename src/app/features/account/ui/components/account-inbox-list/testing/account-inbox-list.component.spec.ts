@@ -110,7 +110,7 @@ describe('AccountInboxList', () => {
     await fixture.whenStable();
 
     const markers = fixture.nativeElement.querySelectorAll('[data-slot="marker"]');
-    expect(markers.length).toBe(2);
+    expect(markers).toHaveLength(2);
   });
 
   it('should not repeat a day heading for entries on the same day', async () => {
@@ -123,7 +123,7 @@ describe('AccountInboxList', () => {
     await fixture.whenStable();
 
     const markers = fixture.nativeElement.querySelectorAll('[data-slot="marker"]');
-    expect(markers.length).toBe(1);
+    expect(markers).toHaveLength(1);
   });
 
   it('should offer a conversation link for a mention and a read control for a notification', async () => {

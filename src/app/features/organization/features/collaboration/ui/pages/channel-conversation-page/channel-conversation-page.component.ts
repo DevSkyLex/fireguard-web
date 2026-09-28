@@ -60,8 +60,8 @@ import {
   ORGANIZATION_PERMISSION,
   type MemberDirectoryEntry,
   type OrganizationPermissionName,
+  type PresenceStatus,
 } from '@features/organization/models';
-import type { PresenceStatus } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_CONTEXT_PORT,

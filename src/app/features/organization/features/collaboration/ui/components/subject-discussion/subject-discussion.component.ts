@@ -30,8 +30,11 @@ import {
   buildMessageViews,
   memberIriOf,
 } from '@features/organization/features/collaboration/utils';
-import type { PresenceStatus } from '@features/organization/models';
-import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
+import {
+  ORGANIZATION_PERMISSION,
+  type MemberDirectoryEntry,
+  type PresenceStatus,
+} from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,
   ORGANIZATION_MEMBER_ACCESS_PORT,

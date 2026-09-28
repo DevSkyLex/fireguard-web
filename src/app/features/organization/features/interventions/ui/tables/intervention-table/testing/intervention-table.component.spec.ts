@@ -163,14 +163,14 @@ describe('InterventionTable', () => {
     fixture.componentRef.setInput('items', [row()]);
     await fixture.whenStable();
 
-    const unknown: HTMLElement | null = element.querySelector(
+    const unknown: SVGSVGElement | null = element.querySelector(
       '[data-testid="intervention-table"] tbody tr td:nth-child(8) [role="img"]',
     );
 
     expect(unknown?.getAttribute('aria-label')).toBe('No responsible assigned');
-    expect(unknown?.className).toContain('size-8');
-    expect(unknown?.className).toContain('border-2');
-    expect(unknown?.className).toContain('border-dotted');
+    expect(unknown?.classList.contains('size-8')).toBe(true);
+    expect(unknown?.classList.contains('border-2')).toBe(true);
+    expect(unknown?.classList.contains('border-dotted')).toBe(true);
     expect(unknown?.textContent?.trim()).toBe('—');
   });
 

@@ -2,6 +2,7 @@ import { formatDate } from '@angular/common';
 import { Pipe, type PipeTransform } from '@angular/core';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '../../../constants/regional-format-defaults.constants';
 import type { RegionalFormatSettings } from '../../../models/regional-format-settings.interface';
+import type { OrgDateValue } from './models/org-date-value.type';
 
 /**
  * Constant UTC_OR_OFFSET_PATTERN
@@ -98,11 +99,11 @@ interface DateOnlyParts {
  * @access private
  * @since 1.1.0
  *
- * @param {Date | string | number} value - The date-only value to resolve.
+ * @param {OrgDateValue} value - The date-only value to resolve.
  *
  * @returns {DateOnlyParts | null} The calendar day, or `null` when `value` does not parse.
  */
-function resolveDateOnlyParts(value: Date | string | number): DateOnlyParts | null {
+function resolveDateOnlyParts(value: OrgDateValue): DateOnlyParts | null {
   if (typeof value === 'string') {
     const plainDateMatch: RegExpMatchArray | null = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
     if (plainDateMatch !== null) {
@@ -179,14 +180,17 @@ export class OrgDatePipe implements PipeTransform {
    * sensible placeholder to invent here, the call site decides what "no
    * date" reads as.
    *
-   * @param {Date | string | number | null | undefined} value - The date to render.
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {OrgDateValue | null | undefined} value - The date to render.
    * @param {'date' | 'datetime' | 'dateOnly'} [mode] - Rendering mode. Defaults to `'date'`.
    * @param {RegionalFormatSettings} [settings] - Formatting context. Defaults to {@link DEFAULT_REGIONAL_FORMAT_SETTINGS}.
    *
    * @returns {string} The formatted date, or `''` when `value` is absent or invalid.
    */
   public transform(
-    value: Date | string | number | null | undefined,
+    value: OrgDateValue | null | undefined,
     mode: 'date' | 'datetime' | 'dateOnly' = 'date',
     settings: RegionalFormatSettings = DEFAULT_REGIONAL_FORMAT_SETTINGS,
   ): string {
@@ -218,12 +222,12 @@ export class OrgDatePipe implements PipeTransform {
    * @access private
    * @since 1.1.0
    *
-   * @param {Date | string | number} value - The instant being rendered.
+   * @param {OrgDateValue} value - The instant being rendered.
    * @param {string} timezone - The configured timezone.
    *
    * @returns {string} The timezone argument to hand to `formatDate`.
    */
-  private resolveEffectiveTimezone(value: Date | string | number, timezone: string): string {
+  private resolveEffectiveTimezone(value: OrgDateValue, timezone: string): string {
     if (UTC_OR_OFFSET_PATTERN.test(timezone)) return timezone;
 
     const instant: Date = value instanceof Date ? value : new Date(value);
@@ -246,15 +250,12 @@ export class OrgDatePipe implements PipeTransform {
    * @access private
    * @since 1.1.0
    *
-   * @param {Date | string | number} value - A `'YYYY-MM-DD'` string or a UTC-midnight instant.
+   * @param {OrgDateValue} value - A `'YYYY-MM-DD'` string or a UTC-midnight instant.
    * @param {RegionalFormatSettings} settings - Formatting context.
    *
    * @returns {string} The formatted day, or `''` when `value` does not parse.
    */
-  private transformDateOnly(
-    value: Date | string | number,
-    settings: RegionalFormatSettings,
-  ): string {
+  private transformDateOnly(value: OrgDateValue, settings: RegionalFormatSettings): string {
     const parts: DateOnlyParts | null = resolveDateOnlyParts(value);
     if (parts === null) return '';
 

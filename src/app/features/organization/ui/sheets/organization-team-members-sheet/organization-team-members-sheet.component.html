@@ -63,69 +63,69 @@
             </div>
           </div>
         } @else {
-          <div
+          <ul
             hlmItemGroup
             class="gap-0"
-            role="list"
             aria-label="Team members"
             i18n-aria-label="@@org.teams.membersSheet.rosterLabel"
             data-testid="organization-team-members-roster"
           >
             @for (row of rosterRows(); track row.memberId) {
-              @if (!$first) {
-                <hlm-item-separator class="my-0" />
-              }
-              <div
-                hlmItem
-                size="sm"
-                class="@container"
-                role="listitem"
-                data-testid="organization-team-members-row"
-              >
-                <div hlmItemMedia>
-                  <hlm-avatar size="sm" class="shrink-0">
-                    @if (row.avatarUrl; as avatarUrl) {
-                      <img hlmAvatarImage [src]="avatarUrl" alt="" />
-                    }
-                    <span hlmAvatarFallback class="text-[10px]">{{ initialsOf(row.name) }}</span>
-                  </hlm-avatar>
-                </div>
-                <div hlmItemContent class="min-w-0 gap-0.5">
-                  <div class="flex flex-wrap items-center gap-1.5">
-                    <span hlmItemTitle class="truncate">{{ row.name }}</span>
-                    @if (row.role) {
-                      <span hlmBadge variant="secondary">{{ row.role }}</span>
+              <li>
+                @if (!$first) {
+                  <hlm-item-separator class="my-0" />
+                }
+                <div
+                  hlmItem
+                  size="sm"
+                  class="@container"
+                  data-testid="organization-team-members-row"
+                >
+                  <div hlmItemMedia>
+                    <hlm-avatar size="sm" class="shrink-0">
+                      @if (row.avatarUrl; as avatarUrl) {
+                        <img hlmAvatarImage [src]="avatarUrl" alt="" />
+                      }
+                      <span hlmAvatarFallback class="text-[10px]">{{ initialsOf(row.name) }}</span>
+                    </hlm-avatar>
+                  </div>
+                  <div hlmItemContent class="min-w-0 gap-0.5">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <span hlmItemTitle class="truncate">{{ row.name }}</span>
+                      @if (row.role) {
+                        <span hlmBadge variant="secondary">{{ row.role }}</span>
+                      }
+                    </div>
+                    @if (row.email) {
+                      <span hlmItemDescription class="truncate">{{ row.email }}</span>
                     }
                   </div>
-                  @if (row.email) {
-                    <span hlmItemDescription class="truncate">{{ row.email }}</span>
-                  }
-                </div>
 
-                <div hlmItemActions class="shrink-0 gap-2">
-                  <span class="hidden text-xs text-muted-foreground @sm:inline">
-                    {{ row.addedAt | appOrgDate: 'date' : regionalFormatting() }}
-                  </span>
-                  @if (canWrite()) {
-                    <button
-                      hlmBtn
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
-                      data-testid="organization-team-members-row-remove"
-                      [disabled]="isRemovingMember()"
-                      [attr.aria-label]="removeLabel(row.name)"
-                      [hlmTooltip]="removeLabel(row.name)"
-                      (click)="memberRemoveRequested.emit(row.memberId)"
-                    >
-                      <ng-icon name="lucideTrash2" aria-hidden="true" />
-                    </button>
-                  }
+                  <div hlmItemActions class="shrink-0 gap-2">
+                    <span class="hidden text-xs text-muted-foreground @sm:inline">
+                      {{ row.addedAt | appOrgDate: 'date' : regionalFormatting() }}
+                    </span>
+                    @if (canWrite()) {
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        class="mobile-ui:size-11 mobile-ui:min-h-11 mobile-ui:min-w-11"
+                        data-testid="organization-team-members-row-remove"
+                        [disabled]="isRemovingMember()"
+                        [attr.aria-label]="removeLabel(row.name)"
+                        [hlmTooltip]="removeLabel(row.name)"
+                        (click)="memberRemoveRequested.emit(row.memberId)"
+                      >
+                        <ng-icon name="lucideTrash2" aria-hidden="true" />
+                      </button>
+                    }
+                  </div>
                 </div>
-              </div>
+              </li>
             }
-          </div>
+          </ul>
         }
 
         @if (canWrite()) {

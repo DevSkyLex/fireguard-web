@@ -243,13 +243,15 @@ export class FacilityService extends HydraApiService {
    * @since 4.5.0
    *
    * @param {string} interventionId - The intervention to scope the query to.
-   * @param {FacilityListOptions & { readonly recordStatus?: FacilityOutput['recordStatus'] }} [options] - Optional pagination, search, filters and record status.
+   * @param {FacilityListOptions & { readonly recordStatus?: NonNullable<FacilityOutput['recordStatus']> }} [options] - Optional pagination, search, filters and record status.
    *
    * @returns {Observable<HydraCollection<FacilityOutput>>} An observable emitting the linked facilities.
    */
   public listByIntervention(
     interventionId: string,
-    options?: FacilityListOptions & { readonly recordStatus?: FacilityOutput['recordStatus'] },
+    options?: FacilityListOptions & {
+      readonly recordStatus?: NonNullable<FacilityOutput['recordStatus']>;
+    },
   ): Observable<HydraCollection<FacilityOutput>> {
     return this.getCollection<FacilityOutput>('/api/facilities', {
       page: options?.page,

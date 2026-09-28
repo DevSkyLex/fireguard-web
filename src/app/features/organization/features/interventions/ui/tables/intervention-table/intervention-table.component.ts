@@ -898,7 +898,7 @@ export class InterventionTable {
     if (parts.length === 0) return '?';
 
     const first: string = (parts[0] ?? '').charAt(0);
-    const last: string = parts.length > 1 ? (parts[parts.length - 1] ?? '').charAt(0) : '';
+    const last: string = parts.length > 1 ? (parts.at(-1) ?? '').charAt(0) : '';
 
     return `${first}${last}`.toUpperCase();
   }

@@ -88,6 +88,8 @@ async function render(
 }
 
 describe('DashboardLayout', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   it('renders mobile-only feature actions without requiring desktop header tools', async () => {
     const fixture = await render([
       {
@@ -108,8 +110,6 @@ describe('DashboardLayout', () => {
     const drawer = document.querySelector('[data-testid="dashboard-mobile-actions-drawer"]');
     expect(drawer?.querySelector('#presentation-stub')?.textContent).toBe('menu');
   });
-
-  afterEach(() => vi.unstubAllGlobals());
 
   it('hides back navigation on mobile roots and restores it on their detail routes', async () => {
     const fixture = await render([

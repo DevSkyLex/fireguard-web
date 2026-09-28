@@ -8,6 +8,26 @@ Separate request-scoped server rendering, hydration and later browser navigation
 
 A route request is rendered before browser hydration. Only an approved route-critical query participates in server loading; secondary reads start in their owned browser lifecycle.
 
+```mermaid
+---
+config:
+  sequence:
+    wrap: true
+---
+sequenceDiagram
+  participant Browser
+  participant SSR as SSR host
+  participant API
+  Browser->>SSR: Request route
+  SSR->>SSR: Resolve public runtime configuration
+  opt Approved route-critical server query
+    SSR->>API: Request-scoped authorized query
+    API-->>SSR: Route data
+  end
+  SSR-->>Browser: HTML and approved targeted handoff
+  Browser->>Browser: Hydrate existing route
+  Browser->>API: Browser-only secondary queries when needed
+```
 
 Resolvers load only route-critical data and seed the owner, use an explicit targeted
 handoff, or provide the query's sole loading path. A page must not immediately repeat

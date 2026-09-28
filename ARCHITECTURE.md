@@ -230,6 +230,18 @@ The frontend is organized into five top-level responsibilities under `src/app`.
 
 Solid arrows are allowed imports toward a lower layer or public feature API. The dashed edge is the narrowly approved shared-to-owner port contract; it does not permit importing feature implementation.
 
+```mermaid
+flowchart TD
+  App["App composition"] --> Core["Core infrastructure"]
+  App --> Layouts["Layouts"]
+  App --> Features["Business features"]
+  Layouts -->|"public widgets and published ports"| Features
+  Layouts --> Core
+  Features --> Core
+  Features --> Shared["Generic shared primitives"]
+  Layouts --> Shared
+  Shared -.->|"owner-published port contracts only"| Ports["Owned ports"]
+```
 
 Arrows describe allowed imports, not runtime invocation. Approved sibling/nested
 feature public APIs and core-owned ports retain the detailed rules below.

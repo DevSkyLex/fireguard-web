@@ -8,6 +8,18 @@ This runtime view places the frontend in the FireGuard system. It describes requ
 
 Arrows show runtime requests, storage ownership and realtime delivery. Database/cache/storage access stays behind the API; the web client owns only its browser state and local drafts.
 
+```mermaid
+flowchart LR
+  Browser["Browser and local IndexedDB"] --> SSR["Angular SSR host"]
+  Browser -->|"authorized HTTP"| API["FireGuard API"]
+  SSR -->|"request-scoped HTTP when required"| API
+  API --> Auth["Auth PostgreSQL"]
+  API --> Main["Main PostgreSQL"]
+  API --> Storage["Configured object storage"]
+  API --> Cache["Shared cache and transports"]
+  API --> Hub["Mercure hub"]
+  Hub -->|"private SSE invalidations"| Browser
+```
 
 The browser owns device-local drafts and replay queues. The API authorizes durable
 business operations; Mercure signals changes and does not replace authorized HTTP

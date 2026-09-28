@@ -8,6 +8,30 @@ Direct conversations and organization channels share message infrastructure. Rec
 
 The sender receives a persistence confirmation first. A different browser loads the message before acknowledging delivery, and advances its read position only after the visible thread catches up.
 
+```mermaid
+---
+config:
+  sequence:
+    wrap: true
+---
+sequenceDiagram
+  participant Sender
+  participant API
+  participant Hub as Mercure
+  participant Recipient
+  Sender->>API: Send message with stable client identity
+  API-->>Sender: Confirm durable message
+  API->>Hub: Private conversation invalidation
+  Hub-->>Recipient: Change notification
+  Recipient->>API: Authorized message refresh
+  API-->>Recipient: Message collection
+  Recipient->>API: Acknowledge another member's delivered message
+  opt Visible thread catches up
+    Recipient->>API: Advance read position
+  end
+  API->>Hub: Receipt invalidation
+  Hub-->>Sender: Refresh receipt positions
+```
 
 Sent means a confirmed server message. Received requires an acknowledgement from
 another member's browser after loading it. Seen requires the read position to pass

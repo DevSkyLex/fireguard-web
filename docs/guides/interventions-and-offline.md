@@ -8,6 +8,24 @@ Intervention owns workspace persistence and replay. Offline capability is explic
 
 A durable local operation progresses independently of the server snapshot. Replay confirms it or retains a recoverable failure/conflict; a conflict requires review rather than an unconditional retry.
 
+```mermaid
+stateDiagram-v2
+  [*] --> LocalDraft
+  LocalDraft --> Pending: Persist replay-safe operation
+  Pending --> Sending: Authorized online replay
+  Sending --> Confirmed: Server accepts expected revision
+  Sending --> RetryableFailure: Retryable transport failure
+  Sending --> ReviewRequired: Revision or business conflict
+  note right of RetryableFailure
+    Retry returns the operation to Pending
+    when its contract allows replay.
+  end note
+  note right of ReviewRequired
+    Return to Pending only after review,
+    explicit resolution and required consent.
+  end note
+  Confirmed --> [*]
+```
 
 Keep local drafts when writes fail. Stable operation/client identities preserve
 idempotency; independent revisions protect operational edits and time journals.

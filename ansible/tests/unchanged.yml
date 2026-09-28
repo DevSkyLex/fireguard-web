@@ -1,0 +1,12 @@
+---
+- name: Inspect the existing fixture container ID
+  ansible.builtin.command:
+    argv:
+      [docker, inspect, --format, '{% raw %}{{.Id}}{% endraw %}', '{{ fireguard_container_name }}']
+  register: test_container_id
+  changed_when: false
+
+- name: Require the same existing container
+  ansible.builtin.assert:
+    that:
+      - test_container_id.stdout == (test_inspection.stdout | from_json)[0].Id

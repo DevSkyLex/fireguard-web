@@ -63,7 +63,7 @@ without Basic Auth middleware.
 
 1. `CI` checks pull requests and pushes to `main` and `develop`. Pushes and manual runs on these branches analyze their SonarQube project and wait for its quality gate.
 2. `Docker Image` publishes the `sha-*` image and updates `latest` or `develop` after a push whose CI and SonarQube checks passed for that commit. Manual CI diagnostics do not publish automatically. A manual publication must find a valid CI run for the requested commit.
-3. `Deploy VPS` checks the repository, OCI revision, branch-specific SonarQube result, and digest before accessing the VPS. It then selects the GitHub environment from the branch, checks for at least 2.5 GiB of available memory and 10 GiB of free disk space, and validates the Compose configuration.
+3. `Deploy VPS` checks the repository, OCI revision, branch-specific SonarQube result, and digest before accessing the VPS. It selects the GitHub environment from the branch and runs `ansible/deploy.yml` over SSH using pinned controller dependencies. The playbook checks for at least 2.5 GiB of available memory and 10 GiB of free disk space, validates the existing container identity and Compose configuration, then applies the verified image.
 4. The container must become healthy. The public check follows redirects, verifies Basic Auth in development, and confirms the presence of `noindex`.
 
 The repository variables `SONAR_READY_MAIN` and `SONAR_READY_DEVELOP` must
@@ -72,10 +72,49 @@ explicitly be set to `true` after the initial analyses are validated. See
 blocks delivery; a `develop` result never validates production. GitHub
 `production`/`development` protections remain tied to `main`/`develop`.
 
+## Ansible deployment
+
+Ansible runs on the GitHub Actions runner. The VPS keeps its existing application
+directories, Docker projects, container names, port and external Traefik network.
+The production container remains `fireguard-web`; the development container remains
+`fireguard-dev-front`. No Docker, Traefik or DNS provisioning is performed.
+
+The GitHub environment variables remain the deployment contract. Before writing
+files, the playbook rejects an existing container whose Compose project or working
+directory differs from that contract. It does not remove a conflicting container.
+It copies the image source's Compose files into `VPS_APP_DIR` and renders the existing
+`.env` there with mode `0600`, preserving literal dollar signs in Basic Auth hashes
+and runtime values. Secret-bearing tasks disable output and diffs.
+
+Registry credentials are isolated in a temporary Docker configuration directory and
+removed even if deployment fails. SSH credentials and inventory are also temporary
+runner files. Docker Compose waits for container health, followed by the existing
+public HTTP checks. As with the previous deployment, replacing the single container
+can cause a brief interruption; this is not a zero-downtime deployment.
+
+`CI` includes a real isolated Compose deployment test for production and development.
+It verifies runtime configuration, Basic Auth/noindex labels, repeated deployment
+without replacing the existing container, and rejection of a conflicting project,
+directory or mutable image. The fixture uses a public image and disables Traefik
+exposure; it neither uses VPS secrets nor contacts the VPS.
+
+Run this validation locally on a Linux Docker host (including Docker Desktop):
+
+```sh
+docker build -t fireguard-web-ansible-tests -f ansible/tests/Dockerfile .
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$PWD:/workspace:ro" \
+  -e ANSIBLE_ROLES_PATH=/workspace/ansible/roles \
+  fireguard-web-ansible-tests \
+  sh -eu -c 'ansible-playbook --syntax-check -i "fireguard_vps," ansible/deploy.yml; ansible-playbook -i "localhost," ansible/tests/deploy.yml'
+```
+
 ## VPS prerequisites
 
 - Docker Engine and the Docker Compose plugin
 - SSH access from GitHub Actions
+- Python 3.9 or newer at `/usr/bin/python3` for Ansible modules
 - External `traefik_proxy` network
 - Traefik with the `websecure` entrypoint and `letsencrypt` resolver
 - DNS A records pointing the domains to the VPS
@@ -90,3 +129,7 @@ Leave `source_run_id` empty for a manual rollback. The image must have provenanc
 labels, and its commit must have passed CI and SonarQube on the environment's
 branch. The workflow checks the latest applicable attempt and deploys the
 verified digest; images without validation evidence are rejected.
+
+The workflow checks out its current commit for Ansible tooling and the verified
+image's commit separately for Compose files. Rollback therefore also works with
+images published before Ansible was added, using their original Compose definition.

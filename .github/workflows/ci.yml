@@ -37,6 +37,23 @@ jobs:
       - name: Test deployment validation
         run: node --test .github/scripts/*.test.mjs
 
+  deployment-validation:
+    name: Ansible Deployment Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the pinned Ansible test controller
+        run: docker build -t fireguard-web-ansible-tests -f ansible/tests/Dockerfile .
+      - name: Validate playbook syntax and isolated Compose deployment
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" \
+            -e ANSIBLE_ROLES_PATH=/workspace/ansible/roles \
+            fireguard-web-ansible-tests \
+            sh -eu -c 'ansible-playbook --syntax-check -i "fireguard_vps," ansible/deploy.yml; ansible-playbook -i "localhost," ansible/tests/deploy.yml'
+
   # ==========================================================================
   # Code Style Check
   # ==========================================================================

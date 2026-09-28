@@ -1,0 +1,194 @@
+---
+- name: Validate the deployment identity and immutable image
+  ansible.builtin.assert:
+    that:
+      - fireguard_environment in ['development', 'production']
+      - fireguard_app_dir is match('^/[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)+$')
+      - "'/../' not in fireguard_app_dir and '/./' not in fireguard_app_dir"
+      - fireguard_app_dir.split('/')[-1] not in ['.', '..']
+      - fireguard_project_name is match('^[a-z0-9][a-z0-9_-]+$')
+      - fireguard_container_name is match('^[a-zA-Z0-9][a-zA-Z0-9_.-]+$')
+      - fireguard_router_name is match('^[a-zA-Z0-9][a-zA-Z0-9_.-]+$')
+      - fireguard_image is match('^[a-z0-9][a-z0-9._/:+-]+@sha256:[a-f0-9]{64}$')
+      - fireguard_app_port is match('^[0-9]+$')
+      - fireguard_app_port | int > 0 and fireguard_app_port | int < 65536
+      - fireguard_maintenance in ['true', 'false']
+    fail_msg: Invalid deployment identity, directory, port, or immutable image.
+
+- name: Validate public runtime configuration
+  ansible.builtin.assert:
+    that:
+      - item | length > 0
+      - "'\n' not in item and '\r' not in item"
+    fail_msg: Runtime configuration must contain nonempty single-line values.
+  loop:
+    - '{{ fireguard_app_host }}'
+    - '{{ fireguard_api_url }}'
+    - '{{ fireguard_mercure_url }}'
+    - '{{ fireguard_app_name }}'
+
+- name: Validate development authentication
+  ansible.builtin.assert:
+    that:
+      - fireguard_basic_auth_users | length > 0
+      - "'\n' not in fireguard_basic_auth_users and '\r' not in fireguard_basic_auth_users"
+    fail_msg: Development requires single-line Basic Auth users.
+  when: fireguard_environment == 'development'
+  no_log: true
+
+- name: Validate private registry credentials
+  ansible.builtin.assert:
+    that:
+      - fireguard_ghcr_username | length > 0
+      - fireguard_ghcr_token | length > 0
+    fail_msg: GHCR credentials are required for this verified image.
+  when: fireguard_uses_ghcr
+  no_log: true
+
+- name: Validate Docker Compose is available
+  ansible.builtin.command:
+    argv: [docker, compose, version]
+  changed_when: false
+
+- name: Validate the existing Traefik network
+  ansible.builtin.command:
+    argv: [docker, network, inspect, traefik_proxy, --format, '{% raw %}{{.Name}}{% endraw %}']
+  changed_when: false
+
+- name: Validate VPS capacity
+  ansible.builtin.shell: |
+    set -eu
+    available_kib=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)
+    free_kib=$(df -Pk /srv | awk 'NR==2 {print $4}')
+    test "$available_kib" -ge 2621440
+    test "$free_kib" -ge 10485760
+  changed_when: false
+
+- name: Inspect only the existing container identity
+  ansible.builtin.command:
+    argv:
+      - docker
+      - ps
+      - --all
+      - --filter
+      - 'name=^/{{ fireguard_container_name }}$'
+      - --format
+      - '{% raw %}{{.Label "com.docker.compose.project"}}|{{.Label "com.docker.compose.project.working_dir"}}{% endraw %}'
+  register: fireguard_existing_identity
+  changed_when: false
+
+- name: Refuse a different existing project or installation directory
+  ansible.builtin.assert:
+    that:
+      - fireguard_existing_identity.stdout == '' or fireguard_existing_identity.stdout == fireguard_project_name + '|' + fireguard_app_dir
+    fail_msg: Existing container belongs to a different project or directory; refusing migration.
+
+- name: Report the validated installation identity
+  ansible.builtin.debug:
+    msg:
+      environment: '{{ fireguard_environment }}'
+      directory: '{{ fireguard_app_dir }}'
+      project: '{{ fireguard_project_name }}'
+      container: '{{ fireguard_container_name }}'
+      image: '{{ fireguard_image }}'
+
+- name: Ensure the configured application directory exists
+  ansible.builtin.file:
+    path: '{{ fireguard_app_dir }}'
+    state: directory
+    mode: '0755'
+
+- name: Copy the verified image source Compose files
+  ansible.builtin.copy:
+    src: '{{ fireguard_compose_source_dir }}/{{ item }}'
+    dest: '{{ fireguard_app_dir }}/{{ item }}'
+    mode: '0644'
+  loop: "{{ ['docker-compose.prod.yml', 'docker-compose.dev.yml'] if fireguard_environment == 'development' else ['docker-compose.prod.yml'] }}"
+
+- name: Render the existing runtime configuration file
+  ansible.builtin.template:
+    src: runtime-config.j2
+    dest: '{{ fireguard_app_dir }}/.env'
+    mode: '0600'
+  no_log: true
+  diff: false
+
+- name: Create a temporary registry authentication directory
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: fireguard-web-registry-
+  register: fireguard_registry_dir
+
+- name: Apply the verified image to the existing Compose project
+  block:
+    - name: Authenticate to GHCR with isolated temporary credentials
+      ansible.builtin.command:
+        argv:
+          [docker, login, ghcr.io, --username, '{{ fireguard_ghcr_username }}', --password-stdin]
+        stdin: '{{ fireguard_ghcr_token }}'
+      environment:
+        DOCKER_CONFIG: '{{ fireguard_registry_dir.path }}'
+      when: fireguard_uses_ghcr
+      changed_when: false
+      no_log: true
+
+    - name: Validate the resolved Compose configuration
+      ansible.builtin.command:
+        argv: '{{ fireguard_compose_argv + ["config", "--quiet"] }}'
+        chdir: '{{ fireguard_app_dir }}'
+      changed_when: false
+      no_log: true
+
+    - name: Pull and start the verified image, then wait for health
+      community.docker.docker_compose_v2:
+        project_src: '{{ fireguard_app_dir }}'
+        project_name: '{{ fireguard_project_name }}'
+        files: '{{ fireguard_compose_files }}'
+        state: present
+        pull: always
+        recreate: auto
+        remove_orphans: true
+        wait: true
+        wait_timeout: 150
+      environment:
+        DOCKER_CONFIG: '{{ fireguard_registry_dir.path }}'
+      no_log: true
+
+    - name: Require an actual healthy container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - inspect
+          - --format
+          - '{% raw %}{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}{% endraw %}'
+          - '{{ fireguard_container_name }}'
+      register: fireguard_container_health
+      changed_when: false
+      failed_when: fireguard_container_health.stdout != 'healthy'
+
+  rescue:
+    - name: Inspect only container state after a failed deployment
+      ansible.builtin.command:
+        argv:
+          - docker
+          - inspect
+          - --format
+          - '{% raw %}{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}{% endraw %}'
+          - '{{ fireguard_container_name }}'
+      register: fireguard_failed_container_state
+      changed_when: false
+      failed_when: false
+
+    - name: Report the container state without runtime configuration or credentials
+      ansible.builtin.debug:
+        msg: "Container state: {{ fireguard_failed_container_state.stdout | default('missing', true) }}"
+
+    - name: Keep a failed deployment unsuccessful
+      ansible.builtin.fail:
+        msg: Compose deployment or container health verification failed.
+
+  always:
+    - name: Remove the temporary registry credentials
+      ansible.builtin.file:
+        path: '{{ fireguard_registry_dir.path }}'
+        state: absent

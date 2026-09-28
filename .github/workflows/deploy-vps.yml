@@ -108,179 +108,100 @@ jobs:
       CONTAINER_NAME: ${{ vars.DOCKER_CONTAINER_NAME }}
       TRAEFIK_ROUTER_NAME: ${{ vars.TRAEFIK_ROUTER_NAME }}
       BASIC_AUTH_USERS: ${{ secrets.BASIC_AUTH_USERS }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_PORT: ${{ vars.VPS_PORT || '22' }}
 
     steps:
       - name: Validate deploy configuration
         shell: bash
+        env:
+          BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
         run: |
           case "$GITHUB_REF_NAME" in
             main|develop) ;;
             *) echo "Unsupported deployment branch: $GITHUB_REF_NAME"; exit 1 ;;
           esac
 
-          for value in APP_DIR APP_HOST APP_API_URL APP_MERCURE_HUB_URL COMPOSE_PROJECT_NAME CONTAINER_NAME TRAEFIK_ROUTER_NAME; do
+          for value in APP_DIR APP_HOST APP_API_URL APP_MERCURE_HUB_URL COMPOSE_PROJECT_NAME CONTAINER_NAME TRAEFIK_ROUTER_NAME VPS_HOST VPS_USER VPS_SSH_KEY; do
             test -n "${!value}" || { echo "$value is required."; exit 1; }
           done
 
-          test -n "${{ secrets.VPS_HOST }}" || { echo "VPS_HOST secret is required."; exit 1; }
-          test -n "${{ secrets.VPS_USER }}" || { echo "VPS_USER secret is required."; exit 1; }
-          test -n "${{ secrets.VPS_SSH_KEY }}" || { echo "VPS_SSH_KEY secret is required."; exit 1; }
-
           if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
             test -n "$BASIC_AUTH_USERS" || { echo "BASIC_AUTH_USERS secret is required for development."; exit 1; }
-            test -n "${{ secrets.BASIC_AUTH_CREDENTIALS }}" || { echo "BASIC_AUTH_CREDENTIALS secret is required for development checks."; exit 1; }
+            test -n "$BASIC_AUTH_CREDENTIALS" || { echo "BASIC_AUTH_CREDENTIALS secret is required for development checks."; exit 1; }
           fi
 
-      - name: Checkout repository
+      - name: Checkout current deployment tooling
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: deployment
+
+      - name: Checkout verified image source Compose files
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.guard.outputs.source-sha }}
+          path: image-source
 
-      - name: Prepare image reference
-        id: image
-        shell: bash
-        env:
-          VERIFIED_IMAGE_REF: ${{ needs.guard.outputs.image-ref }}
+      - name: Set up Ansible controller Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned Ansible dependencies
         run: |
-          echo "image_ref=${VERIFIED_IMAGE_REF}" >> "$GITHUB_OUTPUT"
+          python -m pip install -r deployment/ansible/requirements.txt
+          ansible-galaxy collection install -r deployment/ansible/requirements.yml
 
-      - name: Check VPS capacity and Docker projects
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ vars.VPS_PORT || '22' }}
-          script: |
-            set -eu
-            available_kib=$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)
-            free_kib=$(df -Pk /srv | awk 'NR==2 {print $4}')
-            test "$available_kib" -ge 2621440 || { echo "At least 2.5 GiB of available memory is required."; exit 1; }
-            test "$free_kib" -ge 10485760 || { echo "At least 10 GiB of free disk is required."; exit 1; }
-            docker compose ls
-            docker network inspect traefik_proxy >/dev/null
+      - name: Prepare SSH and Ansible inventory
+        shell: bash
+        run: |
+          directory="$RUNNER_TEMP/fireguard-web-ansible"
+          mkdir -p "$directory"
+          chmod 700 "$directory"
+          printf '%s\n' "$VPS_SSH_KEY" > "$directory/private-key"
+          chmod 600 "$directory/private-key"
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
 
-      - name: Prepare remote directory
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ vars.VPS_PORT || '22' }}
-          script: mkdir -p "${{ env.APP_DIR }}"
+          host = os.environ["VPS_HOST"]
+          user = os.environ["VPS_USER"]
+          port = os.environ["VPS_PORT"]
+          if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9.:-]*", host):
+              raise SystemExit("Invalid VPS host")
+          if not re.fullmatch(r"[a-z_][a-z0-9_-]*", user):
+              raise SystemExit("Invalid VPS user")
+          if not port.isdecimal() or not 1 <= int(port) <= 65535:
+              raise SystemExit("Invalid VPS port")
+          directory = pathlib.Path(os.environ["RUNNER_TEMP"]) / "fireguard-web-ansible"
+          inventory = {"all": {"children": {"fireguard_vps": {"hosts": {"vps": {
+              "ansible_host": host,
+              "ansible_user": user,
+              "ansible_port": int(port),
+              "ansible_python_interpreter": "/usr/bin/python3",
+              "ansible_ssh_private_key_file": str(directory / "private-key"),
+              "ansible_ssh_common_args": f"-o UserKnownHostsFile={directory / 'known_hosts'} -o StrictHostKeyChecking=yes",
+          }}}}}}
+          (directory / "inventory.json").write_text(json.dumps(inventory))
+          PY
+          ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" > "$directory/known_hosts"
 
-      - name: Upload Docker Compose files
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ vars.VPS_PORT || '22' }}
-          source: docker-compose.prod.yml,docker-compose.dev.yml
-          target: ${{ env.APP_DIR }}
-
-      - name: Deploy application
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Deploy the verified image with Ansible
         env:
-          DEPLOY_ENVIRONMENT: ${{ env.DEPLOY_ENVIRONMENT }}
-          APP_DIR: ${{ env.APP_DIR }}
-          APP_HOST: ${{ env.APP_HOST }}
-          APP_PORT: ${{ env.APP_PORT }}
-          APP_API_URL: ${{ env.APP_API_URL }}
-          APP_MERCURE_HUB_URL: ${{ env.APP_MERCURE_HUB_URL }}
-          APP_NAME: ${{ env.APP_NAME }}
-          APP_MAINTENANCE: ${{ env.APP_MAINTENANCE }}
-          COMPOSE_PROJECT_NAME: ${{ env.COMPOSE_PROJECT_NAME }}
-          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
-          TRAEFIK_ROUTER_NAME: ${{ env.TRAEFIK_ROUTER_NAME }}
-          BASIC_AUTH_USERS: ${{ env.BASIC_AUTH_USERS }}
+          IMAGE_REF: ${{ needs.guard.outputs.image-ref }}
           GHCR_USERNAME: ${{ vars.GHCR_USERNAME || github.actor }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || github.token }}
-          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ vars.VPS_PORT || '22' }}
-          envs: DEPLOY_ENVIRONMENT,APP_DIR,APP_HOST,APP_PORT,APP_API_URL,APP_MERCURE_HUB_URL,APP_NAME,APP_MAINTENANCE,COMPOSE_PROJECT_NAME,CONTAINER_NAME,TRAEFIK_ROUTER_NAME,BASIC_AUTH_USERS,GHCR_USERNAME,GHCR_TOKEN,IMAGE_REF
-          script: |
-            set -eu
-            mkdir -p "$APP_DIR"
+          COMPOSE_SOURCE_DIR: ${{ github.workspace }}/image-source
+        run: ansible-playbook -i "$RUNNER_TEMP/fireguard-web-ansible/inventory.json" deployment/ansible/deploy.yml
 
-            if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
-              compose_files="-f docker-compose.prod.yml -f docker-compose.dev.yml"
-              secure_middlewares="${TRAEFIK_ROUTER_NAME}-security,${TRAEFIK_ROUTER_NAME}-auth,${TRAEFIK_ROUTER_NAME}-noindex"
-              basic_auth_users=$(printf '%s' "$BASIC_AUTH_USERS" | sed 's/\$/$$/g')
-            else
-              compose_files="-f docker-compose.prod.yml"
-              secure_middlewares="${TRAEFIK_ROUTER_NAME}-security"
-              basic_auth_users=""
-            fi
-
-            cat > "$APP_DIR/.env" <<EOF
-            IMAGE_REF=$IMAGE_REF
-            APP_HOST=$APP_HOST
-            APP_PORT=$APP_PORT
-            APP_API_URL=$APP_API_URL
-            APP_MERCURE_HUB_URL=$APP_MERCURE_HUB_URL
-            APP_NAME=$APP_NAME
-            APP_MAINTENANCE=$APP_MAINTENANCE
-            COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME
-            CONTAINER_NAME=$CONTAINER_NAME
-            TRAEFIK_ROUTER_NAME=$TRAEFIK_ROUTER_NAME
-            TRAEFIK_SECURE_MIDDLEWARES=$secure_middlewares
-            BASIC_AUTH_USERS=$basic_auth_users
-            EOF
-
-            cd "$APP_DIR"
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            docker compose $compose_files config --quiet
-
-            existing_project=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$CONTAINER_NAME" 2>/dev/null || true)
-            if [ -n "$existing_project" ] && [ "$existing_project" != "$COMPOSE_PROJECT_NAME" ]; then
-              docker rm -f "$CONTAINER_NAME"
-            fi
-
-            docker compose $compose_files pull
-            docker compose $compose_files up -d --remove-orphans
-            docker compose $compose_files ps
-            docker logout ghcr.io
-
-      - name: Wait for the container to become healthy
-        uses: appleboy/ssh-action@v1.2.0
-        env:
-          DEPLOY_ENVIRONMENT: ${{ env.DEPLOY_ENVIRONMENT }}
-          APP_DIR: ${{ env.APP_DIR }}
-          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ vars.VPS_PORT || '22' }}
-          envs: DEPLOY_ENVIRONMENT,APP_DIR,CONTAINER_NAME
-          script: |
-            set -eu
-            cd "$APP_DIR"
-            if [ "$DEPLOY_ENVIRONMENT" = "development" ]; then
-              compose_files="-f docker-compose.prod.yml -f docker-compose.dev.yml"
-            else
-              compose_files="-f docker-compose.prod.yml"
-            fi
-
-            attempt=1
-            while [ "$attempt" -le 30 ]; do
-              status=$(docker inspect --format '{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo missing)
-              if [ "$status" = "healthy" ]; then
-                echo "container healthy after ${attempt} attempt(s)"
-                exit 0
-              fi
-              echo "attempt ${attempt}/30: ${status}"
-              attempt=$((attempt + 1))
-              sleep 5
-            done
-
-            docker compose $compose_files logs --tail=200 --no-color || true
-            exit 1
+      - name: Remove temporary SSH credentials
+        if: ${{ always() }}
+        run: rm -rf "$RUNNER_TEMP/fireguard-web-ansible"
 
       - name: Verify the site publicly
         shell: bash

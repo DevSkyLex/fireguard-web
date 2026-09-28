@@ -1,5 +1,7 @@
 # Automations
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/architecture/patterns-and-examples.md).
+
 Owns organization execution history and explicit recovery at `/organizations/:organizationId/automations`.
 The existing automation policy editor remains in organization settings. The backend owns enabled
 policy, outcome totals and retry capabilities; reads require `organization.automation.read` and

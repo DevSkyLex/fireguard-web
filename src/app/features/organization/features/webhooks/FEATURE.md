@@ -1,5 +1,7 @@
 # Organization webhooks
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/architecture/patterns-and-examples.md).
+
 Owns `/organizations/:organizationId/integrations/webhooks`: subscriptions, event selection,
 one-time signing secrets, tests and delivery history. The `integrations` URL segment groups
 organization integrations; it does not introduce a second owner or data loading path.

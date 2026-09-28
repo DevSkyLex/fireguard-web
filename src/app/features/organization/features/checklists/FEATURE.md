@@ -1,5 +1,7 @@
 # Checklists Feature
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/architecture/patterns-and-examples.md).
+
 ## Purpose
 
 Owns organization-scoped checklist template data and the checklist template library page.

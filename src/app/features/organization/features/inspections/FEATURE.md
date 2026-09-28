@@ -1,5 +1,7 @@
 # Inspections Feature
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/architecture/patterns-and-examples.md).
+
 ## Adaptive inspection interface
 
 The central interaction-capabilities contract controls mobile cards, touch targets and bottom-sheet
@@ -67,7 +69,9 @@ stays the single loading path for the record — the page never re-fetches it.
 The API delete operation represents cancellation and is exposed as such in
 the UI.
 
-## UI (this pass)
+<a id="ui-this-pass"></a>
+
+## UI
 
 - `ui/pages/inspections-page` (`InspectionsPage`) — an `hlmTable` of the
   organization's inspections (`InspectionTable`), a URL-synced search box

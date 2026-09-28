@@ -1,5 +1,7 @@
 # Dashboard layout
 
+**Reading guide:** [Documentation index](../../../../docs/README.md) · [Related guide](../../../../docs/architecture/patterns-and-examples.md).
+
 The shell composes feature-owned widgets through public slot factories. It owns
 geometry and responsive presentation, never domain stores, routes or workflows.
 

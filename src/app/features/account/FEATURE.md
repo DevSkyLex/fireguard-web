@@ -1,5 +1,7 @@
 # Account Feature
 
+**Reading guide:** [Documentation index](../../../../docs/README.md) · [Related guide](../../../../docs/guides/organization-and-access.md).
+
 Invisible is an account-wide persisted preference synchronized through
 the same revisioned private stream. Enabling Invisible disables NPD and vice versa in one write. The account
 menu opens the presence submenu from its identity header, with colored Active/NPD/Invisible choices. Each selection applies that mode directly and closes

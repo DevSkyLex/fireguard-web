@@ -1,5 +1,7 @@
 # Audit Feature
 
+**Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/architecture/patterns-and-examples.md).
+
 ## Purpose
 
 Owns the organization audit journal: a read-only, server-paginated view over

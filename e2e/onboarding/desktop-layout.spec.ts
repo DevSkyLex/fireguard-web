@@ -211,11 +211,38 @@ for (const viewport of [
             await onboarding.facilityNameInput.fill('North logistics and maintenance center');
             await onboarding.chooseFacilityAddress();
             await onboarding.facilityAddButton.click();
-            if (PHASE !== 'before')
+            if (PHASE !== 'before') {
+              await expect(onboarding.facilitiesStaged).toContainText(
+                'North logistics and maintenance center',
+              );
+              await expect(onboarding.facilityNameInput).toHaveValue('');
+              await expect(page.locator('hlm-combobox-content')).toHaveCount(0);
+              // The empty required draft is invalid; reset clears interaction and visible errors.
+              await expect(onboarding.facilityNameInput).toHaveAttribute('aria-invalid', 'true');
               await expect(onboarding.facilityNameInput).not.toHaveAttribute(
-                'aria-invalid',
+                'data-touched',
                 'true',
               );
+              await expect(onboarding.facilityNameInput).not.toHaveAttribute('data-dirty', 'true');
+              await expect(onboarding.facilityNameInput).not.toHaveAttribute(
+                'data-matches-spartan-invalid',
+                'true',
+              );
+              await expect(
+                page
+                  .locator('hlm-field')
+                  .filter({ has: onboarding.facilityNameInput })
+                  .locator('hlm-field-error'),
+              ).toBeHidden();
+              await expect(onboarding.facilityAddressInput).toHaveValue('');
+              await expect(onboarding.facilityAddressInput).not.toHaveAttribute(
+                'data-touched',
+                'true',
+              );
+              await expect(
+                page.locator('app-onboarding-facilities-form hlm-field-error:visible'),
+              ).toHaveCount(0);
+            }
             const prepared = await capture('facility-prepared', field);
             if (PHASE !== 'before') expect(prepared.heading?.y).toBe(layout.heading?.y);
             if (PHASE !== 'before')

@@ -88,7 +88,8 @@ local until their owning feature publishes an approved shared contract.
   with the current/default plan identified and the Stripe exit named before submission.
 - Members and facilities stage compact item rows. A valid current draft is automatically included
   on submit; Add another is needed only for an additional row. Rows can be edited or removed
-  before they are saved. A partial batch retains successful rows, identifies failed rows and
+  before they are saved. Staging clears the next draft's interaction state after picker closure;
+  later edits remain intact. A partial batch retains successful rows, identifies failed rows and
   retries only unsaved entries. Saved rows cannot be edited or removed from the local batch.
 - Invitations and facilities are capped at five per batch and cannot submit an empty batch. An empty member
   draft uses the explicit skip action when available; a required member step needs at least one invitation.

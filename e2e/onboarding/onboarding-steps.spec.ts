@@ -8,6 +8,7 @@ import {
 } from '../support/fixtures/api-fixtures';
 import { equipmentOutput } from '../support/fixtures/equipment-fixtures';
 import { facilityOutput } from '../support/fixtures/facility-fixtures';
+import { setDarkTheme } from '../support/helpers/appearance';
 import { ApiMock } from '../support/mocks/api-mock';
 import { OnboardingPage } from '../support/pages/onboarding.page';
 
@@ -262,3 +263,58 @@ test('requires a suggested address and invalidates it after editing the text', a
   await expect(page.getByText('Select a suggested address.', { exact: true })).toBeVisible();
   await expect(onboarding.facilityAddressInput).toHaveAttribute('aria-invalid', 'true');
 });
+
+for (const dark of [false, true]) {
+  test(`clears the next facility draft after its address suggestions finish closing in ${dark ? 'dark' : 'light'} mode`, async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    if (dark) await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
+    await api.mockOnboarding(
+      onboardingAt('create_first_facility', [
+        'create_organization',
+        'select_plan',
+        'invite_members',
+      ]),
+    );
+    const onboarding = new OnboardingPage(page);
+    await onboarding.goto();
+    await page.addStyleTag({
+      content: `
+        @keyframes e2e-address-close { from { opacity: 1; } to { opacity: 0; } }
+        hlm-combobox-content[data-state="closed"] {
+          animation: e2e-address-close 1s linear !important;
+        }
+      `,
+    });
+    await onboarding.pickFacilityType('Site');
+    await onboarding.facilityNameInput.fill('Main warehouse');
+    await onboarding.chooseFacilityAddress();
+    await expect(page.locator('hlm-combobox-content')).toBeAttached();
+    await expect(onboarding.facilityAddButton).toBeEnabled();
+    await onboarding.facilityAddButton.focus();
+    await expect(onboarding.facilityAddButton).toBeFocused();
+    await onboarding.facilityAddButton.press('Enter');
+    await expect(onboarding.facilitiesStaged).toContainText('Main warehouse');
+    await expect(page.locator('hlm-combobox-content')).toBeAttached();
+    await expect(page.locator('hlm-combobox-content')).toHaveCount(0);
+    await expect(onboarding.facilityNameInput).toHaveValue('');
+    await expect(onboarding.facilityAddressInput).toHaveValue('');
+    await expect(onboarding.facilityAddressInput).not.toHaveAttribute('data-touched', 'true');
+    await expect(
+      page.locator('app-onboarding-facilities-form hlm-field-error:visible'),
+    ).toHaveCount(0);
+    await page.screenshot({
+      path: `e2e/artifacts/corrections/onboarding-reset/cleared-${dark ? 'dark' : 'light'}.png`,
+      animations: 'disabled',
+    });
+    await onboarding.facilityAddressInput.focus();
+    await onboarding.facilityNameInput.focus();
+    await expect(page.getByText('Select a suggested address.', { exact: true })).toBeVisible();
+  });
+}

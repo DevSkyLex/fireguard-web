@@ -3,8 +3,8 @@
   <desc id="fg-state-no-attachments-light-description">A paperclip resting on the dotted outline of a missing file.</desc>
   <defs>
     <linearGradient id="fg-state-no-attachments-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-state-no-attachments-light { stroke-linecap: round; stroke-linejoin: round; }

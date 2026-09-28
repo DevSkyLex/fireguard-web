@@ -6,7 +6,7 @@
     <linearGradient id="fg-usage-dark-cell0" gradientUnits="userSpaceOnUse" x1="142.3" y1="49.8" x2="104.6" y2="116.2"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.26"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.06"/></linearGradient>
     <linearGradient id="fg-usage-dark-cell1" gradientUnits="userSpaceOnUse" x1="193.3" y1="79.3" x2="155.6" y2="145.7"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.26"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.06"/></linearGradient>
     <linearGradient id="fg-usage-dark-cell2" gradientUnits="userSpaceOnUse" x1="244.4" y1="108.8" x2="206.7" y2="175.1"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.26"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.06"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-usage-dark { stroke-linecap: round; stroke-linejoin: round; }

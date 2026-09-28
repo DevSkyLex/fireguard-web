@@ -4,7 +4,7 @@
   <defs>
     <linearGradient id="fg-state-no-results-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
     <linearGradient id="fg-state-no-results-light-lens" gradientUnits="userSpaceOnUse" x1="200" y1="56.3" x2="200" y2="133.8"><stop offset="0" stop-color="#18181b" stop-opacity="0.045"/><stop offset="1" stop-color="#18181b" stop-opacity="0.03"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-state-no-results-light { stroke-linecap: round; stroke-linejoin: round; }

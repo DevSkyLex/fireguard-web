@@ -3,8 +3,8 @@
   <desc id="fg-invitation-dark-description">An invitation card rising out of an open envelope.</desc>
   <defs>
     <linearGradient id="fg-invitation-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-invitation-dark { stroke-linecap: round; stroke-linejoin: round; }

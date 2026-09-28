@@ -3,8 +3,8 @@
   <desc id="fg-invoice-light-description">A receipt with its total underlined beside a stack of coins.</desc>
   <defs>
     <linearGradient id="fg-invoice-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-invoice-light { stroke-linecap: round; stroke-linejoin: round; }

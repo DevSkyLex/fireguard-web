@@ -3,8 +3,8 @@
   <desc id="fg-state-sync-pending-dark-description">Queued changes stacked inside a two-arrow sync loop.</desc>
   <defs>
     <linearGradient id="fg-state-sync-pending-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-state-sync-pending-dark { stroke-linecap: round; stroke-linejoin: round; }

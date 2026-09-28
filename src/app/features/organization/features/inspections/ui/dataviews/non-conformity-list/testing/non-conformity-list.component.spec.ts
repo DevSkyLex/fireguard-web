@@ -255,11 +255,12 @@ describe('NonConformityList', () => {
   });
 
   it('should show the absolute due date visibly with a muted relative suffix, not the relative form alone', async () => {
-    const dueAt: string = isoDaysFromToday(3);
+    const dueDay: string = isoDaysFromToday(3);
+    const dueAt = `${dueDay}T00:00:00Z`;
     await createList([nonConformity({ dueAt, status: 'open' })]);
 
     const due = root().querySelector('[data-testid="non-conformity-due"]');
-    expect(due?.querySelector('time')?.textContent).toContain(dueAt);
+    expect(due?.querySelector('time')?.textContent).toContain(dueDay);
     expect(due?.textContent).toContain('in 3 days');
   });
 

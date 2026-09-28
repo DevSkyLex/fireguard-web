@@ -4,7 +4,7 @@
   <defs>
     <linearGradient id="fg-device-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
     <linearGradient id="fg-device-dark-screen" gradientUnits="userSpaceOnUse" x1="248.6" y1="61.1" x2="151.4" y2="244.2"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.26"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.05"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-device-dark { stroke-linecap: round; stroke-linejoin: round; }

@@ -4,7 +4,7 @@
   <defs>
     <linearGradient id="fg-intervention-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
     <linearGradient id="fg-intervention-light-needle" gradientUnits="userSpaceOnUse" x1="200" y1="68.7" x2="200" y2="134.6"><stop offset="0" stop-color="#18181b" stop-opacity="0.12"/><stop offset="1" stop-color="#18181b" stop-opacity="0.1"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-intervention-light { stroke-linecap: round; stroke-linejoin: round; }

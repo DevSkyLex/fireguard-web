@@ -190,7 +190,7 @@ describe('AutomationsPage', () => {
     await fixture.whenStable();
     expect(root().querySelector('[role="alert"]')?.textContent).toContain('History unavailable');
     expect(root().textContent).not.toContain('No execution yet');
-    expect(root().querySelector('.rounded-lg.border')).toBeNull();
+    expect(root().querySelector('[hlmItemGroup]')).toBeNull();
     expect(root().querySelector('[data-testid="automation-page-prev"]')).not.toBeNull();
 
     root().querySelector<HTMLButtonElement>('[data-testid="automation-refresh"]')?.click();

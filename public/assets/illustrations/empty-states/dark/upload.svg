@@ -4,7 +4,7 @@
   <defs>
     <linearGradient id="fg-state-upload-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
     <linearGradient id="fg-state-upload-dark-zone" gradientUnits="userSpaceOnUse" x1="179.5" y1="81.9" x2="220.5" y2="295.1"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.22"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.02"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-state-upload-dark { stroke-linecap: round; stroke-linejoin: round; }

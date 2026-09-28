@@ -4,7 +4,7 @@
   <defs>
     <linearGradient id="fg-calendar-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
     <linearGradient id="fg-calendar-dark-slot" gradientUnits="userSpaceOnUse" x1="208.4" y1="156" x2="208.4" y2="193.3"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.26"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.03"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-calendar-dark { stroke-linecap: round; stroke-linejoin: round; }

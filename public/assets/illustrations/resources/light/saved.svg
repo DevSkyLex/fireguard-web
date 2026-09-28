@@ -4,7 +4,7 @@
   <defs>
     <linearGradient id="fg-saved-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
     <linearGradient id="fg-saved-light-mark" gradientUnits="userSpaceOnUse" x1="219" y1="69.1" x2="219" y2="201.7"><stop offset="0" stop-color="#18181b" stop-opacity="0.12"/><stop offset="1" stop-color="#18181b" stop-opacity="0.05"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-saved-light { stroke-linecap: round; stroke-linejoin: round; }

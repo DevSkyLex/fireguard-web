@@ -4,7 +4,7 @@
   <defs>
     <linearGradient id="fg-state-error-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
     <linearGradient id="fg-state-error-dark-crack" gradientUnits="userSpaceOnUse" x1="200" y1="95.6" x2="200" y2="224.4"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.5"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.08"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-state-error-dark { stroke-linecap: round; stroke-linejoin: round; }

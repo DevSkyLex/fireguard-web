@@ -3,8 +3,8 @@
   <desc id="fg-map-dark-description">A folded map with a route and a location marker.</desc>
   <defs>
     <linearGradient id="fg-map-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-map-dark { stroke-linecap: round; stroke-linejoin: round; }

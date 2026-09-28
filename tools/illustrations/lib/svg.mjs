@@ -144,5 +144,5 @@ export function emit(scene, theme, base, title, desc) {
   </style>
   ${body}
 </svg>
-`;
+`.replace(/^[\t ]+$/gm, '');
 }

@@ -3,8 +3,8 @@
   <desc id="fg-channel-light-description">A standing speech bubble with the channel hash engraved on it.</desc>
   <defs>
     <linearGradient id="fg-channel-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-channel-light { stroke-linecap: round; stroke-linejoin: round; }

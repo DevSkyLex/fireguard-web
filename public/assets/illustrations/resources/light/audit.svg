@@ -3,8 +3,8 @@
   <desc id="fg-audit-light-description">An audit register unrolled from its scroll, one entry highlighted.</desc>
   <defs>
     <linearGradient id="fg-audit-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-audit-light { stroke-linecap: round; stroke-linejoin: round; }

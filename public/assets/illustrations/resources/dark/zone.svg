@@ -5,7 +5,7 @@
     <linearGradient id="fg-zone-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
     <linearGradient id="fg-zone-dark-zone-floor" gradientUnits="userSpaceOnUse" x1="291.3" y1="131.8" x2="219.6" y2="266.6"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.26"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.02"/></linearGradient>
     <linearGradient id="fg-zone-dark-zone" gradientUnits="userSpaceOnUse" x1="255.4" y1="143.5" x2="255.4" y2="199.2"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.09"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.02"/></linearGradient>
-    
+
   </defs>
   <style>
     .fg-zone-dark { stroke-linecap: round; stroke-linejoin: round; }

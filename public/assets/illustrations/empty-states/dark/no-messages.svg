@@ -3,8 +3,8 @@
   <desc id="fg-state-no-messages-dark-description">An empty dotted speech bubble behind a small one with no text yet.</desc>
   <defs>
     <linearGradient id="fg-state-no-messages-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-state-no-messages-dark { stroke-linecap: round; stroke-linejoin: round; }

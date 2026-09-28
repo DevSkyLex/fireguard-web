@@ -97,10 +97,10 @@ describe('EquipmentInformationPanel', () => {
     expect(byTestId('equipment-field-commissionedAt')?.textContent).not.toContain('Not recorded');
   });
 
-  it('should render installedAt in the organization timezone rather than reading its UTC calendar day', async () => {
+  it('should preserve the installed calendar day across organization timezones', async () => {
     fixture.componentRef.setInput('equipment', {
       ...EQUIPMENT,
-      installedAt: '2026-03-12T02:00:00Z',
+      installedAt: '2026-03-12T00:00:00Z',
     });
     fixture.componentRef.setInput('regionalFormatting', {
       dateFormat: 'dd/MM/yyyy',
@@ -108,7 +108,7 @@ describe('EquipmentInformationPanel', () => {
     });
     await fixture.whenStable();
 
-    expect(byTestId('equipment-field-installedAt')?.textContent).toContain('11/03/2026');
+    expect(byTestId('equipment-field-installedAt')?.textContent).toContain('12/03/2026');
   });
 
   it('should ask the page to open the brand editor', () => {

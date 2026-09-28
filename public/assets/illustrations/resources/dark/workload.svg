@@ -3,8 +3,8 @@
   <desc id="fg-workload-dark-description">Stacks of work inside dotted capacity boxes, one stack overflowing.</desc>
   <defs>
     <linearGradient id="fg-workload-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-workload-dark { stroke-linecap: round; stroke-linejoin: round; }

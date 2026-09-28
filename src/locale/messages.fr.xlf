@@ -1781,8 +1781,8 @@
         <target>Chargement de l'équipement</target>
       </trans-unit>
       <trans-unit id="equipment.detail.metaUpdated" datatype="html">
-        <source>Updated <x id="when" equiv-text="when"/></source>
-        <target>Mis à jour <x id="when" equiv-text="when"/></target>
+        <source>Updated <x id="INTERPOLATION" equiv-text="{{ updatedRelativeLabel(equipment.updatedAt) }}"/></source>
+        <target>Mis à jour <x id="INTERPOLATION" equiv-text="{{ updatedRelativeLabel(equipment.updatedAt) }}"/></target>
       </trans-unit>
       <trans-unit id="equipment.attachments.title" datatype="html">
         <source>Attachments</source>
@@ -11711,8 +11711,8 @@
         <target>Ordonnez les contrôles dans leur ordre d’exécution sur le terrain. Les flèches fonctionnent aussi au clavier. Un nouvel élément entièrement renseigné est inclus à l’enregistrement.</target>
       </trans-unit>
       <trans-unit id="checklists.detail.itemCount" datatype="html">
-        <source><x id="INTERPOLATION" equiv-text="{{ checklist.items.length }}"/> items</source>
-        <target><x id="INTERPOLATION" equiv-text="{{ checklist.items.length }}"/> éléments</target>
+        <source>{VAR_PLURAL, plural, =0 {0 items} =1 {1 item} other {<x id="INTERPOLATION"/> items}}</source>
+        <target>{VAR_PLURAL, plural, =0 {0 élément} =1 {1 élément} other {<x id="INTERPOLATION"/> éléments}}</target>
       </trans-unit>
       <trans-unit id="checklists.detail.readOnly" datatype="html">
         <source> This checklist is available for consultation. </source>

@@ -3,8 +3,8 @@
   <desc id="fg-site-light-description">A parcel with two buildings and trees inside its dashed boundary line.</desc>
   <defs>
     <linearGradient id="fg-site-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-site-light { stroke-linecap: round; stroke-linejoin: round; }

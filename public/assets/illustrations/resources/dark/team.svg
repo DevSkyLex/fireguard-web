@@ -3,8 +3,8 @@
   <desc id="fg-team-dark-description">Three people gathered on one base, the lead one brighter.</desc>
   <defs>
     <linearGradient id="fg-team-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
-    
-    
+
+
   </defs>
   <style>
     .fg-team-dark { stroke-linecap: round; stroke-linejoin: round; }

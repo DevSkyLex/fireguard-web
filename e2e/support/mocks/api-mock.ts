@@ -716,8 +716,20 @@ export class ApiMock {
     // app boot, browser-only and independent of the visited route — it reads
     // the current member profile then lists interventions `responsible=` them
     // for offline warm-caching. Every authenticated session hits this once.
+    // Scoped to the session's organizations, as `InterventionService.list`
+    // sends them: a list for any other organization, or none, falls through
+    // to the safety net instead of being swallowed here.
     await this.page.route(/\/api\/interventions(\?.*)?$/, async (route) => {
-      if (route.request().method() !== 'GET') return route.fallback();
+      const request = route.request();
+      if (
+        request.method() !== 'GET' ||
+        !organizations.some(
+          (organization) =>
+            new URL(request.url()).searchParams.get('organization') ===
+            `/api/organizations/${organization.id}`,
+        )
+      )
+        return route.fallback();
       await fulfillJson(route, 200, hydraCollection([]));
     });
     // `MemberDirectoryStore` (bound to `MEMBER_DIRECTORY_PORT` by

@@ -22,7 +22,7 @@ export function presenceScenario(): PresenceScenario {
 }
 
 /** Installs ordinary SSE messages with explicit topic matching and real open/close lifecycle. */
-async function installPresenceEventSource(page: Page): Promise<void> {
+export async function installPresenceEventSource(page: Page): Promise<void> {
   await page.addInitScript(() => {
     class FakeEventSource extends EventTarget {
       public static readonly CONNECTING = 0;

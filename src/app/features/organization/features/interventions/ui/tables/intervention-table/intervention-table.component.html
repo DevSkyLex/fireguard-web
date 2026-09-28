@@ -358,14 +358,17 @@
       </span>
     </span>
   } @else {
-    <span
+    <svg
       role="img"
       class="inline-flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-dotted border-muted-foreground/50 text-muted-foreground"
+      viewBox="0 0 32 32"
       aria-label="No responsible assigned"
       i18n-aria-label="@@intervention.list.noResponsible"
     >
-      <span aria-hidden="true">—</span>
-    </span>
+      <text x="16" y="16" dy=".35em" text-anchor="middle" fill="currentColor" aria-hidden="true">
+        —
+      </text>
+    </svg>
   }
 </ng-template>
 

@@ -247,7 +247,9 @@ describe('MessageRow', () => {
     fixture.componentRef.setInput('presence', 'do_not_disturb');
     await fixture.whenStable();
     expect(
-      fixture.nativeElement.querySelector('[data-slot="avatar-badge"]')?.getAttribute('aria-label'),
+      fixture.nativeElement
+        .querySelector('[data-slot="avatar-badge"] svg')
+        ?.getAttribute('aria-label'),
     ).toBe('Do not disturb');
     fixture.componentRef.setInput('presence', null);
     await fixture.whenStable();

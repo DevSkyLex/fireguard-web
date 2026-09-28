@@ -75,10 +75,10 @@ export class MemberPresenceIndicator {
    */
   protected readonly badgeClass: Signal<string> = computed(() => {
     const classes: Record<PresenceStatus | 'invisible', string> = {
-      invisible: 'bg-muted-foreground',
-      active: 'bg-success',
-      do_not_disturb: 'bg-destructive',
-      offline: 'bg-muted-foreground',
+      invisible: 'bg-muted-foreground fill-muted-foreground',
+      active: 'bg-success fill-success',
+      do_not_disturb: 'bg-destructive fill-destructive',
+      offline: 'bg-muted-foreground fill-muted-foreground',
     };
     const status = this.status();
     const color = status === null ? '' : classes[status];

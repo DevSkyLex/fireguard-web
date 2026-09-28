@@ -3,9 +3,8 @@
     class="pointer-events-none fixed inset-x-4 bottom-[var(--collection-selection-bottom,1rem)] z-20 flex justify-center mobile-ui:bottom-[calc(var(--mobile-navigation-height,0px)+0.75rem)] desktop-ui:left-[calc(var(--sidebar-width)+1rem)] group-has-data-[collapsible=icon]/sidebar-wrapper:desktop-ui:left-[calc(var(--sidebar-width-icon)+1rem)]"
     [attr.data-testid]="testId('bar')"
   >
-    <div
+    <section
       class="pointer-events-auto flex max-w-full min-w-0 items-center justify-center gap-1.5 rounded-full border border-border bg-popover px-2 py-1 text-popover-foreground shadow-xl"
-      role="region"
       [attr.aria-label]="selectionActionsLabel"
     >
       <span
@@ -173,6 +172,6 @@
           </div>
         </div>
       }
-    </div>
+    </section>
   </div>
 }

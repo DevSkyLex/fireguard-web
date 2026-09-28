@@ -5,6 +5,7 @@ import { organizationQuotaOutput } from '../support/fixtures/billing-fixtures';
 import { organizationRoleOutput } from '../support/fixtures/role-fixtures';
 import { workspaceRequest } from '../support/fixtures/workspace-fixtures';
 import {
+  collectConsoleErrors,
   expectNoHorizontalOverflow,
   expectNoInternalOverflow,
   setDarkTheme,
@@ -19,6 +20,9 @@ for (const width of [390, 1440]) {
       context,
       baseURL,
     }) => {
+      const consoleErrors = collectConsoleErrors(page);
+      const pageErrors: string[] = [];
+      page.on('pageerror', (error) => pageErrors.push(error.message));
       await mkdir(CAPTURES, { recursive: true });
       await page.setViewportSize({ width, height: 900 });
       if (dark) await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
@@ -53,12 +57,26 @@ for (const width of [390, 1440]) {
         }),
       ]);
       await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/settings?tab=access`);
+      // A cold SPA bootstrap can exceed the component assertion budget while
+      // the development server compiles the lazy settings route. Wait for the
+      // shell explicitly, and retain JavaScript failures as hard assertions.
+      try {
+        await expect(
+          page.locator('#dashboard-layout'),
+          'SPA shell must finish bootstrapping',
+        ).toBeVisible({ timeout: 15_000 });
+      } finally {
+        expect(pageErrors, 'uncaught JavaScript errors during SPA bootstrap').toEqual([]);
+        expect(consoleErrors, 'browser console errors during SPA bootstrap').toEqual([]);
+      }
       const access = page.getByTestId('organization-access-panel');
       await expect(
         access.getByRole('heading', { name: 'Organization access', exact: true }),
       ).toBeVisible();
       await expectNoHorizontalOverflow(page);
       await expectNoInternalOverflow(access);
+      expect(pageErrors).toEqual([]);
+      expect(consoleErrors).toEqual([]);
       await page.screenshot({
         path: `${CAPTURES}/admin-access-${width}-${dark ? 'dark' : 'light'}.png`,
         animations: 'disabled',

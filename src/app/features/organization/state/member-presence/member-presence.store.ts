@@ -144,13 +144,12 @@ export const MemberPresenceStore = signalStore(
                 next: (responses) => {
                   if (requestGeneration !== generation) return;
                   const now = Date.now();
-                  const entries = responses
-                    .flatMap((response) => response.member)
-                    .map((entry): MemberPresenceEntry =>
-                      Object.assign({}, entry, {
-                        freshUntil: now + PRESENCE_FRESHNESS_MS,
-                      }),
-                    );
+                  const entries = responses.flatMap((response) =>
+                    Array.from(response.member, (entry): MemberPresenceEntry => ({
+                      ...entry,
+                      freshUntil: now + PRESENCE_FRESHNESS_MS,
+                    })),
+                  );
                   patchState(
                     store,
                     setAllEntities(entries, {
@@ -267,7 +266,7 @@ export const MemberPresenceStore = signalStore(
             const requestGeneration = generation;
             return requestSubscription(organization, requestGeneration).pipe(
               expand((subscription) => {
-                const expiry = subscription ? Date.parse(subscription.expiresAt) : NaN;
+                const expiry = subscription ? Date.parse(subscription.expiresAt) : Number.NaN;
                 const delay = Number.isFinite(expiry)
                   ? Math.max(1_000, expiry - Date.now() - 60_000)
                   : 45_000;
@@ -343,7 +342,9 @@ export const MemberPresenceStore = signalStore(
          * @returns {void}
          */
         watch(memberIds: readonly string[]): void {
-          const watched = chunkMemberIds(memberIds).flat().toSorted();
+          const watched = chunkMemberIds(memberIds)
+            .flat()
+            .toSorted((first, second) => first.localeCompare(second));
           if (watched.join(',') === store.watched().join(',')) return;
           patchState(store, { watched });
           refresh();

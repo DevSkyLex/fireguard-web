@@ -1120,9 +1120,7 @@ export class OrganizationAssetsPage {
   protected complianceAncestorPathLabel(facility: ComplianceFacilitySummary): string | null {
     const segments: readonly string[] = facility.path.split(' / ').map((segment) => segment.trim());
     const ancestors: readonly string[] =
-      segments.length > 0 && segments[segments.length - 1] === facility.name
-        ? segments.slice(0, -1)
-        : segments;
+      segments.length > 0 && segments.at(-1) === facility.name ? segments.slice(0, -1) : segments;
 
     return ancestors.length > 0 ? ancestors.join(' › ') : null;
   }

@@ -273,9 +273,9 @@ describe('ChannelParticipantsSheet', () => {
     fixture.componentRef.setInput('participants', [participant({ role: 'owner' })]);
     fixture.componentRef.setInput('presences', { 'member-1': 'offline' });
     await fixture.whenStable();
-    expect(panel()?.querySelector('[data-slot="avatar-badge"]')?.getAttribute('aria-label')).toBe(
-      'Offline',
-    );
+    expect(
+      panel()?.querySelector('[data-slot="avatar-badge"] svg')?.getAttribute('aria-label'),
+    ).toBe('Offline');
     expect(panel()?.textContent).toContain('owner');
   });
 });

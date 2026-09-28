@@ -18,7 +18,10 @@ describe('MemberPresenceIndicator', () => {
     fixture.componentRef.setInput('status', status);
     await fixture.whenStable();
     const badge = fixture.nativeElement.querySelector('[data-slot="avatar-badge"]') as HTMLElement;
-    expect(badge.getAttribute('aria-label')).toBe(label);
+    const image: SVGSVGElement | null = badge.querySelector('svg');
+    expect(image?.getAttribute('role')).toBe('img');
+    expect(image?.getAttribute('aria-label')).toBe(label);
+    expect(image?.querySelector('circle')).not.toBeNull();
     expect(badge.getAttribute('title')).toBe(label);
     expect(badge.classList.contains(color)).toBe(true);
   });

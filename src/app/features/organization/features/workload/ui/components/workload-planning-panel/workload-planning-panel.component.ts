@@ -280,13 +280,12 @@ export class WorkloadPlanningPanel {
     }
     return this.reasonLabels
       .map((definition) => {
-        const rows: readonly WorkloadPlanningRow[] = [
-          ...(buckets.get(definition.reason)?.values() ?? []),
-        ].map((row) =>
-          Object.assign(
-            { periodLabel: this.resolvePeriodLabel(definition.reason, row.startsOn, row.endsOn) },
-            row,
-          ),
+        const rows: readonly WorkloadPlanningRow[] = Array.from(
+          buckets.get(definition.reason)?.values() ?? [],
+          (row) => ({
+            periodLabel: this.resolvePeriodLabel(definition.reason, row.startsOn, row.endsOn),
+            ...row,
+          }),
         );
         return {
           ...definition,

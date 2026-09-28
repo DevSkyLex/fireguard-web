@@ -25,11 +25,11 @@ import {
   directConversationsStoreEvents,
   type DirectConversationsStoreType,
 } from '@features/organization/features/collaboration/state';
-import type { PresenceStatus } from '@features/organization/models';
 import {
   ORGANIZATION_PERMISSION,
   type MemberDirectoryEntry,
   type OrganizationPermissionName,
+  type PresenceStatus,
 } from '@features/organization/models';
 import {
   MEMBER_DIRECTORY_PORT,

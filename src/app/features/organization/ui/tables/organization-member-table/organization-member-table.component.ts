@@ -23,12 +23,12 @@ import {
   lucideTrash2,
   lucideUserCheck,
 } from '@ng-icons/lucide';
-import type { PresenceStatus } from '@features/organization/models';
 import type {
   OrganizationMemberListSort,
   OrganizationMemberOutput,
   OrganizationMemberSortField,
   OrganizationRoleOutput,
+  PresenceStatus,
 } from '@features/organization/models';
 import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
 import { CollectionSurface } from '@shared/collection-surface';

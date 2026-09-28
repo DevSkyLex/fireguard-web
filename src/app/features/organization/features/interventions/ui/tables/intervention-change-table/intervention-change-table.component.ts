@@ -65,15 +65,6 @@ import type { InterventionChangeGroup } from './models/intervention-change-group
 const ISO_DATETIME_PATTERN: RegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
 
 /**
- * Constant RESOURCE_IRI_PATTERN
- * @const RESOURCE_IRI_PATTERN
- * @description Matches a bare API Platform IRI left unresolved in a patch line, so it can be replaced with a readable target label instead of a technical path.
- * @since 2.1.0
- * @type {RegExp}
- */
-const RESOURCE_IRI_PATTERN: RegExp = /^\/api\//;
-
-/**
  * Component InterventionChangeTable
  * @class InterventionChangeTable
  *
@@ -810,7 +801,7 @@ export class InterventionChangeTable {
       return formatted || value;
     }
 
-    if (RESOURCE_IRI_PATTERN.test(value)) {
+    if (value.startsWith('/api/')) {
       const workItem: InterventionWorkItemOutput | undefined = this.workItems().find(
         (work: InterventionWorkItemOutput): boolean =>
           work.target === value || work.resultResource === value,

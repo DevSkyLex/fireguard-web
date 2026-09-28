@@ -314,20 +314,8 @@ export class OrganizationDashboardPage {
       'nonConformities',
       'inProgress',
     );
-    let nonConformityBadge: StatTileBadge | null = null;
-    if (overdueNonConformities !== null && overdueNonConformities > 0) {
-      nonConformityBadge = {
-        label: $localize`:@@org.today.kpi.openNonConformities.badge.overdue:${overdueNonConformities}:count: overdue`,
-        icon: 'lucideTriangleAlert',
-        tone: 'destructive',
-      };
-    } else if (overdueNonConformities === 0) {
-      nonConformityBadge = {
-        label: $localize`:@@org.today.kpi.openNonConformities.badge.onTrack:On track`,
-        icon: 'lucideCircleCheck',
-        tone: 'neutral',
-      };
-    }
+    const nonConformityBadge: StatTileBadge | null =
+      this.nonConformityBadgeOf(overdueNonConformities);
     const overdueInterventions: number | null = getOrganizationDashboardOverviewMetricValue(
       overview,
       'interventions',
@@ -367,8 +355,7 @@ export class OrganizationDashboardPage {
           ? inspectionsLink
           : null,
         delta: null,
-        tone:
-          overdueNonConformities !== null && overdueNonConformities > 0 ? 'destructive' : 'neutral',
+        tone: nonConformityBadge?.tone ?? 'neutral',
         badge: nonConformityBadge,
       },
       {
@@ -1173,6 +1160,33 @@ export class OrganizationDashboardPage {
     }).format(delta);
 
     return $localize`:@@org.statistics.trend.summaryWithDelta:${formattedTotal}:total: total this period, ${formattedDelta}:delta:% vs previous period`;
+  }
+
+  /**
+   * Method nonConformityBadgeOf
+   * @method nonConformityBadgeOf
+   * @description Describes a known overdue count without treating missing data as an on-track result.
+   * @access private
+   * @since 1.0.0
+   * @param {number | null} overdue - The authoritative overdue count, or null when unavailable.
+   * @returns {StatTileBadge | null} The overdue or on-track badge, or null for an unknown count.
+   */
+  private nonConformityBadgeOf(overdue: number | null): StatTileBadge | null {
+    if (overdue !== null && overdue > 0) {
+      return {
+        label: $localize`:@@org.today.kpi.openNonConformities.badge.overdue:${overdue}:count: overdue`,
+        icon: 'lucideTriangleAlert',
+        tone: 'destructive',
+      };
+    }
+    if (overdue === 0) {
+      return {
+        label: $localize`:@@org.today.kpi.openNonConformities.badge.onTrack:On track`,
+        icon: 'lucideCircleCheck',
+        tone: 'neutral',
+      };
+    }
+    return null;
   }
 
   /**

@@ -74,9 +74,20 @@ for (const [width, dark] of [
       await api.mockChannelList([inspectionsChannelOutput()]);
       const channels = new ChannelsPage(page);
       await channels.goto(E2E_ORGANIZATION_ID);
+      if (width === 375) {
+        // Slow the native entry animation to expose premature geometry measurements.
+        await page.addStyleTag({
+          content:
+            '[data-testid="channel-create-dialog"] { animation-duration: 2s !important; animation-timing-function: linear !important; }',
+        });
+      }
       await channels.openChannelCreateDialog();
       await expect(channels.newDialog).toBeVisible();
       await expect(channels.newDialog).toHaveAttribute('data-slot', 'dialog-content');
+      await expect(channels.newDialog).toHaveAttribute('data-state', 'open');
+      await channels.newDialog.evaluate(async (dialog) => {
+        await Promise.all(dialog.getAnimations().map((animation) => animation.finished));
+      });
       const bounds = await channels.newDialog.boundingBox();
       if (!bounds) throw new Error('Missing dialog bounds');
       expect(bounds.x).toBeGreaterThanOrEqual(0);

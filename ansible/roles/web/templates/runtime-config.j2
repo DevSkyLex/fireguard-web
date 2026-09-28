@@ -1,0 +1,17 @@
+{% set values = {
+  'IMAGE_REF': fireguard_image,
+  'APP_HOST': fireguard_app_host,
+  'APP_PORT': fireguard_app_port,
+  'APP_API_URL': fireguard_api_url,
+  'APP_MERCURE_HUB_URL': fireguard_mercure_url,
+  'APP_NAME': fireguard_app_name,
+  'APP_MAINTENANCE': fireguard_maintenance,
+  'COMPOSE_PROJECT_NAME': fireguard_project_name,
+  'CONTAINER_NAME': fireguard_container_name,
+  'TRAEFIK_ROUTER_NAME': fireguard_router_name,
+  'TRAEFIK_SECURE_MIDDLEWARES': fireguard_secure_middlewares,
+  'BASIC_AUTH_USERS': fireguard_basic_auth_users if fireguard_environment == 'development' else ''
+} %}
+{% for key, value in values.items() %}
+{{ key }}={{ value | string | replace('$', '$$') | to_json(ensure_ascii=False) }}
+{% endfor %}

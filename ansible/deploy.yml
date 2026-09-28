@@ -1,0 +1,6 @@
+---
+- name: Deploy FireGuard web to its existing VPS installation
+  hosts: fireguard_vps
+  gather_facts: false
+  roles:
+    - web

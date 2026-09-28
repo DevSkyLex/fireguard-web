@@ -1,0 +1,71 @@
+---
+- name: Exercise the deployment against isolated real Compose projects
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /opt/ansible/bin/python3
+  tasks:
+    - name: Create an isolated test directory
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: fireguard-web-ansible-tests-
+      register: test_directory
+
+    - name: Inspect the external network without modifying existing networks
+      ansible.builtin.command:
+        argv:
+          [
+            docker,
+            network,
+            ls,
+            --filter,
+            'name=^traefik_proxy$',
+            --format,
+            '{% raw %}{{.Name}}{% endraw %}',
+          ]
+      register: test_network
+      changed_when: false
+
+    - name: Run development and production scenarios
+      block:
+        - name: Create the required network only when absent
+          ansible.builtin.command:
+            argv: [docker, network, create, traefik_proxy]
+          when: test_network.stdout == ''
+
+        - name: Pull the small public fixture image
+          ansible.builtin.command:
+            argv: [docker, pull, 'busybox:1.37.0']
+          changed_when: false
+
+        - name: Resolve the fixture to an immutable image digest
+          ansible.builtin.command:
+            argv:
+              [
+                docker,
+                image,
+                inspect,
+                'busybox:1.37.0',
+                --format,
+                '{% raw %}{{index .RepoDigests 0}}{% endraw %}',
+              ]
+          register: test_image
+          changed_when: false
+
+        - name: Exercise each environment using the actual repository Compose files
+          ansible.builtin.include_tasks: scenario.yml
+          loop: [production, development]
+          loop_control:
+            loop_var: test_environment
+
+      always:
+        - name: Remove only the external network created by this test
+          ansible.builtin.command:
+            argv: [docker, network, rm, traefik_proxy]
+          when: test_network.stdout == ''
+
+        - name: Remove only the isolated test directory
+          ansible.builtin.file:
+            path: '{{ test_directory.path }}'
+            state: absent

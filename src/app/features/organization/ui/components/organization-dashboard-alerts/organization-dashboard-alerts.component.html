@@ -4,6 +4,12 @@
     <p hlmCardDescription i18n="@@org.dashboard.attention.description">
       Current items that need a closer look
     </p>
+    <p
+      class="text-xs text-muted-foreground @[960px]/dashboard:hidden"
+      i18n="@@org.dashboard.risks.scope"
+    >
+      Current snapshot, independent of the selected period
+    </p>
   </div>
   <div hlmCardContent class="flex flex-1 flex-col">
     @if (loading()) {
@@ -73,9 +79,7 @@
         </div>
         <div hlmEmpty class="min-h-52 mobile-ui:hidden">
           <div hlmEmptyHeader>
-            <div hlmEmptyMedia variant="icon">
-              <ng-icon name="lucideCircleCheck" aria-hidden="true" />
-            </div>
+            <app-state-illustration hlmEmptyMedia state="all-clear" size="sm" />
             <p hlmEmptyTitle i18n="@@org.dashboard.attention.empty">No attention items raised</p>
             <p hlmEmptyDescription i18n="@@org.dashboard.attention.emptyDescription">
               The latest snapshot contains no operational alerts.

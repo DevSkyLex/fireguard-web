@@ -38,7 +38,6 @@ import {
   lucideChevronRight,
   lucideCircleAlert,
   lucideCloudOff,
-  lucideCompass,
   lucideCopy,
   lucideEllipsis,
   lucideFileDown,
@@ -146,9 +145,6 @@ import {
 import {
   buildInterventionDuplicatePrefill,
   createInterventionCapabilities,
-  formatInterventionScheduleLabel,
-  resolveInterventionResponsibleLabel,
-  summarizeInterventionLabels,
 } from '@features/organization/features/interventions/utils';
 import { WorkloadConfirmationDialog } from '@features/organization/features/workload/ui/dialogs/workload-confirmation-dialog';
 import {
@@ -164,8 +160,11 @@ import {
   OrganizationMemberAccessStore,
   type OrganizationMemberAccessStoreType,
 } from '@features/organization/state';
+import { CollectionSkeletonCards } from '@shared/collection-surface';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { formatRelativeDays } from '@shared/relative-time';
 import { sheetSide } from '@shared/sheet-side';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
@@ -270,15 +269,10 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  *
  * Four decisions a reviewer should know about.
  *
- * The phase's forward action (Plan / Submit / Publish) keeps its one address
- * on the page, `app-intervention-status-band`, a sticky band directly under
- * the title row that serves every viewport — retiring the earlier split
- * between a desktop-only action box and a mobile-only command bar, along
- * with both components. The band reads the same blocker count the desktop
- * issues checklist does: an earlier design tucked proposed changes and
- * blockers inside tab panels with no outside indicator, and `FEATURE.md`
- * records why that was retired — nothing that gates publication may be
- * visible only inside a section the operator has to scroll to.
+ * The properties rail owns intervention identity and planning metadata. The
+ * phase's forward action (Plan / Submit / Publish) remains in the shell
+ * header on desktop and the fixed footer on mobile, both driven by the
+ * `workflowActions` template and `commandAction`.
  *
  * The store exposes one named call state per write concern, so nothing here
  * approximates attribution anymore: the in-place fields settle on
@@ -297,8 +291,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  *
  * The intervention's name is the shell breadcrumb's title, resolved by
  * `interventionTitleResolver`. Status, recording state and the split command
- * register on the shell header through `PageActionsService`; the meta line
- * belongs to the secondary information rail.
+ * register on the shell header through `PageActionsService`.
  *
  * @version 5.1.0
  *
@@ -307,12 +300,14 @@ const IDLE_EDIT_STATE: InterventionEditState = {
 @Component({
   selector: 'app-intervention-detail-page',
   imports: [
+    CollectionSkeletonCards,
     ...HlmDrawerImports,
     ...HlmItemImports,
     NgTemplateOutlet,
     ...HlmSheetImports,
     NgIcon,
     ...HlmEmptyImports,
+    StateIllustration,
     InterventionDiscussionSheet,
     HlmKbd,
     HlmButton,
@@ -374,7 +369,6 @@ const IDLE_EDIT_STATE: InterventionEditState = {
       lucideChevronRight,
       lucideCircleAlert,
       lucideCloudOff,
-      lucideCompass,
       lucideCopy,
       lucideEllipsis,
       lucideFileDown,
@@ -2135,20 +2129,73 @@ export class InterventionDetailPage {
     () => this.store.intervention()?.status === 'submitted' && this.store.blockerCount() === 0,
   );
 
-  /** The responsible agent's display name, resolved from its IRI, for the details chip row. */
-  protected readonly responsibleLabel: Signal<string | null> = computed<string | null>(() =>
-    resolveInterventionResponsibleLabel(this.store.intervention(), this.planningOptions.members()),
-  );
+  /**
+   * Property todayIsoInOrgTimezone
+   * @readonly
+   *
+   * @description
+   * Today's calendar day in the organization's timezone, as `'YYYY-MM-DD'` —
+   * the reference {@link dueSchedule} compares `dueAt` against, per the norm
+   * that a due-date's "today" is the organization's, not the browser's. Falls
+   * back to the runtime's own timezone for an unresolvable IANA name, the
+   * same degradation `appOrgDate` already accepts.
+   *
+   * @access private
+   * @since 7.0.0
+   *
+   * @type {Signal<string>}
+   */
+  private readonly todayIsoInOrgTimezone: Signal<string> = computed<string>(() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: this.regionalFormatting().timezone,
+      }).format(new Date());
+    } catch {
+      return new Intl.DateTimeFormat('en-CA').format(new Date());
+    }
+  });
 
-  /** The planned window as a short date range, for the details chip row. */
-  protected readonly scheduleLabel: Signal<string | null> = computed<string | null>(() =>
-    formatInterventionScheduleLabel(this.store.intervention(), this.locale),
-  );
+  /**
+   * Property dueSchedule
+   * @readonly
+   *
+   * @description
+   * The due date's urgency for the properties grid's
+   * schedule field, or `null` while there is no due date or the intervention
+   * has reached a terminal status (`published`, `abandoned`) where lateness
+   * no longer applies. Compares whole calendar days on `dueAt`'s own UTC
+   * date part against {@link todayIsoInOrgTimezone}, never through a
+   * timezone conversion of the UTC-midnight instant itself.
+   *
+   * @access protected
+   * @since 7.0.0
+   *
+   * @type {Signal<{ readonly overdue: boolean; readonly label: string } | null>}
+   */
+  protected readonly dueSchedule: Signal<{
+    readonly overdue: boolean;
+    readonly label: string;
+  } | null> = computed(() => {
+    const intervention: InterventionOutput | null = this.store.intervention();
+    const dueAt: string | null | undefined = intervention?.dueAt;
+    if (
+      !intervention ||
+      !dueAt ||
+      intervention.status === 'published' ||
+      intervention.status === 'abandoned'
+    )
+      return null;
 
-  /** The intervention's labels, joined for the details chip row. */
-  protected readonly labelsSummary: Signal<string | null> = computed<string | null>(() =>
-    summarizeInterventionLabels(this.store.intervention()),
-  );
+    const todayIso: string = this.todayIsoInOrgTimezone();
+    const overdue: boolean = Date.parse(dueAt) < Date.parse(`${todayIso}T00:00:00.000Z`);
+
+    return {
+      overdue,
+      label: overdue
+        ? $localize`:@@intervention.detail.overdue:Overdue`
+        : formatRelativeDays(dueAt, todayIso, this.locale),
+    };
+  });
 
   /**
    * Property readinessItems

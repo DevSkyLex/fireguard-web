@@ -3,7 +3,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
+  LOCALE_ID,
   output,
   type InputSignal,
   type OutputEmitterRef,
@@ -22,9 +24,11 @@ import {
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { formatRelativeDays } from '@shared/relative-time';
 import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status-tag';
 
 /**
@@ -74,6 +78,7 @@ import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status
     HlmButton,
     ...HlmTableImports,
     ...HlmItemImports,
+    ...HlmTooltipImports,
   ],
   providers: [provideIcons({ lucidePencil })],
   templateUrl: './maintenance-schedule-table.component.html',
@@ -184,6 +189,12 @@ export class MaintenanceScheduleTable {
   //#endregion
 
   //#region Properties
+  /** The application's active locale, for the relative next-due label. */
+  private readonly locale: string = inject(LOCALE_ID);
+
+  /** Pure, dependency-free date formatter for {@link evaluationTooltipOf} and the next-due cell — no DI needed for a single-instance internal use. */
+  private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
+
   /**
    * Property skeletonColumnWidths
    * @readonly
@@ -201,7 +212,7 @@ export class MaintenanceScheduleTable {
    */
   protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
     () => {
-      const widths: string[] = ['w-32', 'w-24', 'w-20', 'w-20', 'w-24'];
+      const widths: string[] = ['w-32', 'w-24', 'w-24', 'w-20', 'w-20', 'w-24'];
 
       if (this.canManage()) widths.push('w-8');
 
@@ -316,7 +327,103 @@ export class MaintenanceScheduleTable {
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
-    return this.canManage() ? 6 : 5;
+    return this.canManage() ? 7 : 6;
+  }
+
+  /**
+   * Method nextDueRelativeLabelOf
+   *
+   * @description
+   * `item.nextDueAt` as a localized "today"/"in N days"/"N days ago" suffix.
+   * Unlike `dueAt`/`plannedStartAt` elsewhere, `nextDueAt` is a real instant
+   * — the last inspection's closure time plus the effective interval — so
+   * both halves of the comparison are resolved to the organization's
+   * timezone through {@link calendarDateIn} before being compared as
+   * calendar days, matching the `'date'` mode used alongside it in the same
+   * cell. `null` when the schedule carries no next-due date.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {MaintenanceScheduleOutput} item - The rendered schedule.
+   *
+   * @returns {string | null} The localized relative label, or `null`.
+   */
+  protected nextDueRelativeLabelOf(item: MaintenanceScheduleOutput): string | null {
+    if (!item.nextDueAt) return null;
+
+    const timezone: string = this.regionalFormatting().timezone;
+    const today: string = this.calendarDateIn(new Date().toISOString(), timezone);
+    const dueDay: string = this.calendarDateIn(item.nextDueAt, timezone);
+
+    return formatRelativeDays(dueDay, today, this.locale);
+  }
+
+  /**
+   * Method evaluationTooltipOf
+   *
+   * @description
+   * The desktop status badge's tooltip text: the last server evaluation
+   * timestamp, or the pending label when none has run yet, followed by
+   * {@link reminderLabelOf} when a due-soon/overdue reminder was sent —
+   * joined so both facts surface from one focusable host.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {MaintenanceScheduleOutput} item - The rendered schedule.
+   *
+   * @returns {string} The tooltip text.
+   */
+  protected evaluationTooltipOf(item: MaintenanceScheduleOutput): string {
+    const evaluatedLabel: string = item.evaluatedAt
+      ? $localize`:@@maintenance.evaluation.tooltipAt:Evaluated ${this.orgDatePipe.transform(item.evaluatedAt, 'datetime', this.regionalFormatting())}:date:`
+      : $localize`:@@maintenance.evaluation.pending:Not yet evaluated`;
+
+    const reminderLabel: string | null = this.reminderLabelOf(item);
+
+    return reminderLabel ? `${evaluatedLabel} · ${reminderLabel}` : evaluatedLabel;
+  }
+
+  /**
+   * Method reminderLabelOf
+   *
+   * @description
+   * `item.lastRemindedAt` as a localized "Reminder sent {date}" line, shown
+   * only for a `due_soon`/`overdue` schedule — a reminder recorded against a
+   * schedule since brought up to date carries no operational meaning.
+   *
+   * @access protected
+   * @since 2.1.0
+   *
+   * @param {MaintenanceScheduleOutput} item - The rendered schedule.
+   *
+   * @returns {string | null} The reminder line, or `null`.
+   */
+  protected reminderLabelOf(item: MaintenanceScheduleOutput): string | null {
+    if (!item.lastRemindedAt) return null;
+    if (item.dueStatus !== 'due_soon' && item.dueStatus !== 'overdue') return null;
+
+    return $localize`:@@maintenance.reminder.sentAt:Reminder sent ${this.orgDatePipe.transform(item.lastRemindedAt, 'datetime', this.regionalFormatting())}:date:`;
+  }
+
+  /**
+   * Method calendarDateIn
+   * @description The `YYYY-MM-DD` calendar day an instant falls on within the given timezone, falling back to the instant's own written date when the timezone identifier is not one `Intl.DateTimeFormat` accepts (a fixed `+HHMM` offset).
+   * @access private
+   * @since 2.1.0
+   * @param {string} instantIso - The ISO instant to resolve.
+   * @param {string} timezone - An IANA timezone name, `'UTC'`, or a fixed offset.
+   * @returns {string} The resolved `YYYY-MM-DD` calendar day.
+   */
+  private calendarDateIn(instantIso: string, timezone: string): string {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: timezone })
+        .format(new Date(instantIso))
+        .slice(0, 10);
+    } catch {
+      return instantIso.slice(0, 10);
+    }
   }
   //#endregion
 }

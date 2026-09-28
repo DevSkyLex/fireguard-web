@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   AddTeamMemberInput,
   OrganizationMemberOutput,
@@ -79,6 +80,14 @@ describe('OrganizationTeamMembersSheet', () => {
             interactionMode: () => (mobileInteractionMode() ? 'mobile' : 'desktop'),
           },
         },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('system'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         provideZonelessChangeDetection(),
       ],
     });
@@ -155,6 +164,19 @@ describe('OrganizationTeamMembersSheet', () => {
     await create({ members: [] });
 
     expect(sheet()?.querySelector('[data-slot="empty"]:not([role="alert"])')).not.toBeNull();
+  });
+
+  it('should invite a writer to add a member from the empty roster', async () => {
+    await create({ members: [], canWrite: true });
+
+    expect(sheet()?.textContent).toContain('Add an organization member below to get started.');
+  });
+
+  it('should not instruct a read-only viewer to use a form they cannot see', async () => {
+    await create({ members: [], canWrite: false });
+
+    expect(sheet()?.textContent).not.toContain('Add an organization member below');
+    expect(sheet()?.textContent).toContain('This team has no members yet.');
   });
 
   it('should exclude the current roster member from the add-member candidates', async () => {

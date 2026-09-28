@@ -11,13 +11,14 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBuilding2 } from '@ng-icons/lucide';
+import { lucideCrown } from '@ng-icons/lucide';
 import { AccountLeaveOrganizationDialog } from '@features/account/ui/dialogs/account-leave-organization-dialog';
 import type { OrganizationOutput } from '@features/organization/models';
 import { MY_ORGANIZATIONS_PORT, type MyOrganizationsPort } from '@features/organization/ports';
 import { OrganizationAvatar } from '@features/organization/ui/components';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -50,15 +51,17 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   selector: 'app-account-organizations-page',
   imports: [
     NgIcon,
+    RouterLink,
     ...HlmEmptyImports,
     AccountLeaveOrganizationDialog,
     OrganizationAvatar,
+    ResourceIllustration,
     HlmBadge,
     HlmButton,
     HlmSkeleton,
     ...HlmItemImports,
   ],
-  providers: [provideIcons({ lucideBuilding2 })],
+  providers: [provideIcons({ lucideCrown })],
   templateUrl: './account-organizations-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

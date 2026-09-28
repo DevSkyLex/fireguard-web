@@ -9,6 +9,7 @@ import {
   type InteractionCapabilitiesPort,
 } from '@core/interaction-capabilities';
 import { errorCallState, idleCallState, toStoreError, type CallState } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   OnboardingSetupOperation,
   OnboardingStepKey,
@@ -162,6 +163,14 @@ describe('OnboardingWizardPage', () => {
             isMobileInteractionMode: signal(false),
             shortcutModifier: signal<'Ctrl'>('Ctrl'),
           } satisfies InteractionCapabilitiesPort,
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
         { provide: OnboardingStore, useValue: storeMock },
         { provide: OrganizationSetupService, useValue: organizationSetupServiceMock },
@@ -368,6 +377,20 @@ describe('OnboardingWizardPage', () => {
     storeMock.isBusy.set(true);
     fixture.componentInstance['retryLifecycle']();
     expect(storeMock.load).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a persistent neutral explanation beside "Try again" for a lifecycle failure', async () => {
+    storeMock.skipStepCallState.set(errorCallState(toStoreError(new Error('Offline'))));
+    await fixture.whenStable();
+
+    const region = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="onboarding-lifecycle-error"]',
+    );
+
+    expect(region?.getAttribute('role')).toBeNull();
+    expect(region?.textContent).toContain(
+      'This step could not be updated. Your saved information is still available.',
+    );
   });
 
   it('retries a failed skip only while the current step still permits it', () => {

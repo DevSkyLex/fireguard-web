@@ -3,20 +3,27 @@ import {
   Component,
   computed,
   input,
+  output,
   type InputSignal,
+  type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert, lucideGauge } from '@ng-icons/lucide';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { StoreError } from '@core/request-state';
 import type {
   OrganizationQuotaItemOutput,
   OrganizationQuotaResource,
 } from '@features/organization/models';
 import { resolveQuotaStatus } from '@features/organization/utils';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmH4, HlmMuted } from '@shared/ui/typography';
 import {
   ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS,
   ORGANIZATION_QUOTA_RESOURCE_LABELS,
@@ -49,13 +56,15 @@ const PERCENT_SCALE = 100;
  * root-provided `OrganizationQuotaStore` and handed down as {@link items}
  * (`ARCHITECTURE.md` §10.3).
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
  * <app-organization-usage-panel
  *   [items]="quotaStore.items()"
  *   [isLoading]="quotaStore.isLoadingQuota()"
+ *   [error]="quotaStore.quotaCallState().error"
+ *   (retried)="quotaStore.reload()"
  * />
  * ```
  *
@@ -63,8 +72,19 @@ const PERCENT_SCALE = 100;
  */
 @Component({
   selector: 'app-organization-usage-panel',
-  imports: [NgIcon, ...HlmEmptyImports, HlmSkeleton, ...HlmProgressImports],
-  providers: [provideIcons({ lucideCircleAlert, lucideGauge })],
+  imports: [
+    NgIcon,
+    ResourceIllustration,
+    ...HlmAlertImports,
+    HlmButton,
+    ...HlmEmptyImports,
+    ...HlmItemImports,
+    HlmSkeleton,
+    ...HlmProgressImports,
+    HlmH4,
+    HlmMuted,
+  ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-usage-panel.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -114,6 +134,18 @@ export class OrganizationUsagePanel {
    * @type {InputSignal<StoreError | null>}
    */
   public readonly error: InputSignal<StoreError | null> = input<StoreError | null>(null);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property retried
+   * @readonly
+   * @description The error state's Retry action was activated. The panel computes no reload itself — the page maps this to its own quota store's `reload`.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly retried: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties

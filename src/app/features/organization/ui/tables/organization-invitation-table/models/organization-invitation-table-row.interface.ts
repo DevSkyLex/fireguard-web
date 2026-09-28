@@ -27,6 +27,9 @@ export interface OrganizationInvitationTableRow {
   /** The status descriptor's severity, mapped to an icon colour class. */
   readonly statusIconClass: string;
 
+  /** A muted "in N days" / "N days ago" suffix for a pending invitation's `expiresAt`, `null` for every other status. */
+  readonly expiresRelativeSuffix: string | null;
+
   /** The fresh accept link, or `null` when the token was never captured this session. */
   readonly acceptUrl: string | null;
 }

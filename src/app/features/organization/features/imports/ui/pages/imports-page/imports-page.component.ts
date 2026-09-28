@@ -16,13 +16,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideLock,
-  lucideSearch,
-  lucideTag,
-  lucideUpload,
-} from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideTag } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -61,6 +55,8 @@ import {
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -127,6 +123,8 @@ const IMPORT_KIND_READ_PERMISSION: Readonly<Record<ImportJobKind, OrganizationPe
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    ResourceIllustration,
+    StateIllustration,
     ImportUploadForm,
     ImportJobTable,
     ImportJobDetailSheet,
@@ -138,9 +136,7 @@ const IMPORT_KIND_READ_PERMISSION: Readonly<Record<ImportJobKind, OrganizationPe
     HlmButton,
     ...HlmCardImports,
   ],
-  providers: [
-    provideIcons({ lucideCircleAlert, lucideLock, lucideSearch, lucideTag, lucideUpload }),
-  ],
+  providers: [provideIcons({ lucideCircleAlert, lucideTag })],
   templateUrl: './imports-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col overflow-y-auto' },
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -97,6 +97,10 @@ describe('InterventionPropertiesGrid', () => {
   });
 
   it('should render one row per property', () => {
+    const propertyGrid = byTestId('intervention-field-reference')?.parentElement;
+    expect(propertyGrid?.classList.contains('grid-cols-1')).toBe(true);
+    expect(propertyGrid?.className).not.toContain('grid-cols-2');
+    expect(propertyGrid?.className).not.toContain('grid-cols-4');
     expect(byTestId('intervention-field-reference')?.textContent).toContain('FG-5');
     expect(byTestId('intervention-field-type')).not.toBeNull();
     expect(byTestId('intervention-field-updated')).not.toBeNull();
@@ -172,6 +176,7 @@ describe('InterventionPropertiesGrid', () => {
       'intervention-field-labels',
       'intervention-description-field',
       'intervention-field-revision',
+      'intervention-field-created',
       'intervention-field-updated',
     ];
     const propertyIds = new Set(expected);

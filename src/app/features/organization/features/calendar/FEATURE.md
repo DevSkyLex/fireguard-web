@@ -47,12 +47,11 @@ The header groups New event and the Subscribe menu in a native Spartan split
 button. Read-only viewers retain a direct Subscribe action.
 
 **Three granularities**, all reading the same date-windowed feed: **month**
-is the shared grid plus the shell's selected-day panel on wide desktop; **week** is deliberately a
-seven-day agenda list — every day of the week rendered as a heading plus its
-entries through `CalendarEntryList`, empty days included — rather than an
-hour-by-column grid, because the feed carries day-anchored entries (many
-all-day) for which an hours grid would be mostly whitespace, and the agenda
-form reuses the exact row renderer the rest of the page already trusts;
+is the shared grid plus the shell's selected-day panel on wide desktop; **week**
+shows seven day columns when the page is wide enough and stacks those days on
+narrow surfaces. Every day, including empty days, retains a heading and its
+entries through `CalendarEntryList`. This day-column grid uses the feed's
+day-anchored entries without inventing hourly slots for mostly all-day data;
 **day** is the anchored day's list full-page with prev/next stepping one
 day. Week honours the same `firstDayOfWeek` preference as the grid. The
 feed window follows the granularity: month ± one week (the grid's filler

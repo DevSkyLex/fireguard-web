@@ -1,4 +1,10 @@
+export type { InvoiceStatusTagDescriptor } from './invoice-status-tag/invoice-status-tag-descriptor.interface';
+export type { InvoiceStatusTagSeverity } from './invoice-status-tag/invoice-status-tag-severity.type';
+export { resolveInvoiceStatusTag } from './invoice-status-tag/invoice-status-tag.util';
 export type { OrganizationSettingsTabId } from './organization-settings-tab-id.type';
+export type { OrganizationStatusTagDescriptor } from './organization-status-tag/organization-status-tag-descriptor.interface';
+export type { OrganizationStatusTagSeverity } from './organization-status-tag/organization-status-tag-severity.type';
+export { resolveOrganizationStatusTag } from './organization-status-tag/organization-status-tag.util';
 export type { SubscriptionStatusTagDescriptor } from './subscription-status-tag/subscription-status-tag-descriptor.interface';
 export type { SubscriptionStatusTagSeverity } from './subscription-status-tag/subscription-status-tag-severity.type';
 export { resolveSubscriptionStatusTag } from './subscription-status-tag/subscription-status-tag.util';

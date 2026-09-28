@@ -98,18 +98,40 @@ export class InterventionCalendarEntryList {
   }
 
   /**
-   * Method timeLabelOf
-   * @description The row's schedule anchor (`plannedStartAt`, falling back to `dueAt`) as a localized time-of-day — the same anchor the calendar places the entry by.
+   * Method anchorLabelOf
+   * @description Names which end of the schedule window placed the row here — "Starts {date}" for `plannedStartAt`, "Due {date}" when only `dueAt` is set — the same anchor the calendar places the entry by. Both fields are date-only (UTC midnight), so this never prints a time of day: doing so would show "02:00" in most timezones for a value that was never meant to carry one.
    * @access protected
-   * @since 1.0.0
+   * @since 6.4.0
    * @param {InterventionOutput} intervention - The row's intervention.
-   * @returns {string} A short time label.
+   * @returns {string} The localized anchor label, or `''` when the intervention carries neither date.
    */
-  protected timeLabelOf(intervention: InterventionOutput): string {
-    const anchor: string | null | undefined = intervention.plannedStartAt ?? intervention.dueAt;
-    if (anchor == null) return '';
+  protected anchorLabelOf(intervention: InterventionOutput): string {
+    if (intervention.plannedStartAt) {
+      return $localize`:@@intervention.calendar.entryStarts:Starts ${this.dateOnlyLabelOf(intervention.plannedStartAt)}:date:`;
+    }
+    if (intervention.dueAt) {
+      return $localize`:@@intervention.calendar.entryDue:Due ${this.dateOnlyLabelOf(intervention.dueAt)}:date:`;
+    }
 
-    return new Intl.DateTimeFormat(this.locale, { timeStyle: 'short' }).format(new Date(anchor));
+    return '';
+  }
+
+  /**
+   * Method dateOnlyLabelOf
+   * @description Formats a date-only anchor (a `YYYY-MM-DD` string or a UTC-midnight instant) from its own written calendar day, never through a timezone conversion that could shift it.
+   * @access private
+   * @since 6.4.0
+   * @param {string} anchor - The date-only value.
+   * @returns {string} The localized day, or `''` when it does not parse.
+   */
+  private dateOnlyLabelOf(anchor: string): string {
+    const match: RegExpMatchArray | null = /^(\d{4})-(\d{2})-(\d{2})/.exec(anchor);
+    if (!match) return '';
+
+    const [, year, month, day] = match as unknown as [string, string, string, string];
+    const local: Date = new Date(Number(year), Number(month) - 1, Number(day));
+
+    return new Intl.DateTimeFormat(this.locale, { dateStyle: 'medium' }).format(local);
   }
 
   /**

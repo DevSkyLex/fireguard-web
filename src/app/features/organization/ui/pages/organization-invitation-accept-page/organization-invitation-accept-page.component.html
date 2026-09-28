@@ -2,7 +2,6 @@
   <ng-template
     #statusContent
     let-testId="testId"
-    let-icon="icon"
     let-avatarName="avatarName"
     let-avatarLogoUrl="avatarLogoUrl"
     let-title="title"
@@ -13,12 +12,6 @@
       <div class="flex flex-col items-start gap-4 text-left">
         @if (avatarName) {
           <app-organization-avatar size="lg" [name]="avatarName" [logoUrl]="avatarLogoUrl" />
-        } @else {
-          <div
-            class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground"
-          >
-            <ng-icon [name]="icon" class="text-2xl" aria-hidden="true" />
-          </div>
         }
         <app-page-heading [heading]="title" />
         @if (badge) {
@@ -46,7 +39,6 @@
         statusContent;
         context: {
           testId: 'organization-invitation-accept-missing-token',
-          icon: 'lucideLink2Off',
           title: missingTokenTitle,
           description: missingTokenDescription,
         }
@@ -60,17 +52,31 @@
       i18n-aria-label="@@org.invitationAccept.loadingAria"
       data-testid="organization-invitation-accept-loading"
     >
-      <div class="flex flex-col items-start gap-4">
-        <hlm-skeleton class="size-14 rounded-lg" />
-        <hlm-skeleton class="h-4 w-40" />
-        <hlm-skeleton class="h-3 w-56" />
+      <div class="flex items-start gap-4">
+        <hlm-skeleton class="size-14 shrink-0 rounded-lg" />
+        <div class="flex min-w-0 flex-1 flex-col gap-2">
+          <hlm-skeleton class="h-8 w-56" />
+          <hlm-skeleton class="h-7 w-48" />
+          <hlm-skeleton class="h-4 w-40" />
+        </div>
       </div>
-      <div class="flex flex-col gap-4">
-        <hlm-skeleton class="h-3 w-full" />
-        <hlm-skeleton class="h-3 w-2/3" />
+      <div class="grid grid-cols-2 gap-x-6 gap-y-6">
+        <div class="col-span-2 flex flex-col gap-2">
+          <hlm-skeleton class="h-3 w-24" />
+          <hlm-skeleton class="h-4 w-full" />
+        </div>
+        <div class="flex flex-col gap-2">
+          <hlm-skeleton class="h-3 w-16" />
+          <hlm-skeleton class="h-4 w-24" />
+        </div>
+        <div class="flex flex-col gap-2">
+          <hlm-skeleton class="h-3 w-16" />
+          <hlm-skeleton class="h-4 w-20" />
+        </div>
       </div>
-      <div class="flex justify-end">
-        <hlm-skeleton class="h-8 w-36" />
+      <div class="flex flex-col-reverse gap-3 sm:flex-row">
+        <hlm-skeleton class="h-10 w-full sm:flex-1" />
+        <hlm-skeleton class="h-10 w-full sm:flex-1" />
       </div>
     </div>
   } @else if (store.isPreviewError()) {
@@ -79,7 +85,6 @@
         statusContent;
         context: {
           testId: 'organization-invitation-accept-preview-error',
-          icon: 'lucideMailX',
           title: previewErrorTitle,
           description: previewErrorDescription,
         }
@@ -95,27 +100,25 @@
   } @else if (store.preview(); as preview) {
     @if (preview.status === 'pending') {
       <div class="flex flex-col gap-8" data-testid="organization-invitation-accept-card">
-        <div class="flex flex-col items-start gap-4 text-left">
+        <div class="flex items-start gap-4 text-left">
           <app-organization-avatar
             size="lg"
             [name]="preview.organizationName"
             [logoUrl]="preview.organizationLogoUrl"
           />
-
-          <div class="flex flex-col gap-3">
+          <div class="flex min-w-0 flex-col gap-1">
             <app-page-heading
               size="large"
               heading="You've been invited"
               i18n-heading="@@org.invitationAccept.title"
-            />
-            <p class="text-sm leading-relaxed text-muted-foreground">
+            >
+              <p class="text-xl font-semibold tracking-tight wrap-anywhere text-foreground">
+                {{ preview.organizationName }}
+              </p>
+            </app-page-heading>
+            <p class="text-sm text-muted-foreground">
               <span i18n="@@org.invitationAccept.invitedBy">Invited by</span>&ngsp;
-              <span class="font-medium text-foreground">{{ preview.inviterDisplayName }}</span
-              >&ngsp; <span i18n="@@org.invitationAccept.toJoin">to join</span>&ngsp;
-              <span
-                class="mt-2 block text-xl font-semibold tracking-tight wrap-anywhere text-foreground"
-                >{{ preview.organizationName }}</span
-              >
+              <span class="font-medium text-foreground">{{ preview.inviterDisplayName }}</span>
             </p>
           </div>
         </div>
@@ -135,7 +138,18 @@
                 Expires
               </dt>
               <dd class="font-medium text-foreground">
-                {{ preview.expiresAt | appOrgDate: 'date' : regionalFormatting() }}
+                <time [attr.datetime]="preview.expiresAt" class="tabular-nums">
+                  {{ preview.expiresAt | date: 'mediumDate' }}
+                  @if (expiresRelativeSuffix(); as suffix) {
+                    <span class="text-muted-foreground">· {{ suffix }}</span>
+                  }
+                </time>
+                @if (isExpiringSoon()) {
+                  <span class="flex items-center gap-1 text-xs text-destructive">
+                    <ng-icon name="lucideClock" aria-hidden="true" />
+                    <span i18n="@@org.invitationAccept.expiresSoon">Expires soon</span>
+                  </span>
+                }
               </dd>
             </div>
             @if (preview.roleNames; as roleNames) {
@@ -161,6 +175,19 @@
             }
           </dl>
         </div>
+
+        @if (store.isAcceptError()) {
+          <div hlmAlert variant="destructive" data-testid="organization-invitation-accept-error">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <p hlmAlertTitle i18n="@@org.invitationAccept.acceptErrorTitle">
+              We couldn't accept this invitation
+            </p>
+            <p hlmAlertDescription i18n="@@org.invitationAccept.acceptErrorDescription">
+              Please try again. If this invitation is no longer valid, ask your administrator for a
+              new one.
+            </p>
+          </div>
+        }
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row">
           <a

@@ -15,13 +15,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideActivity,
-  lucideCalendarDays,
-  lucideCircleAlert,
-  lucideHistory,
-  lucideLock,
-} from '@ng-icons/lucide';
+import { lucideActivity, lucideCalendarDays, lucideCircleAlert } from '@ng-icons/lucide';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import type { AuditEventOutput } from '@features/organization/features/audit/models';
 import { listAuditActionOptions } from '@features/organization/features/audit/models';
@@ -46,6 +40,8 @@ import {
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { AuditEventTable } from '../../tables/audit-event-table';
@@ -109,7 +105,7 @@ function buildActionOptions(): ReadonlyArray<CollectionFilterOption> {
  * date component as interventions. Both open from "+ Filter" and mirror their
  * state through {@link fieldPopoverState}/{@link onFieldPopoverStateChanged}.
  *
- * @version 3.0.0
+ * @version 3.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -127,14 +123,14 @@ function buildActionOptions(): ReadonlyArray<CollectionFilterOption> {
     CollectionToolbar,
     HlmButton,
     CollectionFilterSelect,
+    ResourceIllustration,
+    StateIllustration,
   ],
   providers: [
     provideIcons({
       lucideActivity,
       lucideCalendarDays,
       lucideCircleAlert,
-      lucideHistory,
-      lucideLock,
     }),
   ],
   templateUrl: './audit-page.component.html',
@@ -257,6 +253,18 @@ export class AuditPage {
   /** Which field the filter bar currently renders mid-pick, before it carries a value — `null` when none is. */
   protected readonly openFilterKey: WritableSignal<AuditFilterKey | null> =
     signal<AuditFilterKey | null>(null);
+
+  /**
+   * Property hasActiveNarrowing
+   * @readonly
+   * @description Whether any chip or the search term currently narrows the journal — {@link activeFilterKeys} alone misses the search term, which {@link clearFilters} also resets. Distinguishes a filtered miss from a genuinely empty journal.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasActiveNarrowing: Signal<boolean> = computed<boolean>(
+    () => this.activeFilterKeys().length > 0 || this.search() !== '',
+  );
 
   /**
    * Property filtersVisible

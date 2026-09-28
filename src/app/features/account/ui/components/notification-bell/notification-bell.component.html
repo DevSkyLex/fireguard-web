@@ -226,7 +226,7 @@
           notification of store.entryEntities();
           track notification.sourceKey + ':' + notification.id
         ) {
-          <li>
+          <li class="border-b border-border last:border-b-0">
             <button
               hlmItem
               size="xs"
@@ -238,12 +238,14 @@
               @if (!notification.isRead) {
                 <span class="sr-only" i18n="@@account.notificationBell.unread">Unread</span>
               }
-              <span hlmItemMedia>
-                <span
-                  class="size-1.5 rounded-full"
-                  [class]="notification.isRead ? 'bg-transparent' : 'bg-foreground'"
-                  aria-hidden="true"
-                ></span>
+              <span hlmItemMedia variant="icon" class="relative text-muted-foreground">
+                <ng-icon [name]="iconFor(notification)" aria-hidden="true" />
+                @if (!notification.isRead) {
+                  <span
+                    class="absolute -end-1 -top-1 size-1.5 rounded-full bg-foreground"
+                    aria-hidden="true"
+                  ></span>
+                }
               </span>
               <span hlmItemContent class="min-w-0">
                 <span
@@ -262,7 +264,7 @@
                 >
                   <span
                     class="min-w-0 mobile-ui:break-words mobile-ui:whitespace-normal desktop-ui:truncate"
-                    >{{ notification.snippet }}</span
+                    >{{ notificationBody(notification.snippet) }}</span
                   >
                 </span>
               </span>

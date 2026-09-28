@@ -21,6 +21,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { TitleService } from '@core/title';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -35,7 +36,9 @@ import {
   EquipmentStore,
 } from '@features/organization/features/equipments/state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { EquipmentDetailPage } from '../equipment-detail-page.component';
 
 const equipment = (overrides: Partial<EquipmentOutput> = {}): EquipmentOutput =>
@@ -151,8 +154,20 @@ describe('EquipmentDetailPage', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+        {
           provide: AUTH_SESSION_PORT,
           useValue: { sessionRevision: signal(0), isAuthenticated: signal(true) },
+        },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
         },
         {
           provide: ActiveEquipmentStore,
@@ -182,7 +197,10 @@ describe('EquipmentDetailPage', () => {
             tags: signal<readonly EquipmentTagOutput[]>([]),
             maintenanceLogs: signal([]),
             isLoadingTags: signal(false),
+            isLoadingAttachments: signal(false),
             isLoadingMaintenanceLogs: signal(false),
+            attachmentsListCallState: signal(idleCallState()),
+            maintenanceLogsListCallState: signal(idleCallState()),
             addAttachmentCallState: signal(idleCallState()),
             addTagCallState: signal(idleCallState()),
             deleteAttachmentCallState: signal(idleCallState()),
@@ -215,6 +233,44 @@ describe('EquipmentDetailPage', () => {
     expect(fixture.componentInstance['title']()).toBe('Fire extinguisher — Kidde Pro 210');
   });
 
+  it('should show the location label beside the facility in the identity summary', async () => {
+    selectedEquipment.set(
+      equipment({
+        facilityId: 'facility-1',
+        facilityName: 'Warehouse B',
+        locationLabel: 'Aisle 4',
+      }),
+    );
+    await createPage();
+
+    const root: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="equipment-detail-location"]')?.textContent).toContain(
+      'Aisle 4',
+    );
+  });
+
+  it('should show no location marker when the equipment has no location label', async () => {
+    selectedEquipment.set(equipment({ locationLabel: null }));
+    await createPage();
+
+    const root: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="equipment-detail-location"]')).toBeNull();
+  });
+
+  it('should link to the facility even when its name could not be resolved', async () => {
+    selectedEquipment.set(equipment({ facilityId: 'facility-1', facilityName: null }));
+    await createPage();
+
+    const root: HTMLElement = fixture.nativeElement as HTMLElement;
+    const link: HTMLAnchorElement | null = root.querySelector(
+      '[data-testid="equipment-detail-facility-link"]',
+    );
+
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
+    expect(link?.textContent).toContain('Facility deleted or unavailable');
+    expect(root.textContent).not.toContain('Unassigned');
+  });
+
   describe('pinned on plan indicator', () => {
     it('should show nothing when the equipment has no plan position', async () => {
       await createPage();
@@ -237,7 +293,9 @@ describe('EquipmentDetailPage', () => {
         '[data-testid="equipment-detail-pinned"]',
       );
       expect(link).not.toBeNull();
-      expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
+      expect(link?.getAttribute('href')).toBe(
+        '/organizations/org-1/facilities/facility-1?tab=plans',
+      );
     });
 
     it('should not show the indicator when pinned but unassigned from any facility', async () => {

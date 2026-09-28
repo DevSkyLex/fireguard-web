@@ -7,6 +7,7 @@ import {
   successCallState,
   type CallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { OrganizationOutput } from '@features/organization/models';
 import { MY_ORGANIZATIONS_PORT, type MyOrganizationsPort } from '@features/organization/ports';
 import { AccountOrganizationsPage } from '../account-organizations-page.component';
@@ -65,6 +66,14 @@ describe('AccountOrganizationsPage', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: MY_ORGANIZATIONS_PORT, useValue: port },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
       ],
     });
 

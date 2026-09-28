@@ -22,7 +22,7 @@ import type { StatTileBadge, StatTileDelta, StatTileLink, StatTileTone } from '.
  * their content, while optional links, captions and progress retain the same semantic structure.
  * The figure is a styled child so the small Card's native heading scale does not shrink metrics.
  *
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @example
  * ```html

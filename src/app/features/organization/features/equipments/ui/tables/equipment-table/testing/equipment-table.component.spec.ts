@@ -37,6 +37,7 @@ describe('EquipmentTable', () => {
     fixture.componentRef.setInput('items', items);
     fixture.componentRef.setInput('loading', loading);
     fixture.componentRef.setInput('detailRouteBase', ['/organizations', 'org-1', 'equipments']);
+    fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('sortOrder', { field: 'type', direction: 'asc' });
     await fixture.whenStable();
   };
@@ -94,6 +95,76 @@ describe('EquipmentTable', () => {
     expect(root().textContent).toContain('Unassigned');
   });
 
+  it('should link the facility name to its record', async () => {
+    await render([equipment({ facilityId: 'facility-1', facilityName: 'Warehouse B' })]);
+
+    const row: HTMLElement | null = root().querySelector('[data-testid="equipment-table-row"]');
+    const link: HTMLAnchorElement | null = row?.querySelector('a[href*="/facilities/"]') ?? null;
+
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
+    expect(link?.textContent).toContain('Warehouse B');
+  });
+
+  it('should render a plain facility name when there is no facility to link to', async () => {
+    await render([equipment({ facilityId: null, facilityName: 'Warehouse B' })]);
+
+    const row: HTMLElement | null = root().querySelector('[data-testid="equipment-table-row"]');
+
+    expect(row?.querySelector('a[href*="/facilities/"]')).toBeNull();
+    expect(row?.textContent).toContain('Warehouse B');
+  });
+
+  it('should still link to the facility when it is assigned but its name could not be resolved', async () => {
+    await render([equipment({ facilityId: 'facility-1', facilityName: null })]);
+
+    const row: HTMLElement | null = root().querySelector('[data-testid="equipment-table-row"]');
+    const link: HTMLAnchorElement | null = row?.querySelector('a[href*="/facilities/"]') ?? null;
+
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1');
+    expect(link?.textContent).toContain('Facility deleted or unavailable');
+    expect(row?.textContent).not.toContain('Unassigned');
+  });
+
+  it('should render the first two tags as badges and fold the rest behind a "+N" badge', async () => {
+    await render([
+      equipment({
+        tags: [
+          {
+            '@id': '/api/tags/1',
+            '@type': 'EquipmentTag',
+            id: 't1',
+            name: 'Outdoor',
+            organizationId: 'org-1',
+          },
+          {
+            '@id': '/api/tags/2',
+            '@type': 'EquipmentTag',
+            id: 't2',
+            name: 'Critical',
+            organizationId: 'org-1',
+          },
+          {
+            '@id': '/api/tags/3',
+            '@type': 'EquipmentTag',
+            id: 't3',
+            name: 'Legacy',
+            organizationId: 'org-1',
+          },
+        ],
+      }),
+    ]);
+
+    const row: HTMLElement | null = root().querySelector('[data-testid="equipment-table-row"]');
+
+    expect(row?.textContent).toContain('Outdoor');
+    expect(row?.textContent).toContain('Critical');
+    expect(row?.textContent).not.toContain('Legacy');
+    expect(row?.textContent).toContain('+1');
+    expect(row?.querySelector('[data-variant="secondary"]')?.getAttribute('aria-label')).toBe(
+      '1 more tag',
+    );
+  });
+
   it('should render one card per equipment alongside the table', async () => {
     await render([equipment(), equipment({ id: 'equipment-2', type: 'smoke_detector' })]);
 
@@ -103,6 +174,14 @@ describe('EquipmentTable', () => {
 
     expect(cards).toHaveLength(2);
     expect(cards[0].textContent).toContain('SN-1');
+  });
+
+  it('should render no brand/model paragraph on the mobile card when both are missing', async () => {
+    await render([equipment({ brand: null, model: null })]);
+
+    const card: HTMLElement | null = root().querySelector('[data-testid="equipment-table-card"]');
+
+    expect(card?.textContent).not.toContain('—');
   });
 
   it('should draw placeholder rows on a first load, and no data rows', async () => {

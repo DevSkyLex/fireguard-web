@@ -26,10 +26,8 @@
     </section>
   }
 
-  <h2 class="hidden text-base font-semibold mobile-ui:block" i18n="@@imports.table.title">
-    Import jobs
-  </h2>
   <app-collection-toolbar>
+    <h2 toolbarStart class="text-sm font-semibold" i18n="@@imports.table.title">Import jobs</h2>
     <app-collection-filter-toggle
       toolbarEnd
       [visible]="filtersVisible()"
@@ -75,9 +73,7 @@
   @if (listForbidden()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideLock" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="access-denied" />
         <p hlmEmptyTitle i18n="@@imports.list.forbiddenTitle">
           Not available with your permissions
         </p>
@@ -112,15 +108,26 @@
   } @else if (!store.isLoading() && items().length === 0) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        @if (hasFilters() ? 'lucideSearch' : 'lucideUpload'; as iconName) {
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon [name]="iconName" aria-hidden="true" />
-          </div>
+        @if (hasFilters()) {
+          <app-state-illustration hlmEmptyMedia state="no-matches" />
+        } @else {
+          <app-resource-illustration hlmEmptyMedia resource="import" />
         }
-        <p hlmEmptyTitle i18n="@@imports.list.emptyTitle">No import jobs yet</p>
-        <p hlmEmptyDescription i18n="@@imports.list.emptyDesc">
-          Upload a CSV file above to bulk-create equipment, facilities or member invitations.
-        </p>
+        @if (hasFilters()) {
+          <p hlmEmptyTitle i18n="@@imports.list.filteredEmptyTitle">No jobs match this filter</p>
+          <p hlmEmptyDescription i18n="@@imports.list.filteredEmptyDesc">Try a different kind.</p>
+        } @else {
+          <p hlmEmptyTitle i18n="@@imports.list.emptyTitle">No import jobs yet</p>
+          @if (canUpload()) {
+            <p hlmEmptyDescription i18n="@@imports.list.emptyDesc">
+              Upload a CSV file above to bulk-create equipment, facilities or member invitations.
+            </p>
+          } @else {
+            <p hlmEmptyDescription i18n="@@imports.list.emptyDescReadOnly">
+              Imports started by your team will appear here.
+            </p>
+          }
+        }
       </div>
       <div hlmEmptyContent>
         @if (hasFilters()) {

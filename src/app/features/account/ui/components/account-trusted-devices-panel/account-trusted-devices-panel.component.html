@@ -40,13 +40,12 @@
       }
     </div>
   } @else if (devices().length === 0) {
-    <p
-      class="rounded-lg border border-border p-4 text-sm text-muted-foreground"
-      data-testid="account-devices-empty"
-      i18n="@@account.devices.empty"
-    >
-      No trusted devices.
-    </p>
+    <div hlmEmpty class="border border-border" data-testid="account-devices-empty">
+      <div hlmEmptyHeader>
+        <app-resource-illustration hlmEmptyMedia resource="device" />
+        <p hlmEmptyTitle i18n="@@account.devices.empty">No trusted devices.</p>
+      </div>
+    </div>
   } @else {
     <ul class="flex flex-col gap-3">
       @for (device of devices(); track device.id) {
@@ -62,6 +61,10 @@
               &middot;
               <span i18n="@@account.devices.expires">Expires</span>
               {{ device.expiresAt | date: 'mediumDate' }}
+            </span>
+            <span class="truncate text-xs text-muted-foreground">
+              <span i18n="@@account.devices.added">Added</span>
+              {{ device.createdAt | date: 'medium' }}
             </span>
           </div>
 
@@ -81,20 +84,22 @@
       }
     </ul>
 
-    <div>
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="gap-2 mobile-ui:min-h-11"
-        data-testid="account-devices-revoke-all"
-        (click)="openConfirmAll()"
-      >
-        <ng-icon name="lucideShieldOff" class="text-sm" aria-hidden="true" />
-        <span i18n="@@account.devices.revokeAll">Revoke all devices</span>
-      </button>
-    </div>
+    @if (devices().length > 1) {
+      <div>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="gap-2 mobile-ui:min-h-11"
+          data-testid="account-devices-revoke-all"
+          (click)="openConfirmAll()"
+        >
+          <ng-icon name="lucideShieldOff" class="text-sm" aria-hidden="true" />
+          <span i18n="@@account.devices.revokeAll">Revoke all devices</span>
+        </button>
+      </div>
+    }
   }
 
   <hlm-alert-dialog

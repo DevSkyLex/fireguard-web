@@ -21,10 +21,13 @@ import type {
   FacilityPlanOverlayZone,
   FacilityType,
 } from '@features/organization/features/facilities/models';
-import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
+import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSheetImports } from '@shared/ui/sheet';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { facilityTypeLabel } from '../../../utils';
 import { FacilityPlanItemList, type PlanItemListOption } from '../facility-plan-item-list';
 import { FacilityStatusTag } from '../facility-status-tag';
 
@@ -42,8 +45,8 @@ import { FacilityStatusTag } from '../facility-status-tag';
  * therefore `app-facility-building-3d-room-list` — is always reachable,
  * with no prior pointer interaction required).
  *
- * Always renders: a floor selector (`role="group"`, one button per
- * {@link floors}, `aria-current` on {@link selectedFloorId}) and
+ * Always renders: a floor selector (`hlm-toggle-group`, single-select, one
+ * item per {@link floors} carrying its own room count) and
  * `app-facility-plan-item-list` for that floor's rooms — the actual
  * accessible equivalent of the canvas' pointer browsing, its status
  * decorator projected through `app-facility-status-tag`.
@@ -81,7 +84,10 @@ import { FacilityStatusTag } from '../facility-status-tag';
     FacilityStatusTag,
     HlmButton,
     ...HlmCardImports,
+    ...HlmSeparatorImports,
     ...HlmSheetImports,
+    ...HlmToggleGroupImports,
+    ...HlmTooltipImports,
   ],
   providers: [provideIcons({ lucideMap, lucideX })],
   templateUrl: './facility-building-3d-room-panel.component.html',
@@ -265,10 +271,24 @@ export class FacilityBuilding3dRoomPanel {
    * @access protected
    * @since 1.0.0
    * @param {FacilityType} type - The room's facility type.
-   * @returns {string} Its localized label, or the raw value when it matches no known type.
+   * @returns {string} Its localized label, or a localized "Unknown type" fallback.
    */
   protected typeLabel(type: FacilityType): string {
-    return FACILITY_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
+    return facilityTypeLabel(type);
+  }
+
+  /**
+   * Method onFloorPicked
+   * @description Narrows `hlm-toggle-group`'s single-select payload and re-emits {@link floorActivated} — a no-op if the group somehow reports no value.
+   * @access protected
+   * @since 1.1.0
+   * @param {string | readonly string[] | null | undefined} value - The toggle group's new value.
+   * @returns {void}
+   */
+  protected onFloorPicked(value: string | readonly string[] | null | undefined): void {
+    if (typeof value !== 'string') return;
+
+    this.floorActivated.emit(value);
   }
 
   /**

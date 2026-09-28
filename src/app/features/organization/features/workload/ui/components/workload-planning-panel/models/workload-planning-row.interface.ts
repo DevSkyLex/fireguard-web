@@ -110,4 +110,34 @@ export interface WorkloadPlanningRow extends Pick<
    * @type {string | null}
    */
   readonly capacityMemberId: string | null;
+
+  /**
+   * Property startsOn
+   * @readonly
+   * @description Earliest represented task's effective period start (date-only), or `null` when none carry one.
+   * @access public
+   * @since 1.1.0
+   * @type {string | null}
+   */
+  readonly startsOn: string | null;
+
+  /**
+   * Property endsOn
+   * @readonly
+   * @description Latest represented task's effective period end (date-only), or `null` when none carry one.
+   * @access public
+   * @since 1.1.0
+   * @type {string | null}
+   */
+  readonly endsOn: string | null;
+
+  /**
+   * Property periodLabel
+   * @readonly
+   * @description The row's formatted work period, resolved from its reason so the template never branches on it — `null` when the reason carries no period fact or neither bound is set.
+   * @access public
+   * @since 1.2.0
+   * @type {string | null}
+   */
+  readonly periodLabel: string | null;
 }

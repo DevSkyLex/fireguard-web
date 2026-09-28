@@ -28,6 +28,9 @@ export interface InterventionListItemViewModel {
   /** Whether its deadline falls inside the due-soon window. */
   readonly isDueSoon: boolean;
 
+  /** Day-granular relative label for its deadline ("today", "in 3 days", "2 days ago"), or `null` when it has none. */
+  readonly dueRelativeLabel: string | null;
+
   /** Display name of the site it concerns, when one is resolved. */
   readonly siteName: string | null;
 

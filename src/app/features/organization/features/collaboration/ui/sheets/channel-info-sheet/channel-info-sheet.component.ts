@@ -15,6 +15,7 @@ import { lucidePin, lucidePinOff, lucideUsers } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { PresenceStatus } from '@features/organization/models';
 import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
@@ -71,6 +72,7 @@ import type { PinnedMessageItem } from './models';
     HlmAvatarImage,
     HlmButton,
     HlmSkeleton,
+    ResourceIllustration,
     ...HlmSheetImports,
   ],
   providers: [provideIcons({ lucidePin, lucidePinOff, lucideUsers })],

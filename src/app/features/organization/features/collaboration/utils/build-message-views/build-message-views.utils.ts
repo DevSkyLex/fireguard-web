@@ -1,5 +1,6 @@
 import type {
   BuildMessageViewsInput,
+  ConversationReceiptPositionOutput,
   MessageOutput,
   MessageView,
 } from '@features/organization/features/collaboration/models';
@@ -12,6 +13,18 @@ import { renderMessageBodyHtml } from '../render-message-body/render-message-bod
  */
 function memberIdOf(memberIri: string): string {
   return memberIri.slice(memberIri.lastIndexOf('/') + 1);
+}
+
+/** Both API paging and marker positions order equal timestamps by message id. */
+function coversMessage(
+  positionAt: string | null,
+  positionId: string | null,
+  message: MessageOutput,
+): boolean {
+  if (positionAt === null || positionId === null) return false;
+  const positionTime = Date.parse(positionAt);
+  const messageTime = Date.parse(message.createdAt);
+  return positionTime > messageTime || (positionTime === messageTime && positionId >= message.id);
 }
 
 /**
@@ -46,6 +59,23 @@ export function buildMessageViews(input: BuildMessageViewsInput): readonly Messa
     if (failed.has(message.id)) status = 'failed';
     else if (pending.has(message.id)) status = 'pending';
 
+    const receipt =
+      isOwn && status === 'sent' && input.receiptKind !== undefined
+        ? {
+            kind: input.receiptKind,
+            deliveredCount: (input.receiptPositions ?? []).filter(
+              (position: ConversationReceiptPositionOutput): boolean =>
+                position.memberId !== authorId &&
+                coversMessage(position.deliveredThroughAt, position.deliveredMessageId, message),
+            ).length,
+            readCount: (input.receiptPositions ?? []).filter(
+              (position: ConversationReceiptPositionOutput): boolean =>
+                position.memberId !== authorId &&
+                coversMessage(position.readThroughAt, position.readMessageId, message),
+            ).length,
+          }
+        : undefined;
+
     return {
       id: message.id,
       authorId,
@@ -57,6 +87,7 @@ export function buildMessageViews(input: BuildMessageViewsInput): readonly Messa
       isDeleted: message.isDeleted,
       isOwn,
       status,
+      receipt,
       isPinned: message.pinnedAt !== undefined,
       isSaved: message.isSaved,
       replyCount: message.replyCount,

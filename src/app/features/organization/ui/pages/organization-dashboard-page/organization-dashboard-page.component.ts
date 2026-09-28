@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -49,7 +49,9 @@ import {
 } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
+  REGIONAL_FORMATTING_PORT,
   type OrganizationContextPort,
+  type RegionalFormattingPort,
 } from '@features/organization/ports';
 import {
   AssetGrowthTrendStore,
@@ -71,12 +73,14 @@ import {
 } from '@features/organization/ui/components';
 
 import {
+  getOrganizationDashboardHealthValue,
   getOrganizationDashboardNonConformitySeverityBreakdown,
   getOrganizationDashboardOverviewMetricValue,
   mapAlignedDashboardTrendSeriesToChartSeries,
   parseOrganizationDashboardPeriodBoundary,
 } from '@features/organization/utils';
 import { LineChart, type ChartSeries } from '@shared/chart';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -84,8 +88,10 @@ import { HlmFieldImports } from '@shared/ui/field';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSwitch } from '@shared/ui/switch';
+import { HlmLarge } from '@shared/ui/typography';
 import { resolveOrganizationDashboardAlertTag } from './models/organization-dashboard-alert-tag/organization-dashboard-alert-tag.util';
 
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 
@@ -139,6 +145,22 @@ type OrganizationDashboardSeverityEntry = {
 };
 
 /**
+ * Type OrganizationDashboardHealthRow
+ *
+ * @description
+ * View-model for one row of the Additional analysis section's Health card:
+ * one all-status snapshot percentage, unavailable rather than a misleading
+ * zero when its denominator is empty.
+ *
+ * @since 1.0.0
+ */
+type OrganizationDashboardHealthRow = {
+  readonly key: string;
+  readonly label: string;
+  readonly value: number | null;
+};
+
+/**
  * Component OrganizationDashboardPage
  * @class OrganizationDashboardPage
  *
@@ -147,21 +169,22 @@ type OrganizationDashboardSeverityEntry = {
  * Browser-only trend stores activate when the dashboard mounts; all panels
  * share the same aggregate dashboard store.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-dashboard-page',
   imports: [
-    DatePipe,
     DecimalPipe,
+    OrgDatePipe,
     OrganizationDashboardRisk,
     OrganizationDashboardAlerts,
     OrganizationDashboardRecent,
     ...HlmCollapsibleImports,
     NgIcon,
     ...HlmEmptyImports,
+    StateIllustration,
     HlmButton,
     HlmSkeleton,
     HlmSwitch,
@@ -172,6 +195,7 @@ type OrganizationDashboardSeverityEntry = {
     ...HlmFieldImports,
     ...HlmProgressImports,
     ...HlmToggleGroupImports,
+    HlmLarge,
   ],
   providers: [
     DashboardStore,
@@ -220,6 +244,21 @@ export class OrganizationDashboardPage {
   /** Organization-owned helper exposing reactive permission checks. */
   private readonly permissionService: OrganizationPermissionService =
     inject<OrganizationPermissionService>(OrganizationPermissionService);
+
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
 
   /**
    * Property canReadInterventions
@@ -289,6 +328,19 @@ export class OrganizationDashboardPage {
         tone: 'neutral',
       };
     }
+    const overdueInterventions: number | null = getOrganizationDashboardOverviewMetricValue(
+      overview,
+      'interventions',
+      'overdue',
+    );
+    const interventionsBadge: StatTileBadge | null =
+      overdueInterventions !== null && overdueInterventions > 0
+        ? {
+            label: $localize`:@@org.today.kpi.openInterventions.badge.overdue:${overdueInterventions}:count: overdue`,
+            icon: 'lucideTriangleAlert',
+            tone: 'destructive',
+          }
+        : null;
     const tiles: OrganizationDashboardKpiTile[] = [];
 
     if (this.canReadInterventions()) {
@@ -300,8 +352,8 @@ export class OrganizationDashboardPage {
         icon: 'lucideCompass',
         link: interventionsLink,
         delta: null,
-        tone: 'neutral',
-        badge: null,
+        tone: interventionsBadge ? 'destructive' : 'neutral',
+        badge: interventionsBadge,
       });
     }
 
@@ -410,6 +462,16 @@ export class OrganizationDashboardPage {
    * @type {readonly number[]}
    */
   protected readonly severitySkeletonRows: readonly number[] = [0, 1, 2, 3];
+
+  /**
+   * Property healthSkeletonRows
+   * @readonly
+   * @description Stable placeholder rows shown while the Health card's snapshot loads, matching {@link healthRows}'s fixed row count.
+   * @access protected
+   * @since 1.2.0
+   * @type {readonly number[]}
+   */
+  protected readonly healthSkeletonRows: readonly number[] = [0, 1, 2];
 
   /**
    * Property forbiddenMessage
@@ -603,6 +665,89 @@ export class OrganizationDashboardPage {
       ? $localize`:@@org.dashboard.severity.summaryOne:1 recorded, across all statuses`
       : $localize`:@@org.dashboard.severity.summaryMany:${total}:total: recorded, across all statuses`;
   });
+
+  /**
+   * Property healthRows
+   * @readonly
+   *
+   * @description
+   * The Additional analysis section's Health card: the current-snapshot
+   * inspection pass rate, equipment availability and non-conformity
+   * resolution rate, each `null` when its own denominator is empty rather
+   * than showing a misleading 0%.
+   *
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<readonly OrganizationDashboardHealthRow[]>}
+   */
+  protected readonly healthRows: Signal<readonly OrganizationDashboardHealthRow[]> = computed(
+    () => {
+      const data = this.dashboardStore.queryData();
+      const overview = data?.overview;
+      const health = data?.health;
+
+      const inspectionsPass = getOrganizationDashboardOverviewMetricValue(
+        overview,
+        'inspections',
+        'pass',
+      );
+      const inspectionsFail = getOrganizationDashboardOverviewMetricValue(
+        overview,
+        'inspections',
+        'fail',
+      );
+      const inspectionsPartial = getOrganizationDashboardOverviewMetricValue(
+        overview,
+        'inspections',
+        'partial',
+      );
+      const inspectionsDenominator =
+        (inspectionsPass ?? 0) + (inspectionsFail ?? 0) + (inspectionsPartial ?? 0);
+
+      const equipmentTotal = getOrganizationDashboardOverviewMetricValue(
+        overview,
+        'equipment',
+        'total',
+      );
+      const equipmentDecommissioned = getOrganizationDashboardOverviewMetricValue(
+        overview,
+        'equipment',
+        'decommissioned',
+      );
+      const equipmentDenominator =
+        equipmentTotal !== null ? equipmentTotal - (equipmentDecommissioned ?? 0) : 0;
+
+      const nonConformityTotal =
+        getOrganizationDashboardOverviewMetricValue(overview, 'nonConformities', 'total') ?? 0;
+
+      return [
+        {
+          key: 'inspectionPassRate',
+          label: $localize`:@@org.dashboard.health.inspectionPassRate:Inspection pass rate`,
+          value:
+            inspectionsDenominator > 0
+              ? getOrganizationDashboardHealthValue(health, 'inspectionPassRate')
+              : null,
+        },
+        {
+          key: 'equipmentAvailabilityRate',
+          label: $localize`:@@org.dashboard.health.equipmentAvailabilityRate:Equipment availability`,
+          value:
+            equipmentDenominator > 0
+              ? getOrganizationDashboardHealthValue(health, 'equipmentAvailabilityRate')
+              : null,
+        },
+        {
+          key: 'nonConformityResolutionRate',
+          label: $localize`:@@org.dashboard.health.nonConformityResolutionRate:Non-conformity resolution rate`,
+          value:
+            nonConformityTotal > 0
+              ? getOrganizationDashboardHealthValue(health, 'nonConformityResolutionRate')
+              : null,
+        },
+      ];
+    },
+  );
 
   /**
    * Property inspectionsChartSeries

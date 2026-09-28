@@ -8,8 +8,11 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { TeamOutput } from '@features/organization/models';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 
 /**
@@ -32,7 +35,8 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
  */
 @Component({
   selector: 'app-organization-team-delete-dialog',
-  imports: [...HlmAlertDialogImports],
+  imports: [NgIcon, ...HlmAlertDialogImports, ...HlmAlertImports],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-team-delete-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

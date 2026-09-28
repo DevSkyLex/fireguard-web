@@ -145,4 +145,30 @@ describe('ImportJobDetailSheet', () => {
 
     expect(byTestId('import-job-detail-rows')?.textContent).toContain('Row could not be parsed.');
   });
+
+  it('should show the total row count, started and completed facts once known', async () => {
+    fixture.componentRef.setInput(
+      'job',
+      job({
+        totalRows: 50,
+        startedAt: '2026-01-18T00:01:00+00:00',
+        completedAt: '2026-01-18T00:02:00+00:00',
+      }),
+    );
+    await fixture.whenStable();
+
+    const sheet: HTMLElement | null = byTestId('import-job-detail-sheet');
+    expect(sheet?.textContent).toContain('50');
+    expect(sheet?.querySelector('dl')).not.toBeNull();
+  });
+
+  it('should render a job-level failure as a destructive alert', async () => {
+    fixture.componentRef.setInput('job', job({ status: 'failed', jobError: 'File is corrupt.' }));
+    await fixture.whenStable();
+
+    const alert: HTMLElement | null =
+      byTestId('import-job-detail-sheet')?.querySelector('[data-slot="alert"]') ?? null;
+    expect(alert?.textContent).toContain('File is corrupt.');
+    expect(alert?.className).toContain('text-destructive');
+  });
 });

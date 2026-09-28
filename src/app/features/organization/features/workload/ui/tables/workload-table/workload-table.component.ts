@@ -5,6 +5,7 @@ import {
   computed,
   inject,
   input,
+  LOCALE_ID,
   output,
   type InputSignal,
   type OutputEmitterRef,
@@ -22,6 +23,8 @@ import type {
 import type { MemberSelectOption } from '@features/organization/models';
 import { formatDurationMinutes } from '@shared/duration-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmTooltip } from '@shared/ui/tooltip';
 import { WorkloadDayCell } from './workload-day-cell.component';
@@ -40,7 +43,15 @@ import { WorkloadDayCell } from './workload-day-cell.component';
  */
 @Component({
   selector: 'app-workload-table',
-  imports: [DatePipe, HlmAvatarImports, HlmTableImports, HlmTooltip, WorkloadDayCell],
+  imports: [
+    DatePipe,
+    HlmAvatarImports,
+    ...HlmItemImports,
+    ...HlmSeparatorImports,
+    HlmTableImports,
+    HlmTooltip,
+    WorkloadDayCell,
+  ],
   templateUrl: './workload-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -110,6 +121,26 @@ export class WorkloadTable {
   );
 
   /**
+   * Property locale
+   * @readonly
+   * @description Active application locale, used to spell out a day for the desktop cell's accessible name.
+   * @access private
+   * @since 1.1.0
+   * @type {string}
+   */
+  private readonly locale: string = inject(LOCALE_ID);
+
+  /**
+   * Property unknownMemberLabel
+   * @readonly
+   * @description Accessible-name fallback when neither the authorized directory nor the projection row carries a name — never the raw member id.
+   * @access protected
+   * @since 1.1.0
+   * @type {string}
+   */
+  protected readonly unknownMemberLabel: string = $localize`:@@workload.unknownMember:Unknown member`;
+
+  /**
    * Property membersById
    * @readonly
    *
@@ -125,6 +156,28 @@ export class WorkloadTable {
   protected readonly membersById: Signal<ReadonlyMap<string, MemberSelectOption>> = computed(
     () => new Map(this.members().map((member) => [member.value, member])),
   );
+
+  /**
+   * Method memberName
+   * @method memberName
+   *
+   * @description
+   * The row's resolved display name — the authorized directory first, then the projected
+   * row, and a localized "Unknown member" last resort — never the raw member id.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {MemberWorkloadOutput} member - The row's projection member.
+   * @returns {string} The resolved name.
+   */
+  protected memberName(member: MemberWorkloadOutput): string {
+    return (
+      this.membersById().get(member.memberId)?.displayName ||
+      member.displayName ||
+      this.unknownMemberLabel
+    );
+  }
 
   /**
    * Property unavailableDates
@@ -207,5 +260,55 @@ export class WorkloadTable {
    */
   protected meterValue(day: WorkloadDayOutput): number {
     return Math.min(100, Math.max(0, day.utilizationPercent ?? 0));
+  }
+
+  /**
+   * Method dayAriaLabel
+   * @method dayAriaLabel
+   *
+   * @description
+   * The desktop day button's accessible name: the resolved identity — never
+   * the raw member id — a fully spelled-out date instead of a bare ISO
+   * string, and the same status a sighted user reads.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {MemberWorkloadOutput} member - The row's projection member.
+   * @param {WorkloadDayOutput} day - The cell's daily totals.
+   * @returns {string} The composed accessible name.
+   */
+  protected dayAriaLabel(member: MemberWorkloadOutput, day: WorkloadDayOutput): string {
+    const name: string = this.memberName(member);
+    const date: string = new Intl.DateTimeFormat(this.locale, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(`${day.date}T00:00:00Z`));
+
+    return `${name}, ${date}, ${this.statusLabel(day)}`;
+  }
+
+  /**
+   * Method overloadedDaysCount
+   * @method overloadedDaysCount
+   *
+   * @description
+   * Whole days this week the member's load exceeds capacity, counted from
+   * the server's own `availability`/`overloadMinutes` fields — never a
+   * weekly total, a bar, or a ratio (`workload/FEATURE.md`).
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {MemberWorkloadOutput} member - The row's projection member.
+   * @returns {number} Count of overloaded days, `0` when none.
+   */
+  protected overloadedDaysCount(member: MemberWorkloadOutput): number {
+    return member.days.filter(
+      (day) => day.availability === 'overloaded' || (day.overloadMinutes ?? 0) > 0,
+    ).length;
   }
 }

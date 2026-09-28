@@ -13,6 +13,7 @@ export type {
   BuildMessageViewsInput,
   MessageDayEntry,
   MessageReactionToggle,
+  MessageReceiptView,
   MessageRowEntry,
   MessageSendStatus,
   MessageThreadEntry,
@@ -31,6 +32,9 @@ export type {
 } from './channel';
 export type {
   ConversationOutput,
+  ConversationReceiptPositionOutput,
+  ConversationReceiptsOutput,
+  ConversationSignalOutput,
   ConversationSubjectType,
   ConversationVisibility,
   GetOrCreateConversationInput,

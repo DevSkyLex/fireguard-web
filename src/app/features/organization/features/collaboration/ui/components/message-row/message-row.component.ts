@@ -14,7 +14,10 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBookmark,
   lucideBookmarkX,
+  lucideCheck,
+  lucideCheckCheck,
   lucideEllipsis,
+  lucideEye,
   lucideMessageSquareReply,
   lucidePencilLine,
   lucidePin,
@@ -107,7 +110,10 @@ import { MessageReactions } from '../message-reactions';
     provideIcons({
       lucideBookmark,
       lucideBookmarkX,
+      lucideCheck,
+      lucideCheckCheck,
       lucideEllipsis,
+      lucideEye,
       lucideMessageSquareReply,
       lucidePencilLine,
       lucidePin,

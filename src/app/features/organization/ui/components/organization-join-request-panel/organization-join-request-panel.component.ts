@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,15 +11,44 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideUserRoundPlus } from '@ng-icons/lucide';
+import {
+  lucideBan,
+  lucideCircleAlert,
+  lucideCircleCheck,
+  lucideCircleX,
+  lucideClock,
+} from '@ng-icons/lucide';
 import type { OrganizationJoinRequestOutput } from '@features/organization/models';
 import { OrganizationJoinRequestReviewDialog } from '@features/organization/ui/dialogs/organization-join-request-review-dialog';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmMuted } from '@shared/ui/typography';
+
+/**
+ * Interface OrganizationJoinRequestStatusDescriptor
+ *
+ * @description
+ * How one request status looks, wherever it appears: a localized label, an
+ * icon, and the icon's severity class — a status is never colour alone.
+ *
+ * @since 1.1.0
+ */
+interface OrganizationJoinRequestStatusDescriptor {
+  readonly label: string;
+  readonly icon: string;
+  readonly iconClass: string;
+}
+
 /**
  * Component OrganizationJoinRequestPanel
  * @class OrganizationJoinRequestPanel
@@ -30,21 +58,42 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 @Component({
   selector: 'app-organization-join-request-panel',
   imports: [
-    DatePipe,
     NgIcon,
+    OrgDatePipe,
     OrganizationJoinRequestReviewDialog,
     HlmAlertImports,
     HlmItemImports,
     HlmBadge,
     HlmButton,
     HlmEmptyImports,
+    HlmMuted,
     HlmSkeleton,
+    ResourceIllustration,
   ],
-  providers: [provideIcons({ lucideUserRoundPlus })],
+  providers: [
+    provideIcons({
+      lucideBan,
+      lucideCircleAlert,
+      lucideCircleCheck,
+      lucideCircleX,
+      lucideClock,
+    }),
+  ],
   templateUrl: './organization-join-request-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationJoinRequestPanel {
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+
   /**
    * Property requests
    * @readonly
@@ -147,20 +196,40 @@ export class OrganizationJoinRequestPanel {
       ) ?? null,
   );
   /**
-   * Property statusLabels
+   * Property statusDescriptors
    * @readonly
-   * @description Localized lifecycle labels.
+   * @description Every status's localized label, icon and severity class — pairing colour with a label and glyph so a request's lifecycle is never conveyed by colour alone.
    * @access protected
-   * @since 1.0.0
-   * @type {Readonly<Record<OrganizationJoinRequestOutput['status'], string>>}
+   * @since 1.1.0
+   * @type {Readonly<Record<OrganizationJoinRequestOutput['status'], OrganizationJoinRequestStatusDescriptor>>}
    */
-  protected readonly statusLabels: Readonly<
-    Record<OrganizationJoinRequestOutput['status'], string>
+  protected readonly statusDescriptors: Readonly<
+    Record<OrganizationJoinRequestOutput['status'], OrganizationJoinRequestStatusDescriptor>
   > = {
-    pending: $localize`:@@org.access.requests.pending:Awaiting review`,
-    approved: $localize`:@@org.access.requests.approved:Approved`,
-    rejected: $localize`:@@org.access.requests.rejected:Rejected`,
-    cancelled: $localize`:@@org.access.requests.cancelled:Cancelled`,
-    expired: $localize`:@@org.access.requests.expired:Expired`,
+    pending: {
+      label: $localize`:@@org.access.requests.pending:Awaiting review`,
+      icon: 'lucideClock',
+      iconClass: 'text-muted-foreground',
+    },
+    approved: {
+      label: $localize`:@@org.access.requests.approved:Approved`,
+      icon: 'lucideCircleCheck',
+      iconClass: 'text-success',
+    },
+    rejected: {
+      label: $localize`:@@org.access.requests.rejected:Rejected`,
+      icon: 'lucideCircleX',
+      iconClass: 'text-destructive',
+    },
+    cancelled: {
+      label: $localize`:@@org.access.requests.cancelled:Cancelled`,
+      icon: 'lucideBan',
+      iconClass: 'text-muted-foreground',
+    },
+    expired: {
+      label: $localize`:@@org.access.requests.expired:Expired`,
+      icon: 'lucideCircleAlert',
+      iconClass: 'text-warning',
+    },
   };
 }

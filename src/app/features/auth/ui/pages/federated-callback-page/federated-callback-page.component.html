@@ -1,42 +1,50 @@
 <div class="mx-auto flex w-full max-w-md min-w-0 flex-col items-center gap-5 text-center">
   @if (callbackInvalid()) {
-    <div class="flex min-w-0 flex-col gap-2" role="alert">
-      <h1 class="text-xl font-semibold tracking-tight" i18n="@@auth.federated.failedTitle">
-        Sign-in couldn't be completed
-      </h1>
-      <p class="text-sm text-muted-foreground" i18n="@@auth.federated.failedDescription">
-        The provider response is no longer valid. Start again from the sign-in page.
-      </p>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+        </div>
+        <h1 hlmEmptyTitle i18n="@@auth.federated.failedTitle">Sign-in couldn't be completed</h1>
+        <p hlmEmptyDescription i18n="@@auth.federated.failedDescription">
+          The provider response is no longer valid. Start again from the sign-in page.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <a
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          routerLink="/auth/login"
+          [queryParams]="{ returnUrl: returnUrl() || undefined }"
+          i18n="@@auth.federated.backToLogin"
+        >
+          Back to sign in
+        </a>
+      </div>
     </div>
-    <a
-      class="mobile-ui:min-h-11"
-      hlmBtn
-      variant="outline"
-      routerLink="/auth/login"
-      [queryParams]="{ returnUrl: returnUrl() || undefined }"
-      i18n="@@auth.federated.backToLogin"
-    >
-      Back to sign in
-    </a>
   } @else if (federatedStore.completeLoginError(); as error) {
-    <div class="flex min-w-0 flex-col gap-2" role="alert">
-      <h1 class="text-xl font-semibold tracking-tight" i18n="@@auth.federated.failedTitle">
-        Sign-in couldn't be completed
-      </h1>
-      <p class="text-sm text-muted-foreground">
-        {{ federatedErrorMessage(error.message) }}
-      </p>
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+        </div>
+        <h1 hlmEmptyTitle i18n="@@auth.federated.failedTitle">Sign-in couldn't be completed</h1>
+        <p hlmEmptyDescription>{{ federatedErrorMessage(error.message) }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <a
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          routerLink="/auth/login"
+          [queryParams]="{ returnUrl: returnUrl() || undefined }"
+          i18n="@@auth.federated.backToLogin"
+        >
+          Back to sign in
+        </a>
+      </div>
     </div>
-    <a
-      class="mobile-ui:min-h-11"
-      hlmBtn
-      variant="outline"
-      routerLink="/auth/login"
-      [queryParams]="{ returnUrl: returnUrl() || undefined }"
-      i18n="@@auth.federated.backToLogin"
-    >
-      Back to sign in
-    </a>
   } @else {
     <hlm-spinner
       class="text-primary"

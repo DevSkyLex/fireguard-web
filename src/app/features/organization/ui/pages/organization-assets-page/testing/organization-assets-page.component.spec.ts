@@ -129,6 +129,11 @@ describe('OrganizationAssetsPage', () => {
   let rootsSignal: WritableSignal<readonly FacilityOutput[]>;
   let summarySignal: WritableSignal<ComplianceSummaryOutput | null>;
   let isExportingSignal: WritableSignal<boolean>;
+  let isLoadingSummarySignal: WritableSignal<boolean>;
+  let equipmentTotalSignal: WritableSignal<number>;
+  let isLoadingEquipmentSignal: WritableSignal<boolean>;
+  let inspectionTotalSignal: WritableSignal<number>;
+  let isLoadingInspectionsSignal: WritableSignal<boolean>;
   let loadSnapshots: ReturnType<typeof vi.fn>;
   let archiveRegister: ReturnType<typeof vi.fn>;
   let downloadSnapshot: ReturnType<typeof vi.fn>;
@@ -157,6 +162,11 @@ describe('OrganizationAssetsPage', () => {
     rootsSignal = signal<readonly FacilityOutput[]>([facility()]);
     summarySignal = signal<ComplianceSummaryOutput | null>(null);
     isExportingSignal = signal<boolean>(false);
+    isLoadingSummarySignal = signal<boolean>(false);
+    equipmentTotalSignal = signal<number>(0);
+    isLoadingEquipmentSignal = signal<boolean>(false);
+    inspectionTotalSignal = signal<number>(0);
+    isLoadingInspectionsSignal = signal<boolean>(false);
     loadSnapshots = vi.fn();
     archiveRegister = vi.fn();
     downloadSnapshot = vi.fn();
@@ -200,6 +210,8 @@ describe('OrganizationAssetsPage', () => {
             childrenByParent: signal({}),
             expandingParentIds: signal([]),
             failedParentIds: signal([]),
+            isLoadingRoots: signal(false),
+            hasRootsError: signal(false),
             isMoving: signal(false),
             isDuplicating: signal(false),
             loadRoots,
@@ -213,17 +225,17 @@ describe('OrganizationAssetsPage', () => {
           useValue: {
             equipment: signal([]),
             equipmentListCallState: signal(successCallState([])),
-            equipmentTotal: signal(0),
+            equipmentTotal: equipmentTotalSignal,
             equipmentPage: signal(1),
             equipmentPageCount: signal(1),
-            isLoadingEquipment: signal(false),
+            isLoadingEquipment: isLoadingEquipmentSignal,
             hasEquipmentError: signal(false),
             inspections: signal([]),
             inspectionListCallState: signal(successCallState([])),
-            inspectionTotal: signal(0),
+            inspectionTotal: inspectionTotalSignal,
             inspectionPage: signal(1),
             inspectionPageCount: signal(1),
-            isLoadingInspections: signal(false),
+            isLoadingInspections: isLoadingInspectionsSignal,
             hasInspectionsError: signal(false),
             loadEquipment,
             loadInspections,
@@ -237,7 +249,7 @@ describe('OrganizationAssetsPage', () => {
             isLoadingTree: signal(false),
             hasTreeError: signal(false),
             summary: summarySignal,
-            isLoadingSummary: signal(false),
+            isLoadingSummary: isLoadingSummarySignal,
             hasSummaryError: signal(false),
             isExporting: isExportingSignal,
             hasExportError: signal(false),
@@ -1078,5 +1090,59 @@ describe('OrganizationAssetsPage', () => {
       pane?.querySelector('h2#assets-compliance-summary-title') ?? null;
     expect(pane?.getAttribute('aria-labelledby')).toBe('assets-compliance-summary-title');
     expect(heading?.textContent).toContain('Compliance summary');
+  });
+
+  it('treats a summary still carrying the previous site as loading, not as stale data (as-03)', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['onAxisActivated']('compliance');
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-1',
+      label: 'Headquarters',
+      hasChildren: false,
+      data: complianceNode(),
+    });
+    summarySignal.set({ ...complianceSummary(), facilityId: 'facility-1' });
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['isComplianceSummaryStale']()).toBe(false);
+
+    fixture.componentInstance['onComplianceNodeSelected']({
+      id: 'facility-2',
+      label: 'Warehouse',
+      hasChildren: false,
+      data: complianceNode({ id: 'facility-2', name: 'Warehouse' }),
+    });
+    isLoadingSummarySignal.set(true);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['isComplianceSummaryStale']()).toBe(true);
+    const pane: HTMLElement | null = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="assets-compliance-detail-panel"]',
+    );
+    expect(pane?.querySelector('[aria-label="Loading compliance summary"]')).not.toBeNull();
+    expect(pane?.querySelector('[data-testid="assets-compliance-summary-badge"]')).toBeNull();
+  });
+
+  it('hides the equipment and inspection counts while their pane is loading, instead of a stale total (as-11)', async () => {
+    equipmentTotalSignal.set(12);
+    inspectionTotalSignal.set(7);
+    fixture = await createPage({ organizationId: 'org-1', axis: 'everything' });
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('#assets-equipment-title')?.textContent).toContain('12');
+    expect(host.querySelector('#assets-inspections-title')?.textContent).toContain('7');
+
+    fixture.componentInstance['onNodeSelected']({
+      id: 'facility-2',
+      label: 'Warehouse',
+      hasChildren: false,
+      data: facility({ id: 'facility-2', name: 'Warehouse' }),
+    });
+    isLoadingEquipmentSignal.set(true);
+    isLoadingInspectionsSignal.set(true);
+    await fixture.whenStable();
+
+    expect(host.querySelector('#assets-equipment-title')?.textContent).not.toContain('12');
+    expect(host.querySelector('#assets-inspections-title')?.textContent).not.toContain('7');
   });
 });

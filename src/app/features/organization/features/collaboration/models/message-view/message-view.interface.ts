@@ -1,4 +1,5 @@
 import type { MessageReactionOutput } from '../message';
+import type { MessageReceiptView } from './message-receipt-view.interface';
 import type { MessageSendStatus } from './message-send-status.type';
 
 /**
@@ -36,6 +37,8 @@ export interface MessageView {
   /** Whether the reading member wrote it, which decides the row's side. */
   readonly isOwn: boolean;
   readonly status: MessageSendStatus;
+  /** Present only on confirmed messages in direct conversations and channels. */
+  readonly receipt?: MessageReceiptView;
   /** Whether the message is pinned in its conversation — visible to every reader. */
   readonly isPinned: boolean;
   /** Whether the reading member bookmarked it. Private to that member. */

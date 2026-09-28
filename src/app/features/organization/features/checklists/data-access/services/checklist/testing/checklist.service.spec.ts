@@ -47,6 +47,7 @@ describe('ChecklistService', () => {
     name: 'Fire Safety Inspection Checklist v1',
     version: '1.0',
     status: 'active',
+    itemCount: 1,
     items: [
       {
         id: 'item-uuid-1',

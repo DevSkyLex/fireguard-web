@@ -1,10 +1,12 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
+  LOCALE_ID,
   type EffectRef,
   type InputSignal,
   type Signal,
@@ -16,26 +18,19 @@ import {
   lucideCircleAlert,
   lucideCircleCheck,
   lucideClock,
-  lucideLink2Off,
-  lucideMailX,
   lucideTag,
 } from '@ng-icons/lucide';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth';
-import {
-  REGIONAL_FORMATTING_PORT,
-  type RegionalFormattingPort,
-} from '@features/organization/ports';
 import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
 import { OrganizationAvatar } from '@features/organization/ui/components';
 import { ORGANIZATION_INVITATION_STATUS_TAG_ICON_CLASS } from '@features/organization/ui/tables/organization-invitation-table/constants/organization-invitation-status-tag-severity.constants';
 import { resolveOrganizationInvitationStatusTag } from '@features/organization/ui/tables/organization-invitation-table/models';
 import { getOrganizationInitials } from '@features/organization/utils';
 import { PageHeading } from '@shared/page-heading';
-import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { formatRelativeDays } from '@shared/relative-time';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinner } from '@shared/ui/spinner';
 
@@ -60,7 +55,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
   selector: 'app-organization-invitation-accept-page',
   host: { class: 'block w-full max-w-xl' },
   imports: [
-    OrgDatePipe,
+    DatePipe,
     NgTemplateOutlet,
     RouterLink,
     NgIcon,
@@ -74,15 +69,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
   ],
   providers: [
     OrganizationInvitationAcceptStore,
-    provideIcons({
-      lucideBan,
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideClock,
-      lucideLink2Off,
-      lucideMailX,
-      lucideTag,
-    }),
+    provideIcons({ lucideBan, lucideCircleAlert, lucideCircleCheck, lucideClock, lucideTag }),
   ],
   templateUrl: './organization-invitation-accept-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -106,20 +93,15 @@ export class OrganizationInvitationAcceptPage {
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
-  private readonly regionalFormattingPort: RegionalFormattingPort =
-    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
-
   /**
-   * Property regionalFormatting
+   * Property locale
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
-   * @access protected
-   * @since 1.0.0
-   * @type {Signal<RegionalFormatSettings>}
+   * @description The application's active locale, read directly since the invitee holds no organization context yet (§ DESIGN.md date rules, pages outside an organization).
+   * @access private
+   * @since 1.4.0
+   * @type {string}
    */
-  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
-    this.regionalFormattingPort.regionalFormatting;
+  private readonly locale: string = inject(LOCALE_ID);
 
   /**
    * Property store
@@ -276,6 +258,41 @@ export class OrganizationInvitationAcceptPage {
    * @type {string}
    */
   protected readonly notAcceptableDescription: string = $localize`:@@org.invitationAccept.notAcceptable:This invitation can no longer be accepted.`;
+
+  /**
+   * Property expiresRelativeSuffix
+   * @readonly
+   * @description A pending invitation's `expiresAt`, as a localized whole-day relative label ("in 3 days"), counted from today in the device's local timezone — this page has no organization timezone to read yet. `null` before a preview loads.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<string | null>}
+   */
+  protected readonly expiresRelativeSuffix: Signal<string | null> = computed((): string | null => {
+    const expiresAt: string | undefined = this.store.preview()?.expiresAt;
+
+    return expiresAt
+      ? formatRelativeDays(
+          this.localCalendarDayOf(new Date(expiresAt)),
+          this.localCalendarDayOf(new Date()),
+          this.locale,
+        )
+      : null;
+  });
+
+  /**
+   * Property isExpiringSoon
+   * @readonly
+   * @description Whether a pending invitation expires within 48 hours, so the urgency cue only appears when accepting soon actually matters.
+   * @access protected
+   * @since 1.4.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isExpiringSoon: Signal<boolean> = computed((): boolean => {
+    const expiresAt: string | undefined = this.store.preview()?.expiresAt;
+    if (!expiresAt) return false;
+    const remainingMs: number = new Date(expiresAt).getTime() - Date.now();
+    return remainingMs > 0 && remainingMs <= 48 * 60 * 60 * 1000;
+  });
   //#endregion
 
   //#region Lifecycle
@@ -345,6 +362,22 @@ export class OrganizationInvitationAcceptPage {
     }
 
     this.store.accept(token);
+  }
+
+  /**
+   * Method localCalendarDayOf
+   * @description The `YYYY-MM-DD` calendar day an instant falls on in the device's local timezone, read from `Intl.DateTimeFormat` rather than through string slicing so it stays correct across DST.
+   * @access private
+   * @since 1.4.0
+   * @param {Date} instant - The instant to resolve.
+   * @returns {string} The local calendar day.
+   */
+  private localCalendarDayOf(instant: Date): string {
+    return new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(instant);
   }
   //#endregion
 }

@@ -17,9 +17,11 @@
     </hlm-alert-dialog-header>
 
     @if (error(); as message) {
-      <p role="alert" class="text-sm text-destructive" data-testid="account-deactivate-error">
-        {{ message }}
-      </p>
+      <div hlmAlert variant="destructive" data-testid="account-deactivate-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@account.deactivate.errorTitle">Couldn't deactivate your account</p>
+        <p hlmAlertDescription>{{ message }}</p>
+      </div>
     }
 
     <hlm-alert-dialog-footer>

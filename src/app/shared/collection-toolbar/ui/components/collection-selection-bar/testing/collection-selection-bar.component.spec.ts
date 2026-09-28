@@ -57,11 +57,11 @@ describe('CollectionSelectionBar', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="example-selection-bar"]')).toBeNull();
   });
 
-  it('labels the selected count separately from all query results', async () => {
+  it('counts selected rows against the filtered result total', async () => {
     await render();
     const bar = fixture.nativeElement.querySelector('[data-testid="example-selection-bar"]');
-    expect(bar?.textContent).toContain('Selected: 2');
-    expect(bar?.textContent).toContain('Results: 98');
+    expect(bar?.textContent).toContain('2 of 98 selected');
+    expect(bar?.textContent).not.toContain('Results:');
   });
 
   it('emits an enabled desktop command and rejects a disabled grouped command', async () => {

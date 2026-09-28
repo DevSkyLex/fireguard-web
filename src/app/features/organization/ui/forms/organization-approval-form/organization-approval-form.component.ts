@@ -87,9 +87,11 @@ const SEVERITY_GATED_ACTION_TYPE: string = 'nc_waiver';
  *
  * It owns its model and rules and emits {@link submitted}; the page maps
  * the values onto the settings PATCH and calls the store
- * (`ARCHITECTURE.md` §10.4).
+ * (`ARCHITECTURE.md` §10.4). Every action-type row shares one bordered
+ * container, separated by `hlm-field-separator`, rather than each carrying
+ * its own bordered box.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html

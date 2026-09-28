@@ -32,6 +32,8 @@ import {
 } from '@spartan-ng/brain/calendar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import type { CalendarDisplayEvent } from '../../../models/calendar-display-event.interface';
 import type { CalendarEventDrop } from '../../../models/calendar-event-drop.interface';
 import type { CalendarFirstDayOfWeek } from '../../../models/calendar-first-day-of-week.type';
@@ -48,7 +50,7 @@ import {
 /**
  * The summary shared by every day that carries no event.
  */
-const EMPTY_DAY: CalendarDaySummary = { count: 0, dots: [], overflow: 0 };
+const EMPTY_DAY: CalendarDaySummary = { count: 0, dots: [], overflow: 0, sourceLabels: [] };
 
 /**
  * A Sunday, so adding a JavaScript weekday index lands on that weekday.
@@ -110,6 +112,8 @@ const WEEKDAY_REFERENCE = new Date(2024, 0, 7);
     NgIcon,
     HlmBadge,
     HlmButton,
+    HlmSkeleton,
+    ...HlmTooltipImports,
     BrnCalendarCell,
     BrnCalendarCellButton,
     BrnCalendarGrid,
@@ -215,6 +219,23 @@ export class Calendar implements BrnCalendarBase<Date> {
    * @type {InputSignal<boolean>}
    */
   public readonly canCreate: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Renders a skeleton grid — a week of weekday labels over as many rows of
+   * placeholder cells as {@link days} actually spans ({@link skeletonWeeks})
+   * — instead of the real month while the host's first load is in flight.
+   * Off by default so a host that never loads (a static demo, a host that
+   * gates rendering itself) sees no behavior change.
+   *
+   * @access public
+   * @since 2.4.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Outputs
@@ -266,6 +287,18 @@ export class Calendar implements BrnCalendarBase<Date> {
   /** The grid's per-day counts and uninterrupted bars, resolved once per input change. */
   private readonly layout: Signal<CalendarMonthLayout> = computed(() =>
     buildCalendarMonthLayout(this.days(), this.events()),
+  );
+
+  /**
+   * Property skeletonWeeks
+   * @readonly
+   * @description The loading skeleton's row indexes — one per week the displayed month actually spans (four to six, per {@link days}) — so the skeleton never renders a row short or long of the real grid it is about to be replaced by.
+   * @access protected
+   * @since 2.4.0
+   * @type {Signal<readonly number[]>}
+   */
+  protected readonly skeletonWeeks: Signal<readonly number[]> = computed<readonly number[]>(() =>
+    Array.from({ length: this.days().length / 7 }, (unused, index: number) => index),
   );
   //#endregion
 

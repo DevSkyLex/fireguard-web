@@ -22,6 +22,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
 import type {
@@ -177,6 +178,14 @@ describe('CalendarPage', () => {
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
         {
           provide: CalendarService,

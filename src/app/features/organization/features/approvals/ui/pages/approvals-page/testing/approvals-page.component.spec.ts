@@ -8,6 +8,7 @@ import {
   successCallState,
   type CallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { ApprovalRequestOutput } from '@features/organization/features/approvals/models';
 import { ApprovalRequestsStore } from '@features/organization/features/approvals/state';
@@ -34,6 +35,7 @@ describe('ApprovalsPage', () => {
   let resetDecideOperation: ReturnType<typeof vi.fn>;
   let decideCallState: WritableSignal<CallState>;
   let totalRequests: WritableSignal<number>;
+  let requests: WritableSignal<readonly ApprovalRequestOutput[]>;
   let hasPermission: ReturnType<typeof vi.fn>;
   let ensureDirectoryLoaded: ReturnType<typeof vi.fn>;
 
@@ -62,6 +64,7 @@ describe('ApprovalsPage', () => {
     resetDecideOperation = vi.fn();
     decideCallState = signal<CallState>(idleCallState());
     totalRequests = signal(1);
+    requests = signal<readonly ApprovalRequestOutput[]>([request]);
     hasPermission = vi.fn().mockReturnValue(true);
     ensureDirectoryLoaded = vi.fn();
 
@@ -74,6 +77,14 @@ describe('ApprovalsPage', () => {
             interactionMode: signal('desktop'),
             isMobileInteractionMode: signal(false),
           },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
         {
           provide: REGIONAL_FORMATTING_PORT,
@@ -101,7 +112,7 @@ describe('ApprovalsPage', () => {
             withdraw,
             loadActionTypes,
             resetDecideOperation,
-            requests: signal<readonly ApprovalRequestOutput[]>([request]),
+            requests,
             totalRequests,
             isLoading: signal(false),
             hasListError: signal(false),
@@ -362,6 +373,25 @@ describe('ApprovalsPage', () => {
     expect(page.decisionTarget()).toBeNull();
     expect(refresh).not.toHaveBeenCalled();
     expect(load.mock.calls.at(-1)?.[0]).toMatchObject({ organizationId: 'org-2' });
+  });
+
+  it('should show a neutral, no-filter empty message once every status is shown and none exist at all', async () => {
+    requests.set([]);
+    totalRequests.set(0);
+    fixture = await createPage();
+    const page = fixture.componentInstance as unknown as {
+      showAllStatuses(): void;
+    };
+
+    page.showAllStatuses();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Nothing is waiting on a decision for this filter.',
+    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="approvals-show-all-statuses"]'),
+    ).toBeNull();
   });
 
   it('should not render decide actions on the table when the reader lacks organization.approvals.decide', async () => {

@@ -55,15 +55,23 @@ import {
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { resolveCsvExportErrorDetail } from '@features/organization/utils';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { formatRelativeTime } from '@shared/relative-time';
+import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardTitle } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { EquipmentAttachments } from '../../components/equipment-attachments';
 import { EquipmentInformationPanel } from '../../components/equipment-information-panel';
 import { EquipmentMaintenanceHistory } from '../../components/equipment-maintenance-history';
@@ -133,7 +141,7 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * own first activation ({@link onTabActivated}), matching
  * `FacilityDetailPage`'s Plans tab.
  *
- * @version 1.5.0
+ * @version 1.7.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -143,7 +151,6 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     NgIcon,
     ...HlmEmptyImports,
     ...HlmDropdownMenuImports,
-    HlmCardTitle,
     RouterLink,
     EquipmentAssignFacilityDialog,
     EquipmentAttachments,
@@ -152,10 +159,14 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     EquipmentMaintenanceHistory,
     EquipmentStatusTag,
     EquipmentTags,
+    ...HlmBadgeImports,
     HlmButton,
+    HlmSeparator,
+    OrgDatePipe,
     HlmSkeleton,
     ...HlmSpinnerImports,
     ...HlmTabsImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     FacilityOptionsStore,
@@ -215,6 +226,21 @@ export class EquipmentDetailPage {
 
   /** The application's language, used to phrase the header's metadata line. */
   private readonly locale: string = inject<string>(LOCALE_ID);
+
+  /** The active organization's regional formatting context port. */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   * @access protected
+   * @since 1.6.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
 
   /**
    * The `facilities` subfeature's read-only listing service, consumed
@@ -284,6 +310,16 @@ export class EquipmentDetailPage {
   protected readonly decommissionDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property skeletonFieldRows
+   * @readonly
+   * @description Placeholder count for the loading skeleton's field rows, mirroring `EquipmentInformationPanel`'s row count.
+   * @access protected
+   * @since 1.6.0
+   * @type {readonly number[]}
+   */
+  protected readonly skeletonFieldRows: readonly number[] = [0, 1, 2, 3, 4, 5];
+
+  /**
    * Property canWrite
    * @readonly
    * @description Whether the member may write to this equipment at all.
@@ -300,28 +336,6 @@ export class EquipmentDetailPage {
     const equipment: EquipmentOutput | null = this.activeEquipmentStore.selectedEquipment();
 
     return equipment ? buildEquipmentTitle(equipment) : '';
-  });
-
-  /**
-   * Property metaLine
-   * @readonly
-   * @description The header's metadata line — when the record was last touched.
-   * @access protected
-   * @since 1.1.0
-   * @type {Signal<string>}
-   */
-  protected readonly metaLine: Signal<string> = computed<string>(() => {
-    const equipment: EquipmentOutput | null = this.activeEquipmentStore.selectedEquipment();
-    if (!equipment) return '';
-
-    const formatter = new Intl.DateTimeFormat(this.locale, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-    const when: string = formatter.format(new Date(equipment.updatedAt));
-
-    return $localize`:@@equipment.detail.metaUpdated:Updated ${when}:when:`;
   });
 
   /**
@@ -510,6 +524,18 @@ export class EquipmentDetailPage {
   }
 
   /**
+   * Method updatedRelativeLabel
+   * @description The record's `updatedAt`, as a localized relative label ("3 days ago") — the header's visible text, paired with the absolute value in a tooltip.
+   * @access protected
+   * @since 1.6.0
+   * @param {string} updatedAt - The record's `updatedAt` timestamp.
+   * @returns {string} The localized relative label.
+   */
+  protected updatedRelativeLabel(updatedAt: string): string {
+    return formatRelativeTime(updatedAt, this.locale);
+  }
+
+  /**
    * Method onDetailsChanged
    * @description Sends an in-place patch. The field stays open until the write settles.
    * @access protected
@@ -674,6 +700,34 @@ export class EquipmentDetailPage {
         });
       });
     }
+  }
+
+  /**
+   * Method onAttachmentsRetried
+   * @description Re-runs the attachment list load after a failure.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected onAttachmentsRetried(): void {
+    this.store.loadAttachments({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+    });
+  }
+
+  /**
+   * Method onMaintenanceLogsRetried
+   * @description Re-runs the maintenance history load after a failure.
+   * @access protected
+   * @since 1.6.0
+   * @returns {void}
+   */
+  protected onMaintenanceLogsRetried(): void {
+    this.store.loadMaintenanceLogs({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+    });
   }
 
   /**

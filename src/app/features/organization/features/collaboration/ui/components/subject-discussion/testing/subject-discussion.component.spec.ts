@@ -8,6 +8,7 @@ import {
   type InteractionCapabilitiesPort,
 } from '@core/interaction-capabilities';
 import type { StoreError } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { ConversationService } from '@features/organization/features/collaboration/data-access';
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
@@ -110,6 +111,14 @@ describe('SubjectDiscussion', () => {
             isLoadingAccess: signal(false),
             accessError: signal(null),
           },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
       ],
     });

@@ -1,14 +1,13 @@
 <div
   id="organization-more-page"
-  class="@container/more mx-auto flex w-full max-w-5xl flex-col gap-6 mobile-ui:gap-8"
+  class="@container/more flex w-full max-w-5xl flex-col gap-6 mobile-ui:gap-8"
 >
   @if (navigation().organizationId !== null) {
-    <section aria-labelledby="organization-more-workspace-title" class="min-w-0">
-      <h2
-        id="organization-more-workspace-title"
-        class="mb-2 text-sm font-semibold mobile-ui:mb-3 mobile-ui:text-base"
-        i18n="@@org.more.workspace"
-      >
+    <section
+      aria-labelledby="organization-more-workspace-title"
+      class="flex min-w-0 flex-col gap-3"
+    >
+      <h2 id="organization-more-workspace-title" hlmLarge i18n="@@org.more.workspace">
         Current organization
       </h2>
       @defer (on immediate) {
@@ -19,17 +18,14 @@
     </section>
   }
 
-  <div class="grid items-start gap-6 @[40rem]/more:grid-cols-2 mobile-ui:gap-8">
+  <div class="flex flex-col gap-6 @[40rem]/more:block @[40rem]/more:columns-2 mobile-ui:gap-8">
     @for (section of navigation().sections; track section.id) {
       <nav
         [attr.aria-labelledby]="'organization-more-' + section.id + '-title'"
         [id]="'organization-more-' + section.id"
-        class="min-w-0"
+        class="flex min-w-0 break-inside-avoid flex-col gap-3 @[40rem]/more:mb-6"
       >
-        <h2
-          [id]="'organization-more-' + section.id + '-title'"
-          class="mb-2 text-sm font-semibold mobile-ui:mb-3 mobile-ui:text-base"
-        >
+        <h2 [id]="'organization-more-' + section.id + '-title'" hlmLarge>
           {{ section.label }}
         </h2>
         <ul hlmItemGroup class="mobile-ui:gap-0 mobile-ui:rounded-xl mobile-ui:bg-muted/30">
@@ -60,30 +56,28 @@
               </a>
             </li>
           }
+          @if (section.includesSignOut) {
+            <li>
+              <hlm-item-separator
+                class="hidden mobile-ui:mx-3 mobile-ui:my-0 mobile-ui:block mobile-ui:w-auto"
+              />
+              <app-logout-control />
+            </li>
+          }
         </ul>
       </nav>
     }
 
-    <section aria-labelledby="organization-more-appearance-title" class="min-w-0">
-      <h2
-        id="organization-more-appearance-title"
-        class="mb-2 text-sm font-semibold mobile-ui:mb-3 mobile-ui:text-base"
-        i18n="@@org.more.appearance"
-      >
+    <section
+      aria-labelledby="organization-more-appearance-title"
+      class="flex min-w-0 break-inside-avoid flex-col gap-3 @[40rem]/more:mb-6"
+    >
+      <h2 id="organization-more-appearance-title" hlmLarge i18n="@@org.more.appearance">
         Appearance
       </h2>
-      <app-theme-switcher />
-    </section>
-
-    <section aria-labelledby="organization-more-session-title" class="min-w-0">
-      <h2
-        id="organization-more-session-title"
-        class="mb-2 text-sm font-semibold mobile-ui:mb-3 mobile-ui:text-base"
-        i18n="@@org.more.session"
-      >
-        Account and sign out
-      </h2>
-      <app-logout-control />
+      <div hlmItemGroup class="mobile-ui:gap-0 mobile-ui:rounded-xl mobile-ui:bg-muted/30">
+        <app-theme-switcher />
+      </div>
     </section>
   </div>
 </div>

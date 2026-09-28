@@ -8,6 +8,7 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type { StoreError } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   NotificationFilter,
   NotificationOutput,
@@ -132,6 +133,14 @@ describe('AccountNotificationsPage', () => {
         provideRouter([]),
         { provide: LOCALE_ID, useValue: 'en-US' },
         { provide: PLATFORM_ID, useValue: platformId },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         { provide: NotificationStore, useValue: store },
         {
           provide: InboxStore,

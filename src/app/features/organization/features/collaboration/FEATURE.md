@@ -16,6 +16,15 @@ belongs to.
 Owns the organization's conversational surface: direct conversations, channels, subject threads,
 messages and their reactions and attachments, plus the AI assistant. Organization owns presence.
 
+Direct conversations and channels share a private Mercure topic for message invalidations,
+short-lived typing activity and receipt invalidations. Typing publishes only the acting member id
+and an active flag; the UI expires it after five seconds without another signal. Only a browser
+that loaded another member's message acknowledges delivery. The read position moves when the
+visible thread catches up. Both positions persist on the API and are reloaded on opening a thread
+or reconnecting. Own confirmed rows show sent, received and seen; channels show counts of current
+participants who received or read each message. A missing acknowledgement must never appear as
+received or seen. Subject threads do not display these receipts.
+
 **Direct conversations, channels, the assistant, and the per-message surfaces all have a UI
 today.** The pin/save/edit/tombstone-delete, threaded-replies, saved-messages and
 channel-info-panel slices were pruned once (2026-08-20) for having no UI, then **rebuilt from the

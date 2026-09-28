@@ -13,9 +13,12 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, maxLength, required, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { CreateTeamInput } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -51,6 +54,7 @@ const DESCRIPTION_MAX_LENGTH: number = 500;
 @Component({
   selector: 'app-organization-team-create-form',
   imports: [
+    NgIcon,
     RequiredMarker,
     FormField,
     HlmButton,
@@ -58,7 +62,9 @@ const DESCRIPTION_MAX_LENGTH: number = 500;
     ...HlmFieldImports,
     ...HlmTextareaImports,
     HlmSheetFooter,
+    ...HlmAlertImports,
   ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-team-create-form.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,

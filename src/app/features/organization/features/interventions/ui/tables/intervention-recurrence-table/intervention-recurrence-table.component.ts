@@ -2,6 +2,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  LOCALE_ID,
+  inject,
   input,
   output,
   type InputSignal,
@@ -12,6 +14,7 @@ import {
   lucideCalendarClock,
   lucideCircleAlert,
   lucideEllipsis,
+  lucidePause,
   lucidePencil,
   lucideTrash2,
 } from '@ng-icons/lucide';
@@ -27,12 +30,15 @@ import {
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { formatRelativeTime } from '@shared/relative-time';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /** Placeholder rows drawn while the recurrence list's own fetch is in flight. */
 /**
@@ -49,9 +55,11 @@ import { HlmTableImports } from '@shared/ui/table';
  *
  * A failed fetch ({@link error}) renders the Spartan `hlmEmpty` error composition instead of the grid,
  * the same treatment `InterventionFacilitiesTable` and its "Linked" siblings
- * give their own list failure.
+ * give their own list failure. Its own error and empty states carry a Retry
+ * and a "New recurrence" action ({@link retryRequested}, {@link createRequested})
+ * rather than leaving the tab a dead end.
  *
- * @version 1.3.0
+ * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -64,24 +72,31 @@ import { HlmTableImports } from '@shared/ui/table';
     NgTemplateOutlet,
     CollectionSurface,
     OrgDatePipe,
+    ResourceIllustration,
     HlmButton,
     ...HlmDropdownMenuImports,
     HlmSwitch,
     ...HlmTableImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
       lucideCalendarClock,
       lucideCircleAlert,
       lucideEllipsis,
+      lucidePause,
       lucidePencil,
       lucideTrash2,
     }),
   ],
   templateUrl: './intervention-recurrence-table.component.html',
+  host: { class: 'flex min-h-0 w-full flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionRecurrenceTable {
+  /** The active locale, resolving {@link frequencyLabelOf}'s cadence plural and {@link lastDraftedLabelOf}. */
+  private readonly locale: string = inject(LOCALE_ID);
+
   //#region Inputs
   /**
    * Property recurrences
@@ -203,6 +218,26 @@ export class InterventionRecurrenceTable {
     readonly recurrenceId: string;
     readonly isActive: boolean;
   }> = output();
+
+  /**
+   * Property createRequested
+   * @readonly
+   * @description The empty state's "New recurrence" action was pressed; the owning page opens the create sheet.
+   * @access public
+   * @since 6.4.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly createRequested: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property retryRequested
+   * @readonly
+   * @description The error state's Retry action was pressed; the owning page re-runs the recurrence list fetch.
+   * @access public
+   * @since 6.4.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly retryRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
@@ -234,9 +269,9 @@ export class InterventionRecurrenceTable {
     );
   }
 
-  /** Names a cadence unit for the table's cadence column. */
-  protected frequencyLabelOf(frequency: InterventionRecurrenceFrequency): string {
-    return interventionRecurrenceFrequencyLabel(frequency);
+  /** Names a recurrence's full cadence ("Weekly", "Every 2 weeks") for the table's cadence column. */
+  protected frequencyLabelOf(frequency: InterventionRecurrenceFrequency, interval: number): string {
+    return interventionRecurrenceFrequencyLabel(frequency, interval, this.locale);
   }
 
   /**
@@ -274,6 +309,26 @@ export class InterventionRecurrenceTable {
   /** Emits {@link activeToggled} for the flipped row. */
   protected toggleActive(recurrenceId: string, isActive: boolean): void {
     this.activeToggled.emit({ recurrenceId, isActive });
+  }
+
+  /**
+   * Method lastDraftedLabelOf
+   * @method lastDraftedLabelOf
+   *
+   * @description
+   * Names a row's `lastMaterializedAt` as proof the schedule actually
+   * drafts — the relative label a planner reads at a glance, with the
+   * absolute instant left to the caller's tooltip.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {string} lastMaterializedAt - The recurrence's `lastMaterializedAt`, already known non-null.
+   *
+   * @returns {string} The localized "Last drafted …" line.
+   */
+  protected lastDraftedLabelOf(lastMaterializedAt: string): string {
+    return $localize`:@@intervention.recurrences.lastDrafted:Last drafted ${formatRelativeTime(lastMaterializedAt, this.locale)}:relative:`;
   }
   //#endregion
 }

@@ -24,6 +24,7 @@ import type {
   MessageView,
 } from '@features/organization/features/collaboration/models';
 import type { PresenceStatus } from '@features/organization/models';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmMarker, HlmMarkerContent } from '@shared/ui/marker';
@@ -88,6 +89,7 @@ const BOTTOM_SLACK_PX = 64;
     HlmMessageGroup,
     HlmSkeleton,
     MessageRow,
+    StateIllustration,
   ],
   providers: [provideIcons({ lucideMessageSquare })],
   templateUrl: './message-thread.component.html',
@@ -222,6 +224,9 @@ export class MessageThread {
    * @type {InputSignal<boolean>}
    */
   public readonly actionsBusy: InputSignal<boolean> = input<boolean>(false);
+
+  /** Label for other participants currently typing, or null when quiet. */
+  public readonly typingLabel: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs

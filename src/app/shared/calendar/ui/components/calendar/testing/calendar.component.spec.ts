@@ -216,6 +216,45 @@ describe('Calendar', () => {
     expect(fixture.componentInstance.selectedDay()).not.toBeNull();
   });
 
+  it('should draw a skeleton grid instead of the month while loading, and no day cells', async () => {
+    await create();
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+
+    expect(root().querySelector('[data-testid="calendar-skeleton"]')).not.toBeNull();
+    expect(root().querySelector('[role="grid"]')).toBeNull();
+  });
+
+  it('should draw exactly as many skeleton weeks as the anchored month actually spans', async () => {
+    await create();
+    const realDayCellCount: number = root().querySelectorAll('[data-day]').length;
+
+    fixture.componentRef.setInput('loading', true);
+    await fixture.whenStable();
+    const skeletonDayCellCount: number = root().querySelectorAll(
+      '[data-testid="calendar-skeleton"] .h-24',
+    ).length;
+
+    expect(realDayCellCount).toBe(42);
+    expect(skeletonDayCellCount).toBe(realDayCellCount);
+  });
+
+  it('should render an aria-hidden source glyph on a chip that carries one', async () => {
+    await create([event({ icon: 'lucideWrench' })]);
+
+    const chip: Element | null = root().querySelector('[data-event-id="event-1"]');
+    expect(chip?.querySelector('ng-icon')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it("should announce a day's distinct source labels for assistive tech", async () => {
+    await create([
+      event({ sourceLabel: 'Maintenance' }),
+      event({ id: 'event-2', label: 'Ronde', sourceLabel: 'Inspection' }),
+    ]);
+
+    expect(dayCell('2026-08-09')?.textContent).toContain('Includes Maintenance, Inspection');
+  });
+
   it('should hide its own Today/prev/next controls when the host supplies its own toolbar', async () => {
     await create();
 

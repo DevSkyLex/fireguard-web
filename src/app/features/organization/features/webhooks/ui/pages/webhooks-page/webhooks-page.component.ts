@@ -1,21 +1,34 @@
 import { Clipboard } from '@angular/cdk/clipboard';
-import { DatePipe } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   signal,
   untracked,
   viewChild,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideCircleAlert,
+  lucideCircleCheck,
+  lucideCirclePause,
+  lucideEllipsis,
+  lucideKeyRound,
+  lucidePlus,
+  lucideRefreshCw,
+  lucideTrash2,
+} from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   WebhookSubscriptionOutput,
@@ -29,44 +42,95 @@ import {
   type WebhookSubscriptionsStoreType,
 } from '@features/organization/features/webhooks/state';
 import { WebhookSubscriptionForm } from '@features/organization/features/webhooks/ui/forms/webhook-subscription-form';
+import { resolveWebhookEventLabel } from '@features/organization/features/webhooks/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
+  REGIONAL_FORMATTING_PORT,
   type OrganizationContextPort,
+  type RegionalFormattingPort,
 } from '@features/organization/ports';
+import { CollectionPagination } from '@shared/collection-pagination';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { sheetSide } from '@shared/sheet-side';
+import { StateIllustration } from '@shared/state-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDialogImports } from '@shared/ui/dialog';
+import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmInput } from '@shared/ui/input';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
+import { WebhookDeliveryStatusTag } from '../../components/webhook-delivery-status-tag';
+
+/** The subscription and delivery pages' fixed, server-set page size — the store computes both page counts against it. */
+const PAGE_SIZE: number = 20;
 
 /**
  * Component WebhooksPage
  * @class WebhooksPage
- * @description Coordinates browser-only endpoint management and durable history. Secrets remain in local dialog state and are cleared on scope change or dismissal.
- * @since 1.0.0
+ *
+ * @description
+ * Coordinates browser-only endpoint management and durable delivery
+ * history. "Refresh" and "Add webhook" register on the shell header through
+ * `PageActionsService`, matching `OrganizationTeamsPage`. The subscription
+ * picker and delivery list render as flat `hlmItemGroup`s, paged with
+ * `app-collection-pagination`; the delivery status filter is an
+ * `hlm-toggle-group`; every load and mutation failure renders as an
+ * `hlmAlert`. Rotate secret and Delete sit behind an `hlm-dropdown-menu`,
+ * Delete drawn `variant="destructive"`. Secrets remain in local dialog state
+ * and are cleared on scope change or dismissal.
+ *
+ * @version 1.1.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-webhooks-page',
   imports: [
-    DatePipe,
+    NgIcon,
+    OrgDatePipe,
     HlmButton,
     HlmBadge,
     HlmSkeleton,
     HlmInput,
     WebhookSubscriptionForm,
+    WebhookDeliveryStatusTag,
+    CollectionPagination,
     UnsavedChangesDialog,
-    ...HlmEmptyImports,
+    ResourceIllustration,
+    StateIllustration,
+    ...HlmAlertImports,
     ...HlmAlertDialogImports,
     ...HlmDialogImports,
+    ...HlmDropdownMenuImports,
+    ...HlmEmptyImports,
+    ...HlmItemImports,
     ...HlmSheetImports,
+    ...HlmToggleGroupImports,
+    ...HlmTooltipImports,
   ],
-  providers: [WebhookSubscriptionsStore],
+  providers: [
+    WebhookSubscriptionsStore,
+    provideIcons({
+      lucideCircleAlert,
+      lucideCircleCheck,
+      lucideCirclePause,
+      lucideEllipsis,
+      lucideKeyRound,
+      lucidePlus,
+      lucideRefreshCw,
+      lucideTrash2,
+    }),
+  ],
   templateUrl: './webhooks-page.component.html',
   host: { class: 'block w-full min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -111,6 +175,25 @@ export class WebhooksPage {
    */
   private readonly clipboard: Clipboard = inject(Clipboard);
   /**
+   * Property pageActionsService
+   * @readonly
+   * @description Registers {@link pageActions} on the shell header.
+   * @access private
+   * @since 1.1.0
+   * @type {PageActionsService}
+   */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+  /**
+   * Property pageActions
+   * @readonly
+   * @description The page's own `#pageActions` template — "Refresh" and, when {@link canManage}, "Add webhook".
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  protected readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
+  /**
    * Property ready
    * @readonly
    * @description Prevents private reads during SSR.
@@ -119,6 +202,25 @@ export class WebhooksPage {
    * @type {WritableSignal<boolean>}
    */
   private readonly ready: WritableSignal<boolean> = signal(false);
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT).regionalFormatting;
+  /**
+   * Property pageSizes
+   * @readonly
+   * @description The single, fixed page size {@link PAGE_SIZE} the subscription and delivery pagers offer — hides `app-collection-pagination`'s rows-per-page selector.
+   * @access protected
+   * @since 1.1.0
+   * @type {readonly [number]}
+   */
+  protected readonly pageSizes: readonly [number] = [PAGE_SIZE];
   /**
    * Property canManage
    * @readonly
@@ -241,6 +343,24 @@ export class WebhooksPage {
     { value: 'failed', label: $localize`:@@webhooks.failed:Failed` },
   ];
   /**
+   * Property refreshLabel
+   * @readonly
+   * @description The "Refresh" icon button's accessible name, shared by its `aria-label` and `hlmTooltip`.
+   * @access protected
+   * @since 1.1.0
+   * @type {string}
+   */
+  protected readonly refreshLabel: string = $localize`:@@common.refresh:Refresh`;
+  /**
+   * Property rowMenuLabel
+   * @readonly
+   * @description The per-subscription "more actions" trigger's accessible name.
+   * @access protected
+   * @since 1.1.0
+   * @type {string}
+   */
+  protected readonly rowMenuLabel: string = $localize`:@@webhooks.rowMenu:More actions`;
+  /**
    * Property confirmationTitle
    * @readonly
    * @description Consequence-specific confirmation title.
@@ -273,7 +393,7 @@ export class WebhooksPage {
   /**
    * Constructor
    * @constructor
-   * @description Starts scoped reads only after rendering and consumes transient command results.
+   * @description Starts scoped reads only after rendering, consumes transient command results, and registers {@link pageActions}.
    * @access public
    * @since 1.0.0
    */
@@ -321,6 +441,7 @@ export class WebhooksPage {
             : null,
         );
       });
+    registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
   }
   /**
    * Method openEditor
@@ -453,16 +574,34 @@ export class WebhooksPage {
     if (secret) this.copied.set(this.clipboard.copy(secret));
   }
   /**
-   * Method statusLabel
-   * @method statusLabel
-   * @description Resolves server delivery states into localized labels.
+   * Method onStatusFilterChanged
+   * @description Narrows `hlm-toggle-group`'s single-select payload to one of {@link filters}' values, defaulting to `''` (all) for anything else.
    * @access protected
-   * @since 1.0.0
-   * @param {WebhookDeliveryOutput['status']} status - Server status.
-   * @returns {string} Label.
+   * @since 1.1.0
+   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   * @returns {void}
    */
-  protected statusLabel(status: WebhookDeliveryOutput['status']): string {
-    return this.filters.find((filter) => filter.value === status)?.label ?? status;
+  protected onStatusFilterChanged(value: string | readonly string[] | null | undefined): void {
+    const status: WebhookDeliveryOutput['status'] | '' =
+      typeof value === 'string' && this.filters.some((filter) => filter.value === value)
+        ? (value as WebhookDeliveryOutput['status'] | '')
+        : '';
+
+    this.store.loadDeliveries(1, status);
+  }
+  /**
+   * Method eventLabelOf
+   * @description The curated localized label for a raw event type key, falling back to the loaded catalog's own label, then to the key.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} value - Raw event type key.
+   * @returns {string} The resolved label.
+   */
+  protected eventLabelOf(value: string): string {
+    return resolveWebhookEventLabel(
+      value,
+      this.store.events().find((event) => event.value === value)?.label,
+    );
   }
   /**
    * Method failureLabel

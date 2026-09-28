@@ -17,6 +17,7 @@ describe('RegisterVerifyPage', () => {
     resendError: WritableSignal<null>;
     resendAvailableIn: WritableSignal<number>;
     challengeToken: WritableSignal<string | null>;
+    maskedRecipient: WritableSignal<string | null>;
   };
   let navigate: MockInstance;
 
@@ -32,6 +33,7 @@ describe('RegisterVerifyPage', () => {
       resendError: signal(null),
       resendAvailableIn: signal(0),
       challengeToken: signal(null),
+      maskedRecipient: signal(null),
     };
 
     TestBed.configureTestingModule({
@@ -72,6 +74,18 @@ describe('RegisterVerifyPage', () => {
     // Registration never creates an organization — onboarding owns that, which
     // is why the destination is not the workspace.
     expect(navigate).toHaveBeenCalledWith('/onboarding');
+  });
+
+  it('shows a generic subtitle when the destination is not known yet', () => {
+    expect(fixture.nativeElement.textContent).toContain('Enter the code we just sent you.');
+  });
+
+  it('names the address the code was sent to, once known', async () => {
+    mockRegisterStore.maskedRecipient.set('a***@example.com');
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('a***@example.com');
+    expect(fixture.nativeElement.textContent).not.toContain('Enter the code we just sent you.');
   });
 
   it('should offer the resend control, since an emailed code can be sent again', () => {

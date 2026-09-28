@@ -3,18 +3,9 @@
   data-testid="intervention-equipment"
   aria-labelledby="intervention-equipment-title"
 >
-  <div class="flex flex-col gap-1">
-    <h2
-      id="intervention-equipment-title"
-      class="text-lg font-semibold"
-      i18n="@@intervention.sidebar.equipment"
-    >
-      Equipment
-    </h2>
-    <p class="text-sm text-muted-foreground" i18n="@@intervention.linked.equipment.caption">
-      The equipment linked to this intervention.
-    </p>
-  </div>
+  <h2 id="intervention-equipment-title" class="sr-only" i18n="@@intervention.sidebar.equipment">
+    Equipment
+  </h2>
 
   <app-collection-toolbar>
     <app-collection-search-box
@@ -167,10 +158,11 @@
       }
     </ng-container>
 
-    <ng-container surfaceCards>
-      @for (item of filteredItems(); track item.id) {
+    <div surfaceCards hlmItemGroup class="gap-0 border-y border-border">
+      @for (item of filteredItems(); track item.id; let last = $last) {
         <div
-          class="flex flex-col gap-1 rounded-md border border-border p-3"
+          hlmItem
+          class="flex flex-col items-stretch gap-1 rounded-none px-0"
           data-testid="intervention-equipment-table-card"
         >
           <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
@@ -184,8 +176,11 @@
             }
           </div>
         </div>
+        @if (!last) {
+          <hlm-item-separator />
+        }
       }
-    </ng-container>
+    </div>
 
     <div hlmEmpty role="alert" surfaceError data-testid="intervention-equipment-error">
       <div hlmEmptyHeader>
@@ -198,25 +193,26 @@
         <p hlmEmptyDescription>{{ error() ?? '' }}</p>
       </div>
 
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        [disabled]="loading()"
-        (click)="retryRequested.emit()"
-        i18n="@@intervention.tables.retry"
-      >
-        Retry
-      </button>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="mobile-ui:min-h-11"
+          [disabled]="loading()"
+          (click)="retryRequested.emit()"
+          i18n="@@intervention.tables.retry"
+        >
+          Retry
+        </button>
+      </div>
     </div>
 
     <div hlmEmpty surfaceEmpty data-testid="intervention-equipment-empty">
       <div hlmEmptyHeader>
         @if (hasActiveQuery()) {
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-          </div>
+          <app-state-illustration hlmEmptyMedia state="no-matches" />
         } @else if (
           hasLoaded() && !loading() && !error() && items().length === 0 && totalItems() === 0
         ) {
@@ -244,7 +240,7 @@
   </app-collection-surface>
 
   @if (totalItems() > items().length) {
-    <div class="flex justify-center pt-4">
+    <div class="flex flex-col items-center gap-2">
       <button
         hlmBtn
         type="button"
@@ -255,11 +251,18 @@
         (click)="loadMoreRequested.emit()"
       >
         @if (loadingMore()) {
+          <hlm-spinner size="xs" aria-hidden="true" />
           <span i18n="@@intervention.linked.equipment.loadingMore">Loading…</span>
         } @else {
           <span i18n="@@intervention.linked.equipment.loadMore">Show more</span>
         }
       </button>
+      <span
+        class="text-xs text-muted-foreground tabular-nums"
+        i18n="@@intervention.linked.equipment.shownCount"
+      >
+        Showing {{ items().length }} of {{ totalItems() }}
+      </span>
     </div>
   }
 </section>

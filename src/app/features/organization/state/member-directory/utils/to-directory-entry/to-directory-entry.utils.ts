@@ -26,6 +26,7 @@ export function toDirectoryEntry(member: OrganizationMemberOutput): MemberDirect
     avatarUrl: member.avatarUrl ?? undefined,
     roleNames: member.roleNames ?? [],
     isActive: member.isActive,
+    isOwner: member.isOwner,
   };
 }
 

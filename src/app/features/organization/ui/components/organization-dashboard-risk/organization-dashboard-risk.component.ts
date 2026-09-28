@@ -14,6 +14,7 @@ import {
 import type { OrganizationDashboardOverview } from '@features/organization/models';
 import { getOrganizationDashboardOverviewMetricValue } from '@features/organization/utils';
 import { DonutChart, type ChartSegment, type ChartColorToken } from '@shared/chart';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -22,12 +23,19 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * Component OrganizationDashboardRisk
  * @class OrganizationDashboardRisk
  * @description Read-only current status distribution. Missing status counts remain unavailable instead of claiming a healthy zero.
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-dashboard-risk',
-  imports: [DonutChart, DecimalPipe, HlmSkeleton, ...HlmEmptyImports, ...HlmCardImports],
+  imports: [
+    DonutChart,
+    DecimalPipe,
+    HlmSkeleton,
+    StateIllustration,
+    ...HlmEmptyImports,
+    ...HlmCardImports,
+  ],
   templateUrl: './organization-dashboard-risk.component.html',
   host: { class: 'block min-w-0 h-full' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,6 +61,16 @@ export class OrganizationDashboardRisk {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input(false);
+
+  /**
+   * Property legendSkeletonRows
+   * @readonly
+   * @description Stable placeholder rows mirroring the loaded legend's four status entries.
+   * @access protected
+   * @since 1.1.0
+   * @type {readonly number[]}
+   */
+  protected readonly legendSkeletonRows: readonly number[] = [0, 1, 2, 3];
 
   /**
    * Property segments

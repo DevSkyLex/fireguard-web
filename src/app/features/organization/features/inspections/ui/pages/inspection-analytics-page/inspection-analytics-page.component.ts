@@ -8,14 +8,10 @@ import {
   signal,
 } from '@angular/core';
 import type { InputSignal, Signal, WritableSignal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleCheck,
-  lucideClock,
-  lucideGauge,
-  lucideTriangleAlert,
-} from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideClock, lucideGauge, lucideTriangleAlert } from '@ng-icons/lucide';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import {
   resolveInspectionStatusTag,
   type InspectionStatusTagDescriptor,
@@ -28,6 +24,7 @@ import {
 } from '@features/organization/features/inspections/state';
 import { StatTile } from '@features/organization/ui/components';
 import { CollectionSkeletonRows } from '@shared/collection-surface';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -106,14 +103,21 @@ const SEVERITY_ORDER: readonly NonConformitySeverity[] = ['critical', 'high', 'm
  * ISO 8601 `{from, to}` bounds on `createdAt` at select time, and every
  * organization or period change refetches the whole snapshot.
  *
- * @version 1.0.0
+ * The equipment-type table renders localized labels through the
+ * `equipments` feature's public `EQUIPMENT_TYPE_OPTIONS` registry rather
+ * than the raw backend enum key — this page is a new cross-feature consumer
+ * of that registry (`organization/FEATURE.md`).
+ *
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-inspection-analytics-page',
   imports: [
     NgIcon,
+    RouterLink,
     ...HlmEmptyImports,
+    StateIllustration,
     HlmButton,
     HlmCardImports,
     HlmProgressImports,
@@ -123,15 +127,7 @@ const SEVERITY_ORDER: readonly NonConformitySeverity[] = ['critical', 'high', 'm
     CollectionSkeletonRows,
     StatTile,
   ],
-  providers: [
-    provideIcons({
-      lucideCircleAlert,
-      lucideCircleCheck,
-      lucideClock,
-      lucideGauge,
-      lucideTriangleAlert,
-    }),
-  ],
+  providers: [provideIcons({ lucideCircleAlert, lucideClock, lucideGauge, lucideTriangleAlert })],
   templateUrl: './inspection-analytics-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -215,10 +211,26 @@ export class InspectionAnalyticsPage {
     this.severityRows().reduce((sum, row) => sum + row.open, 0),
   );
 
-  /** The resolved total across every severity, shown as the open KPI's caption context. */
+  /** The resolved total across every severity, shown as the open KPI's dynamic caption. */
   protected readonly totalResolved: Signal<number> = computed<number>(() =>
     this.severityRows().reduce((sum, row) => sum + row.resolved, 0),
   );
+
+  /**
+   * Property openResolvedCaption
+   * @readonly
+   * @description The open KPI's dynamic caption: how many were resolved in the same window.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly openResolvedCaption: Signal<string> = computed<string>(() => {
+    const resolved: number = this.totalResolved();
+
+    return resolved === 1
+      ? $localize`:@@inspection.analytics.kpi.open.resolvedCaptionOne:1 resolved in the period`
+      : $localize`:@@inspection.analytics.kpi.open.resolvedCaptionMany:${resolved}:count: resolved in the period`;
+  });
 
   /** Average resolution days, formatted to one decimal — an em dash when nothing was resolved in the window. */
   protected readonly averageDaysLabel: Signal<string> = computed<string>(() =>
@@ -331,6 +343,33 @@ export class InspectionAnalyticsPage {
    */
   private formatDays(days: number | null | undefined): string {
     return days == null ? '—' : days.toFixed(1);
+  }
+
+  /**
+   * Method typeLabelOf
+   * @description The localized equipment type label for a raw backend enum key, falling back to a humanized form of the key itself when the registry does not know it.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} type - The raw equipment type key.
+   * @returns {string} The localized label, or a humanized fallback.
+   */
+  protected typeLabelOf(type: string): string {
+    return (
+      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === type)?.label ??
+      type.replaceAll('_', ' ')
+    );
+  }
+
+  /**
+   * Method severityAriaLabelOf
+   * @description The severity progress bar's accessible name, naming the severity and its open share together rather than relying on a nearby visual label alone.
+   * @access protected
+   * @since 1.1.0
+   * @param {InspectionAnalyticsSeverityRow} row - The severity row being rendered.
+   * @returns {string} The bar's accessible name.
+   */
+  protected severityAriaLabelOf(row: InspectionAnalyticsSeverityRow): string {
+    return $localize`:@@inspection.analytics.severity.progressAriaLabel:${row.descriptor.label}:severity: — ${row.percent}:percent:% of open non-conformities`;
   }
   //#endregion
 }

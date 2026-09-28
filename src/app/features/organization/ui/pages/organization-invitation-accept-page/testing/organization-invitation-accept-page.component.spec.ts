@@ -6,9 +6,7 @@ import type { MockInstance } from 'vitest';
 import { toStoreError, type StoreError } from '@core/request-state';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth';
 import type { OrganizationInvitationPreviewOutput } from '@features/organization/models';
-import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { OrganizationInvitationAcceptStore } from '@features/organization/state/organization-invitation-accept';
-import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { OrganizationInvitationAcceptPage } from '../organization-invitation-accept-page.component';
 
 /**
@@ -75,10 +73,6 @@ describe('OrganizationInvitationAcceptPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        {
-          provide: REGIONAL_FORMATTING_PORT,
-          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
-        },
         provideRouter([]),
         { provide: AUTH_SESSION_PORT, useValue: authSession },
       ],
@@ -224,7 +218,7 @@ describe('OrganizationInvitationAcceptPage', () => {
     });
   });
 
-  it('keeps acceptance retryable without duplicating the store toast inline', async () => {
+  it('shows an inline alert on an accept failure while keeping acceptance retryable', async () => {
     previewSignal.set(preview('pending'));
     isAcceptError.set(true);
     acceptError.set(toStoreError(new Error('This invitation was just revoked.')));
@@ -234,7 +228,8 @@ describe('OrganizationInvitationAcceptPage', () => {
       '[data-testid="organization-invitation-accept-error"]',
     );
 
-    expect(alert).toBeNull();
+    expect(alert).not.toBeNull();
+    expect(alert?.getAttribute('role')).toBe('alert');
     const button = fixture.nativeElement.querySelector(
       '[data-testid="organization-invitation-accept-submit"]',
     ) as HTMLButtonElement;

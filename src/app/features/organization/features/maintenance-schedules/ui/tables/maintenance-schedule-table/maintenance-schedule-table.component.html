@@ -11,6 +11,7 @@
     <tr hlmTableRow>
       <th hlmTableHead scope="col" i18n="@@maintenance.table.colEquipment">Equipment</th>
       <th hlmTableHead scope="col" i18n="@@maintenance.table.colFacility">Facility</th>
+      <th hlmTableHead scope="col" i18n="@@maintenance.table.colLastInspected">Last inspected</th>
       <th hlmTableHead scope="col" i18n="@@maintenance.table.colNextDue">Next due</th>
       <th hlmTableHead scope="col" i18n="@@maintenance.table.colDueStatus">Status</th>
       <th hlmTableHead scope="col" i18n="@@maintenance.table.colOverride">Interval override</th>
@@ -39,12 +40,28 @@
         </td>
 
         <td hlmTableCell class="whitespace-normal">
+          @if (item.lastInspectionClosedAt) {
+            {{ item.lastInspectionClosedAt | appOrgDate: 'date' : regionalFormatting() }}
+          } @else {
+            <span class="text-muted-foreground">&mdash;</span>
+          }
+        </td>
+
+        <td hlmTableCell class="whitespace-normal">
           <ng-container [ngTemplateOutlet]="nextDue" [ngTemplateOutletContext]="{ item }" />
         </td>
 
         <td hlmTableCell>
-          <app-maintenance-due-status-tag [value]="item.dueStatus" />
-          <ng-container [ngTemplateOutlet]="evaluation" [ngTemplateOutletContext]="{ item }" />
+          <span
+            tabindex="0"
+            class="inline-flex w-fit flex-col items-start gap-0.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            [hlmTooltip]="evaluationTooltipOf(item)"
+          >
+            <app-maintenance-due-status-tag [value]="item.dueStatus" />
+            <span class="sr-only text-xs text-muted-foreground mobile-ui:not-sr-only">{{
+              evaluationTooltipOf(item)
+            }}</span>
+          </span>
         </td>
 
         <td hlmTableCell class="whitespace-normal">
@@ -52,7 +69,7 @@
             {{ overrideLabel }}
           } @else {
             <span class="text-muted-foreground" i18n="@@maintenance.table.defaultOverride"
-              >&mdash;</span
+              >Organization default</span
             >
           }
         </td>
@@ -98,12 +115,25 @@
 
         <ng-container [ngTemplateOutlet]="evaluation" [ngTemplateOutletContext]="{ item }" />
 
-        @if (overrideLabelOf(item); as overrideLabel) {
+        @if (reminderLabelOf(item); as reminderLabel) {
+          <p class="text-xs text-muted-foreground">{{ reminderLabel }}</p>
+        }
+
+        @if (item.lastInspectionClosedAt) {
           <p class="text-xs text-muted-foreground">
-            <span i18n="@@maintenance.table.colOverride">Interval override</span> ·
-            {{ overrideLabel }}
+            <span i18n="@@maintenance.table.colLastInspected">Last inspected</span> ·
+            {{ item.lastInspectionClosedAt | appOrgDate: 'date' : regionalFormatting() }}
           </p>
         }
+
+        <p class="text-xs text-muted-foreground">
+          <span i18n="@@maintenance.table.colOverride">Interval override</span> ·
+          @if (overrideLabelOf(item); as overrideLabel) {
+            {{ overrideLabel }}
+          } @else {
+            <span i18n="@@maintenance.table.defaultOverride">Organization default</span>
+          }
+        </p>
       </div>
       @if (!$last) {
         <hlm-item-separator />
@@ -140,6 +170,7 @@
 <ng-template #nextDue let-item="item">
   @if (item.nextDueAt) {
     {{ item.nextDueAt | appOrgDate: 'date' : regionalFormatting() }}
+    <span class="text-muted-foreground">· {{ nextDueRelativeLabelOf(item) }}</span>
   } @else if (isNeverInspected(item)) {
     <span class="text-destructive" i18n="@@maintenance.table.neverInspected">Never inspected</span>
   } @else {
@@ -153,14 +184,17 @@
       hlmBtn
       type="button"
       variant="ghost"
-      size="sm"
-      class="mobile-ui:min-h-11"
+      size="icon-sm"
+      class="mobile-ui:min-h-11 mobile-ui:w-auto mobile-ui:gap-2 mobile-ui:px-3"
       data-testid="maintenance-schedule-table-override"
       aria-label="Edit interval override"
       i18n-aria-label="@@maintenance.table.editOverride"
+      hlmTooltip="Edit interval override"
+      i18n-hlmTooltip="@@maintenance.table.editOverride"
       (click)="overrideRequested.emit(item)"
     >
       <ng-icon name="lucidePencil" aria-hidden="true" />
+      <span class="hidden mobile-ui:inline" i18n="@@common.edit">Edit</span>
     </button>
   }
 </ng-template>

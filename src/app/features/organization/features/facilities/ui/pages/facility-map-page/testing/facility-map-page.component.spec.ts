@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
   FacilityMapStore,
@@ -70,6 +71,8 @@ describe('FacilityMapPage', () => {
   let worstFacilities: WritableSignal<readonly WorstFacility[]>;
   let hasLoadedCompliance: WritableSignal<boolean>;
   let isLoadingCompliance: WritableSignal<boolean>;
+  let hasMappedError: WritableSignal<boolean>;
+  let hasComplianceError: WritableSignal<boolean>;
   let navigate: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -85,9 +88,22 @@ describe('FacilityMapPage', () => {
     worstFacilities = signal<readonly WorstFacility[]>([]);
     hasLoadedCompliance = signal<boolean>(false);
     isLoadingCompliance = signal<boolean>(false);
+    hasMappedError = signal<boolean>(false);
+    hasComplianceError = signal<boolean>(false);
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
 
     TestBed.overrideComponent(FacilityMapPage, {
@@ -100,7 +116,7 @@ describe('FacilityMapPage', () => {
             useValue: {
               mappedFacilities,
               isLoadingMapped,
-              hasMappedError: signal(false),
+              hasMappedError,
               unplacedCount,
               loadMapped,
               loadUnplacedCount,
@@ -109,7 +125,7 @@ describe('FacilityMapPage', () => {
               worstFacilities,
               hasLoadedCompliance,
               isLoadingCompliance,
-              hasComplianceError: signal(false),
+              hasComplianceError,
               setComplianceVisible,
               loadCompliance,
             },
@@ -135,6 +151,39 @@ describe('FacilityMapPage', () => {
       fixture.nativeElement.querySelector('[data-slot="empty"]:not([role="alert"])'),
     ).not.toBeNull();
     expect(fixture.nativeElement.querySelector('app-map')).toBeNull();
+  });
+
+  it('shows an alert with a retry when the mapped facilities fail to load', async () => {
+    hasMappedError.set(true);
+    fixture = await createPage();
+
+    const alert = fixture.nativeElement.querySelector('[data-testid="facility-map-error"]');
+    expect(alert).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-map')).toBeNull();
+
+    loadMapped.mockClear();
+    (
+      fixture.nativeElement.querySelector('[data-testid="facility-map-retry"]') as HTMLButtonElement
+    ).click();
+
+    expect(loadMapped).toHaveBeenCalledWith({ organizationId: 'org-1' });
+  });
+
+  it('shows a destructive alert with a retry when the compliance layer fails to load', async () => {
+    mappedFacilities.set([facility()]);
+    complianceVisible.set(true);
+    hasComplianceError.set(true);
+    fixture = await createPage();
+
+    const alert = fixture.nativeElement.querySelector(
+      '[data-testid="facility-map-compliance-retry"]',
+    );
+    expect(alert).not.toBeNull();
+
+    loadCompliance.mockClear();
+    (alert as HTMLButtonElement).click();
+
+    expect(loadCompliance).toHaveBeenCalledWith({ organizationId: 'org-1' });
   });
 
   it('renders a marker per located facility and hides the empty state', async () => {

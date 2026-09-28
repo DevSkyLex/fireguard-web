@@ -2,16 +2,31 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   signal,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronRight, lucideTriangleAlert } from '@ng-icons/lucide';
+import type { OrganizationOutput } from '@features/organization/models';
 import { OrganizationStore } from '@features/organization/state';
-import { HlmAlertImports } from '@shared/ui/alert';
+import { OrganizationAvatar } from '@features/organization/ui/components';
+import { CollectionPagination } from '@shared/collection-pagination';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
-import { HlmSpinner } from '@shared/ui/spinner';
+import { HlmSkeleton } from '@shared/ui/skeleton';
+
+/** @description Number of skeleton rows shown while the first page is loading. */
+const SKELETON_ROW_COUNT = 4;
+
+/** @description Rows per page requested from the server; the select is single-sized. */
+const PAGE_SIZE = 30;
 
 /**
  * Component OrganizationSelectPage
@@ -22,8 +37,19 @@ import { HlmSpinner } from '@shared/ui/spinner';
  */
 @Component({
   selector: 'app-organization-select-page',
-  imports: [RouterLink, HlmButton, HlmItemImports, HlmAlertImports, HlmSpinner],
-  providers: [OrganizationStore],
+  imports: [
+    RouterLink,
+    NgIcon,
+    HlmButton,
+    HlmBadge,
+    HlmItemImports,
+    ...HlmEmptyImports,
+    HlmSkeleton,
+    OrganizationAvatar,
+    ResourceIllustration,
+    CollectionPagination,
+  ],
+  providers: [OrganizationStore, provideIcons({ lucideChevronRight, lucideTriangleAlert })],
   templateUrl: './organization-select-page.component.html',
   host: { class: 'block min-w-0' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +74,29 @@ export class OrganizationSelectPage {
    */
   protected readonly page: WritableSignal<number> = signal(1);
   /**
+   * Property pageCount
+   * @readonly
+   * @description Total number of pages at the fixed {@link PAGE_SIZE}, for the shared pagination band.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<number>}
+   */
+  protected readonly pageCount: Signal<number> = computed(() =>
+    Math.max(1, Math.ceil(this.store.totalOrganizations() / PAGE_SIZE)),
+  );
+  /**
+   * Property skeletonRows
+   * @readonly
+   * @description Placeholder row indices rendered while the first page loads.
+   * @access protected
+   * @since 1.1.0
+   * @type {readonly number[]}
+   */
+  protected readonly skeletonRows: readonly number[] = Array.from(
+    { length: SKELETON_ROW_COUNT },
+    (_, index) => index,
+  );
+  /**
    * Constructor
    * @constructor
    * @description Defers the selector query until browser rendering.
@@ -68,6 +117,18 @@ export class OrganizationSelectPage {
    */
   protected load(page: number): void {
     this.page.set(page);
-    this.store.loadOrganizations({ page, itemsPerPage: 30 });
+    this.store.loadOrganizations({ page, itemsPerPage: PAGE_SIZE });
+  }
+  /**
+   * Method firstRoleLabel
+   * @method firstRoleLabel
+   * @description The viewer's first assigned role label for a non-owned organization, or `null`.
+   * @access protected
+   * @since 1.1.0
+   * @param {OrganizationOutput} organization - Row read from the loaded page.
+   * @returns {string | null} The first role's label, or `null` when none is resolved.
+   */
+  protected firstRoleLabel(organization: OrganizationOutput): string | null {
+    return organization.roles?.[0]?.label ?? null;
   }
 }

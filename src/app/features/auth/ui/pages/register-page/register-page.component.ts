@@ -14,15 +14,19 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import { FEDERATED_PROVIDER_ICONS } from '@features/auth/constants';
 import type { FederatedProvider, RegisterInput } from '@features/auth/models';
+import { FEDERATED_PROVIDER_LABELS } from '@features/auth/options';
 import { FederatedReturnContextService } from '@features/auth/services';
 import { FederatedAuthStore, RegisterStore } from '@features/auth/state';
 import { RegisterForm, type RegisterFormValues } from '@features/auth/ui/forms';
 import { resolveFederatedAuthErrorMessage, resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSeparator } from '@shared/ui/separator';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
@@ -45,8 +49,18 @@ import { HlmSpinner } from '@shared/ui/spinner';
  */
 @Component({
   selector: 'app-register-page',
-  imports: [RouterLink, RegisterForm, PageHeading, HlmButton, HlmSeparator, HlmSpinner, NgIcon],
-  providers: [provideIcons(FEDERATED_PROVIDER_ICONS)],
+  imports: [
+    RouterLink,
+    RegisterForm,
+    PageHeading,
+    ...HlmAlertImports,
+    HlmButton,
+    HlmSeparator,
+    HlmSkeleton,
+    HlmSpinner,
+    NgIcon,
+  ],
+  providers: [provideIcons({ ...FEDERATED_PROVIDER_ICONS, lucideCircleAlert })],
   templateUrl: './register-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -267,6 +281,20 @@ export class RegisterPage implements OnInit {
   protected retryProviderDiscovery(): void {
     this.federatedStore.resetStart();
     this.federatedStore.loadProviders();
+  }
+
+  /**
+   * Method providerLabel
+   * @method providerLabel
+   *
+   * @description Resolves a provider's localized display name from the shared registry.
+   * @access protected
+   * @since 1.2.0
+   * @param {FederatedProvider} provider - Provider to label.
+   * @returns {string} Localized provider name.
+   */
+  protected providerLabel(provider: FederatedProvider): string {
+    return FEDERATED_PROVIDER_LABELS[provider];
   }
   //#endregion
 }

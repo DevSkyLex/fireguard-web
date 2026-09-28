@@ -181,6 +181,8 @@ every surface at once.
 
 - `provideAuth()` is invoked from the app shell but ownership remains in `features/auth`.
 - SSR initialization attempts session restoration only when a real browser or per-request server context exists.
+- When SSR and the API share a cookie hostname, refresh must pass its rotated or cleared
+  refresh cookie through the HTML response before browser hydration renews the session.
 - Auth bootstrap is allowed to await account-owned user profile initialization, but it must not serialize the bearer token into `TransferState`.
 - Global TransferCache must not serialize authenticated API responses; auth-sensitive hydration is handled explicitly by owning features.
 - Provider availability is the only federated-auth payload handed through `TransferState`.

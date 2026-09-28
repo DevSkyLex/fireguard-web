@@ -1,43 +1,27 @@
 <div class="flex flex-col" data-testid="calendar-entry-list">
   @for (item of items(); track item.sourceKey + item.id) {
-    @if (interventionLinkOf(item); as link) {
+    @if (linkOf(item); as link) {
       <a
         hlmItem
         size="sm"
         class="rounded-none border-x-0 border-t-0 border-b border-border last:border-b-0 mobile-ui:grid mobile-ui:min-h-11 mobile-ui:grid-cols-[minmax(0,1fr)_auto] mobile-ui:gap-4"
+        [class.flex-col]="compact()"
+        [class.items-start]="compact()"
         data-testid="calendar-day-item"
         [routerLink]="link"
       >
-        <div hlmItemContent class="min-w-0 mobile-ui:col-span-2">
-          <span hlmItemTitle class="mobile-ui:line-clamp-none mobile-ui:max-w-full"
-            ><span class="mobile-ui:min-w-0 mobile-ui:text-base mobile-ui:break-words">{{
-              item.title
-            }}</span></span
-          >
-          <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
-        </div>
-        <span hlmBadge class="mobile-ui:w-fit" [variant]="toneOf(item)">{{
-          sourceLabelOf(item)
-        }}</span>
+        <ng-container [ngTemplateOutlet]="rowContent" [ngTemplateOutletContext]="{ item }" />
       </a>
     } @else {
       <div
         hlmItem
         size="sm"
         class="rounded-none border-x-0 border-t-0 border-b border-border last:border-b-0 mobile-ui:grid mobile-ui:grid-cols-[minmax(0,1fr)_auto] mobile-ui:gap-x-4 mobile-ui:gap-y-2"
+        [class.flex-col]="compact()"
+        [class.items-start]="compact()"
         data-testid="calendar-day-item"
       >
-        <div hlmItemContent class="min-w-0 mobile-ui:col-span-2">
-          <span hlmItemTitle class="mobile-ui:line-clamp-none mobile-ui:max-w-full"
-            ><span class="mobile-ui:min-w-0 mobile-ui:text-base mobile-ui:break-words">{{
-              item.title
-            }}</span></span
-          >
-          <span hlmItemDescription>{{ timeLabelOf(item) }}</span>
-        </div>
-        <span hlmBadge class="mobile-ui:w-fit" [variant]="toneOf(item)">{{
-          sourceLabelOf(item)
-        }}</span>
+        <ng-container [ngTemplateOutlet]="rowContent" [ngTemplateOutletContext]="{ item }" />
         @if (isEditableOf(item)) {
           <div class="flex items-center gap-1 mobile-ui:justify-self-end">
             <button
@@ -45,12 +29,14 @@
               type="button"
               variant="ghost"
               size="icon-sm"
-              class="mobile-ui:size-11"
+              class="mobile-ui:min-h-11 mobile-ui:w-auto mobile-ui:gap-2 mobile-ui:px-3"
               data-testid="calendar-day-item-edit"
               [attr.aria-label]="editAriaLabelOf(item)"
+              [hlmTooltip]="editAriaLabelOf(item)"
               (click)="editRequested.emit(item)"
             >
               <ng-icon name="lucidePencil" aria-hidden="true" />
+              <span class="hidden mobile-ui:inline" i18n="@@common.edit">Edit</span>
             </button>
             <button
               hlmBtn
@@ -60,6 +46,7 @@
               class="mobile-ui:size-11"
               data-testid="calendar-day-item-delete"
               [attr.aria-label]="deleteAriaLabelOf(item)"
+              [hlmTooltip]="deleteAriaLabelOf(item)"
               (click)="deleteRequested.emit(item)"
             >
               <ng-icon name="lucideTrash2" aria-hidden="true" />
@@ -70,3 +57,40 @@
     }
   }
 </div>
+
+<ng-template #rowContent let-item="item">
+  <div hlmItemContent class="min-w-0 mobile-ui:col-span-2" [class.w-full]="compact()">
+    <span hlmItemTitle class="mobile-ui:line-clamp-none mobile-ui:max-w-full"
+      ><span class="mobile-ui:min-w-0 mobile-ui:text-base mobile-ui:break-words">{{
+        item.title
+      }}</span></span
+    >
+    <span hlmItemDescription>
+      {{ timeLabelOf(item) }}
+      @if (facilityOf(item); as facility) {
+        <span aria-hidden="true"> · </span>
+        <ng-icon name="lucideMapPin" size="0.75rem" aria-hidden="true" />
+        {{ facility }}
+      }
+    </span>
+    @if (descriptionOf(item); as description) {
+      <span
+        hlmItemDescription
+        class="line-clamp-1 mobile-ui:line-clamp-2"
+        [hlmTooltip]="description"
+        >{{ description }}</span
+      >
+    }
+  </div>
+  <span
+    hlmBadge
+    class="mobile-ui:w-fit"
+    [class.max-w-full]="compact()"
+    [class.overflow-hidden]="compact()"
+    [variant]="toneOf(item)"
+    [attr.title]="compact() ? sourceLabelOf(item) : null"
+  >
+    <ng-icon [name]="sourceIconOf(item)" aria-hidden="true" />
+    {{ sourceLabelOf(item) }}
+  </span>
+</ng-template>

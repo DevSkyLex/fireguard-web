@@ -1,326 +1,352 @@
-<div class="flex flex-col gap-1">
-  <div
-    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
-    data-testid="facility-field-type"
-  >
-    <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@facility.info.type"
-      >Type</span
+<div class="@container grid grid-cols-1 gap-6 @3xl:grid-cols-2">
+  <div class="flex flex-col gap-2">
+    <h3
+      class="text-sm font-medium text-muted-foreground"
+      i18n="@@facility.info.identificationLegend"
     >
-    <span class="min-w-0 flex-1 text-sm font-medium">{{ typeLabelOf(facility().type) }}</span>
-  </div>
-
-  <div
-    class="flex min-h-11 w-full items-center gap-2 px-2 py-1 sm:min-h-9"
-    data-testid="facility-field-parent"
-  >
-    <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@facility.info.parent"
-      >Parent</span
-    >
-    <span class="min-w-0 flex-1 text-sm">
-      @if (facility().parentFacilityId; as parentId) {
-        <a
-          class="inline-flex items-center rounded-sm font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
-          [routerLink]="['/organizations', organizationId(), 'facilities', parentId]"
-        >
-          <span i18n="@@facility.info.viewParent">View parent facility</span>
-        </a>
-      } @else {
-        <span class="text-muted-foreground" i18n="@@facility.info.rootFacility">Root facility</span>
-      }
-    </span>
-  </div>
-
-  <div data-testid="facility-field-name">
-    <app-inplace-field
-      #nameField
-      label="Name"
-      i18n-label="@@facility.info.name"
-      commit="confirm"
-      [editable]="editable()"
-      [editing]="isEditing('name')"
-      [pending]="isSaving('name')"
-      [error]="errorFor('name')"
-      [canSave]="canSaveText()"
-      (editingChange)="onTextEditing('name', $event)"
-      (saved)="saveText()"
-    >
-      <span fieldValue class="font-medium">{{ facility().name }}</span>
-
-      <input
-        fieldEditor
-        hlmInput
-        type="text"
-        class="w-full mobile-ui:min-h-11"
-        [attr.aria-labelledby]="nameField.labelId"
-        [value]="textDraft()"
-        (input)="textDraft.set($any($event.target).value)"
-      />
-    </app-inplace-field>
-  </div>
-
-  <div data-testid="facility-field-code">
-    <app-inplace-field
-      #codeField
-      label="Code"
-      i18n-label="@@facility.info.code"
-      commit="confirm"
-      [editable]="editable()"
-      [editing]="isEditing('code')"
-      [pending]="isSaving('code')"
-      [error]="errorFor('code')"
-      [canSave]="canSaveText()"
-      (editingChange)="onTextEditing('code', $event)"
-      (saved)="saveText()"
-    >
-      @if (facility().code; as value) {
-        <span fieldValue class="font-medium tabular-nums">{{ value }}</span>
-      } @else {
-        <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
-          >Not specified</span
-        >
-      }
-
-      <input
-        fieldEditor
-        hlmInput
-        type="text"
-        class="w-full mobile-ui:min-h-11"
-        [attr.aria-labelledby]="codeField.labelId"
-        [value]="textDraft()"
-        (input)="textDraft.set($any($event.target).value)"
-      />
-    </app-inplace-field>
-  </div>
-
-  <div data-testid="facility-field-address">
-    <app-inplace-field
-      #addressField
-      label="Address"
-      i18n-label="@@facility.info.address"
-      commit="confirm"
-      [editable]="editable()"
-      [editing]="isEditing('address')"
-      [pending]="isSaving('address')"
-      [error]="errorFor('address')"
-      [canSave]="canSaveText()"
-      (editingChange)="onTextEditing('address', $event)"
-      (saved)="saveText()"
-    >
-      @if (facility().address; as value) {
-        <span fieldValue class="font-medium">{{ value }}</span>
-      } @else {
-        <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
-          >Not specified</span
-        >
-      }
-
-      <input
-        fieldEditor
-        hlmInput
-        type="text"
-        class="w-full mobile-ui:min-h-11"
-        [attr.aria-labelledby]="addressField.labelId"
-        [value]="textDraft()"
-        (input)="textDraft.set($any($event.target).value)"
-      />
-    </app-inplace-field>
-  </div>
-
-  @if (facility().type === 'floor') {
-    <div data-testid="facility-field-level-index">
-      <app-inplace-field
-        #levelIndexField
-        label="Stacking order"
-        i18n-label="@@facility.info.levelIndex"
-        commit="confirm"
-        [editable]="editable()"
-        [editing]="isEditing('levelIndex')"
-        [pending]="isSaving('levelIndex')"
-        [error]="errorFor('levelIndex')"
-        [canSave]="canSaveLevelIndex()"
-        (editingChange)="onLevelIndexEditing($event)"
-        (saved)="saveLevelIndex()"
+      Identification
+    </h3>
+    <hlm-separator />
+    <div class="flex flex-col gap-1">
+      <div
+        class="flex min-h-9 w-full items-center gap-2 px-2 py-1 mobile-ui:min-h-11"
+        data-testid="facility-field-type"
       >
-        @if (facility().levelIndex != null) {
-          <span fieldValue class="font-medium tabular-nums">{{ facility().levelIndex }}</span>
-        } @else {
-          <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
-            >Not specified</span
-          >
-        }
-
-        <div fieldEditor class="flex flex-col gap-2">
-          <label
-            [attr.for]="levelIndexField.editorId + '-value'"
-            class="sr-only"
-            i18n="@@facility.info.levelIndex"
-            >Stacking order</label
-          >
-          <input
-            hlmInput
-            type="number"
-            step="1"
-            min="-100"
-            max="200"
-            class="w-full mobile-ui:min-h-11"
-            [id]="levelIndexField.editorId + '-value'"
-            [attr.aria-invalid]="levelIndexError() !== null"
-            [attr.aria-describedby]="
-              levelIndexError() !== null
-                ? levelIndexField.editorId + '-hint ' + levelIndexField.editorId + '-range'
-                : levelIndexField.editorId + '-hint'
-            "
-            [value]="levelIndexDraft()"
-            (input)="levelIndexDraft.set($any($event.target).value)"
-          />
-
-          @if (levelIndexError(); as rangeError) {
-            <p
-              role="alert"
-              class="text-xs text-destructive"
-              [id]="levelIndexField.editorId + '-range'"
-            >
-              {{ rangeError }}
-            </p>
-          }
-          <p
-            [id]="levelIndexField.editorId + '-hint'"
-            class="text-xs text-muted-foreground"
-            i18n="@@facility.info.levelIndexHint"
-          >
-            Where this floor stacks among its siblings — ground floor is 0, a basement level is
-            negative. Ties between floors are allowed.
-          </p>
-        </div>
-      </app-inplace-field>
-    </div>
-  }
-
-  <div data-testid="facility-field-coordinates">
-    <app-inplace-field
-      #coordinatesField
-      label="Coordinates"
-      i18n-label="@@facility.info.coordinates"
-      commit="confirm"
-      [editable]="editable()"
-      [editing]="isEditing('coordinates')"
-      [pending]="isSaving('coordinates')"
-      [error]="errorFor('coordinates')"
-      [canSave]="canSaveCoordinates()"
-      (editingChange)="onCoordinatesEditing($event)"
-      (saved)="saveCoordinates()"
-    >
-      @if (facility().latitude != null && facility().longitude != null) {
-        <span fieldValue class="font-medium tabular-nums"
-          >{{ facility().latitude }}, {{ facility().longitude }}</span
+        <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@facility.info.type"
+          >Type</span
         >
-      } @else {
-        <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
-          >Not specified</span
-        >
-      }
-
-      <div fieldEditor class="flex flex-col gap-2">
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            hlmBtn
-            type="button"
-            size="sm"
-            data-testid="facility-pick-on-map"
-            (click)="mapPickerVisible.set(true)"
-            class="mobile-ui:min-h-11"
-          >
-            <ng-icon name="lucideMapPin" aria-hidden="true" />
-            <span i18n="@@facility.map.pickOnMap">Pick on map</span>
-          </button>
-          @if (facility().address) {
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              size="sm"
-              data-testid="facility-locate-address"
-              [attr.aria-disabled]="geocodePending() ? 'true' : null"
-              [attr.aria-busy]="geocodePending() ? 'true' : null"
-              (click)="locateAddress()"
-              class="mobile-ui:min-h-11"
-            >
-              <ng-icon name="lucideLocateFixed" aria-hidden="true" />
-              <span i18n="@@facility.form.locateAddress">Locate address</span>
-            </button>
-          }
-        </div>
-        <output aria-live="polite" class="block text-xs" data-testid="facility-geocode-status">
-          @if (geocodePending()) {
-            <span class="text-muted-foreground" i18n="@@facility.form.locatingAddress"
-              >Locating address…</span
-            >
-          } @else if (geocodeNotFound()) {
-            <span class="text-muted-foreground" i18n="@@facility.form.addressNotFound"
-              >Address not found — you can still enter the coordinates yourself.</span
-            >
-          } @else if (geocodeResult(); as match) {
-            <span class="text-muted-foreground">{{ match.displayName }}</span>
-          }
-        </output>
-        <p class="text-xs text-muted-foreground" i18n="@@facility.info.coordinatesManualHint">
-          Or type them, if you already know the figures. Both are needed — a latitude alone is not
-          half a location.
-        </p>
-        <div class="flex gap-2">
-          <div class="flex-1">
-            <label
-              [attr.for]="coordinatesField.editorId + '-lat'"
-              class="sr-only"
-              i18n="@@facility.info.latitude"
-              >Latitude</label
-            >
-            <input
-              hlmInput
-              type="number"
-              step="any"
-              min="-90"
-              max="90"
-              class="w-full mobile-ui:min-h-11"
-              placeholder="Latitude"
-              i18n-placeholder="@@facility.info.latitude"
-              [id]="coordinatesField.editorId + '-lat'"
-              [attr.aria-invalid]="coordinatesError() !== null"
-              [value]="latitudeDraft()"
-              (input)="latitudeDraft.set($any($event.target).value)"
-            />
-          </div>
-          <div class="flex-1">
-            <label
-              [attr.for]="coordinatesField.editorId + '-lng'"
-              class="sr-only"
-              i18n="@@facility.info.longitude"
-              >Longitude</label
-            >
-            <input
-              hlmInput
-              type="number"
-              step="any"
-              min="-180"
-              max="180"
-              class="w-full mobile-ui:min-h-11"
-              placeholder="Longitude"
-              i18n-placeholder="@@facility.info.longitude"
-              [id]="coordinatesField.editorId + '-lng'"
-              [attr.aria-invalid]="coordinatesError() !== null"
-              [value]="longitudeDraft()"
-              (input)="longitudeDraft.set($any($event.target).value)"
-            />
-          </div>
-        </div>
-
-        @if (coordinatesError(); as coordinateError) {
-          <p role="alert" class="text-xs text-destructive" data-testid="facility-coordinates-error">
-            {{ coordinateError }}
-          </p>
-        }
+        <span class="min-w-0 flex-1 text-sm font-medium">{{ typeLabelOf(facility().type) }}</span>
       </div>
-    </app-inplace-field>
+
+      <div
+        class="flex min-h-9 w-full items-center gap-2 px-2 py-1 mobile-ui:min-h-11"
+        data-testid="facility-field-parent"
+      >
+        <span class="w-24 shrink-0 text-xs text-muted-foreground" i18n="@@facility.info.parent"
+          >Parent</span
+        >
+        <span class="min-w-0 flex-1 text-sm">
+          @if (facility().parentFacilityId; as parentId) {
+            <a
+              class="inline-flex items-center rounded-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
+              [routerLink]="['/organizations', organizationId(), 'facilities', parentId]"
+            >
+              {{ parentName() }}
+            </a>
+          } @else {
+            <span class="text-muted-foreground" i18n="@@facility.info.rootFacility"
+              >Root facility</span
+            >
+          }
+        </span>
+      </div>
+
+      <div data-testid="facility-field-name">
+        <app-inplace-field
+          #nameField
+          label="Name"
+          i18n-label="@@facility.info.name"
+          commit="confirm"
+          [editable]="editable()"
+          [editing]="isEditing('name')"
+          [pending]="isSaving('name')"
+          [error]="errorFor('name')"
+          [canSave]="canSaveText()"
+          (editingChange)="onTextEditing('name', $event)"
+          (saved)="saveText()"
+        >
+          <span fieldValue class="font-medium">{{ facility().name }}</span>
+
+          <input
+            fieldEditor
+            hlmInput
+            type="text"
+            class="w-full mobile-ui:min-h-11"
+            [attr.aria-labelledby]="nameField.labelId"
+            [value]="textDraft()"
+            (input)="textDraft.set($any($event.target).value)"
+          />
+        </app-inplace-field>
+      </div>
+
+      <div data-testid="facility-field-code">
+        <app-inplace-field
+          #codeField
+          label="Code"
+          i18n-label="@@facility.info.code"
+          commit="confirm"
+          [editable]="editable()"
+          [editing]="isEditing('code')"
+          [pending]="isSaving('code')"
+          [error]="errorFor('code')"
+          [canSave]="canSaveText()"
+          (editingChange)="onTextEditing('code', $event)"
+          (saved)="saveText()"
+        >
+          @if (facility().code; as value) {
+            <span fieldValue class="font-medium tabular-nums">{{ value }}</span>
+          } @else {
+            <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+              >Not specified</span
+            >
+          }
+
+          <input
+            fieldEditor
+            hlmInput
+            type="text"
+            class="w-full mobile-ui:min-h-11"
+            [attr.aria-labelledby]="codeField.labelId"
+            [value]="textDraft()"
+            (input)="textDraft.set($any($event.target).value)"
+          />
+        </app-inplace-field>
+      </div>
+
+      @if (facility().type === 'floor') {
+        <div data-testid="facility-field-level-index">
+          <app-inplace-field
+            #levelIndexField
+            label="Stacking order"
+            i18n-label="@@facility.info.levelIndex"
+            commit="confirm"
+            [editable]="editable()"
+            [editing]="isEditing('levelIndex')"
+            [pending]="isSaving('levelIndex')"
+            [error]="errorFor('levelIndex')"
+            [canSave]="canSaveLevelIndex()"
+            (editingChange)="onLevelIndexEditing($event)"
+            (saved)="saveLevelIndex()"
+          >
+            @if (facility().levelIndex != null) {
+              <span fieldValue class="font-medium tabular-nums">{{ facility().levelIndex }}</span>
+            } @else {
+              <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+                >Not specified</span
+              >
+            }
+
+            <div fieldEditor class="flex flex-col gap-2">
+              <label
+                [attr.for]="levelIndexField.editorId + '-value'"
+                class="sr-only"
+                i18n="@@facility.info.levelIndex"
+                >Stacking order</label
+              >
+              <input
+                hlmInput
+                type="number"
+                step="1"
+                min="-100"
+                max="200"
+                class="w-full mobile-ui:min-h-11"
+                [id]="levelIndexField.editorId + '-value'"
+                [attr.aria-invalid]="levelIndexError() !== null"
+                [attr.aria-describedby]="
+                  levelIndexError() !== null
+                    ? levelIndexField.editorId + '-hint ' + levelIndexField.editorId + '-range'
+                    : levelIndexField.editorId + '-hint'
+                "
+                [value]="levelIndexDraft()"
+                (input)="levelIndexDraft.set($any($event.target).value)"
+              />
+
+              @if (levelIndexError(); as rangeError) {
+                <p
+                  role="alert"
+                  class="text-xs text-destructive"
+                  [id]="levelIndexField.editorId + '-range'"
+                >
+                  {{ rangeError }}
+                </p>
+              }
+              <p
+                [id]="levelIndexField.editorId + '-hint'"
+                class="text-xs text-muted-foreground"
+                i18n="@@facility.info.levelIndexHint"
+              >
+                Where this floor stacks among its siblings — ground floor is 0, a basement level is
+                negative. Ties between floors are allowed.
+              </p>
+            </div>
+          </app-inplace-field>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <h3 class="text-sm font-medium text-muted-foreground" i18n="@@facility.info.locationLegend">
+      Location
+    </h3>
+    <hlm-separator />
+    <div class="flex flex-col gap-1">
+      <div data-testid="facility-field-address">
+        <app-inplace-field
+          #addressField
+          label="Address"
+          i18n-label="@@facility.info.address"
+          commit="confirm"
+          [editable]="editable()"
+          [editing]="isEditing('address')"
+          [pending]="isSaving('address')"
+          [error]="errorFor('address')"
+          [canSave]="canSaveText()"
+          (editingChange)="onTextEditing('address', $event)"
+          (saved)="saveText()"
+        >
+          @if (facility().address; as value) {
+            <span fieldValue class="font-medium">{{ value }}</span>
+          } @else {
+            <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+              >Not specified</span
+            >
+          }
+
+          <input
+            fieldEditor
+            hlmInput
+            type="text"
+            class="w-full mobile-ui:min-h-11"
+            [attr.aria-labelledby]="addressField.labelId"
+            [value]="textDraft()"
+            (input)="textDraft.set($any($event.target).value)"
+          />
+        </app-inplace-field>
+      </div>
+
+      <div data-testid="facility-field-coordinates">
+        <app-inplace-field
+          #coordinatesField
+          label="Coordinates"
+          i18n-label="@@facility.info.coordinates"
+          commit="confirm"
+          [editable]="editable()"
+          [editing]="isEditing('coordinates')"
+          [pending]="isSaving('coordinates')"
+          [error]="errorFor('coordinates')"
+          [canSave]="canSaveCoordinates()"
+          (editingChange)="onCoordinatesEditing($event)"
+          (saved)="saveCoordinates()"
+        >
+          @if (facility().latitude != null && facility().longitude != null) {
+            <span fieldValue class="font-medium tabular-nums"
+              >{{ facility().latitude | number: '1.0-5' }},
+              {{ facility().longitude | number: '1.0-5' }}</span
+            >
+          } @else {
+            <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+              >Not specified</span
+            >
+          }
+
+          <div fieldEditor class="flex flex-col gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                hlmBtn
+                type="button"
+                size="sm"
+                data-testid="facility-pick-on-map"
+                (click)="mapPickerVisible.set(true)"
+                class="mobile-ui:min-h-11"
+              >
+                <ng-icon name="lucideMapPin" aria-hidden="true" />
+                <span i18n="@@facility.map.pickOnMap">Pick on map</span>
+              </button>
+              @if (facility().address) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-testid="facility-locate-address"
+                  [attr.aria-disabled]="geocodePending() ? 'true' : null"
+                  [attr.aria-busy]="geocodePending() ? 'true' : null"
+                  (click)="locateAddress()"
+                  class="mobile-ui:min-h-11"
+                >
+                  <ng-icon name="lucideLocateFixed" aria-hidden="true" />
+                  <span i18n="@@facility.form.locateAddress">Locate address</span>
+                </button>
+              }
+            </div>
+            <output aria-live="polite" class="block text-xs" data-testid="facility-geocode-status">
+              @if (geocodePending()) {
+                <span class="text-muted-foreground" i18n="@@facility.form.locatingAddress"
+                  >Locating address…</span
+                >
+              } @else if (geocodeNotFound()) {
+                <span class="text-muted-foreground" i18n="@@facility.form.addressNotFound"
+                  >Address not found — you can still enter the coordinates yourself.</span
+                >
+              } @else if (geocodeResult(); as match) {
+                <span class="text-muted-foreground">{{ match.displayName }}</span>
+              }
+            </output>
+            <p class="text-xs text-muted-foreground" i18n="@@facility.info.coordinatesManualHint">
+              Or type them, if you already know the figures. Both are needed — a latitude alone is
+              not half a location.
+            </p>
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label
+                  [attr.for]="coordinatesField.editorId + '-lat'"
+                  class="sr-only"
+                  i18n="@@facility.info.latitude"
+                  >Latitude</label
+                >
+                <input
+                  hlmInput
+                  type="number"
+                  step="any"
+                  min="-90"
+                  max="90"
+                  class="w-full mobile-ui:min-h-11"
+                  placeholder="Latitude"
+                  i18n-placeholder="@@facility.info.latitude"
+                  [id]="coordinatesField.editorId + '-lat'"
+                  [attr.aria-invalid]="coordinatesError() !== null"
+                  [value]="latitudeDraft()"
+                  (input)="latitudeDraft.set($any($event.target).value)"
+                />
+              </div>
+              <div class="flex-1">
+                <label
+                  [attr.for]="coordinatesField.editorId + '-lng'"
+                  class="sr-only"
+                  i18n="@@facility.info.longitude"
+                  >Longitude</label
+                >
+                <input
+                  hlmInput
+                  type="number"
+                  step="any"
+                  min="-180"
+                  max="180"
+                  class="w-full mobile-ui:min-h-11"
+                  placeholder="Longitude"
+                  i18n-placeholder="@@facility.info.longitude"
+                  [id]="coordinatesField.editorId + '-lng'"
+                  [attr.aria-invalid]="coordinatesError() !== null"
+                  [value]="longitudeDraft()"
+                  (input)="longitudeDraft.set($any($event.target).value)"
+                />
+              </div>
+            </div>
+
+            @if (coordinatesError(); as coordinateError) {
+              <p
+                role="alert"
+                class="text-xs text-destructive"
+                data-testid="facility-coordinates-error"
+              >
+                {{ coordinateError }}
+              </p>
+            }
+          </div>
+        </app-inplace-field>
+      </div>
+    </div>
   </div>
 </div>
 

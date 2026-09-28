@@ -16,7 +16,10 @@ export const INTERVENTION_TABLE_COLUMN = {
   TYPE: 'type',
   SITE: 'site',
   RESPONSIBLE: 'responsible',
+  PARTICIPANTS: 'participants',
   DUE: 'due',
+  START: 'start',
+  UPDATED: 'updated',
 } as const;
 
 /**
@@ -46,5 +49,25 @@ export const INTERVENTION_TABLE_COLUMNS: ReadonlyArray<InterventionTableColumn> 
   INTERVENTION_TABLE_COLUMN.TYPE,
   INTERVENTION_TABLE_COLUMN.SITE,
   INTERVENTION_TABLE_COLUMN.RESPONSIBLE,
+  INTERVENTION_TABLE_COLUMN.PARTICIPANTS,
+  INTERVENTION_TABLE_COLUMN.START,
   INTERVENTION_TABLE_COLUMN.DUE,
+  INTERVENTION_TABLE_COLUMN.UPDATED,
+];
+
+/**
+ * Constant INTERVENTION_TABLE_DEFAULT_HIDDEN_COLUMNS
+ *
+ * @description
+ * Columns hidden the first time an operator opens the list, before any
+ * preference cookie exists. Start and Updated echo the sortable fields the
+ * list can order by but otherwise never surfaces a date for.
+ *
+ * @since 6.4.0
+ *
+ * @type {ReadonlyArray<InterventionTableColumn>}
+ */
+export const INTERVENTION_TABLE_DEFAULT_HIDDEN_COLUMNS: ReadonlyArray<InterventionTableColumn> = [
+  INTERVENTION_TABLE_COLUMN.START,
+  INTERVENTION_TABLE_COLUMN.UPDATED,
 ];

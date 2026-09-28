@@ -36,6 +36,16 @@ export interface InboxItemOutput {
   readonly kind: string;
 
   /**
+   * Property sourceType
+   * @readonly
+   * @description Optional source-owned event type used for contextual presentation.
+   * @access public
+   * @since 1.0.0
+   * @type {string | null | undefined}
+   */
+  readonly sourceType?: string | null;
+
+  /**
    * Property title
    * @readonly
    * @description Server-provided title.

@@ -1,15 +1,29 @@
 <form class="flex flex-col gap-6" novalidate (submit)="submit($event)">
   <fieldset hlmFieldSet>
     <legend hlmFieldLegend i18n="@@org.access.policyLegend">How people join</legend>
-    <hlm-radio-group [formField]="policyForm.mode">
+    <hlm-radio-group class="grid gap-3" [formField]="policyForm.mode">
       @for (option of options; track option.value) {
-        <label class="mobile-ui:min-h-11" hlmFieldLabel [for]="'access-mode-' + option.value">
-          <div hlmField orientation="horizontal">
-            <hlm-radio [inputId]="'access-mode-' + option.value" [value]="option.value" />
-            <div hlmFieldContent>
+        <label
+          class="min-w-0 cursor-pointer rounded-lg border border-border bg-card/40 transition-colors hover:bg-muted/40 mobile-ui:min-h-11"
+          hlmFieldLabel
+          [for]="'access-mode-' + option.value"
+        >
+          <div hlmField orientation="horizontal" class="min-w-0 gap-3">
+            <span
+              class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+              aria-hidden="true"
+            >
+              <ng-icon [name]="option.icon" class="text-base" />
+            </span>
+            <div hlmFieldContent class="min-w-0 flex-1">
               <span hlmFieldTitle>{{ option.label }}</span>
               <p hlmFieldDescription>{{ option.description }}</p>
             </div>
+            <hlm-radio
+              class="shrink-0"
+              [inputId]="'access-mode-' + option.value"
+              [value]="option.value"
+            />
           </div>
         </label>
       }
@@ -41,7 +55,7 @@
   <button
     hlmBtn
     type="submit"
-    class="w-fit max-sm:w-full mobile-ui:min-h-11"
+    class="w-fit mobile-ui:min-h-11 mobile-ui:w-full"
     [disabled]="pending()"
     i18n="@@org.access.save"
   >

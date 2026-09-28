@@ -152,12 +152,7 @@
         class="flex min-h-52 flex-col items-center justify-center px-6 text-center"
         data-testid="global-search-empty"
       >
-        <span
-          class="mb-4 flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground"
-          aria-hidden="true"
-        >
-          <ng-icon name="lucideSearch" class="text-xl" />
-        </span>
+        <app-state-illustration state="no-results" size="sm" class="mb-4" />
         <p class="font-medium text-foreground" i18n="@@org.search.noResultsTitle">
           No matching records
         </p>

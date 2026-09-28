@@ -184,6 +184,22 @@
             </hlm-drawer-footer>
           </hlm-drawer-content>
         </hlm-drawer>
+      } @else if (zoneCandidatesFailed()) {
+        <div class="flex flex-wrap items-center gap-2 text-sm">
+          <span class="text-muted-foreground" i18n="@@facility.plans.editor.zoneError"
+            >The zones could not be loaded.</span
+          >
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            (click)="zonePickerOpened.emit()"
+            class="mobile-ui:min-h-11"
+          >
+            <span i18n="@@common.retry">Retry</span>
+          </button>
+        </div>
       } @else {
         <hlm-select
           [value]="null"
@@ -195,7 +211,18 @@
             data-testid="facility-plan-editor-draw-zone-picker"
             (click)="zonePickerOpened.emit()"
           >
-            <hlm-select-value [placeholder]="drawZonePlaceholder" />
+            @if (zoneCandidatesLoading()) {
+              <output
+                role="status"
+                class="inline-flex items-center gap-1.5 text-muted-foreground"
+                i18n="@@facility.plans.editor.loadingZones"
+              >
+                <hlm-spinner size="xs" aria-hidden="true" />
+                Loading zones…
+              </output>
+            } @else {
+              <hlm-select-value [placeholder]="drawZonePlaceholder" />
+            }
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal class="w-56">
             <hlm-select-group>
@@ -337,6 +364,22 @@
             </hlm-drawer-footer>
           </hlm-drawer-content>
         </hlm-drawer>
+      } @else if (equipmentCandidatesFailed()) {
+        <div class="flex flex-wrap items-center gap-2 text-sm">
+          <span class="text-muted-foreground" i18n="@@facility.plans.editor.equipmentError"
+            >The equipment could not be loaded.</span
+          >
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            (click)="equipmentPickerOpened.emit()"
+            class="mobile-ui:min-h-11"
+          >
+            <span i18n="@@common.retry">Retry</span>
+          </button>
+        </div>
       } @else {
         <hlm-select
           [value]="null"
@@ -348,7 +391,18 @@
             data-testid="facility-plan-editor-place-pin-picker"
             (click)="equipmentPickerOpened.emit()"
           >
-            <hlm-select-value [placeholder]="placePinPlaceholder" />
+            @if (equipmentCandidatesLoading()) {
+              <output
+                role="status"
+                class="inline-flex items-center gap-1.5 text-muted-foreground"
+                i18n="@@facility.plans.editor.loadingEquipment"
+              >
+                <hlm-spinner size="xs" aria-hidden="true" />
+                Loading equipment…
+              </output>
+            } @else {
+              <hlm-select-value [placeholder]="placePinPlaceholder" />
+            }
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal class="w-56">
             <hlm-select-group>

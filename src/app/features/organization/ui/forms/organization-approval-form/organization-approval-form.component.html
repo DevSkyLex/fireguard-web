@@ -13,86 +13,52 @@
         </p>
       </div>
 
-      @for (entry of approvalForm.actionRules; track entry[0]) {
-        <fieldset
-          hlmFieldSet
-          class="flex flex-col gap-3 rounded-md border border-border p-3 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:p-0 mobile-ui:pb-4"
-        >
-          <legend hlmFieldLegend class="font-medium text-foreground">
-            {{ actionTypeLabelOf(entry[0]) }}
-          </legend>
+      <div class="rounded-lg border">
+        @for (entry of approvalForm.actionRules; track entry[0]) {
+          @if (!$first) {
+            <hlm-field-separator class="mx-4" />
+          }
+          <fieldset hlmFieldSet class="flex flex-col gap-3 p-4">
+            <legend hlmFieldLegend class="font-medium text-foreground">
+              {{ actionTypeLabelOf(entry[0]) }}
+            </legend>
 
-          <hlm-field orientation="horizontal" class="justify-between">
-            <label
-              class="mobile-ui:min-h-11"
-              [for]="'org-approval-enabled-' + entry[0]"
-              hlmFieldLabel
-              i18n="@@org.settings.approval.requireApprovalLabel"
-            >
-              Require approval
-            </label>
-            <hlm-switch
-              [inputId]="'org-approval-enabled-' + entry[0]"
-              [attr.data-testid]="'org-approval-enabled-' + entry[0]"
-              [formField]="entry[1].enabled"
-            />
-          </hlm-field>
-
-          <div class="grid gap-4 sm:grid-cols-2">
-            <hlm-field>
+            <hlm-field orientation="horizontal" class="justify-between">
               <label
                 class="mobile-ui:min-h-11"
-                [attr.for]="'org-approval-role-' + entry[0]"
+                [for]="'org-approval-enabled-' + entry[0]"
                 hlmFieldLabel
-                i18n="@@org.settings.approval.minApproverRoleLabel"
-                >Minimum approver role</label
+                i18n="@@org.settings.approval.requireApprovalLabel"
               >
-              <hlm-select [formField]="entry[1].minApproverRole">
-                <hlm-select-trigger
-                  [buttonId]="'org-approval-role-' + entry[0]"
-                  class="w-full mobile-ui:min-h-11"
-                  [attr.data-testid]="'org-approval-role-' + entry[0]"
-                >
-                  <hlm-select-value />
-                </hlm-select-trigger>
-                <hlm-select-content *hlmSelectPortal>
-                  <hlm-select-group>
-                    @for (option of roleOptions; track option.value) {
-                      <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">{{
-                        option.label
-                      }}</hlm-select-item>
-                    }
-                  </hlm-select-group>
-                </hlm-select-content>
-              </hlm-select>
+                Require approval
+              </label>
+              <hlm-switch
+                [inputId]="'org-approval-enabled-' + entry[0]"
+                [attr.data-testid]="'org-approval-enabled-' + entry[0]"
+                [formField]="entry[1].enabled"
+              />
             </hlm-field>
 
-            @if (entry[0] === severityGatedActionType) {
+            <div class="grid gap-4 @sm/settings:grid-cols-2">
               <hlm-field>
                 <label
                   class="mobile-ui:min-h-11"
-                  [attr.for]="'org-approval-severity-' + entry[0]"
+                  [attr.for]="'org-approval-role-' + entry[0]"
                   hlmFieldLabel
-                  i18n="@@org.settings.approval.minSeverityLabel"
-                  >Minimum severity</label
+                  i18n="@@org.settings.approval.minApproverRoleLabel"
+                  >Minimum approver role</label
                 >
-                <hlm-select [formField]="entry[1].minSeverity">
+                <hlm-select [formField]="entry[1].minApproverRole">
                   <hlm-select-trigger
-                    [buttonId]="'org-approval-severity-' + entry[0]"
+                    [buttonId]="'org-approval-role-' + entry[0]"
                     class="w-full mobile-ui:min-h-11"
-                    [attr.data-testid]="'org-approval-severity-' + entry[0]"
+                    [attr.data-testid]="'org-approval-role-' + entry[0]"
                   >
                     <hlm-select-value />
                   </hlm-select-trigger>
                   <hlm-select-content *hlmSelectPortal>
                     <hlm-select-group>
-                      <hlm-select-item
-                        class="mobile-ui:min-h-11"
-                        [value]="noMinimumSeverity"
-                        i18n="@@org.settings.approval.noMinimumSeverity"
-                        >No minimum</hlm-select-item
-                      >
-                      @for (option of severityOptions; track option.value) {
+                      @for (option of roleOptions; track option.value) {
                         <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">{{
                           option.label
                         }}</hlm-select-item>
@@ -101,10 +67,46 @@
                   </hlm-select-content>
                 </hlm-select>
               </hlm-field>
-            }
-          </div>
-        </fieldset>
-      }
+
+              @if (entry[0] === severityGatedActionType) {
+                <hlm-field>
+                  <label
+                    class="mobile-ui:min-h-11"
+                    [attr.for]="'org-approval-severity-' + entry[0]"
+                    hlmFieldLabel
+                    i18n="@@org.settings.approval.minSeverityLabel"
+                    >Minimum severity</label
+                  >
+                  <hlm-select [formField]="entry[1].minSeverity">
+                    <hlm-select-trigger
+                      [buttonId]="'org-approval-severity-' + entry[0]"
+                      class="w-full mobile-ui:min-h-11"
+                      [attr.data-testid]="'org-approval-severity-' + entry[0]"
+                    >
+                      <hlm-select-value />
+                    </hlm-select-trigger>
+                    <hlm-select-content *hlmSelectPortal>
+                      <hlm-select-group>
+                        <hlm-select-item
+                          class="mobile-ui:min-h-11"
+                          [value]="noMinimumSeverity"
+                          i18n="@@org.settings.approval.noMinimumSeverity"
+                          >No minimum</hlm-select-item
+                        >
+                        @for (option of severityOptions; track option.value) {
+                          <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">{{
+                            option.label
+                          }}</hlm-select-item>
+                        }
+                      </hlm-select-group>
+                    </hlm-select-content>
+                  </hlm-select>
+                </hlm-field>
+              }
+            </div>
+          </fieldset>
+        }
+      </div>
     </section>
 
     <section class="flex flex-col gap-3 border-t border-border pt-5">

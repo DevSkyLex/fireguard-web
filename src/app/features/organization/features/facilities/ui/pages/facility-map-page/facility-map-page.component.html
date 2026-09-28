@@ -1,116 +1,179 @@
 <div id="facility-map" class="flex min-h-0 w-full flex-1 flex-col gap-4">
-  <div class="flex flex-wrap items-center justify-end gap-2">
-    <div class="flex flex-wrap items-center gap-4">
-      <hlm-field orientation="horizontal" class="gap-2 mobile-ui:min-h-11">
-        <label
-          hlmFieldLabel
-          for="facility-map-compliance-toggle"
-          i18n="@@facility.map.compliance.toggleLabel"
-          >Compliance</label
-        >
-        <hlm-switch
-          inputId="facility-map-compliance-toggle"
-          data-testid="facility-map-compliance-toggle"
-          [checked]="store.complianceVisible()"
-          (checkedChange)="onComplianceLayerToggled($event)"
-        />
-      </hlm-field>
-
-      <hlm-toggle-group
-        type="single"
-        [nullable]="false"
-        variant="outline"
-        size="sm"
-        value="map"
-        data-testid="facility-map-layout-toggle"
+  <div class="flex flex-wrap items-center justify-start gap-2">
+    <hlm-field orientation="horizontal" class="gap-2 mobile-ui:min-h-11">
+      <hlm-switch
+        inputId="facility-map-compliance-toggle"
+        data-testid="facility-map-compliance-toggle"
+        [checked]="store.complianceVisible()"
+        (checkedChange)="onComplianceLayerToggled($event)"
+      />
+      <label
+        hlmFieldLabel
+        for="facility-map-compliance-toggle"
+        i18n="@@facility.map.compliance.toggleLabel"
+        >Compliance</label
       >
-        <button
-          hlmToggleGroupItem
-          value="list"
-          data-testid="facility-map-layout-list"
-          [routerLink]="listRouteBase()"
-          i18n-aria-label="@@facility.list.layoutList"
-          aria-label="List view"
-          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
-        >
-          <span i18n="@@facility.map.layoutListLabel">List</span>
-        </button>
-        <button
-          hlmToggleGroupItem
-          value="map"
-          data-testid="facility-map-layout-map"
-          i18n-aria-label="@@facility.map.layoutMap"
-          aria-label="Map view"
-          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
-        >
-          <ng-icon name="lucideMap" aria-hidden="true" />
-          <span i18n="@@facility.map.layoutMapLabel">Map</span>
-        </button>
-      </hlm-toggle-group>
-    </div>
+    </hlm-field>
   </div>
 
-  @if (store.mappedFacilities().length === 0 && !store.isLoadingMapped()) {
-    <div hlmEmpty class="flex-1" data-testid="facility-map-empty">
+  @if (store.hasMappedError()) {
+    <div hlmEmpty class="flex-1" role="alert" data-testid="facility-map-error">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideMap" aria-hidden="true" />
+        <div hlmEmptyMedia variant="icon" class="text-destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
         </div>
-        <p hlmEmptyTitle i18n="@@facility.map.emptyTitle">No facilities on the map yet</p>
-        <p hlmEmptyDescription i18n="@@facility.map.emptyDesc">
-          The map fills in as facilities get placed. Add coordinates from a facility's Information
-          tab or when creating one.
+        <p hlmEmptyTitle i18n="@@facility.map.errorTitle">Couldn't load the map</p>
+        <p hlmEmptyDescription i18n="@@facility.map.errorDesc">
+          The facility map could not be loaded. Check your connection and try again.
         </p>
       </div>
-    </div>
-  } @else {
-    @if (store.unplacedCount() > 0) {
-      <p
-        class="rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground"
-        data-testid="facility-map-unplaced-banner"
-      >
-        <span i18n="@@facility.map.unplacedBanner"
-          >{{ store.unplacedCount() }} facilities have no coordinates yet.</span
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          variant="outline"
+          data-testid="facility-map-retry"
+          (click)="reloadMapped()"
+          class="mobile-ui:min-h-11"
         >
+          <span i18n="@@facility.list.retry">Retry</span>
+        </button>
+      </div>
+    </div>
+  } @else if (store.mappedFacilities().length === 0 && !store.isLoadingMapped()) {
+    <div hlmEmpty class="flex-1" data-testid="facility-map-empty">
+      <div hlmEmptyHeader>
+        <app-resource-illustration hlmEmptyMedia resource="map" />
+        <p hlmEmptyTitle i18n="@@facility.map.emptyTitle">No facilities on the map yet</p>
+        @if (store.unplacedCount() > 0) {
+          <p hlmEmptyDescription i18n="@@facility.map.emptyDescUnplaced">
+            {store.unplacedCount(), plural,
+              one {1 facility has no coordinates yet}
+              other {{{ store.unplacedCount() }} facilities have no coordinates yet}
+            }
+            — add them from a facility's Information tab or when creating one.
+          </p>
+        } @else {
+          <p hlmEmptyDescription i18n="@@facility.map.emptyDesc">
+            The map fills in as facilities get placed. Add coordinates from a facility's Information
+            tab or when creating one.
+          </p>
+        }
+      </div>
+      <div hlmEmptyContent>
         <a
-          class="inline-flex items-center font-medium underline mobile-ui:min-h-11"
+          hlmBtn
+          variant="outline"
+          data-testid="facility-map-empty-list-link"
+          class="mobile-ui:min-h-11"
           [routerLink]="listRouteBase()"
         >
           <span i18n="@@facility.map.unplacedLink">View the list</span>
         </a>
-      </p>
+      </div>
+    </div>
+  } @else {
+    @if (store.unplacedCount() > 0) {
+      <div hlmAlert data-testid="facility-map-unplaced-banner">
+        <ng-icon name="lucideMapPinOff" aria-hidden="true" />
+        <h2 hlmAlertTitle i18n="@@facility.map.unplacedBannerV2">
+          {store.unplacedCount(), plural,
+            one {1 facility has no coordinates}
+            other {{{ store.unplacedCount() }} facilities have no coordinates}
+          }
+        </h2>
+        <p hlmAlertDescription>
+          <a
+            class="inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11"
+            [routerLink]="listRouteBase()"
+          >
+            <span i18n="@@facility.map.unplacedLink">View the list</span>
+          </a>
+        </p>
+      </div>
     }
 
-    <div class="flex min-h-0 flex-1 flex-col gap-4 md:flex-row">
-      <div class="min-h-0 flex-1 overflow-hidden rounded-md">
-        <app-map
-          class="block h-full"
-          [markers]="markers()"
-          (markerSelected)="onMarkerSelected($event)"
-        />
-      </div>
-
-      @if (store.complianceVisible()) {
-        @if (store.isLoadingCompliance()) {
-          <div
-            class="flex flex-col gap-3 md:w-72 md:shrink-0"
-            data-testid="facility-map-compliance-loading"
-          >
-            <output class="sr-only" i18n="@@facility.map.compliance.loadingAria"
-              >Loading compliance data</output
+    <div class="@container/map min-h-0 flex-1">
+      <div class="flex h-full min-h-0 flex-col gap-4 @3xl/map:flex-row">
+        <div class="relative min-h-0 flex-1 overflow-hidden rounded-md">
+          @if (store.isLoadingMapped()) {
+            <div
+              class="absolute end-3 top-3 z-10 flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground"
+              role="status"
             >
-            <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
-            <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
-            <hlm-skeleton class="h-3 w-full" aria-hidden="true" />
-          </div>
-        } @else {
-          <app-facility-compliance-worst-sites
-            class="md:w-72 md:shrink-0"
-            [facilities]="store.worstFacilities()"
-            (selected)="onWorstSiteSelected($event)"
+              <hlm-spinner class="size-3.5" aria-hidden="true" />
+              <span i18n="@@facility.map.refreshing">Refreshing…</span>
+            </div>
+          }
+          <app-map
+            class="block h-full"
+            [markers]="markers()"
+            (markerSelected)="onMarkerSelected($event)"
           />
+          @if (store.complianceVisible()) {
+            <ul
+              class="pointer-events-none absolute start-3 bottom-3 flex flex-wrap gap-x-4 gap-y-1 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground"
+              data-testid="facility-map-compliance-legend"
+            >
+              <li i18n="@@facility.map.compliance.legendGood">
+                ≥ {{ complianceOkThreshold }}% compliant
+              </li>
+              <li i18n="@@facility.map.compliance.legendWarning">
+                {{ complianceAttentionThreshold }}–{{ complianceOkThreshold - 1 }}% compliant
+              </li>
+              <li i18n="@@facility.map.compliance.legendCritical">
+                &lt; {{ complianceAttentionThreshold }}% compliant
+              </li>
+              <li i18n="@@facility.map.compliance.legendNoData">No data</li>
+            </ul>
+          }
+        </div>
+
+        @if (store.complianceVisible()) {
+          @if (store.hasComplianceError()) {
+            <div hlmAlert variant="destructive" class="@3xl/map:w-72 @3xl/map:shrink-0">
+              <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+              <h2 hlmAlertTitle i18n="@@facility.map.compliance.errorTitle">
+                Couldn't load compliance data
+              </h2>
+              <p hlmAlertDescription i18n="@@facility.map.compliance.errorDesc">
+                The compliance layer and worst-sites ranking could not be loaded.
+              </p>
+              <button
+                hlmAlertAction
+                hlmBtn
+                variant="outline"
+                size="sm"
+                data-testid="facility-map-compliance-retry"
+                (click)="reloadCompliance()"
+                class="mobile-ui:min-h-11"
+              >
+                <span i18n="@@facility.list.retry">Retry</span>
+              </button>
+            </div>
+          } @else if (store.isLoadingCompliance()) {
+            <div
+              class="flex flex-col gap-3 @3xl/map:w-72 @3xl/map:shrink-0"
+              data-testid="facility-map-compliance-loading"
+            >
+              <output class="sr-only" i18n="@@facility.map.compliance.loadingAria"
+                >Loading compliance data</output
+              >
+              <hlm-skeleton class="h-4 w-32" aria-hidden="true" />
+              <hlm-skeleton class="h-9 w-full" aria-hidden="true" />
+              <hlm-skeleton class="h-9 w-full" aria-hidden="true" />
+              <hlm-skeleton class="h-9 w-full" aria-hidden="true" />
+              <hlm-skeleton class="h-9 w-full" aria-hidden="true" />
+              <hlm-skeleton class="h-9 w-full" aria-hidden="true" />
+            </div>
+          } @else {
+            <app-facility-compliance-worst-sites
+              class="@3xl/map:w-72 @3xl/map:shrink-0"
+              [facilities]="store.worstFacilities()"
+              (selected)="onWorstSiteSelected($event)"
+            />
+          }
         }
-      }
+      </div>
     </div>
   }
 </div>
@@ -125,6 +188,7 @@
     data-testid="facility-map-back"
     [routerLink]="listRouteBase()"
   >
+    <ng-icon name="lucideList" aria-hidden="true" />
     <span class="truncate" i18n="@@facility.map.backToList">Back to list</span>
   </a>
 </ng-template>

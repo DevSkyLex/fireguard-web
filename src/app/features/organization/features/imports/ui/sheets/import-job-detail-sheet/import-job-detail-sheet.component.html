@@ -18,35 +18,55 @@
 
       <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         @if (trackingError(); as message) {
-          <div role="alert" class="flex flex-col gap-2 text-sm">
-            <p class="text-destructive">{{ message }}</p>
+          <div hlmAlert variant="destructive" role="alert" class="mb-3">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <p hlmAlertTitle i18n="@@imports.report.trackingErrorTitle">
+              Couldn't check this job's status
+            </p>
+            <p hlmAlertDescription>{{ message }}</p>
             <button
+              hlmAlertAction
               hlmBtn
               type="button"
               variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
               (click)="refreshRequested.emit()"
               i18n="@@imports.report.refresh"
-              class="mobile-ui:min-h-11"
             >
               Check job status
             </button>
           </div>
         }
         @if (job.jobError) {
-          <p role="alert" class="text-sm text-destructive">{{ job.jobError }}</p>
+          <div hlmAlert variant="destructive" role="alert" class="mb-3">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <p hlmAlertTitle i18n="@@imports.report.jobErrorTitle">
+              This import could not complete
+            </p>
+            <p hlmAlertDescription>{{ job.jobError }}</p>
+          </div>
         }
         @if (resumeError(); as message) {
-          <p role="alert" class="text-sm text-destructive">{{ message }}</p>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            (click)="refreshRequested.emit()"
-            i18n="@@imports.report.refresh"
-            class="mobile-ui:min-h-11"
-          >
-            Check job status
-          </button>
+          <div hlmAlert variant="destructive" role="alert" class="mb-3">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <p hlmAlertTitle i18n="@@imports.report.resumeErrorTitle">
+              The import could not resume
+            </p>
+            <p hlmAlertDescription>{{ message }}</p>
+            <button
+              hlmAlertAction
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              (click)="refreshRequested.emit()"
+              i18n="@@imports.report.refresh"
+            >
+              Check job status
+            </button>
+          </div>
         }
         @if (job.canResume) {
           <div class="my-3 flex flex-col items-start gap-2">
@@ -71,16 +91,25 @@
           </div>
         }
         @if (confirmError(); as message) {
-          <p role="alert" class="text-sm text-destructive">{{ message }}</p>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            (click)="refreshRequested.emit()"
-            i18n="@@imports.report.refresh"
-          >
-            Check job status
-          </button>
+          <div hlmAlert variant="destructive" role="alert" class="mb-3">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <p hlmAlertTitle i18n="@@imports.confirm.errorTitle">
+              The import could not be confirmed
+            </p>
+            <p hlmAlertDescription>{{ message }}</p>
+            <button
+              hlmAlertAction
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              (click)="refreshRequested.emit()"
+              i18n="@@imports.report.refresh"
+            >
+              Check job status
+            </button>
+          </div>
         }
         @if (job.canConfirm) {
           <div class="my-3 flex flex-col gap-2">
@@ -129,29 +158,68 @@
           </p>
         }
 
+        @if (job.totalRows !== undefined || job.startedAt || job.completedAt) {
+          <dl class="my-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
+            @if (job.totalRows !== undefined) {
+              <dt class="text-muted-foreground" i18n="@@imports.report.totalRows">Rows in file</dt>
+              <dd class="font-medium text-foreground tabular-nums">{{ job.totalRows }}</dd>
+            }
+            @if (job.startedAt) {
+              <dt class="text-muted-foreground" i18n="@@imports.report.startedAt">Started</dt>
+              <dd class="font-medium text-foreground">
+                {{ job.startedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+              </dd>
+            }
+            @if (job.completedAt) {
+              <dt class="text-muted-foreground" i18n="@@imports.report.completedAt">Completed</dt>
+              <dd class="font-medium text-foreground">
+                {{ job.completedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+              </dd>
+            }
+          </dl>
+        }
+
+        @if (progressRatioOf(job); as ratio) {
+          <hlm-progress
+            [value]="ratio"
+            [attr.aria-label]="job.processedRows + ' / ' + job.totalRows"
+            class="my-2 h-1.5"
+          >
+            <hlm-progress-indicator />
+          </hlm-progress>
+        }
+
         @if (rows().length > 0) {
-          <ul class="flex flex-col gap-2" data-testid="import-job-detail-rows">
+          <div
+            hlmItemGroup
+            class="my-2 gap-0 rounded-md border"
+            data-testid="import-job-detail-rows"
+          >
             @for (row of pageRows(); track row.rowNumber + row.code + row.message) {
-              <li class="flex items-start gap-2 rounded-md border border-border p-2 text-sm">
-                <ng-icon
-                  [name]="rowTagOf(row).icon"
-                  [class]="rowTagOf(row).iconClass"
-                  class="mt-0.5 shrink-0"
-                  aria-hidden="true"
-                />
-                <span class="flex min-w-0 flex-col break-words">
-                  <span class="text-foreground">
+              @if (!$first) {
+                <hlm-item-separator class="my-0" />
+              }
+              <div hlmItem size="xs">
+                <div hlmItemMedia variant="icon">
+                  <ng-icon
+                    [name]="rowTagOf(row).icon"
+                    [class]="rowTagOf(row).iconClass"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div hlmItemContent>
+                  <span hlmItemTitle>
                     <span i18n="@@imports.report.row">Row</span> {{ row.rowNumber }}
                     @if (row.column) {
                       · {{ row.column }}
                     }
                     · {{ rowTagOf(row).label }}
                   </span>
-                  <span class="text-muted-foreground">{{ row.message }}</span>
-                </span>
-              </li>
+                  <p hlmItemDescription>{{ row.message }}</p>
+                </div>
+              </div>
             }
-          </ul>
+          </div>
           @if (pageCount() > 1) {
             <app-collection-pagination
               testIdPrefix="import-report"
@@ -176,17 +244,26 @@
         </p>
       </hlm-sheet-header>
       @if (trackingError(); as message) {
-        <div class="flex flex-col gap-2 p-4">
-          <p role="alert" class="text-sm text-destructive">{{ message }}</p>
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            (click)="refreshRequested.emit()"
-            i18n="@@imports.report.refresh"
-          >
-            Check job status
-          </button>
+        <div class="p-4">
+          <div hlmAlert variant="destructive" role="alert">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <p hlmAlertTitle i18n="@@imports.report.trackingErrorTitle">
+              Couldn't check this job's status
+            </p>
+            <p hlmAlertDescription>{{ message }}</p>
+            <button
+              hlmAlertAction
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="mobile-ui:min-h-11"
+              (click)="refreshRequested.emit()"
+              i18n="@@imports.report.refresh"
+            >
+              Check job status
+            </button>
+          </div>
         </div>
       }
     }

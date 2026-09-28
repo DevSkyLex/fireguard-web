@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { EquipmentAttachmentOutput } from '@features/organization/features/equipments/models';
 import { EquipmentAttachments } from '../equipment-attachments.component';
 
@@ -30,7 +31,19 @@ describe('EquipmentAttachments', () => {
     attachments: readonly EquipmentAttachmentOutput[],
     canManage = true,
   ): Promise<void> => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
+    });
     fixture = TestBed.createComponent(EquipmentAttachments);
     fixture.componentRef.setInput('attachments', attachments);
     fixture.componentRef.setInput('canManage', canManage);
@@ -99,6 +112,28 @@ describe('EquipmentAttachments', () => {
       ?.dispatchEvent(new MouseEvent('click'));
 
     expect(emitted).toEqual([attachment(1)]);
+  });
+
+  it('should show a small file size in kilobytes rather than "0.0 MB"', async () => {
+    await create([attachment(1, { size: 40 * 1024 })]);
+
+    const row: HTMLElement | null = root().querySelector(
+      '[data-testid="equipment-attachment-row"]',
+    );
+
+    expect(row?.textContent).toContain('40');
+    expect(row?.textContent).toContain('kB');
+    expect(row?.textContent).not.toContain('0.0 MB');
+  });
+
+  it('should append the upload date to the attachment row', async () => {
+    await create([attachment(1, { uploadedAt: '2026-01-05T09:00:00Z' })]);
+
+    const row: HTMLElement | null = root().querySelector(
+      '[data-testid="equipment-attachment-row"]',
+    );
+
+    expect(row?.textContent).toContain('2026-01-05');
   });
 
   it('should lock the row download button while its id is downloading', async () => {

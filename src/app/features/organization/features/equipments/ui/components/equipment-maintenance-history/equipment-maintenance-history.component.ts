@@ -2,21 +2,34 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
   input,
-  LOCALE_ID,
+  output,
   type InputSignal,
+  type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRightLeft, lucideHistory, lucideWrench } from '@ng-icons/lucide';
+import {
+  lucideArrowRightLeft,
+  lucideCircleAlert,
+  lucideHistory,
+  lucideWrench,
+} from '@ng-icons/lucide';
 import type {
   EquipmentMaintenanceLogOutput,
   EquipmentMaintenanceLogSource,
 } from '@features/organization/features/equipments/models';
-import { HlmCardImports } from '@shared/ui/card';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
 /**
@@ -30,10 +43,14 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * originating intervention (`FG-{interventionNumber}`) when `interventionId`
  * is present. `source` is a closed two-value union, so
  * {@link sourceDescriptorOf} is total rather than carrying an unreachable
- * fallback branch. Purely presentational (`ARCHITECTURE.md` §10.3): it owns
- * no store and calls no service; the page owns the load.
+ * fallback branch. Rows render as `hlmMarker` entries rather than a
+ * divided list, and dates go through `appOrgDate` with the organization's
+ * own {@link regionalFormatting} instead of the runtime's locale. Purely
+ * presentational (`ARCHITECTURE.md` §10.3): it owns no store and calls no
+ * service; the page owns the load, and {@link error} lets it distinguish a
+ * genuinely empty history from a failed one.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -41,6 +58,9 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  *   [organizationId]="organizationId()"
  *   [logs]="store.maintenanceLogs()"
  *   [loading]="store.isLoadingMaintenanceLogs()"
+ *   [error]="store.maintenanceLogsListCallState().status === 'error'"
+ *   [regionalFormatting]="regionalFormatting()"
+ *   (retried)="onMaintenanceLogsRetried()"
  * />
  * ```
  *
@@ -48,8 +68,20 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-equipment-maintenance-history',
-  imports: [NgIcon, ...HlmEmptyImports, RouterLink, ...HlmCardImports, HlmSkeleton],
-  providers: [provideIcons({ lucideArrowRightLeft, lucideHistory, lucideWrench })],
+  imports: [
+    NgIcon,
+    OrgDatePipe,
+    ResourceIllustration,
+    ...HlmAlertImports,
+    ...HlmEmptyImports,
+    ...HlmMarkerImports,
+    RouterLink,
+    HlmButton,
+    HlmSkeleton,
+  ],
+  providers: [
+    provideIcons({ lucideArrowRightLeft, lucideCircleAlert, lucideHistory, lucideWrench }),
+  ],
   templateUrl: './equipment-maintenance-history.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -86,44 +118,51 @@ export class EquipmentMaintenanceHistory {
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property error
+   * @readonly
+   * @description Whether the last load failed — renders an inline destructive alert with Retry instead of the empty state.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly error: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The organization's date pattern and timezone, for each row's `appOrgDate` binding.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+  //#endregion
+
+  //#region Outputs
+  /**
+   * Property retried
+   * @readonly
+   * @description The load-failed alert's Retry action was activated.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly retried: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The application's language, used to format each entry's dates. */
-  private readonly locale: string = inject<string>(LOCALE_ID);
-
   /** {@link logs}, newest-first by `startedAt`. */
   protected readonly orderedLogs: Signal<readonly EquipmentMaintenanceLogOutput[]> = computed(() =>
     this.logs().toSorted(
       (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
     ),
   );
-
-  /** One date/time formatter, shared across every row. */
-  private readonly dateFormat: Intl.DateTimeFormat = new Intl.DateTimeFormat(this.locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
   //#endregion
 
   //#region Methods
-  /**
-   * Method dateRangeOf
-   * @description The entry's formatted start date, and its completion date when present.
-   * @access protected
-   * @since 1.0.0
-   * @param {EquipmentMaintenanceLogOutput} log - The row's entry.
-   * @returns {{ readonly started: string; readonly completed: string | null }} The formatted dates.
-   */
-  protected dateRangeOf(log: EquipmentMaintenanceLogOutput): {
-    readonly started: string;
-    readonly completed: string | null;
-  } {
-    return {
-      started: this.dateFormat.format(new Date(log.startedAt)),
-      completed: log.completedAt ? this.dateFormat.format(new Date(log.completedAt)) : null,
-    };
-  }
 
   /**
    * Method sourceDescriptorOf

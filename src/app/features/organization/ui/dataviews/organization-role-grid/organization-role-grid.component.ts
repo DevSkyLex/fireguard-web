@@ -2,7 +2,9 @@ import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  LOCALE_ID,
   computed,
+  inject,
   input,
   output,
   type InputSignal,
@@ -14,38 +16,23 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideEllipsis,
   lucidePencil,
+  lucidePlus,
   lucideShieldCheck,
-  lucideShieldPlus,
   lucideTrash2,
 } from '@ng-icons/lucide';
 import type { OrganizationRoleOutput } from '@features/organization/models';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmSeparatorImports } from '@shared/ui/separator';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { HlmLarge } from '@shared/ui/typography';
 
-/** Placeholder cards drawn while the first page loads. */
-const SKELETON_CARDS: ReadonlyArray<number> = [1, 2, 3, 4, 5, 6];
-
-/** How many permission-group badges a card shows before folding the rest into a "+N" badge. */
-const MAX_VISIBLE_PERMISSION_GROUPS = 3;
-
-/**
- * Type PermissionGroupsPreview
- *
- * @description
- * View-model for a card's permission-group badge row: the labels shown, and
- * how many further groups the "+N" badge folds in.
- *
- * @since 1.1.0
- */
-type PermissionGroupsPreview = {
-  readonly shown: readonly string[];
-  readonly remaining: number;
-};
+/** Placeholder rows drawn while the first page loads. */
+const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3, 4, 5, 6];
 
 /**
  * Function permissionGroupOf
@@ -119,37 +106,36 @@ function permissionGroupLabelOf(group: string): string {
  * @class OrganizationRoleGrid
  *
  * @description
- * The role grid: one `hlmCard` per role, mirroring the feature's other
- * record grid (`FacilityGrid`) — a card-corner `…` menu carries the row
- * actions. A system role never offers the menu at all (the backend refuses
- * every edit to one) rather than showing disabled items; a custom role offers
- * **Edit permissions** and **Delete**, gated by `canManage`.
+ * The role list: one flat `hlmItemGroup` per section, mirroring the feature's
+ * other collection surfaces — a trailing `…` menu carries the row actions. A
+ * system role never offers the menu at all (the backend refuses every edit
+ * to one) rather than showing disabled items; a custom role offers **Edit
+ * permissions** and **Delete**, gated by `canManage`.
  *
  * Splits its one `items` list into two titled sections — System roles and
- * Custom roles, separated by `hlm-separator` — rather than taking two
- * already-split inputs, so a caller only ever passes the roles it loaded.
- * When the Custom roles section is empty, it shows a single, button-less
- * empty state (`canManage` only): the page header's persistent "New role"
- * action is this feature's only create entry point, so the empty state does
- * not repeat it.
+ * Custom roles — rather than taking two already-split inputs, so a caller
+ * only ever passes the roles it loaded. When the Custom roles section is
+ * empty, a manager sees {@link createRequested}'s action inline; a read-only
+ * viewer sees a neutral explanation with no action at all.
  *
  * Renaming is **supported by the backend** since API lot P2.4 — the role PATCH
  * accepts `name` alongside the required `permissions` — but no control is
  * offered here yet, pending its own dialog. This is a gap in the UI, not a
  * backend limitation.
  *
- * Each card previews its permission groups (by dotted-name segment, capped at
- * {@link MAX_VISIBLE_PERMISSION_GROUPS} with a "+N" overflow badge) and
- * reports `memberCount` — how many active members hold the role — which only
- * the read endpoints populate. A role that arrives from a mutation response
- * carries `0`, so the count is omitted rather than shown as zero when the
- * field is absent.
+ * Each row lists every one of its permission groups (by dotted-name segment)
+ * as a wrapping badge row — no overflow cap, so sighted users see the same
+ * information a screen reader would have to read out one badge at a time —
+ * and reports `memberCount` — how many active members hold the role — which
+ * only the read endpoints populate. A role that arrives from a mutation
+ * response carries `0`, so the count is omitted rather than shown as zero
+ * when the field is absent.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
- * no service. The page decides what to load and whether the acting member
- * may manage roles at all.
+ * no service. The page decides what to load, whether the acting member may
+ * manage roles at all, and what {@link createRequested} does.
  *
- * @version 1.2.0
+ * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -157,22 +143,24 @@ function permissionGroupLabelOf(group: string): string {
   selector: 'app-organization-role-grid',
   imports: [
     NgIcon,
+    ResourceIllustration,
     ...HlmEmptyImports,
     NgTemplateOutlet,
     RouterLink,
     HlmBadge,
     HlmButton,
+    ...HlmItemImports,
+    HlmLarge,
     HlmSkeleton,
-    ...HlmCardImports,
     ...HlmDropdownMenuImports,
-    ...HlmSeparatorImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
       lucideEllipsis,
       lucidePencil,
+      lucidePlus,
       lucideShieldCheck,
-      lucideShieldPlus,
       lucideTrash2,
     }),
   ],
@@ -181,6 +169,9 @@ function permissionGroupLabelOf(group: string): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationRoleGrid {
+  /** Selects the plural form for {@link permissionCountLabelOf} and {@link memberCountLabelOf}, deciding 0 correctly for locales (French included) where it takes the singular form. */
+  private readonly pluralRules: Intl.PluralRules = new Intl.PluralRules(inject(LOCALE_ID));
+
   //#region Inputs
   /**
    * Property items
@@ -254,11 +245,21 @@ export class OrganizationRoleGrid {
    */
   public readonly deleteRequested: OutputEmitterRef<OrganizationRoleOutput> =
     output<OrganizationRoleOutput>();
+
+  /**
+   * Property createRequested
+   * @readonly
+   * @description The empty Custom roles section's "New role" action was activated. The grid computes no create workflow itself — the page maps this to its own `openCreateDialog`.
+   * @access public
+   * @since 2.0.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly createRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** Placeholder cards for the loading render. */
-  protected readonly skeletonCards: ReadonlyArray<number> = SKELETON_CARDS;
+  /** Placeholder rows for the loading render. */
+  protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
 
   /** This section's built-in roles, always read-only. */
   protected readonly systemItems: Signal<readonly OrganizationRoleOutput[]> = computed(
@@ -311,8 +312,8 @@ export class OrganizationRoleGrid {
   protected permissionCountLabelOf(role: OrganizationRoleOutput): string {
     const count: number = role.permissions.length;
 
-    return count === 1
-      ? $localize`:@@org.team.permissionCountOne:1 permission`
+    return this.pluralRules.select(count) === 'one'
+      ? $localize`:@@org.team.permissionCountSingular:${count}:count: permission`
       : $localize`:@@org.team.permissionCountMany:${count}:count: permissions`;
   }
 
@@ -329,41 +330,25 @@ export class OrganizationRoleGrid {
 
     if (count === undefined) return null;
 
-    return count === 1
-      ? $localize`:@@org.team.memberCountOne:1 member`
+    return this.pluralRules.select(count) === 'one'
+      ? $localize`:@@org.team.memberCountSingular:${count}:count: member`
       : $localize`:@@org.team.memberCountMany:${count}:count: members`;
   }
 
   /**
    * Method permissionGroupsOf
-   * @description The role's distinct permission groups, capped at {@link MAX_VISIBLE_PERMISSION_GROUPS} for the card's badge row, with the rest folded into a count.
+   * @description Every one of the role's distinct permission groups, in a stable order — no overflow cap; the row wraps.
    * @access protected
-   * @since 1.1.0
+   * @since 2.0.0
    * @param {OrganizationRoleOutput} role - The role being rendered.
-   * @returns {PermissionGroupsPreview} The badge labels to show and how many groups remain.
+   * @returns {readonly string[]} The badge labels to show.
    */
-  protected permissionGroupsOf(role: OrganizationRoleOutput): PermissionGroupsPreview {
+  protected permissionGroupsOf(role: OrganizationRoleOutput): readonly string[] {
     const groups: readonly string[] = [
       ...new Set(role.permissions.map((permission) => permissionGroupOf(permission.name))),
     ];
-    const labels: readonly string[] = groups.map(permissionGroupLabelOf);
 
-    return {
-      shown: labels.slice(0, MAX_VISIBLE_PERMISSION_GROUPS),
-      remaining: Math.max(0, labels.length - MAX_VISIBLE_PERMISSION_GROUPS),
-    };
-  }
-
-  /**
-   * Method remainingGroupsLabelOf
-   * @description The accessible name for the "+N" overflow badge, since the badge itself shows only the bare number.
-   * @access protected
-   * @since 1.2.0
-   * @param {number} remaining - How many further permission groups the badge folds in.
-   * @returns {string} A sentence naming the remaining group count.
-   */
-  protected remainingGroupsLabelOf(remaining: number): string {
-    return $localize`:@@org.team.permissionGroupsRemaining:+${remaining}:count: more`;
+    return groups.map(permissionGroupLabelOf);
   }
   //#endregion
 }

@@ -13,10 +13,16 @@ import {
 } from '@angular/core';
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronDown, lucideFileText, lucideUpload } from '@ng-icons/lucide';
+import {
+  lucideChevronDown,
+  lucideCircleAlert,
+  lucideFileText,
+  lucideUpload,
+} from '@ng-icons/lucide';
 import type { ImportJobKind } from '@features/organization/features/imports/models';
 import { IMPORT_JOB_KIND_OPTIONS } from '@features/organization/features/imports/options';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -76,12 +82,13 @@ const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: true };
     FormField,
     NgIcon,
     HlmButton,
+    ...HlmAlertImports,
     ...HlmCollapsibleImports,
     ...HlmFieldImports,
     ...HlmSelectImports,
     ...HlmSwitchImports,
   ],
-  providers: [provideIcons({ lucideChevronDown, lucideFileText, lucideUpload })],
+  providers: [provideIcons({ lucideChevronDown, lucideCircleAlert, lucideFileText, lucideUpload })],
   templateUrl: './import-upload-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

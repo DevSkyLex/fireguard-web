@@ -36,6 +36,7 @@ const INSPECTION: InspectionOutput = {
     organizationName: null,
   },
   checklistId: null,
+  checklistName: null,
   notes: 'Everything looked fine',
   signature: null,
   nonConformitiesCount: 0,
@@ -65,7 +66,6 @@ describe('InspectionInformationPanel', () => {
     fixture.componentRef.setInput('inspection', INSPECTION);
     fixture.componentRef.setInput('editable', true);
     fixture.componentRef.setInput('editState', IDLE_EDIT_STATE);
-    fixture.componentRef.setInput('organizationId', 'org-1');
     await fixture.whenStable();
 
     patches = [];
@@ -79,17 +79,16 @@ describe('InspectionInformationPanel', () => {
     expect(root().textContent).toContain('2026-08-10');
   });
 
-  it('should show a placeholder for an unassigned facility', () => {
-    expect(byTestId('inspection-field-facility')?.textContent).toContain('Not specified');
-  });
-
   it('should show a placeholder for an unassigned checklist', () => {
     expect(byTestId('inspection-field-checklist')?.textContent).toContain('Not specified');
   });
 
-  it('should render the resolved checklist name', async () => {
-    fixture.componentRef.setInput('inspection', { ...INSPECTION, checklistId: 'checklist-1' });
-    fixture.componentRef.setInput('checklistName', 'Monthly fire panel check');
+  it('should render the checklist name carried on the record', async () => {
+    fixture.componentRef.setInput('inspection', {
+      ...INSPECTION,
+      checklistId: 'checklist-1',
+      checklistName: 'Monthly fire panel check',
+    });
     await fixture.whenStable();
 
     expect(byTestId('inspection-field-checklist')?.textContent).toContain(
@@ -98,7 +97,11 @@ describe('InspectionInformationPanel', () => {
   });
 
   it('should fall back to a neutral label when the checklist name could not be resolved', async () => {
-    fixture.componentRef.setInput('inspection', { ...INSPECTION, checklistId: 'checklist-1' });
+    fixture.componentRef.setInput('inspection', {
+      ...INSPECTION,
+      checklistId: 'checklist-1',
+      checklistName: null,
+    });
     await fixture.whenStable();
 
     expect(byTestId('inspection-field-checklist')?.textContent).toContain(

@@ -1,3 +1,22 @@
+@if (error()) {
+  <div hlmAlert variant="destructive" role="alert" class="mb-4">
+    <p hlmAlertTitle i18n="@@equipment.kpi.errorTitle">Key figures unavailable</p>
+    <p hlmAlertDescription i18n="@@equipment.kpi.errorDesc">
+      The equipment key figures could not be loaded.
+    </p>
+    <button
+      hlmBtn
+      variant="outline"
+      size="sm"
+      class="mt-3 mobile-ui:min-h-11"
+      data-testid="equipment-kpi-strip-retry"
+      (click)="retried.emit()"
+    >
+      <span i18n="@@equipment.list.retry">Retry</span>
+    </button>
+  </div>
+}
+
 <hlm-collapsible
   class="block"
   [expanded]="!isMobileInteractionMode() || statisticsExpanded()"
@@ -18,9 +37,9 @@
       [class.rotate-180]="statisticsExpanded()"
     />
   </button>
-  <div hlmCollapsibleContent data-testid="equipment-kpi-statistics-content">
+  <div hlmCollapsibleContent class="@container" data-testid="equipment-kpi-statistics-content">
     <div
-      class="grid grid-cols-2 gap-4 lg:grid-cols-4 mobile-ui:grid-cols-1 mobile-ui:gap-0 mobile-ui:divide-y mobile-ui:divide-border"
+      class="grid grid-cols-1 gap-4 @xl:grid-cols-2 @4xl:grid-cols-4 mobile-ui:grid-cols-1 mobile-ui:gap-0 mobile-ui:divide-y mobile-ui:divide-border"
     >
       @if (loading()) {
         <span
@@ -44,6 +63,15 @@
                 }
               </dd>
               <dd class="col-span-2 text-sm text-muted-foreground">{{ tile.caption }}</dd>
+              @if (tile.progress !== null && !loading()) {
+                <hlm-progress
+                  class="col-span-2 h-1.5"
+                  [value]="tile.progress"
+                  [attr.aria-label]="tile.label"
+                >
+                  <hlm-progress-indicator />
+                </hlm-progress>
+              }
             </dl>
           } @else {
             <app-stat-tile
@@ -53,6 +81,7 @@
               [icon]="tile.icon"
               [tone]="tile.tone"
               [caption]="tile.caption"
+              [progress]="tile.progress"
               [loading]="loading()"
             />
           }

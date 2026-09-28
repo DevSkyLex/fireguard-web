@@ -1,16 +1,28 @@
-import { LOCALE_ID, PLATFORM_ID, signal } from '@angular/core';
+import { computed, LOCALE_ID, PLATFORM_ID, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Events } from '@ngrx/signals/events';
 import { DateTime } from 'luxon';
 import { Subject } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
-import { idleCallState, successCallState, type CallState } from '@core/request-state';
+import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import {
+  idleCallState,
+  pendingCallState,
+  successCallState,
+  type CallState,
+} from '@core/request-state';
 import type {
   WorkloadDaySelection,
   WorkloadOutput,
 } from '@features/organization/features/workload/models';
 import { WorkloadStore, workloadStoreEvents } from '@features/organization/features/workload/state';
+import { WorkloadPlanningPanel } from '@features/organization/features/workload/ui/components/workload-planning-panel';
+import { WorkloadCapacitySheet } from '@features/organization/features/workload/ui/sheets/workload-capacity-sheet';
+import { WorkloadDaySheet } from '@features/organization/features/workload/ui/sheets/workload-day-sheet';
+import { WorkloadTable } from '@features/organization/features/workload/ui/tables/workload-table';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { CollectionFilterBar, CollectionFilterToggle } from '@shared/collection-filters';
+import { CollectionPagination } from '@shared/collection-pagination';
 import { WorkloadPage } from '../workload-page.component';
 
 /**
@@ -76,6 +88,7 @@ describe('WorkloadPage', () => {
   const organization = signal<{
     settings: { regional: { firstDayOfWeek: 'monday' | 'sunday' } };
   } | null>(null);
+  const offline = computed(() => !online());
   const regionalFormatting = signal({ timezone: 'Europe/Paris' });
   const store = { projectionCallState, load: vi.fn(), loadCapacity: vi.fn() };
   let saved: Subject<ReturnType<typeof workloadStoreEvents.capacitySaved>>;
@@ -93,9 +106,13 @@ describe('WorkloadPage', () => {
       providers: [
         { provide: PLATFORM_ID, useValue: platform },
         { provide: LOCALE_ID, useValue: 'en-US' },
-        { provide: ConnectivityService, useValue: { online } },
+        { provide: ConnectivityService, useValue: { online, offline } },
         { provide: ORGANIZATION_CONTEXT_PORT, useValue: { selectedOrganization: organization } },
         { provide: REGIONAL_FORMATTING_PORT, useValue: { regionalFormatting } },
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
         { provide: Events, useValue: { on: vi.fn().mockReturnValue(saved) } },
       ],
     }).overrideComponent(WorkloadPage, {
@@ -106,6 +123,46 @@ describe('WorkloadPage', () => {
         providers: [{ provide: WorkloadStore, useValue: store }],
       },
     });
+    fixture = TestBed.createComponent(WorkloadPage);
+    fixture.componentRef.setInput('organizationId', 'org-1');
+    await fixture.whenStable();
+    return fixture.componentInstance;
+  };
+
+  /**
+   * Function createFullPage
+   * @description Renders the page's real template — required to prove wl-01 (a template branch
+   * order bug, not a store or orchestration bug) — with heavy children stubbed to an empty
+   * template so only `WorkloadPage`'s own markup is exercised.
+   * @access private
+   * @since 1.1.0
+   * @returns {Promise<WorkloadPage>} Settled page instance.
+   */
+  const createFullPage = async (): Promise<WorkloadPage> => {
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: LOCALE_ID, useValue: 'en-US' },
+        { provide: ConnectivityService, useValue: { online, offline } },
+        { provide: ORGANIZATION_CONTEXT_PORT, useValue: { selectedOrganization: organization } },
+        { provide: REGIONAL_FORMATTING_PORT, useValue: { regionalFormatting } },
+        {
+          provide: INTERACTION_CAPABILITIES_PORT,
+          useValue: { isMobileInteractionMode: signal(false) },
+        },
+        { provide: Events, useValue: { on: vi.fn().mockReturnValue(saved) } },
+      ],
+    })
+      .overrideComponent(WorkloadPage, {
+        set: { providers: [{ provide: WorkloadStore, useValue: store }] },
+      })
+      .overrideComponent(WorkloadTable, { set: { template: '' } })
+      .overrideComponent(WorkloadPlanningPanel, { set: { template: '' } })
+      .overrideComponent(WorkloadDaySheet, { set: { template: '' } })
+      .overrideComponent(WorkloadCapacitySheet, { set: { template: '' } })
+      .overrideComponent(CollectionFilterBar, { set: { template: '' } })
+      .overrideComponent(CollectionFilterToggle, { set: { template: '' } })
+      .overrideComponent(CollectionPagination, { set: { template: '' } });
     fixture = TestBed.createComponent(WorkloadPage);
     fixture.componentRef.setInput('organizationId', 'org-1');
     await fixture.whenStable();
@@ -199,6 +256,33 @@ describe('WorkloadPage', () => {
     expect(page['openFilterKey']()).toBe('team');
     page['filterStateChanged']('team', 'closed');
     expect(page['openFilterKey']()).toBeNull();
+  });
+
+  it('keeps the matrix visible and shows an updating notice instead of a full skeleton while a refresh is pending (wl-01)', async () => {
+    const loaded = projection({
+      projection: {
+        ...projection().projection,
+        members: [{ memberId: 'member-1', days: [], unallocated: [] }],
+      },
+    });
+    await createFullPage();
+    projectionCallState.set(successCallState(loaded));
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-workload-table')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[role="status"][aria-label="Loading workload"]'),
+    ).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Updating…');
+
+    projectionCallState.set(pendingCallState(loaded));
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-workload-table')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[role="status"][aria-label="Loading workload"]'),
+    ).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Updating…');
   });
 
   it('uses server totals and authorized identities rather than totals from the displayed rows', async () => {

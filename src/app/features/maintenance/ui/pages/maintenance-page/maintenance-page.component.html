@@ -1,8 +1,4 @@
-<div id="maintenance-page" class="flex w-full max-w-md flex-col items-center gap-6 text-center">
-  <div class="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-    <ng-icon name="lucideWrench" class="text-2xl" aria-hidden="true" />
-  </div>
-
+<div id="maintenance-page" class="flex w-full max-w-md flex-col items-center gap-8 text-center">
   <div class="flex flex-col gap-2">
     <app-page-heading
       heading="Fireguard is under maintenance"
@@ -12,11 +8,13 @@
     />
   </div>
 
-  <div class="flex flex-wrap items-center justify-center gap-3">
+  <div
+    class="flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center"
+  >
     <button
       hlmBtn
-      size="sm"
-      class="gap-2 mobile-ui:min-h-11"
+      size="lg"
+      class="h-11 min-h-11 gap-2"
       data-testid="maintenance-retry"
       (click)="retry()"
     >

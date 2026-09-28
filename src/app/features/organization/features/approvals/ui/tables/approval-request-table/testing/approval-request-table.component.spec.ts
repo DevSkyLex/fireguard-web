@@ -66,6 +66,23 @@ describe('ApprovalRequestTable', () => {
     expect(rejectSpy).toHaveBeenCalledWith(item);
   });
 
+  it('should carry a visible mobile-ui label beside the Approve and Reject icons', async () => {
+    fixture.componentRef.setInput('items', [request()]);
+    fixture.componentRef.setInput('canDecide', true);
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const approve = element.querySelector('[data-testid="approval-request-table-approve"]');
+    const reject = element.querySelector('[data-testid="approval-request-table-reject"]');
+    const approveLabel = approve?.querySelector('span.mobile-ui\\:inline');
+    const rejectLabel = reject?.querySelector('span.mobile-ui\\:inline');
+
+    expect(approveLabel?.classList.contains('hidden')).toBe(true);
+    expect(approveLabel?.textContent).toContain('Approve');
+    expect(rejectLabel?.classList.contains('hidden')).toBe(true);
+    expect(rejectLabel?.textContent).toContain('Reject');
+  });
+
   it('should not render decide actions on a decided row even when canDecide is true', async () => {
     fixture.componentRef.setInput('items', [request({ status: 'approved' })]);
     fixture.componentRef.setInput('canDecide', true);

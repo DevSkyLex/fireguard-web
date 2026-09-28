@@ -12,7 +12,13 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCopy, lucideGlobe, lucideCircleAlert } from '@ng-icons/lucide';
+import {
+  lucideChevronDown,
+  lucideCircleAlert,
+  lucideCircleCheck,
+  lucideClock,
+  lucideCopy,
+} from '@ng-icons/lucide';
 import type {
   OrganizationAccessPolicyInput,
   OrganizationAccessPolicyOutput,
@@ -20,13 +26,41 @@ import type {
 } from '@features/organization/models';
 import { OrganizationAccessPolicyForm } from '@features/organization/ui/forms/organization-access-policy-form';
 import { OrganizationDomainForm } from '@features/organization/ui/forms/organization-domain-form';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmDialogImports } from '@shared/ui/dialog';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { HlmH4, HlmMuted } from '@shared/ui/typography';
+
+/**
+ * Interface OrganizationDomainStatusDescriptor
+ *
+ * @description
+ * How one domain `status` reads on its badge: `label` and `icon` always
+ * render, so the state is legible without colour; `iconClass` only tints the
+ * icon (WCAG 1.4.1). `checkActionLabel` names the recheck button so the
+ * template never branches on the status value itself.
+ *
+ * @since 1.1.0
+ */
+interface OrganizationDomainStatusDescriptor {
+  readonly label: string;
+  readonly icon: string;
+  readonly iconClass: string;
+  readonly checkActionLabel: string;
+}
+
 /**
  * Component OrganizationAccessPanel
  * @class OrganizationAccessPanel
@@ -40,19 +74,43 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
     NgIcon,
     OrganizationAccessPolicyForm,
     OrganizationDomainForm,
-    HlmAlertImports,
-    HlmItemImports,
+    ...HlmAlertDialogImports,
+    ...HlmAlertImports,
+    ...HlmCollapsibleImports,
+    ...HlmItemImports,
+    ...HlmTooltipImports,
     HlmBadge,
     HlmButton,
-    HlmDialogImports,
     HlmEmptyImports,
+    HlmH4,
+    HlmMuted,
     HlmSkeleton,
+    ResourceIllustration,
   ],
-  providers: [provideIcons({ lucideCopy, lucideGlobe, lucideCircleAlert })],
+  providers: [
+    provideIcons({
+      lucideChevronDown,
+      lucideCircleAlert,
+      lucideCircleCheck,
+      lucideClock,
+      lucideCopy,
+    }),
+  ],
   templateUrl: './organization-access-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationAccessPanel {
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+
   /**
    * Property policy
    * @readonly
@@ -162,18 +220,38 @@ export class OrganizationAccessPanel {
    * @type {WritableSignal<string>}
    */
   protected readonly clipboardMessage: WritableSignal<string> = signal('');
+
+  /** Pure, dependency-free date formatter for {@link checkStatusLineOf} — no DI needed for a single-instance internal use. */
+  private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
   /**
-   * Property statusLabels
+   * Property statusDescriptors
    * @readonly
-   * @description Localized domain lifecycle labels.
+   * @description Every domain status's localized label, icon and severity class — pairing colour with a label and glyph so a domain's verification state is never conveyed by colour alone.
    * @access protected
-   * @since 1.0.0
-   * @type {Readonly<Record<OrganizationDomainOutput['status'], string>>}
+   * @since 1.1.0
+   * @type {Readonly<Record<OrganizationDomainOutput['status'], OrganizationDomainStatusDescriptor>>}
    */
-  protected readonly statusLabels: Readonly<Record<OrganizationDomainOutput['status'], string>> = {
-    pending: $localize`:@@org.access.domainStatus.pending:Awaiting verification`,
-    verified: $localize`:@@org.access.domainStatus.verified:Verified`,
-    suspended: $localize`:@@org.access.domainStatus.suspended:Verification suspended`,
+  protected readonly statusDescriptors: Readonly<
+    Record<OrganizationDomainOutput['status'], OrganizationDomainStatusDescriptor>
+  > = {
+    pending: {
+      label: $localize`:@@org.access.domainStatus.pending:Awaiting verification`,
+      icon: 'lucideClock',
+      iconClass: 'text-muted-foreground',
+      checkActionLabel: $localize`:@@org.access.verifyDomain:Verify domain`,
+    },
+    verified: {
+      label: $localize`:@@org.access.domainStatus.verified:Verified`,
+      icon: 'lucideCircleCheck',
+      iconClass: 'text-success',
+      checkActionLabel: $localize`:@@org.access.recheckDomain:Check again`,
+    },
+    suspended: {
+      label: $localize`:@@org.access.domainStatus.suspended:Verification suspended`,
+      icon: 'lucideCircleAlert',
+      iconClass: 'text-warning',
+      checkActionLabel: $localize`:@@org.access.verifyDomain:Verify domain`,
+    },
   };
   /**
    * Property hasSuspendedDomain
@@ -186,6 +264,82 @@ export class OrganizationAccessPanel {
   protected readonly hasSuspendedDomain: Signal<boolean> = computed(
     () => this.policy()?.domains.some((domain) => domain.status === 'suspended') ?? false,
   );
+
+  /**
+   * Property dnsExpandedOverrides
+   * @readonly
+   * @description Per-domain manual overrides of the DNS-record disclosure, keyed by domain id. Absent domains fall back to {@link isDnsExpanded}'s default (collapsed once verified).
+   * @access protected
+   * @since 1.1.0
+   * @type {WritableSignal<ReadonlyMap<string, boolean>>}
+   */
+  protected readonly dnsExpandedOverrides: WritableSignal<ReadonlyMap<string, boolean>> = signal(
+    new Map<string, boolean>(),
+  );
+
+  /**
+   * Method isDnsExpanded
+   * @description Whether a domain's DNS instructions disclosure is open — a manual override if the operator toggled it this session, otherwise open for anything not yet verified and closed for a verified domain.
+   * @access protected
+   * @since 1.1.0
+   * @param {OrganizationDomainOutput} domain - The domain row.
+   * @returns {boolean} Whether the disclosure is open.
+   */
+  protected isDnsExpanded(domain: OrganizationDomainOutput): boolean {
+    return this.dnsExpandedOverrides().get(domain.id) ?? domain.status !== 'verified';
+  }
+
+  /**
+   * Method setDnsExpanded
+   * @description Records a manual toggle of a domain's DNS instructions disclosure.
+   * @access protected
+   * @since 1.1.0
+   * @param {string} domainId - The toggled domain's id.
+   * @param {boolean} expanded - The disclosure's next state.
+   * @returns {void}
+   */
+  protected setDnsExpanded(domainId: string, expanded: boolean): void {
+    const next: Map<string, boolean> = new Map(this.dnsExpandedOverrides());
+    next.set(domainId, expanded);
+    this.dnsExpandedOverrides.set(next);
+  }
+
+  /** Localized label for the "Copy TXT record name" icon-only button, reused by its `hlmTooltip`. */
+  protected readonly copyNameLabel: string = $localize`:@@org.access.copyName:Copy TXT record name`;
+
+  /** Localized label for the "Copy TXT record value" icon-only button, reused by its `hlmTooltip`. */
+  protected readonly copyValueLabel: string = $localize`:@@org.access.copyValue:Copy TXT record value`;
+
+  /**
+   * Method checkStatusLineOf
+   *
+   * @description
+   * The muted line under a domain's title, naming when it was last found
+   * verified or, for a domain that never has been, when it was last checked
+   * at all — so a stale check is legible without opening the DNS details.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {OrganizationDomainOutput} domain - The domain row.
+   *
+   * @returns {string | null} The localized line, or `null` when neither timestamp is set.
+   */
+  protected checkStatusLineOf(domain: OrganizationDomainOutput): string | null {
+    const settings: RegionalFormatSettings = this.regionalFormatting();
+
+    if (domain.verifiedAt) {
+      const date: string = this.orgDatePipe.transform(domain.verifiedAt, 'date', settings);
+      return $localize`:@@org.access.verifiedOn:Verified ${date}:date:`;
+    }
+    if (domain.lastCheckedAt) {
+      const date: string = this.orgDatePipe.transform(domain.lastCheckedAt, 'datetime', settings);
+      return $localize`:@@org.access.lastCheckedOn:Last checked ${date}:date:`;
+    }
+
+    return null;
+  }
+
   /**
    * Method copied
    * @method copied

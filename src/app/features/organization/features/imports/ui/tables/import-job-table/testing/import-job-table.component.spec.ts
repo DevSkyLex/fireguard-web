@@ -54,7 +54,7 @@ describe('ImportJobTable', () => {
     expect(rows[1].textContent).not.toContain('Dry run');
   });
 
-  it('should render live processed/total progress while a job is processing', async () => {
+  it('should render a progress bar and caption while a job is processing with a known total', async () => {
     fixture.componentRef.setInput('items', [
       job({
         status: 'processing',
@@ -66,7 +66,20 @@ describe('ImportJobTable', () => {
     ]);
     await fixture.whenStable();
 
-    expect(byTestId('import-job-table-progress')?.textContent).toContain('50 / 200');
+    const caption = byTestId('import-job-table-progress');
+    expect(caption?.textContent).toContain('50');
+    expect(caption?.textContent).toContain('200');
+    expect(root().querySelector('hlm-progress')?.getAttribute('aria-valuenow')).toBe('25');
+  });
+
+  it('should render processed-only text with no bar while the total row count is unknown', async () => {
+    fixture.componentRef.setInput('items', [
+      job({ status: 'processing', processedRows: 12, totalRows: undefined }),
+    ]);
+    await fixture.whenStable();
+
+    expect(byTestId('import-job-table-progress')?.textContent).toContain('12');
+    expect(root().querySelector('hlm-progress')).toBeNull();
   });
 
   it('should render no progress line outside processing', async () => {
@@ -126,6 +139,28 @@ describe('ImportJobTable', () => {
     expect(row?.querySelector('ng-icon[name="lucideCircleX"]')).not.toBeNull();
     expect(row?.textContent).toContain('rows imported');
     expect(row?.textContent).toContain('rows failed');
+  });
+
+  it('should render a muted dash instead of results for a pending job', async () => {
+    fixture.componentRef.setInput('items', [
+      job({ status: 'pending', successfulRows: 0, failedRows: 0 }),
+    ]);
+    await fixture.whenStable();
+
+    const row = byTestId('import-job-table-row');
+    expect(row?.textContent).toContain('—');
+    expect(row?.textContent).not.toContain('rows imported');
+  });
+
+  it('should render a zero failed count in muted text, not destructive red', async () => {
+    fixture.componentRef.setInput('items', [job({ successfulRows: 10, failedRows: 0 })]);
+    await fixture.whenStable();
+
+    const failedCount = byTestId('import-job-table-row')?.querySelector(
+      'ng-icon[name="lucideCircleX"]',
+    )?.parentElement;
+    expect(failedCount?.className).toContain('text-muted-foreground');
+    expect(failedCount?.className).not.toContain('text-destructive');
   });
 
   it('should mirror every row as a card carrying an explicitly labelled report action', async () => {

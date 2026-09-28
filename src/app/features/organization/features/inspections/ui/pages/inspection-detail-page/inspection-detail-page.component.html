@@ -3,19 +3,60 @@
     <div class="flex flex-wrap items-center gap-2">
       <app-inspection-status-tag kind="status" [value]="inspection.status" />
       <app-inspection-status-tag kind="result" [value]="inspection.result" />
-      <button
-        type="button"
-        class="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline mobile-ui:min-h-11"
-        data-testid="inspection-non-conformities-count"
-        [attr.aria-expanded]="nonConformitiesExpanded()"
-        aria-controls="inspection-non-conformities"
-        (click)="toggleNonConformities()"
+    </div>
+
+    <div
+      class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground"
+      data-testid="inspection-detail-summary"
+    >
+      <a
+        class="text-foreground underline underline-offset-4 hover:decoration-2"
+        [routerLink]="['/organizations', organizationId(), 'equipments', inspection.equipmentId]"
       >
-        {{ nonConformitiesLabel() }}
-      </button>
+        @if (inspection.equipmentSerialNumber; as serial) {
+          {{ serial }}
+        } @else {
+          <span i18n="@@inspection.info.viewEquipment">View equipment</span>
+        }
+      </a>
+      @if (inspection.facilityId; as siteFacilityId) {
+        <span aria-hidden="true">·</span>
+        <a
+          class="underline underline-offset-4 hover:decoration-2"
+          [routerLink]="['/organizations', organizationId(), 'facilities', siteFacilityId]"
+        >
+          @if (inspection.facilityName; as facilityName) {
+            {{ facilityName }}
+          } @else {
+            <span i18n="@@inspection.info.viewFacility">View facility</span>
+          }
+        </a>
+      }
+      <span aria-hidden="true">·</span>
+      <time [attr.datetime]="inspection.performedAt">{{
+        inspection.performedAt | appOrgDate: 'date' : regionalFormatting()
+      }}</time>
+      @if (inspection.inspector; as inspector) {
+        <span aria-hidden="true">·</span>
+        <span class="inline-flex min-w-0 items-center gap-1.5">
+          <hlm-avatar size="sm" class="shrink-0">
+            @if (inspectorAvatarUrlOf(inspection); as avatarUrl) {
+              <img hlmAvatarImage [src]="avatarUrl" alt="" />
+            }
+            <span hlmAvatarFallback class="text-[10px]">{{ inspectorInitialsOf(inspection) }}</span>
+          </hlm-avatar>
+          <span class="truncate text-foreground">{{ inspector.displayName }}</span>
+        </span>
+      }
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <p class="text-sm text-muted-foreground" data-testid="inspection-detail-meta">
+        {{ metaLine() }}
+      </p>
       @if (inspection.facilityId; as siteFacilityId) {
         <a
-          class="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          class="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground hover:decoration-2"
           data-testid="inspection-detail-site-interventions"
           [routerLink]="['/organizations', organizationId(), 'interventions']"
           [queryParams]="{ site: siteFacilityId }"
@@ -24,59 +65,52 @@
           <span i18n="@@inspection.detail.siteInterventions">Interventions on this site</span>
         </a>
       }
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        class="ms-auto mobile-ui:min-h-11"
-        data-testid="inspection-detail-export-report"
-        [disabled]="reportExporting()"
-        [attr.aria-busy]="reportExporting() ? 'true' : null"
-        (click)="exportReport()"
-      >
-        @if (reportExporting()) {
-          <hlm-spinner class="size-4" aria-hidden="true" />
-        } @else {
-          <ng-icon name="lucideDownload" aria-hidden="true" />
-        }
-        <span i18n="@@inspection.report.exportButton">Export report</span>
-      </button>
     </div>
-    <p class="text-sm text-muted-foreground" data-testid="inspection-detail-meta">
-      {{ metaLine() }}
-    </p>
 
     @if (inspection.intervention; as interventionIri) {
-      <aside
-        class="flex max-w-2xl flex-col gap-2 border-s-2 border-border py-2 ps-4"
-        aria-label="Intervention context"
-        i18n-aria-label="@@inspection.detail.interventionContext"
-      >
+      <div hlmAlert data-testid="inspection-detail-intervention-context" class="max-w-2xl">
+        <ng-icon name="lucideWrench" aria-hidden="true" />
         @if (inspection.recordStatus === 'draft') {
-          <p class="text-sm" i18n="@@inspection.detail.provisional">
-            This inspection belongs to an intervention that has not published this record yet. Its
-            result remains provisional in that workflow.
+          <p hlmAlertTitle i18n="@@inspection.detail.provisionalTitle">Provisional result</p>
+          <p hlmAlertDescription>
+            <span i18n="@@inspection.detail.provisional">
+              This inspection belongs to an intervention that has not published this record yet. Its
+              result remains provisional in that workflow.
+            </span>
+            <a
+              class="font-medium text-foreground underline underline-offset-4 hover:decoration-2"
+              [routerLink]="[
+                '/organizations',
+                organizationId(),
+                'interventions',
+                interventionIri.split('/').pop(),
+              ]"
+              i18n="@@inspection.detail.openIntervention"
+              >Open the intervention</a
+            >
           </p>
         } @else {
-          <p class="text-sm" i18n="@@inspection.detail.linkedIntervention">
-            This inspection was recorded as part of an intervention.
+          <p hlmAlertTitle i18n="@@inspection.detail.interventionContext">
+            Part of an intervention
+          </p>
+          <p hlmAlertDescription>
+            <span i18n="@@inspection.detail.linkedIntervention">
+              This inspection was recorded as part of an intervention.
+            </span>
+            <a
+              class="font-medium text-foreground underline underline-offset-4 hover:decoration-2"
+              [routerLink]="[
+                '/organizations',
+                organizationId(),
+                'interventions',
+                interventionIri.split('/').pop(),
+              ]"
+              i18n="@@inspection.detail.openIntervention"
+              >Open the intervention</a
+            >
           </p>
         }
-        <a
-          hlmBtn
-          variant="link"
-          class="h-auto justify-start p-0"
-          [routerLink]="[
-            '/organizations',
-            organizationId(),
-            'interventions',
-            interventionIri.split('/').pop(),
-          ]"
-          i18n="@@inspection.detail.openIntervention"
-          >Open the intervention</a
-        >
-      </aside>
+      </div>
     }
 
     <section
@@ -87,7 +121,7 @@
       <h2
         hlmCardTitle
         id="inspection-detail-info-title"
-        class="px-2"
+        class="px-2 mobile-ui:px-0"
         i18n="@@inspection.info.title"
       >
         Inspection information
@@ -96,110 +130,136 @@
         [inspection]="inspection"
         [editable]="canEditFields()"
         [editState]="editState()"
-        [organizationId]="organizationId()"
-        [checklistName]="checklistName()"
+        [regionalFormatting]="regionalFormatting()"
         (detailsChanged)="onDetailsChanged($event)"
         (editTargetChanged)="onEditTargetChanged($event)"
       />
     </section>
 
-    @if (nonConformitiesExpanded()) {
-      <section
-        id="inspection-non-conformities"
-        class="flex max-w-2xl flex-col gap-2"
-        aria-labelledby="inspection-non-conformities-title"
-        data-testid="inspection-non-conformities"
+    <hlm-collapsible
+      id="inspection-non-conformities-section"
+      class="max-w-2xl"
+      [expanded]="nonConformitiesExpanded()"
+      (expandedChange)="onNonConformitiesExpandedChanged($event)"
+    >
+      <button
+        hlmBtn
+        hlmCollapsibleTrigger
+        type="button"
+        variant="ghost"
+        class="w-full justify-start gap-2 px-2 mobile-ui:min-h-11 mobile-ui:px-0"
+        data-testid="inspection-non-conformities-count"
+        aria-controls="inspection-non-conformities"
       >
+        <span class="text-base font-semibold" i18n="@@inspection.nc.title">Non-conformities</span>
+        <span hlmBadge variant="secondary" class="tabular-nums">{{ nonConformitiesLabel() }}</span>
+        <ng-icon
+          name="lucideChevronDown"
+          class="ms-auto transition-transform"
+          [class.rotate-180]="nonConformitiesExpanded()"
+          aria-hidden="true"
+        />
+      </button>
+
+      <div hlmCollapsibleContent id="inspection-non-conformities" class="flex flex-col gap-2">
         <div
           class="flex items-center justify-between gap-2 px-2 mobile-ui:flex-col mobile-ui:items-stretch mobile-ui:px-0"
         >
-          <h2 hlmCardTitle id="inspection-non-conformities-title" i18n="@@inspection.nc.title">
-            Non-conformities
-          </h2>
-          <div class="flex items-center gap-2 mobile-ui:flex-wrap">
+          @if (canAddNonConformity()) {
             <button
               hlmBtn
               type="button"
-              variant="outline"
               size="sm"
               class="mobile-ui:min-h-11"
-              data-testid="inspection-non-conformities-export"
-              [disabled]="exportDisabled()"
-              [attr.aria-busy]="exportBusy() ? 'true' : null"
-              (click)="exportNonConformitiesCsv()"
+              data-testid="inspection-non-conformities-add"
+              (click)="openAddNonConformityDialog()"
             >
-              @if (exportBusy()) {
-                <hlm-spinner class="size-4" aria-hidden="true" />
-              } @else {
-                <ng-icon name="lucideDownload" aria-hidden="true" />
-              }
-              <span i18n="@@inspection.nc.exportButton">Export</span>
+              <ng-icon name="lucidePlus" aria-hidden="true" />
+              <span i18n="@@inspection.nc.addButton">Add non-conformity</span>
             </button>
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              size="sm"
-              class="mobile-ui:min-h-11"
-              data-testid="inspection-non-conformities-export-report"
-              [disabled]="ncReportDisabled()"
-              [attr.aria-busy]="ncReportExporting() ? 'true' : null"
-              (click)="exportNonConformitiesReport()"
+          } @else if (canWrite()) {
+            <p
+              class="text-xs text-muted-foreground"
+              data-testid="inspection-non-conformities-add-closed"
+              i18n="@@inspection.nc.addClosedExplanation"
             >
-              @if (ncReportExporting()) {
-                <hlm-spinner class="size-4" aria-hidden="true" />
-              } @else {
-                <ng-icon name="lucideDownload" aria-hidden="true" />
-              }
-              <span i18n="@@inspection.nc.exportReportButton">Export report (PDF)</span>
-            </button>
-            @if (exportBusy()) {
-              <span
-                class="sr-only"
-                aria-live="polite"
-                data-testid="inspection-non-conformities-export-status"
-                i18n="@@inspection.nc.exportingStatus"
-              >
-                Preparing the export…
-              </span>
+              A closed inspection can no longer record new non-conformities.
+            </p>
+          }
+
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            align="end"
+            class="mobile-ui:min-h-11"
+            data-testid="inspection-non-conformities-export"
+            [disabled]="exportDisabled() && ncReportDisabled()"
+            [attr.aria-busy]="exportBusy() || ncReportExporting() ? 'true' : null"
+            [hlmDropdownMenuTrigger]="exportMenu"
+          >
+            @if (exportBusy() || ncReportExporting()) {
+              <hlm-spinner class="size-4" aria-hidden="true" />
+            } @else {
+              <ng-icon name="lucideDownload" aria-hidden="true" />
             }
-            @if (canAddNonConformity()) {
+            <span i18n="@@inspection.nc.exportButton">Export</span>
+          </button>
+          <ng-template #exportMenu>
+            <hlm-dropdown-menu class="w-72">
               <button
-                hlmBtn
-                type="button"
-                variant="outline"
-                size="sm"
+                hlmDropdownMenuItem
                 class="mobile-ui:min-h-11"
-                data-testid="inspection-non-conformities-add"
-                (click)="openAddNonConformityDialog()"
+                [disabled]="exportDisabled()"
+                (click)="exportNonConformitiesCsv()"
               >
-                <span i18n="@@inspection.nc.addButton">Add non-conformity</span>
+                <ng-icon name="lucideDownload" aria-hidden="true" />
+                <span i18n="@@inspection.nc.exportButton.csv"
+                  >All organization non-conformities (CSV)</span
+                >
               </button>
-            } @else if (canWrite()) {
-              <p
-                class="text-xs text-muted-foreground"
-                data-testid="inspection-non-conformities-add-closed"
-                i18n="@@inspection.nc.addClosedExplanation"
+              <button
+                hlmDropdownMenuItem
+                class="mobile-ui:min-h-11"
+                [disabled]="ncReportDisabled()"
+                (click)="exportNonConformitiesReport()"
               >
-                A closed inspection can no longer record new non-conformities.
-              </p>
-            }
-          </div>
+                <ng-icon name="lucideDownload" aria-hidden="true" />
+                <span i18n="@@inspection.nc.exportButton.pdf"
+                  >All organization non-conformities (PDF report)</span
+                >
+              </button>
+            </hlm-dropdown-menu>
+          </ng-template>
+          @if (exportBusy() || ncReportExporting()) {
+            <span
+              class="sr-only"
+              aria-live="polite"
+              data-testid="inspection-non-conformities-export-status"
+              i18n="@@inspection.nc.exportingStatus"
+            >
+              Preparing the export…
+            </span>
+          }
         </div>
 
         <app-non-conformity-list
           [nonConformities]="store.nonConformities()"
           [pendingApprovals]="store.nonConformityWaivePending()"
           [loading]="store.isLoadingNonConformities()"
+          [error]="store.nonConformitiesListCallState().error?.message ?? null"
           [canWrite]="canWrite()"
           [organizationId]="organizationId()"
+          [regionalFormatting]="regionalFormatting()"
           [updatingId]="pendingNonConformityId()"
           [statusErrorId]="store.nonConformityStatusErrorId()"
           [statusErrorText]="store.nonConformityStatusErrorText()"
           (statusPicked)="onNonConformityStatusPicked($event)"
+          (retryRequested)="loadNonConformities()"
         />
-      </section>
-    }
+      </div>
+    </hlm-collapsible>
   } @else if (activeInspectionStore.isLoadingInspection()) {
     <div
       class="flex flex-col gap-4"
@@ -208,9 +268,19 @@
       i18n-aria-label="@@inspection.detail.loadingAria"
       data-testid="inspection-detail-loading"
     >
-      <hlm-skeleton class="h-8 w-64" />
-      <hlm-skeleton class="h-4 w-40" />
-      <hlm-skeleton class="h-64 w-full max-w-2xl" />
+      <div class="flex gap-2">
+        <hlm-skeleton class="h-5 w-20 rounded-full" />
+        <hlm-skeleton class="h-5 w-20 rounded-full" />
+      </div>
+      <hlm-skeleton class="h-4 w-48" />
+      <div class="flex max-w-2xl flex-col gap-2">
+        @for (row of [0, 1, 2, 3, 4, 5, 6, 7]; track row) {
+          <div class="flex items-center gap-2">
+            <hlm-skeleton class="h-3 w-24" />
+            <hlm-skeleton class="h-4 w-40" />
+          </div>
+        }
+      </div>
     </div>
   } @else {
     <div hlmEmpty role="alert" data-testid="inspection-detail-load-failed">
@@ -255,58 +325,81 @@
 />
 
 <ng-template #pageActions>
-  @if (canWrite()) {
-    <div class="flex items-center gap-2" data-testid="inspection-lifecycle-band">
-      @if (canCancel()) {
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          class="min-w-0 shrink mobile-ui:min-h-11"
-          data-testid="inspection-cancel"
-          i18n-aria-label="@@inspection.cancel"
-          aria-label="Cancel"
-          [disabled]="store.isChangingLifecycle()"
-          (click)="requestCancel()"
-        >
-          <ng-icon name="lucideBan" aria-hidden="true" />
-          <span class="truncate desktop-ui:max-sm:hidden" i18n="@@inspection.cancel">Cancel</span>
-        </button>
-
-        <button
-          hlmBtn
-          type="button"
-          class="min-w-0 shrink mobile-ui:min-h-11"
-          data-testid="inspection-submit"
-          [disabled]="store.isChangingLifecycle()"
-          (click)="onSubmit()"
-        >
-          @if (store.isChangingLifecycle()) {
-            <hlm-spinner class="size-3.5" aria-hidden="true" />
-          } @else {
-            <ng-icon name="lucideSend" aria-hidden="true" />
-          }
-          <span class="truncate" i18n="@@inspection.submit">Submit</span>
-        </button>
+  <div class="flex items-center gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      class="min-w-0 shrink mobile-ui:min-h-11"
+      data-testid="inspection-detail-export-report"
+      [disabled]="reportExporting()"
+      [attr.aria-busy]="reportExporting() ? 'true' : null"
+      (click)="exportReport()"
+    >
+      @if (reportExporting()) {
+        <hlm-spinner class="size-4" aria-hidden="true" />
+      } @else {
+        <ng-icon name="lucideDownload" aria-hidden="true" />
       }
+      <span class="truncate desktop-ui:max-sm:hidden" i18n="@@inspection.report.exportButton"
+        >Export report</span
+      >
+    </button>
 
-      @if (canClose()) {
-        <button
-          hlmBtn
-          type="button"
-          class="min-w-0 shrink mobile-ui:min-h-11"
-          data-testid="inspection-close"
-          [disabled]="store.isChangingLifecycle()"
-          (click)="onClose()"
-        >
-          @if (store.isChangingLifecycle()) {
-            <hlm-spinner class="size-3.5" aria-hidden="true" />
-          } @else {
-            <ng-icon name="lucideCheck" aria-hidden="true" />
-          }
-          <span class="truncate" i18n="@@inspection.close">Close</span>
-        </button>
-      }
-    </div>
-  }
+    @if (canWrite()) {
+      <div class="flex items-center gap-2" data-testid="inspection-lifecycle-band">
+        @if (canCancel()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="min-w-0 shrink mobile-ui:min-h-11"
+            data-testid="inspection-cancel"
+            i18n-aria-label="@@inspection.cancel"
+            aria-label="Cancel"
+            [disabled]="store.isChangingLifecycle()"
+            (click)="requestCancel()"
+          >
+            <ng-icon name="lucideBan" aria-hidden="true" />
+            <span class="truncate desktop-ui:max-sm:hidden" i18n="@@inspection.cancel">Cancel</span>
+          </button>
+
+          <button
+            hlmBtn
+            type="button"
+            class="min-w-0 shrink mobile-ui:min-h-11"
+            data-testid="inspection-submit"
+            [disabled]="store.isChangingLifecycle()"
+            (click)="onSubmit()"
+          >
+            @if (store.isChangingLifecycle()) {
+              <hlm-spinner class="size-3.5" aria-hidden="true" />
+            } @else {
+              <ng-icon name="lucideSend" aria-hidden="true" />
+            }
+            <span class="truncate" i18n="@@inspection.submit">Submit</span>
+          </button>
+        }
+
+        @if (canClose()) {
+          <button
+            hlmBtn
+            type="button"
+            class="min-w-0 shrink mobile-ui:min-h-11"
+            data-testid="inspection-close"
+            [disabled]="store.isChangingLifecycle()"
+            (click)="onClose()"
+          >
+            @if (store.isChangingLifecycle()) {
+              <hlm-spinner class="size-3.5" aria-hidden="true" />
+            } @else {
+              <ng-icon name="lucideCheck" aria-hidden="true" />
+            }
+            <span class="truncate" i18n="@@inspection.close">Close</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
 </ng-template>

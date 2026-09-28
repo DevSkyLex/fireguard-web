@@ -503,7 +503,75 @@ describe('OrganizationMembersPage', () => {
       includeInvitations: true,
       includeRoles: true,
       sort: { field: 'joinedAt', direction: 'asc' },
+      roleId: null,
     });
+  });
+
+  it('keeps the active role narrowing across a retry, in one request', async () => {
+    roleIdParam = 'role-7';
+    loadCallState.set(errorCallState(toStoreError(new Error('Service unavailable'))));
+    await createPage();
+    load.mockClear();
+
+    byTestId('organization-members-retry')?.click();
+
+    expect(load).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      includeMembers: true,
+      includeInvitations: true,
+      includeRoles: true,
+      sort: { field: 'joinedAt', direction: 'asc' },
+      roleId: 'role-7',
+    });
+  });
+
+  it('offers an Invite member action from the empty pending-invitations state', async () => {
+    activeInvitations.set([]);
+    await createPage();
+
+    const inviteButton: HTMLElement | null = byTestId('organization-invitations-invite');
+    expect(inviteButton).not.toBeNull();
+
+    inviteButton?.click();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['inviteDialogVisible']()).toBe(true);
+  });
+
+  it('hides the whole pending-invitations section while the roster load is in error', async () => {
+    loadCallState.set(errorCallState(toStoreError(new Error('Service unavailable'))));
+    await createPage();
+
+    expect(byTestId('organization-invitations-invite')).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain(
+      "Couldn't load invitations",
+    );
+  });
+
+  it('renders exactly three organization-wide KPI tiles, no filtered "Total members" tile', async () => {
+    invitationsTotal.set(4);
+    await createPage();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '[data-testid^="organization-members-kpi-"]',
+      ),
+    ).toHaveLength(3);
+    expect(byTestId('organization-members-kpi-total')).toBeNull();
+    expect(byTestId('organization-members-kpi-open-invitations')?.textContent).toContain('4');
+  });
+
+  it('hides the open-invitations tile for a viewer without members.manage, rather than a false zero', async () => {
+    invitationsTotal.set(4);
+    permissions.set([ORGANIZATION_PERMISSION.MEMBERS_READ]);
+    await createPage();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '[data-testid^="organization-members-kpi-"]',
+      ),
+    ).toHaveLength(2);
+    expect(byTestId('organization-members-kpi-open-invitations')).toBeNull();
   });
 
   it('should show Invite only to a member holding members.manage', async () => {
@@ -650,13 +718,15 @@ describe('OrganizationMembersPage', () => {
   });
 
   it('opens the existing confirmation from the floating selection bar and hides it when cleared', async () => {
+    membersTotal.set(52);
     await createPage();
     fixture.componentInstance['onSelectionChanged'](new Set(['member-1']));
     await fixture.whenStable();
 
     expect(
-      fixture.nativeElement.querySelector('[data-testid="organization-members-selection-bar"]'),
-    ).not.toBeNull();
+      fixture.nativeElement.querySelector('[data-testid="organization-members-selection-bar"]')
+        ?.textContent,
+    ).toContain('1 of 52 selected');
     fixture.componentInstance['onSelectionActionRequested']('remove');
     expect(fixture.componentInstance['removeDialogState']()).toBe('open');
 
@@ -1053,9 +1123,8 @@ describe('OrganizationMembersPage', () => {
 
     const tiles = fixture.componentInstance['kpiTiles']();
 
-    expect(tiles.find((tile) => tile.id === 'total')?.value).toBe(12);
     expect(tiles.find((tile) => tile.id === 'active')?.value).toBe(9);
-    expect(tiles.find((tile) => tile.id === 'pending-invitations')?.value).toBe(1);
+    expect(tiles.find((tile) => tile.id === 'open-invitations')?.value).toBe(1);
     expect(tiles.find((tile) => tile.id === 'seats-used')?.value).toBe('—');
   });
 

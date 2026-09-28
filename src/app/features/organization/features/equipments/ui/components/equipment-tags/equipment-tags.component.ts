@@ -11,11 +11,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideTag, lucideX } from '@ng-icons/lucide';
+import { lucideX } from '@ng-icons/lucide';
 import type { EquipmentTagOutput } from '@features/organization/features/equipments/models';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
@@ -35,9 +35,11 @@ const NO_PICK_VALUE = '';
  * create-or-attaches by name server-side, so both paths emit the same
  * {@link tagAddRequested}. Mirrors `FacilityMoveDialog`'s combobox pattern.
  * Purely presentational (`ARCHITECTURE.md` §10.3): it owns no store and
- * calls no service; the page owns the load and the write.
+ * calls no service; the page owns the load and the write. The genuinely
+ * empty description is neutral for a read-only viewer, since the combobox
+ * that would let them add a tag is hidden.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -58,14 +60,14 @@ const NO_PICK_VALUE = '';
   selector: 'app-equipment-tags',
   imports: [
     NgIcon,
+    ResourceIllustration,
     ...HlmEmptyImports,
     HlmButton,
     ...HlmBadgeImports,
-    ...HlmCardImports,
     ...HlmComboboxImports,
     ...HlmSpinnerImports,
   ],
-  providers: [provideIcons({ lucideTag, lucideX })],
+  providers: [provideIcons({ lucideX })],
   templateUrl: './equipment-tags.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

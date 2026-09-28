@@ -1,5 +1,6 @@
-import { PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
+import { PLATFORM_ID, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { LineChart } from '../line-chart.component';
 
 /**
@@ -58,7 +59,18 @@ describe('LineChart', () => {
    */
   async function render(platform = 'browser'): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), { provide: PLATFORM_ID, useValue: platform }],
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: PLATFORM_ID, useValue: platform },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
     fixture = TestBed.createComponent(LineChart);
     fixture.componentRef.setInput('series', [

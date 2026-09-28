@@ -34,6 +34,23 @@ export interface CalendarDisplayEvent {
   readonly tone: 'default' | 'secondary' | 'destructive' | 'outline';
 
   /**
+   * Optional `ng-icon` name shown, `aria-hidden`, before the chip's label —
+   * tone alone does not distinguish an event's kind once several sources
+   * share one tone. The host must register the icon through `provideIcons`
+   * somewhere in its own injector chain; the calendar renders whatever name
+   * it is given without importing an icon set of its own.
+   */
+  readonly icon?: string;
+
+  /**
+   * Optional human name of the event's source (e.g. "Maintenance"), read by
+   * assistive technology through the day cell's accessible summary — the
+   * chip itself stays `aria-hidden` decoration, so this is the only path a
+   * screen reader has to which kinds of event a day carries.
+   */
+  readonly sourceLabel?: string;
+
+  /**
    * Whether the chip may be pointer-dragged onto another day, reported back
    * through `eventDropped`. Off by default; the hosting feature sets it only
    * on events it can actually reschedule, and must keep a keyboard path to

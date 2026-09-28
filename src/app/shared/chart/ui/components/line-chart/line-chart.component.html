@@ -3,9 +3,7 @@
 } @else if (isEmpty()) {
   <div hlmEmpty [style.height.px]="height()">
     <div hlmEmptyHeader>
-      <div hlmEmptyMedia variant="icon">
-        <ng-icon name="lucideChartLine" aria-hidden="true" />
-      </div>
+      <app-state-illustration hlmEmptyMedia state="no-data" size="sm" />
       <p hlmEmptyTitle>{{ emptyTitle }}</p>
     </div>
   </div>

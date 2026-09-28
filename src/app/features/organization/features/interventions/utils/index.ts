@@ -1,6 +1,7 @@
 export { createInterventionCapabilities } from './intervention-capabilities/intervention-capabilities.utils';
 export {
   formatInterventionChangePatch,
+  humanizeChangeField,
   interventionChangeResourceKind,
 } from './format-intervention-change-patch/format-intervention-change-patch.utils';
 export { toUtcMidnight } from './intervention-date-only/intervention-date-only.utils';

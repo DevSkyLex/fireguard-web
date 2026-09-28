@@ -65,10 +65,11 @@ day header. Never `hlmCardTitle` outside a card; a tab panel never repeats its o
 A list is one flat `hlmItemGroup` with separators — never a bordered box per row, skeletons
 included.
 Collection states form a triad. A genuinely empty collection shows its `ResourceIllustration`
-when one of the catalog resources matches, otherwise native icon media, one explanation and the
-permission-gated action (adapted text when the viewer lacks the permission). A search or filter
-miss shows `lucideSearch`/`lucideListFilter` media and a clear-filters action. A failed load shows
-`hlmEmpty` with `role="alert"`, destructive media and Retry inside `hlmEmptyContent`.
+(the closest `StateIllustration` when no catalog resource matches), one explanation and the
+permission-gated action (adapted text when the viewer lacks the permission). A search miss shows
+the `no-results` state artwork and a filter miss `no-matches`, each with a clear-filters action. A
+failed load keeps `hlmEmpty` with `role="alert"`, destructive icon media and Retry inside
+`hlmEmptyContent`: errors stay compact and never take artwork.
 An action or section failure on a composed page uses a destructive `hlmAlert` with icon, title,
 description and Retry. Onboarding is the named exception: the global toast plus a persistent
 neutral explanation beside the retry action, without `role="alert"`. An icon-only button always
@@ -232,18 +233,39 @@ Use these same patterns for account, settings, members, sites, equipment and
 inspection surfaces. Do not create generic replacements for native controls or
 edit vendored primitives to encode a feature's workflow.
 
-Genuinely empty resource collections may replace their Empty media icon with the matching
-isometric asset through `ResourceIllustration`. Keep the native Empty structure and existing
-permission-gated action. Use one decorative illustration per empty region at 160 px on small
-screens / 192 px from `sm`, following the applied app theme. Search/filter misses, loading,
-errors and empty pagination pages of a nonempty collection do not use resource artwork.
-Navigation icons and populated tables remain compact. See
-`public/assets/illustrations/resources/catalog.json`.
-Judge resource artwork at those rendered sizes: contours should remain legible, face values
-should explain volume, and details/decorations should stay secondary to the silhouette.
-Improve the SVG's optical hierarchy rather than enlarging Empty media or increasing its orange area.
-Dark resource artwork keeps near-black neutral faces, lighter outer contours and subdued
-internal lines; avoid pale-gray filled panels inside these illustrations.
+Empty regions take isometric artwork from two catalogs, each paired light/dark and following
+the applied theme. `ResourceIllustration` draws a domain resource
+(`public/assets/illustrations/resources/catalog.json`) and serves genuinely empty collections
+only: never a miss, loading, an error or an empty pagination page of a nonempty collection.
+`StateIllustration` draws a generic situation
+(`public/assets/illustrations/empty-states/catalog.json`): `no-results` and `no-matches` for
+misses, `access-denied` for a forbidden list, `all-clear` when emptiness is good news,
+`no-selection` for a master-detail pane waiting on a choice, `not-found` for a missing record,
+`no-events`, `no-history`, `no-messages`, `no-notifications` and `empty-inbox` for empty feeds.
+Keep the native Empty structure: the artwork replaces the media icon as the first child of
+`hlmEmptyHeader`, on the default (transparent) media variant, with the existing title,
+description and permission-gated action. One illustration per empty region, 160 px on small
+screens / 192 px from `sm`; `size="sm"` (112 / 128 px) in sheets, dialogs, side panels and
+dashboard cards. Pickers, comboboxes, inline list rows and navigation stay text or icon only.
+The artwork is a technical drawing, not a mascot, in one true 30° isometric throughout: no
+front view, no object turned to face the viewer. Its vocabulary comes from three reference
+plates: keycaps on a keyboard slab (one lifted over its slot), rounded cubes wired by dotted
+links, and a lidded translucent volume. Turned objects (extinguisher, bell, hourglass, cone,
+a domed bust for a person) are exact surfaces of revolution. Faces sit at the
+page background's value so the linework alone draws the volumes: one brighter contour for the
+subject, zinc contours and fine inner edges for the rest, hairline strokes that keep
+their width at every rendered size (`vector-effect: non-scaling-stroke`). Pictograms are the
+interface's own Lucide icons, engraved in the plane of a face, upright on screen and
+foreshortened like a decal. The artwork is monochrome, like the reference plates: no brand
+color. Its one light is the palette's brightest neutral (white in dark, near-black shading in
+light): a lit slot, a glowing volume, a lit screen or opening, or a single brightest object.
+Never a floating halo. Dotted lines mean absent, hidden or projected, never a visible edge of
+a solid. Absence is drawn with dotted ghosts. An object stands on its own;
+a slab appears only when it is the subject (a parcel, a keypad, a board). Judge it at the
+rendered sizes: it must be recognizable blind, the silhouette leads and details stay
+secondary. Improve the drawing's hierarchy rather than enlarging Empty media or widening its
+lit area. Both catalogs are generated: edit a scene, the kit or the palette in
+`tools/illustrations/` and run `node tools/illustrations/build-illustrations.mjs`, never the SVG.
 
 Named exception: the 403/404/500 error pages keep their `aria-hidden`, one-shot, motion-safe
 decorative ornament (`error-scene`).

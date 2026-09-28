@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideInteractionCapabilities } from '@core/interaction-capabilities';
@@ -8,6 +9,7 @@ import {
   successCallState,
   toStoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   InterventionTimeDraft,
   InterventionTimeEntryView,
@@ -107,7 +109,19 @@ describe('InterventionTimeSheet', () => {
         return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
       }),
     );
-    TestBed.configureTestingModule({ providers: [provideInteractionCapabilities()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideInteractionCapabilities(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
+    });
     fixture = TestBed.createComponent(InterventionTimeSheet);
     fixture.componentRef.setInput('item', item);
     fixture.componentRef.setInput('actorId', 'member-1');

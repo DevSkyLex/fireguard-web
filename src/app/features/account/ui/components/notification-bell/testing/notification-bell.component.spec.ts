@@ -17,6 +17,7 @@ const UNREAD: InboxItemOutput = {
   sourceKey: 'notification',
   id: '1',
   kind: 'notification',
+  sourceType: 'intervention.assigned',
   title: 'An intervention was assigned to you',
   snippet: 'Boiler room, tomorrow morning.',
   isRead: false,
@@ -52,10 +53,12 @@ describe('NotificationBell', () => {
   const panel = (): {
     onPanelState(state: 'closed' | 'open'): void;
     markRead(notification: InboxItemOutput): void;
+    iconFor(notification: InboxItemOutput): string;
   } =>
     fixture.componentInstance as unknown as {
       onPanelState(state: 'closed' | 'open'): void;
       markRead(notification: InboxItemOutput): void;
+      iconFor(notification: InboxItemOutput): string;
     };
 
   beforeEach(async () => {
@@ -117,6 +120,17 @@ describe('NotificationBell', () => {
     await fixture.whenStable();
 
     expect(trigger().getAttribute('aria-label')).toContain('99+');
+  });
+
+  it('should select icons from the notification type with a fallback for older entries', () => {
+    expect(panel().iconFor(UNREAD)).toBe('lucideClipboardList');
+    expect(panel().iconFor({ ...UNREAD, sourceType: 'organization.invitation' })).toBe(
+      'lucideBuilding2',
+    );
+    expect(panel().iconFor({ ...UNREAD, sourceType: null })).toBe('lucideBell');
+    expect(panel().iconFor({ ...UNREAD, sourceKey: 'messaging.mention', kind: 'mention' })).toBe(
+      'lucideAtSign',
+    );
   });
 
   it('should fetch the feed the first time the panel is opened', () => {

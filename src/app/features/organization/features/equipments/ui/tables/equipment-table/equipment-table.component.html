@@ -79,7 +79,21 @@
         </td>
 
         <td hlmTableCell>
-          <app-equipment-status-tag kind="status" [value]="item.status" />
+          <div class="flex flex-col items-start gap-1.5">
+            <app-equipment-status-tag kind="status" [value]="item.status" />
+            @if (item.tags.length > 0) {
+              <div class="flex flex-wrap gap-1">
+                @for (tag of visibleTags(item); track tag) {
+                  <span hlmBadge variant="outline">{{ tag }}</span>
+                }
+                @if (hiddenTagCount(item); as hidden) {
+                  <span hlmBadge variant="secondary" [attr.aria-label]="hiddenTagsAriaLabel(hidden)"
+                    >+{{ hidden }}</span
+                  >
+                }
+              </div>
+            }
+          </div>
         </td>
 
         <td hlmTableCell>
@@ -90,7 +104,21 @@
         </td>
 
         <td hlmTableCell class="whitespace-normal">
-          @if (item.facilityName; as facility) {
+          @if (facilityRoute(item); as route) {
+            <a
+              class="rounded-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              [routerLink]="route"
+            >
+              @if (item.facilityName; as facility) {
+                {{ facility }}
+              } @else {
+                <span i18n="@@equipment.facilityUnavailable">Facility deleted or unavailable</span>
+              }
+            </a>
+            @if (item.locationLabel) {
+              <span class="block text-sm text-muted-foreground">{{ item.locationLabel }}</span>
+            }
+          } @else if (item.facilityName; as facility) {
             <span class="font-medium text-foreground">{{ facility }}</span>
             @if (item.locationLabel) {
               <span class="block text-sm text-muted-foreground">{{ item.locationLabel }}</span>
@@ -122,15 +150,25 @@
           }
         </div>
 
-        <p class="text-sm text-muted-foreground">
-          @if (brandModelOf(item); as brandModel) {
-            {{ brandModel }}
-          } @else {
-            <span aria-hidden="true">—</span>
-          }
-        </p>
+        @if (brandModelOf(item); as brandModel) {
+          <p class="text-sm text-muted-foreground">{{ brandModel }}</p>
+        }
         <p class="text-sm break-words">
-          @if (item.facilityName; as facility) {
+          @if (facilityRoute(item); as route) {
+            <a
+              class="rounded-sm font-medium underline underline-offset-4 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              [routerLink]="route"
+            >
+              @if (item.facilityName; as facility) {
+                {{ facility }}
+              } @else {
+                <span i18n="@@equipment.facilityUnavailable">Facility deleted or unavailable</span>
+              }
+            </a>
+            @if (item.locationLabel) {
+              <span class="block text-muted-foreground">{{ item.locationLabel }}</span>
+            }
+          } @else if (item.facilityName; as facility) {
             <span class="font-medium">{{ facility }}</span>
             @if (item.locationLabel) {
               <span class="block text-muted-foreground">{{ item.locationLabel }}</span>
@@ -148,6 +186,18 @@
             [value]="item.maintenanceDueStatus"
           />
         </div>
+        @if (item.tags.length > 0) {
+          <div class="flex flex-wrap gap-1">
+            @for (tag of visibleTags(item); track tag) {
+              <span hlmBadge variant="outline">{{ tag }}</span>
+            }
+            @if (hiddenTagCount(item); as hidden) {
+              <span hlmBadge variant="secondary" [attr.aria-label]="hiddenTagsAriaLabel(hidden)"
+                >+{{ hidden }}</span
+              >
+            }
+          </div>
+        }
       </div>
     }
   </ng-container>

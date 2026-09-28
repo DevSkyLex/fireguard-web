@@ -17,9 +17,13 @@ import type {
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { CollectionSurface } from '@shared/collection-surface';
+import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmTableImports } from '@shared/ui/table';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
+
+/** How many tags a row shows outright before folding the rest into a "+N" badge. */
+const VISIBLE_TAG_COUNT: number = 2;
 
 /**
  * Component EquipmentTable
@@ -41,9 +45,11 @@ import { EquipmentStatusTag } from '../../components/equipment-status-tag';
  * covers that this table also renders — "Model" and the two timestamp
  * fields have no dedicated column, so they carry no sortable head. Each head
  * is a ghost button carrying the direction glyph, mirroring
- * `InterventionTable`'s sortable-head pattern.
+ * `InterventionTable`'s sortable-head pattern. The Location cell's facility
+ * name links to that facility's record, and each row's first two tags render
+ * as outline badges with a "+N" overflow badge for the rest.
  *
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -55,6 +61,7 @@ import { EquipmentStatusTag } from '../../components/equipment-status-tag';
     CollectionSurface,
     EquipmentStatusTag,
     HlmButton,
+    ...HlmBadgeImports,
     ...HlmTableImports,
   ],
   providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown })],
@@ -105,6 +112,16 @@ export class EquipmentTable {
    */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
     input.required<readonly string[]>();
+
+  /**
+   * Property organizationId
+   * @readonly
+   * @description The workspace a row's facility link is scoped to.
+   * @access public
+   * @since 2.1.0
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input.required<string>();
   //#endregion
 
   //#region Outputs
@@ -167,6 +184,58 @@ export class EquipmentTable {
     );
 
     return parts.length > 0 ? parts.join(' ') : null;
+  }
+
+  /**
+   * Method facilityRoute
+   * @description The route to the row's assigned facility record, or `null` when unassigned.
+   * @access protected
+   * @since 2.1.0
+   * @param {EquipmentOutput} item - The equipment being rendered.
+   * @returns {readonly string[] | null} The facility detail route.
+   */
+  protected facilityRoute(item: EquipmentOutput): readonly string[] | null {
+    if (!item.facilityId) return null;
+
+    return ['/organizations', this.organizationId(), 'facilities', item.facilityId];
+  }
+
+  /**
+   * Method visibleTags
+   * @description The first {@link VISIBLE_TAG_COUNT} tag names shown outright.
+   * @access protected
+   * @since 2.1.0
+   * @param {EquipmentOutput} item - The equipment being rendered.
+   * @returns {readonly string[]} The tag names to render as badges.
+   */
+  protected visibleTags(item: EquipmentOutput): readonly string[] {
+    return item.tags.slice(0, VISIBLE_TAG_COUNT).map((tag) => tag.name);
+  }
+
+  /**
+   * Method hiddenTagCount
+   * @description How many tags are folded behind the "+N" badge.
+   * @access protected
+   * @since 2.1.0
+   * @param {EquipmentOutput} item - The equipment being rendered.
+   * @returns {number} The count of tags beyond {@link VISIBLE_TAG_COUNT}.
+   */
+  protected hiddenTagCount(item: EquipmentOutput): number {
+    return Math.max(0, item.tags.length - VISIBLE_TAG_COUNT);
+  }
+
+  /**
+   * Method hiddenTagsAriaLabel
+   * @description The accessible name for the "+N" overflow badge, since its visible text alone does not say it means tags.
+   * @access protected
+   * @since 2.1.0
+   * @param {number} hidden - How many tags are folded behind the badge.
+   * @returns {string} The localized, pluralized accessible name.
+   */
+  protected hiddenTagsAriaLabel(hidden: number): string {
+    return hidden === 1
+      ? $localize`:@@equipment.table.hiddenTagOne:1 more tag`
+      : $localize`:@@equipment.table.hiddenTagOther:${hidden}:count: more tags`;
   }
 
   /**

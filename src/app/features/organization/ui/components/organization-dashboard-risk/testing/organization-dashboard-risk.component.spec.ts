@@ -1,12 +1,24 @@
-import { PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
+import { PLATFORM_ID, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationDashboardRisk } from '../organization-dashboard-risk.component';
 
 describe('OrganizationDashboardRisk', () => {
   let fixture: ComponentFixture<OrganizationDashboardRisk>;
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), { provide: PLATFORM_ID, useValue: 'server' }],
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: PLATFORM_ID, useValue: 'server' },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('system'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
     fixture = TestBed.createComponent(OrganizationDashboardRisk);
   });

@@ -42,6 +42,7 @@ export function buildCalendarMonthLayout(
 
   const counts = new Map<string, number>();
   const shown = new Map<string, number>();
+  const sourceLabelsByDay = new Map<string, string[]>();
   const segmentsByStart = new Map<string, CalendarWeekSegment[]>();
   const previousLane = new Map<string, number>();
 
@@ -71,7 +72,14 @@ export function buildCalendarMonthLayout(
 
       for (let column = startColumn; column <= endColumn; column += 1) {
         const day = weekDays[column];
-        if (day !== undefined) counts.set(day, (counts.get(day) ?? 0) + 1);
+        if (day === undefined) continue;
+
+        counts.set(day, (counts.get(day) ?? 0) + 1);
+        if (span.event.sourceLabel) {
+          const labels = sourceLabelsByDay.get(day) ?? [];
+          if (!labels.includes(span.event.sourceLabel)) labels.push(span.event.sourceLabel);
+          sourceLabelsByDay.set(day, labels);
+        }
       }
 
       const preferred = previousLane.get(span.event.id);
@@ -112,6 +120,7 @@ export function buildCalendarMonthLayout(
       count,
       dots: Array.from({ length: Math.min(count, 3) }, (unused, index) => index),
       overflow: Math.max(0, count - (shown.get(iso) ?? 0)),
+      sourceLabels: sourceLabelsByDay.get(iso) ?? [],
     });
   }
 

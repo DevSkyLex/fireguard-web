@@ -1,22 +1,24 @@
-<section hlmCard data-testid="equipment-tags">
-  <div hlmCardHeader>
-    <h2 hlmCardTitle i18n="@@equipment.tags.title">Tags</h2>
-    <p hlmCardDescription i18n="@@equipment.tags.caption">
-      Labels used to search and group this equipment.
-    </p>
-  </div>
+<section data-testid="equipment-tags" class="flex flex-col gap-3">
+  <h2 class="sr-only" i18n="@@equipment.tags.title">Tags</h2>
+  <p class="text-sm text-muted-foreground" i18n="@@equipment.tags.caption">
+    Labels used to search and group this equipment.
+  </p>
 
-  <div hlmCardContent class="flex flex-col gap-3">
+  <div class="flex flex-col gap-3">
     @if (tags().length === 0) {
       <div hlmEmpty data-testid="equipment-tags-empty">
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideTag" aria-hidden="true" />
-          </div>
+          <app-resource-illustration hlmEmptyMedia resource="label" size="sm" />
           <p hlmEmptyTitle i18n="@@equipment.tags.emptyTitle">No tags yet</p>
-          <p hlmEmptyDescription i18n="@@equipment.tags.emptyDesc">
-            Add a tag to help find and group this equipment.
-          </p>
+          @if (editable()) {
+            <p hlmEmptyDescription i18n="@@equipment.tags.emptyDesc">
+              Add a tag to help find and group this equipment.
+            </p>
+          } @else {
+            <p hlmEmptyDescription i18n="@@equipment.tags.emptyDescReadOnly">
+              No tags on this equipment.
+            </p>
+          }
         </div>
       </div>
     } @else {

@@ -17,7 +17,6 @@ import {
   lucideBan,
   lucideCircleCheck,
   lucidePackage,
-  lucideShapes,
   lucideWrench,
   lucideX,
 } from '@ng-icons/lucide';
@@ -29,12 +28,15 @@ import type {
   FacilityType,
 } from '@features/organization/features/facilities/models';
 import { resolveEquipmentStatusTag } from '@features/organization/features/facilities/models';
-import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSheetImports } from '@shared/ui/sheet';
-import { equipmentPlanDetail, equipmentPlanLabel } from '../../../utils';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { equipmentPlanDetail, equipmentPlanLabel, facilityTypeLabel } from '../../../utils';
 import { FacilityPlanItemList, type PlanItemListOption } from '../facility-plan-item-list';
 import { FacilityStatusTag } from '../facility-status-tag';
 
@@ -101,18 +103,21 @@ import { FacilityStatusTag } from '../facility-status-tag';
     NgIcon,
     ...HlmEmptyImports,
     NgTemplateOutlet,
+    ResourceIllustration,
     FacilityPlanItemList,
     FacilityStatusTag,
     HlmButton,
+    ...HlmBadgeImports,
     ...HlmCardImports,
+    ...HlmSeparatorImports,
     ...HlmSheetImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
       lucideBan,
       lucideCircleCheck,
       lucidePackage,
-      lucideShapes,
       lucideWrench,
       lucideX,
     }),
@@ -205,8 +210,8 @@ export class FacilityPlanPanel {
     this.compactVisible() ? 'open' : 'closed',
   );
 
-  /** This panel's accessible landmark name, shared by the card and the sheet content. */
-  protected readonly panelLabel: string = $localize`:@@facility.plans.panel.title:Plan zones`;
+  /** This panel's accessible landmark name, shared by the card and the sheet content — names what it shows (zones and equipment both), not only the first roster it used to carry alone. */
+  protected readonly panelLabel: string = $localize`:@@facility.plans.panel.titleV2:On this plan`;
 
   /** The zone-detail close button's accessible name. */
   protected readonly closeLabel: string = $localize`:@@facility.plans.panel.close:Close`;
@@ -241,8 +246,19 @@ export class FacilityPlanPanel {
   /** The "nothing drawn yet" empty state's title. */
   protected readonly noContentTitle: string = $localize`:@@facility.plans.panel.noContentTitle:Nothing drawn on this plan yet`;
 
-  /** The "nothing drawn yet" empty state's description. */
-  protected readonly noContentDescription: string = $localize`:@@facility.plans.panel.noContentDescription:Draw a zone outline or place equipment from the toolbar above to see it here.`;
+  /**
+   * Property noContentDescription
+   * @readonly
+   * @description The "nothing drawn yet" empty state's description — the toolbar hint only for a member who can actually draw or place something; a read-only member gets a neutral statement instead.
+   * @access protected
+   * @since 2.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly noContentDescription: Signal<string> = computed<string>(() =>
+    this.canWrite() || this.canEditEquipment()
+      ? $localize`:@@facility.plans.panel.noContentDescription:Draw a zone outline or place equipment from the toolbar above to see it here.`
+      : $localize`:@@facility.plans.panel.noContentDescriptionReadOnly:Ask a member with edit access to draw a zone outline or place equipment on this plan.`,
+  );
 
   /**
    * Property zoneOptions
@@ -288,10 +304,10 @@ export class FacilityPlanPanel {
    * @access protected
    * @since 1.0.0
    * @param {FacilityType} type - The zone's facility type.
-   * @returns {string} Its localized label, or the raw value when it matches no known type.
+   * @returns {string} Its localized label, or a localized "Unknown type" fallback.
    */
   protected typeLabel(type: FacilityType): string {
-    return FACILITY_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
+    return facilityTypeLabel(type);
   }
 
   /**

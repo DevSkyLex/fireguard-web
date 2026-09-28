@@ -1,5 +1,6 @@
-import { LOCALE_ID, provideZonelessChangeDetection } from '@angular/core';
+import { LOCALE_ID, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { NotificationOutput } from '@features/account/models';
 import { AccountNotificationList } from '../account-notification-list.component';
 
@@ -28,7 +29,18 @@ describe('AccountNotificationList', () => {
     TestBed.configureTestingModule({
       // Pinned so the relative timestamps are asserted in a known language:
       // the component follows the app's locale, not the machine's.
-      providers: [provideZonelessChangeDetection(), { provide: LOCALE_ID, useValue: 'en-US' }],
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: LOCALE_ID, useValue: 'en-US' },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(AccountNotificationList);
@@ -66,19 +78,16 @@ describe('AccountNotificationList', () => {
   it('should tint an unread row and leave a read one plain', async () => {
     fixture.componentRef.setInput('notifications', [notification()]);
     await fixture.whenStable();
-    const unread = fixture.nativeElement.querySelector('li') as HTMLElement;
+    const unread = fixture.nativeElement.querySelector('[data-slot="item"]') as HTMLElement;
 
-    // Asserted because the class list is built from two literal strings rather
-    // than from `[class.x]` flags: an opacity modifier carries a `/`, which an
-    // Angular binding name is not specified to hold.
+    expect(unread.getAttribute('data-variant')).toBe('outline');
     expect(unread.className).toContain('bg-muted/40');
-    expect(unread.className).toContain('border-primary/40');
 
     fixture.componentRef.setInput('notifications', [notification({ isRead: true })]);
     await fixture.whenStable();
-    const read = fixture.nativeElement.querySelector('li') as HTMLElement;
+    const read = fixture.nativeElement.querySelector('[data-slot="item"]') as HTMLElement;
 
-    expect(read.className).toContain('border-border');
+    expect(read.getAttribute('data-variant')).toBe('outline');
     expect(read.className).not.toContain('bg-muted/40');
   });
 
@@ -135,8 +144,9 @@ describe('AccountNotificationList', () => {
       fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
     );
     buttons
-      .find((button): boolean => button.textContent?.trim() === 'billing')
+      .find((button): boolean => button.textContent?.trim() === 'Billing')
       ?.dispatchEvent(new Event('click'));
+    await fixture.whenStable();
     buttons
       .find((button): boolean => button.textContent?.trim() === 'All')
       ?.dispatchEvent(new Event('click'));
@@ -144,6 +154,22 @@ describe('AccountNotificationList', () => {
 
     expect(categorySelected).toHaveBeenNthCalledWith(1, 'billing');
     expect(categorySelected).toHaveBeenNthCalledWith(2, null);
+  });
+
+  it('humanizes each category label so a raw identifier never shows through', async () => {
+    fixture.componentRef.setInput('categories', ['non_conformity']);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Non conformity');
+    expect(fixture.nativeElement.textContent).not.toContain('non_conformity');
+  });
+
+  it('humanizes the category shown on a notification row', async () => {
+    fixture.componentRef.setInput('notifications', [notification({ category: 'non_conformity' })]);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.textContent).toContain('Non conformity');
+    expect(fixture.nativeElement.textContent).not.toContain('non_conformity');
   });
 
   it('should offer a bulk clear only while something is unread', async () => {

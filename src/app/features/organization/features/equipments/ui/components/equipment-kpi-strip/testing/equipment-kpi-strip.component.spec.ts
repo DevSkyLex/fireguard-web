@@ -173,4 +173,48 @@ describe('EquipmentKpiStrip', () => {
     expect(text).toContain('Total assets');
     expect(text).toContain('0');
   });
+
+  it('should show a destructive alert with every value dashed, and emit retried on click', async () => {
+    fixture.componentRef.setInput('statistics', null);
+    fixture.componentRef.setInput('loading', false);
+    fixture.componentRef.setInput('error', true);
+    await fixture.whenStable();
+    const element: HTMLElement = fixture.nativeElement as HTMLElement;
+
+    const retried: unknown[] = [];
+    fixture.componentInstance.retried.subscribe(() => retried.push(undefined));
+
+    expect(element.querySelector('[role="alert"]')?.textContent).toContain(
+      'Key figures unavailable',
+    );
+    expect(
+      element.querySelector('[data-testid="equipment-kpi-strip-total-assets"]')?.textContent,
+    ).toContain('—');
+
+    element
+      .querySelector<HTMLButtonElement>('[data-testid="equipment-kpi-strip-retry"]')
+      ?.dispatchEvent(new Event('click'));
+
+    expect(retried).toHaveLength(1);
+  });
+
+  it('should tint the due-soon tile warning, not destructive, once above zero', async () => {
+    const element: HTMLElement = await render(KPIS, false);
+
+    const icon: HTMLElement | null = element
+      .querySelector('[data-testid="equipment-kpi-strip-due-soon"]')
+      ?.querySelector('ng-icon') as HTMLElement | null;
+    expect(icon?.className).toContain('text-warning');
+    expect(icon?.className).not.toContain('text-destructive');
+  });
+
+  it('should show the compliant ratio as a progress bar', async () => {
+    const element: HTMLElement = await render(KPIS, false);
+
+    const progress: HTMLElement | null = element
+      .querySelector('[data-testid="equipment-kpi-strip-compliant"]')
+      ?.querySelector('hlm-progress') as HTMLElement | null;
+    expect(progress).not.toBeNull();
+    expect(progress?.getAttribute('aria-valuenow')).toBe('75');
+  });
 });

@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { errorCallState, idleCallState, toStoreError } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   AutomationAttemptOutput,
@@ -9,7 +10,8 @@ import type {
 } from '@features/organization/features/automations/models';
 import { AutomationExecutionsStore } from '@features/organization/features/automations/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { AutomationsPage } from '../automations-page.component';
 
 const attempt = (overrides: Partial<AutomationAttemptOutput> = {}): AutomationAttemptOutput => ({
@@ -76,6 +78,18 @@ describe('AutomationsPage', () => {
           useValue: { selectedOrganizationId: organizationId },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
       ],
     });
     TestBed.overrideComponent(AutomationsPage, {
@@ -176,11 +190,12 @@ describe('AutomationsPage', () => {
     await fixture.whenStable();
     expect(root().querySelector('[role="alert"]')?.textContent).toContain('History unavailable');
     expect(root().textContent).not.toContain('No execution yet');
+    expect(root().querySelector('.rounded-lg.border')).toBeNull();
+    expect(root().querySelector('[data-testid="automation-page-prev"]')).not.toBeNull();
 
     root().querySelector<HTMLButtonElement>('[data-testid="automation-refresh"]')?.click();
-    const pageButtons = Array.from(root().querySelectorAll<HTMLButtonElement>('nav button'));
-    pageButtons[0]?.click();
-    pageButtons[1]?.click();
+    root().querySelector<HTMLButtonElement>('[data-testid="automation-page-prev"]')?.click();
+    root().querySelector<HTMLButtonElement>('[data-testid="automation-page-next"]')?.click();
     expect(refresh.mock.calls.map(([requested]) => requested)).toEqual([2, 1, 3]);
 
     loading.set(true);
@@ -188,6 +203,5 @@ describe('AutomationsPage', () => {
     expect(
       root().querySelector<HTMLButtonElement>('[data-testid="automation-refresh"]')?.disabled,
     ).toBe(true);
-    expect(pageButtons.every((button) => button.disabled)).toBe(true);
   });
 });

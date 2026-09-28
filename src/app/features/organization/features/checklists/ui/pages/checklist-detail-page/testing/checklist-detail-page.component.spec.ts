@@ -10,6 +10,7 @@ import {
   toStoreError,
   type CallState,
 } from '@core/request-state';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import {
@@ -17,6 +18,8 @@ import {
   ChecklistStore,
 } from '@features/organization/features/checklists/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { ChecklistDetailPage } from '../checklist-detail-page.component';
 
 /**
@@ -39,6 +42,7 @@ const checklist = (overrides: Partial<ChecklistOutput> = {}): ChecklistOutput =>
   canEditMetadata: true,
   canEditItems: false,
   canCreateRevision: true,
+  itemCount: 0,
   items: [],
   createdAt: '2026-09-20T10:00:00Z',
   updatedAt: '2026-09-20T10:00:00Z',
@@ -62,6 +66,7 @@ describe('ChecklistDetailPage', () => {
   };
   const permissions = { hasPermission: vi.fn() };
   const router = { navigate: vi.fn() };
+  const setTitle = vi.fn();
 
   /**
    * Function createPage
@@ -83,6 +88,11 @@ describe('ChecklistDetailPage', () => {
         { provide: PLATFORM_ID, useValue: platform },
         { provide: OrganizationPermissionService, useValue: permissions },
         { provide: Router, useValue: router },
+        { provide: TitleService, useValue: { setTitle } },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
       ],
     }).overrideComponent(ChecklistDetailPage, {
       set: {
@@ -124,6 +134,36 @@ describe('ChecklistDetailPage', () => {
     expect(active.clear.mock.invocationCallOrder[0]).toBeLessThan(
       active.resolveChecklist.mock.invocationCallOrder[0],
     );
+  });
+
+  it('never pushes an empty title to the shell header while the checklist is still loading', async () => {
+    await createPage();
+    expect(setTitle).not.toHaveBeenCalledWith('');
+  });
+
+  it('pushes the resolved checklist name to the shell header once loaded', async () => {
+    await createPage();
+    setTitle.mockClear();
+    selectedChecklist.set(checklist({ name: 'Fire safety' }));
+    await fixture.whenStable();
+    expect(setTitle).toHaveBeenCalledWith('Fire safety');
+  });
+
+  it('pushes "New checklist" to the shell header on the creation route', async () => {
+    await createPage();
+    fixture.componentRef.setInput('checklistId', undefined);
+    await fixture.whenStable();
+    expect(setTitle).toHaveBeenCalledWith('New checklist');
+  });
+
+  it('pushes "New revision" to the shell header once a revision draft opens', async () => {
+    const page = await createPage();
+    selectedChecklist.set(checklist());
+    await fixture.whenStable();
+    setTitle.mockClear();
+    await page['startRevision']();
+    await fixture.whenStable();
+    expect(setTitle).toHaveBeenCalledWith('New revision');
   });
 
   it('does not read or clear authenticated checklist state during SSR', async () => {

@@ -76,7 +76,7 @@
               class="mobile-ui:min-h-11 mobile-ui:px-3"
               data-testid="org-settings-tab-access"
             >
-              <ng-icon name="lucideGlobe" class="mobile-ui:hidden" aria-hidden="true" /><span
+              <ng-icon name="lucideKeyRound" class="mobile-ui:hidden" aria-hidden="true" /><span
                 i18n="@@org.access.tab"
                 >Access and domains</span
               >
@@ -88,11 +88,7 @@
               class="mobile-ui:min-h-11 mobile-ui:px-3"
               data-testid="org-settings-tab-danger"
             >
-              <ng-icon
-                name="lucideTriangleAlert"
-                class="text-destructive mobile-ui:hidden"
-                aria-hidden="true"
-              />
+              <ng-icon name="lucideTriangleAlert" class="mobile-ui:hidden" aria-hidden="true" />
               <span i18n="@@org.settings.tabs.danger">Danger zone</span>
             </button>
           }
@@ -103,6 +99,7 @@
         <div hlmTabsContent="access" class="w-full min-w-0">
           <ng-template hlmTabsContentLazy>
             <app-organization-access-panel
+              [regionalFormatting]="regionalFormatting()"
               [policy]="accessStore.policy()"
               [policyRevision]="accessStore.policyFormRevision()"
               [loading]="accessStore.policyCallState().status === 'pending'"
@@ -279,6 +276,9 @@
                   @if (renewalStatusText(); as statusText) {
                     <p class="text-xs text-muted-foreground">{{ statusText }}</p>
                   }
+                  @if (billingIntervalText(); as intervalText) {
+                    <p class="text-xs text-muted-foreground">{{ intervalText }}</p>
+                  }
                 </div>
               </div>
 
@@ -430,9 +430,7 @@
               } @else if (billingStore.invoices().length === 0) {
                 <div hlmEmpty class="border border-border">
                   <div hlmEmptyHeader>
-                    <div hlmEmptyMedia variant="icon">
-                      <ng-icon name="lucideReceipt" aria-hidden="true" />
-                    </div>
+                    <app-resource-illustration hlmEmptyMedia resource="invoice" />
                     <p hlmEmptyTitle i18n="@@org.settings.subscription.invoicesEmptyTitle">
                       No invoices yet
                     </p>
@@ -455,11 +453,23 @@
                       data-testid="org-settings-invoice-row"
                     >
                       <div hlmItemContent>
-                        <span hlmItemTitle>{{ formatInvoiceAmount(invoice) }}</span>
+                        <span hlmItemTitle>{{ invoiceNumberOf(invoice) }}</span>
                         <span hlmItemDescription>
-                          {{ formatDate(invoice.createdAt) ?? '—' }} · {{ invoice.status }}
+                          {{ invoice.createdAt | appOrgDate: 'date' : regionalFormatting() }}
                         </span>
                       </div>
+                      @let statusTag = invoiceStatusTagOf(invoice);
+                      <span hlmBadge variant="outline" class="gap-1.5 text-muted-foreground">
+                        <ng-icon
+                          [name]="statusTag.icon"
+                          [class]="invoiceStatusTagIconClass[statusTag.severity]"
+                          aria-hidden="true"
+                        />
+                        {{ statusTag.label }}
+                      </span>
+                      <span class="text-sm text-muted-foreground tabular-nums">{{
+                        formatInvoiceAmount(invoice)
+                      }}</span>
                       @if (invoice.invoicePdf ?? invoice.hostedInvoiceUrl; as downloadUrl) {
                         <div hlmItemActions>
                           <a
@@ -500,6 +510,8 @@
           <app-organization-usage-panel
             [items]="quotaStore.items()"
             [isLoading]="quotaStore.isLoadingQuota()"
+            [error]="quotaStore.quotaCallState().error"
+            (retried)="quotaStore.reload()"
           />
         </ng-template>
       </div>
@@ -616,6 +628,20 @@
                       />
                       <span i18n="@@org.settings.danger.statusTitle">Suspend or restore</span>
                     </h2>
+                    @if (organizationStatusTag(); as status) {
+                      <span
+                        hlmBadge
+                        variant="outline"
+                        class="mt-2 w-fit gap-1.5 text-muted-foreground"
+                      >
+                        <ng-icon
+                          [name]="status.icon"
+                          [class]="organizationStatusIconClass[status.severity]"
+                          aria-hidden="true"
+                        />
+                        {{ status.label }}
+                      </span>
+                    }
                     <p hlmCardDescription i18n="@@org.settings.danger.statusDescription">
                       Suspending blocks every member's access immediately without deleting any data.
                       Restoring brings a suspended or archived organization back to active.

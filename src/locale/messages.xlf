@@ -4751,7 +4751,7 @@
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.workspace.noOrganizationDescription" datatype="html">
-        <source> Ask your administrator for an invitation, or create a workspace for your team. Personal email addresses can join by invitation. </source>
+        <source> Ask for an invitation or create a workspace. Personal emails need an invitation. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
           <context context-type="linenumber">218,221</context>
@@ -19705,6 +19705,9 @@
       <trans-unit id="intervention.list.columnResponsible" datatype="html">
         <source>Responsible</source>
       </trans-unit>
+      <trans-unit id="intervention.list.columnParticipants" datatype="html">
+        <source>Participants</source>
+      </trans-unit>
       <trans-unit id="intervention.list.columnSite" datatype="html">
         <source>Site</source>
         <context-group purpose="location">
@@ -30146,17 +30149,10 @@
         </context-group>
       </trans-unit>
       <trans-unit id="shared.collectionSelection.countWithTotal" datatype="html">
-        <source> Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Results: <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </source>
+        <source> <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> selected </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.html</context>
-          <context context-type="linenumber">17,19</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="shared.collectionSelection.count" datatype="html">
-        <source>Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/></source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/shared/collection-toolbar/ui/components/collection-selection-bar/collection-selection-bar.component.html</context>
-          <context context-type="linenumber">20,21</context>
+          <context context-type="linenumber">16,18</context>
         </context-group>
       </trans-unit>
       <trans-unit id="shared.collectionSelection.actions" datatype="html">
@@ -30613,6 +30609,30 @@
       </trans-unit>
       <trans-unit id="intervention.calendar.selectedDayPanelLabel" datatype="html">
         <source>Selected day interventions</source>
+      </trans-unit>
+      <trans-unit id="messages.typing.named" datatype="html">
+        <source><x id="name"/> is typing…</source>
+      </trans-unit>
+      <trans-unit id="messages.typing.someone" datatype="html">
+        <source>Someone is typing…</source>
+      </trans-unit>
+      <trans-unit id="messages.typing.multiple" datatype="html">
+        <source><x id="count"/> members are typing…</source>
+      </trans-unit>
+      <trans-unit id="messages.row.sent" datatype="html">
+        <source>Sent</source>
+      </trans-unit>
+      <trans-unit id="messages.row.received" datatype="html">
+        <source>Received</source>
+      </trans-unit>
+      <trans-unit id="messages.row.seen" datatype="html">
+        <source>Seen</source>
+      </trans-unit>
+      <trans-unit id="messages.row.receivedBy" datatype="html">
+        <source>Received by <x id="INTERPOLATION"/></source>
+      </trans-unit>
+      <trans-unit id="messages.row.seenBy" datatype="html">
+        <source>Seen by <x id="INTERPOLATION"/></source>
       </trans-unit>
     </body>
   </file>

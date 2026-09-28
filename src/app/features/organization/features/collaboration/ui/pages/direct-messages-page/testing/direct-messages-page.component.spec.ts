@@ -1,7 +1,8 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, RouterOutlet } from '@angular/router';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { DirectMessagesPage } from '../direct-messages-page.component';
 
 describe('DirectMessagesPage', () => {
@@ -19,7 +20,18 @@ describe('DirectMessagesPage', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(DirectMessagesPage);

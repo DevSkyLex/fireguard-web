@@ -14,7 +14,8 @@ import {
   webhookSubscriptionsEvents,
 } from '@features/organization/features/webhooks/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { WebhooksPage } from '../webhooks-page.component';
 
 /**
@@ -47,8 +48,10 @@ describe('WebhooksPage', () => {
     isMutating,
     load: vi.fn(),
     loadCatalog: vi.fn(),
+    loadDeliveries: vi.fn(),
     clearMutationFeedback: vi.fn(),
     mutate: vi.fn(),
+    events: vi.fn().mockReturnValue([]),
   };
   let completed: Subject<ReturnType<typeof webhookSubscriptionsEvents.completed>>;
 
@@ -73,6 +76,10 @@ describe('WebhooksPage', () => {
         },
         { provide: OrganizationPermissionService, useValue: permissions },
         { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode: mobile } },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
         { provide: Events, useValue: { on: vi.fn().mockReturnValue(completed) } },
       ],
     }).overrideComponent(WebhooksPage, {
@@ -95,6 +102,7 @@ describe('WebhooksPage', () => {
     mobile.set(false);
     permissions.hasPermission.mockImplementation(() => managementAllowed());
     clipboard.copy.mockReturnValue(true);
+    store.events.mockReturnValue([]);
     completed = new Subject();
   });
 
@@ -351,10 +359,19 @@ describe('WebhooksPage', () => {
     },
   );
 
-  it('labels delivery states consistently with the filter choices', async () => {
+  it('narrows the delivery status filter to a known value, defaulting to all', async () => {
     const page = await createPage();
-    expect(page['statusLabel']('pending')).toBe('Pending');
-    expect(page['statusLabel']('delivered')).toBe('Delivered');
-    expect(page['statusLabel']('failed')).toBe('Failed');
+    page['onStatusFilterChanged']('pending');
+    expect(store.loadDeliveries).toHaveBeenLastCalledWith(1, 'pending');
+    page['onStatusFilterChanged']('some-unknown-value');
+    expect(store.loadDeliveries).toHaveBeenLastCalledWith(1, '');
+    page['onStatusFilterChanged'](undefined);
+    expect(store.loadDeliveries).toHaveBeenLastCalledWith(1, '');
+  });
+
+  it('resolves a raw event type key to its curated localized label', async () => {
+    const page = await createPage();
+    expect(page['eventLabelOf']('facility.facility_created_event')).toBe('Facility created');
+    expect(page['eventLabelOf']('some.unknown_event')).toBe('some.unknown_event');
   });
 });

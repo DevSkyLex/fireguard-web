@@ -4,8 +4,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
+  LOCALE_ID,
   output,
   signal,
   untracked,
@@ -17,7 +19,12 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronDown, lucideChevronUp } from '@ng-icons/lucide';
+import {
+  lucideChevronDown,
+  lucideChevronUp,
+  lucideCircleAlert,
+  lucideTimer,
+} from '@ng-icons/lucide';
 import type {
   PlanningCatalogueKind,
   PlanningCatalogueState,
@@ -34,6 +41,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import { toUtcMidnight } from '@features/organization/features/interventions/utils';
 import { InplaceField } from '@shared/inplace-field';
+import { formatRelativeTime } from '@shared/relative-time';
 import { HlmInputGroupAddon } from '@shared/ui/input-group';
 import { InterventionCatalogueStatus } from '../intervention-catalogue-status';
 
@@ -49,6 +57,7 @@ import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePickerImports } from '@shared/ui/date-picker';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmTextareaImports } from '@shared/ui/textarea';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { InterventionTag } from '../intervention-tag';
 
 import { HlmItemImports } from '@shared/ui/item';
@@ -74,20 +83,30 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
 const DESCRIPTION_MAX_LENGTH: number = 2000;
 
 /**
+ * Constant PARTICIPANT_PREVIEW_COUNT
+ * @const PARTICIPANT_PREVIEW_COUNT
+ * @description How many participant avatars the group shows before folding the rest into a count.
+ * @since 1.3.0
+ * @type {number}
+ */
+const PARTICIPANT_PREVIEW_COUNT: number = 4;
+
+/**
  * Component InterventionPropertiesGrid
  * @class InterventionPropertiesGrid
  *
  * @description
  * The intervention's properties, each edited where it is displayed
- * (`ARCHITECTURE.md` §10.5). Lifecycle and planning values stay visible for
- * quick scanning; participants, labels, audit metadata and the description
- * sit behind a local Spartan collapsible so the narrow rail keeps its focus.
- * The reading order is identity (reference, type), lifecycle and action
- * context (status, priority), planning context (site, responsible, planned
- * window), then secondary context (participants, labels, description) and
- * finally audit metadata (revision, updated).
- * The secondary grid uses this component's container width instead of
- * viewport breakpoints, keeping its values legible when the rail stacks.
+ * (`ARCHITECTURE.md` §10.5). Only audit metadata (revision, created, updated)
+ * sits behind a local Spartan collapsible — participants, labels and the
+ * description read every time, since none of the three is something a
+ * reviewer can afford to miss behind a toggle that resets closed on every
+ * intervention. The reading order is identity (reference, type), lifecycle
+ * and action context (status, priority), planning context (site,
+ * responsible, planned window), context (participants, labels, description)
+ * and finally, collapsed, audit metadata.
+ * Both grids use this component's container width instead of viewport
+ * breakpoints, keeping their values legible when the rail stacks.
  *
  * Two commit modes, chosen by the control rather than by taste: a value
  * picked in one gesture commits on that gesture, because a Save button after
@@ -99,14 +118,17 @@ const DESCRIPTION_MAX_LENGTH: number = 2000;
  * accepted patch increments `revision`, which publication is pinned to.
  *
  * `plannedStartAt` and `dueAt` are one scheduling field: they are picked together and
- * sent in one patch, which §10.5 admits as "a small coherent group".
+ * sent in one patch, which §10.5 admits as "a small coherent group". Its
+ * urgency ({@link dueSchedule}) is computed once by the page against the
+ * organization's timezone, never re-derived here, so it never disagrees with
+ * the identity row showing the same intervention.
  *
  * When the site is editable, its name opens the in-place picker. Once the
  * workflow freezes that field, the same name becomes the link to the facility
  * record. The conditional shapes avoid nesting an anchor inside
  * `InplaceField`'s button trigger while keeping the name itself actionable.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -128,12 +150,16 @@ const DESCRIPTION_MAX_LENGTH: number = 2000;
     ...HlmDatePickerImports,
     ...HlmSelectImports,
     ...HlmTextareaImports,
+    ...HlmTooltipImports,
   ],
-  providers: [provideIcons({ lucideChevronDown, lucideChevronUp })],
+  providers: [provideIcons({ lucideChevronDown, lucideChevronUp, lucideCircleAlert, lucideTimer })],
   templateUrl: './intervention-properties-grid.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionPropertiesGrid {
+  /** The application's active locale, for relative-time formatting. */
+  private readonly locale: string = inject<string>(LOCALE_ID);
+
   /**
    * Property catalogues
    * @readonly
@@ -176,16 +202,42 @@ export class InterventionPropertiesGrid {
     input.required<InterventionOutput>();
 
   /**
-   * Whether the secondary properties are visible.
-   *
-   * The disclosure is local UI state and resets when the page moves to a
+   * Whether the audit metadata (revision, created, updated) is visible. The
+   * disclosure is local UI state and resets when the page moves to a
    * different intervention, while a refresh of the same intervention keeps
-   * the operator's choice.
+   * the operator's choice. Participants, labels and the description no
+   * longer sit behind this — they read every time, per the norm that a
+   * value gating publication or the day's work may not hide behind a toggle.
    */
   protected readonly detailsExpanded: WritableSignal<boolean> = linkedSignal<string, boolean>({
     source: () => this.intervention().id,
     computation: () => false,
   });
+
+  /**
+   * Property descriptionExpanded
+   * @readonly
+   * @description Whether a long description reads past its 3-line clamp. Resets on intervention change like {@link detailsExpanded}.
+   * @access protected
+   * @since 1.3.0
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly descriptionExpanded: WritableSignal<boolean> = linkedSignal<string, boolean>({
+    source: () => this.intervention().id,
+    computation: () => false,
+  });
+
+  /**
+   * Property descriptionOverflows
+   * @readonly
+   * @description Whether the stored description is long enough to warrant the clamp and its "Show more" toggle.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly descriptionOverflows: Signal<boolean> = computed<boolean>(
+    () => (this.intervention().description ?? '').length > 220,
+  );
 
   /**
    * Property organizationId
@@ -343,6 +395,26 @@ export class InterventionPropertiesGrid {
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
     input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+
+  /**
+   * Property dueSchedule
+   * @readonly
+   *
+   * @description
+   * The due date's urgency, computed once by the page against the
+   * organization's timezone and passed down rather than recomputed here, so
+   * the identity row and this field never disagree on "today". `null` while
+   * there is no due date or the intervention has reached a terminal status.
+   *
+   * @access public
+   * @since 1.3.0
+   *
+   * @type {InputSignal<{ readonly overdue: boolean; readonly label: string } | null>}
+   */
+  public readonly dueSchedule: InputSignal<{
+    readonly overdue: boolean;
+    readonly label: string;
+  } | null> = input<{ readonly overdue: boolean; readonly label: string } | null>(null);
 
   //#endregion
 
@@ -525,6 +597,68 @@ export class InterventionPropertiesGrid {
     this.intervention()
       .participants.map((iri) => this.memberOf(iri))
       .filter((member): member is MemberSelectOption => member !== null),
+  );
+
+  /**
+   * Property visibleParticipants
+   * @readonly
+   * @description The participants the avatar group shows before folding the rest into a count.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<readonly MemberSelectOption[]>}
+   */
+  protected readonly visibleParticipants: Signal<readonly MemberSelectOption[]> = computed<
+    readonly MemberSelectOption[]
+  >(() => this.participantOptions().slice(0, PARTICIPANT_PREVIEW_COUNT));
+
+  /**
+   * Property hiddenParticipantCount
+   * @readonly
+   * @description How many participants the avatar group is not showing.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<number>}
+   */
+  protected readonly hiddenParticipantCount: Signal<number> = computed<number>(() =>
+    Math.max(0, this.participantOptions().length - PARTICIPANT_PREVIEW_COUNT),
+  );
+
+  /**
+   * Property participantNamesLabel
+   * @readonly
+   * @description The full participant name list, read by assistive technology in place of the avatar group's decorative initials.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<string>}
+   */
+  protected readonly participantNamesLabel: Signal<string> = computed<string>(() =>
+    this.participantOptions()
+      .map((member) => member.displayName)
+      .join(', '),
+  );
+
+  /**
+   * Property createdRelative
+   * @readonly
+   * @description When the intervention was created, as a relative label — the absolute instant reads in an adjacent tooltip.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<string>}
+   */
+  protected readonly createdRelative: Signal<string> = computed<string>(() =>
+    formatRelativeTime(this.intervention().createdAt, this.locale),
+  );
+
+  /**
+   * Property updatedRelative
+   * @readonly
+   * @description When the intervention was last updated, as a relative label — the absolute instant reads in an adjacent tooltip.
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<string>}
+   */
+  protected readonly updatedRelative: Signal<string> = computed<string>(() =>
+    formatRelativeTime(this.intervention().updatedAt, this.locale),
   );
 
   /**

@@ -53,12 +53,12 @@ export class CollectionSelectionBar {
   /**
    * Property totalResults
    * @readonly
-   * @description Optional server result total, separately labeled so it cannot imply cross-page selection.
+   * @description Filtered server result total used as the selection counter denominator.
    * @access public
    * @since 1.0.0
-   * @type {InputSignal<number | null>}
+   * @type {InputSignal<number>}
    */
-  public readonly totalResults: InputSignal<number | null> = input<number | null>(null);
+  public readonly totalResults: InputSignal<number> = input.required<number>();
 
   /**
    * Property mobileMode

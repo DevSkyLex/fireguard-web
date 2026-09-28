@@ -8,6 +8,8 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
   OrganizationPermissionOutput,
@@ -15,6 +17,7 @@ import type {
 } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { sheetSide } from '@shared/sheet-side';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmSheetImports } from '@shared/ui/sheet';
@@ -126,7 +129,8 @@ function permissionDomainLabelOf(domain: string): string {
  */
 @Component({
   selector: 'app-organization-role-permissions-sheet',
-  imports: [HlmButton, HlmCheckbox, ...HlmSheetImports],
+  imports: [NgIcon, HlmButton, HlmCheckbox, ...HlmSheetImports, ...HlmAlertImports],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-role-permissions-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

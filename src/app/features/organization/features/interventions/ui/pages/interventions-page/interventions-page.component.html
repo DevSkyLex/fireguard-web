@@ -5,26 +5,22 @@
   (tabActivated)="switchView($event)"
 >
   @if (store.servedFromLocalCache()) {
-    <div
-      class="flex shrink-0 items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3 py-2.5"
-      role="status"
-      data-testid="interventions-offline-notice"
-    >
-      <ng-icon
-        name="lucideCloudOff"
-        class="mt-0.5 shrink-0 text-base text-foreground"
-        aria-hidden="true"
-      />
-      <p class="text-sm text-foreground" i18n="@@intervention.list.offlineNotice">
-        You're offline. These {{ store.totalInterventions() }} intervention(s) are the copy saved on
-        this device; anything created since is not here, and the key figures are unavailable until
-        you reconnect.
+    <div hlmAlert class="shrink-0" role="status" data-testid="interventions-offline-notice">
+      <ng-icon name="lucideCloudOff" aria-hidden="true" />
+      <p hlmAlertTitle i18n="@@intervention.list.offlineNoticeTitle">You're offline</p>
+      <p hlmAlertDescription i18n="@@intervention.list.offlineNotice">
+        These {{ store.totalInterventions() }} intervention(s) are the copy saved on this device;
+        anything created since is not here.
       </p>
     </div>
   }
 
   @if (batchIds().length > 0) {
     <div hlmAlert class="shrink-0" role="status" data-testid="interventions-batch-result">
+      <ng-icon
+        [name]="batchFailedCount() > 0 ? 'lucideCircleAlert' : 'lucideListChecks'"
+        aria-hidden="true"
+      />
       <p hlmAlertTitle i18n="@@intervention.batch.summary">
         {{ batchSucceededCount() }} succeeded · {{ batchFailedCount() }} failed ·
         {{ batchIds().length }} eligible
@@ -966,16 +962,12 @@
     <section
       hlmTabsContent="list"
       class="flex min-h-0 flex-1 flex-col gap-4 mobile-ui:flex-none"
-      [style.padding-bottom]="
-        selectedIds().size > 0 ? 'calc(var(--mobile-navigation-height, 0px) + 6rem)' : null
-      "
+      [class.pb-20]="selectedIds().size > 0"
     >
       @if (listForbidden()) {
         <div hlmEmpty class="border border-border">
           <div hlmEmptyHeader>
-            <div hlmEmptyMedia variant="icon">
-              <ng-icon name="lucideLock" aria-hidden="true" />
-            </div>
+            <app-state-illustration hlmEmptyMedia state="access-denied" />
             <p hlmEmptyTitle i18n="@@intervention.list.forbiddenTitle">
               Not available with your permissions
             </p>
@@ -1010,12 +1002,10 @@
           </div>
         </div>
       } @else if (!store.isLoadingInterventions() && items().length === 0) {
-        @if (hasSearch() || activeFilterKeys().length > 0) {
+        @if (hasSearch()) {
           <div hlmEmpty class="border border-border">
             <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucideSearch" aria-hidden="true" />
-              </div>
+              <app-state-illustration hlmEmptyMedia state="no-results" />
               <p hlmEmptyTitle i18n="@@intervention.list.searchEmptyHeading">
                 No matching intervention
               </p>
@@ -1029,6 +1019,23 @@
               </button>
             </div>
           </div>
+        } @else if (activeFilterKeys().length > 0 || filters().mine) {
+          <div hlmEmpty class="border border-border">
+            <div hlmEmptyHeader>
+              <app-state-illustration hlmEmptyMedia state="no-matches" />
+              <p hlmEmptyTitle i18n="@@intervention.list.filterEmptyHeading">
+                No intervention matches these filters
+              </p>
+              <p hlmEmptyDescription i18n="@@intervention.list.filterEmptyDescription">
+                Clear the filters to see every intervention.
+              </p>
+            </div>
+            <div hlmEmptyContent>
+              <button class="mobile-ui:min-h-11" hlmBtn variant="outline" (click)="clearFilters()">
+                <span i18n="@@intervention.list.clearFilters">Clear filters</span>
+              </button>
+            </div>
+          </div>
         } @else {
           <div hlmEmpty class="border border-border">
             <div hlmEmptyHeader>
@@ -1037,15 +1044,21 @@
               }
               <p hlmEmptyTitle i18n="@@intervention.list.emptyTitle">No interventions yet</p>
               <p hlmEmptyDescription i18n="@@intervention.list.emptyDescription">
-                Create your first intervention to start planning field work.
+                @if (canCreate()) {
+                  Create your first intervention to start planning field work.
+                } @else {
+                  Planners create interventions for this organization.
+                }
               </p>
             </div>
-            <div hlmEmptyContent>
-              <button class="mobile-ui:min-h-11" hlmBtn (click)="openCreate()">
-                <ng-icon name="lucidePlus" aria-hidden="true" />
-                <span i18n="@@intervention.list.newButtonShort">New</span>
-              </button>
-            </div>
+            @if (canCreate()) {
+              <div hlmEmptyContent>
+                <button class="mobile-ui:min-h-11" hlmBtn (click)="openCreate()">
+                  <ng-icon name="lucidePlus" aria-hidden="true" />
+                  <span i18n="@@intervention.list.newButtonShort">New</span>
+                </button>
+              </div>
+            }
           </div>
         }
       } @else {
@@ -1053,6 +1066,7 @@
           [regionalFormatting]="regionalFormatting()"
           [items]="items()"
           [loading]="store.isLoadingInterventions()"
+          [selectable]="canTransition() || canAssign() || canDelete()"
           [selectionMode]="selectionMode()"
           [sortOrder]="sortOrder()"
           [hiddenColumns]="hiddenColumns()"
@@ -1091,69 +1105,76 @@
     >
       @defer (when activeView() === 'board') {
         @if (isMobileInteractionMode()) {
-          <div
-            class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
-            data-testid="interventions-mobile-board"
-          >
-            @for (column of boardColumns(); track column.id) {
-              <section class="flex min-w-0 flex-col gap-3" [attr.aria-label]="column.label">
-                <h2 class="flex items-center justify-between gap-2 text-sm font-medium">
-                  <app-intervention-tag kind="status" [value]="column.id" asOption />
-                  <span>{{ column.total ?? column.items.length }}</span>
-                </h2>
-                @for (card of column.items; track card.id) {
-                  <app-intervention-board-card
-                    [regionalFormatting]="regionalFormatting()"
-                    [item]="card.data"
-                    [canTransition]="canTransition()"
-                    [currentMemberIri]="memberIri()"
-                    [locked]="!!card.disabled"
-                    [detailRouteBase]="detailRouteBase()"
-                    (moveRequested)="onBoardMoveRequested({ item: card.data, columnId: $event })"
-                  />
-                  @if (boardStore.moves()[card.data.intervention.id]?.error; as error) {
-                    <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
-                  }
-                } @empty {
-                  @if (!column.loading && !column.error) {
-                    <p
-                      class="text-sm text-muted-foreground"
-                      i18n="@@intervention.board.columnEmpty"
+          <div class="@container/board">
+            <div
+              class="grid grid-cols-1 gap-4 @xl/board:grid-cols-2 @5xl/board:grid-cols-3"
+              data-testid="interventions-mobile-board"
+            >
+              @for (column of boardColumns(); track column.id; let last = $last) {
+                <section class="flex min-w-0 flex-col gap-3" [attr.aria-label]="column.label">
+                  <h2 class="flex items-center justify-between gap-2 text-sm font-medium">
+                    <app-intervention-tag kind="status" [value]="column.id" asOption />
+                    <hlm-badge
+                      variant="secondary"
+                      class="shrink-0 tabular-nums"
+                      [attr.aria-label]="boardColumnCountLabel(column)"
+                      >{{ column.total ?? column.items.length }}</hlm-badge
                     >
-                      No interventions.
-                    </p>
+                  </h2>
+                  @for (card of column.items; track card.id) {
+                    <app-intervention-board-card
+                      [regionalFormatting]="regionalFormatting()"
+                      [item]="card.data"
+                      [canTransition]="canTransition()"
+                      [currentMemberIri]="memberIri()"
+                      [locked]="!!card.disabled"
+                      [detailRouteBase]="detailRouteBase()"
+                      (moveRequested)="onBoardMoveRequested({ item: card.data, columnId: $event })"
+                    />
+                    @if (boardStore.moves()[card.data.intervention.id]?.error; as error) {
+                      <div hlmAlert variant="destructive" class="px-2.5 py-2 text-xs">
+                        <p hlmAlertDescription>{{ error.message }}</p>
+                      </div>
+                    }
                   }
+                  @if (column.loading) {
+                    <app-collection-skeleton-cards [rows]="2" />
+                  }
+                  @if (column.error) {
+                    <div hlmAlert variant="destructive">
+                      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                      <p hlmAlertTitle>{{ column.error }}</p>
+                      <div hlmAlertAction>
+                        <button
+                          hlmBtn
+                          variant="outline"
+                          size="sm"
+                          class="mobile-ui:min-h-11"
+                          (click)="boardStore.loadMore(column.id)"
+                          i18n="@@common.retry"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    </div>
+                  } @else if (column.hasMore) {
+                    <button
+                      hlmBtn
+                      variant="outline"
+                      class="min-h-11 mobile-ui:min-h-11"
+                      [disabled]="column.loading"
+                      (click)="boardStore.loadMore(column.id)"
+                      i18n="@@common.loadMore"
+                    >
+                      Load more
+                    </button>
+                  }
+                </section>
+                @if (!last) {
+                  <hlm-separator class="@xl/board:hidden" />
                 }
-                @if (column.loading) {
-                  <p role="status" class="text-sm text-muted-foreground" i18n="@@common.loading">
-                    Loading…
-                  </p>
-                }
-                @if (column.error) {
-                  <p role="alert" class="text-sm text-destructive">{{ column.error }}</p>
-                  <button
-                    hlmBtn
-                    variant="outline"
-                    class="min-h-11 mobile-ui:min-h-11"
-                    (click)="boardStore.loadMore(column.id)"
-                    i18n="@@common.retry"
-                  >
-                    Retry
-                  </button>
-                } @else if (column.hasMore) {
-                  <button
-                    hlmBtn
-                    variant="outline"
-                    class="min-h-11 mobile-ui:min-h-11"
-                    [disabled]="column.loading"
-                    (click)="boardStore.loadMore(column.id)"
-                    i18n="@@common.loadMore"
-                  >
-                    Load more
-                  </button>
-                }
-              </section>
-            }
+              }
+            </div>
           </div>
         } @else {
           <app-board
@@ -1182,19 +1203,29 @@
                 (moveRequested)="move($event)"
               />
               @if (boardStore.moves()[card.data.intervention.id]?.error; as error) {
-                <p role="alert" class="px-3 pb-3 text-sm text-destructive">{{ error.message }}</p>
+                <div hlmAlert variant="destructive" class="mx-3 mb-3 px-2.5 py-2 text-xs">
+                  <p hlmAlertDescription>{{ error.message }}</p>
+                </div>
               }
             </ng-template>
           </app-board>
         }
+      } @placeholder (minimum 150ms) {
+        <div class="flex gap-4 overflow-hidden" aria-hidden="true">
+          @for (i of [0, 1, 2]; track i) {
+            <hlm-skeleton class="h-72 w-80 shrink-0 rounded-lg" />
+          }
+        </div>
       }
     </section>
 
-    <section hlmTabsContent="calendar" class="min-h-0 flex-1">
-      <p class="mb-3 text-sm text-muted-foreground" i18n="@@intervention.calendar.scope">
-        Calendar applies status, type, site and responsible filters to the displayed period. Search,
-        priority, labels and date filters remain saved for the list.
-      </p>
+    <section hlmTabsContent="calendar" class="flex min-h-0 flex-1 flex-col gap-4">
+      @if (activeFilterKeys().length > honouredActiveFilterKeys().length || hasSearch()) {
+        <p class="text-sm text-muted-foreground" i18n="@@intervention.calendar.scope">
+          Calendar applies status, type, site and responsible filters to the displayed period.
+          Search, priority, labels and date filters remain saved for the list.
+        </p>
+      }
       @defer (when activeView() === 'calendar') {
         <app-intervention-calendar
           [firstDayOfWeek]="firstDayOfWeek()"
@@ -1207,6 +1238,8 @@
           (monthChanged)="onCalendarMonthChanged($event)"
           (reloadRequested)="calendarReload()"
         />
+      } @placeholder (minimum 150ms) {
+        <app-collection-skeleton-cards [rows]="3" />
       }
     </section>
 
@@ -1225,7 +1258,11 @@
             (editRequested)="editRecurrence($event)"
             (removed)="requestRecurrenceDelete($event)"
             (activeToggled)="toggleRecurrenceActive($event)"
+            (createRequested)="openRecurrenceCreate()"
+            (retryRequested)="retryRecurrences()"
           />
+        } @placeholder (minimum 150ms) {
+          <app-collection-skeleton-cards [rows]="3" />
         }
       </section>
     }
@@ -1333,11 +1370,11 @@
     class="inline-flex min-w-0 items-center gap-1.5"
     [attr.title]="option.roleLabel ? option.label + ' · ' + option.roleLabel : option.label"
   >
-    <hlm-avatar size="sm" class="shrink-0" aria-hidden="true">
+    <hlm-avatar class="size-4 shrink-0" aria-hidden="true">
       @if (option.avatarUrl; as avatarUrl) {
         <img hlmAvatarImage [src]="avatarUrl" alt="" />
       }
-      <span hlmAvatarFallback>{{ option.initials ?? '?' }}</span>
+      <span hlmAvatarFallback class="text-[9px]">{{ option.initials ?? '?' }}</span>
     </hlm-avatar>
     <span class="truncate"
       >{{ option.label }}

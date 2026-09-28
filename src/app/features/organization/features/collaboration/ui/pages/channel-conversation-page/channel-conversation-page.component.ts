@@ -1,11 +1,13 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
+  PLATFORM_ID,
   signal,
   untracked,
   type InputSignal,
@@ -71,7 +73,14 @@ import {
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import { registerMemberPresence } from '@features/organization/services/member-presence';
 import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
-import { HlmAvatar, HlmAvatarFallback, HlmAvatarGroup, HlmAvatarImage } from '@shared/ui/avatar';
+import {
+  HlmAvatar,
+  HlmAvatarFallback,
+  HlmAvatarGroup,
+  HlmAvatarGroupCount,
+  HlmAvatarImage,
+} from '@shared/ui/avatar';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
 import {
@@ -83,6 +92,7 @@ import {
 } from '@shared/ui/dropdown-menu';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSpinner } from '@shared/ui/spinner';
+import { HlmTooltip } from '@shared/ui/tooltip';
 import { MessageThread } from '../../components/message-thread';
 import { ChannelDeleteDialog } from '../../dialogs/channel-delete-dialog';
 import { ChannelEditDialog, type ChannelEditDraft } from '../../dialogs/channel-edit-dialog';
@@ -147,7 +157,10 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
     HlmAvatar,
     HlmAvatarFallback,
     HlmAvatarGroup,
+    HlmAvatarGroupCount,
     HlmAvatarImage,
+    HlmBadge,
+    HlmTooltip,
     HlmDropdownMenu,
     HlmDropdownMenuGroup,
     HlmDropdownMenuItem,
@@ -404,8 +417,22 @@ export class ChannelConversationPage {
         unknownMemberLabel: this.unknownMemberLabel,
         canWrite: this.canWrite(),
         canManage: this.canManage(),
+        receiptKind: 'channel',
+        receiptPositions: this.thread.receiptPositions(),
       }),
   );
+
+  /** Names one typer when possible and counts concurrent typers without exposing member ids. */
+  protected readonly typingLabel: Signal<string | null> = computed((): string | null => {
+    const ids = this.thread.typingMemberIds();
+    if (ids.length === 0) return null;
+    if (ids.length > 1)
+      return $localize`:@@messages.typing.multiple:${ids.length}:count: members are typing…`;
+    const participant = this.participantViews().find((entry) => entry.memberId === ids[0]);
+    return participant?.isResolved
+      ? $localize`:@@messages.typing.named:${participant.displayName}:name: is typing…`
+      : $localize`:@@messages.typing.someone:Someone is typing…`;
+  });
 
   /**
    * Property mentionCandidates
@@ -978,6 +1005,12 @@ export class ChannelConversationPage {
   private readonly events: Events = inject<Events>(Events);
 
   private readonly document: Document = inject<Document>(DOCUMENT);
+  private readonly browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly destroyRef = inject(DestroyRef);
+  private typingIdleTimer: ReturnType<typeof setTimeout> | null = null;
+  private typingActive = false;
+  private typingConversationId: string | null = null;
+  private lastTypingPublishedAt = 0;
 
   /** Stands in wherever a member cannot be named. Never a raw id. */
   private readonly unknownMemberLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
@@ -1035,6 +1068,7 @@ export class ChannelConversationPage {
    * @since 1.0.0
    */
   public constructor() {
+    this.destroyRef.onDestroy((): void => this.stopTyping());
     effect((): void => {
       const channelId: string = this.channelId();
       const organizationId: string | null = this.organizationContext.selectedOrganizationId();
@@ -1043,13 +1077,14 @@ export class ChannelConversationPage {
         this.replyTargetId.set(null);
         this.editTargetId.set(null);
         this.messageDeleteTargetId.set(null);
+        this.stopTyping();
         this.infoSheetVisible.set(false);
         this.pinnedStore.reset();
 
         this.thread.reset();
         this.thread.load(channelId);
         this.thread.connect(channelId);
-        this.thread.markRead({ conversationId: channelId });
+        if (this.browser) this.thread.loadReceipts(channelId);
 
         this.channels.loadOne(channelId);
 
@@ -1058,6 +1093,18 @@ export class ChannelConversationPage {
 
         if (organizationId !== null) this.directory.ensureLoaded(organizationId);
       });
+    });
+
+    effect((): void => {
+      if (!this.browser || this.thread.isLoading()) return;
+      const conversationId = this.channelId();
+      const lastIncoming = this.messages().findLast(
+        (message) => !message.isOwn && message.status === 'sent',
+      );
+      if (lastIncoming !== undefined)
+        untracked((): void => {
+          this.thread.acknowledgeDelivery({ conversationId, messageId: lastIncoming.id });
+        });
     });
 
     effect((): void => {
@@ -1323,8 +1370,47 @@ export class ChannelConversationPage {
    */
   protected markRead(): void {
     if (this.document.visibilityState !== 'visible') return;
+    const latest = this.messages().findLast((message) => message.status === 'sent');
+    if (latest === undefined) return;
+    this.thread.markRead({ conversationId: this.channelId(), lastReadMessageId: latest.id });
+  }
 
-    this.thread.markRead({ conversationId: this.channelId() });
+  /** Sends sparse typing heartbeats while the composer remains active. */
+  protected onTypingActivity(active: boolean): void {
+    if (
+      !this.browser ||
+      !this.canWrite() ||
+      this.document.visibilityState !== 'visible' ||
+      !active
+    ) {
+      this.stopTyping();
+      return;
+    }
+    if (this.typingIdleTimer !== null) clearTimeout(this.typingIdleTimer);
+    const now = Date.now();
+    const conversationId = this.channelId();
+    if (
+      !this.typingActive ||
+      this.typingConversationId !== conversationId ||
+      now - this.lastTypingPublishedAt >= 2_000
+    ) {
+      this.thread.publishTyping({ conversationId, active: true });
+      this.lastTypingPublishedAt = now;
+    }
+    this.typingActive = true;
+    this.typingConversationId = conversationId;
+    this.typingIdleTimer = setTimeout((): void => this.stopTyping(), 3_500);
+  }
+
+  /** A missed stop is bounded by the receiver's five-second expiry. */
+  private stopTyping(): void {
+    if (this.typingIdleTimer !== null) clearTimeout(this.typingIdleTimer);
+    this.typingIdleTimer = null;
+    if (this.typingActive && this.typingConversationId !== null) {
+      this.thread.publishTyping({ conversationId: this.typingConversationId, active: false });
+    }
+    this.typingActive = false;
+    this.typingConversationId = null;
   }
 
   /**

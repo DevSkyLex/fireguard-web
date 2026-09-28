@@ -68,6 +68,7 @@ const row = (
   intervention: intervention(),
   isOverdue: false,
   isDueSoon: false,
+  dueRelativeLabel: null,
   siteName: 'Warehouse B',
   responsible: null,
   people: [],
@@ -121,6 +122,9 @@ describe('InterventionTable', () => {
     expect(element.textContent).toContain('Planned');
     expect(element.textContent).toContain('High');
     expect(element.textContent).toContain('Inventory');
+    expect(
+      element.querySelector('[data-testid="intervention-table"] tbody td:nth-child(5) [hlmBadge]'),
+    ).not.toBeNull();
   });
 
   it('should render the responsible member with an avatar and an accessible unknown fallback', async () => {
@@ -133,7 +137,12 @@ describe('InterventionTable', () => {
       initials: 'AL',
     };
 
-    fixture.componentRef.setInput('items', [row({ responsible })]);
+    fixture.componentRef.setInput('items', [
+      row({
+        responsible,
+        people: [{ label: 'Ada Lovelace' }, { label: 'Grace Hopper' }],
+      }),
+    ]);
     await fixture.whenStable();
 
     const assignedCell: Element | null = element.querySelector(
@@ -141,8 +150,15 @@ describe('InterventionTable', () => {
     );
 
     expect(assignedCell?.textContent).toContain('Ada Lovelace');
+    expect(assignedCell?.textContent).not.toContain('Grace Hopper');
     expect(assignedCell?.querySelector('hlm-avatar')).not.toBeNull();
     expect(assignedCell?.textContent).toContain('AL');
+
+    const participantsCell: Element | null = element.querySelector(
+      '[data-testid="intervention-table"] tbody tr td:nth-child(9)',
+    );
+    expect(participantsCell?.textContent).toContain('Grace Hopper');
+    expect(participantsCell?.textContent).not.toContain('Ada Lovelace');
 
     fixture.componentRef.setInput('items', [row()]);
     await fixture.whenStable();
@@ -153,6 +169,7 @@ describe('InterventionTable', () => {
 
     expect(unknown?.getAttribute('aria-label')).toBe('No responsible assigned');
     expect(unknown?.className).toContain('size-8');
+    expect(unknown?.className).toContain('border-2');
     expect(unknown?.className).toContain('border-dotted');
     expect(unknown?.textContent?.trim()).toBe('—');
   });
@@ -163,7 +180,7 @@ describe('InterventionTable', () => {
     );
 
     expect(sorted.filter((value: string): boolean => value === 'ascending')).toHaveLength(1);
-    expect(sorted.filter((value: string): boolean => value === 'none')).toHaveLength(1);
+    expect(sorted.filter((value: string): boolean => value === 'none')).toHaveLength(3);
   });
 
   it('should emit the field when a sortable head is activated', () => {
@@ -187,11 +204,11 @@ describe('InterventionTable', () => {
 
     fixture.componentRef.setInput(
       'hiddenColumns',
-      new Set<InterventionTableColumn>(['site', 'type']),
+      new Set<InterventionTableColumn>(['site', 'type', 'participants']),
     );
     await fixture.whenStable();
 
-    expect(element.querySelectorAll('thead th')).toHaveLength(before - 2);
+    expect(element.querySelectorAll('thead th')).toHaveLength(before - 3);
     expect(element.querySelector('table')?.textContent).not.toContain('Warehouse B');
     expect(element.querySelector('[data-testid="intervention-table-card"]')?.textContent).toContain(
       'Warehouse B',
@@ -202,16 +219,59 @@ describe('InterventionTable', () => {
   });
 
   it('should mark an overdue deadline with an icon, never with red text', async () => {
-    fixture.componentRef.setInput('items', [row({ isOverdue: true })]);
+    fixture.componentRef.setInput('items', [
+      row({ isOverdue: true, dueRelativeLabel: '3 days ago' }),
+    ]);
     await fixture.whenStable();
 
     const cells: readonly Element[] = [...element.querySelectorAll('tbody td')];
-    const due: Element | undefined = cells.at(-2);
+    const due: Element | undefined = cells.at(-3);
     const icon: Element | null | undefined = due?.querySelector('ng-icon');
 
     expect(due?.className).not.toContain('text-destructive');
     expect(icon).toBeTruthy();
     expect(icon?.className).toContain('text-destructive');
+    expect(due?.querySelector('[hlmBadge]')?.textContent).toContain('Overdue');
+    expect(due?.textContent).not.toContain('3 days ago');
+  });
+
+  it('should keep the desktop intervention summary to one metadata line', async () => {
+    fixture.componentRef.setInput('items', [
+      row({
+        intervention: intervention({
+          workItemsCount: 2,
+          completedWorkItemsCount: 1,
+          blockersCount: 1,
+          labels: [{ id: 'label-1', name: 'Field work', color: '#2463eb' }],
+        }),
+      }),
+    ]);
+    await fixture.whenStable();
+
+    const titleCell: Element | null = element.querySelector(
+      '[data-testid="intervention-table"] tbody tr td:nth-child(3)',
+    );
+    expect(titleCell?.textContent).toContain('1/2');
+    expect(titleCell?.textContent).toContain('1 blocking issue');
+    expect(titleCell?.querySelector('a ng-icon')?.className).toContain('text-destructive');
+    expect(titleCell?.querySelector('a .sr-only')?.textContent).toContain('1 blocking issue');
+    expect(titleCell?.textContent).not.toContain('Field work');
+    expect(titleCell?.querySelector('hlm-progress')).toBeNull();
+  });
+
+  it('should show a blocker beside the name without adding a metadata row', async () => {
+    fixture.componentRef.setInput('items', [
+      row({ intervention: intervention({ blockersCount: 1 }) }),
+    ]);
+    await fixture.whenStable();
+
+    const titleCell: Element | null = element.querySelector(
+      '[data-testid="intervention-table"] tbody tr td:nth-child(3)',
+    );
+
+    expect(titleCell?.querySelector('a ng-icon')?.className).toContain('text-destructive');
+    expect(titleCell?.querySelector('a .sr-only')?.textContent).toContain('1 blocking issue');
+    expect(titleCell?.querySelector('div')).toBeNull();
   });
 
   it('should carry no overdue icon when the deadline is not overdue', async () => {
@@ -219,7 +279,7 @@ describe('InterventionTable', () => {
     await fixture.whenStable();
 
     const cells: readonly Element[] = [...element.querySelectorAll('tbody td')];
-    const due: Element | undefined = cells.at(-2);
+    const due: Element | undefined = cells.at(-3);
 
     expect(due?.querySelector('ng-icon')).toBeNull();
   });

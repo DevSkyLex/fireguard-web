@@ -14,22 +14,28 @@
 
   @if (federatedStore.providersLoading()) {
     <div
-      class="flex min-h-11 items-center justify-center gap-2 text-sm text-muted-foreground"
+      class="grid min-w-0 gap-3 sm:grid-cols-2"
       role="status"
-      aria-live="polite"
+      aria-label="Loading sign-in providers"
+      i18n-aria-label="@@auth.federated.loadingProviders"
     >
-      <hlm-spinner aria-hidden="true" />
-      <span i18n="@@auth.federated.loadingProviders">Loading sign-in providers…</span>
+      <hlm-skeleton class="h-11 w-full" />
+      <hlm-skeleton class="h-11 w-full" />
     </div>
   } @else if (federatedStore.providersCallState().error; as error) {
-    <div class="flex flex-col items-center gap-3 text-center" role="alert">
-      <p class="text-sm text-destructive">{{ federatedErrorMessage(error.message) }}</p>
+    <div hlmAlert variant="destructive">
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <p hlmAlertTitle i18n="@@auth.federated.providersErrorTitle">
+        Couldn't load sign-in providers
+      </p>
+      <p hlmAlertDescription>{{ federatedErrorMessage(error.message) }}</p>
       <button
-        class="mobile-ui:min-h-11"
+        hlmAlertAction
         hlmBtn
         type="button"
         variant="outline"
         size="sm"
+        class="mobile-ui:min-h-11"
         data-testid="federated-provider-retry"
         (click)="retryProviderDiscovery()"
       >
@@ -71,19 +77,17 @@
             } @else {
               <ng-icon [name]="provider" aria-hidden="true" />
             }
-            @if (provider === 'google') {
-              <span i18n="@@auth.federated.google">Google</span>
-            } @else {
-              <span i18n="@@auth.federated.microsoft">Microsoft</span>
-            }
+            <span>{{ providerLabel(provider) }}</span>
           </button>
         }
       </div>
 
       @if (federatedStore.startCallState().error; as error) {
-        <p class="text-center text-sm text-destructive" role="alert">
-          {{ federatedErrorMessage(error.message) }}
-        </p>
+        <div hlmAlert variant="destructive">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@auth.federated.startErrorTitle">Sign-in couldn't start</p>
+          <p hlmAlertDescription>{{ federatedErrorMessage(error.message) }}</p>
+        </div>
       }
     </div>
   }

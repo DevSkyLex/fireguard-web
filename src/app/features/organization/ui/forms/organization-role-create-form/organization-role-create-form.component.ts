@@ -21,12 +21,15 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type {
   CreateOrganizationRoleInput,
   OrganizationPermissionOutput,
 } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -153,6 +156,7 @@ function permissionDomainLabelOf(domain: string): string {
 @Component({
   selector: 'app-organization-role-create-form',
   imports: [
+    NgIcon,
     RequiredMarker,
     FormField,
     HlmButton,
@@ -161,7 +165,9 @@ function permissionDomainLabelOf(domain: string): string {
     ...HlmFieldImports,
     ...HlmTextareaImports,
     HlmSheetFooter,
+    ...HlmAlertImports,
   ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-role-create-form.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,

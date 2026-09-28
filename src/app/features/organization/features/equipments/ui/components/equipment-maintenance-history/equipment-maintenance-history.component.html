@@ -1,48 +1,62 @@
-<section hlmCard data-testid="equipment-maintenance-history">
-  <div hlmCardHeader>
-    <h2 hlmCardTitle i18n="@@equipment.maintenance.title">Maintenance history</h2>
-    <p hlmCardDescription i18n="@@equipment.maintenance.caption">
-      Every status change and intervention recorded against this equipment.
-    </p>
-  </div>
+<section data-testid="equipment-maintenance-history" class="flex flex-col gap-3">
+  <h2 class="sr-only" i18n="@@equipment.maintenance.title">Maintenance history</h2>
+  <p class="text-sm text-muted-foreground" i18n="@@equipment.maintenance.caption">
+    Every status change and intervention recorded against this equipment.
+  </p>
 
-  <div hlmCardContent class="flex flex-col gap-3">
-    @if (loading()) {
-      <div
-        class="flex flex-col gap-3"
-        role="status"
-        aria-label="Loading maintenance history"
-        i18n-aria-label="@@equipment.maintenance.loadingAria"
-        data-testid="equipment-maintenance-history-loading"
+  @if (error()) {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertTitle i18n="@@equipment.maintenance.errorTitle">
+        Couldn't load the maintenance history
+      </p>
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        class="mt-3 mobile-ui:min-h-11"
+        data-testid="equipment-maintenance-history-retry"
+        (click)="retried.emit()"
       >
-        <hlm-skeleton class="h-12 w-full" />
-        <hlm-skeleton class="h-12 w-full" />
+        <span i18n="@@equipment.list.retry">Retry</span>
+      </button>
+    </div>
+  } @else if (loading()) {
+    <div
+      class="flex flex-col gap-3"
+      role="status"
+      aria-label="Loading maintenance history"
+      i18n-aria-label="@@equipment.maintenance.loadingAria"
+      data-testid="equipment-maintenance-history-loading"
+    >
+      <hlm-skeleton class="h-12 w-full" />
+      <hlm-skeleton class="h-12 w-full" />
+    </div>
+  } @else if (orderedLogs().length === 0) {
+    <div hlmEmpty data-testid="equipment-maintenance-history-empty">
+      <div hlmEmptyHeader>
+        <app-resource-illustration hlmEmptyMedia resource="maintenance" />
+        <p hlmEmptyTitle i18n="@@equipment.maintenance.emptyTitle">No maintenance recorded yet</p>
+        <p hlmEmptyDescription i18n="@@equipment.maintenance.emptyDesc">
+          Status changes and interventions on this equipment will appear here.
+        </p>
       </div>
-    } @else if (orderedLogs().length === 0) {
-      <div hlmEmpty data-testid="equipment-maintenance-history-empty">
-        <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideHistory" aria-hidden="true" />
-          </div>
-          <p hlmEmptyTitle i18n="@@equipment.maintenance.emptyTitle">No maintenance recorded yet</p>
-          <p hlmEmptyDescription i18n="@@equipment.maintenance.emptyDesc">
-            Status changes and interventions on this equipment will appear here.
-          </p>
-        </div>
-      </div>
-    } @else {
-      <ul class="flex flex-col divide-y divide-border" data-testid="equipment-maintenance-log-list">
-        @for (log of orderedLogs(); track log.id) {
-          <li class="flex flex-col gap-1 py-3" data-testid="equipment-maintenance-log-row">
+    </div>
+  } @else {
+    <ul class="flex flex-col gap-3" data-testid="equipment-maintenance-log-list">
+      @for (log of orderedLogs(); track log.id) {
+        <li hlmMarker class="items-start" data-testid="equipment-maintenance-log-row">
+          <span hlmMarkerIcon>
+            <ng-icon [name]="sourceDescriptorOf(log.source).icon" aria-hidden="true" />
+          </span>
+          <div hlmMarkerContent class="flex flex-col gap-1">
             <div class="flex flex-wrap items-center gap-2 text-sm">
-              <span class="inline-flex items-center gap-1 text-muted-foreground">
-                <ng-icon [name]="sourceDescriptorOf(log.source).icon" aria-hidden="true" />
-                <span>{{ sourceDescriptorOf(log.source).label }}</span>
-              </span>
-              <span class="text-foreground">{{ dateRangeOf(log).started }}</span>
-              @if (dateRangeOf(log).completed; as completed) {
-                <span class="text-muted-foreground" i18n="@@equipment.maintenance.completedAt"
-                  >→ {{ completed }}</span
+              <span>{{ sourceDescriptorOf(log.source).label }}</span>
+              <span class="text-foreground">{{
+                log.startedAt | appOrgDate: 'datetime' : regionalFormatting()
+              }}</span>
+              @if (log.completedAt; as completed) {
+                <span i18n="@@equipment.maintenance.completedAt"
+                  >&rarr; {{ completed | appOrgDate: 'datetime' : regionalFormatting() }}</span
                 >
               }
             </div>
@@ -51,16 +65,16 @@
             }
             @if (log.interventionId; as interventionId) {
               <a
-                class="inline-flex w-fit items-center text-sm text-muted-foreground hover:text-foreground hover:underline mobile-ui:min-h-11 mobile-ui:min-w-11"
+                class="inline-flex w-fit items-center text-sm text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11 mobile-ui:min-w-11"
                 data-testid="equipment-maintenance-log-intervention-link"
                 [attr.aria-label]="interventionLinkAriaLabelOf(log)"
                 [routerLink]="['/organizations', organizationId(), 'interventions', interventionId]"
                 >FG-{{ log.interventionNumber }}</a
               >
             }
-          </li>
-        }
-      </ul>
-    }
-  </div>
+          </div>
+        </li>
+      }
+    </ul>
+  }
 </section>

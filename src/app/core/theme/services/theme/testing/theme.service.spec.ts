@@ -264,4 +264,21 @@ describe('ThemeService', () => {
     onboardingLogo.remove();
     icon.remove();
   });
+
+  it('should preserve a favicon override through theme changes and restore the default', () => {
+    const icon: HTMLLinkElement = document.createElement('link');
+    icon.setAttribute('data-theme-icon', '');
+    document.head.appendChild(icon);
+
+    service.setFaviconOverride('fireguard-logo-primary-unread.svg');
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-primary-unread.svg');
+
+    service.setTheme('dark');
+    TestBed.tick();
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-primary-unread.svg');
+
+    service.setFaviconOverride(null);
+    expect(icon.getAttribute('href')).toBe('fireguard-logo-primary.svg');
+    icon.remove();
+  });
 });

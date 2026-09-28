@@ -47,7 +47,10 @@ export async function expectResourceIllustration(
   resource: string,
   theme: 'light' | 'dark',
 ): Promise<void> {
-  const media = page.getByTestId('resource-illustration').filter({ visible: true });
+  const media = page
+    .getByTestId('resource-illustration')
+    .filter({ visible: true })
+    .filter({ has: page.locator(`img[src$="/${resource}.svg"]`) });
   const image = media.locator('img');
   await expect(media).toHaveCount(1);
   await expect(media).toHaveAttribute('aria-hidden', 'true');
@@ -65,5 +68,49 @@ export async function expectResourceIllustration(
   expect(bounds.width).toBeLessThanOrEqual(192);
   expect(bounds.width / bounds.height).toBeCloseTo(1.25, 2);
   await expectNoInternalOverflow(media);
+  await expectNoHorizontalOverflow(page);
+}
+
+/**
+ * Function expectIllustration
+ * @description Verifies one named artwork among possibly several illustrated regions on the page:
+ * decorative semantics, decoded image, applied theme and the rendered size of its variant.
+ * @access public
+ * @since 1.1.0
+ * @param {Page} page - Settled page.
+ * @param {{ catalog: 'resource' | 'state'; name: string; theme: 'light' | 'dark'; size?: 'sm' | 'md' }} artwork - Expected artwork.
+ * @returns {Promise<void>} Assertions over the rendered Empty media.
+ */
+export async function expectIllustration(
+  page: Page,
+  artwork: {
+    catalog: 'resource' | 'state';
+    name: string;
+    theme: 'light' | 'dark';
+    size?: 'sm' | 'md';
+  },
+): Promise<void> {
+  const folder = artwork.catalog === 'resource' ? 'resources' : 'empty-states';
+  const media = page
+    .getByTestId(`${artwork.catalog}-illustration`)
+    .filter({ visible: true })
+    .filter({
+      has: page.locator(
+        `img[src="/assets/illustrations/${folder}/${artwork.theme}/${artwork.name}.svg"]`,
+      ),
+    });
+  const image = media.locator('img');
+  await expect(media).toHaveCount(1);
+  await expect(media).toHaveAttribute('aria-hidden', 'true');
+  await expect(image).toHaveAttribute('alt', '');
+  await expect
+    .poll(() => image.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth > 0))
+    .toBe(true);
+  const bounds = await image.boundingBox();
+  if (!bounds) throw new Error(`The ${artwork.name} illustration has no rendered bounds.`);
+  const [min, max] = artwork.size === 'sm' ? [104, 128] : [150, 192];
+  expect(bounds.width).toBeGreaterThanOrEqual(min);
+  expect(bounds.width).toBeLessThanOrEqual(max);
+  expect(bounds.width / bounds.height).toBeCloseTo(1.25, 2);
   await expectNoHorizontalOverflow(page);
 }

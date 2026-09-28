@@ -15,21 +15,26 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { of } from 'rxjs';
 import { PageTabsService } from '@core/page-tabs';
 import {
+  errorCallState,
   idleCallState,
   pendingCallState,
   successCallState,
+  toStoreError,
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
 import { ApprovalRequestService } from '@features/organization/features/approvals/data-access';
 import {
   ORGANIZATION_PERMISSION,
   type CurrentOrganizationMemberProfileOutput,
+  type InvoiceOutput,
   type OrganizationMemberOutput,
   type OrganizationOutput,
 } from '@features/organization/models';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import {
   ActiveOrganizationStore,
   OrganizationMemberAccessStore,
@@ -42,6 +47,10 @@ import {
 } from '@features/organization/state/organization-billing';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
 import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { OrganizationPlanSelector } from '../../../components/organization-plan-selector';
 import { OrganizationSettingsPage } from '../organization-settings-page.component';
 
@@ -102,6 +111,7 @@ describe('OrganizationSettingsPage', () => {
   let transferOwnershipCallState: WritableSignal<CallState<OrganizationOutput>>;
   let cancelCallState: WritableSignal<CallState<unknown>>;
   let subscription: WritableSignal<{ hasSubscription: boolean; cancelAtPeriodEnd: boolean } | null>;
+  let invoices: WritableSignal<readonly InvoiceOutput[]>;
   let permissions: WritableSignal<ReadonlyArray<string>>;
   let actingProfile: WritableSignal<CurrentOrganizationMemberProfileOutput | null>;
   let navigate: ReturnType<typeof vi.fn>;
@@ -121,6 +131,8 @@ describe('OrganizationSettingsPage', () => {
   let checkoutConfirmed: WritableSignal<boolean>;
   let resolveOrganization: ReturnType<typeof vi.fn>;
   let loadQuota: ReturnType<typeof vi.fn>;
+  let reloadQuota: ReturnType<typeof vi.fn>;
+  let quotaCallState: WritableSignal<CallState>;
   let reloadAccess: ReturnType<typeof vi.fn>;
   let loadPricing: ReturnType<typeof vi.fn>;
   let loadInvoices: ReturnType<typeof vi.fn>;
@@ -131,6 +143,7 @@ describe('OrganizationSettingsPage', () => {
 
   let listAllMembers: ReturnType<typeof vi.fn>;
   let listLegalTypes: ReturnType<typeof vi.fn>;
+  let regionalFormatting: WritableSignal<RegionalFormatSettings>;
 
   const renderPageTabs = (): HTMLElement => {
     tabsFixture ??= TestBed.createComponent(PageTabsHost);
@@ -174,7 +187,17 @@ describe('OrganizationSettingsPage', () => {
         },
         {
           provide: OrganizationQuotaStore,
-          useValue: { items: signal([]), isLoadingQuota: signal(false), load: loadQuota },
+          useValue: {
+            items: signal([]),
+            isLoadingQuota: signal(false),
+            quotaCallState,
+            load: loadQuota,
+            reload: reloadQuota,
+          },
+        },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting },
         },
         {
           provide: ApprovalRequestService,
@@ -191,6 +214,14 @@ describe('OrganizationSettingsPage', () => {
         {
           provide: OrganizationService,
           useValue: { listLegalTypes },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('system'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
       ],
     });
@@ -266,7 +297,7 @@ describe('OrganizationSettingsPage', () => {
               isLoadingSubscription: signal(false),
               pricing: signal([]),
               isLoadingPricing: signal(false),
-              invoices: signal([]),
+              invoices,
               isLoadingInvoices: signal(false),
               invoicesError: signal<StoreError | null>(null),
               isStartingCheckout: signal(false),
@@ -331,6 +362,8 @@ describe('OrganizationSettingsPage', () => {
     transferOwnershipCallState = signal<CallState<OrganizationOutput>>(idleCallState());
     cancelCallState = signal<CallState<unknown>>(idleCallState());
     subscription = signal<{ hasSubscription: boolean; cancelAtPeriodEnd: boolean } | null>(null);
+    invoices = signal<readonly InvoiceOutput[]>([]);
+    regionalFormatting = signal<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
     permissions = signal<ReadonlyArray<string>>([ORGANIZATION_PERMISSION.DELETE]);
     actingProfile = signal<CurrentOrganizationMemberProfileOutput | null>({
       id: 'member-1',
@@ -355,6 +388,8 @@ describe('OrganizationSettingsPage', () => {
     checkoutConfirmed = signal(false);
     resolveOrganization = vi.fn().mockReturnValue(of(organization()));
     loadQuota = vi.fn();
+    reloadQuota = vi.fn();
+    quotaCallState = signal<CallState>(idleCallState());
     reloadAccess = vi.fn();
     loadPricing = vi.fn();
     loadInvoices = vi.fn();
@@ -490,13 +525,14 @@ describe('OrganizationSettingsPage', () => {
     }
   });
 
-  it('should give the danger tab trigger icon the destructive tint, keeping its label neutral', async () => {
+  it('should keep the danger tab icon and label neutral', async () => {
     await createPage('danger');
 
     const dangerTrigger: HTMLElement | null = byTestId('org-settings-tab-danger');
     const dangerIcon: Element | null | undefined = dangerTrigger?.querySelector('ng-icon');
 
-    expect(dangerIcon?.className).toContain('text-destructive');
+    expect(dangerIcon).not.toBeNull();
+    expect(dangerIcon?.className).not.toContain('text-destructive');
     expect(dangerTrigger?.className).not.toContain('text-destructive');
     expect(dangerTrigger?.textContent).toContain('Danger zone');
   });
@@ -535,18 +571,18 @@ describe('OrganizationSettingsPage', () => {
     await createPage('subscription');
 
     const trigger: HTMLElement = byTestId('org-settings-billing-checkout') as HTMLElement;
-    const card: HTMLElement | null = trigger.closest('[hlmCard], [data-slot="card"]');
+    const item: HTMLElement | null = trigger.closest('[hlmcard]');
 
-    expect(card).not.toBeNull();
+    expect(item).not.toBeNull();
   });
 
-  it('should render the danger zone as a card', async () => {
+  it('should render the danger action in a card', async () => {
     await createPage('danger');
 
     const trigger: HTMLElement = byTestId('org-settings-danger-open') as HTMLElement;
-    const card: HTMLElement | null = trigger.closest('[hlmCard], [data-slot="card"]');
+    const group: HTMLElement | null = trigger.closest('[hlmcard]');
 
-    expect(card).not.toBeNull();
+    expect(group).not.toBeNull();
   });
 
   it('should write a picked tab back onto the ?tab= query parameter', async () => {
@@ -758,6 +794,17 @@ describe('OrganizationSettingsPage', () => {
     expect(byTestId('org-settings-danger-restore')).toBeNull();
   });
 
+  it('should name the organization’s current status next to Suspend or restore', async () => {
+    selectedOrganization.set(organization({ status: 'suspended' }));
+    await createPage('danger');
+
+    const suspendRow: HTMLElement | null = byTestId('org-settings-danger-restore')?.closest(
+      '[hlmcard]',
+    ) as HTMLElement | null;
+
+    expect(suspendRow?.textContent).toContain('Suspended');
+  });
+
   it('should show Restore but not Suspend for a suspended organization', async () => {
     selectedOrganization.set(organization({ status: 'suspended' }));
     await createPage('danger');
@@ -771,6 +818,17 @@ describe('OrganizationSettingsPage', () => {
     await createPage('danger');
 
     expect(byTestId('org-settings-danger-restore')).not.toBeNull();
+  });
+
+  it('should render the archived status badge with a resolved glyph, not an unregistered icon name', async () => {
+    selectedOrganization.set(organization({ status: 'archived' }));
+    await createPage('danger');
+
+    const statusRow = byTestId('org-settings-danger-restore')?.closest('[hlmcard]');
+    const badge = statusRow?.querySelector('[data-slot="badge"]');
+
+    expect(badge?.textContent).toContain('Archived');
+    expect(badge?.querySelector('ng-icon svg')).not.toBeNull();
   });
 
   it('should suspend the active organization once confirmed', async () => {
@@ -906,6 +964,36 @@ describe('OrganizationSettingsPage', () => {
     expect(byTestId('org-settings-subscription-resume')).toBeNull();
   });
 
+  it('renders an invoice row by its number and status tag, never the raw status enum', async () => {
+    invoices.set([
+      {
+        id: 'inv-1',
+        number: 'INV-0042',
+        status: 'paid',
+        amount: 1999,
+        currency: 'usd',
+        createdAt: '2026-01-15T00:00:00+00:00',
+      } as InvoiceOutput,
+    ]);
+    await createPage('subscription');
+
+    const row: HTMLElement | null = byTestId('org-settings-invoice-row');
+
+    expect(row?.textContent).toContain('INV-0042');
+    expect(row?.textContent).toContain('Paid');
+    expect(row?.textContent).not.toContain('paid');
+  });
+
+  it('should reload the quota usage when the Usage tab’s Retry is activated', async () => {
+    quotaCallState.set(errorCallState(toStoreError(new Error('Network down'))));
+    await createPage('usage');
+
+    (byTestId('organization-usage-retry') as HTMLButtonElement | null)?.click();
+    await fixture.whenStable();
+
+    expect(reloadQuota).toHaveBeenCalledOnce();
+  });
+
   it('should cancel the active subscription once confirmed', async () => {
     await createPage('subscription');
 
@@ -943,6 +1031,9 @@ describe('OrganizationSettingsPage', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(byTestId('org-settings-tab-access')).not.toBeNull();
+    expect(
+      byTestId('org-settings-tab-access')?.querySelector('ng-icon[name="lucideKeyRound"]'),
+    ).not.toBeNull();
     expect(fixture.componentInstance['accessStore'].loadPolicy).toHaveBeenCalledWith('org-1');
   });
 
@@ -1056,5 +1147,13 @@ describe('OrganizationSettingsPage', () => {
     expect(page['formatDate'](null)).toBeNull();
     expect(page['formatDate']('not-a-date')).toBeNull();
     expect(page['formatDate']('2026-09-23T12:00:00+00:00')).toBeTruthy();
+  });
+
+  it("renders the renewal date in the organization's timezone, not the runtime's own", async () => {
+    regionalFormatting.set({ dateFormat: 'yyyy-MM-dd', timezone: 'Asia/Tokyo' });
+    await createPage('subscription');
+    const page = fixture.componentInstance;
+
+    expect(page['formatDate']('2026-09-23T15:30:00+00:00')).toBe('2026-09-24');
   });
 });

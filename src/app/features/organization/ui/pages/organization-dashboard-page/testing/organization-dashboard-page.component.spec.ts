@@ -11,13 +11,14 @@ import {
   type OrganizationDashboardOverviewTrendResource,
   type OrganizationDashboardTrendOutput,
 } from '@features/organization/models';
-import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import {
   AssetGrowthTrendStore,
   DashboardStore,
   OverviewTrendStore,
 } from '@features/organization/state/organization-dashboard';
 import { LineChart } from '@shared/chart';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { OrganizationDashboardPage } from '../organization-dashboard-page.component';
 
 const RECENT: OrganizationDashboardRecentIntervention = {
@@ -115,6 +116,10 @@ describe('OrganizationDashboardPage', () => {
         {
           provide: ORGANIZATION_CONTEXT_PORT,
           useValue: { selectedOrganizationId: signal('org-1') },
+        },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
         },
         {
           provide: OrganizationPermissionService,

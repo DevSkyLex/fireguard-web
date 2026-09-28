@@ -4,6 +4,7 @@ import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationSearchOutput } from '@features/organization/models';
@@ -69,6 +70,14 @@ describe('OrganizationGlobalSearch', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated: signal(true) } },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('system'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: {
@@ -266,6 +275,14 @@ describe('OrganizationGlobalSearch', () => {
             },
           },
           { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated: signal(true) } },
+          {
+            provide: THEME_PORT,
+            useValue: {
+              theme: signal('system'),
+              resolvedTheme: signal('light'),
+              setTheme: vi.fn(),
+            } satisfies ThemePort,
+          },
           {
             provide: ActiveOrganizationStore,
             useValue: { selectedOrganizationId: signal('org-1') },

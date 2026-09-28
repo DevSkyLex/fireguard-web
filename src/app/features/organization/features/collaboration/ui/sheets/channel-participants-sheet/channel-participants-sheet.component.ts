@@ -11,10 +11,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideUserMinus, lucideUserPlus, lucideUsers } from '@ng-icons/lucide';
+import { lucideUserMinus, lucideUserPlus } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type { PresenceStatus, MemberDirectoryEntry } from '@features/organization/models';
 import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
+import { ResourceIllustration } from '@shared/resource-illustration';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
@@ -79,9 +80,10 @@ import type { ChannelParticipantView } from './models';
     HlmItem,
     HlmSkeleton,
     HlmSpinner,
+    ResourceIllustration,
     ...HlmSheetImports,
   ],
-  providers: [provideIcons({ lucideUserMinus, lucideUserPlus, lucideUsers })],
+  providers: [provideIcons({ lucideUserMinus, lucideUserPlus })],
   templateUrl: './channel-participants-sheet.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

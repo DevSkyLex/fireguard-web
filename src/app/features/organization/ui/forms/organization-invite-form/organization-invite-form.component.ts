@@ -11,6 +11,8 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { email, form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { StoreError } from '@core/request-state';
 import type {
   InviteOrganizationMemberInput,
@@ -18,6 +20,7 @@ import type {
 } from '@features/organization/models';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
@@ -55,13 +58,16 @@ const EMPTY_VALUES: OrganizationInviteFormDraft = { email: '', roleId: '' };
 @Component({
   selector: 'app-organization-invite-form',
   imports: [
+    NgIcon,
     RequiredMarker,
     FormField,
     HlmButton,
     HlmInput,
     ...HlmFieldImports,
     ...HlmSelectImports,
+    ...HlmAlertImports,
   ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-invite-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,

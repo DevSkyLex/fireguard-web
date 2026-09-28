@@ -27,13 +27,21 @@
       <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         @if (serverMessages().length > 0) {
           <div
+            hlmAlert
+            variant="destructive"
             role="alert"
             data-testid="organization-role-permissions-error"
-            class="text-sm text-destructive"
+            class="mb-3"
           >
-            @for (message of serverMessages(); track message) {
-              <p>{{ message }}</p>
-            }
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <p hlmAlertTitle i18n="@@org.team.permissionsSheet.errorTitle">
+              Couldn't save permissions
+            </p>
+            <div hlmAlertDescription>
+              @for (message of serverMessages(); track message) {
+                <p>{{ message }}</p>
+              }
+            </div>
           </div>
         }
 

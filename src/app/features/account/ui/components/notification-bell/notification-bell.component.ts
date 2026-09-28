@@ -11,12 +11,24 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideAtSign, lucideBell } from '@ng-icons/lucide';
+import {
+  lucideArrowRight,
+  lucideAtSign,
+  lucideBell,
+  lucideBuilding2,
+  lucideClipboardCheck,
+  lucideClipboardList,
+  lucideMapPin,
+  lucidePackage,
+  lucideUserRound,
+  lucideWrench,
+} from '@ng-icons/lucide';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type { InboxItemOutput } from '@features/account/models';
 import { InboxStore, type InboxStoreType } from '@features/account/state';
 import { displayInboxTitle } from '@features/account/utils/inbox-item-title';
 import { inboxConversationLink } from '@features/account/utils/inbox-link';
+import { displayNotificationBody } from '@features/account/utils/notification-body/notification-body.utils';
 import { SLOT_PRESENTATION, type SlotPresentation } from '@shared/layout-slot';
 import { formatRelativeTime } from '@shared/relative-time';
 import { HlmButton } from '@shared/ui/button';
@@ -82,7 +94,20 @@ const UNREAD_DISPLAY_CEILING: number = 99;
     HlmSeparator,
     HlmSkeleton,
   ],
-  providers: [provideIcons({ lucideArrowRight, lucideAtSign, lucideBell })],
+  providers: [
+    provideIcons({
+      lucideArrowRight,
+      lucideAtSign,
+      lucideBell,
+      lucideBuilding2,
+      lucideClipboardCheck,
+      lucideClipboardList,
+      lucideMapPin,
+      lucidePackage,
+      lucideUserRound,
+      lucideWrench,
+    }),
+  ],
   templateUrl: './notification-bell.component.html',
   host: { class: 'contents' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -142,6 +167,16 @@ export class NotificationBell {
    * @type {typeof displayInboxTitle}
    */
   protected readonly inboxTitle: typeof displayInboxTitle = displayInboxTitle;
+
+  /**
+   * Property notificationBody
+   * @readonly
+   * @description Removes the legacy onboarding session identifier from stored previews.
+   * @access protected
+   * @since 1.0.0
+   * @type {typeof displayNotificationBody}
+   */
+  protected readonly notificationBody: typeof displayNotificationBody = displayNotificationBody;
 
   /**
    * Property panelState
@@ -281,6 +316,40 @@ export class NotificationBell {
    */
   protected isMention(item: InboxItemOutput): boolean {
     return item.sourceKey === 'messaging.mention' && item.kind === 'mention';
+  }
+
+  /**
+   * Method iconFor
+   * @method iconFor
+   * @description Chooses a source-aware icon from the optional notification event type.
+   * Unknown and older inbox entries retain the generic bell.
+   * @access protected
+   * @since 1.0.0
+   * @param {InboxItemOutput} item - The inbox entry to represent.
+   * @returns {string} Registered Lucide icon name.
+   */
+  protected iconFor(item: InboxItemOutput): string {
+    if (this.isMention(item)) return 'lucideAtSign';
+    if (item.sourceKey !== 'notification') return 'lucideBell';
+
+    switch (item.sourceType?.split('.')[0]) {
+      case 'organization':
+        return 'lucideBuilding2';
+      case 'intervention':
+        return 'lucideClipboardList';
+      case 'inspection':
+        return 'lucideClipboardCheck';
+      case 'facility':
+        return 'lucideMapPin';
+      case 'equipment':
+        return 'lucidePackage';
+      case 'maintenance':
+        return 'lucideWrench';
+      case 'user':
+        return 'lucideUserRound';
+      default:
+        return 'lucideBell';
+    }
   }
   //#endregion
 

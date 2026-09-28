@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   InterventionRecurrenceOutput,
   InterventionTemplateOutput,
@@ -44,7 +45,19 @@ describe('InterventionRecurrenceTable', () => {
     root().querySelector(`[data-testid="${id}"]`);
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
+    });
 
     fixture = TestBed.createComponent(InterventionRecurrenceTable);
     fixture.componentRef.setInput('recurrences', []);
@@ -103,7 +116,77 @@ describe('InterventionRecurrenceTable', () => {
 
     expect(row.textContent).toContain('Quarterly fire door check');
     expect(row.textContent).toContain('Annual inspection round');
-    expect(row.textContent).toContain('2× Quarterly');
+    expect(row.textContent).toContain('Every 2 quarters');
+    expect(row.textContent).not.toContain('2×');
+  });
+
+  it('names a single-interval cadence by its bare unit, never "1× Weekly"', async () => {
+    fixture.componentRef.setInput('recurrences', [
+      recurrence({ frequency: 'weekly', interval: 1 }),
+    ]);
+    await fixture.whenStable();
+
+    const row = byTestId('intervention-recurrence-row-recurrence-1') as HTMLElement;
+
+    expect(row.textContent).toContain('Weekly');
+    expect(row.textContent).not.toContain('1×');
+    expect(row.textContent).not.toContain('Every 1');
+  });
+
+  it('shows a paused recurrence as "Paused" instead of its next occurrence', async () => {
+    fixture.componentRef.setInput('recurrences', [recurrence({ isActive: false })]);
+    await fixture.whenStable();
+
+    const cell = byTestId('intervention-recurrence-next-recurrence-1') as HTMLElement;
+
+    expect(cell.textContent).toContain('Paused');
+  });
+
+  it('names when a recurrence last drafted, and until when it runs', async () => {
+    fixture.componentRef.setInput('recurrences', [
+      recurrence({ lastMaterializedAt: '2026-01-01T00:00:00Z', endAt: '2026-12-31T00:00:00Z' }),
+    ]);
+    await fixture.whenStable();
+
+    const cell = byTestId('intervention-recurrence-next-recurrence-1') as HTMLElement;
+
+    expect(cell.textContent).toContain('Last drafted');
+    expect(cell.textContent).toContain('until');
+  });
+
+  it('offers a "New recurrence" action from the empty state only when the viewer can write', async () => {
+    fixture.componentRef.setInput('canWrite', false);
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-recurrences-create')).toBeNull();
+
+    fixture.componentRef.setInput('canWrite', true);
+    await fixture.whenStable();
+
+    expect(byTestId('intervention-recurrences-create')).not.toBeNull();
+  });
+
+  it('emits createRequested and retryRequested from their respective actions', async () => {
+    fixture.componentRef.setInput('canWrite', true);
+    await fixture.whenStable();
+
+    const createRequested = vi.fn();
+    fixture.componentInstance.createRequested.subscribe(createRequested);
+    byTestId('intervention-recurrences-create')?.dispatchEvent(
+      new Event('click', { bubbles: true }),
+    );
+
+    fixture.componentRef.setInput('error', 'Recurrences could not be loaded.');
+    await fixture.whenStable();
+
+    const retryRequested = vi.fn();
+    fixture.componentInstance.retryRequested.subscribe(retryRequested);
+    byTestId('intervention-recurrences-retry')?.dispatchEvent(
+      new Event('click', { bubbles: true }),
+    );
+
+    expect(createRequested).toHaveBeenCalledTimes(1);
+    expect(retryRequested).toHaveBeenCalledTimes(1);
   });
 
   it('should hide the edit/delete affordances without canWrite', async () => {

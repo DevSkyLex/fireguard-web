@@ -19,22 +19,19 @@
   </p>
 }
 @if (error() && hasResult()) {
-  <div
-    role="alert"
-    class="flex flex-wrap items-center justify-between gap-3 text-sm"
-    data-testid="intervention-table-refresh-error"
-  >
-    <div class="min-w-0">
-      <p class="font-medium" i18n="@@intervention.tables.refreshFailed">
-        Could not update these results. Previously loaded rows are still shown.
-      </p>
-      <p class="break-words text-muted-foreground">{{ error() }}</p>
-    </div>
+  <div hlmAlert variant="destructive" role="alert" data-testid="intervention-table-refresh-error">
+    <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+    <p hlmAlertTitle i18n="@@intervention.tables.refreshFailed">
+      Could not update these results. Previously loaded rows are still shown.
+    </p>
+    <p hlmAlertDescription class="break-words">{{ error() }}</p>
     <button
+      hlmAlertAction
       hlmBtn
       type="button"
       variant="outline"
       size="sm"
+      class="mobile-ui:min-h-11"
       [disabled]="loading()"
       (click)="retryRequested.emit()"
       i18n="@@intervention.tables.retry"

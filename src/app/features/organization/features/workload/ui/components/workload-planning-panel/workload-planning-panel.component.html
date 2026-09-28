@@ -5,19 +5,16 @@
     class="@container flex min-w-0 flex-col gap-4"
   >
     <div class="flex flex-col gap-1">
-      <h2
-        id="workload-planning-title"
-        class="text-lg font-semibold"
-        i18n="@@workload.planning.title"
-      >
-        Work to plan
-      </h2>
+      <h2 id="workload-planning-title" hlmLarge i18n="@@workload.planning.title">Work to plan</h2>
       <p class="max-w-prose text-sm text-muted-foreground" i18n="@@workload.planning.description">
         These tasks are not included in daily totals. Expand a reason to see what needs attention.
       </p>
     </div>
-    <div class="min-w-0 divide-y rounded-xl border">
+    <div class="flex min-w-0 flex-col">
       @for (group of groups(); track group.reason) {
+        @if (!$first) {
+          <hlm-item-separator />
+        }
         <div
           hlmCollapsible
           [expanded]="expandedReason() === group.reason"
@@ -68,11 +65,13 @@
                 </p>
                 <ul hlmItemGroup>
                   @for (row of group.rows; track row.key) {
+                    @if (!$first) {
+                      <hlm-item-separator />
+                    }
                     <li class="flex min-w-0 flex-col gap-2">
                       <a
                         hlmItem
                         size="sm"
-                        variant="muted"
                         [routerLink]="[
                           '/organizations',
                           organizationId(),
@@ -107,6 +106,9 @@
                                 <span hlmBadge variant="outline" i18n="@@workload.draft"
                                   >Draft</span
                                 >
+                              }
+                              @if (row.periodLabel; as period) {
+                                <span class="tabular-nums">{{ period }}</span>
                               }
                             </div>
                           </div>

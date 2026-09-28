@@ -19,6 +19,13 @@
     "error",
     "all-clear",
     "waiting",
-    "no-notifications"
+    "no-notifications",
+    "no-matches",
+    "no-selection",
+    "no-data",
+    "not-found",
+    "no-history",
+    "sync-pending",
+    "no-events"
   ]
 }

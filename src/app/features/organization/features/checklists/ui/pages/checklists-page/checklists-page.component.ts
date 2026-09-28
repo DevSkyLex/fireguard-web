@@ -20,13 +20,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideCircleAlert,
-  lucideCircleDot,
-  lucideListChecks,
-  lucideLock,
-  lucidePlus,
-} from '@ng-icons/lucide';
+import { lucideCircleAlert, lucideCircleDot, lucidePlus } from '@ng-icons/lucide';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -53,6 +47,7 @@ import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
@@ -74,11 +69,12 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
  * Route entry page for the organization's checklist templates: a search box
  * and an editable "Status" filter chip (`app-collection-filter-bar`,
  * `@shared/collection-filters`) above `ChecklistTable`, a "New checklist"
- * header action, and the create/edit/archive dialogs the row menu and
- * header button open. Owns the query the table renders (search, status
- * filter, paging) and every write the table and dialogs only ask for
- * (`ARCHITECTURE.md` §10.3/§10.5) — the table and the three dialogs inject
- * no store and call no service themselves.
+ * header action navigating to the dedicated create route, and the archive
+ * confirmation the row menu opens. `ChecklistTable`'s own name link is the
+ * only way to a row's detail record, where it is both viewed and edited.
+ * Owns the query the table renders (search, status filter, paging) and the
+ * archive write the table only asks for (`ARCHITECTURE.md` §10.3/§10.5) —
+ * the table and the dialog inject no store and call no service themselves.
  *
  * The status chip renders `app-checklist-status-tag` in place of the raw
  * enum value — the same registry `ChecklistTable`'s Status column already
@@ -97,7 +93,7 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
  * chip's equivalent of the `state`/`stateChanged` open-on-pick contract the
  * bar's other, popover-backed value controls use.
  *
- * @version 2.2.0
+ * @version 2.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -107,6 +103,7 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
     NgIcon,
     ...HlmEmptyImports,
     ResourceIllustration,
+    StateIllustration,
     ChecklistArchiveDialog,
     ChecklistStatusTag,
     ChecklistTable,
@@ -118,10 +115,7 @@ const STATUS_VALUES: readonly ChecklistStatus[] = ['active', 'archived'];
     HlmButton,
     ...HlmToggleGroupImports,
   ],
-  providers: [
-    ChecklistStore,
-    provideIcons({ lucideCircleAlert, lucideCircleDot, lucideListChecks, lucideLock, lucidePlus }),
-  ],
+  providers: [ChecklistStore, provideIcons({ lucideCircleAlert, lucideCircleDot, lucidePlus })],
   templateUrl: './checklists-page.component.html',
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -225,6 +219,18 @@ export class ChecklistsPage {
   /** The rows the current page renders. */
   protected readonly items: Signal<readonly ChecklistOutput[]> = computed(() =>
     this.store.checklists(),
+  );
+
+  /**
+   * Property detailRouteBase
+   * @readonly
+   * @description Path segments `ChecklistTable`'s name link appends a checklist id to.
+   * @access protected
+   * @since 2.3.0
+   * @type {Signal<readonly string[]>}
+   */
+  protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
+    () => ['/organizations', this.organizationId(), 'checklists'],
   );
 
   /**
@@ -580,23 +586,6 @@ export class ChecklistsPage {
   protected openCreateDialog(): void {
     if (this.canWrite())
       void this.router.navigate(['/organizations', this.organizationId(), 'checklists', 'new']);
-  }
-
-  /**
-   * Method requestEdit
-   * @description Opens the edit dialog for a row.
-   * @access protected
-   * @since 2.0.0
-   * @param {ChecklistOutput} checklist - The row to edit.
-   * @returns {void}
-   */
-  protected requestEdit(checklist: ChecklistOutput): void {
-    void this.router.navigate([
-      '/organizations',
-      this.organizationId(),
-      'checklists',
-      checklist.id,
-    ]);
   }
 
   /**

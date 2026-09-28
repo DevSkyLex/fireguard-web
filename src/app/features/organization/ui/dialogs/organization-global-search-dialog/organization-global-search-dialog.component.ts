@@ -35,6 +35,7 @@ import {
   OrganizationSearchStore,
   type OrganizationSearchStoreType,
 } from '@features/organization/state/organization-search';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCommandImports } from '@shared/ui/command';
@@ -90,6 +91,7 @@ const SEARCH_GROUP_ORDER: readonly OrganizationSearchResultType[] = [
     HlmKbdImports,
     HlmInputGroupImports,
     HlmSpinner,
+    StateIllustration,
   ],
   providers: [
     OrganizationSearchStore,

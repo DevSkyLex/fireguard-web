@@ -11,8 +11,10 @@ import {
   INTERACTION_CAPABILITIES_PORT,
 } from '@core/interaction-capabilities';
 import { idleCallState } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { TitleService } from '@core/title';
 import { MessageService } from '@features/organization/features/collaboration/data-access';
+import type { MessageOutput } from '@features/organization/features/collaboration/models';
 import {
   DirectConversationsStore,
   MessageThreadStore,
@@ -47,11 +49,16 @@ describe('DirectConversationPage', () => {
     reset: ReturnType<typeof vi.fn>;
     load: ReturnType<typeof vi.fn>;
     connect: ReturnType<typeof vi.fn>;
+    loadReceipts: ReturnType<typeof vi.fn>;
+    acknowledgeDelivery: ReturnType<typeof vi.fn>;
+    publishTyping: ReturnType<typeof vi.fn>;
     markRead: ReturnType<typeof vi.fn>;
     send: ReturnType<typeof vi.fn>;
     loadOlder: ReturnType<typeof vi.fn>;
     retryFailed: ReturnType<typeof vi.fn>;
     sortedMessages: ReturnType<typeof vi.fn>;
+    receiptPositions: ReturnType<typeof vi.fn>;
+    typingMemberIds: ReturnType<typeof vi.fn>;
     pendingMessageIds: ReturnType<typeof vi.fn>;
     failedMessageIds: ReturnType<typeof vi.fn>;
     isLoading: ReturnType<typeof vi.fn>;
@@ -142,6 +149,14 @@ describe('DirectConversationPage', () => {
             isLoadingOrganization: signal(false),
           },
         },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
       ],
     });
 
@@ -169,11 +184,16 @@ describe('DirectConversationPage', () => {
       reset: vi.fn(),
       load: vi.fn(),
       connect: vi.fn(),
+      loadReceipts: vi.fn(),
+      acknowledgeDelivery: vi.fn(),
+      publishTyping: vi.fn(),
       markRead: vi.fn(),
       send: vi.fn(),
       loadOlder: vi.fn(),
       retryFailed: vi.fn(),
       sortedMessages: vi.fn(() => []),
+      receiptPositions: vi.fn(() => []),
+      typingMemberIds: vi.fn(() => []),
       pendingMessageIds: vi.fn(() => []),
       failedMessageIds: vi.fn(() => []),
       isLoading: vi.fn(() => false),
@@ -203,7 +223,56 @@ describe('DirectConversationPage', () => {
     expect(thread.reset).toHaveBeenCalled();
     expect(thread.load).toHaveBeenCalledWith('dc-1');
     expect(thread.connect).toHaveBeenCalledWith('dc-1');
-    expect(thread.markRead).toHaveBeenCalledWith({ conversationId: 'dc-1' });
+    expect(thread.loadReceipts).toHaveBeenCalledWith('dc-1');
+    expect(thread.markRead).not.toHaveBeenCalled();
+  });
+
+  it('acknowledges a loaded incoming message before claiming it was read', async () => {
+    thread.sortedMessages.mockReturnValue([
+      {
+        '@id': '/api/messages/message-2',
+        '@type': 'Message',
+        id: 'message-2',
+        conversation: '/api/conversations/dc-1',
+        authorMember: COUNTERPART_IRI,
+        body: 'Hello',
+        mentions: [],
+        mentionNames: {},
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+        isDeleted: false,
+        attachments: [],
+        isSaved: false,
+        replyCount: 0,
+        reactions: [],
+        references: [],
+      } satisfies MessageOutput,
+    ]);
+    await createPage();
+
+    expect(thread.acknowledgeDelivery).toHaveBeenCalledWith({
+      conversationId: 'dc-1',
+      messageId: 'message-2',
+    });
+  });
+
+  it('publishes typing state without a draft body', async () => {
+    await createPage();
+    fixture.componentInstance['onTypingActivity'](true);
+    fixture.componentInstance['onTypingActivity'](false);
+
+    expect(thread.publishTyping).toHaveBeenCalledWith({ conversationId: 'dc-1', active: true });
+    expect(thread.publishTyping).toHaveBeenCalledWith({ conversationId: 'dc-1', active: false });
+  });
+
+  it('keeps a typing indicator readable when a deep link has no counterpart name yet', async () => {
+    counterpart = undefined;
+    thread.typingMemberIds.mockReturnValue(['member-9']);
+    await createPage();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="message-typing-indicator"]')?.textContent,
+    ).toContain('Someone is typing');
   });
 
   it('should re-run the whole sequence when another conversation is routed to', async () => {

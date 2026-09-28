@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  LOCALE_ID,
   computed,
   inject,
   input,
@@ -13,12 +14,11 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowRight, lucideCircleAlert, lucideEllipsis } from '@ng-icons/lucide';
+import { lucideArrowRight, lucideCircleAlert, lucideEllipsis, lucideTimer } from '@ng-icons/lucide';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
-import {
-  resolveInterventionTag,
-  type InterventionStatus,
-  type InterventionBoardCardViewModel,
+import type {
+  InterventionStatus,
+  InterventionBoardCardViewModel,
 } from '@features/organization/features/interventions/models';
 import { resolveInterventionBoardMoveReason } from '@features/organization/features/interventions/utils';
 import { GateReasonDirective } from '@shared/gate-reason';
@@ -27,14 +27,23 @@ import {
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { formatRelativeDays } from '@shared/relative-time';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { InterventionTag } from '../intervention-tag';
+
+/**
+ * The window (48 hours) inside which an active deadline counts as "due soon"
+ * — mirrors `InterventionsPage`'s own `DUE_SOON_WINDOW_MS`. Not shared: two
+ * call sites do not yet justify a `utils/` extraction (`ARCHITECTURE.md` §2.9).
+ */
+const DUE_SOON_WINDOW_MS: number = 48 * 60 * 60 * 1000;
 
 /**
  * Component InterventionBoardCard
@@ -66,8 +75,9 @@ import { InterventionTag } from '../intervention-tag';
     ...HlmDrawerImports,
     ...HlmItemImports,
     ...HlmCardImports,
+    ...HlmProgressImports,
   ],
-  providers: [provideIcons({ lucideArrowRight, lucideCircleAlert, lucideEllipsis })],
+  providers: [provideIcons({ lucideArrowRight, lucideCircleAlert, lucideEllipsis, lucideTimer })],
   templateUrl: './intervention-board-card.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,6 +104,9 @@ export class InterventionBoardCard {
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
     INTERACTION_CAPABILITIES_PORT,
   ).isMobileInteractionMode;
+
+  /** The active locale, resolving {@link dueRelativeLabel}. */
+  private readonly locale: string = inject(LOCALE_ID);
 
   //#region Inputs
   /** The card's own view model. */
@@ -159,6 +172,92 @@ export class InterventionBoardCard {
     () => this.item().intervention.priority !== 'normal',
   );
 
+  /**
+   * Property isDueSoon
+   * @readonly
+   *
+   * @description
+   * Whether the deadline falls inside the 48-hour due-soon window — mirrors
+   * `InterventionsPage`'s own row computation, since {@link InterventionBoardCardViewModel}
+   * carries {@link InterventionBoardCardViewModel.isOverdue} but not this flag.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly isDueSoon: Signal<boolean> = computed((): boolean => {
+    const intervention = this.item().intervention;
+    const dueTime: number | null = intervention.dueAt
+      ? new Date(intervention.dueAt).getTime()
+      : null;
+    const isTerminal: boolean =
+      intervention.status === 'published' || intervention.status === 'abandoned';
+
+    return (
+      dueTime !== null &&
+      !isTerminal &&
+      !this.item().isOverdue &&
+      dueTime - Date.now() <= DUE_SOON_WINDOW_MS
+    );
+  });
+
+  /**
+   * Property dueRelativeLabel
+   * @readonly
+   *
+   * @description
+   * Day-granular relative label for the deadline ("today", "in 3 days", "2
+   * days ago"), or `null` when there is none.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly dueRelativeLabel: Signal<string | null> = computed((): string | null => {
+    const dueAt: string | null = this.item().intervention.dueAt ?? null;
+
+    return dueAt ? formatRelativeDays(dueAt, new Date().toISOString(), this.locale) : null;
+  });
+
+  /**
+   * Property progressPercent
+   * @readonly
+   *
+   * @description
+   * The card's work-item completion, as a percentage for `hlm-progress`.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly progressPercent: Signal<number> = computed((): number => {
+    const intervention = this.item().intervention;
+    if (intervention.workItemsCount === 0) return 0;
+
+    return Math.round((intervention.completedWorkItemsCount / intervention.workItemsCount) * 100);
+  });
+
+  /**
+   * Property progressLabel
+   * @readonly
+   *
+   * @description
+   * The accessible name for the card's work-item progress bar.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly progressLabel: Signal<string> = computed((): string => {
+    const intervention = this.item().intervention;
+
+    return $localize`:@@intervention.list.workItemsProgress:${intervention.completedWorkItemsCount}:completed: of ${intervention.workItemsCount}:total: work items completed`;
+  });
+
   /** The menu trigger's accessible name while the card's own transition is in flight. */
   protected readonly updatingReason: string = $localize`:@@intervention.board.cardUpdating:This card is updating.`;
 
@@ -183,18 +282,6 @@ export class InterventionBoardCard {
   //#endregion
 
   //#region Methods
-  /**
-   * Method statusLabelOf
-   * @description Names a status for a menu entry.
-   * @access protected
-   * @since 1.0.0
-   * @param {InterventionStatus} status - The status.
-   * @returns {string} Its localized label.
-   */
-  protected statusLabelOf(status: InterventionStatus): string {
-    return resolveInterventionTag('status', status).label;
-  }
-
   /**
    * Method moveBlockedReason
    * @method moveBlockedReason

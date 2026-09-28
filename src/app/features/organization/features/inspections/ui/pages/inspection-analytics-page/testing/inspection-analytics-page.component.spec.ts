@@ -6,6 +6,7 @@ import {
   INTERACTION_CAPABILITIES_PORT,
   type InteractionCapabilitiesPort,
 } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { NonConformityStatisticsOutput } from '@features/organization/features/inspections/models';
 import { NonConformityStatisticsStore } from '@features/organization/features/inspections/state';
@@ -71,6 +72,14 @@ describe('InspectionAnalyticsPage', () => {
         provideRouter([]),
         NonConformityStatisticsStore,
         { provide: InspectionService, useValue: service },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
       ],
     });
   });

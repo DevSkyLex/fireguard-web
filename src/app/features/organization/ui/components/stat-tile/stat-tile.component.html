@@ -12,8 +12,11 @@
               [name]="b.icon"
               data-icon="inline-start"
               [class.text-destructive]="b.tone === 'destructive'"
+              [class.text-warning]="b.tone === 'warning'"
               [class.text-success]="b.tone === 'success'"
-              [class.text-muted-foreground]="b.tone !== 'destructive' && b.tone !== 'success'"
+              [class.text-muted-foreground]="
+                b.tone !== 'destructive' && b.tone !== 'warning' && b.tone !== 'success'
+              "
               aria-hidden="true"
             />
           }
@@ -49,8 +52,11 @@
           [name]="iconName"
           class="shrink-0 text-base"
           [class.text-destructive]="tone() === 'destructive'"
+          [class.text-warning]="tone() === 'warning'"
           [class.text-success]="tone() === 'success'"
-          [class.text-muted-foreground]="tone() !== 'destructive' && tone() !== 'success'"
+          [class.text-muted-foreground]="
+            tone() !== 'destructive' && tone() !== 'warning' && tone() !== 'success'
+          "
           aria-hidden="true"
         />
       }
@@ -71,7 +77,7 @@
     </div>
   } @else {
     @if (caption(); as c) {
-      <div hlmCardFooter class="mt-auto flex-col items-start gap-0.5">
+      <div hlmCardContent class="flex flex-col items-start gap-0.5">
         <p class="text-sm font-semibold text-foreground">{{ c }}</p>
         @if (description(); as hint) {
           <p class="text-xs text-muted-foreground">{{ hint }}</p>

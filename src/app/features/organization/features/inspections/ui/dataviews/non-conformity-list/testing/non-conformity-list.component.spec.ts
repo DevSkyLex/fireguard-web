@@ -1,11 +1,43 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   NonConformityOutput,
   NonConformityWaivePendingOutput,
 } from '@features/organization/features/inspections/models';
 import { NonConformityList } from '../non-conformity-list.component';
+
+/** A `'YYYY-MM-DD'` calendar day `days` away from the real, unmocked "now" in UTC — the default `regionalFormatting` timezone — so overdue tests need no fake clock. */
+function isoDaysFromToday(days: number): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * An ISO instant `days` away from the real, unmocked "now", written at
+ * 22:00 UTC — Europe/Paris local midnight during its summer (UTC+2) offset —
+ * so its UTC calendar day and its Europe/Paris calendar day disagree by one,
+ * proving {@link NonConformityList} resolves `dueAt` through the
+ * organization's timezone rather than the instant's raw UTC date.
+ */
+function isoInstantAtParisMidnight(days: number): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days - 1);
+  date.setUTCHours(22, 0, 0, 0);
+
+  return date.toISOString();
+}
+
+/** The `'YYYY-MM-DD'` calendar day `days` away from today in Europe/Paris, matching {@link isoInstantAtParisMidnight}'s intended day. */
+function parisIsoDaysFromToday(days: number): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + days);
+
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(date);
+}
 
 function nonConformity(overrides: Partial<NonConformityOutput> = {}): NonConformityOutput {
   return {
@@ -28,15 +60,27 @@ function nonConformity(overrides: Partial<NonConformityOutput> = {}): NonConform
 describe('NonConformityList', () => {
   let fixture: ComponentFixture<NonConformityList>;
   let statusPicked: Array<{ nonConformityId: string; status: string }>;
+  let retryRequested: number;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   async function createList(
     items: readonly NonConformityOutput[] = [],
-    overrides: { canWrite?: boolean; loading?: boolean } = {},
+    overrides: { canWrite?: boolean; loading?: boolean; error?: string | null } = {},
   ): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(NonConformityList);
@@ -44,10 +88,13 @@ describe('NonConformityList', () => {
     fixture.componentRef.setInput('organizationId', 'org-1');
     fixture.componentRef.setInput('canWrite', overrides.canWrite ?? false);
     fixture.componentRef.setInput('loading', overrides.loading ?? false);
+    fixture.componentRef.setInput('error', overrides.error ?? null);
     await fixture.whenStable();
 
     statusPicked = [];
     fixture.componentInstance.statusPicked.subscribe((event) => statusPicked.push(event));
+    retryRequested = 0;
+    fixture.componentInstance.retryRequested.subscribe(() => retryRequested++);
   }
 
   it('should render the empty state when there is nothing to show and no load is in flight', async () => {
@@ -62,6 +109,24 @@ describe('NonConformityList', () => {
 
     expect(root().querySelector('[data-testid="non-conformity-list-empty"]')).toBeNull();
     expect(root().querySelector('[role="status"]')).not.toBeNull();
+  });
+
+  it('should render the load-failed state instead of the plain empty state when there is an error', async () => {
+    await createList([], { error: 'Network error' });
+
+    const failure = root().querySelector('[data-testid="non-conformity-list-error"]');
+    expect(failure).not.toBeNull();
+    expect(failure?.getAttribute('role')).toBe('alert');
+    expect(failure?.textContent).toContain('Network error');
+    expect(root().querySelector('[data-testid="non-conformity-list-empty"]')).toBeNull();
+  });
+
+  it('should emit retryRequested when the load-failed state\'s "Try again" is activated', async () => {
+    await createList([], { error: 'Network error' });
+
+    root().querySelector<HTMLButtonElement>('[data-testid="non-conformity-list-retry"]')?.click();
+
+    expect(retryRequested).toBe(1);
   });
 
   it('should render one row per non-conformity with its description', async () => {
@@ -187,6 +252,58 @@ describe('NonConformityList', () => {
     await fixture.whenStable();
 
     expect(root().querySelector('[data-testid="non-conformity-status-error"]')).toBeNull();
+  });
+
+  it('should show the absolute due date visibly with a muted relative suffix, not the relative form alone', async () => {
+    const dueAt: string = isoDaysFromToday(3);
+    await createList([nonConformity({ dueAt, status: 'open' })]);
+
+    const due = root().querySelector('[data-testid="non-conformity-due"]');
+    expect(due?.querySelector('time')?.textContent).toContain(dueAt);
+    expect(due?.textContent).toContain('in 3 days');
+  });
+
+  it('should flag an open row past its due date as Overdue, with an icon and a text label', async () => {
+    await createList([nonConformity({ dueAt: isoDaysFromToday(-5), status: 'open' })]);
+
+    const due = root().querySelector('[data-testid="non-conformity-due"]');
+    expect(due?.textContent).toContain('Overdue');
+    expect(due?.querySelector('ng-icon')).not.toBeNull();
+  });
+
+  it("should read a due instant's calendar day through the organization's timezone, not its raw UTC date", async () => {
+    const dueAt: string = isoInstantAtParisMidnight(0);
+    await createList([nonConformity({ dueAt, status: 'open' })]);
+    fixture.componentRef.setInput('regionalFormatting', {
+      dateFormat: 'yyyy-MM-dd',
+      timezone: 'Europe/Paris',
+    });
+    await fixture.whenStable();
+
+    const due = root().querySelector('[data-testid="non-conformity-due"]');
+    expect(due?.querySelector('time')?.textContent).toContain(parisIsoDaysFromToday(0));
+    expect(due?.textContent).not.toContain('Overdue');
+  });
+
+  it('should flag as Overdue a due instant whose organization-timezone day has passed, even when its raw UTC day has not', async () => {
+    const dueAt: string = isoInstantAtParisMidnight(-5);
+    await createList([nonConformity({ dueAt, status: 'open' })]);
+    fixture.componentRef.setInput('regionalFormatting', {
+      dateFormat: 'yyyy-MM-dd',
+      timezone: 'Europe/Paris',
+    });
+    await fixture.whenStable();
+
+    const due = root().querySelector('[data-testid="non-conformity-due"]');
+    expect(due?.querySelector('time')?.textContent).toContain(parisIsoDaysFromToday(-5));
+    expect(due?.textContent).toContain('Overdue');
+  });
+
+  it('should not flag a resolved (terminal) row as Overdue even past its due date', async () => {
+    await createList([nonConformity({ dueAt: isoDaysFromToday(-5), status: 'done' })]);
+
+    const due = root().querySelector('[data-testid="non-conformity-due"]');
+    expect(due?.textContent).not.toContain('Overdue');
   });
 
   it('should emit statusPicked with the row id and the chosen status', async () => {

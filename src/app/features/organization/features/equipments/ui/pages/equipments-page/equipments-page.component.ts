@@ -24,11 +24,9 @@ import {
   lucideCircleAlert,
   lucideCircleDot,
   lucideDownload,
-  lucideLock,
   lucidePackage,
   lucidePlus,
   lucideQrCode,
-  lucideSearch,
   lucideTag,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
@@ -70,6 +68,7 @@ import {
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
@@ -125,6 +124,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     NgIcon,
     ...HlmEmptyImports,
     ResourceIllustration,
+    StateIllustration,
     EquipmentCreateSheet,
     EquipmentKpiStrip,
     EquipmentStatusTag,
@@ -141,14 +141,12 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
   providers: [
     FacilityOptionsStore,
     provideIcons({
-      lucideLock,
       lucideCircleAlert,
       lucideCircleDot,
       lucideDownload,
       lucidePackage,
       lucidePlus,
       lucideQrCode,
-      lucideSearch,
       lucideTag,
     }),
   ],

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-state-no-events-light-title fg-state-no-events-light-description" class="fg-state-no-events-light">
+  <title id="fg-state-no-events-light-title">Nothing scheduled</title>
+  <desc id="fg-state-no-events-light-description">A standing desk calendar with an empty page, today marked.</desc>
+  <defs>
+    <linearGradient id="fg-state-no-events-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
+    
+    
+  </defs>
+  <style>
+    .fg-state-no-events-light { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-state-no-events-light path { vector-effect: non-scaling-stroke; }
+    .fg-state-no-events-light .t { fill: #ffffff; }
+    .fg-state-no-events-light .l { fill: #f6f6f7; }
+    .fg-state-no-events-light .r { fill: #efeff1; }
+    .fg-state-no-events-light .hole { fill: #ececef; }
+    .fg-state-no-events-light .cy { fill: url(#fg-state-no-events-light-cy); }
+    .fg-state-no-events-light .af { fill: #5f5f68; }
+    .fg-state-no-events-light .kf { fill: #85858e; }
+    .fg-state-no-events-light .eo { fill-rule: evenodd; }
+    .fg-state-no-events-light .o { stroke: #8a8a93; stroke-width: 1.35; }
+    .fg-state-no-events-light .o2 { stroke: #a8a8b0; stroke-width: 1.1; }
+    .fg-state-no-events-light .e { stroke: #dcdce0; stroke-width: 1; }
+    .fg-state-no-events-light .d { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-no-events-light .dh { stroke: #dcdce0; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-no-events-light .g { stroke: #a8a8b0; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-state-no-events-light .k { stroke: #85858e; stroke-width: 1.2; }
+    .fg-state-no-events-light .ka, .fg-state-no-events-light .oa { stroke: #5f5f68; stroke-width: 1.35; }
+    .fg-state-no-events-light .da { stroke: #5f5f68; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-no-events-light .ga { stroke: #5f5f68; stroke-width: 1; stroke-dasharray: 3 3; }
+  </style>
+  <path class="l" d="M65.4 201L229.9 296L282.3 119L117.7 24Z"/>
+  <path class="r" d="M229.9 296L334.6 235.6L282.3 119Z"/>
+  <path class="e" d="M282.3 119L229.9 296"/>
+  <path class="o" d="M65.4 201L117.7 24L282.3 119L334.6 235.6L229.9 296Z"/>
+  <path class="e" d="M113.8 66.8L263.4 153.2"/>
+  <path class="d" d="M120.7 91.1L145.3 105.3L136.8 134.2L112.1 119.9ZM154.3 110.5L179 124.7L170.5 153.6L145.8 139.3ZM188 129.9L212.7 144.2L204.1 173L179.4 158.8ZM221.6 149.4L246.3 163.6L237.8 192.4L213.1 178.2ZM109.9 127.6L134.5 141.9L126 170.7L101.3 156.4Z"/>
+  <path class="oa" d="M143.5 147L168.2 161.3L159.7 190.1L135 175.9Z"/>
+  <path class="d" d="M177.2 166.5L201.8 180.7L193.3 209.6L168.6 195.3ZM210.8 185.9L235.5 200.1L227 229L202.3 214.7ZM99.1 164.1L123.7 178.4L115.2 207.2L90.5 193ZM132.7 183.6L157.4 197.8L148.9 226.7L124.2 212.4ZM166.4 203L191 217.3L182.5 246.1L157.8 231.8ZM200 222.4L224.7 236.7L216.2 265.5L191.5 251.3Z"/>
+  <path class="t" d="M152.8 52.7L153 50.3L153.8 47.9L154.9 45.5L156.4 43.2L158.2 41.4L160 40.1L161.6 39.4L162.8 39.3L163.6 39.5L164.2 40.1L164.7 41.3L164.9 43L164.7 45.2L164 47.6L162.8 50L161.3 52.2L159.6 54.1L157.8 55.4L156.2 56.1L154.9 56.2L154.1 56L153.5 55.4L153 54.2L152.8 52.2L152.5 51.4L152 50.8L151.2 50.4L150.4 50.4L149.6 50.6L148.9 51.2L148.6 51.9L148.5 52.8L148.8 55.4L150 57.8L152 59.7L154.6 60.5L157.3 60.2L160 59.1L162.4 57.3L164.7 54.9L166.6 52.2L168 49.2L168.9 46L169.3 43L168.9 40.1L167.8 37.6L165.8 35.8L163.2 35L160.4 35.3L157.8 36.4L155.3 38.2L153.1 40.5L151.2 43.3L149.7 46.3L148.8 49.4L148.5 52.3L152.7 51.9L152.3 51.1L151.7 50.6L150.9 50.3L150 50.4L149.3 50.8L148.7 51.5Z"/>
+  <path class="o2" d="M152.8 52.7L153 50.3L153.8 47.9L154.9 45.5L156.4 43.2L158.2 41.4L160 40.1L161.6 39.4L162.8 39.3L163.6 39.5L164.2 40.1L164.7 41.3L164.9 43L164.7 45.2L164 47.6L162.8 50L161.3 52.2L159.6 54.1L157.8 55.4L156.2 56.1L154.9 56.2L154.1 56L153.5 55.4L153 54.2L152.8 52.2L152.5 51.4L152 50.8L151.2 50.4L150.4 50.4L149.6 50.6L148.9 51.2L148.6 51.9L148.5 52.8L148.8 55.4L150 57.8L152 59.7L154.6 60.5L157.3 60.2L160 59.1L162.4 57.3L164.7 54.9L166.6 52.2L168 49.2L168.9 46L169.3 43L168.9 40.1L167.8 37.6L165.8 35.8L163.2 35L160.4 35.3L157.8 36.4L155.3 38.2L153.1 40.5L151.2 43.3L149.7 46.3L148.8 49.4L148.5 52.3L152.7 51.9L152.3 51.1L151.7 50.6L150.9 50.3L150 50.4L149.3 50.8L148.7 51.5Z"/>
+  <path class="t" d="M235 100.2L235.3 97.8L236 95.4L237.2 93L238.7 90.7L240.4 88.9L242.2 87.6L243.8 86.9L245.1 86.8L245.9 87L246.5 87.6L247 88.8L247.2 90.5L247 92.7L246.2 95.1L245.1 97.5L243.6 99.7L241.8 101.6L240 102.9L238.4 103.6L237.2 103.7L236.4 103.4L235.8 102.9L235.3 101.7L235 99.7L234.8 98.9L234.2 98.3L233.5 97.9L232.6 97.8L231.8 98.1L231.2 98.7L230.8 99.4L230.8 100.2L231.1 102.8L232.2 105.3L234.2 107.2L236.8 108L239.6 107.7L242.2 106.6L244.7 104.8L246.9 102.4L248.8 99.7L250.3 96.7L251.2 93.5L251.5 90.5L251.2 87.6L250 85.1L248 83.3L245.4 82.5L242.7 82.7L240 83.9L237.6 85.7L235.3 88L233.4 90.8L232 93.8L231.1 96.9L230.8 99.8L235 99.4L234.6 98.6L233.9 98.1L233.1 97.8L232.3 97.9L231.5 98.3L231 99Z"/>
+  <path class="o2" d="M235 100.2L235.3 97.8L236 95.4L237.2 93L238.7 90.7L240.4 88.9L242.2 87.6L243.8 86.9L245.1 86.8L245.9 87L246.5 87.6L247 88.8L247.2 90.5L247 92.7L246.2 95.1L245.1 97.5L243.6 99.7L241.8 101.6L240 102.9L238.4 103.6L237.2 103.7L236.4 103.4L235.8 102.9L235.3 101.7L235 99.7L234.8 98.9L234.2 98.3L233.5 97.9L232.6 97.8L231.8 98.1L231.2 98.7L230.8 99.4L230.8 100.2L231.1 102.8L232.2 105.3L234.2 107.2L236.8 108L239.6 107.7L242.2 106.6L244.7 104.8L246.9 102.4L248.8 99.7L250.3 96.7L251.2 93.5L251.5 90.5L251.2 87.6L250 85.1L248 83.3L245.4 82.5L242.7 82.7L240 83.9L237.6 85.7L235.3 88L233.4 90.8L232 93.8L231.1 96.9L230.8 99.8L235 99.4L234.6 98.6L233.9 98.1L233.1 97.8L232.3 97.9L231.5 98.3L231 99Z"/>
+</svg>

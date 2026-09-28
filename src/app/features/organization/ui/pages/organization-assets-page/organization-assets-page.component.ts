@@ -11,6 +11,7 @@ import {
   inject,
   Injector,
   input,
+  LOCALE_ID,
   signal,
   untracked,
   viewChild,
@@ -29,12 +30,14 @@ import {
   lucideCircleCheck,
   lucideCircleHelp,
   lucideClipboardList,
+  lucideClock,
   lucideCopy,
   lucideDownload,
   lucideEllipsis,
   lucideLayoutGrid,
   lucideMove,
   lucideNetwork,
+  lucideOctagonAlert,
   lucidePlus,
   lucideQrCode,
   lucideShieldCheck,
@@ -50,7 +53,12 @@ import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constants';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
+import type {
+  EquipmentOutput,
+  EquipmentType,
+} from '@features/organization/features/equipments/models';
 import { EquipmentStatusTag } from '@features/organization/features/equipments/ui/components/equipment-status-tag';
 import type {
   FacilityOption,
@@ -67,11 +75,14 @@ import {
   facilityToTreeNode,
   toFacilityOption,
 } from '@features/organization/features/facilities/utils';
+import type { InspectorOutput } from '@features/organization/features/inspections/models';
 import { InspectionStatusTag } from '@features/organization/features/inspections/ui/components/inspection-status-tag';
 import {
   ORGANIZATION_PERMISSION,
   resolveComplianceBucketTag,
+  type ComplianceFacilitySummary,
   type ComplianceFacilityTreeNodeOutput,
+  type ComplianceSummaryOutput,
 } from '@features/organization/models';
 import {
   REGIONAL_FORMATTING_PORT,
@@ -86,22 +97,34 @@ import {
   OrganizationAssetsPaneStore,
   type OrganizationAssetsPaneStoreType,
 } from '@features/organization/state/organization-assets-pane';
-import { resolveComplianceBucket, resolveCsvExportErrorDetail } from '@features/organization/utils';
+import {
+  getOrganizationInitials,
+  resolveComplianceBucket,
+  resolveCsvExportErrorDetail,
+} from '@features/organization/utils';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSkeletonCards, CollectionSkeletonRows } from '@shared/collection-surface';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { formatRelativeTime } from '@shared/relative-time';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { Tree, type TreeDropEvent, type TreeNode } from '@shared/tree';
 import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmProgressImports } from '@shared/ui/progress';
+import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmTabsImports } from '@shared/ui/tabs';
+import { HlmTooltip } from '@shared/ui/tooltip';
+import { HlmLarge } from '@shared/ui/typography';
+import { resolveComplianceStatusTag } from './models/compliance-status-tag/compliance-status-tag.util';
 
 /** The explorer's first-level axes (`organization/FEATURE.md` "Assets"). */
 type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
@@ -142,7 +165,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
  * The three axes use a paginated Spartan `line` tab list projected beneath
  * the shell page title through `PageTabsService`.
  *
- * @version 1.2.0
+ * @version 1.3.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -150,6 +173,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
   imports: [
     CollectionPagination,
     ResourceIllustration,
+    StateIllustration,
     CollectionSkeletonCards,
     CollectionSkeletonRows,
     NgIcon,
@@ -163,9 +187,14 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
     InspectionStatusTag,
     HlmBadge,
     HlmButton,
+    ...HlmAvatarImports,
     ...HlmCardImports,
     ...HlmItemImports,
+    ...HlmProgressImports,
+    HlmSeparator,
     HlmSkeleton,
+    HlmTooltip,
+    HlmLarge,
     ...HlmAlertImports,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
@@ -177,6 +206,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
       lucideCircleCheck,
       lucideCircleHelp,
       lucideClipboardList,
+      lucideClock,
       lucideArchive,
       lucideArrowLeft,
       lucideCopy,
@@ -185,6 +215,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
       lucideLayoutGrid,
       lucideMove,
       lucideNetwork,
+      lucideOctagonAlert,
       lucidePlus,
       lucideQrCode,
       lucideShieldCheck,
@@ -315,6 +346,101 @@ export class OrganizationAssetsPage {
   /** The colour each badge severity puts on the icon alone. */
   protected readonly complianceBucketIconClass: typeof COMPLIANCE_BUCKET_TAG_ICON_CLASS =
     COMPLIANCE_BUCKET_TAG_ICON_CLASS;
+
+  /** Resolves the backend's graded compliance verdict into a label/severity/icon descriptor. */
+  protected readonly resolveComplianceStatusTag: typeof resolveComplianceStatusTag =
+    resolveComplianceStatusTag;
+
+  /** Resolves a member or inspector name into its 1–2 letter avatar fallback. */
+  protected readonly getInitials: typeof getOrganizationInitials = getOrganizationInitials;
+
+  /** Fallback label for an inspection row carrying no inspector. */
+  protected readonly notSpecifiedLabel: string = $localize`:@@inspection.notSpecified:Not specified`;
+
+  /** Accessible label and tooltip text for a tree row's "…" menu trigger. */
+  protected readonly openMenuLabel: string = $localize`:@@org.assets.tree.nodeMenu:Open menu`;
+
+  /** Tooltip text for the "New facility" action, shown when its visible label collapses. */
+  protected readonly newFacilityLabel: string = $localize`:@@facility.newButton:New facility`;
+
+  /** Tooltip text for the "New equipment" action, shown when its visible label collapses. */
+  protected readonly newEquipmentLabel: string = $localize`:@@equipment.newButton:New equipment`;
+
+  /** Tooltip text for the mobile archived-register icon-only "Download" action. */
+  protected readonly downloadSnapshotLabel: string = $localize`:@@org.assets.compliance.snapshotDownloadAria:Download this archived register`;
+
+  /**
+   * Property complianceSummarySkeletonRows
+   * @readonly
+   * @description Stable placeholder rows shown while a compliance summary loads, matching the loaded totals `<dl>`'s row count.
+   * @access protected
+   * @since 1.4.0
+   * @type {readonly number[]}
+   */
+  protected readonly complianceSummarySkeletonRows: readonly number[] = [0, 1, 2, 3, 4, 5, 6];
+
+  /**
+   * Property treeSkeletonRows
+   * @readonly
+   * @description Stable placeholder rows shown while a hierarchy's roots load.
+   * @access protected
+   * @since 1.3.0
+   * @type {readonly number[]}
+   */
+  protected readonly treeSkeletonRows: readonly number[] = [0, 1, 2, 3, 4, 5];
+
+  /**
+   * Property locale
+   * @readonly
+   * @description Active application locale, used by the relative-age formatters.
+   * @access private
+   * @since 1.3.0
+   * @type {string}
+   */
+  private readonly locale: string = inject(LOCALE_ID);
+
+  /**
+   * Property isComplianceSummaryStale
+   * @readonly
+   *
+   * @description
+   * Whether the currently rendered `compliance.summary()` still belongs to a
+   * previously selected facility — `loadSummary` keeps the prior response
+   * visible while the next one resolves, so this is what tells the template
+   * to show the loading skeleton instead of a stale scope's totals.
+   *
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly isComplianceSummaryStale: Signal<boolean> = computed(() => {
+    const summary: ComplianceSummaryOutput | null = this.compliance.summary();
+    if (summary === null) return false;
+
+    return (summary.facilityId ?? null) !== this.selectedComplianceFacilityId();
+  });
+
+  /**
+   * Property selectedComplianceFacilitySummary
+   * @readonly
+   *
+   * @description
+   * The single-facility row of a loaded, non-stale compliance summary — its
+   * name, path, type and last inspection date for the Compliance axis's
+   * identity header.
+   *
+   * @access protected
+   * @since 1.3.0
+   * @type {Signal<ComplianceFacilitySummary | null>}
+   */
+  protected readonly selectedComplianceFacilitySummary: Signal<ComplianceFacilitySummary | null> =
+    computed(() => {
+      if (this.selectedComplianceFacilityId() === null || this.isComplianceSummaryStale())
+        return null;
+      const summary = this.compliance.summary();
+
+      return summary !== null && summary.facilities.length === 1 ? summary.facilities[0] : null;
+    });
 
   /**
    * * Registers {@link pageActions} on the shell header.
@@ -959,6 +1085,102 @@ export class OrganizationAssetsPage {
     if (sizeBytes >= 1_048_576) return `${(sizeBytes / 1_048_576).toFixed(1)} MB`;
 
     return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
+  }
+
+  /**
+   * Method snapshotScopeLabel
+   * @description Resolves an archived register's raw `scope` into its localized label — a `facility` snapshot reads "Site", anything else "Organization".
+   * @access protected
+   * @since 1.4.0
+   * @param {string} scope - The snapshot's raw `scope` value.
+   * @returns {string} The localized scope label.
+   */
+  protected snapshotScopeLabel(scope: string): string {
+    return scope === 'facility'
+      ? $localize`:@@org.assets.compliance.snapshotScopeFacility:Site`
+      : $localize`:@@org.assets.compliance.snapshotScopeOrganization:Organization`;
+  }
+
+  /**
+   * Method complianceAncestorPathLabel
+   *
+   * @description
+   * The compliance facility's ancestor breadcrumb, mirroring `toFacilityOption`'s
+   * `pathLabel` shape for the compliance axis's differently-shaped summary row:
+   * the backend's `path` is a `" / "`-joined breadcrumb that repeats the
+   * facility's own name as its last segment (or holds only that name at the
+   * root), so this strips that trailing segment and rejoins the rest with the
+   * same `" › "` separator the site axis uses.
+   *
+   * @access protected
+   * @since 1.4.0
+   * @param {ComplianceFacilitySummary} facility - The selected facility's compliance summary row.
+   * @returns {string | null} The ancestor path, or `null` for a root facility.
+   */
+  protected complianceAncestorPathLabel(facility: ComplianceFacilitySummary): string | null {
+    const segments: readonly string[] = facility.path.split(' / ').map((segment) => segment.trim());
+    const ancestors: readonly string[] =
+      segments.length > 0 && segments[segments.length - 1] === facility.name
+        ? segments.slice(0, -1)
+        : segments;
+
+    return ancestors.length > 0 ? ancestors.join(' › ') : null;
+  }
+
+  /**
+   * Method typeLabelOf
+   * @description The equipment's type, humanized through the shared type catalog — mirrors `EquipmentTable`'s own resolution.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} type - The raw type value.
+   * @returns {string} The localized label, or the raw value humanized if unknown.
+   */
+  protected typeLabelOf(type: string): string {
+    return (
+      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === (type as EquipmentType))?.label ??
+      type.replaceAll('_', ' ')
+    );
+  }
+
+  /**
+   * Method equipmentSecondaryLineOf
+   * @description The equipment row's muted second line: its serial number, or its brand and model, or `null` when none is set.
+   * @access protected
+   * @since 1.3.0
+   * @param {EquipmentOutput} item - The equipment being rendered.
+   * @returns {string | null} The secondary line, or `null`.
+   */
+  protected equipmentSecondaryLineOf(item: EquipmentOutput): string | null {
+    if (item.serialNumber) return item.serialNumber;
+    const parts: readonly string[] = [item.brand, item.model].filter(
+      (part): part is string => !!part,
+    );
+
+    return parts.length > 0 ? parts.join(' ') : null;
+  }
+
+  /**
+   * Method inspectorAvatarFallback
+   * @description The inspector's avatar fallback, or `'?'` when the inspection carries no inspector.
+   * @access protected
+   * @since 1.3.0
+   * @param {InspectorOutput | null} inspector - The inspection row's `inspector`.
+   * @returns {string} The 1–2 letter fallback.
+   */
+  protected inspectorAvatarFallback(inspector: InspectorOutput | null): string {
+    return inspector ? this.getInitials(inspector.displayName) : '?';
+  }
+
+  /**
+   * Method formatRelativeAge
+   * @description Renders an ISO 8601 timestamp as a localized relative label ("3 days ago"), for the compliance freshness lines.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} iso - ISO 8601 timestamp to compare against now.
+   * @returns {string} The relative label.
+   */
+  protected formatRelativeAge(iso: string): string {
+    return formatRelativeTime(iso, this.locale);
   }
 
   /**

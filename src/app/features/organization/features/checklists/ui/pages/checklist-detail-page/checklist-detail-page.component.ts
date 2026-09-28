@@ -9,11 +9,17 @@ import {
   computed,
   untracked,
   afterNextRender,
+  viewChild,
   type Signal,
+  type TemplateRef,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert, lucideGitBranch } from '@ng-icons/lucide';
+import { PageActionsService, registerPageActions } from '@core/page-actions';
+import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   CreateChecklistInput,
@@ -24,7 +30,16 @@ import {
   ChecklistStore,
 } from '@features/organization/features/checklists/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { UnsavedChangesDialog, type UnsavedChangesAware } from '@shared/unsaved-changes';
 import { ChecklistStatusTag } from '../../components/checklist-status-tag';
@@ -32,20 +47,41 @@ import { ChecklistEditForm } from '../../forms/checklist-edit-form';
 /**
  * Component ChecklistDetailPage
  * @class ChecklistDetailPage
- * @description Dedicated checklist editor with protected drafts and a read-only archive. Browser-only loading avoids serializing authenticated templates in SSR.
+ *
+ * @description
+ * Dedicated checklist editor with protected drafts and a read-only archive.
+ * Browser-only loading avoids serializing authenticated templates in SSR.
+ * Carries no in-page title: the resolved checklist's name (or "New revision"
+ * while drafting one) is pushed to the shell header through `TitleService`,
+ * as `InspectionDetailPage` does, and "Create a new revision" registers on
+ * that same header through `PageActionsService` instead of floating in the
+ * content.
+ *
  * @since 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-checklist-detail-page',
   imports: [
     RouterLink,
+    NgIcon,
+    OrgDatePipe,
+    HlmBadge,
     HlmButton,
     HlmSkeleton,
     ChecklistEditForm,
     ChecklistStatusTag,
     UnsavedChangesDialog,
+    ResourceIllustration,
+    ...HlmEmptyImports,
+    ...HlmItemImports,
   ],
-  providers: [ActiveChecklistStore, ChecklistStore],
+  providers: [
+    ActiveChecklistStore,
+    ChecklistStore,
+    provideIcons({ lucideCircleAlert, lucideGitBranch }),
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(window:beforeunload)': 'beforeUnload($event)' },
   templateUrl: './checklist-detail-page.component.html',
@@ -114,6 +150,54 @@ export class ChecklistDetailPage implements UnsavedChangesAware {
    * @type {InstanceType<typeof DestroyRef>}
    */
   private readonly destroyRef = inject(DestroyRef);
+  /**
+   * Property titleService
+   * @readonly
+   * @description Pushes the resolved checklist's name to the shell header once loaded.
+   * @access private
+   * @since 2.0.0
+   * @type {InstanceType<typeof TitleService>}
+   */
+  private readonly titleService: TitleService = inject<TitleService>(TitleService);
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   * @description The active organization's regional formatting context port.
+   * @access private
+   * @since 2.0.0
+   * @type {RegionalFormattingPort}
+   */
+  private readonly regionalFormattingPort: RegionalFormattingPort =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    this.regionalFormattingPort.regionalFormatting;
+  /**
+   * Property pageActionsService
+   * @readonly
+   * @description Registers {@link pageActions} on the shell header.
+   * @access private
+   * @since 2.0.0
+   * @type {InstanceType<typeof PageActionsService>}
+   */
+  private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+  /**
+   * Property pageActions
+   * @readonly
+   * @description The "New revision" button, registered on the shell header instead of floating in the content.
+   * @access private
+   * @since 2.0.0
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
+  private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
+    viewChild<TemplateRef<unknown>>('pageActions');
   /**
    * Property browserReady
    * @readonly
@@ -188,6 +272,45 @@ export class ChecklistDetailPage implements UnsavedChangesAware {
   );
 
   /**
+   * Property archived
+   * @readonly
+   * @description Whether the resolved checklist's status is archived, resolved once here so the template never compares the raw status literal itself.
+   * @access protected
+   * @since 2.1.0
+   * @type {Signal<boolean>}
+   */
+  protected readonly archived: Signal<boolean> = computed(
+    () => this.active.selectedChecklist()?.status === 'archived',
+  );
+
+  /**
+   * Property requiredItemCount
+   * @readonly
+   * @description How many of the resolved checklist's items are marked required.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<number>}
+   */
+  protected readonly requiredItemCount: Signal<number> = computed<number>(
+    () => this.active.selectedChecklist()?.items.filter((item) => item.required).length ?? 0,
+  );
+
+  /**
+   * Property title
+   * @readonly
+   * @description The shell header's title: the section label while drafting, "New revision" while revising, else the resolved checklist's name.
+   * @access protected
+   * @since 2.0.0
+   * @type {Signal<string>}
+   */
+  protected readonly title: Signal<string> = computed<string>(() => {
+    if (this.revising()) return $localize`:@@checklists.detail.newRevision:New revision`;
+    if (!this.checklistId()) return $localize`:@@checklists.list.new:New checklist`;
+
+    return this.active.selectedChecklist()?.name ?? '';
+  });
+
+  /**
    * Property pending
    * @readonly
    * @description Whether the form submission is awaiting its result.
@@ -197,14 +320,40 @@ export class ChecklistDetailPage implements UnsavedChangesAware {
    */
   protected readonly pending = computed(() => this.store.isCreating() || this.store.isUpdating());
   /**
+   * Property skeletonFieldRows
+   * @readonly
+   * @description Placeholder label/input rows drawn while the checklist metadata loads.
+   * @access protected
+   * @since 2.0.0
+   * @type {readonly number[]}
+   */
+  protected readonly skeletonFieldRows: readonly number[] = [0, 1, 2];
+  /**
+   * Property skeletonItemRows
+   * @readonly
+   * @description Placeholder item rows drawn while the checklist metadata loads.
+   * @access protected
+   * @since 2.0.0
+   * @type {readonly number[]}
+   */
+  protected readonly skeletonItemRows: readonly number[] = [0, 1, 2, 3];
+  /**
    * Constructor
    * @constructor
-   * @description Registers draft, route and browser lifecycle coordination.
+   * @description Registers draft, route and browser lifecycle coordination, pushes {@link title} to the shell header once resolved, and registers {@link pageActions}.
    * @access public
    * @since 1.0.0
    */
   public constructor() {
+    registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
+
     afterNextRender(() => this.browserReady.set(true));
+    effect((): void => {
+      const title: string = this.title();
+      if (!title) return;
+
+      untracked((): void => this.titleService.setTitle(title));
+    });
     effect((onCleanup) => {
       if (!this.browserReady()) return;
       const org = this.organizationId();

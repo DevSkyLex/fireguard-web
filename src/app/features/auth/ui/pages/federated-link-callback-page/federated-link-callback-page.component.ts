@@ -11,10 +11,13 @@ import {
   type EffectRef,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideTriangleAlert } from '@ng-icons/lucide';
 import type { FederatedProvider } from '@features/auth/models';
 import { FederatedAuthStore } from '@features/auth/state';
 import { resolveFederatedAuthErrorMessage } from '@features/auth/utils';
 import { HlmButton } from '@shared/ui/button';
+import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
 
 /**
@@ -25,12 +28,13 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * Finalizes a provider link while the current Fireguard session stays active,
  * then returns to account security.
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-federated-link-callback-page',
-  imports: [RouterLink, HlmButton, HlmSpinner],
+  imports: [RouterLink, NgIcon, ...HlmEmptyImports, HlmButton, HlmSpinner],
+  providers: [provideIcons({ lucideTriangleAlert })],
   templateUrl: './federated-link-callback-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -216,8 +216,12 @@ account section means updating both entry and local navigation.
 
 `NotificationBell` (`ui/components/notification-bell/`) is account-owned for the same reason, and a
 shell contributes it to its header-actions slot through `withNotificationBell()` (`order: 7`, between
-the global search and the assistant toggle). It is the only ambient signal that a notification
-arrived; the notification centre itself stays at `/account/notifications`.
+the global search and the assistant toggle). Its unread dot is mirrored on the browser tab's
+primary favicon; both follow the same scope-matched `InboxStore.unreadCount` and clear on read,
+account change or organization change. The favicon dot uses a light or dark outline with the
+applied theme. The notification centre stays at `/account/notifications`.
+The bell preview separates entries and uses the source's optional `sourceType` for contextual
+icons; older entries and unknown types use the generic bell.
 
 These contracts are intended for shell consumers such as layouts and shared shell widgets,
 plus approved external workflows that need to bootstrap or clear the authenticated user profile.

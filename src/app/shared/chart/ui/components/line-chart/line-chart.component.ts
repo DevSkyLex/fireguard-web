@@ -13,12 +13,11 @@ import {
   type InputSignalWithTransform,
   type Signal,
 } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChartLine } from '@ng-icons/lucide';
 import type { ChartOptions } from '@tanstack/angular-charts';
 import { areaY, colorLegend, defineChart, lineY } from '@tanstack/charts';
 import { scaleLinear } from '@tanstack/charts/scales/linear';
 import { scalePoint } from '@tanstack/charts/scales/point';
+import { StateIllustration } from '@shared/state-illustration';
 import { HLM_CHART_THEME, HlmChartImports, hlmChartTooltip } from '@shared/ui/chart';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -50,8 +49,7 @@ type LineChartDatum = {
  */
 @Component({
   selector: 'app-line-chart',
-  imports: [NgIcon, ...HlmEmptyImports, HlmChartImports, HlmSkeleton],
-  providers: [provideIcons({ lucideChartLine })],
+  imports: [...HlmEmptyImports, HlmChartImports, HlmSkeleton, StateIllustration],
   host: { class: 'block min-w-0' },
   templateUrl: './line-chart.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

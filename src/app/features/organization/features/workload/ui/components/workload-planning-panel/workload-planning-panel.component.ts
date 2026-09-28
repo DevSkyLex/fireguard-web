@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
@@ -27,12 +28,18 @@ import type {
   WorkloadProjectionOutput,
 } from '@features/organization/features/workload/models';
 import type { MemberSelectOption } from '@features/organization/models';
+import {
+  REGIONAL_FORMATTING_PORT,
+  type RegionalFormattingPort,
+} from '@features/organization/ports';
 import { formatDurationMinutes } from '@shared/duration-format';
+import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCollapsibleImports } from '@shared/ui/collapsible';
-import { HlmItem, HlmItemContent, HlmItemGroup } from '@shared/ui/item';
+import { HlmItem, HlmItemContent, HlmItemGroup, HlmItemSeparator } from '@shared/ui/item';
+import { HlmLarge } from '@shared/ui/typography';
 import type { WorkloadPlanningGroup } from './models/workload-planning-group.interface';
 import type { WorkloadPlanningRow } from './models/workload-planning-row.interface';
 
@@ -59,6 +66,8 @@ import type { WorkloadPlanningRow } from './models/workload-planning-row.interfa
     HlmItem,
     HlmItemContent,
     HlmItemGroup,
+    HlmItemSeparator,
+    HlmLarge,
   ],
   providers: [
     provideIcons({
@@ -193,6 +202,27 @@ export class WorkloadPlanningPanel {
   protected readonly duration: typeof formatDurationMinutes = formatDurationMinutes;
 
   /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern, read while resolving each row's {@link resolvePeriodLabel}.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<RegionalFormatSettings>}
+   */
+  protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
+    inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT).regionalFormatting;
+
+  /**
+   * Property datePipe
+   * @readonly
+   * @description Dependency-free date-only formatter, called directly so the resolved period stays a plain string the template never branches to build.
+   * @access private
+   * @since 1.2.0
+   * @type {OrgDatePipe}
+   */
+  private readonly datePipe: OrgDatePipe = new OrgDatePipe();
+
+  /**
    * Property groups
    * @readonly
    *
@@ -218,11 +248,15 @@ export class WorkloadPlanningPanel {
       ...projection.unassigned.map((task) => ({ task, memberId: null, displayName: '' })),
     ];
     const seen = new Set<string>();
-    const buckets = new Map<UnallocatedWorkOutput['reason'], Map<string, WorkloadPlanningRow>>();
+    const buckets = new Map<
+      UnallocatedWorkOutput['reason'],
+      Map<string, Omit<WorkloadPlanningRow, 'periodLabel'>>
+    >();
     for (const { task, memberId, displayName } of entries) {
       if (seen.has(task.taskId)) continue;
       seen.add(task.taskId);
-      const rows = buckets.get(task.reason) ?? new Map<string, WorkloadPlanningRow>();
+      const rows =
+        buckets.get(task.reason) ?? new Map<string, Omit<WorkloadPlanningRow, 'periodLabel'>>();
       buckets.set(task.reason, rows);
       const key = JSON.stringify([task.interventionId, memberId, task.commitment]);
       const previous = rows.get(key);
@@ -240,11 +274,20 @@ export class WorkloadPlanningPanel {
             : (previous?.remainingMinutes ?? 0) + task.remainingMinutes,
         capacityMemberId:
           task.reason === 'unknown_capacity' && this.canManageCapacity() ? memberId : null,
+        startsOn: this.earliestOf(previous?.startsOn, task.startsOn),
+        endsOn: this.latestOf(previous?.endsOn, task.endsOn),
       });
     }
     return this.reasonLabels
       .map((definition) => {
-        const rows = [...(buckets.get(definition.reason)?.values() ?? [])];
+        const rows: readonly WorkloadPlanningRow[] = [
+          ...(buckets.get(definition.reason)?.values() ?? []),
+        ].map((row) =>
+          Object.assign(
+            { periodLabel: this.resolvePeriodLabel(definition.reason, row.startsOn, row.endsOn) },
+            row,
+          ),
+        );
         return {
           ...definition,
           rows,
@@ -253,6 +296,72 @@ export class WorkloadPlanningPanel {
       })
       .filter((group) => group.taskCount > 0);
   });
+
+  /**
+   * Method resolvePeriodLabel
+   * @method resolvePeriodLabel
+   * @description Resolves a row's work-period fact into one formatted string, so the template renders it without branching on the reason itself. A single known bound renders alone instead of a dangling range separator.
+   * @access private
+   * @since 1.2.0
+   * @param {UnallocatedWorkOutput['reason']} reason - The row's planning reason.
+   * @param {string | null} startsOn - Earliest represented task's period start (date-only).
+   * @param {string | null} endsOn - Latest represented task's period end (date-only).
+   * @returns {string | null} The formatted period, or `null` when the reason carries no period fact.
+   */
+  private resolvePeriodLabel(
+    reason: UnallocatedWorkOutput['reason'],
+    startsOn: string | null,
+    endsOn: string | null,
+  ): string | null {
+    const settings: RegionalFormatSettings = this.regionalFormatting();
+    if (reason === 'overdue' && endsOn) {
+      return $localize`:@@workload.planning.ended:Ended ${this.datePipe.transform(endsOn, 'dateOnly', settings)}:date:`;
+    }
+    if ((reason === 'no_available_day' || reason === 'unknown_capacity') && (startsOn || endsOn)) {
+      if (startsOn && endsOn)
+        return $localize`:@@workload.planning.period:${this.datePipe.transform(startsOn, 'dateOnly', settings)}:start: – ${this.datePipe.transform(endsOn, 'dateOnly', settings)}:end:`;
+      return this.datePipe.transform(startsOn ?? endsOn, 'dateOnly', settings);
+    }
+    return null;
+  }
+
+  /**
+   * Method earliestOf
+   * @method earliestOf
+   * @description The earlier of two date-only values, keeping either one when the other is absent. Plain `'YYYY-MM-DD'` values sort correctly as strings.
+   * @access private
+   * @since 1.1.0
+   * @param {string | null | undefined} current - The row's date so far.
+   * @param {string | null | undefined} candidate - The task's own date.
+   * @returns {string | null} The earlier date, or `null` when neither is set.
+   */
+  private earliestOf(
+    current: string | null | undefined,
+    candidate: string | null | undefined,
+  ): string | null {
+    if (!current) return candidate ?? null;
+    if (!candidate) return current;
+    return candidate < current ? candidate : current;
+  }
+
+  /**
+   * Method latestOf
+   * @method latestOf
+   * @description The later of two date-only values, keeping either one when the other is absent.
+   * @access private
+   * @since 1.1.0
+   * @param {string | null | undefined} current - The row's date so far.
+   * @param {string | null | undefined} candidate - The task's own date.
+   * @returns {string | null} The later date, or `null` when neither is set.
+   */
+  private latestOf(
+    current: string | null | undefined,
+    candidate: string | null | undefined,
+  ): string | null {
+    if (!current) return candidate ?? null;
+    if (!candidate) return current;
+    return candidate > current ? candidate : current;
+  }
 
   /**
    * Property reasonLabels

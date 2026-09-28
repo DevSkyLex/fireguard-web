@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
 import { organizationQuotaOutput } from '../support/fixtures/billing-fixtures';
+import { E2E_MEMBER_IRI, interventionOutput } from '../support/fixtures/intervention-fixtures';
 import {
   inspectorOrganizationMemberOutput,
   organizationMemberOutput,
@@ -9,7 +10,55 @@ import {
 import { ownerOrganizationRoleOutput } from '../support/fixtures/role-fixtures';
 import { expectNoHorizontalOverflow } from '../support/helpers/appearance';
 import { ApiMock } from '../support/mocks/api-mock';
+import { InterventionsPage } from '../support/pages/interventions.page';
 import { OrganizationMembersPage } from '../support/pages/organization-members.page';
+
+for (const width of [1440, 780]) {
+  test(`anchors intervention selection actions below pagination at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockInterventionList(
+      E2E_ORGANIZATION_ID,
+      Array.from({ length: 31 }, (_, index) =>
+        interventionOutput({
+          id: `selected-desktop-${index}`,
+          '@id': `/api/interventions/selected-desktop-${index}`,
+          name: index === 0 ? 'Selected desktop intervention' : `Additional intervention ${index}`,
+          number: 101 + index,
+          responsible: E2E_MEMBER_IRI,
+        }),
+      ),
+    );
+    await api.mockInterventionLabels(E2E_ORGANIZATION_ID, []);
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
+    await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
+
+    const interventions = new InterventionsPage(page);
+    await interventions.goto(E2E_ORGANIZATION_ID);
+    await expect(interventions.tableRows).toHaveCount(30);
+    await interventions.selectRow('Selected desktop intervention');
+    await expect(interventions.selectionBar).toContainText('1 of 31 selected');
+
+    const pagination = page.getByTestId('interventions-page-size');
+    await pagination.scrollIntoViewIfNeeded();
+    const paginationBox = await pagination.boundingBox();
+    const barBox = await interventions.selectionBar.boundingBox();
+    if (!paginationBox || !barBox) throw new Error('Pagination or selection bar is missing.');
+    expect(paginationBox.y + paginationBox.height).toBeLessThan(barBox.y);
+    expect(900 - (barBox.y + barBox.height)).toBeGreaterThanOrEqual(12);
+    expect(900 - (barBox.y + barBox.height)).toBeLessThanOrEqual(24);
+    await expectNoHorizontalOverflow(page);
+
+    await mkdir('e2e/artifacts/selection-bar', { recursive: true });
+    await page.screenshot({
+      path: `e2e/artifacts/selection-bar/interventions-page-bottom-${width}.png`,
+      animations: 'disabled',
+    });
+  });
+}
 
 test('keeps the members selection bar and final pagination reachable on a narrow desktop', async ({
   page,
@@ -33,8 +82,7 @@ test('keeps the members selection bar and final pagination reachable on a narrow
   await expect(bar).toHaveCount(0);
 
   await members.memberRows.first().getByTestId('organization-member-table-row-select').click();
-  await expect(bar).toContainText('Selected: 1');
-  await expect(bar).toContainText('Results: 2');
+  await expect(bar).toContainText('1 of 2 selected');
   await expectNoHorizontalOverflow(page);
 
   await page.getByTestId('organization-members-tab-requests').click();

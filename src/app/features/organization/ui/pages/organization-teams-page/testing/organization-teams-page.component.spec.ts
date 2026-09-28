@@ -1,4 +1,10 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import {
+  LOCALE_ID,
+  provideZonelessChangeDetection,
+  signal,
+  type Provider,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
@@ -64,7 +70,10 @@ describe('OrganizationTeamsPage', () => {
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
-  async function createPage(organizationId = 'org-1'): Promise<void> {
+  async function createPage(
+    organizationId = 'org-1',
+    extraProviders: Provider[] = [],
+  ): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
         {
@@ -98,6 +107,7 @@ describe('OrganizationTeamsPage', () => {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
         },
+        ...extraProviders,
       ],
     });
 
@@ -224,6 +234,41 @@ describe('OrganizationTeamsPage', () => {
 
     expect(root().querySelector('app-organization-team-table')).not.toBeNull();
     expect(root().querySelector('[data-slot="empty"]:not([role="alert"])')).toBeNull();
+  });
+
+  it('should show the visible team count only once the load has actually succeeded', async () => {
+    listCallState = signal<CallState>(idleCallState());
+    await createPage();
+
+    expect(root().querySelector('[data-testid="organization-teams-subtitle"]')).toBeNull();
+
+    listCallState.set(successCallState(null));
+    await fixture.whenStable();
+
+    expect(
+      root().querySelector('[data-testid="organization-teams-subtitle"]')?.textContent,
+    ).toContain('1 team');
+  });
+
+  it('should hide the visible team count above the error state', async () => {
+    const error: StoreError = { message: 'Network down' } as StoreError;
+    listCallState = signal<CallState>(errorCallState(error));
+    listError = signal<StoreError | null>(error);
+    await createPage();
+
+    expect(root().querySelector('[data-testid="organization-teams-subtitle"]')).toBeNull();
+  });
+
+  it('should announce the real zero count, not a hardcoded one, in a locale where zero takes the singular form', async () => {
+    teams = signal<readonly TeamOutput[]>([]);
+    listCallState = signal<CallState>(successCallState(null));
+    await createPage('org-1', [{ provide: LOCALE_ID, useValue: 'fr' }]);
+
+    const announcement: string | undefined = root().querySelector(
+      '[data-testid="organization-teams-status"]',
+    )?.textContent;
+    expect(announcement).toContain('0 team');
+    expect(announcement).not.toContain('1 team');
   });
 
   it('should render the table with its loading input while the first load is pending', async () => {

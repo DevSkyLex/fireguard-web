@@ -1,4 +1,4 @@
-import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -21,7 +21,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideChevronLeft,
   lucideChevronRight,
-  lucideCalendarDays,
+  lucideCircleAlert,
   lucideUser,
   lucideUsers,
   lucideGauge,
@@ -29,6 +29,10 @@ import {
 import { Events } from '@ngrx/signals/events';
 import { DateTime } from 'luxon';
 import { ConnectivityService } from '@core/connectivity';
+import {
+  INTERACTION_CAPABILITIES_PORT,
+  type InteractionCapabilitiesPort,
+} from '@core/interaction-capabilities';
 import type {
   WorkloadDaySelection,
   WorkloadOutput,
@@ -59,11 +63,19 @@ import {
   type CollectionFilterPopoverState,
 } from '@shared/collection-filters';
 import { CollectionPagination } from '@shared/collection-pagination';
+import { CollectionSkeletonRows } from '@shared/collection-surface';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { HlmButtonGroupImports } from '@shared/ui/button-group';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmSeparatorImports } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltip } from '@shared/ui/tooltip';
 import { WorkloadPlanningPanel } from '../../components/workload-planning-panel';
 import { WorkloadCapacitySheet } from '../../sheets/workload-capacity-sheet';
 import { WorkloadTable } from '../../tables/workload-table';
@@ -84,17 +96,24 @@ import { WorkloadTable } from '../../tables/workload-table';
   templateUrl: './workload-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe,
     NgIcon,
     HlmButton,
+    ...HlmButtonGroupImports,
+    HlmTooltip,
     HlmAvatarImports,
     CollectionFilterBar,
     CollectionFilterSelect,
     CollectionFilterToggle,
     CollectionPagination,
+    CollectionSkeletonRows,
     HlmAlertImports,
     HlmEmptyImports,
+    ...HlmItemImports,
+    ...HlmSeparatorImports,
     HlmSkeleton,
+    ...HlmTableImports,
+    ResourceIllustration,
+    StateIllustration,
     WorkloadTable,
     WorkloadPlanningPanel,
     WorkloadCapacitySheet,
@@ -105,7 +124,7 @@ import { WorkloadTable } from '../../tables/workload-table';
     provideIcons({
       lucideChevronLeft,
       lucideChevronRight,
-      lucideCalendarDays,
+      lucideCircleAlert,
       lucideUser,
       lucideUsers,
       lucideGauge,
@@ -211,6 +230,38 @@ export class WorkloadPage {
    * @type {string}
    */
   private readonly locale: string = inject(LOCALE_ID);
+
+  /**
+   * Property interaction
+   * @readonly
+   * @description Stable interaction mode, read to render the same mobile-list/matrix split in the first-load skeleton as the loaded table.
+   * @access protected
+   * @since 1.1.0
+   * @type {InteractionCapabilitiesPort}
+   */
+  protected readonly interaction: InteractionCapabilitiesPort = inject(
+    INTERACTION_CAPABILITIES_PORT,
+  );
+
+  /**
+   * Property skeletonMemberRows
+   * @readonly
+   * @description Placeholder member row indices for the first-load skeleton.
+   * @access protected
+   * @since 1.1.0
+   * @type {readonly number[]}
+   */
+  protected readonly skeletonMemberRows: readonly number[] = [0, 1];
+
+  /**
+   * Property skeletonDayColumns
+   * @readonly
+   * @description Placeholder day indices for the first-load skeleton — one full week.
+   * @access protected
+   * @since 1.1.0
+   * @type {readonly number[]}
+   */
+  protected readonly skeletonDayColumns: readonly number[] = [0, 1, 2, 3, 4, 5, 6];
 
   /**
    * Property weekOffset
@@ -616,6 +667,24 @@ export class WorkloadPage {
     return DateTime.fromISO(projection.calculatedAt, { zone: projection.timezone })
       .setLocale(this.locale)
       .toLocaleString(DateTime.DATETIME_MED);
+  });
+
+  /**
+   * Property weekRangeLabel
+   * @readonly
+   * @description The requested week's date-only bounds, formatted once instead of twice, without repeating the year on the boundary date. Read at UTC — {@link query}'s `from`/`to` are calendar days, not device-zoned instants.
+   * @access protected
+   * @since 1.1.0
+   * @type {Signal<string>}
+   */
+  protected readonly weekRangeLabel: Signal<string> = computed(() => {
+    const { from, to } = this.query();
+    return new Intl.DateTimeFormat(this.locale, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).formatRange(new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`));
   });
 
   /**

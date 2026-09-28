@@ -7,3 +7,4 @@ export type {
   MessageThreadEntry,
 } from './message-thread-entry.type';
 export type { MessageView } from './message-view.interface';
+export type { MessageReceiptView } from './message-receipt-view.interface';

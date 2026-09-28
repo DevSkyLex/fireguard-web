@@ -21,5 +21,12 @@ export interface CalendarDaySummary {
 
   /** How many events the visible bars leave out, zero when everything fits. */
   readonly overflow: number;
+
+  /**
+   * Distinct {@link CalendarDisplayEvent.sourceLabel} values carried by the
+   * day, in first-occurrence order — the accessible route to which kinds of
+   * event a day holds, since the chips themselves render `aria-hidden`.
+   */
+  readonly sourceLabels: readonly string[];
   //#endregion
 }

@@ -375,5 +375,39 @@
     } @else if (entry.editedAt) {
       <div hlmMessageFooter i18n="@@messages.row.edited">Edited</div>
     }
+
+    @if (entry.status === 'sent' && entry.isOwn && entry.receipt; as receipt) {
+      <div
+        hlmMessageFooter
+        class="gap-1.5 self-end text-muted-foreground"
+        data-testid="message-receipt"
+      >
+        @if (receipt.kind === 'direct') {
+          @if (receipt.readCount > 0) {
+            <ng-icon name="lucideEye" class="text-xs" aria-hidden="true" />
+            <span i18n="@@messages.row.seen">Seen</span>
+          } @else if (receipt.deliveredCount > 0) {
+            <ng-icon name="lucideCheckCheck" class="text-xs" aria-hidden="true" />
+            <span i18n="@@messages.row.received">Received</span>
+          } @else {
+            <ng-icon name="lucideCheck" class="text-xs" aria-hidden="true" />
+            <span i18n="@@messages.row.sent">Sent</span>
+          }
+        } @else {
+          @if (receipt.deliveredCount > 0) {
+            <ng-icon name="lucideCheckCheck" class="text-xs" aria-hidden="true" />
+            <span i18n="@@messages.row.receivedBy">Received by {{ receipt.deliveredCount }}</span>
+          } @else {
+            <ng-icon name="lucideCheck" class="text-xs" aria-hidden="true" />
+            <span i18n="@@messages.row.sent">Sent</span>
+          }
+          @if (receipt.readCount > 0) {
+            <span aria-hidden="true">·</span>
+            <ng-icon name="lucideEye" class="text-xs" aria-hidden="true" />
+            <span i18n="@@messages.row.seenBy">Seen by {{ receipt.readCount }}</span>
+          }
+        }
+      </div>
+    }
   </div>
 </div>

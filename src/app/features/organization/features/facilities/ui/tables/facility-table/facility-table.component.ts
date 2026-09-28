@@ -23,13 +23,19 @@ import type {
   FacilityListSort,
   FacilityOutput,
   FacilitySortField,
-  FacilityType,
 } from '@features/organization/features/facilities/models';
-import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
 import { CollectionSurface } from '@shared/collection-surface';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { facilityTypeLabel } from '../../../utils';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
 
 /**
@@ -48,13 +54,16 @@ import { FacilityStatusTag } from '../../components/facility-status-tag';
  * choice only asks for the write through an `output()`. The bordered,
  * scrollable shell, the first-load skeleton and the below-`2xl` card
  * fallback all come from the shared `CollectionSurface`, and the row menu is
- * declared once as a template both the row and the card project. Name, Type, Status
- * and Code are the four columns the backend's own sort whitelist
- * (`ListFacilitiesProvider`) covers that this table also renders — each
- * head is a ghost button carrying the direction glyph, mirroring
- * `InterventionTable`'s sortable-head pattern.
+ * declared once as a template both the row and the card project. Name, Type,
+ * Status and Updated are sortable — the backend's own sort whitelist
+ * (`ListFacilitiesProvider`) also covers Code and `createdAt`, which this
+ * table does not render as a column — each head is a ghost button carrying
+ * the direction glyph, mirroring `InterventionTable`'s sortable-head pattern.
+ * Equipment is a read-only count, not sortable. Name and Type also carry the
+ * address and Updated reads the organization's regional date format through
+ * {@link regionalFormatting}, injected by the page.
  *
- * @version 2.0.0
+ * @version 2.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -67,8 +76,11 @@ import { FacilityStatusTag } from '../../components/facility-status-tag';
     CollectionSurface,
     FacilityStatusTag,
     HlmButton,
+    OrgDatePipe,
     ...HlmDropdownMenuImports,
+    ...HlmItemImports,
     ...HlmTableImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
@@ -139,6 +151,17 @@ export class FacilityTable {
    */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
     input.required<readonly string[]>();
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, read by the Updated column's `appOrgDate` binding.
+   * @access public
+   * @since 2.1.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs
@@ -187,6 +210,8 @@ export class FacilityTable {
     'w-24',
     'w-16',
     'w-20',
+    'ms-auto w-10',
+    'w-20',
     'ms-auto size-6',
   ];
   //#endregion
@@ -198,13 +223,10 @@ export class FacilityTable {
    * @access protected
    * @since 1.0.0
    * @param {string} type - The raw type value.
-   * @returns {string} The localized label, or the raw value humanized if unknown.
+   * @returns {string} The localized label, or a localized "Unknown type" fallback.
    */
   protected typeLabelOf(type: string): string {
-    return (
-      FACILITY_TYPE_OPTIONS.find((option) => option.value === (type as FacilityType))?.label ??
-      type.replaceAll('_', ' ')
-    );
+    return facilityTypeLabel(type);
   }
 
   /**
@@ -215,7 +237,7 @@ export class FacilityTable {
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
-    return 5;
+    return 7;
   }
 
   /**

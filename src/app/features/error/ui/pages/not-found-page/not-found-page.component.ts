@@ -4,6 +4,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft, lucideCompass, lucideMapPin, lucideRoute } from '@ng-icons/lucide';
 import { PageHeading } from '@shared/page-heading';
 import { HlmButton } from '@shared/ui/button';
+import { ErrorScene } from '../../components/error-scene';
 
 /**
  * Component NotFoundPage
@@ -19,7 +20,7 @@ import { HlmButton } from '@shared/ui/button';
  */
 @Component({
   selector: 'app-not-found-page',
-  imports: [RouterLink, NgIcon, PageHeading, HlmButton],
+  imports: [RouterLink, NgIcon, ErrorScene, PageHeading, HlmButton],
   providers: [provideIcons({ lucideMapPin, lucideRoute, lucideArrowLeft, lucideCompass })],
   templateUrl: './not-found-page.component.html',
   host: { class: 'my-auto block min-w-0 w-full max-w-full shrink-0 sm:max-w-xl' },

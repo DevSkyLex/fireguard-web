@@ -14,7 +14,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBellOff, lucideTriangleAlert } from '@ng-icons/lucide';
+import { lucideTriangleAlert } from '@ng-icons/lucide';
 import type {
   NotificationPreferenceOutput,
   NotificationTypeOutput,
@@ -32,6 +32,8 @@ import {
   type AccountNotificationPreferenceRow,
   type AccountNotificationPreferenceToggle,
 } from '@features/account/ui/forms/account-notification-preferences-form';
+import { humanizeNotificationCategory } from '@features/account/utils/notification-category-label';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -62,12 +64,10 @@ import type { AccountNotificationsTabId } from './models';
     AccountNotificationPreferencesForm,
     HlmButton,
     HlmSkeleton,
+    StateIllustration,
     ...HlmTabsImports,
   ],
-  providers: [
-    AccountNotificationPreferencesStore,
-    provideIcons({ lucideBellOff, lucideTriangleAlert }),
-  ],
+  providers: [AccountNotificationPreferencesStore, provideIcons({ lucideTriangleAlert })],
   templateUrl: './account-notifications-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -258,7 +258,7 @@ export class AccountNotificationsPage implements OnInit {
 
         return {
           category,
-          label: this.humanize(category),
+          label: humanizeNotificationCategory(category),
           emailEnabled: preference?.emailEnabled ?? true,
           mercureEnabled: preference?.mercureEnabled ?? true,
         };
@@ -440,28 +440,6 @@ export class AccountNotificationsPage implements OnInit {
         },
       ],
     });
-  }
-
-  /**
-   * Method humanize
-   * @method humanize
-   *
-   * @description
-   * Turns a raw category identifier into a readable label: separators become
-   * spaces and the first letter is capitalized (`non_conformity` becomes "Non
-   * conformity"). There is no category label registry to reuse — the feed
-   * renders raw identifiers — so this stays a plain presentation fallback.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {string} category - The raw category identifier.
-   *
-   * @returns {string} The human-readable label.
-   */
-  private humanize(category: string): string {
-    const spaced: string = category.replaceAll(/[._-]/g, ' ').trim();
-    return spaced.length === 0 ? category : spaced.charAt(0).toUpperCase() + spaced.slice(1);
   }
   //#endregion
 }

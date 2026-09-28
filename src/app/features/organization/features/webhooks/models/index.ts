@@ -5,3 +5,6 @@ export type { WebhookMutation } from './subscription/webhook-mutation.type';
 export type { WebhookDeliveryOutput } from './delivery/webhook-delivery-output.interface';
 export type { WebhookPingOutput } from './delivery/webhook-ping-output.interface';
 export type { WebhookEventOutput } from './event/webhook-event-output.interface';
+export type { WebhookDeliveryStatusTagDescriptor } from './webhook-delivery-status-tag/webhook-delivery-status-tag-descriptor.interface';
+export type { WebhookDeliveryStatusTagSeverity } from './webhook-delivery-status-tag/webhook-delivery-status-tag-severity.type';
+export { resolveWebhookDeliveryStatusTag } from './webhook-delivery-status-tag/webhook-delivery-status-tag.util';

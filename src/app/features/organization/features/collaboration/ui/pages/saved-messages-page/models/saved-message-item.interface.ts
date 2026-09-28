@@ -25,6 +25,8 @@ export interface SavedMessageItem {
 
   /** Never blank — the API's own `authorDisplayName`, or a neutral label. */
   readonly authorName: string;
+  /** Whether {@link authorName} is a real name, so the avatar draws a placeholder rather than initials of the neutral label. */
+  readonly isAuthorResolved: boolean;
   /** ISO instant the message was written. */
   readonly createdAt: string;
   /** Rendered HTML. Empty on a tombstone, which draws a placeholder instead. */

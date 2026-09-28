@@ -8,6 +8,8 @@
     data-testid="saved-messages-back"
     i18n-aria-label="@@messages.conversation.back"
     aria-label="Back to conversations"
+    hlmTooltip="Back to conversations"
+    i18n-hlmTooltip="@@messages.conversation.back"
   >
     <ng-icon name="lucideArrowLeft" aria-hidden="true" />
   </a>
@@ -48,18 +50,35 @@
       </div>
     </div>
   } @else if (saved.isLoading() && items().length === 0) {
-    <div class="flex flex-col gap-3" aria-hidden="true">
-      <hlm-skeleton class="h-20 w-full rounded-lg" />
-      <hlm-skeleton class="h-20 w-full rounded-lg" />
-      <hlm-skeleton class="h-20 w-full rounded-lg" />
-    </div>
+    <span class="sr-only" role="status" i18n="@@messages.saved.loading"
+      >Loading saved messages…</span
+    >
+    <ul hlmItemGroup class="gap-0">
+      @for (row of [0, 1, 2]; track row) {
+        <li>
+          @if (row !== 0) {
+            <hlm-item-separator />
+          }
+          <div hlmItem class="items-start">
+            <div hlmItemMedia variant="image">
+              <hlm-skeleton class="size-8 rounded-full" />
+            </div>
+            <div hlmItemContent class="min-w-0 gap-1">
+              <hlm-skeleton class="h-3 w-32" />
+              <hlm-skeleton class="h-4 w-full" />
+            </div>
+            <div hlmItemActions>
+              <hlm-skeleton class="size-8 shrink-0 rounded-md" />
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
   } @else if (items().length === 0) {
     <div class="my-auto">
       <div hlmEmpty>
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideBookmark" aria-hidden="true" />
-          </div>
+          <app-resource-illustration hlmEmptyMedia resource="saved" />
           <p hlmEmptyTitle i18n="@@messages.saved.emptyTitle">Nothing saved yet</p>
           <p hlmEmptyDescription i18n="@@messages.saved.emptyDescription">
             Save a message from its menu to find it again here.
@@ -68,54 +87,71 @@
       </div>
     </div>
   } @else {
-    <ul class="flex flex-col gap-2" data-testid="saved-messages-list">
+    <ul hlmItemGroup class="gap-0" data-testid="saved-messages-list">
       @for (item of items(); track item.id) {
-        <li class="flex items-start gap-2 rounded-lg border p-3">
-          <div class="flex min-w-0 flex-1 flex-col gap-1">
-            <div
-              class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs text-muted-foreground"
-            >
-              <span class="truncate font-medium text-foreground">{{ item.authorName }}</span>
-              <app-member-presence-indicator
-                [status]="presences()[item.authorMemberId] ?? null"
-                [showLabel]="true"
-              />
-              <a
-                class="truncate underline-offset-2 hover:text-foreground hover:underline"
-                data-testid="saved-message-conversation-link"
-                [routerLink]="item.link"
+        <li>
+          @if (!$first) {
+            <hlm-item-separator />
+          }
+          <div hlmItem class="items-start">
+            <div hlmItemMedia variant="image">
+              <hlm-avatar>
+                <span hlmAvatarFallback>{{
+                  item.isAuthorResolved ? getOrganizationInitials(item.authorName) : '?'
+                }}</span>
+              </hlm-avatar>
+            </div>
+            <div hlmItemContent class="min-w-0 gap-1">
+              <div
+                class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs text-muted-foreground"
               >
-                {{ item.conversationLabel }}
-              </a>
+                <span class="truncate font-medium text-foreground">{{ item.authorName }}</span>
+                <app-member-presence-indicator
+                  [status]="presences()[item.authorMemberId] ?? null"
+                  [showLabel]="true"
+                />
+                <a
+                  class="truncate underline-offset-2 hover:text-foreground hover:underline"
+                  data-testid="saved-message-conversation-link"
+                  [routerLink]="item.link"
+                >
+                  {{ item.conversationLabel }}
+                </a>
+                <span>{{ item.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}</span>
+              </div>
+
+              @if (item.isDeleted) {
+                <span class="text-sm text-muted-foreground italic" i18n="@@messages.row.deleted">
+                  This message was deleted
+                </span>
+              } @else {
+                <div
+                  class="line-clamp-4 text-sm break-words whitespace-pre-wrap [&_a]:underline"
+                  [innerHTML]="item.bodyHtml"
+                ></div>
+              }
             </div>
 
-            @if (item.isDeleted) {
-              <span class="text-sm text-muted-foreground italic" i18n="@@messages.row.deleted">
-                This message was deleted
-              </span>
-            } @else {
-              <div
-                class="line-clamp-4 text-sm break-words whitespace-pre-wrap [&_a]:underline"
-                [innerHTML]="item.bodyHtml"
-              ></div>
-            }
+            <div hlmItemActions>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                class="shrink-0 mobile-ui:size-11"
+                data-testid="saved-message-unsave"
+                i18n-aria-label="@@messages.saved.unsaveAria"
+                aria-label="Remove from saved"
+                hlmTooltip="Remove from saved"
+                i18n-hlmTooltip="@@messages.saved.unsaveAria"
+                [disabled]="saved.isUnsaving()"
+                [attr.aria-busy]="saved.isUnsaving() ? 'true' : null"
+                (click)="saved.unsave(item.id)"
+              >
+                <ng-icon name="lucideBookmarkX" class="text-sm" aria-hidden="true" />
+              </button>
+            </div>
           </div>
-
-          <button
-            hlmBtn
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            class="shrink-0 mobile-ui:size-11"
-            data-testid="saved-message-unsave"
-            i18n-aria-label="@@messages.saved.unsaveAria"
-            aria-label="Remove from saved"
-            [disabled]="saved.isUnsaving()"
-            [attr.aria-busy]="saved.isUnsaving() ? 'true' : null"
-            (click)="saved.unsave(item.id)"
-          >
-            <ng-icon name="lucideBookmarkX" class="text-sm" aria-hidden="true" />
-          </button>
         </li>
       }
     </ul>

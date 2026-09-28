@@ -62,6 +62,18 @@ export class ThemeService {
   private readonly document: Document = inject<Document>(DOCUMENT);
 
   /**
+   * Property faviconOverrideHref
+   *
+   * @description Optional browser-tab icon supplied by an owning feature.
+   * Theme changes keep the override until that feature clears it.
+   *
+   * @access private
+   * @since 1.4.0
+   * @type {string | null}
+   */
+  private faviconOverrideHref: string | null = null;
+
+  /**
    * Property platformId
    * @readonly
    *
@@ -199,6 +211,24 @@ export class ThemeService {
   //#endregion
 
   //#region Public Methods
+  /**
+   * Method setFaviconOverride
+   * @method setFaviconOverride
+   *
+   * @description Replaces the browser favicon until the caller passes null.
+   * The primary brand icon remains the default across theme changes.
+   *
+   * @access public
+   * @since 1.4.0
+   * @param {string | null} href - Alternate icon URL, or null to restore the default.
+   * @returns {void} - Nothing.
+   */
+  public setFaviconOverride(href: string | null): void {
+    if (this.faviconOverrideHref === href) return;
+    this.faviconOverrideHref = href;
+    this.applyThemeAssets();
+  }
+
   /**
    * Method switchTheme
    * @method switchTheme
@@ -438,7 +468,7 @@ export class ThemeService {
     }
 
     for (const icon of this.document.querySelectorAll<HTMLLinkElement>('[data-theme-icon]')) {
-      icon.setAttribute('href', primarySource);
+      icon.setAttribute('href', this.faviconOverrideHref ?? primarySource);
     }
   }
 

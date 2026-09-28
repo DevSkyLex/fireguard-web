@@ -46,7 +46,13 @@
         </div>
       }
       @if (error(); as message) {
-        <p role="alert" class="text-sm text-destructive">{{ message }}</p>
+        <div hlmAlert variant="destructive" role="alert">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@org.access.requests.reviewErrorTitle">
+            Couldn't submit this decision
+          </p>
+          <p hlmAlertDescription>{{ message }}</p>
+        </div>
       }
       <hlm-dialog-footer class="flex-wrap"
         ><button

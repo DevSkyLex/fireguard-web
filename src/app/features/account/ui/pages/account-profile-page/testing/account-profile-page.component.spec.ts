@@ -126,9 +126,8 @@ describe('AccountProfilePage', () => {
     userStore.roles.set(['ROLE_USER', 'ROLE_INTERNAL_METADATA']);
     await fixture.whenStable();
 
-    expect(root.querySelector('[data-testid="account-profile-roles"]')?.textContent?.trim()).toBe(
-      'User, Assigned role',
-    );
+    const roles = root.querySelector('[data-testid="account-profile-roles"]')?.textContent?.trim();
+    expect(roles).toBe('User, Assigned role');
     expect(root.textContent).not.toContain('ROLE_');
     expect(root.querySelector('app-account-profile-form')).toBe(form);
 
@@ -136,6 +135,15 @@ describe('AccountProfilePage', () => {
     await fixture.whenStable();
     expect(root.querySelector('[data-testid="account-profile-roles"]')).toBeNull();
     expect(root.querySelector('app-account-profile-form')).toBe(form);
+  });
+
+  it('dedupes two unrecognized roles into a single badge rather than repeating the same label', async () => {
+    const root: HTMLElement = fixture.nativeElement;
+    userStore.roles.set(['ROLE_USER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN']);
+    await fixture.whenStable();
+
+    const roles = root.querySelector('[data-testid="account-profile-roles"]')?.textContent?.trim();
+    expect(roles).toBe('User, Assigned role');
   });
 
   it('should flag an unconfirmed address, and stay quiet about a confirmed one', async () => {

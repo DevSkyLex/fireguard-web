@@ -8,7 +8,10 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmSpinner } from '@shared/ui/spinner';
 
@@ -50,7 +53,8 @@ import { HlmSpinner } from '@shared/ui/spinner';
  */
 @Component({
   selector: 'app-account-leave-organization-dialog',
-  imports: [...HlmAlertDialogImports, HlmSpinner],
+  imports: [NgIcon, ...HlmAlertImports, ...HlmAlertDialogImports, HlmSpinner],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './account-leave-organization-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

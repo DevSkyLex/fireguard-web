@@ -3,18 +3,9 @@
   data-testid="intervention-inspections"
   aria-labelledby="intervention-inspections-title"
 >
-  <div class="flex flex-col gap-1">
-    <h2
-      id="intervention-inspections-title"
-      class="text-lg font-semibold"
-      i18n="@@intervention.sidebar.inspections"
-    >
-      Inspections
-    </h2>
-    <p class="text-sm text-muted-foreground" i18n="@@intervention.linked.inspections.caption">
-      The inspections linked to this intervention.
-    </p>
-  </div>
+  <h2 id="intervention-inspections-title" class="sr-only" i18n="@@intervention.sidebar.inspections">
+    Inspections
+  </h2>
 
   <app-collection-toolbar>
     <app-collection-search-box
@@ -110,7 +101,7 @@
     [hasLoaded]="hasLoaded()"
     [hasError]="error() !== null && !hasLoaded() && filteredItems().length === 0"
     [rowCount]="filteredItems().length"
-    [columnCount]="4"
+    [columnCount]="5"
     [skeletonColumns]="skeletonColumnWidths"
   >
     <ng-container surfaceHead>
@@ -142,6 +133,14 @@
         <th hlmTableHead scope="col" i18n="@@intervention.linked.inspections.columnInspector">
           Inspector
         </th>
+        <th
+          hlmTableHead
+          scope="col"
+          class="w-40"
+          i18n="@@intervention.linked.inspections.columnNonConformities"
+        >
+          Non-conformities
+        </th>
       </tr>
     </ng-container>
 
@@ -160,25 +159,37 @@
           <td hlmTableCell>
             <ng-container [ngTemplateOutlet]="inspector" [ngTemplateOutletContext]="{ item }" />
           </td>
+          <td hlmTableCell>
+            <ng-container
+              [ngTemplateOutlet]="nonConformities"
+              [ngTemplateOutletContext]="{ item }"
+            />
+          </td>
         </tr>
       }
     </ng-container>
 
-    <ng-container surfaceCards>
-      @for (item of filteredItems(); track item.id) {
+    <div surfaceCards hlmItemGroup class="gap-0 border-y border-border">
+      @for (item of filteredItems(); track item.id; let last = $last) {
         <div
-          class="flex flex-col gap-1 rounded-md border border-border p-3"
+          hlmItem
+          class="flex flex-col items-stretch gap-1 rounded-none px-0"
           data-testid="intervention-inspections-table-card"
         >
           <ng-container [ngTemplateOutlet]="identity" [ngTemplateOutletContext]="{ item }" />
 
-          <div class="flex items-center gap-2 text-xs text-muted-foreground">
+          <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <app-intervention-tag kind="inspectionResult" [value]="item.result" />
+            <app-intervention-tag kind="inspectionStatus" [value]="item.status" />
             <ng-container [ngTemplateOutlet]="inspector" [ngTemplateOutletContext]="{ item }" />
           </div>
+          <ng-container [ngTemplateOutlet]="nonConformities" [ngTemplateOutletContext]="{ item }" />
         </div>
+        @if (!last) {
+          <hlm-item-separator />
+        }
       }
-    </ng-container>
+    </div>
 
     <div hlmEmpty role="alert" surfaceError data-testid="intervention-inspections-error">
       <div hlmEmptyHeader>
@@ -191,25 +202,26 @@
         <p hlmEmptyDescription>{{ error() ?? '' }}</p>
       </div>
 
-      <button
-        hlmBtn
-        type="button"
-        variant="outline"
-        size="sm"
-        [disabled]="loading()"
-        (click)="retryRequested.emit()"
-        i18n="@@intervention.tables.retry"
-      >
-        Retry
-      </button>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="mobile-ui:min-h-11"
+          [disabled]="loading()"
+          (click)="retryRequested.emit()"
+          i18n="@@intervention.tables.retry"
+        >
+          Retry
+        </button>
+      </div>
     </div>
 
     <div hlmEmpty surfaceEmpty data-testid="intervention-inspections-empty">
       <div hlmEmptyHeader>
         @if (hasActiveQuery()) {
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-          </div>
+          <app-state-illustration hlmEmptyMedia state="no-matches" />
         } @else if (
           hasLoaded() && !loading() && !error() && items().length === 0 && totalItems() === 0
         ) {
@@ -239,7 +251,7 @@
   </app-collection-surface>
 
   @if (totalItems() > items().length) {
-    <div class="flex justify-center pt-4">
+    <div class="flex flex-col items-center gap-2">
       <button
         hlmBtn
         type="button"
@@ -250,11 +262,18 @@
         (click)="loadMoreRequested.emit()"
       >
         @if (loadingMore()) {
+          <hlm-spinner size="xs" aria-hidden="true" />
           <span i18n="@@intervention.linked.inspections.loadingMore">Loading…</span>
         } @else {
           <span i18n="@@intervention.linked.inspections.loadMore">Show more</span>
         }
       </button>
+      <span
+        class="text-xs text-muted-foreground tabular-nums"
+        i18n="@@intervention.linked.inspections.shownCount"
+      >
+        Showing {{ items().length }} of {{ totalItems() }}
+      </span>
     </div>
   }
 </section>
@@ -297,5 +316,24 @@
     </div>
   } @else {
     <span class="text-muted-foreground" aria-hidden="true">—</span>
+  }
+</ng-template>
+
+<ng-template #nonConformities let-item="item">
+  @if (item.nonConformitiesCount > 0) {
+    <span class="flex items-center gap-1.5 text-sm text-warning">
+      <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+      <span
+        i18n="@@intervention.linked.inspections.nonConformitiesCount"
+        >{item.nonConformitiesCount, plural,
+          =1 {1 non-conformity}
+          other {{{ item.nonConformitiesCount }} non-conformities}
+        }</span
+      >
+    </span>
+  } @else {
+    <span class="text-muted-foreground" i18n="@@intervention.linked.inspections.noNonConformities"
+      >None</span
+    >
   }
 </ng-template>

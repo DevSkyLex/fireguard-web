@@ -16,10 +16,13 @@ import {
 const PREFERENCES_COOKIE_NAME = 'fg-equipment-list';
 
 /**
- * Ordering used when nothing has been remembered — the backend's own default
- * (`ListEquipmentsProvider`).
+ * Ordering used when nothing has been remembered. `type` rather than the
+ * backend's own `createdAt` default, since "Equipment" is the one sortable
+ * head the table actually renders — a `createdAt` default left every head
+ * showing `aria-sort="none"` on first load, with no way to tell the list was
+ * ordered at all.
  */
-const DEFAULT_SORT: EquipmentListSort = { field: 'createdAt', direction: 'asc' };
+const DEFAULT_SORT: EquipmentListSort = { field: 'type', direction: 'asc' };
 
 /**
  * Shape persisted in the cookie. Deliberately not exported: it is an encoding
@@ -87,7 +90,7 @@ export class EquipmentListPreferencesService {
    * Method readSort
    *
    * @description
-   * The remembered ordering, or createdAt/asc when none was stored or the
+   * The remembered ordering, or type/asc when none was stored or the
    * stored one no longer names a field this build supports.
    *
    * @access public

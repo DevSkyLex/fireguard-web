@@ -26,16 +26,16 @@ async function expectAboveBottomNavigation(page: Page, testId: string): Promise<
 }
 
 async function expectPaginationAboveBar(page: Page, prefix: string): Promise<void> {
-  const pageSize = page.getByTestId(`${prefix}-page-size`);
-  await pageSize.scrollIntoViewIfNeeded();
+  const rowCount = page.getByTestId(`${prefix}-row-count`);
+  await rowCount.scrollIntoViewIfNeeded();
   await page.locator('#dashboard-main').evaluate((main: HTMLElement) => {
     main.scrollTop += 120;
   });
-  await expect(pageSize).toBeInViewport();
-  const pageSizeBox = await pageSize.boundingBox();
+  await expect(rowCount).toBeInViewport();
+  const rowCountBox = await rowCount.boundingBox();
   const barBox = await page.getByTestId(`${prefix}-selection-bar`).boundingBox();
-  if (!pageSizeBox || !barBox) throw new Error('Pagination or selection bar is missing.');
-  expect(pageSizeBox.y + pageSizeBox.height).toBeLessThan(barBox.y);
+  if (!rowCountBox || !barBox) throw new Error('Row count or selection bar is missing.');
+  expect(rowCountBox.y + rowCountBox.height).toBeLessThan(barBox.y);
 }
 
 test.beforeEach(async ({ context, browserName }) => {
@@ -76,7 +76,7 @@ test('opens intervention actions above the bottom navigation and closes before c
     .getByTestId('intervention-table-row-select')
     .click();
 
-  await expect(interventions.selectionBar).toContainText('Selected: 1');
+  await expect(interventions.selectionBar).toContainText('1 of 2 selected');
   await expectAboveBottomNavigation(page, 'interventions-selection-bar');
   await expectPaginationAboveBar(page, 'interventions');
 
@@ -125,7 +125,7 @@ test('keeps member removal in its existing confirmation from the compact dark ba
     .click();
 
   const bar = page.getByTestId('organization-members-selection-bar');
-  await expect(bar).toContainText('Selected: 1');
+  await expect(bar).toContainText('1 of 2 selected');
   await expectAboveBottomNavigation(page, 'organization-members-selection-bar');
   await expectPaginationAboveBar(page, 'organization-members');
   await mkdir('e2e/artifacts/selection-bar', { recursive: true });

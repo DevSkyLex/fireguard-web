@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -19,6 +20,7 @@ import type {
   FederatedConnectionsOutput,
   FederatedProvider,
 } from '@features/auth/models';
+import { FEDERATED_PROVIDER_LABELS } from '@features/auth/options';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
 import { HlmSkeleton } from '@shared/ui/skeleton';
@@ -36,7 +38,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-federated-connections-panel',
-  imports: [NgIcon, HlmButton, HlmSkeleton, ...HlmAlertDialogImports],
+  imports: [NgIcon, DatePipe, HlmButton, HlmSkeleton, ...HlmAlertDialogImports],
   providers: [
     provideIcons({
       lucideCheck,
@@ -217,18 +219,16 @@ export class FederatedConnectionsPanel {
   }
 
   /**
-   * Method providerName
-   * @method providerName
-   * @description Returns the localized name used by the confirmation dialog.
+   * Method providerLabel
+   * @method providerLabel
+   * @description Resolves a provider's localized display name from the shared registry, rather than branching on it here.
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    * @param {FederatedProvider} provider - Provider to label.
    * @returns {string} Localized provider name.
    */
-  protected providerName(provider: FederatedProvider): string {
-    return provider === 'google'
-      ? $localize`:@@auth.federated.google:Google`
-      : $localize`:@@auth.federated.microsoft:Microsoft`;
+  protected providerLabel(provider: FederatedProvider): string {
+    return FEDERATED_PROVIDER_LABELS[provider];
   }
 
   /**

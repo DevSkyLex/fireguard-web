@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import type {
@@ -5,6 +6,8 @@ import type {
   WorkloadProjectionOutput,
 } from '@features/organization/features/workload/models';
 import type { MemberSelectOption } from '@features/organization/models';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { WorkloadPlanningPanel } from '../workload-planning-panel.component';
 
 describe('WorkloadPlanningPanel', () => {
@@ -45,7 +48,15 @@ describe('WorkloadPlanningPanel', () => {
   };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+      ],
+    });
     fixture = TestBed.createComponent(WorkloadPlanningPanel);
     fixture.componentRef.setInput('organizationId', 'organization-1');
     fixture.componentRef.setInput('projection', projection);

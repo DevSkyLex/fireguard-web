@@ -1,6 +1,6 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 @sm/settings:grid-cols-2">
       <hlm-field>
         <label hlmFieldLabel for="org-regional-timezone"
           ><span i18n="@@org.settings.regional.timezoneLabel">Timezone</span><app-required-marker
@@ -44,7 +44,7 @@
       </hlm-field>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="grid gap-4 @lg/settings:grid-cols-3">
       <hlm-field>
         <label
           hlmFieldLabel

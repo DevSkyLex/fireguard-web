@@ -1,6 +1,6 @@
-<div id="organization-team" class="flex h-full flex-col gap-6">
+<div id="organization-team" class="flex min-h-0 w-full flex-1 flex-col gap-4">
   @if (store.loadCallState().status === 'error') {
-    <div hlmEmpty role="alert">
+    <div hlmEmpty class="border border-border" role="alert">
       <div hlmEmptyHeader>
         <div hlmEmptyMedia variant="icon" class="text-destructive">
           <ng-icon name="lucideCircleAlert" aria-hidden="true" />
@@ -21,19 +21,6 @@
       </div>
     </div>
   } @else {
-    <section class="grid grid-cols-1 gap-4 sm:grid-cols-3" data-testid="organization-team-kpis">
-      @for (tile of kpiTiles(); track tile.id) {
-        <div [attr.data-testid]="'organization-team-kpi-' + tile.id">
-          <app-stat-tile
-            [label]="tile.label"
-            [value]="tile.value"
-            [icon]="tile.icon"
-            [loading]="tile.loading"
-          />
-        </div>
-      }
-    </section>
-
     <app-organization-role-grid
       [items]="store.roles()"
       [loading]="store.isLoading()"
@@ -41,6 +28,7 @@
       [membersRouteBase]="membersRouteBase()"
       (editPermissionsRequested)="openPermissionsEditor($event)"
       (deleteRequested)="requestDelete($event)"
+      (createRequested)="openCreateDialog()"
     />
   }
 </div>

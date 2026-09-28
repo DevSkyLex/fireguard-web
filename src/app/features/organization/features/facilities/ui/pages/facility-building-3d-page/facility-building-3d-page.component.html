@@ -13,11 +13,19 @@
   </div>
 
   @if (!store.isQueryLoaded() && !store.queryHasError()) {
-    <div class="flex min-h-0 flex-1 flex-col gap-3" data-testid="facility-3d-loading">
+    <div class="flex min-h-0 flex-1 flex-col gap-4" data-testid="facility-3d-loading">
       <output class="sr-only" i18n="@@facility.building3d.loadingAria"
         >Loading the building model</output
       >
-      <hlm-skeleton class="h-full w-full flex-1" aria-hidden="true" />
+      <div class="flex flex-wrap items-center gap-2" aria-hidden="true">
+        <hlm-skeleton class="h-8 w-28" />
+        <hlm-skeleton class="h-8 w-28" />
+        <hlm-skeleton class="h-8 w-28" />
+      </div>
+      <div class="@container flex min-h-0 flex-1 gap-4" aria-hidden="true">
+        <hlm-skeleton class="min-h-0 flex-1" />
+        <hlm-skeleton class="hidden w-80 shrink-0 @3xl:block" />
+      </div>
     </div>
   } @else if (store.queryHasError()) {
     <div
@@ -48,24 +56,28 @@
       data-testid="facility-3d-empty"
     >
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideBoxes" aria-hidden="true" />
-        </div>
+        <app-resource-illustration hlmEmptyMedia resource="floor" />
         <p hlmEmptyTitle i18n="@@facility.building3d.emptyTitle">This building has no floors yet</p>
-        <p hlmEmptyDescription i18n="@@facility.building3d.emptyDesc">
-          Add a floor from the record's Plans tab to see it here.
-        </p>
+        @if (canWrite()) {
+          <p hlmEmptyDescription i18n="@@facility.building3d.emptyDescV2">
+            Add the floors of this building as sub-facilities to see them here.
+          </p>
+        } @else {
+          <p hlmEmptyDescription i18n="@@facility.building3d.emptyDescReadOnly">
+            This building's floors will appear here once added as sub-facilities.
+          </p>
+        }
       </div>
       <div hlmEmptyContent>
         @if (canWrite()) {
           <a
             hlmBtn
             type="button"
-            [routerLink]="plansTabRoute()"
-            [queryParams]="{ tab: 'plans' }"
+            [routerLink]="['/organizations', organizationId(), 'facilities']"
+            [queryParams]="{ create: 1, parent: facilityId() }"
             class="mobile-ui:min-h-11"
           >
-            <span i18n="@@facility.building3d.emptyCta">Go to Plans</span>
+            <span i18n="@@facility.building3d.emptyCtaV2">Add a floor</span>
           </a>
         }
       </div>
@@ -83,9 +95,9 @@
         <p hlmEmptyTitle i18n="@@facility.building3d.noGeometryTitle">
           No floor has a drawn plan yet
         </p>
-        <p hlmEmptyDescription i18n="@@facility.building3d.noGeometryDesc">
-          The 3D view is built from the outlines drawn on each floor's plan. Draw them from the
-          record's Plans tab and they will appear here.
+        <p hlmEmptyDescription i18n="@@facility.building3d.noGeometryDescV2">
+          The 3D view is built from the outlines drawn on each floor's own plan. Open a floor and
+          draw them from its Plans tab, and they will appear here.
         </p>
       </div>
       <div hlmEmptyContent>
@@ -93,11 +105,11 @@
           <a
             hlmBtn
             type="button"
-            [routerLink]="plansTabRoute()"
-            [queryParams]="{ tab: 'plans' }"
+            [routerLink]="['/organizations', organizationId(), 'facilities', facilityId()]"
+            [queryParams]="{ tab: 'overview' }"
             class="mobile-ui:min-h-11"
           >
-            <span i18n="@@facility.building3d.noGeometryCta">Go to Plans</span>
+            <span i18n="@@facility.building3d.noGeometryCtaV2">Go to the floors</span>
           </a>
         }
       </div>
@@ -132,85 +144,53 @@
       </div>
     </div>
   } @else {
-    <div class="flex flex-wrap items-center justify-between gap-2">
-      <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="facility-3d-reset-camera"
+        (click)="store.resetCamera()"
+        class="mobile-ui:min-h-11"
+      >
+        <ng-icon name="lucideRotateCcw" aria-hidden="true" />
+        <span i18n="@@facility.building3d.resetCamera">Reset camera</span>
+      </button>
+
+      <button
+        hlmToggle
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="facility-3d-explode-toggle"
+        [state]="store.exploded() ? 'on' : 'off'"
+        (stateChange)="store.toggleExploded()"
+        class="mobile-ui:min-h-11"
+      >
+        <ng-icon name="lucideLayers" aria-hidden="true" />
+        <span i18n="@@facility.building3d.explodeToggle">Exploded view</span>
+      </button>
+
+      @if (isMobileInteractionMode() && !roomPanelVisible()) {
         <button
           hlmBtn
           type="button"
           variant="outline"
           size="sm"
-          data-testid="facility-3d-reset-camera"
-          (click)="store.resetCamera()"
+          aria-expanded="false"
+          data-testid="facility-3d-open-room-panel"
+          (click)="roomPanelVisible.set(true)"
           class="mobile-ui:min-h-11"
         >
-          <ng-icon name="lucideRotateCcw" aria-hidden="true" />
-          <span i18n="@@facility.building3d.resetCamera">Reset camera</span>
+          <ng-icon name="lucideList" aria-hidden="true" />
+          <span i18n="@@facility.building3d.openRoomPanel">Floors and rooms</span>
         </button>
-
-        <button
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          [attr.aria-pressed]="store.exploded()"
-          data-testid="facility-3d-explode-toggle"
-          (click)="store.toggleExploded()"
-          class="mobile-ui:min-h-11"
-        >
-          <ng-icon name="lucideLayers" aria-hidden="true" />
-          <span i18n="@@facility.building3d.explodeToggle">Exploded view</span>
-        </button>
-
-        @if (isMobileInteractionMode() && !roomPanelVisible()) {
-          <button
-            hlmBtn
-            type="button"
-            variant="outline"
-            size="sm"
-            aria-expanded="false"
-            data-testid="facility-3d-open-room-panel"
-            (click)="roomPanelVisible.set(true)"
-            class="mobile-ui:min-h-11"
-          >
-            <ng-icon name="lucideList" aria-hidden="true" />
-            <span i18n="@@facility.building3d.openRoomPanel">Floors and rooms</span>
-          </button>
-        }
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <a
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          data-testid="facility-3d-plan-2d-link"
-          [routerLink]="plansTabRoute()"
-          [queryParams]="{ tab: 'plans' }"
-          class="mobile-ui:min-h-11"
-        >
-          <ng-icon name="lucideMap" aria-hidden="true" />
-          <span i18n="@@facility.building3d.planLink">View 2D plan</span>
-        </a>
-
-        <a
-          hlmBtn
-          type="button"
-          variant="outline"
-          size="sm"
-          data-testid="facility-3d-back-link"
-          [routerLink]="plansTabRoute()"
-          [queryParams]="{ tab: 'plans' }"
-          class="mobile-ui:min-h-11"
-        >
-          <ng-icon name="lucideArrowLeft" aria-hidden="true" />
-          <span i18n="@@facility.building3d.backToDetail">Back to facility</span>
-        </a>
-      </div>
+      }
     </div>
 
-    <div class="flex min-h-0 flex-1 gap-4">
-      <div class="relative min-h-0 flex-1">
+    <div class="@container flex min-h-0 flex-1 flex-col gap-4 @3xl:flex-row">
+      <div class="relative min-h-[20rem] flex-1 @3xl:min-h-0">
         <app-facility-building-3d-scene
           class="min-h-0 flex-1"
           [model]="store.queryData()!"
@@ -253,3 +233,18 @@
     </div>
   }
 </div>
+
+<ng-template #pageActions>
+  <a
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="sm"
+    class="min-w-0 shrink mobile-ui:min-h-11"
+    data-testid="facility-3d-back-link"
+    [routerLink]="plansTabRoute()"
+  >
+    <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+    <span class="truncate" i18n="@@facility.building3d.backToDetail">Back to facility</span>
+  </a>
+</ng-template>

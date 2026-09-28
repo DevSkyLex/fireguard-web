@@ -41,65 +41,74 @@
       }
     </div>
   } @else {
-    <ul class="flex flex-col gap-3">
-      @for (session of sessions(); track session.id) {
-        <li
-          class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"
-          data-testid="account-sessions-row"
-        >
-          <div class="flex min-w-0 items-center gap-3">
-            <ng-icon
-              name="lucideMonitor"
-              class="shrink-0 text-lg text-muted-foreground"
-              aria-hidden="true"
-            />
-            <div class="flex min-w-0 flex-col gap-0.5">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="truncate text-sm font-medium text-foreground">
-                  {{ session.browser ?? session.deviceType ?? unknownDeviceLabel }}
-                </span>
-                @if (session.id === currentSessionId()) {
-                  <span
-                    hlmBadge
-                    variant="default"
-                    class="gap-1"
-                    data-testid="account-sessions-current"
-                  >
-                    <ng-icon name="lucideShieldCheck" class="text-xs" aria-hidden="true" />
-                    <span i18n="@@account.sessions.current">Current</span>
+    @if (sessions().length === 0) {
+      <div hlmEmpty class="border border-border">
+        <div hlmEmptyHeader>
+          <app-resource-illustration hlmEmptyMedia resource="session" />
+          <p hlmEmptyTitle i18n="@@account.sessions.empty">No active sessions.</p>
+        </div>
+      </div>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (session of sessions(); track session.id) {
+          <li
+            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3"
+            data-testid="account-sessions-row"
+          >
+            <div class="flex min-w-0 items-center gap-3">
+              <ng-icon
+                [name]="deviceIcon(session.deviceType)"
+                class="shrink-0 text-lg text-muted-foreground"
+                aria-hidden="true"
+              />
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <div class="mb-1.5 flex flex-wrap items-center gap-2">
+                  <span class="truncate text-sm font-medium text-foreground">
+                    {{ session.browser ?? session.deviceType ?? unknownDeviceLabel }}
                   </span>
-                }
+                  @if (session.id === currentSessionId()) {
+                    <span
+                      hlmBadge
+                      variant="default"
+                      class="gap-1"
+                      data-testid="account-sessions-current"
+                    >
+                      <ng-icon name="lucideShieldCheck" class="text-xs" aria-hidden="true" />
+                      <span i18n="@@account.sessions.current">Current</span>
+                    </span>
+                  }
+                </div>
+                <span class="truncate text-xs text-muted-foreground">
+                  <span i18n="@@account.sessions.lastActive">Last active</span>
+                  {{ session.lastActivityAt | date: 'medium' }}
+                  &middot;
+                  {{ session.ipAddress }}
+                </span>
+                <span class="truncate text-xs text-muted-foreground">
+                  <span i18n="@@account.sessions.created">Signed in</span>
+                  {{ session.createdAt | date: 'medium' }}
+                </span>
               </div>
-              <span class="truncate text-xs text-muted-foreground">
-                <span i18n="@@account.sessions.lastActive">Last active</span>
-                {{ session.lastActivityAt | date: 'medium' }}
-                &middot;
-                {{ session.ipAddress }}
-              </span>
             </div>
-          </div>
 
-          @if (session.id !== currentSessionId()) {
-            <button
-              hlmBtn
-              type="button"
-              size="sm"
-              variant="outline"
-              class="shrink-0 mobile-ui:min-h-11"
-              data-testid="account-sessions-revoke"
-              [disabled]="revoking()"
-              (click)="revokeSession(session.id)"
-            >
-              <span i18n="@@account.sessions.revoke">Revoke</span>
-            </button>
-          }
-        </li>
-      } @empty {
-        <li class="rounded-lg border border-border p-4 text-sm text-muted-foreground">
-          <span i18n="@@account.sessions.empty">No active sessions.</span>
-        </li>
-      }
-    </ul>
+            @if (session.id !== currentSessionId()) {
+              <button
+                hlmBtn
+                type="button"
+                size="sm"
+                variant="outline"
+                class="shrink-0 mobile-ui:min-h-11"
+                data-testid="account-sessions-revoke"
+                [disabled]="revoking()"
+                (click)="revokeSession(session.id)"
+              >
+                <span i18n="@@account.sessions.revoke">Revoke</span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
 
     @if (hasOtherSessions()) {
       <div>

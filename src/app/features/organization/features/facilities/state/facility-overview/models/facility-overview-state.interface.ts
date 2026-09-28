@@ -51,6 +51,28 @@ export interface FacilityOverviewState {
   readonly interventions: ReadonlyArray<InterventionOutput>;
 
   /**
+   * Property inspectionsTotal
+   *
+   * @description
+   * Server-side `totalItems` of the facility's inspection collection, which
+   * may exceed the single preview page held in `inspections`.
+   *
+   * @type {number}
+   */
+  readonly inspectionsTotal: number;
+
+  /**
+   * Property equipmentTotal
+   *
+   * @description
+   * Server-side `totalItems` of the facility's equipment collection, which
+   * may exceed the single preview page held in `equipment`.
+   *
+   * @type {number}
+   */
+  readonly equipmentTotal: number;
+
+  /**
    * Property inspectionsCallState
    *
    * @description

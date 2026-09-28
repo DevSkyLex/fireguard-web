@@ -9,14 +9,20 @@ import {
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronRight, lucideCircleCheck } from '@ng-icons/lucide';
+import { lucideChevronRight, lucideCircleAlert, lucideCircleCheck } from '@ng-icons/lucide';
 import type {
   InterventionIssueOutput,
   InterventionIssueTarget,
   InterventionPhase,
 } from '@features/organization/features/interventions/models';
+import {
+  humanizeChangeField,
+  interventionChangeResourceKind,
+} from '@features/organization/features/interventions/utils';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { InterventionTag } from '../intervention-tag';
 import { resolveInterventionIssueTarget } from './utils/intervention-issue-target/intervention-issue-target.utils';
 
@@ -32,9 +38,13 @@ import { resolveInterventionIssueTarget } from './utils/intervention-issue-targe
  * pair. Blockers render first — the only issues that actually stop publication
  * should never be a click away from visible. Warnings and recommendations
  * render directly beneath them because they remain useful context while an
- * intervention is being resolved.
+ * intervention is being resolved. Each issue's raw `field` key never renders
+ * — {@link contextLineOf} pairs the resource kind with its humanized field
+ * instead. Loading is a skeleton pair, the load failure is an `hlmAlert`, and
+ * the list itself is one flat `hlmItemGroup`, matching the sibling linked
+ * tables' anatomy rather than a bordered box per row.
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @example
  * ```html
@@ -49,8 +59,8 @@ import { resolveInterventionIssueTarget } from './utils/intervention-issue-targe
  */
 @Component({
   selector: 'app-intervention-issues-checklist',
-  imports: [...HlmItemImports, NgIcon, HlmButton, InterventionTag],
-  providers: [provideIcons({ lucideChevronRight, lucideCircleCheck })],
+  imports: [...HlmAlertImports, ...HlmItemImports, NgIcon, HlmButton, HlmSkeleton, InterventionTag],
+  providers: [provideIcons({ lucideChevronRight, lucideCircleAlert, lucideCircleCheck })],
   templateUrl: './intervention-issues-checklist.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -183,6 +193,20 @@ export class InterventionIssuesChecklist {
    */
   protected activate(issue: InterventionIssueOutput): void {
     this.activated.emit(resolveInterventionIssueTarget(issue));
+  }
+
+  /**
+   * Method contextLineOf
+   * @description The issue's resource kind, with its faulty field appended when the issue is field-level, reusing the same registry the change table's patch lines resolve resource kinds through.
+   * @access protected
+   * @since 1.1.0
+   * @param {InterventionIssueOutput} issue - The issue being rendered.
+   * @returns {string} A localized context line.
+   */
+  protected contextLineOf(issue: InterventionIssueOutput): string {
+    const kind: string = interventionChangeResourceKind(issue.resource);
+
+    return issue.field ? `${kind} · ${humanizeChangeField(issue.field)}` : kind;
   }
   //#endregion
 }

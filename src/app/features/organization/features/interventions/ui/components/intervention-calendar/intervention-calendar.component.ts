@@ -30,8 +30,12 @@ import {
   type CalendarDisplayEvent,
   type CalendarFirstDayOfWeek,
 } from '@shared/calendar';
+import { CollectionSkeletonCards } from '@shared/collection-surface';
+import { StateIllustration } from '@shared/state-illustration';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { InterventionCalendarEntryList } from '../intervention-calendar-entry-list';
 import { INTERVENTION_CALENDAR_EVENT_TONE } from './constants';
@@ -52,6 +56,7 @@ const GRID_CHIP_CAP = 2;
 type InterventionCalendarAgendaGroup = {
   readonly day: string;
   readonly label: string;
+  readonly isToday: boolean;
   readonly items: readonly InterventionOutput[];
   readonly overflow: number;
 };
@@ -101,10 +106,14 @@ type InterventionCalendarAgendaGroup = {
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    StateIllustration,
     RouterLink,
     Calendar,
     InterventionCalendarEntryList,
+    CollectionSkeletonCards,
+    HlmBadge,
     HlmButton,
+    ...HlmMarkerImports,
     HlmSkeleton,
   ],
   providers: [provideIcons({ lucideChevronLeft, lucideChevronRight, lucideCircleAlert })],
@@ -164,6 +173,15 @@ export class InterventionCalendar {
   /** Anchor of the displayed month, driven by the toolbar and the grid. */
   protected readonly month: WritableSignal<Date> = signal<Date>(new Date());
 
+  /** Today's local day, resolved once so the agenda's "Today" marker cannot shift mid-session. */
+  private readonly todayIso: string = toIsoDay(new Date());
+
+  /** One placeholder per grid loading cell — a 7-by-5 month shape, the widest a month view ever draws. */
+  protected readonly skeletonGridCells: readonly number[] = Array.from({ length: 35 }, (_, i) => i);
+
+  /** One placeholder per agenda loading group. */
+  protected readonly skeletonAgendaGroups: readonly number[] = [0, 1, 2];
+
   /** The selected day (`yyyy-MM-dd`), today on arrival. */
   protected readonly selectedDay: WritableSignal<string | null> = signal<string | null>(
     toIsoDay(new Date()),
@@ -190,7 +208,14 @@ export class InterventionCalendar {
     },
   );
 
-  /** Every visible intervention that carries a schedule anchor, keyed by its local day. */
+  /**
+   * Every visible intervention that carries a schedule anchor, keyed by its
+   * calendar day. `plannedStartAt` and `dueAt` are date-only values (UTC
+   * midnight), so the day is read directly off the anchor's own written
+   * `YYYY-MM-DD` characters rather than through `new Date(anchor)` and a
+   * local-timezone read — that would shift the day for a browser west of
+   * UTC even though the value was never meant to carry a time at all.
+   */
   private readonly interventionsByDay: Signal<ReadonlyMap<string, readonly InterventionOutput[]>> =
     computed((): ReadonlyMap<string, readonly InterventionOutput[]> => {
       const grouped = new Map<string, InterventionOutput[]>();
@@ -198,7 +223,7 @@ export class InterventionCalendar {
         const anchor: string | null = this.anchorOf(intervention);
         if (anchor === null) continue;
 
-        const day: string = toIsoDay(new Date(anchor));
+        const day: string = anchor.slice(0, 10);
         const bucket: InterventionOutput[] = grouped.get(day) ?? [];
         bucket.push(intervention);
         grouped.set(day, bucket);
@@ -275,9 +300,13 @@ export class InterventionCalendar {
    * @readonly
    *
    * @description
-   * The loaded window's entries grouped by local day, earliest day and
+   * The **displayed month's** entries grouped by local day, earliest day and
    * earliest anchor first — the agenda's day sections below `md`, where the
-   * shrunken month grid does not render.
+   * shrunken month grid does not render. The loaded window spans the
+   * displayed month plus its neighbours so the grid can fill leading and
+   * trailing cells; the agenda excludes those neighbouring days, or "Nothing
+   * scheduled in {@link periodLabel}" would never show while they hold
+   * entries.
    *
    * @access protected
    * @since 1.0.0
@@ -285,17 +314,22 @@ export class InterventionCalendar {
    * @type {Signal<readonly InterventionCalendarAgendaGroup[]>}
    */
   protected readonly agendaGroups: Signal<readonly InterventionCalendarAgendaGroup[]> = computed(
-    (): readonly InterventionCalendarAgendaGroup[] =>
-      [...this.interventionsByDay().entries()]
+    (): readonly InterventionCalendarAgendaGroup[] => {
+      const displayedMonth: string = toIsoDay(this.month()).slice(0, 7);
+
+      return [...this.interventionsByDay().entries()]
+        .filter(([day]) => day.startsWith(displayedMonth))
         .toSorted(([dayA], [dayB]) => dayA.localeCompare(dayB))
         .map(([day, items]): InterventionCalendarAgendaGroup => ({
           day,
           label: new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(
             new Date(`${day}T00:00:00`),
           ),
+          isToday: day === this.todayIso,
           items,
           overflow: Math.max(0, items.length - GRID_CHIP_CAP),
-        })),
+        }));
+    },
   );
   //#endregion
 
@@ -339,9 +373,55 @@ export class InterventionCalendar {
     this.month.set(new Date(current.getFullYear(), current.getMonth() + offset, 1));
   }
 
-  /** The query params of the List view filtered to a single day, via the existing `dueAfter`/`dueBefore` contract. */
+  /**
+   * Method dayListQueryParams
+   * @method dayListQueryParams
+   *
+   * @description
+   * The query params the "See all in list" link opens with. Days are
+   * bucketed on each intervention's own anchor — `plannedStartAt`, falling
+   * back to `dueAt` — so this narrows the List view with the same anchor
+   * every item on that day actually used: `plannedStartAfter`/`plannedStartBefore`
+   * when the whole day is start-anchored, `dueAfter`/`dueBefore` otherwise.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {string} day - The `yyyy-MM-dd` day the link narrows to.
+   *
+   * @returns {Readonly<Record<string, string>>} The List view's query params for that day.
+   */
   protected dayListQueryParams(day: string): Readonly<Record<string, string>> {
-    return { dueAfter: day, dueBefore: day };
+    return this.isDayStartAnchored(day)
+      ? { plannedStartAfter: day, plannedStartBefore: day }
+      : { dueAfter: day, dueBefore: day };
+  }
+
+  /**
+   * Method isDayStartAnchored
+   * @method isDayStartAnchored
+   *
+   * @description
+   * Whether every intervention bucketed on `day` was placed there by its
+   * `plannedStartAt`, so the "See all" link's label and query params can
+   * agree on which anchor they actually narrow by.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {string} day - The `yyyy-MM-dd` day to check.
+   *
+   * @returns {boolean} True when the whole day is start-anchored.
+   */
+  protected isDayStartAnchored(day: string): boolean {
+    const items: readonly InterventionOutput[] = this.interventionsByDay().get(day) ?? [];
+
+    return (
+      items.length > 0 &&
+      items.every(
+        (intervention: InterventionOutput): boolean => intervention.plannedStartAt != null,
+      )
+    );
   }
 
   /** The intervention's schedule anchor — `plannedStartAt`, falling back to `dueAt` — the same anchor the endpoint fetches by. */

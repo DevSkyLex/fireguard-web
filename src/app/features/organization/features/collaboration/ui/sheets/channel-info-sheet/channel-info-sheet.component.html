@@ -69,11 +69,9 @@
             <hlm-skeleton class="h-14 w-full rounded-lg" />
           </div>
         } @else if (pinned().length === 0) {
-          <div hlmEmpty>
+          <div hlmEmpty class="border border-dashed border-border">
             <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon">
-                <ng-icon name="lucidePin" aria-hidden="true" />
-              </div>
+              <app-resource-illustration hlmEmptyMedia resource="pinned" size="sm" />
               <p hlmEmptyTitle i18n="@@channels.info.pinnedEmptyTitle">Nothing pinned</p>
               <p hlmEmptyDescription i18n="@@channels.info.pinnedEmptyDescription">
                 Pin a message from its menu to keep it here.

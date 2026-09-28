@@ -84,6 +84,21 @@ describe('OrganizationMemberTable', () => {
   });
 
   describe('rows', () => {
+    it('resolves assigned role names from the loaded catalog when the member payload omits names', async () => {
+      await createTable([member({ roleIds: ['role-7'], roleNames: [] })]);
+      fixture.componentRef.setInput('roles', [{ id: 'role-7', name: 'Safety manager' }]);
+      await fixture.whenStable();
+
+      expect(root().textContent).toContain('Safety manager');
+      expect(root().textContent).not.toContain('No role');
+    });
+
+    it('shows the effective owner access instead of claiming the owner has no role', async () => {
+      await createTable([member({ isOwner: true, roleIds: [], roleNames: [] })]);
+
+      expect(root().textContent).not.toContain('No role');
+    });
+
     it('should render one row per item, addressed by the canonical row testid', async () => {
       await createTable([member({ id: 'a' }), member({ id: 'b' })]);
 
@@ -253,6 +268,24 @@ describe('OrganizationMemberTable', () => {
         root().querySelector('tbody tr')?.querySelectorAll('td').length ?? 0;
 
       expect(firstRowCells).toBe(7);
+    });
+  });
+
+  describe('owner badge', () => {
+    it('should render no Owner badge for a regular member', async () => {
+      await createTable([member({ id: 'a', isOwner: false })]);
+
+      expect(root().textContent).not.toContain('Owner');
+    });
+
+    it('should render an Owner badge next to the name for the organization owner', async () => {
+      await createTable([member({ id: 'a', isOwner: true, displayName: 'Alice Doe' })]);
+
+      const row: HTMLElement | null = root().querySelector(
+        '[data-testid="organization-member-table-row"]',
+      );
+
+      expect(row?.textContent).toContain('Owner');
     });
   });
 

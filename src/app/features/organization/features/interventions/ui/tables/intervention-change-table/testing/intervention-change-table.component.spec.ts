@@ -2,7 +2,11 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
-import type { InterventionChangeOutput } from '@features/organization/features/interventions/models';
+import { THEME_PORT, type ThemePort } from '@core/theme';
+import type {
+  InterventionChangeOutput,
+  InterventionWorkItemOutput,
+} from '@features/organization/features/interventions/models';
 import { InterventionChangeTable } from '../intervention-change-table.component';
 
 const change = (overrides: Partial<InterventionChangeOutput> = {}): InterventionChangeOutput =>
@@ -41,6 +45,14 @@ describe('InterventionChangeTable', () => {
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: { isMobileInteractionMode: signal(false) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
       ],
     });
@@ -81,6 +93,40 @@ describe('InterventionChangeTable', () => {
 
     expect(root().textContent).toContain('Location label');
     expect(root().textContent).toContain('Rack B-12');
+  });
+
+  it('should drop the time from an ISO datetime patch value, keeping only the organization-formatted date', async () => {
+    await create([change({ patch: { plannedStartAt: '2026-01-05T09:00:00Z' } })]);
+
+    expect(root().textContent).toContain('2026-01-05');
+    expect(root().textContent).not.toContain('2026-01-05T09:00:00Z');
+  });
+
+  it('should replace a resolvable resource IRI patch value with the work item target label', async () => {
+    await create([change({ patch: { target: '/api/equipment/eq-1' } })]);
+    fixture.componentRef.setInput('workItems', [
+      {
+        id: 'wi-1',
+        target: '/api/equipment/eq-1',
+        targetSummary: { resource: '/api/equipment/eq-1', kind: 'equipment', label: 'Pump A-3' },
+      } as InterventionWorkItemOutput,
+    ]);
+    await fixture.whenStable();
+
+    expect(root().textContent).toContain('Pump A-3');
+    expect(root().textContent).not.toContain('/api/equipment/eq-1');
+  });
+
+  it('should fall back to a neutral label for an unresolved resource IRI patch value', async () => {
+    await create([change({ patch: { target: '/api/equipment/eq-unknown' } })]);
+
+    expect(root().textContent).toContain('Linked resource');
+  });
+
+  it('should state when the change was proposed, relative to now', async () => {
+    await create([change({ createdAt: '2026-01-05T09:00:00Z' })]);
+
+    expect(root().textContent).toContain('Proposed');
   });
 
   it('should share the table column tracks between headers and rows', async () => {
@@ -140,21 +186,21 @@ describe('InterventionChangeTable', () => {
     expect(cells).toHaveLength(4);
   });
 
-  it('should show the applied-at-publication caption', async () => {
+  it('should keep the section title accessible without repeating the tab label visibly', async () => {
     await create([change()]);
 
-    expect(root().textContent).toContain(
-      'Review proposed values and consult rejected or applied changes.',
-    );
+    const title = root().querySelector<HTMLElement>('#intervention-change-table-title');
+
+    expect(title?.textContent?.trim()).toBe('Resource changes');
+    expect(title?.classList.contains('sr-only')).toBe(true);
   });
 
-  it('should show a history icon in the empty state', async () => {
+  it('should show a history illustration in the genuinely empty state', async () => {
     await create([]);
 
     const empty = root().querySelector<HTMLElement>('[data-testid="intervention-changes-empty"]');
 
-    expect(empty?.parentElement?.classList.contains('border-dashed')).toBe(true);
-    expect(empty?.querySelector('ng-icon[name="lucideHistory"]')).not.toBeNull();
+    expect(empty?.querySelector('[data-testid="state-illustration"]')).not.toBeNull();
   });
 
   it('should use the shared status filter with the proposed state selected by default', async () => {

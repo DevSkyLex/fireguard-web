@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   FacilityPlanOverlayEquipment,
   FacilityPlanOverlayZone,
@@ -58,6 +59,14 @@ describe('FacilityPlanPanel', () => {
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: { isMobileInteractionMode: signal(false) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
       ],
     });

@@ -27,9 +27,15 @@
             [routerLink]="detailRouteBase()"
             [queryParams]="dayListQueryParams(day)"
           >
-            <span i18n="@@intervention.calendar.seeAllInList"
-              >See all {{ dayItems().length }} in list</span
-            >
+            @if (isDayStartAnchored(day)) {
+              <span i18n="@@intervention.calendar.seeAllInList"
+                >See all {{ dayItems().length }} in list</span
+              >
+            } @else {
+              <span i18n="@@intervention.calendar.seeAllDueInList"
+                >See {{ dayItems().length }} due this day in list</span
+              >
+            }
           </a>
         }
       }
@@ -118,7 +124,11 @@
   } @else {
     <div class="hidden min-h-0 flex-1 flex-col desktop-ui:lg:flex">
       @if (loading() && events().length === 0) {
-        <hlm-skeleton class="h-96 w-full" />
+        <div class="grid grid-cols-7 gap-1" aria-hidden="true">
+          @for (cell of skeletonGridCells; track cell) {
+            <hlm-skeleton class="aspect-square w-full" />
+          }
+        </div>
       } @else {
         <app-calendar
           class="min-h-0"
@@ -138,18 +148,48 @@
       class="flex min-h-0 flex-1 flex-col divide-y divide-border overflow-y-auto desktop-ui:lg:hidden"
     >
       @if (loading() && events().length === 0) {
-        <hlm-skeleton class="h-48 w-full" />
+        <div class="flex flex-col gap-4" aria-hidden="true">
+          @for (i of skeletonAgendaGroups; track i) {
+            <div class="flex flex-col gap-2">
+              <hlm-skeleton class="h-4 w-48" />
+              <app-collection-skeleton-cards [rows]="2" />
+            </div>
+          }
+        </div>
       } @else if (agendaGroups().length === 0) {
-        <p class="py-3 text-sm text-muted-foreground" i18n="@@intervention.calendar.empty">
-          Nothing scheduled in this period.
-        </p>
+        <div hlmEmpty>
+          <div hlmEmptyHeader>
+            <app-state-illustration hlmEmptyMedia state="no-events" />
+            <p hlmEmptyTitle i18n="@@intervention.calendar.empty">
+              Nothing scheduled in {{ periodLabel() }}
+            </p>
+          </div>
+          <div hlmEmptyContent>
+            <button
+              class="mobile-ui:min-h-11"
+              hlmBtn
+              variant="outline"
+              data-testid="intervention-calendar-next-month"
+              (click)="stepMonth(1)"
+            >
+              <span i18n="@@intervention.calendar.nextMonth">Next month</span>
+            </button>
+          </div>
+        </div>
       } @else {
         @for (group of agendaGroups(); track group.day) {
           <div
             class="flex flex-col gap-2 py-3 first:pt-0 last:pb-0"
             data-testid="intervention-calendar-agenda-group"
           >
-            <h2 class="text-sm font-medium text-muted-foreground">{{ group.label }}</h2>
+            <div hlmMarker variant="separator" class="text-xs font-medium">
+              <h2 hlmMarkerContent class="flex items-center gap-2">
+                {{ group.label }}
+                @if (group.isToday) {
+                  <hlm-badge variant="secondary" i18n="@@calendar.today">Today</hlm-badge>
+                }
+              </h2>
+            </div>
             <app-intervention-calendar-entry-list
               [items]="group.items"
               [organizationId]="organizationId()"
@@ -165,9 +205,15 @@
                 [routerLink]="detailRouteBase()"
                 [queryParams]="dayListQueryParams(group.day)"
               >
-                <span i18n="@@intervention.calendar.seeAllInList"
-                  >See all {{ group.items.length }} in list</span
-                >
+                @if (isDayStartAnchored(group.day)) {
+                  <span i18n="@@intervention.calendar.seeAllInList"
+                    >See all {{ group.items.length }} in list</span
+                  >
+                } @else {
+                  <span i18n="@@intervention.calendar.seeAllDueInList"
+                    >See {{ group.items.length }} due this day in list</span
+                  >
+                }
               </a>
             }
           </div>

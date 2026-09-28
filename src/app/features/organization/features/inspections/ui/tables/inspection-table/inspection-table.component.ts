@@ -8,13 +8,25 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowDown, lucideArrowUp, lucideChevronsUpDown } from '@ng-icons/lucide';
+import {
+  lucideArrowDown,
+  lucideArrowUp,
+  lucideChevronsUpDown,
+  lucideTriangleAlert,
+} from '@ng-icons/lucide';
+import { pickAvatarUrl } from '@core/api/utils';
 import type {
   InspectionListSort,
   InspectionOutput,
   InspectionSortField,
 } from '@features/organization/features/inspections/models';
 import { CollectionSurface } from '@shared/collection-surface';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
@@ -29,9 +41,11 @@ import { InspectionStatusTag } from '../../components/inspection-status-tag';
  * row per inspection, no per-row menu — every property is edited on the
  * detail record, not the list (`FEATURE.md` "The record is the edit
  * surface"), so the only interactive element per row is the date cell's
- * link to that record. The row shows no equipment column: `InspectionOutput`
- * carries only a bare `equipmentId`, and a raw id is worse than omitting the
- * column — the detail record links to the equipment's own name instead.
+ * link to that record. The Equipment column renders {@link InspectionOutput}'s
+ * `equipmentSerialNumber` (falling back to a neutral label, never the raw
+ * id) with its `facilityName` as a muted second line, and the inspector
+ * renders with an avatar, mirroring `InterventionInspectionsTable`'s pattern
+ * for the same resource.
  *
  * "Performed on", "Result" and "Status" are sortable heads, the same ghost-
  * button-with-glyph pattern `InterventionTable` uses — the backend's own
@@ -54,13 +68,17 @@ import { InspectionStatusTag } from '../../components/inspection-status-tag';
   imports: [
     RouterLink,
     NgIcon,
+    OrgDatePipe,
     CollectionSurface,
     HlmButton,
     InspectionStatusTag,
+    ...HlmAvatarImports,
     ...HlmTableImports,
     ...HlmItemImports,
   ],
-  providers: [provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown })],
+  providers: [
+    provideIcons({ lucideArrowDown, lucideArrowUp, lucideChevronsUpDown, lucideTriangleAlert }),
+  ],
   templateUrl: './inspection-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,6 +131,17 @@ export class InspectionTable {
    * @type {InputSignal<InspectionListSort>}
    */
   public readonly sortOrder: InputSignal<InspectionListSort> = input.required<InspectionListSort>();
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 2.1.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs
@@ -153,6 +182,7 @@ export class InspectionTable {
   protected readonly skeletonColumnWidths: readonly string[] = [
     'w-24',
     'w-32',
+    'w-32',
     'w-20',
     'w-20',
     'w-8',
@@ -168,7 +198,54 @@ export class InspectionTable {
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
-    return 5;
+    return 6;
+  }
+
+  /**
+   * Method equipmentLabelOf
+   * @description The Equipment column's identity: the serial number, or a neutral label — never the raw id.
+   * @access protected
+   * @since 2.1.0
+   * @param {InspectionOutput} item - The row being rendered.
+   * @returns {string | null} The serial number, or `null` when absent.
+   */
+  protected equipmentLabelOf(item: InspectionOutput): string | null {
+    return item.equipmentSerialNumber ?? null;
+  }
+
+  /**
+   * Method inspectorInitialsOf
+   * @description Avatar fallback initials derived from the inspector's display name.
+   * @access protected
+   * @since 2.1.0
+   * @param {InspectionOutput} item - The row being rendered.
+   * @returns {string} Up to two uppercase initials, or an empty string when there is no inspector.
+   */
+  protected inspectorInitialsOf(item: InspectionOutput): string {
+    const name: string | undefined = item.inspector?.displayName;
+    if (!name) return '';
+
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part: string): string => part.charAt(0).toUpperCase())
+      .join('');
+  }
+
+  /**
+   * Method inspectorAvatarUrlOf
+   * @description The inspector's best-fit avatar URL for a small avatar, or `null` when none is available.
+   * @access protected
+   * @since 2.1.0
+   * @param {InspectionOutput} item - The row being rendered.
+   * @returns {string | null} The resolved avatar URL, or `null`.
+   */
+  protected inspectorAvatarUrlOf(item: InspectionOutput): string | null {
+    const inspector = item.inspector;
+    if (!inspector) return null;
+
+    return pickAvatarUrl(inspector.avatarUrls, '64', inspector.avatarUrl);
   }
 
   /**

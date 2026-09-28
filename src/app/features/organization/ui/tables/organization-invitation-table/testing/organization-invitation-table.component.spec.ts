@@ -114,7 +114,7 @@ describe('OrganizationInvitationTable', () => {
     expect(caption?.id).toBeTruthy();
   });
 
-  it('should join roleIds against the given roles, in the order the API returned them', async () => {
+  it('should resolve roleIds against the given roles and render each as its own badge, in the order the API returned them', async () => {
     await createTable();
     fixture.componentRef.setInput('items', [invitation({ roleIds: ['r2', 'r1'] })]);
     fixture.componentRef.setInput('roles', [
@@ -124,7 +124,59 @@ describe('OrganizationInvitationTable', () => {
     await fixture.whenStable();
 
     const row = root().querySelector('[data-testid="organization-invitation-table-row"]');
-    expect(row?.textContent).toContain('Admin, Inspector');
+    const badges: readonly string[] = [
+      ...(row?.querySelectorAll('[data-variant="secondary"]') ?? []),
+    ].map((badge) => badge.textContent?.trim() ?? '');
+
+    expect(badges).toEqual(['Admin', 'Inspector']);
+  });
+
+  it('should render who sent the invitation, or an em dash fallback', async () => {
+    await createTable([
+      invitation({ id: 'a', invitedByDisplayName: 'Alice Doe' }),
+      invitation({ id: 'b', invitedByDisplayName: null }),
+    ]);
+
+    const rows = root().querySelectorAll('[data-testid="organization-invitation-table-row"]');
+
+    expect(rows[0]?.textContent).toContain('Alice Doe');
+    expect(rows[1]?.textContent).toContain('—');
+  });
+
+  it('should show a muted relative suffix next to a pending invitation’s expiry date', async () => {
+    const inTwoDays = new Date(Date.now() + 2 * 86_400_000).toISOString();
+    await createTable([invitation({ status: 'pending', expiresAt: inTwoDays })]);
+
+    const time = root().querySelector(
+      '[data-testid="organization-invitation-table-row"] time',
+    ) as HTMLElement | null;
+
+    expect(time?.textContent).toMatch(/in 2 days/);
+  });
+
+  it('should render the row without throwing when the organization timezone is invalid', async () => {
+    const inTwoDays = new Date(Date.now() + 2 * 86_400_000).toISOString();
+    await createTable([invitation({ status: 'pending', expiresAt: inTwoDays })]);
+    fixture.componentRef.setInput('regionalFormatting', {
+      timezone: 'Not/A-Timezone',
+      dateFormat: 'DMY',
+      locale: 'en-US',
+    });
+
+    await expect(fixture.whenStable()).resolves.not.toThrow();
+    expect(
+      root().querySelectorAll('[data-testid="organization-invitation-table-row"]'),
+    ).toHaveLength(1);
+  });
+
+  it('should show no relative suffix next to an expired invitation’s date', async () => {
+    await createTable([invitation({ status: 'expired', expiresAt: '2020-01-01T00:00:00+00:00' })]);
+
+    const time = root().querySelector(
+      '[data-testid="organization-invitation-table-row"] time',
+    ) as HTMLElement | null;
+
+    expect(time?.textContent).not.toMatch(/ago|in \d/);
   });
 
   it('should show a "No role" fallback when the invitation carries none', async () => {

@@ -29,6 +29,7 @@ import {
   defer,
   EMPTY,
   exhaustMap,
+  filter,
   map,
   mergeMap,
   type Observable,
@@ -59,6 +60,7 @@ import {
 } from '@features/organization/features/collaboration/data-access';
 import type {
   AddReactionInput,
+  ConversationReceiptsOutput,
   EditMessageInput,
   MessageOutput,
   MessageReactionOutput,
@@ -94,6 +96,13 @@ const INITIAL_STATE: MessageThreadState = {
   editCallState: idleCallState(),
   deleteCallState: idleCallState(),
   realtimeTopic: null,
+  receiptPositions: [],
+  receiptsCallState: idleCallState(),
+  deliveryCallState: idleCallState(),
+  typingCallState: idleCallState(),
+  lastDeliveryAttemptId: null,
+  lastReadAttemptId: null,
+  typingMemberIds: [],
   pendingMessageIds: [],
   failedMessageIds: [],
 };
@@ -128,7 +137,7 @@ function newestPageOf(totalItems: number): number {
 
 /** Oldest-first ordering, which is how a conversation reads. */
 function byCreatedAt(first: MessageOutput, second: MessageOutput): number {
-  return first.createdAt.localeCompare(second.createdAt);
+  return first.createdAt.localeCompare(second.createdAt) || first.id.localeCompare(second.id);
 }
 
 /**
@@ -210,7 +219,10 @@ function optimisticMessage(
 export const MessageThreadStore = signalStore(
   withEntities({ entity: type<MessageOutput>(), collection: 'message' }),
   withState<MessageThreadState>(INITIAL_STATE),
-  withProps(() => ({ readsInvalidated: new Subject<void>() })),
+  withProps(() => ({
+    readsInvalidated: new Subject<void>(),
+    typingTimers: new Map<string, ReturnType<typeof setTimeout>>(),
+  })),
 
   withComputed((store) => ({
     isLoading: computed(
@@ -473,6 +485,8 @@ export const MessageThreadStore = signalStore(
       reset(): void {
         const generation = store.readGeneration() + 1;
         store.readsInvalidated.next();
+        for (const timeout of store.typingTimers.values()) clearTimeout(timeout);
+        store.typingTimers.clear();
         patchState(store, removeAllEntities({ collection: 'message' }), {
           ...INITIAL_STATE,
           readGeneration: generation,
@@ -1001,6 +1015,7 @@ export const MessageThreadStore = signalStore(
       conversations = inject(ConversationService),
       mercure = inject(MercureService),
       dispatcher = inject(Dispatcher),
+      memberAccess = inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT),
     ) => {
       /**
        * Re-reads the newest page and folds it into what is already loaded.
@@ -1069,8 +1084,128 @@ export const MessageThreadStore = signalStore(
         ),
       );
 
+      const loadReceipts = rxMethod<string>(
+        pipe(
+          switchMap((conversationId: string) => {
+            if (conversationId !== store.conversationId()) return EMPTY;
+            const generation = store.readGeneration();
+            patchState(store, { receiptsCallState: pendingCallState() });
+            return conversations.getReceipts(conversationId).pipe(
+              takeUntil(store.readsInvalidated),
+              tapResponse({
+                next: (response: ConversationReceiptsOutput): void => {
+                  if (
+                    store.conversationId() !== conversationId ||
+                    store.readGeneration() !== generation
+                  )
+                    return;
+                  patchState(store, {
+                    receiptPositions: response.receipts,
+                    receiptsCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown): void => {
+                  if (
+                    store.conversationId() !== conversationId ||
+                    store.readGeneration() !== generation
+                  )
+                    return;
+                  patchState(store, { receiptsCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            );
+          }),
+        ),
+      );
+
+      const applyTyping = (frame: unknown): void => {
+        if (typeof frame !== 'object' || frame === null) return;
+        const memberId = Reflect.get(frame, 'memberId');
+        const active = Reflect.get(frame, 'active');
+        if (
+          typeof memberId !== 'string' ||
+          typeof active !== 'boolean' ||
+          memberId === memberAccess.profile()?.id
+        )
+          return;
+        const previous = store.typingTimers.get(memberId);
+        if (previous !== undefined) clearTimeout(previous);
+        store.typingTimers.delete(memberId);
+        if (!active) {
+          patchState(store, {
+            typingMemberIds: store
+              .typingMemberIds()
+              .filter((id: string): boolean => id !== memberId),
+          });
+          return;
+        }
+        patchState(store, {
+          typingMemberIds: [...new Set([...store.typingMemberIds(), memberId])],
+        });
+        store.typingTimers.set(
+          memberId,
+          setTimeout((): void => {
+            store.typingTimers.delete(memberId);
+            patchState(store, {
+              typingMemberIds: store
+                .typingMemberIds()
+                .filter((id: string): boolean => id !== memberId),
+            });
+          }, 5_000),
+        );
+      };
+
       return {
         refresh,
+        loadReceipts,
+
+        /** Confirms one loaded incoming message from this browser. */
+        acknowledgeDelivery: rxMethod<{
+          readonly conversationId: string;
+          readonly messageId: string;
+        }>(
+          pipe(
+            concatMap(({ conversationId, messageId }) => {
+              if (
+                conversationId !== store.conversationId() ||
+                store.lastDeliveryAttemptId() === messageId
+              )
+                return EMPTY;
+              patchState(store, {
+                lastDeliveryAttemptId: messageId,
+                deliveryCallState: pendingCallState(),
+              });
+              return conversations.acknowledgeDelivery(conversationId, messageId).pipe(
+                tapResponse({
+                  next: (): void =>
+                    patchState(store, { deliveryCallState: successCallState(null) }),
+                  error: (error: unknown): void =>
+                    patchState(store, {
+                      lastDeliveryAttemptId: null,
+                      deliveryCallState: errorCallState(toStoreError(error)),
+                    }),
+                }),
+              );
+            }),
+          ),
+        ),
+
+        /** Publishes a temporary typing signal without sending draft content. */
+        publishTyping: rxMethod<{ readonly conversationId: string; readonly active: boolean }>(
+          pipe(
+            concatMap(({ conversationId, active }) => {
+              if (conversationId !== store.conversationId()) return EMPTY;
+              patchState(store, { typingCallState: pendingCallState() });
+              return conversations.publishTyping(conversationId, active).pipe(
+                tapResponse({
+                  next: (): void => patchState(store, { typingCallState: successCallState(null) }),
+                  error: (error: unknown): void =>
+                    patchState(store, { typingCallState: errorCallState(toStoreError(error)) }),
+                }),
+              );
+            }),
+          ),
+        ),
 
         /**
          * Adds or withdraws the acting member's reaction with one emoji.
@@ -1100,10 +1235,10 @@ export const MessageThreadStore = signalStore(
          * Moves the acting member's read marker, clearing the conversation's
          * unread count.
          *
-         * With no `lastReadMessageId` the marker moves to now, which is what
-         * opening a conversation does. With one, it moves to that message —
-         * the API records both, and the marker is what the unread counts on
-         * `ListChannels`/`ListConversations` are computed from.
+         * With no `lastReadMessageId` the marker moves to now for legacy
+         * callers. Conversation pages supply the last displayed message only
+         * after the visible thread catches up. The API records that position
+         * along with the instant used for unread counts.
          *
          * Fire-and-forget: a read marker that fails to move is not worth
          * interrupting the member for. On success it emits `conversationRead`
@@ -1116,8 +1251,15 @@ export const MessageThreadStore = signalStore(
           readonly lastReadMessageId?: string;
         }>(
           pipe(
-            switchMap(({ conversationId, lastReadMessageId }) =>
-              conversations
+            concatMap(({ conversationId, lastReadMessageId }) => {
+              if (
+                lastReadMessageId !== undefined &&
+                store.lastReadAttemptId() === lastReadMessageId
+              )
+                return EMPTY;
+              if (lastReadMessageId !== undefined)
+                patchState(store, { lastReadAttemptId: lastReadMessageId });
+              return conversations
                 .markRead(
                   conversationId,
                   lastReadMessageId === undefined ? undefined : { lastReadMessageId },
@@ -1126,21 +1268,24 @@ export const MessageThreadStore = signalStore(
                   tap(() =>
                     dispatcher.dispatch(messageThreadStoreEvents.conversationRead(conversationId)),
                   ),
-                  catchError(() => EMPTY),
-                ),
-            ),
+                  catchError(() => {
+                    if (lastReadMessageId !== undefined)
+                      patchState(store, { lastReadAttemptId: null });
+                    return EMPTY;
+                  }),
+                );
+            }),
           ),
         ),
 
         /**
          * Starts listening for the conversation's realtime updates.
          *
-         * Frames are treated as **invalidation signals, not data**. A Mercure
-         * frame carries six fields where `MessageOutput` needs twelve, there
-         * is no endpoint to hydrate one message, `message.created` doubles as
-         * the threaded-reply event, and the frames emit explicit `null`s where
-         * REST omits the key. Building a message out of that would be wrong in
-         * several ways at once; re-reading the page is right in all of them.
+         * Message frames are **invalidation signals, not message data**. A
+         * Mercure frame carries six fields where `MessageOutput` needs twelve,
+         * and there is no endpoint to hydrate one message. Typing frames carry
+         * only ephemeral identity and activity; receipt frames invalidate the
+         * durable receipt snapshot without refetching message bodies.
          *
          * Bursts are coalesced, and a reconnection triggers the same catch-up
          * because the hub replays nothing — see the reconnect effect below.
@@ -1164,6 +1309,17 @@ export const MessageThreadStore = signalStore(
                 tap((subscription) => patchState(store, { realtimeTopic: subscription.topic })),
                 switchMap((subscription) =>
                   mercure.subscribe<unknown>(subscription.topic, subscription.token).pipe(
+                    tap((frame: unknown): void => {
+                      if (typeof frame !== 'object' || frame === null) return;
+                      const eventType = Reflect.get(frame, 'type');
+                      if (eventType === 'typing.changed') applyTyping(frame);
+                      else if (eventType === 'receipt.changed') loadReceipts(conversationId);
+                    }),
+                    filter((frame: unknown): boolean => {
+                      if (typeof frame !== 'object' || frame === null) return true;
+                      const eventType = Reflect.get(frame, 'type');
+                      return eventType !== 'typing.changed' && eventType !== 'receipt.changed';
+                    }),
                     debounceTime(MESSAGE_REALTIME_COALESCE_MS),
                     tap(() => refresh()),
                   ),
@@ -1214,8 +1370,14 @@ export const MessageThreadStore = signalStore(
         if (status === 'connected' && missedUpdates) {
           missedUpdates = false;
           store.refresh();
+          const conversationId = store.conversationId();
+          if (conversationId !== null) store.loadReceipts(conversationId);
         }
       });
+    },
+    onDestroy(): void {
+      for (const timeout of store.typingTimers.values()) clearTimeout(timeout);
+      store.typingTimers.clear();
     },
   })),
 );

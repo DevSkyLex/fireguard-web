@@ -30,6 +30,7 @@ import {
   pendingCallState,
   type CallState,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { TeamService } from '@features/organization/data-access';
@@ -420,6 +421,14 @@ describe('InterventionDetailPage', () => {
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
         {
           provide: InterventionStore,
@@ -910,20 +919,33 @@ describe('InterventionDetailPage', () => {
     expect(detail?.classList.contains('md:-mt-6')).toBe(false);
   });
 
-  it('should use the compact rhythm between overview sections', async () => {
+  it('should separate the overview tab into major sections, denser inside each one', async () => {
     fixture = await createPage();
 
     const overview = root().querySelector('#brn-tabs-content-overview > div');
 
-    expect(overview?.classList.contains('gap-4')).toBe(true);
-    expect(overview?.classList.contains('gap-6')).toBe(false);
+    expect(overview?.classList.contains('gap-8')).toBe(true);
+    expect(overview?.classList.contains('gap-4')).toBe(false);
   });
 
-  it('should keep activity metadata out of the properties surface', async () => {
+  it('should keep metadata in the properties rail without a duplicate identity row', async () => {
     fixture = await createPage();
 
+    expect(root().querySelector('[data-testid="intervention-detail-identity"]')).toBeNull();
     expect(byTestId('intervention-detail-meta')).toBeNull();
+    expect(byTestId('intervention-field-revision').textContent).toContain('v');
     expect(byTestId('intervention-detail-about')).toBeNull();
+  });
+
+  describe('the properties rail', () => {
+    it('caps its own height and scrolls internally once it is sticky', async () => {
+      fixture = await createPage();
+
+      const aside: HTMLElement | null = root().querySelector('aside');
+
+      expect(aside?.className).toContain('@4xl/detail:max-h-');
+      expect(aside?.className).toContain('@4xl/detail:overflow-y-auto');
+    });
   });
 
   describe('the phase action', () => {
@@ -968,7 +990,15 @@ describe('InterventionDetailPage', () => {
       expect(byTestId('intervention-detail-status-band').textContent).not.toContain(
         'Set a due date',
       );
-      expect(root().querySelector('#intervention-command-reason')).toBeNull();
+
+      const reason = root().querySelector('#intervention-command-reason');
+
+      expect(reason?.textContent?.trim()).toBe('Set a due date');
+      expect(
+        (byTestId('intervention-detail-command') as HTMLButtonElement).getAttribute(
+          'aria-describedby',
+        ),
+      ).toBe('intervention-command-reason');
     });
 
     it('should send the operator to the work rather than to a submit they cannot use', async () => {
@@ -2111,10 +2141,10 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('proposed changes', () => {
-    it('should show zero on the changes tab trigger and mount nothing until that tab activates', async () => {
+    it('should show no badge on the changes tab trigger while nothing is pending, and mount nothing until that tab activates', async () => {
       fixture = await createPage();
 
-      expect(byTestId('intervention-tab-changes').textContent).toContain('0');
+      expect(byTestId('intervention-tab-changes').querySelector('[data-slot="badge"]')).toBeNull();
       expect(root().querySelector('[data-testid="intervention-change-table"]')).toBeNull();
 
       byTestId('intervention-tab-changes').click();
@@ -2150,23 +2180,24 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('linked tabs', () => {
-    it('should render linked resource totals as secondary badges on their triggers', async () => {
+    it('should render a linked resource total as a secondary badge only once it is above zero', async () => {
       fixture = await createPage();
 
-      const expectedCounts: Readonly<Record<string, number>> = {
-        'intervention-tab-changes': 0,
-        'intervention-tab-attachments': 0,
-        'intervention-tab-facilities': 0,
-        'intervention-tab-equipment': 0,
-        'intervention-tab-inspections': 4,
-      };
-
-      for (const [testId, expectedCount] of Object.entries(expectedCounts)) {
-        const badge: HTMLElement | null = byTestId(testId).querySelector('[data-slot="badge"]');
-
-        expect(badge?.getAttribute('data-variant')).toBe('secondary');
-        expect(badge?.textContent?.trim()).toBe(String(expectedCount));
+      for (const testId of [
+        'intervention-tab-changes',
+        'intervention-tab-attachments',
+        'intervention-tab-facilities',
+        'intervention-tab-equipment',
+      ]) {
+        expect(byTestId(testId).querySelector('[data-slot="badge"]')).toBeNull();
       }
+
+      const inspectionsBadge: HTMLElement | null = byTestId(
+        'intervention-tab-inspections',
+      ).querySelector('[data-slot="badge"]');
+
+      expect(inspectionsBadge?.getAttribute('data-variant')).toBe('secondary');
+      expect(inspectionsBadge?.textContent?.trim()).toBe('4');
     });
 
     it('should mount attachments only once its tab activates, and show the total count on the trigger', async () => {
@@ -2873,6 +2904,21 @@ describe('InterventionDetailPage', () => {
         expect.stringContaining('North riser'),
       );
       expect(page['workItemTable']()?.['focusedItemId']()).toBe(matched.id);
+    });
+  });
+
+  describe('the scan control', () => {
+    it('should give the scan trigger a touch-sized target, not the sr-only file input', async () => {
+      vi.spyOn(TestBed.inject(InterventionFieldExecutionService), 'scanSupported').mockReturnValue(
+        true,
+      );
+      current.set(intervention({ status: 'planned' }));
+      fixture = await createPage();
+
+      const scan: HTMLElement = byTestId('intervention-detail-scan');
+
+      expect(scan.className).toContain('mobile-ui:min-h-11');
+      expect(scan.parentElement?.querySelector('input')?.getAttribute('tabindex')).toBe('-1');
     });
   });
 

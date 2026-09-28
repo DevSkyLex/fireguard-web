@@ -16,9 +16,13 @@
     </hlm-alert-dialog-header>
 
     @if (error(); as message) {
-      <p role="alert" class="text-sm text-destructive" data-testid="organization-suspend-error">
-        {{ message }}
-      </p>
+      <div hlmAlert variant="destructive" role="alert" data-testid="organization-suspend-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@org.settings.danger.suspendErrorTitle">
+          Couldn't suspend the organization
+        </p>
+        <p hlmAlertDescription>{{ message }}</p>
+      </div>
     }
 
     <hlm-alert-dialog-footer>

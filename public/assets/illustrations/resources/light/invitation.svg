@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-invitation-light-title fg-invitation-light-description" class="fg-invitation-light">
+  <title id="fg-invitation-light-title">Invitation</title>
+  <desc id="fg-invitation-light-description">An invitation card rising out of an open envelope.</desc>
+  <defs>
+    <linearGradient id="fg-invitation-light-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f6f6f7"/><stop offset="1" stop-color="#efeff1"/></linearGradient>
+    
+    
+  </defs>
+  <style>
+    .fg-invitation-light { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-invitation-light path { vector-effect: non-scaling-stroke; }
+    .fg-invitation-light .t { fill: #ffffff; }
+    .fg-invitation-light .l { fill: #f6f6f7; }
+    .fg-invitation-light .r { fill: #efeff1; }
+    .fg-invitation-light .hole { fill: #ececef; }
+    .fg-invitation-light .cy { fill: url(#fg-invitation-light-cy); }
+    .fg-invitation-light .af { fill: #5f5f68; }
+    .fg-invitation-light .kf { fill: #85858e; }
+    .fg-invitation-light .eo { fill-rule: evenodd; }
+    .fg-invitation-light .o { stroke: #8a8a93; stroke-width: 1.35; }
+    .fg-invitation-light .o2 { stroke: #a8a8b0; stroke-width: 1.1; }
+    .fg-invitation-light .e { stroke: #dcdce0; stroke-width: 1; }
+    .fg-invitation-light .d { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-invitation-light .dh { stroke: #dcdce0; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-invitation-light .g { stroke: #a8a8b0; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-invitation-light .k { stroke: #85858e; stroke-width: 1.2; }
+    .fg-invitation-light .ka, .fg-invitation-light .oa { stroke: #5f5f68; stroke-width: 1.35; }
+    .fg-invitation-light .da { stroke: #5f5f68; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-invitation-light .ga { stroke: #5f5f68; stroke-width: 1; stroke-dasharray: 3 3; }
+  </style>
+  <path class="r" d="M349.3 220.4C349.3 220.9 349 221.4 348.3 221.8L233.6 288.1C232.9 288.4 232.1 288.6 231.2 288.6L231.2 296C232.1 296 232.9 295.8 233.6 295.4L348.3 229.2C349 228.8 349.3 228.3 349.3 227.8Z"/>
+  <path class="l" d="M231.2 288.6C230.3 288.6 229.4 288.4 228.8 288.1L50.3 185C49.6 184.6 49.3 184.1 49.3 183.6L49.3 191C49.3 191.5 49.6 192 50.3 192.4L228.8 295.4C229.4 295.8 230.3 296 231.2 296Z"/>
+  <path class="t" d="M49.3 183.6C49.3 183.1 49.6 182.6 50.3 182.2L165 116C165.7 115.6 166.5 115.4 167.4 115.4C168.3 115.4 169.2 115.6 169.8 116L348.3 219C349 219.4 349.3 219.9 349.3 220.4C349.3 220.9 349 221.4 348.3 221.8L233.6 288.1C232.9 288.4 232.1 288.6 231.2 288.6C230.3 288.6 229.4 288.4 228.8 288.1L50.3 185C49.6 184.6 49.3 184.1 49.3 183.6Z"/>
+  <path class="e" d="M349.3 220.4C349.3 220.9 349 221.4 348.3 221.8L233.6 288.1C232.9 288.4 232.1 288.6 231.2 288.6C230.3 288.6 229.4 288.4 228.8 288.1L50.3 185C49.6 184.6 49.3 184.1 49.3 183.6M231.2 288.6L231.2 296M49.3 183.6L49.3 191"/>
+  <path class="o" d="M49.3 183.6C49.3 183.1 49.6 182.6 50.3 182.2L165 116C165.7 115.6 166.5 115.4 167.4 115.4C168.3 115.4 169.2 115.6 169.8 116L348.3 219C349 219.4 349.3 219.9 349.3 220.4L349.3 227.8C349.3 228.3 349 228.8 348.3 229.2L233.6 295.4C232.9 295.8 232.1 296 231.2 296C230.3 296 229.4 295.8 228.8 295.4L50.3 192.4C49.6 192 49.3 191.5 49.3 191Z"/>
+  <path class="e" d="M57.4 183.6L191.3 206.6L231.2 283.9"/>
+  <path class="l" d="M167.4 114.6L295.7 93L350.7 220.4Z"/>
+  <path class="o2" d="M167.4 114.6L295.7 93L350.7 220.4"/>
+  <path class="r" d="M296.7 205.1C297.6 204.6 298.1 203.5 298.1 202L298.1 91.6C298.1 90.1 297.6 88.4 296.7 86.9L299.1 85.5C300 87 300.5 88.7 300.5 90.2L300.5 200.6C300.5 202.1 300 203.2 299.1 203.7Z"/>
+  <path class="t" d="M296.7 86.9C295.8 85.3 294.6 84 293.3 83.3L194.5 26.2C193.2 25.5 192 25.4 191.1 25.9L193.5 24.5C194.4 24 195.6 24.1 196.9 24.9L295.7 81.9C297 82.6 298.2 83.9 299.1 85.5ZM191.1 25.9C190.2 26.4 189.7 27.5 189.7 29L189.7 139.4C189.7 140.9 190.2 142.6 191.1 144.1C192 145.7 193.2 147 194.5 147.7L293.3 204.8C294.6 205.5 295.8 205.6 296.7 205.1C297.6 204.6 298.1 203.5 298.1 202L298.1 91.6C298.1 90.1 297.6 88.4 296.7 86.9C295.8 85.3 294.6 84 293.3 83.3L194.5 26.2C193.2 25.5 192 25.4 191.1 25.9Z"/>
+  <path class="e" d="M296.7 205.1C297.6 204.6 298.1 203.5 298.1 202L298.1 91.6C298.1 90.1 297.6 88.4 296.7 86.9C295.8 85.3 294.6 84 293.3 83.3L194.5 26.2C193.2 25.5 192 25.4 191.1 25.9M296.7 86.9L299.1 85.5M191.1 25.9L193.5 24.5"/>
+  <path class="oa" d="M191.1 25.9C190.2 26.4 189.7 27.5 189.7 29L189.7 139.4C189.7 140.9 190.2 142.6 191.1 144.1C192 145.7 193.2 147 194.5 147.7L293.3 204.8C294.6 205.5 295.8 205.6 296.7 205.1L299.1 203.7C300 203.2 300.5 202.1 300.5 200.6L300.5 90.2C300.5 88.7 300 87 299.1 85.5C298.2 83.9 297 82.6 295.7 81.9L196.9 24.9C195.6 24.1 194.4 24 193.5 24.5Z"/>
+  <path class="ka" d="M254.3 131.4L254.3 125.4C254.3 118.8 249.7 113.4 243.9 113.4L228.4 113.4C222.7 113.4 218 118.8 218 125.4L218 131.4M246.5 89.5C246.5 96.1 241.9 101.5 236.2 101.5C230.4 101.5 225.8 96.1 225.8 89.5C225.8 82.9 230.4 77.5 236.2 77.5C241.9 77.5 246.5 82.9 246.5 89.5ZM262.1 92.5L262.1 110.4M269.8 101.5L254.3 101.5"/>
+  <path class="e" d="M218.4 139.4L269.4 168.9"/>
+</svg>

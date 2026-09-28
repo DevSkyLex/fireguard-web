@@ -1,10 +1,14 @@
 <form novalidate (submit)="submit($event)">
   <hlm-field-group>
     @if (serverMessages().length > 0) {
-      <div role="alert" data-testid="organization-invite-error" class="text-sm text-destructive">
-        @for (message of serverMessages(); track message) {
-          <p>{{ message }}</p>
-        }
+      <div hlmAlert variant="destructive" role="alert" data-testid="organization-invite-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@org.inviteForm.errorTitle">Couldn't send the invitation</p>
+        <div hlmAlertDescription>
+          @for (message of serverMessages(); track message) {
+            <p>{{ message }}</p>
+          }
+        </div>
       </div>
     }
 

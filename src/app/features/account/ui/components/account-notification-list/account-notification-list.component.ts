@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,13 +10,21 @@ import {
   type OutputEmitterRef,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBell, lucideCheck, lucideCheckCheck, lucideTriangleAlert } from '@ng-icons/lucide';
+import { lucideCheck, lucideCheckCheck, lucideTriangleAlert } from '@ng-icons/lucide';
+import type { ToggleValue } from '@spartan-ng/brain/toggle-group';
 import type { NotificationOutput } from '@features/account/models';
+import { displayNotificationBody } from '@features/account/utils/notification-body/notification-body.utils';
+import { humanizeNotificationCategory } from '@features/account/utils/notification-category-label';
 import { formatRelativeTime } from '@shared/relative-time';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmMarkerImports } from '@shared/ui/marker';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /**
  * Component AccountNotificationList
@@ -44,13 +53,41 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  */
 @Component({
   selector: 'app-account-notification-list',
-  imports: [NgIcon, ...HlmEmptyImports, HlmBadge, HlmButton, HlmSkeleton],
-  providers: [provideIcons({ lucideBell, lucideCheck, lucideCheckCheck, lucideTriangleAlert })],
+  imports: [
+    NgIcon,
+    ...HlmEmptyImports,
+    ...HlmItemImports,
+    ...HlmMarkerImports,
+    ...HlmToggleGroupImports,
+    ...HlmTooltipImports,
+    DatePipe,
+    HlmBadge,
+    HlmButton,
+    HlmSkeleton,
+    StateIllustration,
+  ],
+  providers: [
+    provideIcons({
+      lucideCheck,
+      lucideCheckCheck,
+      lucideTriangleAlert,
+    }),
+  ],
   templateUrl: './account-notification-list.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountNotificationList {
+  /**
+   * Property notificationBody
+   * @readonly
+   * @description Removes the legacy onboarding session identifier from stored messages.
+   * @access protected
+   * @since 1.0.0
+   * @type {typeof displayNotificationBody}
+   */
+  protected readonly notificationBody: typeof displayNotificationBody = displayNotificationBody;
+
   //#region Inputs
   /**
    * Property notifications
@@ -271,6 +308,21 @@ export class AccountNotificationList {
    * @type {string}
    */
   private readonly locale: string = inject<string>(LOCALE_ID);
+
+  /**
+   * Property allCategoryValue
+   * @readonly
+   *
+   * @description
+   * Sentinel toggle-group value standing in for "no filter", since the group
+   * itself only carries strings.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {string}
+   */
+  protected readonly allCategoryValue: string = '__all__';
   //#endregion
 
   //#region Methods
@@ -312,6 +364,120 @@ export class AccountNotificationList {
    */
   protected relativeTime(iso: string): string {
     return formatRelativeTime(iso, this.locale);
+  }
+
+  /**
+   * Method categoryLabel
+   * @method categoryLabel
+   *
+   * @description
+   * Renders a raw category identifier as a readable label, through the shared
+   * {@link humanizeNotificationCategory} helper — the same one the preference
+   * matrix uses, so a category reads identically everywhere it appears.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string} category - The raw category identifier.
+   *
+   * @returns {string} The human-readable label.
+   */
+  protected categoryLabel(category: string): string {
+    return humanizeNotificationCategory(category);
+  }
+
+  /**
+   * Method onCategoryToggled
+   * @method onCategoryToggled
+   *
+   * @description
+   * Maps the single-select toggle group's value back onto the category filter
+   * contract: the sentinel {@link allCategoryValue} becomes `null`. The group's
+   * output type covers multi-select and empty states this group never reaches
+   * (`type="single"`, `[nullable]="false"`); anything but a plain string is
+   * treated as "all" defensively rather than asserted away.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {ToggleValue<string>} value - The toggle group's newly selected value.
+   *
+   * @returns {void}
+   */
+  protected onCategoryToggled(value: ToggleValue<string>): void {
+    const selected: string = typeof value === 'string' ? value : this.allCategoryValue;
+    this.categorySelected.emit(selected === this.allCategoryValue ? null : selected);
+  }
+
+  /**
+   * Method isDayBoundary
+   * @method isDayBoundary
+   *
+   * @description
+   * Whether a notification opens a new calendar day in the device's timezone,
+   * so a day separator should render before it.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {NotificationOutput} notification - The row being rendered.
+   * @param {NotificationOutput | undefined} previous - The preceding row, or `undefined` for the first one.
+   *
+   * @returns {boolean} `true` when a separator belongs before `notification`.
+   */
+  protected isDayBoundary(
+    notification: NotificationOutput,
+    previous: NotificationOutput | undefined,
+  ): boolean {
+    return previous === undefined || this.dayKeyOf(notification) !== this.dayKeyOf(previous);
+  }
+
+  /**
+   * Method dayHeadingOf
+   * @method dayHeadingOf
+   *
+   * @description
+   * The localized day heading for a notification's separator, in the
+   * interface's language.
+   *
+   * @access protected
+   * @since 1.2.0
+   *
+   * @param {NotificationOutput} notification - The notification opening the day.
+   *
+   * @returns {string} The formatted day heading, or the raw timestamp when unparseable.
+   */
+  protected dayHeadingOf(notification: NotificationOutput): string {
+    const date: Date = new Date(notification.createdAt);
+    if (Number.isNaN(date.getTime())) return notification.createdAt;
+
+    return new Intl.DateTimeFormat(this.locale, { dateStyle: 'long' }).format(date);
+  }
+
+  /**
+   * Method dayKeyOf
+   * @method dayKeyOf
+   *
+   * @description
+   * A sortable `'YYYY-MM-DD'` calendar-day key for a notification, in the
+   * device's timezone.
+   *
+   * @access private
+   * @since 1.2.0
+   *
+   * @param {NotificationOutput} notification - The rendered notification.
+   *
+   * @returns {string} The calendar-day key, or the raw timestamp when it does not parse.
+   */
+  private dayKeyOf(notification: NotificationOutput): string {
+    const date: Date = new Date(notification.createdAt);
+    if (Number.isNaN(date.getTime())) return notification.createdAt;
+
+    return new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
   }
   //#endregion
 }

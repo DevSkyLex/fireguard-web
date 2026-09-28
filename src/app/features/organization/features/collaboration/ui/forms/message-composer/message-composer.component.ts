@@ -36,7 +36,6 @@ import {
   HlmInputGroupTextarea,
 } from '@shared/ui/input-group';
 import { HlmItem, HlmItemContent, HlmItemMedia, HlmItemTitle } from '@shared/ui/item';
-import { HlmKbd } from '@shared/ui/kbd';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import {
   MENTION_SUGGESTION_LIMIT,
@@ -58,9 +57,9 @@ import type { MessageComposerValues } from './models';
  * surface is expected to do — the form's submit button stays for anyone who
  * reaches it by keyboard or does not know the shortcut.
  *
- * The card is spartan's `input-group`: the textarea is its control and the row
- * of actions its `block-end` addon, so the border, the focus ring and the send
- * button are one surface rather than three hand-matched ones.
+ * The compact composer uses spartan's `input-group`: the textarea is its
+ * control and the send button sits in its `inline-end` addon. The border,
+ * focus ring and action remain one surface as the draft grows.
  *
  * The height is still driven from TypeScript. `HlmTextarea` sizes itself with
  * `field-sizing: content`, which Safari and Firefox do not implement, and a
@@ -114,7 +113,6 @@ import type { MessageComposerValues } from './models';
     HlmItemContent,
     HlmItemMedia,
     HlmItemTitle,
-    HlmKbd,
     ...HlmSpinnerImports,
   ],
   providers: [provideIcons({ lucideArrowUp })],
@@ -244,6 +242,9 @@ export class MessageComposer {
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly draftChanged: OutputEmitterRef<boolean> = output<boolean>();
+
+  /** Emits activity without exposing the draft; hosts decide when to signal peers. */
+  public readonly typingActivity: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
@@ -502,6 +503,8 @@ export class MessageComposer {
 
     if (this.composerForm().invalid() || !this.canSend()) return;
 
+    this.typingActivity.emit(false);
+
     this.sent.emit(applyMentionMarkers(this.model().body.trim(), this.pickedMentions));
     this.pickedMentions.clear();
     this.model.set({ body: '' });
@@ -558,6 +561,19 @@ export class MessageComposer {
    */
   protected onFieldChanged(): void {
     this.caret.set(this.field()?.nativeElement.selectionStart ?? 0);
+  }
+
+  /** Relays actual text edits, leaving caret-only changes out of typing state. */
+  protected onDraftInput(event: Event): void {
+    this.onFieldChanged();
+    const field = event.target;
+    if (field instanceof HTMLTextAreaElement)
+      this.typingActivity.emit(field.value.trim().length > 0);
+  }
+
+  /** A blurred composer stops announcing active typing. */
+  protected onDraftBlur(): void {
+    this.typingActivity.emit(false);
   }
 
   /**

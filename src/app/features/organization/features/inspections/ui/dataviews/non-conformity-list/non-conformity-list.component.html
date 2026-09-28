@@ -8,12 +8,35 @@
     <hlm-skeleton class="h-24 w-full" />
     <hlm-skeleton class="h-24 w-full" />
   </div>
+} @else if (error(); as message) {
+  <div hlmEmpty role="alert" data-testid="non-conformity-list-error">
+    <div hlmEmptyHeader>
+      <div hlmEmptyMedia variant="icon" class="text-destructive">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      </div>
+      <p hlmEmptyTitle i18n="@@inspection.nc.list.errorTitle">
+        The non-conformities could not be loaded
+      </p>
+      <p hlmEmptyDescription>{{ message }}</p>
+    </div>
+    <div hlmEmptyContent>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="mobile-ui:min-h-11"
+        data-testid="non-conformity-list-retry"
+        (click)="retryRequested.emit()"
+        i18n="@@common.tryAgain"
+      >
+        Try again
+      </button>
+    </div>
+  </div>
 } @else if (isEmpty()) {
   <div hlmEmpty data-testid="non-conformity-list-empty">
     <div hlmEmptyHeader>
-      <div hlmEmptyMedia variant="icon">
-        <ng-icon name="lucideCircleCheck" aria-hidden="true" />
-      </div>
+      <app-state-illustration hlmEmptyMedia state="all-clear" />
       <p hlmEmptyTitle i18n="@@inspection.nc.list.emptyTitle">No non-conformities recorded</p>
       <p hlmEmptyDescription i18n="@@inspection.nc.list.emptyDescription">
         Nothing was flagged during this inspection.
@@ -21,24 +44,39 @@
     </div>
   </div>
 } @else {
-  <ul
-    class="flex flex-col gap-3 mobile-ui:gap-0 mobile-ui:border-t mobile-ui:border-border"
-    data-testid="non-conformity-list"
-  >
-    @for (nc of nonConformities(); track nc.id) {
-      <li
-        class="flex flex-col gap-2 rounded-md border border-border bg-card p-3 mobile-ui:rounded-none mobile-ui:border-x-0 mobile-ui:border-t-0 mobile-ui:bg-transparent mobile-ui:px-0 mobile-ui:py-4"
+  <div hlmItemGroup data-testid="non-conformity-list">
+    @for (nc of nonConformities(); track nc.id; let last = $last) {
+      <div
+        hlmItem
+        class="flex-col items-stretch gap-2"
         [class.opacity-80]="isTerminal(nc.status)"
         data-testid="non-conformity-row"
         [attr.data-non-conformity-id]="nc.id"
       >
+        <p
+          class="text-sm font-medium wrap-anywhere text-foreground"
+          data-testid="non-conformity-description"
+        >
+          {{ nc.description }}
+        </p>
+
         <div class="flex flex-wrap items-center gap-2">
           <app-inspection-status-tag kind="nonConformitySeverity" [value]="nc.severity" />
           <app-inspection-status-tag kind="nonConformityStatus" [value]="nc.status" />
           @if (dueDateOf(nc); as due) {
-            <span class="text-xs text-muted-foreground" data-testid="non-conformity-due">
-              <span i18n="@@inspection.nc.dueLabel">Due</span>
-              {{ due }}
+            <span class="inline-flex items-center gap-1 text-xs" data-testid="non-conformity-due">
+              @if (isOverdueOf(nc)) {
+                <ng-icon name="lucideClock" class="text-destructive" aria-hidden="true" />
+                <span class="font-medium text-destructive" i18n="@@inspection.nc.overdue"
+                  >Overdue</span
+                >
+              } @else {
+                <span class="text-muted-foreground" i18n="@@inspection.nc.dueLabel">Due</span>
+              }
+              <time [attr.datetime]="nc.dueAt" class="text-foreground">{{ due }}</time>
+              @if (dueRelativeOf(nc); as relative) {
+                <span class="text-muted-foreground">({{ relative }})</span>
+              }
             </span>
           }
           @if (resolvedDateOf(nc); as resolved) {
@@ -48,13 +86,6 @@
             </span>
           }
         </div>
-
-        <p
-          class="text-sm text-foreground mobile-ui:order-first mobile-ui:text-base mobile-ui:font-medium mobile-ui:wrap-anywhere"
-          data-testid="non-conformity-description"
-        >
-          {{ nc.description }}
-        </p>
 
         @if (nc.notes; as notes) {
           <p class="text-xs text-muted-foreground" data-testid="non-conformity-notes">
@@ -137,7 +168,10 @@
             {{ errorText }}
           </p>
         }
-      </li>
+      </div>
+      @if (!last) {
+        <hlm-item-separator />
+      }
     }
-  </ul>
+  </div>
 }

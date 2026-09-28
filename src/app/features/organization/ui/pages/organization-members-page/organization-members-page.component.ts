@@ -23,7 +23,6 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
   lucideGauge,
-  lucideLock,
   lucideMailPlus,
   lucideMailQuestion,
   lucideNetwork,
@@ -90,9 +89,9 @@ import {
 } from '@shared/collection-toolbar';
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardTitle } from '@shared/ui/card';
 import { HlmCommandImports } from '@shared/ui/command';
 import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmEmptyImports } from '@shared/ui/empty';
@@ -100,6 +99,8 @@ import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
+import { HlmLarge } from '@shared/ui/typography';
 import { OrganizationInvitationRevokeDialog } from '../../dialogs/organization-invitation-revoke-dialog';
 import { OrganizationInviteDialog } from '../../dialogs/organization-invite-dialog';
 import { OrganizationMemberRemoveDialog } from '../../dialogs/organization-member-remove-dialog';
@@ -222,9 +223,10 @@ type OrganizationMembersKpiTile = {
  * The roster's search and status filter are server-side: a debounced search
  * keystroke and an immediate status change both re-issue
  * `OrganizationMembersStore.loadMembers` on page one, which is also what the
- * "N of M shown" line and the KPI row's own "Total members" tile then
- * reflect. `OrganizationQuotaStore` (root-provided) supplies the "Seats
- * used" tile's used/limit reading, shared with the settings Usage tab.
+ * "N of M shown" line then reflects. Every KPI tile stays organization-wide
+ * and does not shift with that filter — there is no "Total members" tile.
+ * `OrganizationQuotaStore` (root-provided) supplies the "Seats used" tile's
+ * used/limit reading, shared with the settings Usage tab.
  *
  * Its title lives in the shell's own `DashboardPageHeader`; this page
  * renders no title band of its own. `app-organization-page-header` is
@@ -246,7 +248,7 @@ type OrganizationMembersKpiTile = {
     NgIcon,
     ...HlmEmptyImports,
     ResourceIllustration,
-    HlmCardTitle,
+    StateIllustration,
     HlmButton,
     ...HlmCommandImports,
     BrnCommandInput,
@@ -269,12 +271,13 @@ type OrganizationMembersKpiTile = {
     ...HlmAlertImports,
     ...HlmTabsImports,
     ...HlmToggleGroupImports,
+    ...HlmTooltipImports,
+    HlmLarge,
   ],
   providers: [
     OrganizationAccessAdminStore,
     OrganizationMembersStore,
     provideIcons({
-      lucideLock,
       lucideCircleAlert,
       lucideGauge,
       lucideMailPlus,
@@ -705,15 +708,19 @@ export class OrganizationMembersPage {
    * @readonly
    *
    * @description
-   * The KPI row's view-models: the roster's total and active-membership
-   * counts, the pending-invitation count, and the plan's seat usage.
-   * "Total members" reads {@link OrganizationMembersStore.membersTotal},
-   * which reflects the roster's own search/status filter by design; "Active"
-   * is the fixed organization-wide count `load` fetches once, so it stays
-   * meaningful even while the roster below is filtered to `inactive`.
+   * The KPI row's view-models: the roster's active-membership count, the
+   * organization-wide open-invitation count (pending and expired —
+   * {@link OrganizationMembersStore.invitationsTotal}, never the loaded
+   * window's length) — omitted for a viewer without `members.manage`, since
+   * invitations are never loaded for them and the tile would otherwise read
+   * a false zero — and the plan's seat usage. Every remaining tile is
+   * organization-wide by design, so none of them shifts while the roster
+   * below is narrowed by search, status or role — the pagination band
+   * already carries the roster's own filtered "N of M shown" count, and a
+   * "Total members" tile duplicating it was dropped.
    *
    * @access protected
-   * @since 1.1.0
+   * @since 1.2.0
    * @type {Signal<readonly OrganizationMembersKpiTile[]>}
    */
   protected readonly kpiTiles: Signal<readonly OrganizationMembersKpiTile[]> = computed(() => {
@@ -728,15 +735,7 @@ export class OrganizationMembersPage {
         ? Math.min(100, Math.round((quotaItem.used / quotaItem.limit) * 100))
         : null;
 
-    return [
-      {
-        id: 'total',
-        label: $localize`:@@org.members.kpi.total:Total members`,
-        value: this.store.membersTotal(),
-        icon: 'lucideUsersRound',
-        progress: null,
-        loading: this.store.isLoading(),
-      },
+    const tiles: OrganizationMembersKpiTile[] = [
       {
         id: 'active',
         label: $localize`:@@org.members.kpi.active:Active`,
@@ -745,38 +744,40 @@ export class OrganizationMembersPage {
         progress: null,
         loading: this.store.isLoading(),
       },
-      {
-        id: 'pending-invitations',
-        label: $localize`:@@org.members.kpi.pendingInvitations:Pending invitations`,
-        value: this.store.activeInvitations().length,
+    ];
+
+    if (this.canManageMembers()) {
+      tiles.push({
+        id: 'open-invitations',
+        label: $localize`:@@org.members.kpi.openInvitations:Open invitations`,
+        value: this.store.invitationsTotal(),
         icon: 'lucideMailQuestion',
         progress: null,
         loading: this.store.isLoading(),
-      },
-      {
-        id: 'seats-used',
-        label: $localize`:@@org.members.kpi.seatsUsed:Seats used`,
-        value: seatsValue,
-        icon: 'lucideGauge',
-        progress: seatsProgress,
-        loading: this.quotaStore.isLoadingQuota(),
-      },
-    ];
+      });
+    }
+
+    tiles.push({
+      id: 'seats-used',
+      label: $localize`:@@org.members.kpi.seatsUsed:Seats used`,
+      value: seatsValue,
+      icon: 'lucideGauge',
+      progress: seatsProgress,
+      loading: this.quotaStore.isLoadingQuota(),
+    });
+
+    return tiles;
   });
 
   /**
    * Property pendingInvitationsHeading
    * @readonly
-   * @description The pending-invitations section's heading, naming how many are outstanding.
+   * @description The open-invitations section's heading — it lists pending and expired invitations alike. The count itself lives only on the "Open invitations" KPI tile above, so it is not repeated here.
    * @access protected
-   * @since 1.1.0
-   * @type {Signal<string>}
+   * @since 1.2.0
+   * @type {string}
    */
-  protected readonly pendingInvitationsHeading: Signal<string> = computed<string>(() => {
-    const total: number = this.store.activeInvitations().length;
-
-    return $localize`:@@org.invitations.headingCount:Pending invitations (${total}:count:)`;
-  });
+  protected readonly pendingInvitationsHeading: string = $localize`:@@org.invitations.heading:Open invitations`;
 
   /**
    * Property hasRosterFilters
@@ -991,19 +992,35 @@ export class OrganizationMembersPage {
   //#region Methods
   /**
    * Method reload
-   * @description Re-runs the initial load after a failure.
+   *
+   * @description
+   * Re-runs the initial load after a failure, mirroring the constructor
+   * effect's own reset: one request only, with the roster's page, page size,
+   * selection, search term and status filter all returned to their defaults
+   * so the toolbar and pager never show a stale narrowing the fresh roster no
+   * longer matches. The active role filter is the one narrowing kept, and
+   * passed explicitly as `roleId` — `store.load` would otherwise reset it to
+   * `null` on the caller's behalf.
+   *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
    * @returns {void}
    */
   protected reload(): void {
+    this.page.set(1);
+    this.pageSize.set(MEMBERS_PAGE_SIZE);
+    this.selectedIds.set(new Set<string>());
+    this.searchTerm.set('');
+    this.statusFilter.set('all');
     this.invitationsPage.set(1);
+
     this.store.load({
       organizationId: this.organizationId(),
       includeMembers: this.canReadMembers(),
       includeInvitations: this.canManageMembers(),
       includeRoles: this.canReadRoles(),
       sort: this.sortOrder(),
+      roleId: this.roleFilter(),
     });
   }
 

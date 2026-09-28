@@ -3,7 +3,7 @@
   i18n-ariaLabel="@@facility.hierarchy.treeLabel"
   [nodes]="nodes()"
   [childrenByParent]="treeChildrenByParent()"
-  [loadingIds]="emptyIds"
+  [loadingIds]="loadingIds()"
   [failedIds]="emptyIds"
   [selectedId]="activeFacilityId()"
   [nodeTemplate]="hierarchyNode"
@@ -13,8 +13,12 @@
 
 <ng-template #hierarchyNode let-node="node">
   <div class="flex min-w-0 flex-1 items-center gap-2" data-testid="facility-hierarchy-node">
-    <ng-icon name="lucideBuilding2" class="shrink-0 text-muted-foreground" aria-hidden="true" />
-    <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ node.data.name }}</span>
-    <app-facility-status-tag [value]="node.data.status" />
+    <span class="min-w-0 flex-1 truncate text-sm font-medium"
+      >{{ node.data.name }}
+      <span class="font-normal text-muted-foreground">· {{ typeLabelOf(node.data.type) }}</span>
+    </span>
+    @if (isArchived(node.data)) {
+      <app-facility-status-tag [value]="node.data.status" />
+    }
   </div>
 </ng-template>

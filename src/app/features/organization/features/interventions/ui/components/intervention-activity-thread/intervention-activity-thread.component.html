@@ -47,9 +47,7 @@
     } @else if (isEmpty()) {
       <div hlmEmpty>
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucideHistory" aria-hidden="true" />
-          </div>
+          <app-state-illustration hlmEmptyMedia state="no-history" />
           <p hlmEmptyTitle i18n="@@intervention.activity.empty">No activity recorded yet.</p>
         </div>
       </div>
@@ -71,7 +69,17 @@
       }
 
       <ol class="flex flex-col">
-        @for (row of rows(); track row.activity.id; let last = $last) {
+        @for (row of rows(); track row.activity.id; let last = $last, index = $index) {
+          @if (row.dayLabel; as dayLabel) {
+            <div
+              hlmMarker
+              variant="separator"
+              class="py-3 text-xs font-medium"
+              data-testid="intervention-activity-day-separator"
+            >
+              <span hlmMarkerContent>{{ dayLabel }}</span>
+            </div>
+          }
           <li
             [class]="
               last
@@ -127,7 +135,15 @@
                     <span i18n="@@intervention.activity.generic">Activity recorded</span>
                   }
                   <span aria-hidden="true">·</span>
-                  <time [attr.datetime]="row.activity.createdAt">{{ row.relativeTime }}</time>
+                  <time
+                    [attr.datetime]="row.activity.createdAt"
+                    [hlmTooltip]="
+                      row.activity.createdAt | appOrgDate: 'datetime' : regionalFormatting()
+                    "
+                    tabindex="0"
+                    class="rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                    >{{ row.relativeTime }}</time
+                  >
                 </span>
               </div>
             } @else {
@@ -146,7 +162,15 @@
                 <div hlmMessageContent class="gap-1.5">
                   <div hlmMessageHeader class="min-h-6 flex-nowrap gap-2 px-0">
                     <span class="font-medium text-foreground">{{ row.actorName }}</span>
-                    <time [attr.datetime]="row.activity.createdAt">{{ row.relativeTime }}</time>
+                    <time
+                      [attr.datetime]="row.activity.createdAt"
+                      [hlmTooltip]="
+                        row.activity.createdAt | appOrgDate: 'datetime' : regionalFormatting()
+                      "
+                      tabindex="0"
+                      class="rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      >{{ row.relativeTime }}</time
+                    >
                   </div>
                   <div hlmBubble variant="muted" class="*:data-[slot=bubble-content]:bg-muted/25">
                     <p hlmBubbleContent class="whitespace-pre-line text-foreground">
@@ -167,10 +191,16 @@
                 </div>
               </div>
             }
-            @if (!last) {
+            @if (!last && !rows()[index + 1]?.dayLabel) {
               <span
                 class="absolute top-6 bottom-0 left-3 w-0.5 -translate-x-1/2 bg-border"
                 data-testid="intervention-activity-connector"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              <span
+                class="absolute top-6 bottom-0 left-3 w-0.5 -translate-x-1/2 bg-border [mask-image:linear-gradient(to_bottom,black,transparent)]"
+                data-testid="intervention-activity-connector-end"
                 aria-hidden="true"
               ></span>
             }

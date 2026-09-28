@@ -272,6 +272,41 @@ describe('StatTile', () => {
     expect(card?.className).not.toContain('border-destructive');
   });
 
+  it('tints only the icon warning for a warning tone, never the value or the surface', async () => {
+    await render();
+    fixture.componentRef.setInput('icon', 'lucideTrendingUp');
+    fixture.componentRef.setInput('tone', 'warning');
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const icon: HTMLElement | null = host.querySelector('ng-icon');
+    const value: HTMLElement | null = host.querySelector('p[hlmCardTitle]');
+    const card: HTMLElement | null = host.querySelector('[hlmCard]');
+
+    expect(icon?.className).toContain('text-warning');
+    expect(icon?.className).not.toContain('text-muted-foreground');
+    expect(value?.className).not.toContain('text-warning');
+    expect(card?.className).not.toContain('text-warning');
+    expect(card?.className).not.toContain('border-warning');
+  });
+
+  it('tints only the badge icon warning for a warning badge tone', async () => {
+    await render();
+    fixture.componentRef.setInput('badge', {
+      label: 'Due soon',
+      icon: 'lucideTrendingUp',
+      tone: 'warning',
+    });
+    await fixture.whenStable();
+
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const badgeIcon: HTMLElement | null = host.querySelector('[hlmBadge] ng-icon');
+    const value: HTMLElement | null = host.querySelector('p[hlmCardTitle]');
+
+    expect(badgeIcon?.className).toContain('text-warning');
+    expect(value?.className).not.toContain('text-warning');
+  });
+
   it('renders no badge and no footer by default', async () => {
     await render();
 
@@ -314,18 +349,19 @@ describe('StatTile', () => {
     expect(value?.className).not.toContain('text-destructive');
   });
 
-  it('moves the description into a bordered footer alongside the caption headline when caption is given', async () => {
+  it('keeps caption and description in the ordinary card content without a tinted footer', async () => {
     await render();
     fixture.componentRef.setInput('description', 'Waiting on your decision');
     fixture.componentRef.setInput('caption', 'Submitted for review');
     await fixture.whenStable();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    const footer: HTMLElement | null = host.querySelector('[hlmCardFooter]');
+    const content: HTMLElement | null = host.querySelector('[hlmCardContent]');
 
-    expect(footer).not.toBeNull();
-    expect(footer?.textContent).toContain('Submitted for review');
-    expect(footer?.textContent).toContain('Waiting on your decision');
+    expect(content).not.toBeNull();
+    expect(content?.textContent).toContain('Submitted for review');
+    expect(content?.textContent).toContain('Waiting on your decision');
+    expect(host.querySelector('[hlmCardFooter]')).toBeNull();
   });
 
   it('renders the value at one single size whether or not a caption is set', async () => {
@@ -345,15 +381,15 @@ describe('StatTile', () => {
     expect(read()).not.toContain('font-bold');
   });
 
-  it('renders no icon beside the footer caption even when icon is set, since the caption text already states it', async () => {
+  it('renders no icon beside the caption even when an icon is set', async () => {
     await render();
     fixture.componentRef.setInput('icon', 'lucideTrendingUp');
     fixture.componentRef.setInput('caption', 'Submitted for review');
     await fixture.whenStable();
 
     const host: HTMLElement = fixture.nativeElement as HTMLElement;
-    const footer: HTMLElement | null = host.querySelector('[hlmCardFooter]');
+    const content: HTMLElement | null = host.querySelector('[hlmCardContent]');
 
-    expect(footer?.querySelector('ng-icon')).toBeNull();
+    expect(content?.querySelector('ng-icon')).toBeNull();
   });
 });

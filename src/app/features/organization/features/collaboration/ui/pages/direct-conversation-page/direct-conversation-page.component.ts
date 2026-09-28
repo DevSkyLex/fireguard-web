@@ -1,11 +1,13 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
+  PLATFORM_ID,
   signal,
   untracked,
   type InputSignal,
@@ -46,8 +48,10 @@ import {
 import { SubmissionGateService, type SubmissionGate } from '@features/organization/services';
 import { registerMemberPresence } from '@features/organization/services/member-presence';
 import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
+import { getOrganizationInitials } from '@features/organization/utils';
 import { HlmAvatar, HlmAvatarFallback, HlmAvatarImage } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { HlmTooltip } from '@shared/ui/tooltip';
 import { MessageThread } from '../../components/message-thread';
 import { MessageDeleteDialog } from '../../dialogs/message-delete-dialog';
 import { MessageEditDialog } from '../../dialogs/message-edit-dialog';
@@ -89,6 +93,7 @@ import { MessageReplySheet } from '../../sheets/message-reply-sheet';
     HlmAvatarFallback,
     HlmAvatarImage,
     HlmButton,
+    HlmTooltip,
     MessageComposer,
     MessageDeleteDialog,
     MessageEditDialog,
@@ -246,6 +251,17 @@ export class DirectConversationPage {
   );
 
   /**
+   * Property getOrganizationInitials
+   * @readonly
+   * @description Template-bound reference to the shared initials util, used for the counterpart's avatar fallback.
+   * @access protected
+   * @since 1.1.0
+   * @type {typeof getOrganizationInitials}
+   */
+  protected readonly getOrganizationInitials: typeof getOrganizationInitials =
+    getOrganizationInitials;
+
+  /**
    * Property messages
    * @readonly
    *
@@ -269,8 +285,22 @@ export class DirectConversationPage {
         unknownMemberLabel: this.unknownLabel,
         canWrite: this.canWrite(),
         canManage: this.canManage(),
+        receiptKind: 'direct',
+        receiptPositions: this.thread.receiptPositions(),
       }),
   );
+
+  /** The counterpart's transient typing state, never the reader's own. */
+  protected readonly typingLabel: Signal<string | null> = computed((): string | null => {
+    const typingMemberIds = this.thread.typingMemberIds();
+    if (typingMemberIds.length === 0) return null;
+    const counterpart = this.counterpart();
+    if (counterpart === undefined) return $localize`:@@messages.typing.someone:Someone is typing…`;
+    if (!typingMemberIds.includes(this.memberIdOf(counterpart))) return null;
+    return this.isCounterpartResolved()
+      ? $localize`:@@messages.typing.named:${this.counterpartName()}:name: is typing…`
+      : $localize`:@@messages.typing.someone:Someone is typing…`;
+  });
 
   /**
    * Property mentionCandidates
@@ -581,6 +611,12 @@ export class DirectConversationPage {
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
   private readonly document: Document = inject<Document>(DOCUMENT);
+  private readonly browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly destroyRef = inject(DestroyRef);
+  private typingIdleTimer: ReturnType<typeof setTimeout> | null = null;
+  private typingActive = false;
+  private typingConversationId: string | null = null;
+  private lastTypingPublishedAt = 0;
 
   /** Stands in wherever a member cannot be named. Never a raw id. */
   private readonly unknownLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
@@ -604,6 +640,7 @@ export class DirectConversationPage {
    * @since 1.0.0
    */
   public constructor() {
+    this.destroyRef.onDestroy((): void => this.stopTyping());
     effect((): void => {
       const title: string = this.isMobileInteractionMode()
         ? this.counterpartName()
@@ -618,11 +655,24 @@ export class DirectConversationPage {
         this.replyTargetId.set(null);
         this.editTargetId.set(null);
         this.deleteTargetId.set(null);
+        this.stopTyping();
         this.thread.reset();
         this.thread.load(conversationId);
         this.thread.connect(conversationId);
-        this.thread.markRead({ conversationId });
+        if (this.browser) this.thread.loadReceipts(conversationId);
       });
+    });
+
+    effect((): void => {
+      if (!this.browser || this.thread.isLoading()) return;
+      const conversationId = this.conversationId();
+      const lastIncoming = this.messages().findLast(
+        (message) => !message.isOwn && message.status === 'sent',
+      );
+      if (lastIncoming !== undefined)
+        untracked((): void => {
+          this.thread.acknowledgeDelivery({ conversationId, messageId: lastIncoming.id });
+        });
     });
   }
   //#endregion
@@ -845,8 +895,47 @@ export class DirectConversationPage {
    */
   protected markRead(): void {
     if (this.document.visibilityState !== 'visible') return;
+    const latest = this.messages().findLast((message) => message.status === 'sent');
+    if (latest === undefined) return;
+    this.thread.markRead({ conversationId: this.conversationId(), lastReadMessageId: latest.id });
+  }
 
-    this.thread.markRead({ conversationId: this.conversationId() });
+  /** Sends at most one typing refresh every two seconds and stops after an idle pause. */
+  protected onTypingActivity(active: boolean): void {
+    if (
+      !this.browser ||
+      !this.canWrite() ||
+      this.document.visibilityState !== 'visible' ||
+      !active
+    ) {
+      this.stopTyping();
+      return;
+    }
+    if (this.typingIdleTimer !== null) clearTimeout(this.typingIdleTimer);
+    const now = Date.now();
+    const conversationId = this.conversationId();
+    if (
+      !this.typingActive ||
+      this.typingConversationId !== conversationId ||
+      now - this.lastTypingPublishedAt >= 2_000
+    ) {
+      this.thread.publishTyping({ conversationId, active: true });
+      this.lastTypingPublishedAt = now;
+    }
+    this.typingActive = true;
+    this.typingConversationId = conversationId;
+    this.typingIdleTimer = setTimeout((): void => this.stopTyping(), 3_500);
+  }
+
+  /** Clears local activity; the remote indicator also expires if a stop cannot arrive. */
+  private stopTyping(): void {
+    if (this.typingIdleTimer !== null) clearTimeout(this.typingIdleTimer);
+    this.typingIdleTimer = null;
+    if (this.typingActive && this.typingConversationId !== null) {
+      this.thread.publishTyping({ conversationId: this.typingConversationId, active: false });
+    }
+    this.typingActive = false;
+    this.typingConversationId = null;
   }
 
   /**

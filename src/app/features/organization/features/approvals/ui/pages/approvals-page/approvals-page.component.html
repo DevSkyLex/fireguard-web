@@ -79,9 +79,7 @@
   @if (listForbidden()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideLock" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="access-denied" />
         <p hlmEmptyTitle i18n="@@approvals.list.forbiddenTitle">
           Not available with your permissions
         </p>
@@ -107,15 +105,57 @@
         </button>
       </div>
     </div>
-  } @else if (!store.isLoading() && items().length === 0) {
+  } @else if (!store.isLoading() && items().length === 0 && isDefaultPendingView()) {
     <div hlmEmpty class="border border-border">
       <div hlmEmptyHeader>
-        <div hlmEmptyMedia variant="icon">
-          <ng-icon name="lucideShieldCheck" aria-hidden="true" />
-        </div>
+        <app-state-illustration hlmEmptyMedia state="all-clear" />
         <p hlmEmptyTitle i18n="@@approvals.list.emptyTitle">No approval requests</p>
         <p hlmEmptyDescription i18n="@@approvals.list.emptyDesc">
           Nothing is waiting on a decision for this filter.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          data-testid="approvals-show-all-statuses"
+          (click)="showAllStatuses()"
+        >
+          <span i18n="@@approvals.list.showAllStatuses">Show all statuses</span>
+        </button>
+      </div>
+    </div>
+  } @else if (!store.isLoading() && items().length === 0 && isFilteredMiss()) {
+    <div hlmEmpty class="border border-border">
+      <div hlmEmptyHeader>
+        <app-state-illustration hlmEmptyMedia state="no-results" />
+        <p hlmEmptyTitle i18n="@@approvals.list.filteredEmptyTitle">
+          No requests match these filters
+        </p>
+        <p hlmEmptyDescription i18n="@@approvals.list.filteredEmptyDesc">
+          Try a different status, action type or search term.
+        </p>
+      </div>
+      <div hlmEmptyContent>
+        <button
+          hlmBtn
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          data-testid="approvals-clear-filters"
+          (click)="clearFilters()"
+        >
+          <span i18n="@@approvals.list.clearFilters">Clear filters</span>
+        </button>
+      </div>
+    </div>
+  } @else if (!store.isLoading() && items().length === 0) {
+    <div hlmEmpty class="border border-border">
+      <div hlmEmptyHeader>
+        <app-resource-illustration hlmEmptyMedia resource="approval" />
+        <p hlmEmptyTitle i18n="@@approvals.list.emptyTitle">No approval requests</p>
+        <p hlmEmptyDescription i18n="@@approvals.list.trueEmptyDesc">
+          No approval requests have been made in this organization yet.
         </p>
       </div>
     </div>
@@ -128,6 +168,7 @@
       [organizationId]="organizationId()"
       [actionTypeLabelOf]="actionTypeLabelOf"
       [memberLabelOf]="memberLabelOf"
+      [memberAvatarOf]="memberAvatarOf"
       (approveRequested)="openApprove($event)"
       (rejectRequested)="openReject($event)"
       (withdrawRequested)="openWithdraw($event)"

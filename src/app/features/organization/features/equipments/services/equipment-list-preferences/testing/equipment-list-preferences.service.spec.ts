@@ -21,30 +21,30 @@ function build(cookieValue: string | null): {
 
 describe('EquipmentListPreferencesService', () => {
   describe('readSort', () => {
-    it('should fall back to createdAt/asc when no cookie is stored', () => {
+    it('should fall back to type/asc when no cookie is stored', () => {
       const { service } = build(null);
 
-      expect(service.readSort()).toEqual({ field: 'createdAt', direction: 'asc' });
+      expect(service.readSort()).toEqual({ field: 'type', direction: 'asc' });
     });
 
-    it('should fall back to createdAt/asc when the cookie is corrupted JSON', () => {
+    it('should fall back to type/asc when the cookie is corrupted JSON', () => {
       const { service } = build('{not-json');
 
-      expect(service.readSort()).toEqual({ field: 'createdAt', direction: 'asc' });
+      expect(service.readSort()).toEqual({ field: 'type', direction: 'asc' });
     });
 
-    it('should fall back to createdAt/asc when the JSON is not an object', () => {
+    it('should fall back to type/asc when the JSON is not an object', () => {
       const { service } = build('"a string"');
 
-      expect(service.readSort()).toEqual({ field: 'createdAt', direction: 'asc' });
+      expect(service.readSort()).toEqual({ field: 'type', direction: 'asc' });
     });
 
-    it('should fall back to createdAt/asc when the stored sort field is stale', () => {
+    it('should fall back to type/asc when the stored sort field is stale', () => {
       const { service } = build(
         JSON.stringify({ sortField: 'retiredField', sortDirection: 'desc' }),
       );
 
-      expect(service.readSort()).toEqual({ field: 'createdAt', direction: 'asc' });
+      expect(service.readSort()).toEqual({ field: 'type', direction: 'asc' });
     });
 
     it.each<EquipmentListSort['field']>([

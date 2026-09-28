@@ -1,5 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { ChannelInfoSheet } from '../channel-info-sheet.component';
 import type { PinnedMessageItem } from '../models';
 
@@ -25,7 +26,18 @@ describe('ChannelInfoSheet', () => {
 
   async function open(pinned: readonly PinnedMessageItem[]): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideInteractionCapabilities()],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideInteractionCapabilities(),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
 
     fixture = TestBed.createComponent(ChannelInfoSheet);

@@ -9,6 +9,7 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   RequestEmailChangeOutput,
   SetupTotpOutput,
@@ -240,6 +241,14 @@ describe('AccountSecurityPage', () => {
         provideRouter([]),
         { provide: UserStore, useValue: userStore },
         { provide: AUTH_SESSION_PORT, useValue: authSession },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('system'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
       ],
     })
       .overrideComponent(AccountSecurityPage, {

@@ -9,7 +9,10 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { form, FormField, disabled, required, type FieldTree } from '@angular/forms/signals';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { OrganizationJoinRequestOutput } from '@features/organization/models';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmDialogImports } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
@@ -22,7 +25,16 @@ import { HlmSelectImports } from '@shared/ui/select';
  */
 @Component({
   selector: 'app-organization-join-request-review-dialog',
-  imports: [FormField, HlmDialogImports, HlmSelectImports, HlmFieldImports, HlmButton],
+  imports: [
+    NgIcon,
+    FormField,
+    HlmDialogImports,
+    HlmSelectImports,
+    HlmFieldImports,
+    HlmButton,
+    ...HlmAlertImports,
+  ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-join-request-review-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

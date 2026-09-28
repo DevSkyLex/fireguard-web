@@ -32,7 +32,10 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { sheetSide } from '@shared/sheet-side';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSheetImports } from '@shared/ui/sheet';
 
 /** The severity-to-icon-colour pairing for a row's code badge, matching `IMPORT_STATUS_TAG_ICON_CLASS`. */
@@ -53,17 +56,20 @@ const ROW_TAG_ICON_CLASS: Readonly<Record<string, string>> = {
  * ({@link summary} — the partial-application copy: how many rows were
  * created versus skipped, and why, since the backend applies a quota
  * per row during processing rather than refusing the whole file up
- * front) followed by the full row list — row number, column, a code badge
- * (`would_create` renders as a positive "Would create", never as a
- * failure), and the message. A `pending`/`processing` job renders the same
- * panel with whatever the live poll has observed so far.
+ * front), a compact `<dl>` of the facts the summary omits (rows in file,
+ * started, completed), a live `hlm-progress` bar while `processing` with a
+ * known total, then the full row list as a flat `hlmItemGroup` — row number,
+ * column, a code badge (`would_create` renders as a positive "Would create",
+ * never as a failure), and the message. A `pending`/`processing` job renders
+ * the same panel with whatever the live poll has observed so far. Every
+ * tracking, job, resume and confirm failure renders as an `hlmAlert`.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store; the page
  * owns which job is open and the live data behind it.
  *
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`).
  *
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -75,6 +81,9 @@ const ROW_TAG_ICON_CLASS: Readonly<Record<string, string>> = {
     OrgDatePipe,
     NgIcon,
     ImportStatusTag,
+    ...HlmAlertImports,
+    ...HlmItemImports,
+    ...HlmProgressImports,
     ...HlmSheetImports,
   ],
   providers: [
@@ -340,6 +349,22 @@ export class ImportJobDetailSheet {
       icon: descriptor.icon,
       iconClass: ROW_TAG_ICON_CLASS[descriptor.severity],
     };
+  }
+
+  /**
+   * Method progressRatioOf
+   * @description The processing job's completion ratio for `hlm-progress`, or `null` while the total row count is not yet known.
+   * @access protected
+   * @since 1.1.0
+   * @param {ImportJobOutput} job - The viewed job.
+   * @returns {number | null} A `0`–`100` percentage, or `null` outside `processing` or with an unknown total.
+   */
+  protected progressRatioOf(job: ImportJobOutput): number | null {
+    if (job.status !== 'processing' || job.totalRows === undefined || job.totalRows <= 0) {
+      return null;
+    }
+
+    return Math.min(100, (job.processedRows / job.totalRows) * 100);
   }
 
   /**

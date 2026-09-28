@@ -12,6 +12,8 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import type {
   OrganizationTransferOwnershipConfirmedEvent,
@@ -19,6 +21,7 @@ import type {
 } from '@features/organization/models';
 import { HlmInputGroupAddon } from '@shared/ui/input-group';
 
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldLabel } from '@shared/ui/field';
@@ -65,14 +68,17 @@ const NO_CANDIDATE_VALUE = '';
 @Component({
   selector: 'app-organization-transfer-ownership-dialog',
   imports: [
+    NgIcon,
     HlmInputGroupAddon,
     ...HlmAvatarImports,
     ...HlmItemImports,
     HlmFieldLabel,
     HlmInput,
     ...HlmAlertDialogImports,
+    ...HlmAlertImports,
     ...HlmComboboxImports,
   ],
+  providers: [provideIcons({ lucideCircleAlert })],
   templateUrl: './organization-transfer-ownership-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

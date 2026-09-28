@@ -25,9 +25,7 @@ import {
   lucideCircleAlert,
   lucideCircleDot,
   lucideEllipsis,
-  lucideFilterX,
   lucideImages,
-  lucideListChecks,
   lucidePlus,
   lucideSkipForward,
   lucideTrash2,
@@ -54,11 +52,19 @@ import { CollectionPagination } from '@shared/collection-pagination';
 import { CollectionSurface } from '@shared/collection-surface';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { formatDurationMinutes } from '@shared/duration-format';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
@@ -94,8 +100,13 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
  * stacking 8px of padding on every side on top of it (measured: 60px rows
  * against `InterventionTable`'s 44px) was excess chrome, not part of the
  * target — its own 44px hit area still renders untouched at `p-0`.
+ * A planned work window (`workStartsOn`/`workEndsOn`) joins the effort summary
+ * as a date-only pair, so scheduling reads next to duration rather than only
+ * from the row's tooltip. The genuinely empty scope shows a `work-item`
+ * illustration instead of a dashed placeholder box, and the load-failure
+ * retry sits inside `hlmEmptyContent` like the other linked tables.
  *
- * @version 2.3.0
+ * @version 2.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -113,6 +124,9 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
     CollectionFilterToggle,
     CollectionSearchBox,
     CollectionToolbar,
+    OrgDatePipe,
+    ResourceIllustration,
+    StateIllustration,
     HlmBadge,
     HlmToggle,
     InterventionTag,
@@ -120,6 +134,7 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
     ...HlmAvatarImports,
     ...HlmButtonImports,
     ...HlmDropdownMenuImports,
+    ...HlmItemImports,
     ...HlmProgressImports,
     ...HlmSpinnerImports,
     ...HlmTableImports,
@@ -131,9 +146,7 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
       lucideCircleAlert,
       lucideCircleDot,
       lucideEllipsis,
-      lucideFilterX,
       lucideImages,
-      lucideListChecks,
       lucidePlus,
       lucideSkipForward,
       lucideTrash2,
@@ -267,6 +280,16 @@ export class InterventionWorkItemTable {
   public readonly queuedIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
     new Set(),
   );
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The active organization's date pattern, for a work item's planned window. The default keeps the component renderable with no context wired.
+   * @access public
+   * @since 2.4.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   /**
    * Property contextId
    * @readonly

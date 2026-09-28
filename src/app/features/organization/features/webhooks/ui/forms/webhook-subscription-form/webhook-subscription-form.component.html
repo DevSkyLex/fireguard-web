@@ -47,12 +47,14 @@
       @for (entry of fields.events; track $index) {
         <hlm-field orientation="horizontal" class="min-h-11 items-center">
           <hlm-checkbox [inputId]="'webhook-event-' + $index" [formField]="entry.checked" />
-          <label
-            hlmFieldLabel
-            [for]="'webhook-event-' + $index"
-            class="min-w-0 py-2 font-mono text-xs break-words"
-            >{{ model().events[$index].value }}</label
-          >
+          <div class="flex min-w-0 flex-col py-2">
+            <label hlmFieldLabel [for]="'webhook-event-' + $index" class="min-w-0 break-words">
+              {{ eventLabelOf($index) }}
+            </label>
+            <p hlmFieldDescription class="font-mono text-xs break-all text-muted-foreground">
+              {{ model().events[$index].value }}
+            </p>
+          </div>
         </hlm-field>
       }
       @if (fields.events().touched()) {

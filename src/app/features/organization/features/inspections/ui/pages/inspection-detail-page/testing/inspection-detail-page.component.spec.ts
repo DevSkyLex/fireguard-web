@@ -22,10 +22,9 @@ import {
   type CallState,
   type StoreError,
 } from '@core/request-state';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { ChecklistService } from '@features/organization/features/checklists/data-access';
-import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
   InspectionOutput,
@@ -35,6 +34,8 @@ import {
   ActiveInspectionStore,
   InspectionStore,
 } from '@features/organization/features/inspections/state';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { InspectionDetailPage } from '../inspection-detail-page.component';
 
 const inspection = (overrides: Partial<InspectionOutput> = {}): InspectionOutput =>
@@ -100,9 +101,9 @@ describe('InspectionDetailPage', () => {
   let updateNonConformityStatus: ReturnType<typeof vi.fn>;
   let resetAddNonConformityOperation: ReturnType<typeof vi.fn>;
   let nonConformitiesListCallState: WritableSignal<CallState>;
+  let totalNonConformities: WritableSignal<number>;
   let addNonConformityCallState: WritableSignal<CallState<NonConformityOutput | null>>;
   let isUpdatingNonConformity: WritableSignal<boolean>;
-  let checklistGet: ReturnType<typeof vi.fn>;
   let exportNonConformitiesCsv: ReturnType<typeof vi.fn>;
   let exportReport: ReturnType<typeof vi.fn>;
   let exportNonConformitiesReport: ReturnType<typeof vi.fn>;
@@ -134,14 +135,9 @@ describe('InspectionDetailPage', () => {
     updateNonConformityStatus = vi.fn();
     resetAddNonConformityOperation = vi.fn();
     nonConformitiesListCallState = signal<CallState>(idleCallState());
+    totalNonConformities = signal<number>(0);
     addNonConformityCallState = signal<CallState<NonConformityOutput | null>>(idleCallState());
     isUpdatingNonConformity = signal<boolean>(false);
-    checklistGet = vi.fn().mockReturnValue(
-      of({
-        id: 'checklist-1',
-        name: 'Monthly fire panel check',
-      } as unknown as ChecklistOutput),
-    );
     exportNonConformitiesCsv = vi.fn().mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
     exportReport = vi.fn().mockReturnValue(of(new Blob(['pdf'], { type: 'application/pdf' })));
     exportNonConformitiesReport = vi
@@ -154,6 +150,14 @@ describe('InspectionDetailPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
         {
           provide: ActiveInspectionStore,
           useValue: { selectedInspection, getError, isLoadingInspection, resolveInspection },
@@ -177,6 +181,7 @@ describe('InspectionDetailPage', () => {
             nonConformities: signal<ReadonlyArray<NonConformityOutput>>([]),
             nonConformityWaivePending: signal({}),
             nonConformitiesListCallState,
+            totalNonConformities,
             addNonConformityCallState,
             isLoadingNonConformities: signal<boolean>(false),
             isAddingNonConformity: signal<boolean>(false),
@@ -189,12 +194,15 @@ describe('InspectionDetailPage', () => {
           provide: OrganizationPermissionService,
           useValue: { hasPermission: (): boolean => true },
         },
-        { provide: ChecklistService, useValue: { get: checklistGet } },
         {
           provide: InspectionService,
           useValue: { exportNonConformitiesCsv, exportReport, exportNonConformitiesReport },
         },
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
       ],
     });
 
@@ -273,41 +281,6 @@ describe('InspectionDetailPage', () => {
         .querySelector('[data-testid="inspection-lifecycle-band"]')
         ?.textContent?.trim(),
     ).toBe('');
-  });
-
-  describe('checklist name resolution', () => {
-    it('should not fetch a checklist name when the inspection has none', async () => {
-      await createPage();
-
-      expect(checklistGet).not.toHaveBeenCalled();
-      expect(fixture.componentInstance['checklistName']()).toBeNull();
-    });
-
-    it('should resolve and expose the checklist name once the record carries a checklistId', async () => {
-      selectedInspection.set(inspection({ checklistId: 'checklist-1' }));
-      await createPage();
-
-      expect(checklistGet).toHaveBeenCalledWith('org-1', 'checklist-1');
-      expect(fixture.componentInstance['checklistName']()).toBe('Monthly fire panel check');
-    });
-
-    it('should not re-fetch the same checklist id twice', async () => {
-      selectedInspection.set(inspection({ checklistId: 'checklist-1' }));
-      await createPage();
-
-      selectedInspection.set(inspection({ checklistId: 'checklist-1' }));
-      await fixture.whenStable();
-
-      expect(checklistGet).toHaveBeenCalledTimes(1);
-    });
-
-    it('should leave the checklist name null when it could not be resolved', async () => {
-      checklistGet.mockReturnValue(throwError(() => new Error('not found')));
-      selectedInspection.set(inspection({ checklistId: 'checklist-1' }));
-      await createPage();
-
-      expect(fixture.componentInstance['checklistName']()).toBeNull();
-    });
   });
 
   it('should gate the in-place fields to a draft inspection', async () => {
@@ -415,10 +388,10 @@ describe('InspectionDetailPage', () => {
     it('should load non-conformities only on the first expansion', async () => {
       await createPage();
 
-      fixture.componentInstance['toggleNonConformities']();
+      fixture.componentInstance['onNonConformitiesExpandedChanged'](true);
       nonConformitiesListCallState.set(pendingCallState());
-      fixture.componentInstance['toggleNonConformities']();
-      fixture.componentInstance['toggleNonConformities']();
+      fixture.componentInstance['onNonConformitiesExpandedChanged'](false);
+      fixture.componentInstance['onNonConformitiesExpandedChanged'](true);
 
       expect(loadNonConformities).toHaveBeenCalledTimes(1);
       expect(loadNonConformities).toHaveBeenCalledWith({
@@ -431,9 +404,21 @@ describe('InspectionDetailPage', () => {
       nonConformitiesListCallState.set(successCallState(null));
       await createPage();
 
-      fixture.componentInstance['toggleNonConformities']();
+      fixture.componentInstance['onNonConformitiesExpandedChanged'](true);
 
       expect(loadNonConformities).not.toHaveBeenCalled();
+    });
+
+    it('should reload on re-expansion after a failed load', async () => {
+      await createPage();
+
+      nonConformitiesListCallState.set(
+        errorCallState({ error: null, message: 'down', code: 500, retryable: true, timestamp: 0 }),
+      );
+      fixture.componentInstance['onNonConformitiesExpandedChanged'](false);
+      fixture.componentInstance['onNonConformitiesExpandedChanged'](true);
+
+      expect(loadNonConformities).toHaveBeenCalledTimes(1);
     });
 
     it('should hide the add entry point once the inspection is closed even for a writer', async () => {
@@ -533,6 +518,26 @@ describe('InspectionDetailPage', () => {
     });
   });
 
+  describe('non-conformities count label', () => {
+    it('should reflect an added row immediately instead of the stale record snapshot', async () => {
+      selectedInspection.set(inspection({ nonConformitiesCount: 0 }));
+      await createPage();
+
+      totalNonConformities.set(1);
+      nonConformitiesListCallState.set(successCallState(null));
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance['nonConformitiesLabel']()).toBe('1 non-conformity');
+    });
+
+    it('should fall back to the record snapshot before the section has ever loaded', async () => {
+      selectedInspection.set(inspection({ nonConformitiesCount: 3 }));
+      await createPage();
+
+      expect(fixture.componentInstance['nonConformitiesLabel']()).toBe('3 non-conformities');
+    });
+  });
+
   describe('non-conformities export', () => {
     beforeEach(() => {
       URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
@@ -585,7 +590,7 @@ describe('InspectionDetailPage', () => {
     it('renders the header button and downloads the PDF report on click', async () => {
       await createPage();
 
-      const button: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      const button: HTMLButtonElement | null = renderPageActions().querySelector(
         '[data-testid="inspection-detail-export-report"]',
       );
       expect(button).not.toBeNull();

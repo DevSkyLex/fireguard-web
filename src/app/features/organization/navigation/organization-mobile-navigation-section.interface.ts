@@ -37,4 +37,14 @@ export interface OrganizationMobileNavigationSection {
    * @type {readonly OrganizationMobileNavigationLink[]}
    */
   readonly links: readonly OrganizationMobileNavigationLink[];
+
+  /**
+   * Property includesSignOut
+   * @readonly
+   * @description Whether this section's row list ends with the sign-out control, so the More page renders it without matching a section id.
+   * @access public
+   * @since 1.1.0
+   * @type {boolean}
+   */
+  readonly includesSignOut?: boolean;
 }

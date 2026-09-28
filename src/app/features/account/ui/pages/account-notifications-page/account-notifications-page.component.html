@@ -44,17 +44,6 @@
     </div>
 
     <div hlmTabsContent="notifications" class="flex flex-col gap-4">
-      @if (store.unreadCount(); as unread) {
-        <p class="text-sm text-muted-foreground">
-          <span i18n="@@account.notifications.unreadCount">Unread</span>
-          <span class="ml-1 font-medium text-foreground">{{ unread }}</span>
-        </p>
-      } @else {
-        <p class="text-sm text-muted-foreground" i18n="@@account.notifications.allRead">
-          You are all caught up.
-        </p>
-      }
-
       <app-account-notification-list
         [notifications]="store.notifications()"
         [categories]="categories()"
@@ -122,9 +111,7 @@
           } @else if (rows().length === 0) {
             <div hlmEmpty data-testid="notif-pref-empty">
               <div hlmEmptyHeader>
-                <div hlmEmptyMedia variant="icon">
-                  <ng-icon name="lucideBellOff" aria-hidden="true" />
-                </div>
+                <app-state-illustration hlmEmptyMedia state="no-notifications" />
                 <p hlmEmptyTitle i18n="@@account.notificationPreferences.emptyCategories">
                   No notification categories are available yet.
                 </p>

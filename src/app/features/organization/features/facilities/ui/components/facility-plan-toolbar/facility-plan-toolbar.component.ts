@@ -25,6 +25,7 @@ import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmInput } from '@shared/ui/input';
 import { HlmItem, HlmItemContent, HlmItemGroup, HlmItemMedia, HlmItemTitle } from '@shared/ui/item';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmSwitch } from '@shared/ui/switch';
 import { equipmentPlanLabel } from '../../../utils';
 
@@ -66,6 +67,7 @@ import { equipmentPlanLabel } from '../../../utils';
     HlmSwitch,
     ...HlmDrawerImports,
     ...HlmSelectImports,
+    ...HlmSpinnerImports,
   ],
   providers: [provideIcons({ lucideBox, lucideBoxes, lucideList, lucideMapPin })],
   templateUrl: './facility-plan-toolbar.component.html',

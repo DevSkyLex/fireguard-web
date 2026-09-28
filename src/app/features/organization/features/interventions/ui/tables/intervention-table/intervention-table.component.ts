@@ -17,17 +17,19 @@ import {
   lucideChevronsUpDown,
   lucideCircleAlert,
   lucideCopy,
+  lucideCopyPlus,
   lucideEllipsis,
   lucideSquareArrowOutUpRight,
+  lucideTimer,
   lucideTrash2,
   lucideUserCog,
 } from '@ng-icons/lucide';
-import {
-  resolveInterventionTag,
-  type InterventionListSort,
-  type InterventionOutput,
-  type InterventionSortField,
-  type InterventionStatus,
+import type {
+  InterventionListSort,
+  InterventionOutput,
+  InterventionSortField,
+  InterventionStatus,
+  MemberAvatar,
 } from '@features/organization/features/interventions/models';
 import { CollectionSurface } from '@shared/collection-surface';
 import { GateReasonDirective } from '@shared/gate-reason';
@@ -37,11 +39,14 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { HlmAvatarImports } from '@shared/ui/avatar';
+import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionListItemViewModel } from '../../pages/interventions-page/models';
 import {
@@ -103,9 +108,12 @@ import {
     GateReasonDirective,
     InterventionTag,
     ...HlmAvatarImports,
+    HlmBadge,
     ...HlmDropdownMenuImports,
     ...HlmTableImports,
     ...HlmItemImports,
+    ...HlmProgressImports,
+    ...HlmTooltipImports,
   ],
   providers: [
     provideIcons({
@@ -114,8 +122,10 @@ import {
       lucideChevronsUpDown,
       lucideCircleAlert,
       lucideCopy,
+      lucideCopyPlus,
       lucideEllipsis,
       lucideSquareArrowOutUpRight,
+      lucideTimer,
       lucideTrash2,
       lucideUserCog,
     }),
@@ -188,6 +198,41 @@ export class InterventionTable {
   >(new Set<InterventionTableColumn>());
 
   /**
+   * Property selectionMode
+   * @readonly
+   *
+   * @description
+   * Whether the card layout offers its selection checkbox. Below the surface's
+   * compact breakpoint a permanent checkbox column would cost an eighth of a
+   * 375px screen for an action the field scene never performs, so selection is
+   * a mode the page turns on rather than a column that is always there. Has no
+   * effect while {@link selectable} is false.
+   *
+   * @access public
+   * @since 7.0.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly selectionMode: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property selectable
+   * @readonly
+   *
+   * @description
+   * Whether the table offers row selection at all. False drops the select-all
+   * head and every row checkbox — desktop and mobile alike — rather than
+   * reserving a column for controls a member with no bulk action can do
+   * nothing with.
+   *
+   * @access public
+   * @since 6.4.0
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly selectable: InputSignal<boolean> = input<boolean>(true);
+
+  /**
    * Property canTransition
    * @readonly
    *
@@ -200,24 +245,6 @@ export class InterventionTable {
    *
    * @type {InputSignal<boolean>}
    */
-  /**
-   * Property selectionMode
-   * @readonly
-   *
-   * @description
-   * Whether the card layout offers its selection checkbox. Below the surface's
-   * compact breakpoint a permanent checkbox column would cost an eighth of a
-   * 375px screen for an action the field scene never performs, so selection is
-   * a mode the page turns on rather than a column that is always there. The
-   * table layout is unaffected — its checkbox column is unconditional, as before.
-   *
-   * @access public
-   * @since 7.0.0
-   *
-   * @type {InputSignal<boolean>}
-   */
-  public readonly selectionMode: InputSignal<boolean> = input<boolean>(false);
-
   public readonly canTransition: InputSignal<boolean> = input<boolean>(false);
 
   /**
@@ -466,14 +493,19 @@ export class InterventionTable {
    */
   protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
     () => {
-      const widths: string[] = ['size-4', 'w-14', 'w-56 max-w-full'];
+      const widths: string[] = this.selectable()
+        ? ['size-4', 'w-14', 'w-56 max-w-full']
+        : ['w-14', 'w-56 max-w-full'];
 
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.STATUS)) widths.push('w-24');
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.PRIORITY)) widths.push('w-20');
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.TYPE)) widths.push('w-28');
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.SITE)) widths.push('w-32');
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.RESPONSIBLE)) widths.push('w-40');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.PARTICIPANTS)) widths.push('w-20');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.START)) widths.push('w-24');
       if (this.isVisible(INTERVENTION_TABLE_COLUMN.DUE)) widths.push('ms-auto w-20');
+      if (this.isVisible(INTERVENTION_TABLE_COLUMN.UPDATED)) widths.push('w-24');
 
       widths.push('ms-auto size-6');
 
@@ -522,10 +554,13 @@ export class InterventionTable {
       this.column.TYPE,
       this.column.SITE,
       this.column.RESPONSIBLE,
+      this.column.PARTICIPANTS,
+      this.column.START,
       this.column.DUE,
+      this.column.UPDATED,
     ].filter((id: InterventionTableColumn): boolean => this.isVisible(id)).length;
 
-    return optional + 4;
+    return optional + (this.selectable() ? 4 : 3);
   }
 
   /**
@@ -594,24 +629,6 @@ export class InterventionTable {
     if (!this.canTransition() || this.transitioningIds().includes(intervention.id)) return [];
 
     return intervention.allowedTransitions;
-  }
-
-  /**
-   * Method statusLabelOf
-   * @method statusLabelOf
-   *
-   * @description
-   * Names a status for a menu entry.
-   *
-   * @access protected
-   * @since 4.0.0
-   *
-   * @param {InterventionStatus} status - The status.
-   *
-   * @returns {string} Its localized label.
-   */
-  protected statusLabelOf(status: InterventionStatus): string {
-    return resolveInterventionTag('status', status).label;
   }
 
   /**
@@ -836,6 +853,113 @@ export class InterventionTable {
    */
   protected selectRowLabel(name: string): string {
     return $localize`:@@intervention.list.rowSelectLabel:Select ${name}:name:`;
+  }
+
+  /**
+   * Method participantsOf
+   * @method participantsOf
+   *
+   * @description
+   * The row's avatar stack minus its responsible, who has an identity in
+   * the separate Responsible column. {@link InterventionListItemViewModel.people}
+   * always resolves the responsible first when one is assigned.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {InterventionListItemViewModel} item - The row.
+   *
+   * @returns {readonly MemberAvatar[]} The participants to show in the avatar stack.
+   */
+  protected participantsOf(item: InterventionListItemViewModel): readonly MemberAvatar[] {
+    return item.responsible ? item.people.slice(1) : item.people;
+  }
+
+  /**
+   * Method initialsOf
+   * @method initialsOf
+   *
+   * @description
+   * Derives up to two initials from a display name, for an avatar stack
+   * entry with no resolved `MemberSelectOption.initials`.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {string} label - The person's display name.
+   *
+   * @returns {string} Up to two uppercase initials, or `'?'` when `label` is blank.
+   */
+  protected initialsOf(label: string): string {
+    const parts: readonly string[] = label
+      .trim()
+      .split(/\s+/)
+      .filter((part: string): boolean => part.length > 0);
+    if (parts.length === 0) return '?';
+
+    const first: string = (parts[0] ?? '').charAt(0);
+    const last: string = parts.length > 1 ? (parts[parts.length - 1] ?? '').charAt(0) : '';
+
+    return `${first}${last}`.toUpperCase();
+  }
+
+  /**
+   * Method extraLabelsOf
+   * @method extraLabelsOf
+   *
+   * @description
+   * Names the labels a row's "+N" chip hides, for its tooltip.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {InterventionOutput} intervention - The row's intervention.
+   *
+   * @returns {string} The hidden labels' names, comma-separated.
+   */
+  protected extraLabelsOf(intervention: InterventionOutput): string {
+    return intervention.labels
+      .slice(2)
+      .map((label): string => label.name)
+      .join(', ');
+  }
+
+  /**
+   * Method progressPercentOf
+   * @method progressPercentOf
+   *
+   * @description
+   * The row's work-item completion, as a percentage for `hlm-progress`.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {InterventionOutput} intervention - The row's intervention.
+   *
+   * @returns {number} The completion percentage, `0` when there is no work item.
+   */
+  protected progressPercentOf(intervention: InterventionOutput): number {
+    if (intervention.workItemsCount === 0) return 0;
+
+    return Math.round((intervention.completedWorkItemsCount / intervention.workItemsCount) * 100);
+  }
+
+  /**
+   * Method progressLabelOf
+   * @method progressLabelOf
+   *
+   * @description
+   * The accessible name for a row's work-item progress bar.
+   *
+   * @access protected
+   * @since 6.4.0
+   *
+   * @param {InterventionOutput} intervention - The row's intervention.
+   *
+   * @returns {string} The localized label.
+   */
+  protected progressLabelOf(intervention: InterventionOutput): string {
+    return $localize`:@@intervention.list.workItemsProgress:${intervention.completedWorkItemsCount}:completed: of ${intervention.workItemsCount}:total: work items completed`;
   }
   //#endregion
 }

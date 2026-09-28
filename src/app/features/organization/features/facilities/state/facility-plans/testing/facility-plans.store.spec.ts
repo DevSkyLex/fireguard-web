@@ -76,6 +76,7 @@ const zoneFacility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =
   status: 'active',
   address: null,
   metadata: {},
+  equipmentCount: 0,
   path: [],
   createdAt: '2026-08-01T00:00:00+00:00',
   updatedAt: '2026-08-01T00:00:00+00:00',

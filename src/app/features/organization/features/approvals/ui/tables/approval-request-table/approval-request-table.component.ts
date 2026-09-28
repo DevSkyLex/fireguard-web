@@ -3,7 +3,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
+  LOCALE_ID,
   output,
   type InputSignal,
   type OutputEmitterRef,
@@ -11,17 +13,22 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideX } from '@ng-icons/lucide';
+import { lucideCheck, lucideCircleAlert, lucideX } from '@ng-icons/lucide';
 import type { ApprovalRequestOutput } from '@features/organization/features/approvals/models';
 import { approvalDecisionReason } from '@features/organization/features/approvals/utils';
+import { getOrganizationInitials } from '@features/organization/utils';
 import { CollectionSurface } from '@shared/collection-surface';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   OrgDatePipe,
   type RegionalFormatSettings,
 } from '@shared/regional-format';
+import { formatRelativeTime } from '@shared/relative-time';
+import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmButton } from '@shared/ui/button';
+import { HlmItemImports } from '@shared/ui/item';
 import { HlmTableImports } from '@shared/ui/table';
+import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { ApprovalStatusTag } from '../../components/approval-status-tag';
 
 /** One literal Tailwind width per always-rendered column, for the shared surface's first-load skeleton. */
@@ -63,8 +70,11 @@ const SUBJECT_LABELS: Readonly<Record<string, string>> = {
  * `equipment_decommission`; a bare reference otherwise, since no
  * non-conformity detail route exists yet), requester, requested/expires
  * dates, status, and — once decided or expired — the decision note, the
- * decider, and the execution error when present. Row actions Approve/Reject
- * render only on a `pending` row and only when {@link canDecide}.
+ * decider, the execution timestamp, and the execution error when present. A
+ * pending row's expiry carries a muted relative suffix next to the absolute
+ * date; decided and withdrawn rows show a plain dash instead, since the
+ * expiry no longer applies. Row actions Approve/Reject render only on a
+ * `pending` row and only when {@link canDecide}.
  *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter and paginate, and
@@ -75,7 +85,7 @@ const SUBJECT_LABELS: Readonly<Record<string, string>> = {
  * {@link rejectAriaLabelOf}) rather than a static "Approve request" label
  * repeated on every row.
  *
- * @version 1.2.0
+ * @version 1.3.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -89,9 +99,12 @@ const SUBJECT_LABELS: Readonly<Record<string, string>> = {
     NgIcon,
     ApprovalStatusTag,
     HlmButton,
+    ...HlmAvatarImports,
+    ...HlmItemImports,
     ...HlmTableImports,
+    ...HlmTooltipImports,
   ],
-  providers: [provideIcons({ lucideCheck, lucideX })],
+  providers: [provideIcons({ lucideCheck, lucideCircleAlert, lucideX })],
   templateUrl: './approval-request-table.component.html',
   host: { class: 'block min-h-0 w-full flex-1' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -106,6 +119,9 @@ export class ApprovalRequestTable {
    * @type {typeof approvalDecisionReason}
    */
   protected readonly decisionReason: typeof approvalDecisionReason = approvalDecisionReason;
+
+  /** The application's active locale, for {@link expiresRelativeOf}. */
+  private readonly locale: string = inject<string>(LOCALE_ID);
   //#region Inputs
   /**
    * Property items
@@ -176,6 +192,23 @@ export class ApprovalRequestTable {
   public readonly memberLabelOf: InputSignal<(memberId: string) => string> = input<
     (memberId: string) => string
   >(() => $localize`:@@common.unknownMember:Unknown member`);
+
+  /**
+   * Property memberAvatarOf
+   * @readonly
+   *
+   * @description
+   * Resolves a member reference to their directory avatar URL, or
+   * `undefined` when none is set. The neutral default keeps this
+   * presentational component renderable with no directory wired.
+   *
+   * @access public
+   * @since 1.3.0
+   * @type {InputSignal<(memberId: string) => string | undefined>}
+   */
+  public readonly memberAvatarOf: InputSignal<(memberId: string) => string | undefined> = input<
+    (memberId: string) => string | undefined
+  >(() => undefined);
 
   /**
    * Property regionalFormatting
@@ -348,6 +381,54 @@ export class ApprovalRequestTable {
    */
   protected columnCount(): number {
     return this.showActions() ? 7 : 6;
+  }
+
+  /**
+   * Method initialsOf
+   * @description The requester's avatar-fallback initials, derived from their resolved display name.
+   * @access protected
+   * @since 1.3.0
+   * @param {string} memberId - The requester's bare member id.
+   * @returns {string} A 1–2 letter uppercase initials string.
+   */
+  protected initialsOf(memberId: string): string {
+    return getOrganizationInitials(this.memberLabelOf()(memberId));
+  }
+
+  /**
+   * Method expiresRelativeOf
+   * @description The localized "in 3 days" / "3 days ago" label for a pending row's expiry, muted beside the absolute date.
+   * @access protected
+   * @since 1.3.0
+   * @param {ApprovalRequestOutput} item - The rendered request.
+   * @returns {string} The relative expiry label.
+   */
+  protected expiresRelativeOf(item: ApprovalRequestOutput): string {
+    return formatRelativeTime(item.expiresAt, this.locale);
+  }
+
+  /**
+   * Method expiresVisible
+   * @description Whether a row's expiry still means anything to show — `pending` or `expired` — as opposed to a decided or withdrawn row, whose expiry no longer applies.
+   * @access protected
+   * @since 1.4.0
+   * @param {ApprovalRequestOutput} item - The rendered request.
+   * @returns {boolean}
+   */
+  protected expiresVisible(item: ApprovalRequestOutput): boolean {
+    return item.status === 'pending' || item.status === 'expired';
+  }
+
+  /**
+   * Method expiresRelativeVisible
+   * @description Whether the muted relative suffix belongs beside the absolute expiry — only while the row is still `pending`.
+   * @access protected
+   * @since 1.4.0
+   * @param {ApprovalRequestOutput} item - The rendered request.
+   * @returns {boolean}
+   */
+  protected expiresRelativeVisible(item: ApprovalRequestOutput): boolean {
+    return item.status === 'pending';
   }
   //#endregion
 }

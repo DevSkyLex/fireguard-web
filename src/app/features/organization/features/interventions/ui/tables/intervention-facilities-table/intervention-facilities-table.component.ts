@@ -38,9 +38,12 @@ import {
 import { CollectionSurface } from '@shared/collection-surface';
 import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolbar';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTableFeedback } from '../../components/intervention-table-feedback';
 import { InterventionTag } from '../../components/intervention-tag';
@@ -106,9 +109,12 @@ const FACILITY_STATUS_OPTIONS: readonly CollectionFilterOption[] = FACILITY_STAT
  * feature's own upcoming pages). A row's name links to the facility's own
  * record, unless it is still an intervention-scoped draft — those do not
  * resolve on the canonical route yet, so they render as plain text with an
- * outline "Draft" badge beside it (icon + label, never colour-only).
+ * outline "Draft" badge beside it (icon + label, never colour-only). The
+ * mobile card shares `hlmItemGroup`'s flat separators with the sibling
+ * linked tables, and the "Show more" row states how many of the total rows
+ * are currently loaded.
  *
- * @version 1.4.0
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -121,10 +127,13 @@ const FACILITY_STATUS_OPTIONS: readonly CollectionFilterOption[] = FACILITY_STAT
     NgTemplateOutlet,
     CollectionSurface,
     ResourceIllustration,
+    StateIllustration,
     RouterLink,
     HlmBadge,
     HlmButton,
     InterventionTag,
+    ...HlmItemImports,
+    ...HlmSpinnerImports,
     ...HlmTableImports,
     CollectionFilterBar,
     CollectionFilterSelect,

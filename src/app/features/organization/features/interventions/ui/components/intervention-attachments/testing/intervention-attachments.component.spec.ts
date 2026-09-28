@@ -1,11 +1,21 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   InterventionAttachmentOutput,
   InterventionQueuedAttachment,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
 import { InterventionAttachments } from '../intervention-attachments.component';
+
+const themeProvider = {
+  provide: THEME_PORT,
+  useValue: {
+    theme: signal('light'),
+    resolvedTheme: signal('light'),
+    setTheme: vi.fn(),
+  } satisfies ThemePort,
+};
 
 const MAX_ATTACHMENTS = 25;
 
@@ -67,7 +77,9 @@ describe('InterventionAttachments', () => {
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   const create = async (count: number, canManage = true): Promise<void> => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), themeProvider],
+    });
     fixture = TestBed.createComponent(InterventionAttachments);
     fixture.componentRef.setInput('attachments', attachments(count));
     fixture.componentRef.setInput('canManage', canManage);
@@ -409,9 +421,7 @@ describe('InterventionAttachments', () => {
       '[data-testid="intervention-attachments-empty"]',
     );
 
-    expect(empty?.classList.contains('border-dashed')).toBe(true);
-    expect(empty?.classList.contains('border-border')).toBe(true);
-    expect(empty?.querySelector('ng-icon[name="lucidePaperclip"]')).not.toBeNull();
+    expect(empty?.querySelector('app-resource-illustration')).not.toBeNull();
     expect(empty?.textContent).toContain('Add photos or documents to keep with this intervention.');
   });
 
@@ -494,7 +504,9 @@ describe('InterventionAttachments', () => {
   });
 
   it('should name the work item a scoped attachment documents', async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), themeProvider],
+    });
     fixture = TestBed.createComponent(InterventionAttachments);
     fixture.componentRef.setInput('attachments', [attachment(0, { workItemId: 'wi-1' })]);
     fixture.componentRef.setInput('workItems', [
@@ -511,7 +523,9 @@ describe('InterventionAttachments', () => {
   });
 
   it('should show no chip when the attachment’s work item id no longer resolves', async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), themeProvider],
+    });
     fixture = TestBed.createComponent(InterventionAttachments);
     fixture.componentRef.setInput('attachments', [attachment(0, { workItemId: 'wi-deleted' })]);
     fixture.componentRef.setInput('workItems', []);
@@ -531,7 +545,9 @@ describe('InterventionAttachments', () => {
   });
 
   it('should show a Signature chip on a signature-kind attachment', async () => {
-    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
+    TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection(), themeProvider],
+    });
     fixture = TestBed.createComponent(InterventionAttachments);
     fixture.componentRef.setInput('attachments', [attachment(0, { kind: 'signature' })]);
     await fixture.whenStable();

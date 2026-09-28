@@ -12,6 +12,7 @@ import {
 import {
   collectConsoleErrors,
   expectNoHorizontalOverflow,
+  expectNoInternalOverflow,
   setDarkTheme,
 } from '../support/helpers/appearance';
 import { ApiMock } from '../support/mocks/api-mock';
@@ -84,6 +85,8 @@ for (const [width, dark] of [
       expect(Math.abs(bounds.x + bounds.width / 2 - width / 2)).toBeLessThanOrEqual(2);
       await expect(channels.newNameInput).toBeFocused();
       await expectNoHorizontalOverflow(page);
+      await expectNoInternalOverflow(channels.newDialog);
+      await expectNoInternalOverflow(channels.newDialog.locator('hlm-field-group'));
       await page.screenshot({
         path: 'e2e/artifacts/channel-create-dialog-' + width + '.png',
         animations: 'disabled',

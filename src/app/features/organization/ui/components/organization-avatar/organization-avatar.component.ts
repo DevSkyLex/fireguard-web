@@ -105,7 +105,7 @@ export class OrganizationAvatar {
   /**
    * Property size
    * @readonly
-   * @description Which of the four rungs to render at.
+   * @description Which of the five rungs to render at.
    * @access public
    * @since 1.0.0
    * @type {InputSignal<OrganizationAvatarSize>}

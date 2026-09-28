@@ -1,37 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-empty-empty-collection-dark-title fg-empty-empty-collection-dark-description" class="fg-empty-empty-collection-dark">
-  <title id="fg-empty-empty-collection-dark-title">Empty collection</title>
-  <desc id="fg-empty-empty-collection-dark-description">An open storage box with folded flaps and an empty interior.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320" fill="none" role="img" aria-labelledby="fg-state-empty-collection-dark-title fg-state-empty-collection-dark-description" class="fg-state-empty-collection-dark">
+  <title id="fg-state-empty-collection-dark-title">Empty collection</title>
+  <desc id="fg-state-empty-collection-dark-description">An open lit container, its lid lifted, nothing inside.</desc>
   <defs>
-    <linearGradient id="fg-empty-empty-collection-dark-plane" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#141416"/>
-      <stop offset="1" stop-color="#101012"/>
-    </linearGradient>
+    <linearGradient id="fg-state-empty-collection-dark-cy" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#121215"/><stop offset="1" stop-color="#0f0f12"/></linearGradient>
+    <linearGradient id="fg-state-empty-collection-dark-box-floor" gradientUnits="userSpaceOnUse" x1="180.6" y1="161.3" x2="219.4" y2="296"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.26"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.02"/></linearGradient>
+    <linearGradient id="fg-state-empty-collection-dark-box" gradientUnits="userSpaceOnUse" x1="200" y1="146.3" x2="200" y2="228.6"><stop offset="0" stop-color="#f4f4f5" stop-opacity="0.09"/><stop offset="1" stop-color="#f4f4f5" stop-opacity="0.02"/></linearGradient>
+    
   </defs>
   <style>
-    .fg-empty-empty-collection-dark { stroke-linecap: butt; stroke-linejoin: miter; stroke-width: 2; stroke-opacity: .45; }
-    .fg-empty-empty-collection-dark .edge, .fg-empty-empty-collection-dark .seam { stroke: #a1a1aa; }
-    .fg-empty-empty-collection-dark .seam { stroke: #51515c; }
-    .fg-empty-empty-collection-dark .seam { stroke-width: 1.35; }
-    .fg-empty-empty-collection-dark .shade { fill: #000000; fill-opacity: .28; }
-    .fg-empty-empty-collection-dark .soft { stroke: #46464f; stroke-width: 1.1; }
-    .fg-empty-empty-collection-dark .guide { stroke: #6b6b75; stroke-width: .8; stroke-dasharray: 2 4; opacity: .55; }
-    .fg-empty-empty-collection-dark .accent { stroke: #ff7043; }
-    .fg-empty-empty-collection-dark .accent { stroke-width: 1.1; }
-    .fg-empty-empty-collection-dark .accent-fill { fill: #ff7043; }
-    .fg-empty-empty-collection-dark .tf { fill: url(#fg-empty-empty-collection-dark-plane); }
-    .fg-empty-empty-collection-dark .lf { fill: #141417; }
-    .fg-empty-empty-collection-dark .rf { fill: #0d0d0f; }
-    .fg-empty-empty-collection-dark .accent { stroke-opacity: 1; }
+    .fg-state-empty-collection-dark { stroke-linecap: round; stroke-linejoin: round; }
+    .fg-state-empty-collection-dark path { vector-effect: non-scaling-stroke; }
+    .fg-state-empty-collection-dark .t { fill: #0c0c0f; }
+    .fg-state-empty-collection-dark .l { fill: #121215; }
+    .fg-state-empty-collection-dark .r { fill: #0f0f12; }
+    .fg-state-empty-collection-dark .hole { fill: #060607; }
+    .fg-state-empty-collection-dark .cy { fill: url(#fg-state-empty-collection-dark-cy); }
+    .fg-state-empty-collection-dark .af { fill: #bdbdc5; }
+    .fg-state-empty-collection-dark .kf { fill: #8e8e97; }
+    .fg-state-empty-collection-dark .eo { fill-rule: evenodd; }
+    .fg-state-empty-collection-dark .o { stroke: #a1a1aa; stroke-width: 1.35; }
+    .fg-state-empty-collection-dark .o2 { stroke: #71717a; stroke-width: 1.1; }
+    .fg-state-empty-collection-dark .e { stroke: #3f3f46; stroke-width: 1; }
+    .fg-state-empty-collection-dark .d { stroke: #71717a; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-empty-collection-dark .dh { stroke: #3f3f46; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-empty-collection-dark .g { stroke: #71717a; stroke-width: 1; stroke-dasharray: 3 3; }
+    .fg-state-empty-collection-dark .k { stroke: #8e8e97; stroke-width: 1.2; }
+    .fg-state-empty-collection-dark .ka, .fg-state-empty-collection-dark .oa { stroke: #bdbdc5; stroke-width: 1.35; }
+    .fg-state-empty-collection-dark .da { stroke: #bdbdc5; stroke-width: 1.2; stroke-dasharray: 0 3; }
+    .fg-state-empty-collection-dark .ga { stroke: #bdbdc5; stroke-width: 1; stroke-dasharray: 3 3; }
   </style>
-  <g data-part="illustration"><g data-part="decoration" aria-hidden="true" pointer-events="none" opacity=".8"><path class="soft" d="M67 53L82.6 62L67 71L51.4 62ZM51.4 66L67 75L82.6 66M337.7 92.5L346.3 97.5M337.7 97.5L346.3 92.5M312.5 284a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM319.5 288a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0ZM64 244.5L60 251.5M96 263L92 270"/><path class="guide" d="M51.4 62L51.4 66L67 75M62 248L94 266.5"/><path class="accent" d="M64.6 249.5L71.5 253.5"/><path class="accent-fill" d="M305.4 280a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/></g><g data-part="subject"><g transform="translate(0 24)">
-<polygon class="shade" points="193.9,94.5 327.3,171.5 206.1,241.5 72.7,164.5"/>
-<g data-part="folded-panel"><polygon class="rf" points="315.2,84.5 285.7,116.5 285.7,119.5 315.2,87.5"/><polygon class="rf" points="285.7,116.5 192.2,62.5 192.2,65.5 285.7,119.5"/><polygon class="tf" points="192.2,62.5 221.7,30.5 315.2,84.5 285.7,116.5"/><polyline class="seam" points="315.2,84.5 285.7,116.5"/><polyline class="seam" points="285.7,116.5 192.2,62.5"/><polyline class="seam" points="285.7,116.5 285.7,119.5"/><polygon class="edge" points="192.2,62.5 221.7,30.5 221.7,30.5 315.2,84.5 315.2,87.5 285.7,119.5 285.7,119.5 192.2,65.5"/></g>
-<g data-part="folded-panel"><polygon class="rf" points="192.2,62.5 114.3,107.5 114.3,110.5 192.2,65.5"/><polygon class="rf" points="114.3,107.5 86.6,77.5 86.6,80.5 114.3,110.5"/><polygon class="tf" points="192.2,62.5 114.3,107.5 86.6,77.5 164.5,32.5"/><polyline class="seam" points="192.2,62.5 114.3,107.5"/><polyline class="seam" points="114.3,107.5 86.6,77.5"/><polyline class="seam" points="114.3,107.5 114.3,110.5"/><polygon class="edge" points="192.2,65.5 114.3,110.5 114.3,110.5 86.6,80.5 86.6,77.5 164.5,32.5 164.5,32.5 192.2,62.5"/></g>
-<g data-part="volume"><polygon class="lf" points="192.2,114.5 285.7,168.5 285.7,172.5 207.8,217.5 114.3,163.5 114.3,159.5"/><polygon class="rf" points="285.7,168.5 207.8,213.5 207.8,217.5 285.7,172.5"/><polygon class="tf" points="192.2,114.5 285.7,168.5 207.8,213.5 114.3,159.5"/><path class="seam" d="M207.8 213.5L285.7 168.5M207.8 213.5L114.3 159.5M207.8 213.5L207.8 217.5"/><polygon class="edge" points="192.2,114.5 285.7,168.5 285.7,172.5 207.8,217.5 114.3,163.5 114.3,159.5"/></g>
-<g data-part="volume"><polygon class="rf" points="192.2,66.5 117.7,109.5 117.7,161.5 192.2,118.5"/><path class="seam" d="M192.2 118.5L117.7 161.5"/><polygon class="lf" points="278.8,116.5 192.2,66.5 192.2,118.5 278.8,168.5"/><path class="seam" d="M278.8 168.5L192.2 118.5M278.8 116.5L278.8 168.5M192.2 66.5L192.2 118.5"/><polygon class="lf" points="117.7,109.5 114.3,107.5 114.3,159.5 117.7,161.5"/><path class="seam" d="M117.7 161.5L114.3 159.5M117.7 109.5L117.7 161.5M114.3 107.5L114.3 159.5"/><polygon class="rf" points="285.7,116.5 207.8,161.5 207.8,213.5 285.7,168.5"/><path class="seam" d="M285.7 168.5L207.8 213.5M285.7 116.5L285.7 168.5"/><polygon class="lf" points="207.8,161.5 204.3,159.5 204.3,211.5 207.8,213.5"/><path class="seam" d="M207.8 213.5L204.3 211.5M207.8 161.5L207.8 213.5M204.3 159.5L204.3 211.5"/><polygon class="tf" points="192.2,62.5 285.7,116.5 207.8,161.5 204.3,159.5 278.8,116.5 192.2,66.5 117.7,109.5 114.3,107.5"/><polyline class="edge" points="192.2,62.5 285.7,116.5"/><polyline class="edge" points="285.7,116.5 207.8,161.5"/><polyline class="edge" points="207.8,161.5 204.3,159.5"/><polyline class="seam" points="204.3,159.5 278.8,116.5"/><polyline class="seam" points="278.8,116.5 192.2,66.5"/><polyline class="seam" points="192.2,66.5 117.7,109.5"/><polyline class="edge" points="117.7,109.5 114.3,107.5"/><polyline class="edge" points="114.3,107.5 192.2,62.5"/></g>
-<g data-part="volume"><polygon class="lf" points="117.7,105.5 211.3,159.5 211.3,211.5 207.8,213.5 114.3,159.5 114.3,107.5"/><polygon class="rf" points="211.3,159.5 207.8,161.5 207.8,213.5 211.3,211.5"/><polygon class="tf" points="117.7,105.5 211.3,159.5 207.8,161.5 114.3,107.5"/><path class="seam" d="M207.8 161.5L211.3 159.5M207.8 161.5L114.3 107.5M207.8 161.5L207.8 213.5"/><polygon class="edge" points="117.7,105.5 211.3,159.5 211.3,211.5 207.8,213.5 114.3,159.5 114.3,107.5"/></g>
-<g data-part="folded-panel"><polygon class="rf" points="315.2,151.5 237.2,196.5 237.2,199.5 315.2,154.5"/><polygon class="rf" points="237.2,196.5 207.8,161.5 207.8,164.5 237.2,199.5"/><polygon class="tf" points="285.7,116.5 315.2,151.5 237.2,196.5 207.8,161.5"/><polyline class="seam" points="315.2,151.5 237.2,196.5"/><polyline class="seam" points="237.2,196.5 207.8,161.5"/><polyline class="seam" points="237.2,196.5 237.2,199.5"/><polygon class="edge" points="285.7,116.5 315.2,151.5 315.2,154.5 237.2,199.5 237.2,199.5 207.8,164.5 207.8,161.5 285.7,116.5"/></g>
-<g data-part="folded-panel"><polygon class="rf" points="207.8,161.5 180.1,195.5 180.1,198.5 207.8,164.5"/><polygon class="rf" points="180.1,195.5 86.6,141.5 86.6,144.5 180.1,198.5"/><polygon class="tf" points="114.3,107.5 207.8,161.5 180.1,195.5 86.6,141.5"/><polyline class="seam" points="207.8,161.5 180.1,195.5"/><polyline class="seam" points="180.1,195.5 86.6,141.5"/><polyline class="seam" points="180.1,195.5 180.1,198.5"/><polygon class="edge" points="114.3,107.5 207.8,161.5 207.8,164.5 180.1,198.5 180.1,198.5 86.6,144.5 86.6,141.5 114.3,107.5"/></g>
-<polygon class="accent" points="135.9,138.8 165.4,155.8 156.7,166.4 127.3,149.4"/>
-  </g></g></g>
+  <path fill="url(#fg-state-empty-collection-dark-box-floor)" d="M219.4 296L83.3 217.4L180.6 161.3L316.7 239.9L219.4 296Z"/>
+  <path fill="url(#fg-state-empty-collection-dark-box)" d="M83.3 135.1L180.6 78.9L316.7 157.5L316.7 239.9L219.4 296L83.3 217.4Z"/>
+  <path class="d" d="M180.6 161.3L83.3 217.4M180.6 161.3L316.7 239.9M180.6 161.3L180.6 78.9M83.3 217.4L83.3 135.1M219.4 296L219.4 213.7M316.7 239.9L316.7 157.5M83.3 217.4L219.4 296L316.7 239.9M219.4 213.7L83.3 135.1L180.6 78.9L316.7 157.5L219.4 213.7ZM78.1 93.2L78.1 135.1M219.4 174.7L219.4 216.7M321.9 115.6L321.9 157.5"/>
+  <path class="r" d="M321.1 105.1C321.1 105.4 320.9 105.7 320.6 105.9L220.7 163.5C220.4 163.7 219.9 163.8 219.4 163.8L219.4 174.3C219.9 174.3 220.4 174.2 220.7 174L320.6 116.4C320.9 116.2 321.1 115.9 321.1 115.6Z"/>
+  <path class="l" d="M219.4 163.8C219 163.8 218.5 163.7 218.1 163.5L79.4 83.4C79.1 83.2 78.9 83 78.9 82.7L78.9 93.2C78.9 93.4 79.1 93.7 79.4 93.9L218.1 174C218.5 174.2 219 174.3 219.4 174.3Z"/>
+  <path class="t" d="M78.9 82.7C78.9 82.4 79.1 82.1 79.4 81.9L179.3 24.3C179.6 24.1 180.1 24 180.6 24C181 24 181.5 24.1 181.9 24.3L320.6 104.4C320.9 104.6 321.1 104.9 321.1 105.1C321.1 105.4 320.9 105.7 320.6 105.9L220.7 163.5C220.4 163.7 219.9 163.8 219.4 163.8C219 163.8 218.5 163.7 218.1 163.5L79.4 83.4C79.1 83.2 78.9 83 78.9 82.7Z"/>
+  <path class="e" d="M321.1 105.1C321.1 105.4 320.9 105.7 320.6 105.9L220.7 163.5C220.4 163.7 219.9 163.8 219.4 163.8C219 163.8 218.5 163.7 218.1 163.5L79.4 83.4C79.1 83.2 78.9 83 78.9 82.7M219.4 163.8L219.4 174.3M78.9 82.7L78.9 93.2"/>
+  <path class="o" d="M78.9 82.7C78.9 82.4 79.1 82.1 79.4 81.9L179.3 24.3C179.6 24.1 180.1 24 180.6 24C181 24 181.5 24.1 181.9 24.3L320.6 104.4C320.9 104.6 321.1 104.9 321.1 105.1L321.1 115.6C321.1 115.9 320.9 116.2 320.6 116.4L220.7 174C220.4 174.2 219.9 174.3 219.4 174.3C219 174.3 218.5 174.2 218.1 174L79.4 93.9C79.1 93.7 78.9 93.4 78.9 93.2Z"/>
 </svg>

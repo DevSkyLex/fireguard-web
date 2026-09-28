@@ -56,6 +56,7 @@ const FACILITY: FacilityOutput = {
   status: 'active',
   address: '1 Main Street',
   metadata: {},
+  equipmentCount: 0,
   latitude: 48.8566,
   longitude: 2.3522,
   path: [],
@@ -140,6 +141,19 @@ describe('FacilityInformationPanel', () => {
   it('should call a root facility out as such rather than linking nowhere', () => {
     expect(byTestId('facility-field-parent')?.querySelector('a')).toBeNull();
     expect(byTestId('facility-field-parent')?.textContent).toContain('Root facility');
+  });
+
+  it('should name the parent record in the link, from the detail read’s own path', async () => {
+    fixture.componentRef.setInput('facility', {
+      ...FACILITY,
+      parentFacilityId: 'parent-1',
+      path: [{ id: 'parent-1', name: 'Ground Floor', type: 'floor' }],
+    });
+    await fixture.whenStable();
+
+    expect(byTestId('facility-field-parent')?.querySelector('a')?.textContent).toContain(
+      'Ground Floor',
+    );
   });
 
   it('should ask the page to open the name editor', () => {

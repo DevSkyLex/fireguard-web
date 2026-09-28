@@ -26,6 +26,7 @@
         class="mobile-ui:min-h-11"
         [disabled]="!canPick()"
         [attr.aria-busy]="uploading() ? 'true' : null"
+        [attr.aria-describedby]="atCapacity() ? 'intervention-attachments-capacity' : null"
         data-testid="intervention-attachments-add"
         (click)="pick(filesInput)"
       >
@@ -56,6 +57,7 @@
         class="mobile-ui:min-h-11"
         [disabled]="!canPick()"
         [attr.aria-busy]="uploading() ? 'true' : null"
+        [attr.aria-describedby]="atCapacity() ? 'intervention-attachments-capacity' : null"
         data-testid="intervention-attachments-photo"
         (click)="pick(photoInput)"
       >
@@ -83,21 +85,41 @@
 
   <div class="flex flex-col gap-3">
     @if (loading()) {
-      <p
-        role="status"
-        class="text-sm text-muted-foreground"
-        i18n="@@intervention.attachments.loading"
-      >
+      <span class="sr-only" role="status" i18n="@@intervention.attachments.loading">
         Loading intervention files…
-      </p>
+      </span>
+      <ul
+        class="flex min-w-0 flex-col gap-2"
+        aria-hidden="true"
+        data-testid="intervention-attachments-skeleton"
+      >
+        @for (row of [1, 2, 3]; track row) {
+          <li hlmAttachment class="w-full flex-nowrap">
+            <div hlmAttachmentMedia>
+              <hlm-skeleton class="size-8 rounded-md" />
+            </div>
+            <div hlmAttachmentContent class="gap-1">
+              <hlm-skeleton class="h-4 w-48" />
+              <hlm-skeleton class="h-3 w-24" />
+            </div>
+          </li>
+        }
+      </ul>
     }
     @if (loadError(); as message) {
-      <div role="alert">
-        <p class="text-sm text-destructive">{{ message }}</p>
+      <div hlmAlert variant="destructive" role="alert">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@intervention.attachments.loadFailedTitle">
+          Attachments could not be loaded
+        </p>
+        <p hlmAlertDescription>{{ message }}</p>
         <button
+          hlmAlertAction
           hlmBtn
+          type="button"
           variant="outline"
           size="sm"
+          class="mobile-ui:min-h-11"
           (click)="reloadRequested.emit()"
           i18n="@@common.retry"
         >
@@ -106,24 +128,30 @@
       </div>
     }
     @if (!online()) {
-      <p
+      <div
         id="intervention-attachments-offline-reason"
-        class="text-xs text-muted-foreground"
+        hlmAlert
+        role="status"
         data-testid="intervention-attachments-offline-reason"
-        i18n="@@intervention.attachments.actionOfflineReason"
       >
-        Downloading and deleting files are unavailable until you reconnect.
-      </p>
-    }
-
-    @if (!online() && canManage()) {
-      <p class="text-xs text-muted-foreground" i18n="@@intervention.attachments.offlineQueueHint">
-        Files you add stay on this device and upload once the connection returns.
-      </p>
+        <ng-icon name="lucideCloudOff" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@intervention.attachments.offlineTitle">You're offline</p>
+        <p hlmAlertDescription>
+          <span i18n="@@intervention.attachments.actionOfflineReason">
+            Downloading and deleting files are unavailable until you reconnect.
+          </span>
+          @if (canManage()) {
+            <span i18n="@@intervention.attachments.offlineQueueHint">
+              Files you add stay on this device and upload once the connection returns.
+            </span>
+          }
+        </p>
+      </div>
     }
 
     @if (atCapacity() && canManage()) {
       <p
+        id="intervention-attachments-capacity"
         class="text-xs text-muted-foreground"
         data-testid="intervention-attachments-capacity"
         i18n="@@intervention.attachments.capacityHint"
@@ -133,9 +161,10 @@
     }
 
     @if (pickError(); as message) {
-      <p class="text-xs text-destructive" role="alert" data-testid="intervention-attachments-error">
-        {{ message }}
-      </p>
+      <div hlmAlert variant="destructive" role="alert" data-testid="intervention-attachments-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertDescription>{{ message }}</p>
+      </div>
     }
 
     @if (
@@ -147,9 +176,7 @@
         data-testid="intervention-attachments-empty"
       >
         <div hlmEmptyHeader>
-          <div hlmEmptyMedia variant="icon">
-            <ng-icon name="lucidePaperclip" aria-hidden="true" />
-          </div>
+          <app-resource-illustration hlmEmptyMedia resource="document" />
           <p hlmEmptyTitle i18n="@@intervention.attachments.emptyTitle">No files attached yet</p>
           <p hlmEmptyDescription>{{ emptyDescription() }}</p>
         </div>
@@ -249,6 +276,16 @@
                     >Signature</span
                   >
                 }
+                ·
+                <time
+                  [attr.datetime]="attachment.uploadedAt"
+                  [hlmTooltip]="
+                    attachment.uploadedAt | appOrgDate: 'datetime' : regionalFormatting()
+                  "
+                  tabindex="0"
+                  class="rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >{{ uploadedRelativeOf(attachment) }}</time
+                >
               </span>
             </div>
             <div hlmAttachmentActions>

@@ -10,7 +10,12 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLock } from '@ng-icons/lucide';
+import {
+  lucideArrowRight,
+  lucideCircleCheck,
+  lucideCircleDot,
+  lucideCrown,
+} from '@ng-icons/lucide';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type { PresenceStatus } from '@features/organization/models';
 import { ORGANIZATION_PERMISSION, type MemberDirectoryEntry } from '@features/organization/models';
@@ -22,8 +27,11 @@ import {
 } from '@features/organization/ports';
 import { registerMemberPresence } from '@features/organization/services/member-presence';
 import { MemberPresenceIndicator } from '@features/organization/ui/components/member-presence-indicator';
+import { getOrganizationInitials } from '@features/organization/utils';
+import { StateIllustration } from '@shared/state-illustration';
 
 import { HlmBadge } from '@shared/ui/badge';
+import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 
@@ -52,7 +60,7 @@ import { HlmItemImports } from '@shared/ui/item';
  * `organization.interventions.read`, points at the interventions list
  * pre-filtered by `?responsible=`, which the list page already parses.
  *
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @example
  * ```typescript
@@ -71,9 +79,18 @@ import { HlmItemImports } from '@shared/ui/item';
     ...HlmEmptyImports,
     RouterLink,
     HlmBadge,
+    HlmButton,
     HlmSkeleton,
+    StateIllustration,
   ],
-  providers: [provideIcons({ lucideLock })],
+  providers: [
+    provideIcons({
+      lucideArrowRight,
+      lucideCircleCheck,
+      lucideCircleDot,
+      lucideCrown,
+    }),
+  ],
   templateUrl: './organization-member-profile-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -220,6 +237,18 @@ export class OrganizationMemberProfilePage implements OnInit {
    */
   protected readonly roles: Signal<readonly string[]> = computed(
     (): readonly string[] => this.member()?.roleNames ?? [],
+  );
+
+  /**
+   * Property initials
+   * @readonly
+   * @description The avatar fallback shown while this member has no picture — the same derivation the member table uses for the same person.
+   * @access protected
+   * @since 1.2.0
+   * @type {Signal<string>}
+   */
+  protected readonly initials: Signal<string> = computed((): string =>
+    getOrganizationInitials(this.member()?.displayName ?? ''),
   );
   //#endregion
 

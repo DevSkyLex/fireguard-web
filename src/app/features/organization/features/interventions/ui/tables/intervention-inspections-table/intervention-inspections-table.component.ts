@@ -23,6 +23,7 @@ import {
   lucideCircleDotDashed,
   lucideClipboardCheck,
   lucideGauge,
+  lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import type {
@@ -51,10 +52,13 @@ import {
   type RegionalFormatSettings,
 } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
+import { StateIllustration } from '@shared/state-illustration';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmItemImports } from '@shared/ui/item';
+import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTableImports } from '@shared/ui/table';
 import { InterventionTableFeedback } from '../../components/intervention-table-feedback';
 import { InterventionTag } from '../../components/intervention-tag';
@@ -111,9 +115,13 @@ const INSPECTION_RESULT_OPTIONS: readonly CollectionFilterOption[] = INSPECTION_
  * still an intervention-scoped draft — those do not resolve on the
  * canonical route yet, so they render as plain text with an outline "Draft"
  * badge beside it (icon + label, never colour-only). The link's accessible
- * name folds in the result label since a bare date repeats across rows.
+ * name folds in the result label since a bare date repeats across rows. Each
+ * row also shows its non-conformity count, the field the linked history
+ * exists to surface. The mobile card shares `hlmItemGroup`'s flat separators
+ * with the sibling linked tables, and the "Show more" row states how many of
+ * the total rows are currently loaded.
  *
- * @version 1.4.0
+ * @version 1.5.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
@@ -126,12 +134,15 @@ const INSPECTION_RESULT_OPTIONS: readonly CollectionFilterOption[] = INSPECTION_
     NgTemplateOutlet,
     CollectionSurface,
     ResourceIllustration,
+    StateIllustration,
     OrgDatePipe,
     RouterLink,
     HlmBadge,
     HlmButton,
     InterventionTag,
     ...HlmAvatarImports,
+    ...HlmItemImports,
+    ...HlmSpinnerImports,
     ...HlmTableImports,
     CollectionFilterBar,
     CollectionFilterSelect,
@@ -146,6 +157,7 @@ const INSPECTION_RESULT_OPTIONS: readonly CollectionFilterOption[] = INSPECTION_
       lucideCircleDotDashed,
       lucideClipboardCheck,
       lucideGauge,
+      lucideTriangleAlert,
     }),
   ],
   templateUrl: './intervention-inspections-table.component.html',
@@ -570,7 +582,13 @@ export class InterventionInspectionsTable {
    * @since 2.0.0
    * @type {readonly string[]}
    */
-  protected readonly skeletonColumnWidths: readonly string[] = ['w-24', 'w-20', 'w-20', 'w-32'];
+  protected readonly skeletonColumnWidths: readonly string[] = [
+    'w-24',
+    'w-20',
+    'w-20',
+    'w-32',
+    'w-32',
+  ];
 
   /**
    * Property locale

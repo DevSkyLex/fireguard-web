@@ -8,6 +8,13 @@ import {
   type OutputEmitterRef,
   type Signal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideCircleAlert,
+  lucideCircleCheck,
+  lucideCircleHelp,
+  lucideTriangleAlert,
+} from '@ng-icons/lucide';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import type { WorstFacility } from '@features/organization/features/facilities/state';
 import { resolveComplianceBucket } from '@features/organization/features/facilities/utils';
@@ -15,6 +22,7 @@ import type { MapMarkerStatusKind } from '@shared/map';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
+import { HlmProgressImports } from '@shared/ui/progress';
 
 /**
  * Constant WORST_SITE_BADGE_VARIANT
@@ -29,6 +37,19 @@ const WORST_SITE_BADGE_VARIANT: Readonly<
   critical: 'destructive',
   muted: 'outline',
   neutral: 'outline',
+};
+
+/**
+ * Constant WORST_SITE_BUCKET_ICON
+ * @description Registered lucide icon per compliance bucket, paired with the badge so severity reads through shape as well as colour.
+ * @since 2.2.0
+ */
+const WORST_SITE_BUCKET_ICON: Readonly<Record<MapMarkerStatusKind, string>> = {
+  positive: 'lucideCircleCheck',
+  warning: 'lucideTriangleAlert',
+  critical: 'lucideCircleAlert',
+  muted: 'lucideCircleHelp',
+  neutral: 'lucideCircleHelp',
 };
 
 /**
@@ -48,7 +69,10 @@ const WORST_SITE_BADGE_VARIANT: Readonly<
  */
 @Component({
   selector: 'app-facility-compliance-worst-sites',
-  imports: [...HlmEmptyImports, HlmBadge, ...HlmItemImports],
+  imports: [...HlmEmptyImports, HlmBadge, ...HlmItemImports, ...HlmProgressImports, NgIcon],
+  providers: [
+    provideIcons({ lucideCircleAlert, lucideCircleCheck, lucideCircleHelp, lucideTriangleAlert }),
+  ],
   templateUrl: './facility-compliance-worst-sites.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -103,14 +127,20 @@ export class FacilityComplianceWorstSites {
     ReadonlyArray<{
       readonly entry: WorstFacility;
       readonly badgeVariant: 'default' | 'destructive' | 'outline' | 'secondary';
+      readonly icon: string;
       readonly ariaLabel: string;
     }>
   > = computed(() =>
-    this.facilities().map((entry) => ({
-      entry,
-      badgeVariant: WORST_SITE_BADGE_VARIANT[resolveComplianceBucket(entry.complianceRate)],
-      ariaLabel: $localize`:@@facility.map.compliance.markerLabel:${entry.facility.name}:facilityName: — ${entry.complianceRate}:rate:% compliant`,
-    })),
+    this.facilities().map((entry) => {
+      const bucket: MapMarkerStatusKind = resolveComplianceBucket(entry.complianceRate);
+
+      return {
+        entry,
+        badgeVariant: WORST_SITE_BADGE_VARIANT[bucket],
+        icon: WORST_SITE_BUCKET_ICON[bucket],
+        ariaLabel: $localize`:@@facility.map.compliance.markerLabel:${entry.facility.name}:facilityName: — ${entry.complianceRate}:rate:% compliant`,
+      };
+    }),
   );
   //#endregion
 

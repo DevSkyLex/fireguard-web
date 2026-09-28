@@ -46,7 +46,7 @@ export const ORGANIZATION_SWITCHER_QUICK_LINKS: ReadonlyArray<OrganizationSwitch
       id: 'webhooks',
       label: $localize`:@@route.webhooks:Webhooks`,
       icon: 'lucideWebhook',
-      shortcutKey: '',
+      shortcutKey: 'I',
       path: 'integrations/webhooks',
       queryParams: null,
       permissions: [ORGANIZATION_PERMISSION.WEBHOOKS_READ],

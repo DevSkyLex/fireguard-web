@@ -1,10 +1,14 @@
+import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideInteractionCapabilities } from '@core/interaction-capabilities';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
   WorkloadDayOutput,
   WorkloadDaySelection,
 } from '@features/organization/features/workload/models';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { WorkloadDaySheet } from '../workload-day-sheet.component';
 
 const sheet = (): HTMLElement => {
@@ -41,7 +45,22 @@ describe('WorkloadDaySheet', () => {
       },
     );
     TestBed.configureTestingModule({
-      providers: [provideInteractionCapabilities(), provideRouter([])],
+      providers: [
+        provideInteractionCapabilities(),
+        provideRouter([]),
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
+        },
+      ],
     });
     const day: WorkloadDayOutput = {
       date: '2026-09-16',
@@ -242,9 +261,9 @@ describe('WorkloadDaySheet', () => {
     });
     expect(rows()).toHaveLength(2);
     expect(rows()[0].querySelector('a')).toBeNull();
-    expect(text(rows()[0])).toContain('task-a');
+    expect(text(rows()[0])).toContain('Untitled task');
     expect(text(rows()[0].querySelector('dl'))).toBe('Time recorded 0 min');
-    expect(text(rows()[1])).toContain('task-b');
+    expect(text(rows()[1])).toContain('Untitled task');
     expect(text(rows()[1].querySelector('dl'))).toBe('Remaining committed work 1 h');
   });
 

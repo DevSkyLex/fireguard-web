@@ -37,6 +37,7 @@ import { SLOT_PRESENTATION } from '@shared/layout-slot';
 import { ThemeSwitcher } from '@shared/theme-switcher';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmSkeleton } from '@shared/ui/skeleton';
+import { HlmLarge } from '@shared/ui/typography';
 
 /**
  * Component OrganizationMorePage
@@ -44,10 +45,11 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  *
  * @description
  * Full routed directory of secondary organization and account destinations, using
- * native Spartan item groups. Existing owner widgets retain switching, logout and
- * appearance behavior. Sections use two columns from 40rem of available content in either
- * interaction mode. The switcher is deferred to browser rendering to keep its
- * secondary organization list out of SSR. The shell supplies the page's sole h1.
+ * native Spartan item groups. Sign out renders as the last row of the account group
+ * instead of its own section. Sections flow through a balanced two-column layout from
+ * 40rem of available content in either interaction mode. The switcher is deferred to
+ * browser rendering to keep its secondary organization list out of SSR. The shell
+ * supplies the page's sole h1.
  *
  * @since 1.0.0
  */
@@ -58,6 +60,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
     NgIcon,
     HlmItemImports,
     HlmSkeleton,
+    HlmLarge,
     OrganizationSwitcher,
     LogoutControl,
     ThemeSwitcher,

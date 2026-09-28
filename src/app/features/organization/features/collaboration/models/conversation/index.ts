@@ -8,3 +8,8 @@ export type { MarkConversationReadInput } from './mark-conversation-read-input.i
 export type { ListConversationsQuery } from './list-conversations-query.interface';
 export type { GetOrCreateDirectConversationInput } from './get-or-create-direct-conversation-input.interface';
 export type { ListDirectConversationsQuery } from './list-direct-conversations-query.interface';
+export type {
+  ConversationReceiptPositionOutput,
+  ConversationReceiptsOutput,
+} from './conversation-receipts-output.interface';
+export type { ConversationSignalOutput } from './conversation-signal-output.interface';

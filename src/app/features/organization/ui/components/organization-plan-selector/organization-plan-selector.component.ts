@@ -17,10 +17,11 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck } from '@ng-icons/lucide';
+import { lucideCheck, lucideCircleAlert, lucideCircleCheck } from '@ng-icons/lucide';
 import type { StoreError } from '@core/request-state';
 import type { BillingInterval, PlanOutput, PlanPricingOutput } from '@features/organization/models';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
@@ -121,7 +122,12 @@ function priceDisplayOf(
  * component host an overlay and talk to a store, and this component is that
  * documented owner of `OrganizationPlanStore`.
  *
- * @version 1.1.0
+ * The card grid queries its own `@container/plans` host rather than the
+ * settings tab panel's `@container/settings` — it sits in the panel's
+ * narrower right column, so reusing the panel's own breakpoints would open
+ * three columns well before this component's actual width allows it.
+ *
+ * @version 1.2.0
  *
  * @example
  * ```html
@@ -138,6 +144,7 @@ function priceDisplayOf(
   selector: 'app-organization-plan-selector',
   imports: [
     NgIcon,
+    ...HlmAlertImports,
     HlmBadge,
     HlmButton,
     HlmSeparator,
@@ -146,9 +153,12 @@ function priceDisplayOf(
     ...HlmCardImports,
     ...HlmToggleGroupImports,
   ],
-  providers: [OrganizationPlanStore, provideIcons({ lucideCheck })],
+  providers: [
+    OrganizationPlanStore,
+    provideIcons({ lucideCheck, lucideCircleAlert, lucideCircleCheck }),
+  ],
   templateUrl: './organization-plan-selector.component.html',
-  host: { class: 'block' },
+  host: { class: 'block @container/plans' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationPlanSelector implements OnInit {

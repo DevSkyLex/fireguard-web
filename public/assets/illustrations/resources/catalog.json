@@ -23,6 +23,27 @@
     "workload",
     "member",
     "team",
-    "document"
+    "document",
+    "approval",
+    "audit",
+    "automation",
+    "channel",
+    "device",
+    "domain",
+    "import",
+    "invitation",
+    "invoice",
+    "label",
+    "map",
+    "pinned",
+    "plan",
+    "request",
+    "role",
+    "saved",
+    "session",
+    "time-entry",
+    "usage",
+    "webhook",
+    "work-item"
   ]
 }

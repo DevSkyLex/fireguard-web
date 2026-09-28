@@ -221,7 +221,7 @@ describe('OrganizationSwitcher', () => {
         'a[hlmDropdownMenuItem][href*="/org-1/"] [data-slot="dropdown-menu-shortcut"]',
       ),
     ).map((element: Element): string => element.textContent?.trim() ?? '');
-    expect(shortcuts).toEqual(['Ctrl+,', 'Ctrl+B', 'Ctrl+M', 'Ctrl+J']);
+    expect(shortcuts).toEqual(['Ctrl+,', 'Ctrl+B', 'Ctrl+M', 'Ctrl+I', 'Ctrl+J']);
     const settingsLink: HTMLAnchorElement | null = document.querySelector('a[hlmDropdownMenuItem]');
     expect(settingsLink?.getAttribute('href')).toBe('/organizations/org-1/settings');
   });

@@ -1047,13 +1047,15 @@ describe('InterventionsPage', () => {
           revision: 4,
         }),
       ]);
+      totalInterventions.set(52);
       fixture = await createPage();
       fixture.componentInstance['onSelectionChanged'](new Set(['i-1']));
       await fixture.whenStable();
 
       expect(
-        fixture.nativeElement.querySelector('[data-testid="interventions-selection-bar"]'),
-      ).not.toBeNull();
+        fixture.nativeElement.querySelector('[data-testid="interventions-selection-bar"]')
+          ?.textContent,
+      ).toContain('1 of 52 selected');
       expect(
         fixture.componentInstance['selectionActions']().some(
           (action) => action.id === 'transitions',
@@ -1771,6 +1773,24 @@ describe('InterventionsPage', () => {
 
       expect(calendarService.listCalendarWindow).toHaveBeenCalledTimes(1);
     });
+
+    it('shows the scope note only when an unhonoured filter or a search narrows the list', async () => {
+      fixture = await createPage({ view: 'calendar' });
+      let root = fixture.nativeElement as HTMLElement;
+      expect(root.textContent).not.toContain('Calendar applies status, type, site');
+
+      fixture = await createPage({ view: 'calendar', status: 'planned' });
+      root = fixture.nativeElement as HTMLElement;
+      expect(root.textContent).not.toContain('Calendar applies status, type, site');
+
+      fixture = await createPage({ view: 'calendar', priority: 'high' });
+      root = fixture.nativeElement as HTMLElement;
+      expect(root.textContent).toContain('Calendar applies status, type, site');
+
+      fixture = await createPage({ view: 'calendar', q: 'north' });
+      root = fixture.nativeElement as HTMLElement;
+      expect(root.textContent).toContain('Calendar applies status, type, site');
+    });
   });
 
   describe('recurrences', () => {
@@ -2454,6 +2474,88 @@ describe('InterventionsPage', () => {
         revision: 7,
       });
       expect(page['assignRequest']()).not.toBeNull();
+    });
+  });
+
+  describe('offline notice', () => {
+    it('renders as an hlmAlert with no mention of key figures', async () => {
+      servedFromLocalCache.set(true);
+      totalInterventions.set(3);
+      fixture = await createPage();
+      const root = fixture.nativeElement as HTMLElement;
+      const notice = root.querySelector('[data-testid="interventions-offline-notice"]');
+
+      expect(notice).not.toBeNull();
+      expect(notice?.getAttribute('role')).toBe('status');
+      expect(notice?.textContent).toContain("You're offline");
+      expect(notice?.textContent).toContain('3');
+      expect(notice?.textContent).not.toContain('key figures');
+    });
+
+    it('renders nothing while served from a live fetch', async () => {
+      fixture = await createPage();
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.querySelector('[data-testid="interventions-offline-notice"]')).toBeNull();
+    });
+  });
+
+  describe('empty states', () => {
+    it('shows the New button and the create-first-intervention copy when the viewer can create', async () => {
+      fixture = await createPage();
+      const root = fixture.nativeElement as HTMLElement;
+      const listPanel = root.querySelector('section[hlmtabscontent="list"]');
+      expect(root.textContent).toContain('No interventions yet');
+      expect(root.textContent).toContain('Create your first intervention');
+      const newButton = [...(listPanel?.querySelectorAll('button') ?? [])].find((button) =>
+        button.textContent?.includes('New'),
+      );
+      expect(newButton).not.toBeUndefined();
+    });
+
+    it('gates the empty-state New button on the create permission and rewords the empty description without it', async () => {
+      TestBed.overrideProvider(OrganizationPermissionService, {
+        useValue: { hasAnyPermission: (): boolean => true, hasPermission: (): boolean => false },
+      });
+      fixture = await createPage();
+      const root = fixture.nativeElement as HTMLElement;
+      const listPanel = root.querySelector('section[hlmtabscontent="list"]');
+
+      expect(root.textContent).not.toContain('Create your first intervention');
+      expect(root.textContent).toContain('Planners create interventions');
+      expect(listPanel?.querySelectorAll('button')).toHaveLength(0);
+    });
+
+    it('offers Clear filters, not Clear search, on a filter-only miss, and Clear search on a search miss', async () => {
+      fixture = await createPage({ status: 'planned' });
+      let root = fixture.nativeElement as HTMLElement;
+      expect(root.textContent).toContain('No intervention matches these filters');
+      expect(root.querySelector('[data-testid="interventions-retry"]')).toBeNull();
+
+      const clearFiltersButton = [...root.querySelectorAll('button')].find(
+        (button) => button.textContent?.trim() === 'Clear filters',
+      );
+      expect(clearFiltersButton).not.toBeUndefined();
+      clearFiltersButton?.click();
+      expect(navigate).toHaveBeenLastCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ status: null, mine: null }),
+        }),
+      );
+
+      fixture = await createPage({ q: 'north' });
+      root = fixture.nativeElement as HTMLElement;
+      expect(root.textContent).toContain('No matching intervention');
+      expect(root.textContent).not.toContain('No intervention matches these filters');
+    });
+
+    it('offers Clear filters on a "My interventions" miss, which is not a named filter key', async () => {
+      fixture = await createPage({ mine: '1' });
+      const root = fixture.nativeElement as HTMLElement;
+
+      expect(root.textContent).toContain('No intervention matches these filters');
+      expect(root.textContent).not.toContain('No interventions yet');
     });
   });
 });

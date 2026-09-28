@@ -1,13 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   input,
+  LOCALE_ID,
   output,
   type InputSignal,
   type OutputEmitterRef,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
+  lucideCircleAlert,
   lucideDownload,
   lucideFileText,
   lucideImage,
@@ -15,11 +18,18 @@ import {
   lucideTrash2,
 } from '@ng-icons/lucide';
 import type { EquipmentAttachmentOutput } from '@features/organization/features/equipments/models';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
+import { ResourceIllustration } from '@shared/resource-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
+import { HlmAttachmentImports } from '@shared/ui/attachment';
 import { HlmBadgeImports } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
-import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
-import { HlmItemImports } from '@shared/ui/item';
+import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinnerImports } from '@shared/ui/spinner';
 
 /**
@@ -37,19 +47,25 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
  * store, this component only ever emits the raw pick. Purely presentational
  * (`ARCHITECTURE.md` §10.3): it owns no store and calls no service.
  *
- * @version 1.0.0
+ * `loading` and `error` let the page distinguish a genuinely empty
+ * collection from one still loading or failed.
+ *
+ * @version 1.1.0
  *
  * @example
  * ```html
  * <app-equipment-attachments
  *   [attachments]="store.attachments()"
  *   [canManage]="canWrite()"
+ *   [loading]="store.isLoadingAttachments()"
+ *   [error]="store.attachmentsListCallState().status === 'error'"
  *   [pendingIds]="pendingAttachmentDeleteIds()"
  *   [downloadingIds]="pendingAttachmentDownloadIds()"
  *   [uploading]="store.isAddingAttachment()"
  *   (filesPicked)="onAttachmentFilesPicked($event)"
  *   (deleteRequested)="onAttachmentDeleteRequested($event)"
  *   (downloadRequested)="onAttachmentDownloadRequested($event)"
+ *   (retried)="onAttachmentsRetried()"
  * />
  * ```
  *
@@ -59,15 +75,25 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
   selector: 'app-equipment-attachments',
   imports: [
     NgIcon,
+    OrgDatePipe,
+    ResourceIllustration,
+    ...HlmAlertImports,
+    ...HlmAttachmentImports,
     ...HlmEmptyImports,
     HlmButton,
     ...HlmBadgeImports,
-    ...HlmCardImports,
-    ...HlmItemImports,
+    HlmSkeleton,
     ...HlmSpinnerImports,
   ],
   providers: [
-    provideIcons({ lucideDownload, lucideFileText, lucideImage, lucidePaperclip, lucideTrash2 }),
+    provideIcons({
+      lucideCircleAlert,
+      lucideDownload,
+      lucideFileText,
+      lucideImage,
+      lucidePaperclip,
+      lucideTrash2,
+    }),
   ],
   templateUrl: './equipment-attachments.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -129,6 +155,37 @@ export class EquipmentAttachments {
    * @type {InputSignal<boolean>}
    */
   public readonly uploading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property loading
+   * @readonly
+   * @description Whether the attachment list is still resolving, so the empty state does not flash before the data.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly loading: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property error
+   * @readonly
+   * @description Whether the last load failed — renders an inline destructive alert with Retry instead of the empty state.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<boolean>}
+   */
+  public readonly error: InputSignal<boolean> = input<boolean>(false);
+
+  /**
+   * Property regionalFormatting
+   * @readonly
+   * @description The organization's date pattern, for each row's upload date.
+   * @access public
+   * @since 1.1.0
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
+    input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
   //#endregion
 
   //#region Outputs
@@ -141,6 +198,16 @@ export class EquipmentAttachments {
    * @type {OutputEmitterRef<readonly File[]>}
    */
   public readonly filesPicked: OutputEmitterRef<readonly File[]> = output<readonly File[]>();
+
+  /**
+   * Property retried
+   * @readonly
+   * @description The load-failed alert's Retry action was activated.
+   * @access public
+   * @since 1.1.0
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly retried: OutputEmitterRef<void> = output<void>();
 
   /**
    * Property deleteRequested
@@ -164,6 +231,9 @@ export class EquipmentAttachments {
   public readonly downloadRequested: OutputEmitterRef<EquipmentAttachmentOutput> =
     output<EquipmentAttachmentOutput>();
   //#endregion
+
+  /** The application's language, for {@link sizeLabelOf}'s unit formatting. */
+  private readonly locale: string = inject<string>(LOCALE_ID);
 
   //#region Methods
   /**
@@ -225,16 +295,45 @@ export class EquipmentAttachments {
 
   /**
    * Method sizeLabelOf
-   * @description The attachment's size as a compact label.
+   *
+   * @description
+   * The attachment's size as a compact, unit-appropriate label — bytes below
+   * 1 KB, kilobytes below 1 MB, megabytes beyond, rather than always
+   * dividing into megabytes (which read a small file as "0.0 MB").
+   *
    * @access protected
-   * @since 1.0.0
+   * @since 1.1.0
+   *
    * @param {EquipmentAttachmentOutput} attachment - The row's attachment.
-   * @returns {string} e.g. "1.2 MB".
+   *
+   * @returns {string} e.g. "512 B", "40 KB", "1.2 MB".
    */
   protected sizeLabelOf(attachment: EquipmentAttachmentOutput): string {
-    const megabytes: number = attachment.size / (1024 * 1024);
+    const bytes: number = attachment.size;
 
-    return `${megabytes >= 10 ? megabytes.toFixed(0) : megabytes.toFixed(1)} MB`;
+    if (bytes < 1024) {
+      return new Intl.NumberFormat(this.locale, {
+        style: 'unit',
+        unit: 'byte',
+        maximumFractionDigits: 0,
+      }).format(bytes);
+    }
+
+    if (bytes < 1024 * 1024) {
+      return new Intl.NumberFormat(this.locale, {
+        style: 'unit',
+        unit: 'kilobyte',
+        maximumFractionDigits: 1,
+      }).format(bytes / 1024);
+    }
+
+    const megabytes: number = bytes / (1024 * 1024);
+
+    return new Intl.NumberFormat(this.locale, {
+      style: 'unit',
+      unit: 'megabyte',
+      maximumFractionDigits: megabytes >= 10 ? 0 : 1,
+    }).format(megabytes);
   }
 
   /**

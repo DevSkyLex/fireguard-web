@@ -633,7 +633,7 @@ Failures use `role="alert"`, a destructive media treatment and an optional retry
 keeping the native anatomy.
 Checkbox collections may render `app-collection-selection-bar` from `@shared/collection-toolbar`.
 The page owns selected IDs, permissions and bulk handlers; the bar only presents supplied commands.
-Its selected-row count is distinct from the filtered result total.
+Its counter compares selected rows with the filtered server result total.
 
 **The five collection components moved to `shared/` on a deliberate uniformity bet, not on
 today's locality.** At the time of the move every consumer still lived under

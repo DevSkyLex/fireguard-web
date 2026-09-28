@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { THEME_PORT, type ThemePort } from '@core/theme';
 import {
   ConversationService,
   MessageService,
@@ -12,6 +13,8 @@ import type {
 } from '@features/organization/features/collaboration/models';
 import { MEMBER_PRESENCE_PORT } from '@features/organization/ports';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
+import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { SavedMessagesPage } from '../saved-messages-page.component';
 
 function saved(overrides: Partial<MessageOutput> = {}): MessageOutput {
@@ -69,6 +72,18 @@ describe('SavedMessagesPage', () => {
             selectedOrganization: signal(null),
             isLoadingOrganization: signal(false),
           },
+        },
+        {
+          provide: REGIONAL_FORMATTING_PORT,
+          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+        },
+        {
+          provide: THEME_PORT,
+          useValue: {
+            theme: signal('light'),
+            resolvedTheme: signal('light'),
+            setTheme: vi.fn(),
+          } satisfies ThemePort,
         },
       ],
     });
@@ -159,6 +174,23 @@ describe('SavedMessagesPage', () => {
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="saved-message-unsave"]'),
     ).toBeNull();
+  });
+
+  it('should show a neutral placeholder avatar when the author cannot be resolved', async () => {
+    service.listSaved.mockReturnValue(
+      of({
+        '@id': '/api/saved-messages',
+        '@type': 'Collection',
+        totalItems: 1,
+        member: [saved({ authorDisplayName: undefined })],
+      }),
+    );
+
+    await createPage();
+
+    const fallback = (fixture.nativeElement as HTMLElement).querySelector('[hlmAvatarFallback]');
+
+    expect(fallback?.textContent?.trim()).toBe('?');
   });
 
   it('should show the empty state when nothing is saved', async () => {

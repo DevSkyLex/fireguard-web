@@ -4942,6 +4942,10 @@
         <source>Responsible</source>
         <target>Responsable</target>
       </trans-unit>
+      <trans-unit id="intervention.list.columnParticipants" datatype="html">
+        <source>Participants</source>
+        <target>Participants</target>
+      </trans-unit>
       <trans-unit id="intervention.list.columnSite" datatype="html">
         <source> Site </source>
         <target>Site</target>
@@ -7959,12 +7963,8 @@
         <target>Fiche de l'installation</target>
       </trans-unit>
       <trans-unit id="shared.collectionSelection.countWithTotal" datatype="html">
-        <source> Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Results: <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </source>
-        <target> Sélectionnées : <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> · Résultats : <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> </target>
-      </trans-unit>
-      <trans-unit id="shared.collectionSelection.count" datatype="html">
-        <source>Selected: <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/></source>
-        <target>Sélectionnées : <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/></target>
+        <source> <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> selected </source>
+        <target> <x id="INTERPOLATION" equiv-text="{{ selectedCount() }}"/> sur <x id="INTERPOLATION_1" equiv-text="{{ totalResults() }}"/> sélectionnés </target>
       </trans-unit>
       <trans-unit id="shared.collectionSelection.actions" datatype="html">
         <source> Actions </source>
@@ -12824,8 +12824,8 @@
         </context-group>
       </trans-unit>
       <trans-unit id="onboarding.workspace.noOrganizationDescription" datatype="html">
-        <source>Ask your administrator for an invitation, or create a workspace for your team. Personal email addresses can join by invitation.</source>
-        <target>Demandez une invitation à votre administrateur ou créez un espace pour votre équipe. Les adresses personnelles peuvent rejoindre sur invitation.</target>
+        <source>Ask for an invitation or create a workspace. Personal emails need an invitation.</source>
+        <target>Demandez une invitation ou créez un espace. Une adresse personnelle nécessite une invitation.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/onboarding/ui/pages/onboarding-workspace-page/onboarding-workspace-page.component.html</context>
           <context context-type="linenumber">87,93</context>
@@ -16941,6 +16941,38 @@
       <trans-unit id="intervention.calendar.selectedDayPanelLabel" datatype="html">
         <source>Selected day interventions</source>
         <target>Interventions du jour sélectionné</target>
+      </trans-unit>
+      <trans-unit id="messages.typing.named" datatype="html">
+        <source><x id="name"/> is typing…</source>
+        <target><x id="name"/> est en train d’écrire…</target>
+      </trans-unit>
+      <trans-unit id="messages.typing.someone" datatype="html">
+        <source>Someone is typing…</source>
+        <target>Quelqu’un est en train d’écrire…</target>
+      </trans-unit>
+      <trans-unit id="messages.typing.multiple" datatype="html">
+        <source><x id="count"/> members are typing…</source>
+        <target><x id="count"/> membres sont en train d’écrire…</target>
+      </trans-unit>
+      <trans-unit id="messages.row.sent" datatype="html">
+        <source>Sent</source>
+        <target>Envoyé</target>
+      </trans-unit>
+      <trans-unit id="messages.row.received" datatype="html">
+        <source>Received</source>
+        <target>Reçu</target>
+      </trans-unit>
+      <trans-unit id="messages.row.seen" datatype="html">
+        <source>Seen</source>
+        <target>Vu</target>
+      </trans-unit>
+      <trans-unit id="messages.row.receivedBy" datatype="html">
+        <source>Received by <x id="INTERPOLATION"/></source>
+        <target>Reçu par <x id="INTERPOLATION"/></target>
+      </trans-unit>
+      <trans-unit id="messages.row.seenBy" datatype="html">
+        <source>Seen by <x id="INTERPOLATION"/></source>
+        <target>Vu par <x id="INTERPOLATION"/></target>
       </trans-unit>
     </body>
   </file>

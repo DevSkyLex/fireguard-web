@@ -278,6 +278,18 @@ describe('OrganizationService', () => {
       expect(req.request.params.get('nonConformitySeverity')).toBe('critical');
       req.flush(mockDashboard);
     });
+
+    it('should keep a false comparison while omitting empty dashboard filters', () => {
+      service.getDashboard('org-uuid-1', { from: '', compare: false, timezone: '' }).subscribe();
+
+      const req = httpMock.expectOne(
+        (request) => request.url === `${baseUrl}/org-uuid-1/dashboard`,
+      );
+      expect(req.request.params.get('compare')).toBe('false');
+      expect(req.request.params.has('from')).toBe(false);
+      expect(req.request.params.has('timezone')).toBe(false);
+      req.flush({});
+    });
   });
 
   // ── getDashboardInspectionsTrend ───────────────────────────────────────────

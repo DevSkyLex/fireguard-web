@@ -141,6 +141,8 @@
               [itemToString]="addressLabelOf"
               [filter]="addressFilter"
               (valueChange)="selectAddress($event)"
+              (stateChanged)="addressPickerStateChanged($event)"
+              (closed)="addressPickerClosed()"
             >
               <hlm-combobox-input
                 inputId="onboarding-facility-address"

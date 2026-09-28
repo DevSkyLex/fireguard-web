@@ -58,8 +58,10 @@ export async function verifyMembershipTransitions(page: Page, info: TestInfo): P
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/organizations\/select$/);
   expect(deletions).toBe(1);
-  await expect(page.getByRole('link', { name: 'Second workspace', exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'E2E Organization', exact: true })).toHaveCount(0);
+  const remainingWorkspace = page.getByRole('link').filter({ hasText: 'Second workspace' });
+  await expect(remainingWorkspace).toBeVisible();
+  await expect(remainingWorkspace).toHaveAttribute('href', `/organizations/${second.id}`);
+  await expect(page.getByRole('link').filter({ hasText: 'E2E Organization' })).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
   await page.screenshot({
     path: `${capture}-selector.png`,

@@ -95,7 +95,7 @@ test.describe('Invitation accept flow', () => {
     await expect(invitationAccept.openOrganizationLink).toHaveCount(0);
   });
 
-  test('shows one error toast while keeping the invitation available for retry', async ({
+  test('shows one error toast and a persistent error while keeping the invitation available for retry', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -116,7 +116,8 @@ test.describe('Invitation accept flow', () => {
     await expect(toast).toContainText(
       'Please try again. If this invitation is no longer valid, ask your administrator for a new one.',
     );
-    await expect(invitationAccept.acceptError).toHaveCount(0);
+    await expect(invitationAccept.acceptError).toBeVisible();
+    await expect(invitationAccept.acceptError).toContainText("We couldn't accept this invitation");
     await expect(invitationAccept.acceptSubmit).toBeEnabled();
     await expect(invitationAccept.card).toBeVisible();
   });

@@ -116,7 +116,7 @@
         </th>
       }
 
-      <th hlmTableHead scope="col" class="w-[52px]">
+      <th hlmTableHead scope="col" class="sticky end-0 z-10 w-[52px] bg-background">
         <span class="sr-only" i18n="@@intervention.list.columnActions">Actions</span>
       </th>
     </tr>
@@ -140,14 +140,14 @@
 
         <td hlmTableCell class="font-medium tabular-nums">FG-{{ item.intervention.number }}</td>
 
-        <td hlmTableCell>
+        <td hlmTableCell class="whitespace-normal">
           <a
-            class="inline-flex max-w-64 min-w-0 items-center gap-1 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="inline-flex w-48 max-w-64 min-w-0 items-center gap-1 rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             [title]="item.intervention.name"
             queryParamsHandling="preserve"
             [routerLink]="[...detailRouteBase(), item.intervention.id]"
           >
-            <span class="truncate">{{ item.intervention.name }}</span>
+            <span class="wrap-anywhere whitespace-normal">{{ item.intervention.name }}</span>
             @if (item.intervention.blockersCount > 0) {
               <ng-icon
                 name="lucideCircleAlert"
@@ -252,7 +252,7 @@
           </td>
         }
 
-        <td hlmTableCell class="text-right">
+        <td hlmTableCell class="sticky end-0 z-10 bg-background text-right">
           <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ item }" />
         </td>
       </tr>

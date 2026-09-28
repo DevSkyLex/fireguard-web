@@ -3,8 +3,13 @@ import {
   expectNoHorizontalOverflow,
   expectNoInternalOverflow,
 } from '../support/helpers/appearance';
+import { emulateMobilePlatform } from '../support/helpers/interaction-mode';
 import { ApiMock } from '../support/mocks/api-mock';
 import { AuthPages } from '../support/pages/auth.page';
+
+test.beforeEach(async ({ context, browserName }) => {
+  await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
+});
 
 test('supports touch entry, password reveal and navigation on a phone', async ({
   page,
@@ -12,6 +17,7 @@ test('supports touch entry, password reveal and navigation on a phone', async ({
   await new ApiMock(page).mockUnauthenticatedSession();
   const auth = new AuthPages(page);
   await auth.gotoLogin();
+  await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
   await expect(page.locator('#split-layout-brand')).toBeVisible();
   await auth.loginPassword.fill('Passw0rd!');
   const reveal = page.getByRole('button', { name: 'Show password' });
@@ -30,8 +36,11 @@ test('supports touch entry, password reveal and navigation on a phone', async ({
   const first = await auth.registerFirstName.boundingBox();
   const last = await auth.registerLastName.boundingBox();
   if (!first || !last) throw new Error('Both name fields must be measurable.');
-  expect(first.y).toBe(last.y);
+  expect(last.y).toBeGreaterThanOrEqual(first.y + first.height);
+  expect(first.x).toBeCloseTo(last.x, 0);
+  expect(first.width).toBeCloseTo(last.width, 0);
   expect(first.height).toBeGreaterThanOrEqual(44);
+  expect(last.height).toBeGreaterThanOrEqual(44);
   await auth.registerSubmit.scrollIntoViewIfNeeded();
   await expect(auth.registerSubmit).toBeInViewport();
   await expectNoHorizontalOverflow(page);

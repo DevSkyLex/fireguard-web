@@ -7,6 +7,11 @@ import {
   setDarkTheme,
 } from '../support/helpers/appearance';
 import { mockMessagesWorkspace } from '../support/helpers/direct-messages';
+import { emulateMobilePlatform } from '../support/helpers/interaction-mode';
+
+test.beforeEach(async ({ context, browserName }) => {
+  await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
+});
 
 for (const width of [390, 320]) {
   test(`mobile messages at ${width}px keeps list, thread and saved routes reachable`, async ({
@@ -19,6 +24,7 @@ for (const width of [390, 320]) {
     if (width === 320) await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
     await mockMessagesWorkspace(page, 8);
     await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/messages`);
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
     const extension = page.locator('#dashboard-sidebar-extension');
     await expect(page.getByTestId('direct-messages-panel-row')).toHaveCount(8);
     await expect(extension).toBeVisible();
@@ -33,10 +39,13 @@ for (const width of [390, 320]) {
       animations: 'disabled',
     });
     await page.getByTestId('direct-messages-panel-row').first().click();
-    await expect(page.getByTestId('direct-conversation-name')).toHaveText('Ines Pector');
+    await expect(
+      page.getByRole('banner').getByRole('heading', { name: 'Ines Pector', exact: true }),
+    ).toBeVisible();
     await expect(extension).toBeHidden();
-    const back = page.getByTestId('direct-conversation-back');
+    const back = page.getByTestId('dashboard-back');
     await expect(back).toBeVisible();
+    await expect(back).toHaveAttribute('href', `/organizations/${E2E_ORGANIZATION_ID}/messages`);
     expect((await back.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     await expectNoHorizontalOverflow(page);
     await expectNoInternalOverflow(page.locator('#dashboard-main'));
@@ -47,12 +56,18 @@ for (const width of [390, 320]) {
     await back.click();
     await expect(extension).toBeVisible();
     await page.getByTestId('direct-messages-panel-saved').click();
-    await expect(page.getByTestId('saved-messages-title')).toBeVisible();
+    await expect(
+      page.getByRole('banner').getByRole('heading', { name: 'Saved messages', exact: true }),
+    ).toBeVisible();
     await expect(extension).toBeHidden();
-    await page.getByTestId('saved-messages-back').click();
+    await page.getByTestId('dashboard-back').click();
     await expect(extension).toBeVisible();
-    await extension.getByRole('button', { name: 'Toggle sidebar', exact: true }).click();
-    await expect(page.getByTestId('direct-messages-nav-link')).toBeVisible();
+    await expect(page.getByTestId('direct-messages-panel-row')).toHaveCount(8);
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('link', { name: 'Messages', exact: true }),
+    ).toHaveAttribute('aria-current', 'page');
     expect(errors).toEqual([]);
   });
 }

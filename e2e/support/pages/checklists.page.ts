@@ -19,9 +19,7 @@ export class ChecklistsPage {
   public readonly newButton: Locator = this.page.getByTestId('checklists-new');
   public readonly createRoot: Locator = this.page.getByTestId('checklist-detail-page');
   public readonly createName: Locator = this.page.getByTestId('checklist-edit-name');
-  public readonly createBack: Locator = this.page.getByRole('button', {
-    name: 'Back to checklists',
-  });
+  public readonly createBack: Locator = this.page.getByTestId('checklist-edit-cancel');
 
   /** The "Status" chip's toggle-group, targeted by its accessible group name (`aria-label="Filter by status"`) rather than `data-testid` — see `ApprovalsPage.actionTypeFilter` for why a role locator is the robust choice for an internal value control. */
   public readonly statusFilter: Locator = this.page.getByRole('group', {

@@ -193,8 +193,8 @@ test('keeps every permitted secondary route in More and switches organizations t
     }),
   );
   await expect(
-    shell.more.getByRole('link', { name: 'Notification preferences', exact: true }),
-  ).toHaveAttribute('href', '/account/notifications?tab=preferences');
+    shell.more.getByRole('link', { name: 'Notifications', exact: true }),
+  ).toHaveAttribute('href', '/account/notifications');
   await expect(
     shell.more.getByRole('link', { name: 'Your organizations', exact: true }),
   ).toHaveAttribute('href', '/account/organizations');

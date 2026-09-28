@@ -154,7 +154,7 @@ export async function verifyWebhookManagement(page: Page, info: TestInfo): Promi
   await page.getByTestId('webhook-secret-close').click();
   await expect(page.getByTestId('webhook-secret')).toHaveCount(0);
   await expect(page.getByTestId('webhook-delivery-original')).toContainText('HTTP 503');
-  await page.getByTestId('webhook-deliveries-next').click();
+  await page.getByTestId('webhook-deliveries-page-next').click();
   await expect(page.getByTestId('webhook-delivery-older')).toBeVisible();
   await page.getByTestId('webhook-filter-failed').click();
   await expect
@@ -178,6 +178,7 @@ export async function verifyWebhookManagement(page: Page, info: TestInfo): Promi
   expect(writes.find((request) => request.path.endsWith('/hook'))?.body).toEqual({
     description: 'Updated receiver',
   });
+  await page.getByRole('button', { name: 'More actions', exact: true }).click();
   await page.getByTestId('webhook-rotate').click();
   await expect(page.getByTestId('webhook-confirmation')).toContainText('stop working immediately');
   await page.getByTestId('webhook-confirm').click();
@@ -209,6 +210,7 @@ export async function verifyWebhookManagement(page: Page, info: TestInfo): Promi
   await expect(page.getByTestId('webhook-secret')).toHaveCount(0);
   await api.mockOrganizationAccess(E2E_ORGANIZATION_ID, { permissions: ['organization.*'] });
   await page.reload();
+  await page.getByRole('button', { name: 'More actions', exact: true }).click();
   await page.getByTestId('webhook-delete').click();
   await expect(page.getByTestId('webhook-confirmation')).toContainText('permanently deleted');
   await page.getByTestId('webhook-confirm').click();

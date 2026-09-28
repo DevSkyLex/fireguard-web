@@ -21,7 +21,7 @@ test.describe('Account navigation', () => {
 
     await page.locator('#organization-switcher-trigger').click();
     await expect(page.getByRole('menu').locator('[data-slot="dropdown-menu-shortcut"]')).toHaveText(
-      ['Ctrl+,', 'Ctrl+B', 'Ctrl+M', 'Ctrl+J'],
+      ['Ctrl+,', 'Ctrl+B', 'Ctrl+M', 'Ctrl+I', 'Ctrl+J'],
     );
     await page.keyboard.press('Escape');
 

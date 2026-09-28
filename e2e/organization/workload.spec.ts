@@ -8,6 +8,7 @@ import {
 } from '../support/helpers/appearance';
 import { checkWorkloadMemberSelectors } from '../support/helpers/member-selector';
 import { checkCapacityEditorPresentation } from '../support/helpers/workload-capacity';
+import { workloadDate } from '../support/helpers/workload-date';
 import { ApiMock } from '../support/mocks/api-mock';
 import { WorkloadApiMock } from '../support/mocks/workload-api-mock';
 import { WorkloadPage } from '../support/pages/workload.page';
@@ -75,16 +76,20 @@ for (const dark of [false, true]) {
         }),
       ).toBeVisible();
       await expect(view.matrix.getByRole('columnheader').nth(1)).toHaveText('Mon 14');
-      await expect(view.root.getByText('Sep 14, 2026 – Sep 20, 2026')).toBeVisible();
+      await expect(view.root.getByText('Sep 14 – 20, 2026')).toBeVisible();
       await expect(view.root.getByText('Some work cannot be quantified')).toBeVisible();
-      const partialDay = view.matrix.getByRole('button', { name: /2026-09-15/ });
+      const partialDay = view.matrix.getByRole('button', {
+        name: new RegExp(workloadDate('2026-09-15')),
+      });
       await expect(partialDay.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
       await expect(partialDay.getByTestId('workload-day-ring-value')).toHaveAttribute(
         'stroke-dashoffset',
         '50',
       );
       await expect(partialDay.getByText('3 h 30 min / 7 h', { exact: true })).toBeVisible();
-      const emptyDay = view.matrix.getByRole('button', { name: /2026-09-14/ });
+      const emptyDay = view.matrix.getByRole('button', {
+        name: new RegExp(workloadDate('2026-09-14')),
+      });
       await expect(emptyDay.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
       await expect(emptyDay.getByTestId('workload-day-ring-value')).toHaveCount(0);
       await expect(view.overloadedDay().getByRole('progressbar')).toHaveAttribute(
@@ -107,7 +112,7 @@ for (const dark of [false, true]) {
        * @returns {Promise<void>}
        */
       const checkDayHover = async (date: string): Promise<void> => {
-        const day = view.matrix.getByRole('button', { name: new RegExp(date) });
+        const day = view.matrix.getByRole('button', { name: new RegExp(workloadDate(date)) });
         await day.hover();
         const progress = day.getByRole('progressbar');
         await expect(progress).toBeVisible();
@@ -121,7 +126,7 @@ for (const dark of [false, true]) {
         await expect(day).not.toHaveCSS('background-color', trackStroke);
         await expect(
           view.matrix.getByRole('row').filter({
-            has: page.getByRole('button', { name: new RegExp(date) }),
+            has: page.getByRole('button', { name: new RegExp(workloadDate(date)) }),
           }),
         ).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
         await page.screenshot({
@@ -132,7 +137,7 @@ for (const dark of [false, true]) {
       await checkDayHover('2026-09-15');
       await checkDayHover('2026-09-16');
       const unavailableDay = view.matrix.getByRole('button', {
-        name: /2026-09-19, Unavailable$/,
+        name: new RegExp(`${workloadDate('2026-09-19')}, Unavailable$`),
       });
       await expect(unavailableDay).toHaveAttribute('data-unavailable', 'true');
       const unavailableColumn = view.matrix.locator('col[data-date="2026-09-19"]');

@@ -3,10 +3,7 @@ import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
 import { organizationQuotaOutput } from '../support/fixtures/billing-fixtures';
 import { E2E_MEMBER_IRI, interventionOutput } from '../support/fixtures/intervention-fixtures';
-import {
-  inspectorOrganizationMemberOutput,
-  organizationMemberOutput,
-} from '../support/fixtures/member-fixtures';
+import { organizationMemberOutput } from '../support/fixtures/member-fixtures';
 import { ownerOrganizationRoleOutput } from '../support/fixtures/role-fixtures';
 import { expectNoHorizontalOverflow } from '../support/helpers/appearance';
 import { ApiMock } from '../support/mocks/api-mock';
@@ -67,22 +64,28 @@ test('keeps the members selection bar and final pagination reachable on a narrow
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession();
   await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
-  await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [
-    organizationMemberOutput(),
-    inspectorOrganizationMemberOutput(),
-  ]);
+  await api.mockOrganizationMembers(
+    E2E_ORGANIZATION_ID,
+    Array.from({ length: 31 }, (_, index) =>
+      organizationMemberOutput({
+        id: `selection-member-${index}`,
+        '@id': `/api/organizations/members/selection-member-${index}`,
+      }),
+    ),
+    { paginate: true },
+  );
   await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID, []);
   await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [ownerOrganizationRoleOutput()]);
   await api.mockOrganizationJoinRequests(E2E_ORGANIZATION_ID, []);
 
   const members = new OrganizationMembersPage(page);
   await members.goto(E2E_ORGANIZATION_ID);
-  await expect(members.memberRows).toHaveCount(2);
+  await expect(members.memberRows).toHaveCount(30);
   const bar = page.getByTestId('organization-members-selection-bar');
   await expect(bar).toHaveCount(0);
 
   await members.memberRows.first().getByTestId('organization-member-table-row-select').click();
-  await expect(bar).toContainText('1 of 2 selected');
+  await expect(bar).toContainText('1 of 31 selected');
   await expectNoHorizontalOverflow(page);
 
   await page.getByTestId('organization-members-tab-requests').click();
@@ -93,9 +96,11 @@ test('keeps the members selection bar and final pagination reachable on a narrow
   await page.locator('#dashboard-main').evaluate((main: HTMLElement) => {
     main.scrollTop = main.scrollHeight;
   });
-  await expect(members.pageIndicator).toBeInViewport();
+  const pagination = members.pageIndicator;
+  await pagination.scrollIntoViewIfNeeded();
+  await expect(pagination).toBeInViewport();
   const barBox = await bar.boundingBox();
-  const paginationBox = await members.pageIndicator.boundingBox();
+  const paginationBox = await pagination.boundingBox();
   const sidebarBox = await page.locator('[data-slot="sidebar-container"]').boundingBox();
   if (!barBox || !paginationBox || !sidebarBox)
     throw new Error('Selection bar, pagination or sidebar is missing.');

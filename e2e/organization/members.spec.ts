@@ -46,7 +46,7 @@ test.describe('Organization members', () => {
     await expect(members.inviteButton).toBeVisible();
     await expect(members.memberTable).toBeVisible();
     await expect(members.memberRows).toHaveCount(2);
-    await expect(members.rowCount).toHaveText('2 of 2 row(s) shown');
+    await expect(members.rowCount).toHaveText('2 of 2 rows shown');
     await expect(members.invitationTable).toBeVisible();
     await expect(members.invitationRows).toHaveCount(1);
   });
@@ -95,9 +95,11 @@ test.describe('Organization members', () => {
 
     await members.removeConfirm.click();
 
-    await expect(page.getByTestId('organization-members-remove-error')).toHaveText(
-      'The last owner cannot be removed.',
-    );
+    await expect(
+      page
+        .getByTestId('organization-members-remove-error')
+        .locator('[data-slot="alert-description"]'),
+    ).toHaveText('The last owner cannot be removed.');
     await expect(members.removeDialog).toBeVisible();
     await expect(members.memberRows).toHaveCount(1);
   });
@@ -205,16 +207,22 @@ test.describe('Organization members', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockOrganizationQuota(E2E_ORGANIZATION_ID, organizationQuotaOutput());
-    await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, [
-      organizationMemberOutput(),
-      inspectorOrganizationMemberOutput(),
-    ]);
+    await api.mockOrganizationMembers(
+      E2E_ORGANIZATION_ID,
+      Array.from({ length: 61 }, (_, index) =>
+        organizationMemberOutput({
+          id: `page-size-member-${index}`,
+          '@id': `/api/organizations/members/page-size-member-${index}`,
+        }),
+      ),
+      { paginate: true },
+    );
     await api.mockOrganizationInvitations(E2E_ORGANIZATION_ID, []);
     await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, [ownerOrganizationRoleOutput()]);
     const members = new OrganizationMembersPage(page);
 
     await members.goto(E2E_ORGANIZATION_ID);
-    await expect(members.memberRows).toHaveCount(2);
+    await expect(members.memberRows).toHaveCount(30);
     await expect(members.pageSizeTrigger).toHaveText('30');
 
     const requestPromise = page.waitForRequest((request) =>
@@ -225,6 +233,7 @@ test.describe('Organization members', () => {
 
     expect(request.url()).toContain('page=1');
     await expect(members.pageSizeTrigger).toHaveText('60');
+    await expect(members.memberRows).toHaveCount(60);
   });
 
   test('renders on desktop in light mode', async ({ page }) => {

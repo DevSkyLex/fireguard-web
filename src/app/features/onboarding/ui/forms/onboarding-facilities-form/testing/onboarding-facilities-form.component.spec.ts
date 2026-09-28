@@ -1,5 +1,8 @@
 import { provideZonelessChangeDetection, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import type { FieldTree } from '@angular/forms/signals';
+import { By } from '@angular/platform-browser';
+import { BrnPopover } from '@spartan-ng/brain/popover';
 import type { SetupCreateFacilityInput } from '@features/organization/setup';
 import type { OnboardingFacilityDraft } from '../models';
 import { OnboardingFacilitiesForm } from '../onboarding-facilities-form.component';
@@ -12,6 +15,16 @@ describe('OnboardingFacilitiesForm', () => {
     element.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }));
     await fixture.whenStable();
   };
+
+  const draftForm = (): FieldTree<OnboardingFacilityDraft> =>
+    (
+      fixture.componentInstance as unknown as {
+        draftForm: FieldTree<OnboardingFacilityDraft>;
+      }
+    ).draftForm;
+
+  const addressPicker = (): BrnPopover =>
+    fixture.debugElement.query(By.css('hlm-combobox')).injector.get(BrnPopover);
 
   const setDraft = async (
     draft: Pick<OnboardingFacilityDraft, 'type' | 'name' | 'address'>,
@@ -197,6 +210,62 @@ describe('OnboardingFacilitiesForm', () => {
     await fixture.whenStable();
 
     expect(element.querySelector('[data-testid="onboarding-facilities-staged"]')).toBeNull();
+  });
+
+  it('clears the previous address picker touch after staging an untouched draft', async () => {
+    await setDraft({ type: 'site', name: 'HQ', address: '' });
+    const picker = addressPicker();
+    picker.stateChanged.emit('open');
+    (element.querySelector('[data-testid="onboarding-facility-add"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    draftForm().address().markAsTouched();
+    picker.closed.emit(undefined);
+    await fixture.whenStable();
+
+    expect(draftForm().address().touched()).toBe(false);
+    expect(draftForm().address().invalid()).toBe(true);
+    expect(
+      element.querySelector('[data-testid="onboarding-facilities-staged"]')?.textContent,
+    ).toContain('HQ');
+  });
+
+  it('preserves draft edits and their validation when the previous address picker closes', async () => {
+    await setDraft({ type: 'site', name: 'HQ', address: '' });
+    const picker = addressPicker();
+    picker.stateChanged.emit('open');
+    (element.querySelector('[data-testid="onboarding-facility-add"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    const model = (
+      fixture.componentInstance as unknown as {
+        model: WritableSignal<OnboardingFacilityDraft>;
+      }
+    ).model;
+    model.update((draft) => ({ ...draft, name: 'New site' }));
+    await fixture.whenStable();
+
+    draftForm().address().markAsTouched();
+    picker.closed.emit(undefined);
+    await fixture.whenStable();
+
+    expect(model().name).toBe('New site');
+    expect(draftForm().address().touched()).toBe(true);
+  });
+
+  it('shows required validation after a new address picker interaction on the cleared draft', async () => {
+    await setDraft({ type: 'site', name: 'HQ', address: '' });
+    const picker = addressPicker();
+    (element.querySelector('[data-testid="onboarding-facility-add"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    picker.stateChanged.emit('open');
+    draftForm().address().markAsTouched();
+    picker.closed.emit(undefined);
+    await fixture.whenStable();
+
+    expect(draftForm().address().touched()).toBe(true);
+    expect(draftForm().address().invalid()).toBe(true);
+    expect(draftForm().address().errors()[0]?.message).toBe('Select a suggested address.');
   });
 
   it('should disable the add control while the draft is invalid', async () => {

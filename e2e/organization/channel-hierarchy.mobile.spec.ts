@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
 import { channelOutput, inspectionsChannelOutput } from '../support/fixtures/channel-fixtures';
+import { emulateMobilePlatform } from '../support/helpers/interaction-mode';
 import { ApiMock } from '../support/mocks/api-mock';
+
+test.beforeEach(async ({ context, browserName }) => {
+  await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
+});
 
 test('moves a channel from the touch menu while keeping the mobile list usable', async ({
   page,
@@ -13,6 +18,7 @@ test('moves a channel from the touch menu while keeping the mobile list usable',
   await api.mockChannelList([general, inspections]);
   await api.mockChannelParent({ ...general, parent: '/api/channels/' + inspections.id });
   await page.goto('/organizations/' + E2E_ORGANIZATION_ID + '/channels');
+  await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
   await page.getByRole('button', { name: 'Move #general', exact: true }).tap();
   await expect(page.getByRole('menuitem', { name: 'inspections', exact: true })).toBeVisible();
   await page.screenshot({

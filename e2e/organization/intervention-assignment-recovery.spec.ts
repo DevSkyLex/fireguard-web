@@ -55,7 +55,7 @@ for (const mode of [
     await collection.goto(E2E_ORGANIZATION_ID);
     await collection.selectRow(first.name);
     await collection.selectRow(second.name);
-    await expect(collection.selectionBar).toContainText('Selected: 2');
+    await expect(collection.selectionBar).toContainText('2 of 2 selected');
     await page.getByTestId('interventions-selection-action-assign').click();
     await page.setViewportSize({ width: mode.width, height: 900 });
     const dialog = page.getByTestId('intervention-assign-dialog');

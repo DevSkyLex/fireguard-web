@@ -203,7 +203,7 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
     path: `${org}/automations`,
     root: '[data-testid="automation-attempt"]',
     endpoint: `${api}/automation/runs`,
-    text: 'NC-NORTH-WING-EVACUATION-ROUTE-2026-001',
+    text: 'This attempt could not complete the action.',
     limit: 'Enabled policy and one failed attempt; retry and policy editing are not exercised.',
   },
   {

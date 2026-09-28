@@ -147,6 +147,15 @@ export class OnboardingFacilitiesForm {
   private readonly draftInput = viewChild<ElementRef<HTMLInputElement>>('draftInput');
   private readonly injector = inject(Injector);
 
+  /**
+   * Property pendingAddressReset
+   * @description Identifies the cleared draft awaiting the previous address picker's final touch event.
+   * @access private
+   * @since 1.0.0
+   * @type {OnboardingFacilityDraft | null}
+   */
+  private pendingAddressReset: OnboardingFacilityDraft | null = null;
+
   /** Wait for the draft to reappear when editing a full batch. */
   private focusDraft(): void {
     afterNextRender(() => this.draftInput()?.nativeElement.focus(), { injector: this.injector });
@@ -227,6 +236,35 @@ export class OnboardingFacilitiesForm {
    * @type {WritableSignal<string>}
    */
   protected readonly addressQuery: WritableSignal<string> = signal('');
+
+  /**
+   * Method addressPickerStateChanged
+   * @method addressPickerStateChanged
+   * @description A newly opened picker starts a fresh interaction and cancels any earlier draft reset.
+   * @access protected
+   * @since 1.0.0
+   * @param {'open' | 'closed'} state - Native picker state before its exit animation finishes.
+   * @returns {void}
+   */
+  protected addressPickerStateChanged(state: 'open' | 'closed'): void {
+    if (state === 'open') this.pendingAddressReset = null;
+  }
+
+  /**
+   * Method addressPickerClosed
+   * @method addressPickerClosed
+   * @description Clears the previous picker's delayed touch only while the staged draft remains untouched.
+   * @access protected
+   * @since 1.0.0
+   * @returns {void}
+   */
+  protected addressPickerClosed(): void {
+    const resetDraft: OnboardingFacilityDraft | null = this.pendingAddressReset;
+    this.pendingAddressReset = null;
+    if (resetDraft && this.model() === resetDraft && this.addressQuery() === '') {
+      this.draftForm.address().reset();
+    }
+  }
 
   /**
    * Method addressInputChanged
@@ -545,7 +583,8 @@ export class OnboardingFacilitiesForm {
    *
    * @description
    * Stages the current row and resets both the draft and its interaction
-   * state, so the next empty facility does not inherit validation errors.
+   * state. A delayed address picker close finishes that reset only for the
+   * same empty draft, preserving any edits made after staging.
    *
    * @access protected
    * @since 1.0.0
@@ -573,6 +612,7 @@ export class OnboardingFacilitiesForm {
         longitude: match.longitude,
       },
     ]);
+    this.pendingAddressReset = EMPTY_VALUES;
     this.model.set(EMPTY_VALUES);
     this.selectedAddress.set(null);
     this.addressQuery.set('');

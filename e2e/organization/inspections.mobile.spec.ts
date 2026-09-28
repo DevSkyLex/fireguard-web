@@ -79,7 +79,8 @@ test('uses mobile quick actions and closes their drawer before opening search', 
   await expect(mobileActions.getByText('Assistant', { exact: true })).toBeVisible();
   await expect(mobileActions.getByText(/^Appearance:/)).toBeVisible();
   await expect(mobileActions.getByRole('button', { name: /^Appearance:/ })).toBeVisible();
-  await expect(actionButtons).toHaveCount(5);
+  await expect(mobileActions.locator('#account-menu-trigger')).toBeVisible();
+  await expect(actionButtons).toHaveCount(6);
   await Promise.all(
     (await actionButtons.all()).map((button) => expectCriticalActionVisible(button)),
   );
@@ -94,6 +95,7 @@ test('uses mobile quick actions and closes their drawer before opening search', 
         testId: button.getAttribute('data-testid'),
         classes: button.className,
         height: box.height,
+        layoutHeight: (button as HTMLElement).offsetHeight,
         width: box.width,
         x: box.x,
         y: box.y,
@@ -104,10 +106,12 @@ test('uses mobile quick actions and closes their drawer before opening search', 
     body: JSON.stringify(actionButtonBoxes, null, 2),
     contentType: 'application/json',
   });
-  expect(actionButtonBoxes).toHaveLength(5);
+  expect(actionButtonBoxes).toHaveLength(6);
   let previousY = Number.NEGATIVE_INFINITY;
   for (const box of actionButtonBoxes) {
-    expect(box.height, `${box.name}: target height`).toBeGreaterThanOrEqual(44);
+    expect(box.layoutHeight, `${box.name}: target height`).toBeGreaterThanOrEqual(44);
+    // Native drawer transforms can leave subpixel noise in rendered bounds.
+    expect(box.height, `${box.name}: rendered target height`).toBeCloseTo(box.layoutHeight, 2);
     expect(box.width, `${box.name}: full row width`).toBeGreaterThan(300);
     expect(box.y, `${box.name}: next row`).toBeGreaterThan(previousY);
     previousY = box.y;

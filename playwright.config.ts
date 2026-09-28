@@ -22,6 +22,8 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   /* Retry on CI only */
   retries: process.env['CI'] ? 2 : 0,
+  /* Keep flaky tests visible as CI failures when a retry passes. */
+  failOnFlakyTests: !!process.env['CI'],
   /*
    * Opt out of parallel tests on CI. Locally, cap workers instead of letting
    * Playwright auto-detect from CPU count: this project's single dev-server

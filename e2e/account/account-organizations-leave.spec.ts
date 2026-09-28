@@ -72,9 +72,9 @@ test.describe('Account organizations — leave organization', () => {
     await accountOrganizations.startLeaving('E2E Organization');
     await accountOrganizations.confirmLeave();
 
-    await expect(accountOrganizations.leaveErrorMessage).toHaveText(
-      'Cannot remove the last administrator of the organization.',
-    );
+    await expect(
+      accountOrganizations.leaveErrorMessage.locator('[data-slot="alert-description"]'),
+    ).toHaveText('Cannot remove the last administrator of the organization.');
     await expect(accountOrganizations.leaveDialog).toBeVisible();
   });
 });

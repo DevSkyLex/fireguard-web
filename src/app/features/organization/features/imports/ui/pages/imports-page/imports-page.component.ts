@@ -61,12 +61,19 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmEmptyImports } from '@shared/ui/empty';
 
-/** The page sizes offered under the table — the server default first. */
+/**
+ * Constant PAGE_SIZES
+ *
+ * @description
+ * The page sizes offered under the table — the server default first.
+ */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 
 /**
  * Constant IMPORT_KIND_WRITE_PERMISSION
- * @description The permission the backend gates `create` on, per submitted kind.
+ *
+ * @description
+ * The permission the backend gates `create` on, per submitted kind.
  */
 const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationPermissionName>> = {
   equipment: ORGANIZATION_PERMISSION.EQUIPMENT_WRITE,
@@ -76,8 +83,12 @@ const IMPORT_KIND_WRITE_PERMISSION: Readonly<Record<ImportJobKind, OrganizationP
 
 /**
  * Constant IMPORT_KIND_READ_PERMISSION
- * @description Permissions governing collection visibility and its kind filter.
+ *
+ * @description
+ * Permissions governing collection visibility and its kind filter.
+ *
  * @since 1.0.0
+ *
  * @type {Readonly<Record<ImportJobKind, OrganizationPermissionName>>}
  */
 const IMPORT_KIND_READ_PERMISSION: Readonly<Record<ImportJobKind, OrganizationPermissionName>> = {
@@ -146,13 +157,29 @@ export class ImportsPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace whose import jobs are listed, bound from the route.
+   *
+   * @description
+   * The workspace whose import jobs are listed, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
-  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+
+  /**
+   * Property listForbidden
+   * @readonly
+   *
+   * @description
+   * Whether the last list read was refused for lack of permission, which a retry cannot fix.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(() =>
     this.store.isListForbidden(),
   );
@@ -160,46 +187,122 @@ export class ImportsPage {
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** The job list and upload dataset, provided by this route. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The job list and upload dataset, provided by this route.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ImportJobsStoreType}
+   */
   protected readonly store: ImportJobsStoreType = inject<ImportJobsStoreType>(ImportJobsStore);
 
-  /** Organization permission checks gating which kinds the upload card offers. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating which kinds the upload card offers.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** The page window, one-based. */
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * The page window, one-based.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly page: WritableSignal<number> = signal<number>(1);
 
-  /** How many rows a page holds. */
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * How many rows a page holds.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
-  /** The job currently opened in the report panel, or `null` when it is closed. */
+  /**
+   * Property selectedJobId
+   * @readonly
+   *
+   * @description
+   * The job currently opened in the report panel, or `null` when it is closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly selectedJobId = linkedSignal<string, string | null>({
     source: () => this.organizationId(),
     computation: () => null,
   });
+
   /**
    * Property selectedJob
    * @readonly
-   * @description Resolves the open report from the live entity cache rather than a stale object copy.
+   *
+   * @description
+   * Resolves the open report from the live entity cache rather than a stale object copy.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ImportJobOutput | null>}
    */
   protected readonly selectedJob = computed(() => {
@@ -210,9 +313,13 @@ export class ImportsPage {
   /**
    * Property kindFilterOptions
    * @readonly
-   * @description Readable kinds in the current organization; write permissions govern upload separately.
+   *
+   * @description
+   * Readable kinds in the current organization; write permissions govern upload separately.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<typeof IMPORT_JOB_KIND_OPTIONS>}
    */
   protected readonly kindFilterOptions: Signal<typeof IMPORT_JOB_KIND_OPTIONS> = computed(() =>
@@ -224,9 +331,13 @@ export class ImportsPage {
   /**
    * Property kindFilter
    * @readonly
-   * @description Resets narrowing when its permission is lost or the organization changes.
+   *
+   * @description
+   * Resets narrowing when its permission is lost or the organization changes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<ImportJobKind | null>}
    */
   protected readonly kindFilter: WritableSignal<ImportJobKind | null> = linkedSignal<
@@ -241,7 +352,18 @@ export class ImportsPage {
         : null,
   });
 
-  /** The filter bar's field catalog — a single "Kind" chip. */
+  /**
+   * Property filterFields
+   * @readonly
+   *
+   * @description
+   * The filter bar's field catalog — a single "Kind" chip.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {readonly CollectionFilterField[]}
+   */
   protected readonly filterFields: readonly CollectionFilterField[] = [
     {
       key: 'kind',
@@ -254,59 +376,124 @@ export class ImportsPage {
   /**
    * Property activeFilterKeys
    * @readonly
-   * @description The `kind` field, when {@link kindFilter} is set — the bar's `activeKeys` input.
+   *
+   * @description
+   * The `kind` field, when {@link kindFilter} is set — the bar's `activeKeys` input.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
     () => (this.kindFilter() !== null ? ['kind'] : []),
   );
 
-  /** Which field the filter bar currently renders mid-pick, before a kind is chosen — `null` when none is. */
+  /**
+   * Property openFilterKey
+   * @readonly
+   *
+   * @description
+   * Which field the filter bar currently renders mid-pick, before a kind is chosen — `null` when
+   * none is.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<'kind' | null>}
+   */
   protected readonly openFilterKey: WritableSignal<'kind' | null> = signal<'kind' | null>(null);
 
   /**
    * Property filtersVisible
    * @readonly
-   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   *
+   * @description
+   * Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only.
+   * Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely
+   * driven by `app-collection-filter-toggle`.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
     computed<boolean>(() => this.activeFilterKeys().length > 0),
   );
 
-  /** The "Kind" chip's `app-collection-filter-select`, projected into the filter bar. */
+  /**
+   * Property kindChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Kind" chip's `app-collection-filter-select`, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly kindChipTemplate = viewChild<TemplateRef<unknown>>('kindChip');
 
   /**
    * Property chipTemplates
    * @readonly
-   * @description The `kind` field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   *
+   * @description
+   * The `kind` field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates`
+   * input.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
    */
   protected readonly chipTemplates: Signal<
     Readonly<Record<string, TemplateRef<unknown> | undefined>>
   > = computed(() => ({ kind: this.kindChipTemplate() }));
 
-  /** Whether the current view is narrowed by kind — decides the empty state's icon and its "Clear filters" action. */
+  /**
+   * Property hasFilters
+   * @readonly
+   *
+   * @description
+   * Whether the current view is narrowed by kind — decides the empty state's icon and its "Clear
+   * filters" action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly hasFilters: Signal<boolean> = computed<boolean>(
     () => this.kindFilter() !== null,
   );
 
-  /** The rows the table currently renders. */
+  /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * The rows the table currently renders.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly ImportJobOutput[]>}
+   */
   protected readonly items: Signal<readonly ImportJobOutput[]> = computed(() => this.store.jobs());
 
   /**
    * Property pageCount
    * @readonly
-   * @description How many pages the current total spans, at least one.
+   *
+   * @description
+   * How many pages the current total spans, at least one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
@@ -334,7 +521,18 @@ export class ImportsPage {
     ),
   );
 
-  /** Whether the active member may upload at least one kind. */
+  /**
+   * Property canUpload
+   * @readonly
+   *
+   * @description
+   * Whether the active member may upload at least one kind.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canUpload: Signal<boolean> = computed<boolean>(
     () => this.availableKindOptions().length > 0,
   );
@@ -342,9 +540,13 @@ export class ImportsPage {
   /**
    * Property detailVisible
    * @readonly
-   * @description Keeps a requested report open while its first read is pending or failed.
+   *
+   * @description
+   * Keeps a requested report open while its first read is pending or failed.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly detailVisible: Signal<boolean> = computed<boolean>(
@@ -356,7 +558,10 @@ export class ImportsPage {
   /**
    * Constructor
    * @constructor
-   * @description Wires the load effect over the active organization, paging and the `kind` narrowing.
+   *
+   * @description
+   * Wires the load effect over the active organization, paging and the `kind` narrowing.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -399,10 +604,16 @@ export class ImportsPage {
   //#region Methods
   /**
    * Method setPageSize
-   * @description Changes the page size and returns to the first page.
+   * @method setPageSize
+   *
+   * @description
+   * Changes the page size and returns to the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} size - The chosen page size.
+   *
    * @returns {void}
    */
   protected setPageSize(size: number): void {
@@ -412,10 +623,16 @@ export class ImportsPage {
 
   /**
    * Method goToPage
-   * @description Moves to a page within bounds.
+   * @method goToPage
+   *
+   * @description
+   * Moves to a page within bounds.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} target - The requested page.
+   *
    * @returns {void}
    */
   protected goToPage(target: number): void {
@@ -424,9 +641,14 @@ export class ImportsPage {
 
   /**
    * Method reload
-   * @description Re-runs the current query, for the error state's retry.
+   * @method reload
+   *
+   * @description
+   * Re-runs the current query, for the error state's retry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected reload(): void {
@@ -441,10 +663,17 @@ export class ImportsPage {
 
   /**
    * Method applyKindFilter
-   * @description Replaces the "Kind" narrowing, which reloads the list from the first page, and closes the field's mid-pick state once a value is chosen.
+   * @method applyKindFilter
+   *
+   * @description
+   * Replaces the "Kind" narrowing, which reloads the list from the first page, and closes the
+   * field's mid-pick state once a value is chosen.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {ImportJobKind | null} kind - The kind to narrow to, or `null` to show every kind.
+   *
    * @returns {void}
    */
   protected applyKindFilter(kind: ImportJobKind | null): void {
@@ -455,10 +684,17 @@ export class ImportsPage {
 
   /**
    * Method onFieldPicked
-   * @description Reacts to the filter bar's `fieldPicked` output by opening the "Kind" chip's `app-collection-filter-select`.
+   * @method onFieldPicked
+   *
+   * @description
+   * Reacts to the filter bar's `fieldPicked` output by opening the "Kind" chip's
+   * `app-collection-filter-select`.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   *
    * @returns {void}
    */
   protected onFieldPicked(key: string): void {
@@ -467,9 +703,14 @@ export class ImportsPage {
 
   /**
    * Method onFieldRemoved
-   * @description Reacts to the filter bar's `fieldRemoved` output by dropping the "Kind" narrowing.
+   * @method onFieldRemoved
+   *
+   * @description
+   * Reacts to the filter bar's `fieldRemoved` output by dropping the "Kind" narrowing.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected onFieldRemoved(): void {
@@ -478,10 +719,17 @@ export class ImportsPage {
 
   /**
    * Method toggleFiltersVisible
-   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @method toggleFiltersVisible
+   *
+   * @description
+   * Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to
+   * the value it reports.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {boolean} visible - The toggle button's intended next state.
+   *
    * @returns {void}
    */
   protected toggleFiltersVisible(visible: boolean): void {
@@ -490,9 +738,14 @@ export class ImportsPage {
 
   /**
    * Method clearFilters
-   * @description Drops the "Kind" narrowing.
+   * @method clearFilters
+   *
+   * @description
+   * Drops the "Kind" narrowing.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected clearFilters(): void {
@@ -501,9 +754,14 @@ export class ImportsPage {
 
   /**
    * Method fieldPopoverState
-   * @description Whether the "Kind" chip's `app-collection-filter-select` should currently render open.
+   * @method fieldPopoverState
+   *
+   * @description
+   * Whether the "Kind" chip's `app-collection-filter-select` should currently render open.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {BrnOverlayState} `'open'` or `'closed'`.
    */
   protected fieldPopoverState(): BrnOverlayState {
@@ -512,10 +770,16 @@ export class ImportsPage {
 
   /**
    * Method onFieldPopoverStateChanged
-   * @description Keeps {@link openFilterKey} in sync with the "Kind" chip's own `app-collection-filter-select`.
+   * @method onFieldPopoverStateChanged
+   *
+   * @description
+   * Keeps {@link openFilterKey} in sync with the "Kind" chip's own `app-collection-filter-select`.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {BrnOverlayState} state - Its next state.
+   *
    * @returns {void}
    */
   protected onFieldPopoverStateChanged(state: BrnOverlayState): void {
@@ -529,10 +793,16 @@ export class ImportsPage {
 
   /**
    * Method upload
-   * @description Submits a validated upload from {@link ImportUploadForm}.
+   * @method upload
+   *
+   * @description
+   * Submits a validated upload from {@link ImportUploadForm}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ImportUploadSubmission} submission - The kind, file and dry-run choice.
+   *
    * @returns {void}
    */
   protected upload(submission: ImportUploadSubmission): void {
@@ -541,10 +811,16 @@ export class ImportsPage {
 
   /**
    * Method openReport
-   * @description Opens the report panel for one row.
+   * @method openReport
+   *
+   * @description
+   * Opens the report panel for one row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ImportJobOutput} job - The row activated.
+   *
    * @returns {void}
    */
   protected openReport(job: ImportJobOutput): void {
@@ -554,10 +830,16 @@ export class ImportsPage {
 
   /**
    * Method openConfirmedReport
-   * @description Opens the persistent real-import link from a previously confirmed simulation.
+   * @method openConfirmedReport
+   *
+   * @description
+   * Opens the persistent real-import link from a previously confirmed simulation.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} jobId - The server-provided import identifier.
+   *
    * @returns {void}
    */
   protected openConfirmedReport(jobId: string): void {
@@ -567,9 +849,14 @@ export class ImportsPage {
 
   /**
    * Method closeReport
-   * @description Closes the report panel.
+   * @method closeReport
+   *
+   * @description
+   * Closes the report panel.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected closeReport(): void {

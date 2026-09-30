@@ -4,7 +4,6 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
 
 /**
  * Constant interventionRecurrenceStoreEvents
- * @const interventionRecurrenceStoreEvents
  *
  * @description
  * Intervention recurrence store events. Every event carries a
@@ -12,24 +11,54 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
  * listener and rendered as a toast.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant interventionRecurrenceStoreEvents
  */
 export const interventionRecurrenceStoreEvents = eventGroup({
   source: 'Intervention Recurrence Store',
   events: {
-    /** Dispatched when fetching the recurrence list fails. */
+    /**
+     * @description
+     * Dispatched when fetching the recurrence list fails.
+     */
     loadFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a recurrence is created. */
+
+    /**
+     * @description
+     * Dispatched when a recurrence is created.
+     */
     createSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when creating a recurrence fails. */
+
+    /**
+     * @description
+     * Dispatched when creating a recurrence fails.
+     */
     createFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a recurrence (including its active toggle) is updated. */
+
+    /**
+     * @description
+     * Dispatched when a recurrence (including its active toggle) is updated.
+     */
     updateSucceeded: type<FeedbackEventPayload & { readonly recurrenceId: string }>(),
-    /** Dispatched when updating a recurrence fails. */
+
+    /**
+     * @description
+     * Dispatched when updating a recurrence fails.
+     */
     updateFailed: type<StoreFailureEventPayload & { readonly recurrenceId: string }>(),
-    /** Dispatched when a recurrence is deleted. */
+
+    /**
+     * @description
+     * Dispatched when a recurrence is deleted.
+     */
     removeSucceeded: type<FeedbackEventPayload & { readonly recurrenceId: string }>(),
-    /** Dispatched when deleting a recurrence fails. */
+
+    /**
+     * @description
+     * Dispatched when deleting a recurrence fails.
+     */
     removeFailed: type<StoreFailureEventPayload & { readonly recurrenceId: string }>(),
   },
 });

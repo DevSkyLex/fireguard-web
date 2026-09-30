@@ -38,21 +38,38 @@ import { HlmSheetFooter } from '@shared/ui/sheet';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { OrganizationRoleCreateFormDraft } from './models';
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_VALUES: OrganizationRoleCreateFormDraft = {
   name: '',
   description: '',
   permissions: [],
 };
 
-/** The exact slug shape the API accepts for a role name (`UpdateOrganizationRoleInput`/`CreateOrganizationRoleInput` on the backend). */
+/**
+ * Constant NAME_PATTERN
+ *
+ * @description
+ * The exact slug shape the API accepts for a role name
+ * (`UpdateOrganizationRoleInput`/`CreateOrganizationRoleInput` on the backend).
+ */
 const NAME_PATTERN: RegExp = /^[a-z0-9_]{3,50}$/;
 
-/** How long a role description may be, mirroring the backend's `Assert\Length` constraint. */
+/**
+ * Constant DESCRIPTION_MAX_LENGTH
+ *
+ * @description
+ * How long a role description may be, mirroring the backend's `Assert\Length` constraint.
+ */
 const DESCRIPTION_MAX_LENGTH: number = 500;
 
 /**
  * Interface PermissionDomainGroup
+ * @interface PermissionDomainGroup
  *
  * @description
  * One section of the permission checklist: every catalog entry that shares
@@ -60,8 +77,46 @@ const DESCRIPTION_MAX_LENGTH: number = 500;
  * localized heading.
  */
 interface PermissionDomainGroup {
+  /**
+   * Property domain
+   * @readonly
+   *
+   * @description
+   * Groups permission entries by their organization permission namespace.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly domain: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Localized heading rendered above the permissions in this group.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Catalog permissions belonging to this domain section.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {readonly OrganizationPermissionOutput[]}
+   */
   readonly permissions: readonly OrganizationPermissionOutput[];
 }
 
@@ -139,7 +194,6 @@ function permissionDomainLabelOf(domain: string): string {
  * (`OrganizationRoleResource` — "At least one permission is required."), so
  * the checklist is validated the same as any other required field rather
  * than presented as optional.
- *
  * Composed from spartan's field primitives like the feature's other create
  * forms; the checklist itself has no bound `[formField]` (Signal Forms has
  * no native array-of-checkboxes control) but is still validated through the
@@ -177,9 +231,13 @@ export class OrganizationRoleCreateForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether a creation request is in flight, which locks the controls.
+   *
+   * @description
+   * Whether a creation request is in flight, which locks the controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -187,9 +245,13 @@ export class OrganizationRoleCreateForm {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the store's create call failed with.
+   *
+   * @description
+   * Whatever the store's create call failed with.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -197,9 +259,13 @@ export class OrganizationRoleCreateForm {
   /**
    * Property catalog
    * @readonly
-   * @description The organization's assignable permissions, offered as the initial checklist.
+   *
+   * @description
+   * The organization's assignable permissions, offered as the initial checklist.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly OrganizationPermissionOutput[]>}
    */
   public readonly catalog: InputSignal<readonly OrganizationPermissionOutput[]> = input<
@@ -211,9 +277,13 @@ export class OrganizationRoleCreateForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the API-shaped payload once the form is valid.
+   *
+   * @description
+   * Emits the API-shaped payload once the form is valid.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CreateOrganizationRoleInput>}
    */
   public readonly submitted: OutputEmitterRef<CreateOrganizationRoleInput> =
@@ -222,9 +292,13 @@ export class OrganizationRoleCreateForm {
   /**
    * Property cancelled
    * @readonly
-   * @description The operator backed out without creating anything.
+   *
+   * @description
+   * The operator backed out without creating anything.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
@@ -232,25 +306,45 @@ export class OrganizationRoleCreateForm {
   /**
    * Property dirtyChanged
    * @readonly
-   * @description Emits whenever the draft's dirtiness changes — a touched field or a checked permission, since the checklist has no bound `[formField]` to mark the tree dirty for it.
+   *
+   * @description
+   * Emits whenever the draft's dirtiness changes — a touched field or a checked permission, since
+   * the checklist has no bound `[formField]` to mark the tree dirty for it.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * The edited draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<OrganizationRoleCreateFormDraft>}
+   */
   protected readonly model: WritableSignal<OrganizationRoleCreateFormDraft> =
     signal<OrganizationRoleCreateFormDraft>(EMPTY_VALUES);
 
   /**
    * Property createForm
    * @readonly
-   * @description The field tree and its rules.
+   *
+   * @description
+   * The field tree and its rules.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<OrganizationRoleCreateFormDraft>}
    */
   protected readonly createForm: FieldTree<OrganizationRoleCreateFormDraft> = form(
@@ -274,9 +368,13 @@ export class OrganizationRoleCreateForm {
   /**
    * Property domainGroups
    * @readonly
-   * @description The catalog, grouped by domain segment for the checklist.
+   *
+   * @description
+   * The catalog, grouped by domain segment for the checklist.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly PermissionDomainGroup[]>}
    */
   protected readonly domainGroups: Signal<readonly PermissionDomainGroup[]> = computed(
@@ -309,6 +407,7 @@ export class OrganizationRoleCreateForm {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
@@ -332,6 +431,7 @@ export class OrganizationRoleCreateForm {
    *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly dirty: Signal<boolean> = computed<boolean>(
@@ -343,7 +443,10 @@ export class OrganizationRoleCreateForm {
   /**
    * Constructor
    * @constructor
-   * @description Relays {@link dirty} through {@link dirtyChanged}.
+   *
+   * @description
+   * Relays {@link dirty} through {@link dirtyChanged}.
+   *
    * @access public
    * @since 1.1.0
    */
@@ -359,10 +462,16 @@ export class OrganizationRoleCreateForm {
   //#region Methods
   /**
    * Method isChecked
-   * @description Whether the given permission is currently in the draft.
+   * @method isChecked
+   *
+   * @description
+   * Whether the given permission is currently in the draft.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} name - The permission's dotted name.
+   *
    * @returns {boolean} `true` when checked.
    */
   protected isChecked(name: string): boolean {
@@ -371,11 +480,17 @@ export class OrganizationRoleCreateForm {
 
   /**
    * Method togglePermission
-   * @description Adds or removes a permission from the draft's checklist.
+   * @method togglePermission
+   *
+   * @description
+   * Adds or removes a permission from the draft's checklist.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} name - The permission's dotted name.
    * @param {boolean} checked - The checkbox's new state.
+   *
    * @returns {void}
    */
   protected togglePermission(name: string, checked: boolean): void {
@@ -389,6 +504,7 @@ export class OrganizationRoleCreateForm {
 
   /**
    * Method submit
+   * @method submit
    *
    * @description
    * Marks the tree touched so every unmet rule shows at once — including the

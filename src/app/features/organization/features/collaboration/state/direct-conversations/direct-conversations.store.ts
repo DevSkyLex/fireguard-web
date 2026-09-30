@@ -39,6 +39,16 @@ import { messageThreadStoreEvents } from '../message-thread/events';
 import { directConversationsStoreEvents } from './events';
 import type { DirectConversationsState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {DirectConversationsState}
+ */
 const INITIAL_STATE: DirectConversationsState = {
   organizationId: null,
   total: 0,
@@ -48,23 +58,22 @@ const INITIAL_STATE: DirectConversationsState = {
 
 /**
  * Constant DirectConversationsStore
- * @const DirectConversationsStore
  *
  * @description
  * The acting member's 1-to-1 conversations for one organization.
- *
  * Root-provided, unlike {@link ChannelsStore}: a channel resolves its name from
  * its own single read, but a direct conversation's counterpart is reported
  * *only* by the list (`counterpartMember`), never by `GET /conversations/{id}`.
  * The sidebar and the conversation page must therefore read the same loaded
  * list, so a single shared instance loads it once.
- *
  * Rows are keyed off the scalar `id` because `@id` is a Skolem genid
  * regenerated on every response.
  *
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant DirectConversationsStore
  */
 export const DirectConversationsStore = signalStore(
   { providedIn: 'root' },
@@ -76,7 +85,10 @@ export const DirectConversationsStore = signalStore(
     isOpening: computed((): boolean => isCallPending(store.openCallState())),
     loadError: computed(() => store.listCallState().error),
 
-    /** Conversations, most recently active first — the sidebar's order. */
+    /**
+     * @description
+     * Conversations, most recently active first — the sidebar's order.
+     */
     rows: computed((): readonly ConversationOutput[] =>
       store
         .directConversationEntities()
@@ -85,7 +97,10 @@ export const DirectConversationsStore = signalStore(
         ),
     ),
 
-    /** Unread total across direct conversations, for the section badge. */
+    /**
+     * @description
+     * Unread total across direct conversations, for the section badge.
+     */
     unreadTotal: computed((): number =>
       store
         .directConversationEntities()
@@ -95,8 +110,8 @@ export const DirectConversationsStore = signalStore(
 
   withMethods((store, service = inject(ConversationService), dispatcher = inject(Dispatcher)) => ({
     /**
+     * @description
      * Loads the member's direct conversations for an organization.
-     *
      * A load for a *different* organization empties the collection first. The
      * store is root-provided and the rows only land in the response handler, so
      * without that the switcher would leave the previous organization's
@@ -143,8 +158,8 @@ export const DirectConversationsStore = signalStore(
     ),
 
     /**
+     * @description
      * Opens the 1-to-1 conversation with a member, creating it on first use.
-     *
      * The `200` response carries no `counterpartMember`, so the row is not
      * inserted from it; instead the list is reloaded so the sidebar and page
      * see a labelled row. The `opened` event lets the caller navigate.
@@ -199,6 +214,9 @@ export const DirectConversationsStore = signalStore(
     ),
 
     /**
+     * Method counterpartFor
+     *
+     * @description
      * The counterpart member IRI for one conversation, or `undefined` when the
      * row is not loaded. Only the list carries it.
      */
@@ -209,9 +227,11 @@ export const DirectConversationsStore = signalStore(
 
   withMethods((store) => ({
     /**
+     * Method ensureLoaded
+     *
+     * @description
      * Loads the list once per organization, so a deep link into a conversation
      * still resolves its counterpart.
-     *
      * The guard reads only `organizationId` (set synchronously by `load`), never
      * the in-flight call state: callers run this inside a reactive effect, and
      * reading the pending state there would make the effect re-fire on every
@@ -254,5 +274,7 @@ export const DirectConversationsStore = signalStore(
  * Injection type of {@link DirectConversationsStore}.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type DirectConversationsStoreType = InstanceType<typeof DirectConversationsStore>;

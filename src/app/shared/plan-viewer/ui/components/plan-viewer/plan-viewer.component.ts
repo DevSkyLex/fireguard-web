@@ -34,44 +34,132 @@ import {
 } from '../../../utils/plan-transform/plan-transform.utils';
 
 /**
+ * Type PlanViewerStatus
+ *
+ * @description
  * Whether the plan image is still loading, ready, or failed to load.
+ *
+ * @type {PlanViewerStatus}
  */
 type PlanViewerStatus = 'loading' | 'loaded' | 'error';
 
 /**
+ * Constant WHEEL_ZOOM_FACTOR
+ *
+ * @description
  * The multiplicative factor a wheel notch applies.
  */
 const WHEEL_ZOOM_FACTOR = 1.1;
 
 /**
+ * Constant BUTTON_ZOOM_FACTOR
+ *
+ * @description
  * The multiplicative factor the zoom in/out buttons and +/- keys apply.
  */
 const BUTTON_ZOOM_FACTOR = 1.25;
 
 /**
+ * Constant KEYBOARD_PAN_STEP_PX
+ *
+ * @description
  * How many pixels an arrow-key press pans by.
  */
 const KEYBOARD_PAN_STEP_PX = 48;
 
 /**
+ * Constant MIN_VISIBLE_PX
+ *
+ * @description
  * The minimum sliver of the plan, in pixels, that panning must always leave visible.
  */
 const MIN_VISIBLE_PX = 48;
 
 /**
+ * Interface PlanPointerOrigin
+ * @interface PlanPointerOrigin
+ *
+ * @description
  * The state shared by pointer-driven interactions in progress.
  */
 interface PlanPointerOrigin {
+  /**
+   * Property pointer
+   * @readonly
+   *
+   * @description
+   * Pointer position at the start of the drag gesture.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {PlanPoint}
+   */
   readonly pointer: PlanPoint;
+
+  /**
+   * Property transform
+   * @readonly
+   *
+   * @description
+   * Plan pan and zoom state captured before the drag begins.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {PlanTransform}
+   */
   readonly transform: PlanTransform;
 }
 
 /**
+ * Interface PlanPinchOrigin
+ * @interface PlanPinchOrigin
+ *
+ * @description
  * The state shared by a two-pointer pinch in progress.
  */
 interface PlanPinchOrigin {
+  /**
+   * Property distance
+   * @readonly
+   *
+   * @description
+   * Initial separation between the two active pointers in viewport pixels.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number}
+   */
   readonly distance: number;
+
+  /**
+   * Property midpoint
+   * @readonly
+   *
+   * @description
+   * Initial center point between the two pointers in viewport coordinates.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {PlanPoint}
+   */
   readonly midpoint: PlanPoint;
+
+  /**
+   * Property transform
+   * @readonly
+   *
+   * @description
+   * Pan and zoom state captured before the pinch gesture begins.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {PlanTransform}
+   */
   readonly transform: PlanTransform;
 }
 
@@ -111,6 +199,8 @@ interface PlanPinchOrigin {
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-plan-viewer
@@ -122,8 +212,6 @@ interface PlanPinchOrigin {
  *   <!-- equipment pins, positioned in image coordinates -->
  * </ng-template>
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-plan-viewer',
@@ -138,9 +226,13 @@ export class PlanViewer {
   /**
    * Property src
    * @readonly
-   * @description The plan image's URL.
+   *
+   * @description
+   * The plan image's URL.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly src: InputSignal<string> = input.required<string>();
@@ -148,9 +240,13 @@ export class PlanViewer {
   /**
    * Property alt
    * @readonly
-   * @description The accessible description of what the plan shows; also the stage's `aria-label`.
+   *
+   * @description
+   * The accessible description of what the plan shows; also the stage's `aria-label`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly alt: InputSignal<string> = input.required<string>();
@@ -158,9 +254,13 @@ export class PlanViewer {
   /**
    * Property naturalWidth
    * @readonly
-   * @description The image's pixel width, when the caller already knows it; else read from the loaded image.
+   *
+   * @description
+   * The image's pixel width, when the caller already knows it; else read from the loaded image.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<number | null>}
    */
   public readonly naturalWidth: InputSignal<number | null> = input<number | null>(null);
@@ -168,9 +268,13 @@ export class PlanViewer {
   /**
    * Property naturalHeight
    * @readonly
-   * @description The image's pixel height, when the caller already knows it; else read from the loaded image.
+   *
+   * @description
+   * The image's pixel height, when the caller already knows it; else read from the loaded image.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<number | null>}
    */
   public readonly naturalHeight: InputSignal<number | null> = input<number | null>(null);
@@ -178,9 +282,13 @@ export class PlanViewer {
   /**
    * Property minZoom
    * @readonly
-   * @description The lowest allowed scale.
+   *
+   * @description
+   * The lowest allowed scale.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<number>}
    */
   public readonly minZoom: InputSignal<number> = input<number>(0.5);
@@ -188,9 +296,13 @@ export class PlanViewer {
   /**
    * Property maxZoom
    * @readonly
-   * @description The highest allowed scale.
+   *
+   * @description
+   * The highest allowed scale.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<number>}
    */
   public readonly maxZoom: InputSignal<number> = input<number>(8);
@@ -198,9 +310,13 @@ export class PlanViewer {
   /**
    * Property overlayTemplate
    * @readonly
-   * @description Optional content rendered inside the transformed stage; see the class doc.
+   *
+   * @description
+   * Optional content rendered inside the transformed stage; see the class doc.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<TemplateRef<PlanViewerOverlayContext> | null>}
    */
   public readonly overlayTemplate: InputSignal<TemplateRef<PlanViewerOverlayContext> | null> =
@@ -208,52 +324,166 @@ export class PlanViewer {
   //#endregion
 
   //#region Properties
-  /** The focusable interactive surface pointer, wheel and keyboard events attach to. */
+  /**
+   * Property viewportRef
+   * @readonly
+   *
+   * @description
+   * The focusable interactive surface pointer, wheel and keyboard events attach to.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLDivElement> | undefined>}
+   */
   private readonly viewportRef: Signal<ElementRef<HTMLDivElement> | undefined> =
     viewChild<ElementRef<HTMLDivElement>>('viewport');
 
-  /** The unclipped inner frame all fit, pan and pointer geometry is measured against. */
+  /**
+   * Property frameRef
+   * @readonly
+   *
+   * @description
+   * The unclipped inner frame all fit, pan and pointer geometry is measured against.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLDivElement> | undefined>}
+   */
   private readonly frameRef: Signal<ElementRef<HTMLDivElement> | undefined> =
     viewChild<ElementRef<HTMLDivElement>>('frame');
 
-  /** Pointers currently down on the stage, keyed by `pointerId`. */
+  /**
+   * Property activePointers
+   * @readonly
+   *
+   * @description
+   * Pointers currently down on the stage, keyed by `pointerId`.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Map<number, PlanPoint>}
+   */
   private readonly activePointers = new Map<number, PlanPoint>();
 
-  /** The single-pointer drag in progress, if any. */
+  /**
+   * Property dragOrigin
+   *
+   * @description
+   * The single-pointer drag in progress, if any.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PlanPointerOrigin | null}
+   */
   private dragOrigin: PlanPointerOrigin | null = null;
 
-  /** The two-pointer pinch in progress, if any. */
+  /**
+   * Property pinchOrigin
+   *
+   * @description
+   * The two-pointer pinch in progress, if any.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PlanPinchOrigin | null}
+   */
   private pinchOrigin: PlanPinchOrigin | null = null;
 
-  /** Loading / loaded / error. */
+  /**
+   * Property status
+   * @readonly
+   *
+   * @description
+   * Loading / loaded / error.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<PlanViewerStatus>}
+   */
   protected readonly status: WritableSignal<PlanViewerStatus> = signal<PlanViewerStatus>('loading');
 
-  /** The image's natural pixel size, resolved once loaded. */
+  /**
+   * Property contentSize
+   * @readonly
+   *
+   * @description
+   * The image's natural pixel size, resolved once loaded.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<PlanViewportSize | null>}
+   */
   protected readonly contentSize: WritableSignal<PlanViewportSize | null> =
     signal<PlanViewportSize | null>(null);
 
-  /** The current pan/zoom transform. */
+  /**
+   * Property transform
+   * @readonly
+   *
+   * @description
+   * The current pan/zoom transform.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<PlanTransform>}
+   */
   protected readonly transform: WritableSignal<PlanTransform> = signal<PlanTransform>({
     x: 0,
     y: 0,
     scale: 1,
   });
 
-  /** The scale that fits the whole plan in the viewport, restored by {@link resetView}. */
+  /**
+   * Property fitScale
+   *
+   * @description
+   * The scale that fits the whole plan in the viewport, restored by {@link resetView}.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {number}
+   */
   private fitScale = 1;
 
   /**
-   * Whether the user has panned or zoomed since the last fit.
+   * Property hasUserTransform
    *
+   * @description
+   * Whether the user has panned or zoomed since the last fit.
    * It gates {@link refitToViewport}: a container that changes size re-fits
    * only while the view is still the one the component chose. Re-fitting under
    * someone who had zoomed in on a corner would throw their work away — and
    * the container does change size in ordinary use, when the detail panel
    * beside the plan opens or closes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
    */
   private hasUserTransform = false;
 
-  /** The stage's CSS transform, or `null` before the image has loaded. */
+  /**
+   * Property stageTransform
+   * @readonly
+   *
+   * @description
+   * The stage's CSS transform, or `null` before the image has loaded.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
   protected readonly stageTransform: Signal<string | null> = computed<string | null>(() => {
     if (this.status() !== 'loaded') return null;
     const t: PlanTransform = this.transform();
@@ -261,20 +491,35 @@ export class PlanViewer {
     return `translate(${t.x}px, ${t.y}px) scale(${t.scale})`;
   });
 
-  /** The context handed to the projected overlay template. */
+  /**
+   * Property overlayContext
+   * @readonly
+   *
+   * @description
+   * The context handed to the projected overlay template.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<PlanViewerOverlayContext>}
+   */
   protected readonly overlayContext: Signal<PlanViewerOverlayContext> =
     computed<PlanViewerOverlayContext>(() => ({ scale: this.transform().scale }));
   //#endregion
 
   //#region Constructor
   /**
-   * Watches the inner frame's size and re-fits the plan when it changes.
+   * Constructor
+   * @constructor
    *
+   * @description
+   * Watches the inner frame's size and re-fits the plan when it changes.
    * Browser-only by construction — `afterNextRender` never runs on the server,
    * and `ResizeObserver` does not exist there. Without this the fit computed
    * on image load survives every later layout change, which is how the plan
    * ended up rendered larger than the column holding it.
    *
+   * @access public
    * @since 1.13.0
    */
   public constructor() {
@@ -294,6 +539,7 @@ export class PlanViewer {
   //#region Methods
   /**
    * Method onImageLoad
+   * @method onImageLoad
    *
    * @description
    * Resolves the plan's natural size (input override or the loaded image),
@@ -302,7 +548,9 @@ export class PlanViewer {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @param {Event} event - The `<img>` element's `load` event.
+   *
    * @returns {void}
    */
   protected onImageLoad(event: Event): void {
@@ -321,9 +569,14 @@ export class PlanViewer {
 
   /**
    * Method onImageError
-   * @description Switches the viewer to its error state.
+   * @method onImageError
+   *
+   * @description
+   * Switches the viewer to its error state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onImageError(): void {
@@ -332,6 +585,7 @@ export class PlanViewer {
 
   /**
    * Method onWheel
+   * @method onWheel
    *
    * @description
    * Zooms around the cursor position — but only once the stage holds focus,
@@ -342,7 +596,9 @@ export class PlanViewer {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @param {WheelEvent} event - The wheel event.
+   *
    * @returns {void}
    */
   protected onWheel(event: WheelEvent): void {
@@ -357,10 +613,16 @@ export class PlanViewer {
 
   /**
    * Method onPointerDown
-   * @description Starts a drag pan (one pointer) or a pinch zoom (two pointers).
+   * @method onPointerDown
+   *
+   * @description
+   * Starts a drag pan (one pointer) or a pinch zoom (two pointers).
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {PointerEvent} event - The pointer-down event.
+   *
    * @returns {void}
    */
   protected onPointerDown(event: PointerEvent): void {
@@ -386,10 +648,16 @@ export class PlanViewer {
 
   /**
    * Method onPointerMove
-   * @description Advances the active drag pan or pinch zoom, if any.
+   * @method onPointerMove
+   *
+   * @description
+   * Advances the active drag pan or pinch zoom, if any.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {PointerEvent} event - The pointer-move event.
+   *
    * @returns {void}
    */
   protected onPointerMove(event: PointerEvent): void {
@@ -424,10 +692,16 @@ export class PlanViewer {
 
   /**
    * Method onPointerUp
-   * @description Ends a drag or pinch when a pointer is released, cancelled, or leaves the stage.
+   * @method onPointerUp
+   *
+   * @description
+   * Ends a drag or pinch when a pointer is released, cancelled, or leaves the stage.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {PointerEvent} event - The ending pointer event.
+   *
    * @returns {void}
    */
   protected onPointerUp(event: PointerEvent): void {
@@ -438,6 +712,7 @@ export class PlanViewer {
 
   /**
    * Method onKeydown
+   * @method onKeydown
    *
    * @description
    * The keyboard enhancement over the always-present buttons: `+`/`-` zoom,
@@ -446,7 +721,9 @@ export class PlanViewer {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @param {KeyboardEvent} event - The key event.
+   *
    * @returns {void}
    */
   protected onKeydown(event: KeyboardEvent): void {
@@ -488,9 +765,14 @@ export class PlanViewer {
 
   /**
    * Method zoomIn
-   * @description Zooms in one step, anchored on the viewport's center.
+   * @method zoomIn
+   *
+   * @description
+   * Zooms in one step, anchored on the viewport's center.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected zoomIn(): void {
@@ -499,9 +781,14 @@ export class PlanViewer {
 
   /**
    * Method zoomOut
-   * @description Zooms out one step, anchored on the viewport's center.
+   * @method zoomOut
+   *
+   * @description
+   * Zooms out one step, anchored on the viewport's center.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected zoomOut(): void {
@@ -510,9 +797,14 @@ export class PlanViewer {
 
   /**
    * Method resetView
-   * @description Restores the transform that fits the whole plan in the viewport.
+   * @method resetView
+   *
+   * @description
+   * Restores the transform that fits the whole plan in the viewport.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected resetView(): void {
@@ -522,11 +814,17 @@ export class PlanViewer {
 
   /**
    * Method zoomAround
-   * @description Applies a zoom factor anchored on a viewport point, then re-clamps the pan.
+   * @method zoomAround
+   *
+   * @description
+   * Applies a zoom factor anchored on a viewport point, then re-clamps the pan.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {PlanPoint} pointer - The zoom's anchor, viewport-relative.
    * @param {number} factor - The multiplicative zoom change.
+   *
    * @returns {void}
    */
   private zoomAround(pointer: PlanPoint, factor: number): void {
@@ -544,11 +842,17 @@ export class PlanViewer {
 
   /**
    * Method panBy
-   * @description Translates the transform by a fixed pixel offset, then re-clamps the pan.
+   * @method panBy
+   *
+   * @description
+   * Translates the transform by a fixed pixel offset, then re-clamps the pan.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {number} dx - The horizontal offset in pixels.
    * @param {number} dy - The vertical offset in pixels.
+   *
    * @returns {void}
    */
   private panBy(dx: number, dy: number): void {
@@ -558,10 +862,16 @@ export class PlanViewer {
 
   /**
    * Method applyTransform
-   * @description Confines a candidate transform's pan to the current content and viewport, and writes it.
+   * @method applyTransform
+   *
+   * @description
+   * Confines a candidate transform's pan to the current content and viewport, and writes it.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {PlanTransform} next - The candidate transform.
+   *
    * @returns {void}
    */
   private applyTransform(next: PlanTransform): void {
@@ -574,10 +884,10 @@ export class PlanViewer {
 
   /**
    * Method computeFitScale
+   * @method computeFitScale
    *
    * @description
    * The scale at which the whole plan fits the current viewport.
-   *
    * Capped by {@link maxZoom} but deliberately **not** floored by
    * {@link minZoom}: `minZoom` bounds how far a user may zoom *out*, while the
    * fit is by definition the point where the plan is fully visible. Flooring
@@ -587,7 +897,9 @@ export class PlanViewer {
    *
    * @access private
    * @since 1.13.0
+   *
    * @param {PlanViewportSize} content - The plan's natural pixel size.
+   *
    * @returns {number} The fitting scale, or `1` when either box is empty.
    */
   private computeFitScale(content: PlanViewportSize): number {
@@ -602,9 +914,15 @@ export class PlanViewer {
 
   /**
    * Method effectiveMinZoom
-   * @description The lowest scale a user may zoom out to — never above the fit, so the whole plan stays reachable.
+   * @method effectiveMinZoom
+   *
+   * @description
+   * The lowest scale a user may zoom out to — never above the fit, so the whole plan stays
+   * reachable.
+   *
    * @access private
    * @since 1.13.0
+   *
    * @returns {number} The effective lower zoom bound.
    */
   private effectiveMinZoom(): number {
@@ -613,9 +931,15 @@ export class PlanViewer {
 
   /**
    * Method refitToViewport
-   * @description Recomputes the fit after the container changed size, and re-applies it unless the user has since panned or zoomed.
+   * @method refitToViewport
+   *
+   * @description
+   * Recomputes the fit after the container changed size, and re-applies it unless the user has
+   * since panned or zoomed.
+   *
    * @access private
    * @since 1.13.0
+   *
    * @returns {void}
    */
   private refitToViewport(): void {
@@ -633,10 +957,16 @@ export class PlanViewer {
 
   /**
    * Method pointerFromEvent
-   * @description A pointer or wheel event's position, relative to the inner frame's top-left.
+   * @method pointerFromEvent
+   *
+   * @description
+   * A pointer or wheel event's position, relative to the inner frame's top-left.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {PointerEvent | WheelEvent} event - The source event.
+   *
    * @returns {PlanPoint} The frame-relative position.
    */
   private pointerFromEvent(event: PointerEvent | WheelEvent): PlanPoint {
@@ -647,9 +977,14 @@ export class PlanViewer {
 
   /**
    * Method viewportCenter
-   * @description The viewport's center, in its own relative coordinates.
+   * @method viewportCenter
+   *
+   * @description
+   * The viewport's center, in its own relative coordinates.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {PlanPoint} The center point.
    */
   private viewportCenter(): PlanPoint {
@@ -660,9 +995,14 @@ export class PlanViewer {
 
   /**
    * Method currentViewportSize
-   * @description The inner frame's current size, read live rather than cached.
+   * @method currentViewportSize
+   *
+   * @description
+   * The inner frame's current size, read live rather than cached.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {PlanViewportSize} The frame's size.
    */
   private currentViewportSize(): PlanViewportSize {

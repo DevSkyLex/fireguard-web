@@ -1,8 +1,0 @@
-{
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "useDefineForClassFields": false,
-    "types": ["node"]
-  },
-  "include": ["./**/*.ts", "../playwright.ssr.config.ts", "../playwright.localized.config.ts"]
-}

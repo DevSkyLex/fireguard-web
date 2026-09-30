@@ -3,7 +3,7 @@ description: Author or repair unit/integration specs at the boundary each unit o
 argument-hint: '<area or unit — e.g. "the interventions store" or src/app/features/auth>'
 ---
 
-Delegate to the **fg-web-test-writer** subagent: $ARGUMENTS
+Delegate to the **fg-web-web-test-writer** subagent: $ARGUMENTS
 
 The agent carries the boundary table (what each unit type owns), the standard harnesses, and the `--include` glob trap; do not restate them.
 

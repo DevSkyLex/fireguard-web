@@ -49,21 +49,70 @@ import type { InterventionRecurrenceFormDraft } from './models';
 
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmItemImports } from '@shared/ui/item';
-/** Shortest and longest a recurrence's name may be. */
+
+/**
+ * Constant NAME_MAX_LENGTH
+ *
+ * @description
+ * Shortest and longest a recurrence's name may be.
+ */
 const NAME_MAX_LENGTH: number = 160;
 
-/** Cadence multiplier bounds the backend accepts. */
+/**
+ * Constant INTERVAL_MIN
+ *
+ * @description
+ * Cadence multiplier bounds the backend accepts.
+ */
 const INTERVAL_MIN: number = 1;
+
+/**
+ * Constant INTERVAL_MAX
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {number}
+ */
 const INTERVAL_MAX: number = 12;
 
-/** Lead time bounds, in days, the backend accepts. */
+/**
+ * Constant LEAD_TIME_MIN
+ *
+ * @description
+ * Lead time bounds, in days, the backend accepts.
+ */
 const LEAD_TIME_MIN: number = 0;
+
+/**
+ * Constant LEAD_TIME_MAX
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {number}
+ */
 const LEAD_TIME_MAX: number = 90;
 
-/** The anchor-day-of-month past which the backend's own documented caveat applies: occurrences drift after a short month. */
+/**
+ * Constant ANCHOR_DRIFT_DAY_THRESHOLD
+ *
+ * @description
+ * The anchor-day-of-month past which the backend's own documented caveat applies: occurrences drift
+ * after a short month.
+ */
 const ANCHOR_DRIFT_DAY_THRESHOLD: number = 28;
 
-/** Every cadence unit the frequency select offers. */
+/**
+ * Constant FREQUENCY_VALUES
+ *
+ * @description
+ * Every cadence unit the frequency select offers.
+ */
 const FREQUENCY_VALUES: ReadonlyArray<InterventionRecurrenceFrequency> = [
   'weekly',
   'monthly',
@@ -72,7 +121,12 @@ const FREQUENCY_VALUES: ReadonlyArray<InterventionRecurrenceFrequency> = [
   'annual',
 ];
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_VALUES: InterventionRecurrenceFormDraft = {
   name: '',
   templateId: '',
@@ -87,21 +141,19 @@ const EMPTY_VALUES: InterventionRecurrenceFormDraft = {
 };
 
 /**
- * Component InterventionRecurrenceForm
+ * Class InterventionRecurrenceForm
  * @class InterventionRecurrenceForm
  *
  * @description
  * The create/edit form for a recurring intervention schedule, composed from
  * spartan's field primitives: one `hlm-field-group`, one `hlm-field` per
  * control, `hlm-field-error` for the messages.
- *
  * It owns its model, its rules and its own validity, and emits
  * {@link submitted} with the typed values — the hosting sheet or page calls
  * the store (`ARCHITECTURE.md` §10.4). {@link recurrence} being `null`
  * drives a create draft; a non-`null` value reseeds the model for an edit,
  * splitting the row's template IRI down to the bare id the template select
  * expects.
- *
  * Its own host fills the flex column its hosting sheet establishes: the
  * field group scrolls independently while the `hlm-sheet-footer` action row
  * stays pinned (`FEATURE.md` "sticky-footer contract").
@@ -152,29 +204,43 @@ export class InterventionRecurrenceForm {
   /**
    * Property catalogues
    * @readonly
-   * @description Independent request states and server coverage for preparation sources.
+   *
+   * @description
+   * Independent request states and server coverage for preparation sources.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>>}
    */
   public readonly catalogues = input<
     Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
   >({});
+
   /**
    * Property catalogueRequested
    * @readonly
-   * @description Requests the next page or retry of a selection source.
+   *
+   * @description
+   * Requests the next page or retry of a selection source.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<PlanningCatalogueKind>}
    */
   public readonly catalogueRequested = output<PlanningCatalogueKind>();
+
   /**
    * Property catalogueSearched
    * @readonly
-   * @description Requests server search while preserving the active draft and selected labels.
+   *
+   * @description
+   * Requests server search while preserving the active draft and selected labels.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<PlanningCatalogueRequest>}
    */
   public readonly catalogueSearched = output<PlanningCatalogueRequest>();
@@ -366,7 +432,18 @@ export class InterventionRecurrenceForm {
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * Holds the editable recurrence schedule before it is submitted.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionRecurrenceFormDraft>}
+   */
   protected readonly model: WritableSignal<InterventionRecurrenceFormDraft> =
     signal<InterventionRecurrenceFormDraft>(EMPTY_VALUES);
 
@@ -418,11 +495,17 @@ export class InterventionRecurrenceForm {
     },
   );
 
-  /** Property cadenceSummary
+  /**
+   * Property cadenceSummary
    * @readonly
-   * @description Reformulates the actual frequency multiplier without forecasting a server occurrence date.
+   *
+   * @description
+   * Reformulates the actual frequency multiplier without forecasting a server occurrence date.
+   *
    * @access protected
    * @since 1.0.0
+   *
+   * @type {unknown}
    */
   protected readonly cadenceSummary = computed(() => {
     const { frequency, interval } = this.model();
@@ -432,32 +515,98 @@ export class InterventionRecurrenceForm {
     return $localize`:@@intervention.recurrences.everyMonths:Every ${count}:count: month(s)`;
   });
 
-  /** Every cadence unit offered. */
+  /**
+   * Property frequencyValues
+   * @readonly
+   *
+   * @description
+   * Supplies supported recurrence frequencies to the cadence selector.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<InterventionRecurrenceFrequency>}
+   */
   protected readonly frequencyValues: ReadonlyArray<InterventionRecurrenceFrequency> =
     FREQUENCY_VALUES;
 
-  /** Whether the anchor-day drift hint should render — past the 28th, occurrences drift after a short month. */
+  /**
+   * Property anchorDriftHintVisible
+   * @readonly
+   *
+   * @description
+   * Shows a hint when the selected recurrence anchor differs from the template anchor.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly anchorDriftHintVisible: Signal<boolean> = computed<boolean>(() => {
     const anchor: Date | null = this.model().anchorDate;
 
     return anchor !== null && anchor.getDate() > ANCHOR_DRIFT_DAY_THRESHOLD;
   });
 
-  /** Names a cadence unit on the closed select trigger and its option rows. */
+  /**
+   * Property frequencyLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the localized label for a recurrence frequency.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(frequency: InterventionRecurrenceFrequency) => string}
+   */
   protected readonly frequencyLabelOf: (frequency: InterventionRecurrenceFrequency) => string = (
     frequency: InterventionRecurrenceFrequency,
   ): string => interventionRecurrenceFrequencyLabel(frequency);
 
-  /** Names a picked template on the closed select trigger. */
+  /**
+   * Property templateLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the display name for a selected recurrence template.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly templateLabelOf: (value: string) => string = (value: string): string =>
     this.templates().find((template: InterventionTemplateOutput): boolean => template.id === value)
       ?.name ?? '';
 
-  /** Names a picked site on the closed select trigger. */
+  /**
+   * Property siteLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the display label for a selected site option.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly siteLabelOf: (value: string) => string = (value: string): string =>
     this.siteOptions().find((option: SelectOption): boolean => option.value === value)?.label ?? '';
 
-  /** Names a picked member on the closed combobox trigger. */
+  /**
+   * Property memberLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the display label for a selected responsible-member option.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly memberLabelOf: (value: string) => string = (value: string): string =>
     this.memberOptions().find((option: MemberSelectOption): boolean => option.value === value)
       ?.displayName ?? '';

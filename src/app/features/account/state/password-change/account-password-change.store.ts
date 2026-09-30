@@ -24,7 +24,6 @@ import type { AccountPasswordChangeState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial state of the authenticated password change workflow.
@@ -32,6 +31,8 @@ import type { AccountPasswordChangeState } from './models';
  * @since 1.0.0
  *
  * @type {AccountPasswordChangeState}
+ *
+ * @constant INITIAL_STATE
  */
 const INITIAL_STATE: AccountPasswordChangeState = {
   step: 'request',
@@ -41,8 +42,7 @@ const INITIAL_STATE: AccountPasswordChangeState = {
 } as const;
 
 /**
- * Store AccountPasswordChangeStore
- * @const AccountPasswordChangeStore
+ * Constant AccountPasswordChangeStore
  *
  * @description
  * Component-scoped workflow store for the authenticated password change
@@ -54,6 +54,8 @@ const INITIAL_STATE: AccountPasswordChangeState = {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant AccountPasswordChangeStore
  */
 export const AccountPasswordChangeStore = signalStore(
   //#region State
@@ -63,9 +65,8 @@ export const AccountPasswordChangeStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isRequesting
-     *
      * @description
+     * Computed isRequesting
      * Whether the password change request is in progress.
      *
      * @since 1.0.0
@@ -75,9 +76,8 @@ export const AccountPasswordChangeStore = signalStore(
     isRequesting: computed<boolean>(() => store.requestCallState().status === 'pending'),
 
     /**
-     * Computed isConfirming
-     *
      * @description
+     * Computed isConfirming
      * Whether the password change confirmation is in progress.
      *
      * @since 1.0.0
@@ -87,9 +87,8 @@ export const AccountPasswordChangeStore = signalStore(
     isConfirming: computed<boolean>(() => store.confirmCallState().status === 'pending'),
 
     /**
-     * Computed requestError
-     *
      * @description
+     * Computed requestError
      * Error of the latest password change request, if any.
      *
      * @since 1.0.0
@@ -99,9 +98,8 @@ export const AccountPasswordChangeStore = signalStore(
     requestError: computed<StoreError | null>(() => store.requestCallState().error),
 
     /**
-     * Computed confirmError
-     *
      * @description
+     * Computed confirmError
      * Error of the latest password change confirmation, if any.
      *
      * @since 1.0.0
@@ -111,9 +109,8 @@ export const AccountPasswordChangeStore = signalStore(
     confirmError: computed<StoreError | null>(() => store.confirmCallState().error),
 
     /**
-     * Computed maskedRecipient
-     *
      * @description
+     * Computed maskedRecipient
      * Masked email address the one-time code was sent to.
      *
      * @since 1.0.0
@@ -246,11 +243,12 @@ export const AccountPasswordChangeStore = signalStore(
 
 /**
  * Type AccountPasswordChangeStore
- * @type AccountPasswordChangeStore
  *
  * @description
  * Injectable instance type exposed by {@link AccountPasswordChangeStore}.
  *
  * @since 1.0.0
+ *
+ * @type AccountPasswordChangeStore
  */
 export type AccountPasswordChangeStore = InstanceType<typeof AccountPasswordChangeStore>;

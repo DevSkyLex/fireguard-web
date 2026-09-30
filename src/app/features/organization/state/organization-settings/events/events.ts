@@ -5,7 +5,6 @@ import type { OrganizationOutput } from '@features/organization/models';
 
 /**
  * Constant organizationSettingsStoreEvents
- * @const organizationSettingsStoreEvents
  *
  * @description
  * Events dispatched by the {@link OrganizationSettingsStore} when the active
@@ -15,41 +14,103 @@ import type { OrganizationOutput } from '@features/organization/models';
  * cached logo.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant organizationSettingsStoreEvents
  */
 export const organizationSettingsStoreEvents = eventGroup({
   source: 'Organization Settings Store',
   events: {
-    /** Cross-store sync: the active organization changed (settings or logo). */
+    /**
+     * @description
+     * Cross-store sync: the active organization changed (settings or logo).
+     */
     organizationUpdated: type<OrganizationOutput>(),
-    /** Dispatched when the settings are saved. */
+
+    /**
+     * @description
+     * Dispatched when the settings are saved.
+     */
     saveSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when saving the settings fails. */
+
+    /**
+     * @description
+     * Dispatched when saving the settings fails.
+     */
     saveFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when the logo is uploaded. */
+
+    /**
+     * @description
+     * Dispatched when the logo is uploaded.
+     */
     logoUploadSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when uploading the logo fails. */
+
+    /**
+     * @description
+     * Dispatched when uploading the logo fails.
+     */
     logoUploadFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when the logo is removed. */
+
+    /**
+     * @description
+     * Dispatched when the logo is removed.
+     */
     logoRemoveSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when removing the logo fails. */
+
+    /**
+     * @description
+     * Dispatched when removing the logo fails.
+     */
     logoRemoveFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when the organization is archived. */
+
+    /**
+     * @description
+     * Dispatched when the organization is archived.
+     */
     deleteSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when archiving the organization fails. */
+
+    /**
+     * @description
+     * Dispatched when archiving the organization fails.
+     */
     deleteFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when ownership is handed to another member. */
+
+    /**
+     * @description
+     * Dispatched when ownership is handed to another member.
+     */
     transferOwnershipSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when the ownership transfer is refused. */
+
+    /**
+     * @description
+     * Dispatched when the ownership transfer is refused.
+     */
     transferOwnershipFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when the organization is suspended or restored. */
+
+    /**
+     * @description
+     * Dispatched when the organization is suspended or restored.
+     */
     statusChangeSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when suspending or restoring the organization fails. */
+
+    /**
+     * @description
+     * Dispatched when suspending or restoring the organization fails.
+     */
     statusChangeFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when the acting member leaves the organization. */
+
+    /**
+     * @description
+     * Dispatched when the acting member leaves the organization.
+     */
     leaveSucceeded: type<FeedbackEventPayload>(),
     membershipLeft: type<{ readonly organizationId: string }>(),
-    /** Dispatched when leaving is refused — owner, or last administrator. */
+
+    /**
+     * @description
+     * Dispatched when leaving is refused — owner, or last administrator.
+     */
     leaveFailed: type<StoreFailureEventPayload>(),
   },
 });

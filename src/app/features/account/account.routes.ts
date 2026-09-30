@@ -8,7 +8,6 @@ import { Router, type Routes, type UrlTree } from '@angular/router';
  * The account workspace and its routed sections inside the dashboard shell's
  * content column. The parent keeps signed-in identity and local navigation
  * stable while each child page owns its account workflow.
- *
  * They mount inside the one dashboard shell, alongside the organization tree,
  * so opening the account changes the page and nothing else: the sidebar keeps
  * its global navigation, its switcher and the organization block
@@ -33,7 +32,10 @@ export const ACCOUNT_ROUTES: Routes = [
       },
       {
         path: 'security/federated/:provider/callback',
-        loadComponent: () => import('@features/auth').then((m) => m.FederatedLinkCallbackPage),
+        loadComponent: () =>
+          import('@features/auth/ui/pages/federated-link-callback-page/federated-link-callback-page.component').then(
+            (m) => m.FederatedLinkCallbackPage,
+          ),
         title: $localize`:@@route.federatedLinkCallback:Connecting sign-in provider`,
         data: { breadcrumb: $localize`:@@route.accountSecurity:Security` },
       },

@@ -7,12 +7,12 @@ import type { BarcodeDetectorConstructor } from './models';
  *
  * @description
  * Browser QR code decoding service used by intervention equipment entry.
- *
  * Wraps the experimental `BarcodeDetector` API so UI components only deal
  * with a simple "decode this photo" contract and can degrade gracefully when
  * the browser lacks support.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -28,7 +28,7 @@ export class InterventionQrScannerService {
    * @access public
    * @since 1.0.0
    *
-   * @return {boolean} `true` when QR decoding is available.
+   * @returns {boolean} `true` when QR decoding is available.
    */
   public isSupported(): boolean {
     return this.detector() !== undefined;
@@ -48,7 +48,8 @@ export class InterventionQrScannerService {
    *
    * @param {File} file - Captured photo to decode.
    *
-   * @return {Promise<string | null>} A promise resolving with the trimmed QR value, or `null` when none is detected.
+   * @returns {Promise<string | null>} A promise resolving with the trimmed QR value, or `null` when
+   *   none is detected.
    */
   public async scan(file: File): Promise<string | null> {
     const Detector = this.detector();
@@ -86,7 +87,7 @@ export class InterventionQrScannerService {
    * @access private
    * @since 1.0.0
    *
-   * @return {BarcodeDetectorConstructor | undefined} Constructor, or `undefined` when unsupported.
+   * @returns {BarcodeDetectorConstructor | undefined} Constructor, or `undefined` when unsupported.
    */
   private detector(): BarcodeDetectorConstructor | undefined {
     return (globalThis as { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector;

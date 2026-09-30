@@ -64,6 +64,8 @@ const CODE_LENGTH = 6;
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-account-password-form
@@ -75,8 +77,6 @@ const CODE_LENGTH = 6;
  *   (restarted)="store.restart()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-account-password-form',

@@ -98,6 +98,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Prepare Node workspace
         uses: ./.github/actions/prepare-node-workspace
@@ -106,6 +108,11 @@ jobs:
 
       - name: Check formatting
         run: npm run format:check
+
+      - name: Check documentation on changed authored files
+        env:
+          DOC_BASE: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
+        run: npm run docs:test && npm run docs:check
 
   # ==========================================================================
   # Static Analysis
@@ -124,8 +131,25 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Run oxlint
+      - name: Run lint and architecture tests
         run: npm run lint
+
+  contracts:
+    name: API Fixture Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Node workspace
+        uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          install-playwright-browsers: 'true'
+          playwright-browsers: chromium
+      - name: Validate OpenAPI reference and SSR fixtures
+        run: npm run test:contracts
+      - name: Validate actual SPA mock responses
+        run: npm run e2e:harness -- api-contract.spec.ts --project=chromium
 
   # ==========================================================================
   # Unit and Integration Tests
@@ -384,7 +408,7 @@ jobs:
             projects+=("--project=${browser}")
           done
 
-          npx playwright test "${projects[@]}"
+          npx playwright test --config=tests/e2e/playwright.config.ts "${projects[@]}"
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

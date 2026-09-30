@@ -93,7 +93,13 @@ export interface InterventionWorkItemOutput extends HydraItem {
    * @access public
    * @since 1.0.0
    *
-   * @type {{ readonly canLogTime: boolean; readonly canManageTime: boolean; readonly canReestimate: boolean; readonly canReassign: boolean; readonly canEditPlanning: boolean }}
+   * @type {{
+   *   readonly canLogTime: boolean;
+   *   readonly canManageTime: boolean;
+   *   readonly canReestimate: boolean;
+   *   readonly canReassign: boolean;
+   *   readonly canEditPlanning: boolean;
+   * }}
    */
   readonly allowedActions?: {
     readonly canExecute?: boolean;
@@ -103,6 +109,7 @@ export interface InterventionWorkItemOutput extends HydraItem {
     readonly canReassign: boolean;
     readonly canEditPlanning: boolean;
   };
+
   /**
    * Property id
    * @readonly

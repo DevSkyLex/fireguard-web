@@ -1,8 +1,14 @@
 import type { InterventionStatus } from '@features/organization/features/interventions/models';
+
 /**
  * Type InterventionBatchAction
- * @description Repeatable user intention, applied only to failed eligible rows after a partial result.
+ *
+ * @description
+ * Repeatable user intention, applied only to failed eligible rows after a partial result.
+ *
  * @since 1.0.0
+ *
+ * @type {InterventionBatchAction}
  */
 export type InterventionBatchAction =
   | { readonly kind: 'transition'; readonly status: InterventionStatus }

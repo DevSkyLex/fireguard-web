@@ -47,12 +47,12 @@ import type { RegisterFormValues } from './models';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-register-form [pending]="isRegistering()" (submitted)="register($event)" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-register-form',
@@ -263,7 +263,11 @@ export class RegisterForm {
    * @access protected
    * @since 1.1.0
    *
-   * @type {readonly { readonly id: string; readonly label: string; readonly matches: (value: string) => boolean }[]}
+   * @type {readonly {
+   *   readonly id: string;
+   *   readonly label: string;
+   *   readonly matches: (value: string) => boolean;
+   * }[]}
    */
   protected readonly passwordCriteria: readonly {
     readonly id: 'minLength' | 'uppercase' | 'lowercase' | 'digit' | 'symbol';
@@ -300,9 +304,14 @@ export class RegisterForm {
   /**
    * Property passwordRequirementsDescription
    * @readonly
-   * @description Persistent native Field description associated with the password input even when the guidance popover is closed.
+   *
+   * @description
+   * Persistent native Field description associated with the password input even when the guidance
+   * popover is closed.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {string}
    */
   protected readonly passwordRequirementsDescription: string = this.passwordCriteria
@@ -312,9 +321,14 @@ export class RegisterForm {
   /**
    * Property requirementMetLabel
    * @readonly
-   * @description Text accompanying a satisfied password criterion so its status does not rely on color or an icon.
+   *
+   * @description
+   * Text accompanying a satisfied password criterion so its status does not rely on color or an
+   * icon.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {string}
    */
   protected readonly requirementMetLabel: string = $localize`:@@auth.password.requirements.met:Met`;
@@ -322,9 +336,13 @@ export class RegisterForm {
   /**
    * Property requirementNotMetLabel
    * @readonly
-   * @description Text accompanying an unmet password criterion.
+   *
+   * @description
+   * Text accompanying an unmet password criterion.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {string}
    */
   protected readonly requirementNotMetLabel: string = $localize`:@@auth.password.requirements.notMet:Not met`;
@@ -332,9 +350,15 @@ export class RegisterForm {
   /**
    * Property passwordRequirementsAnnouncement
    * @readonly
-   * @description Accessible criterion statuses. The derived string changes only when a criterion changes, never for additional characters that leave the criteria unchanged; no password characters enter the live region.
+   *
+   * @description
+   * Accessible criterion statuses. The derived string changes only when a criterion changes, never
+   * for additional characters that leave the criteria unchanged; no password characters enter the
+   * live region.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly passwordRequirementsAnnouncement: Signal<string> = computed(() =>
@@ -376,6 +400,7 @@ export class RegisterForm {
    * @since 1.1.0
    *
    * @param {BrnOverlayState} state - State emitted by the popover.
+   *
    * @returns {void}
    */
   protected onPasswordRequirementsStateChanged(state: BrnOverlayState): void {
@@ -398,7 +423,8 @@ export class RegisterForm {
    * @since 1.1.0
    *
    * @param {Event} event - The document interaction that occurred outside the
-   * password field.
+   *   password field.
+   *
    * @returns {void}
    */
   @HostListener('document:pointerdown', ['$event'])
@@ -439,6 +465,7 @@ export class RegisterForm {
    * @since 1.1.0
    *
    * @param {Element | null} target - The document event target.
+   *
    * @returns {boolean} Whether the target represents a focusable interaction.
    */
   private canReceiveFocus(target: Element | null): boolean {
@@ -481,6 +508,7 @@ export class RegisterForm {
    * @since 1.1.0
    *
    * @param {FocusEvent} event - Focus transition emitted by the anchor.
+   *
    * @returns {void}
    */
   protected closePasswordRequirements(event: FocusEvent): void {
@@ -508,6 +536,8 @@ export class RegisterForm {
    *
    * @access protected
    * @since 1.0.0
+   *
+   * @param {Event} event - Form submission event whose native navigation is prevented.
    *
    * @returns {void}
    */

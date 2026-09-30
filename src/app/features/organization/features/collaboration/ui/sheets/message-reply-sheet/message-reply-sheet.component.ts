@@ -39,7 +39,7 @@ import { MessageRow } from '../../components/message-row';
 import { MessageComposer } from '../../forms/message-composer';
 
 /**
- * Component MessageReplySheet
+ * Class MessageReplySheet
  * @class MessageReplySheet
  *
  * @description
@@ -55,6 +55,8 @@ import { MessageComposer } from '../../forms/message-composer';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-message-reply-sheet
@@ -66,8 +68,6 @@ import { MessageComposer } from '../../forms/message-composer';
  *   (replyPosted)="thread.noteReplyPosted($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-message-reply-sheet',
@@ -175,9 +175,13 @@ export class MessageReplySheet {
   /**
    * Property presences
    * @readonly
-   * @description Registers only the open reply thread's parent and displayed authors.
+   *
+   * @description
+   * Registers only the open reply thread's parent and displayed authors.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
    */
   protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
@@ -235,9 +239,13 @@ export class MessageReplySheet {
   /**
    * Property sheetState
    * @readonly
-   * @description The overlay's own open/closed state, derived from {@link visible}.
+   *
+   * @description
+   * The overlay's own open/closed state, derived from {@link visible}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly sheetState: Signal<BrnDialogState> = computed((): BrnDialogState =>
@@ -247,9 +255,13 @@ export class MessageReplySheet {
   /**
    * Property side
    * @readonly
-   * @description Right-anchored on desktop, a bottom drawer under `sm`.
+   *
+   * @description
+   * Right-anchored on desktop, a bottom drawer under `sm`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -279,19 +291,54 @@ export class MessageReplySheet {
     return '';
   });
 
+  /**
+   * Property directory
+   * @readonly
+   *
+   * @description
+   * Resolves display information for members referenced in messages.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {MemberDirectoryPort}
+   */
   private readonly directory: MemberDirectoryPort =
     inject<MemberDirectoryPort>(MEMBER_DIRECTORY_PORT);
 
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Provides the active member permissions used to gate messaging actions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessPort}
+   */
   private readonly memberAccess: OrganizationMemberAccessPort =
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
-  /** Stands in wherever a member cannot be named. Never a raw id. */
+  /**
+   * Property unknownLabel
+   * @readonly
+   *
+   * @description
+   * Provides the localized fallback name shown when a reply author is unavailable.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly unknownLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description

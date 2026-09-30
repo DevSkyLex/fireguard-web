@@ -35,13 +35,29 @@ import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 import type { CalendarEventDraft, CalendarEventFormValues } from './models';
 
-/** The select's value for "no facility" — no narrowing. */
+/**
+ * Constant NO_FACILITY_VALUE
+ *
+ * @description
+ * The select's value for "no facility" — no narrowing.
+ */
 const NO_FACILITY_VALUE: string = '';
 
-/** The local wall-clock time a fresh draft's start defaults to, mirroring the page's own quick-create default. */
+/**
+ * Constant DEFAULT_EVENT_TIME
+ *
+ * @description
+ * The local wall-clock time a fresh draft's start defaults to, mirroring the page's own
+ * quick-create default.
+ */
 const DEFAULT_EVENT_TIME: string = '09:00';
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_DRAFT
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_DRAFT: CalendarEventDraft = {
   title: '',
   description: '',
@@ -53,10 +69,20 @@ const EMPTY_DRAFT: CalendarEventDraft = {
   facilityId: NO_FACILITY_VALUE,
 };
 
-/** How long a title may be, mirroring the backend's `Assert\Length` constraint. */
+/**
+ * Constant TITLE_MAX_LENGTH
+ *
+ * @description
+ * How long a title may be, mirroring the backend's `Assert\Length` constraint.
+ */
 const TITLE_MAX_LENGTH: number = 255;
 
-/** How long a description may be, mirroring the backend's `Assert\Length` constraint. */
+/**
+ * Constant DESCRIPTION_MAX_LENGTH
+ *
+ * @description
+ * How long a description may be, mirroring the backend's `Assert\Length` constraint.
+ */
 const DESCRIPTION_MAX_LENGTH: number = 5000;
 
 /**
@@ -85,6 +111,8 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
  *
  * @version 2.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-calendar-event-form
@@ -97,8 +125,6 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
  *   (cancelled)="eventDialogVisible.set(false)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-calendar-event-form',
@@ -124,9 +150,13 @@ export class CalendarEventForm {
   /**
    * Property visible
    * @readonly
-   * @description Whether the hosting overlay is open. Watched only to seed or clear the draft.
+   *
+   * @description
+   * Whether the hosting overlay is open. Watched only to seed or clear the draft.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -134,9 +164,13 @@ export class CalendarEventForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether the create/update write is in flight, which locks the footer controls.
+   *
+   * @description
+   * Whether the create/update write is in flight, which locks the footer controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -144,9 +178,13 @@ export class CalendarEventForm {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the last write attempt failed with.
+   *
+   * @description
+   * Whatever the last write attempt failed with.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<StoreError | null>}
    */
   public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
@@ -154,9 +192,13 @@ export class CalendarEventForm {
   /**
    * Property editing
    * @readonly
-   * @description The `event`-source entry being edited, or `null` when creating a new one.
+   *
+   * @description
+   * The `event`-source entry being edited, or `null` when creating a new one.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<CalendarFeedItemOutput | null>}
    */
   public readonly editing: InputSignal<CalendarFeedItemOutput | null> =
@@ -165,9 +207,13 @@ export class CalendarEventForm {
   /**
    * Property facilityOptions
    * @readonly
-   * @description The organization's facilities, offered as the optional association.
+   *
+   * @description
+   * The organization's facilities, offered as the optional association.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ReadonlyArray<{ readonly label: string; readonly value: string }>>}
    */
   public readonly facilityOptions: InputSignal<
@@ -177,9 +223,14 @@ export class CalendarEventForm {
   /**
    * Property initialStartsAt
    * @readonly
-   * @description A `yyyy-MM-ddTHH:mm` start pre-filling a fresh create draft — the quick-create path seeds the clicked day here. Ignored while {@link editing} holds a record.
+   *
+   * @description
+   * A `yyyy-MM-ddTHH:mm` start pre-filling a fresh create draft — the quick-create path seeds the
+   * clicked day here. Ignored while {@link editing} holds a record.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly initialStartsAt: InputSignal<string | null> = input<string | null>(null);
@@ -189,9 +240,13 @@ export class CalendarEventForm {
   /**
    * Property submitted
    * @readonly
-   * @description The validated draft, converted to ISO instants.
+   *
+   * @description
+   * The validated draft, converted to ISO instants.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CalendarEventFormValues>}
    */
   public readonly submitted: OutputEmitterRef<CalendarEventFormValues> =
@@ -200,9 +255,13 @@ export class CalendarEventForm {
   /**
    * Property cancelled
    * @readonly
-   * @description The operator backed out without saving.
+   *
+   * @description
+   * The operator backed out without saving.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
@@ -210,28 +269,59 @@ export class CalendarEventForm {
   /**
    * Property dirtyChanged
    * @readonly
-   * @description Emits whenever the field tree's dirtiness changes.
+   *
+   * @description
+   * Emits whenever the field tree's dirtiness changes.
+   *
    * @access public
    * @since 2.1.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
-  /** The sentinel value representing "no facility". */
+  /**
+   * Property noFacilityValue
+   * @readonly
+   *
+   * @description
+   * The sentinel value representing "no facility".
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly noFacilityValue: string = NO_FACILITY_VALUE;
 
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * The edited draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CalendarEventDraft>}
+   */
   protected readonly model: WritableSignal<CalendarEventDraft> =
     signal<CalendarEventDraft>(EMPTY_DRAFT);
 
   /**
    * Property eventForm
    * @readonly
-   * @description The field tree and its rules, mirroring `CreateCalendarEventInput`/`UpdateCalendarEventInput`'s constraints.
+   *
+   * @description
+   * The field tree and its rules, mirroring `CreateCalendarEventInput`/`UpdateCalendarEventInput`'s
+   * constraints.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<CalendarEventDraft>}
    */
   protected readonly eventForm: FieldTree<CalendarEventDraft> = form(this.model, (path) => {
@@ -269,9 +359,13 @@ export class CalendarEventForm {
   /**
    * Property serverMessage
    * @readonly
-   * @description The last failed attempt's message — `null` when there is nothing to show.
+   *
+   * @description
+   * The last failed attempt's message — `null` when there is nothing to show.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly serverMessage: Signal<string | null> = computed<string | null>(() => {
@@ -287,6 +381,7 @@ export class CalendarEventForm {
   //#region Constructor
   /**
    * Constructor
+   * @constructor
    *
    * @description
    * Seeds the draft from {@link editing} the moment the hosting overlay
@@ -322,11 +417,19 @@ export class CalendarEventForm {
 
   //#region Methods
   /**
-   * Method facilityLabelOf
-   * @description Names a facility value on the closed select trigger, including the sentinel "no facility" entry.
+   * Property facilityLabelOf
+   *
+   * @description
+   * Names a facility value on the closed select trigger, including the sentinel "no facility"
+   * entry.
+   *
    * @access protected
    * @since 1.0.0
+   *
+   * @type {(value: string) => string}
+   *
    * @param {string} value - The select's current value.
+   *
    * @returns {string} The localized label.
    */
   protected facilityLabelOf = (value: string): string => {
@@ -342,6 +445,7 @@ export class CalendarEventForm {
 
   /**
    * Method submit
+   * @method submit
    *
    * @description
    * Marks the tree touched so every unmet rule shows at once, then emits the
@@ -383,9 +487,15 @@ export class CalendarEventForm {
 
 /**
  * Function toDraft
+ *
+ * @description
+ * Creates the editable form draft from a calendar feed item.
+ *
  * @access private
  * @since 1.0.0
+ *
  * @param {CalendarFeedItemOutput} item - The `event`-source entry being edited.
+ *
  * @returns {CalendarEventDraft} The form's draft shape, seeded from the record.
  */
 function toDraft(item: CalendarFeedItemOutput): CalendarEventDraft {
@@ -406,10 +516,18 @@ function toDraft(item: CalendarFeedItemOutput): CalendarEventDraft {
 
 /**
  * Function draftFromInitialStartsAt
+ *
+ * @description
+ * Seeds a blank quick-create draft with its requested local start date and time.
+ *
  * @access private
  * @since 2.0.0
- * @param {string | null} value - The quick-create path's `yyyy-MM-ddTHH:mm` seed, or `null` for a plain blank draft.
- * @returns {CalendarEventDraft} {@link EMPTY_DRAFT} with the start date/time pre-filled from `value`, when given.
+ *
+ * @param {string | null} value - The quick-create path's `yyyy-MM-ddTHH:mm` seed, or `null` for a
+ *   plain blank draft.
+ *
+ * @returns {CalendarEventDraft} {@link EMPTY_DRAFT} with the start date/time pre-filled from
+ *   `value`, when given.
  */
 function draftFromInitialStartsAt(value: string | null): CalendarEventDraft {
   if (!value) return EMPTY_DRAFT;
@@ -426,10 +544,17 @@ function draftFromInitialStartsAt(value: string | null): CalendarEventDraft {
 
 /**
  * Function toDateOnly
+ *
+ * @description
+ * Removes the time portion while retaining the date in the local timezone.
+ *
  * @access private
  * @since 2.0.0
+ *
  * @param {Date} date - Any instant.
- * @returns {Date} Local midnight on `date`'s calendar day — the value shape `hlm-date-picker` expects.
+ *
+ * @returns {Date} Local midnight on `date`'s calendar day — the value shape `hlm-date-picker`
+ *   expects.
  */
 function toDateOnly(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -437,9 +562,15 @@ function toDateOnly(date: Date): Date {
 
 /**
  * Function toTimeString
+ *
+ * @description
+ * Formats local hours and minutes for the event form's time input.
+ *
  * @access private
  * @since 2.0.0
+ *
  * @param {Date} date - Any instant.
+ *
  * @returns {string} The local wall-clock time as `HH:mm`, matching a native `type="time"` input.
  */
 function toTimeString(date: Date): string {
@@ -448,10 +579,16 @@ function toTimeString(date: Date): string {
 
 /**
  * Function combineDateAndTime
+ *
+ * @description
+ * Combines a local calendar day and wall-clock time into a local Date value.
+ *
  * @access private
  * @since 2.0.0
+ *
  * @param {Date} date - A calendar day, as {@link toDateOnly} produces.
  * @param {string} time - An `HH:mm` wall-clock time; an unparsable value falls back to midnight.
+ *
  * @returns {Date} The local instant combining both.
  */
 function combineDateAndTime(date: Date, time: string): Date {
@@ -468,9 +605,15 @@ function combineDateAndTime(date: Date, time: string): Date {
 
 /**
  * Function pad
+ *
+ * @description
+ * Pads a numeric date or time component to two characters.
+ *
  * @access private
  * @since 1.0.0
+ *
  * @param {number} value - A date/time component.
+ *
  * @returns {string} The value, zero-padded to two digits.
  */
 function pad(value: number): string {

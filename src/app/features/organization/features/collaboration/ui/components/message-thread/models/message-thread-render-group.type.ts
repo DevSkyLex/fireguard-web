@@ -2,7 +2,6 @@ import type { MessageRowEntry } from '@features/organization/features/collaborat
 
 /**
  * Type MessageThreadRenderGroup
- * @typedef MessageThreadRenderGroup
  *
  * @description
  * What the thread actually draws, one level above {@link MessageThreadEntry}: a
@@ -13,6 +12,9 @@ import type { MessageRowEntry } from '@features/organization/features/collaborat
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type MessageThreadRenderGroup
+ * @type
  */
 export type MessageThreadRenderGroup = MessageThreadDayGroup | MessageThreadRunGroup;
 
@@ -28,10 +30,43 @@ export type MessageThreadRenderGroup = MessageThreadDayGroup | MessageThreadRunG
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface MessageThreadDayGroup {
+  /**
+   * Property kind
+   * @readonly
+   *
+   * @description
+   * Distinguishes the message thread day group variant represented by this value.
+   *
+   * @access public
+   *
+   * @type {'day'}
+   */
   readonly kind: 'day';
-  /** Local `YYYY-MM-DD`. A tracking key, never a display value. */
+
+  /**
+   * Property day
+   * @readonly
+   *
+   * @description
+   * Local `YYYY-MM-DD`. A tracking key, never a display value.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly day: string;
-  /** The day's first message instant — what actually gets formatted. */
+
+  /**
+   * Property at
+   * @readonly
+   *
+   * @description
+   * The day's first message instant — what actually gets formatted.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly at: string;
 }
 
@@ -48,8 +83,42 @@ export interface MessageThreadDayGroup {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface MessageThreadRunGroup {
+  /**
+   * Property kind
+   * @readonly
+   *
+   * @description
+   * Distinguishes the message thread run group variant represented by this value.
+   *
+   * @access public
+   *
+   * @type {'run'}
+   */
   readonly kind: 'run';
-  /** The first message's id in the run — stable across re-renders. */
+
+  /**
+   * Property key
+   * @readonly
+   *
+   * @description
+   * The first message's id in the run — stable across re-renders.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly key: string;
+
+  /**
+   * Property entries
+   * @readonly
+   *
+   * @description
+   * Contains the message rows grouped together for rendering.
+   *
+   * @access public
+   *
+   * @type {readonly MessageRowEntry[]}
+   */
   readonly entries: readonly MessageRowEntry[];
 }

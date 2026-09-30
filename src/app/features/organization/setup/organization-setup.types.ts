@@ -1,13 +1,13 @@
-/**
- * Organization Setup Types
- *
+/*
  * @description
+ * Organization Setup Types
  * Public DTOs and input contracts exposed by the organization setup boundary.
  * These types are intentionally owned by `@features/organization/setup` so
  * onboarding and other approved consumers do not depend on internal
  * organization subfeature model types.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 
@@ -19,6 +19,7 @@
  * Input payload used to create an organization through the setup boundary.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SetupCreateOrganizationInput {
@@ -53,6 +54,7 @@ export interface SetupCreateOrganizationInput {
  * Input payload used to invite a member through the setup boundary.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SetupInviteMemberInput {
@@ -81,29 +83,38 @@ export interface SetupInviteMemberInput {
 
 /**
  * Type SetupFacilityType
- * @type {SetupFacilityType}
  *
  * @description
  * Facility types exposed by the setup boundary.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type {SetupFacilityType}
  */
 export type SetupFacilityType = 'site' | 'building' | 'floor' | 'zone' | 'area';
 
 /**
  * Interface SetupFacilityAddressMatch
  * @interface SetupFacilityAddressMatch
- * @description Single geocoded address offered for explicit selection during facility setup.
+ *
+ * @description
+ * Single geocoded address offered for explicit selection during facility setup.
+ *
  * @since 1.0.0
  */
 export interface SetupFacilityAddressMatch {
   /**
    * Property displayName
    * @readonly
-   * @description Canonical postal address returned by the geocoding provider.
+   *
+   * @description
+   * Canonical postal address returned by the geocoding provider.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string}
    */
   readonly displayName: string;
@@ -111,9 +122,13 @@ export interface SetupFacilityAddressMatch {
   /**
    * Property street
    * @readonly
-   * @description Provider-supplied street and optional house number; absent on older API responses.
+   *
+   * @description
+   * Provider-supplied street and optional house number; absent on older API responses.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string | undefined}
    */
   readonly street?: string;
@@ -121,9 +136,13 @@ export interface SetupFacilityAddressMatch {
   /**
    * Property city
    * @readonly
-   * @description Provider-supplied locality; absent on older API responses.
+   *
+   * @description
+   * Provider-supplied locality; absent on older API responses.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string | undefined}
    */
   readonly city?: string;
@@ -131,9 +150,13 @@ export interface SetupFacilityAddressMatch {
   /**
    * Property region
    * @readonly
-   * @description Provider-supplied state or province when available; absent on older API responses.
+   *
+   * @description
+   * Provider-supplied state or province when available; absent on older API responses.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string | undefined}
    */
   readonly region?: string;
@@ -141,9 +164,13 @@ export interface SetupFacilityAddressMatch {
   /**
    * Property country
    * @readonly
-   * @description Provider-supplied country name; absent on older API responses.
+   *
+   * @description
+   * Provider-supplied country name; absent on older API responses.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string | undefined}
    */
   readonly country?: string;
@@ -151,9 +178,13 @@ export interface SetupFacilityAddressMatch {
   /**
    * Property countryCode
    * @readonly
-   * @description ISO 3166-1 alpha-2 country code from the provider; absent on older responses.
+   *
+   * @description
+   * ISO 3166-1 alpha-2 country code from the provider; absent on older responses.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string | undefined}
    */
   readonly countryCode?: string;
@@ -161,9 +192,13 @@ export interface SetupFacilityAddressMatch {
   /**
    * Property postalCode
    * @readonly
-   * @description Provider-supplied postal code when available; absent on older API responses.
+   *
+   * @description
+   * Provider-supplied postal code when available; absent on older API responses.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string | undefined}
    */
   readonly postalCode?: string;
@@ -171,9 +206,13 @@ export interface SetupFacilityAddressMatch {
   /**
    * Property latitude
    * @readonly
-   * @description Latitude of the selected address in decimal degrees.
+   *
+   * @description
+   * Latitude of the selected address in decimal degrees.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {number}
    */
   readonly latitude: number;
@@ -181,9 +220,13 @@ export interface SetupFacilityAddressMatch {
   /**
    * Property longitude
    * @readonly
-   * @description Longitude of the selected address in decimal degrees.
+   *
+   * @description
+   * Longitude of the selected address in decimal degrees.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {number}
    */
   readonly longitude: number;
@@ -197,6 +240,7 @@ export interface SetupFacilityAddressMatch {
  * Input payload used to create a facility through the setup boundary.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SetupCreateFacilityInput {
@@ -236,9 +280,13 @@ export interface SetupCreateFacilityInput {
   /**
    * Property latitude
    * @readonly
-   * @description Optional latitude selected from an address suggestion.
+   *
+   * @description
+   * Optional latitude selected from an address suggestion.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {number | null | undefined}
    */
   readonly latitude?: number | null;
@@ -246,9 +294,13 @@ export interface SetupCreateFacilityInput {
   /**
    * Property longitude
    * @readonly
-   * @description Optional longitude selected from an address suggestion.
+   *
+   * @description
+   * Optional longitude selected from an address suggestion.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {number | null | undefined}
    */
   readonly longitude?: number | null;
@@ -263,6 +315,7 @@ export interface SetupCreateFacilityInput {
  * enough for consumers to reference it (equipment attachment) and to name it.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SetupFacilitySummary {
@@ -308,6 +361,7 @@ export interface SetupFacilitySummary {
  * Role summary exposed by the setup boundary for invitation flows.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SetupOrganizationRole {
@@ -354,6 +408,7 @@ export interface SetupOrganizationRole {
  * selectors.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SetupEquipmentSummary {
@@ -399,6 +454,7 @@ export interface SetupEquipmentSummary {
  * Input payload used to create an equipment record through the setup boundary.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SetupCreateEquipmentInput {
@@ -461,25 +517,29 @@ export interface SetupCreateEquipmentInput {
 
 /**
  * Type SetupInspectionResult
- * @type {SetupInspectionResult}
  *
  * @description
  * Inspection result values exposed by the setup boundary.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type {SetupInspectionResult}
  */
 export type SetupInspectionResult = 'pass' | 'fail' | 'partial';
 
 /**
  * Type SetupInspectorType
- * @type {SetupInspectorType}
  *
  * @description
  * Inspector source values exposed by the setup boundary.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type {SetupInspectorType}
  */
 export type SetupInspectorType = 'user' | 'external';
 
@@ -491,6 +551,7 @@ export type SetupInspectorType = 'user' | 'external';
  * Input payload used to create an inspection through the setup boundary.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SetupCreateInspectionInput {
@@ -553,10 +614,38 @@ export interface SetupCreateInspectionInput {
 /**
  * Interface SetupOperationContext
  * @interface SetupOperationContext
- * @description Optional durable creation receipt. Both fields are validated together by the server.
+ *
+ * @description
+ * Optional durable creation receipt. Both fields are validated together by the server.
+ *
  * @since 1.1.0
  */
 export interface SetupOperationContext {
+  /**
+   * Property onboardingSessionId
+   * @readonly
+   *
+   * @description
+   * Binds the operation receipt to the server-created onboarding session.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly onboardingSessionId: string;
+
+  /**
+   * Property onboardingItemKey
+   * @readonly
+   *
+   * @description
+   * Identifies the durable batch item whose resource creation is being recorded.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly onboardingItemKey: string;
 }

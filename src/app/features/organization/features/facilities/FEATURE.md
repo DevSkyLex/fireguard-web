@@ -360,3 +360,11 @@ Address suggestions use the authenticated organization-scoped `address-suggestio
 through `FacilityService.addressSuggestions`. This is distinct from the explicit Nominatim
 geocode action; autocomplete consumers must never issue per-keystroke Nominatim lookups.
 The organization setup facade may publish the suggestion transport for onboarding. Suggestions include provider-normalized street, city, region, postal code, country and ISO country code; consumers must not parse the canonical label to reconstruct them.
+
+## Public entry points
+
+These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
+
+| Entry point                     | Consumers                             |
+| ------------------------------- | ------------------------------------- |
+| `ui/forms/facility-create-form` | `organization/features/interventions` |

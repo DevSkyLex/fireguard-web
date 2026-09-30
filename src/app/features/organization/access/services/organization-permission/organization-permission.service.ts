@@ -1,7 +1,8 @@
 import { computed, inject, Service, type Signal } from '@angular/core';
 import type { StoreError } from '@core/request-state';
 import type { OrganizationPermissionName } from '@features/organization/models';
-import { OrganizationMemberAccessStore } from '@features/organization/state';
+import { OrganizationMemberAccessStore } from '@features/organization/state/organization-member-access';
+import { hasAnyOrganizationPermission } from '../../utils/has-any-permission/has-any-permission.utils';
 
 /**
  * Service OrganizationPermissionService
@@ -10,14 +11,13 @@ import { OrganizationMemberAccessStore } from '@features/organization/state';
  * @description
  * Feature-owned helper service exposing ergonomic checks for the authenticated
  * user's effective permissions in the current active organization.
- *
  * Because this helper is owned and consumed inside the organization feature,
  * it reads the concrete `OrganizationMemberAccessStore` directly.
- *
  * The published `ORGANIZATION_MEMBER_ACCESS_PORT` remains the boundary for
  * external consumers such as sibling features, layouts, or shared UI.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -32,6 +32,8 @@ export class OrganizationPermissionService {
    * access state in the currently active organization.
    *
    * @access private
+   * @since 0.1.0
+   *
    * @type {OrganizationMemberAccessStore}
    */
   private readonly organizationMemberAccessStore: OrganizationMemberAccessStore =
@@ -46,6 +48,8 @@ export class OrganizationPermissionService {
    * the active organization.
    *
    * @access public
+   * @since 0.1.0
+   *
    * @type {Signal<ReadonlyArray<string>>}
    */
   public readonly permissions: Signal<ReadonlyArray<string>> =
@@ -60,6 +64,8 @@ export class OrganizationPermissionService {
    * loading.
    *
    * @access public
+   * @since 0.1.0
+   *
    * @type {Signal<boolean>}
    */
   public readonly isLoadingPermissions: Signal<boolean> =
@@ -74,6 +80,8 @@ export class OrganizationPermissionService {
    * organization access store.
    *
    * @access public
+   * @since 0.1.0
+   *
    * @type {Signal<StoreError | null>}
    */
   public readonly permissionError: Signal<StoreError | null> =
@@ -88,6 +96,8 @@ export class OrganizationPermissionService {
    * checks constant-time while remaining fully reactive to signal updates.
    *
    * @access private
+   * @since 0.1.0
+   *
    * @type {Signal<ReadonlySet<string>>}
    */
   private readonly permissionSet: Signal<ReadonlySet<string>> = computed(
@@ -106,6 +116,8 @@ export class OrganizationPermissionService {
    * payload for the currently active organization.
    *
    * @access public
+   * @since 0.1.0
+   *
    * @returns {void}
    */
   public reload(): void {
@@ -119,11 +131,13 @@ export class OrganizationPermissionService {
    * @description
    * Returns whether the authenticated user currently has the requested
    * organization-scoped permission.
-   *
    * Blank and whitespace-only permission names are rejected.
    *
    * @access public
+   * @since 0.1.0
+   *
    * @param {string} permission - Permission name to check.
+   *
    * @returns {boolean} `true` when the permission is currently granted.
    */
   public hasPermission(permission: OrganizationPermissionName): boolean {
@@ -145,7 +159,10 @@ export class OrganizationPermissionService {
    * granted in the active organization.
    *
    * @access public
+   * @since 0.1.0
+   *
    * @param {ReadonlyArray<string>} permissions - Permission names to evaluate.
+   *
    * @returns {boolean} `true` when any permission is currently granted.
    */
   public hasAnyPermission(permissions: ReadonlyArray<OrganizationPermissionName>): boolean {
@@ -163,7 +180,10 @@ export class OrganizationPermissionService {
    * granted in the active organization.
    *
    * @access public
+   * @since 0.1.0
+   *
    * @param {ReadonlyArray<string>} permissions - Permission names to evaluate.
+   *
    * @returns {boolean} `true` when all permissions are currently granted.
    */
   public hasAllPermissions(permissions: ReadonlyArray<OrganizationPermissionName>): boolean {
@@ -179,19 +199,20 @@ export class OrganizationPermissionService {
    * @description
    * Evaluates whether the authenticated user can access organization-scoped
    * navigation requiring the provided permissions.
-   *
    * When the requested organization already matches the loaded access store and
    * the access payload is in a successful state, the check is resolved from the
    * current store synchronously.
-   *
    * Preloading the target organization's access payload is handled upstream by
    * `organizationAccessGuard`, so this service remains read-only against the
    * shared organization access store.
    *
    * @access public
+   * @since 0.1.0
+   *
    * @param {string} organizationId - Target organization identifier.
    * @param {ReadonlyArray<string>} permissions - Required permission names.
    * @param {'all' | 'any'} [match='all'] - Matching strategy.
+   *
    * @returns {boolean} `true` when route access should be granted.
    */
   public canAccessOrganization(
@@ -221,7 +242,10 @@ export class OrganizationPermissionService {
    * methods can remain strict and predictable.
    *
    * @access private
+   * @since 0.1.0
+   *
    * @param {string} permission - Raw permission value to normalize.
+   *
    * @returns {string | null} The trimmed permission or `null` when empty.
    */
   private normalizePermission(permission: string): string | null {
@@ -237,7 +261,10 @@ export class OrganizationPermissionService {
    * Trims permission names and removes blank values from a permission list.
    *
    * @access private
+   * @since 0.1.0
+   *
    * @param {ReadonlyArray<string>} permissions - Raw permission names.
+   *
    * @returns {ReadonlyArray<string>} Normalized non-empty permission names.
    */
   private normalizePermissions(
@@ -257,8 +284,11 @@ export class OrganizationPermissionService {
    * the provided matching strategy.
    *
    * @access private
+   * @since 0.1.0
+   *
    * @param {ReadonlyArray<string>} requiredPermissions - Required permission names.
    * @param {'all' | 'any'} match - Matching strategy.
+   *
    * @returns {boolean} `true` when the requirement is satisfied.
    */
   private matchesPermissions(
@@ -279,7 +309,10 @@ export class OrganizationPermissionService {
    * successful access payload for the requested organization.
    *
    * @access private
+   * @since 0.1.0
+   *
    * @param {string} organizationId - Organization identifier to validate.
+   *
    * @returns {boolean} `true` when the store is resolved for the target organization.
    */
   private hasResolvedAccessForOrganization(organizationId: string): boolean {
@@ -298,7 +331,10 @@ export class OrganizationPermissionService {
    * normalized permission name, including wildcard matches.
    *
    * @access private
+   * @since 0.1.0
+   *
    * @param {string} permission - Normalized permission name to evaluate.
+   *
    * @returns {boolean} `true` when the permission is granted.
    */
   private hasGrantedPermission(permission: string): boolean {
@@ -322,20 +358,15 @@ export class OrganizationPermissionService {
    * permission name, including wildcard permissions such as `organization.*`.
    *
    * @access private
+   * @since 0.1.0
+   *
    * @param {string} grantedPermission - Granted permission name.
    * @param {string} requiredPermission - Required permission name.
+   *
    * @returns {boolean} `true` when the granted permission satisfies the requirement.
    */
   private matchesPermissionName(grantedPermission: string, requiredPermission: string): boolean {
-    if (grantedPermission === requiredPermission) {
-      return true;
-    }
-
-    if (!grantedPermission.endsWith('.*')) {
-      return false;
-    }
-
-    return requiredPermission.startsWith(grantedPermission.slice(0, -1));
+    return hasAnyOrganizationPermission([grantedPermission], [requiredPermission]);
   }
 
   //#endregion

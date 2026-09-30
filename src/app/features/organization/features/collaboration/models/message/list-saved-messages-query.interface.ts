@@ -12,9 +12,42 @@
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface ListSavedMessagesQuery {
-  /** Bare organization UUID (the server also accepts the IRI form). */
+  /**
+   * Property organization
+   * @readonly
+   *
+   * @description
+   * Bare organization UUID (the server also accepts the IRI form).
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organization: string;
+
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * Selects the page of list saved messages results to request.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
   readonly page?: number;
-  /** Clamped server-side to 1..100. */
+
+  /**
+   * Property itemsPerPage
+   * @readonly
+   *
+   * @description
+   * Clamped server-side to 1..100.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
   readonly itemsPerPage?: number;
 }

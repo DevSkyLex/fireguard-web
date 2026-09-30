@@ -54,19 +54,64 @@ import {
 import { onboardingStoreEvents } from './events';
 import type { OnboardingStoreState } from './models';
 
+/**
+ * Interface ExecuteStepPayload
+ * @interface ExecuteStepPayload
+ *
+ * @description
+ * Input identifying the step whose onboarding command is being executed.
+ *
+ * @since 0.1.0
+ */
 interface ExecuteStepPayload {
+  /**
+   * Property stepKey
+   * @readonly
+   *
+   * @description
+   * Onboarding step key sent to the execute command.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {OnboardingStepKey}
+   */
   readonly stepKey: OnboardingStepKey;
 }
 
+/**
+ * Constant ONBOARDING_TRANSFER_KEY
+ *
+ * @description
+ * Per-request TransferState key for handing the onboarding snapshot into hydration.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @type {StateKey<OnboardingOutput | null>}
+ *
+ * @constant ONBOARDING_TRANSFER_KEY
+ */
 const ONBOARDING_TRANSFER_KEY = makeStateKey<OnboardingOutput | null>('organization-onboarding');
 
-/** @description Default bootstrap payload when the creator does not request a reset. */
+/**
+ * Constant DEFAULT_START_INPUT
+ *
+ * @description
+ * Default bootstrap payload when the creator does not request a reset.
+ *
+ * @access private
+ * @since unreleased
+ *
+ * @type {StartOnboardingInput}
+ *
+ * @constant DEFAULT_START_INPUT
+ */
 const DEFAULT_START_INPUT: StartOnboardingInput = { reset: false };
 
 //#region Initial State
 /**
  * Constant INITIAL_ONBOARDING_STATE
- * @const INITIAL_ONBOARDING_STATE
  *
  * @description
  * Initial state for the OnboardingStore. Every operation starts idle
@@ -75,6 +120,8 @@ const DEFAULT_START_INPUT: StartOnboardingInput = { reset: false };
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_ONBOARDING_STATE
  */
 const INITIAL_ONBOARDING_STATE: OnboardingStoreState = {
   onboarding: null,
@@ -87,8 +134,7 @@ const INITIAL_ONBOARDING_STATE: OnboardingStoreState = {
 //#endregion
 
 /**
- * Store OnboardingStore
- * @const OnboardingStore
+ * Constant OnboardingStore
  *
  * @description
  * Root-level NgRx SignalStore for the onboarding workflow. Manages a single
@@ -98,6 +144,14 @@ const INITIAL_ONBOARDING_STATE: OnboardingStoreState = {
  *
  * Each API action has a dedicated `Operation` so the UI can independently
  * show loading/error states per action (e.g. spinner on a single step button).
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const OnboardingStore
+ *
+ * @const OnboardingStore
  *
  * @example
  * ```typescript
@@ -112,9 +166,6 @@ const INITIAL_ONBOARDING_STATE: OnboardingStoreState = {
  * // Check progress
  * if (store.isCompleted()) { … }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const OnboardingStore = signalStore(
   { providedIn: 'root' },
@@ -126,9 +177,8 @@ export const OnboardingStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isLoading
-     *
      * @description
+     * Computed isLoading
      * Returns `true` while the onboarding GET request is in-flight.
      *
      * @returns {boolean}
@@ -136,9 +186,8 @@ export const OnboardingStore = signalStore(
     isLoading: computed<boolean>(() => store.loadCallState().status === 'pending'),
 
     /**
-     * Computed isStarting
-     *
      * @description
+     * Computed isStarting
      * Returns `true` while the start-onboarding POST request is in-flight.
      *
      * @returns {boolean}
@@ -146,9 +195,8 @@ export const OnboardingStore = signalStore(
     isStarting: computed<boolean>(() => store.startCallState().status === 'pending'),
 
     /**
-     * Computed isExecutingStep
-     *
      * @description
+     * Computed isExecutingStep
      * Returns `true` while an execute-step request is in-flight.
      *
      * @returns {boolean}
@@ -156,9 +204,8 @@ export const OnboardingStore = signalStore(
     isExecutingStep: computed<boolean>(() => store.executeStepCallState().status === 'pending'),
 
     /**
-     * Computed isSkippingStep
-     *
      * @description
+     * Computed isSkippingStep
      * Returns `true` while a skip-step request is in-flight.
      *
      * @returns {boolean}
@@ -166,9 +213,8 @@ export const OnboardingStore = signalStore(
     isSkippingStep: computed<boolean>(() => store.skipStepCallState().status === 'pending'),
 
     /**
-     * Computed isRollingBack
-     *
      * @description
+     * Computed isRollingBack
      * Returns `true` while a rollback request is in-flight.
      *
      * @returns {boolean}
@@ -176,9 +222,8 @@ export const OnboardingStore = signalStore(
     isRollingBack: computed<boolean>(() => store.rollbackCallState().status === 'pending'),
 
     /**
-     * Computed isBusy
-     *
      * @description
+     * Computed isBusy
      * Returns `true` when **any** onboarding operation is in-flight.
      * Used to disable UI controls globally during mutations.
      *
@@ -196,9 +241,8 @@ export const OnboardingStore = signalStore(
     }),
 
     /**
-     * Computed loadError
-     *
      * @description
+     * Computed loadError
      * Returns the load call state error, or `null` if not in error state.
      *
      * @returns {StoreError | null}
@@ -206,58 +250,89 @@ export const OnboardingStore = signalStore(
     loadError: computed<StoreError | null>(() => store.loadCallState().error),
 
     /**
-     * Computed executeStepError
-     *
      * @description
+     * Computed executeStepError
      * Returns the execute-step error, or `null` if not in error state.
      *
      * @returns {StoreError | null}
      */
     executeStepError: computed<StoreError | null>(() => store.executeStepCallState().error),
 
-    /** Current onboarding state string, or `null` if not loaded. */
+    /**
+     * @description
+     * Current onboarding state string, or `null` if not loaded.
+     */
     state: computed(() => store.onboarding()?.state ?? null),
 
-    /** `true` when the onboarding workflow is fully completed. */
+    /**
+     * @description
+     * `true` when the onboarding workflow is fully completed.
+     */
     isCompleted: computed<boolean>(() => store.onboarding()?.state === 'completed'),
 
-    /** `true` when the onboarding workflow is blocked. */
+    /**
+     * @description
+     * `true` when the onboarding workflow is blocked.
+     */
     isBlocked: computed<boolean>(() => store.onboarding()?.state === 'blocked'),
 
-    /** `true` when the onboarding workflow is in progress. */
+    /**
+     * @description
+     * `true` when the onboarding workflow is in progress.
+     */
     isInProgress: computed<boolean>(() => store.onboarding()?.state === 'in_progress'),
 
-    /** Key of the next step to execute, or `null` if completed. */
+    /**
+     * @description
+     * Key of the next step to execute, or `null` if completed.
+     */
     nextStep: computed<OnboardingStepKey | null>(() => store.onboarding()?.nextStep ?? null),
 
-    /** Ordered list of all onboarding steps. */
+    /**
+     * @description
+     * Ordered list of all onboarding steps.
+     */
     steps: computed<readonly OnboardingStepOutput[]>(() => store.onboarding()?.steps ?? []),
 
-    /** Keys of already-completed steps. */
+    /**
+     * @description
+     * Keys of already-completed steps.
+     */
     completedSteps: computed<readonly OnboardingStepKey[]>(
       () => store.onboarding()?.completedSteps ?? [],
     ),
 
-    /** Whether a rollback action is available. */
+    /**
+     * @description
+     * Whether a rollback action is available.
+     */
     canRollback: computed<boolean>(() => store.onboarding()?.canRollback ?? false),
 
-    /** Reason the workflow is blocked, or `null`. */
+    /**
+     * @description
+     * Reason the workflow is blocked, or `null`.
+     */
     blockedReason: computed<string | null>(() => store.onboarding()?.blockedReason ?? null),
 
-    /** Organization ID associated with the onboarding, or `null`. */
+    /**
+     * @description
+     * Organization ID associated with the onboarding, or `null`.
+     */
     targetOrganizationId: computed<string | null>(
       () => store.onboarding()?.targetOrganizationId ?? null,
     ),
 
-    /** Organization name associated with the onboarding, or `null`. */
+    /**
+     * @description
+     * Organization name associated with the onboarding, or `null`.
+     */
     targetOrganizationName: computed<string | null>(
       () => store.onboarding()?.targetOrganizationName ?? null,
     ),
 
     /**
-     * Computed activeStepIndex
-     *
      * @description
+     * Computed activeStepIndex
      * Zero-based index of the current (next-to-execute) step in the
      * `steps` array. Returns `steps.length` when all steps are done.
      *
@@ -274,9 +349,8 @@ export const OnboardingStore = signalStore(
     }),
 
     /**
-     * Computed progress
-     *
      * @description
+     * Computed progress
      * Activation progress as `{ done, total }`, where a step counts as done when
      * it is `completed` or `skipped`. Drives the shell checklist "N of M" label.
      *
@@ -364,11 +438,11 @@ export const OnboardingStore = signalStore(
          * Fetches the current onboarding record from the API. Uses `switchMap`
          * so a new call cancels any in-flight request.
          *
-         * @fires onboardingStoreEvents.loadFailed  On API error.
-         *
          * @since 1.0.0
          *
          * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         *
+         * @fires onboardingStoreEvents.loadFailed On API error.
          */
         load: rxMethod<void>(
           pipe(
@@ -408,14 +482,14 @@ export const OnboardingStore = signalStore(
          * Starts the onboarding workflow by posting the initial input to the
          * API. Uses `exhaustMap` to prevent duplicate submissions.
          *
-         * @param {StartOnboardingInput} input  Configuration for the new
-         *   onboarding (e.g. target organization).
-         *
-         * @fires onboardingStoreEvents.startFailed  On API error.
-         *
          * @since 1.0.0
          *
          * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         *
+         * @param {StartOnboardingInput} input Configuration for the new
+         *   onboarding (e.g. target organization).
+         *
+         * @fires onboardingStoreEvents.startFailed On API error.
          */
         start: rxMethod<StartOnboardingInput>(
           pipe(
@@ -456,13 +530,13 @@ export const OnboardingStore = signalStore(
          * duplicate submissions. On success the full onboarding record is
          * refreshed.
          *
-         * @param {ExecuteStepPayload} payload  Contains the `stepKey` to execute.
-         *
-         * @fires onboardingStoreEvents.executeStepFailed  On API error.
-         *
          * @since 1.0.0
          *
          * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         *
+         * @param {ExecuteStepPayload} payload Contains the `stepKey` to execute.
+         *
+         * @fires onboardingStoreEvents.executeStepFailed On API error.
          */
         executeStep: rxMethod<ExecuteStepPayload>(
           pipe(
@@ -504,13 +578,13 @@ export const OnboardingStore = signalStore(
          * Skips an onboarding step by key. Uses `exhaustMap` to prevent
          * duplicate submissions.
          *
-         * @param {OnboardingStepKey} stepKey  The step key to skip.
-         *
-         * @fires onboardingStoreEvents.skipStepFailed  On API error.
-         *
          * @since 1.0.0
          *
          * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         *
+         * @param {OnboardingStepKey} stepKey The step key to skip.
+         *
+         * @fires onboardingStoreEvents.skipStepFailed On API error.
          */
         skipStep: rxMethod<OnboardingStepKey>(
           pipe(
@@ -553,11 +627,11 @@ export const OnboardingStore = signalStore(
          * to prevent duplicate submissions. Check `canRollback()` before
          * calling to ensure a rollback is available.
          *
-         * @fires onboardingStoreEvents.rollbackFailed  On API error.
-         *
          * @since 1.0.0
          *
          * @author Valentin FORTIN <contact@valentin-fortin.pro>
+         *
+         * @fires onboardingStoreEvents.rollbackFailed On API error.
          */
         rollback: rxMethod<void>(
           pipe(
@@ -634,7 +708,6 @@ export const OnboardingStore = signalStore(
          * synchronously (via `of()`); otherwise the API is called once and the
          * response is patched into the store as a side-effect so consumers (the
          * wizard-access guard, the shell checklist) do not re-fetch it.
-         *
          * Loading never blocks the shell: any API error resolves to `null` so a failing
          * endpoint never hard-locks navigation.
          *
@@ -703,11 +776,11 @@ export const OnboardingStore = signalStore(
   //#region Hooks
   withHooks({
     /**
+     * @description
      * Root-provided, so the record survives the client-side navigation that logging
      * out really is. Left in place, `ensureLoaded()` hands the previous user's
      * onboarding record to the access guards, which then gate the next user on
      * somebody else's activation state.
-     *
      * Listens to `sessionEnded`, not `logoutSucceeded`: a failed logout request
      * still ends the local session.
      */
@@ -737,4 +810,14 @@ export const OnboardingStore = signalStore(
   //#endregion
 );
 
+/**
+ * Type OnboardingStore
+ *
+ * @description
+ * Instance type exposed by the root-provided onboarding SignalStore.
+ *
+ * @since 0.1.0
+ *
+ * @type {InstanceType<typeof OnboardingStore>}
+ */
 export type OnboardingStore = InstanceType<typeof OnboardingStore>;

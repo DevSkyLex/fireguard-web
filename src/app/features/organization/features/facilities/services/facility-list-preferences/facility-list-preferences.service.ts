@@ -11,27 +11,65 @@ import {
 } from '@shared/list-sort-preferences';
 
 /**
+ * Constant PREFERENCES_COOKIE_NAME
+ *
+ * @description
  * Cookie holding the facilities list's remembered shape.
  */
 const PREFERENCES_COOKIE_NAME = 'fg-facility-list';
 
 /**
- * Ordering used when nothing has been remembered — the backend's own default
+ * Constant DEFAULT_SORT
+ *
+ * @description
  * (`ListFacilitiesProvider`).
  */
 const DEFAULT_SORT: FacilityListSort = { field: 'name', direction: 'asc' };
 
 /**
- * Shape persisted in the cookie. Deliberately not exported: it is an encoding
+ * Interface PersistedPreferences
+ * @interface
+ *
+ * @description
  * detail, and every caller goes through the accessors below.
  */
 interface PersistedPreferences {
+  /**
+   * Property sortField
+   * @readonly
+   *
+   * @description
+   * Names the field used to order the equipment list.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly sortField?: string;
+
+  /**
+   * Property sortDirection
+   * @readonly
+   *
+   * @description
+   * Selects ascending or descending order for the equipment list.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly sortDirection?: string;
 }
 
 /**
- * Narrows a decoded sort field to one this build's facilities list supports.
+ * Function isFacilitySortField
+ *
+ * @description
+ * Checks whether a field is supported by facility-list sorting.
+ *
+ * @param {string} field - Candidate facility field name.
+ *
+ * @returns {field is FacilitySortField} Whether the field belongs to the supported sort fields.
  */
 function isFacilitySortField(field: string): field is FacilitySortField {
   return (
@@ -45,7 +83,7 @@ function isFacilitySortField(field: string): field is FacilitySortField {
 }
 
 /**
- * Service FacilityListPreferencesService
+ * Class FacilityListPreferencesService
  * @class FacilityListPreferencesService
  *
  * @description
@@ -53,7 +91,6 @@ function isFacilitySortField(field: string): field is FacilitySortField {
  * shape `InterventionListPreferencesService` keeps for interventions —
  * narrowed to sort alone, since this list has neither hideable columns nor a
  * remembered page size.
- *
  * A behavioral service rather than a util (`ARCHITECTURE.md` §10.7): it needs
  * `CookieService`, and a util may not inject. `CookieService` already no-ops
  * on the server, so every method here is safe during SSR. The persisted-shape
@@ -62,6 +99,7 @@ function isFacilitySortField(field: string): field is FacilitySortField {
  * the cookie name, field whitelist, and default stay local here.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -85,6 +123,7 @@ export class FacilityListPreferencesService {
   //#region Methods
   /**
    * Method readSort
+   * @method readSort
    *
    * @description
    * The remembered ordering, or name/asc when none was stored or the stored
@@ -108,6 +147,7 @@ export class FacilityListPreferencesService {
 
   /**
    * Method write
+   * @method write
    *
    * @description
    * Persists the active ordering in one cookie.
@@ -130,6 +170,7 @@ export class FacilityListPreferencesService {
 
   /**
    * Method read
+   * @method read
    *
    * @description
    * Decodes the cookie, answering with an empty record for anything that is

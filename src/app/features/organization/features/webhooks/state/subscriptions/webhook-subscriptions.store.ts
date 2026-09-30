@@ -26,9 +26,13 @@ import { webhookSubscriptionsEvents } from './webhook-subscriptions.events';
 
 /**
  * Constant WebhookSubscriptionsStore
- * @const WebhookSubscriptionsStore
- * @description Route-scoped server pages. Scope revisions fence accepted writes; secrets never enter state.
+ *
+ * @description
+ * Route-scoped server pages. Scope revisions fence accepted writes; secrets never enter state.
+ *
  * @since 1.0.0
+ *
+ * @constant WebhookSubscriptionsStore
  */
 export const WebhookSubscriptionsStore = signalStore(
   withEntities({ entity: type<WebhookSubscriptionOutput>(), collection: 'subscription' }),
@@ -162,13 +166,19 @@ export const WebhookSubscriptionsStore = signalStore(
       );
       return {
         load,
+
         /**
          * Method select
          * @method select
-         * @description Loads a subscription's first delivery page.
+         *
+         * @description
+         * Loads a subscription's first delivery page.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} id - Visible subscription identity.
+         *
          * @returns {void}
          */
         select(id: string): void {
@@ -176,38 +186,54 @@ export const WebhookSubscriptionsStore = signalStore(
           patchState(store, { mutationCallState: idleCallState() });
           deliveries({ id, page: 1, status: '' });
         },
+
         /**
          * Method loadDeliveries
          * @method loadDeliveries
-         * @description Reads the selected endpoint's history, retaining authoritative totals.
+         *
+         * @description
+         * Reads the selected endpoint's history, retaining authoritative totals.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {number} page - One-based page.
          * @param {WebhookDeliveryOutput['status'] | ''} status - Optional status.
+         *
          * @returns {void}
          */
         loadDeliveries(page: number, status: WebhookDeliveryOutput['status'] | ''): void {
           if (store.isMutating()) return;
           deliveries({ id: store.selectedId(), page, status });
         },
+
         /**
          * Method loadCatalog
          * @method loadCatalog
-         * @description Reads selectable events when a management form opens.
+         *
+         * @description
+         * Reads selectable events when a management form opens.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         loadCatalog(): void {
           if (store.events().length || store.isLoadingCatalog()) return;
           catalog(store.organizationId());
         },
+
         /**
          * Method clearMutationFeedback
          * @method clearMutationFeedback
-         * @description Clears an acknowledged error without resending a command.
+         *
+         * @description
+         * Clears an acknowledged error without resending a command.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         clearMutationFeedback(): void {
@@ -270,8 +296,12 @@ export const WebhookSubscriptionsStore = signalStore(
 
 /**
  * Type WebhookSubscriptionsStoreType
- * @type WebhookSubscriptionsStoreType
- * @description Injectable route store instance.
+ *
+ * @description
+ * Injectable route store instance.
+ *
  * @since 1.0.0
+ *
+ * @type WebhookSubscriptionsStoreType
  */
 export type WebhookSubscriptionsStoreType = InstanceType<typeof WebhookSubscriptionsStore>;

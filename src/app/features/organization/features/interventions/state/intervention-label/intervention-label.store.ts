@@ -30,6 +30,16 @@ import type {
 import { interventionLabelStoreEvents } from './events';
 import type { InterventionLabelState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {InterventionLabelState}
+ */
 const INITIAL_STATE: InterventionLabelState = {
   listCallState: idleCallState(),
   createCallState: idleCallState(),
@@ -40,8 +50,7 @@ const INITIAL_STATE: InterventionLabelState = {
 };
 
 /**
- * Store InterventionLabelStore
- * @const InterventionLabelStore
+ * Constant InterventionLabelStore
  *
  * @description
  * Component-scoped CRUD store for the organization's intervention label
@@ -56,6 +65,8 @@ const INITIAL_STATE: InterventionLabelState = {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant InterventionLabelStore
  */
 export const InterventionLabelStore = signalStore(
   withEntities({ entity: type<InterventionLabelOutput>(), collection: 'label' }),
@@ -111,9 +122,12 @@ export const InterventionLabelStore = signalStore(
        * Method create
        * @method create
        *
-       * @description Creates a label. The API rejects a duplicate name with `409`.
+       * @description
+       * Creates a label. The API rejects a duplicate name with `409`.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @type {RxMethod<CreateInterventionLabelInput>}
        */
       create: rxMethod<CreateInterventionLabelInput>(
@@ -160,9 +174,12 @@ export const InterventionLabelStore = signalStore(
        * Method update
        * @method update
        *
-       * @description Renames or recolors a label.
+       * @description
+       * Renames or recolors a label.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @type {RxMethod<{ labelId: string; input: UpdateInterventionLabelInput }>}
        */
       update: rxMethod<{ labelId: string; input: UpdateInterventionLabelInput }>(
@@ -217,9 +234,12 @@ export const InterventionLabelStore = signalStore(
        * Method remove
        * @method remove
        *
-       * @description Deletes a label; interventions referencing it keep their remaining labels.
+       * @description
+       * Deletes a label; interventions referencing it keep their remaining labels.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @type {RxMethod<string>}
        */
       remove: rxMethod<string>(
@@ -266,9 +286,12 @@ export const InterventionLabelStore = signalStore(
 
 /**
  * Type InterventionLabelStoreType
- * @type InterventionLabelStoreType
  *
- * @description Instance type of the InterventionLabelStore signal store.
+ * @description
+ * Instance type of the InterventionLabelStore signal store.
+ *
  * @since 1.0.0
+ *
+ * @type InterventionLabelStoreType
  */
 export type InterventionLabelStoreType = InstanceType<typeof InterventionLabelStore>;

@@ -81,7 +81,12 @@ import { EquipmentAssignFacilityDialog } from '../../dialogs/equipment-assign-fa
 import { EquipmentDecommissionDialog } from '../../dialogs/equipment-decommission-dialog';
 import type { EquipmentDetailTabId } from './models';
 
-/** The equipment properties this page has open, writing or showing a rejection. */
+/**
+ * Constant IDLE_EDIT_STATE
+ *
+ * @description
+ * The equipment properties this page has open, writing or showing a rejection.
+ */
 const IDLE_EDIT_STATE: EquipmentEditState = {
   open: null,
   saving: null,
@@ -103,7 +108,6 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * resume service, or move to maintenance) with Decommission as the
  * secondary, and {@link EquipmentInformationPanel} for the identification
  * fields.
- *
  * `equipmentResolver` (route `resolve`) seeds {@link ActiveEquipmentStore}
  * fire-and-forget, so this page always renders immediately: the full-page
  * skeleton shows from the store's pending state until the record lands, and
@@ -112,7 +116,6 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * rather than leaving the operator on an eternal skeleton or navigating them
  * away silently. A route-scoped {@link EquipmentStore} carries the update and
  * lifecycle writes.
- *
  * The record's name is the shell breadcrumb's title, resolved by
  * `equipmentTitleResolver`; the status tags and meta line stay as a lead
  * group at content top, and the lifecycle band registers on the shell header
@@ -125,7 +128,6 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
  * when a facility is assigned — points at the interventions list
  * pre-filtered by that facility's `site`; it is a proxy by site, not a
  * filter by equipment, and is labelled as such.
- *
  * A paginated Spartan `line` list beneath the shell page title exposes three
  * tabs beyond the identification fields (**Overview**): **Attachments**
  * ({@link EquipmentAttachments}, base64-JSON wire — see
@@ -190,9 +192,13 @@ export class EquipmentDetailPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning this equipment, bound from the route.
+   *
+   * @description
+   * The workspace owning this equipment, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -200,121 +206,362 @@ export class EquipmentDetailPage {
   /**
    * Property equipmentId
    * @readonly
-   * @description The resolved equipment's id, bound from the route.
+   *
+   * @description
+   * The resolved equipment's id, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly equipmentId: InputSignal<string> = input.required<string>();
   //#endregion
 
   //#region Properties
-  /** The currently active equipment, seeded by `equipmentResolver`; null until the fetch lands. */
+  /**
+   * Property activeEquipmentStore
+   * @readonly
+   *
+   * @description
+   * The currently active equipment, seeded by `equipmentResolver`; null until the fetch lands.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ActiveEquipmentStore}
+   */
   protected readonly activeEquipmentStore: ActiveEquipmentStore =
     inject<ActiveEquipmentStore>(ActiveEquipmentStore);
 
-  /** The route-scoped store carrying the update and lifecycle writes. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The route-scoped store carrying the update and lifecycle writes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentStoreType}
+   */
   protected readonly store: EquipmentStoreType = inject<EquipmentStoreType>(EquipmentStore);
 
-  /** Document title channel, kept in sync with the loaded record. */
+  /**
+   * Property titleService
+   * @readonly
+   *
+   * @description
+   * Document title channel, kept in sync with the loaded record.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {TitleService}
+   */
   private readonly titleService: TitleService = inject<TitleService>(TitleService);
 
-  /** Organization permission checks gating every write on this page. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating every write on this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** The application's language, used to phrase the header's metadata line. */
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * The application's language, used to phrase the header's metadata line.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
   /**
+   * Property facilityOptionsStore
+   * @readonly
+   *
+   * @description
    * The `facilities` subfeature's read-only listing service, consumed
    * directly for the assignment dialog's facility options — an approved
    * cross-feature dependency (`FEATURE.md` "Cross-Feature Dependencies"),
    * mirroring `MaintenanceSchedulesPage`.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FacilityOptionsStore}
    */
   private readonly facilityOptionsStore: FacilityOptionsStore =
     inject<FacilityOptionsStore>(FacilityOptionsStore);
 
   /**
+   * Property equipmentService
+   * @readonly
+   *
+   * @description
    * The equipment transport service, injected directly (not through the
    * store) for the one-shot attachment-download fetch — a download changes
    * no persisted state, so it does not belong in `EquipmentStore`, mirroring
    * `InterventionDetailPage`'s `downloadAttachment`.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {EquipmentService}
    */
   private readonly equipmentService: EquipmentService = inject<EquipmentService>(EquipmentService);
 
-  /** Saves a fetched attachment blob to the visitor's device. */
+  /**
+   * Property browserDownload
+   * @readonly
+   *
+   * @description
+   * Saves a fetched attachment blob to the visitor's device.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
   private readonly browserDownload: BrowserDownloadService =
     inject<BrowserDownloadService>(BrowserDownloadService);
 
-  /** Global toast feedback for the sheet export's error path. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Global toast feedback for the sheet export's error path.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
 
-  /** Whether the equipment sheet's PDF export is currently in flight. */
+  /**
+   * Property reportExporting
+   * @readonly
+   *
+   * @description
+   * Whether the equipment sheet's PDF export is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly reportExporting: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** For cancelling in-flight downloads when the page is destroyed. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * For cancelling in-flight downloads when the page is destroyed.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Which in-place field is open, writing, or showing a rejection. */
+  /**
+   * Property editState
+   * @readonly
+   *
+   * @description
+   * Which in-place field is open, writing, or showing a rejection.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<EquipmentEditState>}
+   */
   protected readonly editState: WritableSignal<EquipmentEditState> =
     signal<EquipmentEditState>(IDLE_EDIT_STATE);
 
-  /** Which tab is showing. */
+  /**
+   * Property activeTab
+   * @readonly
+   *
+   * @description
+   * Which tab is showing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<EquipmentDetailTabId>}
+   */
   protected readonly activeTab: WritableSignal<EquipmentDetailTabId> =
     signal<EquipmentDetailTabId>('overview');
 
-  /** Ids of the tabs whose data has already been requested, so a re-activation never re-fetches. */
+  /**
+   * Property tabsLoaded
+   * @readonly
+   *
+   * @description
+   * Ids of the tabs whose data has already been requested, so a re-activation never re-fetches.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Set<EquipmentDetailTabId>}
+   */
   private readonly tabsLoaded: Set<EquipmentDetailTabId> = new Set<EquipmentDetailTabId>();
 
-  /** Ids of the attachments whose delete is in flight. */
+  /**
+   * Property pendingAttachmentDeleteIds
+   * @readonly
+   *
+   * @description
+   * Ids of the attachments whose delete is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
   protected readonly pendingAttachmentDeleteIds: WritableSignal<ReadonlySet<string>> = signal<
     ReadonlySet<string>
   >(new Set<string>());
 
-  /** Ids of the attachments whose download is in flight. */
+  /**
+   * Property pendingAttachmentDownloadIds
+   * @readonly
+   *
+   * @description
+   * Ids of the attachments whose download is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
   protected readonly pendingAttachmentDownloadIds: WritableSignal<ReadonlySet<string>> = signal<
     ReadonlySet<string>
   >(new Set<string>());
 
-  /** Ids of the tags whose removal is in flight. */
+  /**
+   * Property pendingTagRemoveIds
+   * @readonly
+   *
+   * @description
+   * Ids of the tags whose removal is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
   protected readonly pendingTagRemoveIds: WritableSignal<ReadonlySet<string>> = signal<
     ReadonlySet<string>
   >(new Set<string>());
 
-  /** The organization's facilities, preloaded for the assignment dialog. */
+  /**
+   * Property facilityOptions
+   * @readonly
+   *
+   * @description
+   * The organization's facilities, preloaded for the assignment dialog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly FacilityOption[]>}
+   */
   protected readonly facilityOptions: Signal<readonly FacilityOption[]> = computed(() =>
     this.facilityOptionsStore.options(),
   );
 
-  /** Whether the facility assignment dialog is open. */
+  /**
+   * Property assignFacilityDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the facility assignment dialog is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly assignFacilityDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the decommission confirmation is open. */
+  /**
+   * Property decommissionDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the decommission confirmation is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly decommissionDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property skeletonFieldRows
    * @readonly
-   * @description Placeholder count for the loading skeleton's field rows, mirroring `EquipmentInformationPanel`'s row count.
+   *
+   * @description
+   * Placeholder count for the loading skeleton's field rows, mirroring
+   * `EquipmentInformationPanel`'s row count.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {readonly number[]}
    */
   protected readonly skeletonFieldRows: readonly number[] = [0, 1, 2, 3, 4, 5];
@@ -322,16 +569,31 @@ export class EquipmentDetailPage {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the member may write to this equipment at all.
+   *
+   * @description
+   * Whether the member may write to this equipment at all.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canWrite: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
   );
 
-  /** The record's own display title. */
+  /**
+   * Property title
+   * @readonly
+   *
+   * @description
+   * The record's own display title.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly title: Signal<string> = computed<string>(() => {
     const equipment: EquipmentOutput | null = this.activeEquipmentStore.selectedEquipment();
 
@@ -349,6 +611,7 @@ export class EquipmentDetailPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<{ readonly label: string; readonly run: () => void } | null>}
    */
   protected readonly primaryAction: Signal<{
@@ -382,19 +645,45 @@ export class EquipmentDetailPage {
   /**
    * Property canDecommission
    * @readonly
-   * @description Whether the secondary Decommission action applies — every status but the terminal one.
+   *
+   * @description
+   * Whether the secondary Decommission action applies — every status but the terminal one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canDecommission: Signal<boolean> = computed<boolean>(
     () => this.activeEquipmentStore.selectedEquipment()?.status !== 'decommissioned',
   );
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The lifecycle band, registered on the shell header instead of an in-page title band. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The lifecycle band, registered on the shell header instead of an in-page title band.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
 
@@ -499,10 +788,16 @@ export class EquipmentDetailPage {
   //#region Methods
   /**
    * Method onEditTargetChanged
-   * @description Opens or closes an in-place field, clearing any rejection left from the previous attempt.
+   * @method onEditTargetChanged
+   *
+   * @description
+   * Opens or closes an in-place field, clearing any rejection left from the previous attempt.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {EquipmentEditTarget | null} target - The field to open, or null to close.
+   *
    * @returns {void}
    */
   protected onEditTargetChanged(target: EquipmentEditTarget | null): void {
@@ -511,9 +806,14 @@ export class EquipmentDetailPage {
 
   /**
    * Method retryLoad
-   * @description The load-failed state's retry — re-runs {@link ActiveEquipmentStore}'s resolve for this record.
+   * @method retryLoad
+   *
+   * @description
+   * The load-failed state's retry — re-runs {@link ActiveEquipmentStore}'s resolve for this record.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected retryLoad(): void {
@@ -525,10 +825,17 @@ export class EquipmentDetailPage {
 
   /**
    * Method updatedRelativeLabel
-   * @description The record's `updatedAt`, as a localized relative label ("3 days ago") — the header's visible text, paired with the absolute value in a tooltip.
+   * @method updatedRelativeLabel
+   *
+   * @description
+   * The record's `updatedAt`, as a localized relative label ("3 days ago") — the header's visible
+   * text, paired with the absolute value in a tooltip.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @param {string} updatedAt - The record's `updatedAt` timestamp.
+   *
    * @returns {string} The localized relative label.
    */
   protected updatedRelativeLabel(updatedAt: string): string {
@@ -537,10 +844,16 @@ export class EquipmentDetailPage {
 
   /**
    * Method onDetailsChanged
-   * @description Sends an in-place patch. The field stays open until the write settles.
+   * @method onDetailsChanged
+   *
+   * @description
+   * Sends an in-place patch. The field stays open until the write settles.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {UpdateEquipmentInput} patch - The single-property patch.
+   *
    * @returns {void}
    */
   protected onDetailsChanged(patch: UpdateEquipmentInput): void {
@@ -557,13 +870,17 @@ export class EquipmentDetailPage {
 
   /**
    * Method onDecommission
+   * @method onDecommission
+   *
    * @description
    * Opens the Decommission confirmation rather than acting: the move is
    * terminal — `primaryAction()` resolves to `null` afterwards, so nothing
    * puts the record back in service — and `DESIGN.md` §Action Surfaces rule 5
    * requires every irreversible action to confirm.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @returns {void}
    */
   protected onDecommission(): void {
@@ -574,9 +891,14 @@ export class EquipmentDetailPage {
 
   /**
    * Method confirmDecommission
-   * @description Runs the confirmed Decommission, refusing it while another lifecycle write is in flight.
+   * @method confirmDecommission
+   *
+   * @description
+   * Runs the confirmed Decommission, refusing it while another lifecycle write is in flight.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @returns {void}
    */
   protected confirmDecommission(): void {
@@ -586,9 +908,14 @@ export class EquipmentDetailPage {
 
   /**
    * Method lifecycleArgs
-   * @description The `{ organizationId, equipmentId }` pair every lifecycle method takes.
+   * @method lifecycleArgs
+   *
+   * @description
+   * The `{ organizationId, equipmentId }` pair every lifecycle method takes.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {{ organizationId: string; equipmentId: string }} The pair.
    */
   private lifecycleArgs(): { readonly organizationId: string; readonly equipmentId: string } {
@@ -597,10 +924,16 @@ export class EquipmentDetailPage {
 
   /**
    * Method runLifecycle
-   * @description Refuses a lifecycle action while another one is already in flight.
+   * @method runLifecycle
+   *
+   * @description
+   * Refuses a lifecycle action while another one is already in flight.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {() => void} run - The store call to make.
+   *
    * @returns {void}
    */
   private runLifecycle(run: () => void): void {
@@ -611,10 +944,16 @@ export class EquipmentDetailPage {
 
   /**
    * Method settleUpdateWrite
-   * @description Closes the open field on a successful write, or attributes the rejection to it.
+   * @method settleUpdateWrite
+   *
+   * @description
+   * Closes the open field on a successful write, or attributes the rejection to it.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {CallState<EquipmentOutput | null>} callState - The update write's call state.
+   *
    * @returns {void}
    */
   private settleUpdateWrite(callState: CallState<EquipmentOutput | null>): void {
@@ -635,6 +974,7 @@ export class EquipmentDetailPage {
 
   /**
    * Method onTabActivated
+   * @method onTabActivated
    *
    * @description
    * Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing
@@ -674,6 +1014,7 @@ export class EquipmentDetailPage {
 
   /**
    * Method onAttachmentFilesPicked
+   * @method onAttachmentFilesPicked
    *
    * @description
    * Converts each picked file to base64 (`fileToBase64`) and adds it as an
@@ -704,9 +1045,14 @@ export class EquipmentDetailPage {
 
   /**
    * Method onAttachmentsRetried
-   * @description Re-runs the attachment list load after a failure.
+   * @method onAttachmentsRetried
+   *
+   * @description
+   * Re-runs the attachment list load after a failure.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected onAttachmentsRetried(): void {
@@ -718,9 +1064,14 @@ export class EquipmentDetailPage {
 
   /**
    * Method onMaintenanceLogsRetried
-   * @description Re-runs the maintenance history load after a failure.
+   * @method onMaintenanceLogsRetried
+   *
+   * @description
+   * Re-runs the maintenance history load after a failure.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected onMaintenanceLogsRetried(): void {
@@ -732,10 +1083,16 @@ export class EquipmentDetailPage {
 
   /**
    * Method onAttachmentDeleteRequested
-   * @description Deletes the given attachment.
+   * @method onAttachmentDeleteRequested
+   *
+   * @description
+   * Deletes the given attachment.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @param {EquipmentAttachmentOutput} attachment - The attachment to delete.
+   *
    * @returns {void}
    */
   protected onAttachmentDeleteRequested(attachment: EquipmentAttachmentOutput): void {
@@ -751,6 +1108,7 @@ export class EquipmentDetailPage {
 
   /**
    * Method onAttachmentDownloadRequested
+   * @method onAttachmentDownloadRequested
    *
    * @description
    * Fetches one attachment's binary content and saves it to the visitor's
@@ -794,6 +1152,7 @@ export class EquipmentDetailPage {
 
   /**
    * Method exportReport
+   * @method exportReport
    *
    * @description
    * Fetches the equipment's PDF sheet (`EquipmentService.exportReport`) and
@@ -808,6 +1167,7 @@ export class EquipmentDetailPage {
    *
    * @access protected
    * @since 1.8.0
+   *
    * @returns {void}
    */
   protected exportReport(): void {
@@ -835,10 +1195,16 @@ export class EquipmentDetailPage {
 
   /**
    * Method onTagAddRequested
-   * @description Attaches (or creates and attaches) a tag by name.
+   * @method onTagAddRequested
+   *
+   * @description
+   * Attaches (or creates and attaches) a tag by name.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @param {string} name - The tag name.
+   *
    * @returns {void}
    */
   protected onTagAddRequested(name: string): void {
@@ -851,10 +1217,16 @@ export class EquipmentDetailPage {
 
   /**
    * Method onTagRemoveRequested
-   * @description Detaches the given tag, locking its chip on its own write.
+   * @method onTagRemoveRequested
+   *
+   * @description
+   * Detaches the given tag, locking its chip on its own write.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @param {EquipmentTagOutput} tag - The tag to detach.
+   *
    * @returns {void}
    */
   protected onTagRemoveRequested(tag: EquipmentTagOutput): void {
@@ -868,10 +1240,16 @@ export class EquipmentDetailPage {
 
   /**
    * Method onFacilityAssigned
-   * @description Submits the picked facility from the assignment dialog.
+   * @method onFacilityAssigned
+   *
+   * @description
+   * Submits the picked facility from the assignment dialog.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @param {string} facilityId - The picked facility's id.
+   *
    * @returns {void}
    */
   protected onFacilityAssigned(facilityId: string): void {
@@ -884,9 +1262,14 @@ export class EquipmentDetailPage {
 
   /**
    * Method onFacilityUnassigned
-   * @description Clears the equipment's facility assignment.
+   * @method onFacilityUnassigned
+   *
+   * @description
+   * Clears the equipment's facility assignment.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @returns {void}
    */
   protected onFacilityUnassigned(): void {

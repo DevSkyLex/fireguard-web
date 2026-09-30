@@ -21,7 +21,7 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const APP_MARKER = 'angular.json';
-const APP_DIRNAME = 'fireguard-sso-web';
+const APP_DIRNAME = 'fireguard-web';
 
 /** Candidate roots, most specific first; the first one holding APP_MARKER wins. */
 function resolveAppDir() {

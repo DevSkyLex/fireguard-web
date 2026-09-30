@@ -49,7 +49,19 @@ import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { OnboardingEquipmentFormDraft, OnboardingEquipmentTypeOption } from './models';
 
-/** Trims a free-text field, sending `undefined` rather than an empty string. */
+/**
+ * Function trimmed
+ *
+ * @description
+ * Trims a free-text field, sending `undefined` rather than an empty string.
+ *
+ * @access private
+ * @since unreleased
+ *
+ * @param {string} value - User-entered field content.
+ *
+ * @returns {string | undefined} The trimmed value or `undefined` when blank.
+ */
 function trimmed(value: string): string | undefined {
   const trimmedValue: string = value.trim();
 
@@ -78,12 +90,12 @@ function trimmed(value: string): string | undefined {
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-onboarding-equipment-form [pending]="isCreating()" (submitted)="createEquipment($event)" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-onboarding-equipment-form',
@@ -130,9 +142,13 @@ export class OnboardingEquipmentForm {
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Central interaction mode; viewport width only controls geometry.
+   *
+   * @description
+   * Central interaction mode; viewport width only controls geometry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -142,9 +158,13 @@ export class OnboardingEquipmentForm {
   /**
    * Property restored
    * @readonly
-   * @description Pending fields restored from the server before any durable creation result exists.
+   *
+   * @description
+   * Pending fields restored from the server before any durable creation result exists.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<SetupCreateEquipmentInput | null>}
    */
   public readonly restored: InputSignal<SetupCreateEquipmentInput | null> =
@@ -154,9 +174,13 @@ export class OnboardingEquipmentForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether the equipment is being registered, which locks the controls.
+   *
+   * @description
+   * Whether the equipment is being registered, which locks the controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -164,9 +188,14 @@ export class OnboardingEquipmentForm {
   /**
    * Property facilities
    * @readonly
-   * @description The facilities created earlier in the wizard. One pre-attaches silently; several offer a pre-selected choice.
+   *
+   * @description
+   * The facilities created earlier in the wizard. One pre-attaches silently; several offer a
+   * pre-selected choice.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly SetupFacilitySummary[]>}
    */
   public readonly facilities: InputSignal<readonly SetupFacilitySummary[]> = input<
@@ -176,9 +205,14 @@ export class OnboardingEquipmentForm {
   /**
    * Property skippable
    * @readonly
-   * @description Whether the backend currently lets this step be skipped. The backend never does for the first equipment, but every step form shares the footer contract.
+   *
+   * @description
+   * Whether the backend currently lets this step be skipped. The backend never does for the first
+   * equipment, but every step form shares the footer contract.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly skippable: InputSignal<boolean> = input<boolean>(false);
@@ -188,9 +222,13 @@ export class OnboardingEquipmentForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the setup-boundary payload once the form is valid.
+   *
+   * @description
+   * Emits the setup-boundary payload once the form is valid.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<SetupCreateEquipmentInput>}
    */
   public readonly submitted: OutputEmitterRef<SetupCreateEquipmentInput> =
@@ -199,16 +237,31 @@ export class OnboardingEquipmentForm {
   /**
    * Property skipped
    * @readonly
-   * @description Relays the footer's skip request to the page.
+   *
+   * @description
+   * Relays the footer's skip request to the page.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * Holds the equipment details edited by this form, including restored draft values.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<OnboardingEquipmentFormDraft>}
+   */
   protected readonly model: WritableSignal<OnboardingEquipmentFormDraft> = linkedSignal(() => {
     const restored = this.restored();
     return {
@@ -223,9 +276,13 @@ export class OnboardingEquipmentForm {
   /**
    * Property equipmentForm
    * @readonly
-   * @description The field tree and its one rule.
+   *
+   * @description
+   * The field tree and its one rule.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<OnboardingEquipmentFormDraft>}
    */
   protected readonly equipmentForm: FieldTree<OnboardingEquipmentFormDraft> = form(
@@ -241,19 +298,45 @@ export class OnboardingEquipmentForm {
     },
   );
 
-  /** The equipment types offered, owned by the equipments subfeature. */
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Uses the equipment subfeature's canonical set of selectable types.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   */
   protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
 
-  /** Names a type on the closed select trigger. */
+  /**
+   * Property typeLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the selected equipment type's label for the closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: OnboardingEquipmentTypeOption | '') => string}
+   */
   protected readonly typeLabelOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
 
   /**
    * Property typeIconOf
    * @readonly
-   * @description Resolves a decorative equipment icon, with a neutral fallback before selection.
+   *
+   * @description
+   * Resolves a decorative equipment icon, with a neutral fallback before selection.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: OnboardingEquipmentTypeOption | '') => string}
    */
   protected readonly typeIconOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
@@ -262,9 +345,13 @@ export class OnboardingEquipmentForm {
   /**
    * Property facilityRows
    * @readonly
-   * @description The created facilities with their type resolved to its localized label, for the select options.
+   *
+   * @description
+   * The created facilities with their type resolved to its localized label, for the select options.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly { id: string; name: string; typeLabel: string }[]>}
    */
   protected readonly facilityRows: Signal<
@@ -279,7 +366,18 @@ export class OnboardingEquipmentForm {
     })),
   );
 
-  /** Names a facility on the closed select trigger as "Name · Type". */
+  /**
+   * Property facilityLabelOf
+   * @readonly
+   *
+   * @description
+   * Combines the selected facility's name and type for its closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly facilityLabelOf: (value: string) => string = (value) => {
     const row = this.facilityRows().find((facility) => facility.id === value);
     if (row === undefined) return '';
@@ -287,14 +385,46 @@ export class OnboardingEquipmentForm {
     return row.typeLabel === '' ? row.name : `${row.name} · ${row.typeLabel}`;
   };
 
-  /** The footer's resting label. */
+  /**
+   * Property submitLabel
+   * @readonly
+   *
+   * @description
+   * Supplies the footer action's label while submission is idle.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly submitLabel: string = $localize`:@@onboarding.equipmentForm.submit:Register equipment`;
 
-  /** The footer's label while the equipment is being registered. */
+  /**
+   * Property pendingLabel
+   * @readonly
+   *
+   * @description
+   * Supplies the footer action's label while registration is pending.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly pendingLabel: string = $localize`:@@onboarding.equipmentForm.submitting:Registering…`;
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Keeps the selected facility valid as the available facility catalog changes.
+   *
+   * @access public
+   * @since unreleased
+   */
   constructor() {
     effect(() => {
       const facilities: readonly SetupFacilitySummary[] = this.facilities();
@@ -313,6 +443,7 @@ export class OnboardingEquipmentForm {
   //#region Methods
   /**
    * Method submit
+   * @method submit
    *
    * @description
    * Marks the tree touched so the unmet rule shows, then emits when valid.

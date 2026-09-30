@@ -10,9 +10,8 @@ import type {
 } from '@features/organization/features/checklists/models';
 
 /**
- * Service ChecklistService
+ * Class ChecklistService
  * @class ChecklistService
- * @extends {HydraApiService}
  *
  * @description
  * API service for checklist template management.
@@ -20,15 +19,30 @@ import type {
  * inspection checklist templates.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class ChecklistService extends HydraApiService {
-  //#region Constants
+  //#region Properties
+  /**
+   * Property BASE_PATH
+   * @readonly
+   *
+   * @description
+   * Defines the organization API path used by checklist requests.
+   *
+   * @access private
+   * @since 0.1.0
+   *
+   * @type {string}
+   */
   private static readonly BASE_PATH: string = '/api/organizations';
   //#endregion
 
-  //#region Public Methods
+  //#region Methods
   /**
    * Method list
    * @method list
@@ -43,7 +57,8 @@ export class ChecklistService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {RequestOptions} [options] - Optional pagination parameters.
    *
-   * @return {Observable<HydraCollection<ChecklistOutput>>} An observable emitting the checklists collection.
+   * @returns {Observable<HydraCollection<ChecklistOutput>>} An observable emitting the checklists
+   *   collection.
    */
   public list(
     organizationId: string,
@@ -83,7 +98,7 @@ export class ChecklistService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} checklistId - The ID of the checklist to retrieve.
    *
-   * @return {Observable<ChecklistOutput>} An observable emitting the checklist details.
+   * @returns {Observable<ChecklistOutput>} An observable emitting the checklist details.
    */
   public get(organizationId: string, checklistId: string): Observable<ChecklistOutput> {
     return this.getOne<ChecklistOutput>(
@@ -105,7 +120,7 @@ export class ChecklistService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {CreateChecklistInput} input - The data required to create the checklist.
    *
-   * @return {Observable<ChecklistOutput>} An observable emitting the created checklist details.
+   * @returns {Observable<ChecklistOutput>} An observable emitting the created checklist details.
    */
   public create(organizationId: string, input: CreateChecklistInput): Observable<ChecklistOutput> {
     return this.post<CreateChecklistInput, ChecklistOutput>(
@@ -131,7 +146,7 @@ export class ChecklistService extends HydraApiService {
    * @param {string} checklistId - The ID of the checklist to update.
    * @param {UpdateChecklistInput} input - The fields to change.
    *
-   * @return {Observable<ChecklistOutput>} An observable emitting the updated checklist details.
+   * @returns {Observable<ChecklistOutput>} An observable emitting the updated checklist details.
    */
   public update(
     organizationId: string,
@@ -158,7 +173,7 @@ export class ChecklistService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} checklistId - The ID of the checklist to archive.
    *
-   * @return {Observable<ChecklistOutput>} An observable emitting the archived checklist details.
+   * @returns {Observable<ChecklistOutput>} An observable emitting the archived checklist details.
    */
   public archive(organizationId: string, checklistId: string): Observable<ChecklistOutput> {
     return this.postAction<ChecklistOutput>(

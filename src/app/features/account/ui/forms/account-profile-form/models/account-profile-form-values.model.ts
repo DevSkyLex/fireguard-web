@@ -2,6 +2,7 @@ import type { UserLocale } from '@features/account/models';
 
 /**
  * Interface AccountProfileFormValues
+ * @interface AccountProfileFormValues
  *
  * @description
  * The shape the profile form edits. Distinct from
@@ -13,7 +14,42 @@ import type { UserLocale } from '@features/account/models';
  * @since 1.0.0
  */
 export interface AccountProfileFormValues {
+  /**
+   * Property firstName
+   *
+   * @description
+   * Editable given name; the page omits it from the request when blank.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   firstName: string;
+
+  /**
+   * Property lastName
+   *
+   * @description
+   * Editable family name; the page omits it from the request when blank.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   lastName: string;
+
+  /**
+   * Property locale
+   *
+   * @description
+   * Selected interface language sent with profile updates.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {UserLocale}
+   */
   locale: UserLocale;
 }

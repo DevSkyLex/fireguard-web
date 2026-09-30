@@ -17,6 +17,9 @@ import {
 } from '../../options/intervention-filter-options.constants';
 
 /**
+ * Constant MILLISECONDS_PER_DAY
+ *
+ * @description
  * Milliseconds in a day, for resolving the named due-date windows.
  */
 const MILLISECONDS_PER_DAY = 86_400_000;
@@ -31,16 +34,16 @@ const MILLISECONDS_PER_DAY = 86_400_000;
  * of a bare upper bound: the backend pairs the past-due check with the
  * non-terminal status exclusion the statistics endpoint uses, so the KPI
  * tile and the list it opens count the same set.
- *
  * The instant is a parameter rather than read here so the function stays pure
  * and its spec stays deterministic.
+ *
+ * @since 1.0.0
  *
  * @param {InterventionDueWindow} window - The window to resolve.
  * @param {Date} now - Instant the window is anchored on.
  *
- * @returns {{ due?: 'overdue'; dueAtAfter?: string; dueAtBefore?: string }} The query fragment to send.
- *
- * @since 1.0.0
+ * @returns {{ due?: 'overdue'; dueAtAfter?: string; dueAtBefore?: string }} The query fragment to
+ *   send.
  */
 export function resolveDueWindow(
   window: InterventionDueWindow,
@@ -72,13 +75,13 @@ export function resolveDueWindow(
  * way `null` is) — what is left is a real scalar or a non-empty readonly
  * array, either way forwarded to {@link InterventionListOptions} as-is.
  *
+ * @since 8.3.0
+ *
  * @template T - The field's own value type (`InterventionStatus`, a raw IRI, …).
  *
  * @param {T | readonly T[] | null} value - The filter field's current value.
  *
  * @returns {value is T | readonly T[]} Whether the field is actually narrowing anything.
- *
- * @since 8.3.0
  */
 function hasEnumValue<T>(value: InterventionEnumFilterValue<T>): value is T | readonly T[] {
   return Array.isArray(value) ? value.length > 0 : value !== null;
@@ -90,22 +93,21 @@ function hasEnumValue<T>(value: InterventionEnumFilterValue<T>): value is T | re
  * @description
  * Folds the operator's narrowing and ordering into the query the collection
  * actually receives.
- *
  * A filter left unset is **omitted**, never sent empty: the API treats an empty
  * `status` as a value, not as "any". Search is folded in here too so the page
  * has one place that decides what goes on the wire.
+ *
+ * @since 1.0.0
  *
  * @param {InterventionListFilters} filters - Active narrowing.
  * @param {InterventionListSort} sort - Active ordering.
  * @param {string} search - Trimmed free-text search, empty when unused.
  * @param {Date} now - Instant the due-date windows are anchored on.
  * @param {string | null} memberIri - The signed-in member's IRI, resolving the
- * `mine` narrowing to the API's `member` (responsible OR participant) filter;
- * `mine` is silently dropped while the profile has not resolved yet.
+ *   `mine` narrowing to the API's `member` (responsible OR participant) filter;
+ *   `mine` is silently dropped while the profile has not resolved yet.
  *
  * @returns {InterventionListOptions} Options to hand the store.
- *
- * @since 1.0.0
  */
 export function buildInterventionListOptions(
   filters: InterventionListFilters,
@@ -125,9 +127,13 @@ export function buildInterventionListOptions(
 
 /**
  * Function enumFilterOptions
- * @description Omits cleared scalar and multi-value filters from the API request.
+ *
+ * @description
+ * Omits cleared scalar and multi-value filters from the API request.
+ *
  * @param {InterventionListFilters} filters - Active narrowing.
  * @param {string | null} memberIri - Signed-in member for the Mine filter.
+ *
  * @returns {Partial<InterventionListOptions>} Active enum and IRI filters.
  */
 function enumFilterOptions(
@@ -151,9 +157,13 @@ function enumFilterOptions(
 
 /**
  * Function dueFilterOptions
- * @description Combines named and explicit due windows using the most restrictive bounds.
+ *
+ * @description
+ * Combines named and explicit due windows using the most restrictive bounds.
+ *
  * @param {InterventionListFilters} filters - Active narrowing.
  * @param {Date} now - Anchor for named windows.
+ *
  * @returns {Partial<InterventionListOptions>} Due-date query fragment.
  */
 function dueFilterOptions(
@@ -185,8 +195,12 @@ function dueFilterOptions(
 
 /**
  * Function plannedStartFilterOptions
- * @description Serializes the independent planned-start range into API bounds.
+ *
+ * @description
+ * Serializes the independent planned-start range into API bounds.
+ *
  * @param {InterventionListFilters} filters - Active narrowing.
+ *
  * @returns {Partial<InterventionListOptions>} Planned-start query fragment.
  */
 function plannedStartFilterOptions(
@@ -209,6 +223,9 @@ function plannedStartFilterOptions(
 }
 
 /**
+ * Constant EXPORTABLE_OPTION_KEYS
+ *
+ * @description
  * The {@link InterventionListOptions} keys the CSV export endpoint accepts —
  * see {@link InterventionExportOptions}. Kept local rather than derived from
  * the type itself: a `Pick` alias carries no runtime key list.
@@ -237,6 +254,8 @@ const EXPORTABLE_OPTION_KEYS: ReadonlySet<string> = new Set([
  * caller how many of those were actually in force, so it can warn only when
  * the export is narrower than the screen the operator is looking at.
  *
+ * @since 8.4.0
+ *
  * @param {InterventionListFilters} filters - Active narrowing.
  * @param {InterventionListSort} sort - Active ordering, dropped from the result.
  * @param {string} search - Trimmed free-text search, empty when unused.
@@ -244,9 +263,7 @@ const EXPORTABLE_OPTION_KEYS: ReadonlySet<string> = new Set([
  * @param {string | null} memberIri - See {@link buildInterventionListOptions}.
  *
  * @returns {{ readonly options: InterventionExportOptions; readonly droppedFilterCount: number }}
- * The exportable options, plus how many active filters were left out.
- *
- * @since 8.4.0
+ *   The exportable options, plus how many active filters were left out.
  */
 export function buildInterventionExportOptions(
   filters: InterventionListFilters,
@@ -278,25 +295,52 @@ export function buildInterventionExportOptions(
 }
 
 /**
+ * Function laterOf
+ *
+ * @description
  * The later (more restrictive as a lower bound) of an already-set
  * `dueAtAfter` and a newly resolved one — ISO 8601 instants compare
  * chronologically as plain strings. Lets `dueWindow` (the segmented views'
  * legacy preset) and `dueRange` (the filter bar's own operator) combine into
  * the tightest bound when both happen to be active at once, rather than one
  * silently overwriting the other.
+ *
+ * @param {string | undefined} existing - Previously selected lower bound, when present.
+ * @param {string} next - Candidate lower bound compared with the existing value.
+ *
+ * @returns {string}
  */
 function laterOf(existing: string | undefined, next: string): string {
   return existing && existing > next ? existing : next;
 }
 
-/** The earlier of an already-set `dueAtBefore` and a newly resolved one. See {@link laterOf}. */
+/**
+ * Function earlierOf
+ *
+ * @description
+ * The earlier of an already-set `dueAtBefore` and a newly resolved one. See {@link laterOf}.
+ *
+ * @param {string | undefined} existing - Previously selected upper bound, when present.
+ * @param {string} next - Candidate upper bound compared with the existing value.
+ *
+ * @returns {string}
+ */
 function earlierOf(existing: string | undefined, next: string): string {
   return existing && existing < next ? existing : next;
 }
 
 /**
+ * Function parseOption
+ *
+ * @description
  * The value of a query param when it names a known option, null otherwise —
  * an unknown or tampered value is dropped rather than sent to the API.
+ *
+ * @param {string | undefined} raw - Serialized option value read from the route query.
+ * @param {readonly SelectOption<T>[]} options - Allowed options against which the serialized value
+ *   is matched.
+ *
+ * @returns {T | null}
  */
 function parseOption<T extends string>(
   raw: string | undefined,
@@ -319,14 +363,15 @@ function parseOption<T extends string>(
  * exact `equals` shape it always has, never a one-element array — and no
  * surviving value parses as unfiltered, matching {@link parseOption}.
  *
+ * @since 8.3.0
+ *
  * @template T - The option's own literal type.
  *
  * @param {string | undefined} raw - The raw, possibly comma-separated, query param value.
  * @param {readonly SelectOption<T>[]} options - The field's known option catalog.
  *
- * @returns {T | readonly T[] | null} A scalar for one surviving value, an array for several, `null` for none.
- *
- * @since 8.3.0
+ * @returns {T | readonly T[] | null} A scalar for one surviving value, an array for several, `null`
+ *   for none.
  */
 function parseOptionSet<T extends string>(
   raw: string | undefined,
@@ -353,12 +398,14 @@ function parseOptionSet<T extends string>(
  * {@link parseInterventionListFilters}'s single-valued IRI parsing already
  * carries).
  *
- * @param {string | undefined} raw - The raw, possibly comma-separated, query param value — bare ids, never full IRIs.
+ * @since 8.3.0
+ *
+ * @param {string | undefined} raw - The raw, possibly comma-separated, query param value — bare
+ *   ids, never full IRIs.
  * @param {(id: string) => string} toIri - Rebuilds one raw id into its full IRI.
  *
- * @returns {string | readonly string[] | null} A scalar for one id, an array for several, `null` for none.
- *
- * @since 8.3.0
+ * @returns {string | readonly string[] | null} A scalar for one id, an array for several, `null`
+ *   for none.
  */
 function parseIriSet(
   raw: string | undefined,
@@ -375,7 +422,16 @@ function parseIriSet(
   return ids.length === 1 ? toIri(ids[0]) : ids.map(toIri);
 }
 
-/** The last path segment of an IRI, null in and null out. */
+/**
+ * Function lastIriSegment
+ *
+ * @description
+ * The last path segment of an IRI, null in and null out.
+ *
+ * @param {string | null} iri - Resource identifier whose trailing segment is extracted.
+ *
+ * @returns {string | null}
+ */
 function lastIriSegment(iri: string | null): string | null {
   return iri === null ? null : (iri.split('/').pop() ?? null);
 }
@@ -390,14 +446,14 @@ function lastIriSegment(iri: string | null): string | null {
  * for an IRI field, the value itself for an enum one), `null` or an empty
  * array becomes `null`, removing the param.
  *
+ * @since 8.3.0
+ *
  * @template T - The field's own value type.
  *
  * @param {T | readonly T[] | null} value - The field's current value.
  * @param {(item: T) => string | null} toRaw - Rebuilds one value into its URL-facing raw form.
  *
  * @returns {string | null} The param value, `null` to remove it.
- *
- * @since 8.3.0
  */
 function serializeEnumFilter<T>(
   value: InterventionEnumFilterValue<T>,
@@ -413,7 +469,20 @@ function serializeEnumFilter<T>(
   return kept.length === 0 ? null : kept.join(',');
 }
 
-/** A `YYYY-MM-DD` query param parsed to **local** midnight, `null` for an absent or unparseable value — a tampered date param is dropped rather than sent to the API. The explicit field parse is the point: `new Date('2026-08-10')` is UTC midnight by specification, which reads as the previous day everywhere west of Greenwich and shifts the API window by a whole day. Anything that is not a bare `YYYY-MM-DD` falls back to the native parse, which handles a full instant correctly. */
+/**
+ * Function parseIsoDate
+ *
+ * @description
+ * A `YYYY-MM-DD` query param parsed to **local** midnight, `null` for an absent or unparseable
+ * value — a tampered date param is dropped rather than sent to the API. The explicit field parse is
+ * the point: `new Date('2026-08-10')` is UTC midnight by specification, which reads as the previous
+ * day everywhere west of Greenwich and shifts the API window by a whole day. Anything that is not a
+ * bare `YYYY-MM-DD` falls back to the native parse, which handles a full instant correctly.
+ *
+ * @param {string | undefined} raw - Serialized date to validate and parse.
+ *
+ * @returns {Date | null}
+ */
 function parseIsoDate(raw: string | undefined): Date | null {
   if (!raw) return null;
 
@@ -425,7 +494,18 @@ function parseIsoDate(raw: string | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-/** A `Date` rendered as its own **local** `YYYY-MM-DD`. Never `toISOString().slice(0, 10)`: that converts to UTC first, so a calendar pick of local midnight serializes to the previous day at any positive offset — the round trip then reads back a day early. */
+/**
+ * Function toLocalIsoDate
+ *
+ * @description
+ * A `Date` rendered as its own **local** `YYYY-MM-DD`. Never `toISOString().slice(0, 10)`: that
+ * converts to UTC first, so a calendar pick of local midnight serializes to the previous day at any
+ * positive offset — the round trip then reads back a day early.
+ *
+ * @param {Date} date - Local calendar date serialized without shifting its day.
+ *
+ * @returns {string}
+ */
 function toLocalIsoDate(date: Date): string {
   const month: string = String(date.getMonth() + 1).padStart(2, '0');
   const day: string = String(date.getDate()).padStart(2, '0');
@@ -442,12 +522,12 @@ function toLocalIsoDate(date: Date): string {
  * either alone resolves the matching one-sided operator, neither resolves
  * unfiltered.
  *
+ * @since 8.1.0
+ *
  * @param {string | undefined} after - The raw `dueAfter` param.
  * @param {string | undefined} before - The raw `dueBefore` param.
  *
  * @returns {InterventionDueRangeFilter | null} The narrowing the params express.
- *
- * @since 8.1.0
  */
 function parseDueRange(
   after: string | undefined,
@@ -472,12 +552,12 @@ function parseDueRange(
  * shared generic parser (`ARCHITECTURE.md` §2.9: two consumers do not yet
  * justify that abstraction).
  *
+ * @since 8.2.0
+ *
  * @param {string | undefined} after - The raw `plannedStartAfter` param.
  * @param {string | undefined} before - The raw `plannedStartBefore` param.
  *
  * @returns {InterventionPlannedStartRangeFilter | null} The narrowing the params express.
- *
- * @since 8.2.0
  */
 function parsePlannedStartRange(
   after: string | undefined,
@@ -501,12 +581,12 @@ function parsePlannedStartRange(
  * against the filter option catalogs (an unknown value parses as unfiltered);
  * IRI-valued ones travel as raw ids and are rebuilt here.
  *
+ * @since 5.2.0
+ *
  * @param {object} raw - The raw query param values, undefined when absent.
  * @param {string} organizationId - The active organization, anchoring member IRIs.
  *
  * @returns {InterventionListFilters} The narrowing the URL expresses.
- *
- * @since 5.2.0
  */
 export function parseInterventionListFilters(
   raw: {
@@ -552,11 +632,11 @@ export function parseInterventionListFilters(
  * serialize to plain **local** `YYYY-MM-DD` dates, kept separate from
  * `dueWindow`'s own `due=` preset param.
  *
+ * @since 5.2.0
+ *
  * @param {InterventionListFilters} filters - Active narrowing.
  *
  * @returns {Record<string, string | null>} Query params for `navigateQuery`.
- *
- * @since 5.2.0
  */
 export function serializeInterventionListFilters(
   filters: InterventionListFilters,
@@ -602,11 +682,11 @@ export function serializeInterventionListFilters(
  * Search is deliberately excluded: it has its own visible input — and so is
  * `mine`, whose toggle chip already shows its own state.
  *
+ * @since 1.0.0
+ *
  * @param {InterventionListFilters} filters - Active narrowing.
  *
  * @returns {number} Count of set filters.
- *
- * @since 1.0.0
  */
 export function countActiveFilters(filters: InterventionListFilters): number {
   return Object.entries(filters).filter(

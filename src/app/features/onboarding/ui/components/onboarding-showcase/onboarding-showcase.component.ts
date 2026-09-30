@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { OnboardingStore } from '@features/onboarding/state';
-import { OnboardingStepRail } from '@features/onboarding/ui/components';
+import { OnboardingStepRail } from '../onboarding-step-rail';
 
 /**
  * Component OnboardingShowcase
@@ -21,12 +21,12 @@ import { OnboardingStepRail } from '@features/onboarding/ui/components';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-onboarding-showcase />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-onboarding-showcase',
@@ -40,9 +40,13 @@ export class OnboardingShowcase {
   /**
    * Property store
    * @readonly
-   * @description The root-provided onboarding record the rail renders.
+   *
+   * @description
+   * The root-provided onboarding record the rail renders.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OnboardingStore}
    */
   protected readonly store: OnboardingStore = inject<OnboardingStore>(OnboardingStore);

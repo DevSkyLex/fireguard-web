@@ -113,7 +113,12 @@ import { OrganizationMemberTable } from '../../tables/organization-member-table'
 import { OrganizationTeamPage } from '../organization-team-page/organization-team-page.component';
 import { OrganizationTeamsPage } from '../organization-teams-page/organization-teams-page.component';
 
-/** How long typing settles before the roster search reaches the wire. */
+/**
+ * Constant SEARCH_DEBOUNCE_MS
+ *
+ * @description
+ * How long typing settles before the roster search reaches the wire.
+ */
 const SEARCH_DEBOUNCE_MS: number = 300;
 
 /**
@@ -125,10 +130,17 @@ const SEARCH_DEBOUNCE_MS: number = 300;
  * (`OrganizationTeamsPage`) surfaces.
  *
  * @since 2.0.0
+ *
+ * @type {OrganizationMembersTabId}
  */
 type OrganizationMembersTabId = 'members' | 'roles' | 'teams' | 'requests';
 
-/** The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string. */
+/**
+ * Constant MEMBERS_TAB_IDS
+ *
+ * @description
+ * The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string.
+ */
 const MEMBERS_TAB_IDS: ReadonlySet<string> = new Set<string>([
   'members',
   'roles',
@@ -161,13 +173,92 @@ function isOrganizationMembersTabId(value: string | undefined): value is Organiz
  * View-model for one `app-stat-tile` in the page's KPI row.
  *
  * @since 1.1.0
+ *
+ * @type {OrganizationMembersKpiTile}
  */
 type OrganizationMembersKpiTile = {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Stable metric key used to identify this member-page KPI tile.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Accessible metric name displayed beside its value.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property value
+   * @readonly
+   *
+   * @description
+   * Formatted organization member metric shown in the KPI row.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string | number}
+   */
   readonly value: string | number;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Registered icon identifying the member metric category.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly icon: string;
+
+  /**
+   * Property progress
+   * @readonly
+   *
+   * @description
+   * Optional progress percentage for metrics with a quota target.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number | null}
+   */
   readonly progress: number | null;
+
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Indicates that the metric should render its loading state.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   readonly loading: boolean;
 };
 
@@ -186,7 +277,6 @@ type OrganizationMembersKpiTile = {
  * `hlmTabsContentLazy` panels rather than inlined — each keeps its own
  * component-scoped store and page actions (`ARCHITECTURE.md` §10.2's
  * "smallest useful shape"; this page does not absorb their business logic).
- *
  * **Per-tab permissions.** The `members` route now opens on the union of
  * every tab's read permission (`match: 'any'` over `members.read`,
  * `members.manage`, `roles.read`, `roles.manage`, `teams.read`) rather than
@@ -196,13 +286,11 @@ type OrganizationMembersKpiTile = {
  * panel individually, and {@link activeTab} never resolves to a tab the
  * acting member cannot see: an unauthorized or unrecognized `?tab=` falls
  * back to the first permitted tab in `members` → `roles` → `teams` order.
- *
  * The `members` tab itself renders a KPI row, then two stacked sections
  * built like this codebase's other permission-aware list pages
  * (`InterventionsPage`) — the members grid with search, a status filter,
  * bulk selection and a confirm-gated remove, and the pending-invitations
  * grid underneath, both fed by one component-scoped `OrganizationMembersStore`.
- *
  * It owns what its tables must not — which resources load
  * (`OrganizationMembersLoadOptions` is built from four independent backend
  * permissions: `organization.members.read` for the roster,
@@ -212,14 +300,12 @@ type OrganizationMembersKpiTile = {
  * it is a distinct permission the backend checks on its own endpoint), the
  * members page window, the invite/role-assignment dialogs and the
  * remove/revoke confirmations (`ARCHITECTURE.md` §10.5).
- *
  * The store exposes one shared `mutationCallState` across every write
  * action, so a stale error from an earlier action must never leak into a
  * dialog opened afterwards: the invite dialog, the remove confirmation and
  * the revoke confirmation each hold their own `SubmissionGate` over it, and
  * the page-level banner clears itself the moment a new error lands and
  * hides while any of them is showing its own copy.
- *
  * The roster's search and status filter are server-side: a debounced search
  * keystroke and an immediate status change both re-issue
  * `OrganizationMembersStore.loadMembers` on page one, which is also what the
@@ -227,7 +313,6 @@ type OrganizationMembersKpiTile = {
  * and does not shift with that filter — there is no "Total members" tile.
  * `OrganizationQuotaStore` (root-provided) supplies the "Seats used" tile's
  * used/limit reading, shared with the settings Usage tab.
- *
  * Its title lives in the shell's own `DashboardPageHeader`; this page
  * renders no title band of its own. `app-organization-page-header` is
  * retired — the primary tabs register beneath the title through `PageTabsService`,
@@ -299,9 +384,13 @@ export class OrganizationMembersPage {
   /**
    * Property presences
    * @readonly
-   * @description Presence for the currently rendered roster; the other member-management tabs do not poll.
+   *
+   * @description
+   * Presence for the currently rendered roster; the other member-management tabs do not poll.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
    */
   protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
@@ -313,9 +402,13 @@ export class OrganizationMembersPage {
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Central phone and tablet interaction mode, independent of roster geometry.
+   *
+   * @description
+   * Central phone and tablet interaction mode, independent of roster geometry.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -325,9 +418,13 @@ export class OrganizationMembersPage {
   /**
    * Property roleFilterDrawerVisible
    * @readonly
-   * @description Keeps an open role picker mounted until native dismissal, even if interaction mode changes.
+   *
+   * @description
+   * Keeps an open role picker mounted until native dismissal, even if interaction mode changes.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly roleFilterDrawerVisible: WritableSignal<boolean> = signal(false);
@@ -335,9 +432,13 @@ export class OrganizationMembersPage {
   /**
    * Property accessStore
    * @readonly
-   * @description Page-scoped request review state with server-authorized roles.
+   *
+   * @description
+   * Page-scoped request review state with server-authorized roles.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OrganizationAccessAdminStoreType}
    */
   protected readonly accessStore: OrganizationAccessAdminStoreType = inject(
@@ -347,9 +448,13 @@ export class OrganizationMembersPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace whose members are listed, bound from the route.
+   *
+   * @description
+   * The workspace whose members are listed, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -377,14 +482,30 @@ export class OrganizationMembersPage {
   /**
    * Property tab
    * @readonly
-   * @description Which tab the URL asks for (`?tab=`), bound through `withComponentInputBinding()`. `undefined` and any unrecognized or unauthorized value resolve to {@link activeTab}'s fallback.
+   *
+   * @description
+   * Which tab the URL asks for (`?tab=`), bound through `withComponentInputBinding()`. `undefined`
+   * and any unrecognized or unauthorized value resolve to {@link activeTab}'s fallback.
+   *
    * @access public
    * @since 2.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly tab: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  /**
+   * Property listForbidden
+   * @readonly
+   *
+   * @description
+   * Whether the last list read was refused for lack of permission, which a retry cannot fix.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(
     () => this.store.loadCallState().error?.code === 403,
   );
@@ -392,53 +513,140 @@ export class OrganizationMembersPage {
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** The members/invitations workflow store, scoped to this page. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The members/invitations workflow store, scoped to this page.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {OrganizationMembersStore}
+   */
   protected readonly store: OrganizationMembersStore =
     inject<OrganizationMembersStore>(OrganizationMembersStore);
 
-  /** Organization permission checks gating every write action this page offers. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating every write action this page offers.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Builds the per-surface claims on the store's one shared `mutationCallState`. */
+  /**
+   * Property submissionGates
+   * @readonly
+   *
+   * @description
+   * Builds the per-surface claims on the store's one shared `mutationCallState`.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {SubmissionGateService}
+   */
   private readonly submissionGates: SubmissionGateService =
     inject<SubmissionGateService>(SubmissionGateService);
 
-  /** The cookie-backed memory of how the roster was last ordered. */
+  /**
+   * Property preferences
+   * @readonly
+   *
+   * @description
+   * The cookie-backed memory of how the roster was last ordered.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberListPreferencesService}
+   */
   private readonly preferences: OrganizationMemberListPreferencesService =
     inject<OrganizationMemberListPreferencesService>(OrganizationMemberListPreferencesService);
 
   /**
    * Property quotaStore
    * @readonly
-   * @description Root-provided quota usage, read here only for the "Seats used" KPI tile (shared with the settings Usage tab).
+   *
+   * @description
+   * Root-provided quota usage, read here only for the "Seats used" KPI tile (shared with the
+   * settings Usage tab).
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {OrganizationQuotaStoreType}
    */
   protected readonly quotaStore: OrganizationQuotaStoreType =
     inject<OrganizationQuotaStoreType>(OrganizationQuotaStore);
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The "Invite member" button, registered on the shell header instead of an in-page title band. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The "Invite member" button, registered on the shell header instead of an in-page title band.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
 
@@ -471,83 +679,267 @@ export class OrganizationMembersPage {
   private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageTabs');
 
-  /** Currently selected member ids, scoped to the loaded page — cleared on every reload. */
+  /**
+   * Property selectedIds
+   * @readonly
+   *
+   * @description
+   * Currently selected member ids, scoped to the loaded page — cleared on every reload.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
     new Set<string>(),
   );
 
-  /** The members page window, one-based. */
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * The members page window, one-based.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly page: WritableSignal<number> = signal<number>(1);
 
-  /** How many roster rows a page holds, from the pagination band's rows-per-page select. */
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * How many roster rows a page holds, from the pagination band's rows-per-page select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly pageSize: WritableSignal<number> = signal<number>(MEMBERS_PAGE_SIZE);
 
-  /** Writes the role narrowing back into the URL. */
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Writes the role narrowing back into the URL.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject<Router>(Router);
 
-  /** The route the role narrowing is written relative to. */
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * The route the role narrowing is written relative to.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
-  /** What the roster search box holds; debounced before it reaches the wire. */
+  /**
+   * Property searchTerm
+   * @readonly
+   *
+   * @description
+   * What the roster search box holds; debounced before it reaches the wire.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly searchTerm: WritableSignal<string> = signal<string>('');
 
-  /** The roster's active status filter. */
+  /**
+   * Property statusFilter
+   * @readonly
+   *
+   * @description
+   * The roster's active status filter.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<OrganizationMemberStatusFilter>}
+   */
   protected readonly statusFilter: WritableSignal<OrganizationMemberStatusFilter> =
     signal<OrganizationMemberStatusFilter>('all');
 
   /**
    * Property selectionMode
    * @readonly
-   * @description Whether mobile cards expose selection checkboxes; desktop selection remains a table column.
+   *
+   * @description
+   * Whether mobile cards expose selection checkboxes; desktop selection remains a table column.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly selectionMode: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The role the roster is narrowed to, or `null` for everyone. */
+  /**
+   * Property roleFilter
+   * @readonly
+   *
+   * @description
+   * The role the roster is narrowed to, or `null` for everyone.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly roleFilter: WritableSignal<string | null> = signal<string | null>(null);
 
   /**
    * Property sortOrder
    * @readonly
-   * @description The roster's active ordering, restored from the preferences cookie.
+   *
+   * @description
+   * The roster's active ordering, restored from the preferences cookie.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @type {WritableSignal<OrganizationMemberListSort>}
    */
   protected readonly sortOrder: WritableSignal<OrganizationMemberListSort> =
     signal<OrganizationMemberListSort>(this.preferences.readSort());
 
-  /** The pending-invitations page window, one-based. */
+  /**
+   * Property invitationsPage
+   * @readonly
+   *
+   * @description
+   * The pending-invitations page window, one-based.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly invitationsPage: WritableSignal<number> = signal<number>(1);
 
-  /** Rows per invitations page — fixed; the section offers no rows-per-page choice. */
+  /**
+   * Property invitationsPageSize
+   * @readonly
+   *
+   * @description
+   * Rows per invitations page — fixed; the section offers no rows-per-page choice.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {number}
+   */
   protected readonly invitationsPageSize: number = INVITATIONS_PAGE_SIZE;
 
-  /** Whether the invite dialog is open. */
+  /**
+   * Property inviteDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the invite dialog is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly inviteDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The invite dialog's claim on the shared mutation state, closing it once its own invite lands. */
+  /**
+   * Property inviteGate
+   * @readonly
+   *
+   * @description
+   * The invite dialog's claim on the shared mutation state, closing it once its own invite lands.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {SubmissionGate}
+   */
   private readonly inviteGate: SubmissionGate = this.submissionGates.create(
     this.store.mutationCallState,
     { onSuccess: (): void => this.inviteDialogVisible.set(false) },
   );
 
-  /** The member id the role-assignment dialog is currently open for, or `null` when closed. */
+  /**
+   * Property rolesDialogMemberId
+   * @readonly
+   *
+   * @description
+   * The member id the role-assignment dialog is currently open for, or `null` when closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly rolesDialogMemberId: WritableSignal<string | null> = signal<string | null>(
     null,
   );
 
-  /** The member a row's menu asked to remove, pending confirmation. */
+  /**
+   * Property pendingRemove
+   * @readonly
+   *
+   * @description
+   * The member a row's menu asked to remove, pending confirmation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<OrganizationMemberOutput | null>}
+   */
   protected readonly pendingRemove: WritableSignal<OrganizationMemberOutput | null> =
     signal<OrganizationMemberOutput | null>(null);
 
-  /** The selected ids the toolbar asked to bulk-remove, pending confirmation. */
+  /**
+   * Property pendingBulkRemoveIds
+   * @readonly
+   *
+   * @description
+   * The selected ids the toolbar asked to bulk-remove, pending confirmation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlyArray<string> | null>}
+   */
   protected readonly pendingBulkRemoveIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
 
-  /** The remove-confirm dialog's own claim, clearing its pending target once its own removal lands. */
+  /**
+   * Property removeGate
+   * @readonly
+   *
+   * @description
+   * The remove-confirm dialog's own claim, clearing its pending target once its own removal lands.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {SubmissionGate}
+   */
   private readonly removeGate: SubmissionGate = this.submissionGates.create(
     this.store.mutationCallState,
     {
@@ -558,25 +950,62 @@ export class OrganizationMembersPage {
     },
   );
 
-  /** The invitation a row's menu asked to revoke, pending confirmation. */
+  /**
+   * Property pendingRevoke
+   * @readonly
+   *
+   * @description
+   * The invitation a row's menu asked to revoke, pending confirmation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<OrganizationInvitationOutput | null>}
+   */
   protected readonly pendingRevoke: WritableSignal<OrganizationInvitationOutput | null> =
     signal<OrganizationInvitationOutput | null>(null);
 
-  /** The revoke-confirm dialog's own claim, clearing its pending target once its own revoke lands. */
+  /**
+   * Property revokeGate
+   * @readonly
+   *
+   * @description
+   * The revoke-confirm dialog's own claim, clearing its pending target once its own revoke lands.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {SubmissionGate}
+   */
   private readonly revokeGate: SubmissionGate = this.submissionGates.create(
     this.store.mutationCallState,
     { onSuccess: (): void => this.pendingRevoke.set(null) },
   );
 
-  /** Whether the page-level action-error banner was dismissed for the error currently in state. */
+  /**
+   * Property actionErrorDismissed
+   * @readonly
+   *
+   * @description
+   * Whether the page-level action-error banner was dismissed for the error currently in state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   private readonly actionErrorDismissed: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property canReadMembers
    * @readonly
-   * @description Whether the roster may be loaded and shown at all (`organization.members.read`).
+   *
+   * @description
+   * Whether the roster may be loaded and shown at all (`organization.members.read`).
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canReadMembers: Signal<boolean> = computed<boolean>(() =>
@@ -586,9 +1015,14 @@ export class OrganizationMembersPage {
   /**
    * Property canManageMembers
    * @readonly
-   * @description Whether invitations, invite/resend/revoke and member removal may render (`organization.members.manage`).
+   *
+   * @description
+   * Whether invitations, invite/resend/revoke and member removal may render
+   * (`organization.members.manage`).
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canManageMembers: Signal<boolean> = computed<boolean>(() =>
@@ -598,9 +1032,14 @@ export class OrganizationMembersPage {
   /**
    * Property canReadRoles
    * @readonly
-   * @description Whether the role catalog may be loaded (`organization.roles.read`), needed for the role badges' source data and the assignment dialog.
+   *
+   * @description
+   * Whether the role catalog may be loaded (`organization.roles.read`), needed for the role badges'
+   * source data and the assignment dialog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canReadRoles: Signal<boolean> = computed<boolean>(() =>
@@ -610,26 +1049,66 @@ export class OrganizationMembersPage {
   /**
    * Property canManageRoles
    * @readonly
-   * @description Whether role assignment may render at all (`organization.roles.manage` — distinct from `members.manage`).
+   *
+   * @description
+   * Whether role assignment may render at all (`organization.roles.manage` — distinct from
+   * `members.manage`).
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canManageRoles: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.ROLES_MANAGE),
   );
 
-  /** Whether the `members` tab may render — `organization.members.read` or `.manage`. */
+  /**
+   * Property canViewMembersTab
+   * @readonly
+   *
+   * @description
+   * Whether the `members` tab may render — `organization.members.read` or `.manage`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canViewMembersTab: Signal<boolean> = computed<boolean>(
     () => this.canReadMembers() || this.canManageMembers(),
   );
 
-  /** Whether the `roles` tab (the absorbed `OrganizationTeamPage`) may render — `organization.roles.read` or `.manage`. */
+  /**
+   * Property canViewRolesTab
+   * @readonly
+   *
+   * @description
+   * Whether the `roles` tab (the absorbed `OrganizationTeamPage`) may render —
+   * `organization.roles.read` or `.manage`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canViewRolesTab: Signal<boolean> = computed<boolean>(
     () => this.canReadRoles() || this.canManageRoles(),
   );
 
-  /** Whether the `teams` tab (the absorbed `OrganizationTeamsPage`) may render — `organization.teams.read`. */
+  /**
+   * Property canViewTeamsTab
+   * @readonly
+   *
+   * @description
+   * Whether the `teams` tab (the absorbed `OrganizationTeamsPage`) may render —
+   * `organization.teams.read`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canViewTeamsTab: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.TEAMS_READ),
   );
@@ -648,6 +1127,7 @@ export class OrganizationMembersPage {
    *
    * @access protected
    * @since 2.0.0
+   *
    * @type {WritableSignal<OrganizationMembersTabId>}
    */
   protected readonly activeTab: WritableSignal<OrganizationMembersTabId> =
@@ -662,9 +1142,13 @@ export class OrganizationMembersPage {
   /**
    * Property membersPageCount
    * @readonly
-   * @description How many member pages the current total spans, at least one.
+   *
+   * @description
+   * How many member pages the current total spans, at least one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly membersPageCount: Signal<number> = computed<number>(() =>
@@ -674,16 +1158,31 @@ export class OrganizationMembersPage {
   /**
    * Property invitationsPageCount
    * @readonly
-   * @description How many invitation pages the current total spans, at least one.
+   *
+   * @description
+   * How many invitation pages the current total spans, at least one.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<number>}
    */
   protected readonly invitationsPageCount: Signal<number> = computed<number>(() =>
     Math.max(1, Math.ceil(this.store.invitationsTotal() / this.invitationsPageSize)),
   );
 
-  /** Where a member row's link points. */
+  /**
+   * Property memberDetailRouteBase
+   * @readonly
+   *
+   * @description
+   * Where a member row's link points.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly string[]>}
+   */
   protected readonly memberDetailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'members'],
   );
@@ -691,9 +1190,13 @@ export class OrganizationMembersPage {
   /**
    * Property membersQuotaItem
    * @readonly
-   * @description The organization's `members` quota usage, `null` while it has not resolved.
+   *
+   * @description
+   * The organization's `members` quota usage, `null` while it has not resolved.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<OrganizationQuotaItemOutput | null>}
    */
   protected readonly membersQuotaItem: Signal<OrganizationQuotaItemOutput | null> = computed(
@@ -721,6 +1224,7 @@ export class OrganizationMembersPage {
    *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<readonly OrganizationMembersKpiTile[]>}
    */
   protected readonly kpiTiles: Signal<readonly OrganizationMembersKpiTile[]> = computed(() => {
@@ -772,9 +1276,14 @@ export class OrganizationMembersPage {
   /**
    * Property pendingInvitationsHeading
    * @readonly
-   * @description The open-invitations section's heading — it lists pending and expired invitations alike. The count itself lives only on the "Open invitations" KPI tile above, so it is not repeated here.
+   *
+   * @description
+   * The open-invitations section's heading — it lists pending and expired invitations alike. The
+   * count itself lives only on the "Open invitations" KPI tile above, so it is not repeated here.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {string}
    */
   protected readonly pendingInvitationsHeading: string = $localize`:@@org.invitations.heading:Open invitations`;
@@ -782,9 +1291,14 @@ export class OrganizationMembersPage {
   /**
    * Property hasRosterFilters
    * @readonly
-   * @description Whether the roster is currently narrowed by a search term or a non-default status, deciding what the empty state offers.
+   *
+   * @description
+   * Whether the roster is currently narrowed by a search term or a non-default status, deciding
+   * what the empty state offers.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly hasRosterFilters: Signal<boolean> = computed<boolean>(
@@ -806,6 +1320,7 @@ export class OrganizationMembersPage {
    *
    * @access protected
    * @since 2.1.0
+   *
    * @type {(value: string) => string}
    */
   protected readonly roleFilterLabelOf: (value: string) => string = (value: string): string => {
@@ -817,13 +1332,46 @@ export class OrganizationMembersPage {
     );
   };
 
-  /** Fallback text for the action-error banner when the backend sent no message. */
+  /**
+   * Property actionErrorFallback
+   * @readonly
+   *
+   * @description
+   * Fallback text for the action-error banner when the backend sent no message.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly actionErrorFallback: string = $localize`:@@org.members.actionErrorFallback:The action could not be completed.`;
 
-  /** The action-error banner's heading. */
+  /**
+   * Property actionErrorTitle
+   * @readonly
+   *
+   * @description
+   * The action-error banner's heading.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly actionErrorTitle: string = $localize`:@@org.members.actionErrorTitle:Action failed`;
 
-  /** The bulk-remove button's label, counting the current selection. */
+  /**
+   * Property bulkRemoveLabel
+   * @readonly
+   *
+   * @description
+   * The bulk-remove button's label, counting the current selection.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly bulkRemoveLabel: Signal<string> = computed<string>(
     () => $localize`:@@org.members.bulkRemoveButton:Remove (${this.selectedIds().size}:count:)`,
   );
@@ -831,9 +1379,13 @@ export class OrganizationMembersPage {
   /**
    * Property selectionActions
    * @readonly
-   * @description Permission-gated roster command rendered by the shared selection bar.
+   *
+   * @description
+   * Permission-gated roster command rendered by the shared selection bar.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly CollectionSelectionAction[]>}
    */
   protected readonly selectionActions: Signal<readonly CollectionSelectionAction[]> = computed(
@@ -852,28 +1404,80 @@ export class OrganizationMembersPage {
         : [],
   );
 
-  /** The member the role-assignment dialog is open for, resolved reactively so a toggle's own result is reflected immediately. */
+  /**
+   * Property rolesDialogMember
+   * @readonly
+   *
+   * @description
+   * The member the role-assignment dialog is open for, resolved reactively so a toggle's own result
+   * is reflected immediately.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<OrganizationMemberOutput | null>}
+   */
   protected readonly rolesDialogMember: Signal<OrganizationMemberOutput | null> = computed(() => {
     const id: string | null = this.rolesDialogMemberId();
 
     return id === null ? null : (this.store.memberEntityMap()[id] ?? null);
   });
 
-  /** The invite dialog's error banner, scoped to an invite actually attempted this session. */
+  /**
+   * Property inviteServerError
+   * @readonly
+   *
+   * @description
+   * The invite dialog's error banner, scoped to an invite actually attempted this session.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly inviteServerError: Signal<StoreError | null> = this.inviteGate.error;
 
-  /** Whether the revoke-confirm dialog's own write is in flight — busy-disables its footer and blocks Escape/backdrop dismissal. */
+  /**
+   * Property revokeDialogBusy
+   * @readonly
+   *
+   * @description
+   * Whether the revoke-confirm dialog's own write is in flight — busy-disables its footer and
+   * blocks Escape/backdrop dismissal.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly revokeDialogBusy: Signal<boolean> = this.revokeGate.isBusy;
 
-  /** The revoke-confirm dialog's own error, scoped to a revoke actually attempted this session — never a stale or unrelated mutation's failure. */
+  /**
+   * Property revokeDialogError
+   * @readonly
+   *
+   * @description
+   * The revoke-confirm dialog's own error, scoped to a revoke actually attempted this session —
+   * never a stale or unrelated mutation's failure.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly revokeDialogError: Signal<StoreError | null> = this.revokeGate.error;
 
   /**
    * Property actionError
    * @readonly
-   * @description A resend/role-toggle mutation's error, shown as a page-level banner and hidden while the invite, remove-confirm or revoke-confirm dialog is showing its own copy.
+   *
+   * @description
+   * A resend/role-toggle mutation's error, shown as a page-level banner and hidden while the
+   * invite, remove-confirm or revoke-confirm dialog is showing its own copy.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<StoreError | null>}
    */
   protected readonly actionError: Signal<StoreError | null> = computed<StoreError | null>(() => {
@@ -890,21 +1494,57 @@ export class OrganizationMembersPage {
     return state.status === 'error' ? state.error : null;
   });
 
-  /** The remove-confirm dialog's open/closed state, derived from whichever pending target is set. */
+  /**
+   * Property removeDialogState
+   * @readonly
+   *
+   * @description
+   * The remove-confirm dialog's open/closed state, derived from whichever pending target is set.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<BrnDialogState>}
+   */
   protected readonly removeDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.pendingRemove() !== null || this.pendingBulkRemoveIds() !== null ? 'open' : 'closed',
   );
 
-  /** Whether the remove-confirm dialog's own write is in flight — busy-disables its footer and blocks Escape/backdrop dismissal. */
+  /**
+   * Property removeDialogBusy
+   * @readonly
+   *
+   * @description
+   * Whether the remove-confirm dialog's own write is in flight — busy-disables its footer and
+   * blocks Escape/backdrop dismissal.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly removeDialogBusy: Signal<boolean> = this.removeGate.isBusy;
 
-  /** The remove-confirm dialog's own error, scoped to a remove actually attempted this session — never a stale or unrelated mutation's failure. */
+  /**
+   * Property removeDialogError
+   * @readonly
+   *
+   * @description
+   * The remove-confirm dialog's own error, scoped to a remove actually attempted this session —
+   * never a stale or unrelated mutation's failure.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly removeDialogError: Signal<StoreError | null> = this.removeGate.error;
   //#endregion
 
   //#region Constructor
   /**
    * Constructor
+   * @constructor
    *
    * @description
    * Wires the resource load (re-firing whenever the organization or the
@@ -992,6 +1632,7 @@ export class OrganizationMembersPage {
   //#region Methods
   /**
    * Method reload
+   * @method reload
    *
    * @description
    * Re-runs the initial load after a failure, mirroring the constructor
@@ -1004,6 +1645,7 @@ export class OrganizationMembersPage {
    *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected reload(): void {
@@ -1026,10 +1668,17 @@ export class OrganizationMembersPage {
 
   /**
    * Method goToMembersPage
-   * @description Loads another members page, keeping the current search/status filter and leaving invitations and roles untouched.
+   * @method goToMembersPage
+   *
+   * @description
+   * Loads another members page, keeping the current search/status filter and leaving invitations
+   * and roles untouched.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} target - The requested one-based page.
+   *
    * @returns {void}
    */
   protected goToMembersPage(target: number): void {
@@ -1040,10 +1689,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method setPageSize
-   * @description Changes how many roster rows a page holds and returns to the first page.
+   * @method setPageSize
+   *
+   * @description
+   * Changes how many roster rows a page holds and returns to the first page.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {number} size - The chosen page size.
+   *
    * @returns {void}
    */
   protected setPageSize(size: number): void {
@@ -1053,10 +1708,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method onSearchQueryChanged
-   * @description Records a keystroke into the debounced roster search.
+   * @method onSearchQueryChanged
+   *
+   * @description
+   * Records a keystroke into the debounced roster search.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {string} term - The search box's current value.
+   *
    * @returns {void}
    */
   protected onSearchQueryChanged(term: string): void {
@@ -1065,10 +1726,18 @@ export class OrganizationMembersPage {
 
   /**
    * Method onStatusFilterChanged
-   * @description Narrows `hlm-toggle-group`'s single/multi-select payload and re-queries the roster immediately — a discrete choice needs no debounce.
+   * @method onStatusFilterChanged
+   *
+   * @description
+   * Narrows `hlm-toggle-group`'s single/multi-select payload and re-queries the roster immediately
+   * — a discrete choice needs no debounce.
+   *
    * @access protected
    * @since 1.1.0
-   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   *
+   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted
+   *   value.
+   *
    * @returns {void}
    */
   protected onStatusFilterChanged(value: string | readonly string[] | null | undefined): void {
@@ -1080,18 +1749,15 @@ export class OrganizationMembersPage {
   }
 
   /**
-   * Method onRoleFilterChanged
-   * @description Narrows the roster to one role, or widens it back to everyone, and records the choice in the URL.
-   * @access protected
-   * @since 2.0.0
-   * @param {string | null | undefined} value - The chosen role id, or `all`.
-   * @returns {void}
-   */
-  /**
    * Method toggleSelectionMode
-   * @description Enters or leaves mobile card selection, clearing the selection on the way out.
+   * @method toggleSelectionMode
+   *
+   * @description
+   * Enters or leaves mobile card selection, clearing the selection on the way out.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @returns {void}
    */
   protected toggleSelectionMode(): void {
@@ -1101,6 +1767,20 @@ export class OrganizationMembersPage {
     if (!next) this.selectedIds.set(new Set<string>());
   }
 
+  /**
+   * Method onRoleFilterChanged
+   *
+   * @description
+   * Narrows the roster to one role, or widens it back to everyone, and records the choice in the
+   * URL.
+   *
+   * @access protected
+   * @since 2.0.0
+   *
+   * @param {string | null | undefined} value - The chosen role id, or `all`.
+   *
+   * @returns {void}
+   */
   protected onRoleFilterChanged(value: string | null | undefined): void {
     this.roleFilter.set(value === 'all' || !value ? null : value);
     this.writeRoleParam();
@@ -1109,9 +1789,14 @@ export class OrganizationMembersPage {
 
   /**
    * Method clearRosterFilters
-   * @description Drops the search term and returns the status filter to `all`.
+   * @method clearRosterFilters
+   *
+   * @description
+   * Drops the search term and returns the status filter to `all`.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected clearRosterFilters(): void {
@@ -1124,10 +1809,17 @@ export class OrganizationMembersPage {
 
   /**
    * Method onTabActivated
-   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing {@link activeTab}, ignoring a request for a tab the acting member cannot see.
+   * @method onTabActivated
+   *
+   * @description
+   * Narrows `hlm-tabs`' plain-string `tabActivated` payload before writing {@link activeTab},
+   * ignoring a request for a tab the acting member cannot see.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @param {string} tabId - The `hlm-tabs` id that just activated.
+   *
    * @returns {void}
    */
   protected onTabActivated(tabId: string): void {
@@ -1136,9 +1828,15 @@ export class OrganizationMembersPage {
 
   /**
    * Method writeRoleParam
-   * @description Mirrors the role narrowing into `?roleId=`, so the narrowed roster survives a reload and can be sent to a colleague.
+   * @method writeRoleParam
+   *
+   * @description
+   * Mirrors the role narrowing into `?roleId=`, so the narrowed roster survives a reload and can be
+   * sent to a colleague.
+   *
    * @access private
    * @since 2.0.0
+   *
    * @returns {void}
    */
   private writeRoleParam(): void {
@@ -1152,6 +1850,7 @@ export class OrganizationMembersPage {
 
   /**
    * Method applySortField
+   * @method applySortField
    *
    * @description
    * Orders the roster by a column head. Re-picking the active field reverses
@@ -1179,10 +1878,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method goToInvitationsPage
-   * @description Loads another pending-invitations page.
+   * @method goToInvitationsPage
+   *
+   * @description
+   * Loads another pending-invitations page.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @param {number} target - The requested one-based page.
+   *
    * @returns {void}
    */
   protected goToInvitationsPage(target: number): void {
@@ -1198,10 +1903,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method onSelectionChanged
-   * @description Records the members table's next row selection.
+   * @method onSelectionChanged
+   *
+   * @description
+   * Records the members table's next row selection.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ReadonlySet<string>} ids - The full next selection.
+   *
    * @returns {void}
    */
   protected onSelectionChanged(ids: ReadonlySet<string>): void {
@@ -1211,10 +1922,15 @@ export class OrganizationMembersPage {
   /**
    * Method onSelectionActionRequested
    * @method onSelectionActionRequested
-   * @description Rechecks roster access before opening the existing bulk-remove confirmation.
+   *
+   * @description
+   * Rechecks roster access before opening the existing bulk-remove confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} id - Shared selection command id.
+   *
    * @returns {void}
    */
   protected onSelectionActionRequested(id: string): void {
@@ -1231,9 +1947,14 @@ export class OrganizationMembersPage {
 
   /**
    * Method openInviteDialog
-   * @description Opens the invite dialog for a fresh session.
+   * @method openInviteDialog
+   *
+   * @description
+   * Opens the invite dialog for a fresh session.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected openInviteDialog(): void {
@@ -1243,10 +1964,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method onInviteDialogVisibleChange
-   * @description Keeps the dialog's error scope in sync with whether it is actually open.
+   * @method onInviteDialogVisibleChange
+   *
+   * @description
+   * Keeps the dialog's error scope in sync with whether it is actually open.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {boolean} visible - The dialog's next visibility.
+   *
    * @returns {void}
    */
   protected onInviteDialogVisibleChange(visible: boolean): void {
@@ -1256,10 +1983,17 @@ export class OrganizationMembersPage {
 
   /**
    * Method sendInvite
-   * @description Hands the form's values to the store. The dialog closes itself once the shared mutation state reports success.
+   * @method sendInvite
+   *
+   * @description
+   * Hands the form's values to the store. The dialog closes itself once the shared mutation state
+   * reports success.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InviteOrganizationMemberInput} payload - The validated invite payload.
+   *
    * @returns {void}
    */
   protected sendInvite(payload: InviteOrganizationMemberInput): void {
@@ -1269,10 +2003,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method openRolesDialog
-   * @description Opens the role-assignment dialog for a member.
+   * @method openRolesDialog
+   *
+   * @description
+   * Opens the role-assignment dialog for a member.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {OrganizationMemberOutput} member - The row's member.
+   *
    * @returns {void}
    */
   protected openRolesDialog(member: OrganizationMemberOutput): void {
@@ -1281,10 +2021,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method onRolesDialogVisibleChange
-   * @description Closes the role-assignment dialog.
+   * @method onRolesDialogVisibleChange
+   *
+   * @description
+   * Closes the role-assignment dialog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {boolean} visible - The dialog's next visibility.
+   *
    * @returns {void}
    */
   protected onRolesDialogVisibleChange(visible: boolean): void {
@@ -1293,10 +2039,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method onRoleToggled
-   * @description Assigns or removes the toggled role for the dialog's current member.
+   * @method onRoleToggled
+   *
+   * @description
+   * Assigns or removes the toggled role for the dialog's current member.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {OrganizationMemberRoleToggle} toggle - Which role, and the requested next state.
+   *
    * @returns {void}
    */
   protected onRoleToggled(toggle: OrganizationMemberRoleToggle): void {
@@ -1320,10 +2072,17 @@ export class OrganizationMembersPage {
 
   /**
    * Method reactivateMember
-   * @description Reactivates an inactive member. No confirm step — unlike Remove, reactivation is not destructive, so the store call fires directly from the row menu.
+   * @method reactivateMember
+   *
+   * @description
+   * Reactivates an inactive member. No confirm step — unlike Remove, reactivation is not
+   * destructive, so the store call fires directly from the row menu.
+   *
    * @access protected
    * @since 1.7.0
+   *
    * @param {OrganizationMemberOutput} member - The row's member.
+   *
    * @returns {void}
    */
   protected reactivateMember(member: OrganizationMemberOutput): void {
@@ -1332,10 +2091,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method requestRemove
-   * @description Opens the confirm dialog for a single row's Remove entry.
+   * @method requestRemove
+   *
+   * @description
+   * Opens the confirm dialog for a single row's Remove entry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {OrganizationMemberOutput} member - The row's member.
+   *
    * @returns {void}
    */
   protected requestRemove(member: OrganizationMemberOutput): void {
@@ -1345,9 +2110,14 @@ export class OrganizationMembersPage {
 
   /**
    * Method requestBulkRemove
-   * @description Opens the confirm dialog for the current selection. A no-op when nothing is selected.
+   * @method requestBulkRemove
+   *
+   * @description
+   * Opens the confirm dialog for the current selection. A no-op when nothing is selected.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected requestBulkRemove(): void {
@@ -1361,6 +2131,7 @@ export class OrganizationMembersPage {
 
   /**
    * Method confirmRemove
+   * @method confirmRemove
    *
    * @description
    * Sends the pending target(s) to the store. The dialog stays open,
@@ -1370,6 +2141,7 @@ export class OrganizationMembersPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirmRemove(): void {
@@ -1393,10 +2165,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method onRemoveDialogVisibleChange
-   * @description Clears both pending-remove signals on any dismissal — Cancel, the backdrop or Escape.
+   * @method onRemoveDialogVisibleChange
+   *
+   * @description
+   * Clears both pending-remove signals on any dismissal — Cancel, the backdrop or Escape.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {boolean} visible - The dialog's next visibility.
+   *
    * @returns {void}
    */
   protected onRemoveDialogVisibleChange(visible: boolean): void {
@@ -1409,10 +2187,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method copyInvitationLink
-   * @description Puts an invitation's accept link on the clipboard.
+   * @method copyInvitationLink
+   *
+   * @description
+   * Puts an invitation's accept link on the clipboard.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} link - The accept link.
+   *
    * @returns {void}
    */
   protected copyInvitationLink(link: string): void {
@@ -1421,10 +2205,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method resendInvitation
-   * @description Resends an invitation, regenerating its accept link.
+   * @method resendInvitation
+   *
+   * @description
+   * Resends an invitation, regenerating its accept link.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {OrganizationInvitationOutput} invitation - The row's invitation.
+   *
    * @returns {void}
    */
   protected resendInvitation(invitation: OrganizationInvitationOutput): void {
@@ -1436,10 +2226,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method requestRevoke
-   * @description Opens the confirm dialog for a row's Revoke entry.
+   * @method requestRevoke
+   *
+   * @description
+   * Opens the confirm dialog for a row's Revoke entry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {OrganizationInvitationOutput} invitation - The row's invitation.
+   *
    * @returns {void}
    */
   protected requestRevoke(invitation: OrganizationInvitationOutput): void {
@@ -1449,6 +2245,7 @@ export class OrganizationMembersPage {
 
   /**
    * Method confirmRevoke
+   * @method confirmRevoke
    *
    * @description
    * Sends the pending invitation to the store. The dialog stays open,
@@ -1458,6 +2255,7 @@ export class OrganizationMembersPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirmRevoke(): void {
@@ -1473,10 +2271,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method onRevokeDialogVisibleChange
-   * @description Clears the pending invitation on any dismissal — Cancel, the backdrop or Escape.
+   * @method onRevokeDialogVisibleChange
+   *
+   * @description
+   * Clears the pending invitation on any dismissal — Cancel, the backdrop or Escape.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {boolean} visible - The dialog's next visibility.
+   *
    * @returns {void}
    */
   protected onRevokeDialogVisibleChange(visible: boolean): void {
@@ -1488,9 +2292,14 @@ export class OrganizationMembersPage {
 
   /**
    * Method dismissActionError
-   * @description Hides the page-level action-error banner until the next error.
+   * @method dismissActionError
+   *
+   * @description
+   * Hides the page-level action-error banner until the next error.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected dismissActionError(): void {
@@ -1501,6 +2310,7 @@ export class OrganizationMembersPage {
   //#region Internals
   /**
    * Method setActiveTab
+   * @method setActiveTab
    *
    * @description
    * Switches the active tab and mirrors the choice into `?tab=`, dropping
@@ -1529,10 +2339,16 @@ export class OrganizationMembersPage {
 
   /**
    * Method isTabPermitted
-   * @description Whether the acting member holds the permission the given tab requires.
+   * @method isTabPermitted
+   *
+   * @description
+   * Whether the acting member holds the permission the given tab requires.
+   *
    * @access private
    * @since 2.0.0
+   *
    * @param {OrganizationMembersTabId} tab - The tab to check.
+   *
    * @returns {boolean}
    */
   private isTabPermitted(tab: OrganizationMembersTabId): boolean {
@@ -1545,9 +2361,15 @@ export class OrganizationMembersPage {
 
   /**
    * Method firstPermittedTab
-   * @description The first tab, in `members` → `roles` → `teams` order, the acting member may see — the route guard's `match: 'any'` over the three tabs' permissions guarantees at least one.
+   * @method firstPermittedTab
+   *
+   * @description
+   * The first tab, in `members` → `roles` → `teams` order, the acting member may see — the route
+   * guard's `match: 'any'` over the three tabs' permissions guarantees at least one.
+   *
    * @access private
    * @since 2.0.0
+   *
    * @returns {OrganizationMembersTabId}
    */
   private firstPermittedTab(): OrganizationMembersTabId {
@@ -1559,6 +2381,7 @@ export class OrganizationMembersPage {
 
   /**
    * Method queryMembers
+   * @method queryMembers
    *
    * @description
    * Re-issues the server-side roster query for the given page with the

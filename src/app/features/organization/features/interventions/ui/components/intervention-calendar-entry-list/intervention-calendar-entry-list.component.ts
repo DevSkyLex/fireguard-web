@@ -12,7 +12,7 @@ import { HlmItemImports } from '@shared/ui/item';
 import { InterventionTag } from '../intervention-tag';
 
 /**
- * Component InterventionCalendarEntryList
+ * Class InterventionCalendarEntryList
  * @class InterventionCalendarEntryList
  *
  * @description
@@ -29,6 +29,8 @@ import { InterventionTag } from '../intervention-tag';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-intervention-calendar-entry-list
@@ -36,8 +38,6 @@ import { InterventionTag } from '../intervention-tag';
  *   [organizationId]="organizationId()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-calendar-entry-list',
@@ -51,9 +51,13 @@ export class InterventionCalendarEntryList {
   /**
    * Property items
    * @readonly
-   * @description The interventions to render, in the order given — the caller sorts.
+   *
+   * @description
+   * The interventions to render, in the order given — the caller sorts.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly InterventionOutput[]>}
    */
   public readonly items: InputSignal<readonly InterventionOutput[]> =
@@ -62,9 +66,13 @@ export class InterventionCalendarEntryList {
   /**
    * Property organizationId
    * @readonly
-   * @description The organization a row's link routes into.
+   *
+   * @description
+   * The organization a row's link routes into.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -72,25 +80,47 @@ export class InterventionCalendarEntryList {
   /**
    * Property compact
    * @readonly
-   * @description Stacks the status under the title inside a narrow contextual panel.
+   *
+   * @description
+   * Stacks the status under the title inside a narrow contextual panel.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly compact: InputSignal<boolean> = input<boolean>(false);
   //#endregion
 
   //#region Properties
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * Provides the active locale used to format calendar dates and times.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject(LOCALE_ID);
   //#endregion
 
   //#region Methods
   /**
    * Method numberLabelOf
-   * @description The intervention's per-organization number, rendered `FG-{number}`.
+   * @method numberLabelOf
+   *
+   * @description
+   * The intervention's per-organization number, rendered `FG-{number}`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionOutput} intervention - The row's intervention.
+   *
    * @returns {string} The `FG-` label.
    */
   protected numberLabelOf(intervention: InterventionOutput): string {
@@ -99,11 +129,21 @@ export class InterventionCalendarEntryList {
 
   /**
    * Method anchorLabelOf
-   * @description Names which end of the schedule window placed the row here — "Starts {date}" for `plannedStartAt`, "Due {date}" when only `dueAt` is set — the same anchor the calendar places the entry by. Both fields are date-only (UTC midnight), so this never prints a time of day: doing so would show "02:00" in most timezones for a value that was never meant to carry one.
+   * @method anchorLabelOf
+   *
+   * @description
+   * Names which end of the schedule window placed the row here — "Starts {date}" for
+   * `plannedStartAt`, "Due {date}" when only `dueAt` is set — the same anchor the calendar places
+   * the entry by. Both fields are date-only (UTC midnight), so this never prints a time of day:
+   * doing so would show "02:00" in most timezones for a value that was never meant to carry one.
+   *
    * @access protected
    * @since 6.4.0
+   *
    * @param {InterventionOutput} intervention - The row's intervention.
-   * @returns {string} The localized anchor label, or `''` when the intervention carries neither date.
+   *
+   * @returns {string} The localized anchor label, or `''` when the intervention carries neither
+   *   date.
    */
   protected anchorLabelOf(intervention: InterventionOutput): string {
     if (intervention.plannedStartAt) {
@@ -118,10 +158,17 @@ export class InterventionCalendarEntryList {
 
   /**
    * Method dateOnlyLabelOf
-   * @description Formats a date-only anchor (a `YYYY-MM-DD` string or a UTC-midnight instant) from its own written calendar day, never through a timezone conversion that could shift it.
+   * @method dateOnlyLabelOf
+   *
+   * @description
+   * Formats a date-only anchor (a `YYYY-MM-DD` string or a UTC-midnight instant) from its own
+   * written calendar day, never through a timezone conversion that could shift it.
+   *
    * @access private
    * @since 6.4.0
+   *
    * @param {string} anchor - The date-only value.
+   *
    * @returns {string} The localized day, or `''` when it does not parse.
    */
   private dateOnlyLabelOf(anchor: string): string {
@@ -136,10 +183,16 @@ export class InterventionCalendarEntryList {
 
   /**
    * Method detailLinkOf
-   * @description The intervention's workspace route.
+   * @method detailLinkOf
+   *
+   * @description
+   * The intervention's workspace route.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionOutput} intervention - The row's intervention.
+   *
    * @returns {readonly string[]} The router commands.
    */
   protected detailLinkOf(intervention: InterventionOutput): readonly string[] {

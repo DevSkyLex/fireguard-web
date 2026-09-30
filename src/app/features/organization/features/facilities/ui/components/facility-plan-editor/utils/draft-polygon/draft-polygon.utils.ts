@@ -1,4 +1,9 @@
-/** The minimum vertex count a polygon needs before it can be closed. */
+/**
+ * Constant MIN_CLOSABLE_POLYGON_VERTICES
+ *
+ * @description
+ * The minimum vertex count a polygon needs before it can be closed.
+ */
 const MIN_CLOSABLE_POLYGON_VERTICES = 3;
 
 /**
@@ -17,8 +22,10 @@ const MIN_CLOSABLE_POLYGON_VERTICES = 3;
  * @access public
  * @since 1.4.0
  *
- * @param {{ x: number; y: number }} point - The screen point, typically `{ x: event.clientX, y: event.clientY }`.
- * @param {{ left: number; top: number; width: number; height: number }} rect - The capture layer's current bounding rect.
+ * @param {{ x: number; y: number }} point - The screen point, typically `{ x: event.clientX, y:
+ *   event.clientY }`.
+ * @param {{ left: number; top: number; width: number; height: number }} rect - The capture layer's
+ *   current bounding rect.
  *
  * @returns {readonly [number, number]} The point in normalized `[0, 1]` image coordinates.
  */
@@ -68,11 +75,15 @@ export function isTapGesture(
 /**
  * Function addDraftVertex
  *
- * @description Appends a vertex to a draft polygon's point list.
+ * @description
+ * Appends a vertex to a draft polygon's point list.
+ *
  * @access public
  * @since 1.4.0
+ *
  * @param {ReadonlyArray<readonly [number, number]>} points - The current draft points.
  * @param {readonly [number, number]} point - The vertex to append.
+ *
  * @returns {ReadonlyArray<readonly [number, number]>} The points with `point` appended.
  */
 export function addDraftVertex(
@@ -85,10 +96,14 @@ export function addDraftVertex(
 /**
  * Function undoDraftVertex
  *
- * @description Removes the last vertex from a draft polygon's point list, if any.
+ * @description
+ * Removes the last vertex from a draft polygon's point list, if any.
+ *
  * @access public
  * @since 1.4.0
+ *
  * @param {ReadonlyArray<readonly [number, number]>} points - The current draft points.
+ *
  * @returns {ReadonlyArray<readonly [number, number]>} The points without their last entry.
  */
 export function undoDraftVertex(
@@ -100,10 +115,14 @@ export function undoDraftVertex(
 /**
  * Function isClosablePolygon
  *
- * @description Whether a draft polygon has enough vertices to submit (the backend requires at least three).
+ * @description
+ * Whether a draft polygon has enough vertices to submit (the backend requires at least three).
+ *
  * @access public
  * @since 1.4.0
+ *
  * @param {ReadonlyArray<readonly [number, number]>} points - The current draft points.
+ *
  * @returns {boolean} `true` when `points` holds at least three vertices.
  */
 export function isClosablePolygon(points: ReadonlyArray<readonly [number, number]>): boolean {
@@ -112,9 +131,15 @@ export function isClosablePolygon(points: ReadonlyArray<readonly [number, number
 
 /**
  * Function clamp01
+ *
+ * @description
+ * Restricts a normalized polygon coordinate to the unit interval.
+ *
  * @access private
  * @since 1.4.0
+ *
  * @param {number} value - The candidate value.
+ *
  * @returns {number} `value` confined to `[0, 1]`.
  */
 function clamp01(value: number): number {

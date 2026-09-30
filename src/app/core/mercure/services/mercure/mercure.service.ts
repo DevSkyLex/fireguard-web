@@ -18,20 +18,81 @@ import {
 import type { MercureConnectionStatus } from '@core/mercure/models';
 
 /**
+ * Interface TopicConnection
+ * @interface TopicConnection
+ *
+ * @description
  * One topic's shared connection and the subscribers riding on it.
  */
 interface TopicConnection {
+  /**
+   * Property eventSource
+   *
+   * @description
+   * Active Server-Sent Events source; `null` before opening or after teardown.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {EventSource | null}
+   */
   eventSource: EventSource | null;
-  /** Latest token seen for this topic; reconnects use it, not the first one. */
+
+  /**
+   * Property token
+   *
+   * @description
+   * Most recently supplied authorization token, used if this topic needs reconnecting.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {string}
+   */
   token: string;
+
+  /**
+   * Property subscribers
+   *
+   * @description
+   * Observers sharing this topic connection; the source is released when the set becomes empty.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {Set<Subscriber<never>>}
+   */
   subscribers: Set<Subscriber<never>>;
-  /** Consecutive failed attempts, reset by a successful open. */
+
+  /**
+   * Property attempt
+   *
+   * @description
+   * Failed reconnect count used to calculate the capped retry delay; a successful open resets it.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {number}
+   */
   attempt: number;
+
+  /**
+   * Property retryTimer
+   *
+   * @description
+   * Scheduled reconnect handle, or `null` when no retry is pending.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {ReturnType<typeof setTimeout> | null}
+   */
   retryTimer: ReturnType<typeof setTimeout> | null;
 }
 
 /**
- * MercureService
+ * Service MercureService
  * @class MercureService
  *
  * @description
@@ -63,6 +124,8 @@ interface TopicConnection {
  *
  * @version 2.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```typescript
  * const mercure: MercureService = inject(MercureService);
@@ -72,8 +135,6 @@ interface TopicConnection {
  *
  * subscription.unsubscribe();
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
 export class MercureService {
@@ -157,7 +218,6 @@ export class MercureService {
    *
    * @description
    * Connection health per topic. A topic with no entry has no subscriber.
-   *
    * Consumers that must not miss updates watch this and refetch when a topic
    * returns to `connected` — this service replays nothing.
    *
@@ -178,7 +238,6 @@ export class MercureService {
    * @description
    * Streams a topic's updates. Several callers may subscribe to the same topic
    * without opening more than one connection.
-   *
    * The returned observable never errors on a connection problem — it goes
    * quiet while the connection is being re-established and resumes on its own.
    *
@@ -188,7 +247,7 @@ export class MercureService {
    * @param {string} topic - Mercure topic.
    * @param {string} token - Subscriber JWT authorizing that topic.
    *
-   * @return {Observable<T>} Parsed updates for the topic.
+   * @returns {Observable<T>} Parsed updates for the topic.
    */
   public subscribe<T>(topic: string, token: string): Observable<T> {
     if (!this.browser) return EMPTY;
@@ -217,7 +276,7 @@ export class MercureService {
    *
    * @param {string} topic - Mercure topic.
    *
-   * @return {boolean} `true` only while the connection is open.
+   * @returns {boolean} `true` only while the connection is open.
    */
   public isConnected(topic: string): boolean {
     return this.status().get(topic) === 'connected';
@@ -241,7 +300,7 @@ export class MercureService {
    * @param {string} topic - Mercure topic.
    * @param {string} token - Subscriber JWT.
    *
-   * @return {TopicConnection} The shared connection.
+   * @returns {TopicConnection} The shared connection.
    */
   private acquire(topic: string, token: string): TopicConnection {
     const existing: TopicConnection | undefined = this.connections.get(topic);
@@ -278,7 +337,7 @@ export class MercureService {
    *
    * @param {string} topic - Mercure topic.
    *
-   * @return {void}
+   * @returns {void}
    */
   private release(topic: string): void {
     const connection: TopicConnection | undefined = this.connections.get(topic);
@@ -304,7 +363,7 @@ export class MercureService {
    * @param {string} topic - Mercure topic.
    * @param {TopicConnection} connection - The topic's shared connection.
    *
-   * @return {void}
+   * @returns {void}
    */
   private open(topic: string, connection: TopicConnection): void {
     const url: URL = new URL(this.config.mercureHubUrl);
@@ -348,7 +407,7 @@ export class MercureService {
    * @param {TopicConnection} connection - The topic's shared connection.
    * @param {MessageEvent} event - Raw frame.
    *
-   * @return {void}
+   * @returns {void}
    */
   private dispatch(topic: string, connection: TopicConnection, event: MessageEvent): void {
     let data: unknown;
@@ -378,7 +437,6 @@ export class MercureService {
    *
    * @description
    * Decides who owns the retry.
-   *
    * A source still in `CONNECTING` is one the browser is already retrying with
    * its own backoff; touching it — in particular calling `close()` — is what
    * would turn a blip into a permanent outage. Only a `CLOSED` source is ours
@@ -391,7 +449,7 @@ export class MercureService {
    * @param {TopicConnection} connection - The topic's shared connection.
    * @param {EventSource} eventSource - The source that failed.
    *
-   * @return {void}
+   * @returns {void}
    */
   private handleError(topic: string, connection: TopicConnection, eventSource: EventSource): void {
     // A stale source from a previous attempt: ignore it.
@@ -410,7 +468,6 @@ export class MercureService {
    *
    * @description
    * Reopens the topic after a capped, jittered delay.
-   *
    * The jitter is full rather than partial so that a hub restart does not bring
    * every client back in the same instant.
    *
@@ -420,7 +477,7 @@ export class MercureService {
    * @param {string} topic - Mercure topic.
    * @param {TopicConnection} connection - The topic's shared connection.
    *
-   * @return {void}
+   * @returns {void}
    */
   private scheduleReconnect(topic: string, connection: TopicConnection): void {
     if (connection.retryTimer !== null) return;
@@ -458,7 +515,7 @@ export class MercureService {
    * @param {string} topic - Mercure topic.
    * @param {MercureConnectionStatus | null} status - New status, or `null` to forget the topic.
    *
-   * @return {void}
+   * @returns {void}
    */
   private setStatus(topic: string, status: MercureConnectionStatus | null): void {
     this.statuses.update(

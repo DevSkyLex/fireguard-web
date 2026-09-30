@@ -26,13 +26,14 @@ import type { FacilityBuilding3dState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Seeds {@link FacilityBuilding3dState}. Query state (`_queryStatus`,
  * `_queryError`, `_queryData`) is initialised by `withQueryState`.
  *
  * @since 1.0.0
+ *
+ * @constant INITIAL_STATE
  */
 const INITIAL_STATE: FacilityBuilding3dState = {
   selectedFloorId: null,
@@ -44,8 +45,7 @@ const INITIAL_STATE: FacilityBuilding3dState = {
 //#endregion
 
 /**
- * Store FacilityBuilding3dStore
- * @const FacilityBuilding3dStore
+ * Constant FacilityBuilding3dStore
  *
  * @description
  * Route-scoped store for the building 3D view: the read-only building
@@ -54,12 +54,10 @@ const INITIAL_STATE: FacilityBuilding3dState = {
  * 3D scene renders against. The scene itself, and any per-frame hover
  * state, live entirely outside this store — a 60Hz `patchState` would be a
  * store misuse this slice deliberately avoids.
- *
  * `loadModel` is guarded to the browser platform: the building model is
  * secondary tab data for a route already rendered by its parent facility
  * page, the same convention `FacilityDetailPage`'s Plans tab follows, so
  * SSR renders a pure skeleton for this view with no server-side fetch.
- *
  * `loadModel`'s success handler also selects the model's first floor
  * (server order) whenever nothing is selected yet — the only way a room can
  * be selected is `selectRoom`, called from the scene's pointer-only
@@ -67,7 +65,10 @@ const INITIAL_STATE: FacilityBuilding3dState = {
  * would have no path at all into `FacilityBuilding3dRoomPanel` (WCAG 2.1.1).
  *
  * @since 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant FacilityBuilding3dStore
  */
 export const FacilityBuilding3dStore = signalStore(
   withQueryState<FacilityBuildingModelOutput>(),
@@ -75,6 +76,7 @@ export const FacilityBuilding3dStore = signalStore(
 
   withComputed((store) => ({
     /**
+     * @description
      * The loaded model's floors, in the exact server order — never
      * re-sorted, per the model's own contract.
      */
@@ -84,7 +86,10 @@ export const FacilityBuilding3dStore = signalStore(
   })),
 
   withComputed((store) => ({
-    /** The currently selected floor, or `null` when none matches. */
+    /**
+     * @description
+     * The currently selected floor, or `null` when none matches.
+     */
     selectedFloor: computed<FacilityBuildingModelFloor | null>(() => {
       const selectedFloorId: string | null = store.selectedFloorId();
       if (!selectedFloorId) return null;
@@ -92,7 +97,10 @@ export const FacilityBuilding3dStore = signalStore(
       return store.floors().find((floor) => floor.facilityId === selectedFloorId) ?? null;
     }),
 
-    /** The currently selected room, or `null` when none matches. */
+    /**
+     * @description
+     * The currently selected room, or `null` when none matches.
+     */
     selectedRoom: computed<FacilityPlanOverlayZone | null>(() => {
       const selectedRoomId: string | null = store.selectedRoomId();
       if (!selectedRoomId) return null;
@@ -107,12 +115,15 @@ export const FacilityBuilding3dStore = signalStore(
       return null;
     }),
 
-    /** True once the model has loaded and the building has no floors. */
+    /**
+     * @description
+     * True once the model has loaded and the building has no floors.
+     */
     isEmpty: computed<boolean>(() => store.isQueryLoaded() && store.floors().length === 0),
 
     /**
+     * @description
      * True when the building has floors but not one of them carries geometry.
-     *
      * A distinct state from {@link isEmpty}, and a common one: floors are
      * created long before anyone digitizes a plan. Both would otherwise render
      * an empty canvas with nothing to explain it — the scene has nothing to
@@ -136,7 +147,6 @@ export const FacilityBuilding3dStore = signalStore(
     ) => {
       /**
        * Constant loadModelFn
-       * @const loadModelFn
        *
        * @description
        * Internal rxMethod fetching one building's 3D model. Exposed as
@@ -145,6 +155,8 @@ export const FacilityBuilding3dStore = signalStore(
        * @since 1.0.0
        *
        * @type {RxMethod<{ organizationId: string; facilityId: string }>}
+       *
+       * @constant loadModelFn
        */
       const loadModelFn = rxMethod<{ organizationId: string; facilityId: string }>(
         pipe(
@@ -201,9 +213,13 @@ export const FacilityBuilding3dStore = signalStore(
          * Method selectFloor
          * @method selectFloor
          *
-         * @description Selects a floor, without touching the current room selection.
+         * @description
+         * Selects a floor, without touching the current room selection.
+         *
          * @since 1.0.0
+         *
          * @param {string | null} floorId - The floor to select, or `null` to clear it.
+         *
          * @returns {void}
          */
         selectFloor(floorId: string | null): void {
@@ -250,7 +266,9 @@ export const FacilityBuilding3dStore = signalStore(
          * clears it, showing every floor again.
          *
          * @since 1.0.0
+         *
          * @param {string} floorId - The floor to isolate.
+         *
          * @returns {void}
          */
         toggleIsolation(floorId: string): void {
@@ -263,8 +281,11 @@ export const FacilityBuilding3dStore = signalStore(
          * Method toggleExploded
          * @method toggleExploded
          *
-         * @description Toggles the vertically-exploded floor layout.
+         * @description
+         * Toggles the vertically-exploded floor layout.
+         *
          * @since 1.0.0
+         *
          * @returns {void}
          */
         toggleExploded(): void {
@@ -280,6 +301,7 @@ export const FacilityBuilding3dStore = signalStore(
          * the 3D scene watches this value for changes, not its magnitude.
          *
          * @since 1.0.0
+         *
          * @returns {void}
          */
         resetCamera(): void {
@@ -290,8 +312,11 @@ export const FacilityBuilding3dStore = signalStore(
          * Method clearSelection
          * @method clearSelection
          *
-         * @description Clears the selected floor and room, leaving isolation and the exploded layout untouched.
+         * @description
+         * Clears the selected floor and room, leaving isolation and the exploded layout untouched.
+         *
          * @since 1.0.0
+         *
          * @returns {void}
          */
         clearSelection(): void {
@@ -304,11 +329,12 @@ export const FacilityBuilding3dStore = signalStore(
 
 /**
  * Type FacilityBuilding3dStoreType
- * @type FacilityBuilding3dStoreType
  *
  * @description
  * Instance type of the {@link FacilityBuilding3dStore} signal store.
  *
  * @since 1.0.0
+ *
+ * @type FacilityBuilding3dStoreType
  */
 export type FacilityBuilding3dStoreType = InstanceType<typeof FacilityBuilding3dStore>;

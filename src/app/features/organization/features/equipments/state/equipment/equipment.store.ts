@@ -42,12 +42,21 @@ import { ActiveEquipmentStore } from '../active-equipment/active-equipment.store
 import { equipmentStoreEvents } from './events';
 import type { EquipmentState } from './models';
 
+/**
+ * Constant INSPECTION_CREATE_EQUIPMENT_ITEMS_PER_PAGE
+ *
+ * @description
+ * Sets the page size used to load equipment options for inspection creation.
+ *
+ * @access public
+ *
+ * @type {number}
+ */
 const INSPECTION_CREATE_EQUIPMENT_ITEMS_PER_PAGE = 200;
 
 //#region Initial State
 /**
  * Constant INITIAL_EQUIPMENT_STATE
- * @const INITIAL_EQUIPMENT_STATE
  *
  * @description
  * Initial state for the EquipmentStore. Entity state (`equipmentEntities`,
@@ -57,6 +66,8 @@ const INSPECTION_CREATE_EQUIPMENT_ITEMS_PER_PAGE = 200;
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_EQUIPMENT_STATE
  */
 const INITIAL_EQUIPMENT_STATE: EquipmentState = {
   createCallState: idleCallState(),
@@ -83,8 +94,7 @@ const INITIAL_EQUIPMENT_STATE: EquipmentState = {
 //#endregion
 
 /**
- * Store EquipmentStore
- * @const EquipmentStore
+ * Constant EquipmentStore
  *
  * @description
  * Component-scoped NgRx SignalStore for equipment list management, CRUD,
@@ -99,6 +109,12 @@ const INITIAL_EQUIPMENT_STATE: EquipmentState = {
  * For reading the currently active/selected equipment use the root-level
  * {@link ActiveEquipmentStore} instead.
  *
+ * @version 2.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const EquipmentStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [EquipmentStore] })
@@ -106,16 +122,12 @@ const INITIAL_EQUIPMENT_STATE: EquipmentState = {
  *   readonly store = inject<EquipmentStore>(EquipmentStore);
  * }
  * ```
- *
- * @version 2.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const EquipmentStore = signalStore(
   //#region Features
   /**
-   * Feature withEntities
-   *
    * @description
+   * Feature withEntities
    * Adds NgRx entity state and entity-adapter updater functions for
    * `EquipmentOutput`, `EquipmentAttachmentOutput`, and `EquipmentTagOutput`
    * objects keyed by their `id` field.
@@ -130,9 +142,8 @@ export const EquipmentStore = signalStore(
   withEntities({ entity: type<EquipmentMaintenanceLogOutput>(), collection: 'maintenanceLog' }),
 
   /**
-   * Feature withState
-   *
    * @description
+   * Feature withState
    * Adds auxiliary state to the store. Entity state is handled separately by
    * `withEntities`.
    *
@@ -143,9 +154,8 @@ export const EquipmentStore = signalStore(
   withState<EquipmentState>(INITIAL_EQUIPMENT_STATE),
 
   /**
-   * Feature withComputed
-   *
    * @description
+   * Feature withComputed
    * Adds computed properties to the store for common derived state
    * related to the equipment list and its operations.
    *
@@ -158,13 +168,14 @@ export const EquipmentStore = signalStore(
   withComputed((store) => {
     /**
      * Constant activeEquipmentStore
-     * @const activeEquipmentStore
      *
      * @description
      * The root-level store that tracks the currently active equipment and
      * its associated loading state.
      *
      * @type {ActiveEquipmentStore} The injected ActiveEquipmentStore instance.
+     *
+     * @constant activeEquipmentStore
      */
     const activeEquipmentStore: ActiveEquipmentStore =
       inject<ActiveEquipmentStore>(ActiveEquipmentStore);
@@ -209,25 +220,40 @@ export const EquipmentStore = signalStore(
        */
       tags: computed<ReadonlyArray<EquipmentTagOutput>>(() => store.tagEntities()),
 
-      /** All cached maintenance log entries. */
+      /**
+       * @description
+       * All cached maintenance log entries.
+       */
       maintenanceLogs: computed<ReadonlyArray<EquipmentMaintenanceLogOutput>>(() =>
         store.maintenanceLogEntities(),
       ),
 
-      /** True while equipment attachments are loading. */
+      /**
+       * @description
+       * True while equipment attachments are loading.
+       */
       isLoadingAttachments: computed<boolean>(
         () => store.attachmentsListCallState().status === 'pending',
       ),
 
-      /** True while the organization equipment tag catalog is loading. */
+      /**
+       * @description
+       * True while the organization equipment tag catalog is loading.
+       */
       isLoadingTags: computed<boolean>(() => store.tagsListCallState().status === 'pending'),
 
-      /** True while equipment maintenance logs are loading. */
+      /**
+       * @description
+       * True while equipment maintenance logs are loading.
+       */
       isLoadingMaintenanceLogs: computed<boolean>(
         () => store.maintenanceLogsListCallState().status === 'pending',
       ),
 
-      /** True while an equipment lifecycle transition is in-flight. */
+      /**
+       * @description
+       * True while an equipment lifecycle transition is in-flight.
+       */
       isChangingLifecycle: computed<boolean>(
         () =>
           store.commissionCallState().status === 'pending' ||
@@ -342,9 +368,8 @@ export const EquipmentStore = signalStore(
   }),
 
   /**
-   * Feature withMethods
-   *
    * @description
+   * Feature withMethods
    * Adds methods to the store for managing the equipment list, including
    * loading a paginated list, creating, updating, lifecycle transitions,
    * attachments, tags, and resetting operations.
@@ -352,12 +377,17 @@ export const EquipmentStore = signalStore(
    * @since 1.0.0
    *
    * @param {SignalStore} store - The store instance to which the methods will be added.
-   * @param {ActiveEquipmentStore} activeEquipmentStore - The root store tracking the currently active equipment.
-   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on errors.
-   * @param {EquipmentService} equipmentService - The service used to interact with the equipment API.
+   * @param {ActiveEquipmentStore} activeEquipmentStore - The root store tracking the currently
+   *   active equipment.
+   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on
+   *   errors.
+   * @param {EquipmentService} equipmentService - The service used to interact with the equipment
+   *   API.
    *
    * @returns {object} An object containing the methods to add to the store.
    */
+  //#endregion
+
   //#region Methods
   withMethods(
     (
@@ -371,7 +401,6 @@ export const EquipmentStore = signalStore(
     ) => {
       /**
        * Constant loadFn
-       * @const loadFn
        *
        * @description
        * Shared rxMethod implementation for loading a paginated equipment list.
@@ -382,6 +411,8 @@ export const EquipmentStore = signalStore(
        * @since 2.0.0
        *
        * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>}
+       *
+       * @constant loadFn
        */
       const loadFn = rxMethod<{ organizationId: string; options?: RequestOptions }>(
         pipe(
@@ -540,7 +571,11 @@ export const EquipmentStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; equipmentId: string; input: UpdateEquipmentInput }>}
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   equipmentId: string;
+         *   input: UpdateEquipmentInput;
+         * }>}
          */
         update: rxMethod<{
           organizationId: string;
@@ -593,7 +628,11 @@ export const EquipmentStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; equipmentId: string; input: AssignToFacilityInput }>}
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   equipmentId: string;
+         *   input: AssignToFacilityInput;
+         * }>}
          */
         assignToFacility: rxMethod<{
           organizationId: string;
@@ -801,7 +840,6 @@ export const EquipmentStore = signalStore(
          * so the entity is dropped from this store's collection either way,
          * since it leaves the active view. Uses `exhaustMap` to prevent
          * concurrent submissions.
-         *
          * Not wired to a detail-page UI action: `equipment-detail` already
          * exposes the equivalent lifecycle action ({@link decommission}), so
          * this method exists for data-access parity and future consumers
@@ -908,7 +946,11 @@ export const EquipmentStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; equipmentId: string; options?: RequestOptions }>}
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   equipmentId: string;
+         *   options?: RequestOptions;
+         * }>}
          */
         loadAttachments: rxMethod<{
           organizationId: string;
@@ -957,7 +999,11 @@ export const EquipmentStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; equipmentId: string; input: AddAttachmentInput }>}
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   equipmentId: string;
+         *   input: AddAttachmentInput;
+         * }>}
          */
         addAttachment: rxMethod<{
           organizationId: string;
@@ -1002,7 +1048,11 @@ export const EquipmentStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; equipmentId: string; attachmentId: string }>}
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   equipmentId: string;
+         *   attachmentId: string;
+         * }>}
          */
         deleteAttachment: rxMethod<{
           organizationId: string;
@@ -1180,6 +1230,7 @@ export const EquipmentStore = signalStore(
         ),
 
         /**
+         * @description
          * Loads the maintenance log collection for one equipment.
          */
         loadMaintenanceLogs: rxMethod<{
@@ -1262,7 +1313,6 @@ export const EquipmentStore = signalStore(
 
 /**
  * Type EquipmentStore
- * @type EquipmentStore
  *
  * @description
  * Instance type of the {@link EquipmentStore} signal store.
@@ -1270,5 +1320,7 @@ export const EquipmentStore = signalStore(
  * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type EquipmentStore
  */
 export type EquipmentStore = InstanceType<typeof EquipmentStore>;

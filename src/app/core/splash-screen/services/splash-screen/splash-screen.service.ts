@@ -27,38 +27,55 @@ import type { SplashScreenPhase } from '../../ports';
  *
  * @description
  * Manages the global splash screen visibility for two scenarios:
+ *
  * - **Boot**: visible while the auth session has not yet initialized.
- * - **Navigation**: visible during lazy-loaded route transitions
- *   that exceed the anti-flicker threshold.
- *
- * A boot that exceeds the stall threshold flips the phase to `stalled`
- * so the splash can offer a retry instead of spinning indefinitely.
- *
- * The service exposes a `visible` signal, a semantic `phase` signal,
- * and a `retry()` method, consumed by the `SplashScreen` component at
- * the root level through the `SPLASH_SCREEN_PORT` neutral contract.
+ * - **Navigation**: visible during lazy-loaded route transitions that exceed the anti-flicker
+ *   threshold. A boot that exceeds the stall threshold flips the phase to `stalled` so the splash
+ *   can offer a retry instead of spinning indefinitely. The service exposes a `visible` signal, a
+ *   semantic `phase` signal, and a `retry()` method, consumed by the `SplashScreen` component at
+ *   the root level through the `SPLASH_SCREEN_PORT` neutral contract.
  *
  * @version 1.2.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
 export class SplashScreenService {
   //#region Constants
   /**
+   * Property NAV_DELAY_MS
+   * @readonly
+   *
+   * @description
    * Anti-flicker delay in milliseconds.
    * Navigation splash only appears if the transition takes longer.
+   *
+   * @access private
+   * @since 0.1.0
+   *
+   * @type {number}
    */
   private static readonly NAV_DELAY_MS: number = 150;
 
   /**
+   * Property STALL_DELAY_MS
+   * @readonly
+   *
+   * @description
    * Stall threshold in milliseconds. If the app is still booting after
    * this delay, the splash switches to its failure state so the user is
    * offered a retry instead of an indefinite wait.
+   *
+   * @access private
+   * @since 0.1.0
+   *
+   * @type {number}
    */
   private static readonly STALL_DELAY_MS: number = 10_000;
 
   //#endregion
 
+  //#region Properties
   //#region Dependencies
   /**
    * Property router
@@ -158,10 +175,16 @@ export class SplashScreenService {
 
   /**
    * Property initialNavigationPending
+   * @readonly
    *
    * @description
    * Keeps the splash visible until the first navigation lifecycle settles.
    * This avoids exposing a white frame between app bootstrap and route render.
+   *
+   * @access private
+   * @since 0.1.0
+   *
+   * @type {WritableSignal<boolean>}
    */
   private readonly initialNavigationPending: WritableSignal<boolean> = signal<boolean>(
     !this.router.navigated,
@@ -270,8 +293,19 @@ export class SplashScreenService {
    */
   private stallTimer: ReturnType<typeof setTimeout> | null = null;
   //#endregion
+  //#endregion
 
   //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Starts browser-only navigation tracking and the one-shot boot stall watch.
+   *
+   * @access public
+   * @since 0.1.0
+   */
   public constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.listenToRouter();
@@ -280,9 +314,11 @@ export class SplashScreenService {
   }
   //#endregion
 
+  //#region Methods
   //#region Public Methods
   /**
    * Method retry
+   * @method retry
    *
    * @description
    * Re-attempts a stalled boot by reloading the document, which re-runs
@@ -306,6 +342,7 @@ export class SplashScreenService {
   //#region Private Methods
   /**
    * Method startStallWatch
+   * @method startStallWatch
    *
    * @description
    * Schedules the one-shot stall watch. When it fires, the boot is
@@ -329,6 +366,7 @@ export class SplashScreenService {
 
   /**
    * Method listenToRouter
+   * @method listenToRouter
    *
    * @description
    * Subscribes to router lifecycle events and manages the `navigating`
@@ -364,6 +402,7 @@ export class SplashScreenService {
 
   /**
    * Method onNavigationStart
+   * @method onNavigationStart
    *
    * @description
    * Schedules the navigation splash appearance after the anti-flicker
@@ -385,6 +424,7 @@ export class SplashScreenService {
 
   /**
    * Method onNavigationEnd
+   * @method onNavigationEnd
    *
    * @description
    * Clears any pending anti-flicker timer and hides the navigation
@@ -408,5 +448,6 @@ export class SplashScreenService {
     }
   }
 
+  //#endregion
   //#endregion
 }

@@ -1,0 +1,135 @@
+import { expect, test } from '@playwright/test';
+import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
+import {
+  interventionOutput,
+  interventionStatisticsOutput,
+} from '../support/fixtures/intervention-fixtures';
+import { collectConsoleErrors, expectNoHorizontalOverflow } from '../support/helpers/appearance';
+import { emulateMobilePlatform } from '../support/helpers/interaction-mode';
+import { ApiMock } from '../support/mocks/api-mock';
+import { InterventionsPage } from '../support/pages/interventions.page';
+
+/**
+ * The suite's first `*.mobile.spec.ts`: it runs under the `Mobile Chrome` and
+ * `Mobile Safari` projects only, so it is the first coverage in this repo with
+ * real touch input, `pointer: coarse` and a mobile user agent rather than a
+ * desktop browser resized to a phone's width.
+ *
+ * It also exercises the two harness repairs it depends on — the
+ * `/api/interventions/statistics` mock, without which every KPI tile silently
+ * renders zero, and `expectNoInternalOverflow`, which sees the overflow
+ * `expectNoHorizontalOverflow` structurally cannot.
+ */
+
+const INTERVENTIONS = [
+  interventionOutput({
+    id: 'e2e-mobile-1',
+    '@id': '/api/interventions/e2e-mobile-1',
+    number: 401,
+    name: 'Quarterly extinguisher round — north depot, level 3',
+    status: 'planned',
+  }),
+  interventionOutput({
+    id: 'e2e-mobile-2',
+    '@id': '/api/interventions/e2e-mobile-2',
+    number: 402,
+    name: 'Sprinkler riser inspection',
+    status: 'in_progress',
+  }),
+];
+
+async function gotoList(page: Parameters<typeof collectConsoleErrors>[0]): Promise<void> {
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession();
+  await api.mockInterventionStatistics(interventionStatisticsOutput());
+  await api.mockInterventionList(E2E_ORGANIZATION_ID, INTERVENTIONS);
+  await api.mockInterventionLabels(E2E_ORGANIZATION_ID, []);
+  await api.mockInterventionTemplates(E2E_ORGANIZATION_ID, []);
+  await api.mockFacilityList(E2E_ORGANIZATION_ID, []);
+  await api.mockOrganizationMembers(E2E_ORGANIZATION_ID, []);
+
+  /*
+   * `InterventionPrefetchService` warms an offline workspace for every row the
+   * list returns, so the three workspace reads fire once per fixture even
+   * though this spec never opens a detail page. Left unmocked they answer 404
+   * through the safety net, which is invisible until a spec asserts on the
+   * console — no existing interventions spec does.
+   */
+  await api.mockInterventionWorkItems(E2E_ORGANIZATION_ID, []);
+  await api.mockInterventionChanges(E2E_ORGANIZATION_ID, []);
+  await Promise.all(
+    INTERVENTIONS.map((intervention) => api.mockInterventionIssues(intervention.id, [])),
+  );
+
+  await new InterventionsPage(page).goto(E2E_ORGANIZATION_ID);
+}
+
+test.describe('Interventions list on a phone', () => {
+  test.beforeEach(async ({ context, browserName }) => {
+    await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
+  });
+  test('starts with view controls and keeps the collection reachable without metric cards', async ({
+    page,
+  }) => {
+    const consoleErrors = collectConsoleErrors(page);
+    await gotoList(page);
+
+    await expect(page.getByTestId('intervention-statistics-analysis-trigger')).toHaveCount(0);
+    await expect(page.getByTestId('intervention-kpi-strip')).toHaveCount(0);
+    const viewToggle = page.getByTestId('intervention-view-toggle');
+    await expect(viewToggle).toBeInViewport();
+
+    const tabGeometry = await viewToggle.evaluate((rail) => {
+      const list = rail.querySelector<HTMLElement>('[role="tablist"] > div');
+      const active = rail.querySelector<HTMLElement>('[aria-selected="true"]');
+      const pageHeader = rail.closest<HTMLElement>('#dashboard-page-header');
+      if (!list || !active || !pageHeader) return null;
+
+      const listRect = list.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      const headerRect = pageHeader.getBoundingClientRect();
+      const indicator = getComputedStyle(active, '::after');
+      const indicatorTop = activeRect.bottom - Number(indicator.bottom.replace('px', ''));
+
+      return {
+        activeBottom: activeRect.bottom,
+        activeTop: activeRect.top,
+        headerBottom: headerRect.bottom,
+        indicatorTop,
+        listBottom: listRect.bottom,
+        listTop: listRect.top,
+      };
+    });
+
+    expect(tabGeometry).not.toBeNull();
+    expect(tabGeometry?.activeTop).toBeGreaterThanOrEqual((tabGeometry?.listTop ?? 0) - 1);
+    expect(tabGeometry?.activeBottom).toBeLessThanOrEqual((tabGeometry?.listBottom ?? 0) + 1);
+    expect(
+      Math.abs((tabGeometry?.indicatorTop ?? 0) - (tabGeometry?.headerBottom ?? 0)),
+    ).toBeLessThanOrEqual(6);
+    await page.screenshot({
+      path: 'tests/e2e/artifacts/interventions-summary/mobile.png',
+      animations: 'disabled',
+    });
+    await page.getByTestId('intervention-table-card').first().scrollIntoViewIfNeeded();
+    await expect(page.getByTestId('intervention-table-card').first()).toBeInViewport();
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test('does not scroll the document sideways', async ({ page }) => {
+    await gotoList(page);
+
+    await expect(page.getByTestId('intervention-table-card')).toHaveCount(INTERVENTIONS.length);
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test('renders the collection as cards, not as a sideways-scrolling table', async ({ page }) => {
+    await gotoList(page);
+
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
+    await expect(page.getByTestId('intervention-table')).toBeHidden();
+    await expect(page.getByTestId('intervention-table-cards')).toBeVisible();
+    await expect(page.getByTestId('intervention-table-card')).toHaveCount(INTERVENTIONS.length);
+    await expectNoHorizontalOverflow(page);
+  });
+});

@@ -2,7 +2,6 @@ import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@cor
 
 /**
  * Function serverMessagesOf
- * @function serverMessagesOf
  *
  * @description
  * Everything the API said about a rejected form, as flat lines to show above
@@ -15,11 +14,14 @@ import { toServerFieldErrors, toUnmatchedViolations, type Violation } from '@cor
  * @access public
  * @since 1.0.0
  *
- * @param {unknown} error - Whatever the write failed with, or `null` / `undefined` while nothing did.
+ * @param {unknown} error - Whatever the write failed with, or `null` / `undefined` while nothing
+ *   did.
  * @param {readonly string[]} knownFields - The fields the form already renders inline errors for.
  * @param {string} fallback - The localized generic line for a refusal that says nothing usable.
  *
  * @returns {readonly string[]} The lines to render, empty while there is no error.
+ *
+ * @function serverMessagesOf
  */
 export function serverMessagesOf(
   error: unknown,

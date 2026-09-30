@@ -1,5 +1,5 @@
 """Validate local Codex manifests, skills, references and vendor integrity (Python 3.11+)."""
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import hashlib
 import json
 import re
@@ -7,9 +7,8 @@ import tomllib
 
 from check_links import check_links
 
-from agent_profiles import (
-    load_profiles, validate_global_policy, validate_native_agent, validate_native_references,
-    validate_profile_coverage,
+from agent_config import (
+    validate_global_policy, validate_native_agent, validate_native_references, validate_role_registry,
 )
 
 
@@ -67,6 +66,19 @@ def find_legacy_references(root: Path) -> list[str]:
     ]
 
 
+def validate_mcp_portability(config: dict) -> None:
+    """Keep the shared MCP example independent of machine paths."""
+    for name, server in config.get('mcp_servers', {}).items():
+        command = server.get('command', '')
+        assert command and '/' not in command and '\\' not in command, f'{name}: resolve executables through PATH'
+        values = [server.get('cwd', '')] + list(server.get('args', [])) + list(server.get('env', {}).values())
+        for value in values:
+            if isinstance(value, str):
+                assert not (PurePosixPath(value).is_absolute() or PureWindowsPath(value).is_absolute()), (
+                    f'{name}: absolute paths belong in personal configuration'
+                )
+
+
 def validate(root: Path) -> dict:
     skills_root = root / '.agents/skills'
     skill_names = set()
@@ -86,8 +98,9 @@ def validate(root: Path) -> dict:
             for match in re.finditer(r'\]\(([^)]+\.md)\)', text):
                 assert (skill / match.group(1)).is_file(), f'Broken reference in {skill.name}: {match.group(1)}'
             assert (skill / 'agents/openai.yaml').is_file(), f'Missing Codex metadata: {skill.name}'
-    config = tomllib.loads((root / '.codex/config.toml').read_text(encoding='utf-8'))
+    config = tomllib.loads((root / '.codex/config.example.toml').read_text(encoding='utf-8'))
     validate_global_policy(config)
+    validate_mcp_portability(config)
     agents = []
     for path in sorted((root / '.codex/agents').glob('*.toml')):
         agent = tomllib.loads(path.read_text(encoding='utf-8'))
@@ -96,8 +109,7 @@ def validate(root: Path) -> dict:
         validate_native_agent(agent, path.name)
         agents.append(agent['name'])
         validate_native_references(agent['developer_instructions'], root)
-    profiles = load_profiles(root / '.codex/agent-profiles.toml')
-    validate_profile_coverage(profiles, set(agents))
+    validate_role_registry(config, root / '.codex/config.example.toml')
     check_links(root)
     hooks = json.loads((root / '.codex/hooks.json').read_text(encoding='utf-8'))['hooks']
     assert {'PreToolUse', 'PostToolUse'} <= hooks.keys()

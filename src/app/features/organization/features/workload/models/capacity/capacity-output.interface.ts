@@ -34,7 +34,21 @@ export interface CapacityOutput extends HydraItem {
    * @access public
    * @since 1.0.0
    *
-   * @type {{ readonly weeks: readonly { readonly id: string; readonly scopeId: string; readonly effectiveOn: string; readonly minutes: readonly number[] }[]; readonly exceptions: readonly { readonly id: string; readonly memberId: string; readonly startsOn: string; readonly endsOn: string; readonly minutes: number }[] }}
+   * @type {{
+   *   readonly weeks: readonly {
+   *     readonly id: string;
+   *     readonly scopeId: string;
+   *     readonly effectiveOn: string;
+   *     readonly minutes: readonly number[];
+   *   }[];
+   *   readonly exceptions: readonly {
+   *     readonly id: string;
+   *     readonly memberId: string;
+   *     readonly startsOn: string;
+   *     readonly endsOn: string;
+   *     readonly minutes: number;
+   *   }[];
+   * }}
    */
   readonly configuration: {
     readonly weeks: readonly {

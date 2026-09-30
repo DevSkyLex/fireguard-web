@@ -7,7 +7,6 @@ import type { ThreadSubjectType } from './thread-subject-type.type';
  * @description
  * Payload for `POST /api/conversations`, which opens the thread attached to a
  * record or returns the existing one.
- *
  * The response is `201` in both cases — it does not tell you whether anything
  * was created.
  *
@@ -16,9 +15,42 @@ import type { ThreadSubjectType } from './thread-subject-type.type';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface GetOrCreateConversationInput {
-  /** Organization IRI or bare UUID — both accepted. */
+  /**
+   * Property organization
+   * @readonly
+   *
+   * @description
+   * Organization IRI or bare UUID — both accepted.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organization: string;
+
+  /**
+   * Property subjectType
+   * @readonly
+   *
+   * @description
+   * Identifies the subject category for this get or create conversation.
+   *
+   * @access public
+   *
+   * @type {ThreadSubjectType}
+   */
   readonly subjectType: ThreadSubjectType;
-  /** Subject IRI or bare id — both accepted. */
+
+  /**
+   * Property subject
+   * @readonly
+   *
+   * @description
+   * Subject IRI or bare id — both accepted.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly subject: string;
 }

@@ -1,1 +1,1 @@
-export * from './workload-assignee-indicator.component';
+export { WorkloadAssigneeIndicator } from './workload-assignee-indicator.component';

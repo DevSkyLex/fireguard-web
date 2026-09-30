@@ -24,7 +24,10 @@ import type { ApprovalDecisionTarget } from './models';
 
 /**
  * Constant DECISION_NOTE_MAX_LENGTH
- * @description The backend's `Assert\Length(max: 2000)` bound on `decisionNote`, enforced client-side too.
+ *
+ * @description
+ * The backend's `Assert\Length(max: 2000)` bound on `decisionNote`, enforced client-side too.
+ *
  * @since 1.0.0
  */
 const DECISION_NOTE_MAX_LENGTH: number = 2000;
@@ -56,6 +59,8 @@ const DECISION_NOTE_MAX_LENGTH: number = 2000;
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-approval-decision-dialog
@@ -66,8 +71,6 @@ const DECISION_NOTE_MAX_LENGTH: number = 2000;
  *   (dismissed)="closeDecisionDialog()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-approval-decision-dialog',
@@ -87,9 +90,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property target
    * @readonly
-   * @description What is pending confirmation, or `null` to keep the dialog closed.
+   *
+   * @description
+   * What is pending confirmation, or `null` to keep the dialog closed.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ApprovalDecisionTarget | null>}
    */
   public readonly target: InputSignal<ApprovalDecisionTarget | null> =
@@ -98,9 +105,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property pending
    * @readonly
-   * @description Whether the decision is in flight, which disables the confirm action and blocks dismissal.
+   *
+   * @description
+   * Whether the decision is in flight, which disables the confirm action and blocks dismissal.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -108,9 +119,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property errorText
    * @readonly
-   * @description The last decision failure's specific, actionable copy, or `null`.
+   *
+   * @description
+   * The last decision failure's specific, actionable copy, or `null`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly errorText: InputSignal<string | null> = input<string | null>(null);
@@ -118,9 +133,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property refreshing
    * @readonly
-   * @description Whether the server view is being refreshed after a conflict.
+   *
+   * @description
+   * Whether the server view is being refreshed after a conflict.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly refreshing: InputSignal<boolean> = input(false);
@@ -128,9 +147,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property refreshErrorText
    * @readonly
-   * @description An observation failure keeps the note and offers another refresh.
+   *
+   * @description
+   * An observation failure keeps the note and offers another refresh.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly refreshErrorText: InputSignal<string | null> = input<string | null>(null);
@@ -138,9 +161,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property refreshRequested
    * @readonly
-   * @description Requests a fresh server view without submitting the local draft.
+   *
+   * @description
+   * Requests a fresh server view without submitting the local draft.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly refreshRequested: OutputEmitterRef<void> = output<void>();
@@ -150,9 +177,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property decided
    * @readonly
-   * @description Emits the trimmed decision note (possibly empty) once the reader confirms.
+   *
+   * @description
+   * Emits the trimmed decision note (possibly empty) once the reader confirms.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly decided: OutputEmitterRef<string> = output<string>();
@@ -160,9 +191,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property dismissed
    * @readonly
-   * @description The dialog was closed without deciding — Escape, the backdrop, or Cancel.
+   *
+   * @description
+   * The dialog was closed without deciding — Escape, the backdrop, or Cancel.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly dismissed: OutputEmitterRef<void> = output<void>();
@@ -172,7 +207,10 @@ export class ApprovalDecisionDialog {
   /**
    * Constructor
    * @constructor
-   * @description Resets the draft when another request or decision mode opens.
+   *
+   * @description
+   * Resets the draft when another request or decision mode opens.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -189,9 +227,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property noteModel
    * @readonly
-   * @description Draft note retained across refreshes of the same decision.
+   *
+   * @description
+   * Draft note retained across refreshes of the same decision.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<{ note: string }>}
    */
   protected readonly noteModel: WritableSignal<{ note: string }> = signal({ note: '' });
@@ -199,9 +241,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property noteForm
    * @readonly
-   * @description Validates the optional note without owning the decision workflow.
+   *
+   * @description
+   * Validates the optional note without owning the decision workflow.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<{ note: string }>}
    */
   protected readonly noteForm: FieldTree<{ note: string }> = form(this.noteModel, (path) =>
@@ -211,9 +257,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property draftKey
    * @readonly
-   * @description Identifies the decision independently of refreshed resource objects.
+   *
+   * @description
+   * Identifies the decision independently of refreshed resource objects.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   private readonly draftKey: Signal<string | null> = computed(() => {
@@ -224,9 +274,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property canSubmit
    * @readonly
-   * @description Current server capability after a conflict refresh.
+   *
+   * @description
+   * Current server capability after a conflict refresh.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSubmit: Signal<boolean> = computed(() => {
@@ -241,9 +295,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property blockedReason
    * @readonly
-   * @description Explains the current server refusal independently of the last HTTP error.
+   *
+   * @description
+   * Explains the current server refusal independently of the last HTTP error.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly blockedReason: Signal<string | null> = computed(() =>
@@ -252,10 +310,32 @@ export class ApprovalDecisionDialog {
       : approvalDecisionReason(this.target()?.request.decisionBlockReason),
   );
 
-  /** The backend's character bound, read by the template's counter. */
+  /**
+   * Property maxLength
+   * @readonly
+   *
+   * @description
+   * The backend's character bound, read by the template's counter.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {number}
+   */
   protected readonly maxLength: number = DECISION_NOTE_MAX_LENGTH;
 
-  /** The dialog state, derived from {@link target} so there is no second copy of the truth. */
+  /**
+   * Property dialogState
+   * @readonly
+   *
+   * @description
+   * The dialog state, derived from {@link target} so there is no second copy of the truth.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<BrnDialogState>}
+   */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.target() === null ? 'closed' : 'open',
   );
@@ -263,9 +343,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property title
    * @readonly
-   * @description Names the action being confirmed.
+   *
+   * @description
+   * Names the action being confirmed.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly title: Signal<string> = computed<string>(() => {
@@ -279,9 +363,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property description
    * @readonly
-   * @description Explains the consequence of approval, rejection or withdrawal.
+   *
+   * @description
+   * Explains the consequence of approval, rejection or withdrawal.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly description: Signal<string> = computed<string>(() => {
@@ -295,9 +383,13 @@ export class ApprovalDecisionDialog {
   /**
    * Property acceptLabel
    * @readonly
-   * @description Names the action submitted by the confirmation button.
+   *
+   * @description
+   * Names the action submitted by the confirmation button.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly acceptLabel: Signal<string> = computed<string>(() => {
@@ -311,6 +403,7 @@ export class ApprovalDecisionDialog {
   //#region Methods
   /**
    * Method onStateChanged
+   * @method onStateChanged
    *
    * @description
    * Relays a dismissal — Escape or the backdrop — as {@link dismissed}. The
@@ -332,9 +425,14 @@ export class ApprovalDecisionDialog {
 
   /**
    * Method accept
-   * @description Emits {@link decided} with the trimmed note, unless a decision is already in flight.
+   * @method accept
+   *
+   * @description
+   * Emits {@link decided} with the trimmed note, unless a decision is already in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected accept(): void {

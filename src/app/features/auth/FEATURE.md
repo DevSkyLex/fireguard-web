@@ -28,6 +28,10 @@ This feature does not own user profile presentation or notification UX. Those be
 
 ## Routes
 
+Account's federated connection callback lazily loads Auth's page implementation directly.
+Route entry components remain private to their owner and are not re-exported by the Auth
+root barrel; the route-file exception is checked by the architecture suite.
+
 - `/auth/login`
 - `/auth/federated/:provider/callback` — uses client rendering, exchanges a single-use Google or
   Microsoft callback in the browser only, removes `code` and `state` from browser history before

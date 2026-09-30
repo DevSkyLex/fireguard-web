@@ -11,6 +11,29 @@
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface UpdateChannelInput {
+  /**
+   * Property name
+   * @readonly
+   *
+   * @description
+   * Sets the channel name supplied by this update.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly name?: string;
+
+  /**
+   * Property isArchived
+   * @readonly
+   *
+   * @description
+   * Includes or excludes archived update channel records according to this filter.
+   *
+   * @access public
+   *
+   * @type {boolean}
+   */
   readonly isArchived?: boolean;
 }

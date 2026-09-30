@@ -34,20 +34,60 @@ import {
 } from './constants/import-csv-columns.constants';
 import type { ImportUploadSubmission } from './models/import-upload-submission.interface';
 
-/** Backend-enforced ceiling (`ARCHITECTURE.md` API contract): 5 MB, checked client-side for a friendlier error than the server's 422. */
+/**
+ * Constant MAX_FILE_SIZE_BYTES
+ *
+ * @description
+ * Backend-enforced ceiling (`ARCHITECTURE.md` API contract): 5 MB, checked client-side for a
+ * friendlier error than the server's 422.
+ */
 const MAX_FILE_SIZE_BYTES: number = 5 * 1024 * 1024;
 
-/** Draft shape backing the Signal Forms field tree. */
+/**
+ * Interface ImportUploadDraft
+ * @interface
+ *
+ * @description
+ * Carries the values and selected file submitted by the import upload form.
+ */
 interface ImportUploadDraft {
+  /**
+   * Property kind
+   * @readonly
+   *
+   * @description
+   * Distinguishes the import upload variant represented by this value.
+   *
+   * @access public
+   *
+   * @type {ImportJobKind | ''}
+   */
   readonly kind: ImportJobKind | '';
+
+  /**
+   * Property dryRun
+   * @readonly
+   *
+   * @description
+   * Indicates whether the inspection import is being previewed without applying changes.
+   *
+   * @access public
+   *
+   * @type {boolean}
+   */
   readonly dryRun: boolean;
 }
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_DRAFT
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: true };
 
 /**
- * Component ImportUploadForm
+ * Class ImportUploadForm
  * @class ImportUploadForm
  *
  * @description
@@ -64,6 +104,8 @@ const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: true };
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-import-upload-form
@@ -72,8 +114,6 @@ const EMPTY_DRAFT: ImportUploadDraft = { kind: '', dryRun: true };
  *   (submitted)="upload($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-import-upload-form',
@@ -97,15 +137,24 @@ export class ImportUploadForm {
   /**
    * Property acceptedJobId
    * @readonly
-   * @description Server acceptance clears the submitted file and draft.
+   *
+   * @description
+   * Server acceptance clears the submitted file and draft.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {unknown}
    */
   public readonly acceptedJobId = input<string | null>(null);
+  //#region Constructor
   /**
    * Constructor
    * @constructor
-   * @description Registers draft, route and browser lifecycle coordination.
+   *
+   * @description
+   * Registers draft, route and browser lifecycle coordination.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -118,14 +167,19 @@ export class ImportUploadForm {
       }
     });
   }
+  //#endregion
 
   //#region Inputs
   /**
    * Property pending
    * @readonly
-   * @description Whether the upload request is in flight.
+   *
+   * @description
+   * Whether the upload request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -133,9 +187,13 @@ export class ImportUploadForm {
   /**
    * Property error
    * @readonly
-   * @description The last upload's normalized failure message, or `null`.
+   *
+   * @description
+   * The last upload's normalized failure message, or `null`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
@@ -143,9 +201,13 @@ export class ImportUploadForm {
   /**
    * Property kindOptions
    * @readonly
-   * @description The kind choices offered — the page narrows this to the kinds the active member may write.
+   *
+   * @description
+   * The kind choices offered — the page narrows this to the kinds the active member may write.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<typeof IMPORT_JOB_KIND_OPTIONS>}
    */
   public readonly kindOptions: InputSignal<typeof IMPORT_JOB_KIND_OPTIONS> =
@@ -156,9 +218,13 @@ export class ImportUploadForm {
   /**
    * Property submitted
    * @readonly
-   * @description The validated kind, file and dry-run choice.
+   *
+   * @description
+   * The validated kind, file and dry-run choice.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<ImportUploadSubmission>}
    */
   public readonly submitted: OutputEmitterRef<ImportUploadSubmission> =
@@ -168,9 +234,13 @@ export class ImportUploadForm {
   /**
    * Property templateRequested
    * @readonly
-   * @description Requests the selected kind’s server template.
+   *
+   * @description
+   * Requests the selected kind’s server template.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<ImportJobKind>}
    */
   public readonly templateRequested: OutputEmitterRef<ImportJobKind> = output<ImportJobKind>();
@@ -178,9 +248,13 @@ export class ImportUploadForm {
   /**
    * Property templatePending
    * @readonly
-   * @description Whether the requested template is loading.
+   *
+   * @description
+   * Whether the requested template is loading.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly templatePending: InputSignal<boolean> = input(false);
@@ -188,27 +262,57 @@ export class ImportUploadForm {
   /**
    * Property templateError
    * @readonly
-   * @description The last template download failure.
+   *
+   * @description
+   * The last template download failure.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly templateError: InputSignal<string | null> = input<string | null>(null);
 
   //#region Properties
-  /** Whether the "Expected CSV format" block is expanded. */
+  /**
+   * Property helpExpanded
+   * @readonly
+   *
+   * @description
+   * Controls whether the import instructions are expanded.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly helpExpanded: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * Holds the current facility creation draft edited by this form.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ImportUploadDraft>}
+   */
   protected readonly model: WritableSignal<ImportUploadDraft> =
     signal<ImportUploadDraft>(EMPTY_DRAFT);
 
   /**
    * Property uploadForm
    * @readonly
-   * @description The field tree and its rules.
+   *
+   * @description
+   * The field tree and its rules.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<ImportUploadDraft>}
    */
   protected readonly uploadForm: FieldTree<ImportUploadDraft> = form(this.model, (path) => {
@@ -217,18 +321,44 @@ export class ImportUploadForm {
     });
   });
 
-  /** The picked file, or `null` before one is chosen. */
+  /**
+   * Property selectedFile
+   * @readonly
+   *
+   * @description
+   * Holds the file selected for import, or null when none is selected.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<File | null>}
+   */
   protected readonly selectedFile: WritableSignal<File | null> = signal<File | null>(null);
 
-  /** Client-side pre-check failure for the picked file, or `null`. */
+  /**
+   * Property fileError
+   * @readonly
+   *
+   * @description
+   * Holds the validation message for the selected file, when invalid.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly fileError: WritableSignal<string | null> = signal<string | null>(null);
 
   /**
    * Property columnHelp
    * @readonly
-   * @description The active kind's column contract, or `null` before a kind is chosen.
+   *
+   * @description
+   * The active kind's column contract, or `null` before a kind is chosen.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<(typeof IMPORT_CSV_COLUMN_HELP)[ImportJobKind] | null>}
    */
   protected readonly columnHelp: Signal<(typeof IMPORT_CSV_COLUMN_HELP)[ImportJobKind] | null> =
@@ -237,16 +367,32 @@ export class ImportUploadForm {
       return kind === '' ? null : IMPORT_CSV_COLUMN_HELP[kind];
     });
 
-  /** File-level rules shown regardless of the active kind. */
+  /**
+   * Property generalNotes
+   * @readonly
+   *
+   * @description
+   * Provides the general import guidance displayed by the form.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<string>}
+   */
   protected readonly generalNotes: ReadonlyArray<string> = IMPORT_CSV_GENERAL_NOTES;
   //#endregion
 
   //#region Methods
   /**
    * Method downloadTemplate
-   * @description Requests the selected type without submitting or clearing the file draft.
+   * @method downloadTemplate
+   *
+   * @description
+   * Requests the selected type without submitting or clearing the file draft.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected downloadTemplate(): void {
@@ -298,6 +444,7 @@ export class ImportUploadForm {
 
   /**
    * Method submit
+   * @method submit
    *
    * @description
    * Marks the tree touched so an unmet kind selection shows, requires a

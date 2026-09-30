@@ -2,7 +2,6 @@ import type { EquipmentType } from '@features/organization/features/equipments/m
 
 /**
  * Constant EQUIPMENT_TYPE_OPTIONS
- * @const EQUIPMENT_TYPE_OPTIONS
  *
  * @description
  * Localized select options for the fire-safety equipment type picker,
@@ -13,7 +12,13 @@ import type { EquipmentType } from '@features/organization/features/equipments/m
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly icon: string; readonly label: string; readonly value: EquipmentType }>}
+ * @type {ReadonlyArray<{
+ *   readonly icon: string;
+ *   readonly label: string;
+ *   readonly value: EquipmentType;
+ * }>}
+ *
+ * @constant EQUIPMENT_TYPE_OPTIONS
  */
 export const EQUIPMENT_TYPE_OPTIONS: ReadonlyArray<{
   readonly icon: string;

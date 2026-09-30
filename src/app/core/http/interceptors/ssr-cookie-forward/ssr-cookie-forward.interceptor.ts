@@ -10,21 +10,50 @@ import {
 import { inject, PLATFORM_ID, REQUEST, RESPONSE_INIT } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
+/**
+ * Constant FORWARDED_COOKIE_NAME_PATTERN
+ *
+ * @description
+ * Matches refresh-token and trusted-device cookie names eligible for forwarding to SSR API
+ * requests.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @type {RegExp}
+ */
 const FORWARDED_COOKIE_NAME_PATTERN: RegExp =
   /^(?:__Host-|__Secure-)?(?:refresh_token|trusted_device(?:_token)?|device_trust_token)$/i;
+
+/**
+ * Constant REFRESH_COOKIE_HEADER_PATTERN
+ *
+ * @description
+ * Selects refresh-token `Set-Cookie` headers for the same-host refresh response forwarded to HTML.
+ *
+ * @access private
+ * @since unreleased
+ *
+ * @type {RegExp}
+ */
 const REFRESH_COOKIE_HEADER_PATTERN: RegExp = /^(?:__Host-|__Secure-)?refresh_token=/i;
 
 /**
  * Function forwardRotatedRefreshCookie
- * @function forwardRotatedRefreshCookie
+ *
  * @description
  * Carries a same-host API refresh cookie from the SSR API response to the HTML
  * response so hydration uses the token that SSR just rotated.
+ *
  * @access private
  * @since 1.0.0
+ *
  * @param {HttpResponse<unknown> | HttpErrorResponse} response - Refresh API response.
  * @param {ResponseInit} responseInit - Mutable SSR response options.
+ *
  * @returns {void}
+ *
+ * @function forwardRotatedRefreshCookie
  */
 function forwardRotatedRefreshCookie(
   response: HttpResponse<unknown> | HttpErrorResponse,
@@ -42,6 +71,19 @@ function forwardRotatedRefreshCookie(
   responseInit.headers = headers;
 }
 
+/**
+ * Function filterForwardedCookies
+ *
+ * @description
+ * Keeps eligible session cookies from the incoming header and returns `null` when none match.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @param {string} cookieHeader - Cookie header from the incoming SSR request.
+ *
+ * @returns {string | null} Eligible cookies joined for forwarding, or `null` when none match.
+ */
 function filterForwardedCookies(cookieHeader: string): string | null {
   const forwardedCookies: string[] = cookieHeader
     .split(';')
@@ -56,7 +98,7 @@ function filterForwardedCookies(cookieHeader: string): string | null {
 }
 
 /**
- * SSR Cookie Forward Interceptor
+ * Function ssrCookieForwardInterceptor
  *
  * @description
  * Forwards incoming request cookies to server-side API calls during SSR.
@@ -64,9 +106,15 @@ function filterForwardedCookies(cookieHeader: string): string | null {
  * keeping browser hydration on the server's new session token.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
+ * @param {HttpRequest<unknown>} req - Outgoing request whose cookies must be forwarded during SSR.
+ * @param {HttpHandlerFn} next - Next interceptor or HTTP backend in the request chain.
+ *
  * @returns {Observable<HttpEvent<unknown>>} An observable of the HTTP event stream.
+ *
+ * @function ssrCookieForwardInterceptor
  */
 export const ssrCookieForwardInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
@@ -74,26 +122,28 @@ export const ssrCookieForwardInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<unknown>> => {
   /**
    * Constant platformId
-   * @const platformId
    *
    * @description
    * Angular platform ID for determining if code
    * is running on server or browser. Used to conditionally
    * forward cookies only during SSR.
    *
-   * @var {object}
+   * @constant platformId
+   *
+   * @member {object}
    */
   const platformId: object = inject<object>(PLATFORM_ID);
 
   /**
    * Constant incomingRequest
-   * @const incomingRequest
    *
    * @description
    * The incoming HTTP request during SSR, injected
    * from the REQUEST token.
    *
-   * @var {Request | null}
+   * @constant incomingRequest
+   *
+   * @member {Request | null}
    */
   const incomingRequest: Request | null = inject<Request>(REQUEST, { optional: true });
   const responseInit: ResponseInit | null = inject(RESPONSE_INIT, { optional: true });

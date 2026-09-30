@@ -21,7 +21,6 @@ import type { ActiveInspectionState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_ACTIVE_INSPECTION_STATE
- * @const INITIAL_ACTIVE_INSPECTION_STATE
  *
  * @description
  * Initial state for the ActiveInspectionStore, representing an idle
@@ -30,6 +29,8 @@ import type { ActiveInspectionState } from './models';
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_ACTIVE_INSPECTION_STATE
  */
 const INITIAL_ACTIVE_INSPECTION_STATE: ActiveInspectionState = {
   selectedInspection: null,
@@ -38,31 +39,30 @@ const INITIAL_ACTIVE_INSPECTION_STATE: ActiveInspectionState = {
 //#endregion
 
 /**
- * Store ActiveInspectionStore
- * @const ActiveInspectionStore
+ * Constant ActiveInspectionStore
  *
  * @description
  * Root-level NgRx SignalStore that tracks only the **currently active /
  * selected inspection** and its associated loading state.
- *
  * This store is intentionally minimal — its single responsibility is
  * answering "which inspection are we looking at right now?". All list
  * management and CRUD live in the component-scoped {@link InspectionStore}.
- *
  * Provided at the root level (`providedIn: 'root'`) so that any service or
  * component can read `selectedInspection` without providing anything.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant ActiveInspectionStore
  */
 export const ActiveInspectionStore = signalStore(
   { providedIn: 'root' },
 
   //#region Features
   /**
-   * Feature withState
-   *
    * @description
+   * Feature withState
    * Adds the ActiveInspectionState to the store, initialized with
    * INITIAL_ACTIVE_INSPECTION_STATE.
    *
@@ -73,9 +73,8 @@ export const ActiveInspectionStore = signalStore(
   withState<ActiveInspectionState>(INITIAL_ACTIVE_INSPECTION_STATE),
 
   /**
-   * Feature withComputed
-   *
    * @description
+   * Feature withComputed
    * Adds computed properties to the store for common
    * derived state related to the active inspection.
    *
@@ -112,16 +111,16 @@ export const ActiveInspectionStore = signalStore(
   })),
 
   /**
-   * Feature withMethods
-   *
    * @description
+   * Feature withMethods
    * Adds methods to the store for managing the active inspection state.
    *
    * @since 1.0.0
    *
    * @param {SignalStore} store - The store instance to which the methods will be added.
    * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher.
-   * @param {InspectionService} inspectionService - The service used to fetch inspection data from the API.
+   * @param {InspectionService} inspectionService - The service used to fetch inspection data from
+   *   the API.
    *
    * @returns {object} An object containing the methods to add to the store.
    */
@@ -167,7 +166,8 @@ export const ActiveInspectionStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @param {{ organizationId: string; inspectionId: string }} params - Organization and inspection identifiers.
+       * @param {{ organizationId: string; inspectionId: string }} params - Organization and
+       *   inspection identifiers.
        *
        * @returns {void} No return value — progress is observable through `getCallState`.
        */
@@ -217,7 +217,7 @@ export const ActiveInspectionStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @return {void} No return value.
+       * @returns {void} No return value.
        */
       clearSelectedInspection(): void {
         patchState(store, { selectedInspection: null });
@@ -245,11 +245,12 @@ export const ActiveInspectionStore = signalStore(
 
 /**
  * Type ActiveInspectionStore
- * @type ActiveInspectionStore
  *
  * @description
  * Instance type of the {@link ActiveInspectionStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type ActiveInspectionStore
  */
 export type ActiveInspectionStore = InstanceType<typeof ActiveInspectionStore>;

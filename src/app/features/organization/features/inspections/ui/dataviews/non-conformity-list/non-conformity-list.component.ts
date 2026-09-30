@@ -36,25 +36,56 @@ import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 
-/** Every status the row's status select offers, in workflow order. */
+/**
+ * Constant STATUS_VALUES
+ *
+ * @description
+ * Every status the row's status select offers, in workflow order.
+ */
 const STATUS_VALUES: ReadonlyArray<NonConformityStatus> = ['open', 'in_progress', 'done', 'waived'];
 
-/** A non-conformity's terminal statuses — immutable server-side, so the row select is replaced by a static tag. */
+/**
+ * Constant TERMINAL_STATUSES
+ *
+ * @description
+ * A non-conformity's terminal statuses — immutable server-side, so the row select is replaced by a
+ * static tag.
+ */
 const TERMINAL_STATUSES: ReadonlySet<NonConformityStatus> = new Set<NonConformityStatus>([
   'done',
   'waived',
 ]);
 
-/** A non-conformity's open statuses — the only ones a passed `dueAt` reads as overdue. */
+/**
+ * Constant OPEN_STATUSES
+ *
+ * @description
+ * A non-conformity's open statuses — the only ones a passed `dueAt` reads as overdue.
+ */
 const OPEN_STATUSES: ReadonlySet<NonConformityStatus> = new Set<NonConformityStatus>([
   'open',
   'in_progress',
 ]);
 
-/** How much of a row's description folds into its per-row accessible names, before an ellipsis. */
+/**
+ * Constant LABEL_DESCRIPTION_MAX_LENGTH
+ *
+ * @description
+ * How much of a row's description folds into its per-row accessible names, before an ellipsis.
+ */
 const LABEL_DESCRIPTION_MAX_LENGTH: number = 40;
 
-/** Truncates a row's description for reuse inside a per-row accessible name — every row otherwise shares the same generic label (WCAG 2.4.6, 4.1.2). */
+/**
+ * Function truncateDescription
+ *
+ * @description
+ * Truncates a row's description for reuse inside a per-row accessible name — every row otherwise
+ * shares the same generic label (WCAG 2.4.6, 4.1.2).
+ *
+ * @param {string} description - Non-conformity description to shorten for the table cell.
+ *
+ * @returns {string}
+ */
 function truncateDescription(description: string): string {
   return description.length > LABEL_DESCRIPTION_MAX_LENGTH
     ? `${description.slice(0, LABEL_DESCRIPTION_MAX_LENGTH).trimEnd()}…`
@@ -92,6 +123,8 @@ function truncateDescription(description: string): string {
  *
  * @version 2.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-non-conformity-list
@@ -107,8 +140,6 @@ function truncateDescription(description: string): string {
  *   (retryRequested)="loadNonConformities()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-non-conformity-list',
@@ -134,9 +165,13 @@ export class NonConformityList {
   /**
    * Property nonConformities
    * @readonly
-   * @description The inspection's cached non-conformities, in server order.
+   *
+   * @description
+   * The inspection's cached non-conformities, in server order.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ReadonlyArray<NonConformityOutput>>}
    */
   public readonly nonConformities: InputSignal<ReadonlyArray<NonConformityOutput>> =
@@ -145,9 +180,14 @@ export class NonConformityList {
   /**
    * Property pendingApprovals
    * @readonly
-   * @description Pending waiver requests, keyed by non-conformity id (`InspectionStore.nonConformityWaivePending`).
+   *
+   * @description
+   * Pending waiver requests, keyed by non-conformity id
+   * (`InspectionStore.nonConformityWaivePending`).
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<Readonly<Record<string, NonConformityWaivePendingOutput>>>}
    */
   public readonly pendingApprovals: InputSignal<
@@ -157,9 +197,13 @@ export class NonConformityList {
   /**
    * Property loading
    * @readonly
-   * @description Whether the list is still loading, rendering a skeleton instead of the empty state.
+   *
+   * @description
+   * Whether the list is still loading, rendering a skeleton instead of the empty state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly loading: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -170,9 +214,14 @@ export class NonConformityList {
   /**
    * Property error
    * @readonly
-   * @description The list's load failure message, or `null` while idle, loading or loaded. Takes precedence over the plain empty state.
+   *
+   * @description
+   * The list's load failure message, or `null` while idle, loading or loaded. Takes precedence over
+   * the plain empty state.
+   *
    * @access public
    * @since 2.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
@@ -180,9 +229,14 @@ export class NonConformityList {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone, bound by the page. The default keeps the
+   * component renderable with no context wired.
+   *
    * @access public
    * @since 2.0.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -191,9 +245,13 @@ export class NonConformityList {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the member may change a row's status (`INSPECTION_WRITE`), owned by the page.
+   *
+   * @description
+   * Whether the member may change a row's status (`INSPECTION_WRITE`), owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly canWrite: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -204,9 +262,14 @@ export class NonConformityList {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning these records, so a pending-approval notice can link into its approvals inbox.
+   *
+   * @description
+   * The workspace owning these records, so a pending-approval notice can link into its approvals
+   * inbox.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -214,9 +277,13 @@ export class NonConformityList {
   /**
    * Property updatingId
    * @readonly
-   * @description The id of the row whose status write is currently in flight, or `null`.
+   *
+   * @description
+   * The id of the row whose status write is currently in flight, or `null`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly updatingId: InputSignal<string | null> = input<string | null>(null);
@@ -224,9 +291,14 @@ export class NonConformityList {
   /**
    * Property statusErrorText
    * @readonly
-   * @description The last status-write failure's specific copy (`InspectionStore.nonConformityStatusErrorText`), or `null`.
+   *
+   * @description
+   * The last status-write failure's specific copy (`InspectionStore.nonConformityStatusErrorText`),
+   * or `null`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly statusErrorText: InputSignal<string | null> = input<string | null>(null);
@@ -243,6 +315,7 @@ export class NonConformityList {
    *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly statusErrorId: InputSignal<string | null> = input<string | null>(null);
@@ -252,9 +325,13 @@ export class NonConformityList {
   /**
    * Property statusPicked
    * @readonly
-   * @description The operator picked a new status for one row.
+   *
+   * @description
+   * The operator picked a new status for one row.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<{ nonConformityId: string; status: NonConformityStatus }>}
    */
   public readonly statusPicked: OutputEmitterRef<{
@@ -265,30 +342,73 @@ export class NonConformityList {
   /**
    * Property retryRequested
    * @readonly
-   * @description The load-failed state's own "Try again" was activated. The page owns the actual retry call.
+   *
+   * @description
+   * The load-failed state's own "Try again" was activated. The page owns the actual retry call.
+   *
    * @access public
    * @since 2.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly retryRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The application's language, used to format the relative due/overdue phrase. */
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * The application's language, used to format the relative due/overdue phrase.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
-  /** A directly instantiated, dependency-free `OrgDatePipe`, reused to format due/resolved dates without injection. */
+  /**
+   * Property orgDatePipe
+   * @readonly
+   *
+   * @description
+   * A directly instantiated, dependency-free `OrgDatePipe`, reused to format due/resolved dates
+   * without injection.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrgDatePipe}
+   */
   private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
 
-  /** Every status the row select offers. */
+  /**
+   * Property statusValues
+   * @readonly
+   *
+   * @description
+   * Every status the row select offers.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<NonConformityStatus>}
+   */
   protected readonly statusValues: ReadonlyArray<NonConformityStatus> = STATUS_VALUES;
 
   /**
    * Property isEmpty
    * @readonly
-   * @description Whether the plain empty state should render — no records, no load in flight, and no load failure.
+   *
+   * @description
+   * Whether the plain empty state should render — no records, no load in flight, and no load
+   * failure.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isEmpty: Signal<boolean> = computed<boolean>(
@@ -299,10 +419,16 @@ export class NonConformityList {
   //#region Methods
   /**
    * Method isTerminal
-   * @description Whether a row's status is immutable server-side (`done`/`waived`).
+   * @method isTerminal
+   *
+   * @description
+   * Whether a row's status is immutable server-side (`done`/`waived`).
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {NonConformityStatus} status - The row's current status.
+   *
    * @returns {boolean} True for `done` or `waived`.
    */
   protected isTerminal(status: NonConformityStatus): boolean {
@@ -311,10 +437,16 @@ export class NonConformityList {
 
   /**
    * Method pendingFor
-   * @description The pending waiver for one row, if its last waive attempt answered 202.
+   * @method pendingFor
+   *
+   * @description
+   * The pending waiver for one row, if its last waive attempt answered 202.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} nonConformityId - The row's id.
+   *
    * @returns {NonConformityWaivePendingOutput | null} The pending request, or null.
    */
   protected pendingFor(nonConformityId: string): NonConformityWaivePendingOutput | null {
@@ -323,10 +455,18 @@ export class NonConformityList {
 
   /**
    * Method dueDateOf
-   * @description The row's `dueAt`, formatted for display, or null when unset. `dueAt` is a server instant, not a date-only value, so it renders in `'date'` mode against the organization's timezone (`DESIGN.md` "Dates") rather than reading its UTC calendar day.
+   * @method dueDateOf
+   *
+   * @description
+   * The row's `dueAt`, formatted for display, or null when unset. `dueAt` is a server instant, not
+   * a date-only value, so it renders in `'date'` mode against the organization's timezone
+   * (`DESIGN.md` "Dates") rather than reading its UTC calendar day.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {NonConformityOutput} nonConformity - The row.
+   *
    * @returns {string | null} The formatted date, or null.
    */
   protected dueDateOf(nonConformity: NonConformityOutput): string | null {
@@ -337,10 +477,17 @@ export class NonConformityList {
 
   /**
    * Method resolvedDateOf
-   * @description The row's `resolvedAt`, formatted for display, or null when unset. `resolvedAt` is a server instant, rendered the same way as {@link dueDateOf}.
+   * @method resolvedDateOf
+   *
+   * @description
+   * The row's `resolvedAt`, formatted for display, or null when unset. `resolvedAt` is a server
+   * instant, rendered the same way as {@link dueDateOf}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {NonConformityOutput} nonConformity - The row.
+   *
    * @returns {string | null} The formatted date, or null.
    */
   protected resolvedDateOf(nonConformity: NonConformityOutput): string | null {
@@ -351,10 +498,19 @@ export class NonConformityList {
 
   /**
    * Method isOverdueOf
-   * @description Whether a row's `dueAt` has passed while it is still `open`/`in_progress` — `done`/`waived` never read as overdue. Compares calendar days in the organization's timezone, not the raw instant, so a due instant near local midnight is never misread through the runtime's own timezone.
+   * @method isOverdueOf
+   *
+   * @description
+   * Whether a row's `dueAt` has passed while it is still `open`/`in_progress` — `done`/`waived`
+   * never read as overdue. Compares calendar days in the organization's timezone, not the raw
+   * instant, so a due instant near local midnight is never misread through the runtime's own
+   * timezone.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @param {NonConformityOutput} nonConformity - The row.
+   *
    * @returns {boolean} True when the row needs the operator's attention past its deadline.
    */
   protected isOverdueOf(nonConformity: NonConformityOutput): boolean {
@@ -366,10 +522,17 @@ export class NonConformityList {
 
   /**
    * Method dueRelativeOf
-   * @description The row's `dueAt` as a localized relative-day phrase ("in 3 days", "2 days ago"), or `null` when unset.
+   * @method dueRelativeOf
+   *
+   * @description
+   * The row's `dueAt` as a localized relative-day phrase ("in 3 days", "2 days ago"), or `null`
+   * when unset.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @param {NonConformityOutput} nonConformity - The row.
+   *
    * @returns {string | null} The relative phrase, or `null`.
    */
   protected dueRelativeOf(nonConformity: NonConformityOutput): string | null {
@@ -384,10 +547,18 @@ export class NonConformityList {
 
   /**
    * Method calendarDayOf
-   * @description The organization-timezone calendar day of an ISO instant, as `'YYYY-MM-DD'` — the same day {@link todayIso}, {@link isOverdueOf} and {@link dueRelativeOf} compare against, so a due/resolved instant near local midnight is never misread through the runtime's own timezone.
+   * @method calendarDayOf
+   *
+   * @description
+   * The organization-timezone calendar day of an ISO instant, as `'YYYY-MM-DD'` — the same day
+   * {@link todayIso}, {@link isOverdueOf} and {@link dueRelativeOf} compare against, so a due/resolved
+   * instant near local midnight is never misread through the runtime's own timezone.
+   *
    * @access private
    * @since 2.1.0
+   *
    * @param {string} isoInstant - The instant to resolve, e.g. a row's `dueAt`.
+   *
    * @returns {string} The instant's calendar day in the active organization's timezone.
    */
   private calendarDayOf(isoInstant: string): string {
@@ -402,9 +573,15 @@ export class NonConformityList {
 
   /**
    * Method todayIso
-   * @description Today's calendar day in the active organization's timezone, as `'YYYY-MM-DD'` — the reference {@link isOverdueOf} and {@link dueRelativeOf} compare against.
+   * @method todayIso
+   *
+   * @description
+   * Today's calendar day in the active organization's timezone, as `'YYYY-MM-DD'` — the reference
+   * {@link isOverdueOf} and {@link dueRelativeOf} compare against.
+   *
    * @access private
    * @since 2.0.0
+   *
    * @returns {string} Today's date in the organization's timezone.
    */
   private todayIso(): string {
@@ -413,11 +590,17 @@ export class NonConformityList {
 
   /**
    * Method pickStatus
-   * @description Emits {@link statusPicked}, unless it is the status already stored.
+   * @method pickStatus
+   *
+   * @description
+   * Emits {@link statusPicked}, unless it is the status already stored.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {NonConformityOutput} nonConformity - The row being changed.
    * @param {NonConformityStatus} status - The chosen status.
+   *
    * @returns {void}
    */
   protected pickStatus(nonConformity: NonConformityOutput, status: NonConformityStatus): void {
@@ -428,6 +611,7 @@ export class NonConformityList {
 
   /**
    * Method statusSelectLabelOf
+   * @method statusSelectLabelOf
    *
    * @description
    * A distinct accessible name for one row's status select, so a screen
@@ -449,10 +633,16 @@ export class NonConformityList {
 
   /**
    * Method statusErrorIdOf
-   * @description The inline error paragraph's DOM id for one row, whether or not it currently renders.
+   * @method statusErrorIdOf
+   *
+   * @description
+   * The inline error paragraph's DOM id for one row, whether or not it currently renders.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} nonConformityId - The row's id.
+   *
    * @returns {string} The paragraph's id.
    */
   protected statusErrorIdOf(nonConformityId: string): string {
@@ -461,6 +651,7 @@ export class NonConformityList {
 
   /**
    * Method pendingApprovalLinkLabelOf
+   * @method pendingApprovalLinkLabelOf
    *
    * @description
    * A distinct accessible name for one row's "View in approvals" link, so a

@@ -77,13 +77,28 @@ import { MaintenanceCampaignDialog } from '../../dialogs/maintenance-campaign-di
 import { MaintenanceOverrideDialog } from '../../dialogs/maintenance-override-dialog';
 import { MaintenanceScheduleTable } from '../../tables/maintenance-schedule-table';
 
-/** The page sizes offered under the table — the server default first. */
+/**
+ * Constant PAGE_SIZES
+ *
+ * @description
+ * The page sizes offered under the table — the server default first.
+ */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 
-/** How long typing settles before the search reaches the wire. */
+/**
+ * Constant SEARCH_DEBOUNCE_MS
+ *
+ * @description
+ * How long typing settles before the search reaches the wire.
+ */
 const SEARCH_DEBOUNCE_MS: number = 300;
 
-/** Every due-status chip offered in the filter bar. */
+/**
+ * Constant DUE_STATUS_VALUES
+ *
+ * @description
+ * Every due-status chip offered in the filter bar.
+ */
 const DUE_STATUS_VALUES: readonly MaintenanceDueStatus[] = [
   'unscheduled',
   'up_to_date',
@@ -91,14 +106,27 @@ const DUE_STATUS_VALUES: readonly MaintenanceDueStatus[] = [
   'overdue',
 ];
 
-/** How many facilities the scoping select fetches — organizations rarely exceed this. */
+/**
+ * Constant FACILITY_OPTIONS_PAGE_SIZE
+ *
+ * @description
+ * How many facilities the scoping select fetches — organizations rarely exceed this.
+ */
 const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
 
-/** The filter bar's field keys — this page's whole narrowing surface. */
+/**
+ * Type MaintenanceScheduleFilterKey
+ *
+ * @description
+ * Names the filter controls that can be applied to the maintenance schedule list.
+ *
+ * @type MaintenanceScheduleFilterKey
+ */
 type MaintenanceScheduleFilterKey = 'dueStatus' | 'facility' | 'equipmentType' | 'dueBefore';
 
 /**
  * Interface MaintenanceScheduleFilters
+ * @interface
  *
  * @description
  * The page's own narrowing state — questions asked now, so never persisted.
@@ -107,14 +135,61 @@ type MaintenanceScheduleFilterKey = 'dueStatus' | 'facility' | 'equipmentType' |
  * `load` input requires one.
  */
 interface MaintenanceScheduleFilters {
+  /**
+   * Property dueStatus
+   * @readonly
+   *
+   * @description
+   * Selects the due status variant used to interpret this maintenance schedule filters.
+   *
+   * @access public
+   *
+   * @type {MaintenanceDueStatus | null}
+   */
   readonly dueStatus: MaintenanceDueStatus | null;
+
+  /**
+   * Property facility
+   * @readonly
+   *
+   * @description
+   * Filters maintenance schedules to the selected facility.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly facility: string | null;
+
+  /**
+   * Property equipmentType
+   * @readonly
+   *
+   * @description
+   * Filters maintenance schedules to the selected equipment type.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly equipmentType: string | null;
+
+  /**
+   * Property dueBefore
+   * @readonly
+   *
+   * @description
+   * Limits maintenance schedules to items due before this date.
+   *
+   * @access public
+   *
+   * @type {Date | null}
+   */
   readonly dueBefore: Date | null;
 }
 
 /**
- * Component MaintenanceSchedulesPage
+ * Class MaintenanceSchedulesPage
  * @class MaintenanceSchedulesPage
  *
  * @description
@@ -128,7 +203,6 @@ interface MaintenanceScheduleFilters {
  * header action is gated on that permission **and**
  * `organization.interventions.plan` together — a single 403 otherwise, so
  * the button only ever offers what the backend will actually accept.
- *
  * Owns the query the table renders (filters, paging), the two dialogs'
  * visibility, and the campaign success reaction: the store already toasts
  * on success (`campaignSucceeded`), so this page's own job is closing the
@@ -136,7 +210,6 @@ interface MaintenanceScheduleFilters {
  * table's `facilityLabelOf` input ({@link tableFacilityLabelOf}) from its
  * own {@link facilityOptions}, so the grid can disambiguate rows sharing an
  * equipment type across facilities.
- *
  * Every chip's value control is now one of `@shared/collection-filters`'
  * generic field components — `app-collection-filter-select` for "Due
  * status", "Facility" and "Equipment type", `app-collection-filter-date`
@@ -196,13 +269,29 @@ export class MaintenanceSchedulesPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace whose schedules are listed, bound from the route.
+   *
+   * @description
+   * The workspace whose schedules are listed, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
-  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+
+  /**
+   * Property listForbidden
+   * @readonly
+   *
+   * @description
+   * Indicates whether the current organization member may view the schedule list.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(() =>
     this.store.isListForbidden(),
   );
@@ -210,59 +299,196 @@ export class MaintenanceSchedulesPage {
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * Provides organization-specific date and timezone formatting settings.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** The list and mutation dataset, provided by this route. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * Provides the schedule rows, filters, and loading state for this page.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {MaintenanceSchedulesStoreType}
+   */
   protected readonly store: MaintenanceSchedulesStoreType =
     inject<MaintenanceSchedulesStoreType>(MaintenanceSchedulesStore);
 
-  /** Organization permission checks gating override and campaign actions. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Checks the current member’s schedule permissions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Cross-feature dependency for the facility scoping selects — the same direct-service pattern `FacilityPlansStore` already takes on `EquipmentService`. */
+  /**
+   * Property facilityService
+   * @readonly
+   *
+   * @description
+   * Loads facilities used by schedule filters and forms.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FacilityService}
+   */
   private readonly facilityService: FacilityService = inject(FacilityService);
 
-  /** Navigates to the created intervention after a successful campaign. */
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Navigates to schedule, facility, and equipment routes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject(Router);
 
-  /** Transport used directly for the one-shot CSV export — a download, not list state. */
+  /**
+   * Property maintenanceScheduleService
+   * @readonly
+   *
+   * @description
+   * Loads and exports maintenance schedule data.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {MaintenanceScheduleService}
+   */
   private readonly maintenanceScheduleService: MaintenanceScheduleService = inject(
     MaintenanceScheduleService,
   );
 
-  /** Hands the export blob to the browser as a file download. */
+  /**
+   * Property browserDownload
+   * @readonly
+   *
+   * @description
+   * Downloads the generated schedule export in the browser.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
   private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
-  /** Global toast feedback for the export's warn and error paths. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Reports success and failure messages to the operator.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject(FeedbackService);
 
-  /** Unsubscribes an in-flight export when the page is destroyed. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Scopes subscriptions to the lifetime of this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Whether a CSV export is currently in flight. */
+  /**
+   * Property exportBusy
+   * @readonly
+   *
+   * @description
+   * Tracks whether a schedule export is being prepared.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the export button should be inert: nothing loaded yet, nothing to export, or an export already in flight. */
+  /**
+   * Property exportDisabled
+   * @readonly
+   *
+   * @description
+   * Disables export while data is loading, an export is running, or no schedules exist.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly exportDisabled: Signal<boolean> = computed(
     (): boolean => this.store.isLoading() || this.exportBusy() || this.store.totalSchedules() === 0,
   );
 
-  /** The active narrowing. */
+  /**
+   * Property filters
+   * @readonly
+   *
+   * @description
+   * Stores the applied due, facility, equipment-type, and date filters.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<MaintenanceScheduleFilters>}
+   */
   protected readonly filters: WritableSignal<MaintenanceScheduleFilters> =
     signal<MaintenanceScheduleFilters>({
       dueStatus: null,
@@ -271,24 +497,73 @@ export class MaintenanceSchedulesPage {
       dueBefore: null,
     });
 
-  /** What the search box holds before the debounce settles. */
+  /**
+   * Property draftSearch
+   * @readonly
+   *
+   * @description
+   * Holds search text before it is applied to the schedule query.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly draftSearch: WritableSignal<string> = signal<string>('');
 
-  /** The trimmed free-text search currently sent to the list endpoint. */
+  /**
+   * Property searchTerm
+   * @readonly
+   *
+   * @description
+   * Stores the search term applied to the schedule list.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly searchTerm: WritableSignal<string> = signal<string>('');
 
-  /** The page window, one-based. */
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * Tracks the current schedule-list page.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly page: WritableSignal<number> = signal<number>(1);
 
-  /** How many rows a page holds. */
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * Sets the number of schedule rows displayed per page.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
   /**
    * Property dueStatusOptions
    * @readonly
-   * @description Due-status choices offered in the "Due status" chip, labelled through the maintenance tag registry rather than a second copy (`ARCHITECTURE.md` §10.10).
+   *
+   * @description
+   * Due-status choices offered in the "Due status" chip, labelled through the maintenance tag
+   * registry rather than a second copy (`ARCHITECTURE.md` §10.10).
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {readonly CollectionFilterOption[]}
    */
   protected readonly dueStatusOptions: readonly CollectionFilterOption[] = DUE_STATUS_VALUES.map(
@@ -298,25 +573,93 @@ export class MaintenanceSchedulesPage {
     }),
   );
 
-  /** The equipment-type choices offered, reused from the equipments feature's public catalog. */
+  /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * Provides equipment-type choices available to the schedule filter.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   */
   protected readonly equipmentTypeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
 
-  /** The organization's facilities, offered by both the filter select and the campaign dialog. */
+  /**
+   * Property facilityOptions
+   * @readonly
+   *
+   * @description
+   * Provides facility choices available to the schedule filter.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<
+   *     ReadonlyArray<{ readonly label: string; readonly value: string }>
+   *   >}
+   */
   protected readonly facilityOptions: WritableSignal<
     ReadonlyArray<{ readonly label: string; readonly value: string }>
   > = signal([]);
 
-  /** The row currently opened in the override dialog, or `null` when the dialog is closed. */
+  /**
+   * Property overrideTarget
+   * @readonly
+   *
+   * @description
+   * Identifies the schedule selected for an override action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<MaintenanceScheduleOutput | null>}
+   */
   protected readonly overrideTarget: WritableSignal<MaintenanceScheduleOutput | null> =
     signal<MaintenanceScheduleOutput | null>(null);
 
-  /** Whether the override dialog is open. */
+  /**
+   * Property overrideDialogVisible
+   * @readonly
+   *
+   * @description
+   * Controls visibility of the schedule override dialog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly overrideDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the campaign dialog is open. */
+  /**
+   * Property campaignDialogVisible
+   * @readonly
+   *
+   * @description
+   * Controls visibility of the maintenance campaign dialog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly campaignDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The rows the table currently renders. */
+  /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * Returns the schedule rows displayed on the current page.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly MaintenanceScheduleOutput[]>}
+   */
   protected readonly items: Signal<readonly MaintenanceScheduleOutput[]> = computed(() =>
     this.store.schedules(),
   );
@@ -324,16 +667,31 @@ export class MaintenanceSchedulesPage {
   /**
    * Property pageCount
    * @readonly
-   * @description How many pages the current total spans, at least one.
+   *
+   * @description
+   * How many pages the current total spans, at least one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
     Math.max(1, Math.ceil(this.store.totalSchedules() / this.pageSize())),
   );
 
-  /** The filter bar's field catalog: due status, facility, equipment type, then due-before. */
+  /**
+   * Property filterFields
+   * @readonly
+   *
+   * @description
+   * Defines the filter controls and their current values.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {readonly CollectionFilterField[]}
+   */
   protected readonly filterFields: readonly CollectionFilterField[] = [
     {
       key: 'dueStatus',
@@ -367,9 +725,14 @@ export class MaintenanceSchedulesPage {
   /**
    * Property activeFilterKeys
    * @readonly
-   * @description Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input and {@link hasFilters} both read this.
+   *
+   * @description
+   * Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input and
+   * {@link hasFilters} both read this.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
@@ -385,45 +748,122 @@ export class MaintenanceSchedulesPage {
     },
   );
 
-  /** Whether the current view is narrowed at all, deciding what the empty state offers. */
+  /**
+   * Property hasFilters
+   * @readonly
+   *
+   * @description
+   * Indicates whether any schedule filter is active.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly hasFilters: Signal<boolean> = computed<boolean>(
     () => this.searchTerm() !== '' || this.activeFilterKeys().length > 0,
   );
 
-  /** Which field's value selector currently renders forced open — `null` when none is. */
+  /**
+   * Property openFilterKey
+   * @readonly
+   *
+   * @description
+   * Identifies the filter popover currently open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<MaintenanceScheduleFilterKey | null>}
+   */
   protected readonly openFilterKey: WritableSignal<MaintenanceScheduleFilterKey | null> =
     signal<MaintenanceScheduleFilterKey | null>(null);
 
   /**
    * Property filtersVisible
    * @readonly
-   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   *
+   * @description
+   * Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only.
+   * Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely
+   * driven by `app-collection-filter-toggle`.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
     this.hasFilters,
   );
 
-  /** The "Due status" chip's value control, projected into the filter bar. */
+  /**
+   * Property dueStatusChipTemplate
+   * @readonly
+   *
+   * @description
+   * Provides the chip template for an applied due-status filter.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private readonly dueStatusChipTemplate = viewChild<TemplateRef<unknown>>('dueStatusChip');
 
-  /** The "Facility" chip's value control, projected into the filter bar. */
+  /**
+   * Property facilityChipTemplate
+   * @readonly
+   *
+   * @description
+   * Provides the chip template for an applied facility filter.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private readonly facilityChipTemplate = viewChild<TemplateRef<unknown>>('facilityChip');
 
-  /** The "Equipment type" chip's value control, projected into the filter bar. */
+  /**
+   * Property equipmentTypeChipTemplate
+   * @readonly
+   *
+   * @description
+   * Provides the chip template for an applied equipment-type filter.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private readonly equipmentTypeChipTemplate = viewChild<TemplateRef<unknown>>('equipmentTypeChip');
 
-  /** The "Due before" chip's value control, projected into the filter bar. */
+  /**
+   * Property dueBeforeChipTemplate
+   * @readonly
+   *
+   * @description
+   * Provides the chip template for an applied due-date filter.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private readonly dueBeforeChipTemplate = viewChild<TemplateRef<unknown>>('dueBeforeChip');
 
   /**
    * Property chipTemplates
    * @readonly
-   * @description Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   *
+   * @description
+   * Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates`
+   * input.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
    */
   protected readonly chipTemplates: Signal<
@@ -435,32 +875,98 @@ export class MaintenanceSchedulesPage {
     dueBefore: this.dueBeforeChipTemplate(),
   }));
 
-  /** Whether the active member may open the interval-override dialog. */
+  /**
+   * Property canManage
+   * @readonly
+   *
+   * @description
+   * Indicates whether the current member may manage maintenance schedules.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canManage: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.MAINTENANCE_MANAGE),
   );
 
-  /** Whether the active member may generate an inspection campaign — both permissions, one 403 otherwise. */
+  /**
+   * Property canPlanCampaign
+   * @readonly
+   *
+   * @description
+   * Indicates whether the current member may create a maintenance campaign.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canPlanCampaign: Signal<boolean> = computed<boolean>(
     () =>
       this.canManage() &&
       this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /** Where the equipment link column points. */
+  /**
+   * Property equipmentRouteBase
+   * @readonly
+   *
+   * @description
+   * Builds the route prefix used to open equipment details.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly string[]>}
+   */
   protected readonly equipmentRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'equipments'],
   );
 
-  /** Where the facility link column points. */
+  /**
+   * Property facilityRouteBase
+   * @readonly
+   *
+   * @description
+   * Builds the route prefix used to open facility details.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly string[]>}
+   */
   protected readonly facilityRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'facilities'],
   );
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * Creates the page action model for schedule-page commands.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The "Generate inspection campaign" button, registered on the shell header. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * Exposes the actions available from the maintenance schedules page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
@@ -560,13 +1066,26 @@ export class MaintenanceSchedulesPage {
   //#endregion
 
   //#region Methods
-  /** Records a keystroke into the draft term watched by the debounce. */
+  /**
+   * Method onSearchQueryChanged
+   * @method onSearchQueryChanged
+   *
+   * @description
+   * Updates the draft search value before it is applied to the schedule query.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} term - Search text entered in the schedule list.
+   *
+   * @returns {void}
+   */
   protected onSearchQueryChanged(term: string): void {
     this.draftSearch.set(term);
   }
 
   /**
-   * Method tableFacilityLabelOf
+   * Property tableFacilityLabelOf
    *
    * @description
    * Resolves a bare facility id — as {@link MaintenanceScheduleTable} reads
@@ -579,6 +1098,8 @@ export class MaintenanceSchedulesPage {
    * @access protected
    * @since 1.1.0
    *
+   * @type {unknown}
+   *
    * @param {string} facilityId - The bare facility id.
    *
    * @returns {string | null} The facility's name, or `null` when it does not resolve.
@@ -588,10 +1109,16 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method applyFilter
-   * @description Replaces one narrowing, which reloads the list from the first page.
+   * @method applyFilter
+   *
+   * @description
+   * Replaces one narrowing, which reloads the list from the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {Partial<MaintenanceScheduleFilters>} patch - The field to change.
+   *
    * @returns {void}
    */
   protected applyFilter(patch: Partial<MaintenanceScheduleFilters>): void {
@@ -601,10 +1128,17 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method onFieldPicked
-   * @description Reacts to the filter bar's `fieldPicked` output by forcing the picked field's value control open.
+   * @method onFieldPicked
+   *
+   * @description
+   * Reacts to the filter bar's `fieldPicked` output by forcing the picked field's value control
+   * open.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   *
    * @returns {void}
    */
   protected onFieldPicked(key: string): void {
@@ -613,10 +1147,16 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method onFieldRemoved
-   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   * @method onFieldRemoved
+   *
+   * @description
+   * Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {string} key - The field key a chip's remove button cleared.
+   *
    * @returns {void}
    */
   protected onFieldRemoved(key: string): void {
@@ -638,10 +1178,17 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method toggleFiltersVisible
-   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @method toggleFiltersVisible
+   *
+   * @description
+   * Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to
+   * the value it reports.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {boolean} visible - The toggle button's intended next state.
+   *
    * @returns {void}
    */
   protected toggleFiltersVisible(visible: boolean): void {
@@ -650,10 +1197,17 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method fieldPopoverState
-   * @description Whether a field's value control should currently render open — true only for {@link openFilterKey}.
+   * @method fieldPopoverState
+   *
+   * @description
+   * Whether a field's value control should currently render open — true only for
+   * {@link openFilterKey}.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {MaintenanceScheduleFilterKey} key - The field to read.
+   *
    * @returns {BrnOverlayState} `'open'` or `'closed'`.
    */
   protected fieldPopoverState(key: MaintenanceScheduleFilterKey): BrnOverlayState {
@@ -662,11 +1216,17 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method onFieldPopoverStateChanged
-   * @description Keeps {@link openFilterKey} in sync with a field's own value control.
+   * @method onFieldPopoverStateChanged
+   *
+   * @description
+   * Keeps {@link openFilterKey} in sync with a field's own value control.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {MaintenanceScheduleFilterKey} key - The field whose value control changed.
    * @param {BrnOverlayState} state - Its next state.
+   *
    * @returns {void}
    */
   protected onFieldPopoverStateChanged(
@@ -683,9 +1243,14 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method clearFilters
-   * @description Drops every narrowing at once.
+   * @method clearFilters
+   *
+   * @description
+   * Drops every narrowing at once.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected clearFilters(): void {
@@ -697,10 +1262,16 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method setPageSize
-   * @description Changes the page size and returns to the first page.
+   * @method setPageSize
+   *
+   * @description
+   * Changes the page size and returns to the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} size - The chosen page size.
+   *
    * @returns {void}
    */
   protected setPageSize(size: number): void {
@@ -710,10 +1281,16 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method goToPage
-   * @description Moves to a page within bounds.
+   * @method goToPage
+   *
+   * @description
+   * Moves to a page within bounds.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} target - The requested page.
+   *
    * @returns {void}
    */
   protected goToPage(target: number): void {
@@ -722,6 +1299,7 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method exportCsv
+   * @method exportCsv
    *
    * @description
    * Downloads the organization's maintenance schedules as CSV
@@ -730,6 +1308,7 @@ export class MaintenanceSchedulesPage {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected exportCsv(): void {
@@ -770,9 +1349,14 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method reload
-   * @description Re-runs the current query, for the error state's retry.
+   * @method reload
+   *
+   * @description
+   * Re-runs the current query, for the error state's retry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected reload(): void {
@@ -792,10 +1376,16 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method openOverrideDialog
-   * @description Opens the override dialog for one row.
+   * @method openOverrideDialog
+   *
+   * @description
+   * Opens the override dialog for one row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {MaintenanceScheduleOutput} schedule - The row activated.
+   *
    * @returns {void}
    */
   protected openOverrideDialog(schedule: MaintenanceScheduleOutput): void {
@@ -805,9 +1395,14 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method closeOverrideDialog
-   * @description Closes the override dialog and resets its operation state.
+   * @method closeOverrideDialog
+   *
+   * @description
+   * Closes the override dialog and resets its operation state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected closeOverrideDialog(): void {
@@ -818,10 +1413,16 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method submitOverride
-   * @description Calls the store for the currently opened row.
+   * @method submitOverride
+   *
+   * @description
+   * Calls the store for the currently opened row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string | null} value - The chosen override, or `null` for the organization default.
+   *
    * @returns {void}
    */
   protected submitOverride(value: string | null): void {
@@ -834,9 +1435,14 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method openCampaignDialog
-   * @description Opens the campaign dialog.
+   * @method openCampaignDialog
+   *
+   * @description
+   * Opens the campaign dialog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected openCampaignDialog(): void {
@@ -846,9 +1452,14 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method closeCampaignDialog
-   * @description Closes the campaign dialog and resets its operation state.
+   * @method closeCampaignDialog
+   *
+   * @description
+   * Closes the campaign dialog and resets its operation state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected closeCampaignDialog(): void {
@@ -858,10 +1469,17 @@ export class MaintenanceSchedulesPage {
 
   /**
    * Method submitCampaign
-   * @description Folds in the organization IRI the dialog does not own and calls the store.
+   * @method submitCampaign
+   *
+   * @description
+   * Folds in the organization IRI the dialog does not own and calls the store.
+   *
    * @access protected
    * @since 1.0.0
-   * @param {Omit<GenerateMaintenanceCampaignInput, 'organization'>} scope - The dialog's validated scope.
+   *
+   * @param {Omit<GenerateMaintenanceCampaignInput, 'organization'>} scope - The dialog's validated
+   *   scope.
+   *
    * @returns {void}
    */
   protected submitCampaign(scope: Omit<GenerateMaintenanceCampaignInput, 'organization'>): void {

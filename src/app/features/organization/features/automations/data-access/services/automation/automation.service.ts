@@ -10,30 +10,47 @@ import type {
 /**
  * Service AutomationService
  * @class AutomationService
- * @extends {HydraApiService}
- * @description Organization-scoped policy, history and fenced retry transport.
+ *
+ * @description
+ * Organization-scoped policy, history and fenced retry transport.
+ *
  * @since 1.0.0
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class AutomationService extends HydraApiService {
   /**
    * Method policy
-   * @description Reads the effective automation rule and management capability.
+   * @method policy
+   *
+   * @description
+   * Reads the effective automation rule and management capability.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Current workspace.
+   *
    * @returns {Observable<AutomationPolicyOutput>} Current server policy.
    */
   public policy(organizationId: string): Observable<AutomationPolicyOutput> {
     return this.getOne<AutomationPolicyOutput>(`/api/organizations/${organizationId}/automation`);
   }
+
   /**
    * Method list
-   * @description Reads one server-counted page of attempts.
+   * @method list
+   *
+   * @description
+   * Reads one server-counted page of attempts.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Current workspace.
    * @param {number} page - One-based page.
+   *
    * @returns {Observable<HydraCollection<AutomationAttemptOutput>>} Scoped results.
    */
   public list(
@@ -45,13 +62,20 @@ export class AutomationService extends HydraApiService {
       { page, itemsPerPage: 20 },
     );
   }
+
   /**
    * Method retry
-   * @description Requests one new attempt with the original action identity.
+   * @method retry
+   *
+   * @description
+   * Requests one new attempt with the original action identity.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Current workspace.
    * @param {AutomationAttemptOutput} attempt - Failed server row with its precondition.
+   *
    * @returns {Observable<AutomationAttemptOutput>} Accepted new attempt.
    */
   public retry(

@@ -1,5 +1,6 @@
 /**
  * Interface ChannelEditDraft
+ * @interface
  *
  * @description
  * What {@link ChannelEditForm} emits once the form is valid: the channel's
@@ -9,7 +10,29 @@
  * @since 1.0.0
  */
 export interface ChannelEditDraft {
+  /**
+   * Property name
+   * @readonly
+   *
+   * @description
+   * Provides the display name of this channel edit.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly name: string;
-  /** Bare parent channel UUID, or `null` for a root channel. */
+
+  /**
+   * Property parentChannelId
+   * @readonly
+   *
+   * @description
+   * Bare parent channel UUID, or `null` for a root channel.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly parentChannelId: string | null;
 }

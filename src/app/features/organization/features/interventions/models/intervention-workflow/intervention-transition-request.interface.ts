@@ -37,7 +37,43 @@ export interface InterventionTransitionRequest {
    * @type {string}
    */
   readonly workloadConfirmationToken?: string;
+
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
+
+  /**
+   * Property status
+   * @readonly
+   *
+   * @description
+   * Reports the current lifecycle status of this intervention transition request.
+   *
+   * @access public
+   *
+   * @type {InterventionStatus}
+   */
   readonly status: InterventionStatus;
+
+  /**
+   * Property reviewNote
+   * @readonly
+   *
+   * @description
+   * Contains the reviewer note attached to this transition.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly reviewNote?: string;
 }

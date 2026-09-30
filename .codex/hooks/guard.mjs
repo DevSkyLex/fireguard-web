@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * PreToolUse hook (fireguard-sso-web) — block clearly-unsafe or architecture-violating
+ * PreToolUse hook (fireguard-web) — block clearly-unsafe or architecture-violating
  * writes before they happen. Deny = exit 2 with a message on stderr; everything else
  * = exit 0.
  *
  * Paths here are relative to the WEB app root, because this config is loaded when
- * `fireguard-sso-web/` is the workspace root. The monorepo-root guard carries the
- * same frontend rules with a `/fireguard-sso-web/` prefix, for sessions opened one
+ * `fireguard-web/` is the workspace root. The monorepo-root guard carries the
+ * same frontend rules with a `/fireguard-web/` prefix, for sessions opened one
  * level up. Keep the two in sync when a rule changes.
  *
  * Denies:

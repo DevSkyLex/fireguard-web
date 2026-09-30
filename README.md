@@ -67,7 +67,7 @@ and each owner's `FEATURE.md` for boundaries and public APIs.
 
 Use Angular's `ng test` builder for application specs. Browser modes have distinct
 boundaries: hermetic SPA, test harness, localized scenarios and real SSR smoke.
-Start with the [testing guide](docs/guides/testing.md); [e2e/README.md](e2e/README.md)
+Start with the [repository test index](tests/README.md) and [testing guide](docs/guides/testing.md); [tests/e2e/README.md](tests/e2e/README.md)
 contains the suite-specific procedures and limits.
 
 ## Documentation

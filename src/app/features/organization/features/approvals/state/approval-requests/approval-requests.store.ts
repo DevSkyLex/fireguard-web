@@ -47,17 +47,55 @@ const INITIAL_STATE: ApprovalRequestsState = {
 
 /**
  * Interface DecideParams
- * @description Parameters shared by {@link ApprovalRequestsStore.approve} and {@link ApprovalRequestsStore.reject}.
+ * @interface
+ *
+ * @description
+ * Parameters shared by {@link ApprovalRequestsStore.approve} and
+ * {@link ApprovalRequestsStore.reject}.
  */
 interface DecideParams {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Identifies the organization associated with this decide.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property requestId
+   * @readonly
+   *
+   * @description
+   * Identifies the approval request being decided.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly requestId: string;
+
+  /**
+   * Property note
+   * @readonly
+   *
+   * @description
+   * Carries the optional note submitted with this decision.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly note?: string;
 }
 
 /**
- * Store ApprovalRequestsStore
- * @const ApprovalRequestsStore
+ * Constant ApprovalRequestsStore
  *
  * @description
  * Component-scoped NgRx SignalStore for one organization's four-eyes
@@ -74,6 +112,12 @@ interface DecideParams {
  * server may have moved it out from under the reader (already decided, or
  * cancelled because its subject changed).
  *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const ApprovalRequestsStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [ApprovalRequestsStore] })
@@ -81,9 +125,6 @@ interface DecideParams {
  *   protected readonly store = inject(ApprovalRequestsStore);
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const ApprovalRequestsStore = signalStore(
   withEntities({ entity: type<ApprovalRequestOutput>(), collection: 'request' }),
@@ -91,33 +132,57 @@ export const ApprovalRequestsStore = signalStore(
   withState<ApprovalRequestsState>(INITIAL_STATE),
 
   withComputed((store) => ({
-    /** All cached requests from the entity collection, in insertion order. */
+    /**
+     * @description
+     * All cached requests from the entity collection, in insertion order.
+     */
     requests: computed<ReadonlyArray<ApprovalRequestOutput>>(() => store.requestEntities()),
 
-    /** True while the list is loading. */
+    /**
+     * @description
+     * True while the list is loading.
+     */
     isLoading: computed<boolean>(() => store.listCallState().status === 'pending'),
 
-    /** True when the collection is empty and no list request is in flight. */
+    /**
+     * @description
+     * True when the collection is empty and no list request is in flight.
+     */
     isEmpty: computed<boolean>(
       () => store.requestIds().length === 0 && store.listCallState().status !== 'pending',
     ),
 
-    /** True when the last list request failed. */
+    /**
+     * @description
+     * True when the last list request failed.
+     */
     hasListError: computed<boolean>(() => store.listCallState().status === 'error'),
 
-    /** True when the last list request was refused for lack of permission, which a retry cannot fix. */
+    /**
+     * @description
+     * True when the last list request was refused for lack of permission, which a retry cannot fix.
+     */
     isListForbidden: computed<boolean>(() => store.listCallState().error?.code === 403),
 
-    /** True while a decision (approve or reject) is in flight. */
+    /**
+     * @description
+     * True while a decision (approve or reject) is in flight.
+     */
     isDeciding: computed<boolean>(() => store.decideCallState().status === 'pending'),
 
-    /** Specific, actionable copy for the last decision failure, or `null`. */
+    /**
+     * @description
+     * Specific, actionable copy for the last decision failure, or `null`.
+     */
     decideErrorText: computed<string | null>(() => {
       const error: StoreError | null = store.decideCallState().error;
       return error ? decideErrorMessage(error) : null;
     }),
 
-    /** The action-type catalog, once loaded. */
+    /**
+     * @description
+     * The action-type catalog, once loaded.
+     */
     actionTypes: computed<ReadonlyArray<ApprovalActionTypeOutput>>(() => {
       const state = store.actionTypesCallState();
       return isCallSuccess(state) ? state.data : [];
@@ -140,7 +205,11 @@ export const ApprovalRequestsStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @type {RxMethod<{ organizationId: string; options?: RequestOptions; query?: ApprovalRequestListQuery }>}
+       * @type {RxMethod<{
+       *   organizationId: string;
+       *   options?: RequestOptions;
+       *   query?: ApprovalRequestListQuery;
+       * }>}
        */
       load: rxMethod<{
         organizationId: string;
@@ -403,9 +472,13 @@ export const ApprovalRequestsStore = signalStore(
 
       /**
        * Method resetDecideOperation
-       * @description Resets the decide operation back to idle, for the dialog's close/reopen.
+       *
+       * @description
+       * Resets the decide operation back to idle, for the dialog's close/reopen.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @returns {void}
        */
       resetDecideOperation(): void {
@@ -417,9 +490,12 @@ export const ApprovalRequestsStore = signalStore(
 
 /**
  * Type ApprovalRequestsStoreType
- * @type ApprovalRequestsStoreType
  *
- * @description Instance type of the {@link ApprovalRequestsStore} signal store.
+ * @description
+ * Instance type of the {@link ApprovalRequestsStore} signal store.
+ *
  * @since 1.0.0
+ *
+ * @type ApprovalRequestsStoreType
  */
 export type ApprovalRequestsStoreType = InstanceType<typeof ApprovalRequestsStore>;

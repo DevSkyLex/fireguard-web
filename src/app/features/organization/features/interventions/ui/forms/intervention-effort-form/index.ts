@@ -1,1 +1,1 @@
-export * from './intervention-effort-form.component';
+export { InterventionEffortForm } from './intervention-effort-form.component';

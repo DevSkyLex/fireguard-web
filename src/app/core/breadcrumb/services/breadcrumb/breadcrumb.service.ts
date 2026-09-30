@@ -7,6 +7,7 @@ import type { BreadcrumbItem } from '../../models';
 
 /**
  * Interface BreadcrumbTrailNode
+ * @interface BreadcrumbTrailNode
  *
  * @description
  * Internal trail node built per navigation, before the current-page item is
@@ -17,13 +18,53 @@ import type { BreadcrumbItem } from '../../models';
  * @since 2.1.0
  */
 interface BreadcrumbTrailNode {
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Resolved breadcrumb text from route data, a resolver, or the route title.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property routerLink
+   * @readonly
+   *
+   * @description
+   * Accumulated route path used to link this breadcrumb in the trail.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly routerLink: string;
+
+  /**
+   * Property fromTitle
+   * @readonly
+   *
+   * @description
+   * Marks labels supplied by the route-title fallback so the current crumb can follow live title
+   * changes.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   readonly fromTitle: boolean;
 }
 
 /**
  * Interface BreadcrumbTrailResult
+ * @interface BreadcrumbTrailResult
  *
  * @description
  * What one route-tree walk produces: the trail itself, plus whether the
@@ -37,7 +78,33 @@ interface BreadcrumbTrailNode {
  * @since 2.2.0
  */
 interface BreadcrumbTrailResult {
+  /**
+   * Property trail
+   * @readonly
+   *
+   * @description
+   * Route nodes with resolved labels, ordered from the root toward the active page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {readonly BreadcrumbTrailNode[]}
+   */
   readonly trail: readonly BreadcrumbTrailNode[];
+
+  /**
+   * Property deepestSuppressed
+   * @readonly
+   *
+   * @description
+   * Indicates that the deepest active route supplied no breadcrumb, so the last trail node is an
+   * ancestor.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   readonly deepestSuppressed: boolean;
 }
 
@@ -52,7 +119,6 @@ interface BreadcrumbTrailResult {
  * follows the live `TitleService.pageTitle` — so a detail page whose title
  * resolver returned a neutral label while its record was still loading gets
  * its real name in the trail as soon as the page re-sets the document title.
- *
  * The current-page marker is withheld when the deepest route in the tree
  * suppressed its own breadcrumb: an ancestor's node would otherwise stand in
  * as "current" and get overlaid with a live page title that is not its own

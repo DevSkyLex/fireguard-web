@@ -1,0 +1,606 @@
+/**
+ * API response fixtures matching the backend transport contracts consumed by
+ * `HydraApiService`. Kept as plain factory functions (not classes) so tests
+ * can override individual fields with object spread.
+ *
+ * Hydra collections use plain `member` / `totalItems` keys (not the
+ * `hydra:member` JSON-LD form) — see `core/api/models/hydra-collection.interface.ts`.
+ */
+
+/** Organization the equipment/facility/inspection/onboarding e2e scenarios run against. */
+export const E2E_ORGANIZATION_ID = 'e2e-org-1';
+
+export interface LoginOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly access_token: string | null;
+  readonly token_type: 'Bearer';
+  readonly expires_in: number | null;
+  readonly scope?: string | null;
+  readonly mfa_required?: boolean | null;
+  readonly mfa_token?: string | null;
+  readonly challenge_token?: string | null;
+  readonly mfa_method?: 'email' | 'sms' | 'totp' | null;
+  readonly mfa_destination?: string | null;
+  readonly mfa_resend_in?: number | null;
+  readonly return_url?: string | null;
+  readonly new_account?: boolean | null;
+}
+
+export function loginOutput(overrides: Partial<LoginOutputFixture> = {}): LoginOutputFixture {
+  return {
+    '@id': '/api/auth/login',
+    '@type': 'Token',
+    access_token: 'e2e-access-token',
+    token_type: 'Bearer',
+    expires_in: 3600,
+    scope: 'openid profile email',
+    ...overrides,
+  };
+}
+
+export interface RegisterOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly success: boolean;
+  readonly message: string;
+  readonly challengeToken: string | null;
+  readonly maskedRecipient: string | null;
+  readonly expiresAt: string | null;
+  readonly maxAttempts: number | null;
+  readonly canResendIn: number | null;
+}
+
+/** The registration request's response — carries the challenge token the verify step needs. */
+export function registerOutput(
+  overrides: Partial<RegisterOutputFixture> = {},
+): RegisterOutputFixture {
+  return {
+    '@id': '/api/.well-known/genid/e2e-register-1',
+    '@type': 'RegisterOutput',
+    success: true,
+    message: 'Your account has been created. Enter the verification code we sent to your email.',
+    challengeToken: 'e2e-register-challenge-token',
+    maskedRecipient: 'j***e@e****e.com',
+    expiresAt: '2026-02-03T12:00:00+00:00',
+    maxAttempts: 10,
+    canResendIn: 60,
+    ...overrides,
+  };
+}
+
+export interface UserProfileOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly username: string;
+  readonly email: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly avatarUrl: string | null;
+  readonly status: string;
+  readonly locale: 'system' | 'en' | 'fr' | 'es';
+  readonly emailVerified: boolean;
+  readonly totpEnabled: boolean;
+  readonly tenantId: string | null;
+  readonly createdAt: string;
+  readonly lastLoginAt: string;
+  readonly roles: ReadonlyArray<string>;
+  readonly permissions: ReadonlyArray<string>;
+}
+
+export function userProfileOutput(
+  overrides: Partial<UserProfileOutputFixture> = {},
+): UserProfileOutputFixture {
+  return {
+    '@id': '/api/me',
+    '@type': 'User',
+    id: 'e2e-user-1',
+    username: 'e2e.user',
+    email: 'e2e.user@fireguard.test',
+    firstName: 'Ella',
+    lastName: 'Uzer',
+    avatarUrl: null,
+    status: 'active',
+    locale: 'system',
+    emailVerified: true,
+    totpEnabled: false,
+    tenantId: 'e2e-tenant-1',
+    createdAt: '2026-01-01T00:00:00+00:00',
+    lastLoginAt: '2026-07-08T00:00:00+00:00',
+    roles: ['ROLE_USER'],
+    permissions: [],
+    ...overrides,
+  };
+}
+
+export interface HydraCollectionFixture<T> {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly member: ReadonlyArray<T>;
+  readonly totalItems: number;
+}
+
+export function hydraCollection<T>(
+  member: ReadonlyArray<T> = [],
+  overrides: Partial<HydraCollectionFixture<T>> = {},
+): HydraCollectionFixture<T> {
+  return {
+    '@id': '/api/collection',
+    '@type': 'Collection',
+    member,
+    totalItems: member.length,
+    ...overrides,
+  };
+}
+
+export type OnboardingStepKeyFixture =
+  | 'create_organization'
+  | 'select_plan'
+  | 'invite_members'
+  | 'create_first_facility'
+  | 'create_first_equipment';
+
+export interface OnboardingStepOutputFixture {
+  readonly key: OnboardingStepKeyFixture;
+  readonly label: string;
+  readonly status: 'pending' | 'completed' | 'skipped' | 'blocked';
+  readonly required: boolean;
+  readonly available: boolean;
+  readonly reason: string | null;
+  readonly rollbackAvailable: boolean;
+  readonly skippable: boolean;
+  readonly skipAvailable: boolean;
+  readonly completedAt: string | null;
+}
+
+export function onboardingStepOutput(
+  overrides: Partial<OnboardingStepOutputFixture> = {},
+): OnboardingStepOutputFixture {
+  return {
+    key: 'create_organization',
+    label: 'Create your organization',
+    status: 'pending',
+    required: true,
+    available: true,
+    reason: null,
+    rollbackAvailable: false,
+    skippable: false,
+    skipAvailable: false,
+    completedAt: null,
+    ...overrides,
+  };
+}
+
+/** Every onboarding step, `pending` and untouched — the wizard's very first render. */
+export const E2E_ONBOARDING_STEPS: ReadonlyArray<OnboardingStepOutputFixture> = [
+  onboardingStepOutput({ key: 'create_organization', label: 'Create your organization' }),
+  onboardingStepOutput({
+    key: 'select_plan',
+    label: 'Choose a plan',
+    skippable: true,
+    skipAvailable: false,
+  }),
+  onboardingStepOutput({
+    key: 'invite_members',
+    label: 'Invite your team',
+    required: false,
+    skippable: true,
+    skipAvailable: false,
+  }),
+  onboardingStepOutput({
+    key: 'create_first_facility',
+    label: 'Add your first facility',
+    required: false,
+    skippable: false,
+    skipAvailable: false,
+  }),
+  onboardingStepOutput({
+    key: 'create_first_equipment',
+    label: 'Register your first equipment',
+    required: false,
+    skippable: false,
+    skipAvailable: false,
+  }),
+];
+
+/** A durable setup item returned on every browser resume. */
+export interface OnboardingSetupOperationFixture {
+  readonly stepKey: Exclude<OnboardingStepKeyFixture, 'select_plan'>;
+  readonly itemKey: string;
+  readonly payload: Readonly<Record<string, unknown>>;
+  readonly resourceId: string | null;
+  readonly status: 'prepared' | 'completed';
+}
+
+export interface OnboardingOutputFixture {
+  readonly sessionId: string;
+  readonly setupOperations: readonly OnboardingSetupOperationFixture[];
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly state: 'not_started' | 'in_progress' | 'blocked' | 'completed';
+  readonly flow: string | null;
+  readonly nextStep: OnboardingStepKeyFixture | null;
+  readonly steps: ReadonlyArray<OnboardingStepOutputFixture>;
+  readonly completedSteps: ReadonlyArray<OnboardingStepKeyFixture>;
+  readonly skippedSteps: ReadonlyArray<OnboardingStepKeyFixture>;
+  readonly dismissed: boolean;
+  readonly canRollback: boolean;
+  readonly blockedReason?: string | null;
+  readonly targetOrganizationId: string | null;
+  readonly targetOrganizationName: string | null;
+}
+
+/** An already-completed onboarding record — the default so most session bootstraps skip the wizard. */
+export function onboardingOutput(
+  overrides: Partial<OnboardingOutputFixture> = {},
+): OnboardingOutputFixture {
+  return {
+    '@id': '/api/onboarding/organization',
+    '@type': 'Onboarding',
+    sessionId: '00000000-0000-4000-8000-000000000101',
+    setupOperations: [],
+    state: 'completed',
+    flow: 'organization',
+    nextStep: null,
+    steps: [onboardingStepOutput({ status: 'completed' })],
+    completedSteps: ['create_organization'],
+    skippedSteps: [],
+    dismissed: false,
+    canRollback: false,
+    targetOrganizationId: E2E_ORGANIZATION_ID,
+    targetOrganizationName: 'E2E Organization',
+    ...overrides,
+  };
+}
+
+/** A brand-new, in-progress onboarding record sitting on its very first step. */
+export function inProgressOnboardingOutput(
+  overrides: Partial<OnboardingOutputFixture> = {},
+): OnboardingOutputFixture {
+  return onboardingOutput({
+    state: 'in_progress',
+    nextStep: 'create_organization',
+    steps: E2E_ONBOARDING_STEPS,
+    completedSteps: [],
+    targetOrganizationId: null,
+    targetOrganizationName: null,
+    ...overrides,
+  });
+}
+
+export interface OrganizationOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string;
+  readonly ownerUserId: string;
+  readonly createdByUserId: string;
+  readonly status: string;
+  readonly isActive: boolean;
+  readonly memberCount: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+
+  /*
+   * Optional on the wire, and optional here for the same reason: the API omits
+   * them on a bare organization read and fills them on the ones a settings or
+   * billing surface asks for. They are declared rather than left to the
+   * `Partial` override because a spec that passes `planName` is describing a
+   * real field of `OrganizationOutput`, not inventing one — until this list
+   * existed, `organizationOutput({ planName: 'Pro' })` was a type error whose
+   * payload nonetheless reached the app correctly through the object spread.
+   */
+  readonly description?: string | null;
+  readonly logoUrl?: string | null;
+  readonly settings?: Readonly<Record<string, unknown>> | null;
+  readonly planId?: string | null;
+  readonly planName?: string | null;
+  readonly country?: string | null;
+  readonly legalType?: string | null;
+  readonly legalName?: string | null;
+  readonly registrationNumber?: string | null;
+  readonly vatNumber?: string | null;
+  readonly isOwner?: boolean | null;
+  readonly roles?: ReadonlyArray<{ readonly id: string; readonly label: string }> | null;
+}
+
+export function organizationOutput(
+  overrides: Partial<OrganizationOutputFixture> = {},
+): OrganizationOutputFixture {
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}`,
+    '@type': 'Organization',
+    id: E2E_ORGANIZATION_ID,
+    name: 'E2E Organization',
+    slug: 'e2e-organization',
+    ownerUserId: 'e2e-user-1',
+    createdByUserId: 'e2e-user-1',
+    status: 'active',
+    isActive: true,
+    memberCount: 1,
+    createdAt: '2026-01-01T00:00:00+00:00',
+    updatedAt: '2026-01-01T00:00:00+00:00',
+    ...overrides,
+  };
+}
+
+/**
+ * Shared shape for the auth "challenge" flows — register, MFA, and
+ * password-reset all return this same envelope from their request/resend
+ * endpoints (`RegisterOutput`, `PasswordResetRequestOutput`,
+ * `PasswordResetVerifyOutput`).
+ */
+export interface ChallengeOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly success: boolean;
+  readonly message: string;
+  readonly challengeToken: string | null;
+  readonly maskedRecipient: string | null;
+  readonly expiresAt: string | null;
+  readonly maxAttempts: number | null;
+  readonly canResendIn: number | null;
+}
+
+export function challengeOutput(
+  overrides: Partial<ChallengeOutputFixture> = {},
+): ChallengeOutputFixture {
+  return {
+    '@id': '/api/auth/challenge',
+    '@type': 'ChallengeOutput',
+    success: true,
+    message: 'Verification code sent.',
+    challengeToken: 'e2e-challenge-token',
+    maskedRecipient: 'e***r@f***d.test',
+    expiresAt: null,
+    maxAttempts: 5,
+    canResendIn: 30,
+    ...overrides,
+  };
+}
+
+export interface CurrentOrganizationMemberProfileOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly organizationId: string;
+  readonly userId: string;
+  readonly isActive: boolean;
+  readonly joinedAt: string;
+  readonly roles: ReadonlyArray<{ readonly id: string; readonly name: string }>;
+  readonly permissions: ReadonlyArray<{ readonly id: string; readonly name: string }>;
+}
+
+/**
+ * All `ORGANIZATION_PERMISSION` catalog values
+ * (`src/app/features/organization/models`), granted by default so a smoke
+ * test can reach any permission-gated organization page. Pass `permissions`
+ * to `currentOrganizationMemberProfileOutput` to scope down for a
+ * guard-denial test.
+ */
+export const ALL_ORGANIZATION_PERMISSIONS: ReadonlyArray<string> = [
+  'organization.automation.manage',
+  'organization.automation.read',
+  'organization.dashboard.read',
+  'organization.members.read',
+  'organization.members.manage',
+  'organization.roles.read',
+  'organization.roles.manage',
+  'organization.facilities.read',
+  'organization.facilities.write',
+  'organization.equipment.read',
+  'organization.equipment.write',
+  'organization.inspection.read',
+  'organization.inspection.write',
+  'organization.interventions.read',
+  'organization.interventions.write',
+  'organization.interventions.plan',
+  'organization.interventions.execute',
+  'organization.interventions.review',
+  'organization.interventions.publish',
+  'organization.messaging.read',
+  'organization.messaging.write',
+  'organization.messaging.manage',
+  'organization.assistant.use',
+  'organization.settings.write',
+  'organization.compliance.read',
+  'organization.compliance.export',
+  'organization.maintenance.read',
+  'organization.maintenance.manage',
+  'organization.teams.read',
+  'organization.teams.write',
+  'organization.teams.manage',
+  'organization.audit.read',
+  'organization.approvals.read',
+  'organization.approvals.request',
+  'organization.approvals.decide',
+  'organization.webhooks.read',
+  'organization.webhooks.manage',
+  'organization.delete',
+];
+
+/**
+ * Overrides accepted by {@link currentOrganizationMemberProfileOutput} and by
+ * `ApiMock.mockOrganizationAccess`.
+ *
+ * `permissions` is deliberately NOT the shape the fixture carries: a spec
+ * names the permissions it grants (`'organization.members.read'`) and the
+ * factory expands each one into the `{ id, name }` object the transport uses.
+ * That is why the property has to be `Omit`-ted from the `Partial` before
+ * being redeclared — intersecting the two instead produced
+ * `readonly { id, name }[] & readonly string[]`, a type no caller can satisfy,
+ * which is exactly what nine specs were failing to typecheck against while
+ * running green.
+ */
+export type CurrentOrganizationMemberProfileOverrides = Omit<
+  Partial<CurrentOrganizationMemberProfileOutputFixture>,
+  'permissions'
+> & {
+  readonly permissions?: ReadonlyArray<string>;
+};
+
+export function currentOrganizationMemberProfileOutput(
+  overrides: CurrentOrganizationMemberProfileOverrides = {},
+): CurrentOrganizationMemberProfileOutputFixture {
+  const { permissions, ...rest } = overrides;
+  const permissionNames: ReadonlyArray<string> = permissions ?? ALL_ORGANIZATION_PERMISSIONS;
+
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/me`,
+    '@type': 'OrganizationMemberProfile',
+    id: 'e2e-member-1',
+    organizationId: E2E_ORGANIZATION_ID,
+    userId: 'e2e-user-1',
+    isActive: true,
+    joinedAt: '2026-01-01T00:00:00+00:00',
+    roles: [{ id: 'e2e-role-owner', name: 'Owner' }],
+    permissions: permissionNames.map((name, index) => ({ id: `e2e-permission-${index}`, name })),
+    ...rest,
+  };
+}
+
+export interface MercureSubscriptionOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly topic: string;
+  readonly token: string;
+}
+
+export function mercureSubscriptionOutput(
+  overrides: Partial<MercureSubscriptionOutputFixture> = {},
+): MercureSubscriptionOutputFixture {
+  return {
+    '@id': '/api/notifications/subscription',
+    '@type': 'NotificationSubscription',
+    topic: '/e2e/user-1',
+    token: 'e2e-mercure-token',
+    ...overrides,
+  };
+}
+
+/**
+ * One inbox notification, as the bell and the notification centre read it.
+ * `mockSessionData` serves an empty feed by default; pass `notifications` to
+ * seed one.
+ */
+export interface NotificationOutputFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly id: string;
+  readonly type: string;
+  readonly category: string;
+  readonly subject: string;
+  readonly body: string;
+  readonly channels: ReadonlyArray<string>;
+  readonly payload: Record<string, string | null>;
+  readonly isRead: boolean;
+  readonly createdAt: string;
+  readonly readAt: string | null;
+}
+
+export function notificationOutput(
+  overrides: Partial<NotificationOutputFixture> = {},
+): NotificationOutputFixture {
+  const id: string = overrides.id ?? 'e2e-notification-1';
+
+  return {
+    '@id': `/api/notifications/${id}`,
+    '@type': 'Notification',
+    id,
+    type: 'intervention.assigned',
+    category: 'work',
+    subject: 'An intervention was assigned to you',
+    body: 'Boiler room inspection, tomorrow morning.',
+    channels: ['in_app'],
+    payload: {},
+    isRead: false,
+    createdAt: '2026-08-30T08:00:00+00:00',
+    readAt: null,
+    ...overrides,
+  };
+}
+
+/**
+ * Sidebar navigation badge counters. The workspace shell reads these on every
+ * organization route, so `mockSessionData` serves them ambiently.
+ */
+export interface OrganizationNavigationCountersFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly openInterventions: number;
+  readonly openNonConformities: number;
+  readonly submittedInterventions: number;
+}
+
+export function organizationNavigationCountersOutput(
+  overrides: Partial<OrganizationNavigationCountersFixture> = {},
+): OrganizationNavigationCountersFixture {
+  return {
+    '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/navigation-counters`,
+    '@type': 'OrganizationNavigationCounters',
+    openInterventions: 0,
+    openNonConformities: 0,
+    submittedInterventions: 0,
+    ...overrides,
+  };
+}
+
+/** Generic value/label reference item returned by the catalog endpoints. */
+export interface OptionFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly value: string;
+  readonly label: string;
+}
+
+export function optionOutput(
+  overrides: Partial<OptionFixture> & Pick<OptionFixture, 'value' | 'label'>,
+): OptionFixture {
+  return {
+    '@id': `/api/options/${overrides.value}`,
+    '@type': 'Option',
+    ...overrides,
+  };
+}
+
+export interface ApiErrorFixture {
+  readonly '@id': string;
+  readonly '@type': string;
+  readonly status: number;
+  readonly type: string;
+  readonly title: string;
+  readonly detail?: string;
+}
+
+export function apiError(overrides: Partial<ApiErrorFixture> = {}): ApiErrorFixture {
+  return {
+    '@id': '/errors/error',
+    '@type': 'Error',
+    status: 400,
+    type: 'about:blank',
+    title: 'An error occurred',
+    ...overrides,
+  };
+}
+
+/** The `POST /api/trusted-devices` payload — the token itself travels in an HttpOnly cookie the mock cannot set. */
+export interface TrustDeviceOutputFixture {
+  readonly deviceId: string;
+  readonly token: string;
+  readonly deviceName: string;
+  readonly expiresAt: string;
+}
+
+export function trustDeviceOutput(
+  overrides: Partial<TrustDeviceOutputFixture> = {},
+): TrustDeviceOutputFixture {
+  return {
+    deviceId: 'e2e-trusted-device-id',
+    token: 'e2e-trusted-device-token',
+    deviceName: 'Chromium on Linux',
+    expiresAt: '2030-01-01T00:00:00+00:00',
+    ...overrides,
+  };
+}

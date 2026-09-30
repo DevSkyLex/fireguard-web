@@ -35,26 +35,57 @@ import { HlmDialogImports } from '@shared/ui/dialog';
 const QR_PIXEL_SIZE: number = 320;
 
 /**
- * The one `qrcode` entry point this dialog needs.
+ * Type QrCodeToDataUrl
+ *
+ * @description
+ * Describes the QR encoder function loaded by the dialog.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 type QrCodeToDataUrl = typeof import('qrcode').toDataURL;
 
 /**
- * The shape a dynamic `import('qrcode')` can take. The package is CommonJS,
+ * Interface QrCodeModule
+ * @interface
+ *
+ * @description
  * so depending on the interop the bundler applies, `toDataURL` sits either on
  * the namespace or under `default`.
  *
  * @since 1.0.0
  */
 interface QrCodeModule {
+  /**
+   * Property toDataURL
+   * @readonly
+   *
+   * @description
+   * Provides the QR encoder function used to convert a code into an image URL.
+   *
+   * @access public
+   *
+   * @type {QrCodeToDataUrl}
+   */
   readonly toDataURL?: QrCodeToDataUrl;
+
+  /**
+   * Property default
+   * @readonly
+   *
+   * @description
+   * Provides the QR encoder module’s default export.
+   *
+   * @access public
+   *
+   * @type {{ readonly toDataURL?: QrCodeToDataUrl }}
+   */
   readonly default?: { readonly toDataURL?: QrCodeToDataUrl };
 }
 
 /**
- * Component FacilityQrDialog
+ * Class FacilityQrDialog
  * @class FacilityQrDialog
  *
  * @description
@@ -72,6 +103,8 @@ interface QrCodeModule {
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-facility-qr-dialog
@@ -81,8 +114,6 @@ interface QrCodeModule {
  *   (dismissed)="onQrDialogDismissed()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-facility-qr-dialog',
@@ -96,9 +127,13 @@ export class FacilityQrDialog {
   /**
    * Property visible
    * @readonly
-   * @description Whether the dialog is open.
+   *
+   * @description
+   * Whether the dialog is open.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -106,9 +141,13 @@ export class FacilityQrDialog {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning the facility, used to build the record URL.
+   *
+   * @description
+   * The workspace owning the facility, used to build the record URL.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -116,9 +155,13 @@ export class FacilityQrDialog {
   /**
    * Property facility
    * @readonly
-   * @description The facility the QR points to, or `null` before it has loaded.
+   *
+   * @description
+   * The facility the QR points to, or `null` before it has loaded.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<FacilityOutput | null>}
    */
   public readonly facility: InputSignal<FacilityOutput | null> = input<FacilityOutput | null>(null);
@@ -128,27 +171,58 @@ export class FacilityQrDialog {
   /**
    * Property dismissed
    * @readonly
-   * @description The dialog was closed — Escape, the backdrop, or the close button.
+   *
+   * @description
+   * The dialog was closed — Escape, the backdrop, or the close button.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly dismissed: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** Guards the browser-only work: building the URL, generating the QR, printing and downloading. */
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Provides the Angular platform identifier used to guard browser-only rendering.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {object}
+   */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
 
-  /** Used to create the download anchor without touching `document` directly. */
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Provides the document used to detect browser visibility and restore focus.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Document}
+   */
   private readonly document: Document = inject<Document>(DOCUMENT);
 
   /**
    * Property facilityUrl
    * @readonly
-   * @description The facility's absolute record URL, empty until a facility and the browser origin are both available.
+   *
+   * @description
+   * The facility's absolute record URL, empty until a facility and the browser origin are both
+   * available.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly facilityUrl: Signal<string> = computed((): string => {
@@ -161,9 +235,13 @@ export class FacilityQrDialog {
   /**
    * Property qrDataUrl
    * @readonly
-   * @description The rendered QR as a data URL, or `null` when there is nothing to render or the render failed.
+   *
+   * @description
+   * The rendered QR as a data URL, or `null` when there is nothing to render or the render failed.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly qrDataUrl: WritableSignal<string | null> = signal<string | null>(null);
@@ -171,9 +249,13 @@ export class FacilityQrDialog {
   /**
    * Property altText
    * @readonly
-   * @description The QR image's accessible alt text, naming the facility it links to.
+   *
+   * @description
+   * The QR image's accessible alt text, naming the facility it links to.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly altText: Signal<string> = computed((): string => {
@@ -187,6 +269,7 @@ export class FacilityQrDialog {
   //#region Lifecycle
   /**
    * Property renderQr
+   * @readonly
    *
    * @description
    * Renders the facility URL whenever the dialog opens on a resolved
@@ -195,6 +278,8 @@ export class FacilityQrDialog {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
   private readonly renderQr: EffectRef = effect((): void => {
     const visible: boolean = this.visible();
@@ -214,10 +299,16 @@ export class FacilityQrDialog {
   //#region Methods
   /**
    * Method onDialogStateChanged
-   * @description Relays a dismissal — Escape, the backdrop, or the close button — as {@link dismissed}.
+   * @method onDialogStateChanged
+   *
+   * @description
+   * Relays a dismissal — Escape, the backdrop, or the close button — as {@link dismissed}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - The dialog's new state.
+   *
    * @returns {void}
    */
   protected onDialogStateChanged(state: BrnDialogState): void {
@@ -228,9 +319,15 @@ export class FacilityQrDialog {
 
   /**
    * Method print
-   * @description Opens the browser print dialog. The app-wide print stylesheet keeps only this open overlay on the page.
+   * @method print
+   *
+   * @description
+   * Opens the browser print dialog. The app-wide print stylesheet keeps only this open overlay on
+   * the page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected print(): void {
@@ -241,9 +338,15 @@ export class FacilityQrDialog {
 
   /**
    * Method download
-   * @description Saves the rendered QR as a PNG through a programmatic anchor click. A no-op until the QR has rendered.
+   * @method download
+   *
+   * @description
+   * Saves the rendered QR as a PNG through a programmatic anchor click. A no-op until the QR has
+   * rendered.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected download(): void {
@@ -259,10 +362,17 @@ export class FacilityQrDialog {
 
   /**
    * Method generateQr
-   * @description Draws the facility URL. A failure is swallowed on purpose: the record stays reachable by other means, so a missing QR costs convenience, not access.
+   * @method generateQr
+   *
+   * @description
+   * Draws the facility URL. A failure is swallowed on purpose: the record stays reachable by other
+   * means, so a missing QR costs convenience, not access.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string} url - The facility's absolute record URL.
+   *
    * @returns {Promise<void>}
    */
   private async generateQr(url: string): Promise<void> {
@@ -291,10 +401,16 @@ export class FacilityQrDialog {
 
   /**
    * Method slugify
-   * @description Turns a facility's code or name into a filesystem-safe download filename stem.
+   * @method slugify
+   *
+   * @description
+   * Turns a facility's code or name into a filesystem-safe download filename stem.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string} value - The source text.
+   *
    * @returns {string} The lowercased, hyphen-separated slug.
    */
   private slugify(value: string): string {

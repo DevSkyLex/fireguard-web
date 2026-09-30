@@ -77,13 +77,28 @@ import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentCreateSheet } from '../../sheets/equipment-create-sheet';
 import { EquipmentTable } from '../../tables/equipment-table';
 
-/** How long typing settles before the search reaches the wire. */
+/**
+ * Constant SEARCH_DEBOUNCE_MS
+ *
+ * @description
+ * How long typing settles before the search reaches the wire.
+ */
 const SEARCH_DEBOUNCE_MS: number = 300;
 
-/** The page sizes offered under the table — the server default first. */
+/**
+ * Constant PAGE_SIZES
+ *
+ * @description
+ * The page sizes offered under the table — the server default first.
+ */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 
-/** Every lifecycle status offered in the filter bar. */
+/**
+ * Constant STATUS_VALUES
+ *
+ * @description
+ * Every lifecycle status offered in the filter bar.
+ */
 const STATUS_VALUES: readonly EquipmentStatus[] = [
   'in_stock',
   'operational',
@@ -102,12 +117,10 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
  * above the grid, in its bordered shell, and a footer carrying the row
  * count, the page size and the pager — the same shell `InterventionsPage`
  * draws, whose filter bar this one now shares.
- *
  * It owns the query the table renders — search, filters, paging — and the
  * "New equipment" affordance; the record itself is where every property is
  * edited (`FEATURE.md` "The record is the edit surface"), so this page has
  * no row menu and no bulk actions to orchestrate.
- *
  * Its title lives in the shell breadcrumb; "New equipment" registers on the
  * shell header through `PageActionsService`. The type/status chips' own
  * value controls are `app-collection-filter-select`
@@ -159,9 +172,13 @@ export class EquipmentsPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace whose equipment is listed, bound from the route.
+   *
+   * @description
+   * The workspace whose equipment is listed, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -169,9 +186,14 @@ export class EquipmentsPage {
   /**
    * Property create
    * @readonly
-   * @description `?create=1` asks the page to open the creation sheet on arrival — the deep link the `/create` redirect and the in-app links use. Consumed once, then stripped from the URL.
+   *
+   * @description
+   * `?create=1` asks the page to open the creation sheet on arrival — the deep link the `/create`
+   * redirect and the in-app links use. Consumed once, then stripped from the URL.
+   *
    * @access public
    * @since 1.6.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
@@ -179,9 +201,14 @@ export class EquipmentsPage {
   /**
    * Property facility
    * @readonly
-   * @description The site the caller pre-picked, bound from `?facility=`, so a record created from a site lands in it. Consumed with `create`.
+   *
+   * @description
+   * The site the caller pre-picked, bound from `?facility=`, so a record created from a site lands
+   * in it. Consumed with `create`.
+   *
    * @access public
    * @since 1.6.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly facility: InputSignal<string | undefined> = input<string | undefined>(undefined);
@@ -189,13 +216,29 @@ export class EquipmentsPage {
   /**
    * Property q
    * @readonly
-   * @description The search term the URL carries, so a filtered list survives a reload.
+   *
+   * @description
+   * The search term the URL carries, so a filtered list survives a reload.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly q: InputSignal<string | undefined> = input<string | undefined>(undefined);
-  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+
+  /**
+   * Property listForbidden
+   * @readonly
+   *
+   * @description
+   * Whether the last list read was refused for lack of permission, which a retry cannot fix.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(
     () => this.store.listCallState().error?.code === 403,
   );
@@ -203,7 +246,18 @@ export class EquipmentsPage {
   //#endregion
 
   //#region Properties
-  /** The list dataset, provided by this route. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The list dataset, provided by this route.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentStoreType}
+   */
   protected readonly store: EquipmentStoreType = inject<EquipmentStoreType>(EquipmentStore);
 
   /**
@@ -223,75 +277,252 @@ export class EquipmentsPage {
   protected readonly kpisStore: EquipmentKpisStoreType =
     inject<EquipmentKpisStoreType>(EquipmentKpisStore);
 
-  /** Transport used directly for the one-shot CSV export — a download, not list state. */
+  /**
+   * Property equipmentService
+   * @readonly
+   *
+   * @description
+   * Transport used directly for the one-shot CSV export — a download, not list state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {EquipmentService}
+   */
   private readonly equipmentService: EquipmentService = inject(EquipmentService);
 
-  /** Hands the export blob to the browser as a file download. */
+  /**
+   * Property browserDownload
+   * @readonly
+   *
+   * @description
+   * Hands the export blob to the browser as a file download.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
   private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
-  /** Global toast feedback for the export's warn and error paths. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Global toast feedback for the export's warn and error paths.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject(FeedbackService);
 
-  /** Unsubscribes an in-flight export when the page is destroyed. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Unsubscribes an in-flight export when the page is destroyed.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Whether a CSV export is currently in flight. */
+  /**
+   * Property exportBusy
+   * @readonly
+   *
+   * @description
+   * Whether a CSV export is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether a QR label sheet export is currently in flight. */
+  /**
+   * Property labelsBusy
+   * @readonly
+   *
+   * @description
+   * Whether a QR label sheet export is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly labelsBusy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Organization permission checks gating the "New equipment" action. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating the "New equipment" action.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Router used to round-trip the `?q=` query param. */
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Router used to round-trip the `?q=` query param.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject(Router);
 
-  /** Current route, anchoring the relative query-param navigation. */
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Current route, anchoring the relative query-param navigation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
-  /** The cookie-backed memory of how this list was left ordered. */
+  /**
+   * Property preferences
+   * @readonly
+   *
+   * @description
+   * The cookie-backed memory of how this list was left ordered.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {EquipmentListPreferencesService}
+   */
   private readonly preferences: EquipmentListPreferencesService =
     inject<EquipmentListPreferencesService>(EquipmentListPreferencesService);
 
   /**
    * Property sortOrder
    * @readonly
-   * @description The active ordering, restored from the preferences cookie.
+   *
+   * @description
+   * The active ordering, restored from the preferences cookie.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {WritableSignal<EquipmentListSort>}
    */
   protected readonly sortOrder: WritableSignal<EquipmentListSort> = signal<EquipmentListSort>(
     this.preferences.readSort(),
   );
 
-  /** The active narrowing. Questions asked now, so never persisted. */
+  /**
+   * Property filters
+   * @readonly
+   *
+   * @description
+   * The active narrowing. Questions asked now, so never persisted.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<{
+   *   readonly type: EquipmentType | null;
+   *   readonly status: EquipmentStatus | null;
+   * }>}
+   */
   protected readonly filters: WritableSignal<{
     readonly type: EquipmentType | null;
     readonly status: EquipmentStatus | null;
   }> = signal({ type: null, status: null });
 
-  /** What the search box holds, before the debounce settles. */
+  /**
+   * Property draftSearch
+   * @readonly
+   *
+   * @description
+   * What the search box holds, before the debounce settles.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly draftSearch: WritableSignal<string> = signal<string>('');
 
-  /** The page window, one-based. */
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * The page window, one-based.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly page: WritableSignal<number> = signal<number>(1);
 
-  /** How many rows a page holds. */
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * How many rows a page holds.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
-  /** Type choices offered in the filter bar. */
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Equipment type catalogue displayed by the list filters.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   */
   protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
 
   /**
    * Property statusOptions
    * @readonly
-   * @description Status choices offered in the filter bar, labelled through the equipment status registry rather than a second copy (`ARCHITECTURE.md` §10.10).
+   *
+   * @description
+   * Status choices offered in the filter bar, labelled through the equipment status registry rather
+   * than a second copy (`ARCHITECTURE.md` §10.10).
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {readonly CollectionFilterOption[]}
    */
   protected readonly statusOptions: readonly CollectionFilterOption[] = STATUS_VALUES.map(
@@ -304,9 +535,13 @@ export class EquipmentsPage {
   /**
    * Property searchTerm
    * @readonly
-   * @description The search as everything downstream reads it: trimmed, never `undefined`.
+   *
+   * @description
+   * The search as everything downstream reads it: trimmed, never `undefined`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
@@ -314,9 +549,13 @@ export class EquipmentsPage {
   /**
    * Property hasSearchOrFilters
    * @readonly
-   * @description Whether the current view is narrowed at all, deciding what the empty state offers.
+   *
+   * @description
+   * Whether the current view is narrowed at all, deciding what the empty state offers.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly hasSearchOrFilters: Signal<boolean> = computed<boolean>(() => {
@@ -325,19 +564,54 @@ export class EquipmentsPage {
     return this.searchTerm() !== '' || filters.type !== null || filters.status !== null;
   });
 
-  /** Whether the "Print QR labels" button should be inert: nothing loaded yet, nothing to print, or a sheet already in flight. */
+  /**
+   * Property labelsDisabled
+   * @readonly
+   *
+   * @description
+   * Whether the "Print QR labels" button should be inert: nothing loaded yet, nothing to print, or
+   * a sheet already in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly labelsDisabled: Signal<boolean> = computed(
     (): boolean =>
       this.store.isLoadingEquipment() || this.labelsBusy() || this.store.totalEquipment() === 0,
   );
 
-  /** Whether the export button should be inert: nothing loaded yet, nothing to export, or an export already in flight. */
+  /**
+   * Property exportDisabled
+   * @readonly
+   *
+   * @description
+   * Whether the export button should be inert: nothing loaded yet, nothing to export, or an export
+   * already in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly exportDisabled: Signal<boolean> = computed(
     (): boolean =>
       this.store.isLoadingEquipment() || this.exportBusy() || this.store.totalEquipment() === 0,
   );
 
-  /** The filter bar's field catalog: type, then status. */
+  /**
+   * Property filterFields
+   * @readonly
+   *
+   * @description
+   * The filter bar's field catalog: type, then status.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {readonly CollectionFilterField[]}
+   */
   protected readonly filterFields: readonly CollectionFilterField[] = [
     {
       key: 'type',
@@ -356,9 +630,13 @@ export class EquipmentsPage {
   /**
    * Property activeFilterKeys
    * @readonly
-   * @description Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input.
+   *
+   * @description
+   * Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
@@ -372,7 +650,18 @@ export class EquipmentsPage {
     },
   );
 
-  /** Which field's value selector currently renders forced open — `null` when none is. */
+  /**
+   * Property openFilterKey
+   * @readonly
+   *
+   * @description
+   * Which field's value selector currently renders forced open — `null` when none is.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<'type' | 'status' | null>}
+   */
   protected readonly openFilterKey: WritableSignal<'type' | 'status' | null> = signal<
     'type' | 'status' | null
   >(null);
@@ -380,34 +669,78 @@ export class EquipmentsPage {
   /**
    * Property filtersVisible
    * @readonly
-   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   *
+   * @description
+   * Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only.
+   * Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely
+   * driven by `app-collection-filter-toggle`.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
     computed<boolean>(() => this.activeFilterKeys().length > 0),
   );
 
-  /** The "Type" chip's value control, projected into the filter bar. */
+  /**
+   * Property typeChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Type" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly typeChipTemplate = viewChild<TemplateRef<unknown>>('typeChip');
 
-  /** The "Status" chip's value control, projected into the filter bar. */
+  /**
+   * Property statusChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Status" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
 
   /**
    * Property chipTemplates
    * @readonly
-   * @description Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   *
+   * @description
+   * Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates`
+   * input.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
    */
   protected readonly chipTemplates: Signal<
     Readonly<Record<string, TemplateRef<unknown> | undefined>>
   > = computed(() => ({ type: this.typeChipTemplate(), status: this.statusChipTemplate() }));
 
-  /** The rows the table currently renders. */
+  /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * The rows the table currently renders.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly EquipmentOutput[]>}
+   */
   protected readonly items: Signal<readonly EquipmentOutput[]> = computed<
     readonly EquipmentOutput[]
   >(() => this.store.equipmentList());
@@ -415,9 +748,13 @@ export class EquipmentsPage {
   /**
    * Property pageCount
    * @readonly
-   * @description How many pages the current total spans, at least one.
+   *
+   * @description
+   * How many pages the current total spans, at least one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
@@ -427,26 +764,63 @@ export class EquipmentsPage {
   /**
    * Property canCreate
    * @readonly
-   * @description Whether the member may register new equipment.
+   *
+   * @description
+   * Whether the member may register new equipment.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canCreate: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
   );
 
-  /** Where a row's link, and the "New equipment" button, point. */
+  /**
+   * Property listRouteBase
+   * @readonly
+   *
+   * @description
+   * Where a row's link, and the "New equipment" button, point.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly string[]>}
+   */
   protected readonly listRouteBase: Signal<readonly string[]> = computed<readonly string[]>(() => [
     '/organizations',
     this.organizationId(),
     'equipments',
   ]);
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The "New equipment" button, registered on the shell header instead of an in-page title band. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The "New equipment" button, registered on the shell header instead of an in-page title band.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
@@ -454,9 +828,13 @@ export class EquipmentsPage {
   /**
    * Property createSheetVisible
    * @readonly
-   * @description Whether the creation sheet is open. The page owns it; the sheet derives its state from it.
+   *
+   * @description
+   * Whether the creation sheet is open. The page owns it; the sheet derives its state from it.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -464,9 +842,13 @@ export class EquipmentsPage {
   /**
    * Property pendingScopeId
    * @readonly
-   * @description The site a `?facility=` deep link pre-picked for the sheet, cleared when it closes.
+   *
+   * @description
+   * The site a `?facility=` deep link pre-picked for the sheet, cleared when it closes.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly pendingScopeId: WritableSignal<string | null> = signal<string | null>(null);
@@ -474,9 +856,14 @@ export class EquipmentsPage {
   /**
    * Property platformId
    * @readonly
-   * @description Distinguishes browser from server: the sheet, its options and the `?create=1` handshake are browser-only.
+   *
+   * @description
+   * Distinguishes browser from server: the sheet, its options and the `?create=1` handshake are
+   * browser-only.
+   *
    * @access private
    * @since 1.6.0
+   *
    * @type {object}
    */
   private readonly platformId: object = inject(PLATFORM_ID);
@@ -484,9 +871,13 @@ export class EquipmentsPage {
   /**
    * Property facilityOptionsStore
    * @readonly
-   * @description The organization's facilities offered by the sheet's Site field, loaded on first open.
+   *
+   * @description
+   * The organization's facilities offered by the sheet's Site field, loaded on first open.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {FacilityOptionsStore}
    */
   protected readonly facilityOptionsStore: FacilityOptionsStore =
@@ -582,10 +973,16 @@ export class EquipmentsPage {
   //#region Methods
   /**
    * Method onSearchQueryChanged
-   * @description Records a keystroke into the draft term the debounce watches.
+   * @method onSearchQueryChanged
+   *
+   * @description
+   * Records a keystroke into the draft term the debounce watches.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} term - The search box's current value.
+   *
    * @returns {void}
    */
   protected onSearchQueryChanged(term: string): void {
@@ -594,9 +991,14 @@ export class EquipmentsPage {
 
   /**
    * Method clearSearch
-   * @description Drops the search from the URL.
+   * @method clearSearch
+   *
+   * @description
+   * Drops the search from the URL.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected clearSearch(): void {
@@ -607,10 +1009,17 @@ export class EquipmentsPage {
 
   /**
    * Method applyFilter
-   * @description Replaces one narrowing, which reloads the list from the first page.
+   * @method applyFilter
+   *
+   * @description
+   * Replaces one narrowing, which reloads the list from the first page.
+   *
    * @access protected
    * @since 1.0.0
-   * @param {Partial<{ type: EquipmentType | null; status: EquipmentStatus | null }>} patch - The field to change.
+   *
+   * @param {Partial<{ type: EquipmentType | null; status: EquipmentStatus | null }>} patch - The
+   *   field to change.
+   *
    * @returns {void}
    */
   protected applyFilter(
@@ -625,9 +1034,14 @@ export class EquipmentsPage {
 
   /**
    * Method clearFilters
-   * @description Drops every narrowing at once, including the search term.
+   * @method clearFilters
+   *
+   * @description
+   * Drops every narrowing at once, including the search term.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected clearFilters(): void {
@@ -638,10 +1052,17 @@ export class EquipmentsPage {
 
   /**
    * Method onFieldPicked
-   * @description Reacts to the filter bar's `fieldPicked` output by forcing the picked field's value control open.
+   * @method onFieldPicked
+   *
+   * @description
+   * Reacts to the filter bar's `fieldPicked` output by forcing the picked field's value control
+   * open.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   *
    * @returns {void}
    */
   protected onFieldPicked(key: string): void {
@@ -650,10 +1071,16 @@ export class EquipmentsPage {
 
   /**
    * Method onFieldRemoved
-   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   * @method onFieldRemoved
+   *
+   * @description
+   * Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {string} key - The field key a chip's remove button cleared.
+   *
    * @returns {void}
    */
   protected onFieldRemoved(key: string): void {
@@ -662,10 +1089,17 @@ export class EquipmentsPage {
 
   /**
    * Method toggleFiltersVisible
-   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @method toggleFiltersVisible
+   *
+   * @description
+   * Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to
+   * the value it reports.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {boolean} visible - The toggle button's intended next state.
+   *
    * @returns {void}
    */
   protected toggleFiltersVisible(visible: boolean): void {
@@ -674,10 +1108,17 @@ export class EquipmentsPage {
 
   /**
    * Method fieldPopoverState
-   * @description Whether a field's value control should currently render open — true only for {@link openFilterKey}.
+   * @method fieldPopoverState
+   *
+   * @description
+   * Whether a field's value control should currently render open — true only for
+   * {@link openFilterKey}.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {'type' | 'status'} key - The field to read.
+   *
    * @returns {BrnOverlayState} `'open'` or `'closed'`.
    */
   protected fieldPopoverState(key: 'type' | 'status'): BrnOverlayState {
@@ -686,11 +1127,17 @@ export class EquipmentsPage {
 
   /**
    * Method onFieldPopoverStateChanged
-   * @description Keeps {@link openFilterKey} in sync with a field's own value control.
+   * @method onFieldPopoverStateChanged
+   *
+   * @description
+   * Keeps {@link openFilterKey} in sync with a field's own value control.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {'type' | 'status'} key - The field whose selector changed.
    * @param {BrnOverlayState} state - Its next state.
+   *
    * @returns {void}
    */
   protected onFieldPopoverStateChanged(key: 'type' | 'status', state: BrnOverlayState): void {
@@ -704,10 +1151,16 @@ export class EquipmentsPage {
 
   /**
    * Method setPageSize
-   * @description Changes the page size and returns to the first page.
+   * @method setPageSize
+   *
+   * @description
+   * Changes the page size and returns to the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} size - The chosen page size.
+   *
    * @returns {void}
    */
   protected setPageSize(size: number): void {
@@ -717,10 +1170,16 @@ export class EquipmentsPage {
 
   /**
    * Method goToPage
-   * @description Moves to a page within bounds.
+   * @method goToPage
+   *
+   * @description
+   * Moves to a page within bounds.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} target - The requested page.
+   *
    * @returns {void}
    */
   protected goToPage(target: number): void {
@@ -729,6 +1188,7 @@ export class EquipmentsPage {
 
   /**
    * Method exportCsv
+   * @method exportCsv
    *
    * @description
    * Downloads the organization's equipment inventory as CSV
@@ -739,6 +1199,7 @@ export class EquipmentsPage {
    *
    * @access protected
    * @since 1.7.0
+   *
    * @returns {void}
    */
   protected exportCsv(): void {
@@ -776,6 +1237,7 @@ export class EquipmentsPage {
 
   /**
    * Method printLabels
+   * @method printLabels
    *
    * @description
    * Downloads the organization's printable QR label sheet as PDF
@@ -787,6 +1249,7 @@ export class EquipmentsPage {
    *
    * @access protected
    * @since 1.8.0
+   *
    * @returns {void}
    */
   protected printLabels(): void {
@@ -815,9 +1278,14 @@ export class EquipmentsPage {
 
   /**
    * Method reload
-   * @description Re-runs the current query, for the error state's retry.
+   * @method reload
+   *
+   * @description
+   * Re-runs the current query, for the error state's retry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected reload(): void {
@@ -834,10 +1302,18 @@ export class EquipmentsPage {
 
   /**
    * Method applySortField
-   * @description Orders by a column head. Re-picking the active field reverses it, which is what a second click on a sorted column means everywhere else. Resets to the first page like every other narrowing change.
+   * @method applySortField
+   *
+   * @description
+   * Orders by a column head. Re-picking the active field reverses it, which is what a second click
+   * on a sorted column means everywhere else. Resets to the first page like every other narrowing
+   * change.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {EquipmentSortField} field - The column's field.
+   *
    * @returns {void}
    */
   protected applySortField(field: EquipmentSortField): void {
@@ -852,6 +1328,7 @@ export class EquipmentsPage {
 
   /**
    * Method buildListParams
+   * @method buildListParams
    *
    * @description
    * Folds the active search and narrowing into the query params the
@@ -878,9 +1355,14 @@ export class EquipmentsPage {
   /**
    * Method openCreate
    * @method openCreate
-   * @description Opens the creation sheet, loading its options the first time — browser only, they are secondary UI data.
+   *
+   * @description
+   * Opens the creation sheet, loading its options the first time — browser only, they are secondary
+   * UI data.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected openCreate(): void {
@@ -893,10 +1375,15 @@ export class EquipmentsPage {
   /**
    * Method onCreateSheetVisibleChange
    * @method onCreateSheetVisibleChange
-   * @description Relays the sheet's open/closed state and, on close, drops the pre-picked scope.
+   *
+   * @description
+   * Relays the sheet's open/closed state and, on close, drops the pre-picked scope.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @param {boolean} visible - Whether the sheet is open.
+   *
    * @returns {void}
    */
   protected onCreateSheetVisibleChange(visible: boolean): void {
@@ -908,10 +1395,16 @@ export class EquipmentsPage {
   /**
    * Method onCreateSubmitted
    * @method onCreateSubmitted
-   * @description Sends the sheet's payload to the store, ignoring re-entries while a create is in flight. The sheet closes and the page navigates once the store reports the new record.
+   *
+   * @description
+   * Sends the sheet's payload to the store, ignoring re-entries while a create is in flight. The
+   * sheet closes and the page navigates once the store reports the new record.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @param {CreateEquipmentInput} payload - The validated payload.
+   *
    * @returns {void}
    */
   protected onCreateSubmitted(payload: CreateEquipmentInput): void {
@@ -922,10 +1415,17 @@ export class EquipmentsPage {
 
   /**
    * Method navigateQuery
-   * @description Round-trips `?q=` without disturbing the rest of the URL.
+   * @method navigateQuery
+   *
+   * @description
+   * Round-trips `?q=` without disturbing the rest of the URL.
+   *
    * @access private
    * @since 1.0.0
-   * @param {Readonly<Record<string, string | null>>} patch - Query params to merge; `null` removes one.
+   *
+   * @param {Readonly<Record<string, string | null>>} patch - Query params to merge; `null` removes
+   *   one.
+   *
    * @returns {void}
    */
   private navigateQuery(patch: Readonly<Record<string, string | null>>): void {

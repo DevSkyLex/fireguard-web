@@ -40,14 +40,13 @@ import { HlmTooltip } from '@shared/ui/tooltip';
 import type { SavedMessageItem } from './models';
 
 /**
- * Component SavedMessagesPage
+ * Class SavedMessagesPage
  * @class SavedMessagesPage
  *
  * @description
  * The reader's saved messages across the open organization — private
  * bookmarks, listed newest-loaded-first as the API returns them, each linking
  * into the conversation it lives in.
- *
  * A bookmark in a channel links to the channel route and one in a direct
  * conversation to the messages route; the store resolves each conversation
  * once to tell them apart, and an unresolvable one falls back to the direct
@@ -84,9 +83,13 @@ export class SavedMessagesPage {
   /**
    * Property presences
    * @readonly
-   * @description Visible bookmark authors registered independently of the open conversation.
+   *
+   * @description
+   * Visible bookmark authors registered independently of the open conversation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
    */
   protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
@@ -170,15 +173,31 @@ export class SavedMessagesPage {
     (): string | null => this.saved.loadError()?.message ?? null,
   );
 
+  /**
+   * Property organizationContext
+   * @readonly
+   *
+   * @description
+   * Provides the active organization context for conversation requests.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationContextPort}
+   */
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
   /**
    * Property regionalFormattingPort
    * @readonly
-   * @description Source of the open organization's date pattern and timezone, for {@link OrgDatePipe}.
+   *
+   * @description
+   * Source of the open organization's date pattern and timezone, for {@link OrgDatePipe}.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {RegionalFormattingPort}
    */
   private readonly regionalFormattingPort: RegionalFormattingPort =
@@ -187,9 +206,14 @@ export class SavedMessagesPage {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The open organization's date pattern and timezone, read by the template for each bookmark's timestamp.
+   *
+   * @description
+   * The open organization's date pattern and timezone, read by the template for each bookmark's
+   * timestamp.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
@@ -198,24 +222,50 @@ export class SavedMessagesPage {
   /**
    * Property getOrganizationInitials
    * @readonly
-   * @description Template-bound reference to the shared initials util, used for an authorless-avatar fallback.
+   *
+   * @description
+   * Template-bound reference to the shared initials util, used for an authorless-avatar fallback.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {typeof getOrganizationInitials}
    */
   protected readonly getOrganizationInitials: typeof getOrganizationInitials =
     getOrganizationInitials;
 
-  /** Stands in wherever a member cannot be named. Never a raw id. */
+  /**
+   * Property unknownLabel
+   * @readonly
+   *
+   * @description
+   * Provides the localized fallback name shown when a message author is unavailable.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly unknownLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
 
-  /** Labels a bookmark whose conversation is not a named channel. */
+  /**
+   * Property directLabel
+   * @readonly
+   *
+   * @description
+   * Provides the localized label used for saved messages from direct conversations.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly directLabel: string = $localize`:@@messages.saved.directConversation:Direct conversation`;
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description

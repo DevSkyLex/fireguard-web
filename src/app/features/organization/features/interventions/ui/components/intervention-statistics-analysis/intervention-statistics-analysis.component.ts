@@ -22,7 +22,12 @@ import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { InterventionTag } from '../intervention-tag';
 
-/** The priority ladder, in the order the breakdown lists it. */
+/**
+ * Constant PRIORITY_VALUES
+ *
+ * @description
+ * The priority ladder, in the order the breakdown lists it.
+ */
 const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high', 'urgent'];
 
 /**
@@ -36,14 +41,12 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
  * lists, and `averagePublicationDays`. Collapsed by default, matching the
  * KPI strip's own idiom of labeled counts and short lists rather than a
  * chart.
- *
  * A `null` `siteName`/`displayName` (a since-deleted facility or member)
  * falls back to a localized "Unknown" label rather than an empty cell.
  * Sites link into the facility record; responsibles link into the
  * organization's members list — this codebase has no per-member profile
  * route yet, so that list is the closest existing surface rather than a
  * fabricated deep link.
- *
  * Purely presentational (`ARCHITECTURE.md` §10.2): derived only from
  * {@link statistics} and {@link organizationId}, no store, no service.
  *
@@ -68,19 +71,65 @@ const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high
 })
 export class InterventionStatisticsAnalysis {
   //#region Inputs
-  /** The organization-wide snapshot, or `null` while it has not resolved yet. */
+  /**
+   * Property statistics
+   * @readonly
+   *
+   * @description
+   * The organization-wide snapshot, or `null` while it has not resolved yet.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<InterventionStatisticsOutput | null>}
+   */
   public readonly statistics: InputSignal<InterventionStatisticsOutput | null> =
     input<InterventionStatisticsOutput | null>(null);
 
-  /** The active organization, for the site/member links. */
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * The active organization, for the site/member links.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
   public readonly organizationId: InputSignal<string> = input.required<string>();
   //#endregion
 
   //#region Properties
-  /** Whether the disclosure is expanded. Collapsed by default. */
+  /**
+   * Property expanded
+   * @readonly
+   *
+   * @description
+   * Whether the disclosure is expanded. Collapsed by default.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly expanded: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Every priority paired with its count, zero-filled. */
+  /**
+   * Property priorityCounts
+   * @readonly
+   *
+   * @description
+   * Every priority paired with its count, zero-filled.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<
+   *   ReadonlyArray<{ readonly priority: InterventionPriority; readonly count: number }>
+   * >}
+   */
   protected readonly priorityCounts: Signal<
     ReadonlyArray<{ readonly priority: InterventionPriority; readonly count: number }>
   > = computed(() => {
@@ -92,26 +141,81 @@ export class InterventionStatisticsAnalysis {
     }));
   });
 
-  /** The top-10 sites, or an empty list before the snapshot resolves. */
+  /**
+   * Property bySite
+   * @readonly
+   *
+   * @description
+   * The top-10 sites, or an empty list before the snapshot resolves.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly InterventionSiteStatisticOutput[]>}
+   */
   protected readonly bySite: Signal<readonly InterventionSiteStatisticOutput[]> = computed(
     () => this.statistics()?.bySite ?? [],
   );
 
-  /** The top-10 responsibles, or an empty list before the snapshot resolves. */
+  /**
+   * Property byResponsible
+   * @readonly
+   *
+   * @description
+   * The top-10 responsibles, or an empty list before the snapshot resolves.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly InterventionResponsibleStatisticOutput[]>}
+   */
   protected readonly byResponsible: Signal<readonly InterventionResponsibleStatisticOutput[]> =
     computed(() => this.statistics()?.byResponsible ?? []);
 
-  /** The formatted average publication time, or "—" when the organization has no publications. */
+  /**
+   * Property averagePublicationDaysLabel
+   * @readonly
+   *
+   * @description
+   * The formatted average publication time, or "—" when the organization has no publications.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly averagePublicationDaysLabel: Signal<string> = computed<string>(() => {
     const value: number | null = this.statistics()?.averagePublicationDays ?? null;
 
     return value === null ? '—' : value.toFixed(1);
   });
 
-  /** Fallback for a `bySite` row whose facility no longer resolves. */
+  /**
+   * Property siteFallbackLabel
+   * @readonly
+   *
+   * @description
+   * Fallback for a `bySite` row whose facility no longer resolves.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly siteFallbackLabel: string = $localize`:@@intervention.statistics.analysis.unknownSite:Unknown`;
 
-  /** Fallback for a `byResponsible` row whose member no longer resolves. */
+  /**
+   * Property responsibleFallbackLabel
+   * @readonly
+   *
+   * @description
+   * Fallback for a `byResponsible` row whose member no longer resolves.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly responsibleFallbackLabel: string = $localize`:@@intervention.statistics.analysis.unknownResponsible:Unknown`;
   //#endregion
 }

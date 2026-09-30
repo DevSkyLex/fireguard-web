@@ -27,37 +27,52 @@ import {
 
 /**
  * Constant DEFAULT_MIN_APPROVER_ROLE
- * @const DEFAULT_MIN_APPROVER_ROLE
  *
  * @description
  * Mirrors the backend's `OrganizationApprovalDefaults::MIN_APPROVER_ROLE` —
  * the row a catalog action type starts from before it is ever customized.
  *
  * @since 1.0.0
+ *
  * @type {string}
+ *
+ * @constant DEFAULT_MIN_APPROVER_ROLE
  */
 const DEFAULT_MIN_APPROVER_ROLE: string = 'admin';
 
 /**
  * Constant MIN_APPROVAL_TTL_DAYS
- * @description Lower bound the backend accepts for `approvalTtlDays`.
+ *
+ * @description
+ * Lower bound the backend accepts for `approvalTtlDays`.
+ *
  * @since 1.0.0
+ *
  * @type {number}
  */
 const MIN_APPROVAL_TTL_DAYS: number = 1;
 
 /**
  * Constant MAX_APPROVAL_TTL_DAYS
- * @description Upper bound the backend accepts for `approvalTtlDays`.
+ *
+ * @description
+ * Upper bound the backend accepts for `approvalTtlDays`.
+ *
  * @since 1.0.0
+ *
  * @type {number}
  */
 const MAX_APPROVAL_TTL_DAYS: number = 90;
 
 /**
  * Constant SEVERITY_GATED_ACTION_TYPE
- * @description The one action type whose rule carries a `minSeverity` — every other type's severity select stays hidden.
+ *
+ * @description
+ * The one action type whose rule carries a `minSeverity` — every other type's severity select stays
+ * hidden.
+ *
  * @since 1.0.0
+ *
  * @type {string}
  */
 const SEVERITY_GATED_ACTION_TYPE: string = 'nc_waiver';
@@ -93,6 +108,8 @@ const SEVERITY_GATED_ACTION_TYPE: string = 'nc_waiver';
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-organization-approval-form
@@ -102,8 +119,6 @@ const SEVERITY_GATED_ACTION_TYPE: string = 'nc_waiver';
  *   (submitted)="save($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-approval-form',
@@ -116,9 +131,13 @@ export class OrganizationApprovalForm {
   /**
    * Property approval
    * @readonly
-   * @description The values the form starts from, and re-seeds to whenever they change.
+   *
+   * @description
+   * The values the form starts from, and re-seeds to whenever they change.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<OrganizationApprovalSettings>}
    */
   public readonly approval: InputSignal<OrganizationApprovalSettings> =
@@ -127,9 +146,14 @@ export class OrganizationApprovalForm {
   /**
    * Property actionTypes
    * @readonly
-   * @description The regulated action-type catalog (`approvals/data-access`'s `listActionTypes`), deciding which rows render.
+   *
+   * @description
+   * The regulated action-type catalog (`approvals/data-access`'s `listActionTypes`), deciding which
+   * rows render.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ReadonlyArray<ApprovalActionTypeOutput>>}
    */
   public readonly actionTypes: InputSignal<ReadonlyArray<ApprovalActionTypeOutput>> = input<
@@ -139,9 +163,13 @@ export class OrganizationApprovalForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether a save is in flight, which disables the submit control.
+   *
+   * @description
+   * Whether a save is in flight, which disables the submit control.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -151,9 +179,13 @@ export class OrganizationApprovalForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the edited values once the form is valid and has changed.
+   *
+   * @description
+   * Emits the edited values once the form is valid and has changed.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<OrganizationApprovalFormValues>}
    */
   public readonly submitted: OutputEmitterRef<OrganizationApprovalFormValues> =
@@ -161,18 +193,62 @@ export class OrganizationApprovalForm {
   //#endregion
 
   //#region Properties
-  /** The minimum-approver-role picker's choices. */
+  /**
+   * Property roleOptions
+   * @readonly
+   *
+   * @description
+   * The minimum-approver-role picker's choices.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof ORGANIZATION_APPROVAL_ROLE_OPTIONS}
+   */
   protected readonly roleOptions: typeof ORGANIZATION_APPROVAL_ROLE_OPTIONS =
     ORGANIZATION_APPROVAL_ROLE_OPTIONS;
 
-  /** The `nc_waiver` minimum-severity picker's choices. */
+  /**
+   * Property severityOptions
+   * @readonly
+   *
+   * @description
+   * The `nc_waiver` minimum-severity picker's choices.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof ORGANIZATION_APPROVAL_SEVERITY_OPTIONS}
+   */
   protected readonly severityOptions: typeof ORGANIZATION_APPROVAL_SEVERITY_OPTIONS =
     ORGANIZATION_APPROVAL_SEVERITY_OPTIONS;
 
-  /** The one action type whose row renders a severity select. */
+  /**
+   * Property severityGatedActionType
+   * @readonly
+   *
+   * @description
+   * The one action type whose row renders a severity select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly severityGatedActionType: string = SEVERITY_GATED_ACTION_TYPE;
 
-  /** The "no minimum" sentinel the severity select's extra option carries. */
+  /**
+   * Property noMinimumSeverity
+   * @readonly
+   *
+   * @description
+   * The "no minimum" sentinel the severity select's extra option carries.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly noMinimumSeverity: string = NO_MINIMUM_SEVERITY;
 
   /**
@@ -218,9 +294,14 @@ export class OrganizationApprovalForm {
   /**
    * Property approvalForm
    * @readonly
-   * @description The field tree and its rules. `actionRules` carries one dynamic sub-field per catalog action type; `approvalTtlDays` is bounded to what the backend accepts.
+   *
+   * @description
+   * The field tree and its rules. `actionRules` carries one dynamic sub-field per catalog action
+   * type; `approvalTtlDays` is bounded to what the backend accepts.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<OrganizationApprovalFormDraft>}
    */
   protected readonly approvalForm: FieldTree<OrganizationApprovalFormDraft> = form(
@@ -238,9 +319,14 @@ export class OrganizationApprovalForm {
   /**
    * Property canSubmit
    * @readonly
-   * @description Whether the submit control should be enabled: the tree is valid, has changed from the seeded values, and no save is already in flight.
+   *
+   * @description
+   * Whether the submit control should be enabled: the tree is valid, has changed from the seeded
+   * values, and no save is already in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSubmit: Signal<boolean> = computed<boolean>(
@@ -251,10 +337,16 @@ export class OrganizationApprovalForm {
   //#region Methods
   /**
    * Method actionTypeLabelOf
-   * @description Resolves an action-type value to its catalog label.
+   * @method actionTypeLabelOf
+   *
+   * @description
+   * Resolves an action-type value to its catalog label.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} value - The action-type key.
+   *
    * @returns {string} The catalog label, or a localized "Unknown type" — never the raw key.
    */
   protected actionTypeLabelOf(value: string): string {

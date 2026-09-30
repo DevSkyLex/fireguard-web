@@ -9,12 +9,13 @@
  * Each variant maps to one or both of the API's own
  * `plannedStartAtAfter`/`plannedStartAtBefore` bounds
  * (`utils/intervention-list-query/`):
- *
  * - `greaterThan` — planned to start after {@link after} (`plannedStartAtAfter` only),
  * - `lessThan` — planned to start before {@link before} (`plannedStartAtBefore` only),
  * - `between` — planned to start within [{@link after}, {@link before}] (both bounds).
  *
  * @since 8.2.0
+ *
+ * @type {InterventionPlannedStartRangeFilter}
  */
 export type InterventionPlannedStartRangeFilter =
   | { readonly operator: 'greaterThan'; readonly after: Date }

@@ -25,15 +25,39 @@ import type {
  * param never issues a malformed request.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type NonConformityStatisticsLoadParams = {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Identifies the organization associated with this non conformity statistics load.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property window
+   * @readonly
+   *
+   * @description
+   * Provides the date window used to calculate non-conformity statistics.
+   *
+   * @access public
+   *
+   * @type {NonConformityStatisticsOptions}
+   */
   readonly window?: NonConformityStatisticsOptions;
 };
 
 /**
- * Store NonConformityStatisticsStore
- * @const NonConformityStatisticsStore
+ * Constant NonConformityStatisticsStore
  *
  * @description
  * Component-scoped NgRx SignalStore for the organization-wide
@@ -44,7 +68,10 @@ export type NonConformityStatisticsLoadParams = {
  * or the period window changes, mirroring `InterventionStatisticsStore`.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant NonConformityStatisticsStore
  */
 export const NonConformityStatisticsStore = signalStore(
   withQueryState<NonConformityStatisticsOutput>(),
@@ -83,11 +110,12 @@ export const NonConformityStatisticsStore = signalStore(
 
 /**
  * Type NonConformityStatisticsStoreType
- * @type NonConformityStatisticsStoreType
  *
  * @description
  * Injectable instance type exposed by {@link NonConformityStatisticsStore}.
  *
  * @since 1.0.0
+ *
+ * @type NonConformityStatisticsStoreType
  */
 export type NonConformityStatisticsStoreType = InstanceType<typeof NonConformityStatisticsStore>;

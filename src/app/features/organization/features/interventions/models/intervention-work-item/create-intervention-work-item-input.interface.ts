@@ -66,12 +66,108 @@ export interface CreateInterventionWorkItemInput {
    * @type {string}
    */
   readonly workloadConfirmationToken?: string;
+
+  /**
+   * Property clientId
+   * @readonly
+   *
+   * @description
+   * Identifies the client-created message used to correlate this send with its result.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly clientId?: string;
+
+  /**
+   * Property intervention
+   * @readonly
+   *
+   * @description
+   * Contains the intervention currently loaded into the workspace.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly intervention: string;
+
+  /**
+   * Property action
+   * @readonly
+   *
+   * @description
+   * Selects the action represented by this work-item form.
+   *
+   * @access public
+   *
+   * @type {InterventionWorkItemAction}
+   */
   readonly action: InterventionWorkItemAction;
+
+  /**
+   * Property target
+   * @readonly
+   *
+   * @description
+   * Identifies the selected target for this work item.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly target?: string | null;
+
+  /**
+   * Property resultResource
+   * @readonly
+   *
+   * @description
+   * Identifies the resource produced or updated by this work item, when one exists.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly resultResource?: string | null;
+
+  /**
+   * Property assignee
+   * @readonly
+   *
+   * @description
+   * Identifies the member assigned to the work item.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly assignee?: string | null;
+
+  /**
+   * Property source
+   * @readonly
+   *
+   * @description
+   * Identifies the source that added this create intervention work item.
+   *
+   * @access public
+   *
+   * @type {InterventionWorkItemSource}
+   */
   readonly source: InterventionWorkItemSource;
+
+  /**
+   * Property required
+   * @readonly
+   *
+   * @description
+   * Indicates whether completing this checklist item is required.
+   *
+   * @access public
+   *
+   * @type {boolean}
+   */
   readonly required: boolean;
 }

@@ -2,7 +2,6 @@ import type { FacilityType } from '@features/organization/features/facilities/mo
 
 /**
  * Constant FACILITY_TYPE_OPTIONS
- * @const FACILITY_TYPE_OPTIONS
  *
  * @description
  * Localized select options for the facility hierarchy type picker, shared by
@@ -14,6 +13,8 @@ import type { FacilityType } from '@features/organization/features/facilities/mo
  * @since 1.0.0
  *
  * @type {ReadonlyArray<{ readonly label: string; readonly value: FacilityType }>}
+ *
+ * @constant FACILITY_TYPE_OPTIONS
  */
 export const FACILITY_TYPE_OPTIONS: ReadonlyArray<{
   readonly label: string;

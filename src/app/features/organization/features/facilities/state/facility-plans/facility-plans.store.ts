@@ -49,19 +49,25 @@ import { facilityPlansStoreEvents } from './events';
 import type { FacilityPlansState } from './models';
 import { planWriteErrorMessage } from './utils/plan-write-error-message/plan-write-error-message.utils';
 
-/** Facility types eligible as a `draw-zone` target — a zone outline is drawn for a zone or an area. */
+/**
+ * Constant ZONE_CANDIDATE_TYPES
+ *
+ * @description
+ * Facility types eligible as a `draw-zone` target — a zone outline is drawn for a zone or an area.
+ */
 const ZONE_CANDIDATE_TYPES: ReadonlySet<string> = new Set(['zone', 'area']);
 
 //#region Initial State
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Seeds {@link FacilityPlansState}. Entity state (planEntities,
  * planEntityMap, planIds) is initialised by withEntities.
  *
  * @since 1.0.0
+ *
+ * @constant INITIAL_STATE
  */
 const INITIAL_STATE: FacilityPlansState = {
   listCallState: idleCallState(),
@@ -96,8 +102,7 @@ const INITIAL_STATE: FacilityPlansState = {
 //#endregion
 
 /**
- * Store FacilityPlansStore
- * @const FacilityPlansStore
+ * Constant FacilityPlansStore
  *
  * @description
  * Component-scoped store for the facility detail page's Plans tab: the
@@ -105,7 +110,6 @@ const INITIAL_STATE: FacilityPlansState = {
  * upload, primary selection and deletion, plus the zone/equipment overlay —
  * both its read side (zone polygons, equipment pins) and its editor half
  * (drawing a zone outline, placing/moving/removing an equipment pin).
- *
  * The selected plan's image bytes are neither in the attachment's output DTO
  * nor reachable from a plain img src: GET
  * /api/facility-attachments/{id}/download is bearer-authenticated and
@@ -116,13 +120,11 @@ const INITIAL_STATE: FacilityPlansState = {
  * URL.createObjectURL has no server counterpart, and the effect never fires
  * during SSR since load (the only way planEntities stops being empty) is
  * itself only ever called from the page once isBrowser is true.
- *
  * The same effect also fetches the selected plan's overlay via
  * `FacilityService.getPlanOverlay`, re-triggered after a successful editor
  * write so the overlay reflects the change without a page reload.
  * `showZones`/`showEquipment` are page-driven visibility toggles for its two
  * layers, both default true.
- *
  * The editor half drives `FacilityPlanEditor`'s pointer affordances and the
  * two coordinate-editing dialogs: `editMode`/`draftPoints` track an
  * in-progress `draw-zone` outline; `saveZoneGeometry`/`savePinPosition`
@@ -136,39 +138,62 @@ const INITIAL_STATE: FacilityPlansState = {
  * @version 1.4.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant FacilityPlansStore
  */
 export const FacilityPlansStore = signalStore(
   withEntities({ entity: type<FacilityAttachmentOutput>(), collection: 'plan' }),
   withState<FacilityPlansState>(INITIAL_STATE),
 
   withComputed((store) => ({
-    /** The primary plan, or null when none is set yet. */
+    /**
+     * @description
+     * The primary plan, or null when none is set yet.
+     */
     primaryPlan: computed<FacilityAttachmentOutput | null>(
       () => store.planEntities().find((plan) => plan.isPrimaryPlan) ?? null,
     ),
 
-    /** Plans in display order: the primary plan first, then upload order. */
+    /**
+     * @description
+     * Plans in display order: the primary plan first, then upload order.
+     */
     orderedPlans: computed<readonly FacilityAttachmentOutput[]>(() =>
       store.planEntities().toSorted((a, b) => Number(b.isPrimaryPlan) - Number(a.isPrimaryPlan)),
     ),
 
-    /** True while the list request is in flight. */
+    /**
+     * @description
+     * True while the list request is in flight.
+     */
     isLoading: computed<boolean>(() => store.listCallState().status === 'pending'),
 
-    /** True while an upload is in flight. */
+    /**
+     * @description
+     * True while an upload is in flight.
+     */
     isUploading: computed<boolean>(() => store.uploadCallState().status === 'pending'),
 
-    /** True when the list has resolved and holds no plan. */
+    /**
+     * @description
+     * True when the list has resolved and holds no plan.
+     */
     isEmpty: computed<boolean>(
       () => store.planIds().length === 0 && store.listCallState().status === 'success',
     ),
 
-    /** True while a zone outline write (draw finish or clear) is in flight. */
+    /**
+     * @description
+     * True while a zone outline write (draw finish or clear) is in flight.
+     */
     isSavingZoneGeometry: computed<boolean>(
       () => store.saveZoneGeometryCallState().status === 'pending',
     ),
 
-    /** True while an equipment pin write (place, drag-move, or remove) is in flight. */
+    /**
+     * @description
+     * True while an equipment pin write (place, drag-move, or remove) is in flight.
+     */
     isSavingPinPosition: computed<boolean>(
       () => store.savePinPositionCallState().status === 'pending',
     ),
@@ -184,6 +209,7 @@ export const FacilityPlansStore = signalStore(
      * still present, else the primary plan, else the first uploaded one.
      *
      * @since 1.0.0
+     *
      * @type {FacilityAttachmentOutput | null}
      */
     selectedPlan: computed<FacilityAttachmentOutput | null>(() => {
@@ -196,7 +222,10 @@ export const FacilityPlansStore = signalStore(
   })),
 
   withComputed((store) => ({
-    /** @description Identifies the complete selection independently of effect scheduling. */
+    /**
+     * @description
+     * Identifies the complete selection independently of effect scheduling.
+     */
     selectedPlanKey: computed(() => {
       const plan = store.selectedPlan();
       return plan && store.organizationId() && store.facilityId()
@@ -206,15 +235,26 @@ export const FacilityPlansStore = signalStore(
   })),
 
   withComputed((store) => ({
-    /** @description Only exposes image bytes belonging to the current selection. */
+    /**
+     * @description
+     * Only exposes image bytes belonging to the current selection.
+     */
     planImageUrl: computed(() =>
       store.imageKey() === store.selectedPlanKey() ? store.imageUrl() : null,
     ),
-    /** @description Only exposes annotations belonging to the current selection. */
+
+    /**
+     * @description
+     * Only exposes annotations belonging to the current selection.
+     */
     overlay: computed(() =>
       store.overlayKey() === store.selectedPlanKey() ? store.planOverlay() : null,
     ),
-    /** @description Editing requires both resources for the same currently selected plan. */
+
+    /**
+     * @description
+     * Editing requires both resources for the same currently selected plan.
+     */
     selectedPlanReady: computed(
       () =>
         store.selectedPlanKey() !== null &&
@@ -238,6 +278,7 @@ export const FacilityPlansStore = signalStore(
      * empty overlay renders no noise.
      *
      * @since 1.2.0
+     *
      * @type {Signal<boolean>}
      */
     overlayHasContent: computed<boolean>(() => {
@@ -255,6 +296,7 @@ export const FacilityPlansStore = signalStore(
      * not already show as a zone — the `draw-zone` picker's option list.
      *
      * @since 1.4.0
+     *
      * @type {Signal<ReadonlyArray<FacilityOutput>>}
      */
     availableZoneCandidates: computed<ReadonlyArray<FacilityOutput>>(() => {
@@ -274,6 +316,7 @@ export const FacilityPlansStore = signalStore(
      * not already show as a pin — the `place-pin` picker's option list.
      *
      * @since 1.4.0
+     *
      * @type {Signal<ReadonlyArray<EquipmentOutput>>}
      */
     availableEquipmentCandidates: computed<ReadonlyArray<EquipmentOutput>>(() => {
@@ -299,7 +342,10 @@ export const FacilityPlansStore = signalStore(
       let selectionGeneration = 0;
       let contextGeneration = 0;
 
-      /** @description Cancels selected-plan reads, releases bytes and discards the old editor draft. */
+      /**
+       * @description
+       * Cancels selected-plan reads, releases bytes and discards the old editor draft.
+       */
       function clearSelectionResources(): void {
         selectionGeneration++;
         selectionChanged.next();
@@ -320,9 +366,9 @@ export const FacilityPlansStore = signalStore(
           savePinPositionCallState: idleCallState(),
         });
       }
+
       /**
        * Constant loadOverlayFn
-       * @const loadOverlayFn
        *
        * @description
        * Shared rxMethod implementation fetching the selected plan's overlay.
@@ -333,6 +379,8 @@ export const FacilityPlansStore = signalStore(
        * @since 1.4.0
        *
        * @type {RxMethod<{ organizationId: string; facilityId: string; attachmentId: string }>}
+       *
+       * @constant loadOverlayFn
        */
       const loadOverlayFn = rxMethod<{
         organizationId: string;
@@ -385,7 +433,6 @@ export const FacilityPlansStore = signalStore(
 
       /**
        * Constant loadZoneCandidatesFn
-       * @const loadZoneCandidatesFn
        *
        * @description
        * Fetches this facility's direct children of type `zone`/`area`
@@ -395,6 +442,8 @@ export const FacilityPlansStore = signalStore(
        * @since 1.4.0
        *
        * @type {RxMethod<void>}
+       *
+       * @constant loadZoneCandidatesFn
        */
       const loadZoneCandidatesFn = rxMethod<void>(
         pipe(
@@ -436,7 +485,6 @@ export const FacilityPlansStore = signalStore(
 
       /**
        * Constant loadFacilityEquipmentFn
-       * @const loadFacilityEquipmentFn
        *
        * @description
        * Fetches this facility's assigned equipment (`place-pin`'s picker
@@ -447,6 +495,8 @@ export const FacilityPlansStore = signalStore(
        * @since 1.4.0
        *
        * @type {RxMethod<void>}
+       *
+       * @constant loadFacilityEquipmentFn
        */
       const loadFacilityEquipmentFn = rxMethod<void>(
         pipe(
@@ -489,7 +539,6 @@ export const FacilityPlansStore = signalStore(
 
       /**
        * Constant saveZoneGeometryFn
-       * @const saveZoneGeometryFn
        *
        * @description
        * Shared rxMethod implementation writing (or clearing, when `points`
@@ -502,7 +551,14 @@ export const FacilityPlansStore = signalStore(
        *
        * @since 1.4.0
        *
-       * @type {RxMethod<{ organizationId: string; facilityId: string; attachmentId: string | null; points: ReadonlyArray<readonly [number, number]> | null }>}
+       * @type {RxMethod<{
+       *   organizationId: string;
+       *   facilityId: string;
+       *   attachmentId: string | null;
+       *   points: ReadonlyArray<readonly [number, number]> | null;
+       * }>}
+       *
+       * @constant saveZoneGeometryFn
        */
       const saveZoneGeometryFn = rxMethod<{
         organizationId: string;
@@ -597,7 +653,6 @@ export const FacilityPlansStore = signalStore(
 
       /**
        * Constant savePinPositionFn
-       * @const savePinPositionFn
        *
        * @description
        * Shared rxMethod implementation writing (or clearing, when `x`/`y`
@@ -609,7 +664,16 @@ export const FacilityPlansStore = signalStore(
        *
        * @since 1.4.0
        *
-       * @type {RxMethod<{ organizationId: string; equipmentId: string; attachmentId: string | null; x: number | null; y: number | null; exitPlaceMode: boolean }>}
+       * @type {RxMethod<{
+       *   organizationId: string;
+       *   equipmentId: string;
+       *   attachmentId: string | null;
+       *   x: number | null;
+       *   y: number | null;
+       *   exitPlaceMode: boolean;
+       * }>}
+       *
+       * @constant savePinPositionFn
        */
       const savePinPositionFn = rxMethod<{
         organizationId: string;
@@ -962,10 +1026,16 @@ export const FacilityPlansStore = signalStore(
           });
         },
 
-        /** @description Releases resources and cancels reads when the selected plan disappears. */
+        /**
+         * @description
+         * Releases resources and cancels reads when the selected plan disappears.
+         */
         clearSelectionResources,
 
-        /** @description Clears a facility context when its parameterized page is reused. */
+        /**
+         * @description
+         * Clears a facility context when its parameterized page is reused.
+         */
         reset(): void {
           contextGeneration += 1;
           contextChanged.next();
@@ -1045,9 +1115,16 @@ export const FacilityPlansStore = signalStore(
          * Method loadOverlay
          * @method loadOverlay
          *
-         * @description Fetches one plan's zone/equipment overlay. See {@link loadOverlayFn}.
+         * @description
+         * Fetches one plan's zone/equipment overlay. See {@link loadOverlayFn}.
+         *
          * @since 1.2.0
-         * @type {RxMethod<{ organizationId: string; facilityId: string; attachmentId: string }>}
+         *
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   facilityId: string;
+         *   attachmentId: string;
+         * }>}
          */
         loadOverlay: loadOverlayFn,
 
@@ -1055,9 +1132,13 @@ export const FacilityPlansStore = signalStore(
          * Method setShowZones
          * @method setShowZones
          *
-         * @description Toggles the overlay's zone-polygon layer.
+         * @description
+         * Toggles the overlay's zone-polygon layer.
+         *
          * @since 1.2.0
+         *
          * @param {boolean} value - Whether zones should render.
+         *
          * @returns {void}
          */
         setShowZones(value: boolean): void {
@@ -1068,9 +1149,13 @@ export const FacilityPlansStore = signalStore(
          * Method setShowEquipment
          * @method setShowEquipment
          *
-         * @description Toggles the overlay's equipment-pin layer.
+         * @description
+         * Toggles the overlay's equipment-pin layer.
+         *
          * @since 1.2.0
+         *
          * @param {boolean} value - Whether equipment pins should render.
+         *
          * @returns {void}
          */
         setShowEquipment(value: boolean): void {
@@ -1089,6 +1174,7 @@ export const FacilityPlansStore = signalStore(
          * duplicate fetch on repeated opens of the picker.
          *
          * @since 1.4.0
+         *
          * @returns {void}
          */
         ensureZoneCandidatesLoaded(): void {
@@ -1110,6 +1196,7 @@ export const FacilityPlansStore = signalStore(
          * browser-only, guarded against a duplicate fetch.
          *
          * @since 1.4.0
+         *
          * @returns {void}
          */
         ensureFacilityEquipmentLoaded(): void {
@@ -1127,9 +1214,13 @@ export const FacilityPlansStore = signalStore(
          * Method enterDrawZoneMode
          * @method enterDrawZoneMode
          *
-         * @description Starts drawing a new outline for the given child facility.
+         * @description
+         * Starts drawing a new outline for the given child facility.
+         *
          * @since 1.4.0
+         *
          * @param {string} targetFacilityId - The zone/area the outline belongs to.
+         *
          * @returns {void}
          */
         enterDrawZoneMode(targetFacilityId: string): void {
@@ -1146,9 +1237,13 @@ export const FacilityPlansStore = signalStore(
          * Method enterPlacePinMode
          * @method enterPlacePinMode
          *
-         * @description Starts placing the given equipment item on the plan.
+         * @description
+         * Starts placing the given equipment item on the plan.
+         *
          * @since 1.4.0
+         *
          * @param {string} equipmentId - The equipment to place.
+         *
          * @returns {void}
          */
         enterPlacePinMode(equipmentId: string): void {
@@ -1165,8 +1260,11 @@ export const FacilityPlansStore = signalStore(
          * Method cancelEditing
          * @method cancelEditing
          *
-         * @description Leaves `draw-zone`/`place-pin` mode, discarding any in-progress draft.
+         * @description
+         * Leaves `draw-zone`/`place-pin` mode, discarding any in-progress draft.
+         *
          * @since 1.4.0
+         *
          * @returns {void}
          */
         cancelEditing(): void {
@@ -1182,9 +1280,14 @@ export const FacilityPlansStore = signalStore(
          * Method addDraftVertex
          * @method addDraftVertex
          *
-         * @description Appends a vertex to the in-progress `draw-zone` outline.
+         * @description
+         * Appends a vertex to the in-progress `draw-zone` outline.
+         *
          * @since 1.4.0
-         * @param {readonly [number, number]} point - The vertex, in normalized `[0, 1]` image coordinates.
+         *
+         * @param {readonly [number, number]} point - The vertex, in normalized `[0, 1]` image
+         *   coordinates.
+         *
          * @returns {void}
          */
         addDraftVertex(point: readonly [number, number]): void {
@@ -1197,8 +1300,11 @@ export const FacilityPlansStore = signalStore(
          * Method undoDraftVertex
          * @method undoDraftVertex
          *
-         * @description Removes the last vertex of the in-progress `draw-zone` outline, if any.
+         * @description
+         * Removes the last vertex of the in-progress `draw-zone` outline, if any.
+         *
          * @since 1.4.0
+         *
          * @returns {void}
          */
         undoDraftVertex(): void {
@@ -1217,6 +1323,7 @@ export const FacilityPlansStore = signalStore(
          * outside `draw-zone` mode or below the vertex minimum.
          *
          * @since 1.4.0
+         *
          * @returns {void}
          */
         finishDrawZone(): void {
@@ -1234,9 +1341,13 @@ export const FacilityPlansStore = signalStore(
          * Method clearZoneGeometry
          * @method clearZoneGeometry
          *
-         * @description Clears an existing zone's outline (the "Clear geometry" action in its edit dialog).
+         * @description
+         * Clears an existing zone's outline (the "Clear geometry" action in its edit dialog).
+         *
          * @since 1.4.0
+         *
          * @param {string} facilityId - The zone to clear.
+         *
          * @returns {void}
          */
         clearZoneGeometry(facilityId: string): void {
@@ -1251,10 +1362,14 @@ export const FacilityPlansStore = signalStore(
          * Method saveZoneGeometryFromDialog
          * @method saveZoneGeometryFromDialog
          *
-         * @description The non-pointer "Edit coordinates" dialog's submit path.
+         * @description
+         * The non-pointer "Edit coordinates" dialog's submit path.
+         *
          * @since 1.4.0
+         *
          * @param {string} facilityId - The zone whose outline is written.
          * @param {ReadonlyArray<readonly [number, number]>} points - The submitted vertices.
+         *
          * @returns {void}
          */
         saveZoneGeometryFromDialog(
@@ -1278,7 +1393,10 @@ export const FacilityPlansStore = signalStore(
          * no-op outside `place-pin` mode.
          *
          * @since 1.4.0
-         * @param {readonly [number, number]} point - The pin's position, in normalized `[0, 1]` image coordinates.
+         *
+         * @param {readonly [number, number]} point - The pin's position, in normalized `[0, 1]`
+         *   image coordinates.
+         *
          * @returns {void}
          */
         placePin(point: readonly [number, number]): void {
@@ -1302,10 +1420,15 @@ export const FacilityPlansStore = signalStore(
          * Method movePin
          * @method movePin
          *
-         * @description Moves an already-placed pin (drag-and-drop), independent of `editMode`.
+         * @description
+         * Moves an already-placed pin (drag-and-drop), independent of `editMode`.
+         *
          * @since 1.4.0
+         *
          * @param {string} equipmentId - The pin's equipment id.
-         * @param {readonly [number, number]} point - The pin's new position, in normalized `[0, 1]` image coordinates.
+         * @param {readonly [number, number]} point - The pin's new position, in normalized `[0, 1]`
+         *   image coordinates.
+         *
          * @returns {void}
          */
         movePin(equipmentId: string, point: readonly [number, number]): void {
@@ -1328,9 +1451,13 @@ export const FacilityPlansStore = signalStore(
          * Method removePinFromPlan
          * @method removePinFromPlan
          *
-         * @description Clears an equipment item's pin (the "Remove from plan" action).
+         * @description
+         * Clears an equipment item's pin (the "Remove from plan" action).
+         *
          * @since 1.4.0
+         *
          * @param {string} equipmentId - The pin's equipment id.
+         *
          * @returns {void}
          */
         removePinFromPlan(equipmentId: string): void {
@@ -1356,6 +1483,7 @@ export const FacilityPlansStore = signalStore(
 
     return {
       /**
+       * @description
        * Reacts to `selectedPlan` changes by fetching that plan's image bytes
        * (republished as an object URL, revoking whichever preceded it) and
        * its overlay, keyed on the same selection.
@@ -1385,7 +1513,11 @@ export const FacilityPlansStore = signalStore(
           });
         });
       },
-      /** Revokes the last live object URL so the store never leaks one. */
+
+      /**
+       * @description
+       * Revokes the last live object URL so the store never leaks one.
+       */
       onDestroy(): void {
         store.clearSelectionResources();
       },
@@ -1395,11 +1527,12 @@ export const FacilityPlansStore = signalStore(
 
 /**
  * Type FacilityPlansStoreType
- * @type FacilityPlansStoreType
  *
  * @description
  * Instance type of the FacilityPlansStore signal store.
  *
  * @since 1.0.0
+ *
+ * @type FacilityPlansStoreType
  */
 export type FacilityPlansStoreType = InstanceType<typeof FacilityPlansStore>;

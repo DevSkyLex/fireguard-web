@@ -53,6 +53,9 @@ import type {
 } from './models/state.interface';
 
 /**
+ * Constant MEMBERS_PAGE_SIZE
+ *
+ * @description
  * Default server-side page size for the members table — the same
  * `[30, 60, 100]` family the other organization list pages offer through
  * `CollectionPagination`, so the roster's rows-per-page select opens on a
@@ -61,6 +64,9 @@ import type {
 export const MEMBERS_PAGE_SIZE = 30;
 
 /**
+ * Constant INVITATIONS_PAGE_SIZE
+ *
+ * @description
  * Server-side page size for the pending-invitations table's own pagination.
  * Kept independent from {@link MEMBERS_PAGE_SIZE}: invitation volumes run far
  * lower than membership rosters, and the invitations query is a two-status
@@ -69,6 +75,9 @@ export const MEMBERS_PAGE_SIZE = 30;
 export const INVITATIONS_PAGE_SIZE = 30;
 
 /**
+ * Constant DEFAULT_MEMBERS_SORT
+ *
+ * @description
  * Ordering used when nothing narrower is asked for — the members endpoint's
  * own default (`order[joinedAt]=asc`), mirrored by
  * `OrganizationMemberListPreferencesService`'s fallback.
@@ -79,6 +88,9 @@ export const DEFAULT_MEMBERS_SORT: OrganizationMemberListSort = {
 };
 
 /**
+ * Constant INITIAL_STATE
+ *
+ * @description
  * Initial organization members workflow state. Members and invitations are held
  * in `withEntities` collections; only roles, the link map and call states live
  * in plain state.
@@ -103,9 +115,11 @@ const INITIAL_STATE: OrganizationMembersState = {
 };
 
 /**
+ * Function fetchActiveInvitations
+ *
+ * @description
  * Fetches the pending-invitations table's full universe — pending and expired
  * invitations only — as one combined, id-deduplicated page.
- *
  * The invitations endpoint's `status` filter accepts exactly one value, so
  * "pending or expired" cannot be asked for in a single request. The
  * pending-invitations section only ever renders those two statuses (accepted
@@ -115,6 +129,14 @@ const INITIAL_STATE: OrganizationMembersState = {
  * comparatively small, bounded set (they age out and stop being actionable),
  * so a single "cheap" fetch of up to 100 is combined in rather than given its
  * own page.
+ *
+ * @param {OrganizationInvitationService} invitationService - Transport service for pending and
+ *   expired invitations.
+ * @param {string} organizationId - Organization whose invitations are requested.
+ * @param {number} page - One-based page of pending invitations.
+ * @param {number} pageSize - Maximum pending invitations requested for the page.
+ *
+ * @returns {Observable<{ items: OrganizationInvitationOutput[]; total: number }>}
  */
 function fetchActiveInvitations(
   invitationService: OrganizationInvitationService,
@@ -146,8 +168,18 @@ function fetchActiveInvitations(
 }
 
 /**
+ * Function withCapturedLink
+ *
+ * @description
  * Captures the fresh accept link returned by an invite/resend response into the
  * id → link map, ignoring empty links (listed invitations never carry a token).
+ *
+ * @param {Record<string, string>} links - Previously captured invitation acceptance URLs, keyed by
+ *   invitation ID.
+ * @param {OrganizationInvitationOutput} invitation - Fresh invitation response whose acceptance URL
+ *   may be captured.
+ *
+ * @returns {Record<string, string>}
  */
 function withCapturedLink(
   links: Record<string, string>,
@@ -158,7 +190,7 @@ function withCapturedLink(
 }
 
 /**
- * Store OrganizationMembersStore
+ * Constant OrganizationMembersStore
  *
  * @description
  * Component-scoped workflow store for the dedicated members page: loads members,
@@ -167,7 +199,6 @@ function withCapturedLink(
  * `withEntities` collections for O(1) id-based updates; each successful mutation
  * dispatches a feedback event the app-wide listener renders as a confirmation
  * toast. Roles CRUD stays with the roles-only team page.
- *
  * {@link load} also fetches `membersActiveTotal`, a fixed organization-wide
  * active-membership count independent of the roster's own search/status
  * filter, so the page's KPI row reads correctly regardless of what the table
@@ -184,23 +215,50 @@ export const OrganizationMembersStore = signalStore(
   withEntities({ entity: type<OrganizationInvitationOutput>(), collection: 'invitation' }),
   withState(INITIAL_STATE),
   withComputed((store) => ({
-    /** Loaded organization members. */
+    /**
+     * @description
+     * Loaded organization members.
+     */
     members: computed(() => store.memberEntities()),
-    /** Loaded organization invitations (all statuses). */
+
+    /**
+     * @description
+     * Loaded organization invitations (all statuses).
+     */
     invitations: computed(() => store.invitationEntities()),
-    /** Actionable invitations (pending or expired) for the pending-invitations card. */
+
+    /**
+     * @description
+     * Actionable invitations (pending or expired) for the pending-invitations card.
+     */
     activeInvitations: computed(() =>
       store
         .invitationEntities()
         .filter((invitation) => invitation.status === 'pending' || invitation.status === 'expired'),
     ),
-    /** Whether member-page resources are loading. */
+
+    /**
+     * @description
+     * Whether member-page resources are loading.
+     */
     isLoading: computed(() => isCallPending(store.loadCallState())),
-    /** Whether a member/invitation mutation is pending. */
+
+    /**
+     * @description
+     * Whether a member/invitation mutation is pending.
+     */
     isMutating: computed(() => isCallPending(store.mutationCallState())),
-    /** Error from the last resource load. */
+
+    /**
+     * @description
+     * Error from the last resource load.
+     */
     loadError: computed(() => store.loadCallState().error),
-    /** Error from the last mutation. */
+
+    /**
+     * @description
+     * Error from the last mutation.
+     */
     mutationError: computed(() => store.mutationCallState().error),
   })),
   withMethods(
@@ -211,7 +269,10 @@ export const OrganizationMembersStore = signalStore(
       invitationService = inject<OrganizationInvitationService>(OrganizationInvitationService),
       dispatcher = inject<Dispatcher>(Dispatcher),
     ) => ({
-      /** Loads the member-page resources permitted for the active member. */
+      /**
+       * @description
+       * Loads the member-page resources permitted for the active member.
+       */
       load: rxMethod<OrganizationMembersLoadOptions>(
         pipe(
           tap(() => patchState(store, { loadCallState: pendingCallState() })),
@@ -289,7 +350,9 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
+
       /**
+       * @description
        * Loads a single members page for the given search term, status filter,
        * page size and ordering (server-side). `pageSize` defaults to
        * {@link MEMBERS_PAGE_SIZE} and `sort` to {@link DEFAULT_MEMBERS_SORT} so
@@ -352,7 +415,9 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
+
       /**
+       * @description
        * Loads a single pending-invitations page for the given page and page
        * size, through {@link fetchActiveInvitations}'s combined pending/expired
        * fetch. `pageSize` defaults to {@link INVITATIONS_PAGE_SIZE}.
@@ -381,7 +446,11 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Removes a member from the organization. */
+
+      /**
+       * @description
+       * Removes a member from the organization.
+       */
       removeMember: rxMethod<{ organizationId: string; memberId: string }>(
         pipe(
           tap(() =>
@@ -411,7 +480,11 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Removes several members in one action and confirms with a single toast. */
+
+      /**
+       * @description
+       * Removes several members in one action and confirms with a single toast.
+       */
       removeMembers: rxMethod<{ organizationId: string; memberIds: readonly string[] }>(
         pipe(
           tap(() =>
@@ -457,7 +530,9 @@ export const OrganizationMembersStore = signalStore(
           }),
         ),
       ),
+
       /**
+       * @description
        * Reactivates a deactivated member, replacing the row with the
        * server's response so its `isActive` flag and any other server-owned
        * field stay in sync.
@@ -494,7 +569,11 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Sends an organization invitation. */
+
+      /**
+       * @description
+       * Sends an organization invitation.
+       */
       invite: rxMethod<{ organizationId: string; input: InviteOrganizationMemberInput }>(
         pipe(
           tap(() =>
@@ -525,7 +604,11 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Revokes a pending organization invitation. */
+
+      /**
+       * @description
+       * Revokes a pending organization invitation.
+       */
       revokeInvitation: rxMethod<{ organizationId: string; invitationId: string }>(
         pipe(
           tap(() =>
@@ -555,7 +638,11 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Resends an invitation, regenerating its token and accept link. */
+
+      /**
+       * @description
+       * Resends an invitation, regenerating its token and accept link.
+       */
       resendInvitation: rxMethod<{ organizationId: string; invitationId: string }>(
         pipe(
           tap(() =>
@@ -592,7 +679,11 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Assigns an organization role to a member. */
+
+      /**
+       * @description
+       * Assigns an organization role to a member.
+       */
       assignRole: rxMethod<{
         organizationId: string;
         memberId: string;
@@ -627,7 +718,11 @@ export const OrganizationMembersStore = signalStore(
           ),
         ),
       ),
-      /** Assigns one role to several members in a single action. */
+
+      /**
+       * @description
+       * Assigns one role to several members in a single action.
+       */
       assignRoleToMembers: rxMethod<{
         organizationId: string;
         memberIds: readonly string[];
@@ -687,7 +782,11 @@ export const OrganizationMembersStore = signalStore(
           }),
         ),
       ),
-      /** Removes an assigned role from an organization member. */
+
+      /**
+       * @description
+       * Removes an assigned role from an organization member.
+       */
       removeRoleFromMember: rxMethod<{
         organizationId: string;
         memberId: string;
@@ -738,6 +837,11 @@ export const OrganizationMembersStore = signalStore(
 );
 
 /**
+ * Type OrganizationMembersStore
+ *
+ * @description
  * Injectable instance type exposed by {@link OrganizationMembersStore}.
+ *
+ * @type {OrganizationMembersStore}
  */
 export type OrganizationMembersStore = InstanceType<typeof OrganizationMembersStore>;

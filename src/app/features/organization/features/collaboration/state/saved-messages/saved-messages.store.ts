@@ -28,6 +28,16 @@ import { SAVED_MESSAGES_PAGE_SIZE } from './constants';
 import { savedMessagesStoreEvents } from './events';
 import type { SavedMessagesState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {SavedMessagesState}
+ */
 const INITIAL_STATE: SavedMessagesState = {
   organizationId: null,
   loadedPage: 0,
@@ -37,32 +47,40 @@ const INITIAL_STATE: SavedMessagesState = {
   unsaveCallState: idleCallState(),
 };
 
-/** The bare conversation id inside a `/api/conversations/{id}` IRI. */
+/**
+ * Function conversationIdOf
+ *
+ * @description
+ * Extracts the conversation identifier from a conversation IRI.
+ *
+ * @param {string} conversationIri - API IRI of the conversation.
+ *
+ * @returns {string} Final path segment of the IRI.
+ */
 function conversationIdOf(conversationIri: string): string {
   return conversationIri.slice(conversationIri.lastIndexOf('/') + 1);
 }
 
 /**
  * Constant SavedMessagesStore
- * @const SavedMessagesStore
  *
  * @description
  * The acting member's saved messages across one organization — private
  * bookmarks, never a property of any conversation.
- *
  * Beyond the list itself, the store resolves each distinct conversation the
  * bookmarks point into (`GET /conversations/{id}`), because a `MessageOutput`
  * names its conversation only as an IRI and whether that conversation `isChannel`
  * decides which route an item links to. A conversation the member can no
  * longer read is simply absent from the map; its items still render and link
  * as a direct conversation.
- *
  * Component-scoped by the saved-messages page: the list must be fresh on each
  * visit — a bookmark added elsewhere has no event that could invalidate it.
  *
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant SavedMessagesStore
  */
 export const SavedMessagesStore = signalStore(
   withEntities({ entity: type<MessageOutput>(), collection: 'savedMessage' }),
@@ -73,7 +91,10 @@ export const SavedMessagesStore = signalStore(
     isUnsaving: computed((): boolean => isCallPending(store.unsaveCallState())),
     loadError: computed(() => store.listCallState().error),
 
-    /** Whether pages beyond the loaded window remain. */
+    /**
+     * @description
+     * Whether pages beyond the loaded window remain.
+     */
     hasMore: computed((): boolean => store.savedMessageEntities().length < store.total()),
   })),
 
@@ -85,7 +106,9 @@ export const SavedMessagesStore = signalStore(
       dispatcher = inject(Dispatcher),
     ) => {
       /**
-       * Resolves the conversations a page of bookmarks points into, skipping
+       * Function resolveConversations
+       *
+       * @description
        * ones already resolved. Each failed read is dropped: the map is a
        * routing refinement, not a load-bearing dependency.
        */
@@ -120,6 +143,7 @@ export const SavedMessagesStore = signalStore(
 
       return {
         /**
+         * @description
          * Loads the first page of the member's bookmarks in one organization.
          */
         load: rxMethod<string>(
@@ -167,6 +191,7 @@ export const SavedMessagesStore = signalStore(
         ),
 
         /**
+         * @description
          * Appends the next page. `exhaustMap` because a repeated click while
          * a page is in flight would fetch the same rows twice.
          */
@@ -218,6 +243,7 @@ export const SavedMessagesStore = signalStore(
         ),
 
         /**
+         * @description
          * Withdraws one bookmark and drops its row. The endpoint is an
          * idempotent `204`, so success is the only signal needed.
          */
@@ -261,5 +287,7 @@ export const SavedMessagesStore = signalStore(
  * Injection type of {@link SavedMessagesStore}.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type SavedMessagesStoreType = InstanceType<typeof SavedMessagesStore>;

@@ -11,7 +11,7 @@ Read `AGENTS.md`, the applicable entries in `.codex/rules.md`, and the owning `F
 Run commands from the repository root. Use the tools actually exposed by the Codex session;
 see `.codex/workflow.md` for shell, MCP, delegation and validation conventions.
 
-Read [the Playwright harness](references/playwright.md), `e2e/README.md` and
+Read [the Playwright harness](references/playwright.md), `tests/e2e/README.md` and
 the selected Playwright config before changing tests. Choose SPA, synthetic harness, SSR or
 localized cases through [validation selection](../../../.codex/references/validation.md).
 Prefer the project's hermetic Playwright suite for client scenarios;

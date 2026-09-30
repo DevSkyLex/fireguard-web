@@ -3,10 +3,15 @@ import { eventGroup } from '@ngrx/signals/events';
 import type { FeedbackEventPayload } from '@core/request-state';
 
 /**
+ * Constant organizationInvitationAcceptStoreEvents
+ *
+ * @description
  * Events organizationInvitationAcceptStoreEvents
- * @const organizationInvitationAcceptStoreEvents
- * @description Separates membership invalidation from the single toast emitted for an acceptance result.
+ * Separates membership invalidation from the single toast emitted for an acceptance result.
+ *
  * @since 1.0.0
+ *
+ * @constant organizationInvitationAcceptStoreEvents
  */
 export const organizationInvitationAcceptStoreEvents = eventGroup({
   source: 'Organization Invitation Accept Store',

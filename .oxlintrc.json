@@ -77,6 +77,26 @@
       }
     },
     {
+      "files": ["src/app/**/*.routes.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@shared"],
+                "message": "ARCHITECTURE.md 8.5 / 13.2 - `shared` has no root barrel. Import the concept: @shared/tag, @shared/empty-state, @shared/calendar."
+              },
+              {
+                "group": ["@core/*/services/**"],
+                "message": "ARCHITECTURE.md 13.2 - a core concern's barrel is its only entry point. Import @core/<concern>, never its services/ implementation files. The only sanctioned deep buckets are @core/api/models and @core/api/utils."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["src/app/core/**/*.ts"],
       "rules": {
         "no-restricted-imports": [

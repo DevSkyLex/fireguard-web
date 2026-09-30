@@ -18,7 +18,13 @@ export interface WorkloadAssessmentInput {
    * @access public
    * @since 1.0.0
    *
-   * @type {readonly { readonly taskId: string; readonly memberId: string | null; readonly remainingMinutes: number | null; readonly startsOn: string | null; readonly endsOn: string | null }[]}
+   * @type {readonly {
+   *   readonly taskId: string;
+   *   readonly memberId: string | null;
+   *   readonly remainingMinutes: number | null;
+   *   readonly startsOn: string | null;
+   *   readonly endsOn: string | null;
+   * }[]}
    */
   readonly changes: readonly {
     readonly taskId: string;

@@ -1,34 +1,36 @@
-# Specialist catalogue
+# FireGuard Web native agents
 
-Choose the narrowest useful responsibility. A skill describes how; a role executes assigned
-files/contracts. A specialist is not a mandatory delegation step.
-The parent assigns scope and preserves other workers' edits. Direct launches inherit the
-session; delegated model/effort selection follows [workflow](../workflow.md#agent-profiles)
-and [agent-profiles.toml](../agent-profiles.toml).
+The 25 frontend role definitions set their model, effort and tier directly. The primary
+configuration also exposes the 22 API roles. See [the workflow](../workflow.md#native-agent-settings)
+for native invocation, current availability, permissions and shared-project discovery.
 
-| Agent                          | Owned responsibility                                                                                              | Mode            | Category / effort |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------- | --------------- | ----------------- |
-| `fg-web-component-builder`     | Build FireGuard pages and ordinary presentational components with correct ownership and public contracts.         | Assigned writes | terra / high      |
-| `fg-web-directive-builder`     | Build SSR-safe FireGuard behavioral directives and typed template markers.                                        | Assigned writes | terra / high      |
-| `fg-web-feature-builder`       | Define FireGuard feature ownership, public APIs, ports, composition and normative FEATURE.md contracts.           | Assigned writes | sol / high        |
-| `fg-web-service-builder`       | Build FireGuard Hydra transport, pure data adapters and ordinary behavioral services.                             | Assigned writes | terra / high      |
-| `fg-web-signal-store`          | Build FireGuard SignalStore slices with explicit request state, typed events and deliberate lifecycle scope.      | Assigned writes | sol / high        |
-| `fg-web-spartan-ui`            | Refine existing FireGuard visual composition, density and native Spartan interaction patterns.                    | Assigned writes | sol / high        |
-| `fg-web-utils-builder`         | Build pure FireGuard helpers, constants and option sets at their lowest justified scope.                          | Assigned writes | luna / medium     |
-| `fg-web-pipe-builder`          | Build pure FireGuard Angular pipes when a computed value or built-in does not fit.                                | Assigned writes | luna / high       |
-| `fg-web-web-test-writer`       | Write and repair FireGuard Angular unit/integration tests at the owning boundary.                                 | Assigned writes | terra / high      |
-| `fg-web-e2e-runner`            | Verify FireGuard behavior in a real browser with bounded scenarios and durable evidence.                          | Assigned writes | terra / medium    |
-| `fg-web-a11y-auditor`          | Audit FireGuard semantics and interaction accessibility with concrete evidence and limits.                        | Read-only       | terra / high      |
-| `fg-web-architecture-reviewer` | Review FireGuard ownership, imports, public contracts, state and SSR invariants.                                  | Read-only       | astra / high      |
-| `fg-web-form-builder`          | Build FireGuard Signal Forms, reusable validators and explicit draft/submission contracts.                        | Assigned writes | sol / high        |
-| `fg-web-overlay-builder`       | Build native FireGuard overlays with safe dismissal, focus and adaptive surface contracts.                        | Assigned writes | sol / high        |
-| `fg-web-collection-builder`    | Build presentational FireGuard tables and dataviews with explicit collection events.                              | Assigned writes | terra / high      |
-| `fg-web-routing-ssr-builder`   | Build FireGuard routing, guards, resolvers and explicit SSR/hydration loading boundaries.                         | Assigned writes | sol / xhigh       |
-| `fg-web-access-builder`        | Build FireGuard permission projections and owner-published access contracts.                                      | Assigned writes | sol / high        |
-| `fg-web-offline-sync-builder`  | Build FireGuard offline persistence and durable replay under the feature's conflict contract.                     | Assigned writes | sol / xhigh       |
-| `fg-web-i18n-auditor`          | Audit FireGuard message IDs, placeholders and locale catalogs without claiming visual or linguistic completeness. | Read-only       | luna / medium     |
-| `fg-web-api-contract-reviewer` | Compare FireGuard frontend transport contracts with explicitly scoped backend evidence.                           | Read-only       | sol / high        |
-| `fg-web-design-reviewer`       | Critique FireGuard visual composition against current artifacts, DESIGN.md and native Spartan.                    | Read-only       | sol / high        |
+| Agent                          | Responsibility                                                                                                                                        | Model                  | Effort | Mode            |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------ | --------------- |
+| `fg-web-a11y-auditor`          | Audit FireGuard semantics and interaction accessibility with concrete evidence and limits.                                                            | gpt-6.1-sol · Standard | high   | Read-only       |
+| `fg-web-access-builder`        | Build FireGuard permission projections and owner-published access contracts.                                                                          | gpt-6.1-sol · Standard | high   | Assigned writes |
+| `fg-web-api-contract-reviewer` | Compare FireGuard frontend transport contracts with explicitly scoped backend evidence.                                                               | gpt-6.1-sol · Standard | high   | Read-only       |
+| `fg-web-architecture-reviewer` | Review FireGuard ownership, imports, public contracts, state and SSR invariants.                                                                      | gpt-6.1-sol · Standard | high   | Read-only       |
+| `fg-web-collection-builder`    | Build presentational FireGuard tables and dataviews with explicit collection events.                                                                  | gpt-6.1-sol · Standard | medium | Assigned writes |
+| `fg-web-comment-maintainer`    | Define or maintain assigned comment conventions, correct source docblocks and run scoped documentation formatting and lint without changing behavior. | gpt-6-luna · Fast      | medium | Assigned writes |
+| `fg-web-component-builder`     | Build FireGuard pages and ordinary presentational components with correct ownership and public contracts.                                             | gpt-6.1-sol · Standard | medium | Assigned writes |
+| `fg-web-design-reviewer`       | Critique FireGuard visual composition against current artifacts, DESIGN.md and native Spartan.                                                        | gpt-6.1-sol · Standard | high   | Read-only       |
+| `fg-web-directive-builder`     | Build SSR-safe FireGuard behavioral directives and typed template markers.                                                                            | gpt-6.1-sol · Standard | medium | Assigned writes |
+| `fg-web-e2e-runner`            | Verify FireGuard behavior in a real browser with bounded scenarios and durable evidence.                                                              | gpt-6.1-sol · Standard | medium | Assigned writes |
+| `fg-web-feature-builder`       | Define FireGuard feature ownership, public APIs, ports, composition and normative FEATURE.md contracts.                                               | gpt-6.1-sol · Standard | high   | Assigned writes |
+| `fg-web-form-builder`          | Build FireGuard Signal Forms, reusable validators and explicit draft/submission contracts.                                                            | gpt-6.1-sol · Standard | high   | Assigned writes |
+| `fg-web-i18n-auditor`          | Audit FireGuard message IDs, placeholders and locale catalogs without claiming visual or linguistic completeness.                                     | gpt-6-luna · Fast      | medium | Read-only       |
+| `fg-web-offline-sync-builder`  | Build FireGuard offline persistence and durable replay under the feature's conflict contract.                                                         | gpt-6.1-sol · Standard | xhigh  | Assigned writes |
+| `fg-web-overlay-builder`       | Build native FireGuard overlays with safe dismissal, focus and adaptive surface contracts.                                                            | gpt-6.1-sol · Standard | high   | Assigned writes |
+| `fg-web-performance-reviewer`  | Review frontend bundle cost, lazy loading, request duplication, reactivity and SSR hydration from evidence.                                           | gpt-6.1-sol · Standard | high   | Read-only       |
+| `fg-web-pipe-builder`          | Build pure FireGuard Angular pipes when a computed value or built-in does not fit.                                                                    | gpt-6-luna · Fast      | high   | Assigned writes |
+| `fg-web-routing-ssr-builder`   | Build FireGuard routing, guards, resolvers and explicit SSR/hydration loading boundaries.                                                             | gpt-6.1-sol · Standard | xhigh  | Assigned writes |
+| `fg-web-security-auditor`      | Review frontend auth/session, SSR cookies, token exposure, unsafe HTML and redirect boundaries.                                                       | gpt-6.1-sol · Standard | xhigh  | Read-only       |
+| `fg-web-service-builder`       | Build FireGuard Hydra transport, pure data adapters and ordinary behavioral services.                                                                 | gpt-6.1-sol · Standard | medium | Assigned writes |
+| `fg-web-signal-store`          | Build FireGuard SignalStore slices with explicit request state, typed events and deliberate lifecycle scope.                                          | gpt-6.1-sol · Standard | high   | Assigned writes |
+| `fg-web-spartan-ui`            | Refine existing FireGuard visual composition, density and native Spartan interaction patterns.                                                        | gpt-6.1-sol · Standard | high   | Assigned writes |
+| `fg-web-utils-builder`         | Build pure FireGuard helpers, constants and option sets at their lowest justified scope.                                                              | gpt-6-luna · Fast      | medium | Assigned writes |
+| `fg-web-web-test-writer`       | Write and repair FireGuard Angular unit/integration tests at the owning boundary.                                                                     | gpt-6.1-sol · Standard | high   | Assigned writes |
+| `fg-web-workflow-reviewer`     | Review frontend CI, browser tests, permissions, caches, images and deployment gates.                                                                  | gpt-6.1-sol · Standard | high   | Read-only       |
 
 ## Selection boundaries
 
@@ -50,3 +52,7 @@ and [agent-profiles.toml](../agent-profiles.toml).
 
 Read-only roles use the native read-only sandbox. Implementation roles keep the user's runtime
 permissions; no agent grants itself additional filesystem, network or approval authority.
+
+Security review owns frontend trust/exposure paths; access-builder implements permission
+projections. Performance review needs measured bundle/network/render evidence. Workflow
+review owns frontend CI/deployment gates; the API workflow reviewer remains backend-scoped.

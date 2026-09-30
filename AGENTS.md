@@ -1,5 +1,36 @@
 # Agent Instructions
 
+Authored comments and docblocks follow [the shared convention](docs/guides/code-comments.md).
+
+## Planning and explanations
+
+Choose the presentation that makes the subject easier to understand, with detail proportional
+to the task. Plans should make the intended result, decisions, changes and validation clear;
+these are useful information, not mandatory headings. Use Mermaid, tables and other Markdown
+when they help explain a relationship, comparison or sequence. There is no required format,
+quota or need to justify the absence of a visual. Follow the user's language and explicit
+format or brevity requests. See the [planning guide](docs/guides/planning.md) for guidance
+and examples when preparing a plan or clarifying a complex change.
+
+## Git naming
+
+Apply these conventions before creating or renaming a branch, including a worktree branch,
+and before preparing a commit or pull request. They also apply to native agents and secondary checkouts.
+
+- Branches use `<type>/<description-kebab>`, with a type that describes the change:
+  `feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `perf`, `ci`, `build`, `style`, `revert`, or `hotfix`.
+  Descriptions use lowercase English words and digits separated by single hyphens;
+  for example `fix/otp-expiry`. Do not use `codex/` or another agent name as a branch prefix.
+  Choose a creation tool that accepts the intended name; use Git with an explicit branch name
+  when a worktree tool would force an agent prefix.
+- Commit headers and PR titles use `<type>(<scope>): <subject>`. Use the same types except `hotfix`;
+  the scope is optional and names the module or feature in lowercase. Use `!` before `:` only for a breaking change.
+  Write an English imperative subject starting lowercase, without a trailing period; the header is at most 100 characters.
+- Validate the proposed branch against these conventions and `git check-ref-format --branch <name>` before creation.
+  Check the actual first line of each commit message, including messages supplied through a file or an amend.
+  Correct rejected names or headers instead of bypassing hooks with `--no-verify` or a `core.hooksPath` override.
+  Preserve existing branches unless their rename is requested; stage only changes authorized for the commit.
+
 ## Codex tooling
 
 For Codex, read [.codex/workflow.md](.codex/workflow.md) and the matching entries in
@@ -24,10 +55,10 @@ skill: native Spartan, DESIGN.md and project architecture remain authoritative. 
 marketing-page advice mechanically to product dashboards or generate a competing design system.
 
 The consolidated `fg-web-spartan` skill routes component, form, collection, overlay and visual
-review work to focused references. Specialist roles and user-approved model/effort profiles are
+review work to focused references. Specialist roles and native model/effort settings are
 documented in [.codex/references/agents.md](.codex/references/agents.md) and
-[.codex/workflow.md](.codex/workflow.md). Resolve delegated profiles against the actual session
-catalogue; direct agent invocations inherit the session settings.
+[.codex/workflow.md](.codex/workflow.md). Invoke the actual native role; its model, effort and speed are explicit. Check availability
+in the current callable catalogue; do not substitute inherited settings when a role is unavailable.
 
 Do not read or write secret environment files (except `.env.example`/`.env.dist`),
 API `config/jwt/`, or web `src/environments/environment*.ts`. Do not hand-edit

@@ -38,6 +38,8 @@ import { ActiveOrganizationStore } from '@features/organization/state';
  * Primitive KPI value extracted from an overview section summary
  * entry. Covers the numeric and formatted-string cases returned by
  * the backend, plus null when the metric is absent.
+ *
+ * @type {OrganizationDashboardKpiValue}
  */
 type OrganizationDashboardKpiValue = number | string | null;
 
@@ -47,9 +49,36 @@ type OrganizationDashboardKpiValue = number | string | null;
  * @description
  * Scalar delta entry shown below a KPI card when the
  * previous-period comparison is enabled.
+ *
+ * @type {OrganizationDashboardComparisonDelta}
  */
 type OrganizationDashboardComparisonDelta = {
+  /**
+   * Property value
+   * @readonly
+   *
+   * @description
+   * Formatted scalar change displayed beneath its KPI value.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {string | number | null}
+   */
   readonly value: string | number | null;
+
+  /**
+   * Property direction
+   * @readonly
+   *
+   * @description
+   * Comparison trend direction used to choose the indicator styling.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {string | null}
+   */
   readonly direction: string | null;
 };
 
@@ -60,8 +89,10 @@ type OrganizationDashboardComparisonDelta = {
  * Maps one embedded trend series to the plain numeric points consumed
  * by the KPI sparklines, or null when the series is absent or empty.
  *
- * @param {OrganizationDashboardTrends | undefined} trends - Embedded trends map from the dashboard payload.
+ * @param {OrganizationDashboardTrends | undefined} trends - Embedded trends map from the dashboard
+ *   payload.
  * @param {string} key - Backend-defined series key (e.g. `facilities`).
+ *
  * @returns {readonly number[] | null} Ordered numeric points, or null.
  */
 function extractSparkline(
@@ -77,15 +108,21 @@ function extractSparkline(
 }
 
 /**
- * Store OrganizationDashboardStore
- * @const OrganizationDashboardStore
+ * Constant DashboardStore
  *
+ * Store OrganizationDashboardStore
  * @description
  * Component-scoped NgRx SignalStore for the aggregate `/dashboard`
  * endpoint. Fetches KPI summary and comparison data for the active
  * organization and exposes derived signals for the four KPI cards
  * and their period-over-period comparison deltas. Query state belongs to
  * `queryOrganizationId`; changing that identity clears data and errors.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const OrganizationDashboardStore
  *
  * @example
  * ```typescript
@@ -94,17 +131,13 @@ function extractSparkline(
  *   protected readonly store = inject<OrganizationDashboardStore>(OrganizationDashboardStore);
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const DashboardStore = signalStore(
   //#region State
 
   /**
-   * Feature withQueryState
-   *
    * @description
+   * Feature withQueryState
    * Seeds the store with idle/pending/success/error status,
    * the raw dashboard payload and a normalized error.
    *
@@ -117,9 +150,8 @@ export const DashboardStore = signalStore(
   //#region Computed
 
   /**
-   * Feature withComputed
-   *
    * @description
+   * Feature withComputed
    * Derives the four KPI count values and four comparison deltas
    * from the raw `queryData` signal.
    *
@@ -127,9 +159,8 @@ export const DashboardStore = signalStore(
    */
   withComputed((store) => ({
     /**
-     * Computed facilityCount
-     *
      * @description
+     * Computed facilityCount
      * Total facility count from `overview.facilities.summary[0].value`.
      *
      * @since 1.0.0
@@ -139,9 +170,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed memberCount
-     *
      * @description
+     * Computed memberCount
      * Total member count from `overview.members.summary[0].value`.
      *
      * @since 1.0.0
@@ -151,9 +181,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed equipmentCount
-     *
      * @description
+     * Computed equipmentCount
      * Total equipment count from `overview.equipment.summary[0].value`.
      *
      * @since 1.0.0
@@ -163,9 +192,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed inspectionCount
-     *
      * @description
+     * Computed inspectionCount
      * Total inspection count from `overview.inspections.summary[0].value`.
      *
      * @since 1.0.0
@@ -175,9 +203,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed facilitiesComparison
-     *
      * @description
+     * Computed facilitiesComparison
      * Period-over-period delta for the facilities KPI.
      *
      * @since 1.0.0
@@ -196,9 +223,8 @@ export const DashboardStore = signalStore(
     }),
 
     /**
-     * Computed membersComparison
-     *
      * @description
+     * Computed membersComparison
      * Period-over-period delta for the members KPI.
      *
      * @since 1.0.0
@@ -217,9 +243,8 @@ export const DashboardStore = signalStore(
     }),
 
     /**
-     * Computed equipmentComparison
-     *
      * @description
+     * Computed equipmentComparison
      * Period-over-period delta for the equipment KPI.
      *
      * @since 1.0.0
@@ -238,9 +263,8 @@ export const DashboardStore = signalStore(
     }),
 
     /**
-     * Computed inspectionsComparison
-     *
      * @description
+     * Computed inspectionsComparison
      * Period-over-period delta for the inspections KPI.
      *
      * @since 1.0.0
@@ -259,9 +283,8 @@ export const DashboardStore = signalStore(
     }),
 
     /**
-     * Computed facilitiesSparkline
-     *
      * @description
+     * Computed facilitiesSparkline
      * Daily running-total points for the facilities KPI sparkline,
      * from the embedded `trends.facilities` series.
      *
@@ -272,9 +295,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed membersSparkline
-     *
      * @description
+     * Computed membersSparkline
      * Daily running-total points for the members KPI sparkline,
      * from the embedded `trends.members` series.
      *
@@ -285,9 +307,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed equipmentSparkline
-     *
      * @description
+     * Computed equipmentSparkline
      * Daily running-total points for the equipment KPI sparkline,
      * from the embedded `trends.equipment` series.
      *
@@ -298,9 +319,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed inspectionsSparkline
-     *
      * @description
+     * Computed inspectionsSparkline
      * Daily running-total points for the inspections KPI sparkline,
      * from the embedded `trends.inspections` series.
      *
@@ -311,9 +331,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed recentInterventions
-     *
      * @description
+     * Computed recentInterventions
      * Most recently updated interventions embedded in the dashboard
      * payload. Empty until loaded or when the caller lacks the
      * interventions read permission.
@@ -325,9 +344,8 @@ export const DashboardStore = signalStore(
     ),
 
     /**
-     * Computed alerts
-     *
      * @description
+     * Computed alerts
      * Backend-computed attention feed embedded in the dashboard payload.
      * The API emits an entry only when its count is above zero, so the
      * list is already filtered: an empty array means nothing is raised.
@@ -341,9 +359,8 @@ export const DashboardStore = signalStore(
   //#region Methods
 
   /**
-   * Feature withMethods
-   *
    * @description
+   * Feature withMethods
    * Adds the `load` reactive method that fetches the aggregate
    * `/dashboard` payload for the given organization ID.
    *
@@ -367,7 +384,9 @@ export const DashboardStore = signalStore(
        *
        * @access public
        * @since 1.0.0
+       *
        * @param {string | undefined} organizationId - Active organization, or cancellation.
+       *
        * @returns {void}
        */
       load: rxMethod<string | undefined>(
@@ -412,9 +431,8 @@ export const DashboardStore = signalStore(
   //#region Hooks
 
   /**
-   * Feature withComputed (load params)
-   *
    * @description
+   * Feature withComputed (load params)
    * Derives the organization ID forwarded to {@link load}. Declared in
    * `withComputed` so that derived state is not created imperatively
    * inside `onInit`.
@@ -434,9 +452,8 @@ export const DashboardStore = signalStore(
   }),
 
   /**
-   * Feature withHooks
-   *
    * @description
+   * Feature withHooks
    * Connects {@link loadParams} to {@link load} on store init and clears the
    * query scope when its organization disappears.
    *
@@ -457,10 +474,15 @@ export const DashboardStore = signalStore(
 );
 
 /**
- * Type OrganizationDashboardStore
- * @type DashboardStore
+ * Type DashboardStore
+ *
+ * @description
+ * Instance contract for the organization dashboard store.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type DashboardStore
  */
 export type DashboardStore = InstanceType<typeof DashboardStore>;

@@ -25,12 +25,28 @@ import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinner } from '@shared/ui/spinner';
 import type { ChannelEditDraft, EditChannelFormDraft } from './models';
 
-/** Matches `UpdateChannelInput`'s underlying `ChannelResource.name` bounds. */
+/**
+ * Constant CHANNEL_NAME_MIN_LENGTH
+ *
+ * @description
+ * Matches `UpdateChannelInput`'s underlying `ChannelResource.name` bounds.
+ */
 const CHANNEL_NAME_MIN_LENGTH = 2;
+
+/**
+ * Constant CHANNEL_NAME_MAX_LENGTH
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {unknown}
+ */
 const CHANNEL_NAME_MAX_LENGTH = 80;
 
 /**
- * Component ChannelEditForm
+ * Class ChannelEditForm
  * @class ChannelEditForm
  *
  * @description
@@ -50,6 +66,8 @@ const CHANNEL_NAME_MAX_LENGTH = 80;
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-channel-edit-form
@@ -61,8 +79,6 @@ const CHANNEL_NAME_MAX_LENGTH = 80;
  *   (cancelled)="editDialogVisible.set(false)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-channel-edit-form',
@@ -187,7 +203,18 @@ export class ChannelEditForm {
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * Holds the editable channel values while the existing channel is being changed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<EditChannelFormDraft>}
+   */
   protected readonly model: WritableSignal<EditChannelFormDraft> = signal<EditChannelFormDraft>({
     name: '',
     parentChannelId: '',
@@ -218,14 +245,25 @@ export class ChannelEditForm {
     });
   });
 
-  /** Names a picked parent on the closed select trigger. */
+  /**
+   * Property parentLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the display label for a selected parent channel option.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly parentLabelOf: (value: string) => string = (value) =>
     this.parentOptions().find((option) => option.value === value)?.label ?? '';
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description

@@ -7,6 +7,8 @@ import type { OrganizationDashboardRecentIntervention } from './organization-das
  * @description
  * Primitive value supported by one overview
  * metric entry in the dashboard payload.
+ *
+ * @type {OrganizationDashboardOverviewValue}
  */
 export type OrganizationDashboardOverviewValue = number | string;
 
@@ -16,6 +18,8 @@ export type OrganizationDashboardOverviewValue = number | string;
  * @description
  * One overview metric entry returned by the backend,
  * keyed by backend-defined field names.
+ *
+ * @type {OrganizationDashboardOverviewMetric}
  */
 export type OrganizationDashboardOverviewMetric = Readonly<
   Record<string, OrganizationDashboardOverviewValue>
@@ -27,6 +31,8 @@ export type OrganizationDashboardOverviewMetric = Readonly<
  * @description
  * One overview section grouping metric arrays under
  * backend-defined subsection keys.
+ *
+ * @type {OrganizationDashboardOverviewSection}
  */
 export type OrganizationDashboardOverviewSection = Readonly<
   Record<string, readonly OrganizationDashboardOverviewMetric[]>
@@ -38,6 +44,8 @@ export type OrganizationDashboardOverviewSection = Readonly<
  * @description
  * Top-level overview map returned by the organization
  * dashboard aggregate endpoint.
+ *
+ * @type {OrganizationDashboardOverview}
  */
 export type OrganizationDashboardOverview = Readonly<
   Record<string, OrganizationDashboardOverviewSection>
@@ -49,6 +57,8 @@ export type OrganizationDashboardOverview = Readonly<
  * @description
  * Primitive value supported by one dashboard
  * health metric entry.
+ *
+ * @type {OrganizationDashboardHealthValue}
  */
 export type OrganizationDashboardHealthValue = number | string;
 
@@ -58,6 +68,8 @@ export type OrganizationDashboardHealthValue = number | string;
  * @description
  * One health metric entry returned by the dashboard,
  * keyed by backend-defined field names.
+ *
+ * @type {OrganizationDashboardHealthMetric}
  */
 export type OrganizationDashboardHealthMetric = Readonly<
   Record<string, OrganizationDashboardHealthValue>
@@ -69,6 +81,8 @@ export type OrganizationDashboardHealthMetric = Readonly<
  * @description
  * Top-level health metrics map returned by the
  * organization dashboard payload.
+ *
+ * @type {OrganizationDashboardHealth}
  */
 export type OrganizationDashboardHealth = Readonly<
   Record<string, readonly OrganizationDashboardHealthMetric[]>
@@ -80,6 +94,8 @@ export type OrganizationDashboardHealth = Readonly<
  * @description
  * Primitive value supported inside one dashboard
  * alert entry.
+ *
+ * @type {OrganizationDashboardAlertValue}
  */
 export type OrganizationDashboardAlertValue = number | string;
 
@@ -89,6 +105,8 @@ export type OrganizationDashboardAlertValue = number | string;
  * @description
  * Alert entry returned by the dashboard payload,
  * describing an item that requires attention.
+ *
+ * @type {OrganizationDashboardAlert}
  */
 export type OrganizationDashboardAlert = Readonly<
   Record<string, OrganizationDashboardAlertValue>
@@ -104,6 +122,8 @@ export type OrganizationDashboardAlert = Readonly<
  * @description
  * Primitive value supported inside one embedded
  * dashboard trend point.
+ *
+ * @type {OrganizationDashboardTrendPointValue}
  */
 export type OrganizationDashboardTrendPointValue = number | string;
 
@@ -113,6 +133,8 @@ export type OrganizationDashboardTrendPointValue = number | string;
  * @description
  * One embedded dashboard trend point keyed by
  * backend-defined field names.
+ *
+ * @type {OrganizationDashboardTrendPoint}
  */
 export type OrganizationDashboardTrendPoint = Readonly<
   Record<string, OrganizationDashboardTrendPointValue>
@@ -124,6 +146,8 @@ export type OrganizationDashboardTrendPoint = Readonly<
  * @description
  * Optional embedded trends map returned by the
  * aggregate dashboard payload.
+ *
+ * @type {OrganizationDashboardTrends}
  */
 export type OrganizationDashboardTrends = Readonly<
   Record<string, readonly OrganizationDashboardTrendPoint[]>
@@ -135,6 +159,8 @@ export type OrganizationDashboardTrends = Readonly<
  * @description
  * Primitive value supported inside one comparison
  * metric entry.
+ *
+ * @type {OrganizationDashboardComparisonMetricValue}
  */
 export type OrganizationDashboardComparisonMetricValue = number | string | null;
 
@@ -144,6 +170,8 @@ export type OrganizationDashboardComparisonMetricValue = number | string | null;
  * @description
  * One comparison metric entry returned by the
  * dashboard comparison block.
+ *
+ * @type {OrganizationDashboardComparisonMetric}
  */
 export type OrganizationDashboardComparisonMetric = Readonly<
   Record<string, OrganizationDashboardComparisonMetricValue>
@@ -155,6 +183,8 @@ export type OrganizationDashboardComparisonMetric = Readonly<
  * @description
  * Ordered collection of comparison metrics belonging
  * to the same logical group.
+ *
+ * @type {OrganizationDashboardComparisonMetricGroup}
  */
 export type OrganizationDashboardComparisonMetricGroup =
   readonly OrganizationDashboardComparisonMetric[];
@@ -165,6 +195,8 @@ export type OrganizationDashboardComparisonMetricGroup =
  * @description
  * Named collection of comparison metric groups,
  * such as grouped health comparisons.
+ *
+ * @type {OrganizationDashboardComparisonMetricGroups}
  */
 export type OrganizationDashboardComparisonMetricGroups = Readonly<
   Record<string, OrganizationDashboardComparisonMetricGroup>
@@ -176,6 +208,8 @@ export type OrganizationDashboardComparisonMetricGroups = Readonly<
  * @description
  * Supported value types exposed by the dashboard
  * comparison object.
+ *
+ * @type {OrganizationDashboardComparisonValue}
  */
 export type OrganizationDashboardComparisonValue =
   | OrganizationDashboardComparisonMetricGroups
@@ -189,6 +223,8 @@ export type OrganizationDashboardComparisonValue =
  * @description
  * Comparison block returned alongside the aggregate
  * dashboard payload for the previous period.
+ *
+ * @type {OrganizationDashboardComparison}
  */
 export type OrganizationDashboardComparison = Readonly<
   Record<string, OrganizationDashboardComparisonValue>

@@ -1,6 +1,5 @@
 /**
  * Constant ORGANIZATION_COMPLIANCE_SEVERITY_OPTIONS
- * @const ORGANIZATION_COMPLIANCE_SEVERITY_OPTIONS
  *
  * @description
  * The non-conformity severities `nonConformitySlaDays` is keyed by, in the
@@ -8,7 +7,15 @@
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly description: string; readonly icon: string; readonly iconClass: string; readonly label: string; readonly value: string }>}
+ * @type {ReadonlyArray<{
+ *   readonly description: string;
+ *   readonly icon: string;
+ *   readonly iconClass: string;
+ *   readonly label: string;
+ *   readonly value: string;
+ * }>}
+ *
+ * @constant ORGANIZATION_COMPLIANCE_SEVERITY_OPTIONS
  */
 export const ORGANIZATION_COMPLIANCE_SEVERITY_OPTIONS: ReadonlyArray<{
   readonly description: string;

@@ -45,6 +45,7 @@ import { HlmH4, HlmMuted } from '@shared/ui/typography';
 
 /**
  * Interface OrganizationDomainStatusDescriptor
+ * @interface OrganizationDomainStatusDescriptor
  *
  * @description
  * How one domain `status` reads on its badge: `label` and `icon` always
@@ -55,16 +56,71 @@ import { HlmH4, HlmMuted } from '@shared/ui/typography';
  * @since 1.1.0
  */
 interface OrganizationDomainStatusDescriptor {
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Supplies the readable status text rendered on the domain badge.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Names the status icon that keeps meaning available without color.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly icon: string;
+
+  /**
+   * Property iconClass
+   * @readonly
+   *
+   * @description
+   * Applies the status tint to the icon while text and shape carry meaning.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly iconClass: string;
+
+  /**
+   * Property checkActionLabel
+   * @readonly
+   *
+   * @description
+   * Names the recheck action without branching in the template on status values.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly checkActionLabel: string;
 }
 
 /**
  * Component OrganizationAccessPanel
  * @class OrganizationAccessPanel
- * @description Presentational admission policy and DNS challenge panel. The page owns permission gating, loading and mutations; clipboard handling reports success or failure.
+ *
+ * @description
+ * Presentational admission policy and DNS challenge panel. The page owns permission gating, loading
+ * and mutations; clipboard handling reports success or failure.
+ *
  * @since 1.0.0
  */
 @Component({
@@ -103,9 +159,14 @@ export class OrganizationAccessPanel {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone. The default keeps the component renderable
+   * with no context wired.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -114,121 +175,198 @@ export class OrganizationAccessPanel {
   /**
    * Property policy
    * @readonly
-   * @description Loaded policy or null before first load.
+   *
+   * @description
+   * Loaded policy or null before first load.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<OrganizationAccessPolicyOutput | null>}
    */
   public readonly policy: InputSignal<OrganizationAccessPolicyOutput | null> =
     input<OrganizationAccessPolicyOutput | null>(null);
+
   /**
    * Property loading
    * @readonly
-   * @description Initial or refresh request state.
+   *
+   * @description
+   * Initial or refresh request state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input(false);
+
   /**
    * Property pending
    * @readonly
-   * @description Policy or domain mutation state.
+   *
+   * @description
+   * Policy or domain mutation state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input(false);
+
   /**
    * Property policyRevision
    * @readonly
-   * @description Forwards successful policy saves and organization changes independently of domain refreshes.
+   *
+   * @description
+   * Forwards successful policy saves and organization changes independently of domain refreshes.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<number>}
    */
   public readonly policyRevision: InputSignal<number> = input(0);
+
   /**
    * Property error
    * @readonly
-   * @description Recoverable server error.
+   *
+   * @description
+   * Recoverable server error.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
+
   /**
    * Property policySubmitted
    * @readonly
-   * @description Confirmed policy update.
+   *
+   * @description
+   * Confirmed policy update.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<OrganizationAccessPolicyInput>}
    */
   public readonly policySubmitted: OutputEmitterRef<OrganizationAccessPolicyInput> = output();
+
   /**
    * Property domainAdded
    * @readonly
-   * @description Domain submitted for verification setup.
+   *
+   * @description
+   * Domain submitted for verification setup.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly domainAdded: OutputEmitterRef<string> = output();
+
   /**
    * Property domainVerified
    * @readonly
-   * @description Requests a server DNS check.
+   *
+   * @description
+   * Requests a server DNS check.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly domainVerified: OutputEmitterRef<string> = output();
+
   /**
    * Property domainRemoved
    * @readonly
-   * @description Confirmed domain removal.
+   *
+   * @description
+   * Confirmed domain removal.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly domainRemoved: OutputEmitterRef<string> = output();
+
   /**
    * Property retried
    * @readonly
-   * @description Requests a fresh policy load.
+   *
+   * @description
+   * Requests a fresh policy load.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly retried: OutputEmitterRef<void> = output();
+
   /**
    * Property removing
    * @readonly
-   * @description Domain selected for removal confirmation.
+   *
+   * @description
+   * Domain selected for removal confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<OrganizationDomainOutput | null>}
    */
   protected readonly removing: WritableSignal<OrganizationDomainOutput | null> = signal(null);
+
   /**
    * Property clipboardMessage
    * @readonly
-   * @description Live region feedback for copying DNS values.
+   *
+   * @description
+   * Live region feedback for copying DNS values.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string>}
    */
   protected readonly clipboardMessage: WritableSignal<string> = signal('');
 
-  /** Pure, dependency-free date formatter for {@link checkStatusLineOf} — no DI needed for a single-instance internal use. */
+  /**
+   * Property orgDatePipe
+   * @readonly
+   *
+   * @description
+   * Pure, dependency-free date formatter for {@link checkStatusLineOf} — no DI needed for a
+   * single-instance internal use.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrgDatePipe}
+   */
   private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
+
   /**
    * Property statusDescriptors
    * @readonly
-   * @description Every domain status's localized label, icon and severity class — pairing colour with a label and glyph so a domain's verification state is never conveyed by colour alone.
+   *
+   * @description
+   * Every domain status's localized label, icon and severity class — pairing colour with a label
+   * and glyph so a domain's verification state is never conveyed by colour alone.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Readonly<Record<OrganizationDomainOutput['status'], OrganizationDomainStatusDescriptor>>}
    */
   protected readonly statusDescriptors: Readonly<
@@ -253,12 +391,17 @@ export class OrganizationAccessPanel {
       checkActionLabel: $localize`:@@org.access.verifyDomain:Verify domain`,
     },
   };
+
   /**
    * Property hasSuspendedDomain
    * @readonly
-   * @description Shows the suspension consequence when a proof has failed.
+   *
+   * @description
+   * Shows the suspension consequence when a proof has failed.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly hasSuspendedDomain: Signal<boolean> = computed(
@@ -268,9 +411,14 @@ export class OrganizationAccessPanel {
   /**
    * Property dnsExpandedOverrides
    * @readonly
-   * @description Per-domain manual overrides of the DNS-record disclosure, keyed by domain id. Absent domains fall back to {@link isDnsExpanded}'s default (collapsed once verified).
+   *
+   * @description
+   * Per-domain manual overrides of the DNS-record disclosure, keyed by domain id. Absent domains
+   * fall back to {@link isDnsExpanded}'s default (collapsed once verified).
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {WritableSignal<ReadonlyMap<string, boolean>>}
    */
   protected readonly dnsExpandedOverrides: WritableSignal<ReadonlyMap<string, boolean>> = signal(
@@ -279,10 +427,18 @@ export class OrganizationAccessPanel {
 
   /**
    * Method isDnsExpanded
-   * @description Whether a domain's DNS instructions disclosure is open — a manual override if the operator toggled it this session, otherwise open for anything not yet verified and closed for a verified domain.
+   * @method isDnsExpanded
+   *
+   * @description
+   * Whether a domain's DNS instructions disclosure is open — a manual override if the operator
+   * toggled it this session, otherwise open for anything not yet verified and closed for a verified
+   * domain.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {OrganizationDomainOutput} domain - The domain row.
+   *
    * @returns {boolean} Whether the disclosure is open.
    */
   protected isDnsExpanded(domain: OrganizationDomainOutput): boolean {
@@ -291,11 +447,17 @@ export class OrganizationAccessPanel {
 
   /**
    * Method setDnsExpanded
-   * @description Records a manual toggle of a domain's DNS instructions disclosure.
+   * @method setDnsExpanded
+   *
+   * @description
+   * Records a manual toggle of a domain's DNS instructions disclosure.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} domainId - The toggled domain's id.
    * @param {boolean} expanded - The disclosure's next state.
+   *
    * @returns {void}
    */
   protected setDnsExpanded(domainId: string, expanded: boolean): void {
@@ -304,14 +466,37 @@ export class OrganizationAccessPanel {
     this.dnsExpandedOverrides.set(next);
   }
 
-  /** Localized label for the "Copy TXT record name" icon-only button, reused by its `hlmTooltip`. */
+  /**
+   * Property copyNameLabel
+   * @readonly
+   *
+   * @description
+   * Localized label for the "Copy TXT record name" icon-only button, reused by its `hlmTooltip`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly copyNameLabel: string = $localize`:@@org.access.copyName:Copy TXT record name`;
 
-  /** Localized label for the "Copy TXT record value" icon-only button, reused by its `hlmTooltip`. */
+  /**
+   * Property copyValueLabel
+   * @readonly
+   *
+   * @description
+   * Localized label for the "Copy TXT record value" icon-only button, reused by its `hlmTooltip`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly copyValueLabel: string = $localize`:@@org.access.copyValue:Copy TXT record value`;
 
   /**
    * Method checkStatusLineOf
+   * @method checkStatusLineOf
    *
    * @description
    * The muted line under a domain's title, naming when it was last found
@@ -343,10 +528,15 @@ export class OrganizationAccessPanel {
   /**
    * Method copied
    * @method copied
-   * @description Reports clipboard completion without exposing unrelated document data.
+   *
+   * @description
+   * Reports clipboard completion without exposing unrelated document data.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {boolean} success - Clipboard result.
+   *
    * @returns {void}
    */
   protected copied(success: boolean): void {
@@ -356,12 +546,17 @@ export class OrganizationAccessPanel {
         : $localize`:@@org.access.copyFailed:Could not copy. Select and copy the DNS value manually.`,
     );
   }
+
   /**
    * Method remove
    * @method remove
-   * @description Emits removal only after an explicit confirmation.
+   *
+   * @description
+   * Emits removal only after an explicit confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected remove(): void {

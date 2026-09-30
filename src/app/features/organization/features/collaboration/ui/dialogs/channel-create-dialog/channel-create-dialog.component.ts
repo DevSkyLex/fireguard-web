@@ -37,6 +37,8 @@ import { ChannelCreateForm, type ChannelCreateDraft } from '../../forms/channel-
  *
  * @version 2.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-channel-create-dialog
@@ -45,8 +47,6 @@ import { ChannelCreateForm, type ChannelCreateDraft } from '../../forms/channel-
  *   (submitted)="create($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-channel-create-dialog',
@@ -136,7 +136,11 @@ export class ChannelCreateDialog {
   /**
    * Constructor
    * @constructor
-   * @description Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next opening confirm over nothing.
+   *
+   * @description
+   * Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next
+   * opening confirm over nothing.
+   *
    * @access public
    * @since 2.1.0
    */
@@ -172,9 +176,14 @@ export class ChannelCreateDialog {
   /**
    * Property dirty
    * @readonly
-   * @description Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates {@link requestClose}.
+   *
+   * @description
+   * Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates
+   * {@link requestClose}.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly dirty: WritableSignal<boolean> = signal<boolean>(false);
@@ -182,9 +191,14 @@ export class ChannelCreateDialog {
   /**
    * Property unsavedChangesDialogState
    * @readonly
-   * @description Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when {@link dirty} is true.
+   *
+   * @description
+   * Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when
+   * {@link dirty} is true.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @type {WritableSignal<BrnDialogState>}
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
@@ -193,9 +207,14 @@ export class ChannelCreateDialog {
   /**
    * Property dialogRef
    * @readonly
-   * @description The panel directive, queried so {@link onStateChanged} can reopen it to undo an Escape/outside-click made while {@link dirty}.
+   *
+   * @description
+   * The panel directive, queried so {@link onStateChanged} can reopen it to undo an
+   * Escape/outside-click made while {@link dirty}.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @type {Signal<HlmDialog | undefined>}
    */
   protected readonly dialogRef: Signal<HlmDialog | undefined> = viewChild(HlmDialog);
@@ -239,9 +258,15 @@ export class ChannelCreateDialog {
 
   /**
    * Method requestClose
-   * @description The panel's own close action, reached from the form's Cancel. Closes right away when nothing would be lost; otherwise asks first.
+   * @method requestClose
+   *
+   * @description
+   * The panel's own close action, reached from the form's Cancel. Closes right away when nothing
+   * would be lost; otherwise asks first.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @returns {void}
    */
   protected requestClose(): void {
@@ -256,9 +281,14 @@ export class ChannelCreateDialog {
 
   /**
    * Method onUnsavedChangesConfirmed
-   * @description The operator chose to discard the draft — closes both the confirmation and the panel.
+   * @method onUnsavedChangesConfirmed
+   *
+   * @description
+   * The operator chose to discard the draft — closes both the confirmation and the panel.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesConfirmed(): void {
@@ -268,9 +298,14 @@ export class ChannelCreateDialog {
 
   /**
    * Method onUnsavedChangesDismissed
-   * @description The operator chose to keep editing — closes the confirmation only.
+   * @method onUnsavedChangesDismissed
+   *
+   * @description
+   * The operator chose to keep editing — closes the confirmation only.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesDismissed(): void {

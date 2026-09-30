@@ -47,13 +47,17 @@ import type { OrganizationTodayQueues, OrganizationTodayState } from './models';
 const QUEUE_PAGE_SIZE = 4;
 
 /**
- * Constant EMPTY_QUEUE
+ * Function EMPTY_QUEUE
  *
  * @description
  * The queue a key resolves to before anything is loaded, so the page never has
  * to reason about a missing queue.
  *
  * @since 1.0.0
+ *
+ * @param {InterventionQueueKey} key - Queue identity retained when no interventions are available.
+ *
+ * @returns {InterventionQueue}
  */
 const EMPTY_QUEUE = (key: InterventionQueueKey): InterventionQueue => ({
   key,
@@ -75,9 +79,9 @@ const INITIAL_STATE: OrganizationTodayState = {
 };
 
 /**
- * Store OrganizationTodayStore
- * @const OrganizationTodayStore
+ * Constant OrganizationTodayStore
  *
+ * Store OrganizationTodayStore
  * @description
  * Component-scoped NgRx SignalStore backing the landing page's work queues.
  *
@@ -91,6 +95,12 @@ const INITIAL_STATE: OrganizationTodayState = {
  * the offline layer adds no bundle weight here: the workspace shell already
  * mounts the sync chip, which injects the same service.
  *
+ * @version 2.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const OrganizationTodayStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [OrganizationTodayStore] })
@@ -98,9 +108,6 @@ const INITIAL_STATE: OrganizationTodayState = {
  *   protected readonly store = inject(OrganizationTodayStore);
  * }
  * ```
- *
- * @version 2.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const OrganizationTodayStore = signalStore(
   //#region State
@@ -109,33 +116,54 @@ export const OrganizationTodayStore = signalStore(
 
   //#region Computed
   withComputed((store) => ({
-    /** Whether the collection queues are still resolving. */
+    /**
+     * @description
+     * Whether the collection queues are still resolving.
+     */
     isLoading: computed<boolean>(() => isCallPending(store.queuesCallState())),
 
-    /** Whether the collection queues failed. */
+    /**
+     * @description
+     * Whether the collection queues failed.
+     */
     hasError: computed<boolean>(() => isCallError(store.queuesCallState())),
 
-    /** Workable interventions past their due date. */
+    /**
+     * @description
+     * Workable interventions past their due date.
+     */
     overdue: computed<InterventionQueue>(
       () => store.queuesCallState().data?.overdue ?? EMPTY_QUEUE('overdue'),
     ),
 
-    /** Interventions a reviewer sent back. */
+    /**
+     * @description
+     * Interventions a reviewer sent back.
+     */
     changesRequested: computed<InterventionQueue>(
       () => store.queuesCallState().data?.changesRequested ?? EMPTY_QUEUE('changesRequested'),
     ),
 
-    /** Interventions submitted and waiting for a reviewer. */
+    /**
+     * @description
+     * Interventions submitted and waiting for a reviewer.
+     */
     awaitingReview: computed<InterventionQueue>(
       () => store.queuesCallState().data?.awaitingReview ?? EMPTY_QUEUE('awaitingReview'),
     ),
 
-    /** Planned interventions still ahead, nearest deadline first. */
+    /**
+     * @description
+     * Planned interventions still ahead, nearest deadline first.
+     */
     upcoming: computed<InterventionQueue>(
       () => store.queuesCallState().data?.upcoming ?? EMPTY_QUEUE('upcoming'),
     ),
 
-    /** Interventions with operations still queued locally. */
+    /**
+     * @description
+     * Interventions with operations still queued locally.
+     */
     unsynced: computed<readonly InterventionUnsyncedEntry[]>(
       () => store.unsyncedCallState().data ?? [],
     ),
@@ -143,6 +171,7 @@ export const OrganizationTodayStore = signalStore(
 
   withComputed((store) => ({
     /**
+     * @description
      * How many things wait on the operator, across every queue. Local work
      * counts: an unsynced intervention is work in progress, not a notification.
      */
@@ -157,6 +186,7 @@ export const OrganizationTodayStore = signalStore(
 
   withComputed((store) => ({
     /**
+     * @description
      * Whether anything is waiting. Deliberately false while the queues are
      * still resolving or after they failed, so the all-clear is only ever
      * claimed on evidence.
@@ -175,6 +205,7 @@ export const OrganizationTodayStore = signalStore(
       offline = inject<InterventionOfflineService>(InterventionOfflineService),
     ) => {
       /**
+       * @description
        * Runs every request a named question needs and folds them into one
        * queue. `overdue` spans two statuses because the API filters one at a
        * time, so the totals are summed and the items concatenated.
@@ -210,6 +241,7 @@ export const OrganizationTodayStore = signalStore(
       };
 
       /**
+       * @description
        * Crosses the outbox with the local workspace cache. An id queued for an
        * intervention this device never cached is skipped rather than rendered
        * as a blank row.
@@ -333,9 +365,8 @@ export const OrganizationTodayStore = signalStore(
   ),
 
   /**
-   * Feature withComputed (load params)
-   *
    * @description
+   * Feature withComputed (load params)
    * Derives the organization id forwarded to both loads. Undefined on the
    * server: the queues are per-operator working state, not first-render
    * content, and IndexedDB does not exist there (ARCHITECTURE.md §12.5).
@@ -356,9 +387,8 @@ export const OrganizationTodayStore = signalStore(
   }),
 
   /**
-   * Feature withHooks
-   *
    * @description
+   * Feature withHooks
    * Connects {@link loadParams} to both loads on store init, so switching
    * organization refreshes the queues without the page wiring an effect.
    *
@@ -380,5 +410,7 @@ export const OrganizationTodayStore = signalStore(
  * Instance type of the {@link OrganizationTodayStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type {OrganizationTodayStore}
  */
 export type OrganizationTodayStore = InstanceType<typeof OrganizationTodayStore>;

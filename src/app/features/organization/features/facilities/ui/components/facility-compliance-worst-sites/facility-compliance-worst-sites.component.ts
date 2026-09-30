@@ -26,7 +26,11 @@ import { HlmProgressImports } from '@shared/ui/progress';
 
 /**
  * Constant WORST_SITE_BADGE_VARIANT
- * @description Badge variant per compliance bucket, so severity is never colour-only — the rate itself is already in the row's text.
+ *
+ * @description
+ * Badge variant per compliance bucket, so severity is never colour-only — the rate itself is
+ * already in the row's text.
+ *
  * @since 1.0.0
  */
 const WORST_SITE_BADGE_VARIANT: Readonly<
@@ -41,7 +45,11 @@ const WORST_SITE_BADGE_VARIANT: Readonly<
 
 /**
  * Constant WORST_SITE_BUCKET_ICON
- * @description Registered lucide icon per compliance bucket, paired with the badge so severity reads through shape as well as colour.
+ *
+ * @description
+ * Registered lucide icon per compliance bucket, paired with the badge so severity reads through
+ * shape as well as colour.
+ *
  * @since 2.2.0
  */
 const WORST_SITE_BUCKET_ICON: Readonly<Record<MapMarkerStatusKind, string>> = {
@@ -82,9 +90,13 @@ export class FacilityComplianceWorstSites {
   /**
    * Property facilities
    * @readonly
-   * @description The lowest-rate located facilities to list, already ranked and capped by the store.
+   *
+   * @description
+   * The lowest-rate located facilities to list, already ranked and capped by the store.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly WorstFacility[]>}
    */
   public readonly facilities: InputSignal<readonly WorstFacility[]> = input<
@@ -96,9 +108,13 @@ export class FacilityComplianceWorstSites {
   /**
    * Property selected
    * @readonly
-   * @description A listed facility was activated.
+   *
+   * @description
+   * A listed facility was activated.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<FacilityOutput>}
    */
   public readonly selected: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
@@ -108,9 +124,13 @@ export class FacilityComplianceWorstSites {
   /**
    * Property regionLabel
    * @readonly
-   * @description The list's accessible name.
+   *
+   * @description
+   * The list's accessible name.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly regionLabel: string = $localize`:@@facility.map.compliance.worstSitesTitle:Worst performing sites`;
@@ -118,10 +138,23 @@ export class FacilityComplianceWorstSites {
   /**
    * Property rows
    * @readonly
-   * @description Each entry paired with the badge variant its bucket resolves to, and an accessible name that keeps a separator between the facility name and its rate — the visible name+badge concatenate without one. Reuses the marker label's i18n unit (`utils/facility-compliance-marker`) so both surfaces share one translation.
+   *
+   * @description
+   * Each entry paired with the badge variant its bucket resolves to, and an accessible name that
+   * keeps a separator between the facility name and its rate — the visible name+badge concatenate
+   * without one. Reuses the marker label's i18n unit (`utils/facility-compliance-marker`) so both
+   * surfaces share one translation.
+   *
    * @access protected
    * @since 1.0.0
-   * @type {Signal<ReadonlyArray<{ readonly entry: WorstFacility; readonly badgeVariant: 'default' | 'destructive' | 'outline' | 'secondary'; readonly ariaLabel: string }>>}
+   *
+   * @type {Signal<
+   *   ReadonlyArray<{
+   *     readonly entry: WorstFacility;
+   *     readonly badgeVariant: 'default' | 'destructive' | 'outline' | 'secondary';
+   *     readonly ariaLabel: string;
+   *   }>
+   * >}
    */
   protected readonly rows: Signal<
     ReadonlyArray<{
@@ -147,10 +180,16 @@ export class FacilityComplianceWorstSites {
   //#region Methods
   /**
    * Method onEntrySelected
-   * @description Forwards the activated row's facility to the page.
+   * @method onEntrySelected
+   *
+   * @description
+   * Forwards the activated row's facility to the page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FacilityOutput} facility - The selected facility.
+   *
    * @returns {void}
    */
   protected onEntrySelected(facility: FacilityOutput): void {

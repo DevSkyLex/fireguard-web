@@ -37,12 +37,12 @@ import type { OnboardingStepRailRow } from './models';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-onboarding-step-rail [steps]="store.steps()" [activeStepKey]="store.nextStep()" [progress]="store.progress()" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-onboarding-step-rail',
@@ -57,9 +57,13 @@ export class OnboardingStepRail {
   /**
    * Property steps
    * @readonly
-   * @description The onboarding record's steps, in backend order.
+   *
+   * @description
+   * The onboarding record's steps, in backend order.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly OnboardingStepOutput[]>}
    */
   public readonly steps: InputSignal<readonly OnboardingStepOutput[]> = input<
@@ -69,9 +73,13 @@ export class OnboardingStepRail {
   /**
    * Property activeStepKey
    * @readonly
-   * @description Key of the step the operator should act on next, or `null` once every step is resolved.
+   *
+   * @description
+   * Key of the step the operator should act on next, or `null` once every step is resolved.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<OnboardingStepKey | null>}
    */
   public readonly activeStepKey: InputSignal<OnboardingStepKey | null> =
@@ -80,9 +88,13 @@ export class OnboardingStepRail {
   /**
    * Property progress
    * @readonly
-   * @description Completed-versus-total step count, driving the progress bar.
+   *
+   * @description
+   * Completed-versus-total step count, driving the progress bar.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<{ readonly done: number; readonly total: number }>}
    */
   public readonly progress: InputSignal<{ readonly done: number; readonly total: number }> = input<{
@@ -93,9 +105,14 @@ export class OnboardingStepRail {
   /**
    * Property compact
    * @readonly
-   * @description Removes the duplicated progress summary when the rail is expanded below the mobile progress control.
+   *
+   * @description
+   * Removes the duplicated progress summary when the rail is expanded below the mobile progress
+   * control.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly compact: InputSignal<boolean> = input<boolean>(false);
@@ -105,9 +122,13 @@ export class OnboardingStepRail {
   /**
    * Property rows
    * @readonly
-   * @description Each step's presentation joined with its resolved status.
+   *
+   * @description
+   * Each step's presentation joined with its resolved status.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly OnboardingStepRailRow[]>}
    */
   protected readonly rows: Signal<readonly OnboardingStepRailRow[]> = computed<
@@ -141,9 +162,14 @@ export class OnboardingStepRail {
   /**
    * Property progressLabel
    * @readonly
-   * @description "N of M completed" readout, localized here rather than in the template so the two numeric placeholders keep stable, hand-auditable ids.
+   *
+   * @description
+   * "N of M completed" readout, localized here rather than in the template so the two numeric
+   * placeholders keep stable, hand-auditable ids.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly progressLabel: Signal<string> = computed<string>(() => {

@@ -2,7 +2,7 @@
 
 **Reading guide:** [Documentation index](docs/README.md) · [Related guide](docs/architecture/patterns-and-examples.md).
 
-This document defines the target frontend architecture for `fireguard-sso-web`.
+This document defines the target frontend architecture for `fireguard-web`.
 
 It is normative: new code must follow this document, and refactors move code toward it.
 
@@ -42,7 +42,7 @@ The application is an **Angular 22** SPA with SSR and hydration:
 - injectables declared with `@Service` rather than `@Injectable` (section 10.14),
 - Hydra/JSON-LD API access through `HydraApiService` (section 11),
 - strict TypeScript 6 (`strict`, `strictTemplates`, no `any`, no non-null assertions), with the `nullishCoalescingNotNullable` and `optionalChainNotNullable` template diagnostics raised to errors,
-- tooling: `oxlint` / `oxfmt`, unit tests via `ng test` (vitest runner), Playwright e2e under `e2e/`.
+- tooling: `oxlint` / `oxfmt`, unit tests via `ng test` (vitest runner), Playwright e2e under `tests/e2e/`.
 
 The only non-Angular runtime dependencies are `rxjs`, `luxon`, `express` (the SSR host), the
 styling helpers `clsx` / `tailwind-merge` / `class-variance-authority` that spartan generates
@@ -874,7 +874,7 @@ Suffixes that must **not** be introduced:
 - `.module.ts` — the app is standalone-only,
 - `.enum.ts` — no TypeScript enums; use `.type.ts` unions or `.model.ts` const-enum catalogs,
 - `.dto.ts` — API DTOs are `…-input.interface.ts` / `…-output.interface.ts`,
-- `.page.ts` inside `src/app` — pages are components (`<page>.component.ts`); the `.page.ts` suffix is reserved for Playwright page objects under `e2e/support/pages/`,
+- `.page.ts` inside `src/app` — pages are components (`<page>.component.ts`); the `.page.ts` suffix is reserved for Playwright page objects under `tests/e2e/support/pages/`,
 - bare `types.ts` or `constants.ts` without a concept prefix — existing occurrences are transitional.
 
 ### 9.3 Classes and symbols
@@ -958,8 +958,8 @@ No other prefix is permitted.
 - unit specs live in a `testing/` folder next to the subject, named `<subject-file-name>.spec.ts`: `state/auth/testing/auth.store.spec.ts`, `services/theme/testing/theme.service.spec.ts`,
 - the top-level `describe()` is the exact symbol under test, no prefix or path: `describe('OrganizationMembersStore')`, `describe('LoginPage')`,
 - shared test doubles take `.mock.ts` (and fixtures `.fixture.ts` if ever needed) inside a `testing/` folder,
-- e2e specs live under `e2e/<area>/<scenario>.spec.ts` with kebab-case scenario names (`auth/login.spec.ts`, `interventions/intervention-offline-comment.spec.ts`),
-- Playwright page objects are `e2e/support/pages/<name>.page.ts` exporting `class <Name>Page`; mocks and fixtures live in `e2e/support/mocks/` and `e2e/support/fixtures/`,
+- e2e specs live under `tests/e2e/<area>/<scenario>.spec.ts` with kebab-case scenario names (`auth/login.spec.ts`, `interventions/intervention-offline-comment.spec.ts`),
+- Playwright page objects are `tests/e2e/support/pages/<name>.page.ts` exporting `class <Name>Page`; mocks and fixtures live in `tests/e2e/support/mocks/` and `tests/e2e/support/fixtures/`,
 - e2e `test.describe()` uses a human-readable feature name and test titles are full sentences (`test('signs in and lands on the default organization workspace', …)`).
 
 ### 9.10 i18n ids and test hooks
@@ -2162,7 +2162,7 @@ Where and how:
 - unit specs live in a `testing/` folder beside the subject, named `<subject-file>.spec.ts` (naming in section 9.9); the `testing/` folder also hosts reusable local fixtures and `.mock.ts` doubles,
 - run specs with `npx ng test --watch=false --include="src/app/<area>/**/*.spec.ts"` — never with bare `vitest`, which misses the project globals. `--include` is the **spec-discovery glob**, not a path filter: it must end in `*.spec.ts`. A directory glob such as `--include="src/app/shared/**"` makes the runner treat every `.html` and `.component.ts` under it as a test entry and fails with `No loader is configured for ".html" files`,
 - the quality gate is `npm run quality` (format check, oxlint, tests, strict build); run the narrowest useful check first and widen as the blast radius grows,
-- browser-level flows live in the Playwright suite under `e2e/` (`e2e/<area>/<scenario>.spec.ts`, page objects in `e2e/support/pages/`); use e2e for what unit specs cannot prove (visual, responsive, offline, multi-page flows).
+- browser-level flows live in the Playwright suite under `tests/e2e/` (`tests/e2e/<area>/<scenario>.spec.ts`, page objects in `tests/e2e/support/pages/`); use e2e for what unit specs cannot prove (visual, responsive, offline, multi-page flows).
 
 ### 14.2 Feature documentation — `FEATURE.md`
 
@@ -2200,6 +2200,9 @@ Do not add dependencies or new architectural patterns unless the task requires i
 Do not let architecture drift appear silently through implementation. A deviation that is not recorded (in this document or the owning `FEATURE.md`) is a defect, not an exception.
 
 ### 14.4 Prefer meaningful documentation over mechanical comments
+
+The [shared comment convention](docs/guides/code-comments.md) defines the declaration
+tags, formatter profile and progressive checks used by human authors and both clients.
 
 Document:
 
@@ -2352,12 +2355,21 @@ When the current code and this document disagree, new work should move toward th
 
 ### General feature-boundary gate
 
-`npm run lint` also runs `tools/architecture/check-feature-boundaries.mjs`. It resolves static
-imports, re-exports and literal dynamic imports through local aliases or relative paths, then
-uses the nearest FEATURE.md as ownership (including nested features). Cross-owner business
-imports must resolve to a barrel. Core cannot depend on features/layouts; shared may consume
-only feature-owned port barrels. Route files may load route entry components directly.
-The exact legacy exception file is currently empty; repaired entries must be removed. Public
-barrels still require their normative FEATURE.md approval; existence alone does not authorize
-new cross-feature behavior. Typechecking, OpenAPI contract tests and the pair-specific lint
-rules remain complementary checks.
+`npm run lint` also runs `npm run test:architecture`, the dedicated Vitest Node suite in
+`tests/architecture/`. The TypeScript compiler API resolves local imports with the real
+`tsconfig.json`, including inherited configuration. The nearest FEATURE.md determines
+ownership, including nested features; missing business feature contracts fail. Core cannot depend on features/layouts; shared may
+consume only feature-owned port barrels. Cross-owner dependencies must use public feature
+or concern barrels; narrow entry points require an exact path in the owning
+FEATURE.md, with named approved consumers in its `Public entry points` table. Prose mentions
+and consumer documentation cannot grant access. An arbitrary private `index.ts` is insufficient. Route files may lazily load
+route trees or page entry components, with no general exemption for feature internals.
+
+The suite detects unresolved local imports and includes positive/negative temporary fixtures
+for its dependency resolver and rules. There is no baseline capture or silent exception list.
+The suite also enforces explicit public exports, prevents private/test exports and concrete
+feature implementations in layouts, keeps forms/tables/dataviews presentational, and detects
+static execution cycles after TypeScript erases types. See the
+[architecture test contract](tests/architecture/README.md) for declaration syntax and scope.
+Human review still verifies semantic ownership and the intended exported symbols. Typechecking, OpenAPI
+contract tests and the pair-specific lint rules remain complementary checks.

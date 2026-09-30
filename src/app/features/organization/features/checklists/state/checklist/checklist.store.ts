@@ -43,12 +43,21 @@ import { ActiveChecklistStore } from '../active-checklist/active-checklist.store
 import { checklistStoreEvents } from './events';
 import type { ChecklistState } from './models';
 
+/**
+ * Constant INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE
+ *
+ * @description
+ * Sets the page size used to load checklist items in the inspection creation form.
+ *
+ * @access public
+ *
+ * @type {unknown}
+ */
 const INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE = 200;
 
 //#region Initial State
 /**
  * Constant INITIAL_CHECKLIST_STATE
- * @const INITIAL_CHECKLIST_STATE
  *
  * @description
  * Initial state for the ChecklistStore. Entity state (`checklistEntities`,
@@ -58,6 +67,8 @@ const INSPECTION_CREATE_CHECKLIST_ITEMS_PER_PAGE = 200;
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_CHECKLIST_STATE
  */
 const INITIAL_CHECKLIST_STATE: ChecklistState = {
   currentOrganizationId: null,
@@ -71,8 +82,7 @@ const INITIAL_CHECKLIST_STATE: ChecklistState = {
 //#endregion
 
 /**
- * Store ChecklistStore
- * @const ChecklistStore
+ * Constant ChecklistStore
  *
  * @description
  * Component-scoped NgRx SignalStore for checklist list management and CRUD.
@@ -89,6 +99,12 @@ const INITIAL_CHECKLIST_STATE: ChecklistState = {
  * For reading the currently active/selected checklist use the root-level
  * {@link ActiveChecklistStore} instead.
  *
+ * @version 2.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const ChecklistStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [ChecklistStore] })
@@ -96,16 +112,12 @@ const INITIAL_CHECKLIST_STATE: ChecklistState = {
  *   readonly store = inject<ChecklistStore>(ChecklistStore);
  * }
  * ```
- *
- * @version 2.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const ChecklistStore = signalStore(
   //#region Features
   /**
-   * Feature withEntities
-   *
    * @description
+   * Feature withEntities
    * Adds NgRx entity state and entity-adapter updater functions for
    * `ChecklistOutput` objects keyed by their `id` field. Provides:
    * - `checklistEntities` — ordered array of all cached entities
@@ -119,9 +131,8 @@ export const ChecklistStore = signalStore(
   withEntities({ entity: type<ChecklistOutput>(), collection: 'checklist' }),
 
   /**
-   * Feature withState
-   *
    * @description
+   * Feature withState
    * Adds auxiliary state to the store: `createCallState`, `archiveCallState`,
    * `totalChecklists`, and `listCallState`. Initialized from
    * `INITIAL_CHECKLIST_STATE`. Entity state is handled separately by
@@ -134,9 +145,8 @@ export const ChecklistStore = signalStore(
   withState<ChecklistState>(INITIAL_CHECKLIST_STATE),
 
   /**
-   * Feature withComputed
-   *
    * @description
+   * Feature withComputed
    * Adds computed properties to the store for common derived state
    * related to the checklist list and its operations.
    *
@@ -149,13 +159,14 @@ export const ChecklistStore = signalStore(
   withComputed((store) => {
     /**
      * Constant activeChecklistStore
-     * @const activeChecklistStore
      *
      * @description
      * The root-level store that tracks the currently active checklist and
      * its associated loading state.
      *
      * @type {ActiveChecklistStore} The injected ActiveChecklistStore instance.
+     *
+     * @constant activeChecklistStore
      */
     const activeChecklistStore: ActiveChecklistStore =
       inject<ActiveChecklistStore>(ActiveChecklistStore);
@@ -277,7 +288,8 @@ export const ChecklistStore = signalStore(
        *
        * @since 2.1.0
        *
-       * @type {StoreError | null} The error object if the update operation is in error, or null otherwise.
+       * @type {StoreError | null} The error object if the update operation is in error, or null
+       *   otherwise.
        */
       updateError: computed<StoreError | null>(() => store.updateCallState().error),
 
@@ -290,16 +302,16 @@ export const ChecklistStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @type {StoreError | null} The error object if the create operation is in error, or null otherwise.
+       * @type {StoreError | null} The error object if the create operation is in error, or null
+       *   otherwise.
        */
       createError: computed<StoreError | null>(() => store.createCallState().error),
     };
   }),
 
   /**
-   * Feature withMethods
-   *
    * @description
+   * Feature withMethods
    * Adds methods to the store for managing the checklist list, including
    * loading a paginated list, creating, archiving checklists,
    * and resetting the create operation.
@@ -307,9 +319,12 @@ export const ChecklistStore = signalStore(
    * @since 1.0.0
    *
    * @param {SignalStore} store - The store instance to which the methods will be added.
-   * @param {ChecklistService} checklistService - The service used to fetch checklist data from the API.
-   * @param {ActiveChecklistStore} activeChecklistStore - The root store tracking the currently active checklist.
-   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on errors.
+   * @param {ChecklistService} checklistService - The service used to fetch checklist data from the
+   *   API.
+   * @param {ActiveChecklistStore} activeChecklistStore - The root store tracking the currently
+   *   active checklist.
+   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on
+   *   errors.
    *
    * @returns {object} An object containing the methods to add to the store.
    */
@@ -329,10 +344,15 @@ export const ChecklistStore = signalStore(
       let listGeneration = 0;
       let sessionRevision = authSession.sessionRevision();
       let lastQuery: { organizationId: string; options?: ChecklistListOptions } | null = null;
+
       /**
        * Function clear
-       * @description Invalidates cached templates and pending reads across organization or session changes.
+       *
+       * @description
+       * Invalidates cached templates and pending reads across organization or session changes.
+       *
        * @since 2.1.0
+       *
        * @returns {void}
        */
       const clear = (): void => {
@@ -342,10 +362,15 @@ export const ChecklistStore = signalStore(
         lastQuery = null;
         patchState(store, INITIAL_CHECKLIST_STATE, removeAllEntities({ collection: 'checklist' }));
       };
+
       /**
        * Function synchronizeSession
-       * @description Prevents reuse of templates belonging to a previous authenticated session.
+       *
+       * @description
+       * Prevents reuse of templates belonging to a previous authenticated session.
+       *
        * @since 2.1.0
+       *
        * @returns {void}
        */
       const synchronizeSession = (): void => {
@@ -355,11 +380,17 @@ export const ChecklistStore = signalStore(
           clear();
         }
       };
+
       /**
        * Function captureContext
-       * @description Associates a read or accepted command with its organization and current session.
+       *
+       * @description
+       * Associates a read or accepted command with its organization and current session.
+       *
        * @since 2.1.0
+       *
        * @param {string} organizationId - Organization owning the request.
+       *
        * @returns {{ generation: number; revision: number }} Captured context.
        */
       const captureContext = (organizationId: string) => {
@@ -370,11 +401,17 @@ export const ChecklistStore = signalStore(
         }
         return { generation, revision: sessionRevision };
       };
+
       /**
        * Function isCurrent
-       * @description Restricts request results to the context that accepted them.
+       *
+       * @description
+       * Restricts request results to the context that accepted them.
+       *
        * @since 2.1.0
+       *
        * @param {ReturnType<typeof captureContext>} context - Original request context.
+       *
        * @returns {boolean} Whether the result can still update the store.
        */
       const isCurrent = (context: ReturnType<typeof captureContext>): boolean =>
@@ -384,7 +421,6 @@ export const ChecklistStore = signalStore(
 
       /**
        * Constant loadFn
-       * @const loadFn
        *
        * @description
        * Shared rxMethod implementation for loading a paginated checklist list.
@@ -395,6 +431,8 @@ export const ChecklistStore = signalStore(
        * @since 1.0.0
        *
        * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>}
+       *
+       * @constant loadFn
        */
       const loadFn = rxMethod<{ organizationId: string; options?: ChecklistListOptions }>(
         pipe(
@@ -438,6 +476,7 @@ export const ChecklistStore = signalStore(
       return {
         clear,
         synchronizeSession,
+
         /**
          * Method ensureInspectionCreateOptionsLoaded
          *
@@ -482,7 +521,8 @@ export const ChecklistStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>} An RxMethod that accepts organization ID and optional request options.
+         * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>} An RxMethod that
+         *   accepts organization ID and optional request options.
          */
         load: loadFn,
 
@@ -496,7 +536,8 @@ export const ChecklistStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>} An RxMethod that accepts organization ID and optional request options.
+         * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>} An RxMethod that
+         *   accepts organization ID and optional request options.
          */
         loadChecklists: loadFn,
 
@@ -505,13 +546,14 @@ export const ChecklistStore = signalStore(
          * @method create
          *
          * @description
-         * Creates a new checklist via the API. Rejects duplicate submissions within the current context
-         * while preserving accepted writes across navigation. On success the `createCallState` transitions
-         * to a success state carrying the newly created entity.
+         * Creates a new checklist via the API. Rejects duplicate submissions within the current
+         * context while preserving accepted writes across navigation. On success the
+         * `createCallState` transitions to a success state carrying the newly created entity.
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; input: CreateChecklistInput }>} An RxMethod that accepts the creation input.
+         * @type {RxMethod<{ organizationId: string; input: CreateChecklistInput }>} An RxMethod
+         *   that accepts the creation input.
          */
         create: rxMethod<{ organizationId: string; input: CreateChecklistInput }>(
           pipe(
@@ -564,7 +606,8 @@ export const ChecklistStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; checklistId: string }>} An RxMethod that accepts the organization ID and checklist ID to archive.
+         * @type {RxMethod<{ organizationId: string; checklistId: string }>} An RxMethod that
+         *   accepts the organization ID and checklist ID to archive.
          */
         archive: rxMethod<{ organizationId: string; checklistId: string }>(
           pipe(
@@ -617,7 +660,12 @@ export const ChecklistStore = signalStore(
          *
          * @since 2.1.0
          *
-         * @type {RxMethod<{ organizationId: string; checklistId: string; input: UpdateChecklistInput }>} An RxMethod that accepts the organization ID, checklist ID and the fields to change.
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   checklistId: string;
+         *   input: UpdateChecklistInput;
+         * }>}
+         *   An RxMethod that accepts the organization ID, checklist ID and the fields to change.
          */
         update: rxMethod<{
           organizationId: string;
@@ -731,11 +779,12 @@ export const ChecklistStore = signalStore(
 
 /**
  * Type ChecklistStore
- * @type ChecklistStore
  *
  * @description
  * Instance type of the {@link ChecklistStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type ChecklistStore
  */
 export type ChecklistStore = InstanceType<typeof ChecklistStore>;

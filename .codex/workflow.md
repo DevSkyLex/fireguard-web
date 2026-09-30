@@ -31,43 +31,36 @@ Specialists are capabilities, not a mandatory sequence or a reason to leave usef
 Reviews remain read-only unless fixes are explicitly requested through an implementation role.
 Do not create a sidebar task for an implementation subtask or launch nested `codex exec`.
 
-## Agent profiles
+## Native agent settings
 
-The user-approved balanced profiles live in [agent-profiles.toml](agent-profiles.toml).
-Each role selects a category and effort; native agent TOML deliberately contains no `model`
-or `model_reasoning_effort`. A direct invocation inherits the current session settings.
+Each role defines `model`, `model_reasoning_effort`, `service_tier` and `features.fast_mode`
+in its own native TOML. Select the actual custom agent type exposed by the runtime, not merely
+a task name: naming a generic spawn does not load the role. The native file takes precedence
+over inherited or explicit spawn model/effort. Luna roles use Fast; Sol roles explicitly
+request Standard. Do not alter the main session's model, speed, trust or approval policy.
 
-For delegation, obtain the actual session catalogue or a real `model/list` response, normalize
-it to the resolver's input shape, and pass it on stdin. Drain all `model/list` pages until
-`nextCursor` is null before resolving. Use the launchable `model` field, never `id` or
-`displayName`. Map `supportedReasoningEfforts[].reasoningEffort` to the string array
-`supported_reasoning_efforts`; preserve each entry's actual `hidden` value. Do not infer
-missing fields. Catalogue completeness is the parent's responsibility: the resolver can
-validate supplied entries but cannot detect an omitted page.
+Before dispatch, check that the exact configured model and effort are available in the current
+callable catalog. If using app-server `model/list`, collect every page until `nextCursor` is null;
+read `model` and `supportedReasoningEfforts[].reasoningEffort`, not display labels or a cache.
+An unavailable model/effort or runtime without native-role selection is an explicit limitation,
+not permission to silently inherit, substitute a model or lower effort. Continue independent
+work in the parent. User-requested changes to a role require an explicit supported configuration.
 
-```text
-python -B .codex/scripts/resolve_agent.py --agent <agent-name>
-stdin:  {"models":[{"model":"gpt-6-astra","hidden":false,"supported_reasoning_efforts":["high","xhigh"]}]}
-stdout: {"model":"<resolved-id>","reasoning_effort":"<supported-effort>"}
-```
+The primary project's local configuration registers the peer's agents using relative
+`agents.<name>.config_file` paths. Native definitions remain in their owning checkout:
+22 API and 25 web roles form one 47-role catalog. Keep the intended `fireguard-api` and
+`fireguard-web` checkouts beside each other, including when using a worktree. Read the owning
+repository's instructions explicitly for a secondary folder. Missing peers fail explicitly;
+an isolated clone can use its local standalone agents without the peer declarations.
 
-The sample is a wire-shape example, not an available-model inventory. Never manufacture the
-catalogue, probe guessed names, or reuse an old list as proof of current availability.
-Resolve immediately before dispatch; the resolver itself performs no network request.
+The parent assigns workspace, objective, exact files, authoritative contracts, relevant
+observations, allowed checks and required result. Writers inherit session permissions and
+coordinate overlap. Reviewers/auditors/explorers are read-only, including generated files,
+caches and database preparation; ask the parent for evidence when a check would write.
+Do not automatically launch additional agents, Serena processes or nested Codex challenges.
 
-It selects the newest visible canonical numeric version in the configured category supporting
-the exact effort. Numeric versions are ordered numerically; snapshots/prereleases are excluded.
-An unavailable category/effort, conflicting catalogue entries or unsupported naming fails
-explicitly (stderr, exit 2, no stdout). Do not silently change family or effort.
-
-Pass the resolved ID and effort using the delegation tool's actual parameter names
-(`model` and `reasoning_effort` for `spawn_agent`). Explicit overrides require
-`fork_turns="none"` or a bounded history string such as `"3"`; full-history forks inherit the parent settings.
-Supply the bounded task and repository constraints when history is omitted.
-An explicit user override takes precedence if supported by the current catalogue.
-If discovery, resolution or explicit override is unavailable, report the limit and do not
-launch that role by inherited settings as a fallback. Continue independent work locally.
-A user-requested direct invocation remains a separate inherited-mode choice.
+See [native agent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents)
+and [role declarations](https://learn.chatgpt.com/docs/config-file/config-reference).
 
 ## Verification and delivery
 

@@ -29,13 +29,14 @@ import type { MaintenanceSchedulesState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Seeds the auxiliary state managed in {@link MaintenanceSchedulesState}.
  * Entity state is initialised by `withEntities`.
  *
  * @since 1.0.0
+ *
+ * @constant INITIAL_STATE
  */
 const INITIAL_STATE: MaintenanceSchedulesState = {
   listCallState: idleCallState(),
@@ -45,9 +46,9 @@ const INITIAL_STATE: MaintenanceSchedulesState = {
 };
 
 /**
- * Store MaintenanceSchedulesStore
- * @const MaintenanceSchedulesStore
+ * Constant MaintenanceSchedulesStore
  *
+ * Store MaintenanceSchedulesStore
  * @description
  * Component-scoped NgRx SignalStore for one organization's maintenance
  * schedules: the paginated, filterable list, the per-schedule interval
@@ -59,6 +60,12 @@ const INITIAL_STATE: MaintenanceSchedulesState = {
  * patched row (`setEntity`) from the server's full recomputed response —
  * never a refetch of the whole list.
  *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const MaintenanceSchedulesStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [MaintenanceSchedulesStore] })
@@ -66,9 +73,6 @@ const INITIAL_STATE: MaintenanceSchedulesState = {
  *   protected readonly store = inject(MaintenanceSchedulesStore);
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const MaintenanceSchedulesStore = signalStore(
   withEntities({ entity: type<MaintenanceScheduleOutput>(), collection: 'schedule' }),
@@ -76,33 +80,60 @@ export const MaintenanceSchedulesStore = signalStore(
   withState<MaintenanceSchedulesState>(INITIAL_STATE),
 
   withComputed((store) => ({
-    /** All cached schedules from the entity collection, in insertion order. */
+    /**
+     * @description
+     * All cached schedules from the entity collection, in insertion order.
+     */
     schedules: computed<ReadonlyArray<MaintenanceScheduleOutput>>(() => store.scheduleEntities()),
 
-    /** True while the list is loading. */
+    /**
+     * @description
+     * True while the list is loading.
+     */
     isLoading: computed<boolean>(() => store.listCallState().status === 'pending'),
 
-    /** True when the collection is empty and no list request is in flight. */
+    /**
+     * @description
+     * True when the collection is empty and no list request is in flight.
+     */
     isEmpty: computed<boolean>(
       () => store.scheduleIds().length === 0 && store.listCallState().status !== 'pending',
     ),
 
-    /** True when the last list request failed. */
+    /**
+     * @description
+     * True when the last list request failed.
+     */
     hasListError: computed<boolean>(() => store.listCallState().status === 'error'),
 
-    /** True when the last list request was refused for lack of permission, which a retry cannot fix. */
+    /**
+     * @description
+     * True when the last list request was refused for lack of permission, which a retry cannot fix.
+     */
     isListForbidden: computed<boolean>(() => store.listCallState().error?.code === 403),
 
-    /** True while an interval-override request is in flight. */
+    /**
+     * @description
+     * True while an interval-override request is in flight.
+     */
     isOverriding: computed<boolean>(() => store.overrideCallState().status === 'pending'),
 
-    /** True while a campaign-generation request is in flight. */
+    /**
+     * @description
+     * True while a campaign-generation request is in flight.
+     */
     isGeneratingCampaign: computed<boolean>(() => store.campaignCallState().status === 'pending'),
 
-    /** Error from the last campaign-generation attempt, rendered inline in the campaign dialog. */
+    /**
+     * @description
+     * Error from the last campaign-generation attempt, rendered inline in the campaign dialog.
+     */
     campaignError: computed<StoreError | null>(() => store.campaignCallState().error),
 
-    /** The last successfully generated campaign's result, read once by the page to navigate. */
+    /**
+     * @description
+     * The last successfully generated campaign's result, read once by the page to navigate.
+     */
     campaignResult: computed<MaintenanceCampaignOutput | null>(() => {
       const state = store.campaignCallState();
       return isCallSuccess(state) ? state.data : null;
@@ -251,9 +282,13 @@ export const MaintenanceSchedulesStore = signalStore(
 
       /**
        * Method resetOverrideOperation
-       * @description Resets the override operation back to idle, for the dialog's close/reopen.
+       *
+       * @description
+       * Resets the override operation back to idle, for the dialog's close/reopen.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @returns {void}
        */
       resetOverrideOperation(): void {
@@ -262,9 +297,13 @@ export const MaintenanceSchedulesStore = signalStore(
 
       /**
        * Method resetCampaignOperation
-       * @description Resets the campaign operation back to idle, for the dialog's close/reopen.
+       *
+       * @description
+       * Resets the campaign operation back to idle, for the dialog's close/reopen.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @returns {void}
        */
       resetCampaignOperation(): void {
@@ -276,11 +315,12 @@ export const MaintenanceSchedulesStore = signalStore(
 
 /**
  * Type MaintenanceSchedulesStoreType
- * @type MaintenanceSchedulesStoreType
  *
  * @description
  * Instance type of the {@link MaintenanceSchedulesStore} signal store.
  *
  * @since 1.0.0
+ *
+ * @type MaintenanceSchedulesStoreType
  */
 export type MaintenanceSchedulesStoreType = InstanceType<typeof MaintenanceSchedulesStore>;

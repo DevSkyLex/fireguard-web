@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * PostToolUse hook (fireguard-sso-web) — auto-format the file Codex just edited
+ * PostToolUse hook (fireguard-web) — auto-format the file Codex just edited
  * with the project's own oxfmt config, so no change ever fails `npm run format:check`
  * for whitespace reasons alone.
  *

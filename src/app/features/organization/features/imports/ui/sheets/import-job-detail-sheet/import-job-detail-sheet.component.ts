@@ -38,7 +38,13 @@ import { HlmItemImports } from '@shared/ui/item';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSheetImports } from '@shared/ui/sheet';
 
-/** The severity-to-icon-colour pairing for a row's code badge, matching `IMPORT_STATUS_TAG_ICON_CLASS`. */
+/**
+ * Constant ROW_TAG_ICON_CLASS
+ *
+ * @description
+ * The severity-to-icon-colour pairing for a row's code badge, matching
+ * `IMPORT_STATUS_TAG_ICON_CLASS`.
+ */
 const ROW_TAG_ICON_CLASS: Readonly<Record<string, string>> = {
   neutral: 'text-muted-foreground',
   info: 'text-info',
@@ -63,10 +69,8 @@ const ROW_TAG_ICON_CLASS: Readonly<Record<string, string>> = {
  * never as a failure), and the message. A `pending`/`processing` job renders
  * the same panel with whatever the live poll has observed so far. Every
  * tracking, job, resume and confirm failure renders as an `hlmAlert`.
- *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store; the page
  * owns which job is open and the live data behind it.
- *
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`).
  *
  * @version 1.1.0
@@ -103,18 +107,27 @@ export class ImportJobDetailSheet {
   /**
    * Property trackingError
    * @readonly
-   * @description Observation failure for this job, distinct from a confirmed processing failure.
+   *
+   * @description
+   * Observation failure for this job, distinct from a confirmed processing failure.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly trackingError = input<string | null>(null);
+
   /**
    * Property refreshRequested
    * @readonly
-   * @description Requests a new status read without recreating the job.
+   *
+   * @description
+   * Requests a new status read without recreating the job.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly refreshRequested = output<void>();
@@ -122,9 +135,13 @@ export class ImportJobDetailSheet {
   /**
    * Property resuming
    * @readonly
-   * @description Server resumption request state.
+   *
+   * @description
+   * Server resumption request state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly resuming: InputSignal<boolean> = input(false);
@@ -132,9 +149,13 @@ export class ImportJobDetailSheet {
   /**
    * Property resumeError
    * @readonly
-   * @description Last resumption failure, retaining confirmed report data.
+   *
+   * @description
+   * Last resumption failure, retaining confirmed report data.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly resumeError: InputSignal<string | null> = input<string | null>(null);
@@ -142,36 +163,55 @@ export class ImportJobDetailSheet {
   /**
    * Property resumeRequested
    * @readonly
-   * @description Requests resumption of the current import identifier.
+   *
+   * @description
+   * Requests resumption of the current import identifier.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly resumeRequested: OutputEmitterRef<void> = output<void>();
+
   /**
    * Property page
    * @readonly
-   * @description Current local report page, reset for another job.
+   *
+   * @description
+   * Current local report page, reset for another job.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<number>}
    */
   protected readonly page = linkedSignal({ source: () => this.job()?.id, computation: () => 1 });
+
   /**
    * Property pageCount
    * @readonly
-   * @description Number of pages in the received report.
+   *
+   * @description
+   * Number of pages in the received report.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly pageCount = computed(() => Math.max(1, Math.ceil(this.rows().length / 50)));
+
   /**
    * Property pageRows
    * @readonly
-   * @description Report rows on the current local page.
+   *
+   * @description
+   * Report rows on the current local page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly ImportRowErrorOutput[]>}
    */
   protected readonly pageRows = computed(() =>
@@ -181,9 +221,13 @@ export class ImportJobDetailSheet {
   /**
    * Property confirming
    * @readonly
-   * @description Whether simulation confirmation is pending.
+   *
+   * @description
+   * Whether simulation confirmation is pending.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly confirming: InputSignal<boolean> = input(false);
@@ -191,9 +235,13 @@ export class ImportJobDetailSheet {
   /**
    * Property confirmError
    * @readonly
-   * @description A confirmation failure preserves the simulation report.
+   *
+   * @description
+   * A confirmation failure preserves the simulation report.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly confirmError: InputSignal<string | null> = input<string | null>(null);
@@ -201,9 +249,13 @@ export class ImportJobDetailSheet {
   /**
    * Property confirmRequested
    * @readonly
-   * @description Confirms the retained simulation after reviewing its report.
+   *
+   * @description
+   * Confirms the retained simulation after reviewing its report.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly confirmRequested: OutputEmitterRef<void> = output<void>();
@@ -211,9 +263,13 @@ export class ImportJobDetailSheet {
   /**
    * Property confirmedReportRequested
    * @readonly
-   * @description Opens the real import linked by an earlier confirmation.
+   *
+   * @description
+   * Opens the real import linked by an earlier confirmation.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly confirmedReportRequested: OutputEmitterRef<string> = output<string>();
@@ -222,9 +278,13 @@ export class ImportJobDetailSheet {
   /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -232,9 +292,13 @@ export class ImportJobDetailSheet {
   /**
    * Property job
    * @readonly
-   * @description The job being viewed, or `null` while nothing is selected.
+   *
+   * @description
+   * The job being viewed, or `null` while nothing is selected.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ImportJobOutput | null>}
    */
   public readonly job: InputSignal<ImportJobOutput | null> = input<ImportJobOutput | null>(null);
@@ -242,9 +306,14 @@ export class ImportJobDetailSheet {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone, bound by the page. The default keeps the
+   * component renderable with no context wired.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -255,9 +324,13 @@ export class ImportJobDetailSheet {
   /**
    * Property visibleChange
    * @readonly
-   * @description The panel wants to open or close.
+   *
+   * @description
+   * The panel wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -267,9 +340,13 @@ export class ImportJobDetailSheet {
   /**
    * Property sheetState
    * @readonly
-   * @description The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @description
+   * The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -279,9 +356,14 @@ export class ImportJobDetailSheet {
   /**
    * Property side
    * @readonly
-   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   *
+   * @description
+   * The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action
+   * Surfaces" rule 2).
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -323,7 +405,18 @@ export class ImportJobDetailSheet {
     return $localize`:@@imports.report.partial:${job.successfulRows}:created: of ${job.processedRows}:processed: created; ${job.failedRows}:skipped: skipped — ${reason}:reason:`;
   });
 
-  /** The report's row list, in the order the backend returned it. */
+  /**
+   * Property rows
+   * @readonly
+   *
+   * @description
+   * The report's row list, in the order the backend returned it.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlyArray<ImportRowErrorOutput>>}
+   */
   protected readonly rows: Signal<ReadonlyArray<ImportRowErrorOutput>> = computed(
     () => this.job()?.errorReport ?? [],
   );
@@ -332,10 +425,16 @@ export class ImportJobDetailSheet {
   //#region Methods
   /**
    * Method rowTagOf
-   * @description Resolves one report row's code to its label, icon and colour.
+   * @method rowTagOf
+   *
+   * @description
+   * Resolves one report row's code to its label, icon and colour.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ImportRowErrorOutput} row - The report row.
+   *
    * @returns {{ label: string; icon: string; iconClass: string }} The resolved presentation.
    */
   protected rowTagOf(row: ImportRowErrorOutput): {
@@ -353,11 +452,19 @@ export class ImportJobDetailSheet {
 
   /**
    * Method progressRatioOf
-   * @description The processing job's completion ratio for `hlm-progress`, or `null` while the total row count is not yet known.
+   * @method progressRatioOf
+   *
+   * @description
+   * The processing job's completion ratio for `hlm-progress`, or `null` while the total row count
+   * is not yet known.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {ImportJobOutput} job - The viewed job.
-   * @returns {number | null} A `0`–`100` percentage, or `null` outside `processing` or with an unknown total.
+   *
+   * @returns {number | null} A `0`–`100` percentage, or `null` outside `processing` or with an
+   *   unknown total.
    */
   protected progressRatioOf(job: ImportJobOutput): number | null {
     if (job.status !== 'processing' || job.totalRows === undefined || job.totalRows <= 0) {

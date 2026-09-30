@@ -22,10 +22,16 @@ import {
 import { facilityAddressSearchEvents } from './events';
 
 /**
- * Store FacilityAddressSearchStore
- * @const FacilityAddressSearchStore
- * @description Page-scoped address suggestions. Input changes cancel older responses immediately; only a query stable for 500 milliseconds reaches the provider. No search runs during SSR or enters TransferState.
+ * Constant FacilityAddressSearchStore
+ *
+ * @description
+ * Page-scoped address suggestions. Input changes cancel older responses immediately; only a query
+ * stable for 500 milliseconds reaches the provider. No search runs during SSR or enters
+ * TransferState.
+ *
  * @since 1.0.0
+ *
+ * @constant FacilityAddressSearchStore
  */
 export const FacilityAddressSearchStore = signalStore(
   withQueryState<readonly SetupFacilityAddressMatch[]>(),
@@ -33,36 +39,55 @@ export const FacilityAddressSearchStore = signalStore(
     /**
      * Property matches
      * @readonly
-     * @description Current suggestions, cleared as soon as the address draft changes.
+     *
+     * @description
+     * Current suggestions, cleared as soon as the address draft changes.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<readonly SetupFacilityAddressMatch[]>}
      */
     matches: computed<readonly SetupFacilityAddressMatch[]>(() => store.queryData() ?? []),
+
     /**
      * Property loading
      * @readonly
-     * @description Whether the debounce or provider request is pending.
+     *
+     * @description
+     * Whether the debounce or provider request is pending.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     loading: computed(() => store.isQueryLoading()),
+
     /**
      * Property error
      * @readonly
-     * @description Normalized provider or API failure, distinct from a successful empty result.
+     *
+     * @description
+     * Normalized provider or API failure, distinct from a successful empty result.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<StoreError | null>}
      */
     error: computed(() => store.queryError()),
+
     /**
      * Property notFound
      * @readonly
-     * @description True only after a successful search returned no suggestions.
+     *
+     * @description
+     * True only after a successful search returned no suggestions.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     notFound: computed(() => store.isQueryLoaded() && store.queryData()?.length === 0),
@@ -76,10 +101,17 @@ export const FacilityAddressSearchStore = signalStore(
       /**
        * Method search
        * @method search
-       * @description Debounces a trimmed address query of at least three characters for 500 milliseconds. Every input, including null or a shorter query, cancels the previous request immediately.
+       *
+       * @description
+       * Debounces a trimmed address query of at least three characters for 500 milliseconds. Every
+       * input, including null or a shorter query, cancels the previous request immediately.
+       *
        * @access public
        * @since 1.0.0
-       * @param {{readonly organizationId: string; readonly query: string} | null} params - Address query or cancellation.
+       *
+       * @param {{ readonly organizationId: string; readonly query: string } | null} params -
+       *   Address query or cancellation.
+       *
        * @returns {void}
        */
       const dispatcher: Dispatcher = inject(Dispatcher);
@@ -119,12 +151,18 @@ export const FacilityAddressSearchStore = signalStore(
 
       return {
         search,
+
         /**
          * Method clear
          * @method clear
-         * @description Cancels any pending lookup and clears results when the draft, organization or step changes.
+         *
+         * @description
+         * Cancels any pending lookup and clears results when the draft, organization or step
+         * changes.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         clear(): void {
@@ -137,8 +175,12 @@ export const FacilityAddressSearchStore = signalStore(
 
 /**
  * Type FacilityAddressSearchStoreType
- * @type FacilityAddressSearchStoreType
- * @description Injectable instance of the page-scoped address lookup store.
+ *
+ * @description
+ * Injectable instance of the page-scoped address lookup store.
+ *
  * @since 1.0.0
+ *
+ * @type FacilityAddressSearchStoreType
  */
 export type FacilityAddressSearchStoreType = InstanceType<typeof FacilityAddressSearchStore>;

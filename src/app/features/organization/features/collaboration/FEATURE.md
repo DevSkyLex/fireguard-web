@@ -48,6 +48,9 @@ and its published domain types.
 - Public read events: `state/message-thread/events`; Account may consume `conversationRead` to
   refresh its unified inbox. The inbox links to the existing channel/messages routes and never
   acknowledges mentions through the notification API. Conversation read markers remain owned here.
+- Organization shell contributions use the narrow entry points `providers/collaboration-nav`,
+  `providers/direct-messages-sidebar-extension`, `providers/channels-sidebar-extension` and
+  `providers/assistant`; these keep sidebar/assistant factories outside the messaging root barrel.
 - Bootstrap: `collaboration.feature.ts` (`provideCollaborationFeature()`), wired from `app.config.ts`
 
 `organization.routes.ts` loads the route file **directly**, not through `index.ts`: the barrel also
@@ -548,3 +551,16 @@ Restoration preserves client IDs/timestamps and never overwrites a confirmed mes
 server pagination totals. Late storage responses are fenced by account and conversation.
 
 The messaging database binds to the canonical profile `id`, retaining `sub` as a legacy fallback.
+
+## Public entry points
+
+These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
+
+| Entry point                                   | Consumers      |
+| --------------------------------------------- | -------------- |
+| `providers/bootstrap`                         | `app`          |
+| `providers/collaboration-nav`                 | `organization` |
+| `providers/direct-messages-sidebar-extension` | `organization` |
+| `providers/channels-sidebar-extension`        | `organization` |
+| `providers/assistant`                         | `organization` |
+| `state/message-thread/events`                 | `account`      |

@@ -71,7 +71,12 @@ import { NonConformityList } from '../../dataviews/non-conformity-list';
 import { InspectionCancelDialog } from '../../dialogs/inspection-cancel-dialog';
 import { NonConformityAddDialog } from '../../dialogs/non-conformity-add-dialog';
 
-/** The inspection properties this page has open, writing or showing a rejection. */
+/**
+ * Constant IDLE_EDIT_STATE
+ *
+ * @description
+ * The inspection properties this page has open, writing or showing a rejection.
+ */
 const IDLE_EDIT_STATE: InspectionEditState = {
   open: null,
   saving: null,
@@ -85,55 +90,40 @@ const IDLE_EDIT_STATE: InspectionEditState = {
  *
  * @description
  * Route entry page for one inspection record
- * (`/organizations/:organizationId/inspections/:inspectionId`). Everything
- * writable is edited right here — there is no edit page (`FEATURE.md` "The
- * record is the edit surface"): a lead identity block (status/result tags,
- * a compact equipment · facility · date · inspector summary, and a
- * created/updated meta line), a lifecycle band naming the single relevant
- * action for the current status (Submit while `draft`, Close while
- * `submitted`, none once terminal) plus a confirm-gated Cancel while
- * `draft`, and {@link InspectionInformationPanel} for the editable fields.
- * The equipment and facility rows use `InspectionOutput.equipmentSerialNumber`
- * and `.facilityName` directly — both filled on the single-resource GET, so
- * no extra lookup is needed to name them.
- *
- * Only a `draft` inspection may be edited, submitted or cancelled
- * (`FEATURE.md` "Only draft inspections can be edited, submitted, or
- * cancelled; submitted inspections can be closed"); this page is the sole
- * owner of that gate; the panel only reflects it through {@link editable}.
- *
- * `inspectionResolver` (route `resolve`) seeds {@link ActiveInspectionStore}
- * fire-and-forget, so this page always renders immediately: the full-page
- * skeleton shows from the store's pending state until the record lands, the
- * document title follows through `TitleService`, and a load failure shows
- * the Spartan `hlmEmpty` error composition with a retry that re-runs {@link ActiveInspectionStore}'s
- * resolve (`DESIGN.md` "Detail-page gating") rather than leaving the operator
- * on an eternal skeleton or navigating them away silently. A route-scoped
- * {@link InspectionStore} carries the update and lifecycle writes. Every
- * date on the lead block and the meta line renders through {@link RegionalFormattingPort},
- * the same organization timezone and pattern the rest of the organization's
- * pages honor.
- *
- * The record's name is the shell breadcrumb's title, resolved by
- * `inspectionTitleResolver`; "Export report" registers alongside the
- * lifecycle band on the shell header through `PageActionsService`. The
- * Cancel confirmation is {@link InspectionCancelDialog} (`DESIGN.md` §
- * Action Surfaces rule 5). A quiet "Interventions on this site" proxy link —
- * shown only when the inspection carries a `facilityId` — points at the
- * interventions list pre-filtered by that facility's `site`; it is a proxy
- * by site, not a filter by inspection, and is labelled as such.
- *
- * The non-conformities section is its own `hlm-collapsible`, collapsed by
- * default — its list loads only on that first expansion (`AGENTS.md`
- * "Secondary UI data"). Writing to a row (a status change or
- * {@link NonConformityAddDialog}) is gated on {@link canWrite}; adding one is
- * further hidden on a `closed` inspection through {@link canAddNonConformity},
- * while a status change stays available regardless of the inspection's own
- * status — the backend blocks only the add endpoint on `closed`
- * (`FEATURE.md`). {@link nonConformitiesLabel} reads the freshest count
- * available: the store's own running total once the section has loaded at
- * least once, the record's own snapshot count otherwise — so an added row
- * is reflected immediately rather than waiting on a re-fetch.
+ * (`/organizations/:organizationId/inspections/:inspectionId`). Everything writable is edited right
+ * here — there is no edit page (`FEATURE.md` "The record is the edit surface"): a lead identity
+ * block (status/result tags, a compact equipment · facility · date · inspector summary, and a
+ * created/updated meta line), a lifecycle band naming the single relevant action for the current
+ * status (Submit while `draft`, Close while `submitted`, none once terminal) plus a confirm-gated
+ * Cancel while `draft`, and {@link InspectionInformationPanel} for the editable fields. The
+ * equipment and facility rows use `InspectionOutput.equipmentSerialNumber` and `.facilityName`
+ * directly — both filled on the single-resource GET, so no extra lookup is needed to name them.
+ * Only a `draft` inspection may be edited, submitted or cancelled (`FEATURE.md` "Only draft
+ * inspections can be edited, submitted, or cancelled; submitted inspections can be closed"); this
+ * page is the sole owner of that gate; the panel only reflects it through {@link editable}.
+ * `inspectionResolver` (route `resolve`) seeds {@link ActiveInspectionStore} fire-and-forget, so
+ * this page always renders immediately: the full-page skeleton shows from the store's pending state
+ * until the record lands, the document title follows through `TitleService`, and a load failure
+ * shows the Spartan `hlmEmpty` error composition with a retry that re-runs
+ * {@link ActiveInspectionStore}'s resolve (`DESIGN.md` "Detail-page gating") rather than leaving the
+ * operator on an eternal skeleton or navigating them away silently. A route-scoped
+ * {@link InspectionStore} carries the update and lifecycle writes. Every date on the lead block and
+ * the meta line renders through {@link RegionalFormattingPort}, the same organization timezone and
+ * pattern the rest of the organization's pages honor. The record's name is the shell breadcrumb's
+ * title, resolved by `inspectionTitleResolver`; "Export report" registers alongside the lifecycle
+ * band on the shell header through `PageActionsService`. The Cancel confirmation is
+ * {@link InspectionCancelDialog} (`DESIGN.md` § Action Surfaces rule 5). A quiet "Interventions on
+ * this site" proxy link — shown only when the inspection carries a `facilityId` — points at the
+ * interventions list pre-filtered by that facility's `site`; it is a proxy by site, not a filter by
+ * inspection, and is labelled as such. The non-conformities section is its own `hlm-collapsible`,
+ * collapsed by default — its list loads only on that first expansion (`AGENTS.md` "Secondary UI
+ * data"). Writing to a row (a status change or {@link NonConformityAddDialog}) is gated on
+ * {@link canWrite}; adding one is further hidden on a `closed` inspection through
+ * {@link canAddNonConformity}, while a status change stays available regardless of the inspection's
+ * own status — the backend blocks only the add endpoint on `closed` (`FEATURE.md`).
+ * {@link nonConformitiesLabel} reads the freshest count available: the store's own running total
+ * once the section has loaded at least once, the record's own snapshot count otherwise — so an
+ * added row is reflected immediately rather than waiting on a re-fetch.
  *
  * @version 2.0.0
  *
@@ -180,9 +170,13 @@ export class InspectionDetailPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning this inspection, bound from the route.
+   *
+   * @description
+   * The workspace owning this inspection, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -190,74 +184,250 @@ export class InspectionDetailPage {
   /**
    * Property inspectionId
    * @readonly
-   * @description The resolved inspection's id, bound from the route.
+   *
+   * @description
+   * The resolved inspection's id, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly inspectionId: InputSignal<string> = input.required<string>();
   //#endregion
 
   //#region Properties
-  /** The currently active inspection, seeded by `inspectionResolver`; null until the fetch lands. */
+  /**
+   * Property activeInspectionStore
+   * @readonly
+   *
+   * @description
+   * The currently active inspection, seeded by `inspectionResolver`; null until the fetch lands.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ActiveInspectionStore}
+   */
   protected readonly activeInspectionStore: ActiveInspectionStore =
     inject<ActiveInspectionStore>(ActiveInspectionStore);
 
-  /** Document title channel, kept in sync with the loaded record. */
+  /**
+   * Property titleService
+   * @readonly
+   *
+   * @description
+   * Document title channel, kept in sync with the loaded record.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {TitleService}
+   */
   private readonly titleService: TitleService = inject<TitleService>(TitleService);
 
-  /** The route-scoped store carrying the update and lifecycle writes. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The route-scoped store carrying the update and lifecycle writes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InspectionStoreType}
+   */
   protected readonly store: InspectionStoreType = inject<InspectionStoreType>(InspectionStore);
 
-  /** Transport used directly for the one-shot non-conformities CSV export — a download, not list state. */
+  /**
+   * Property inspectionService
+   * @readonly
+   *
+   * @description
+   * Transport used directly for the one-shot non-conformities CSV export — a download, not list
+   * state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InspectionService}
+   */
   private readonly inspectionService: InspectionService = inject(InspectionService);
 
-  /** Hands the export blob to the browser as a file download. */
+  /**
+   * Property browserDownload
+   * @readonly
+   *
+   * @description
+   * Hands the export blob to the browser as a file download.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
   private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
-  /** Global toast feedback for the export's warn and error paths. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Global toast feedback for the export's warn and error paths.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject(FeedbackService);
 
-  /** Unsubscribes an in-flight export when the page is destroyed. */
+  /**
+   * Property exportDestroyRef
+   * @readonly
+   *
+   * @description
+   * Unsubscribes an in-flight export when the page is destroyed.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly exportDestroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Whether a non-conformities CSV export is currently in flight. */
+  /**
+   * Property exportBusy
+   * @readonly
+   *
+   * @description
+   * Whether a non-conformities CSV export is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the export button should be inert: the section's list still loading, nothing listed at all, or an export already in flight. */
+  /**
+   * Property exportDisabled
+   * @readonly
+   *
+   * @description
+   * Whether the export button should be inert: the section's list still loading, nothing listed at
+   * all, or an export already in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly exportDisabled: Signal<boolean> = computed(
     (): boolean => this.store.isLoadingNonConformities() || this.exportBusy(),
   );
 
-  /** Whether the inspection's PDF report export is currently in flight. */
+  /**
+   * Property reportExporting
+   * @readonly
+   *
+   * @description
+   * Whether the inspection's PDF report export is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly reportExporting: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the non-conformities PDF report export is currently in flight. */
+  /**
+   * Property ncReportExporting
+   * @readonly
+   *
+   * @description
+   * Whether the non-conformities PDF report export is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly ncReportExporting: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the non-conformities report button should be inert: the section's list still loading, or a report already in flight. */
+  /**
+   * Property ncReportDisabled
+   * @readonly
+   *
+   * @description
+   * Whether the non-conformities report button should be inert: the section's list still loading,
+   * or a report already in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly ncReportDisabled: Signal<boolean> = computed(
     (): boolean => this.store.isLoadingNonConformities() || this.ncReportExporting(),
   );
 
-  /** Organization permission checks gating every write on this page. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating every write on this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Router used to return to the list once a cancellation succeeds. */
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Router used to return to the list once a cancellation succeeds.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject(Router);
 
-  /** Publishes the active organization's date pattern and timezone for every date on this page. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * Publishes the active organization's date pattern and timezone for every date on this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone.
+   *
+   * @description
+   * The active organization's date pattern and timezone.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
@@ -266,26 +436,57 @@ export class InspectionDetailPage {
   /**
    * Property orgDatePipe
    * @readonly
-   * @description A directly instantiated, dependency-free `OrgDatePipe`, reused to format the title and meta line the same way the template does — the pipe needs no injection to run.
+   *
+   * @description
+   * A directly instantiated, dependency-free `OrgDatePipe`, reused to format the title and meta
+   * line the same way the template does — the pipe needs no injection to run.
+   *
    * @access private
    * @since 2.0.0
+   *
    * @type {OrgDatePipe}
    */
   private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
 
-  /** Which in-place field is open, writing, or showing a rejection. */
+  /**
+   * Property editState
+   * @readonly
+   *
+   * @description
+   * Which in-place field is open, writing, or showing a rejection.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InspectionEditState>}
+   */
   protected readonly editState: WritableSignal<InspectionEditState> =
     signal<InspectionEditState>(IDLE_EDIT_STATE);
 
-  /** Whether the Cancel confirmation is open. */
+  /**
+   * Property pendingCancel
+   * @readonly
+   *
+   * @description
+   * Whether the Cancel confirmation is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly pendingCancel: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the member may write to this inspection at all.
+   *
+   * @description
+   * Whether the member may write to this inspection at all.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canWrite: Signal<boolean> = computed<boolean>(() =>
@@ -304,6 +505,7 @@ export class InspectionDetailPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canEditFields: Signal<boolean> = computed<boolean>(
@@ -313,9 +515,13 @@ export class InspectionDetailPage {
   /**
    * Property canCancel
    * @readonly
-   * @description Whether the Cancel action applies — only a `draft` inspection.
+   *
+   * @description
+   * Whether the Cancel action applies — only a `draft` inspection.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canCancel: Signal<boolean> = computed<boolean>(
@@ -325,9 +531,13 @@ export class InspectionDetailPage {
   /**
    * Property canClose
    * @readonly
-   * @description Whether the Close action applies — only a `submitted` inspection.
+   *
+   * @description
+   * Whether the Close action applies — only a `submitted` inspection.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canClose: Signal<boolean> = computed<boolean>(
@@ -347,27 +557,55 @@ export class InspectionDetailPage {
    *
    * @access protected
    * @since 1.5.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canAddNonConformity: Signal<boolean> = computed<boolean>(
     () => this.canWrite() && this.activeInspectionStore.selectedInspection()?.status !== 'closed',
   );
 
-  /** Whether the non-conformities section is expanded — collapsed by default, its list loads on first expansion. */
+  /**
+   * Property nonConformitiesExpanded
+   * @readonly
+   *
+   * @description
+   * Whether the non-conformities section is expanded — collapsed by default, its list loads on
+   * first expansion.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly nonConformitiesExpanded: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property addNonConformityDialogVisible
    * @readonly
-   * @description Whether the add non-conformity dialog is visible.
+   *
+   * @description
+   * Whether the add non-conformity dialog is visible.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly addNonConformityDialogVisible: WritableSignal<boolean> =
     signal<boolean>(false);
 
-  /** The id of the non-conformity whose status write is currently in flight, or `null`. */
+  /**
+   * Property pendingNonConformityId
+   * @readonly
+   *
+   * @description
+   * The id of the non-conformity whose status write is currently in flight, or `null`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly pendingNonConformityId: WritableSignal<string | null> = signal<string | null>(
     null,
   );
@@ -375,9 +613,13 @@ export class InspectionDetailPage {
   /**
    * Property title
    * @readonly
-   * @description The record's own display title.
+   *
+   * @description
+   * The record's own display title.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly title: Signal<string> = computed<string>(() => {
@@ -405,6 +647,7 @@ export class InspectionDetailPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly nonConformitiesLabel: Signal<string> = computed<string>(() => {
@@ -421,9 +664,13 @@ export class InspectionDetailPage {
   /**
    * Property metaLine
    * @readonly
-   * @description The header's metadata line — when the record was created and last touched.
+   *
+   * @description
+   * The header's metadata line — when the record was created and last touched.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly metaLine: Signal<string> = computed<string>(() => {
@@ -437,10 +684,33 @@ export class InspectionDetailPage {
     return $localize`:@@inspection.detail.metaCreatedUpdated:Created ${created}:created: · Updated ${updated}:updated:`;
   });
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The lifecycle band (Cancel/Submit/Close), registered on the shell header instead of an in-page title band. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The lifecycle band (Cancel/Submit/Close), registered on the shell header instead of an in-page
+   * title band.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
@@ -514,10 +784,16 @@ export class InspectionDetailPage {
   //#region Methods
   /**
    * Method onEditTargetChanged
-   * @description Opens or closes an in-place field, clearing any rejection left from the previous attempt.
+   * @method onEditTargetChanged
+   *
+   * @description
+   * Opens or closes an in-place field, clearing any rejection left from the previous attempt.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InspectionEditTarget | null} target - The field to open, or null to close.
+   *
    * @returns {void}
    */
   protected onEditTargetChanged(target: InspectionEditTarget | null): void {
@@ -526,9 +802,14 @@ export class InspectionDetailPage {
 
   /**
    * Method retryLoad
-   * @description The load-failed state's retry — re-runs {@link ActiveInspectionStore}'s resolve for this record.
+   * @method retryLoad
+   *
+   * @description
+   * The load-failed state's retry — re-runs {@link ActiveInspectionStore}'s resolve for this record.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected retryLoad(): void {
@@ -540,10 +821,16 @@ export class InspectionDetailPage {
 
   /**
    * Method onDetailsChanged
-   * @description Sends an in-place patch. The field stays open until the write settles.
+   * @method onDetailsChanged
+   *
+   * @description
+   * Sends an in-place patch. The field stays open until the write settles.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {UpdateInspectionInput} patch - The single-property patch.
+   *
    * @returns {void}
    */
   protected onDetailsChanged(patch: UpdateInspectionInput): void {
@@ -560,9 +847,14 @@ export class InspectionDetailPage {
 
   /**
    * Method onSubmit
-   * @description Submits the draft inspection, refusing it while another lifecycle write is in flight.
+   * @method onSubmit
+   *
+   * @description
+   * Submits the draft inspection, refusing it while another lifecycle write is in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onSubmit(): void {
@@ -573,9 +865,14 @@ export class InspectionDetailPage {
 
   /**
    * Method onClose
-   * @description Closes the submitted inspection, refusing it while another lifecycle write is in flight.
+   * @method onClose
+   *
+   * @description
+   * Closes the submitted inspection, refusing it while another lifecycle write is in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onClose(): void {
@@ -586,9 +883,14 @@ export class InspectionDetailPage {
 
   /**
    * Method requestCancel
-   * @description Opens the Cancel confirmation.
+   * @method requestCancel
+   *
+   * @description
+   * Opens the Cancel confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected requestCancel(): void {
@@ -597,9 +899,14 @@ export class InspectionDetailPage {
 
   /**
    * Method confirmCancel
-   * @description Sends the cancel write. The dialog closes once the store settles, via the constructor effect.
+   * @method confirmCancel
+   *
+   * @description
+   * Sends the cancel write. The dialog closes once the store settles, via the constructor effect.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirmCancel(): void {
@@ -608,10 +915,16 @@ export class InspectionDetailPage {
 
   /**
    * Method onCancelDialogVisibleChanged
-   * @description Clears the pending flag on any dismissal — "Keep it", the backdrop or Escape.
+   * @method onCancelDialogVisibleChanged
+   *
+   * @description
+   * Clears the pending flag on any dismissal — "Keep it", the backdrop or Escape.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {boolean} visible - The dialog's new visibility.
+   *
    * @returns {void}
    */
   protected onCancelDialogVisibleChanged(visible: boolean): void {
@@ -622,6 +935,7 @@ export class InspectionDetailPage {
 
   /**
    * Method exportNonConformitiesCsv
+   * @method exportNonConformitiesCsv
    *
    * @description
    * Downloads the organization's non-conformities as CSV
@@ -632,6 +946,7 @@ export class InspectionDetailPage {
    *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected exportNonConformitiesCsv(): void {
@@ -665,6 +980,7 @@ export class InspectionDetailPage {
 
   /**
    * Method exportReport
+   * @method exportReport
    *
    * @description
    * Fetches the inspection's PDF report
@@ -679,6 +995,7 @@ export class InspectionDetailPage {
    *
    * @access protected
    * @since 1.7.0
+   *
    * @returns {void}
    */
   protected exportReport(): void {
@@ -706,6 +1023,7 @@ export class InspectionDetailPage {
 
   /**
    * Method exportNonConformitiesReport
+   * @method exportNonConformitiesReport
    *
    * @description
    * Downloads the organization's non-conformities as a PDF report
@@ -717,6 +1035,7 @@ export class InspectionDetailPage {
    *
    * @access protected
    * @since 1.7.0
+   *
    * @returns {void}
    */
   protected exportNonConformitiesReport(): void {
@@ -751,6 +1070,7 @@ export class InspectionDetailPage {
 
   /**
    * Method onNonConformitiesExpandedChanged
+   * @method onNonConformitiesExpandedChanged
    *
    * @description
    * Reacts to the `hlm-collapsible` section's own `expandedChange`. The list
@@ -760,7 +1080,9 @@ export class InspectionDetailPage {
    *
    * @access protected
    * @since 2.0.0
+   *
    * @param {boolean} expanded - Whether the section is now expanded.
+   *
    * @returns {void}
    */
   protected onNonConformitiesExpandedChanged(expanded: boolean): void {
@@ -772,9 +1094,15 @@ export class InspectionDetailPage {
 
   /**
    * Method loadNonConformities
-   * @description Loads (or retries) the non-conformities section, for {@link onNonConformitiesExpandedChanged} and the section's own error-state retry.
+   * @method loadNonConformities
+   *
+   * @description
+   * Loads (or retries) the non-conformities section, for {@link onNonConformitiesExpandedChanged}
+   * and the section's own error-state retry.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @returns {void}
    */
   protected loadNonConformities(): void {
@@ -786,9 +1114,14 @@ export class InspectionDetailPage {
 
   /**
    * Method openAddNonConformityDialog
-   * @description Opens the "Add non-conformity" dialog, clearing any rejection left from a previous attempt.
+   * @method openAddNonConformityDialog
+   *
+   * @description
+   * Opens the "Add non-conformity" dialog, clearing any rejection left from a previous attempt.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @returns {void}
    */
   protected openAddNonConformityDialog(): void {
@@ -798,9 +1131,14 @@ export class InspectionDetailPage {
 
   /**
    * Method closeAddNonConformityDialog
-   * @description Closes the dialog and resets its operation state — the backdrop, Escape or Cancel.
+   * @method closeAddNonConformityDialog
+   *
+   * @description
+   * Closes the dialog and resets its operation state — the backdrop, Escape or Cancel.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @returns {void}
    */
   protected closeAddNonConformityDialog(): void {
@@ -810,10 +1148,17 @@ export class InspectionDetailPage {
 
   /**
    * Method onNonConformityAdded
-   * @description Sends the validated add-non-conformity payload. The dialog closes once the store settles, via the constructor effect.
+   * @method onNonConformityAdded
+   *
+   * @description
+   * Sends the validated add-non-conformity payload. The dialog closes once the store settles, via
+   * the constructor effect.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @param {AddNonConformityInput} payload - The dialog's validated payload.
+   *
    * @returns {void}
    */
   protected onNonConformityAdded(payload: AddNonConformityInput): void {
@@ -826,10 +1171,17 @@ export class InspectionDetailPage {
 
   /**
    * Method onNonConformityStatusPicked
-   * @description Sends a row's status write, refusing a second one while one is already in flight.
+   * @method onNonConformityStatusPicked
+   *
+   * @description
+   * Sends a row's status write, refusing a second one while one is already in flight.
+   *
    * @access protected
    * @since 1.5.0
-   * @param {{ nonConformityId: string; status: NonConformityStatus }} event - The row and the chosen status.
+   *
+   * @param {{ nonConformityId: string; status: NonConformityStatus }} event - The row and the
+   *   chosen status.
+   *
    * @returns {void}
    */
   protected onNonConformityStatusPicked(event: {
@@ -849,10 +1201,16 @@ export class InspectionDetailPage {
 
   /**
    * Method settleUpdateWrite
-   * @description Closes the open field on a successful write, or attributes the rejection to it.
+   * @method settleUpdateWrite
+   *
+   * @description
+   * Closes the open field on a successful write, or attributes the rejection to it.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {CallState<InspectionOutput | null>} callState - The update write's call state.
+   *
    * @returns {void}
    */
   private settleUpdateWrite(callState: CallState<InspectionOutput | null>): void {
@@ -873,10 +1231,17 @@ export class InspectionDetailPage {
 
   /**
    * Method inspectorInitialsOf
-   * @description Avatar fallback initials derived from the inspector's display name, for the lead summary's avatar.
+   * @method inspectorInitialsOf
+   *
+   * @description
+   * Avatar fallback initials derived from the inspector's display name, for the lead summary's
+   * avatar.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @param {InspectionOutput} inspection - The loaded record.
+   *
    * @returns {string} Up to two uppercase initials, or an empty string when there is no inspector.
    */
   protected inspectorInitialsOf(inspection: InspectionOutput): string {
@@ -893,10 +1258,16 @@ export class InspectionDetailPage {
 
   /**
    * Method inspectorAvatarUrlOf
-   * @description The inspector's best-fit avatar URL for a small avatar, or `null` when none is available.
+   * @method inspectorAvatarUrlOf
+   *
+   * @description
+   * The inspector's best-fit avatar URL for a small avatar, or `null` when none is available.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @param {InspectionOutput} inspection - The loaded record.
+   *
    * @returns {string | null} The resolved avatar URL, or `null`.
    */
   protected inspectorAvatarUrlOf(inspection: InspectionOutput): string | null {

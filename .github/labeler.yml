@@ -77,8 +77,9 @@ area:tests:
       - any-glob-to-any-file:
           - '**/testing/**'
           - '**/*.spec.ts'
-          - 'e2e/**'
-          - 'playwright.config.ts'
+          - 'tests/**'
+          - 'tests/**/playwright.config.ts'
+          - 'tests/**/vitest.config.ts'
           - 'tsconfig.spec.json'
 
 area:docs:
@@ -98,6 +99,8 @@ area:config:
       - any-glob-to-any-file:
           - 'angular.json'
           - 'tsconfig*.json'
+          - 'tests/**/playwright.config.ts'
+          - 'tests/**/vitest.config.ts'
           - '.oxlintrc.json'
           - '.oxfmtrc.json'
           - 'ngsw-config.json'

@@ -514,6 +514,7 @@ export class WorkloadCapacityForm {
    * @since 1.0.0
    *
    * @param {Date | undefined} date - Calendar selection, or an explicitly cleared date.
+   *
    * @returns {void}
    */
   protected chooseEffectiveDate(date: Date | undefined): void {
@@ -599,6 +600,7 @@ export class WorkloadCapacityForm {
    * @since 1.0.0
    *
    * @param {Event} event - Native form submit.
+   *
    * @returns {void}
    */
   protected submit(event: Event): void {

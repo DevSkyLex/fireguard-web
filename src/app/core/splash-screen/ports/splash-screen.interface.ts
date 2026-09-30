@@ -1,8 +1,7 @@
 import type { Signal } from '@angular/core';
 
 /**
- * SplashScreenPhase
- * @type SplashScreenPhase
+ * Type SplashScreenPhase
  *
  * @description
  * Semantic reason the splash is currently shown, so consumers can
@@ -10,16 +9,19 @@ import type { Signal } from '@angular/core';
  * - `session`  — first boot, while the auth session restores.
  * - `navigation` — a lazy-loaded route transition in progress.
  * - `stalled` — boot exceeded the stall threshold without resolving
- *   (offline / unreachable backend); the consumer should surface a
- *   failure message and a retry affordance instead of a progress hint.
+ * (offline / unreachable backend); the consumer should surface a
+ * failure message and a retry affordance instead of a progress hint.
  *
  * @version 1.1.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type SplashScreenPhase
  */
 export type SplashScreenPhase = 'session' | 'navigation' | 'stalled';
 
 /**
- * SplashScreenPort
+ * Interface SplashScreenPort
  * @interface SplashScreenPort
  *
  * @description
@@ -27,14 +29,42 @@ export type SplashScreenPhase = 'session' | 'navigation' | 'stalled';
  * Concrete splash lifecycle behavior is provided by core infrastructure.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface SplashScreenPort {
+  /**
+   * Property visible
+   * @readonly
+   *
+   * @description
+   * Indicates whether the shared splash surface should be displayed.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {Signal<boolean>}
+   */
   readonly visible: Signal<boolean>;
+
+  /**
+   * Property phase
+   * @readonly
+   *
+   * @description
+   * Identifies the boot or navigation condition that determines the splash message and available
+   * action.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {Signal<SplashScreenPhase>}
+   */
   readonly phase: Signal<SplashScreenPhase>;
 
   /**
    * Method retry
+   * @method retry
    *
    * @description
    * Re-attempts a stalled boot. Invoked from the splash failure state

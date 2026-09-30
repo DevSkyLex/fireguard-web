@@ -13,8 +13,10 @@ import type { ChartSeries } from '@shared/chart';
  * @access public
  * @since 1.0.0
  *
- * @param {AlignedDashboardTrendSeries} aligned - The aligned bucket axis and datasets from a trend store.
- * @param {ReadonlyArray<{ readonly name: string; readonly index: number }>} series - Which dataset indices to plot, and the localized name each renders under.
+ * @param {AlignedDashboardTrendSeries} aligned - The aligned bucket axis and datasets from a trend
+ *   store.
+ * @param {ReadonlyArray<{ readonly name: string; readonly index: number }>} series - Which dataset
+ *   indices to plot, and the localized name each renders under.
  *
  * @returns {ChartSeries[]} One named series per requested dataset index.
  */

@@ -46,7 +46,7 @@ import { MessageComposer } from '../../forms/message-composer';
 import { MessageThread } from '../message-thread';
 
 /**
- * Component SubjectDiscussion
+ * Class SubjectDiscussion
  * @class SubjectDiscussion
  *
  * @description
@@ -92,6 +92,8 @@ import { MessageThread } from '../message-thread';
  *
  * @since 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-subject-discussion
@@ -102,8 +104,6 @@ import { MessageThread } from '../message-thread';
  *   (dirtyChanged)="discussionDirty.set($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-subject-discussion',
@@ -117,9 +117,13 @@ export class SubjectDiscussion {
   /**
    * Property presences
    * @readonly
-   * @description Only displayed authors are registered while the embedded discussion is open.
+   *
+   * @description
+   * Only displayed authors are registered while the embedded discussion is open.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
    */
   protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
@@ -128,13 +132,46 @@ export class SubjectDiscussion {
     );
 
   //#region Inputs
-  /** The owning organization, bare UUID. */
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Selects the organization whose member identity scopes the subject conversation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
   public readonly organizationId: InputSignal<string> = input.required<string>();
 
-  /** The attached record's kind, as `POST /api/conversations` accepts it. */
+  /**
+   * Property subjectType
+   * @readonly
+   *
+   * @description
+   * Identifies the kind of organization record attached to this conversation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<ThreadSubjectType>}
+   */
   public readonly subjectType: InputSignal<ThreadSubjectType> = input.required<ThreadSubjectType>();
 
-  /** The attached record's bare id. */
+  /**
+   * Property subjectId
+   * @readonly
+   *
+   * @description
+   * Identifies the organization record attached to this conversation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
   public readonly subjectId: InputSignal<string> = input.required<string>();
 
   /**
@@ -205,10 +242,32 @@ export class SubjectDiscussion {
   protected readonly thread: MessageThreadStoreType =
     inject<MessageThreadStoreType>(MessageThreadStore);
 
-  /** Why the thread could not be opened, or `null`. */
+  /**
+   * Property openError
+   * @readonly
+   *
+   * @description
+   * Holds the latest failure to open the subject conversation, when one occurs.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly openError: WritableSignal<string | null> = signal<string | null>(null);
 
-  /** Whether the get-or-create call is in flight. */
+  /**
+   * Property opening
+   * @readonly
+   *
+   * @description
+   * Indicates whether the subject conversation is currently being opened.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly opening: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
@@ -315,34 +374,125 @@ export class SubjectDiscussion {
    */
   protected readonly draftDirty: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The resolved conversation, or `null` before the get-or-create resolves. */
+  /**
+   * Property conversationId
+   * @readonly
+   *
+   * @description
+   * Identifies the conversation opened for the current subject, or null before it is available.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   private readonly conversationId: WritableSignal<string | null> = signal<string | null>(null);
 
-  /** The last `(organization, subjectType, subject)` triple opened, so re-activation is a no-op. */
+  /**
+   * Property lastOpenedKey
+   *
+   * @description
+   * Stores the organization and subject tuple last requested to avoid duplicate opens.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   private lastOpenedKey: string | null = null;
 
+  /**
+   * Property conversations
+   * @readonly
+   *
+   * @description
+   * Loads and mutates the conversation data owned by this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ConversationService}
+   */
   private readonly conversations: ConversationService =
     inject<ConversationService>(ConversationService);
 
+  /**
+   * Property directory
+   * @readonly
+   *
+   * @description
+   * Resolves display information for members referenced in messages.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {MemberDirectoryPort}
+   */
   private readonly directory: MemberDirectoryPort =
     inject<MemberDirectoryPort>(MEMBER_DIRECTORY_PORT);
 
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Provides the active member permissions used to gate messaging actions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessPort}
+   */
   private readonly memberAccess: OrganizationMemberAccessPort =
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Provides the injected document used by browser-only conversation behavior.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Document}
+   */
   private readonly document: Document = inject<Document>(DOCUMENT);
 
-  /** Classifies an open failure as offline versus a genuine error. */
+  /**
+   * Property connectivity
+   * @readonly
+   *
+   * @description
+   * Provides the client connectivity state used to gate conversation actions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ConnectivityService}
+   */
   private readonly connectivity: ConnectivityService =
     inject<ConnectivityService>(ConnectivityService);
 
-  /** Stands in wherever a member cannot be named. Never a raw id. */
+  /**
+   * Property unknownMemberLabel
+   * @readonly
+   *
+   * @description
+   * Provides the localized fallback name shown when a message author is unavailable.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly unknownMemberLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description

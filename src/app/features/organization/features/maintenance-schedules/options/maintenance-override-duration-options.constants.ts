@@ -1,6 +1,5 @@
 /**
  * Constant MAINTENANCE_OVERRIDE_DURATION_OPTIONS
- * @const MAINTENANCE_OVERRIDE_DURATION_OPTIONS
  *
  * @description
  * The standard interval-override choices offered for a maintenance
@@ -15,6 +14,8 @@
  * @since 1.0.0
  *
  * @type {ReadonlyArray<{ readonly label: string; readonly value: string }>}
+ *
+ * @constant MAINTENANCE_OVERRIDE_DURATION_OPTIONS
  */
 export const MAINTENANCE_OVERRIDE_DURATION_OPTIONS: ReadonlyArray<{
   readonly label: string;

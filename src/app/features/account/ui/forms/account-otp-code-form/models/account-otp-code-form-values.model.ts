@@ -1,5 +1,6 @@
 /**
  * Interface AccountOtpCodeFormValues
+ * @interface AccountOtpCodeFormValues
  *
  * @description
  * The single field the code form edits. It exists because `form()` needs an
@@ -9,5 +10,16 @@
  * @since 1.0.0
  */
 export interface AccountOtpCodeFormValues {
+  /**
+   * Property code
+   *
+   * @description
+   * Code edited by the form before it emits the bare string to its caller.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   code: string;
 }

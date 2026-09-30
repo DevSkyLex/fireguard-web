@@ -43,9 +43,9 @@ const INITIAL_STATE: ComplianceExplorerState = {
 };
 
 /**
- * Store ComplianceExplorerStore
- * @const ComplianceExplorerStore
+ * Constant ComplianceExplorerStore
  *
+ * Store ComplianceExplorerStore
  * @description
  * Component-scoped NgRx SignalStore backing the estate explorer's
  * compliance axis: the enriched facility hierarchy (eager, mapped through
@@ -59,6 +59,12 @@ const INITIAL_STATE: ComplianceExplorerState = {
  * whatever was still in flight; `loadTree` is fetched once per organization;
  * `archiveRegister` `exhaustMap`s so a second click cannot race the write.
  *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const ComplianceExplorerStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [ComplianceExplorerStore] })
@@ -66,9 +72,6 @@ const INITIAL_STATE: ComplianceExplorerState = {
  *   protected readonly compliance = inject(ComplianceExplorerStore);
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const ComplianceExplorerStore = signalStore(
   //#region State
@@ -77,49 +80,88 @@ export const ComplianceExplorerStore = signalStore(
 
   //#region Computed
   withComputed((store) => ({
-    /** The tree roots, mapped onto the shared `Tree` primitive's shape. */
+    /**
+     * @description
+     * The tree roots, mapped onto the shared `Tree` primitive's shape.
+     */
     roots: computed<ReadonlyArray<TreeNode<ComplianceFacilityTreeNodeOutput>>>(
       () => flattenComplianceTree(store.treeCallState().data?.nodes ?? []).roots,
     ),
 
-    /** Every branch's children, keyed by parent id — fully populated, never lazy. */
+    /**
+     * @description
+     * Every branch's children, keyed by parent id — fully populated, never lazy.
+     */
     childrenByParent: computed<
       Readonly<Record<string, ReadonlyArray<TreeNode<ComplianceFacilityTreeNodeOutput>>>>
     >(() => flattenComplianceTree(store.treeCallState().data?.nodes ?? []).childrenByParent),
 
-    /** Whether the tree is still resolving. */
+    /**
+     * @description
+     * Whether the tree is still resolving.
+     */
     isLoadingTree: computed<boolean>(() => isCallPending(store.treeCallState())),
 
-    /** Whether the tree failed to load. */
+    /**
+     * @description
+     * Whether the tree failed to load.
+     */
     hasTreeError: computed<boolean>(() => isCallError(store.treeCallState())),
 
-    /** The active summary — the selected facility's, or the organization rollup. */
+    /**
+     * @description
+     * The active summary — the selected facility's, or the organization rollup.
+     */
     summary: computed<ComplianceSummaryOutput | null>(() => store.summaryCallState().data ?? null),
 
-    /** Whether the summary is still resolving. */
+    /**
+     * @description
+     * Whether the summary is still resolving.
+     */
     isLoadingSummary: computed<boolean>(() => isCallPending(store.summaryCallState())),
 
-    /** Whether the summary failed to load. */
+    /**
+     * @description
+     * Whether the summary failed to load.
+     */
     hasSummaryError: computed<boolean>(() => isCallError(store.summaryCallState())),
 
-    /** Whether a safety-register export is currently in flight. */
+    /**
+     * @description
+     * Whether a safety-register export is currently in flight.
+     */
     isExporting: computed<boolean>(() => isCallPending(store.exportCallState())),
 
-    /** Whether the last export attempt failed. */
+    /**
+     * @description
+     * Whether the last export attempt failed.
+     */
     hasExportError: computed<boolean>(() => isCallError(store.exportCallState())),
 
-    /** The archived register snapshots, newest first — empty until loaded. */
+    /**
+     * @description
+     * The archived register snapshots, newest first — empty until loaded.
+     */
     snapshots: computed<ReadonlyArray<SafetyRegisterSnapshotOutput>>(
       () => store.snapshotsCallState().data?.member ?? [],
     ),
 
-    /** Whether the snapshot list is still resolving. */
+    /**
+     * @description
+     * Whether the snapshot list is still resolving.
+     */
     isLoadingSnapshots: computed<boolean>(() => isCallPending(store.snapshotsCallState())),
 
-    /** Whether the snapshot list failed to load. */
+    /**
+     * @description
+     * Whether the snapshot list failed to load.
+     */
     hasSnapshotsError: computed<boolean>(() => isCallError(store.snapshotsCallState())),
 
-    /** Whether a register archive is currently in flight. */
+    /**
+     * @description
+     * Whether a register archive is currently in flight.
+     */
     isArchiving: computed<boolean>(() => isCallPending(store.archiveCallState())),
   })),
   //#endregion
@@ -377,5 +419,7 @@ export const ComplianceExplorerStore = signalStore(
  * Instance type of the {@link ComplianceExplorerStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type {ComplianceExplorerStoreType}
  */
 export type ComplianceExplorerStoreType = InstanceType<typeof ComplianceExplorerStore>;

@@ -61,6 +61,9 @@ import type { AssistantState } from './models';
 import { applyAssistantFrame } from './utils';
 
 /**
+ * Constant INITIAL_THREAD_STATE
+ *
+ * @description
  * Everything about the conversation itself — reset whenever the thread is
  * abandoned. Kept apart from the panel fields so that starting over, or
  * switching organization, does not yank the panel out of the slot the member
@@ -78,22 +81,46 @@ const INITIAL_THREAD_STATE = {
   generationStalled: false,
 } satisfies Omit<AssistantState, 'panelOpen'>;
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {AssistantState}
+ */
 const INITIAL_STATE: AssistantState = {
   ...INITIAL_THREAD_STATE,
   panelOpen: false,
 };
 
-/** Cookie holding the remembered thread of one organization. */
+/**
+ * Function cookieName
+ *
+ * @description
+ * Cookie holding the remembered thread of one organization.
+ *
+ * @param {string} organization - Organization whose thread cookie is named.
+ *
+ * @returns {string} Cookie name scoped to the organization.
+ */
 function cookieName(organization: string): string {
   return `${ASSISTANT_THREAD_COOKIE_PREFIX}${organization}`;
 }
 
 /**
  * Function toFrame
- * @description Normalizes a persisted reply to the realtime contract.
+ *
+ * @description
+ * Normalizes a persisted reply to the realtime contract.
+ *
  * @access private
  * @since 1.1.0
+ *
  * @param {AssistantMessageOutput} message - Server reply.
+ *
  * @returns {AssistantFrame} The canonical accumulated update.
  */
 function toFrame(message: AssistantMessageOutput): AssistantFrame {
@@ -107,17 +134,14 @@ function toFrame(message: AssistantMessageOutput): AssistantFrame {
 
 /**
  * Constant AssistantStore
- * @const AssistantStore
  *
  * @description
  * The assistant panel's thread and its live generation.
- *
  * **Provided by the workspace route, not root.** It needs the active
  * organization, which lives behind `ORGANIZATION_CONTEXT_PORT` — a route
  * binding a root injector cannot see. Being route-provided also makes it
  * visible to the `PANEL_SLOT` factory, evaluated in that same environment
  * injector.
- *
  * The current thread is remembered per organization. Persisted partial replies
  * are merged with monotonic Mercure frames using attempt identity and sequence.
  * Silence prompts a canonical read; only a server command cancels a generation.
@@ -126,14 +150,16 @@ function toFrame(message: AssistantMessageOutput): AssistantFrame {
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant AssistantStore
  */
 export const AssistantStore = signalStore(
   withState<AssistantState>(INITIAL_STATE),
 
   withComputed((store, permissions = inject(OrganizationPermissionService)) => ({
     /**
+     * @description
      * Whether the member may use the assistant at all.
-     *
      * Every endpoint is guarded by this permission, so without it the panel
      * and its toggle must not appear — a control whose only outcome is a 403
      * is worse than no control.
@@ -149,12 +175,15 @@ export const AssistantStore = signalStore(
     loadError: computed((): StoreError | null => store.threadCallState().error),
     askError: computed((): StoreError | null => store.askCallState().error),
 
-    /** Whether a reply is being produced right now. */
+    /**
+     * @description
+     * Whether a reply is being produced right now.
+     */
     isGenerating: computed((): boolean => store.generatingMessageId() !== null),
 
     /**
+     * @description
      * Whether turns exist before the loaded page.
-     *
      * Surfaced rather than paged: messages come back oldest-first with a plain
      * offset, so a correct history pager is its own design problem.
      */
@@ -169,14 +198,22 @@ export const AssistantStore = signalStore(
       cookies = inject(CookieService),
       organizationContext = inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT),
     ) => {
-      /** Bare id of the organization the panel is scoped to, from the URL. */
+      /**
+       * @description
+       * Bare id of the organization the panel is scoped to, from the URL.
+       */
       let scopeRevision = 0;
 
       function organizationId(): string | null {
         return organizationContext.selectedOrganizationId();
       }
 
-      /** Remembers, or forgets, the thread of the active organization. */
+      /**
+       * Function rememberThread
+       *
+       * @description
+       * Remembers, or forgets, the thread of the active organization.
+       */
       function rememberThread(organization: string, threadId: string | null): void {
         if (threadId === null) {
           cookies.deleteCookie(cookieName(organization));
@@ -194,8 +231,10 @@ export const AssistantStore = signalStore(
       }
 
       /**
-       * Reads a thread's **last** message page.
+       * Function readLatest
        *
+       * @description
+       * Reads a thread's **last** message page.
        * Two requests, and unavoidably so: the endpoint pages oldest-first from
        * an offset, so the newest turns are on the last page and the only way to
        * learn which page that is, is to ask for the first and read
@@ -221,10 +260,15 @@ export const AssistantStore = signalStore(
 
       /**
        * Function acceptDetail
-       * @description Keeps newer live attempts when an older HTTP response arrives.
+       *
+       * @description
+       * Keeps newer live attempts when an older HTTP response arrives.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {AssistantThreadDetailOutput} detail - Persisted page.
+       *
        * @returns {void}
        */
       function acceptDetail(detail: AssistantThreadDetailOutput): void {
@@ -250,11 +294,10 @@ export const AssistantStore = signalStore(
       }
 
       /**
+       * @description
        * Ends the wait on a generation that has gone quiet for too long.
-       *
        * Re-armed on every frame, so the timeout measures silence rather than
        * total duration — a long but healthy answer never trips it.
-       *
        * On firing it re-reads the thread rather than declaring a stall blindly:
        * a quiet generation may simply have lost its terminal frame (the Mercure
        * frame is otherwise the only path to the reply). If the server now holds
@@ -301,10 +344,15 @@ export const AssistantStore = signalStore(
 
       /**
        * Function acceptFrame
-       * @description Accepts monotonic updates for the current attempt and leaves late frames inert.
+       *
+       * @description
+       * Accepts monotonic updates for the current attempt and leaves late frames inert.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {AssistantFrame} frame - Canonical accumulated update.
+       *
        * @returns {void}
        */
       function acceptFrame(frame: AssistantFrame): void {
@@ -319,9 +367,9 @@ export const AssistantStore = signalStore(
       }
 
       /**
+       * @description
        * Subscribes to a thread's topic and keeps the token fresh, or tears the
        * connection down when passed `null`.
-       *
        * `timer(0, …)` re-mints on a schedule. The new token is minted
        * (`concatMap`) **before** the `switchMap` swaps the connection, so the
        * previous `EventSource` stays open across the refresh round trip instead
@@ -361,7 +409,10 @@ export const AssistantStore = signalStore(
         ),
       );
 
-      /** Reads a remembered thread's last page. */
+      /**
+       * @description
+       * Reads a remembered thread's last page.
+       */
       const loadThread = rxMethod<string>(
         pipe(
           tap(() => patchState(store, { threadCallState: pendingCallState() })),
@@ -436,9 +487,10 @@ export const AssistantStore = signalStore(
 
       return {
         controlAttempt,
+
         /**
+         * @description
          * Restores the remembered thread of an organization, resetting first.
-         *
          * Driven by the routed organization id, so switching organization drops
          * the previous transcript instead of showing it under the wrong tenant
          * — and does so as soon as the URL changes, without waiting for the
@@ -464,8 +516,8 @@ export const AssistantStore = signalStore(
         ),
 
         /**
+         * @description
          * Asks a question, creating the thread on the first one.
-         *
          * Both turns are appended from the `201` body: the question, and the
          * reply placeholder that arrives `pending`. No `pending` frame is ever
          * published, so waiting for one would wait forever.
@@ -536,15 +588,22 @@ export const AssistantStore = signalStore(
           ),
         ),
 
-        /** Requests server cancellation of the stalled attempt. */
+        /**
+         * Method dismissStalled
+         *
+         * @description
+         * Requests server cancellation of the stalled attempt.
+         */
         dismissStalled(): void {
           const messageId = store.generatingMessageId();
           if (messageId) controlAttempt({ messageId, retry: false });
         },
 
         /**
-         * Forgets the current thread and starts a new conversation.
+         * Method startNewThread
          *
+         * @description
+         * Forgets the current thread and starts a new conversation.
          * The old thread is left on the server: nothing can delete it, and the
          * organization owner can still read it through the API.
          */
@@ -563,8 +622,10 @@ export const AssistantStore = signalStore(
         },
 
         /**
-         * Opens the assistant sheet.
+         * Method openPanel
          *
+         * @description
+         * Opens the assistant sheet.
          * The flag is the whole state: `AssistantToggle` reads it to open its
          * right-anchored `hlm-sheet` and to keep the trigger's `aria-expanded`
          * honest. Closing needs nothing handed back.
@@ -574,6 +635,9 @@ export const AssistantStore = signalStore(
         },
 
         /**
+         * Method closePanel
+         *
+         * @description
          * Releases the column.
          */
         closePanel(): void {
@@ -602,5 +666,7 @@ export const AssistantStore = signalStore(
  * Injection type of {@link AssistantStore}.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type AssistantStoreType = InstanceType<typeof AssistantStore>;

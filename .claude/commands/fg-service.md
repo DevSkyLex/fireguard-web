@@ -3,7 +3,7 @@ description: Create a service — transport (extends HydraApiService), behaviora
 argument-hint: '<concern> in <feature> — e.g. "audit-event in organization"'
 ---
 
-Delegate to the **fg-service-builder** subagent: $ARGUMENTS
+Delegate to the **fg-web-service-builder** subagent: $ARGUMENTS
 
 The agent carries the kind-routing table (transport / persistence / behavioral / access / adapter) and the §11.3 transport contract; do not restate them.
 

@@ -38,6 +38,7 @@ import { OrganizationTeamMemberAddForm } from '../../forms/organization-team-mem
 
 /**
  * Interface OrganizationTeamRosterRow
+ * @interface OrganizationTeamRosterRow
  *
  * @description
  * One roster row's view-model: a `TeamMemberOutput` resolved against the
@@ -49,15 +50,97 @@ import { OrganizationTeamMemberAddForm } from '../../forms/organization-team-mem
  * @since 1.0.0
  */
 interface OrganizationTeamRosterRow {
+  /**
+   * Property memberId
+   * @readonly
+   *
+   * @description
+   * Identifies the membership row used for team actions.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly memberId: string;
+
+  /**
+   * Property name
+   * @readonly
+   *
+   * @description
+   * Resolved directory name, with a generic fallback when no directory entry exists.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly name: string;
+
+  /**
+   * Property email
+   * @readonly
+   *
+   * @description
+   * Resolved directory address, or null when the member directory has no address.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   readonly email: string | null;
+
+  /**
+   * Property avatarUrl
+   * @readonly
+   *
+   * @description
+   * Resolved directory avatar URL, or null when no image is available.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   readonly avatarUrl: string | null;
+
+  /**
+   * Property role
+   * @readonly
+   *
+   * @description
+   * Localized role label for the member, or null when the role is unavailable.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   readonly role: string | null;
+
+  /**
+   * Property addedAt
+   * @readonly
+   *
+   * @description
+   * ISO timestamp used to show when this member joined the team.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly addedAt: string;
 }
 
-/** Placeholder rows drawn while the roster loads. */
+/**
+ * Constant SKELETON_ROWS
+ *
+ * @description
+ * Placeholder rows drawn while the roster loads.
+ */
 const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
 
 /**
@@ -71,10 +154,8 @@ const SKELETON_ROWS: ReadonlyArray<number> = [1, 2, 3];
  * organization member — offered only from {@link candidates}, which this
  * sheet computes from {@link orgMembers} minus {@link members} so an
  * already-listed member is never offered twice.
- *
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`),
  * matching `OrganizationRolePermissionsSheet`.
- *
  * Presentational (`ARCHITECTURE.md` §10.3): it computes no membership
  * change itself — {@link memberAdded} and {@link memberRemoveRequested}
  * carry the operator's intent, and the page calls
@@ -111,9 +192,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -121,9 +206,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property team
    * @readonly
-   * @description The team whose roster this panel shows, or `null` while nothing is selected.
+   *
+   * @description
+   * The team whose roster this panel shows, or `null` while nothing is selected.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<TeamOutput | null>}
    */
   public readonly team: InputSignal<TeamOutput | null> = input<TeamOutput | null>(null);
@@ -131,9 +220,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property members
    * @readonly
-   * @description The selected team's current membership rows.
+   *
+   * @description
+   * The selected team's current membership rows.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly TeamMemberOutput[]>}
    */
   public readonly members: InputSignal<readonly TeamMemberOutput[]> = input<
@@ -143,9 +236,14 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property orgMembers
    * @readonly
-   * @description The organization's member directory, preloaded by the page — resolves roster identities and feeds the add-member picker.
+   *
+   * @description
+   * The organization's member directory, preloaded by the page — resolves roster identities and
+   * feeds the add-member picker.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly OrganizationMemberOutput[]>}
    */
   public readonly orgMembers: InputSignal<readonly OrganizationMemberOutput[]> = input<
@@ -155,9 +253,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property loadingMembers
    * @readonly
-   * @description Whether the roster is loading.
+   *
+   * @description
+   * Whether the roster is loading.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loadingMembers: InputSignal<boolean> = input<boolean>(false);
@@ -165,9 +267,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property membersError
    * @readonly
-   * @description The roster load's failure message, or `null`.
+   *
+   * @description
+   * The roster load's failure message, or `null`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly membersError: InputSignal<string | null> = input<string | null>(null);
@@ -175,9 +281,14 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the add-member form and each row's Remove action may render (`organization.teams.write`).
+   *
+   * @description
+   * Whether the add-member form and each row's Remove action may render
+   * (`organization.teams.write`).
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
@@ -185,9 +296,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property isAddingMember
    * @readonly
-   * @description Whether an add-member request is in flight.
+   *
+   * @description
+   * Whether an add-member request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly isAddingMember: InputSignal<boolean> = input<boolean>(false);
@@ -195,9 +310,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property addMemberError
    * @readonly
-   * @description Whatever the last add-member attempt failed with.
+   *
+   * @description
+   * Whatever the last add-member attempt failed with.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly addMemberError: InputSignal<unknown> = input<unknown>(null);
@@ -205,9 +324,14 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property isRemovingMember
    * @readonly
-   * @description Whether a remove-member request is in flight — locks every row's Remove action, the store carries no per-member request state.
+   *
+   * @description
+   * Whether a remove-member request is in flight — locks every row's Remove action, the store
+   * carries no per-member request state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly isRemovingMember: InputSignal<boolean> = input<boolean>(false);
@@ -215,9 +339,14 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone. The default keeps the component renderable
+   * with no context wired.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -228,9 +357,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property visibleChange
    * @readonly
-   * @description The panel wants to open or close.
+   *
+   * @description
+   * The panel wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -238,9 +371,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property memberAdded
    * @readonly
-   * @description The picked member and optional membership label, from the add-member form.
+   *
+   * @description
+   * The picked member and optional membership label, from the add-member form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<AddTeamMemberInput>}
    */
   public readonly memberAdded: OutputEmitterRef<AddTeamMemberInput> = output<AddTeamMemberInput>();
@@ -248,9 +385,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property memberRemoveRequested
    * @readonly
-   * @description A row's Remove action was activated for this member id.
+   *
+   * @description
+   * A row's Remove action was activated for this member id.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly memberRemoveRequested: OutputEmitterRef<string> = output<string>();
@@ -258,27 +399,75 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property retryLoad
    * @readonly
-   * @description The roster's error state asked to retry the load.
+   *
+   * @description
+   * The roster's error state asked to retry the load.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly retryLoad: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** Placeholder rows for the loading render. */
+  /**
+   * Property skeletonRows
+   * @readonly
+   *
+   * @description
+   * Placeholder rows for the loading render.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<number>}
+   */
   protected readonly skeletonRows: ReadonlyArray<number> = SKELETON_ROWS;
 
-  /** The panel state, derived from {@link visible} so there is no second copy of the truth. */
+  /**
+   * Property sheetState
+   * @readonly
+   *
+   * @description
+   * The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<BrnDialogState>}
+   */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.visible() ? 'open' : 'closed',
   );
 
-  /** The panel's side — `'bottom'` below `sm`, `'right'` at and above it. */
+  /**
+   * Property side
+   * @readonly
+   *
+   * @description
+   * The panel's side — `'bottom'` below `sm`, `'right'` at and above it.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<'right' | 'bottom'>}
+   */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
 
-  /** The member directory keyed by id, for resolving a roster row's identity. */
+  /**
+   * Property directoryById
+   * @readonly
+   *
+   * @description
+   * The member directory keyed by id, for resolving a roster row's identity.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlyMap<string, OrganizationMemberOutput>>}
+   */
   private readonly directoryById: Signal<ReadonlyMap<string, OrganizationMemberOutput>> = computed(
     (): ReadonlyMap<string, OrganizationMemberOutput> =>
       new Map(this.orgMembers().map((member) => [member.id, member])),
@@ -287,9 +476,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property rosterRows
    * @readonly
-   * @description The current membership rows, resolved against the directory.
+   *
+   * @description
+   * The current membership rows, resolved against the directory.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly OrganizationTeamRosterRow[]>}
    */
   protected readonly rosterRows: Signal<readonly OrganizationTeamRosterRow[]> = computed(
@@ -316,9 +509,13 @@ export class OrganizationTeamMembersSheet {
   /**
    * Property candidates
    * @readonly
-   * @description Organization members not already on the roster, offered to the add-member picker.
+   *
+   * @description
+   * Organization members not already on the roster, offered to the add-member picker.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly MemberSelectOption[]>}
    */
   protected readonly candidates: Signal<readonly MemberSelectOption[]> = computed(
@@ -339,10 +536,17 @@ export class OrganizationTeamMembersSheet {
   //#region Methods
   /**
    * Method removeLabel
-   * @description The accessible name for a row's Remove action, naming the member rather than leaving every button on the page announced identically.
+   * @method removeLabel
+   *
+   * @description
+   * The accessible name for a row's Remove action, naming the member rather than leaving every
+   * button on the page announced identically.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} name - The row's resolved name.
+   *
    * @returns {string} The localized label.
    */
   protected removeLabel(name: string): string {
@@ -351,10 +555,16 @@ export class OrganizationTeamMembersSheet {
 
   /**
    * Method initialsOf
-   * @description Fallback shown while a row's avatar is missing.
+   * @method initialsOf
+   *
+   * @description
+   * Fallback shown while a row's avatar is missing.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} name - The row's resolved name.
+   *
    * @returns {string} Up to two uppercase initials.
    */
   protected initialsOf(name: string): string {
@@ -368,10 +578,16 @@ export class OrganizationTeamMembersSheet {
 
   /**
    * Method onStateChanged
-   * @description Relays a dismissal, ignoring the echo of a change the page already made.
+   * @method onStateChanged
+   *
+   * @description
+   * Relays a dismissal, ignoring the echo of a change the page already made.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - The panel's new state.
+   *
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {

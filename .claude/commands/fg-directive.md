@@ -3,7 +3,7 @@ description: Create an Angular directive as a complete unit folder — behaviora
 argument-hint: '<name> [--context-guard] — e.g. "auto-focus" or "board-card --context-guard"'
 ---
 
-Delegate to the **fg-directive-builder** subagent: $ARGUMENTS
+Delegate to the **fg-web-directive-builder** subagent: $ARGUMENTS
 
 The agent carries the two anatomies (behavioral vs template-marker), the naming rules, and the SSR guard requirement; do not restate them. The repo has **no directive to mirror** — the agent's own templates are the exemplar.
 

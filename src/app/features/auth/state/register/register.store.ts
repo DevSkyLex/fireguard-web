@@ -28,12 +28,13 @@ import type {
   RegisterOutput,
   RegisterVerifyInput,
 } from '@features/auth/models';
-import { AuthStore, authStoreEvents } from '@features/auth/state';
 import {
   toResendAvailableAt,
   toResendAvailableIn,
   toResendDelaySeconds,
 } from '@features/auth/utils';
+import { AuthStore } from '../auth';
+import { authStoreEvents } from '../auth/events';
 import { registerStoreEvents } from './events';
 import type { RegisterState } from './models';
 
@@ -42,9 +43,24 @@ import type { RegisterState } from './models';
  *
  * @description
  * Verify payload without the challenge token (which the store already holds).
+ *
+ * @type {RegisterVerifyPayload}
  */
 type RegisterVerifyPayload = Omit<RegisterVerifyInput, 'token'>;
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Empty registration challenge and request state used when the flow starts or clears.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @type {RegisterState}
+ *
+ * @constant INITIAL_STATE
+ */
 const INITIAL_STATE: RegisterState = {
   currentChallenge: null,
   challengeToken: null,
@@ -56,8 +72,7 @@ const INITIAL_STATE: RegisterState = {
 };
 
 /**
- * Store RegisterStore
- * @const RegisterStore
+ * Constant RegisterStore
  *
  * @description
  * NGRX SignalStore for the public self-service registration flow. Handles
@@ -67,7 +82,10 @@ const INITIAL_STATE: RegisterState = {
  * cancels pending reads without destroying the reusable root request streams.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const RegisterStore
  *
  * @example
  * ```typescript
@@ -83,9 +101,8 @@ export const RegisterStore = signalStore(
 
   withComputed((store) => ({
     /**
-     * Computed isRegistering
-     *
      * @description
+     * Computed isRegistering
      * Whether a registration request is in progress.
      *
      * @since 1.0.0
@@ -95,9 +112,8 @@ export const RegisterStore = signalStore(
     isRegistering: computed<boolean>(() => store.requestCallState().status === 'pending'),
 
     /**
-     * Computed registerError
-     *
      * @description
+     * Computed registerError
      * Registration request error if any.
      *
      * @since 1.0.0
@@ -107,9 +123,8 @@ export const RegisterStore = signalStore(
     registerError: computed<StoreError | null>(() => store.requestCallState().error),
 
     /**
-     * Computed isVerifying
-     *
      * @description
+     * Computed isVerifying
      * Whether email verification is in progress.
      *
      * @since 1.0.0
@@ -119,9 +134,8 @@ export const RegisterStore = signalStore(
     isVerifying: computed<boolean>(() => store.verifyCallState().status === 'pending'),
 
     /**
-     * Computed verifyError
-     *
      * @description
+     * Computed verifyError
      * Email verification error if any.
      *
      * @since 1.0.0
@@ -131,9 +145,8 @@ export const RegisterStore = signalStore(
     verifyError: computed<StoreError | null>(() => store.verifyCallState().error),
 
     /**
-     * Computed isResending
-     *
      * @description
+     * Computed isResending
      * Whether resending the verification code is in progress.
      *
      * @since 1.0.0
@@ -143,9 +156,8 @@ export const RegisterStore = signalStore(
     isResending: computed<boolean>(() => store.resendCallState().status === 'pending'),
 
     /**
-     * Computed resendError
-     *
      * @description
+     * Computed resendError
      * Resend error if any.
      *
      * @since 1.0.0
@@ -155,9 +167,8 @@ export const RegisterStore = signalStore(
     resendError: computed<StoreError | null>(() => store.resendCallState().error),
 
     /**
-     * Computed hasChallenge
-     *
      * @description
+     * Computed hasChallenge
      * Whether a verification challenge is currently pending (gates the verify page).
      *
      * @since 1.0.0
@@ -167,9 +178,8 @@ export const RegisterStore = signalStore(
     hasChallenge: computed<boolean>(() => store.challengeToken() !== null),
 
     /**
-     * Computed resendAvailableIn
-     *
      * @description
+     * Computed resendAvailableIn
      * Whole seconds before a new verification code may be requested, `0` when
      * none. A snapshot, not a ticking clock — the OTP form runs the countdown.
      *
@@ -409,11 +419,12 @@ export const RegisterStore = signalStore(
 
 /**
  * Type RegisterStore
- * @type RegisterStore
  *
  * @description
  * Type of the RegisterStore instance.
  *
  * @since 1.0.0
+ *
+ * @type RegisterStore
  */
 export type RegisterStore = InstanceType<typeof RegisterStore>;

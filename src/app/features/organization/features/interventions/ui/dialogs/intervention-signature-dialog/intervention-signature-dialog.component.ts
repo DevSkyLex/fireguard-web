@@ -19,7 +19,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmDialogImports } from '@shared/ui/dialog';
 
 /**
- * Component InterventionSignatureDialog
+ * Class InterventionSignatureDialog
  * @class InterventionSignatureDialog
  *
  * @description
@@ -41,6 +41,8 @@ import { HlmDialogImports } from '@shared/ui/dialog';
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-intervention-signature-dialog
@@ -50,8 +52,6 @@ import { HlmDialogImports } from '@shared/ui/dialog';
  *   (dismissed)="onSignatureDismissed()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-signature-dialog',
@@ -64,9 +64,13 @@ export class InterventionSignatureDialog {
   /**
    * Property visible
    * @readonly
-   * @description Whether the dialog is open.
+   *
+   * @description
+   * Whether the dialog is open.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -74,9 +78,14 @@ export class InterventionSignatureDialog {
   /**
    * Property busy
    * @readonly
-   * @description Whether the caller's upload of the confirmed signature is in flight, which disables confirming again.
+   *
+   * @description
+   * Whether the caller's upload of the confirmed signature is in flight, which disables confirming
+   * again.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly busy: InputSignal<boolean> = input<boolean>(false);
@@ -86,9 +95,13 @@ export class InterventionSignatureDialog {
   /**
    * Property signed
    * @readonly
-   * @description The captured signature, encoded as a PNG `Blob`.
+   *
+   * @description
+   * The captured signature, encoded as a PNG `Blob`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<Blob>}
    */
   public readonly signed: OutputEmitterRef<Blob> = output<Blob>();
@@ -96,9 +109,13 @@ export class InterventionSignatureDialog {
   /**
    * Property dismissed
    * @readonly
-   * @description Cancels submission when the dialog closes without an explicit commitment.
+   *
+   * @description
+   * Cancels submission when the dialog closes without an explicit commitment.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly dismissed: OutputEmitterRef<void> = output<void>();
@@ -106,9 +123,13 @@ export class InterventionSignatureDialog {
   /**
    * Property skipped
    * @readonly
-   * @description Explicitly submits without the optional signature.
+   *
+   * @description
+   * Explicitly submits without the optional signature.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly skipped: OutputEmitterRef<void> = output<void>();
@@ -116,15 +137,29 @@ export class InterventionSignatureDialog {
   /**
    * Property errorMessage
    * @readonly
-   * @description Upload failure displayed while preserving the drawing for another attempt.
+   *
+   * @description
+   * Upload failure displayed while preserving the drawing for another attempt.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly errorMessage: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Connects the dialog’s reactive effects to its current input state.
+   *
+   * @access public
+   * @since unreleased
+   */
   constructor() {
     effect((): void => {
       const visible: boolean = this.visible();
@@ -141,21 +176,72 @@ export class InterventionSignatureDialog {
 
   //#region Properties
   /**
-   * * The pad's backing canvas element, present only while {@link visible}.
+   * Property canvasRef
+   * @readonly
+   *
+   * @description
+   * References the canvas used to capture the operator’s signature strokes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLCanvasElement> | undefined>}
    */
   protected readonly canvasRef: Signal<ElementRef<HTMLCanvasElement> | undefined> =
     viewChild<ElementRef<HTMLCanvasElement>>('canvas');
 
-  /** Whether at least one stroke has been drawn since the pad last opened or cleared. */
+  /**
+   * Property hasStrokes
+   * @readonly
+   *
+   * @description
+   * Tracks whether the operator has drawn at least one signature stroke.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly hasStrokes: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The sized 2D context, or `null` until the canvas has rendered. */
+  /**
+   * Property context
+   *
+   * @description
+   * Holds the 2D drawing context while the signature canvas is active.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {CanvasRenderingContext2D | null}
+   */
   private context: CanvasRenderingContext2D | null = null;
 
-  /** Whether a pointer is currently down and drawing. */
+  /**
+   * Property drawing
+   *
+   * @description
+   * Tracks whether the pointer is currently drawing a signature stroke.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   private drawing: boolean = false;
 
-  /** Whether Confirm is currently usable: at least one stroke, and no upload already in flight. */
+  /**
+   * Property canConfirm
+   * @readonly
+   *
+   * @description
+   * Enables confirmation only after a stroke is present and submission is idle.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canConfirm: Signal<boolean> = computed<boolean>(
     () => this.hasStrokes() && !this.busy(),
   );
@@ -164,6 +250,7 @@ export class InterventionSignatureDialog {
   //#region Methods
   /**
    * Method onDialogStateChanged
+   * @method onDialogStateChanged
    *
    * @description
    * Relays a dismissal — Escape or the backdrop — as {@link dismissed}. The
@@ -185,10 +272,16 @@ export class InterventionSignatureDialog {
 
   /**
    * Method onPointerDown
-   * @description Starts a new stroke at the pointer's canvas-local position.
+   * @method onPointerDown
+   *
+   * @description
+   * Starts a new stroke at the pointer's canvas-local position.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {PointerEvent} event - The pointer's `pointerdown` event.
+   *
    * @returns {void}
    */
   protected onPointerDown(event: PointerEvent): void {
@@ -206,10 +299,16 @@ export class InterventionSignatureDialog {
 
   /**
    * Method onPointerMove
-   * @description Extends the current stroke while a pointer is down.
+   * @method onPointerMove
+   *
+   * @description
+   * Extends the current stroke while a pointer is down.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {PointerEvent} event - The pointer's `pointermove` event.
+   *
    * @returns {void}
    */
   protected onPointerMove(event: PointerEvent): void {
@@ -225,10 +324,16 @@ export class InterventionSignatureDialog {
 
   /**
    * Method onPointerUp
-   * @description Ends the current stroke.
+   * @method onPointerUp
+   *
+   * @description
+   * Ends the current stroke.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {PointerEvent} event - The pointer's `pointerup`/`pointercancel` event.
+   *
    * @returns {void}
    */
   protected onPointerUp(event: PointerEvent): void {
@@ -240,9 +345,14 @@ export class InterventionSignatureDialog {
 
   /**
    * Method clear
-   * @description Wipes the pad and re-arms Confirm as disabled.
+   * @method clear
+   *
+   * @description
+   * Wipes the pad and re-arms Confirm as disabled.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected clear(): void {
@@ -254,6 +364,7 @@ export class InterventionSignatureDialog {
 
   /**
    * Method confirm
+   * @method confirm
    *
    * @description
    * Encodes the drawn pad as a PNG and emits {@link signed}. A no-op while
@@ -276,6 +387,7 @@ export class InterventionSignatureDialog {
 
   /**
    * Method sizeCanvas
+   * @method sizeCanvas
    *
    * @description
    * Sizes the canvas's backing store to its rendered CSS box times the
@@ -311,11 +423,17 @@ export class InterventionSignatureDialog {
 
   /**
    * Method localPoint
-   * @description The pointer event's position relative to the canvas's own box.
+   * @method localPoint
+   *
+   * @description
+   * The pointer event's position relative to the canvas's own box.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {HTMLCanvasElement} canvas - The canvas the point is relative to.
    * @param {PointerEvent} event - The source pointer event.
+   *
    * @returns {{ x: number; y: number }} The canvas-local coordinates.
    */
   private localPoint(canvas: HTMLCanvasElement, event: PointerEvent): { x: number; y: number } {

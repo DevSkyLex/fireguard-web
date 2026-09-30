@@ -16,7 +16,7 @@ official skill payloads are excluded from authored-code rules and must not be ha
 | [Behavior/access](rules/behavior-access.md)         | `**/services/**`, `**/access/**`, repositories and offline sync                                                       |
 | [Directives/pipes](rules/directives-pipes.md)       | Authored `*.directive.ts`, `*.pipe.ts`                                                                                |
 | [Routing/SSR](rules/routing-ssr.md)                 | `*.routes.ts`, `**/http/**`, routing and hydration changes                                                            |
-| [E2E](rules/e2e.md)                                 | `e2e/**`, `playwright*.config.ts`, browser verification                                                               |
+| [E2E](rules/e2e.md)                                 | `tests/e2e/**`, browser verification                                                                                  |
 | [Code intelligence](rules/lsp-usage.md)             | Symbol changes in authored TypeScript/HTML                                                                            |
 | [Models/utils](rules/models-utils.md)               | `**/models/**`, `**/utils/**`, `**/constants/**`, `**/options/**`                                                     |
 | [State](rules/state.md)                             | `src/app/**/state/**/*.ts`                                                                                            |

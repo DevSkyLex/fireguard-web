@@ -33,18 +33,12 @@
    `html[data-theme="dark"]`.
 4. **Strict TypeScript.** Explicit types, `readonly` members, no `any`, no
    non-null assertions. Reuse shared model/presentation types.
-5. **Heavy JSDoc, concise prose.** Every class, public/protected member and
-   exported function gets `@description`, `@access`, `@since`,
-   `@type`/`@param`/`@returns`, and on components
-   `@author Valentin FORTIN <contact@valentin-fortin.pro>`. Keep the
-   `@description` short — one or two sentences on purpose and any non-obvious
-   behavior. Do not over-detail: never narrate the implementation line-by-line or
-   restate what the signature and types already say.
-   **Documentation goes in the doc block and nowhere else** — no `//` prose
-   between statements, none inside object or array literals (routes, providers,
-   `imports:`), no `<!-- -->` rationale in templates. One inline line is allowed
-   only where a statement would otherwise read as a mistake. See
-   `.claude/rules/comments.md`.
+5. **Structured JSDoc, concise prose.** Follow
+   [the shared convention](docs/guides/code-comments.md) for declaration tags,
+   meaningful English descriptions, verified metadata and native formatter order.
+   Keep region markers. Rationale belongs in the declaration's docblock or the
+   owning FEATURE.md; one inline line is allowed where code would read as a mistake.
+   Use `npm run docs:check -- <assigned files>` for comment maintenance.
 6. **Keep `models/` type-only.** Runtime values go to sibling `utils/`,
    `constants/`, `options/`. See `ARCHITECTURE.md` §10.10 for the two cohesion
    exceptions (presentation registry, const-enum catalog).
@@ -102,7 +96,7 @@ npm run build         # validates strict Angular templates
 
 ## Tooling — this app ships its own `.claude/`
 
-Open **`fireguard-sso-web/`** as the workspace root to activate it. The agents,
+Open **`fireguard-web/`** as the workspace root to activate it. The agents,
 commands, and skills it ships are listed in the session automatically; the guide
 to what each one is for is [.claude/README.md](.claude/README.md).
 
@@ -112,7 +106,7 @@ Two things that listing does not tell you:
   matching file, and carries the few things that must never be got wrong on that kind
   of file. They are why `ARCHITECTURE.md` no longer needs to be `@`-imported.
 - Backend and cross-cutting tooling stays at the monorepo root
-  (`G:\Projets\fireguard\.claude\`): `/fg-contract-check`, `/fg-map`, `/fg-api-*`,
+  (`../.claude/`, relative to this repository): `/fg-contract-check`, `/fg-map`, `/fg-api-*`,
   `/fg-migrate`, `/fg-security-review`, plus pure-Bash `/fg-web-quality` and `/fg-e2e`
   wrappers usable from there. This `.claude/` is also packaged as the **`fireguard-web`
   plugin** (manifest `.claude/.claude-plugin/plugin.json`), installed at the monorepo

@@ -8,12 +8,13 @@ import type {
 
 /**
  * Type InterventionPlanningConfirmation
- * @type InterventionPlanningConfirmation
  *
  * @description
  * Captured intention and its exact server assessment. Revisions are never silently rebased.
  *
  * @since 1.0.0
+ *
+ * @type InterventionPlanningConfirmation
  */
 export type InterventionPlanningConfirmation = { readonly assessment: WorkloadAssessment } & (
   | { readonly kind: 'create'; readonly command: InterventionWorkItemCreateCommand }

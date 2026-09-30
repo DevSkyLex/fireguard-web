@@ -2,32 +2,89 @@ import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
 import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/request-state';
 
+/**
+ * Constant inspectionStoreEvents
+ *
+ * @description
+ * Groups the inspection store events consumed by inspection feature state.
+ *
+ * @access public
+ *
+ * @type {unknown}
+ */
 export const inspectionStoreEvents = eventGroup({
   source: 'Inspection Store',
   events: {
-    /** Dispatched when fetching the inspection list fails. */
+    /**
+     * @description
+     * Dispatched when fetching the inspection list fails.
+     */
     listFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when creating an inspection fails (non-quota errors only). */
+
+    /**
+     * @description
+     * Dispatched when creating an inspection fails (non-quota errors only).
+     */
     createFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when an inspection is created. */
+
+    /**
+     * @description
+     * Dispatched when an inspection is created.
+     */
     createSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when updating an inspection fails. */
+
+    /**
+     * @description
+     * Dispatched when updating an inspection fails.
+     */
     updateFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when cancelling an inspection fails. */
+
+    /**
+     * @description
+     * Dispatched when cancelling an inspection fails.
+     */
     cancelFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when an inspection is cancelled. */
+
+    /**
+     * @description
+     * Dispatched when an inspection is cancelled.
+     */
     cancelSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when submitting an inspection fails. */
+
+    /**
+     * @description
+     * Dispatched when submitting an inspection fails.
+     */
     submitFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when closing an inspection fails. */
+
+    /**
+     * @description
+     * Dispatched when closing an inspection fails.
+     */
     closeFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when loading non-conformities fails. */
+
+    /**
+     * @description
+     * Dispatched when loading non-conformities fails.
+     */
     nonConformitiesListFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when loading one non-conformity fails. */
+
+    /**
+     * @description
+     * Dispatched when loading one non-conformity fails.
+     */
     nonConformityGetFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when adding a non-conformity fails. */
+
+    /**
+     * @description
+     * Dispatched when adding a non-conformity fails.
+     */
     addNonConformityFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when updating non-conformity status fails. */
+
+    /**
+     * @description
+     * Dispatched when updating non-conformity status fails.
+     */
     updateNonConformityStatusFailed: type<StoreFailureEventPayload>(),
   },
 });

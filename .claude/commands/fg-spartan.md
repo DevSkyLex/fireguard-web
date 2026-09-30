@@ -3,7 +3,7 @@ description: Build or adjust a spartan/ui surface — table, form, dialog, sheet
 argument-hint: '<surface or change — e.g. "a filters sheet on the interventions page" or "dark-mode parity on the member table">'
 ---
 
-Delegate to the **fg-spartan-ui** subagent: $ARGUMENTS
+Delegate to the **fg-web-spartan-ui** subagent: $ARGUMENTS
 
 The agent carries the catalog-first ladder, the token rules, and the vendored-helm exceptions (it loads the `spartan-ui` skill); do not restate them.
 

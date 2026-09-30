@@ -14,6 +14,7 @@ import type { OrganizationOutput } from '@features/organization/models';
  * pagination.
  *
  * @version 2.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface OrganizationState {
@@ -95,6 +96,31 @@ export interface OrganizationState {
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface OrganizationArchiveRequest {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Identifies the organization selected for the archive operation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property slug
+   * @readonly
+   *
+   * @description
+   * Carries the operator's retyped danger-zone confirmation for server validation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly slug: string;
 }

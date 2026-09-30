@@ -39,9 +39,14 @@ import type { FacilityTreeState } from './models';
  * @param {string} facilityId - The facility being moved.
  * @param {string | null} parentFacilityId - Its new parent, or `null` for the root.
  * @param {readonly FacilityOutput[]} roots - The current root list.
- * @param {Readonly<Record<string, readonly FacilityOutput[]>>} childrenByParent - The current loaded branches.
+ * @param {Readonly<Record<string, readonly FacilityOutput[]>>} childrenByParent - The current
+ *   loaded branches.
  *
- * @returns {{ roots: readonly FacilityOutput[]; childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>> }} The re-parented snapshot.
+ * @returns {{
+ *   roots: readonly FacilityOutput[];
+ *   childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>>;
+ * }}
+ *   The re-parented snapshot.
  */
 function withFacilityReparented(
   facilityId: string,
@@ -95,9 +100,14 @@ function withFacilityReparented(
  *
  * @param {FacilityOutput} facility - The newly created facility.
  * @param {readonly FacilityOutput[]} roots - The current root list.
- * @param {Readonly<Record<string, readonly FacilityOutput[]>>} childrenByParent - The current loaded branches.
+ * @param {Readonly<Record<string, readonly FacilityOutput[]>>} childrenByParent - The current
+ *   loaded branches.
  *
- * @returns {{ roots: readonly FacilityOutput[]; childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>> }} The updated snapshot.
+ * @returns {{
+ *   roots: readonly FacilityOutput[];
+ *   childrenByParent: Readonly<Record<string, readonly FacilityOutput[]>>;
+ * }}
+ *   The updated snapshot.
  */
 function withFacilityInserted(
   facility: FacilityOutput,
@@ -128,6 +138,9 @@ function withFacilityInserted(
 }
 
 /**
+ * Constant BRANCH_PAGE_SIZE
+ *
+ * @description
  * How many sites one branch may hold before the rest is left unfetched. Deep
  * hierarchies are normal; a single node with hundreds of direct children is
  * not, and paging a tree branch would be a worse answer than not offering it.
@@ -152,9 +165,9 @@ const INITIAL_STATE: FacilityTreeState = {
 };
 
 /**
- * Store FacilityTreeStore
- * @const FacilityTreeStore
+ * Constant FacilityTreeStore
  *
+ * Store FacilityTreeStore
  * @description
  * Component-scoped NgRx SignalStore backing the asset explorer's site tree.
  *
@@ -166,6 +179,12 @@ const INITIAL_STATE: FacilityTreeState = {
  * A branch is fetched once and kept. Collapsing and re-expanding a node is a
  * navigation gesture, not a reason to ask the server again.
  *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const FacilityTreeStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [FacilityTreeStore] })
@@ -173,9 +192,6 @@ const INITIAL_STATE: FacilityTreeState = {
  *   protected readonly tree = inject(FacilityTreeStore);
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const FacilityTreeStore = signalStore(
   //#region State
@@ -184,19 +200,36 @@ export const FacilityTreeStore = signalStore(
 
   //#region Computed
   withComputed((store) => ({
-    /** The top of the hierarchy, empty until it resolves. */
+    /**
+     * @description
+     * The top of the hierarchy, empty until it resolves.
+     */
     roots: computed<readonly FacilityOutput[]>(() => store.rootsCallState().data ?? []),
 
-    /** Whether the roots are still resolving. */
+    /**
+     * @description
+     * Whether the roots are still resolving.
+     */
     isLoadingRoots: computed<boolean>(() => isCallPending(store.rootsCallState())),
 
-    /** Whether the roots failed to load. */
+    /**
+     * @description
+     * Whether the roots failed to load.
+     */
     hasRootsError: computed<boolean>(() => isCallError(store.rootsCallState())),
 
-    /** True while a drag-drop re-parent is in flight — locks the primitive against a second concurrent move. */
+    /**
+     * @description
+     * True while a drag-drop re-parent is in flight — locks the primitive against a second
+     * concurrent move.
+     */
     isMoving: computed<boolean>(() => isCallPending(store.moveCallState())),
 
-    /** True while a duplicate request is in flight — locks the menu action against a second concurrent duplicate. */
+    /**
+     * @description
+     * True while a duplicate request is in flight — locks the menu action against a second
+     * concurrent duplicate.
+     */
     isDuplicating: computed<boolean>(() => isCallPending(store.duplicateCallState())),
   })),
   //#endregion
@@ -209,6 +242,7 @@ export const FacilityTreeStore = signalStore(
       dispatcher: Dispatcher = inject<Dispatcher>(Dispatcher),
     ) => {
       /**
+       * @description
        * The pre-move snapshot for each facility currently being moved, so a
        * failure can roll back the optimistic re-parent without a second fetch.
        */
@@ -321,6 +355,7 @@ export const FacilityTreeStore = signalStore(
          * @since 1.0.0
          *
          * @param {string} facilityId - Node to check.
+         *
          * @returns {boolean} Whether its children are known.
          */
         hasLoadedChildren(facilityId: string): boolean {
@@ -345,7 +380,11 @@ export const FacilityTreeStore = signalStore(
          * @access public
          * @since 1.1.0
          *
-         * @type {RxMethod<{ organizationId: string; facilityId: string; parentFacilityId: string | null }>}
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   facilityId: string;
+         *   parentFacilityId: string | null;
+         * }>}
          */
         move: rxMethod<{
           readonly organizationId: string;
@@ -485,7 +524,8 @@ export const FacilityTreeStore = signalStore(
      * @access public
      * @since 1.1.0
      *
-     * @param {{ organizationId: string; facilityId: string }} params - Organization and parent facility identifiers.
+     * @param {{ organizationId: string; facilityId: string }} params - Organization and parent
+     *   facility identifiers.
      *
      * @returns {void}
      */
@@ -514,5 +554,7 @@ export const FacilityTreeStore = signalStore(
  * Instance type of the {@link FacilityTreeStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type {FacilityTreeStoreType}
  */
 export type FacilityTreeStoreType = InstanceType<typeof FacilityTreeStore>;

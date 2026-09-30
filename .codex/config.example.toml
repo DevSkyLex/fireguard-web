@@ -1,0 +1,132 @@
+# Copy to config.toml and replace checkout placeholders before starting MCPs.
+# config.toml is local and ignored by Git; this example uses native Codex options.
+# Enable only the servers needed by the folders attached to your project.
+
+web_search = "live"
+
+[mcp_servers."context7"]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+startup_timeout_sec = 60
+
+[mcp_servers."angular"]
+command = "npx"
+args = ["--no-install", "ng", "mcp", "--read-only"]
+cwd = "<WEB_CHECKOUT>"
+startup_timeout_sec = 60
+
+[mcp_servers."spartan"]
+command = "npx"
+args = ["-y", "@spartan-ng/mcp"]
+cwd = "<WEB_CHECKOUT>"
+startup_timeout_sec = 60
+
+[mcp_servers."playwright"]
+command = "npx"
+args = ["-y", "@playwright/mcp"]
+cwd = "<WEB_CHECKOUT>"
+startup_timeout_sec = 60
+
+[mcp_servers."serena-api"]
+enabled = false
+command = "serena"
+args = ["start-mcp-server", "--context", "ide", "--project-from-cwd"]
+cwd = "<API_CHECKOUT>"
+startup_timeout_sec = 120
+
+[mcp_servers."serena-web"]
+enabled = false
+command = "serena"
+args = ["start-mcp-server", "--context", "ide", "--project-from-cwd"]
+cwd = "<WEB_CHECKOUT>"
+startup_timeout_sec = 120
+
+# Peer agents for the shared API + web project; definitions stay in their owner checkout.
+
+[agents."fg-api-architecture-reviewer"]
+description = "Use to review fireguard-api PHP changes against the hexagonal Module Architecture Standard \u2014 layer direction, business logic in handlers not processors, ports vs concrete infrastructure, cross-module boundaries, naming, the dual-database wiring, and MODULE.md currency. Invoke after writing or modifying module code. Read-only \u2014 reports findings, does not edit."
+config_file = "../../fireguard-api/.codex/agents/fg-api-architecture-reviewer.toml"
+
+[agents."fg-api-async-builder"]
+description = "Implement assigned Messenger/Scheduler flows with transactional outbox, bounded retry, idempotence, leases and recovery."
+config_file = "../../fireguard-api/.codex/agents/fg-api-async-builder.toml"
+
+[agents."fg-api-auth-reviewer"]
+description = "Review OAuth/OIDC, token verification, sessions, MFA, signatures, rotation, revocation and replay boundaries."
+config_file = "../../fireguard-api/.codex/agents/fg-api-auth-reviewer.toml"
+
+[agents."fg-api-authorization-reviewer"]
+description = "Review RBAC and tenant, organization and object authorization across routes, handlers, repositories and async paths."
+config_file = "../../fireguard-api/.codex/agents/fg-api-authorization-reviewer.toml"
+
+[agents."fg-api-comment-maintainer"]
+description = "Define or maintain assigned comment conventions, correct source docblocks and run scoped documentation formatting and lint without changing behavior."
+config_file = "../../fireguard-api/.codex/agents/fg-api-comment-maintainer.toml"
+
+[agents."fg-api-contract-reviewer"]
+description = "Use to review the API Platform contract in fireguard-api \u2014 resource metadata, operation constants, Input/Output DTOs, serialization groups, status codes, filters, pagination, OpenAPI output, and exception-to-HTTP mapping \u2014 for regressions and drift. Invoke after changing an endpoint or a DTO. Read-only \u2014 reports findings, does not edit."
+config_file = "../../fireguard-api/.codex/agents/fg-api-contract-reviewer.toml"
+
+[agents."fg-api-domain-builder"]
+description = "Use to add Domain-layer code in fireguard-api \u2014 an aggregate or model under Domain/Model/, a value object, a domain event, or a domain exception \u2014 with the invariants enforced inside the model rather than in a handler. Invoke for \"add an aggregate / value object / domain event / domain exception to <Module>\". Writes code."
+config_file = "../../fireguard-api/.codex/agents/fg-api-domain-builder.toml"
+
+[agents."fg-api-endpoint-builder"]
+description = "Build an API Platform endpoint with Resource, Operation, DTOs, Processor or Provider, validation, security, error mapping and functional tests. Business handlers belong to fg-api-usecase-builder when separately delegated."
+config_file = "../../fireguard-api/.codex/agents/fg-api-endpoint-builder.toml"
+
+[agents."fg-api-integration-builder"]
+description = "Implement external service adapters and webhooks behind Application ports with bounded timeouts, errors and tests using doubles."
+config_file = "../../fireguard-api/.codex/agents/fg-api-integration-builder.toml"
+
+[agents."fg-api-migration-builder"]
+description = "Generate or validate new Doctrine schema/data migrations on the explicit auth or main history. Repository-only changes do not automatically require a migration."
+config_file = "../../fireguard-api/.codex/agents/fg-api-migration-builder.toml"
+
+[agents."fg-api-module-builder"]
+description = "Scaffold a backend bounded context with its first vertical slice, four-layer ownership, ports, wiring, persistence when needed, security, MODULE.md and baseline tests."
+config_file = "../../fireguard-api/.codex/agents/fg-api-module-builder.toml"
+
+[agents."fg-api-module-documenter"]
+description = "Update assigned MODULE.md contracts from verified source and configuration evidence, preserving their normative scope."
+config_file = "../../fireguard-api/.codex/agents/fg-api-module-documenter.toml"
+
+[agents."fg-api-module-explorer"]
+description = "Use to map an existing module in fireguard-api before changing it \u2014 its use cases, ports and adapters, Doctrine records and which database they live on, API resources and routes, config wiring, tests, and the closest implementation anchors to mirror. Invoke before implementing in unfamiliar territory. Read-only \u2014 produces a map, not edits."
+config_file = "../../fireguard-api/.codex/agents/fg-api-module-explorer.toml"
+
+[agents."fg-api-observability-reviewer"]
+description = "Review assigned logs, correlation, health checks and failure visibility for API and worker flows."
+config_file = "../../fireguard-api/.codex/agents/fg-api-observability-reviewer.toml"
+
+[agents."fg-api-persistence-builder"]
+description = "Implement assigned Doctrine Records, repositories, mappers and locking through Application ports; schema migrations remain with the migration specialist."
+config_file = "../../fireguard-api/.codex/agents/fg-api-persistence-builder.toml"
+
+[agents."fg-api-port-builder"]
+description = "Use to add a port and its adapter in fireguard-api \u2014 an Application/Port/Outbound (or Inbound) interface, the Infrastructure adapter or Doctrine repository that fulfils it, the config/modules alias, the explicit entity-manager wiring, and the adapter unit test. Invoke when a use case needs an external dependency, or when a module must publish a capability. Writes code."
+config_file = "../../fireguard-api/.codex/agents/fg-api-port-builder.toml"
+
+[agents."fg-api-query-performance-reviewer"]
+description = "Review Doctrine query cost, N+1, pagination, volumes, index coverage and supplied plans without applying changes."
+config_file = "../../fireguard-api/.codex/agents/fg-api-query-performance-reviewer.toml"
+
+[agents."fg-api-security-auditor"]
+description = "Use to security-review changes touching authentication, OAuth2/OIDC, sessions, trusted devices, OTP/MFA, RBAC permissions, the audit ledger, multi-tenant/organization scoping, secrets handling, or the Stripe billing webhook. FireGuard is an identity + fire-safety platform, so these paths are its crown jewels. Read-only \u2014 reports risks and fixes, does not edit."
+config_file = "../../fireguard-api/.codex/agents/fg-api-security-auditor.toml"
+
+[agents."fg-api-service-wiring-reviewer"]
+description = "Review aliases, dependency injection, tags, handler registration and explicit entity and transaction managers."
+config_file = "../../fireguard-api/.codex/agents/fg-api-service-wiring-reviewer.toml"
+
+[agents."fg-api-test-writer"]
+description = "Use to author or repair PHPUnit tests in fireguard-api \u2014 unit tests for handlers, adapters, and domain models; integration tests for Doctrine repositories; functional tests for API endpoint contracts including denial paths; E2E for full flows. Invoke when a change needs coverage. Writes tests; never changes production code to make one pass."
+config_file = "../../fireguard-api/.codex/agents/fg-api-test-writer.toml"
+
+[agents."fg-api-usecase-builder"]
+description = "Build a command or query use case with typed message, Handler, Result, ports, wiring and unit tests. HTTP work belongs to fg-api-endpoint-builder when separately delegated."
+config_file = "../../fireguard-api/.codex/agents/fg-api-usecase-builder.toml"
+
+[agents."fg-api-workflow-reviewer"]
+description = "Use to review GitHub Actions changes in fireguard-api \u2014 triggers, permissions, secret exposure, pull_request_target risks, caching, matrix and job dependencies, and deployment gating. Invoke when .github/workflows or the composite actions change. Read-only \u2014 reports findings, does not edit."
+config_file = "../../fireguard-api/.codex/agents/fg-api-workflow-reviewer.toml"

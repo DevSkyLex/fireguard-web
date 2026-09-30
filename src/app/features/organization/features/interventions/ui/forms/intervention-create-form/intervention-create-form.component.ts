@@ -47,21 +47,52 @@ import { InterventionCatalogueStatus } from '../../components/intervention-catal
 import { InterventionTag } from '../../components/intervention-tag';
 import type { InterventionCreateFormDraft, InterventionCreateFormValues } from './models';
 
-/** Shortest and longest an intervention name may be. */
+/**
+ * Constant NAME_MIN_LENGTH
+ *
+ * @description
+ * Shortest and longest an intervention name may be.
+ */
 const NAME_MIN_LENGTH: number = 2;
+
+/**
+ * Constant NAME_MAX_LENGTH
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {number}
+ */
 const NAME_MAX_LENGTH: number = 255;
 
-/** The objectives an intervention can be opened for. */
+/**
+ * Constant TYPE_VALUES
+ *
+ * @description
+ * The objectives an intervention can be opened for.
+ */
 const TYPE_VALUES: ReadonlyArray<InterventionType> = [
   'site_setup',
   'inventory',
   'inspection_campaign',
 ];
 
-/** The priorities offered, ordered low to urgent. */
+/**
+ * Constant PRIORITY_VALUES
+ *
+ * @description
+ * The priorities offered, ordered low to urgent.
+ */
 const PRIORITY_VALUES: ReadonlyArray<InterventionPriority> = ['low', 'normal', 'high', 'urgent'];
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_VALUES: InterventionCreateFormDraft = {
   name: '',
   type: 'site_setup',
@@ -72,25 +103,21 @@ const EMPTY_VALUES: InterventionCreateFormDraft = {
 };
 
 /**
- * Component InterventionCreateForm
+ * Class InterventionCreateForm
  * @class InterventionCreateForm
  *
  * @description
  * The form that opens an intervention draft, composed from spartan's field
  * primitives: one `hlm-field-group`, one `hlm-field` per control, and
  * `hlm-field-error` for the messages.
- *
  * It owns its model, its rules and its own validity, and emits
  * {@link submitted} with the typed values — the page calls the store
  * (`ARCHITECTURE.md` §10.4). Errors surface only once a field has been
  * touched, so a blank form does not greet the user in red.
- *
  * Dates are date-only, picked together as one window through
  * `hlm-date-range-picker`, then split into `plannedStartAt`/`dueAt` on submit.
- *
  * {@link prefill} seeds the model for the "Duplicate" flow — never the planned
  * window, which stays blank even when duplicating a scheduled intervention.
- *
  * Its own host fills the flex column its hosting sheet establishes: the field
  * group scrolls independently while the `hlm-sheet-footer` action row stays
  * pinned, without the sheet needing to know about the form's internal layout.
@@ -140,27 +167,44 @@ export class InterventionCreateForm {
   /**
    * Property catalogueSearched
    * @readonly
-   * @description Requests remote options without replacing the draft.
+   *
+   * @description
+   * Requests remote options without replacing the draft.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {unknown}
    */
   public readonly catalogueSearched = output<PlanningCatalogueRequest>();
+
   /**
    * Property catalogues
    * @readonly
-   * @description Loaded coverage and failures by preparation source.
+   *
+   * @description
+   * Loaded coverage and failures by preparation source.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {unknown}
    */
   public readonly catalogues = input<
     Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
   >({});
+
   /**
    * Property catalogueRequested
    * @readonly
-   * @description Requests another source page while preserving the form.
+   *
+   * @description
+   * Requests another source page while preserving the form.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {unknown}
    */
   public readonly catalogueRequested = output<PlanningCatalogueKind>();
 
@@ -323,7 +367,18 @@ export class InterventionCreateForm {
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * Holds the intervention fields being edited before creation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionCreateFormDraft>}
+   */
   protected readonly model: WritableSignal<InterventionCreateFormDraft> =
     signal<InterventionCreateFormDraft>(EMPTY_VALUES);
 
@@ -354,10 +409,32 @@ export class InterventionCreateForm {
     },
   );
 
-  /** The objectives offered. */
+  /**
+   * Property typeValues
+   * @readonly
+   *
+   * @description
+   * Supplies supported intervention types to the type selector.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<InterventionType>}
+   */
   protected readonly typeValues: ReadonlyArray<InterventionType> = TYPE_VALUES;
 
-  /** The priorities offered. */
+  /**
+   * Property priorityValues
+   * @readonly
+   *
+   * @description
+   * Supplies supported intervention priorities to the priority selector.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<InterventionPriority>}
+   */
   protected readonly priorityValues: ReadonlyArray<InterventionPriority> = PRIORITY_VALUES;
 
   /**
@@ -383,21 +460,65 @@ export class InterventionCreateForm {
     ),
   );
 
-  /** Names a type on the closed select trigger. */
+  /**
+   * Property typeLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the localized label for an intervention type.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: InterventionType) => string}
+   */
   protected readonly typeLabelOf: (value: InterventionType) => string = (
     value: InterventionType,
   ): string => resolveInterventionTag('type', value).label;
 
-  /** Names a priority on the closed select trigger. */
+  /**
+   * Property priorityLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the localized label for an intervention priority.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: InterventionPriority) => string}
+   */
   protected readonly priorityLabelOf: (value: InterventionPriority) => string = (
     value: InterventionPriority,
   ): string => resolveInterventionTag('priority', value).label;
 
-  /** Names a picked site on the closed combobox trigger. */
+  /**
+   * Property siteLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the display label for a selected site option.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly siteLabelOf: (value: string) => string = (value: string): string =>
     this.siteOptions().find((option: SelectOption): boolean => option.value === value)?.label ?? '';
 
-  /** Names a picked member on the closed combobox trigger. */
+  /**
+   * Property memberLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the display label for a selected responsible-member option.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly memberLabelOf: (value: string) => string = (value: string): string =>
     this.memberOptions().find((option: MemberSelectOption): boolean => option.value === value)
       ?.label ?? '';

@@ -10,7 +10,7 @@ import type {
 import type { InterventionWorkItemOptimisticResult } from './models';
 
 /**
- * Service InterventionWorkspaceOptimisticService
+ * Class InterventionWorkspaceOptimisticService
  * @class InterventionWorkspaceOptimisticService
  *
  * @description
@@ -183,6 +183,22 @@ export class InterventionWorkspaceOptimisticService {
    */
   public addWorkItem(intervention: InterventionOutput | null): InterventionOutput | null;
 
+  /**
+   * Method addWorkItem
+   * @method addWorkItem
+   *
+   * @description
+   * Adds one work item to the optimistic intervention projection and advances its revision.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {InterventionOutput | null} intervention - Current intervention, or null when
+   *   unavailable.
+   *
+   * @returns {InterventionOutput | null} Updated projection, or null when the intervention is
+   *   unavailable.
+   */
   public addWorkItem(intervention: InterventionOutput | null): InterventionOutput | null {
     if (!intervention) return null;
     return {

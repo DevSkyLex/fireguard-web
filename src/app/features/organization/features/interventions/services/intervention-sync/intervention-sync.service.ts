@@ -26,7 +26,9 @@ import { interventionSyncEvents } from './events';
 import type { SyncProblemResponse } from './models';
 
 /**
- * Detail surfaced on a queued operation whose parent resource can never be
+ * Constant DEPENDENCY_UNAVAILABLE_DETAIL
+ *
+ * @description
  * created (its create is permanently failed or conflicted). Marking the
  * dependent `failed` makes an otherwise invisible, permanently-stuck operation
  * visible and actionable (retry after resolving the parent, or discard).
@@ -35,24 +37,49 @@ const DEPENDENCY_UNAVAILABLE_DETAIL =
   'A resource this change depends on could not be created. Resolve the blocked operation it depends on, then retry.';
 
 /**
- * Resources whose replay left a dependent-blocking marker in the current cycle.
+ * Interface BlockedResources
+ * @interface
+ *
+ * @description
  * `permanent` resources come from a failed/conflicted create and can never
  * appear on their own, so their dependents are surfaced as `failed`.
  * `transient` resources come from a retriable 5xx and will be re-attempted next
  * cycle, so their dependents stay `pending`.
  */
 interface BlockedResources {
+  /**
+   * Property permanent
+   * @readonly
+   *
+   * @description
+   * Lists resource keys blocked for the lifetime of the session.
+   *
+   * @access public
+   *
+   * @type {Set<string>}
+   */
   readonly permanent: Set<string>;
+
+  /**
+   * Property transient
+   * @readonly
+   *
+   * @description
+   * Lists resource keys blocked while a temporary operation is active.
+   *
+   * @access public
+   *
+   * @type {Set<string>}
+   */
   readonly transient: Set<string>;
 }
 
 /**
- * Service InterventionSyncService
+ * Class InterventionSyncService
  * @class InterventionSyncService
  *
  * @description
  * Outbox replay service for intervention offline workflows.
- *
  * Replays queued intervention operations against the API in their original field
  * entry order, dequeuing operations the server already applied (idempotent
  * `409 Conflict` responses) and stopping on any other failure so the outbox
@@ -67,9 +94,13 @@ export class InterventionSyncService {
   /**
    * Property dispatcher
    * @readonly
-   * @description Publishes cross-layer consequences; this service never listens to its own group.
+   *
+   * @description
+   * Publishes cross-layer consequences; this service never listens to its own group.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Dispatcher}
    */
   private readonly dispatcher: Dispatcher = inject(Dispatcher);
@@ -161,7 +192,16 @@ export class InterventionSyncService {
   );
 
   /**
-   * Active replay promises keyed by intervention to prevent concurrent duplicate replays.
+   * Property activeReplays
+   * @readonly
+   *
+   * @description
+   * Tracks in-flight replay promises by intervention so concurrent requests share one replay.
+   *
+   * @access private
+   * @since 0.1.0
+   *
+   * @type {Map<string, Promise<number>>}
    */
   private readonly activeReplays: Map<string, Promise<number>> = new Map();
   //#endregion
@@ -207,6 +247,7 @@ export class InterventionSyncService {
    *
    * @param {string} organizationId - Active organization identifier.
    * @param {string} interventionId - Intervention identifier.
+   *
    * @returns {Promise<number>} Number of operations effectively replayed.
    */
   private async replayInterventionOutbox(
@@ -299,7 +340,8 @@ export class InterventionSyncService {
    * @param {number} index - index value.
    * @param {number} replayed - replayed value.
    * @param {BlockedResources} blocked - Resources blocking their dependents this cycle.
-   * @param {(operation: InterventionOutboxOperation) => void} applied - Records affected collections.
+   * @param {(operation: InterventionOutboxOperation) => void} applied - Records affected
+   *   collections.
    *
    * @returns {Promise<number>} Result of the replay operations operation.
    */
@@ -336,11 +378,17 @@ export class InterventionSyncService {
 
   /**
    * Method skipBlockedOperation
-   * @description Keeps dependents of permanent failures actionable and those of transient failures pending.
+   * @method skipBlockedOperation
+   *
+   * @description
+   * Keeps dependents of permanent failures actionable and those of transient failures pending.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperation} operation - Queued operation.
    * @param {BlockedResources} blocked - Resource blockers for this replay cycle.
+   *
    * @returns {Promise<boolean>} Whether replay must skip this operation.
    */
   private async skipBlockedOperation(
@@ -365,12 +413,18 @@ export class InterventionSyncService {
 
   /**
    * Method handleReplayFailure
-   * @description Classifies an API rejection while preserving outbox and dependent-resource state.
+   * @method handleReplayFailure
+   *
+   * @description
+   * Classifies an API rejection while preserving outbox and dependent-resource state.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperation} operation - Rejected operation.
    * @param {unknown} error - Transport failure.
    * @param {BlockedResources} blocked - Resource blockers for this replay cycle.
+   *
    * @returns {Promise<'applied' | 'blocked'>} Replay disposition.
    */
   private async handleReplayFailure(
@@ -416,12 +470,18 @@ export class InterventionSyncService {
 
   /**
    * Method handlePreconditionFailure
-   * @description Captures current values for human review or rebases the queued revision for retry.
+   * @method handlePreconditionFailure
+   *
+   * @description
+   * Captures current values for human review or rebases the queued revision for retry.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperation} operation - Rejected operation.
    * @param {string} detail - Server problem detail.
    * @param {Set<string>} permanent - Resource blockers for this replay cycle.
+   *
    * @returns {Promise<void>}
    */
   private async handlePreconditionFailure(
@@ -444,10 +504,16 @@ export class InterventionSyncService {
 
   /**
    * Method requiresCurrentValueReview
-   * @description Identifies queued edits that need an explicit value comparison after a revision conflict.
+   * @method requiresCurrentValueReview
+   *
+   * @description
+   * Identifies queued edits that need an explicit value comparison after a revision conflict.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperation} operation - Rejected operation.
+   *
    * @returns {boolean} Whether current server values must be shown before retry.
    */
   private requiresCurrentValueReview(operation: InterventionOutboxOperation): boolean {
@@ -585,10 +651,16 @@ export class InterventionSyncService {
 
   /**
    * Method replayMediaCreate
-   * @description Validates a persisted media payload before uploading its evidence.
+   * @method replayMediaCreate
+   *
+   * @description
+   * Validates a persisted media payload before uploading its evidence.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperationFor<'media.create'>} operation - Queued media creation.
+   *
    * @returns {Promise<void>}
    */
   private async replayMediaCreate(
@@ -617,10 +689,16 @@ export class InterventionSyncService {
 
   /**
    * Method replayAttachmentUpload
-   * @description Validates an attachment before replaying the idempotent multipart upload.
+   * @method replayAttachmentUpload
+   *
+   * @description
+   * Validates an attachment before replaying the idempotent multipart upload.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperationFor<'attachment.upload'>} operation - Queued upload.
+   *
    * @returns {Promise<void>}
    */
   private async replayAttachmentUpload(
@@ -646,10 +724,16 @@ export class InterventionSyncService {
 
   /**
    * Method replayCommentCreate
-   * @description Replays a text comment with its optional idempotency key.
+   * @method replayCommentCreate
+   *
+   * @description
+   * Replays a text comment with its optional idempotency key.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperationFor<'comment.create'>} operation - Queued comment.
+   *
    * @returns {Promise<void>}
    */
   private async replayCommentCreate(
@@ -669,10 +753,17 @@ export class InterventionSyncService {
 
   /**
    * Method replayInterventionUpdate
-   * @description Rehydrates persisted ISO dates for the typed update transport.
+   * @method replayInterventionUpdate
+   *
+   * @description
+   * Rehydrates persisted ISO dates for the typed update transport.
+   *
    * @access private
    * @since 1.0.0
-   * @param {InterventionOutboxOperationFor<'intervention.update'>} operation - Queued intervention edit.
+   *
+   * @param {InterventionOutboxOperationFor<'intervention.update'>} operation - Queued intervention
+   *   edit.
+   *
    * @returns {Promise<void>}
    */
   private async replayInterventionUpdate(
@@ -703,10 +794,16 @@ export class InterventionSyncService {
 
   /**
    * Method replayWorkItemUpdate
-   * @description Removes outbox metadata before replaying one work-item edit.
+   * @method replayWorkItemUpdate
+   *
+   * @description
+   * Removes outbox metadata before replaying one work-item edit.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperationFor<'work-item.update'>} operation - Queued work-item edit.
+   *
    * @returns {Promise<void>}
    */
   private async replayWorkItemUpdate(
@@ -732,10 +829,16 @@ export class InterventionSyncService {
 
   /**
    * Method replayChangeUpdate
-   * @description Removes outbox metadata before replaying one change edit.
+   * @method replayChangeUpdate
+   *
+   * @description
+   * Removes outbox metadata before replaying one change edit.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutboxOperationFor<'change.update'>} operation - Queued change edit.
+   *
    * @returns {Promise<void>}
    */
   private async replayChangeUpdate(
@@ -771,7 +874,7 @@ export class InterventionSyncService {
    *
    * @param {InterventionOutboxOperation} operation - operation value.
    *
-   * @return {boolean} Result of the is create operation.
+   * @returns {boolean} Result of the is create operation.
    */
   private isCreate(operation: InterventionOutboxOperation): boolean {
     return (
@@ -795,14 +898,26 @@ export class InterventionSyncService {
    *
    * @param {SyncProblemResponse} response - HTTP problem response.
    *
-   * @return {string | undefined} Stable problem type when present.
+   * @returns {string | undefined} Stable problem type when present.
    */
   private problemType(response: SyncProblemResponse): string | undefined {
     return response.type ?? response.error?.type;
   }
 
   /**
-   * Determines whether retrying an operation unchanged cannot succeed.
+   * Method isPermanentFailure
+   * @method isPermanentFailure
+   *
+   * @description
+   * Determines whether the server response makes an outbox operation permanently unreplayable.
+   *
+   * @access private
+   * @since 0.1.0
+   *
+   * @param {unknown} error - Error raised while submitting the operation.
+   * @param {SyncProblemResponse} response - Normalized HTTP problem response.
+   *
+   * @returns {boolean} Whether replay should stop retrying this operation.
    */
   private isPermanentFailure(error: unknown, response: SyncProblemResponse): boolean {
     return (
@@ -822,6 +937,7 @@ export class InterventionSyncService {
    * @since 1.0.0
    *
    * @param {InterventionOutboxOperation} operation - Outbox entry with a client identifier.
+   *
    * @returns {string | null} Canonical resource path when the operation creates one.
    */
   private createdResource(operation: InterventionOutboxOperation): string | null {
@@ -857,6 +973,7 @@ export class InterventionSyncService {
    *
    * @param {InterventionOutboxOperation} operation - Operation that could not replay.
    * @param {Set<string>} resources - Resource identifiers to block in this replay.
+   *
    * @returns {void}
    */
   private block(operation: InterventionOutboxOperation, resources: Set<string>): void {
@@ -869,11 +986,20 @@ export class InterventionSyncService {
   }
 
   /**
-   * Re-fetches the current server revision of the resource an update operation
-   * targets, so a stale-revision conflict can be rebased. Returns `null` for
-   * non-update operations, when the target can no longer be found, or when the
-   * re-fetch itself fails (offline mid-replay) — the caller then falls back to
-   * a plain conflict mark.
+   * Method currentRevision
+   * @method currentRevision
+   *
+   * @description
+   * Fetches the latest revision for an update target so conflict recovery can rebase it.
+   * Returns null when the operation has no update target, the target is missing, or the
+   * revision lookup fails during an offline replay.
+   *
+   * @access private
+   * @since 0.1.0
+   *
+   * @param {InterventionOutboxOperation} operation - Queued update whose target revision is needed.
+   *
+   * @returns {Promise<number | null>} Current target revision, or null when it cannot be fetched.
    */
   private async currentRevision(operation: InterventionOutboxOperation): Promise<number | null> {
     try {
@@ -915,7 +1041,11 @@ export class InterventionSyncService {
    * @since 1.0.0
    *
    * @param {InterventionOutboxOperation} operation - Conflicting write.
-   * @returns {Promise<{ readonly revision: number; readonly values: Readonly<Record<string, string | number | boolean | null>> } | null>}
+   *
+   * @returns {Promise<{
+   *   readonly revision: number;
+   *   readonly values: Readonly<Record<string, string | number | boolean | null>>;
+   * } | null>}
    */
   private async currentValues(operation: InterventionOutboxOperation): Promise<{
     readonly revision: number;
@@ -985,6 +1115,7 @@ export class InterventionSyncService {
    *
    * @param {InterventionOutboxOperation} operation - Queued write to evaluate.
    * @param {ReadonlySet<string>} blockedResources - Resources awaiting successful replay or review.
+   *
    * @returns {boolean} Whether the operation must wait for a blocked resource.
    */
   private dependsOnBlockedResource(
@@ -1009,7 +1140,19 @@ export class InterventionSyncService {
   }
 
   /**
-   * Recursively checks structured operation payloads for blocked resource IRIs.
+   * Method containsBlockedResource
+   * @method containsBlockedResource
+   *
+   * @description
+   * Checks whether a payload contains any resource identifier blocked by an earlier conflict.
+   *
+   * @access private
+   * @since 0.1.0
+   *
+   * @param {unknown} value - Payload value to inspect recursively.
+   * @param {ReadonlySet<string>} blockedResources - Resource identifiers that cannot be replayed.
+   *
+   * @returns {boolean} Whether the value references a blocked resource.
    */
   private containsBlockedResource(value: unknown, blockedResources: ReadonlySet<string>): boolean {
     if (typeof value === 'string') return blockedResources.has(value);

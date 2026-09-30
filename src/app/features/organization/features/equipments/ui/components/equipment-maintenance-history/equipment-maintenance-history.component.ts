@@ -52,6 +52,8 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-equipment-maintenance-history
@@ -63,8 +65,6 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  *   (retried)="onMaintenanceLogsRetried()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-equipment-maintenance-history',
@@ -90,9 +90,13 @@ export class EquipmentMaintenanceHistory {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning this equipment, used to build the intervention link.
+   *
+   * @description
+   * The workspace owning this equipment, used to build the intervention link.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -100,9 +104,13 @@ export class EquipmentMaintenanceHistory {
   /**
    * Property logs
    * @readonly
-   * @description The loaded maintenance log entries, any order — this component sorts newest-first.
+   *
+   * @description
+   * The loaded maintenance log entries, any order — this component sorts newest-first.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly EquipmentMaintenanceLogOutput[]>}
    */
   public readonly logs: InputSignal<readonly EquipmentMaintenanceLogOutput[]> = input<
@@ -112,9 +120,13 @@ export class EquipmentMaintenanceHistory {
   /**
    * Property loading
    * @readonly
-   * @description Whether the log list is still loading.
+   *
+   * @description
+   * Whether the log list is still loading.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
@@ -122,9 +134,14 @@ export class EquipmentMaintenanceHistory {
   /**
    * Property error
    * @readonly
-   * @description Whether the last load failed — renders an inline destructive alert with Retry instead of the empty state.
+   *
+   * @description
+   * Whether the last load failed — renders an inline destructive alert with Retry instead of the
+   * empty state.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly error: InputSignal<boolean> = input<boolean>(false);
@@ -132,9 +149,13 @@ export class EquipmentMaintenanceHistory {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The organization's date pattern and timezone, for each row's `appOrgDate` binding.
+   *
+   * @description
+   * The organization's date pattern and timezone, for each row's `appOrgDate` binding.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -145,16 +166,31 @@ export class EquipmentMaintenanceHistory {
   /**
    * Property retried
    * @readonly
-   * @description The load-failed alert's Retry action was activated.
+   *
+   * @description
+   * The load-failed alert's Retry action was activated.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly retried: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** {@link logs}, newest-first by `startedAt`. */
+  /**
+   * Property orderedLogs
+   * @readonly
+   *
+   * @description
+   * {@link logs}, newest-first by `startedAt`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly EquipmentMaintenanceLogOutput[]>}
+   */
   protected readonly orderedLogs: Signal<readonly EquipmentMaintenanceLogOutput[]> = computed(() =>
     this.logs().toSorted(
       (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
@@ -166,6 +202,7 @@ export class EquipmentMaintenanceHistory {
 
   /**
    * Method sourceDescriptorOf
+   * @method sourceDescriptorOf
    *
    * @description
    * The icon and label naming what triggered the entry. `EquipmentMaintenanceLogSource`
@@ -200,10 +237,17 @@ export class EquipmentMaintenanceHistory {
 
   /**
    * Method interventionLinkAriaLabelOf
-   * @description The intervention link's accessible name — the bare FG-number alone reads ambiguously in an out-of-context link list.
+   * @method interventionLinkAriaLabelOf
+   *
+   * @description
+   * The intervention link's accessible name — the bare FG-number alone reads ambiguously in an
+   * out-of-context link list.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {EquipmentMaintenanceLogOutput} log - The row's log entry.
+   *
    * @returns {string} The localized label.
    */
   protected interventionLinkAriaLabelOf(log: EquipmentMaintenanceLogOutput): string {

@@ -3,12 +3,13 @@ import { eventGroup } from '@ngrx/signals/events';
 
 /**
  * Constant workloadStoreEvents
- * @const workloadStoreEvents
  *
  * @description
  * Capacity completion invalidates other open workload consumers.
  *
  * @since 1.0.0
+ *
+ * @constant workloadStoreEvents
  */
 export const workloadStoreEvents = eventGroup({
   source: 'Workload Store',

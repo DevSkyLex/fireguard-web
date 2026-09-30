@@ -7,8 +7,8 @@ import {
   type UrlTree,
 } from '@angular/router';
 import { APP_ROUTES } from '@app/app.routes';
-import { FederatedLinkCallbackPage } from '@features/auth';
 import { DashboardLayout } from '@layouts/dashboard-layout';
+import { FederatedLinkCallbackPage } from '../../auth/ui/pages/federated-link-callback-page/federated-link-callback-page.component';
 import { ACCOUNT_ROUTES } from '../account.routes';
 import { AccountNotificationsPage } from '../ui/pages/account-notifications-page/account-notifications-page.component';
 import { AccountOrganizationsPage } from '../ui/pages/account-organizations-page/account-organizations-page.component';

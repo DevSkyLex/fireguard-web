@@ -33,19 +33,104 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * `link`: the list's own filters narrow by lifecycle status, not by
  * maintenance-due status or non-conformity count, so none of the four
  * counters has an exact filtered view to point at.
+ *
+ * @type
  */
 type EquipmentKpiTile = {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Uniquely identifies this equipment kpi tile.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Provides the text displayed to identify this equipment kpi tile.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property value
+   * @readonly
+   *
+   * @description
+   * Provides the value submitted when this equipment kpi tile is selected.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly value: string;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Names the icon displayed for this equipment kpi tile.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly icon: string;
+
+  /**
+   * Property tone
+   * @readonly
+   *
+   * @description
+   * Selects the semantic visual treatment for this KPI tile.
+   *
+   * @access public
+   *
+   * @type {StatTileTone}
+   */
   readonly tone: StatTileTone;
+
+  /**
+   * Property caption
+   * @readonly
+   *
+   * @description
+   * Provides the supporting text displayed beneath this KPI value.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly caption: string;
+
+  /**
+   * Property progress
+   * @readonly
+   *
+   * @description
+   * Reports progress toward the KPI target when progress is available.
+   *
+   * @access public
+   *
+   * @type {number | null}
+   */
   readonly progress: number | null;
 };
 
 /**
- * Component EquipmentKpiStrip
+ * Class EquipmentKpiStrip
  * @class EquipmentKpiStrip
  *
  * @description
@@ -57,18 +142,17 @@ type EquipmentKpiTile = {
  * Mobile places compact metric rows and their unchanged scope captions in a
  * Statistics disclosure, initially closed. Desktop retains its stat tiles;
  * changing central interaction mode preserves the mobile disclosure choice.
- *
  * The open-non-conformities tile's label and caption spell out its
  * organization-wide scope explicitly: `EquipmentKpiOutput.openNonConformities`
  * counts non-conformities across every inspection in the organization, not
  * per-equipment, since non-conformities attach to inspections rather than to
  * equipment.
- *
  * When {@link error} is set, every value renders as `—` instead of a
  * misleading zero, and an inline destructive alert with a Retry action —
  * emitting {@link retried} — replaces the grid.
  *
  * @version 1.1.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -148,9 +232,13 @@ export class EquipmentKpiStrip {
   /**
    * Property retried
    * @readonly
-   * @description The alert's Retry action was activated.
+   *
+   * @description
+   * The alert's Retry action was activated.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly retried: OutputEmitterRef<void> = output<void>();
@@ -160,9 +248,13 @@ export class EquipmentKpiStrip {
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Uses the central interaction mode independently of viewport width.
+   *
+   * @description
+   * Uses the central interaction mode independently of viewport width.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -172,9 +264,13 @@ export class EquipmentKpiStrip {
   /**
    * Property statisticsExpanded
    * @readonly
-   * @description Remembers the mobile disclosure choice without changing KPI requests or the list state.
+   *
+   * @description
+   * Remembers the mobile disclosure choice without changing KPI requests or the list state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly statisticsExpanded: WritableSignal<boolean> = signal(false);

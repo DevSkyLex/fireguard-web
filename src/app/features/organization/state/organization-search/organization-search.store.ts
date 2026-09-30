@@ -43,8 +43,7 @@ const SEARCH_DEBOUNCE_MS: number = 300;
 const MIN_QUERY_LENGTH: number = 2;
 
 /**
- * Store OrganizationSearchStore
- * @const OrganizationSearchStore
+ * Constant OrganizationSearchStore
  *
  * @description
  * Component-scoped NgRx SignalStore behind the global command palette
@@ -52,14 +51,16 @@ const MIN_QUERY_LENGTH: number = 2;
  * `withQueryState` — the palette is a typeahead: each settled keystroke is
  * one whole-payload fetch that replaces the previous one (`switchMap`), so a
  * dedicated multi-call slice would buy nothing (`ARCHITECTURE.md` §10.11).
- *
  * The 300 ms debounce and the `< 2 characters → no call, reset to idle`
  * guard both live here rather than in the component, so every consumer of
  * the store gets the backend's contract (400 below 2 characters) enforced
  * for free.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant OrganizationSearchStore
  */
 export const OrganizationSearchStore = signalStore(
   withQueryState<OrganizationSearchOutput>(),
@@ -67,9 +68,13 @@ export const OrganizationSearchStore = signalStore(
   withComputed((store) => ({
     /**
      * Property hits
-     * @description The flat hit list of the last successful search, empty until one lands.
+     *
+     * @description
+     * The flat hit list of the last successful search, empty until one lands.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<readonly OrganizationSearchHitOutput[]>}
      */
     hits: computed<readonly OrganizationSearchHitOutput[]>(() => store.queryData()?.results ?? []),
@@ -142,11 +147,12 @@ export const OrganizationSearchStore = signalStore(
 
 /**
  * Type OrganizationSearchStoreType
- * @type OrganizationSearchStoreType
  *
  * @description
  * Injectable instance type exposed by {@link OrganizationSearchStore}.
  *
  * @since 1.0.0
+ *
+ * @type OrganizationSearchStoreType
  */
 export type OrganizationSearchStoreType = InstanceType<typeof OrganizationSearchStore>;

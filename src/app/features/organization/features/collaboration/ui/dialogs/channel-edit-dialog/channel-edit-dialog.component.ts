@@ -37,6 +37,8 @@ import { ChannelEditForm, type ChannelEditDraft } from '../../forms/channel-edit
  *
  * @version 2.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-channel-edit-dialog
@@ -47,8 +49,6 @@ import { ChannelEditForm, type ChannelEditDraft } from '../../forms/channel-edit
  *   (submitted)="submitEdit($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-channel-edit-dialog',

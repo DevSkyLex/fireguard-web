@@ -99,16 +99,49 @@ test('rejects runtime services in models', () =>
 for (const [command, status] of [
   ['git status --short', 0],
   ['git reset --hard', 2],
-  ['git switch -c codex/ui-cleanup', 0],
-  ['git switch -c feat/ui-cleanup', 0],
   ['git switch -c Bad_Name', 2],
+  ['git switch -c feat/ui-cleanup', 0],
+  ['git switch -c fix/otp-expiry', 0],
+  ['git switch -c docs/git-naming', 0],
+  ['git switch -c hotfix/session-rotation', 0],
+  ['git switch -c codex/ui-cleanup', 2],
+  ['git checkout -b codex/ui-cleanup', 2],
+  ['git branch codex/ui-cleanup', 2],
+  ['git branch -m feat/old-name codex/ui-cleanup', 2],
+  ['git worktree add ../example -b codex/ui-cleanup', 2],
+  ['git switch -c feat/Uppercase', 2],
+  ['git switch -c feat/has_underscore', 2],
+  ['git switch -c feat/double--dash', 2],
+  ['git switch -c feat/trailing-', 2],
+  ['git switch -c feat/nested/path', 2],
   ['git commit -m "Bad message"', 2],
-  ['git commit -m "chore: adapt Codex tooling"', 0],
+  ['git commit -m "chore: enforce git naming"', 0],
+  ['git commit -m "fix(session): correct token rotation"', 0],
+  ['git commit -m "feat(session)!: change token contract"', 0],
+  ['git commit -m "codex: enforce git naming"', 2],
+  ['git commit -m "hotfix: correct token rotation"', 2],
+  ['git commit -m "fix(session): Correct token rotation"', 2],
+  ['git commit -m "fix(session): correct token rotation."', 2],
+  [
+    'git commit -m "docs: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
+    0,
+  ],
+  [
+    'git commit -m "docs: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
+    2,
+  ],
 ]) {
-  test(`shell policy: ${command}`, () => assert.equal(invoke('Bash', { command }).status, status));
+  test(`git naming: ${command}`, () => {
+    const result = invoke('Bash', { command });
+    assert.equal(result.status, status, result.stderr);
+  });
 }
+
 test('accepts unified exec cmd input', () =>
   assert.equal(invoke('exec_command', { cmd: 'git status --short' }).status, 0));
+
+test('rejects the Codex branch prefix through unified exec input', () =>
+  assert.equal(invoke('exec_command', { cmd: 'git switch -c codex/ui-cleanup' }).status, 2));
 test('post hook skips a deleted file', () =>
   assert.equal(invoke('apply_patch', patch('*** Delete File: docs/absent.xyz'), 'post').status, 0));
 test('manifest hook resolves from a nested working directory', () => {
@@ -128,3 +161,14 @@ test('manifest hook resolves from a nested working directory', () => {
   });
   assert.equal(result.status, 0, result.stderr);
 });
+
+for (const app of ['fireguard-api', 'fireguard-web']) {
+  test(`protects the whole ${app} directory after relocation`, () => {
+    const result = invoke('Bash', { command: `rm -rf ${app}` });
+    assert.equal(result.status, 2, result.stderr);
+  });
+  test(`allows disposable dependencies inside ${app}`, () => {
+    const result = invoke('Bash', { command: `rm -rf ${app}/node_modules` });
+    assert.equal(result.status, 0, result.stderr);
+  });
+}

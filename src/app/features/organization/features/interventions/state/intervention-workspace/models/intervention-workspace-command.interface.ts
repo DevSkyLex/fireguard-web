@@ -30,7 +30,31 @@ export interface InterventionDetailsUpdateCommand {
    * @type {number}
    */
   readonly revision?: number;
+
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
+
+  /**
+   * Property input
+   * @readonly
+   *
+   * @description
+   * Carries the values submitted to intervention details update.
+   *
+   * @access public
+   *
+   * @type {UpdateInterventionInput}
+   */
   readonly input: UpdateInterventionInput;
 }
 
@@ -44,7 +68,30 @@ export interface InterventionDetailsUpdateCommand {
  * @since 1.0.0
  */
 export interface InterventionWorkItemCreateCommand {
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
+
+  /**
+   * Property input
+   * @readonly
+   *
+   * @description
+   * Carries the values submitted to intervention work item create.
+   *
+   * @access public
+   *
+   * @type {CreateInterventionWorkItemInput}
+   */
   readonly input: CreateInterventionWorkItemInput;
 }
 
@@ -58,6 +105,17 @@ export interface InterventionWorkItemCreateCommand {
  * @since 1.0.0
  */
 export interface InterventionWorkItemStatusCommand extends InterventionWorkItemStatusChange {
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
 }
 
@@ -71,7 +129,30 @@ export interface InterventionWorkItemStatusCommand extends InterventionWorkItemS
  * @since 1.2.0
  */
 export interface InterventionCommentAddCommand {
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
+
+  /**
+   * Property body
+   * @readonly
+   *
+   * @description
+   * Contains the message text shown in the conversation.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly body: string;
 }
 
@@ -87,7 +168,30 @@ export interface InterventionCommentAddCommand {
  * @since 4.2.0
  */
 export interface InterventionChangeRejectCommand {
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
+
+  /**
+   * Property changeId
+   * @readonly
+   *
+   * @description
+   * Identifies the change associated with this intervention change reject.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly changeId: string;
 }
 
@@ -105,11 +209,82 @@ export interface InterventionChangeRejectCommand {
  * @since 4.4.0
  */
 export interface InterventionAttachmentUploadCommand {
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
+
+  /**
+   * Property file
+   * @readonly
+   *
+   * @description
+   * Contains the selected file being uploaded.
+   *
+   * @access public
+   *
+   * @type {Blob}
+   */
   readonly file: Blob;
+
+  /**
+   * Property fileName
+   * @readonly
+   *
+   * @description
+   * Provides the original name of the selected file.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly fileName: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Provides the text displayed to identify this intervention attachment upload.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly label?: string;
+
+  /**
+   * Property workItemId
+   * @readonly
+   *
+   * @description
+   * Identifies the work item associated with this intervention attachment upload.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly workItemId?: string;
+
+  /**
+   * Property kind
+   * @readonly
+   *
+   * @description
+   * Distinguishes the intervention attachment upload variant represented by this value.
+   *
+   * @access public
+   *
+   * @type {InterventionAttachmentKind}
+   */
   readonly kind?: InterventionAttachmentKind;
 }
 
@@ -125,7 +300,30 @@ export interface InterventionAttachmentUploadCommand {
  * @since 1.0.0
  */
 export interface InterventionWorkItemDeleteCommand {
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
+
+  /**
+   * Property workItems
+   * @readonly
+   *
+   * @description
+   * Contains the work items currently loaded for this intervention.
+   *
+   * @access public
+   *
+   * @type {readonly InterventionWorkItemOutput[]}
+   */
   readonly workItems: readonly InterventionWorkItemOutput[];
 }
 
@@ -140,7 +338,42 @@ export interface InterventionWorkItemDeleteCommand {
  * @since 1.0.0
  */
 export interface InterventionFacilityCreateCommand {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Selects the organization scope for this operation.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property interventionId
+   * @readonly
+   *
+   * @description
+   * Identifies the intervention associated with this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly interventionId: string;
+
+  /**
+   * Property input
+   * @readonly
+   *
+   * @description
+   * Carries the values submitted to intervention facility create.
+   *
+   * @access public
+   *
+   * @type {CreateFacilityInput}
+   */
   readonly input: CreateFacilityInput;
 }

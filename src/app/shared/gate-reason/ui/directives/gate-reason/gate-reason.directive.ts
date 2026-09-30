@@ -12,6 +12,17 @@ import {
 } from '@angular/core';
 import { computed, effect, signal } from '@angular/core';
 
+/**
+ * Constant nextGateReasonSequence
+ *
+ * @description
+ * Allocates matching page-local IDs during server rendering and client hydration.
+ *
+ * @access private
+ * @since unreleased
+ *
+ * @type {number}
+ */
 let nextGateReasonSequence: number = 0;
 
 /**
@@ -47,10 +58,8 @@ function generateGateReasonId(): string {
  * directive never injects the visible node: it does not know where a
  * one-line reason fits in an arbitrary host's layout (a flex row, a card
  * footer), so it leaves that placement to the template that owns it.
- *
  * A `null` or empty reason is inert — no id is generated, no attribute is
  * touched, and a previously attached id is detached.
- *
  * Only `Renderer2`/`ElementRef` attribute access is used here, never
  * `document` or `window`, so no `isPlatformBrowser` guard is needed — this
  * runs identically during SSR and in the browser.
@@ -97,14 +106,62 @@ export class GateReasonDirective implements OnDestroy {
   //#endregion
 
   //#region State
+  /**
+   * Property generatedId
+   * @readonly
+   *
+   * @description
+   * Retains the directive's stable ID while its reason remains active.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   private readonly generatedId: WritableSignal<string | null> = signal<string | null>(null);
   //#endregion
 
   //#region Dependencies
+  /**
+   * Property element
+   * @readonly
+   *
+   * @description
+   * Provides the host element whose described-by attribute the directive manages.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ElementRef<HTMLElement>}
+   */
   private readonly element: ElementRef<HTMLElement> = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /**
+   * Property renderer
+   * @readonly
+   *
+   * @description
+   * Updates host attributes through Angular's SSR-safe rendering boundary.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Renderer2}
+   */
   private readonly renderer: Renderer2 = inject(Renderer2);
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Connects reason changes to stable IDs and the host's accessible description.
+   *
+   * @access public
+   * @since unreleased
+   */
   constructor() {
     effect(() => {
       const reason: string | null = this.appGateReason();
@@ -125,9 +182,11 @@ export class GateReasonDirective implements OnDestroy {
       this.attachDescribedBy(id);
     });
   }
+  //#endregion
 
   /**
    * Method ngOnDestroy
+   * @method ngOnDestroy
    *
    * @description
    * Detaches the generated id from `aria-describedby` if the directive is
@@ -148,6 +207,7 @@ export class GateReasonDirective implements OnDestroy {
 
   /**
    * Method attachDescribedBy
+   * @method attachDescribedBy
    *
    * @description
    * Adds `id` to the host's `aria-describedby` token list, preserving any
@@ -157,6 +217,7 @@ export class GateReasonDirective implements OnDestroy {
    * @since 13.1.0
    *
    * @param {string} id The id to add.
+   *
    * @returns {void}
    */
   private attachDescribedBy(id: string): void {
@@ -170,6 +231,7 @@ export class GateReasonDirective implements OnDestroy {
 
   /**
    * Method detachDescribedBy
+   * @method detachDescribedBy
    *
    * @description
    * Removes `id` from the host's `aria-describedby` token list, removing
@@ -179,6 +241,7 @@ export class GateReasonDirective implements OnDestroy {
    * @since 13.1.0
    *
    * @param {string} id The id to remove.
+   *
    * @returns {void}
    */
   private detachDescribedBy(id: string): void {
@@ -194,6 +257,7 @@ export class GateReasonDirective implements OnDestroy {
 
   /**
    * Method describedByTokens
+   * @method describedByTokens
    *
    * @description
    * Reads the host's current `aria-describedby` as its whitespace-separated

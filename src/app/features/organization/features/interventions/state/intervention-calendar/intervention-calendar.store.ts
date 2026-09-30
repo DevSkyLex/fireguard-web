@@ -22,16 +22,42 @@ import { interventionCalendarStoreEvents } from './events';
 import type { InterventionCalendarLoadRequest, InterventionCalendarState } from './models';
 
 /**
- * Internal load result merged into the store state.
+ * Interface CalendarLoadResult
+ * @interface CalendarLoadResult
+ *
+ * @description
+ * Carries the loaded interventions and active member identifier for calendar state updates.
  */
 interface CalendarLoadResult {
+  /**
+   * Property interventions
+   * @readonly
+   *
+   * @description
+   * Calendar entries loaded for the requested organization date window.
+   *
+   * @access public
+   *
+   * @type {readonly InterventionOutput[]}
+   */
   readonly interventions: readonly InterventionOutput[];
+
+  /**
+   * Property currentMemberIri
+   * @readonly
+   *
+   * @description
+   * Active member identifier used by personal calendar filters.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly currentMemberIri: string | null;
 }
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial state for the component-scoped {@link InterventionCalendarStore}.
@@ -39,6 +65,8 @@ interface CalendarLoadResult {
  * @since 1.0.0
  *
  * @type {InterventionCalendarState}
+ *
+ * @constant INITIAL_STATE
  */
 const INITIAL_STATE: InterventionCalendarState = {
   interventions: [],
@@ -47,8 +75,7 @@ const INITIAL_STATE: InterventionCalendarState = {
 };
 
 /**
- * Store InterventionCalendarStore
- * @const InterventionCalendarStore
+ * Constant InterventionCalendarStore
  *
  * @description
  * Component-scoped NgRx SignalStore backing the organization intervention
@@ -62,22 +89,22 @@ const INITIAL_STATE: InterventionCalendarState = {
  * @version 1.1.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant InterventionCalendarStore
  */
 export const InterventionCalendarStore = signalStore(
   withState<InterventionCalendarState>(INITIAL_STATE),
   withComputed((store) => ({
     /**
-     * Computed loading.
-     *
      * @description
+     * Computed loading.
      * True while the calendar data is loading.
      */
     loading: computed<boolean>(() => isCallPending(store.loadCallState())),
 
     /**
-     * Computed loadError.
-     *
      * @description
+     * Computed loadError.
      * Normalized error of the last load when it failed, otherwise `null`. Lets
      * the page distinguish an empty calendar from a failed fetch.
      */
@@ -176,11 +203,12 @@ export const InterventionCalendarStore = signalStore(
 
 /**
  * Type InterventionCalendarStoreType
- * @type InterventionCalendarStoreType
  *
  * @description
  * Injectable instance type exposed by {@link InterventionCalendarStore}.
  *
  * @since 1.0.0
+ *
+ * @type InterventionCalendarStoreType
  */
 export type InterventionCalendarStoreType = InstanceType<typeof InterventionCalendarStore>;

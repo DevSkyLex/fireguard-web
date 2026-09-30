@@ -43,6 +43,17 @@ import type {
 } from './models';
 
 //#region Initial State
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Idle billing requests with no active organization or checkout expectation.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @type {OrganizationBillingState}
+ */
 const INITIAL_STATE: OrganizationBillingState = {
   currentOrganizationId: null,
   checkoutExpectation: null,
@@ -74,8 +85,7 @@ function redirectToStripe(documentRef: Document, url: string): void {
 }
 
 /**
- * Store OrganizationBillingStore
- * @const OrganizationBillingStore
+ * Constant OrganizationBillingStore
  *
  * @description
  * Component-scoped NgRx SignalStore backing the subscription panel. Loads the
@@ -83,11 +93,13 @@ function redirectToStripe(documentRef: Document, url: string): void {
  * Billing Portal sessions — on success it redirects the browser to the returned
  * Stripe URL. The plan change itself is applied by the Stripe webhook, so the
  * settings page re-reads the subscription on return.
- *
  * Designed to be provided at **component level** (no `providedIn: 'root'`).
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant OrganizationBillingStore
  */
 export const OrganizationBillingStore = signalStore(
   withState<OrganizationBillingState>(INITIAL_STATE),
@@ -97,34 +109,49 @@ export const OrganizationBillingStore = signalStore(
       const state = store.subscriptionCallState();
       return state.data ?? null;
     }),
+
     /**
      * Property awaitingCheckout
      * @readonly
-     * @description Keeps an unconfirmed return visible after polling stops or connectivity fails.
+     *
+     * @description
+     * Keeps an unconfirmed return visible after polling stops or connectivity fails.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     awaitingCheckout: computed<boolean>(
       () => store.checkoutExpectation() !== null && store.reconciliationCallState().data !== true,
     ),
+
     /**
      * Property isCheckingCheckout
      * @readonly
-     * @description Indicates that the bounded server confirmation check is running.
+     *
+     * @description
+     * Indicates that the bounded server confirmation check is running.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     isCheckingCheckout: computed<boolean>(
       () => store.reconciliationCallState().status === 'pending',
     ),
+
     /**
      * Property checkoutConfirmed
      * @readonly
-     * @description True only when the API confirms the requested active plan and billing interval.
+     *
+     * @description
+     * True only when the API confirms the requested active plan and billing interval.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     checkoutConfirmed: computed<boolean>(() => store.reconciliationCallState().data === true),
@@ -174,7 +201,8 @@ export const OrganizationBillingStore = signalStore(
        * @description
        * Loads the organization's current subscription state.
        *
-       * @param {string | null} organizationId - The organization identifier, or null to cancel and clear.
+       * @param {string | null} organizationId - The organization identifier, or null to cancel and
+       *   clear.
        */
       loadSubscription: rxMethod<string | null>(
         pipe(
@@ -217,10 +245,17 @@ export const OrganizationBillingStore = signalStore(
       /**
        * Method watchCheckout
        * @method watchCheckout
-       * @description Checks at most fifteen times, retains the latest server state and cancels obsolete checks. A missing legacy target stays unconfirmed.
+       *
+       * @description
+       * Checks at most fifteen times, retains the latest server state and cancels obsolete checks.
+       * A missing legacy target stays unconfirmed.
+       *
        * @access public
        * @since 1.0.0
-       * @param {BillingCheckoutExpectation | null} expectation - Server-provided Checkout target, or null to stop.
+       *
+       * @param {BillingCheckoutExpectation | null} expectation - Server-provided Checkout target,
+       *   or null to stop.
+       *
        * @returns {void}
        */
       watchCheckout: rxMethod<BillingCheckoutExpectation | null>(
@@ -452,11 +487,12 @@ export const OrganizationBillingStore = signalStore(
 
 /**
  * Type OrganizationBillingStore
- * @type OrganizationBillingStore
  *
  * @description
  * Instance type of the {@link OrganizationBillingStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type OrganizationBillingStore
  */
 export type OrganizationBillingStore = InstanceType<typeof OrganizationBillingStore>;

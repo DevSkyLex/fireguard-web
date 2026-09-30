@@ -97,7 +97,10 @@ export class WorkloadTable {
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<{ readonly member: MemberWorkloadOutput; readonly day: WorkloadDayOutput }>}
+   * @type {OutputEmitterRef<{
+   *   readonly member: MemberWorkloadOutput;
+   *   readonly day: WorkloadDayOutput;
+   * }>}
    */
   public readonly dayOpened: OutputEmitterRef<{
     readonly member: MemberWorkloadOutput;
@@ -123,9 +126,13 @@ export class WorkloadTable {
   /**
    * Property locale
    * @readonly
-   * @description Active application locale, used to spell out a day for the desktop cell's accessible name.
+   *
+   * @description
+   * Active application locale, used to spell out a day for the desktop cell's accessible name.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {string}
    */
   private readonly locale: string = inject(LOCALE_ID);
@@ -133,9 +140,14 @@ export class WorkloadTable {
   /**
    * Property unknownMemberLabel
    * @readonly
-   * @description Accessible-name fallback when neither the authorized directory nor the projection row carries a name — never the raw member id.
+   *
+   * @description
+   * Accessible-name fallback when neither the authorized directory nor the projection row carries a
+   * name — never the raw member id.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {string}
    */
   protected readonly unknownMemberLabel: string = $localize`:@@workload.unknownMember:Unknown member`;
@@ -169,6 +181,7 @@ export class WorkloadTable {
    * @since 1.1.0
    *
    * @param {MemberWorkloadOutput} member - The row's projection member.
+   *
    * @returns {string} The resolved name.
    */
   protected memberName(member: MemberWorkloadOutput): string {
@@ -230,6 +243,7 @@ export class WorkloadTable {
    * @since 1.0.0
    *
    * @param {WorkloadDayOutput} day - Daily totals.
+   *
    * @returns {string} Accessible availability label.
    */
   protected statusLabel(day: WorkloadDayOutput): string {
@@ -256,6 +270,7 @@ export class WorkloadTable {
    * @since 1.0.0
    *
    * @param {WorkloadDayOutput} day - Daily load.
+   *
    * @returns {number} Visual percentage between zero and one hundred.
    */
   protected meterValue(day: WorkloadDayOutput): number {
@@ -276,6 +291,7 @@ export class WorkloadTable {
    *
    * @param {MemberWorkloadOutput} member - The row's projection member.
    * @param {WorkloadDayOutput} day - The cell's daily totals.
+   *
    * @returns {string} The composed accessible name.
    */
   protected dayAriaLabel(member: MemberWorkloadOutput, day: WorkloadDayOutput): string {
@@ -304,6 +320,7 @@ export class WorkloadTable {
    * @since 1.1.0
    *
    * @param {MemberWorkloadOutput} member - The row's projection member.
+   *
    * @returns {number} Count of overloaded days, `0` when none.
    */
   protected overloadedDaysCount(member: MemberWorkloadOutput): number {

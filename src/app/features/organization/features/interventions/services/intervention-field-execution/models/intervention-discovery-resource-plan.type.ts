@@ -4,7 +4,12 @@ import type {
 } from '@features/organization/features/interventions/models';
 
 /**
+ * Type InterventionDiscoveryResourcePlan
+ *
+ * @description
  * Prepared canonical resource creation for a field discovery.
+ *
+ * @type {InterventionDiscoveryResourcePlan}
  */
 export type InterventionDiscoveryResourcePlan = {
   [Type in Extract<

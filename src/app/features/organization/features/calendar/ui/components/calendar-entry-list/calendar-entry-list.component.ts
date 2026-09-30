@@ -37,7 +37,7 @@ import { HlmItemImports } from '@shared/ui/item';
 import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /**
- * Component CalendarEntryList
+ * Class CalendarEntryList
  * @class CalendarEntryList
  *
  * @description
@@ -58,6 +58,8 @@ import { HlmTooltipImports } from '@shared/ui/tooltip';
  *
  * @version 1.2.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-calendar-entry-list
@@ -68,8 +70,6 @@ import { HlmTooltipImports } from '@shared/ui/tooltip';
  *   (deleteRequested)="requestDelete($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-calendar-entry-list',
@@ -99,15 +99,30 @@ import { HlmTooltipImports } from '@shared/ui/tooltip';
 })
 export class CalendarEntryList {
   //#region Inputs
-  /** Stacks entry details and source badge in narrow week columns. */
+  /**
+   * Property compact
+   * @readonly
+   *
+   * @description
+   * Stacks entry details and source badge in narrow week columns.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
   public readonly compact: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property items
    * @readonly
-   * @description The entries to render, in the order given — the caller sorts.
+   *
+   * @description
+   * The entries to render, in the order given — the caller sorts.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly CalendarFeedItemOutput[]>}
    */
   public readonly items: InputSignal<readonly CalendarFeedItemOutput[]> =
@@ -116,9 +131,13 @@ export class CalendarEntryList {
   /**
    * Property organizationId
    * @readonly
-   * @description The organization an intervention entry's link routes into.
+   *
+   * @description
+   * The organization an intervention entry's link routes into.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -126,15 +145,21 @@ export class CalendarEntryList {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the member holds `organization.events.write` — gates the Edit/Delete affordances on a `calendar_event` row.
+   *
+   * @description
+   * Whether the member holds `organization.events.write` — gates the Edit/Delete affordances on a
+   * `calendar_event` row.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
 
   /**
    * Property day
+   * @readonly
    *
    * @description
    * The `yyyy-MM-dd` day this list renders entries for — each call site
@@ -147,6 +172,7 @@ export class CalendarEntryList {
    *
    * @access public
    * @since 1.2.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly day: InputSignal<string | null> = input<string | null>(null);
@@ -154,9 +180,14 @@ export class CalendarEntryList {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's timezone, read by {@link timeLabelOf} so a time-of-day never reads in the wrong offset. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's timezone, read by {@link timeLabelOf} so a time-of-day never reads in
+   * the wrong offset. The default keeps the component renderable with no context wired.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -165,9 +196,14 @@ export class CalendarEntryList {
   /**
    * Property facilityLabelOf
    * @readonly
-   * @description Resolves a bare facility id to its name, from the page's own facility catalog. Defaults to always resolving `null`, which drops the facility line.
+   *
+   * @description
+   * Resolves a bare facility id to its name, from the page's own facility catalog. Defaults to
+   * always resolving `null`, which drops the facility line.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {InputSignal<(facilityId: string) => string | null>}
    */
   public readonly facilityLabelOf: InputSignal<(facilityId: string) => string | null> = input<
@@ -179,9 +215,13 @@ export class CalendarEntryList {
   /**
    * Property editRequested
    * @readonly
-   * @description A `calendar_event` row's Edit action was activated.
+   *
+   * @description
+   * A `calendar_event` row's Edit action was activated.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<CalendarFeedItemOutput>}
    */
   public readonly editRequested: OutputEmitterRef<CalendarFeedItemOutput> =
@@ -190,9 +230,13 @@ export class CalendarEntryList {
   /**
    * Property deleteRequested
    * @readonly
-   * @description A `calendar_event` row's Delete action was activated.
+   *
+   * @description
+   * A `calendar_event` row's Delete action was activated.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<CalendarFeedItemOutput>}
    */
   public readonly deleteRequested: OutputEmitterRef<CalendarFeedItemOutput> =
@@ -200,16 +244,35 @@ export class CalendarEntryList {
   //#endregion
 
   //#region Properties
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * Provides the active locale used to format calendar dates and times.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject(LOCALE_ID);
   //#endregion
 
   //#region Methods
   /**
    * Method sourceLabelOf
-   * @description Names a feed source for the row's badge, through the resolver shared with the page's "Partial results" banner.
+   * @method sourceLabelOf
+   *
+   * @description
+   * Names a feed source for the row's badge, through the resolver shared with the page's "Partial
+   * results" banner.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry in question.
+   *
    * @returns {string} A short localized source name.
    */
   protected sourceLabelOf(item: CalendarFeedItemOutput): string {
@@ -218,10 +281,16 @@ export class CalendarEntryList {
 
   /**
    * Method toneOf
-   * @description The badge tone of a feed entry, from its source.
+   * @method toneOf
+   *
+   * @description
+   * The badge tone of a feed entry, from its source.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry in question.
+   *
    * @returns {CalendarDisplayEvent['tone']} The `hlm-badge` variant.
    */
   protected toneOf(item: CalendarFeedItemOutput): CalendarDisplayEvent['tone'] {
@@ -232,10 +301,17 @@ export class CalendarEntryList {
 
   /**
    * Method sourceIconOf
-   * @description The `aria-hidden` glyph leading a feed entry's badge — every source's tone is now neutral, so this is what actually distinguishes one from another.
+   * @method sourceIconOf
+   *
+   * @description
+   * The `aria-hidden` glyph leading a feed entry's badge — every source's tone is now neutral, so
+   * this is what actually distinguishes one from another.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry in question.
+   *
    * @returns {string} The `ng-icon` name.
    */
   protected sourceIconOf(item: CalendarFeedItemOutput): string {
@@ -244,6 +320,7 @@ export class CalendarEntryList {
 
   /**
    * Method timeLabelOf
+   * @method timeLabelOf
    *
    * @description
    * The entry's time-of-day, the localized all-day label, or — on a
@@ -289,11 +366,19 @@ export class CalendarEntryList {
 
   /**
    * Method resolveDateTimeFormat
-   * @description Builds an `Intl.DateTimeFormat` for `timeZone`, falling back to the runtime's own timezone when `timeZone` is not one `Intl` accepts — an organization-configured value the browser rejects must not break the whole entry list, matching `OrgDatePipe`'s own fallback.
+   * @method resolveDateTimeFormat
+   *
+   * @description
+   * Builds an `Intl.DateTimeFormat` for `timeZone`, falling back to the runtime's own timezone when
+   * `timeZone` is not one `Intl` accepts — an organization-configured value the browser rejects
+   * must not break the whole entry list, matching `OrgDatePipe`'s own fallback.
+   *
    * @access private
    * @since 1.3.0
+   *
    * @param {Intl.DateTimeFormatOptions} options - The formatting options, without `timeZone`.
    * @param {string} timeZone - An IANA timezone name, `'UTC'`, or a fixed offset.
+   *
    * @returns {Intl.DateTimeFormat} The resolved formatter.
    */
   private resolveDateTimeFormat(
@@ -309,10 +394,17 @@ export class CalendarEntryList {
 
   /**
    * Method descriptionOf
-   * @description The entry's free-text description, when set — an inspection's notes or a standalone event's own description.
+   * @method descriptionOf
+   *
+   * @description
+   * The entry's free-text description, when set — an inspection's notes or a standalone event's own
+   * description.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry in question.
+   *
    * @returns {string | null} The description, or `null`.
    */
   protected descriptionOf(item: CalendarFeedItemOutput): string | null {
@@ -321,10 +413,17 @@ export class CalendarEntryList {
 
   /**
    * Method facilityOf
-   * @description The entry's facility name, resolved through {@link facilityLabelOf}, when the entry carries a facility and it resolves.
+   * @method facilityOf
+   *
+   * @description
+   * The entry's facility name, resolved through {@link facilityLabelOf}, when the entry carries a
+   * facility and it resolves.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry in question.
+   *
    * @returns {string | null} The facility name, or `null`.
    */
   protected facilityOf(item: CalendarFeedItemOutput): string | null {
@@ -333,6 +432,7 @@ export class CalendarEntryList {
 
   /**
    * Method linkOf
+   * @method linkOf
    *
    * @description
    * The record route an entry's row links to — an intervention's workspace
@@ -360,10 +460,17 @@ export class CalendarEntryList {
 
   /**
    * Method isEditableOf
-   * @description Whether a row's Edit/Delete affordances should show — a `calendar_event` entry, and only while {@link canWrite} holds.
+   * @method isEditableOf
+   *
+   * @description
+   * Whether a row's Edit/Delete affordances should show — a `calendar_event` entry, and only while
+   * {@link canWrite} holds.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry in question.
+   *
    * @returns {boolean} Whether the row is a writable standalone event.
    */
   protected isEditableOf(item: CalendarFeedItemOutput): boolean {
@@ -372,10 +479,17 @@ export class CalendarEntryList {
 
   /**
    * Method editAriaLabelOf
-   * @description The edit button's accessible name, naming the event so repeated rows stay distinguishable to assistive tech.
+   * @method editAriaLabelOf
+   *
+   * @description
+   * The edit button's accessible name, naming the event so repeated rows stay distinguishable to
+   * assistive tech.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {CalendarFeedItemOutput} item - The row's entry.
+   *
    * @returns {string} The localized label.
    */
   protected editAriaLabelOf(item: CalendarFeedItemOutput): string {
@@ -386,10 +500,17 @@ export class CalendarEntryList {
 
   /**
    * Method deleteAriaLabelOf
-   * @description The delete button's accessible name, naming the event so repeated rows stay distinguishable to assistive tech.
+   * @method deleteAriaLabelOf
+   *
+   * @description
+   * The delete button's accessible name, naming the event so repeated rows stay distinguishable to
+   * assistive tech.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {CalendarFeedItemOutput} item - The row's entry.
+   *
    * @returns {string} The localized label.
    */
   protected deleteAriaLabelOf(item: CalendarFeedItemOutput): string {

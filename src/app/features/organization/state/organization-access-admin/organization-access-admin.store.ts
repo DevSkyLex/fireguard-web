@@ -29,10 +29,16 @@ import { organizationAccessErrorMessage } from '@features/organization/utils';
 import { organizationAccessAdminEvents } from './organization-access-admin.events';
 
 /**
- * Store OrganizationAccessAdminStore
- * @const OrganizationAccessAdminStore
- * @description Page-scoped admission settings and request commands. Writes exhaust duplicate submissions, replace obsolete command feedback and invalidate older reads. Scope revisions prevent responses from a previous organization visit from replacing current entities.
+ * Constant OrganizationAccessAdminStore
+ *
+ * @description
+ * Page-scoped admission settings and request commands. Writes exhaust duplicate submissions,
+ * replace obsolete command feedback and invalidate older reads. Scope revisions prevent responses
+ * from a previous organization visit from replacing current entities.
+ *
  * @since 1.0.0
+ *
+ * @constant OrganizationAccessAdminStore
  */
 export const OrganizationAccessAdminStore = signalStore(
   withEntities({ entity: type<OrganizationDomainOutput>(), collection: 'domain' }),
@@ -92,9 +98,13 @@ export const OrganizationAccessAdminStore = signalStore(
     (store, service = inject(OrganizationAccessService), dispatcher = inject(Dispatcher)) => {
       /**
        * Function invalidatePolicyQuery
-       * @description Discards reads preceding a write while retaining the last loaded policy and domains.
+       *
+       * @description
+       * Discards reads preceding a write while retaining the last loaded policy and domains.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const invalidatePolicyQuery = (): void => {
@@ -111,9 +121,13 @@ export const OrganizationAccessAdminStore = signalStore(
 
       /**
        * Function invalidateRequestsQuery
-       * @description Prevents a pre-decision refresh from restoring requests already approved or rejected.
+       *
+       * @description
+       * Prevents a pre-decision refresh from restoring requests already approved or rejected.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const invalidateRequestsQuery = (): void => {
@@ -130,9 +144,14 @@ export const OrganizationAccessAdminStore = signalStore(
 
       /**
        * Function resetPolicyFeedback
-       * @description Clears feedback from settled mutually exclusive domain and policy commands before the next action.
+       *
+       * @description
+       * Clears feedback from settled mutually exclusive domain and policy commands before the next
+       * action.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const resetPolicyFeedback = (): void => {
@@ -143,11 +162,16 @@ export const OrganizationAccessAdminStore = signalStore(
           removeCallState: idleCallState(),
         });
       };
+
       /**
        * Function clearFailedPolicyFeedback
-       * @description Clears settled failures before a fresh policy read without interrupting pending commands.
+       *
+       * @description
+       * Clears settled failures before a fresh policy read without interrupting pending commands.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const clearFailedPolicyFeedback = (): void => {
@@ -166,10 +190,16 @@ export const OrganizationAccessAdminStore = signalStore(
         /**
          * Method loadPolicy
          * @method loadPolicy
-         * @description Executes loadPolicy through the authorized admission API and records its independent request state.
+         *
+         * @description
+         * Executes loadPolicy through the authorized admission API and records its independent
+         * request state.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} params - Operation parameters.
+         *
          * @returns {void}
          */
         loadPolicy: rxMethod<string>(
@@ -250,10 +280,17 @@ export const OrganizationAccessAdminStore = signalStore(
         /**
          * Method savePolicy
          * @method savePolicy
-         * @description Executes savePolicy through the authorized admission API and records its independent request state.
+         *
+         * @description
+         * Executes savePolicy through the authorized admission API and records its independent
+         * request state.
+         *
          * @access public
          * @since 1.0.0
-         * @param {{ organizationId: string; input: OrganizationAccessPolicyInput }} params - Operation parameters.
+         *
+         * @param {{ organizationId: string; input: OrganizationAccessPolicyInput }} params -
+         *   Operation parameters.
+         *
          * @returns {void}
          */
         savePolicy: rxMethod<{ organizationId: string; input: OrganizationAccessPolicyInput }>(
@@ -314,10 +351,16 @@ export const OrganizationAccessAdminStore = signalStore(
         /**
          * Method addDomain
          * @method addDomain
-         * @description Executes addDomain through the authorized admission API and records its independent request state.
+         *
+         * @description
+         * Executes addDomain through the authorized admission API and records its independent
+         * request state.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {{ organizationId: string; domain: string }} params - Operation parameters.
+         *
          * @returns {void}
          */
         addDomain: rxMethod<{ organizationId: string; domain: string }>(
@@ -375,10 +418,16 @@ export const OrganizationAccessAdminStore = signalStore(
         /**
          * Method verifyDomain
          * @method verifyDomain
-         * @description Executes verifyDomain through the authorized admission API and records its independent request state.
+         *
+         * @description
+         * Executes verifyDomain through the authorized admission API and records its independent
+         * request state.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {{ organizationId: string; domainId: string }} params - Operation parameters.
+         *
          * @returns {void}
          */
         verifyDomain: rxMethod<{ organizationId: string; domainId: string }>(
@@ -441,10 +490,16 @@ export const OrganizationAccessAdminStore = signalStore(
         /**
          * Method removeDomain
          * @method removeDomain
-         * @description Executes removeDomain through the authorized admission API and records its independent request state.
+         *
+         * @description
+         * Executes removeDomain through the authorized admission API and records its independent
+         * request state.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {{ organizationId: string; domainId: string }} params - Operation parameters.
+         *
          * @returns {void}
          */
         removeDomain: rxMethod<{ organizationId: string; domainId: string }>(
@@ -507,10 +562,16 @@ export const OrganizationAccessAdminStore = signalStore(
         /**
          * Method loadRequests
          * @method loadRequests
-         * @description Executes loadRequests through the authorized admission API and records its independent request state.
+         *
+         * @description
+         * Executes loadRequests through the authorized admission API and records its independent
+         * request state.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} params - Operation parameters.
+         *
          * @returns {void}
          */
         loadRequests: rxMethod<string>(
@@ -604,10 +665,17 @@ export const OrganizationAccessAdminStore = signalStore(
         /**
          * Method approve
          * @method approve
-         * @description Records the approval in the current scope and emits membership invalidation even if the reviewer has since switched organizations.
+         *
+         * @description
+         * Records the approval in the current scope and emits membership invalidation even if the
+         * reviewer has since switched organizations.
+         *
          * @access public
          * @since 1.0.0
-         * @param {{ organizationId: string; requestId: string; roleIds: string[] }} params - Operation parameters.
+         *
+         * @param {{ organizationId: string; requestId: string; roleIds: string[] }} params -
+         *   Operation parameters.
+         *
          * @returns {void}
          */
         approve: rxMethod<{ organizationId: string; requestId: string; roleIds: string[] }>(
@@ -678,10 +746,16 @@ export const OrganizationAccessAdminStore = signalStore(
         /**
          * Method reject
          * @method reject
-         * @description Executes reject through the authorized admission API and records its independent request state.
+         *
+         * @description
+         * Executes reject through the authorized admission API and records its independent request
+         * state.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {{ organizationId: string; requestId: string }} params - Operation parameters.
+         *
          * @returns {void}
          */
         reject: rxMethod<{ organizationId: string; requestId: string }>(
@@ -750,8 +824,12 @@ export const OrganizationAccessAdminStore = signalStore(
 
 /**
  * Type OrganizationAccessAdminStoreType
- * @type OrganizationAccessAdminStoreType
- * @description Injectable admission administration store instance.
+ *
+ * @description
+ * Injectable admission administration store instance.
+ *
  * @since 1.0.0
+ *
+ * @type OrganizationAccessAdminStoreType
  */
 export type OrganizationAccessAdminStoreType = InstanceType<typeof OrganizationAccessAdminStore>;

@@ -126,7 +126,8 @@ export class InterventionDiscoveryService {
    *
    * @param {string} organizationId - Active organization identifier.
    * @param {string} interventionId - Active intervention identifier.
-   * @param {InterventionDiscoveryRequest & { readonly target: string }} request - Field discovery request with a non-null target.
+   * @param {InterventionDiscoveryRequest & { readonly target: string }} request - Field discovery
+   *   request with a non-null target.
    *
    * @returns {Promise<InterventionDiscoveryResult>} Whether the discovery was queued or applied.
    */

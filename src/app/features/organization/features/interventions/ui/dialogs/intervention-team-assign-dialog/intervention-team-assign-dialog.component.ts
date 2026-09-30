@@ -22,7 +22,7 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmRadioGroupImports } from '@shared/ui/radio-group';
 
 /**
- * Component InterventionTeamAssignDialog
+ * Class InterventionTeamAssignDialog
  * @class InterventionTeamAssignDialog
  *
  * @description
@@ -32,7 +32,6 @@ import { HlmRadioGroupImports } from '@shared/ui/radio-group';
  * the union semantics up front: assigning a team snapshot-expands its
  * CURRENT active members into the participants list — it never replaces or
  * removes anyone, and the write is idempotent.
- *
  * Purely presentational (`ARCHITECTURE.md` §10.5): it owns no store and
  * takes its open state from {@link open}. The picked team is this dialog's
  * own draft, cleared whenever {@link open} transitions to `false`; the
@@ -58,58 +57,182 @@ import { HlmRadioGroupImports } from '@shared/ui/radio-group';
 })
 export class InterventionTeamAssignDialog {
   //#region Inputs
-  /** Whether the dialog is open. Owned by the caller. */
+  /**
+   * Property open
+   * @readonly
+   *
+   * @description
+   * Controls whether the team assignment dialog is visible.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
   public readonly open: InputSignal<boolean> = input<boolean>(false);
 
-  /** The organization's teams, offered as candidates. */
+  /**
+   * Property teams
+   * @readonly
+   *
+   * @description
+   * Supplies the teams available for assignment.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<readonly TeamOutput[]>}
+   */
   public readonly teams: InputSignal<readonly TeamOutput[]> = input<readonly TeamOutput[]>([]);
 
   /**
    * Property teamMemberOptions
    * @readonly
-   * @description Resolved member previews keyed by team id; the page owns their loading and resolution.
+   *
+   * @description
+   * Resolved member previews keyed by team id; the page owns their loading and resolution.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<Readonly<Partial<Record<string, readonly MemberSelectOption[]>>>>}
    */
   public readonly teamMemberOptions: InputSignal<
     Readonly<Partial<Record<string, readonly MemberSelectOption[]>>>
   > = input<Readonly<Partial<Record<string, readonly MemberSelectOption[]>>>>({});
 
-  /** Whether the team list is still loading. */
+  /**
+   * Property teamsLoading
+   * @readonly
+   *
+   * @description
+   * Indicates whether the available teams are still loading.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
   public readonly teamsLoading: InputSignal<boolean> = input<boolean>(false);
 
-  /** Whether the caller's assignment write is in flight. */
+  /**
+   * Property busy
+   * @readonly
+   *
+   * @description
+   * Disables assignment actions while the selection is being saved.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
   public readonly busy: InputSignal<boolean> = input<boolean>(false);
 
-  /** The caller's last failure message, if any — a 422 (no active members) or a 409 (no longer assignable). */
+  /**
+   * Property errorMessage
+   * @readonly
+   *
+   * @description
+   * Displays the latest team assignment error when one occurs.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | null>}
+   */
   public readonly errorMessage: InputSignal<string | null> = input<string | null>(null);
   //#endregion
 
   //#region Outputs
-  /** The picked team's id. */
+  /**
+   * Property submitted
+   * @readonly
+   *
+   * @description
+   * Emits the selected team identifier when assignment is confirmed.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
   public readonly submitted: OutputEmitterRef<string> = output<string>();
 
-  /** The dialog was closed without submitting — Escape, the backdrop, or Cancel. */
+  /**
+   * Property dismissed
+   * @readonly
+   *
+   * @description
+   * Emits when the dialog closes without submitting a team selection.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<void>}
+   */
   public readonly dismissed: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The team picked in this dialog, cleared whenever a new open cycle starts. */
+  /**
+   * Property selectedTeamId
+   * @readonly
+   *
+   * @description
+   * Holds the team selected in the dialog until submission.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly selectedTeamId: WritableSignal<string | null> = signal<string | null>(null);
 
-  /** The dialog state, derived from {@link open}. */
+  /**
+   * Property dialogState
+   * @readonly
+   *
+   * @description
+   * Reflects the open input as the native dialog state.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<BrnDialogState>}
+   */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.open() ? 'open' : 'closed',
   );
 
-  /** Whether the assignment may be submitted. */
+  /**
+   * Property canSubmit
+   * @readonly
+   *
+   * @description
+   * Enables submission only when a team is selected and no save is in progress.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canSubmit: Signal<boolean> = computed<boolean>(
     () => !this.busy() && this.selectedTeamId() !== null,
   );
   //#endregion
 
   //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Connects the dialog’s reactive effects to its current input state.
+   *
+   * @access public
+   * @since unreleased
+   */
   public constructor() {
     effect((): void => {
       const isOpen: boolean = this.open();
@@ -124,11 +247,16 @@ export class InterventionTeamAssignDialog {
   //#region Methods
   /**
    * Method onStateChanged
+   * @method onStateChanged
    *
-   * @description Relays a dismissal — Escape or the backdrop.
+   * @description
+   * Relays a dismissal — Escape or the backdrop.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - The dialog's new state.
+   *
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
@@ -139,10 +267,14 @@ export class InterventionTeamAssignDialog {
 
   /**
    * Method submit
+   * @method submit
    *
-   * @description Emits {@link submitted} for the picked team.
+   * @description
+   * Emits {@link submitted} for the picked team.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected submit(): void {

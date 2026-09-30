@@ -4,8 +4,9 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLifeBuoy } from '@ng-icons/lucide';
 import {
   ORGANIZATION_CONTEXT_PORT,
-  OrganizationPermissionService,
+  ORGANIZATION_MEMBER_ACCESS_PORT,
   type OrganizationContextPort,
+  type OrganizationMemberAccessPort,
 } from '@features/organization';
 import {
   HlmSidebarGroup,
@@ -17,6 +18,7 @@ import {
 } from '@shared/ui/sidebar';
 import { DASHBOARD_GLOBAL_NAV_ITEMS } from './constants';
 import type { DashboardGlobalNavRow } from './models';
+import { buildDashboardGlobalNavRows } from './utils/build-nav-rows.utils';
 
 /**
  * Component DashboardGlobalNav
@@ -40,12 +42,12 @@ import type { DashboardGlobalNavRow } from './models';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-dashboard-global-nav />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-dashboard-global-nav',
@@ -74,7 +76,6 @@ export class DashboardGlobalNav {
    * The destinations to render, in catalog order, with an organization-scoped
    * route completed by the open organization and a permission-gated row
    * dropped when the member could not reach it.
-   *
    * A row that names a permission is withheld until the grants have arrived
    * rather than shown and taken away, which would move the rows under the
    * pointer on every page load.
@@ -85,34 +86,12 @@ export class DashboardGlobalNav {
    * @type {Signal<readonly DashboardGlobalNavRow[]>}
    */
   protected readonly items: Signal<readonly DashboardGlobalNavRow[]> = computed(
-    (): readonly DashboardGlobalNavRow[] => {
-      const organizationId: string | null = this.organizationContext.selectedOrganizationId();
-      const rows: DashboardGlobalNavRow[] = [];
-
-      for (const item of DASHBOARD_GLOBAL_NAV_ITEMS) {
-        const isGranted: boolean =
-          item.permissions === undefined ||
-          this.permissionService.hasAnyPermission(item.permissions);
-
-        if (!isGranted) continue;
-
-        if (item.organizationScoped !== true) {
-          rows.push({ id: item.id, label: item.label, icon: item.icon, resolvedRoute: item.route });
-          continue;
-        }
-
-        if (item.route === null || organizationId === null) continue;
-
-        rows.push({
-          id: item.id,
-          label: item.label,
-          icon: item.icon,
-          resolvedRoute: `/organizations/${organizationId}/${item.route}`,
-        });
-      }
-
-      return rows;
-    },
+    (): readonly DashboardGlobalNavRow[] =>
+      buildDashboardGlobalNavRows(
+        DASHBOARD_GLOBAL_NAV_ITEMS,
+        this.organizationContext.selectedOrganizationId(),
+        this.memberAccess.permissions(),
+      ),
   );
 
   /**
@@ -132,24 +111,23 @@ export class DashboardGlobalNav {
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
   /**
-   * Property permissionService
+   * Property memberAccess
    * @readonly
    *
    * @description
    * The reader's grants in that organization, which decide whether a gated row
    * is listed at all.
-   *
-   * The feature's own helper rather than a set built here, because a grant is
-   * not always the leaf permission: an owner holds `organization.*`, and a
+   * The published access port and pure permission matcher preserve wildcard grants.
+   * An owner holds `organization.*`, and a
    * plain membership test would drop every gated row from their column.
    *
    * @access private
    * @since 2.0.0
    *
-   * @type {OrganizationPermissionService}
+   * @type {OrganizationMemberAccessPort}
    */
-  private readonly permissionService: OrganizationPermissionService =
-    inject<OrganizationPermissionService>(OrganizationPermissionService);
+  private readonly memberAccess: OrganizationMemberAccessPort =
+    inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
   /**
    * Property soonLabel

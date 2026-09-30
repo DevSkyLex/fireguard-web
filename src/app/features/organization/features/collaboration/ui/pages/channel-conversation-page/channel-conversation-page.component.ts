@@ -107,33 +107,29 @@ import {
 import { MessageReplySheet } from '../../sheets/message-reply-sheet';
 
 /**
- * Component ChannelConversationPage
+ * Class ChannelConversationPage
  * @class ChannelConversationPage
  *
  * @description
  * One channel's room: an in-column header naming it, the thread, the
  * composer, and the administration surfaces gated on
  * `organization.messaging.manage`.
- *
  * Mirrors `DirectConversationPage` structurally — the same `MessageThread` /
  * `MessageComposer` composition, the same route-driven reset-then-load
  * effect, the same read-marker and realtime wiring — because a channel *is*
  * a conversation row on this API: `channelId === conversationId`, so the
  * thread machinery built for direct messages works here unchanged, pointed
  * at the channel's own id.
- *
  * The dashboard route provides ChannelsStore for both this room and the
  * sidebar extension. Rename, hierarchy and favorite changes therefore update
  * the same collection without rebuilding the navigation. Below 1024px the back
  * link returns to the channel index, which shows the extension in place of the room.
- *
  * Favoriting calls `ConversationService` directly rather than through
  * `ChannelsStore`: the store's public surface is load, loadOne, create,
  * update, remove and setParent, and a channel's favorite state has no
  * dedicated write there. `ChannelsStore.loadOne` — already trustworthy,
  * since it is the one endpoint that reports real derived fields — is what
  * folds the result back into the shared entity afterwards.
- *
  * The header shows no topic line: `ChannelOutput` carries no description or
  * topic field on this API, so there is nothing to render there yet.
  *
@@ -195,9 +191,13 @@ export class ChannelConversationPage {
   /**
    * Property presences
    * @readonly
-   * @description Tracks displayed message authors, the desktop avatar group and the open roster.
+   *
+   * @description
+   * Tracks displayed message authors, the desktop avatar group and the open roster.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
    */
   protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
@@ -422,7 +422,18 @@ export class ChannelConversationPage {
       }),
   );
 
-  /** Names one typer when possible and counts concurrent typers without exposing member ids. */
+  /**
+   * Property typingLabel
+   * @readonly
+   *
+   * @description
+   * Shows the localized typing status for channel participants, when present.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
   protected readonly typingLabel: Signal<string | null> = computed((): string | null => {
     const ids = this.thread.typingMemberIds();
     if (ids.length === 0) return null;
@@ -934,9 +945,13 @@ export class ChannelConversationPage {
   /**
    * Property messageEditBusy
    * @readonly
-   * @description Whether the submitted message edit is in flight.
+   *
+   * @description
+   * Whether the submitted message edit is in flight.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly messageEditBusy: Signal<boolean> = this.messageEditGate.isBusy;
@@ -944,9 +959,13 @@ export class ChannelConversationPage {
   /**
    * Property messageEditError
    * @readonly
-   * @description The message edit's own error, scoped to a submit from this dialog.
+   *
+   * @description
+   * The message edit's own error, scoped to a submit from this dialog.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<StoreError | null>}
    */
   protected readonly messageEditError: Signal<StoreError | null> = this.messageEditGate.error;
@@ -954,9 +973,13 @@ export class ChannelConversationPage {
   /**
    * Property messageDeleteBusy
    * @readonly
-   * @description Whether the confirmed message delete is in flight.
+   *
+   * @description
+   * Whether the confirmed message delete is in flight.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly messageDeleteBusy: Signal<boolean> = this.messageDeleteGate.isBusy;
@@ -964,9 +987,13 @@ export class ChannelConversationPage {
   /**
    * Property messageDeleteError
    * @readonly
-   * @description The message delete's own error, scoped to a confirm from this dialog.
+   *
+   * @description
+   * The message delete's own error, scoped to a confirm from this dialog.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<StoreError | null>}
    */
   protected readonly messageDeleteError: Signal<StoreError | null> = this.messageDeleteGate.error;
@@ -986,36 +1013,228 @@ export class ChannelConversationPage {
    */
   protected readonly favoritePending: WritableSignal<boolean> = signal<boolean>(false);
 
+  /**
+   * Property conversations
+   * @readonly
+   *
+   * @description
+   * Loads and mutates the conversation data owned by this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ConversationService}
+   */
   private readonly conversations: ConversationService =
     inject<ConversationService>(ConversationService);
 
+  /**
+   * Property directory
+   * @readonly
+   *
+   * @description
+   * Resolves display information for members referenced in messages.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {MemberDirectoryPort}
+   */
   private readonly directory: MemberDirectoryPort =
     inject<MemberDirectoryPort>(MEMBER_DIRECTORY_PORT);
 
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Provides the active member permissions used to gate messaging actions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessPort}
+   */
   private readonly memberAccess: OrganizationMemberAccessPort =
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
+  /**
+   * Property organizationContext
+   * @readonly
+   *
+   * @description
+   * Provides the active organization context for conversation requests.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationContextPort}
+   */
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Provides navigation for the active conversation route.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject<Router>(Router);
 
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Provides the activated route parameters for this conversation page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
+  /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * Dispatches typed messaging events to sibling feature state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Events}
+   */
   private readonly events: Events = inject<Events>(Events);
 
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Provides the injected document used by browser-only conversation behavior.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Document}
+   */
   private readonly document: Document = inject<Document>(DOCUMENT);
+
+  /**
+   * Property browser
+   * @readonly
+   *
+   * @description
+   * Indicates whether this instance is running in a browser.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   private readonly browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Provides the component lifecycle scope used to clean up owned work.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private readonly destroyRef = inject(DestroyRef);
+
+  /**
+   * Property typingIdleTimer
+   *
+   * @description
+   * Tracks the pending timeout that clears this page’s typing state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ReturnType<typeof setTimeout> | null}
+   */
   private typingIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Property typingActive
+   *
+   * @description
+   * Tracks whether this page has published a typing indication.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private typingActive = false;
+
+  /**
+   * Property typingConversationId
+   *
+   * @description
+   * Identifies the conversation for the current typing indication.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   private typingConversationId: string | null = null;
+
+  /**
+   * Property lastTypingPublishedAt
+   *
+   * @description
+   * Records the time of the most recent typing indication publication.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private lastTypingPublishedAt = 0;
 
-  /** Stands in wherever a member cannot be named. Never a raw id. */
+  /**
+   * Property unknownMemberLabel
+   * @readonly
+   *
+   * @description
+   * Fallback display name used when a message author cannot be resolved.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly unknownMemberLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
 
-  /** Stands in for the channel's own name while it has not resolved. */
+  /**
+   * Property unknownChannelLabel
+   * @readonly
+   *
+   * @description
+   * Fallback channel name shown while channel details are unavailable.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly unknownChannelLabel: string = $localize`:@@route.channel:Channel`;
 
   /**
@@ -1048,9 +1267,9 @@ export class ChannelConversationPage {
   protected readonly favoriteOffLabel: string = $localize`:@@channels.room.favorite:Add to favorites`;
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description
@@ -1058,7 +1277,6 @@ export class ChannelConversationPage {
    * matters: both stores survive a channel change, since the router reuses
    * this page when only `:channelId` changes, so each is emptied before the
    * new channel is read.
-   *
    * `channels.loadOne` runs alongside the thread load rather than being left
    * to the list: it is the only read reporting a trustworthy `unreadCount`
    * and `isFavorite`, and a member can land here on a deep link the list was
@@ -1375,7 +1593,20 @@ export class ChannelConversationPage {
     this.thread.markRead({ conversationId: this.channelId(), lastReadMessageId: latest.id });
   }
 
-  /** Sends sparse typing heartbeats while the composer remains active. */
+  /**
+   * Method onTypingActivity
+   * @method onTypingActivity
+   *
+   * @description
+   * Publishes typing activity while the visible channel is writable and the member is typing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} active - Whether typing activity is currently active.
+   *
+   * @returns {void}
+   */
   protected onTypingActivity(active: boolean): void {
     if (
       !this.browser ||
@@ -1402,7 +1633,18 @@ export class ChannelConversationPage {
     this.typingIdleTimer = setTimeout((): void => this.stopTyping(), 3_500);
   }
 
-  /** A missed stop is bounded by the receiver's five-second expiry. */
+  /**
+   * Method stopTyping
+   * @method stopTyping
+   *
+   * @description
+   * Cancels the typing timeout and publishes the inactive state for the current channel.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   private stopTyping(): void {
     if (this.typingIdleTimer !== null) clearTimeout(this.typingIdleTimer);
     this.typingIdleTimer = null;
@@ -1626,10 +1868,15 @@ export class ChannelConversationPage {
   /**
    * Method onMobileActionsClosed
    * @method onMobileActionsClosed
-   * @description Opens the requested channel surface after the action drawer has finished closing.
+   *
+   * @description
+   * Opens the requested channel surface after the action drawer has finished closing.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {unknown} action - The explicit native drawer close result.
+   *
    * @returns {void}
    */
   protected onMobileActionsClosed(action: unknown): void {

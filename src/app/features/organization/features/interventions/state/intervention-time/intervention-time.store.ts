@@ -29,12 +29,13 @@ import type { InterventionTimeState } from './models/intervention-time-state.int
 
 /**
  * Constant initialState
- * @const initialState
  *
  * @description
  * An unopened journal has no inferred history or permissions.
  *
  * @since 1.0.0
+ *
+ * @constant initialState
  */
 const initialState: InterventionTimeState = {
   scope: null,
@@ -47,14 +48,15 @@ const initialState: InterventionTimeState = {
 };
 
 /**
- * Store InterventionTimeStore
- * @const InterventionTimeStore
+ * Constant InterventionTimeStore
  *
  * @description
  * Sheet-scoped time journal with cancellable reads and serialized, durable drafts.
  * Journal writes never reuse an operational revision or reestimate work automatically.
  *
  * @since 1.0.0
+ *
+ * @constant InterventionTimeStore
  */
 export const InterventionTimeStore = signalStore(
   withState<InterventionTimeState>(initialState),
@@ -71,6 +73,7 @@ export const InterventionTimeStore = signalStore(
      * @since 1.0.0
      *
      * @param {InterventionTimeScope | null} scope - Selected task or dismissed sheet.
+     *
      * @returns {void}
      */
     load: rxMethod<InterventionTimeScope | null>(
@@ -117,12 +120,14 @@ export const InterventionTimeStore = signalStore(
        * @method _persist
        *
        * @description
-       * Orders draft saves before submission so a slow local write cannot resurrect a submitted draft.
+       * Orders draft saves before submission so a slow local write cannot resurrect a submitted
+       * draft.
        *
        * @access private
        * @since 1.0.0
        *
        * @param {InterventionTimePersistenceRequest} request - Captured local intention.
+       *
        * @returns {void}
        */
       _persist: rxMethod<InterventionTimePersistenceRequest>(
@@ -198,7 +203,12 @@ export const InterventionTimeStore = signalStore(
      * @access public
      * @since 1.0.0
      *
-     * @param {{ readonly scope: InterventionTimeScope; readonly command: InterventionTimeWrite }} request - Reviewed journal intention.
+     * @param {{
+     *   readonly scope: InterventionTimeScope;
+     *   readonly command: InterventionTimeWrite;
+     * }} request
+     *   - Reviewed journal intention.
+     *
      * @returns {void}
      */
     write(request: {
@@ -220,7 +230,9 @@ export const InterventionTimeStore = signalStore(
      * @access public
      * @since 1.0.0
      *
-     * @param {{ readonly scope: InterventionTimeScope; readonly draft: InterventionTimeDraft }} request - Unsaved input.
+     * @param {{ readonly scope: InterventionTimeScope; readonly draft: InterventionTimeDraft }} request -
+     *   Unsaved input.
+     *
      * @returns {void}
      */
     saveDraft(request: {
@@ -236,11 +248,12 @@ export const InterventionTimeStore = signalStore(
 
 /**
  * Type InterventionTimeStoreType
- * @type InterventionTimeStoreType
  *
  * @description
  * Injected independent journal store instance.
  *
  * @since 1.0.0
+ *
+ * @type InterventionTimeStoreType
  */
 export type InterventionTimeStoreType = InstanceType<typeof InterventionTimeStore>;

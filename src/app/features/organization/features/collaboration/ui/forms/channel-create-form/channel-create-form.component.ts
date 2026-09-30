@@ -27,15 +27,36 @@ import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinner } from '@shared/ui/spinner';
 import type { ChannelCreateDraft, NewChannelFormDraft } from './models';
 
-/** Matches `CreateChannelInput.name`'s server-side bounds. */
+/**
+ * Constant CHANNEL_NAME_MIN_LENGTH
+ *
+ * @description
+ * Matches `CreateChannelInput.name`'s server-side bounds.
+ */
 const CHANNEL_NAME_MIN_LENGTH = 2;
+
+/**
+ * Constant CHANNEL_NAME_MAX_LENGTH
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {unknown}
+ */
 const CHANNEL_NAME_MAX_LENGTH = 80;
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
 
 /**
- * Component ChannelCreateForm
+ * Class ChannelCreateForm
  * @class ChannelCreateForm
  *
  * @description
@@ -64,6 +85,8 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
  *
  * @version 2.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-channel-create-form
@@ -73,8 +96,6 @@ const EMPTY_VALUES: NewChannelFormDraft = { name: '', parentChannelId: '' };
  *   (cancelled)="createDialogVisible.set(false)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-channel-create-form',
@@ -186,7 +207,18 @@ export class ChannelCreateForm {
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * Holds the editable values for the new channel until the form is submitted.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<NewChannelFormDraft>}
+   */
   protected readonly model: WritableSignal<NewChannelFormDraft> =
     signal<NewChannelFormDraft>(EMPTY_VALUES);
 
@@ -215,14 +247,25 @@ export class ChannelCreateForm {
     });
   });
 
-  /** Names a picked parent on the closed select trigger. */
+  /**
+   * Property parentLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves the display label for a selected parent channel option.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly parentLabelOf: (value: string) => string = (value) =>
     this.parentOptions().find((option) => option.value === value)?.label ?? '';
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description

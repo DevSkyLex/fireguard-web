@@ -22,7 +22,6 @@ import type { ActiveEquipmentState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_ACTIVE_EQUIPMENT_STATE
- * @const INITIAL_ACTIVE_EQUIPMENT_STATE
  *
  * @description
  * Initial state for the ActiveEquipmentStore, representing an idle
@@ -31,6 +30,8 @@ import type { ActiveEquipmentState } from './models';
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_ACTIVE_EQUIPMENT_STATE
  */
 const INITIAL_ACTIVE_EQUIPMENT_STATE: ActiveEquipmentState = {
   selectedEquipment: null,
@@ -39,32 +40,31 @@ const INITIAL_ACTIVE_EQUIPMENT_STATE: ActiveEquipmentState = {
 //#endregion
 
 /**
- * Store ActiveEquipmentStore
- * @const ActiveEquipmentStore
+ * Constant ActiveEquipmentStore
  *
  * @description
  * Root-level NgRx SignalStore that tracks only the **currently active /
  * selected equipment** and its associated loading state.
- *
  * This store is intentionally minimal — its single responsibility is
  * answering "which equipment are we looking at right now?". All list
  * management, CRUD, lifecycle operations, attachments and tags live in
  * the component-scoped {@link EquipmentStore}.
- *
  * Provided at the root level (`providedIn: 'root'`) so that any service or
  * component can read `selectedEquipment` without providing anything.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant ActiveEquipmentStore
  */
 export const ActiveEquipmentStore = signalStore(
   { providedIn: 'root' },
 
   //#region Features
   /**
-   * Feature withState
-   *
    * @description
+   * Feature withState
    * Adds the ActiveEquipmentState to the store, initialized with
    * INITIAL_ACTIVE_EQUIPMENT_STATE.
    *
@@ -75,9 +75,8 @@ export const ActiveEquipmentStore = signalStore(
   withState<ActiveEquipmentState>(INITIAL_ACTIVE_EQUIPMENT_STATE),
 
   /**
-   * Feature withComputed
-   *
    * @description
+   * Feature withComputed
    * Adds computed properties to the store for common
    * derived state related to the active equipment.
    *
@@ -109,15 +108,15 @@ export const ActiveEquipmentStore = signalStore(
      *
      * @since 1.0.0
      *
-     * @type {StoreError | null} The error object if the get operation is in error, or null otherwise.
+     * @type {StoreError | null} The error object if the get operation is in error, or null
+     *   otherwise.
      */
     getError: computed<StoreError | null>(() => store.getCallState().error),
   })),
 
   /**
-   * Feature withMethods
-   *
    * @description
+   * Feature withMethods
    * Adds methods to the store for managing the active equipment state, including
    * setting the active equipment, resolving it by ID,
    * and clearing the selection.
@@ -125,8 +124,10 @@ export const ActiveEquipmentStore = signalStore(
    * @since 1.0.0
    *
    * @param {SignalStore} store - The store instance to which the methods will be added.
-   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on errors.
-   * @param {EquipmentService} equipmentService - The service used to fetch equipment data from the API.
+   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on
+   *   errors.
+   * @param {EquipmentService} equipmentService - The service used to fetch equipment data from the
+   *   API.
    *
    * @returns {object} An object containing the methods to add to the store.
    */
@@ -176,7 +177,8 @@ export const ActiveEquipmentStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @param {{ organizationId: string; equipmentId: string }} params - Organization and equipment identifiers.
+       * @param {{ organizationId: string; equipmentId: string }} params - Organization and
+       *   equipment identifiers.
        *
        * @returns {void} No return value — progress is observable through `getCallState`.
        */
@@ -223,7 +225,7 @@ export const ActiveEquipmentStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @return {void} No return value.
+       * @returns {void} No return value.
        */
       clearSelectedEquipment(): void {
         patchState(store, { selectedEquipment: null });
@@ -251,11 +253,12 @@ export const ActiveEquipmentStore = signalStore(
 
 /**
  * Type ActiveEquipmentStore
- * @type ActiveEquipmentStore
  *
  * @description
  * Instance type of the {@link ActiveEquipmentStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type ActiveEquipmentStore
  */
 export type ActiveEquipmentStore = InstanceType<typeof ActiveEquipmentStore>;

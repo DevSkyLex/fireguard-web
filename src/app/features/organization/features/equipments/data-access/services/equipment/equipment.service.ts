@@ -19,7 +19,6 @@ import type {
 /**
  * Service EquipmentService
  * @class EquipmentService
- * @extends {HydraApiService}
  *
  * @description
  * API service for equipment management operations.
@@ -27,7 +26,10 @@ import type {
  * facility assignment, attachments, and tags.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class EquipmentService extends HydraApiService {
@@ -64,7 +66,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} [equipmentId] - Optional ID of the equipment.
    *
-   * @return {string} The constructed API path for equipment operations.
+   * @returns {string} The constructed API path for equipment operations.
    */
   private equipmentPath(organizationId: string, equipmentId?: string): string {
     const base: string = `${EquipmentService.BASE_PATH}/${organizationId}/equipment`;
@@ -84,7 +86,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} facilityId - The ID of the facility.
    *
-   * @return {string} The constructed API path for facility equipment list.
+   * @returns {string} The constructed API path for facility equipment list.
    */
   private facilityEquipmentPath(organizationId: string, facilityId: string): string {
     return `${EquipmentService.BASE_PATH}/${organizationId}/facilities/${facilityId}/equipment`;
@@ -104,7 +106,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization to list equipment for.
    * @param {RequestOptions} [options] - Optional request options for pagination and filtering.
    *
-   * @return {Observable<HydraCollection<EquipmentOutput>>} An observable emitting a collection of equipment.
+   * @returns {Observable<HydraCollection<EquipmentOutput>>} An observable emitting a collection of
+   *   equipment.
    */
   public list(
     organizationId: string,
@@ -134,7 +137,20 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
+   * Method listAll
+   * @method listAll
+   *
+   * @description
    * Lists every equipment item by consuming the server-paginated collection.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {string} organizationId - Organization whose complete resource collection is requested.
+   * @param {RequestOptions} options - Request filters and ordering applied while fetching all
+   *   pages.
+   *
+   * @returns {Observable<readonly EquipmentOutput[]>}
    */
   public listAll(
     organizationId: string,
@@ -171,7 +187,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} interventionId - The intervention to scope the query to.
    * @param {PaginationOptions} [options] - Optional pagination.
    *
-   * @returns {Observable<HydraCollection<EquipmentOutput>>} An observable emitting the linked equipment.
+   * @returns {Observable<HydraCollection<EquipmentOutput>>} An observable emitting the linked
+   *   equipment.
    */
   public listByIntervention(
     interventionId: string,
@@ -203,7 +220,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} facilityId - The ID of the facility.
    * @param {RequestOptions} [options] - Optional request options.
    *
-   * @return {Observable<HydraCollection<EquipmentOutput>>} An observable emitting a collection of equipment.
+   * @returns {Observable<HydraCollection<EquipmentOutput>>} An observable emitting a collection of
+   *   equipment.
    */
   public listByFacility(
     organizationId: string,
@@ -235,7 +253,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    *
-   * @return {Observable<Blob>} The export's CSV binary content.
+   * @returns {Observable<Blob>} The export's CSV binary content.
    */
   public exportCsv(organizationId: string): Observable<Blob> {
     return this.http.get(this.buildUrl(`${this.equipmentPath(organizationId)}/export`), {
@@ -265,7 +283,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {{ ids?: readonly string[]; facilityId?: string }} [options] - The selection to print.
    *
-   * @return {Observable<Blob>} The label sheet's PDF binary content.
+   * @returns {Observable<Blob>} The label sheet's PDF binary content.
    */
   public exportLabels(
     organizationId: string,
@@ -302,7 +320,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} equipmentId - The equipment to export the sheet for.
    *
-   * @return {Observable<Blob>} The sheet's PDF binary content.
+   * @returns {Observable<Blob>} The sheet's PDF binary content.
    */
   public exportReport(organizationId: string, equipmentId: string): Observable<Blob> {
     return this.http.get(
@@ -329,7 +347,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    *
-   * @return {Observable<EquipmentKpiOutput>} An observable emitting the KPI snapshot.
+   * @returns {Observable<EquipmentKpiOutput>} An observable emitting the KPI snapshot.
    */
   public kpis(organizationId: string): Observable<EquipmentKpiOutput> {
     return this.getOne<EquipmentKpiOutput>(
@@ -351,7 +369,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization the equipment belongs to.
    * @param {string} equipmentId - The ID of the equipment to retrieve.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the equipment details.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the equipment details.
    */
   public get(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
     return this.getOne<EquipmentOutput>(this.equipmentPath(organizationId, equipmentId));
@@ -371,7 +389,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization to create the equipment in.
    * @param {CreateEquipmentInput} input - The data required to create the equipment.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the created equipment details.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the created equipment details.
    */
   public create(organizationId: string, input: CreateEquipmentInput): Observable<EquipmentOutput> {
     return this.post<CreateEquipmentInput, EquipmentOutput>(
@@ -394,7 +412,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} interventionId - intervention Id value.
    * @param {CreateEquipmentInput} input - input value.
    *
-   * @return {Observable<EquipmentOutput>} Result of the create for intervention operation.
+   * @returns {Observable<EquipmentOutput>} Result of the create for intervention operation.
    */
   public createForIntervention(
     organizationId: string,
@@ -433,7 +451,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} [interventionId] - Intervention authorizing the field evidence upload.
    * @param {string} [clientId] - Stable client UUID used to replay uploads idempotently.
    *
-   * @return {Observable<HydraItem>} Result of the upload evidence operation.
+   * @returns {Observable<HydraItem>} Result of the upload evidence operation.
    */
   public uploadEvidence(
     equipmentId: string,
@@ -470,7 +488,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - The ID of the equipment to update.
    * @param {UpdateEquipmentInput} input - The data to update the equipment with.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the updated equipment details.
    */
   public update(
     organizationId: string,
@@ -501,7 +519,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - The ID of the equipment whose pin is set.
    * @param {SetPlanPositionInput} input - The position to write, or nulls to clear it.
    *
-   * @return {Observable<void>} An observable completing once the write lands.
+   * @returns {Observable<void>} An observable completing once the write lands.
    */
   public setPlanPosition(
     organizationId: string,
@@ -532,7 +550,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @param {string} equipmentId - The ID of the equipment.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the canonical equipment.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the canonical equipment.
    */
   private getCanonical(equipmentId: string): Observable<EquipmentOutput> {
     return this.getOne<EquipmentOutput>(`/api/equipment/${equipmentId}`);
@@ -557,7 +575,7 @@ export class EquipmentService extends HydraApiService {
    *
    * @param {string} equipmentId - The ID of the equipment to delete.
    *
-   * @return {Observable<void>} An observable completing once the equipment is deleted.
+   * @returns {Observable<void>} An observable completing once the equipment is deleted.
    */
   public remove(equipmentId: string): Observable<void> {
     return this.getCanonical(equipmentId).pipe(
@@ -576,7 +594,6 @@ export class EquipmentService extends HydraApiService {
    * @description
    * Assigns an equipment to a facility within the organization
    * using the provided input data.
-   *
    * The input should include the ID of the
    * facility to assign the equipment to.
    *
@@ -587,7 +604,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - The ID of the equipment to assign.
    * @param {AssignToFacilityInput} input - The data required to assign the equipment to a facility.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details after assignment.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the updated equipment details
+   *   after assignment.
    */
   public assignToFacility(
     organizationId: string,
@@ -615,7 +633,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization the equipment belongs to.
    * @param {string} equipmentId - The ID of the equipment to unassign from its facility.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details after unassignment.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the updated equipment details
+   *   after unassignment.
    */
   public unassignFromFacility(
     organizationId: string,
@@ -642,7 +661,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization the equipment belongs to.
    * @param {string} equipmentId - The ID of the equipment to commission.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details after commissioning.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the updated equipment details
+   *   after commissioning.
    */
   public commission(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
     return this.postAction<EquipmentOutput>(
@@ -665,7 +685,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization the equipment belongs to.
    * @param {string} equipmentId - The ID of the equipment to decommission.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details after decommissioning.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the updated equipment details
+   *   after decommissioning.
    */
   public decommission(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
     return this.postAction<EquipmentOutput>(
@@ -678,9 +699,9 @@ export class EquipmentService extends HydraApiService {
    * @method maintenance
    *
    * @description
-   * Puts an equipment into maintenance mode, changing its status to 'maintenance' and
-   * indicating that it is temporarily unavailable for use. This action does not require any input data,
-   * as it simply updates the equipment's lifecycle status.
+   * Puts an equipment into maintenance mode, changing its status to 'maintenance' and indicating
+   * that it is temporarily unavailable for use. This action does not require any input data, as it
+   * simply updates the equipment's lifecycle status.
    *
    * @access public
    * @since 1.0.0
@@ -688,7 +709,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization the equipment belongs to.
    * @param {string} equipmentId - The ID of the equipment to put into maintenance mode.
    *
-   * @return {Observable<EquipmentOutput>} An observable emitting the updated equipment details after putting it into maintenance mode.
+   * @returns {Observable<EquipmentOutput>} An observable emitting the updated equipment details
+   *   after putting it into maintenance mode.
    */
   public maintenance(organizationId: string, equipmentId: string): Observable<EquipmentOutput> {
     return this.postAction<EquipmentOutput>(
@@ -703,7 +725,6 @@ export class EquipmentService extends HydraApiService {
    * @description
    * Retrieves a list of attachments associated with a specific
    * equipment within an organization.
-   *
    * Supports optional pagination parameters via RequestOptions.
    * Attachments can include documents, images, or other files related to the equipment.
    *
@@ -714,7 +735,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - The ID of the equipment to list attachments for.
    * @param {RequestOptions} [options] - Optional request options for pagination and filtering.
    *
-   * @return {Observable<HydraCollection<EquipmentAttachmentOutput>>} An observable emitting a collection of equipment attachments.
+   * @returns {Observable<HydraCollection<EquipmentAttachmentOutput>>} An observable emitting a
+   *   collection of equipment attachments.
    */
   public listAttachments(
     organizationId: string,
@@ -741,7 +763,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - equipment Id value.
    * @param {RequestOptions} [options] - options value.
    *
-   * @return {Observable<HydraCollection<EquipmentMaintenanceLogOutput>>} Result of the list maintenance logs operation.
+   * @returns {Observable<HydraCollection<EquipmentMaintenanceLogOutput>>} Result of the list
+   *   maintenance logs operation.
    */
   public listMaintenanceLogs(
     organizationId: string,
@@ -768,7 +791,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} [search] - search value.
    * @param {RequestOptions} [options] - options value.
    *
-   * @return {Observable<HydraCollection<EquipmentTagOutput>>} Result of the list tag catalog operation.
+   * @returns {Observable<HydraCollection<EquipmentTagOutput>>} Result of the list tag catalog
+   *   operation.
    */
   public listTagCatalog(
     organizationId: string,
@@ -794,7 +818,6 @@ export class EquipmentService extends HydraApiService {
    * @description
    * Adds a new attachment to a specific equipment within an
    * organization using the provided input data.
-   *
    * The input should include details about the
    * attachment, such as the file, description, and any relevant metadata.
    *
@@ -805,7 +828,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - The ID of the equipment to add the attachment to.
    * @param {AddAttachmentInput} input - The data required to add the attachment to the equipment.
    *
-   * @return {Observable<EquipmentAttachmentOutput>} An observable emitting the details of the added attachment.
+   * @returns {Observable<EquipmentAttachmentOutput>} An observable emitting the details of the
+   *   added attachment.
    */
   public addAttachment(
     organizationId: string,
@@ -833,7 +857,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - The ID of the equipment the attachment belongs to.
    * @param {string} attachmentId - The ID of the attachment to be deleted.
    *
-   * @return {Observable<void>} An observable that completes when the attachment is successfully deleted.
+   * @returns {Observable<void>} An observable that completes when the attachment is successfully
+   *   deleted.
    */
   public deleteAttachment(
     organizationId: string,
@@ -850,13 +875,12 @@ export class EquipmentService extends HydraApiService {
    * @method downloadAttachment
    *
    * @description
-   * Reads one attachment's binary content
-   * (`GET /api/organizations/{organizationId}/equipment/{equipmentId}/attachments/{attachmentId}/download`).
-   * The route forces `Content-Disposition: attachment`, so a bare `<a href>`
-   * cannot carry it — the caller reads the resulting `Blob` and triggers the
-   * browser save itself, mirroring `InterventionService.downloadAttachment`.
-   * Calls `this.http` directly for a response shape (`responseType: 'blob'`)
-   * the base class does not support.
+   * Reads one attachment's binary content (`GET
+   * /api/organizations/{organizationId}/equipment/{equipmentId}/attachments/{attachmentId}/download`).
+   * The route forces `Content-Disposition: attachment`, so a bare `<a href>` cannot carry it — the
+   * caller reads the resulting `Blob` and triggers the browser save itself, mirroring
+   * `InterventionService.downloadAttachment`. Calls `this.http` directly for a response shape
+   * (`responseType: 'blob'`) the base class does not support.
    *
    * @access public
    * @since 1.1.0
@@ -865,7 +889,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - The ID of the equipment the attachment belongs to.
    * @param {string} attachmentId - The ID of the attachment to download.
    *
-   * @return {Observable<Blob>} The attachment's binary content.
+   * @returns {Observable<Blob>} The attachment's binary content.
    */
   public downloadAttachment(
     organizationId: string,
@@ -887,7 +911,6 @@ export class EquipmentService extends HydraApiService {
    * @description
    * Adds a new tag to a specific equipment within an organization using the provided input data.
    * Tags are used to categorize and label equipment for easier organization and searchability.
-   *
    * The input should include the name of the tag to be added to the equipment.
    *
    * @access public
@@ -895,9 +918,11 @@ export class EquipmentService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization the equipment belongs to.
    * @param {string} equipmentId - The ID of the equipment to add the tag to.
-   * @param {AddTagInput} input - The data required to add the tag to the equipment, typically including the tag name.
+   * @param {AddTagInput} input - The data required to add the tag to the equipment, typically
+   *   including the tag name.
    *
-   * @return {Observable<EquipmentTagOutput>} An observable emitting the details of the added tag, including its ID and name.
+   * @returns {Observable<EquipmentTagOutput>} An observable emitting the details of the added tag,
+   *   including its ID and name.
    */
   public addTag(
     organizationId: string,
@@ -926,7 +951,8 @@ export class EquipmentService extends HydraApiService {
    * @param {string} equipmentId - The ID of the equipment the tag belongs to.
    * @param {string} tagId - The ID of the tag to be removed from the equipment.
    *
-   * @return {Observable<void>} An observable that completes when the tag is successfully removed from the equipment.
+   * @returns {Observable<void>} An observable that completes when the tag is successfully removed
+   *   from the equipment.
    */
   public removeTag(organizationId: string, equipmentId: string, tagId: string): Observable<void> {
     return this.delete(`${this.equipmentPath(organizationId, equipmentId)}/tags/${tagId}`);

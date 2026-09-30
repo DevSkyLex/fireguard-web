@@ -24,7 +24,11 @@
 /ngsw-config.json @DevSkyLex
 /Dockerfile @DevSkyLex
 /docker-compose.prod.yml @DevSkyLex
-/playwright.config.ts @DevSkyLex
+/tests/e2e/playwright.config.ts @DevSkyLex
+/tests/e2e/ssr/playwright.config.ts @DevSkyLex
+/tests/e2e/localized/playwright.config.ts @DevSkyLex
+/tests/architecture/vitest.config.ts @DevSkyLex
+/tests/contracts/vitest.config.ts @DevSkyLex
 
 # Application shell and infrastructure
 /src/app/core/ @DevSkyLex
@@ -45,4 +49,4 @@
 /src/app/features/maintenance/ @DevSkyLex
 
 # Tests
-/e2e/ @DevSkyLex
+/tests/ @DevSkyLex

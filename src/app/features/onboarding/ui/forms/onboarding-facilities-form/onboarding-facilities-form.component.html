@@ -93,7 +93,9 @@
                 [formField]="draftForm.name"
                 [attr.aria-required]="true"
               />
-              <hlm-field-error>{{ draftForm.name().errors()[0]?.message }}</hlm-field-error>
+              @if (staged().length === 0 || hasDraftInput()) {
+                <hlm-field-error>{{ draftForm.name().errors()[0]?.message }}</hlm-field-error>
+              }
             </hlm-field>
 
             <hlm-field>
@@ -127,7 +129,9 @@
                   </hlm-select-group>
                 </hlm-select-content>
               </hlm-select>
-              <hlm-field-error>{{ draftForm.type().errors()[0]?.message }}</hlm-field-error>
+              @if (staged().length === 0 || hasDraftInput()) {
+                <hlm-field-error>{{ draftForm.type().errors()[0]?.message }}</hlm-field-error>
+              }
             </hlm-field>
           </div>
           <hlm-field class="mt-4">
@@ -186,7 +190,9 @@
                 </div>
               </hlm-combobox-content>
             </hlm-combobox>
-            <hlm-field-error>{{ draftForm.address().errors()[0]?.message }}</hlm-field-error>
+            @if (staged().length === 0 || hasDraftInput()) {
+              <hlm-field-error>{{ draftForm.address().errors()[0]?.message }}</hlm-field-error>
+            }
             @if (addressError()) {
               <button
                 hlmBtn
@@ -215,7 +221,9 @@
                 [formField]="draftForm.city"
                 (input)="addressPartChanged('city', $event)"
               />
-              <hlm-field-error>{{ draftForm.city().errors()[0]?.message }}</hlm-field-error>
+              @if (staged().length === 0 || hasDraftInput()) {
+                <hlm-field-error>{{ draftForm.city().errors()[0]?.message }}</hlm-field-error>
+              }
             </hlm-field>
             <hlm-field>
               <label hlmFieldLabel for="onboarding-facility-country"
@@ -241,7 +249,9 @@
                   (input)="addressPartChanged('country', $event)"
                 />
               </div>
-              <hlm-field-error>{{ draftForm.country().errors()[0]?.message }}</hlm-field-error>
+              @if (staged().length === 0 || hasDraftInput()) {
+                <hlm-field-error>{{ draftForm.country().errors()[0]?.message }}</hlm-field-error>
+              }
             </hlm-field>
             <hlm-field>
               <label hlmFieldLabel for="onboarding-facility-postalCode"
@@ -256,7 +266,9 @@
                 [formField]="draftForm.postalCode"
                 (input)="addressPartChanged('postalCode', $event)"
               />
-              <hlm-field-error>{{ draftForm.postalCode().errors()[0]?.message }}</hlm-field-error>
+              @if (staged().length === 0 || hasDraftInput()) {
+                <hlm-field-error>{{ draftForm.postalCode().errors()[0]?.message }}</hlm-field-error>
+              }
             </hlm-field>
           </div>
 

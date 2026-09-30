@@ -20,9 +20,13 @@ import type {
 
 /**
  * Constant AutomationExecutionsStore
- * @const AutomationExecutionsStore
- * @description Page-scoped history with explicit read/retry states and organization fencing.
+ *
+ * @description
+ * Page-scoped history with explicit read/retry states and organization fencing.
+ *
  * @since 1.0.0
+ *
+ * @constant AutomationExecutionsStore
  */
 export const AutomationExecutionsStore = signalStore(
   withEntities({ entity: type<AutomationAttemptOutput>(), collection: 'attempt' }),
@@ -74,12 +78,18 @@ export const AutomationExecutionsStore = signalStore(
     );
     return {
       load,
+
       /**
        * Method refresh
-       * @description Refreshes visible progress and clears a previously acknowledged retry error.
+       *
+       * @description
+       * Refreshes visible progress and clears a previously acknowledged retry error.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @param {number} page - Requested history page.
+       *
        * @returns {void}
        */
       refresh(page: number): void {
@@ -125,8 +135,12 @@ export const AutomationExecutionsStore = signalStore(
 
 /**
  * Type AutomationExecutionsStoreType
- * @type {InstanceType<typeof AutomationExecutionsStore>}
- * @description Injectable execution history state.
+ *
+ * @description
+ * Injectable execution history state.
+ *
  * @since 1.0.0
+ *
+ * @type {InstanceType<typeof AutomationExecutionsStore>}
  */
 export type AutomationExecutionsStoreType = InstanceType<typeof AutomationExecutionsStore>;

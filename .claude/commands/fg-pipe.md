@@ -3,7 +3,7 @@ description: Create an Angular pipe at shared/<concept>/ui/pipes/<name>/ — the
 argument-hint: '<name> — e.g. "duration-format"'
 ---
 
-Delegate to the **fg-pipe-builder** subagent: $ARGUMENTS
+Delegate to the **fg-web-pipe-builder** subagent: $ARGUMENTS
 
 The agent carries the "is a pipe even right?" gates and the precedent-recording duty; do not restate them. Recommending a `computed()` or a `utils/` function instead of building the pipe is a **valid, useful outcome**.
 

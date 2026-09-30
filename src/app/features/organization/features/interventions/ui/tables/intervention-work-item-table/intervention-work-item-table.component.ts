@@ -77,7 +77,7 @@ import type { InterventionWorkItemFilter } from './models/intervention-work-item
 import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-item-view/intervention-work-item-view.utils';
 
 /**
- * Component InterventionWorkItemTable
+ * Class InterventionWorkItemTable
  * @class InterventionWorkItemTable
  *
  * @description
@@ -92,7 +92,6 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
  * Desktop targets stay on one line and independent effort values occupy a dedicated column;
  * keyboard-accessible tooltips retain the full text. Mobile cards keep the expanded summary.
  * Missing estimates remain explicit, while zero recorded time adds no placeholder metric.
- *
  * The workflow checkbox has a 44px target — unconditionally, not `max-sm:`, because
  * the surface is a gloved hand on a tablet. It is the one place this app
  * deliberately goes past its own `size-9` ceiling. Its cell drops `hlmTd`'s
@@ -223,11 +222,13 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    *
    * @param {InterventionWorkItemOutput} item - Work item.
+   *
    * @returns {boolean}
    */
   protected canOpenTime(item: InterventionWorkItemOutput): boolean {
     return item.allowedActions?.canLogTime === true || item.allowedActions?.canManageTime === true;
   }
+
   /**
    * Property source
    * @readonly
@@ -242,6 +243,7 @@ export class InterventionWorkItemTable {
    */
   public readonly source: InputSignal<InterventionTableSource> =
     input<InterventionTableSource>('api');
+
   /**
    * Property retryRequested
    * @readonly
@@ -255,16 +257,22 @@ export class InterventionWorkItemTable {
    * @type {OutputEmitterRef<void>}
    */
   public readonly retryRequested: OutputEmitterRef<void> = output<void>();
+
   /**
    * Property proofsRequested
    * @readonly
-   * @description Requests consultation of the selected work item’s existing evidence.
+   *
+   * @description
+   * Requests consultation of the selected work item’s existing evidence.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionWorkItemOutput>}
    */
   public readonly proofsRequested: OutputEmitterRef<InterventionWorkItemOutput> =
     output<InterventionWorkItemOutput>();
+
   /**
    * Property queuedIds
    * @readonly
@@ -280,42 +288,51 @@ export class InterventionWorkItemTable {
   public readonly queuedIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
     new Set(),
   );
+
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern, for a work item's planned window. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern, for a work item's planned window. The default keeps the
+   * component renderable with no context wired.
+   *
    * @access public
    * @since 2.4.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
     input<RegionalFormatSettings>(DEFAULT_REGIONAL_FORMAT_SETTINGS);
+
   /**
    * Property contextId
    * @readonly
-   * @description Resets local filters only when entering another intervention.
+   *
+   * @description
+   * Resets local filters only when entering another intervention.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly contextId: InputSignal<string> = input('');
+
   /**
    * Property focusedItemId
    * @readonly
-   * @description Last work item requested by scanning or a deep link.
+   *
+   * @description
+   * Last work item requested by scanning or a deep link.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly focusedItemId: WritableSignal<string | null> = signal(null);
-  /**
-   * Property focusRequest
-   * @readonly
-   * @description Repeats focus when the same code is scanned again.
-   * @access private
-   * @since 1.0.0
-   * @type {WritableSignal<number>}
-   */
+
   /**
    * Property pendingRevealId
    *
@@ -329,20 +346,42 @@ export class InterventionWorkItemTable {
    */
   private pendingRevealId: string | null = null;
 
+  /**
+   * Property focusRequest
+   * @readonly
+   *
+   * @description
+   * Repeats focus when the same code is scanned again.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<number>}
+   */
   private readonly focusRequest: WritableSignal<number> = signal(0);
+
   /**
    * Property hostElement
    * @readonly
-   * @description Bounds DOM focus to this dataview.
+   *
+   * @description
+   * Bounds DOM focus to this dataview.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ElementRef<HTMLElement>}
    */
   private readonly hostElement: ElementRef<HTMLElement> = inject(ElementRef);
 
+  //#region Constructor
   /**
-   * Constructor @constructor
-   * @description Focuses the visible responsive row only after Angular renders its filter change.
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Focuses the visible responsive row only after Angular renders its filter change.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -362,13 +401,20 @@ export class InterventionWorkItemTable {
       row?.focus({ preventScroll: true });
     });
   }
+  //#endregion
 
   /**
    * Method revealItem
-   * @description Reveals a scanned work item regardless of the current filter and requests keyboard focus.
+   * @method revealItem
+   *
+   * @description
+   * Reveals a scanned work item regardless of the current filter and requests keyboard focus.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} id - Work item identifier.
+   *
    * @returns {void}
    */
   public revealItem(id: string): void {
@@ -390,9 +436,13 @@ export class InterventionWorkItemTable {
   /**
    * Property errors
    * @readonly
-   * @description Per-row failures preserved until a retry.
+   *
+   * @description
+   * Per-row failures preserved until a retry.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<Readonly<Record<string, string | null>>>}
    */
   public readonly errors: InputSignal<Readonly<Record<string, string | null>>> = input({});
@@ -400,21 +450,31 @@ export class InterventionWorkItemTable {
   /**
    * Property preferredFilter
    * @readonly
-   * @description Parent-owned preference retained when this dataview is remounted on another tab visit.
+   *
+   * @description
+   * Parent-owned preference retained when this dataview is remounted on another tab visit.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<InterventionWorkItemFilter | null>}
    */
   public readonly preferredFilter = input<InterventionWorkItemFilter | null>(null);
+
   /**
    * Property filterChanged
    * @readonly
-   * @description Emits explicit view changes so the page can preserve the current intervention preference.
+   *
+   * @description
+   * Emits explicit view changes so the page can preserve the current intervention preference.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionWorkItemFilter>}
    */
   public readonly filterChanged = output<InterventionWorkItemFilter>();
+
   /**
    * Property queryChanged
    * @readonly
@@ -433,19 +493,28 @@ export class InterventionWorkItemTable {
   /**
    * Property query
    * @readonly
-   * @description Authoritative criteria owned by the page store; the table emits user edits only.
+   *
+   * @description
+   * Authoritative criteria owned by the page store; the table emits user edits only.
+   *
    * @access public
    * @since 6.2.0
+   *
    * @type {InputSignal<InterventionWorkItemTableQuery | null>}
    */
   public readonly query: InputSignal<InterventionWorkItemTableQuery | null> =
     input<InterventionWorkItemTableQuery | null>(null);
+
   /**
    * Property items
    * @readonly
-   * @description The intervention's work items, in the order the API returned them.
+   *
+   * @description
+   * The intervention's work items, in the order the API returned them.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
    */
   public readonly items: InputSignal<readonly InterventionWorkItemOutput[]> =
@@ -471,7 +540,8 @@ export class InterventionWorkItemTable {
    * Property queryTotal
    * @readonly
    *
-   * @description Total matching tasks across every server page, independent of global progress.
+   * @description
+   * Total matching tasks across every server page, independent of global progress.
    *
    * @access public
    * @since 6.2.0
@@ -484,7 +554,8 @@ export class InterventionWorkItemTable {
    * Property resultPage
    * @readonly
    *
-   * @description Page associated with retained results, including during failed refreshes.
+   * @description
+   * Page associated with retained results, including during failed refreshes.
    *
    * @access public
    * @since 6.2.0
@@ -497,7 +568,8 @@ export class InterventionWorkItemTable {
    * Property resultPageSize
    * @readonly
    *
-   * @description Page size associated with the rendered result.
+   * @description
+   * Page size associated with the rendered result.
    *
    * @access public
    * @since 6.2.0
@@ -510,7 +582,8 @@ export class InterventionWorkItemTable {
    * Property pageCount
    * @readonly
    *
-   * @description Total matching pages, including an empty first page.
+   * @description
+   * Total matching pages, including an empty first page.
    *
    * @access protected
    * @since 6.2.0
@@ -590,9 +663,13 @@ export class InterventionWorkItemTable {
   /**
    * Property canToggle
    * @readonly
-   * @description Whether the operator may record progress on an item.
+   *
+   * @description
+   * Whether the operator may record progress on an item.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly canToggle: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -603,9 +680,13 @@ export class InterventionWorkItemTable {
   /**
    * Property canSkip
    * @readonly
-   * @description Whether an item may be skipped with a reason.
+   *
+   * @description
+   * Whether an item may be skipped with a reason.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly canSkip: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -616,9 +697,13 @@ export class InterventionWorkItemTable {
   /**
    * Property canDelete
    * @readonly
-   * @description Whether a planned item may be removed from the scope.
+   *
+   * @description
+   * Whether a planned item may be removed from the scope.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly canDelete: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -629,9 +714,13 @@ export class InterventionWorkItemTable {
   /**
    * Property canAdd
    * @readonly
-   * @description Whether the scope may still grow.
+   *
+   * @description
+   * Whether the scope may still grow.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly canAdd: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -653,6 +742,7 @@ export class InterventionWorkItemTable {
    *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly busy: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -679,9 +769,14 @@ export class InterventionWorkItemTable {
   /**
    * Property totalCount
    * @readonly
-   * @description The intervention's full work-item scope, from the aggregate — not just what filtered rows are showing.
+   *
+   * @description
+   * The intervention's full work-item scope, from the aggregate — not just what filtered rows are
+   * showing.
+   *
    * @access public
    * @since 6.1.0
+   *
    * @type {InputSignal<number>}
    */
   public readonly totalCount: InputSignal<number> = input<number>(0);
@@ -689,9 +784,13 @@ export class InterventionWorkItemTable {
   /**
    * Property completedCount
    * @readonly
-   * @description How many of the scope's items are completed, from the aggregate.
+   *
+   * @description
+   * How many of the scope's items are completed, from the aggregate.
+   *
    * @access public
    * @since 6.1.0
+   *
    * @type {InputSignal<number>}
    */
   public readonly completedCount: InputSignal<number> = input<number>(0);
@@ -707,6 +806,7 @@ export class InterventionWorkItemTable {
    *
    * @access public
    * @since 6.1.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly showProgress: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -725,6 +825,7 @@ export class InterventionWorkItemTable {
    *
    * @access public
    * @since 5.4.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly canAttachEvidence: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -743,6 +844,7 @@ export class InterventionWorkItemTable {
    *
    * @access public
    * @since 5.4.0
+   *
    * @type {InputSignal<ReadonlySet<string>>}
    */
   public readonly evidencePendingItemIds: InputSignal<ReadonlySet<string>> = input<
@@ -754,9 +856,13 @@ export class InterventionWorkItemTable {
   /**
    * Property statusChanged
    * @readonly
-   * @description A recorded change of state for one item.
+   *
+   * @description
+   * A recorded change of state for one item.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionWorkItemStatusChange>}
    */
   public readonly statusChanged: OutputEmitterRef<InterventionWorkItemStatusChange> =
@@ -765,9 +871,13 @@ export class InterventionWorkItemTable {
   /**
    * Property skipRequested
    * @readonly
-   * @description A skip was asked for; the page collects the reason it requires.
+   *
+   * @description
+   * A skip was asked for; the page collects the reason it requires.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionWorkItemOutput>}
    */
   public readonly skipRequested: OutputEmitterRef<InterventionWorkItemOutput> =
@@ -776,9 +886,13 @@ export class InterventionWorkItemTable {
   /**
    * Property deleteRequested
    * @readonly
-   * @description A removal was asked for; the page confirms it before acting.
+   *
+   * @description
+   * A removal was asked for; the page confirms it before acting.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionWorkItemOutput>}
    */
   public readonly deleteRequested: OutputEmitterRef<InterventionWorkItemOutput> =
@@ -787,9 +901,13 @@ export class InterventionWorkItemTable {
   /**
    * Property addRequested
    * @readonly
-   * @description The operator wants to add to the scope.
+   *
+   * @description
+   * The operator wants to add to the scope.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly addRequested: OutputEmitterRef<void> = output<void>();
@@ -797,9 +915,13 @@ export class InterventionWorkItemTable {
   /**
    * Property evidenceRequested
    * @readonly
-   * @description The operator wants to attach evidence to this row; the page opens the photo/file intake.
+   *
+   * @description
+   * The operator wants to attach evidence to this row; the page opens the photo/file intake.
+   *
    * @access public
    * @since 5.4.0
+   *
    * @type {OutputEmitterRef<InterventionWorkItemOutput>}
    */
   public readonly evidenceRequested: OutputEmitterRef<InterventionWorkItemOutput> =
@@ -997,7 +1119,7 @@ export class InterventionWorkItemTable {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal< Readonly<Record<string, TemplateRef<unknown> | undefined>> >}
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
    */
   protected readonly filterTemplates: Signal<
     Readonly<Record<string, TemplateRef<unknown> | undefined>>
@@ -1020,9 +1142,13 @@ export class InterventionWorkItemTable {
   /**
    * Property mineFirst
    * @readonly
-   * @description Whether the operator's own rows are pulled to the top.
+   *
+   * @description
+   * Whether the operator's own rows are pulled to the top.
+   *
    * @access protected
    * @since 6.1.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly mineFirst: Signal<boolean> = computed(
@@ -1034,9 +1160,13 @@ export class InterventionWorkItemTable {
   /**
    * Property skeletonColumnWidths
    * @readonly
-   * @description One literal width or alignment class per rendered column, handed to the shared skeleton rows.
+   *
+   * @description
+   * One literal width or alignment class per rendered column, handed to the shared skeleton rows.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly skeletonColumnWidths: Signal<readonly string[]> = computed<readonly string[]>(
@@ -1054,9 +1184,14 @@ export class InterventionWorkItemTable {
   /**
    * Property filterCounts
    * @readonly
-   * @description How many items each chip would show, over the full scope — read before the operator picks a chip, so it must not depend on {@link activeFilter}.
+   *
+   * @description
+   * How many items each chip would show, over the full scope — read before the operator picks a
+   * chip, so it must not depend on {@link activeFilter}.
+   *
    * @access protected
    * @since 6.1.0
+   *
    * @type {Signal<Readonly<Record<InterventionWorkItemFilter, number>>>}
    */
   protected readonly filterCounts: Signal<Readonly<Record<InterventionWorkItemFilter, number>>> =
@@ -1074,9 +1209,14 @@ export class InterventionWorkItemTable {
   /**
    * Property showMineFirstToggle
    * @readonly
-   * @description Whether the "Mine first" toggle has anything to offer — a known member with at least one row assigned to them.
+   *
+   * @description
+   * Whether the "Mine first" toggle has anything to offer — a known member with at least one row
+   * assigned to them.
+   *
    * @access protected
    * @since 6.1.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly showMineFirstToggle: Signal<boolean> = computed<boolean>(() => {
@@ -1116,7 +1256,9 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    *
    * @param {InterventionWorkItemFilter} filter - The business filter to map to API statuses.
-   * @returns {readonly InterventionWorkItemStatus[] | null} The matching API statuses, or `null` when no status filter applies.
+   *
+   * @returns {readonly InterventionWorkItemStatus[] | null} The matching API statuses, or `null`
+   *   when no status filter applies.
    */
   private statusesForFilter(
     filter: InterventionWorkItemFilter,
@@ -1130,10 +1272,14 @@ export class InterventionWorkItemTable {
   /**
    * Property showActionsColumn
    * @readonly
-   * @description Evidence inspection is available to every workspace reader, including read-only
-   * users. Reserve its action track before results arrive; write permissions still gate each control.
+   *
+   * @description
+   * Evidence inspection is available to every workspace reader, including read-only users. Reserve
+   * its action track before results arrive; write permissions still gate each control.
+   *
    * @access protected
    * @since 6.2.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly showActionsColumn: Signal<boolean> = computed(() => true);
@@ -1141,9 +1287,13 @@ export class InterventionWorkItemTable {
   /**
    * Property progressPercent
    * @readonly
-   * @description The completion bar's fill, guarded against a zero-sized scope.
+   *
+   * @description
+   * The completion bar's fill, guarded against a zero-sized scope.
+   *
    * @access protected
    * @since 6.1.0
+   *
    * @type {Signal<number>}
    */
   protected readonly progressPercent: Signal<number> = computed<number>(() => {
@@ -1155,9 +1305,13 @@ export class InterventionWorkItemTable {
   /**
    * Property progressLabel
    * @readonly
-   * @description The completion bar's accessible name, stating the same count the visible text already shows.
+   *
+   * @description
+   * The completion bar's accessible name, stating the same count the visible text already shows.
+   *
    * @access protected
    * @since 6.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly progressLabel: Signal<string> = computed<string>(
@@ -1168,9 +1322,13 @@ export class InterventionWorkItemTable {
   /**
    * Property doneCount
    * @readonly
-   * @description How many items are resolved — completed or deliberately skipped.
+   *
+   * @description
+   * How many items are resolved — completed or deliberately skipped.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly doneCount: Signal<number> = computed<number>(
@@ -1201,10 +1359,16 @@ export class InterventionWorkItemTable {
   //#region Methods
   /**
    * Method isNext
-   * @description Whether this is the item the operator should pick up next.
+   * @method isNext
+   *
+   * @description
+   * Whether this is the item the operator should pick up next.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {boolean} True for the next item.
    */
   protected isNext(item: InterventionWorkItemOutput): boolean {
@@ -1213,10 +1377,16 @@ export class InterventionWorkItemTable {
 
   /**
    * Method actionLabelOf
-   * @description The item's action, resolved to its display label.
+   * @method actionLabelOf
+   *
+   * @description
+   * The item's action, resolved to its display label.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {string} The localized action label.
    */
   protected actionLabelOf(item: InterventionWorkItemOutput): string {
@@ -1225,6 +1395,7 @@ export class InterventionWorkItemTable {
 
   /**
    * Method targetLabelOf
+   * @method targetLabelOf
    *
    * @description
    * The resource the item targets, when the API resolved one. A free-text
@@ -1250,10 +1421,16 @@ export class InterventionWorkItemTable {
 
   /**
    * Method assigneeInitialsOf
-   * @description Avatar fallback initials derived from the assignee's display name.
+   * @method assigneeInitialsOf
+   *
+   * @description
+   * Avatar fallback initials derived from the assignee's display name.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {string} Up to two uppercase initials, or an empty string when unassigned.
    */
   protected assigneeInitialsOf(item: InterventionWorkItemOutput): string {
@@ -1270,10 +1447,16 @@ export class InterventionWorkItemTable {
 
   /**
    * Method sourceLabelOf
-   * @description Whether the item was scoped up front or found in the field.
+   * @method sourceLabelOf
+   *
+   * @description
+   * Whether the item was scoped up front or found in the field.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {string} A localized origin label.
    */
   protected sourceLabelOf(item: InterventionWorkItemOutput): string {
@@ -1284,6 +1467,7 @@ export class InterventionWorkItemTable {
 
   /**
    * Method canToggleItem
+   * @method canToggleItem
    *
    * @description
    * Whether this row's toggle is live. A skipped item is not toggled back — it
@@ -1307,6 +1491,7 @@ export class InterventionWorkItemTable {
 
   /**
    * Method isRowPending
+   * @method isRowPending
    *
    * @description
    * Whether this row's own write is in flight. Only this row is locked and only
@@ -1316,6 +1501,7 @@ export class InterventionWorkItemTable {
    * @since 4.1.0
    *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {boolean} True while this row is saving.
    */
   protected isRowPending(item: InterventionWorkItemOutput): boolean {
@@ -1324,6 +1510,7 @@ export class InterventionWorkItemTable {
 
   /**
    * Method canSkipItem
+   * @method canSkipItem
    *
    * @description
    * Whether this row may still be skipped.
@@ -1332,6 +1519,7 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {boolean} True when a skip is offered.
    */
   protected canSkipItem(item: InterventionWorkItemOutput): boolean {
@@ -1345,6 +1533,7 @@ export class InterventionWorkItemTable {
 
   /**
    * Method canDeleteItem
+   * @method canDeleteItem
    *
    * @description
    * Whether this row may be removed. Only planned work is removable; a
@@ -1365,6 +1554,7 @@ export class InterventionWorkItemTable {
 
   /**
    * Method hasRowActions
+   * @method hasRowActions
    *
    * @description
    * Whether the overflow menu has anything to offer for this row.
@@ -1373,6 +1563,7 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {boolean} True when the menu should render.
    */
   protected hasRowActions(item: InterventionWorkItemOutput): boolean {
@@ -1387,10 +1578,16 @@ export class InterventionWorkItemTable {
 
   /**
    * Method isEvidencePending
-   * @description Whether this row's own evidence upload is in flight.
+   * @method isEvidencePending
+   *
+   * @description
+   * Whether this row's own evidence upload is in flight.
+   *
    * @access protected
    * @since 5.4.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {boolean} True while this row's evidence upload is pending.
    */
   protected isEvidencePending(item: InterventionWorkItemOutput): boolean {
@@ -1399,10 +1596,16 @@ export class InterventionWorkItemTable {
 
   /**
    * Method evidenceLabelOf
-   * @description The evidence button's accessible name, stating the current count when there is one.
+   * @method evidenceLabelOf
+   *
+   * @description
+   * The evidence button's accessible name, stating the current count when there is one.
+   *
    * @access protected
    * @since 5.4.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {string} A localized label.
    */
   protected evidenceLabelOf(item: InterventionWorkItemOutput): string {
@@ -1413,10 +1616,16 @@ export class InterventionWorkItemTable {
 
   /**
    * Method onSearchQueryChanged
-   * @description Keeps the table-local search in sync with the shared search box.
+   * @method onSearchQueryChanged
+   *
+   * @description
+   * Keeps the table-local search in sync with the shared search box.
+   *
    * @access protected
    * @since 6.2.0
+   *
    * @param {string} query - The text entered by the operator.
+   *
    * @returns {void}
    */
   protected onSearchQueryChanged(query: string): void {
@@ -1425,10 +1634,18 @@ export class InterventionWorkItemTable {
 
   /**
    * Method toggleLabelOf
-   * @description The toggle's accessible name. For an actionable row it states what the press does; for a `skipped` row the control is disabled, so the name states the state instead of promising a "Complete" that will never fire.
+   * @method toggleLabelOf
+   *
+   * @description
+   * The toggle's accessible name. For an actionable row it states what the press does; for a
+   * `skipped` row the control is disabled, so the name states the state instead of promising a
+   * "Complete" that will never fire.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionWorkItemOutput} item - The item being rendered.
+   *
    * @returns {string} A localized action label.
    */
   protected toggleLabelOf(item: InterventionWorkItemOutput): string {
@@ -1457,6 +1674,7 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    *
    * @param {string} key - The filter field key.
+   *
    * @returns {void} No value is returned.
    */
   protected onFieldPicked(key: string): void {
@@ -1465,10 +1683,16 @@ export class InterventionWorkItemTable {
 
   /**
    * Method toggleFiltersVisible
-   * @description Reacts to the shared filter toggle's requested visibility.
+   * @method toggleFiltersVisible
+   *
+   * @description
+   * Reacts to the shared filter toggle's requested visibility.
+   *
    * @access protected
    * @since 6.2.0
+   *
    * @param {boolean} visible - Whether the filter bar should be mounted.
+   *
    * @returns {void}
    */
   protected toggleFiltersVisible(visible: boolean): void {
@@ -1486,6 +1710,7 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    *
    * @param {string} key - The filter field key.
+   *
    * @returns {void} No value is returned.
    */
   protected onFieldRemoved(key: string): void {
@@ -1521,6 +1746,7 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    *
    * @param {string | null} value - The selected filter value, or `null` when cleared.
+   *
    * @returns {void} No value is returned.
    */
   protected onStatusFilterChanged(value: string | null): void {
@@ -1542,7 +1768,9 @@ export class InterventionWorkItemTable {
    * @access protected
    * @since 1.0.0
    *
-   * @param {Partial<InterventionWorkItemTableQuery>} overrides - Criteria to merge; edits reset to page one unless a page is specified.
+   * @param {Partial<InterventionWorkItemTableQuery>} overrides - Criteria to merge; edits reset to
+   *   page one unless a page is specified.
+   *
    * @returns {void} No value is returned.
    */
   protected emitQuery(overrides: Partial<InterventionWorkItemTableQuery> = {}): void {
@@ -1584,6 +1812,7 @@ export class InterventionWorkItemTable {
    * @since 1.0.0
    *
    * @param {BrnOverlayState} state - The filter popover's next state.
+   *
    * @returns {void} No value is returned.
    */
   protected onFilterPopoverStateChanged(state: BrnOverlayState): void {

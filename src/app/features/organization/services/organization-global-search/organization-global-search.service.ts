@@ -44,9 +44,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property interactionCapabilities
    * @readonly
-   * @description Shared interaction mode and platform shortcut convention.
+   *
+   * @description
+   * Shared interaction mode and platform shortcut convention.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {InteractionCapabilitiesPort}
    */
   private readonly interactionCapabilities: InteractionCapabilitiesPort = inject(
@@ -56,9 +60,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property document
    * @readonly
-   * @description Browser event target, accessed only after hydration or a browser-only opening.
+   *
+   * @description
+   * Browser event target, accessed only after hydration or a browser-only opening.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Document}
    */
   private readonly document: Document = inject(DOCUMENT);
@@ -66,9 +74,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property isBrowser
    * @readonly
-   * @description Prevents imperative dialog creation in every server rendering context.
+   *
+   * @description
+   * Prevents imperative dialog creation in every server rendering context.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   private readonly isBrowser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
@@ -76,9 +88,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property destroyRef
    * @readonly
-   * @description Lifetime of the owner, including its listener and pending parent dismissal.
+   *
+   * @description
+   * Lifetime of the owner, including its listener and pending parent dismissal.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {DestroyRef}
    */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
@@ -86,9 +102,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property organizationContext
    * @readonly
-   * @description Makes both shortcut and trigger inactive without an organization.
+   *
+   * @description
+   * Makes both shortcut and trigger inactive without an organization.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ActiveOrganizationStoreType}
    */
   private readonly organizationContext: ActiveOrganizationStoreType =
@@ -97,9 +117,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property authSession
    * @readonly
-   * @description A remembered organization cannot enable protected search before login/MFA finish.
+   *
+   * @description
+   * A remembered organization cannot enable protected search before login/MFA finish.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {AuthSessionPort}
    */
   private readonly authSession: AuthSessionPort = inject(AUTH_SESSION_PORT);
@@ -107,9 +131,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property dialogs
    * @readonly
-   * @description Native Spartan dialog creation, dismissal and focus management.
+   *
+   * @description
+   * Native Spartan dialog creation, dismissal and focus management.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {HlmDialogService}
    */
   private readonly dialogs: HlmDialogService = inject(HlmDialogService);
@@ -117,9 +145,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property dialogRef
    * @readonly
-   * @description The only search palette, retained until native exit and disposal finish.
+   *
+   * @description
+   * The only search palette, retained until native exit and disposal finish.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<BrnDialogRef<void> | null>}
    */
   private readonly dialogRef: WritableSignal<BrnDialogRef<void> | null> = signal(null);
@@ -127,9 +159,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property paletteVisible
    * @readonly
-   * @description Native dialog visibility advertised by any mounted trigger.
+   *
+   * @description
+   * Native dialog visibility advertised by any mounted trigger.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   public readonly paletteVisible: Signal<boolean> = computed(
@@ -139,9 +175,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Property shortcutModifier
    * @readonly
-   * @description Platform-specific modifier shared by remounted triggers.
+   *
+   * @description
+   * Platform-specific modifier shared by remounted triggers.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {Signal<ShortcutModifier>}
    */
   public readonly shortcutModifier: Signal<ShortcutModifier> =
@@ -149,10 +189,17 @@ export class OrganizationGlobalSearchService {
 
   /**
    * Property trigger
-   * @description Optional live opener and its native parent; absent while quick actions are closed.
+   *
+   * @description
+   * Optional live opener and its native parent; absent while quick actions are closed.
+   *
    * @access private
    * @since 1.0.0
-   * @type {{ readonly element: HTMLElement; readonly parent: BrnDialogRef<unknown> | null } | null}
+   *
+   * @type {{
+   *   readonly element: HTMLElement;
+   *   readonly parent: BrnDialogRef<unknown> | null;
+   * } | null}
    */
   private trigger: {
     readonly element: HTMLElement;
@@ -161,9 +208,13 @@ export class OrganizationGlobalSearchService {
 
   /**
    * Property isOpening
-   * @description Serializes a parent dismissal before the search dialog can be created.
+   *
+   * @description
+   * Serializes a parent dismissal before the search dialog can be created.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   private isOpening: boolean = false;
@@ -173,7 +224,10 @@ export class OrganizationGlobalSearchService {
   /**
    * Constructor
    * @constructor
-   * @description Installs one post-hydration listener and disposes the owned dialog on teardown.
+   *
+   * @description
+   * Installs one post-hydration listener and disposes the owned dialog on teardown.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -199,11 +253,16 @@ export class OrganizationGlobalSearchService {
   /**
    * Method registerTrigger
    * @method registerTrigger
-   * @description Supplies native focus/parent context without making the shortcut depend on a view.
+   *
+   * @description
+   * Supplies native focus/parent context without making the shortcut depend on a view.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {HTMLElement} element - The currently mounted organization search trigger.
    * @param {BrnDialogRef<unknown> | null} parent - Optional native dialog containing that trigger.
+   *
    * @returns {() => void} Cleanup owned by the trigger's render lifetime.
    */
   public registerTrigger(element: HTMLElement, parent: BrnDialogRef<unknown> | null): () => void {
@@ -217,9 +276,13 @@ export class OrganizationGlobalSearchService {
   /**
    * Method open
    * @method open
-   * @description Opens once, after any native parent has closed and restored its own opener's focus.
+   *
+   * @description
+   * Opens once, after any native parent has closed and restored its own opener's focus.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {void}
    */
   public open(): void {
@@ -251,10 +314,16 @@ export class OrganizationGlobalSearchService {
   /**
    * Method openDialog
    * @method openDialog
-   * @description Creates the native palette; interaction mode changes never replace its query/store.
+   *
+   * @description
+   * Creates the native palette; interaction mode changes never replace its query/store.
+   *
    * @access private
    * @since 1.0.0
-   * @param {HTMLElement} [trigger] - Connected opener, otherwise native previously-focused restoration.
+   *
+   * @param {HTMLElement} [trigger] - Connected opener, otherwise native previously-focused
+   *   restoration.
+   *
    * @returns {void}
    */
   private openDialog(trigger?: HTMLElement): void {
@@ -276,10 +345,15 @@ export class OrganizationGlobalSearchService {
   /**
    * Method onKeydown
    * @method onKeydown
-   * @description Toggles Ctrl/Cmd+K, leaving editable fields and already-handled shortcuts untouched.
+   *
+   * @description
+   * Toggles Ctrl/Cmd+K, leaving editable fields and already-handled shortcuts untouched.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {KeyboardEvent} event - Browser keyboard event; Escape remains entirely Spartan-owned.
+   *
    * @returns {void}
    */
   private onKeydown(event: KeyboardEvent): void {

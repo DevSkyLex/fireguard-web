@@ -35,7 +35,7 @@ import type {
 } from '@features/auth/models';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { FederatedReturnContextService } from '@features/auth/services';
-import { authStoreEvents } from '../auth';
+import { authStoreEvents } from '../auth/events';
 import type { FederatedAuthState } from './models';
 
 /**
@@ -46,6 +46,7 @@ import type { FederatedAuthState } from './models';
  * Small SSR handoff containing only public provider availability.
  *
  * @since 1.0.0
+ *
  * @type {StateKey<readonly FederatedProviderOutput[]>}
  */
 const PROVIDERS_TRANSFER_KEY = makeStateKey<readonly FederatedProviderOutput[]>(
@@ -61,6 +62,7 @@ const PROVIDERS_TRANSFER_KEY = makeStateKey<readonly FederatedProviderOutput[]>(
  * first-password setup.
  *
  * @since 1.0.0
+ *
  * @type {FederatedAuthState}
  */
 const INITIAL_STATE: FederatedAuthState = {
@@ -78,7 +80,7 @@ const INITIAL_STATE: FederatedAuthState = {
 } as const;
 
 /**
- * Store FederatedAuthStore
+ * Constant FederatedAuthStore
  *
  * @description
  * Owns provider availability, full-page redirect starts, one-time callback
@@ -87,6 +89,7 @@ const INITIAL_STATE: FederatedAuthState = {
  * to the initiating session revision and is cancelled when reset or cleared.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const FederatedAuthStore = signalStore(
@@ -398,9 +401,13 @@ export const FederatedAuthStore = signalStore(
         /**
          * Method clearSessionState
          * @method clearSessionState
-         * @description Cancels pending redirects and purges account state and unconsumed return intent.
+         *
+         * @description
+         * Cancels pending redirects and purges account state and unconsumed return intent.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         clearSessionState(): void {
@@ -434,12 +441,14 @@ export const FederatedAuthStore = signalStore(
 
 /**
  * Type FederatedAuthStore
- * @type FederatedAuthStore
  *
  * @description
  * Injectable instance type exposed by the federated authentication store.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type FederatedAuthStore
  */
 export type FederatedAuthStore = InstanceType<typeof FederatedAuthStore>;

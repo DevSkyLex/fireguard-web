@@ -49,7 +49,12 @@ import {
 } from './constants/intervention-activity-event-icons.constants';
 import type { InterventionActivityBodySegment, InterventionActivityRowViewModel } from './models';
 
-/** How many skeleton rows the loading state shows. */
+/**
+ * Constant SKELETON_ROW_COUNT
+ *
+ * @description
+ * How many skeleton rows the loading state shows.
+ */
 const SKELETON_ROW_COUNT: number = 3;
 
 /**
@@ -89,6 +94,8 @@ const SKELETON_ROW_COUNT: number = 3;
  *
  * @version 3.2.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-intervention-activity-thread
@@ -97,8 +104,6 @@ const SKELETON_ROW_COUNT: number = 3;
  *   [loading]="store.activityCallState().status === 'pending'"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-activity-thread',
@@ -132,9 +137,14 @@ export class InterventionActivityThread {
   /**
    * Property activities
    * @readonly
-   * @description The loaded window of the timeline, oldest first — the order the API returns it in. Not necessarily the whole history; see {@link hasOlder}.
+   *
+   * @description
+   * The loaded window of the timeline, oldest first — the order the API returns it in. Not
+   * necessarily the whole history; see {@link hasOlder}.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly InterventionActivityOutput[]>}
    */
   public readonly activities: InputSignal<readonly InterventionActivityOutput[]> = input<
@@ -144,9 +154,13 @@ export class InterventionActivityThread {
   /**
    * Property members
    * @readonly
-   * @description The organization's members, resolving a comment or a system entry's actor.
+   *
+   * @description
+   * The organization's members, resolving a comment or a system entry's actor.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly MemberSelectOption[]>}
    */
   public readonly members: InputSignal<readonly MemberSelectOption[]> = input<
@@ -156,9 +170,13 @@ export class InterventionActivityThread {
   /**
    * Property loading
    * @readonly
-   * @description Whether the timeline's first fetch is still in flight.
+   *
+   * @description
+   * Whether the timeline's first fetch is still in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
@@ -173,6 +191,7 @@ export class InterventionActivityThread {
    *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
@@ -187,6 +206,7 @@ export class InterventionActivityThread {
    *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly hasOlder: InputSignal<boolean> = input<boolean>(false);
@@ -194,9 +214,15 @@ export class InterventionActivityThread {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, driving each row's absolute-time tooltip and the day separators' "today"/"yesterday" reference. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone, driving each row's absolute-time tooltip
+   * and the day separators' "today"/"yesterday" reference. The default keeps the component
+   * renderable with no context wired.
+   *
    * @access public
    * @since 3.2.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -207,9 +233,13 @@ export class InterventionActivityThread {
   /**
    * Property olderRequested
    * @readonly
-   * @description The reader asked for the entries above the ones shown.
+   *
+   * @description
+   * The reader asked for the entries above the ones shown.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly olderRequested: OutputEmitterRef<void> = output<void>();
@@ -217,19 +247,45 @@ export class InterventionActivityThread {
   /**
    * Property retryRequested
    * @readonly
-   * @description The reader asked to read the timeline again after a failure.
+   *
+   * @description
+   * The reader asked to read the timeline again after a failure.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly retryRequested: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The application's language, used to phrase the relative timestamps. */
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * The application's language, used to phrase the relative timestamps.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
-  /** One date formatter for the reschedule labels — the constructor is too costly for per-row calls. */
+  /**
+   * Property dateFormat
+   * @readonly
+   *
+   * @description
+   * One date formatter for the reschedule labels — the constructor is too costly for per-row calls.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Intl.DateTimeFormat}
+   */
   private readonly dateFormat: Intl.DateTimeFormat = new Intl.DateTimeFormat(this.locale, {
     dateStyle: 'medium',
   });
@@ -237,9 +293,13 @@ export class InterventionActivityThread {
   /**
    * Property skeletonRows
    * @readonly
-   * @description Placeholder rows shown while the first fetch is in flight.
+   *
+   * @description
+   * Placeholder rows shown while the first fetch is in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {readonly number[]}
    */
   protected readonly skeletonRows: readonly number[] = Array.from(
@@ -250,9 +310,13 @@ export class InterventionActivityThread {
   /**
    * Property isEmpty
    * @readonly
-   * @description Whether there is nothing to show and nothing in flight either.
+   *
+   * @description
+   * Whether there is nothing to show and nothing in flight either.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isEmpty: Signal<boolean> = computed<boolean>(
@@ -319,6 +383,7 @@ export class InterventionActivityThread {
   //#region Methods
   /**
    * Method bodySegmentsOf
+   * @method bodySegmentsOf
    *
    * @description
    * Splits a comment's body into text and mention runs, resolving each
@@ -358,6 +423,7 @@ export class InterventionActivityThread {
 
   /**
    * Method statusChangeOf
+   * @method statusChangeOf
    *
    * @description
    * Narrows a `status_changed` entry's loose payload to its structured shape.
@@ -384,6 +450,7 @@ export class InterventionActivityThread {
 
   /**
    * Method rescheduleOf
+   * @method rescheduleOf
    *
    * @description
    * Narrows a `rescheduled` entry's loose payload to the new planning window.
@@ -395,7 +462,8 @@ export class InterventionActivityThread {
    *
    * @param {InterventionActivityOutput} activity - The entry in question.
    *
-   * @returns {{ plannedStartAt: string | null; dueAt: string | null } | null} The new window, or null.
+   * @returns {{ plannedStartAt: string | null; dueAt: string | null } | null} The new window, or
+   *   null.
    */
   private rescheduleOf(
     activity: InterventionActivityOutput,
@@ -414,10 +482,16 @@ export class InterventionActivityThread {
 
   /**
    * Method rescheduleWindowLabelOf
-   * @description The new planning window as a localized "start → due" label.
+   * @method rescheduleWindowLabelOf
+   *
+   * @description
+   * The new planning window as a localized "start → due" label.
+   *
    * @access private
    * @since 4.3.0
+   *
    * @param {{ plannedStartAt: string | null; dueAt: string | null }} window - The new window.
+   *
    * @returns {string} A localized date pair.
    */
   private rescheduleWindowLabelOf(window: {
@@ -432,6 +506,7 @@ export class InterventionActivityThread {
 
   /**
    * Method dayKeyOf
+   * @method dayKeyOf
    *
    * @description
    * The calendar day of an ISO instant in `timezone`, as `'YYYY-MM-DD'` — the
@@ -458,11 +533,17 @@ export class InterventionActivityThread {
 
   /**
    * Method dayLabelOf
-   * @description Phrases a calendar day as "Today", "Yesterday", or an absolute date once it is further back.
+   * @method dayLabelOf
+   *
+   * @description
+   * Phrases a calendar day as "Today", "Yesterday", or an absolute date once it is further back.
+   *
    * @access private
    * @since 3.2.0
+   *
    * @param {string} dayKey - The row's calendar day, as `'YYYY-MM-DD'`.
    * @param {string} todayKey - Today's calendar day in the same timezone.
+   *
    * @returns {string} The localized day separator label.
    */
   private dayLabelOf(dayKey: string, todayKey: string): string {

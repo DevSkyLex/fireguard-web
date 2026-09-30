@@ -41,7 +41,10 @@ import type { FacilityOptionsState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_FACILITY_OPTIONS_STATE
- * @description No facilities loaded, load idle.
+ *
+ * @description
+ * No facilities loaded, load idle.
+ *
  * @since 1.0.0
  */
 const INITIAL_FACILITY_OPTIONS_STATE: FacilityOptionsState = {
@@ -53,18 +56,21 @@ const INITIAL_FACILITY_OPTIONS_STATE: FacilityOptionsState = {
 
 /**
  * Constant FACILITY_OPTIONS_PAGE_SIZE
+ *
  * @description
  * How many facilities a picker may offer. Bounds the response while covering
  * typical organization sizes — the same cap the create and detail pages used
  * inline before this store existed.
+ *
  * @since 1.0.0
+ *
  * @type {number}
  */
 const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
 
 /**
- * Store FacilityOptionsStore
- * @const FacilityOptionsStore
+ * Constant FacilityOptionsStore
+ *
  * @description
  * Component-scoped NgRx SignalStore that loads the organization's facilities
  * once for a picker — parent of a new facility, site of an equipment,
@@ -73,24 +79,40 @@ const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
  * `FacilityStore`'s list holds one paginated page of roots and cannot double
  * as a complete option source. Secondary UI data: `ensureLoaded` is browser
  * only, never SSR.
+ *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant FacilityOptionsStore
  */
 export const FacilityOptionsStore = signalStore(
   withState<FacilityOptionsState>(INITIAL_FACILITY_OPTIONS_STATE),
   withComputed((store) => ({
-    /** The facilities as picker options, in API order. */
+    /**
+     * @description
+     * The facilities as picker options, in API order.
+     */
     options: computed<readonly FacilityOption[]>(() => store.facilities().map(toFacilityOption)),
 
-    /** Where a map picker should open, averaged from the located facilities. */
+    /**
+     * @description
+     * Where a map picker should open, averaged from the located facilities.
+     */
     mapCenter: computed<MapCoordinates | undefined>(() =>
       resolveFacilityMapCenter(null, store.facilities()),
     ),
 
-    /** True while the facilities are loading. */
+    /**
+     * @description
+     * True while the facilities are loading.
+     */
     loading: computed<boolean>(() => isCallPending(store.loadCallState())),
 
-    /** Normalized error of the last load when it failed, otherwise `null`. */
+    /**
+     * @description
+     * Normalized error of the last load when it failed, otherwise `null`.
+     */
     loadError: computed<StoreError | null>(() => {
       const state = store.loadCallState();
 
@@ -108,10 +130,15 @@ export const FacilityOptionsStore = signalStore(
       const cancellation = new Subject<void>();
       let generation = 0;
       let sessionRevision = authSession.sessionRevision();
+
       /**
        * Function clear
-       * @description Invalidates a picker cache and cancels its outstanding read.
+       *
+       * @description
+       * Invalidates a picker cache and cancels its outstanding read.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const clear = (): void => {
@@ -119,10 +146,15 @@ export const FacilityOptionsStore = signalStore(
         cancellation.next();
         patchState(store, INITIAL_FACILITY_OPTIONS_STATE);
       };
+
       /**
        * Function synchronizeSession
-       * @description Prevents a mounted picker from reusing another session's options.
+       *
+       * @description
+       * Prevents a mounted picker from reusing another session's options.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const synchronizeSession = (): void => {
@@ -177,12 +209,17 @@ export const FacilityOptionsStore = signalStore(
       return {
         clear,
         synchronizeSession,
+
         /**
          * Method load
          * @method load
-         * @description Fetches the organization's facilities, cancelling any in-flight request.
+         *
+         * @description
+         * Fetches the organization's facilities, cancelling any in-flight request.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @type {RxMethod<string>}
          */
         load,
@@ -190,13 +227,17 @@ export const FacilityOptionsStore = signalStore(
         /**
          * Method ensureLoaded
          * @method ensureLoaded
+         *
          * @description
          * Loads once, in the browser only — the options are secondary UI data
          * a server render must not fetch — and never twice while a load is
          * pending or already succeeded.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} organizationId - Organization owning the facilities.
+         *
          * @returns {void}
          */
         ensureLoaded(organizationId: string): void {
@@ -231,8 +272,12 @@ export const FacilityOptionsStore = signalStore(
 
 /**
  * Type FacilityOptionsStore
- * @type FacilityOptionsStore
- * @description Instance type of the {@link FacilityOptionsStore} signal store.
+ *
+ * @description
+ * Instance type of the {@link FacilityOptionsStore} signal store.
+ *
  * @since 1.0.0
+ *
+ * @type FacilityOptionsStore
  */
 export type FacilityOptionsStore = InstanceType<typeof FacilityOptionsStore>;

@@ -36,7 +36,8 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * @class WorkloadAssigneeIndicator
  *
  * @description
- * Feature-owned, cancellable read widget. Shows current load only; mutation-time evaluation remains authoritative for the proposed change.
+ * Feature-owned, cancellable read widget. Shows current load only; mutation-time evaluation remains
+ * authoritative for the proposed change.
  *
  * @version 1.0.0
  */
@@ -170,7 +171,7 @@ export class WorkloadAssigneeIndicator {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<{from: string; to: string} | null>}
+   * @type {Signal<{ from: string; to: string } | null>}
    */
   protected readonly period: Signal<{ from: string; to: string } | null> = computed(() => {
     const from = this.startsOn();

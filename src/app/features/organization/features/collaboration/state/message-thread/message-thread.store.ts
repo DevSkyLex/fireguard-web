@@ -83,6 +83,16 @@ import {
 import { messageThreadStoreEvents } from './events';
 import type { MessageThreadState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {MessageThreadState}
+ */
 const INITIAL_STATE: MessageThreadState = {
   readGeneration: 0,
   conversationId: null,
@@ -108,45 +118,104 @@ const INITIAL_STATE: MessageThreadState = {
 };
 
 /**
- * One fetched page, carrying the page number its rows came from.
+ * Interface LoadedMessagePage
+ * @interface
  *
+ * @description
  * The number cannot be recovered from the response — Hydra's `view` is not
  * emitted by this endpoint — and every write to the loaded-window bounds needs
  * it, so it travels alongside the collection.
  */
 interface LoadedMessagePage {
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * Selects the page of loaded message page results to request.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
   readonly page: number;
+
+  /**
+   * Property collection
+   * @readonly
+   *
+   * @description
+   * Contains the server-paginated messages loaded for the conversation.
+   *
+   * @access public
+   *
+   * @type {HydraCollection<MessageOutput>}
+   */
   readonly collection: HydraCollection<MessageOutput>;
 }
 
-/** Removes one id from a list without mutating it. */
+/**
+ * Function without
+ *
+ * @description
+ * Removes one message identifier from a collection while preserving the remaining order.
+ *
+ * @param {readonly string[]} ids - Message identifiers currently in the collection.
+ * @param {string} id - Identifier to remove.
+ *
+ * @returns {readonly string[]} Remaining identifiers in their original order.
+ */
 function without(ids: readonly string[], id: string): readonly string[] {
   return ids.filter((candidate: string): boolean => candidate !== id);
 }
 
 /**
- * The page holding the newest messages.
+ * Function newestPageOf
  *
+ * @description
  * The API returns messages oldest-first from a plain offset, so the newest ones
  * are on the last page rather than the first. An empty conversation still has a
  * page 1.
+ *
+ * @param {number} totalItems - Number of messages available from the server.
+ *
+ * @returns {number} One-based page containing the newest messages.
  */
 function newestPageOf(totalItems: number): number {
   return Math.max(1, Math.ceil(totalItems / MESSAGE_PAGE_SIZE));
 }
 
-/** Oldest-first ordering, which is how a conversation reads. */
+/**
+ * Function byCreatedAt
+ *
+ * @description
+ * Orders messages chronologically, using the message id to stabilize equal timestamps.
+ *
+ * @param {MessageOutput} first - First message in the comparison.
+ * @param {MessageOutput} second - Second message in the comparison.
+ *
+ * @returns {number} Negative, zero, or positive ordering result.
+ */
 function byCreatedAt(first: MessageOutput, second: MessageOutput): number {
   return first.createdAt.localeCompare(second.createdAt) || first.id.localeCompare(second.id);
 }
 
 /**
- * Builds the row shown the instant someone presses send.
+ * Function optimisticMessage
  *
+ * @description
  * Everything the server owns is left at its empty value; the fields that
  * matter for rendering — who, what, when — are known locally. The id is the
  * client-minted one, so the confirmed message replaces this row rather than
  * appearing beside it.
+ *
+ * @param {string} clientId - Client-generated identifier used for replacement after sync.
+ * @param {string} conversationId - Conversation receiving the message.
+ * @param {PostMessageInput} input - Message content and reply metadata.
+ * @param {OrganizationMemberAccessPort} memberAccess - Current member profile source.
+ * @param {string | null} authorDisplayName - Resolved display name for the current member.
+ *
+ * @returns {MessageOutput} Locally renderable message awaiting server confirmation.
  */
 function optimisticMessage(
   clientId: string,
@@ -183,31 +252,24 @@ function optimisticMessage(
 
 /**
  * Constant MessageThreadStore
- * @const MessageThreadStore
  *
  * @description
  * One conversation's message thread.
- *
  * Component-scoped, but the router reuses the page component when only the
  * conversation id changes, so a fresh instance is not guaranteed: the caller
  * must {@link reset} before loading another conversation.
- *
  * **The API pages oldest-first from a plain offset**, so the newest messages
  * are on the *last* page. A thread therefore opens on that page and reads
  * history by walking page numbers down, and a background refresh re-reads the
  * newest page rather than the first — re-reading page 1 would never see a new
  * message in any conversation longer than one page.
- *
  * Two contract hazards are absorbed here.
- *
  * Reaction responses rebuild the message *without* its real reply count or
  * references, always reporting `replyCount: 0` and `references: []`. Merging
  * them whole would silently erase both, so that path patches only the field
  * it owns.
- *
  * And there is no `GET /api/messages/{id}` — a single message cannot be
  * refetched, which is why every mutation has to leave the local copy correct.
- *
  * The API's edit, tombstone-deletion, pin and save flows had store pipelines
  * here with no UI reaching them; they were pruned rather than left dead
  * (2026-08-20).
@@ -215,6 +277,8 @@ function optimisticMessage(
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant MessageThreadStore
  */
 export const MessageThreadStore = signalStore(
   withEntities({ entity: type<MessageOutput>(), collection: 'message' }),
@@ -239,12 +303,15 @@ export const MessageThreadStore = signalStore(
     editError: computed(() => store.editCallState().error),
     deleteError: computed(() => store.deleteCallState().error),
 
-    /** Whether older messages remain unfetched — that is, pages below the loaded window. */
+    /**
+     * @description
+     * Whether older messages remain unfetched — that is, pages below the loaded window.
+     */
     hasMore: computed((): boolean => store.oldestLoadedPage() > 1),
 
     /**
+     * @description
      * The thread in reading order.
-     *
      * `withEntities` keeps insertion order, and history is paged in *after* the
      * newest messages, so the collection's own order is not chronological.
      * An optimistic row carries a local timestamp of now and sorts last, which
@@ -265,10 +332,16 @@ export const MessageThreadStore = signalStore(
       /**
        * Method restoreQueued
        * @method restoreQueued
-       * @description Restores durable local sends after an authorized server read, retaining IDs and timestamps without replacing confirmed rows.
+       *
+       * @description
+       * Restores durable local sends after an authorized server read, retaining IDs and timestamps
+       * without replacing confirmed rows.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {string} conversationId - Conversation whose read has succeeded.
+       *
        * @returns {void}
        */
       restoreQueued: rxMethod<string>(
@@ -350,8 +423,8 @@ export const MessageThreadStore = signalStore(
       userIdentity = inject<UserIdentityPort>(USER_IDENTITY_PORT),
     ) => ({
       /**
+       * @description
        * Opens a conversation on its newest messages.
-       *
        * Costs one request for a conversation that fits in a page, which is most
        * of them. A longer one costs two: the first read is also the only way to
        * learn `totalItems`, and the newest page cannot be named without it.
@@ -423,8 +496,8 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Pages in the history immediately before the loaded window.
-       *
        * `exhaustMap` because a scroller can ask twice for the same page before
        * the first answer lands, and the second request would fetch rows the
        * first is already bringing.
@@ -473,8 +546,9 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
-       * Empties the thread so another conversation can be opened into it.
+       * Method reset
        *
+       * @description
        * Required rather than optional: the router reuses the page component
        * across a conversation-id change, so this instance outlives the
        * conversation it was built for. Without it the previous thread's
@@ -494,14 +568,13 @@ export const MessageThreadStore = signalStore(
       },
 
       /**
+       * @description
        * Posts a message under a client-minted id.
-       *
        * The id being ours is what makes the rest safe: the confirmation lands
        * on the optimistic row rather than beside it, the Mercure echo of our
        * own message upserts onto it too, a `409` means the message is already
        * stored and is therefore success, and a failure can be queued for replay
        * without risking a duplicate.
-       *
        * Both handlers check the thread is still on the conversation the message
        * was written in. `mergeMap` deliberately lets a send outlive the route
        * change that started it, so without that check a message sent in one
@@ -588,8 +661,8 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Adds a reaction.
-       *
        * Only `reactions` is taken from the response: the reaction handler
        * rebuilds the message without its reply count or references, so the rest
        * of that payload is fabricated.
@@ -625,8 +698,8 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Removes the acting member's reaction with an emoji.
-       *
        * The endpoint answers `204` with no body, so the tally is recomputed
        * locally on success — the member is dropped from it and the chip
        * disappears once its count reaches zero. Applied only after the call
@@ -684,8 +757,8 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Replaces a message's body.
-       *
        * Author-only server-side; the UI never offers it to anyone else, and a
        * `403` still surfaces through the edit dialog's own error. Only the
        * fields the edit owns are patched from the response — the entity keeps
@@ -734,8 +807,8 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Tombstones a message.
-       *
        * The server answers `204` and keeps the row, redacting its content at
        * the API boundary — so the local copy is redacted the same way rather
        * than removed: readers see "deleted", never a hole. `replyCount` and
@@ -786,8 +859,8 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Pins a message in its conversation.
-       *
        * Only `pinnedAt`/`pinnedBy` are taken from the response, out of the
        * same caution the reaction path applies — a fabricated field merged
        * whole is a silent erasure.
@@ -826,6 +899,7 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Unpins a message. `204` with no body, so the pin fields are cleared
        * locally on success — the server treats unpinning an unpinned message
        * as a no-op, so this can never disagree with it.
@@ -861,8 +935,8 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Bookmarks a message for the acting member.
-       *
        * Only `isSaved` is taken from the response: the save handler rebuilds
        * the message without its real reply count or references.
        */
@@ -897,6 +971,7 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
+       * @description
        * Withdraws the acting member's bookmark. Idempotent `204`, so the flag
        * is cleared locally on success.
        */
@@ -934,7 +1009,9 @@ export const MessageThreadStore = signalStore(
       ),
 
       /**
-       * Bumps a parent's reply count after a reply posted elsewhere — the
+       * Method noteReplyPosted
+       *
+       * @description
        * reply sheet owns the write; this keeps the row's counter honest
        * without a refetch that cannot target one message anyway.
        */
@@ -953,7 +1030,9 @@ export const MessageThreadStore = signalStore(
       },
 
       /**
-       * Clears a message's pin fields after an unpin performed by another
+       * Method noteUnpinned
+       *
+       * @description
        * store — the channel info sheet keeps its own pinned list and owns
        * that write.
        */
@@ -970,8 +1049,9 @@ export const MessageThreadStore = signalStore(
       },
 
       /**
-       * Puts a failed message back in the queue and asks for a drain now.
+       * Method retryFailed
        *
+       * @description
        * The row itself never left the thread, so nothing is re-composed — the
        * member is retrying the same message under the same id, which is why
        * this cannot duplicate.
@@ -1000,7 +1080,10 @@ export const MessageThreadStore = signalStore(
   ),
 
   withComputed((store, mercure = inject(MercureService)) => ({
-    /** Health of the thread's realtime topic, or `null` when not connected. */
+    /**
+     * @description
+     * Health of the thread's realtime topic, or `null` when not connected.
+     */
     realtimeStatus: computed((): MercureConnectionStatus | null =>
       store.realtimeTopic() === null
         ? null
@@ -1018,21 +1101,18 @@ export const MessageThreadStore = signalStore(
       memberAccess = inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT),
     ) => {
       /**
+       * @description
        * Re-reads the newest page and folds it into what is already loaded.
-       *
        * The newest page, not the first: messages page oldest-first, so a new
        * message lands at the *end* of the collection and re-reading page 1
        * would never see it in any conversation longer than one page.
-       *
        * A message can also arrive that pushes the conversation onto a page that
        * did not exist when the thread opened, which the fresh `totalItems`
        * reveals — hence the second read, taken only when the boundary moved.
-       *
        * Deliberately silent: it never touches `listCallState`, because a
        * background refresh that flashes a spinner over a conversation someone
        * is reading is worse than the staleness it fixes. A failure is dropped
        * for the same reason — the next frame or reconnection tries again.
-       *
        * It upserts rather than replaces, so history the member scrolled back
        * through survives. The limit is honest and worth knowing: a change to a
        * message outside the loaded window is not picked up, and cannot be —
@@ -1159,7 +1239,10 @@ export const MessageThreadStore = signalStore(
         refresh,
         loadReceipts,
 
-        /** Confirms one loaded incoming message from this browser. */
+        /**
+         * @description
+         * Confirms one loaded incoming message from this browser.
+         */
         acknowledgeDelivery: rxMethod<{
           readonly conversationId: string;
           readonly messageId: string;
@@ -1190,7 +1273,10 @@ export const MessageThreadStore = signalStore(
           ),
         ),
 
-        /** Publishes a temporary typing signal without sending draft content. */
+        /**
+         * @description
+         * Publishes a temporary typing signal without sending draft content.
+         */
         publishTyping: rxMethod<{ readonly conversationId: string; readonly active: boolean }>(
           pipe(
             concatMap(({ conversationId, active }) => {
@@ -1208,8 +1294,9 @@ export const MessageThreadStore = signalStore(
         ),
 
         /**
-         * Adds or withdraws the acting member's reaction with one emoji.
+         * Method toggleReaction
          *
+         * @description
          * The direction lives here because the store holds the tally: a
          * surface handed only an emoji would have to look the row up again to
          * answer a question already answered.
@@ -1232,14 +1319,13 @@ export const MessageThreadStore = signalStore(
         },
 
         /**
+         * @description
          * Moves the acting member's read marker, clearing the conversation's
          * unread count.
-         *
          * With no `lastReadMessageId` the marker moves to now for legacy
          * callers. Conversation pages supply the last displayed message only
          * after the visible thread catches up. The API records that position
          * along with the instant used for unread counts.
-         *
          * Fire-and-forget: a read marker that fails to move is not worth
          * interrupting the member for. On success it emits `conversationRead`
          * so the sidebar lists — separate store instances — can zero the badge
@@ -1279,17 +1365,15 @@ export const MessageThreadStore = signalStore(
         ),
 
         /**
+         * @description
          * Starts listening for the conversation's realtime updates.
-         *
          * Message frames are **invalidation signals, not message data**. A
          * Mercure frame carries six fields where `MessageOutput` needs twelve,
          * and there is no endpoint to hydrate one message. Typing frames carry
          * only ephemeral identity and activity; receipt frames invalidate the
          * durable receipt snapshot without refetching message bodies.
-         *
          * Bursts are coalesced, and a reconnection triggers the same catch-up
          * because the hub replays nothing — see the reconnect effect below.
-         *
          * The subscriber token expires after 15 minutes and `MercureService`
          * never re-mints one, so a long-open conversation would go quiet with
          * no visible symptom: every reconnection retries with the same dead
@@ -1389,5 +1473,7 @@ export const MessageThreadStore = signalStore(
  * Injection type of {@link MessageThreadStore}.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type MessageThreadStoreType = InstanceType<typeof MessageThreadStore>;

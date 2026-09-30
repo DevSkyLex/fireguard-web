@@ -71,7 +71,13 @@ import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import { WebhookDeliveryStatusTag } from '../../components/webhook-delivery-status-tag';
 
-/** The subscription and delivery pages' fixed, server-set page size — the store computes both page counts against it. */
+/**
+ * Constant PAGE_SIZE
+ *
+ * @description
+ * The subscription and delivery pages' fixed, server-set page size — the store computes both page
+ * counts against it.
+ */
 const PAGE_SIZE: number = 20;
 
 /**
@@ -139,198 +145,303 @@ export class WebhooksPage {
   /**
    * Property store
    * @readonly
-   * @description Route-owned request and entity state.
+   *
+   * @description
+   * Route-owned request and entity state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WebhookSubscriptionsStoreType}
    */
   protected readonly store: WebhookSubscriptionsStoreType = inject(WebhookSubscriptionsStore);
+
   /**
    * Property context
    * @readonly
-   * @description Canonical selected organization.
+   *
+   * @description
+   * Canonical selected organization.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationContextPort}
    */
   private readonly context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
+
   /**
    * Property permissions
    * @readonly
-   * @description Published organization permission helper.
+   *
+   * @description
+   * Published organization permission helper.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationPermissionService}
    */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
+
   /**
    * Property clipboard
    * @readonly
-   * @description User-initiated secret copy only.
+   *
+   * @description
+   * User-initiated secret copy only.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Clipboard}
    */
   private readonly clipboard: Clipboard = inject(Clipboard);
+
   /**
    * Property pageActionsService
    * @readonly
-   * @description Registers {@link pageActions} on the shell header.
+   *
+   * @description
+   * Registers {@link pageActions} on the shell header.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {PageActionsService}
    */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
+
   /**
    * Property pageActions
    * @readonly
-   * @description The page's own `#pageActions` template — "Refresh" and, when {@link canManage}, "Add webhook".
+   *
+   * @description
+   * The page's own `#pageActions` template — "Refresh" and, when {@link canManage}, "Add webhook".
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<TemplateRef<unknown> | undefined>}
    */
   protected readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
+
   /**
    * Property ready
    * @readonly
-   * @description Prevents private reads during SSR.
+   *
+   * @description
+   * Prevents private reads during SSR.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   private readonly ready: WritableSignal<boolean> = signal(false);
+
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT).regionalFormatting;
+
   /**
    * Property pageSizes
    * @readonly
-   * @description The single, fixed page size {@link PAGE_SIZE} the subscription and delivery pagers offer — hides `app-collection-pagination`'s rows-per-page selector.
+   *
+   * @description
+   * The single, fixed page size {@link PAGE_SIZE} the subscription and delivery pagers offer —
+   * hides `app-collection-pagination`'s rows-per-page selector.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {readonly [number]}
    */
   protected readonly pageSizes: readonly [number] = [PAGE_SIZE];
+
   /**
    * Property canManage
    * @readonly
-   * @description Management controls follow current grants.
+   *
+   * @description
+   * Management controls follow current grants.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canManage: Signal<boolean> = computed(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.WEBHOOKS_MANAGE),
   );
+
   /**
    * Property editorOpen
    * @readonly
-   * @description Editor visibility.
+   *
+   * @description
+   * Editor visibility.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly editorOpen: WritableSignal<boolean> = signal(false);
+
   /**
    * Property editing
    * @readonly
-   * @description Snapshot retained during a failed save.
+   *
+   * @description
+   * Snapshot retained during a failed save.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<WebhookSubscriptionOutput | null>}
    */
   protected readonly editing: WritableSignal<WebhookSubscriptionOutput | null> =
     signal<WebhookSubscriptionOutput | null>(null);
+
   /**
    * Property dirty
    * @readonly
-   * @description Editor draft protection.
+   *
+   * @description
+   * Editor draft protection.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly dirty: WritableSignal<boolean> = signal(false);
+
   /**
    * Property discardState
    * @readonly
-   * @description Explicit discard confirmation.
+   *
+   * @description
+   * Explicit discard confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<BrnDialogState>}
    */
   protected readonly discardState: WritableSignal<BrnDialogState> =
     signal<BrnDialogState>('closed');
+
   /**
    * Property confirmation
    * @readonly
-   * @description An explicit rotation, delete or redelivery intent.
+   *
+   * @description
+   * An explicit rotation, delete or redelivery intent.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<WebhookMutation | null>}
    */
   protected readonly confirmation: WritableSignal<WebhookMutation | null> =
     signal<WebhookMutation | null>(null);
+
   /**
    * Property secret
    * @readonly
-   * @description One-time secret, never serialized or persisted.
+   *
+   * @description
+   * One-time secret, never serialized or persisted.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly secret: WritableSignal<string | null> = signal<string | null>(null);
+
   /**
    * Property copied
    * @readonly
-   * @description Copy acknowledgement.
+   *
+   * @description
+   * Copy acknowledgement.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly copied: WritableSignal<boolean> = signal(false);
+
   /**
    * Property notice
    * @readonly
-   * @description Accepted queue acknowledgement.
+   *
+   * @description
+   * Accepted queue acknowledgement.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly notice: WritableSignal<string | null> = signal<string | null>(null);
+
   /**
    * Property side
    * @readonly
-   * @description Uses shared interaction mode.
+   *
+   * @description
+   * Uses shared interaction mode.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
+
   /**
    * Property sheet
    * @readonly
-   * @description Native sheet control for discard protection.
+   *
+   * @description
+   * Native sheet control for discard protection.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Signal<HlmSheet | undefined>}
    */
   private readonly sheet: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
+
   /**
    * Property filters
    * @readonly
-   * @description Short, comparable delivery filters.
+   *
+   * @description
+   * Short, comparable delivery filters.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {ReadonlyArray<{ value: WebhookDeliveryOutput['status'] | ''; label: string }>}
    */
   protected readonly filters: ReadonlyArray<{
@@ -342,30 +453,45 @@ export class WebhooksPage {
     { value: 'delivered', label: $localize`:@@webhooks.delivered:Delivered` },
     { value: 'failed', label: $localize`:@@webhooks.failed:Failed` },
   ];
+
   /**
    * Property refreshLabel
    * @readonly
-   * @description The "Refresh" icon button's accessible name, shared by its `aria-label` and `hlmTooltip`.
+   *
+   * @description
+   * The "Refresh" icon button's accessible name, shared by its `aria-label` and `hlmTooltip`.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {string}
    */
   protected readonly refreshLabel: string = $localize`:@@common.refresh:Refresh`;
+
   /**
    * Property rowMenuLabel
    * @readonly
-   * @description The per-subscription "more actions" trigger's accessible name.
+   *
+   * @description
+   * The per-subscription "more actions" trigger's accessible name.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {string}
    */
   protected readonly rowMenuLabel: string = $localize`:@@webhooks.rowMenu:More actions`;
+
   /**
    * Property confirmationTitle
    * @readonly
-   * @description Consequence-specific confirmation title.
+   *
+   * @description
+   * Consequence-specific confirmation title.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly confirmationTitle: Signal<string> = computed(() => {
@@ -375,12 +501,17 @@ export class WebhooksPage {
       return $localize`:@@webhooks.rotateTitle:Replace the signing secret?`;
     return $localize`:@@webhooks.redeliverTitle:Send this delivery again?`;
   });
+
   /**
    * Property confirmationDescription
    * @readonly
-   * @description Describes the consequence before the command.
+   *
+   * @description
+   * Describes the consequence before the command.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly confirmationDescription: Signal<string> = computed(() => {
@@ -390,10 +521,15 @@ export class WebhooksPage {
       return $localize`:@@webhooks.rotateHint:The current secret will stop working immediately. Update your receiver with the new secret after confirming.`;
     return $localize`:@@webhooks.redeliverHint:The same delivery will be sent again. Its identifier stays the same so your receiver can prevent duplicate processing.`;
   });
+
   /**
    * Constructor
    * @constructor
-   * @description Starts scoped reads only after rendering, consumes transient command results, and registers {@link pageActions}.
+   *
+   * @description
+   * Starts scoped reads only after rendering, consumes transient command results, and registers
+   * {@link pageActions}.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -443,13 +579,19 @@ export class WebhooksPage {
       });
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
   }
+
   /**
    * Method openEditor
    * @method openEditor
-   * @description Opens a snapshot editor and requests the catalog.
+   *
+   * @description
+   * Opens a snapshot editor and requests the catalog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {WebhookSubscriptionOutput | null} subscription - Existing endpoint or a new draft.
+   *
    * @returns {void}
    */
   protected openEditor(subscription: WebhookSubscriptionOutput | null): void {
@@ -460,13 +602,19 @@ export class WebhooksPage {
     this.editorOpen.set(true);
     this.store.loadCatalog();
   }
+
   /**
    * Method save
    * @method save
-   * @description Dispatches only the form changes.
+   *
+   * @description
+   * Dispatches only the form changes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {Partial<WebhookSubscriptionInput>} input - Changed form fields.
+   *
    * @returns {void}
    */
   protected save(input: Partial<WebhookSubscriptionInput>): void {
@@ -488,12 +636,17 @@ export class WebhooksPage {
       });
     }
   }
+
   /**
    * Method closeEditor
    * @method closeEditor
-   * @description Preserves dirty data until discard is confirmed.
+   *
+   * @description
+   * Preserves dirty data until discard is confirmed.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected closeEditor(): void {
@@ -506,12 +659,17 @@ export class WebhooksPage {
     this.editorOpen.set(false);
     this.editing.set(null);
   }
+
   /**
    * Method discard
    * @method discard
-   * @description Closes the editor after explicit discard.
+   *
+   * @description
+   * Closes the editor after explicit discard.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected discard(): void {
@@ -520,13 +678,19 @@ export class WebhooksPage {
     this.editorOpen.set(false);
     this.editing.set(null);
   }
+
   /**
    * Method request
    * @method request
-   * @description Prepares a consequence-specific management confirmation.
+   *
+   * @description
+   * Prepares a consequence-specific management confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {WebhookMutation} action - Requested management action.
+   *
    * @returns {void}
    */
   protected request(action: WebhookMutation): void {
@@ -534,25 +698,36 @@ export class WebhooksPage {
     this.store.clearMutationFeedback();
     this.confirmation.set(action);
   }
+
   /**
    * Method confirm
    * @method confirm
-   * @description Executes the explicitly confirmed command once.
+   *
+   * @description
+   * Executes the explicitly confirmed command once.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirm(): void {
     const action = this.confirmation();
     if (action) this.store.mutate(action);
   }
+
   /**
    * Method refresh
    * @method refresh
-   * @description Checks the server without repeating a management command.
+   *
+   * @description
+   * Checks the server without repeating a management command.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} page - Subscription page to read.
+   *
    * @returns {void}
    */
   protected refresh(page: number): void {
@@ -561,24 +736,38 @@ export class WebhooksPage {
     this.notice.set(null);
     this.store.load({ organizationId: this.context.selectedOrganizationId(), page });
   }
+
   /**
    * Method copySecret
    * @method copySecret
-   * @description Copies only on explicit user interaction.
+   *
+   * @description
+   * Copies only on explicit user interaction.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected copySecret(): void {
     const secret = this.secret();
     if (secret) this.copied.set(this.clipboard.copy(secret));
   }
+
   /**
    * Method onStatusFilterChanged
-   * @description Narrows `hlm-toggle-group`'s single-select payload to one of {@link filters}' values, defaulting to `''` (all) for anything else.
+   * @method onStatusFilterChanged
+   *
+   * @description
+   * Narrows `hlm-toggle-group`'s single-select payload to one of {@link filters}' values, defaulting
+   * to `''` (all) for anything else.
+   *
    * @access protected
    * @since 1.1.0
-   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   *
+   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted
+   *   value.
+   *
    * @returns {void}
    */
   protected onStatusFilterChanged(value: string | readonly string[] | null | undefined): void {
@@ -589,12 +778,20 @@ export class WebhooksPage {
 
     this.store.loadDeliveries(1, status);
   }
+
   /**
    * Method eventLabelOf
-   * @description The curated localized label for a raw event type key, falling back to the loaded catalog's own label, then to the key.
+   * @method eventLabelOf
+   *
+   * @description
+   * The curated localized label for a raw event type key, falling back to the loaded catalog's own
+   * label, then to the key.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} value - Raw event type key.
+   *
    * @returns {string} The resolved label.
    */
   protected eventLabelOf(value: string): string {
@@ -603,13 +800,19 @@ export class WebhooksPage {
       this.store.events().find((event) => event.value === value)?.label,
     );
   }
+
   /**
    * Method failureLabel
    * @method failureLabel
-   * @description Consumes stable codes without exposing transport diagnostics.
+   *
+   * @description
+   * Consumes stable codes without exposing transport diagnostics.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} code - Public API failure code.
+   *
    * @returns {string} Localized actionable reason.
    */
   protected failureLabel(code: string): string {

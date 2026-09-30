@@ -47,10 +47,10 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 > `always` in the table below means "before the first action of that kind", never "before you
 > start". Doctrine loaded ahead of the problem crowds out the problem.
 
-| Skill              | Load it when                                                             |
-| ------------------ | ------------------------------------------------------------------------ |
-| `web-testing`      | always — the `--include` trap alone will cost you a run                  |
-| `e2e-playwright`   | the case really belongs in the browser suite and you are handing it over |
+| Skill                                                           | Load it when                                                             |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `web-testing`                                                   | always — the `--include` trap alone will cost you a run                  |
+| `e2e-playwright`                                                | the case really belongs in the browser suite and you are handing it over |
 | `fireguard-naming` (`.claude/skills/fireguard-naming/SKILL.md`) | naming spec files or `testing/` folders                                  |
 
 ## Navigating by symbol
@@ -137,7 +137,6 @@ Never invoke `npx vitest` directly — the bare runner misses the project global
 - Running bare `npx vitest`; running the full suite when a glob would do.
 - Refactoring production code to make a test green — that is the reviewer's/scaffolder's call.
 - Weakening assertions to `toBeTruthy()` where the exact `UrlTree`, enum literal, or emitted payload is the contract.
-
 
 ## Output
 

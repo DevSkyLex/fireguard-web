@@ -36,10 +36,10 @@ Use Skill when the matching local skill is available. Otherwise read its
 `.claude/skills/<name>/SKILL.md` in the owning checkout. Additional-directory discovery
 does not imply the skill is registered. Load conditional resources only when needed.
 
-| Skill | Load when |
-| --- | --- |
-| `spartan-ui` (`.claude/skills/spartan-ui/SKILL.md`) | native component and visual conventions |
-| `fireguard-naming` (`.claude/skills/fireguard-naming/SKILL.md`) | placement or concern boundaries |
+| Skill                                                           | Load when                               |
+| --------------------------------------------------------------- | --------------------------------------- |
+| `spartan-ui` (`.claude/skills/spartan-ui/SKILL.md`)             | native component and visual conventions |
+| `fireguard-naming` (`.claude/skills/fireguard-naming/SKILL.md`) | placement or concern boundaries         |
 
 ## Verification and report
 

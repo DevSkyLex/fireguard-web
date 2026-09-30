@@ -47,10 +47,10 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 > `always` in the table below means "before the first action of that kind", never "before you
 > start". Doctrine loaded ahead of the problem crowds out the problem.
 
-| Skill                 | Load it when                                                        |
-| --------------------- | ------------------------------------------------------------------- |
+| Skill                                                                 | Load it when                                                        |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | `signalstore-recipes` (`.claude/skills/signalstore-recipes/SKILL.md`) | always — the decision tree and the templates this prompt summarises |
-| `fireguard-naming`    | naming the slice files, events or tokens                            |
+| `fireguard-naming`                                                    | naming the slice files, events or tokens                            |
 
 ## Navigating by symbol
 
@@ -143,7 +143,6 @@ Real examples to mirror **for layout**: `features/auth/state/auth/`, `features/a
 - `withQueryState` on a multi-call store, or manual arrays where `withEntities` fits.
 - State interface parked under `models/` instead of the slice's `state/<slice>/models/`.
 - Defaulting to `{ providedIn: 'root' }`; a store listening to its own event group; building `HttpParams` in the store; writing a spec or a component.
-
 
 ## Output
 

@@ -236,7 +236,6 @@ npm run build
 
 `--include` is the **spec-discovery glob**, not a path filter — it must end in `*.spec.ts`, or the runner treats every `.html` as a test entry and dies with `No loader is configured for ".html" files`. Never run bare `npx vitest`. (Abridged from the `web-testing` skill, which owns this — **change one, change both.**)
 
-
 ## Output
 
 Three headings, in this order, and nothing else above them:

@@ -42,10 +42,10 @@ import type { FederatedAuthState } from './models';
  * Constant PROVIDERS_TRANSFER_KEY
  * @readonly
  *
- * @description
- * Small SSR handoff containing only public provider availability.
+ * @description Small SSR handoff containing only public provider availability.
  *
  * @since 1.0.0
+ *
  * @type {StateKey<readonly FederatedProviderOutput[]>}
  */
 const PROVIDERS_TRANSFER_KEY = makeStateKey<readonly FederatedProviderOutput[]>(
@@ -56,11 +56,11 @@ const PROVIDERS_TRANSFER_KEY = makeStateKey<readonly FederatedProviderOutput[]>(
  * Constant INITIAL_STATE
  * @readonly
  *
- * @description
- * Independent request states for discovery, callbacks, connection changes and
+ * @description Independent request states for discovery, callbacks, connection changes and
  * first-password setup.
  *
  * @since 1.0.0
+ *
  * @type {FederatedAuthState}
  */
 const INITIAL_STATE: FederatedAuthState = {
@@ -78,15 +78,15 @@ const INITIAL_STATE: FederatedAuthState = {
 } as const;
 
 /**
- * Store FederatedAuthStore
+ * Constant FederatedAuthStore
  *
- * @description
- * Owns provider availability, full-page redirect starts, one-time callback
+ * @description Owns provider availability, full-page redirect starts, one-time callback
  * completion, connected identities and first-password setup. Only public
  * provider availability crosses the SSR boundary. Callback completion belongs
  * to the initiating session revision and is cancelled when reset or cleared.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const FederatedAuthStore = signalStore(
@@ -397,11 +397,15 @@ export const FederatedAuthStore = signalStore(
 
         /**
          * Method clearSessionState
-         * @method clearSessionState
+         *
          * @description Cancels pending redirects and purges account state and unconsumed return intent.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
+         *
+         * @function clearSessionState
          */
         clearSessionState(): void {
           completionCancellation.next();
@@ -434,12 +438,13 @@ export const FederatedAuthStore = signalStore(
 
 /**
  * Type FederatedAuthStore
- * @type FederatedAuthStore
  *
- * @description
- * Injectable instance type exposed by the federated authentication store.
+ * @description Injectable instance type exposed by the federated authentication store.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type FederatedAuthStore
  */
 export type FederatedAuthStore = InstanceType<typeof FederatedAuthStore>;

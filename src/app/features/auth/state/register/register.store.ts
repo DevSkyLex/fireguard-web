@@ -41,8 +41,9 @@ import type { RegisterState } from './models';
 /**
  * Type RegisterVerifyPayload
  *
- * @description
- * Verify payload without the challenge token (which the store already holds).
+ * @description Verify payload without the challenge token (which the store already holds).
+ *
+ * @type {RegisterVerifyPayload}
  */
 type RegisterVerifyPayload = Omit<RegisterVerifyInput, 'token'>;
 
@@ -57,8 +58,7 @@ const INITIAL_STATE: RegisterState = {
 };
 
 /**
- * Store RegisterStore
- * @const RegisterStore
+ * Constant RegisterStore
  *
  * @description
  * NGRX SignalStore for the public self-service registration flow. Handles
@@ -68,7 +68,10 @@ const INITIAL_STATE: RegisterState = {
  * cancels pending reads without destroying the reusable root request streams.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const RegisterStore
  *
  * @example
  * ```typescript
@@ -84,9 +87,7 @@ export const RegisterStore = signalStore(
 
   withComputed((store) => ({
     /**
-     * Computed isRegistering
-     *
-     * @description
+     * @description Computed isRegistering
      * Whether a registration request is in progress.
      *
      * @since 1.0.0
@@ -96,9 +97,7 @@ export const RegisterStore = signalStore(
     isRegistering: computed<boolean>(() => store.requestCallState().status === 'pending'),
 
     /**
-     * Computed registerError
-     *
-     * @description
+     * @description Computed registerError
      * Registration request error if any.
      *
      * @since 1.0.0
@@ -108,9 +107,7 @@ export const RegisterStore = signalStore(
     registerError: computed<StoreError | null>(() => store.requestCallState().error),
 
     /**
-     * Computed isVerifying
-     *
-     * @description
+     * @description Computed isVerifying
      * Whether email verification is in progress.
      *
      * @since 1.0.0
@@ -120,9 +117,7 @@ export const RegisterStore = signalStore(
     isVerifying: computed<boolean>(() => store.verifyCallState().status === 'pending'),
 
     /**
-     * Computed verifyError
-     *
-     * @description
+     * @description Computed verifyError
      * Email verification error if any.
      *
      * @since 1.0.0
@@ -132,9 +127,7 @@ export const RegisterStore = signalStore(
     verifyError: computed<StoreError | null>(() => store.verifyCallState().error),
 
     /**
-     * Computed isResending
-     *
-     * @description
+     * @description Computed isResending
      * Whether resending the verification code is in progress.
      *
      * @since 1.0.0
@@ -144,9 +137,7 @@ export const RegisterStore = signalStore(
     isResending: computed<boolean>(() => store.resendCallState().status === 'pending'),
 
     /**
-     * Computed resendError
-     *
-     * @description
+     * @description Computed resendError
      * Resend error if any.
      *
      * @since 1.0.0
@@ -156,9 +147,7 @@ export const RegisterStore = signalStore(
     resendError: computed<StoreError | null>(() => store.resendCallState().error),
 
     /**
-     * Computed hasChallenge
-     *
-     * @description
+     * @description Computed hasChallenge
      * Whether a verification challenge is currently pending (gates the verify page).
      *
      * @since 1.0.0
@@ -168,9 +157,7 @@ export const RegisterStore = signalStore(
     hasChallenge: computed<boolean>(() => store.challengeToken() !== null),
 
     /**
-     * Computed resendAvailableIn
-     *
-     * @description
+     * @description Computed resendAvailableIn
      * Whole seconds before a new verification code may be requested, `0` when
      * none. A snapshot, not a ticking clock — the OTP form runs the countdown.
      *
@@ -193,8 +180,7 @@ export const RegisterStore = signalStore(
         /**
          * Method register
          *
-         * @description
-         * Creates an account and triggers the email-verification challenge.
+         * @description Creates an account and triggers the email-verification challenge.
          *
          * @since 1.0.0
          *
@@ -239,8 +225,7 @@ export const RegisterStore = signalStore(
         /**
          * Method verify
          *
-         * @description
-         * Verifies the email with the OTP code. On success the returned session is
+         * @description Verifies the email with the OTP code. On success the returned session is
          * applied to the {@link AuthStore}, logging the user in automatically.
          *
          * @since 1.0.0
@@ -301,8 +286,7 @@ export const RegisterStore = signalStore(
         /**
          * Method resend
          *
-         * @description
-         * Resends the verification code, replacing the challenge token.
+         * @description Resends the verification code, replacing the challenge token.
          *
          * @since 1.0.0
          *
@@ -363,8 +347,7 @@ export const RegisterStore = signalStore(
         /**
          * Method setChallengeToken
          *
-         * @description
-         * Rehydrates the challenge token, typically from the verify route's
+         * @description Rehydrates the challenge token, typically from the verify route's
          * `token` query param after a reload wiped the in-memory state. The
          * masked recipient cannot be recovered from the token alone, so it is
          * left as-is — the verify screen degrades to its generic copy.
@@ -384,8 +367,7 @@ export const RegisterStore = signalStore(
         /**
          * Method clear
          *
-         * @description
-         * Clears all registration state.
+         * @description Clears all registration state.
          *
          * @since 1.0.0
          *
@@ -410,11 +392,11 @@ export const RegisterStore = signalStore(
 
 /**
  * Type RegisterStore
- * @type RegisterStore
  *
- * @description
- * Type of the RegisterStore instance.
+ * @description Type of the RegisterStore instance.
  *
  * @since 1.0.0
+ *
+ * @type RegisterStore
  */
 export type RegisterStore = InstanceType<typeof RegisterStore>;

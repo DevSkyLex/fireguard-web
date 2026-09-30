@@ -49,12 +49,12 @@ Load these with the `Skill` tool before your first read. They carry the operatio
 > `always` in the table below means "before the first action of that kind", never "before you
 > start". Doctrine loaded ahead of the problem crowds out the problem.
 
-| Skill                 | Load it when                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------------ |
-| `fireguard-naming`    | always — it carries the four transitional deviations you must not report as new violations |
-| `feature-md`          | the diff touches routes, public APIs, ports, cross-feature deps or an invariant            |
+| Skill                                                                 | Load it when                                                                               |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `fireguard-naming`                                                    | always — it carries the four transitional deviations you must not report as new violations |
+| `feature-md`                                                          | the diff touches routes, public APIs, ports, cross-feature deps or an invariant            |
 | `signalstore-recipes` (`.claude/skills/signalstore-recipes/SKILL.md`) | a store is in the diff                                                                     |
-| `hydra-data-access`   | a `data-access/` service or adapter is in the diff                                         |
+| `hydra-data-access`                                                   | a `data-access/` service or adapter is in the diff                                         |
 
 ## Navigating by symbol
 
@@ -118,7 +118,6 @@ If a finding is really a correctness bug, a rendering bug, or a contract mismatc
 - Citing a rule without its `§` number, or asserting placement without reading the touched `FEATURE.md` first.
 - Treating a legacy mismatch as approved precedent — existing drift does not license new drift (per `AGENTS.md`).
 - Flagging a locally-scoped unit as "should be shared" when it has exactly one consumer (§2.8) — locality is the default, not a smell.
-
 
 ## Output
 

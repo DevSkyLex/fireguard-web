@@ -315,6 +315,10 @@ for (const dark of [false, true]) {
     });
     await onboarding.facilityAddressInput.focus();
     await onboarding.facilityNameInput.focus();
+    await expect(
+      page.locator('app-onboarding-facilities-form hlm-field-error:visible'),
+    ).toHaveCount(0);
+    await onboarding.facilityNameInput.fill('Second warehouse');
     await expect(page.getByText('Select a suggested address.', { exact: true })).toBeVisible();
   });
 }

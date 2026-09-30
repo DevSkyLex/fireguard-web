@@ -3,10 +3,13 @@ import type { DashboardGlobalNavItem, DashboardGlobalNavRow } from '../models';
 
 /**
  * Function buildDashboardGlobalNavRows
+ *
  * @description Projects shell destinations from active organization and effective grants.
+ *
  * @param {readonly DashboardGlobalNavItem[]} items - Ordered shell destination catalog.
  * @param {string | null} organizationId - Currently selected organization.
  * @param {readonly string[]} permissions - Effective grants read through the member-access port.
+ *
  * @returns {readonly DashboardGlobalNavRow[]} Visible destinations, with scoped URLs completed.
  */
 export function buildDashboardGlobalNavRows(

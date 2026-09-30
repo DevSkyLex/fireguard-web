@@ -51,10 +51,10 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 > `always` in the table below means "before the first action of that kind", never "before you
 > start". Doctrine loaded ahead of the problem crowds out the problem.
 
-| Skill              | Load it when     |
-| ------------------ | ---------------- |
+| Skill                                                           | Load it when     |
+| --------------------------------------------------------------- | ---------------- |
 | `fireguard-naming` (`.claude/skills/fireguard-naming/SKILL.md`) | always           |
-| `web-testing`      | writing the spec |
+| `web-testing`                                                   | writing the spec |
 
 ## Navigating by symbol
 
@@ -191,7 +191,6 @@ npm run build
 ```
 
 `--include` is the **spec-discovery glob** — it must end in `*.spec.ts`. Never run bare `npx vitest`. (Abridged from the `web-testing` skill, which owns this — **change one, change both.**)
-
 
 ## Output
 

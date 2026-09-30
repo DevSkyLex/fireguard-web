@@ -34,11 +34,11 @@ Use Skill when the matching local skill is available. Otherwise read its
 `.claude/skills/<name>/SKILL.md` in the owning checkout. Additional-directory discovery
 does not imply the skill is registered. Load conditional resources only when needed.
 
-| Skill | Load when |
-| --- | --- |
-| `spartan-ui` (`.claude/skills/spartan-ui/SKILL.md`) | every overlay composition assignment |
-| `fireguard-naming` (`.claude/skills/fireguard-naming/SKILL.md`) | overlay placement and contracts |
-| `web-testing` (`.claude/skills/web-testing/SKILL.md`) | assigned focus/dismissal tests |
+| Skill                                                           | Load when                            |
+| --------------------------------------------------------------- | ------------------------------------ |
+| `spartan-ui` (`.claude/skills/spartan-ui/SKILL.md`)             | every overlay composition assignment |
+| `fireguard-naming` (`.claude/skills/fireguard-naming/SKILL.md`) | overlay placement and contracts      |
+| `web-testing` (`.claude/skills/web-testing/SKILL.md`)           | assigned focus/dismissal tests       |
 
 ## Verification and report
 

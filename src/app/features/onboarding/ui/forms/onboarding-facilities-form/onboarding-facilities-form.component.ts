@@ -55,10 +55,18 @@ import { HlmSpinner } from '@shared/ui/spinner';
 import type { OnboardingFacilityDraft } from './models';
 import { loadAddressFlag } from './utils/address-flag/address-flag.utils';
 
-/** Facilities the setup boundary accepts in one onboarding submission. */
+/**
+ * Constant MAX_FACILITIES
+ *
+ * @description Facilities the setup boundary accepts in one onboarding submission.
+ */
 const MAX_FACILITIES = 5;
 
-/** A blank draft row. */
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description A blank draft row.
+ */
 const EMPTY_VALUES: OnboardingFacilityDraft = {
   type: '',
   name: '',
@@ -90,12 +98,12 @@ const EMPTY_VALUES: OnboardingFacilityDraft = {
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-onboarding-facilities-form [pending]="isCreating()" (submitted)="createFacilities($event)" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-onboarding-facilities-form',
@@ -134,63 +142,143 @@ export class OnboardingFacilitiesForm {
   /**
    * Property restored
    * @readonly
+   *
    * @description Complete durable batch restored after reload or a partial creation response.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<readonly SetupCreateFacilityInput[]>}
    */
   public readonly restored: InputSignal<readonly SetupCreateFacilityInput[]> = input<
     readonly SetupCreateFacilityInput[]
   >([]);
 
-  /** Draft input focus is restored only after an explicit row edit. */
+  /**
+   * Property draftInput
+   * @readonly
+   *
+   * @description Draft input focus is restored only after an explicit row edit.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLInputElement> | undefined>}
+   */
   private readonly draftInput = viewChild<ElementRef<HTMLInputElement>>('draftInput');
+  /**
+   * Property injector
+   * @readonly
+   *
+   * @description Injection context used to restore draft focus after the next render.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Injector}
+   */
   private readonly injector = inject(Injector);
 
   /**
    * Property pendingAddressReset
+   *
    * @description Identifies the cleared draft awaiting the previous address picker's final touch event.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OnboardingFacilityDraft | null}
    */
   private pendingAddressReset: OnboardingFacilityDraft | null = null;
 
-  /** Wait for the draft to reappear when editing a full batch. */
+  /**
+   * Method focusDraft
+   *
+   * @description Wait for the draft to reappear when editing a full batch.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   *
+   * @function focusDraft
+   */
   private focusDraft(): void {
     afterNextRender(() => this.draftInput()?.nativeElement.focus(), { injector: this.injector });
   }
 
   /**
    * Method isCompleted
-   * @method isCompleted
+   *
    * @description Compares durable payload identities rather than in-memory object references.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @param {SetupCreateFacilityInput | undefined} row - The staged facility.
+   *
    * @returns {boolean} Whether its server receipt is complete.
+   *
+   * @function isCompleted
    */
   private isCompleted(row: SetupCreateFacilityInput | undefined): boolean {
     return !!row && this.completed().some((done) => setupPayloadKey(done) === setupPayloadKey(row));
   }
 
-  /** Names the staged entry edited by this action. */
+  /**
+   * Method editFacilityLabel
+   *
+   * @description Names the staged entry edited by this action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} name - The staged row's display name.
+   *
+   * @returns {string}
+   *
+   * @function editFacilityLabel
+   */
   protected editFacilityLabel(name: string): string {
     return $localize`:@@onboarding.facilitiesForm.editNamed:Edit ${name}:name:`;
   }
 
-  /** @description Successful batch entries remain visible but cannot be edited or resubmitted. */
+  /**
+   * Property completed
+   * @readonly
+   *
+   * @description @description Successful batch entries remain visible but cannot be edited or resubmitted.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<readonly SetupCreateFacilityInput[]>}
+   */
   public readonly completed: InputSignal<readonly SetupCreateFacilityInput[]> = input<
     readonly SetupCreateFacilityInput[]
   >([]);
+  /**
+   * Property failed
+   * @readonly
+   *
+   * @description Names of prepared entries that require another submission attempt.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<readonly string[]>}
+   */
   public readonly failed: InputSignal<readonly string[]> = input<readonly string[]>([]);
 
   /**
    * Property addressMatches
    * @readonly
+   *
    * @description Address suggestions supplied by the page's search store.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly SetupFacilityAddressMatch[]>}
    */
   public readonly addressMatches: InputSignal<readonly SetupFacilityAddressMatch[]> = input<
@@ -200,9 +288,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property addressPending
    * @readonly
+   *
    * @description Whether suggestions are being retrieved.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly addressPending: InputSignal<boolean> = input(false);
@@ -210,9 +301,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property addressError
    * @readonly
+   *
    * @description Signals a recoverable search failure, distinct from no matching address.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly addressError: InputSignal<boolean> = input(false);
@@ -220,9 +314,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property addressSearched
    * @readonly
+   *
    * @description Sends the current query to the page; an empty query clears pending work.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly addressSearched: OutputEmitterRef<string> = output<string>();
@@ -230,21 +327,29 @@ export class OnboardingFacilitiesForm {
   /**
    * Property addressQuery
    * @readonly
+   *
    * @description Search text is separate from the selected Signal Forms value.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string>}
    */
   protected readonly addressQuery: WritableSignal<string> = signal('');
 
   /**
    * Method addressPickerStateChanged
-   * @method addressPickerStateChanged
+   *
    * @description A newly opened picker starts a fresh interaction and cancels any earlier draft reset.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {'open' | 'closed'} state - Native picker state before its exit animation finishes.
+   *
    * @returns {void}
+   *
+   * @function addressPickerStateChanged
    */
   protected addressPickerStateChanged(state: 'open' | 'closed'): void {
     if (state === 'open') this.pendingAddressReset = null;
@@ -252,11 +357,15 @@ export class OnboardingFacilitiesForm {
 
   /**
    * Method addressPickerClosed
-   * @method addressPickerClosed
+   *
    * @description Clears the previous picker's delayed touch only while the staged draft remains untouched.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
+   *
+   * @function addressPickerClosed
    */
   protected addressPickerClosed(): void {
     const resetDraft: OnboardingFacilityDraft | null = this.pendingAddressReset;
@@ -268,12 +377,17 @@ export class OnboardingFacilitiesForm {
 
   /**
    * Method addressInputChanged
-   * @method addressInputChanged
+   *
    * @description Searches only on user input, not on the combobox resetting its search after closing.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {Event} event - Native input event bubbling from the Spartan control.
+   *
    * @returns {void}
+   *
+   * @function addressInputChanged
    */
   protected addressInputChanged(event: Event): void {
     const target: EventTarget | null = event.target;
@@ -283,9 +397,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property selectedAddress
    * @readonly
+   *
    * @description Last explicitly selected suggestion. Editing its label invalidates the proof.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<SetupFacilityAddressMatch | null>}
    */
   protected readonly selectedAddress: WritableSignal<SetupFacilityAddressMatch | null> =
@@ -294,21 +411,29 @@ export class OnboardingFacilitiesForm {
   /**
    * Property addressFilter
    * @readonly
+   *
    * @description Preserves the server's ranked results without filtering them a second time.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: string, search: string) => boolean}
    */
   protected readonly addressFilter: (value: string, search: string) => boolean = () => true;
 
   /**
    * Method searchAddress
-   * @method searchAddress
+   *
    * @description Invalidates a changed address before requesting fresh suggestions.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} query - Typed address text.
+   *
    * @returns {void}
+   *
+   * @function searchAddress
    */
   protected searchAddress(query: string): void {
     if (this.pending()) return;
@@ -321,12 +446,17 @@ export class OnboardingFacilitiesForm {
 
   /**
    * Method selectAddress
-   * @method selectAddress
+   *
    * @description Accepts only a suggestion currently offered by the search store.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {unknown} label - Selected result label.
+   *
    * @returns {void}
+   *
+   * @function selectAddress
    */
   protected selectAddress(label: unknown): void {
     const match: SetupFacilityAddressMatch | undefined = this.addressMatches().find(
@@ -347,9 +477,13 @@ export class OnboardingFacilitiesForm {
   /**
    * Property stagedAddresses
    * @readonly
-   * @description Keeps structured address details for editing local rows without adding metadata to creation payloads.
+   *
+   * @description Keeps structured address details for editing local rows without adding metadata to creation
+   * payloads.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Map<string, SetupFacilityAddressMatch>}
    */
   private readonly stagedAddresses: Map<string, SetupFacilityAddressMatch> = new Map();
@@ -357,9 +491,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property addressLabelOf
    * @readonly
+   *
    * @description Displays only the street in the control; suggestion rows retain the complete address.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: string) => string}
    */
   protected readonly addressLabelOf: (value: string) => string = (value) =>
@@ -369,11 +506,15 @@ export class OnboardingFacilitiesForm {
 
   /**
    * Method addressSearchQuery
-   * @method addressSearchQuery
+   *
    * @description Combines the street and structured locality fields for an unambiguous provider lookup.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {string} Complete current query.
+   *
+   * @function addressSearchQuery
    */
   protected addressSearchQuery(): string {
     const draft: OnboardingFacilityDraft = this.model();
@@ -385,13 +526,18 @@ export class OnboardingFacilitiesForm {
 
   /**
    * Method addressPartChanged
-   * @method addressPartChanged
+   *
    * @description Invalidates the geocoded selection after a locality edit and searches the updated address.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {'city' | 'country' | 'postalCode'} field - Edited address component.
    * @param {Event} event - Native input event.
+   *
    * @returns {void}
+   *
+   * @function addressPartChanged
    */
   protected addressPartChanged(field: 'city' | 'country' | 'postalCode', event: Event): void {
     const target: EventTarget | null = event.target;
@@ -406,9 +552,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property pending
    * @readonly
+   *
    * @description Whether the batch is being created, which locks the controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -416,9 +565,13 @@ export class OnboardingFacilitiesForm {
   /**
    * Property skippable
    * @readonly
-   * @description Whether the backend currently lets this step be skipped. The backend never does for facilities, but every step form shares the footer contract.
+   *
+   * @description Whether the backend currently lets this step be skipped. The backend never does for facilities,
+   * but every step form shares the footer contract.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly skippable: InputSignal<boolean> = input<boolean>(false);
@@ -428,9 +581,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property submitted
    * @readonly
+   *
    * @description Emits the staged batch — never empty — once the operator continues.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<readonly SetupCreateFacilityInput[]>}
    */
   public readonly submitted: OutputEmitterRef<readonly SetupCreateFacilityInput[]> =
@@ -439,20 +595,43 @@ export class OnboardingFacilitiesForm {
   /**
    * Property skipped
    * @readonly
+   *
    * @description Relays the footer's skip request to the page.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The currently-edited row. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description The currently-edited row.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<OnboardingFacilityDraft>}
+   */
   protected readonly model: WritableSignal<OnboardingFacilityDraft> =
     signal<OnboardingFacilityDraft>(EMPTY_VALUES);
 
-  /** Rows already staged for submission. */
+  /**
+   * Property staged
+   * @readonly
+   *
+   * @description Rows already staged for submission.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<readonly SetupCreateFacilityInput[]>}
+   */
   protected readonly staged: WritableSignal<readonly SetupCreateFacilityInput[]> = linkedSignal(
     () => this.restored(),
   );
@@ -460,9 +639,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property draftForm
    * @readonly
+   *
    * @description The field tree and its rules for the row being drafted.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<OnboardingFacilityDraft>}
    */
   protected readonly draftForm: FieldTree<OnboardingFacilityDraft> = form(this.model, (path) => {
@@ -495,9 +677,14 @@ export class OnboardingFacilitiesForm {
   });
 
   /**
-   * @description Detects an unfinished next row independently of field touch state.
+   * Property hasDraftInput
    * @readonly
+   *
+   * @description Detects an unfinished next row independently of field touch state.
+   *
    * @access protected
+   * @since unreleased
+   *
    * @type {Signal<boolean>}
    */
   protected readonly hasDraftInput: Signal<boolean> = computed(
@@ -510,25 +697,58 @@ export class OnboardingFacilitiesForm {
       this.model().postalCode.trim() !== '',
   );
 
-  /** The facility types offered. */
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description The facility types offered.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof ONBOARDING_FACILITY_TYPE_OPTIONS}
+   */
   protected readonly typeOptions: typeof ONBOARDING_FACILITY_TYPE_OPTIONS =
     ONBOARDING_FACILITY_TYPE_OPTIONS;
 
-  /** Whether another row may be staged. */
+  /**
+   * Property atCapacity
+   * @readonly
+   *
+   * @description Whether another row may be staged.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly atCapacity: Signal<boolean> = computed<boolean>(
     () => this.staged().length >= MAX_FACILITIES,
   );
 
-  /** Names a facility type on the closed select trigger. */
+  /**
+   * Property typeLabelOf
+   * @readonly
+   *
+   * @description Names a facility type on the closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: SetupFacilityType | '') => string}
+   */
   protected readonly typeLabelOf: (value: SetupFacilityType | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
 
   /**
    * Property selectedTypeIcon
    * @readonly
+   *
    * @description Type glyph shared by the selected value and its corresponding option.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | undefined>}
    */
   protected readonly selectedTypeIcon: Signal<string | undefined> = computed(
@@ -538,9 +758,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property selectedCountryIcon
    * @readonly
+   *
    * @description Resolves the confirmed provider country code without inferring it from localized text.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | undefined>}
    */
   protected readonly selectedCountryIcon: Signal<string | undefined> = computed(() => {
@@ -551,9 +774,12 @@ export class OnboardingFacilitiesForm {
   /**
    * Property stagedRows
    * @readonly
+   *
    * @description The staged batch with a "type · address" summary line per row.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly { name: string; summary: string }[]>}
    */
   protected readonly stagedRows: Signal<
@@ -575,9 +801,13 @@ export class OnboardingFacilitiesForm {
   /**
    * Property submitLabel
    * @readonly
-   * @description Counts what a submit would create — the staged rows plus a valid draft — and pluralizes the verb accordingly.
+   *
+   * @description Counts what a submit would create — the staged rows plus a valid draft — and pluralizes the
+   * verb accordingly.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly submitLabel: Signal<string> = computed<string>(() => {
@@ -588,17 +818,25 @@ export class OnboardingFacilitiesForm {
       : $localize`:@@onboarding.facilitiesForm.submitOne:Create facility`;
   });
 
-  /** The footer's label while the batch is being created. */
+  /**
+   * Property pendingLabel
+   * @readonly
+   *
+   * @description The footer's label while the batch is being created.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly pendingLabel: string = $localize`:@@onboarding.facilitiesForm.submitting:Saving…`;
   //#endregion
 
   //#region Methods
   /**
    * Method addFacility
-   * @method addFacility
    *
-   * @description
-   * Stages the current row and resets both the draft and its interaction
+   * @description Stages the current row and resets both the draft and its interaction
    * state. A delayed address picker close finishes that reset only for the
    * same empty draft, preserving any edits made after staging.
    *
@@ -606,6 +844,8 @@ export class OnboardingFacilitiesForm {
    * @since 1.0.0
    *
    * @returns {void}
+   *
+   * @function addFacility
    */
   protected addFacility(): void {
     if (this.pending() || this.draftForm().invalid() || this.atCapacity()) return;
@@ -638,15 +878,18 @@ export class OnboardingFacilitiesForm {
 
   /**
    * Method removeFacilityLabel
-   * @method removeFacilityLabel
    *
    * @description Names one staged row's remove button after the row itself,
    * so several "Remove" buttons stay distinguishable to assistive technology.
    *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} name - The staged row's name.
+   *
    * @returns {string} The localized accessible name.
+   *
+   * @function removeFacilityLabel
    */
   protected removeFacilityLabel(name: string): string {
     return $localize`:@@onboarding.facilitiesForm.removeNamed:Remove ${name}:name:`;
@@ -654,10 +897,8 @@ export class OnboardingFacilitiesForm {
 
   /**
    * Method removeFacility
-   * @method removeFacility
    *
-   * @description
-   * Drops a staged row before submission.
+   * @description Drops a staged row before submission.
    *
    * @access protected
    * @since 1.0.0
@@ -665,6 +906,8 @@ export class OnboardingFacilitiesForm {
    * @param {number} index - Position of the row to remove.
    *
    * @returns {void}
+   *
+   * @function removeFacility
    */
   protected removeFacility(index: number): void {
     if (this.pending() || this.isCompleted(this.staged()[index])) return;
@@ -673,10 +916,8 @@ export class OnboardingFacilitiesForm {
 
   /**
    * Method submit
-   * @method submit
    *
-   * @description
-   * Stages the current row first when it is valid, then emits the batch. An
+   * @description Stages the current row first when it is valid, then emits the batch. An
    * empty batch is never emitted — the backend rejects the step without a
    * facility — so with nothing staged the draft is marked touched and its
    * required-field errors name what is missing.
@@ -687,6 +928,8 @@ export class OnboardingFacilitiesForm {
    * @param {Event} event - The submit event.
    *
    * @returns {void}
+   *
+   * @function submit
    */
   protected submit(event: Event): void {
     event.preventDefault();
@@ -704,12 +947,17 @@ export class OnboardingFacilitiesForm {
   }
   /**
    * Method editFacility
-   * @method editFacility
+   *
    * @description Restores an unsaved row and its selected address while preserving any valid current draft.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} index - Prepared row to edit.
+   *
    * @returns {void}
+   *
+   * @function editFacility
    */
   protected editFacility(index: number): void {
     const row: SetupCreateFacilityInput | undefined = this.staged()[index];

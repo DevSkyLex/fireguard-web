@@ -20,15 +20,15 @@ before presenting it as ready for implementation.
 
 ## Select a format for a purpose
 
-| Reader's need | Useful presentation |
-| --- | --- |
-| Understand components, dependencies or data movement | Mermaid flowchart |
-| Follow exchanges between actors over time | Mermaid sequence diagram |
-| Understand transitions and a lifecycle | Mermaid state diagram |
-| Compare options, contracts or current and proposed behavior | Markdown table |
-| Follow steps whose order matters | Numbered list |
-| Understand an interface or a concrete behavior | Short code, input/output or scenario example |
-| Find supporting evidence or navigate an explanation | Links, descriptive headings and focused emphasis |
+| Reader's need                                               | Useful presentation                              |
+| ----------------------------------------------------------- | ------------------------------------------------ |
+| Understand components, dependencies or data movement        | Mermaid flowchart                                |
+| Follow exchanges between actors over time                   | Mermaid sequence diagram                         |
+| Understand transitions and a lifecycle                      | Mermaid state diagram                            |
+| Compare options, contracts or current and proposed behavior | Markdown table                                   |
+| Follow steps whose order matters                            | Numbered list                                    |
+| Understand an interface or a concrete behavior              | Short code, input/output or scenario example     |
+| Find supporting evidence or navigate an explanation         | Links, descriptive headings and focused emphasis |
 
 These are examples, not an exhaustive menu or mandatory mapping. Plain prose is a complete
 option. There is no diagram or table quota, fixed section count, or requirement to explain
@@ -73,9 +73,9 @@ A short paragraph can carry the whole plan:
 
 For an illustrative status-update question, common comparison dimensions make a table useful:
 
-| Approach | Benefit | Tradeoff |
-| --- | --- | --- |
-| Explicit refresh | Uses the existing request path | The user asks for each update |
+| Approach         | Benefit                             | Tradeoff                                 |
+| ---------------- | ----------------------------------- | ---------------------------------------- |
+| Explicit refresh | Uses the existing request path      | The user asks for each update            |
 | Periodic polling | Updates while the page remains open | Sends requests even when nothing changes |
 
 The final plan would name the selected approach and its reason once the decision is resolved.

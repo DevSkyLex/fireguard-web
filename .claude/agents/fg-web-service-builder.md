@@ -53,11 +53,11 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 > `always` in the table below means "before the first action of that kind", never "before you
 > start". Doctrine loaded ahead of the problem crowds out the problem.
 
-| Skill               | Load it when                                                                   |
-| ------------------- | ------------------------------------------------------------------------------ |
+| Skill                                                             | Load it when                                                                   |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `hydra-data-access` (`.claude/skills/hydra-data-access/SKILL.md`) | always — the `HydraApiService` contract, the envelope, DTOs and the error flow |
-| `fireguard-naming`  | always                                                                         |
-| `web-testing`       | writing the colocated spec — the `HttpTestingController` harness is there      |
+| `fireguard-naming`                                                | always                                                                         |
+| `web-testing`                                                     | writing the colocated spec — the `HttpTestingController` harness is there      |
 
 ## Navigating by symbol
 
@@ -93,7 +93,7 @@ to `Grep` and **say so in your report**.
 | orchestrates stores/ports/services, wraps a device or browser API, coordinates offline sync | **behavioral**    | `services/<concern>/` (§10.7)                                             |
 | projects the feature's access state into `hasPermission`-style checks                       | **access helper** | `access/services/<concern>/` (§10.8)                                      |
 | is a pure function normalizing a transport shape                                            | **data adapter**  | `data-access/adapters/<concern>.adapter.ts` — a **function**, not a class |
-| is a pure function with no DI at all                                                        | not a service     | `utils/<name>/<name>.utils.ts` → **fg-web-utils-builder**                     |
+| is a pure function with no DI at all                                                        | not a service     | `utils/<name>/<name>.utils.ts` → **fg-web-utils-builder**                 |
 
 A behavioral service **may** inject stores, ports, and `data-access/` services; it must **never** perform business-data HTTP itself — it goes through a transport service (§10.7).
 
@@ -211,7 +211,6 @@ npm run build
 ```
 
 `--include` is the **spec-discovery glob** — it must end in `*.spec.ts`. Never run bare `npx vitest`. (Abridged from the `web-testing` skill, which owns this — **change one, change both.**)
-
 
 ## Output
 

@@ -54,8 +54,7 @@ import type { AuthState } from './models';
 /**
  * Constant TOKEN_EXPIRY_WARNING_MS
  *
- * @description
- * Time in milliseconds before token expiration to trigger warning.
+ * @description Time in milliseconds before token expiration to trigger warning.
  * Default: 5 minutes.
  *
  * @since 1.0.0
@@ -67,8 +66,7 @@ const TOKEN_EXPIRY_WARNING_MS: number = 5 * 60 * 1000;
 /**
  * Constant INITIAL_AUTH_STATE
  *
- * @description
- * Initial state for the authentication store.
+ * @description Initial state for the authentication store.
  * All operations start in idle state.
  *
  * @since 1.0.0
@@ -94,8 +92,7 @@ const INITIAL_AUTH_STATE: AuthState = {
 /**
  * Function calculateExpiresAt
  *
- * @description
- * Calculates the token expiration timestamp.
+ * @description Calculates the token expiration timestamp.
  *
  * @since 1.0.0
  *
@@ -108,15 +105,17 @@ function calculateExpiresAt(expiresIn: number): number {
 }
 
 /**
- * Store AuthStore
- * @const AuthStore
+ * Constant AuthStore
  *
  * @description
  * NGRX SignalStore for authentication state management.
  * Handles login, logout, token refresh, and MFA verification.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const AuthStore
  *
  * @example
  * ```typescript
@@ -149,9 +148,7 @@ export const AuthStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isAuthenticated
-     *
-     * @description
+     * @description Computed isAuthenticated
      * Reports an established local session outside MFA. An expired bearer is
      * renewed on 401 rather than ending the session merely because time elapsed.
      *
@@ -162,9 +159,7 @@ export const AuthStore = signalStore(
     isAuthenticated: computed<boolean>(() => !!store.accessToken() && !store.mfaRequired()),
 
     /**
-     * Computed isLoggingIn
-     *
-     * @description
+     * @description Computed isLoggingIn
      * Returns true if a login request is in progress.
      *
      * @since 1.0.0
@@ -174,9 +169,7 @@ export const AuthStore = signalStore(
     isLoggingIn: computed<boolean>(() => store.loginCallState().status === 'pending'),
 
     /**
-     * Computed isLoggingOut
-     *
-     * @description
+     * @description Computed isLoggingOut
      * Returns true if a logout request is in progress.
      *
      * @since 1.0.0
@@ -186,9 +179,7 @@ export const AuthStore = signalStore(
     isLoggingOut: computed<boolean>(() => store.logoutCallState().status === 'pending'),
 
     /**
-     * Computed isRefreshing
-     *
-     * @description
+     * @description Computed isRefreshing
      * Returns true if a token refresh request is in progress.
      *
      * @since 1.0.0
@@ -198,9 +189,7 @@ export const AuthStore = signalStore(
     isRefreshing: computed<boolean>(() => store.refreshCallState().status === 'pending'),
 
     /**
-     * Computed isVerifyingMfa
-     *
-     * @description
+     * @description Computed isVerifyingMfa
      * Returns true if an MFA verification request is in progress.
      *
      * @since 1.0.0
@@ -210,9 +199,7 @@ export const AuthStore = signalStore(
     isVerifyingMfa: computed<boolean>(() => store.mfaVerifyCallState().status === 'pending'),
 
     /**
-     * Computed loginError
-     *
-     * @description
+     * @description Computed loginError
      * Returns the login operation error if any.
      *
      * @since 1.0.0
@@ -222,9 +209,7 @@ export const AuthStore = signalStore(
     loginError: computed<StoreError | null>(() => store.loginCallState().error),
 
     /**
-     * Computed mfaVerifyError
-     *
-     * @description
+     * @description Computed mfaVerifyError
      * Returns the MFA verification operation error if any.
      *
      * @since 1.0.0
@@ -234,9 +219,7 @@ export const AuthStore = signalStore(
     mfaVerifyError: computed<StoreError | null>(() => store.mfaVerifyCallState().error),
 
     /**
-     * Computed isResendingMfa
-     *
-     * @description
+     * @description Computed isResendingMfa
      * Returns true if an MFA code resend request is in progress.
      *
      * @since 1.0.0
@@ -246,9 +229,7 @@ export const AuthStore = signalStore(
     isResendingMfa: computed<boolean>(() => store.mfaResendCallState().status === 'pending'),
 
     /**
-     * Computed mfaResendError
-     *
-     * @description
+     * @description Computed mfaResendError
      * Returns the MFA resend operation error if any.
      *
      * @since 1.0.0
@@ -258,9 +239,7 @@ export const AuthStore = signalStore(
     mfaResendError: computed<StoreError | null>(() => store.mfaResendCallState().error),
 
     /**
-     * Computed mfaMethod
-     *
-     * @description
+     * @description Computed mfaMethod
      * Returns the MFA delivery method if MFA is required.
      *
      * @since 1.0.0
@@ -270,9 +249,7 @@ export const AuthStore = signalStore(
     mfaMethod: computed<string | null>(() => store.loginCallState().data?.mfa_method ?? null),
 
     /**
-     * Computed mfaDestination
-     *
-     * @description
+     * @description Computed mfaDestination
      * Returns the masked destination where the MFA code was sent.
      *
      * @since 1.0.0
@@ -284,9 +261,7 @@ export const AuthStore = signalStore(
     ),
 
     /**
-     * Computed mfaResendAvailableIn
-     *
-     * @description
+     * @description Computed mfaResendAvailableIn
      * Whole seconds before a new MFA code may be requested, `0` when none. A
      * snapshot, not a ticking clock — the OTP form runs the countdown from it.
      *
@@ -309,8 +284,7 @@ export const AuthStore = signalStore(
       destroyRef = inject(DestroyRef),
     ) => {
       /**
-       * In-flight session renewal, shared by every concurrent caller.
-       *
+       * @description In-flight session renewal, shared by every concurrent caller.
        * Held outside the returned methods so a burst of parallel 401s resolves
        * against one refresh rather than racing several against a rotating token.
        */
@@ -320,8 +294,11 @@ export const AuthStore = signalStore(
 
       /**
        * Function invalidateSession
+       *
        * @description Advances local identity before settling old token producers and renewal waiters.
+       *
        * @access private
+       *
        * @returns {void}
        */
       function invalidateSession(): void {
@@ -339,9 +316,13 @@ export const AuthStore = signalStore(
 
       /**
        * Function renewSession
+       *
        * @description Shares one refresh per session; cancellation resolves null and cannot clear a newer memo.
+       *
        * @access private
-       * @returns {Observable<string | null>} The refreshed bearer, or null for an invalidated/refused renewal.
+       *
+       * @returns {Observable<string | null>} The refreshed bearer, or null for an
+       *   invalidated/refused renewal.
        */
       function renewSession(): Observable<string | null> {
         if (renewal) return renewal;
@@ -401,8 +382,7 @@ export const AuthStore = signalStore(
       /**
        * Function applySessionTokens
        *
-       * @description
-       * Applies an authenticated session to the store from a login-shaped
+       * @description Applies an authenticated session to the store from a login-shaped
        * response: stores the access token, clears any MFA state, and bootstraps
        * the account-owned user profile. Shared by `login`, `mfaVerify`, and the
        * registration auto-login (`applySession`).
@@ -427,7 +407,9 @@ export const AuthStore = signalStore(
         userProfilePort.load();
       };
 
-      /** @description Replaces any previous token producer with a new, unauthenticated MFA challenge. */
+      /**
+       * @description Replaces any previous token producer with a new, unauthenticated MFA challenge.
+       */
       const applyMfaChallenge = (response: MfaChallengeLoginOutput): void => {
         const replacingSession = !!store.accessToken();
         invalidateSession();
@@ -448,11 +430,15 @@ export const AuthStore = signalStore(
       return {
         /**
          * Method isTokenExpiringSoon
-         * @method isTokenExpiringSoon
+         *
          * @description Evaluates bearer freshness at call time without a cached clock or SSR timer.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {boolean} Whether expiry is within the warning window.
+         *
+         * @function isTokenExpiringSoon
          */
         isTokenExpiringSoon(): boolean {
           const expiresAt = store.expiresAt();
@@ -462,8 +448,7 @@ export const AuthStore = signalStore(
         /**
          * Method login
          *
-         * @description
-         * Authenticates a user with email and password credentials.
+         * @description Authenticates a user with email and password credentials.
          * If MFA is enabled, sets the MFA state for verification.
          *
          * @since 1.0.0
@@ -509,8 +494,7 @@ export const AuthStore = signalStore(
         /**
          * Method logout
          *
-         * @description
-         * Terminates the current user session by revoking tokens.
+         * @description Terminates the current user session by revoking tokens.
          *
          * @since 1.0.0
          */
@@ -568,8 +552,7 @@ export const AuthStore = signalStore(
         /**
          * Method refresh
          *
-         * @description
-         * Refreshes the access token using the refresh token cookie.
+         * @description Refreshes the access token using the refresh token cookie.
          *
          * @since 1.0.0
          */
@@ -578,9 +561,8 @@ export const AuthStore = signalStore(
         /**
          * Method mfaVerify
          *
-         * @description
-         * Verifies the MFA code to complete authentication.
-         * If a device trust is pending, automatically trusts the device after successful verification.
+         * @description Verifies the MFA code to complete authentication. If a device trust is pending,
+         * automatically trusts the device after successful verification.
          *
          * @since 1.0.0
          *
@@ -621,8 +603,7 @@ export const AuthStore = signalStore(
         /**
          * Method mfaResend
          *
-         * @description
-         * Resends the MFA verification code.
+         * @description Resends the MFA verification code.
          * Updates the pre-auth token and challenge token with new values.
          *
          * @since 1.0.0
@@ -684,21 +665,21 @@ export const AuthStore = signalStore(
         /**
          * Method renewSession
          *
-         * @description
-         * Exchanges the `refresh_token` cookie for a fresh access token and returns
+         * @description Exchanges the `refresh_token` cookie for a fresh access token and returns
          * it, or `null` when the session cannot be renewed.
-         *
          * Unlike {@link refresh}, which is fire-and-forget, this is awaitable — the
          * 401 interceptor needs to know the outcome before deciding whether to
          * retry the failed request or sign the user out.
-         *
          * Concurrent callers share one request: a burst of parallel calls all
          * failing at once must not fire a burst of refreshes, which the server
          * would treat as replay and could invalidate the rotating refresh token.
          *
+         * @access public
          * @since 1.1.0
          *
          * @returns {Observable<string | null>} The new access token, or `null`.
+         *
+         * @function renewSession
          */
         renewSession(): Observable<string | null> {
           return renewSession();
@@ -708,17 +689,19 @@ export const AuthStore = signalStore(
         /**
          * Method initialize
          *
-         * @description
-         * Initializes the auth state by attempting to refresh the session.
+         * @description Initializes the auth state by attempting to refresh the session.
          * If successful, also initializes the account-owned user profile.
          * The access token is never serialized through TransferState, so the
          * browser and SSR runtimes refresh independently.
          * Returns a Promise that resolves when initialization is complete.
          * Should be called once on app startup via APP_INITIALIZER.
          *
+         * @access public
          * @since 1.0.0
          *
          * @returns {Promise<void>} Resolves when initialization is complete.
+         *
+         * @function initialize
          */
         async initialize(): Promise<void> {
           const revision = store.sessionRevision();
@@ -735,14 +718,18 @@ export const AuthStore = signalStore(
         /**
          * Method setToken
          *
-         * @description
-         * Manually sets the access token.
+         * @description Manually sets the access token.
          * Useful for restoring session from storage.
          *
+         * @access public
          * @since 1.0.0
          *
          * @param {string} token - The access token.
          * @param {number} expiresIn - Token lifetime in seconds.
+         *
+         * @returns {void}
+         *
+         * @function setToken
          */
         setToken(token: string, expiresIn: number): void {
           const replacingSession = !!store.accessToken();
@@ -762,16 +749,18 @@ export const AuthStore = signalStore(
         /**
          * Method applySession
          *
-         * @description
-         * Applies an authenticated session from a login-shaped response (access
+         * @description Applies an authenticated session from a login-shaped response (access
          * token + profile bootstrap). Used by flows that authenticate outside the
          * password login path, such as the registration email-verification step.
          *
+         * @access public
          * @since 1.0.0
          *
          * @param {LoginOutput} response - The authenticated login response.
          *
          * @returns {void}
+         *
+         * @function applySession
          */
         applySession(response: LoginOutput): void {
           if (response.mfa_required === true) {
@@ -786,9 +775,7 @@ export const AuthStore = signalStore(
         /**
          * Method clearToken
          *
-         * @description
-         * Ends the session locally, without calling the API.
-         *
+         * @description Ends the session locally, without calling the API.
          * Used by the paths that drop a session without a logout round-trip: a 401
          * from the interceptor, and switching accounts from an invitation. Those
          * end a session just as much as `logout` does, so they dispatch
@@ -796,9 +783,14 @@ export const AuthStore = signalStore(
          * the departing user's data survive into the next sign-in, which is the
          * exact leak `sessionEnded` exists to prevent.
          *
+         * @access public
          * @since 1.1.0
          *
+         * @returns {void}
+         *
          * @fires authStoreEvents.sessionEnded
+         *
+         * @function clearToken
          */
         clearToken(): void {
           invalidateSession();
@@ -820,11 +812,15 @@ export const AuthStore = signalStore(
         /**
          * Method clearMfaState
          *
-         * @description
-         * Clears the MFA pending state.
+         * @description Clears the MFA pending state.
          * Useful when user cancels MFA verification.
          *
+         * @access public
          * @since 1.0.0
+         *
+         * @returns {void}
+         *
+         * @function clearMfaState
          */
         clearMfaState(): void {
           mfaInvalidated.next();
@@ -842,11 +838,15 @@ export const AuthStore = signalStore(
         /**
          * Method resetOperations
          *
-         * @description
-         * Resets all operation states to idle.
+         * @description Resets all operation states to idle.
          * Useful for clearing errors after user acknowledgment.
          *
+         * @access public
          * @since 1.0.0
+         *
+         * @returns {void}
+         *
+         * @function resetOperations
          */
         resetOperations(): void {
           patchState(store, {
@@ -861,10 +861,14 @@ export const AuthStore = signalStore(
         /**
          * Method resetLoginOperation
          *
-         * @description
-         * Resets the login call state to idle.
+         * @description Resets the login call state to idle.
          *
+         * @access public
          * @since 1.0.0
+         *
+         * @returns {void}
+         *
+         * @function resetLoginOperation
          */
         resetLoginOperation(): void {
           patchState(store, {
@@ -875,10 +879,14 @@ export const AuthStore = signalStore(
         /**
          * Method resetMfaVerifyOperation
          *
-         * @description
-         * Resets the MFA verify call state to idle.
+         * @description Resets the MFA verify call state to idle.
          *
+         * @access public
          * @since 1.0.0
+         *
+         * @returns {void}
+         *
+         * @function resetMfaVerifyOperation
          */
         resetMfaVerifyOperation(): void {
           patchState(store, {
@@ -893,12 +901,12 @@ export const AuthStore = signalStore(
 );
 
 /**
- * Type AuthStoreType
- * @type AuthStoreType
+ * Type AuthStore
  *
- * @description
- * Type alias for the AuthStore instance.
+ * @description Type alias for the AuthStore instance.
  *
  * @since 1.0.0
+ *
+ * @type AuthStore
  */
 export type AuthStore = InstanceType<typeof AuthStore>;

@@ -192,3 +192,28 @@ test('changed scope includes staged, unstaged and new files and excludes generat
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('preserves multiple fenced examples and shorter markers inside a longer fence', async () => {
+  const examples = [
+    ' * @example',
+    ' * ````typescript',
+    ' * const example = "keep the authored spacing"',
+    ' * ```',
+    ' * @param {number} nested - Example content, not a declaration tag.',
+    ' * ```',
+    ' * ````',
+    ' *',
+    ' * @example',
+    ' * ~~~typescript',
+    ' * const second=2',
+    ' * ~~~',
+  ].join('\n');
+  const source = requestedFunctionExample.replace(
+    ' * @returns {string} Human-readable shortcut hint.',
+    ' * @returns {string} Human-readable shortcut hint.\n *\n' + examples,
+  );
+  const output = await formatDocblocks(source);
+  assert.ok(output.includes(examples));
+  assert.equal(stripDocblocks(output), stripDocblocks(source));
+  assert.equal(await formatDocblocks(output), output);
+});

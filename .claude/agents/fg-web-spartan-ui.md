@@ -131,7 +131,6 @@ Helm components are **vendored code you own**. Edit the body freely; leave the s
 
 Store logic → **fg-web-signal-store** · specs → **fg-web-web-test-writer** · WCAG audit → **fg-web-a11y-auditor** · structural verdict → **fg-web-architecture-reviewer** · browser proof → **fg-web-e2e-runner**.
 
-
 ## Output
 
 Three headings, in this order, and nothing else above them:

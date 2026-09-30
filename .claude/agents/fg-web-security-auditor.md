@@ -36,11 +36,11 @@ Use Skill when the matching local skill is available. Otherwise read its
 `.claude/skills/<name>/SKILL.md` in the owning checkout. Additional-directory discovery
 does not imply the skill is registered. Load conditional resources only when needed.
 
-| Skill | Load when |
-| --- | --- |
-| `hydra-data-access` (`.claude/skills/hydra-data-access/SKILL.md`) | transport, auth or SSR payload mapping |
-| `signalstore-recipes` (`.claude/skills/signalstore-recipes/SKILL.md`) | session and stale-response handling |
-| `web-testing` (`.claude/skills/web-testing/SKILL.md`) | inspection of existing denial tests |
+| Skill                                                                 | Load when                              |
+| --------------------------------------------------------------------- | -------------------------------------- |
+| `hydra-data-access` (`.claude/skills/hydra-data-access/SKILL.md`)     | transport, auth or SSR payload mapping |
+| `signalstore-recipes` (`.claude/skills/signalstore-recipes/SKILL.md`) | session and stale-response handling    |
+| `web-testing` (`.claude/skills/web-testing/SKILL.md`)                 | inspection of existing denial tests    |
 
 ## Verification and report
 

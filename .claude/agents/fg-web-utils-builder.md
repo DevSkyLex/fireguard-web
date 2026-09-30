@@ -47,10 +47,10 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 > `always` in the table below means "before the first action of that kind", never "before you
 > start". Doctrine loaded ahead of the problem crowds out the problem.
 
-| Skill              | Load it when     |
-| ------------------ | ---------------- |
+| Skill                                                           | Load it when     |
+| --------------------------------------------------------------- | ---------------- |
 | `fireguard-naming` (`.claude/skills/fireguard-naming/SKILL.md`) | always           |
-| `web-testing`      | writing the spec |
+| `web-testing`                                                   | writing the spec |
 
 ## Navigating by symbol
 
@@ -79,12 +79,12 @@ to `Grep` and **say so in your report**.
 
 ## Step 1 — which folder? (§10.13)
 
-| The unit is…                                                      | Folder             | Suffix                       | Layout                                         |
-| ----------------------------------------------------------------- | ------------------ | ---------------------------- | ---------------------------------------------- |
-| a pure, stateless **function**                                    | `utils/`           | `.utils.ts`                  | **one folder per util** + its own `testing/`   |
-| a fixed runtime **value** — default, limit, named key, lookup map | `constants/`       | `.constants.ts`              | **flat**                                       |
-| a **UI choice list** for a select, a menu, or a filter            | `options/`         | `.constants.ts`              | **flat**                                       |
-| a `type` or `interface`                                           | `models/`          | `.type.ts` / `.interface.ts` | concept-first — **not yours**                  |
+| The unit is…                                                      | Folder             | Suffix                       | Layout                                                 |
+| ----------------------------------------------------------------- | ------------------ | ---------------------------- | ------------------------------------------------------ |
+| a pure, stateless **function**                                    | `utils/`           | `.utils.ts`                  | **one folder per util** + its own `testing/`           |
+| a fixed runtime **value** — default, limit, named key, lookup map | `constants/`       | `.constants.ts`              | **flat**                                               |
+| a **UI choice list** for a select, a menu, or a filter            | `options/`         | `.constants.ts`              | **flat**                                               |
+| a `type` or `interface`                                           | `models/`          | `.type.ts` / `.interface.ts` | concept-first — **not yours**                          |
 | anything needing DI, HTTP, or store access                        | a service or store | —                            | → **fg-web-service-builder** / **fg-web-signal-store** |
 
 `constants/` and `options/` stay **flat** — they hold data, and a data file has no spec to own. Only `utils/` gets the folder-per-unit treatment, precisely because each function owns a spec.
@@ -199,7 +199,6 @@ npm run build
 ```
 
 `--include` is the **spec-discovery glob** — it must end in `*.spec.ts`. Never run bare `npx vitest`. (Abridged from the `web-testing` skill, which owns this — **change one, change both.**)
-
 
 ## Output
 

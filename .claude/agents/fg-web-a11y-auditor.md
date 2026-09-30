@@ -49,10 +49,10 @@ Load these with the `Skill` tool before your first read. They carry the operatio
 > `always` in the table below means "before the first action of that kind", never "before you
 > start". Doctrine loaded ahead of the problem crowds out the problem.
 
-| Skill           | Load it when                                                                                                                            |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Skill                                                     | Load it when                                                                                                                            |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `ui-ux-pro-max` (`.claude/skills/ui-ux-pro-max/SKILL.md`) | always — priorities 1, 2, 5 and 8 of its rule table are your checklist; `--domain ux` for the full text of a rule you are about to cite |
-| `spartan-ui`    | judging colour, contrast or dark mode — the tokens decide, not the rendered hex                                                         |
+| `spartan-ui`                                              | judging colour, contrast or dark mode — the tokens decide, not the rendered hex                                                         |
 
 ## Navigating by symbol
 
@@ -124,7 +124,6 @@ Then run the smell greps below as a fast second pass over the markup you control
 - Flagging a decorative `aria-hidden="true"` icon as "missing alt" — that is correct usage.
 - Proposing raw ARIA where a semantic element (`<button>`, `<label>`, `<nav>`) is the real fix.
 - Editing any file, or duplicating structural/ownership findings that belong to `fg-web-architecture-reviewer`.
-
 
 ## Output
 

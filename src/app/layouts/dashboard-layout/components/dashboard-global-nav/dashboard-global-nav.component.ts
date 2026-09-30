@@ -42,12 +42,12 @@ import { buildDashboardGlobalNavRows } from './utils/build-nav-rows.utils';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-dashboard-global-nav />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-dashboard-global-nav',
@@ -72,11 +72,9 @@ export class DashboardGlobalNav {
    * Property items
    * @readonly
    *
-   * @description
-   * The destinations to render, in catalog order, with an organization-scoped
+   * @description The destinations to render, in catalog order, with an organization-scoped
    * route completed by the open organization and a permission-gated row
    * dropped when the member could not reach it.
-   *
    * A row that names a permission is withheld until the grants have arrived
    * rather than shown and taken away, which would move the rows under the
    * pointer on every page load.
@@ -99,8 +97,7 @@ export class DashboardGlobalNav {
    * Property organizationContext
    * @readonly
    *
-   * @description
-   * The organization an organization-scoped row points into, read through the
+   * @description The organization an organization-scoped row points into, read through the
    * published port rather than the owning store (`ARCHITECTURE.md` §4).
    *
    * @access private
@@ -115,10 +112,8 @@ export class DashboardGlobalNav {
    * Property memberAccess
    * @readonly
    *
-   * @description
-   * The reader's grants in that organization, which decide whether a gated row
+   * @description The reader's grants in that organization, which decide whether a gated row
    * is listed at all.
-   *
    * The published access port and pure permission matcher preserve wildcard grants.
    * An owner holds `organization.*`, and a
    * plain membership test would drop every gated row from their column.
@@ -135,8 +130,7 @@ export class DashboardGlobalNav {
    * Property soonLabel
    * @readonly
    *
-   * @description
-   * Badge marking a row whose page does not exist yet. Kept to one short word:
+   * @description Badge marking a row whose page does not exist yet. Kept to one short word:
    * the badge is absolutely positioned over the end of the row, so a sentence
    * would sit on top of the label it qualifies.
    *

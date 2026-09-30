@@ -1033,7 +1033,7 @@ test.describe('Facility Plan Editor', () => {
     await facilities.selectEquipment();
     await facilities.pinRemoveButton.click();
 
-    expect(requestBody).toEqual({ attachmentId: null, x: null, y: null });
+    await expect.poll(() => requestBody).toEqual({ attachmentId: null, x: null, y: null });
   });
 
   test('hides every editor affordance for a read-only member', async ({ page }) => {

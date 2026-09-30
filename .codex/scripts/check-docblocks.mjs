@@ -53,7 +53,7 @@ function renderComment(block, lines) {
 
 const TITLE =
   /^(?:(?:Class|Component|Directive|Service|Strategy|Interface|Type|Property|Method|Function|Constant|Configuration|Enum|Trait) \S.*|Constructor)$/;
-const IDENTITY = ['class', 'interface', 'method', 'constructor', 'static', 'readonly'];
+const IDENTITY = new Set(['class', 'interface', 'method', 'constructor', 'static', 'readonly']);
 const METADATA = ['access', 'category', 'version', 'since'];
 
 /** Restore the title and FireGuard tag groups after native text wrapping. */
@@ -73,15 +73,20 @@ function structureComment(block, title) {
     current.lines.push(line);
     const marker = line.match(/^[ \t]*(\u0060{3,}|~{3,})/);
     if (marker) {
-      if (!fence) fence = marker[1][0];
-      else if (fence === marker[1][0]) fence = undefined;
+      if (!fence) fence = marker[1];
+      else if (
+        fence[0] === marker[1][0] &&
+        marker[1].length >= fence.length &&
+        line.slice(line.indexOf(marker[1]) + marker[1].length).trim() === ''
+      )
+        fence = undefined;
     }
   }
   for (const section of sections) {
     while (section.lines.length && !section.lines.at(-1).trim()) section.lines.pop();
   }
   const groups = [
-    sections.filter((section) => IDENTITY.includes(section.name)),
+    sections.filter((section) => IDENTITY.has(section.name)),
     sections.filter((section) => section.name === '' || section.name === 'description'),
     sections
       .filter((section) => METADATA.includes(section.name))
@@ -123,6 +128,7 @@ export async function formatDocblocks(text, file = 'source.ts') {
     prepared =
       prepared.slice(0, range.pos) + renderComment(block, lines) + prepared.slice(range.end);
   }
+  const preparedBlocks = docblocks(prepared, file);
   const result = await format(file, prepared, profile);
   if (result.errors.length)
     throw new Error('Oxfmt failed for ' + file + ': ' + JSON.stringify(result.errors));
@@ -133,9 +139,19 @@ export async function formatDocblocks(text, file = 'source.ts') {
   for (let index = before.length - 1; index >= 0; index -= 1) {
     const original = before[index];
     const replacement = after[index];
+    // Native Markdown formatting can rewrite fenced code, including its closing marker.
+    // Preserve these authored examples and only normalize their surrounding tag groups.
+    const originalBlock = text.slice(original.pos, original.end);
+    const containsExample = commentLines(originalBlock).some((line) =>
+      /^[ \t]*(\u0060{3,}|~{3,})/.test(line),
+    );
+    const preparedBlock = preparedBlocks[index];
+    const block = containsExample
+      ? prepared.slice(preparedBlock.pos, preparedBlock.end)
+      : result.code.slice(replacement.pos, replacement.end);
     updated =
       updated.slice(0, original.pos) +
-      structureComment(result.code.slice(replacement.pos, replacement.end), titles[index]) +
+      structureComment(block, titles[index]) +
       updated.slice(original.end);
   }
   return updated;
@@ -185,17 +201,20 @@ export function declarationFindings(file, text) {
           .filter((param) => ts.isIdentifier(param.name))
           .map((param) => param.name.text),
       );
-      const documented = new Set();
+      const documentedParameters = new Set();
       for (const tag of ts.getJSDocTags(node).filter(ts.isJSDocParameterTag)) {
-        const name = tag.name.getText(source);
-        if ((ts.isIdentifier(tag.name) && !expected.has(name)) || documented.has(name))
+        const parameterName = tag.name.getText(source);
+        if (
+          (ts.isIdentifier(tag.name) && !expected.has(parameterName)) ||
+          documentedParameters.has(parameterName)
+        )
           findings.push({
             file,
             line: source.getLineAndCharacterOfPosition(tag.pos).line + 1,
             rule: 'docblock-param',
-            message: `Unknown or duplicate @param ${name}.`,
+            message: `Unknown or duplicate @param ${parameterName}.`,
           });
-        documented.add(name);
+        documentedParameters.add(parameterName);
       }
     }
     ts.forEachChild(node, visit);

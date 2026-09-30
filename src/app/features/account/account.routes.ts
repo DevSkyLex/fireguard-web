@@ -4,11 +4,9 @@ import { Router, type Routes, type UrlTree } from '@angular/router';
 /**
  * Constant ACCOUNT_ROUTES
  *
- * @description
- * The account workspace and its routed sections inside the dashboard shell's
+ * @description The account workspace and its routed sections inside the dashboard shell's
  * content column. The parent keeps signed-in identity and local navigation
  * stable while each child page owns its account workflow.
- *
  * They mount inside the one dashboard shell, alongside the organization tree,
  * so opening the account changes the page and nothing else: the sidebar keeps
  * its global navigation, its switcher and the organization block

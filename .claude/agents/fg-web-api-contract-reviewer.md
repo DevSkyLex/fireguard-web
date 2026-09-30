@@ -36,10 +36,10 @@ Use Skill when the matching local skill is available. Otherwise read its
 `.claude/skills/<name>/SKILL.md` in the owning checkout. Additional-directory discovery
 does not imply the skill is registered. Load conditional resources only when needed.
 
-| Skill | Load when |
-| --- | --- |
+| Skill                                                             | Load when                       |
+| ----------------------------------------------------------------- | ------------------------------- |
 | `hydra-data-access` (`.claude/skills/hydra-data-access/SKILL.md`) | transport envelope and adapters |
-| `feature-md` (`.claude/skills/feature-md/SKILL.md`) | public feature contracts |
+| `feature-md` (`.claude/skills/feature-md/SKILL.md`)               | public feature contracts        |
 
 ## Verification and report
 

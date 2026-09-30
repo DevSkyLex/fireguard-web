@@ -9,7 +9,9 @@ import { authStoreEvents } from '@features/auth/state/auth/events';
 /**
  * Service AuthSessionNavigationService
  * @class AuthSessionNavigationService
+ *
  * @description Owns browser navigation after an explicit logout or an invalid session response.
+ *
  * @version 1.0.0
  */
 @Service()
@@ -17,9 +19,12 @@ export class AuthSessionNavigationService {
   /**
    * Property isBrowser
    * @readonly
+   *
    * @description Whether router navigation is available in this runtime.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   private readonly isBrowser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
@@ -27,9 +32,12 @@ export class AuthSessionNavigationService {
   /**
    * Property events
    * @readonly
+   *
    * @description Authentication outcome stream.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Events}
    */
   private readonly events: Events = inject(Events);
@@ -37,9 +45,12 @@ export class AuthSessionNavigationService {
   /**
    * Property router
    * @readonly
+   *
    * @description Router used to leave authenticated history behind.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Router}
    */
   private readonly router: Router = inject(Router);
@@ -47,29 +58,43 @@ export class AuthSessionNavigationService {
   /**
    * Property destroyRef
    * @readonly
+   *
    * @description Service lifetime used to release the event subscription.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {DestroyRef}
    */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /**
    * Property started
+   *
    * @description Prevents duplicate subscriptions when providers initialize more than once.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   private started: boolean = false;
 
   /**
    * Method start
-   * @method start
+   *
    * @description Subscribes once to both remote logout outcomes in browser runtimes.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {void}
+   *
+   * @function start
+   *
+   * @function start
+   *
+   * @function start
    */
   public start(): void {
     if (!this.isBrowser || this.started) return;
@@ -85,11 +110,19 @@ export class AuthSessionNavigationService {
 
   /**
    * Method navigateToLogin
-   * @method navigateToLogin
+   *
    * @description Replaces authenticated history with the login destination when a session is lost.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {void}
+   *
+   * @function navigateToLogin
+   *
+   * @function navigateToLogin
+   *
+   * @function navigateToLogin
    */
   public navigateToLogin(): void {
     if (!this.isBrowser || this.router.url.split(/[?#]/u)[0] === '/auth/login') return;

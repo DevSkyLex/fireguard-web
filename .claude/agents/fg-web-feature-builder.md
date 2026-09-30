@@ -53,13 +53,13 @@ Load these with the `Skill` tool before your first edit. They carry the operatio
 > `always` in the table below means "before the first action of that kind", never "before you
 > start". Doctrine loaded ahead of the problem crowds out the problem.
 
-| Skill                 | Load it when                                                 |
-| --------------------- | ------------------------------------------------------------ |
-| `feature-md`          | always — the `FEATURE.md` is a required output, not a nicety |
-| `fireguard-naming`    | always                                                       |
-| `hydra-data-access`   | the slice emits `data-access/`                               |
+| Skill                                                                 | Load it when                                                 |
+| --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `feature-md`                                                          | always — the `FEATURE.md` is a required output, not a nicety |
+| `fireguard-naming`                                                    | always                                                       |
+| `hydra-data-access`                                                   | the slice emits `data-access/`                               |
 | `signalstore-recipes` (`.claude/skills/signalstore-recipes/SKILL.md`) | the slice emits `state/`                                     |
-| `spartan-ui`          | the slice emits `ui/`                                        |
+| `spartan-ui`                                                          | the slice emits `ui/`                                        |
 
 ## Navigating by symbol
 
@@ -97,10 +97,10 @@ to `Grep` and **say so in your report**.
 | Concern   | Emit                                                                               | The rule that binds you                                                                                                                                                                                          |
 | --------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Routes    | `<feature>.routes.ts` at the feature root + the parent entry                       | const is `SCREAMING_SNAKE` + `_ROUTES`, typed `Routes` (§9.5). An entity subfeature keeps the plural folder but names the const singular: `facilities/facilities.routes.ts` → `FACILITY_ROUTES`. Lazy by default |
-| Transport | `data-access/services/<concern>/<concern>.service.ts` + `testing/`                 | **extends `HydraApiService`** — hand off to **fg-web-service-builder** for the real thing                                                                                                                            |
-| State     | `state/<slice>/` with local `index.ts`                                             | slice-first, business name, store file matches the folder (§9.6) — hand off to **fg-web-signal-store**                                                                                                               |
+| Transport | `data-access/services/<concern>/<concern>.service.ts` + `testing/`                 | **extends `HydraApiService`** — hand off to **fg-web-service-builder** for the real thing                                                                                                                        |
+| State     | `state/<slice>/` with local `index.ts`                                             | slice-first, business name, store file matches the folder (§9.6) — hand off to **fg-web-signal-store**                                                                                                           |
 | Contracts | `models/<concept>/` — `*-input.interface.ts`, `*-output.interface.ts`, `*.type.ts` | **type-only** (§10.10); output DTOs `extends HydraItem`; enum literals match backend strings byte-for-byte (`'in_progress'`, never `'inProgress'`)                                                               |
-| UI        | `ui/{pages,components,tables,dataviews,forms,dialogs,sheets}/`                     | **only** under `ui/`, never at the feature root — hand off to **fg-web-component-builder**                                                                                                                           |
+| UI        | `ui/{pages,components,tables,dataviews,forms,dialogs,sheets}/`                     | **only** under `ui/`, never at the feature root — hand off to **fg-web-component-builder**                                                                                                                       |
 | HTTP      | `http/{guards,resolvers,interceptors}/`                                            | **only** under `http/`, never at the feature root (§10.12). Resolvers are for route-critical data only (§12.2)                                                                                                   |
 | Ports     | `ports/<port>/` (`.interface.ts` + `.token.ts` + `index.ts`) + `providers/`        | **only when published outside the feature** (§5.4). Never for behavior consumed only inside it                                                                                                                   |
 | Bootstrap | `<feature>.feature.ts` exporting `provide<Feature>Feature(): EnvironmentProviders` | `makeEnvironmentProviders([...])`; bind ports with **`{ provide: PORT_TOKEN, useExisting: Adapter }`** to avoid double instantiation (§5.5)                                                                      |
@@ -176,7 +176,6 @@ npx oxfmt -c .oxfmtrc.json <assigned-files>
 npm run lint
 npm run build   # validates strict Angular templates and the route wiring
 ```
-
 
 ## Output
 

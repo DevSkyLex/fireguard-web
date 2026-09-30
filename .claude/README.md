@@ -1,56 +1,71 @@
 # FireGuard Web — Claude Code tooling
 
-This app ships its own `.claude/`. Open **`fireguard-sso-web/`** as the workspace root to
-activate it: 12 agents, 13 commands, 9 skills, 10 rules, 4 MCP servers, and
-2 project hooks (plus 2 local impeccable hooks in the git-ignored `settings.local.json`).
+This checkout ships **25 native agents**, with the same names and responsibilities as
+its Codex catalog. Claude definitions are standalone Markdown files: they do not import,
+link to or depend on Codex agent definitions. Existing slash-command names are preserved.
 
-> **This directory is also a plugin.** The monorepo root installs it as
-> `fireguard-web@fireguard` (project scope, via the root `.claude-plugin/marketplace.json`),
-> so root sessions load the 12 agents, the commands namespaced as `/fireguard-web:fg-store`
-> and friends, the skills, and the guard/format hooks. MCP servers, `rules/`, permissions,
-> and `settings.local.json` are not plugin components — opening this directory as the
-> workspace root remains the only way to get everything. The manifest is
-> `.claude-plugin/plugin.json`; plugin-mode hook wiring is `hooks/hooks.json`. The install
-> is a **cached copy**: after changing tooling here, bump `version` in
-> `.claude-plugin/plugin.json` and run
-> `claude plugin update fireguard-web@fireguard --scope project` from the monorepo root.
+## Shared API + web catalog
 
-Backend and cross-cutting tooling stays at the monorepo root (`G:\Projets\fireguard\.claude\`) —
-`/fg-api-module`, `/fg-api-quality`, `/fg-migrate`, `/fg-security-review`, `/fg-contract-check`,
-`/fg-map`. Nothing is duplicated between the two.
+Start from this checkout and attach the intended peer:
+
+```powershell
+claude --add-dir ../fireguard-api
+```
+
+Current Claude versions discover `.claude/agents/` in added directories, giving the same
+**47 roles** from API or web. Agent prompts resolve their owning checkout explicitly;
+read its AGENTS.md, CLAUDE.md, rules and module/feature contract. Additional-directory agent
+discovery does not imply every skill, hook or setting of the peer is loaded: use the owning
+skill file directly when registration is unavailable.
+
+Both project settings disable Fast (`fastMode: false` and
+`CLAUDE_CODE_DISABLE_FAST_MODE=1`), including the main session. Models and efforts are
+explicit native frontmatter; verify client/provider support and the actually selected model.
+Do not silently lower effort or substitute a model when unavailable.
+
+Local source discovery is the shared-catalog mode. Do not load the same agents again through
+cached plugins. The existing plugin manifest remains available for plugin-only use, with a
+patch version bump after catalog changes; root marketplace/cache activation is separate.
+The absent parent marketplace is not recreated by this migration. Do not modify personal settings.
 
 ## Agents
 
-Every agent is granted the `Skill` tool and opens with a **Skills to load** table naming which
-skills it must load and on what trigger. That is deliberate: the agent prompt states the
-_judgment_ (what to decide, in what order, what to hand off), the skill carries the
-_operational_ detail (commands, harnesses, decision tables). Neither restates the other, so
-neither drifts. From the monorepo root the skill names are namespaced `fireguard-web:<name>`.
+Each agent has assigned ownership, conditional local skills, explicit model/effort and a
+bounded report. Reviewers, auditors and explorers exclude editing/delegation tools and request
+parent evidence for checks that write files, caches or state. Writers inherit permissions and
+preserve concurrent work. No agent automatically spawns a challenge or extra specialist.
 
-**Builders — they create code.** One per kind of unit; each decides _placement_ before writing.
+| Agent                          | Responsibility                                                                                                                                        | Model  | Effort | Mode            |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | --------------- |
+| `fg-web-a11y-auditor`          | Audit FireGuard semantics and interaction accessibility with concrete evidence and limits.                                                            | sonnet | high   | Read-only       |
+| `fg-web-access-builder`        | Build FireGuard permission projections and owner-published access contracts.                                                                          | sonnet | high   | Assigned writes |
+| `fg-web-api-contract-reviewer` | Compare FireGuard frontend transport contracts with explicitly scoped backend evidence.                                                               | opus   | high   | Read-only       |
+| `fg-web-architecture-reviewer` | Review FireGuard ownership, imports, public contracts, state and SSR invariants.                                                                      | opus   | xhigh  | Read-only       |
+| `fg-web-collection-builder`    | Build presentational FireGuard tables and dataviews with explicit collection events.                                                                  | sonnet | medium | Assigned writes |
+| `fg-web-comment-maintainer`    | Define or maintain assigned comment conventions, correct source docblocks and run scoped documentation formatting and lint without changing behavior. | sonnet | medium | Assigned writes |
+| `fg-web-component-builder`     | Build FireGuard pages and ordinary presentational components with correct ownership and public contracts.                                             | sonnet | high   | Assigned writes |
+| `fg-web-design-reviewer`       | Critique FireGuard visual composition against current artifacts, DESIGN.md and native Spartan.                                                        | sonnet | high   | Read-only       |
+| `fg-web-directive-builder`     | Build SSR-safe FireGuard behavioral directives and typed template markers.                                                                            | sonnet | medium | Assigned writes |
+| `fg-web-e2e-runner`            | Verify FireGuard behavior in a real browser with bounded scenarios and durable evidence.                                                              | sonnet | high   | Assigned writes |
+| `fg-web-feature-builder`       | Define FireGuard feature ownership, public APIs, ports, composition and normative FEATURE.md contracts.                                               | opus   | high   | Assigned writes |
+| `fg-web-form-builder`          | Build FireGuard Signal Forms, reusable validators and explicit draft/submission contracts.                                                            | sonnet | high   | Assigned writes |
+| `fg-web-i18n-auditor`          | Audit FireGuard message IDs, placeholders and locale catalogs without claiming visual or linguistic completeness.                                     | sonnet | medium | Read-only       |
+| `fg-web-offline-sync-builder`  | Build FireGuard offline persistence and durable replay under the feature's conflict contract.                                                         | opus   | xhigh  | Assigned writes |
+| `fg-web-overlay-builder`       | Build native FireGuard overlays with safe dismissal, focus and adaptive surface contracts.                                                            | sonnet | high   | Assigned writes |
+| `fg-web-performance-reviewer`  | Review frontend bundle cost, lazy loading, request duplication, reactivity and SSR hydration from evidence.                                           | sonnet | high   | Read-only       |
+| `fg-web-pipe-builder`          | Build pure FireGuard Angular pipes when a computed value or built-in does not fit.                                                                    | sonnet | medium | Assigned writes |
+| `fg-web-routing-ssr-builder`   | Build FireGuard routing, guards, resolvers and explicit SSR/hydration loading boundaries.                                                             | opus   | xhigh  | Assigned writes |
+| `fg-web-security-auditor`      | Review frontend auth/session, SSR cookies, token exposure, unsafe HTML and redirect boundaries.                                                       | opus   | xhigh  | Read-only       |
+| `fg-web-service-builder`       | Build FireGuard Hydra transport, pure data adapters and ordinary behavioral services.                                                                 | sonnet | high   | Assigned writes |
+| `fg-web-signal-store`          | Build FireGuard SignalStore slices with explicit request state, typed events and deliberate lifecycle scope.                                          | opus   | high   | Assigned writes |
+| `fg-web-spartan-ui`            | Refine existing FireGuard visual composition, density and native Spartan interaction patterns.                                                        | sonnet | high   | Assigned writes |
+| `fg-web-utils-builder`         | Build pure FireGuard helpers, constants and option sets at their lowest justified scope.                                                              | sonnet | medium | Assigned writes |
+| `fg-web-web-test-writer`       | Write and repair FireGuard Angular unit/integration tests at the owning boundary.                                                                     | sonnet | high   | Assigned writes |
+| `fg-web-workflow-reviewer`     | Review frontend CI, browser tests, permissions, caches, images and deployment gates.                                                                  | sonnet | high   | Read-only       |
 
-| Agent                  | Creates                                                                          |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| `fg-component-builder` | components, pages, tables, dataviews, forms, dialogs, sheets                     |
-| `fg-directive-builder` | directives — behavioral (SSR-safe) or template-marker with a typed context guard |
-| `fg-pipe-builder`      | pipes — **and** the `ARCHITECTURE.md` edits the first one requires               |
-| `fg-feature-builder`   | a feature or subfeature: routes, concerns, wiring, `FEATURE.md`                  |
-| `fg-service-builder`   | transport / behavioral / access services and pure data adapters                  |
-| `fg-utils-builder`     | pure helpers, constants, option sets                                             |
-
-**Specialists — they enrich or judge.** Called after a builder, or on existing code.
-
-| Agent                      | Does                                                            | Writes?       |
-| -------------------------- | --------------------------------------------------------------- | ------------- |
-| `fg-spartan-ui`            | spartan/ui surfaces, Tailwind + theme tokens, dark-mode parity  | yes           |
-| `fg-signal-store`          | SignalStore slices: CallState, rxMethod, events, scoping        | yes           |
-| `fg-web-test-writer`       | unit and integration specs at the right boundary                | yes           |
-| `fg-e2e-runner`            | Playwright suite, browser reproduction, visual proof            | yes           |
-| `fg-architecture-reviewer` | ownership, dependency direction, barrels, `FEATURE.md` currency | **read-only** |
-| `fg-a11y-auditor`          | static WCAG 2.1 AA + `PRODUCT.md` audit                         | **read-only** |
-
-Create ≠ enrich ≠ review. A builder that ships a finished store, a populated table, or a
-spec suite has taken a specialist's job; each one is told to hand those off by name.
+Forms, overlays and collections have separate owners. Routing/SSR, access and offline sync
+use their dedicated roles; ordinary component/service builders retain their narrower scope.
+Security, performance, workflows and observability report findings rather than applying fixes.
 
 ## Commands
 
@@ -120,7 +135,7 @@ one false claim about `debug:firewall` lived in four files and got corrected in 
 > whole flow — and for its calibration of what a generic AI-generated design looks like. Its
 > visual-identity half (choose a display typeface, a palette, a signature element) has no target
 > in this app: there is no public marketing surface, and the identity is the spartan theme, which
-> is fixed. `fg-spartan-ui` and `fg-component-builder` carry that split in their skill tables.
+> is fixed. `fg-web-spartan-ui` and `fg-web-component-builder` carry that split in their skill tables.
 
 > **`ui-ux-pro-max`** is likewise vendored, from
 > [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
@@ -149,14 +164,14 @@ that kind of file, not the how-to.
 | `models-utils.md`     | `models/` `utils/` `constants/` `options/` | type-only `models/`, folder-per-util, no type in `utils/`                                       |
 | `barrels.md`          | `**/index.ts`                              | never `export *`, narrow by default, which folders get none                                     |
 | `testing.md`          | `*.spec.ts`                                | the boundary each unit owns, the harnesses, the `--include` trap                                |
-| `e2e.md`              | `e2e/**`                                   | `ApiMock`, port 4273, locate by `id`/`data-testid`, local-noon fixtures                         |
+| `e2e.md`              | `tests/e2e/**`                             | `ApiMock`, port 4273, locate by `id`/`data-testid`, local-noon fixtures                         |
 | `lsp-usage.md`        | `src/**/*.ts` / `.html`                    | Serena for symbols / grep for text, the cold index, `find_referencing_symbols` on the **token** |
 
 > `directives-pipes.md` currently matches **nothing** — the repo has zero directives and zero
 > pipes. Both halves are dormant on purpose: the rule exists to cadre the first unit of each
 > kind, including the `ARCHITECTURE.md` edit the first pipe must carry. `e2e.md`, by contrast,
-> is live: `e2e/` carries 9 specs across `onboarding/` and `organization/`, with page objects
-> and fixtures under `e2e/support/`.
+> is live: `tests/e2e/` carries 9 specs across `onboarding/` and `organization/`, with page objects
+> and fixtures under `tests/e2e/support/`.
 
 **Why this matters here:** `ARCHITECTURE.md` (~150 KB) is deliberately **not** `@`-imported
 by `CLAUDE.md` — importing it cost ~41 k tokens in every session. It is read on demand before
@@ -169,10 +184,16 @@ automatically so nothing critical depends on that read happening.
 | ------------ | ------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `angular`    | `npx ng mcp --read-only`       | 6     | uses the **local** CLI — always version-matched, no download. `--read-only` drops `build`/`test`/`run_target`, already covered by `npm run` |
 | `spartan`    | `npx -y @spartan-ng/mcp`       | 17    | the component catalog, APIs, and blocks — ask it before writing markup                                                                      |
-| `playwright` | `npx -y @playwright/mcp`       | 24    | the heaviest; the writing agents scope it out via their `tools:` lists — only `fg-e2e-runner` declares it                                   |
+| `playwright` | `npx -y @playwright/mcp`       | 24    | the heaviest; the writing agents scope it out via their `tools:` lists — only `fg-web-e2e-runner` declares it                               |
 | `context7`   | `npx -y @upstash/context7-mcp` | 2     | NgRx, Tailwind, CDK — what the other two do not cover                                                                                       |
 
-## Code intelligence (Serena, user scope)
+## Code intelligence (Serena, local scope, optional)
+
+`serena-web` is configured privately for this checkout in `~/.claude.json`,
+using the current `fireguard-web` path. It is disabled by default through the
+project's `disabledMcpServers` list. Enable it from `/mcp` for symbol navigation,
+reference analysis or refactoring, then disable it again after the task; the
+toggle is saved per project. Routine text and documentation work uses `rg`.
 
 Reached through the **`serena-web`** MCP server rather than a language-server plugin. One
 server, Serena's `angular` backend, indexes 3 214 files — every `.ts` **and** all 249 `.html`
@@ -241,15 +262,15 @@ skipping everything `.oxfmtrc.json` ignores.
 `ARCHITECTURE.md` and `FEATURE.md` stay writable on purpose — §14.3 requires agents to update
 them in the same change.
 
-The monorepo-root guard carries the same frontend rules with a `/fireguard-sso-web/` path prefix,
+The monorepo-root guard carries the same frontend rules with a `/fireguard-web/` path prefix,
 for sessions opened one level up. **Keep the two in sync when a rule changes.**
 
 ## Dev servers (`launch.json`)
 
-| Config              | Port     | What                                                                        |
-| ------------------- | -------- | --------------------------------------------------------------------------- |
-| `fireguard-web`     | 4200     | `ng serve` — the normal dev server                                          |
-| `fireguard-web-e2e` | **4273** | `ng serve --configuration=e2e`, SSR-off — matches `playwright.config.ts:11` |
+| Config              | Port     | What                                                                               |
+| ------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `fireguard-web`     | 4200     | `ng serve` — the normal dev server                                                 |
+| `fireguard-web-e2e` | **4273** | `ng serve --configuration=e2e`, SSR-off — matches `tests/e2e/playwright.config.ts` |
 
 > The monorepo root defines a config with the **same name** `fireguard-web` on port **4300**.
 > They are never active together (different workspace roots), but if a preview lands on an
@@ -266,3 +287,9 @@ A directory glob makes the runner treat every `.html` as a test entry and fail w
 `No loader is configured for ".html" files`. That error means the glob is wrong, not the code.
 
 Never run bare `npx vitest` — it misses the project globals and dies with `describe is not defined`.
+
+## Comment maintenance
+
+`fg-web-comment-maintainer` uses Sonnet with medium effort for assigned TypeScript comments,
+docblocks and scoped checks. Both clients read the [shared convention](../docs/guides/code-comments.md).
+This role does not change behavior or launch another agent.

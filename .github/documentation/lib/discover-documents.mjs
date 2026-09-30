@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -7,8 +8,10 @@ export function isProjectDocument(file) {
   if (!/\.md$/i.test(normalized)) return false;
   if (/(?:^|\/)(AGENTS|CLAUDE|SKILL)\.md$/i.test(normalized)) return false;
   if (normalized.split('/').some((part) => part.startsWith('.'))) return false;
+  if (/^(?:tests\/e2e\/(?:artifacts|test-results[^/]*|playwright-report))\//.test(normalized))
+    return false;
   if (!normalized.includes('/')) return true;
-  return /^(src|e2e|docs)\//.test(normalized);
+  return /^(src|tests|docs)\//.test(normalized);
 }
 
 function canonical(value) {
@@ -38,7 +41,7 @@ export async function discoverDocuments(root) {
         ).split('\0'),
       ),
     ]
-      .filter(isProjectDocument)
+      .filter((file) => isProjectDocument(file) && existsSync(path.join(root, file)))
       .toSorted();
   }
   // Standalone fixture trees and extracted source archives have no Git index.
@@ -48,7 +51,10 @@ export async function discoverDocuments(root) {
       (await readdir(directory, { withFileTypes: true })).map(async (entry) => {
         if (
           entry.name.startsWith('.') ||
-          ['node_modules', 'vendor', 'coverage', 'dist'].includes(entry.name)
+          ['node_modules', 'vendor', 'coverage', 'dist', 'artifacts', 'playwright-report'].includes(
+            entry.name,
+          ) ||
+          entry.name.startsWith('test-results')
         )
           return;
         const relative = path
@@ -57,7 +63,7 @@ export async function discoverDocuments(root) {
         if (entry.isFile() && isProjectDocument(relative)) files.push(relative);
         if (
           entry.isDirectory() &&
-          (directory !== root || ['src', 'e2e', 'docs'].includes(entry.name))
+          (directory !== root || ['src', 'tests', 'docs'].includes(entry.name))
         ) {
           await walk(path.join(directory, entry.name));
         }

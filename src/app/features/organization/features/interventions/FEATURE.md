@@ -623,3 +623,12 @@ verified server revision. An unsuccessful revision read is explicitly unknown.
 
 Bootstrap consumers import `provideInterventionsFeature` through `providers/bootstrap`, a narrow public barrel
 that does not import route or offline UI trees.
+
+## Public entry points
+
+These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
+
+| Entry point                | Consumers      |
+| -------------------------- | -------------- |
+| `providers/bootstrap`      | `app`          |
+| `providers/sync-indicator` | `organization` |

@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["jsdoc"],
+  "categories": {
+    "correctness": "off",
+    "suspicious": "off",
+    "pedantic": "off",
+    "style": "off",
+    "restriction": "off",
+    "perf": "off"
+  },
+  "rules": {
+    "jsdoc/check-access": "error",
+    "jsdoc/require-param-name": "error",
+    "jsdoc/require-param-description": "error"
+  }
+}

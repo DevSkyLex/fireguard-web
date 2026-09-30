@@ -17,7 +17,7 @@
     ".agents/skills/design-taste-frontend/**",
     ".agents/skills/spartan/**",
     "src/app/shared/ui/**",
-    "e2e/test-results-*/**"
+    "tests/e2e/test-results-*/**"
   ],
   "sortImports": {
     "internalPattern": [

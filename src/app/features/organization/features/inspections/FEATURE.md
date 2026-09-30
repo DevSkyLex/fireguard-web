@@ -287,3 +287,11 @@ field.
   offers the create form: serial number (or the localized type) as the label,
   the localized type and "location · facility" as the qualifier. The raw
   equipment type key and the id never reach a template.
+
+## Public entry points
+
+These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
+
+| Entry point                           | Consumers      |
+| ------------------------------------- | -------------- |
+| `ui/components/inspection-status-tag` | `organization` |

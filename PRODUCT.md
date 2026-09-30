@@ -99,7 +99,7 @@ Two further mechanisms are equally true and support it, but do not lead:
   stored preferences.
 - In-place editing of intervention properties on the detail page, including
   replanning, rather than a separate edit route.
-- Realtime via Mercure; Hydra/JSON-LD transport against `fireguard-sso-api`
+- Realtime via Mercure; Hydra/JSON-LD transport against `fireguard-api`
   (Symfony / API Platform, OAuth2/OIDC).
 - Authentication with MFA, trusted devices, session management, and
   organization-scoped RBAC.

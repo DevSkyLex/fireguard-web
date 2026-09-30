@@ -280,7 +280,7 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   `equals` first as the default a freshly picked field opens on.
 
   **8.3 unbridled the six enum/IRI fields once the API caught up.**
-  `fireguard-sso-api`'s `InterventionProvider` now reads `status[]=`,
+  `fireguard-api`'s `InterventionProvider` now reads `status[]=`,
   `type[]=`, `priority[]=`, `site[]=`, `label[]=` and `responsible[]=` as
   repeated values, OR-combined server side via `IN()` (`multiValue()`,
   reading `$query->all()[<field>]`) — the single scalar form (`status=draft`)
@@ -370,7 +370,7 @@ dueWindow=null`, `overdue` is `dueWindow=overdue` with `status=null`,
   request-time-resolved bound into a frozen `dueBefore=<timestamp>` URL
   param would make a bookmarked "Overdue" link stop tracking "now" on
   reload — a real regression the `?due=overdue` e2e coverage
-  (`e2e/organization/interventions-list-filters.spec.ts`) would have
+  (`tests/e2e/organization/interventions-list-filters.spec.ts`) would have
   caught. Keeping the two fields separate cost nothing: neither the KPI
   tile link nor the Today page needed to change.
 

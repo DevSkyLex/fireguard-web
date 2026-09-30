@@ -22,5 +22,4 @@ export type {
   PasswordSetupConfirmInput,
 } from './models';
 export { FederatedAuthStore } from './state';
-export { FederatedLinkCallbackPage } from './ui/pages/federated-link-callback-page/federated-link-callback-page.component';
 export { resolveFederatedAuthErrorMessage } from './utils';

@@ -13,6 +13,8 @@ contracts from explanations and environment-specific operational information.
 
 ## Guides and operations
 
+- [Code comments and JSDoc](guides/code-comments.md)
+
 - [System overview](architecture/system-overview.md)
 - [Patterns and examples](architecture/patterns-and-examples.md)
 - [Local development](guides/local-development.md)
@@ -79,7 +81,7 @@ npm test
 npm run check
 ```
 
-The isolated Node.js 22 tools check project Markdown in the root, `src/`, `e2e/`
+The isolated Node.js 22 tools check project Markdown in the root, `src/`, `tests/e2e/`
 and `docs/`. Agent instructions, installed skills and dependency trees are outside
 this scope. Local targets, images, references and Markdown fragments are checked;
 code examples and comments are omitted. External URLs require editorial review.

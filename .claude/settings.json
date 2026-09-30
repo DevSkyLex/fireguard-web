@@ -22,9 +22,17 @@
       "Bash(codex exec:*)",
       "Bash(command -v codex)"
     ],
-    "deny": ["Read(./.env)", "Read(./.env.*)"]
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
   },
-  "enabledMcpjsonServers": ["angular", "spartan", "playwright", "context7"],
+  "enabledMcpjsonServers": [
+    "angular",
+    "spartan",
+    "playwright",
+    "context7"
+  ],
   "hooks": {
     "PreToolUse": [
       {
@@ -53,5 +61,9 @@
   },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true
+  },
+  "fastMode": false,
+  "env": {
+    "CLAUDE_CODE_DISABLE_FAST_MODE": "1"
   }
 }

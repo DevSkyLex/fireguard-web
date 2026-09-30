@@ -138,7 +138,18 @@ export type { OrganizationNavigationCountersOutput } from './navigation/organiza
 export type { OrganizationSearchResultType } from './search/organization-search-result-type.type';
 export type { OrganizationSearchHitOutput } from './search/organization-search-hit-output.interface';
 export type { OrganizationSearchOutput } from './search/organization-search-output.interface';
-export type * from './access';
+export type {
+  OrganizationJoinMode,
+  OrganizationDomainOutput,
+  OrganizationAccessPolicyOutput,
+  OrganizationAccessPolicyInput,
+  OrganizationJoinRequestOutput,
+  OrganizationJoinOptionOutput,
+  OrganizationAvailableInvitationOutput,
+  OrganizationJoinOptionsOutput,
+  OrganizationAdmissionOutput,
+  OrganizationJoinRequestCollectionOutput,
+} from './access';
 export type {
   ListPresenceQuery,
   PingPresenceInput,

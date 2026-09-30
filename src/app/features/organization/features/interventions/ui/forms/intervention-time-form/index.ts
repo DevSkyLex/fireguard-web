@@ -1,1 +1,1 @@
-export * from './intervention-time-form.component';
+export { InterventionTimeForm } from './intervention-time-form.component';

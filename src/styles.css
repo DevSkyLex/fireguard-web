@@ -10,7 +10,7 @@
 @import '@fontsource-variable/geist/index.css';
 @import '@fontsource-variable/geist-mono/index.css';
 
-@source not '../e2e';
+@source not '../tests';
 @source not './app/**/testing';
 @source not './**/*.spec.ts';
 

@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { checkLinks } from '../lib/check-links.mjs';
-import { discoverDocuments } from '../lib/discover-documents.mjs';
+import { discoverDocuments, isProjectDocument } from '../lib/discover-documents.mjs';
 import { parseMarkdown } from '../lib/parse-markdown.mjs';
 
 const execute = promisify(execFile);
@@ -135,4 +135,37 @@ test('the CLI fails on broken links instead of reporting a successful render-onl
     ]),
     (error) => error.code === 1 && /missing local target/.test(error.stderr),
   );
+});
+
+test('project discovery includes architecture/E2E guides and excludes generated E2E evidence', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'documentation-tests-'));
+  await Promise.all(
+    [
+      'tests/README.md',
+      'tests/architecture/README.md',
+      'tests/e2e/README.md',
+      'tests/e2e/artifacts/README.md',
+      'tests/e2e/test-results-local/README.md',
+    ].map(async (file) => {
+      await mkdir(path.dirname(path.join(root, file)), { recursive: true });
+      await writeFile(path.join(root, file), '# Test guide');
+    }),
+  );
+  assert.deepEqual(await discoverDocuments(root), [
+    'tests/README.md',
+    'tests/architecture/README.md',
+    'tests/e2e/README.md',
+  ]);
+  assert.equal(isProjectDocument('tests/e2e/artifacts/README.md'), false);
+});
+
+test('Git discovery handles unstaged documentation moves', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'documentation-move-'));
+  await execute('git', ['init', root]);
+  await writeFile(path.join(root, 'README.md'), '# Old location');
+  await execute('git', ['-C', root, 'add', 'README.md']);
+  await mkdir(path.join(root, 'tests'));
+  const { rename } = await import('node:fs/promises');
+  await rename(path.join(root, 'README.md'), path.join(root, 'tests', 'README.md'));
+  assert.deepEqual(await discoverDocuments(root), ['tests/README.md']);
 });

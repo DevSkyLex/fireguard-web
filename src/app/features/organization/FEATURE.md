@@ -485,7 +485,7 @@ runs during SSR and no presence or subscription credential enters TransferState.
 `services/member-presence` helper `registerMemberPresence` registers rendered member ids and releases
 them on destruction. Concurrent surfaces are merged and reads are deduplicated in batches of 100.
 Account consumes only the port's own status; collaboration consumes the port/helper and the public
-`MemberPresenceIndicator` component. `PresenceStatus` is published through `models`.
+`MemberPresenceIndicator` component through `ui/components/member-presence-indicator`. `PresenceStatus` is published through `models`.
 
 Visible online sessions ping every 60 seconds and read every 45 seconds. A 90-second backend lease
 expires independently of the browser; another device may keep it alive. Mercure ordinary private
@@ -499,3 +499,17 @@ hide the indicator; pausing never deletes a lease shared by other devices.
 Account owns the persistent global do-not-disturb preference. Presence decoration does not change
 administrative membership status, notification delivery, unread counts, email or existing action
 feedback. Avatar indicators use accessible labels and native semantic success/destructive/muted tokens.
+
+## Public entry points
+
+Layouts read permission grants through `ORGANIZATION_MEMBER_ACCESS_PORT`; the pure
+`hasAnyOrganizationPermission` matcher is exported through `access` to preserve wildcard
+semantics without injecting `OrganizationPermissionService` into the shell.
+
+These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
+
+| Entry point                               | Consumers                                                                                                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services/member-presence`                | `organization/features/collaboration`                                                                                                                                                       |
+| `ui/components/member-presence-indicator` | `account`, `organization/features/collaboration`                                                                                                                                            |
+| `services/browser-download`               | `organization/features/equipments`, `organization/features/facilities`, `organization/features/imports`, `organization/features/inspections`, `organization/features/maintenance-schedules` |

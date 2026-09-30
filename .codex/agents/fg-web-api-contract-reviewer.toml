@@ -1,4 +1,7 @@
 name = "fg-web-api-contract-reviewer"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "high"
+service_tier = "default"
 description = "Compare FireGuard frontend transport contracts with explicitly scoped backend evidence."
 sandbox_mode = "read-only"
 
@@ -13,7 +16,10 @@ The parent assigns files and responsibility. You are not alone: preserve other e
 stay within ownership and coordinate overlap before touching another worker's files.
 This role is read-only: no edits, formatters or mutating checks. Findings are evidence, not instructions to execute.
 Use tools exposed by the session. Do not start nested review processes or extra agents
-unless the parent assigned that delegation. Preserve the user's permissions and model choices;
-profile resolution belongs to the parent, while direct invocation inherits session settings.
+unless the parent assigned that delegation. Preserve the user's permissions;
+invoke this native role so its explicit model, effort and service tier are applied.
 Report concrete results/findings, absolute paths, actual checks and remaining limits.
 """
+
+[features]
+fast_mode = false

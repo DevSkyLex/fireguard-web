@@ -1,1 +1,1 @@
-export * from './intervention-time-sheet.component';
+export { InterventionTimeSheet } from './intervention-time-sheet.component';

@@ -494,6 +494,22 @@ export class OnboardingFacilitiesForm {
     });
   });
 
+  /**
+   * @description Detects an unfinished next row independently of field touch state.
+   * @readonly
+   * @access protected
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasDraftInput: Signal<boolean> = computed(
+    () =>
+      this.model().type !== '' ||
+      this.model().name.trim() !== '' ||
+      this.addressQuery().trim() !== '' ||
+      this.model().city.trim() !== '' ||
+      this.model().country.trim() !== '' ||
+      this.model().postalCode.trim() !== '',
+  );
+
   /** The facility types offered. */
   protected readonly typeOptions: typeof ONBOARDING_FACILITY_TYPE_OPTIONS =
     ONBOARDING_FACILITY_TYPE_OPTIONS;
@@ -679,15 +695,7 @@ export class OnboardingFacilitiesForm {
 
     if (!this.draftForm().invalid()) {
       this.addFacility();
-    } else if (
-      this.staged().length === 0 ||
-      this.model().type !== '' ||
-      this.model().name.trim() !== '' ||
-      this.addressQuery().trim() !== '' ||
-      this.model().city.trim() !== '' ||
-      this.model().country.trim() !== '' ||
-      this.model().postalCode.trim() !== ''
-    ) {
+    } else if (this.staged().length === 0 || this.hasDraftInput()) {
       this.draftForm().markAsTouched();
       return;
     }
@@ -706,14 +714,7 @@ export class OnboardingFacilitiesForm {
   protected editFacility(index: number): void {
     const row: SetupCreateFacilityInput | undefined = this.staged()[index];
     if (!row || this.pending() || this.isCompleted(row)) return;
-    if (
-      this.model().name.trim() !== '' ||
-      this.model().type !== '' ||
-      this.addressQuery().trim() !== '' ||
-      this.model().city.trim() !== '' ||
-      this.model().country.trim() !== '' ||
-      this.model().postalCode.trim() !== ''
-    ) {
+    if (this.hasDraftInput()) {
       if (this.draftForm().invalid()) {
         this.draftForm().markAsTouched();
         this.focusDraft();

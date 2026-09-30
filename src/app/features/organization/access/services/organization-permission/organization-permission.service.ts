@@ -1,7 +1,8 @@
 import { computed, inject, Service, type Signal } from '@angular/core';
 import type { StoreError } from '@core/request-state';
 import type { OrganizationPermissionName } from '@features/organization/models';
-import { OrganizationMemberAccessStore } from '@features/organization/state';
+import { OrganizationMemberAccessStore } from '@features/organization/state/organization-member-access';
+import { hasAnyOrganizationPermission } from '../../utils/has-any-permission/has-any-permission.utils';
 
 /**
  * Service OrganizationPermissionService
@@ -327,15 +328,7 @@ export class OrganizationPermissionService {
    * @returns {boolean} `true` when the granted permission satisfies the requirement.
    */
   private matchesPermissionName(grantedPermission: string, requiredPermission: string): boolean {
-    if (grantedPermission === requiredPermission) {
-      return true;
-    }
-
-    if (!grantedPermission.endsWith('.*')) {
-      return false;
-    }
-
-    return requiredPermission.startsWith(grantedPermission.slice(0, -1));
+    return hasAnyOrganizationPermission([grantedPermission], [requiredPermission]);
   }
 
   //#endregion

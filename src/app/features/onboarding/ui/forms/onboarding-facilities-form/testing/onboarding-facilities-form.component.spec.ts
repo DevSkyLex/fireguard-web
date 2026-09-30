@@ -230,6 +230,22 @@ describe('OnboardingFacilitiesForm', () => {
     ).toContain('HQ');
   });
 
+  it('keeps an empty next draft quiet when leaving its address after staging a facility', async () => {
+    await setDraft({ type: 'site', name: 'HQ', address: '' });
+    (element.querySelector('[data-testid="onboarding-facility-add"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    draftForm().address().markAsTouched();
+    await fixture.whenStable();
+
+    expect(draftForm().address().invalid()).toBe(true);
+    expect(element.querySelector('hlm-field-error')).toBeNull();
+    const emitted: Array<readonly SetupCreateFacilityInput[]> = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    await submit();
+    expect(emitted[0]?.map((row) => row.name)).toEqual(['HQ']);
+  });
+
   it('preserves draft edits and their validation when the previous address picker closes', async () => {
     await setDraft({ type: 'site', name: 'HQ', address: '' });
     const picker = addressPicker();

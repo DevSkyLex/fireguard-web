@@ -33,7 +33,10 @@ export const ACCOUNT_ROUTES: Routes = [
       },
       {
         path: 'security/federated/:provider/callback',
-        loadComponent: () => import('@features/auth').then((m) => m.FederatedLinkCallbackPage),
+        loadComponent: () =>
+          import('@features/auth/ui/pages/federated-link-callback-page/federated-link-callback-page.component').then(
+            (m) => m.FederatedLinkCallbackPage,
+          ),
         title: $localize`:@@route.federatedLinkCallback:Connecting sign-in provider`,
         data: { breadcrumb: $localize`:@@route.accountSecurity:Security` },
       },

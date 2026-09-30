@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { OnboardingStore } from '@features/onboarding/state';
-import { OnboardingStepRail } from '@features/onboarding/ui/components';
+import { OnboardingStepRail } from '../onboarding-step-rail';
 
 /**
  * Component OnboardingShowcase

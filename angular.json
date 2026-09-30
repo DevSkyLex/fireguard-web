@@ -182,6 +182,7 @@
         "e2e": {
           "builder": "playwright-ng-schematics:playwright",
           "options": {
+            "config": "tests/e2e/playwright.config.ts",
             "devServerTarget": "fireguard-web:serve"
           },
           "configurations": {

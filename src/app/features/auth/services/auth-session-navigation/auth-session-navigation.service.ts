@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { merge } from 'rxjs';
-import { authStoreEvents } from '@features/auth/state';
+import { authStoreEvents } from '@features/auth/state/auth/events';
 
 /**
  * Service AuthSessionNavigationService

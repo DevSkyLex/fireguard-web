@@ -273,3 +273,11 @@ distinct "delete" outcome is ever needed here, revisit this decision.
 - A create refusal that carries no violations (the 409 plan-quota refusal) renders inline in the create form through the normalized `StoreError.message`; the store deliberately suppresses the generic error toast for quota refusals.
 - `EquipmentsPage` closes the create sheet and resets the create operation only after the success navigation resolves; the sheet's own unsaved-changes gate replaces the route-level `unsavedChangesGuard`, and `?create=1` is ignored without `EQUIPMENT_WRITE`.
 - The detail header keeps one primary lifecycle action; Decommission — irreversible — lives in the header's overflow menu as a destructive item and still confirms (`DESIGN.md` "Header actions").
+
+## Public entry points
+
+These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
+
+| Entry point                          | Consumers      |
+| ------------------------------------ | -------------- |
+| `ui/components/equipment-status-tag` | `organization` |

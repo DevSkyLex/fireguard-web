@@ -29,7 +29,7 @@ The type separator is a **dot**: `auth.guard.ts`, never `auth-guard.ts`. One dec
 | domain enum              | `<name>.type.ts`                                           | `type <Name>` — literal union                                                   | —                      |
 | const-enum catalog       | `<name>.model.ts`                                          | `SCREAMING_SNAKE` const + derived `PascalCase` type                             | —                      |
 | spec                     | `<subject-file>.spec.ts` in `testing/`                     | `describe('<ExactSymbol>')`                                                     | —                      |
-| Playwright page object   | `<name>.page.ts` in `e2e/support/pages/`                   | `<Name>Page`                                                                    | —                      |
+| Playwright page object   | `<name>.page.ts` in `tests/e2e/support/pages/`             | `<Name>Page`                                                                    | —                      |
 
 **The selector uses the FOLDER name, not the class name.** Folder `organization-members-page/` → `app-organization-members-page`, even though the class is `OrganizationMembersPage`. `app` is the only permitted prefix.
 

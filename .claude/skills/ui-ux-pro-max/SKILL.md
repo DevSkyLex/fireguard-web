@@ -42,8 +42,8 @@ The search script lives inside this skill's own directory, not the project direc
 
 | Session root                                                                         | `$SKILL`                                                                                                                    |
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `fireguard-sso-web/` (app is the workspace root)                                     | `.claude/skills/ui-ux-pro-max`                                                                                              |
-| `G:\Projets\fireguard` (monorepo root — skill comes from the `fireguard-web` plugin) | `${CLAUDE_PLUGIN_ROOT}/skills/ui-ux-pro-max`, or `fireguard-sso-web/.claude/skills/ui-ux-pro-max` if that variable is unset |
+| `fireguard-web/` (app is the workspace root)                                     | `.claude/skills/ui-ux-pro-max`                                                                                              |
+| `G:\Projets\fireguard` (monorepo root — skill comes from the `fireguard-web` plugin) | `${CLAUDE_PLUGIN_ROOT}/skills/ui-ux-pro-max`, or `fireguard-web/.claude/skills/ui-ux-pro-max` if that variable is unset |
 
 Note the plugin form has **no** `.claude/` segment: the plugin root _is_ the app's `.claude/` directory.
 

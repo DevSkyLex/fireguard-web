@@ -56,6 +56,8 @@ tab list in the dashboard page header. Each section remains a full page and owns
   the danger zone carrying self-service account deactivation
 - `/account/security/federated/:provider/callback` — authenticated completion of an explicit
   Google or Microsoft connection; provider credentials are removed from browser history first.
+  The Account route lazily loads Auth's private callback page directly, without publishing
+  that page through the Auth root barrel.
 - `/account/organizations` — the organizations the caller is a member of, each with its logo, name,
   and (for a non-owner) a "Leave" control; the active workspace is marked. Data and the leave
   mutation come from `features/organization`'s `MY_ORGANIZATIONS_PORT` — see Cross-Feature

@@ -1,1 +1,1 @@
-export * from './intervention-effort-sheet.component';
+export { InterventionEffortSheet } from './intervention-effort-sheet.component';

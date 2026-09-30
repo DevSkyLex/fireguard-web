@@ -1,6 +1,6 @@
 # Playwright e2e
 
-`ARCHITECTURE.md` **§14.1** (when to reach for e2e), **§9.9** / **§9.10** (naming and hooks). `e2e/README.md` documents the mock-composition rules — read it before adding a spec.
+`ARCHITECTURE.md` **§14.1** (when to reach for e2e), **§9.9** / **§9.10** (naming and hooks). `tests/e2e/README.md` documents the mock-composition rules — read it before adding a spec.
 
 ## Run it
 
@@ -16,11 +16,11 @@ npm run e2e:install      # install browsers (once)
 
 This reference covers the ordinary SPA suite. Select other boundaries through `.codex/references/validation.md` before using these commands.
 
-`playwright.config.ts` starts `ng serve --configuration=e2e` on **port 4273**. The build is deliberately **SSR-off** because browser route mocks cannot intercept server-side requests. Do not point this suite at the SSR dev server on 4200.
+`tests/e2e/playwright.config.ts` starts `ng serve --configuration=e2e` on **port 4273**. The build is deliberately **SSR-off** because browser route mocks cannot intercept server-side requests. Do not point this suite at the SSR dev server on 4200.
 
 ## Hermetic by construction
 
-Every backend call is stubbed through `e2e/support/mocks/api-mock.ts`; no real backend, database or Mercure hub is required. Unknown API requests receive a 404 and a Playwright assertion failure, even when the UI catches the response. Diagnose the missing method/path/scope mock; do not interpret that harness failure as a product defect.
+Every backend call is stubbed through `tests/e2e/support/mocks/api-mock.ts`; no real backend, database or Mercure hub is required. Unknown API requests receive a 404 and a Playwright assertion failure, even when the UI catches the response. Diagnose the missing method/path/scope mock; do not interpret that harness failure as a product defect.
 
 `ApiMock` composes:
 
@@ -41,11 +41,11 @@ public async mockInterventionList(
 }
 ```
 
-Match with a **regex tolerant of query strings** (`(\?.*)?$`) — several stores hit the same path with different params, and one matcher should serve them all. Fixtures live in `e2e/support/fixtures/`.
+Match with a **regex tolerant of query strings** (`(\?.*)?$`) — several stores hit the same path with different params, and one matcher should serve them all. Fixtures live in `tests/e2e/support/fixtures/`.
 
 ## Page objects
 
-`e2e/support/pages/<name>.page.ts` exporting `class <Name>Page` (§9.9). Named locators plus **one method per user intent** — not one per click:
+`tests/e2e/support/pages/<name>.page.ts` exporting `class <Name>Page` (§9.9). Named locators plus **one method per user intent** — not one per click:
 
 ```ts
 export class InterventionsPage {
@@ -72,7 +72,7 @@ If a surface has no hook, **add one to the component** in the same change — do
 
 ## Spec conventions (§9.9)
 
-`e2e/<area>/<scenario>.spec.ts`, kebab-case scenario names. `test.describe()` takes a human-readable feature name; test titles are **full sentences**:
+`tests/e2e/<area>/<scenario>.spec.ts`, kebab-case scenario names. `test.describe()` takes a human-readable feature name; test titles are **full sentences**:
 
 ```ts
 test('signs in and lands on the default organization workspace', async ({ page }) => { … });

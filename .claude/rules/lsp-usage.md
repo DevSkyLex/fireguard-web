@@ -94,6 +94,6 @@ gets TypeScript's view of it, not Angular's. This repo uses separate `.html` fil
 gate, not a substitute for it: `npm run quality` still decides when a task is done, and only
 `npm run build` proves the strict template check.
 
-> Triplicated by design — the monorepo root and `fireguard-sso-api` each carry their own copy,
+> Triplicated by design — the monorepo root and `fireguard-api` each carry their own copy,
 > because rules are not a plugin component and do not travel to another session root.
 > **Change one, change all three.**

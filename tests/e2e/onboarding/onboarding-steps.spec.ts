@@ -1,0 +1,320 @@
+import { expect, test } from '@playwright/test';
+import {
+  E2E_ORGANIZATION_ID,
+  onboardingOutput,
+  onboardingStepOutput,
+  type OnboardingOutputFixture,
+  type OnboardingStepKeyFixture,
+} from '../support/fixtures/api-fixtures';
+import { equipmentOutput } from '../support/fixtures/equipment-fixtures';
+import { facilityOutput } from '../support/fixtures/facility-fixtures';
+import { setDarkTheme } from '../support/helpers/appearance';
+import { ApiMock } from '../support/mocks/api-mock';
+import { OnboardingPage } from '../support/pages/onboarding.page';
+
+/**
+ * Builds an in-progress onboarding record sitting on `nextStep`, with every
+ * step before it `completed` and every step after it `pending`. Mirrors the
+ * shape the backend returns after `create_organization` — the organization
+ * already exists, so `targetOrganizationId` is set from the very first fixture.
+ */
+function onboardingAt(
+  nextStep: OnboardingStepKeyFixture | null,
+  completedSteps: ReadonlyArray<OnboardingStepKeyFixture>,
+): OnboardingOutputFixture {
+  const order: ReadonlyArray<OnboardingStepKeyFixture> = [
+    'create_organization',
+    'select_plan',
+    'invite_members',
+    'create_first_facility',
+    'create_first_equipment',
+  ];
+
+  return onboardingOutput({
+    state: nextStep === null ? 'completed' : 'in_progress',
+    nextStep,
+    completedSteps,
+    steps: order.map((key) =>
+      onboardingStepOutput({
+        key,
+        status: completedSteps.includes(key) ? 'completed' : 'pending',
+        required: key !== 'select_plan' && key !== 'invite_members',
+        skippable: key === 'select_plan' || key === 'invite_members',
+        skipAvailable: key === nextStep && (key === 'select_plan' || key === 'invite_members'),
+      }),
+    ),
+    targetOrganizationId: E2E_ORGANIZATION_ID,
+    targetOrganizationName: 'E2E Organization',
+  });
+}
+
+test.describe('Onboarding wizard — steps 2 through 5', () => {
+  test('skips plan and members, stages a facility explicitly, then registers equipment to complete the flow', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
+    await api.mockAuthenticatedSession();
+    await api.mockOnboarding(onboardingAt('select_plan', ['create_organization']));
+    await api.mockPlans([]);
+    await api.mockBillingPricing([]);
+    await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, []);
+
+    const onboarding = new OnboardingPage(page);
+    await onboarding.goto();
+
+    // Step 2 — plan: skip.
+    await expect(onboarding.skipButton).toBeVisible();
+    await api.mockOnboardingStepSkip(
+      'select_plan',
+      onboardingAt('invite_members', ['create_organization', 'select_plan']),
+    );
+    await onboarding.skipButton.click();
+
+    // Step 3 — members: skip.
+    await expect(onboarding.skipButton).toBeVisible();
+    await api.mockOnboardingStepSkip(
+      'invite_members',
+      onboardingAt('create_first_facility', [
+        'create_organization',
+        'select_plan',
+        'invite_members',
+      ]),
+    );
+    await onboarding.skipButton.click();
+
+    // Step 4 — facility: stage one explicitly through "Add facility", then Continue.
+    await expect(onboarding.facilityNameInput).toBeVisible();
+    const createdFacility = facilityOutput({ type: 'site', name: 'Main warehouse' });
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [createdFacility]);
+    await api.mockFacilityCreate(E2E_ORGANIZATION_ID, createdFacility);
+    await api.mockOnboardingStepExecute(
+      'create_first_facility',
+      onboardingAt('create_first_equipment', [
+        'create_organization',
+        'select_plan',
+        'invite_members',
+        'create_first_facility',
+      ]),
+    );
+
+    await onboarding.addFacility({ type: 'Site', name: 'Main warehouse' });
+    await expect(onboarding.facilitiesStaged).toBeVisible();
+    await expect(onboarding.facilitiesStaged).toContainText('Main warehouse');
+    await onboarding.facilitiesSubmit.click();
+
+    // Step 5 — equipment: fill and Continue, completing the wizard.
+    await expect(onboarding.equipmentSerialInput).toBeVisible();
+    const createdEquipment = equipmentOutput({ type: 'fire_extinguisher' });
+    await api.mockEquipmentCreate(E2E_ORGANIZATION_ID, createdEquipment);
+    await api.mockOnboardingStepExecute(
+      'create_first_equipment',
+      onboardingAt(null, [
+        'create_organization',
+        'select_plan',
+        'invite_members',
+        'create_first_facility',
+        'create_first_equipment',
+      ]),
+    );
+
+    await expect(onboarding.equipmentFacilitySummary).toContainText('Main warehouse · Site');
+    await expect(onboarding.nextStepHint).toContainText('Last step');
+    await onboarding.pickEquipmentType('Fire extinguisher');
+    await onboarding.equipmentSerialInput.fill('SN-E2E-001');
+    await onboarding.equipmentSubmit.click();
+
+    await expect(page).toHaveURL(new RegExp(`/organizations/${E2E_ORGANIZATION_ID}$`), {
+      timeout: 10_000,
+    });
+    await expect(onboarding.completedToast).toBeVisible();
+  });
+
+  test('creates the facility in one click when the draft is valid and nothing was staged', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
+    await api.mockAuthenticatedSession();
+    await api.mockOnboarding(
+      onboardingAt('create_first_facility', [
+        'create_organization',
+        'select_plan',
+        'invite_members',
+      ]),
+    );
+
+    const onboarding = new OnboardingPage(page);
+    await onboarding.goto();
+
+    await expect(onboarding.facilityNameInput).toBeVisible();
+    await expect(onboarding.skipButton).toHaveCount(0);
+    await expect(onboarding.nextStepHint).toContainText('Next: First equipment');
+
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [
+      facilityOutput({ type: 'site', name: 'Main warehouse' }),
+    ]);
+    const createRequest = page.waitForRequest(
+      (request) => request.url().includes('/facilities') && request.method() === 'POST',
+    );
+    await api.mockFacilityCreate(
+      E2E_ORGANIZATION_ID,
+      facilityOutput({ type: 'site', name: 'Main warehouse' }),
+    );
+    await api.mockOnboardingStepExecute(
+      'create_first_facility',
+      onboardingAt('create_first_equipment', [
+        'create_organization',
+        'select_plan',
+        'invite_members',
+        'create_first_facility',
+      ]),
+    );
+
+    await onboarding.pickFacilityType('Site');
+    await onboarding.facilityNameInput.fill('Main warehouse');
+    await onboarding.chooseFacilityAddress();
+    await expect(onboarding.facilitiesSubmit).toHaveText(/Create facility/);
+    await onboarding.facilitiesSubmit.click();
+
+    await createRequest;
+    await expect(onboarding.equipmentSerialInput).toBeVisible();
+  });
+
+  test('closes the invitation send while nothing is typed and names the skip as the way out', async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
+    await api.mockAuthenticatedSession();
+    await api.mockOnboarding(
+      onboardingAt('invite_members', ['create_organization', 'select_plan']),
+    );
+    await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, []);
+
+    const onboarding = new OnboardingPage(page);
+    await onboarding.goto();
+
+    await expect(onboarding.membersSubmit).toBeDisabled();
+    await expect(page.getByTestId('onboarding-step-gate-reason')).toContainText(
+      'Add at least one email, or skip this step.',
+    );
+    await expect(onboarding.skipButton).toBeVisible();
+
+    await onboarding.memberEmailInput.fill('jordan@example.com');
+    await expect(onboarding.membersSubmit).toBeEnabled();
+  });
+});
+
+test('returns focus to the draft when editing a prepared invitation or site', async ({ page }) => {
+  const api = new ApiMock(page);
+  await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
+  await api.mockAuthenticatedSession();
+  await api.mockOrganizationRoles(E2E_ORGANIZATION_ID, []);
+  await api.mockOnboarding(onboardingAt('invite_members', ['create_organization', 'select_plan']));
+  const onboarding = new OnboardingPage(page);
+  await onboarding.goto();
+  await onboarding.memberEmailInput.fill('operator@example.com');
+  await onboarding.memberAddButton.click();
+  await page.getByRole('button', { name: 'Edit operator@example.com', exact: true }).click();
+  await expect(onboarding.memberEmailInput).toBeFocused();
+  await expect(onboarding.memberEmailInput).toHaveValue('operator@example.com');
+
+  await api.mockOnboarding(
+    onboardingAt('create_first_facility', ['create_organization', 'select_plan', 'invite_members']),
+  );
+  await onboarding.goto();
+  await onboarding.addFacility({ type: 'Site', name: 'Main warehouse' });
+  await page.getByRole('button', { name: 'Edit Main warehouse', exact: true }).click();
+  await expect(onboarding.facilityNameInput).toBeFocused();
+  await expect(onboarding.facilityNameInput).toHaveValue('Main warehouse');
+});
+
+test('requires a suggested address and invalidates it after editing the text', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const api = new ApiMock(page);
+  await api.mockAuthenticatedSession();
+  await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
+  await api.mockOnboarding(
+    onboardingAt('create_first_facility', ['create_organization', 'select_plan', 'invite_members']),
+  );
+  const onboarding = new OnboardingPage(page);
+  await onboarding.goto();
+  await onboarding.pickFacilityType('Site');
+  await onboarding.facilityNameInput.fill('HQ');
+  await onboarding.facilityAddressInput.fill('12 Quai des Docks');
+  await expect(page.getByTestId('onboarding-address-suggestion')).toBeVisible();
+  await expect(onboarding.facilityAddressInput).toHaveValue('12 Quai des Docks');
+  await page.screenshot({
+    path: 'tests/e2e/artifacts/onboarding-annotations-20260907/address-suggestions-mobile.png',
+    animations: 'disabled',
+  });
+  await onboarding.facilityAddressInput.press('ArrowDown');
+  await onboarding.facilityAddressInput.press('Enter');
+  await expect(onboarding.facilityAddressInput).toHaveValue('12 Quai des Docks');
+  await expect(page.locator('#onboarding-facility-city')).toHaveValue('Le Havre');
+  await expect(page.locator('#onboarding-facility-country')).toHaveValue('France');
+  await expect(page.locator('#onboarding-facility-postalCode')).toHaveValue('76600');
+  await expect(onboarding.facilityAddButton).toBeEnabled();
+  await onboarding.facilityAddressInput.fill('Other address');
+  await onboarding.facilityNameInput.click();
+  await expect(onboarding.facilityAddButton).toBeDisabled();
+  await onboarding.facilitiesSubmit.click();
+  await expect(page.getByText('Select a suggested address.', { exact: true })).toBeVisible();
+  await expect(onboarding.facilityAddressInput).toHaveAttribute('aria-invalid', 'true');
+});
+
+for (const dark of [false, true]) {
+  test(`clears the next facility draft after its address suggestions finish closing in ${dark ? 'dark' : 'light'} mode`, async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    if (dark) await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+    const api = new ApiMock(page);
+    await api.mockAuthenticatedSession();
+    await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
+    await api.mockOnboarding(
+      onboardingAt('create_first_facility', [
+        'create_organization',
+        'select_plan',
+        'invite_members',
+      ]),
+    );
+    const onboarding = new OnboardingPage(page);
+    await onboarding.goto();
+    await page.addStyleTag({
+      content: `
+        @keyframes e2e-address-close { from { opacity: 1; } to { opacity: 0; } }
+        hlm-combobox-content[data-state="closed"] {
+          animation: e2e-address-close 1s linear !important;
+        }
+      `,
+    });
+    await onboarding.pickFacilityType('Site');
+    await onboarding.facilityNameInput.fill('Main warehouse');
+    await onboarding.chooseFacilityAddress();
+    await expect(page.locator('hlm-combobox-content')).toBeAttached();
+    await expect(onboarding.facilityAddButton).toBeEnabled();
+    await onboarding.facilityAddButton.focus();
+    await expect(onboarding.facilityAddButton).toBeFocused();
+    await onboarding.facilityAddButton.press('Enter');
+    await expect(onboarding.facilitiesStaged).toContainText('Main warehouse');
+    await expect(page.locator('hlm-combobox-content')).toBeAttached();
+    await expect(page.locator('hlm-combobox-content')).toHaveCount(0);
+    await expect(onboarding.facilityNameInput).toHaveValue('');
+    await expect(onboarding.facilityAddressInput).toHaveValue('');
+    await expect(onboarding.facilityAddressInput).not.toHaveAttribute('data-touched', 'true');
+    await expect(
+      page.locator('app-onboarding-facilities-form hlm-field-error:visible'),
+    ).toHaveCount(0);
+    await page.screenshot({
+      path: `tests/e2e/artifacts/corrections/onboarding-reset/cleared-${dark ? 'dark' : 'light'}.png`,
+      animations: 'disabled',
+    });
+    await onboarding.facilityAddressInput.focus();
+    await onboarding.facilityNameInput.focus();
+    await expect(page.getByText('Select a suggested address.', { exact: true })).toBeVisible();
+  });
+}

@@ -42,12 +42,12 @@ import type {
   MfaChallengeLoginOutput,
   MfaVerifyInput,
 } from '@features/auth/models';
-import { ActiveTrustedDeviceStore } from '@features/auth/state';
 import {
   toResendAvailableAt,
   toResendAvailableIn,
   toResendDelaySeconds,
 } from '@features/auth/utils';
+import { ActiveTrustedDeviceStore } from '../trusted-device';
 import { authStoreEvents } from './events';
 import type { AuthState } from './models';
 

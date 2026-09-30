@@ -28,12 +28,13 @@ import type {
   RegisterOutput,
   RegisterVerifyInput,
 } from '@features/auth/models';
-import { AuthStore, authStoreEvents } from '@features/auth/state';
 import {
   toResendAvailableAt,
   toResendAvailableIn,
   toResendDelaySeconds,
 } from '@features/auth/utils';
+import { AuthStore } from '../auth';
+import { authStoreEvents } from '../auth/events';
 import { registerStoreEvents } from './events';
 import type { RegisterState } from './models';
 

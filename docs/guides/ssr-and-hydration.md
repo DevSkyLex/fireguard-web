@@ -46,5 +46,5 @@ The owning `FEATURE.md` records any sanctioned exception.
 ## Verification
 
 The hermetic SPA suite does not prove SSR. Use the real SSR smoke procedure in
-[e2e/README.md](../../e2e/README.md), including its isolated API fixture and ports.
+[tests/e2e/README.md](../../tests/e2e/README.md), including its isolated API fixture and ports.
 Check duplicate requests, public configuration bootstrap, hydration and disposal.

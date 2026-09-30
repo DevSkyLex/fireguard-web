@@ -12,8 +12,8 @@ standalone inspections do not consume capacity automatically.
 
 - Route: `/organizations/:organizationId/workload`; parent organization access is required.
 - `models` and `utils` publish the typed assessment contract and conflict validator.
-- `ui/components` publishes the assignee workload indicator to Intervention forms.
-- `ui/dialogs` publishes the explicit overload confirmation to Intervention planning and outbox review.
+- `ui/components/workload-assignee-indicator` publishes the assignee workload indicator to Intervention forms.
+- `ui/dialogs/workload-confirmation-dialog` publishes the explicit overload confirmation to Intervention planning and outbox review.
 - Route-scoped stores; no global workload cache or SSR transfer of authenticated projections.
 
 ## State and Data Access
@@ -60,3 +60,12 @@ Day detail links into Intervention without owning its workflows.
   page and returned unassigned work. Intervention summaries keep assignees and drafts separate;
   missing effort is never rendered as zero or combined into a misleading known total.
 - An offline projection is unavailable; a saved intervention is not a global capacity snapshot.
+
+## Public entry points
+
+These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
+
+| Entry point                                 | Consumers                             |
+| ------------------------------------------- | ------------------------------------- |
+| `ui/components/workload-assignee-indicator` | `organization/features/interventions` |
+| `ui/dialogs/workload-confirmation-dialog`   | `organization/features/interventions` |

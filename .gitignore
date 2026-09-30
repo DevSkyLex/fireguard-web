@@ -49,8 +49,8 @@ Thumbs.db
 /test-results/
 /playwright-report/
 /playwright/.cache/
-/e2e/artifacts/
-/e2e/test-results-*/
+/tests/e2e/artifacts/
+/tests/e2e/test-results-*/
 /debug.log
 
 # Impeccable (état local de l'outillage design)
@@ -71,3 +71,5 @@ __pycache__/
 
 # Playwright visual-proof output, produced on demand and never committed.
 e2e-artifacts/
+# Codex MCP configuration contains checkout paths; share config.example.toml instead.
+/.codex/config.toml

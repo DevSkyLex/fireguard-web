@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { ORGANIZATION_CONTEXT_PORT, OrganizationPermissionService } from '@features/organization';
+import { ORGANIZATION_CONTEXT_PORT, ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization';
 import { DashboardGlobalNav } from '../dashboard-global-nav.component';
 
 describe('DashboardGlobalNav', () => {
@@ -43,16 +43,9 @@ describe('DashboardGlobalNav', () => {
           },
         },
         {
-          provide: OrganizationPermissionService,
+          provide: ORGANIZATION_MEMBER_ACCESS_PORT,
           useValue: {
-            hasAnyPermission: (required: ReadonlyArray<string>): boolean =>
-              required.some((permission: string): boolean =>
-                permissions().some(
-                  (granted: string): boolean =>
-                    granted === permission ||
-                    (granted.endsWith('.*') && permission.startsWith(granted.slice(0, -1))),
-                ),
-              ),
+            permissions,
           },
         },
       ],

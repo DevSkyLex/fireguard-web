@@ -35,7 +35,7 @@ import type {
 } from '@features/auth/models';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { FederatedReturnContextService } from '@features/auth/services';
-import { authStoreEvents } from '../auth';
+import { authStoreEvents } from '../auth/events';
 import type { FederatedAuthState } from './models';
 
 /**

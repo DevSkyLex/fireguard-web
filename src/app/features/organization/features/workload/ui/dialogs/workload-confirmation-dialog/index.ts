@@ -1,1 +1,1 @@
-export * from './workload-confirmation-dialog.component';
+export { WorkloadConfirmationDialog } from './workload-confirmation-dialog.component';

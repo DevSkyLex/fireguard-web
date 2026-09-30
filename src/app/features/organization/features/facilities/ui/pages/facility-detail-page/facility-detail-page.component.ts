@@ -113,7 +113,12 @@ import { FacilityPlanZoneGeometryDialog } from '../../dialogs/facility-plan-zone
 import { FacilityQrDialog } from '../../dialogs/facility-qr-dialog';
 import type { FacilityDetailTabId } from './models';
 
-/** The facility properties this page has open, writing or showing a rejection. */
+/**
+ * Constant IDLE_EDIT_STATE
+ *
+ * @description
+ * The facility properties this page has open, writing or showing a rejection.
+ */
 const IDLE_EDIT_STATE: FacilityEditState = {
   open: null,
   saving: null,
@@ -176,7 +181,6 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * action ({@link FacilityQrDialog}, `FEATURE.md` "Printable QR code")
  * register on the shell header through `PageActionsService` (`FEATURE.md`
  * "Deletion").
- *
  * `facilityResolver` (route `resolve`) seeds {@link ActiveFacilityStore}
  * fire-and-forget, so this page always renders immediately: the full-page
  * skeleton shows from the store's pending state until the record lands, the
@@ -193,7 +197,6 @@ const IDLE_EDIT_STATE: FacilityEditState = {
  * detail read — renders as a quiet ancestor trail above the status row, each
  * segment linking to that ancestor's own detail route; a root facility
  * (empty `path`) renders nothing.
- *
  * {@link activeTab} follows the `?tab=` query parameter (`tab` input, bound
  * by `withComponentInputBinding()`) through {@link activateTab}: an absent
  * or unrecognized value normalizes to `overview`, and a tab click writes the
@@ -275,9 +278,13 @@ export class FacilityDetailPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning this facility, bound from the route.
+   *
+   * @description
+   * The workspace owning this facility, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -285,9 +292,13 @@ export class FacilityDetailPage {
   /**
    * Property facilityId
    * @readonly
-   * @description The resolved facility's id, bound from the route.
+   *
+   * @description
+   * The resolved facility's id, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly facilityId: InputSignal<string> = input.required<string>();
@@ -304,127 +315,404 @@ export class FacilityDetailPage {
    *
    * @access public
    * @since 1.10.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly tab: InputSignal<string | undefined> = input<string | undefined>(undefined);
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** The currently active facility, seeded by `facilityResolver`; null until the fetch lands. */
+  /**
+   * Property activeFacilityStore
+   * @readonly
+   *
+   * @description
+   * The currently active facility, seeded by `facilityResolver`; null until the fetch lands.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ActiveFacilityStore}
+   */
   protected readonly activeFacilityStore: ActiveFacilityStore =
     inject<ActiveFacilityStore>(ActiveFacilityStore);
 
-  /** Document title channel, kept in sync with the loaded record. */
+  /**
+   * Property titleService
+   * @readonly
+   *
+   * @description
+   * Document title channel, kept in sync with the loaded record.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {TitleService}
+   */
   private readonly titleService: TitleService = inject<TitleService>(TitleService);
 
-  /** Whether this instance runs in the browser — the Plans tab's first load only fires there. */
+  /**
+   * Property isBrowser
+   * @readonly
+   *
+   * @description
+   * Whether this instance runs in the browser — the Plans tab's first load only fires there.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   private readonly isBrowser: boolean = isPlatformBrowser(inject<object>(PLATFORM_ID));
 
-  /** The route-scoped store carrying the update, archive/restore and delete writes. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The route-scoped store carrying the update, archive/restore and delete writes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FacilityStoreType}
+   */
   protected readonly store: FacilityStoreType = inject<FacilityStoreType>(FacilityStore);
 
-  /** The route-scoped store carrying the Overview tab's equipment/inspection summary. */
+  /**
+   * Property overview
+   * @readonly
+   *
+   * @description
+   * The route-scoped store carrying the Overview tab's equipment/inspection summary.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FacilityOverviewStore}
+   */
   protected readonly overview: FacilityOverviewStore = inject(FacilityOverviewStore);
 
-  /** The tab-scoped store carrying the Plans tab's floor plans. */
+  /**
+   * Property plans
+   * @readonly
+   *
+   * @description
+   * The tab-scoped store carrying the Plans tab's floor plans.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FacilityPlansStoreType}
+   */
   protected readonly plans: FacilityPlansStoreType =
     inject<FacilityPlansStoreType>(FacilityPlansStore);
 
   /**
-   * @description Organization/facility key whose Plans tab has been activated and loaded.
+   * Property plansLoadRequested
+   *
+   * @description
+   * Organization/facility key whose Plans tab has been activated and loaded.
+   *
    * @access private
    * @since 1.10.0
+   *
    * @type {string | null}
    */
   private plansLoadRequested: string | null = null;
 
-  /** Organization permission checks gating every write on this page. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating every write on this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Router used for hierarchy-node navigation, the post-delete return and the load-failure redirect. */
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Router used for hierarchy-node navigation, the post-delete return and the load-failure
+   * redirect.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject(Router);
 
-  /** This route, used to write the `?tab=` query parameter without disturbing the path. */
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * This route, used to write the `?tab=` query parameter without disturbing the path.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
-  /** Transport used directly for the one-shot "Locate address" lookup — a helper, not list state. */
+  /**
+   * Property facilityService
+   * @readonly
+   *
+   * @description
+   * Transport used directly for the one-shot "Locate address" lookup — a helper, not list state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FacilityService}
+   */
   private readonly facilityService: FacilityService = inject(FacilityService);
 
-  /** Global toast feedback for the lookup's rate-limit and error paths. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Global toast feedback for the lookup's rate-limit and error paths.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject(FeedbackService);
 
-  /** Unsubscribes an in-flight lookup when the page is destroyed. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Unsubscribes an in-flight lookup when the page is destroyed.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Whether a "Locate address" lookup is in flight. */
+  /**
+   * Property geocodePending
+   * @readonly
+   *
+   * @description
+   * Whether a "Locate address" lookup is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly geocodePending: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The latest successful lookup, handed to the panel to fill the coordinate drafts. */
+  /**
+   * Property geocodeResult
+   * @readonly
+   *
+   * @description
+   * The latest successful lookup, handed to the panel to fill the coordinate drafts.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityGeocodeOutput | null>}
+   */
   protected readonly geocodeResult: WritableSignal<FacilityGeocodeOutput | null> =
     signal<FacilityGeocodeOutput | null>(null);
 
-  /** Whether the latest lookup answered `404` — the panel's non-blocking inline message. */
+  /**
+   * Property geocodeNotFound
+   * @readonly
+   *
+   * @description
+   * Whether the latest lookup answered `404` — the panel's non-blocking inline message.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly geocodeNotFound: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The application's language, used to phrase the header's metadata line. */
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * The application's language, used to phrase the header's metadata line.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
-  /** Which in-place field is open, writing, or showing a rejection. */
+  /**
+   * Property editState
+   * @readonly
+   *
+   * @description
+   * Which in-place field is open, writing, or showing a rejection.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityEditState>}
+   */
   protected readonly editState: WritableSignal<FacilityEditState> =
     signal<FacilityEditState>(IDLE_EDIT_STATE);
 
-  /** Which of the record's three tabs is showing. Page-local UI state, `overview` by default. */
+  /**
+   * Property activeTab
+   * @readonly
+   *
+   * @description
+   * Which of the record's three tabs is showing. Page-local UI state, `overview` by default.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityDetailTabId>}
+   */
   protected readonly activeTab: WritableSignal<FacilityDetailTabId> =
     signal<FacilityDetailTabId>('overview');
 
-  /** Whether the Delete confirmation is open. */
+  /**
+   * Property pendingDelete
+   * @readonly
+   *
+   * @description
+   * Whether the Delete confirmation is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly pendingDelete: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The floor plan awaiting delete confirmation, if any. */
+  /**
+   * Property planDeleteTarget
+   * @readonly
+   *
+   * @description
+   * The floor plan awaiting delete confirmation, if any.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityAttachmentOutput | null>}
+   */
   protected readonly planDeleteTarget: WritableSignal<FacilityAttachmentOutput | null> =
     signal<FacilityAttachmentOutput | null>(null);
 
-  /** Whether the QR code dialog is open. */
+  /**
+   * Property qrDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the QR code dialog is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly qrDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * The adaptive plan picker's accessible name.
+   * Property planPickerLabel
+   * @readonly
    *
+   * @description
+   * The adaptive plan picker's accessible name.
    * The plan list used to be a 320 px column of its own. Measured at a
    * 1280 px viewport, that column plus the detail panel left the plan itself
    * 281 px wide — narrower than either of them. The list is the surface a
    * reader consults least once a plan is chosen, so it moved behind this
    * trigger and the plan took the width back. The trigger opens an anchored
    * popover on desktop and a bottom drawer on compact viewports.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
    */
   protected readonly planPickerLabel: string = $localize`:@@facility.plans.pickerLabel:Floor plans`;
 
-  /** The picker trigger's label while no plan is selected yet. */
+  /**
+   * Property planPickerFallbackLabel
+   * @readonly
+   *
+   * @description
+   * The picker trigger's label while no plan is selected yet.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly planPickerFallbackLabel: string = $localize`:@@facility.plans.pickerEmpty:Choose a plan`;
 
   /**
    * Property planPickerDrawerState
    * @readonly
-   * @description Native state of the mobile plan picker.
+   *
+   * @description
+   * Native state of the mobile plan picker.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<'closed' | 'open'>}
    */
   protected readonly planPickerDrawerState: WritableSignal<'closed' | 'open'> = signal<
@@ -434,9 +722,14 @@ export class FacilityDetailPage {
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Selects mobile sheets and touch composition from the central interaction mode, independent of width.
+   *
+   * @description
+   * Selects mobile sheets and touch composition from the central interaction mode, independent of
+   * width.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -456,6 +749,7 @@ export class FacilityDetailPage {
    *
    * @access protected
    * @since 1.11.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly planPanelVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -463,9 +757,15 @@ export class FacilityDetailPage {
   /**
    * Property selectedZoneId
    * @readonly
-   * @description The plan overlay zone currently selected on this tab; `null` while nothing, or an equipment pin, is selected. Activating a zone (plan tap or the panel's own zone list) selects it here instead of navigating — see {@link onZoneSelected}.
+   *
+   * @description
+   * The plan overlay zone currently selected on this tab; `null` while nothing, or an equipment
+   * pin, is selected. Activating a zone (plan tap or the panel's own zone list) selects it here
+   * instead of navigating — see {@link onZoneSelected}.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly selectedZoneId: WritableSignal<string | null> = signal<string | null>(null);
@@ -473,9 +773,14 @@ export class FacilityDetailPage {
   /**
    * Property selectedEquipmentId
    * @readonly
-   * @description The plan overlay equipment pin currently selected on this tab; `null` while nothing, or a zone, is selected.
+   *
+   * @description
+   * The plan overlay equipment pin currently selected on this tab; `null` while nothing, or a zone,
+   * is selected.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly selectedEquipmentId: WritableSignal<string | null> = signal<string | null>(
@@ -485,9 +790,14 @@ export class FacilityDetailPage {
   /**
    * Property selectedOverlayZone
    * @readonly
-   * @description {@link selectedZoneId} resolved against the loaded overlay — `null` while unselected or the id matches no zone in the current overlay (e.g. after switching plans).
+   *
+   * @description
+   * {@link selectedZoneId} resolved against the loaded overlay — `null` while unselected or the id
+   * matches no zone in the current overlay (e.g. after switching plans).
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @type {Signal<FacilityPlanOverlayZone | null>}
    */
   protected readonly selectedOverlayZone: Signal<FacilityPlanOverlayZone | null> = computed(() => {
@@ -500,9 +810,14 @@ export class FacilityDetailPage {
   /**
    * Property selectedOverlayEquipment
    * @readonly
-   * @description {@link selectedEquipmentId} resolved against the loaded overlay — `null` while unselected or the id matches no pin in the current overlay.
+   *
+   * @description
+   * {@link selectedEquipmentId} resolved against the loaded overlay — `null` while unselected or the
+   * id matches no pin in the current overlay.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @type {Signal<FacilityPlanOverlayEquipment | null>}
    */
   protected readonly selectedOverlayEquipment: Signal<FacilityPlanOverlayEquipment | null> =
@@ -516,9 +831,14 @@ export class FacilityDetailPage {
   /**
    * Property planHasNoContent
    * @readonly
-   * @description Whether the selected plan's overlay has loaded successfully and carries neither a zone nor an equipment pin — gates {@link FacilityPlanPanel}'s "nothing drawn yet" empty state.
+   *
+   * @description
+   * Whether the selected plan's overlay has loaded successfully and carries neither a zone nor an
+   * equipment pin — gates {@link FacilityPlanPanel}'s "nothing drawn yet" empty state.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly planHasNoContent: Signal<boolean> = computed<boolean>(
@@ -541,6 +861,7 @@ export class FacilityDetailPage {
    *
    * @access private
    * @since 1.13.0
+   *
    * @type {WritableSignal<number>}
    */
   private readonly selectionAnnouncementNonce: WritableSignal<number> = signal<number>(0);
@@ -548,9 +869,15 @@ export class FacilityDetailPage {
   /**
    * Property planSelectionAnnouncement
    * @readonly
-   * @description The Plans tab's `sr-only`, `aria-live="polite"` region text — the selected zone or equipment's name, or the empty string once nothing is selected. Mirrors `FacilityBuilding3dPage.selectionAnnouncement`.
+   *
+   * @description
+   * The Plans tab's `sr-only`, `aria-live="polite"` region text — the selected zone or equipment's
+   * name, or the empty string once nothing is selected. Mirrors
+   * `FacilityBuilding3dPage.selectionAnnouncement`.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @type {Signal<string>}
    */
   protected readonly planSelectionAnnouncement: Signal<string> = computed<string>(() => {
@@ -578,9 +905,13 @@ export class FacilityDetailPage {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the member may write to this facility at all.
+   *
+   * @description
+   * Whether the member may write to this facility at all.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canWrite: Signal<boolean> = computed<boolean>(() =>
@@ -590,27 +921,57 @@ export class FacilityDetailPage {
   /**
    * Property canEditEquipment
    * @readonly
-   * @description Whether the member may place, move, or remove an equipment pin on this facility's plans.
+   *
+   * @description
+   * Whether the member may place, move, or remove an equipment pin on this facility's plans.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canEditEquipment: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
   );
 
-  /** The zone (by facility id) whose "Edit coordinates" dialog is open; null when closed. */
+  /**
+   * Property zoneGeometryDialogFacilityId
+   * @readonly
+   *
+   * @description
+   * The zone (by facility id) whose "Edit coordinates" dialog is open; null when closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly zoneGeometryDialogFacilityId: WritableSignal<string | null> = signal(null);
 
-  /** The equipment pin (by equipment id) whose "Edit position" dialog is open; null when closed. */
+  /**
+   * Property pinPositionDialogEquipmentId
+   * @readonly
+   *
+   * @description
+   * The equipment pin (by equipment id) whose "Edit position" dialog is open; null when closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly pinPositionDialogEquipmentId: WritableSignal<string | null> = signal(null);
 
   /**
    * Property zoneGeometryDialogZone
    * @readonly
-   * @description The zone the "Edit coordinates" dialog is showing, resolved from the loaded overlay.
+   *
+   * @description
+   * The zone the "Edit coordinates" dialog is showing, resolved from the loaded overlay.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<FacilityPlanOverlayZone | null>}
    */
   protected readonly zoneGeometryDialogZone: Signal<FacilityPlanOverlayZone | null> = computed(
@@ -625,9 +986,13 @@ export class FacilityDetailPage {
   /**
    * Property pinPositionDialogPin
    * @readonly
-   * @description The equipment pin the "Edit position" dialog is showing, resolved from the loaded overlay.
+   *
+   * @description
+   * The equipment pin the "Edit position" dialog is showing, resolved from the loaded overlay.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<FacilityPlanOverlayEquipment | null>}
    */
   protected readonly pinPositionDialogPin: Signal<FacilityPlanOverlayEquipment | null> = computed(
@@ -642,9 +1007,14 @@ export class FacilityDetailPage {
   /**
    * Property zoneGeometryDialogName
    * @readonly
-   * @description The zone dialog's display name — the overlay zone's when it exists, else the picked draw candidate's (a zone with no geometry yet).
+   *
+   * @description
+   * The zone dialog's display name — the overlay zone's when it exists, else the picked draw
+   * candidate's (a zone with no geometry yet).
+   *
    * @access protected
    * @since 1.4.1
+   *
    * @type {Signal<string>}
    */
   protected readonly zoneGeometryDialogName: Signal<string> = computed<string>(() => {
@@ -663,9 +1033,14 @@ export class FacilityDetailPage {
   /**
    * Property pinPositionDialogName
    * @readonly
-   * @description The pin dialog's display name — the overlay pin's when it exists, else the picked place candidate's (equipment not on the plan yet).
+   *
+   * @description
+   * The pin dialog's display name — the overlay pin's when it exists, else the picked place
+   * candidate's (equipment not on the plan yet).
+   *
    * @access protected
    * @since 1.4.1
+   *
    * @type {Signal<string>}
    */
   protected readonly pinPositionDialogName: Signal<string> = computed<string>(() => {
@@ -691,9 +1066,15 @@ export class FacilityDetailPage {
   /**
    * Property pickAvatarUrl
    * @readonly
-   * @description Resolves an avatar's variant map to the display size the recent-inspection rows want. Exposed for the template's direct call ({@link https://angular.dev} template expressions cannot call a bare imported function).
+   *
+   * @description
+   * Resolves an avatar's variant map to the display size the recent-inspection rows want. Exposed
+   * for the template's direct call ({@link https://angular.dev} template expressions cannot call a
+   * bare imported function).
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @type {typeof pickAvatarUrl}
    */
   protected readonly pickAvatarUrl: typeof pickAvatarUrl = pickAvatarUrl;
@@ -701,9 +1082,13 @@ export class FacilityDetailPage {
   /**
    * Property getOrganizationInitials
    * @readonly
-   * @description Resolves a display name to its initials for an avatar fallback.
+   *
+   * @description
+   * Resolves a display name to its initials for an avatar fallback.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @type {typeof getOrganizationInitials}
    */
   protected readonly getOrganizationInitials: typeof getOrganizationInitials =
@@ -712,19 +1097,46 @@ export class FacilityDetailPage {
   /**
    * Property hierarchyLoadingIds
    * @readonly
-   * @description {@link FacilityStoreType.loadingParentIds} as the `ReadonlySet` `FacilityHierarchyChart.loadingIds` expects.
+   *
+   * @description
+   * {@link FacilityStoreType.loadingParentIds} as the `ReadonlySet`
+   * `FacilityHierarchyChart.loadingIds` expects.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @type {Signal<ReadonlySet<string>>}
    */
   protected readonly hierarchyLoadingIds: Signal<ReadonlySet<string>> = computed<
     ReadonlySet<string>
   >(() => new Set(this.store.loadingParentIds()));
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The Delete button, registered on the shell header instead of an in-page title band. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The Delete button, registered on the shell header instead of an in-page title band.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
 
@@ -760,9 +1172,14 @@ export class FacilityDetailPage {
   /**
    * Property editModeStatusLabel
    * @readonly
-   * @description The Plans tab editor's status line, naming the active mode and, in `draw-zone`, its vertex count.
+   *
+   * @description
+   * The Plans tab editor's status line, naming the active mode and, in `draw-zone`, its vertex
+   * count.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<string>}
    */
   protected readonly editModeStatusLabel: Signal<string> = computed<string>(() => {
@@ -779,23 +1196,91 @@ export class FacilityDetailPage {
     return '';
   });
 
-  /** Injection context {@link syncPlanSelectionFocus} needs to schedule a post-render focus move. */
+  /**
+   * Property injector
+   * @readonly
+   *
+   * @description
+   * Injection context {@link syncPlanSelectionFocus} needs to schedule a post-render focus move.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Injector}
+   */
   private readonly injector: Injector = inject(Injector);
 
-  /** The plan panel instance — {@link syncPlanSelectionFocus}'s open-side focus target. */
+  /**
+   * Property planPanel
+   * @readonly
+   *
+   * @description
+   * The plan panel instance — {@link syncPlanSelectionFocus}'s open-side focus target.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<FacilityPlanPanel | undefined>}
+   */
   private readonly planPanel: Signal<FacilityPlanPanel | undefined> = viewChild(FacilityPlanPanel);
 
-  /** This page's own root — {@link syncPlanSelectionFocus}'s close-side fallback once the element focus started on is gone. */
+  /**
+   * Property pageRoot
+   * @readonly
+   *
+   * @description
+   * This page's own root — {@link syncPlanSelectionFocus}'s close-side fallback once the element
+   * focus started on is gone.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
   private readonly pageRoot: Signal<ElementRef<HTMLElement> | undefined> =
     viewChild<ElementRef<HTMLElement>>('pageRoot');
 
-  /** {@link pageRoot}'s accessible name — a focus landing on a last-resort fallback must still be named, not silent. */
+  /**
+   * Property pageRootLabel
+   * @readonly
+   *
+   * @description
+   * {@link pageRoot}'s accessible name — a focus landing on a last-resort fallback must still be
+   * named, not silent.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly pageRootLabel: string = $localize`:@@facility.detail.pageRootLabel:Facility record`;
 
-  /** The element that held focus just before a plan selection opened the detail block, restored once it closes. */
+  /**
+   * Property previouslyFocusedElement
+   *
+   * @description
+   * The element that held focus just before a plan selection opened the detail block, restored once
+   * it closes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {HTMLElement | null}
+   */
   private previouslyFocusedElement: HTMLElement | null = null;
 
-  /** Whether a plan selection, on the Plans tab, was present on the previous check — the edge {@link syncPlanSelectionFocus} reacts to. */
+  /**
+   * Property wasPlanSelected
+   *
+   * @description
+   * Whether a plan selection, on the Plans tab, was present on the previous check — the edge
+   * {@link syncPlanSelectionFocus} reacts to.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   private wasPlanSelected = false;
   //#endregion
 
@@ -914,6 +1399,7 @@ export class FacilityDetailPage {
   //#region Methods
   /**
    * Method onLinkedTabActivated
+   * @method onLinkedTabActivated
    *
    * @description
    * Narrows `hlm-tabs`' plain-string `tabActivated` payload, applies it
@@ -923,7 +1409,9 @@ export class FacilityDetailPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} tab - The `hlm-tabs` id that just activated.
+   *
    * @returns {void}
    */
   protected onLinkedTabActivated(tab: string): void {
@@ -941,10 +1429,17 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanSelected
-   * @description Shows the given plan in the viewer, clearing any zone/equipment selection from the previously shown plan.
+   * @method onPlanSelected
+   *
+   * @description
+   * Shows the given plan in the viewer, clearing any zone/equipment selection from the previously
+   * shown plan.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} planId - The plan to show.
+   *
    * @returns {void}
    */
   protected onPlanSelected(planId: string): void {
@@ -956,9 +1451,14 @@ export class FacilityDetailPage {
 
   /**
    * Method retryPlansLoad
-   * @description The plan-list-failed state's retry — re-runs {@link FacilityPlansStoreType.load}.
+   * @method retryPlansLoad
+   *
+   * @description
+   * The plan-list-failed state's retry — re-runs {@link FacilityPlansStoreType.load}.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @returns {void}
    */
   protected retryPlansLoad(): void {
@@ -967,10 +1467,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanFilePicked
-   * @description Uploads the picked image as a new floor plan.
+   * @method onPlanFilePicked
+   *
+   * @description
+   * Uploads the picked image as a new floor plan.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {File} file - The picked image.
+   *
    * @returns {void}
    */
   protected onPlanFilePicked(file: File): void {
@@ -979,10 +1485,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanSetPrimaryRequested
-   * @description Sets the given plan as the facility's primary plan.
+   * @method onPlanSetPrimaryRequested
+   *
+   * @description
+   * Sets the given plan as the facility's primary plan.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {FacilityAttachmentOutput} plan - The plan to set primary.
+   *
    * @returns {void}
    */
   protected onPlanSetPrimaryRequested(plan: FacilityAttachmentOutput): void {
@@ -991,10 +1503,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanDeleteRequested
-   * @description Opens {@link FacilityPlanDeleteDialog} for the given plan.
+   * @method onPlanDeleteRequested
+   *
+   * @description
+   * Opens {@link FacilityPlanDeleteDialog} for the given plan.
+   *
    * @access protected
    * @since 1.7.0
+   *
    * @param {FacilityAttachmentOutput} plan - The plan whose deletion was requested.
+   *
    * @returns {void}
    */
   protected onPlanDeleteRequested(plan: FacilityAttachmentOutput): void {
@@ -1003,9 +1521,14 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanDeleteDismissed
-   * @description Closes {@link FacilityPlanDeleteDialog} without deleting.
+   * @method onPlanDeleteDismissed
+   *
+   * @description
+   * Closes {@link FacilityPlanDeleteDialog} without deleting.
+   *
    * @access protected
    * @since 1.7.0
+   *
    * @returns {void}
    */
   protected onPlanDeleteDismissed(): void {
@@ -1014,9 +1537,14 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanDeleteConfirmed
-   * @description Deletes the pending plan, pinned to its revision, and closes the dialog.
+   * @method onPlanDeleteConfirmed
+   *
+   * @description
+   * Deletes the pending plan, pinned to its revision, and closes the dialog.
+   *
    * @access protected
    * @since 1.7.0
+   *
    * @returns {void}
    */
   protected onPlanDeleteConfirmed(): void {
@@ -1029,10 +1557,18 @@ export class FacilityDetailPage {
 
   /**
    * Method onZoneSelected
-   * @description A plan overlay zone was activated — from a tap on the plan or the panel's own zone list — and becomes the selection, deselecting any equipment pin. Never navigates: browsing several zones costs nothing, see {@link onZoneRecordRequested} for the explicit action that does.
+   * @method onZoneSelected
+   *
+   * @description
+   * A plan overlay zone was activated — from a tap on the plan or the panel's own zone list — and
+   * becomes the selection, deselecting any equipment pin. Never navigates: browsing several zones
+   * costs nothing, see {@link onZoneRecordRequested} for the explicit action that does.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @param {string} facilityId - The activated zone's facility id.
+   *
    * @returns {void}
    */
   protected onZoneSelected(facilityId: string): void {
@@ -1043,10 +1579,17 @@ export class FacilityDetailPage {
 
   /**
    * Method onEquipmentSelected
-   * @description A plan overlay equipment pin was activated and becomes the selection, deselecting any zone. Never navigates — see {@link onEquipmentRecordRequested}.
+   * @method onEquipmentSelected
+   *
+   * @description
+   * A plan overlay equipment pin was activated and becomes the selection, deselecting any zone.
+   * Never navigates — see {@link onEquipmentRecordRequested}.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @param {string} equipmentId - The activated pin's equipment id.
+   *
    * @returns {void}
    */
   protected onEquipmentSelected(equipmentId: string): void {
@@ -1057,9 +1600,15 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlanDetailClosed
-   * @description The panel's zone/equipment detail close control was activated — clears whichever is currently selected.
+   * @method onPlanDetailClosed
+   *
+   * @description
+   * The panel's zone/equipment detail close control was activated — clears whichever is currently
+   * selected.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @returns {void}
    */
   protected onPlanDetailClosed(): void {
@@ -1069,9 +1618,15 @@ export class FacilityDetailPage {
 
   /**
    * Method onZoneRecordRequested
-   * @description The panel's explicit "View facility record" action for {@link selectedOverlayZone} — the only path off this tab a zone selection now takes.
+   * @method onZoneRecordRequested
+   *
+   * @description
+   * The panel's explicit "View facility record" action for {@link selectedOverlayZone} — the only
+   * path off this tab a zone selection now takes.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @returns {void}
    */
   protected onZoneRecordRequested(): void {
@@ -1083,9 +1638,14 @@ export class FacilityDetailPage {
 
   /**
    * Method onEquipmentRecordRequested
-   * @description The panel's explicit "View equipment record" action for {@link selectedOverlayEquipment}.
+   * @method onEquipmentRecordRequested
+   *
+   * @description
+   * The panel's explicit "View equipment record" action for {@link selectedOverlayEquipment}.
+   *
    * @access protected
    * @since 1.11.0
+   *
    * @returns {void}
    */
   protected onEquipmentRecordRequested(): void {
@@ -1097,9 +1657,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onZoneEditRequested
-   * @description The panel detail block's "Edit coordinates" action for {@link selectedOverlayZone} — opens {@link FacilityPlanZoneGeometryDialog} exactly as the removed management roster's own row button did.
+   * @method onZoneEditRequested
+   *
+   * @description
+   * The panel detail block's "Edit coordinates" action for {@link selectedOverlayZone} — opens
+   * {@link FacilityPlanZoneGeometryDialog} exactly as the removed management roster's own row button
+   * did.
+   *
    * @access protected
    * @since 1.12.0
+   *
    * @returns {void}
    */
   protected onZoneEditRequested(): void {
@@ -1111,9 +1678,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onEquipmentEditRequested
-   * @description The panel detail block's "Edit position" action for {@link selectedOverlayEquipment} — opens {@link FacilityPlanPinPositionDialog} exactly as the removed management roster's own row button did.
+   * @method onEquipmentEditRequested
+   *
+   * @description
+   * The panel detail block's "Edit position" action for {@link selectedOverlayEquipment} — opens
+   * {@link FacilityPlanPinPositionDialog} exactly as the removed management roster's own row button
+   * did.
+   *
    * @access protected
    * @since 1.12.0
+   *
    * @returns {void}
    */
   protected onEquipmentEditRequested(): void {
@@ -1125,9 +1699,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onEquipmentRemoveRequested
-   * @description The panel detail block's "Remove from plan" action for {@link selectedOverlayEquipment} — routes to {@link onPinPositionRemoved} and clears the selection immediately, since the removed pin will otherwise still show as selected until the overlay reload lands.
+   * @method onEquipmentRemoveRequested
+   *
+   * @description
+   * The panel detail block's "Remove from plan" action for {@link selectedOverlayEquipment} — routes
+   * to {@link onPinPositionRemoved} and clears the selection immediately, since the removed pin will
+   * otherwise still show as selected until the overlay reload lands.
+   *
    * @access protected
    * @since 1.12.0
+   *
    * @returns {void}
    */
   protected onEquipmentRemoveRequested(): void {
@@ -1140,10 +1721,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onShowZonesChanged
-   * @description Toggles the plan overlay's zone-polygon layer.
+   * @method onShowZonesChanged
+   *
+   * @description
+   * Toggles the plan overlay's zone-polygon layer.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {boolean} value - The switch's new checked state.
+   *
    * @returns {void}
    */
   protected onShowZonesChanged(value: boolean): void {
@@ -1152,10 +1739,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onShowEquipmentChanged
-   * @description Toggles the plan overlay's equipment-pin layer.
+   * @method onShowEquipmentChanged
+   *
+   * @description
+   * Toggles the plan overlay's equipment-pin layer.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {boolean} value - The switch's new checked state.
+   *
    * @returns {void}
    */
   protected onShowEquipmentChanged(value: boolean): void {
@@ -1164,6 +1757,7 @@ export class FacilityDetailPage {
 
   /**
    * Method onEditorKeydown
+   * @method onEditorKeydown
    *
    * @description
    * The editor's keyboard shortcuts, listened globally rather than on the
@@ -1177,7 +1771,9 @@ export class FacilityDetailPage {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @param {KeyboardEvent} event - The key event.
+   *
    * @returns {void}
    */
   @HostListener('document:keydown', ['$event'])
@@ -1195,9 +1791,14 @@ export class FacilityDetailPage {
 
   /**
    * Method onZonePickerOpened
-   * @description Loads the `draw-zone` picker's candidate list, guarded against a duplicate fetch.
+   * @method onZonePickerOpened
+   *
+   * @description
+   * Loads the `draw-zone` picker's candidate list, guarded against a duplicate fetch.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected onZonePickerOpened(): void {
@@ -1206,9 +1807,14 @@ export class FacilityDetailPage {
 
   /**
    * Method onEquipmentPickerOpened
-   * @description Loads the `place-pin` picker's candidate list, guarded against a duplicate fetch.
+   * @method onEquipmentPickerOpened
+   *
+   * @description
+   * Loads the `place-pin` picker's candidate list, guarded against a duplicate fetch.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected onEquipmentPickerOpened(): void {
@@ -1217,10 +1823,17 @@ export class FacilityDetailPage {
 
   /**
    * Method onZoneDrawTargetPicked
-   * @description Starts drawing an outline for the picked child facility.
+   * @method onZoneDrawTargetPicked
+   *
+   * @description
+   * Starts drawing an outline for the picked child facility.
+   *
    * @access protected
    * @since 1.4.0
-   * @param {string | null | undefined} facilityId - The picked facility, or nullish when the selection cleared.
+   *
+   * @param {string | null | undefined} facilityId - The picked facility, or nullish when the
+   *   selection cleared.
+   *
    * @returns {void}
    */
   protected onZoneDrawTargetPicked(facilityId: string | null | undefined): void {
@@ -1231,10 +1844,17 @@ export class FacilityDetailPage {
 
   /**
    * Method onPlaceEquipmentPicked
-   * @description Starts placing the picked equipment item.
+   * @method onPlaceEquipmentPicked
+   *
+   * @description
+   * Starts placing the picked equipment item.
+   *
    * @access protected
    * @since 1.4.0
-   * @param {string | null | undefined} equipmentId - The picked equipment, or nullish when the selection cleared.
+   *
+   * @param {string | null | undefined} equipmentId - The picked equipment, or nullish when the
+   *   selection cleared.
+   *
    * @returns {void}
    */
   protected onPlaceEquipmentPicked(equipmentId: string | null | undefined): void {
@@ -1245,10 +1865,17 @@ export class FacilityDetailPage {
 
   /**
    * Method onVertexAdded
-   * @description A `draw-zone` tap added this vertex.
+   * @method onVertexAdded
+   *
+   * @description
+   * A `draw-zone` tap added this vertex.
+   *
    * @access protected
    * @since 1.4.0
-   * @param {readonly [number, number]} point - The vertex, in normalized `[0, 1]` image coordinates.
+   *
+   * @param {readonly [number, number]} point - The vertex, in normalized `[0, 1]` image
+   *   coordinates.
+   *
    * @returns {void}
    */
   protected onVertexAdded(point: readonly [number, number]): void {
@@ -1257,9 +1884,14 @@ export class FacilityDetailPage {
 
   /**
    * Method onPolygonCloseRequested
-   * @description A double-click requested closing the in-progress outline; submits it.
+   * @method onPolygonCloseRequested
+   *
+   * @description
+   * A double-click requested closing the in-progress outline; submits it.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected onPolygonCloseRequested(): void {
@@ -1268,10 +1900,17 @@ export class FacilityDetailPage {
 
   /**
    * Method onPinPlaced
-   * @description A `place-pin` tap placed the pin here.
+   * @method onPinPlaced
+   *
+   * @description
+   * A `place-pin` tap placed the pin here.
+   *
    * @access protected
    * @since 1.4.0
-   * @param {readonly [number, number]} point - The pin's position, in normalized `[0, 1]` image coordinates.
+   *
+   * @param {readonly [number, number]} point - The pin's position, in normalized `[0, 1]` image
+   *   coordinates.
+   *
    * @returns {void}
    */
   protected onPinPlaced(point: readonly [number, number]): void {
@@ -1280,10 +1919,17 @@ export class FacilityDetailPage {
 
   /**
    * Method onPinMoved
-   * @description An existing pin was dragged and dropped.
+   * @method onPinMoved
+   *
+   * @description
+   * An existing pin was dragged and dropped.
+   *
    * @access protected
    * @since 1.4.0
-   * @param {{ equipmentId: string; point: readonly [number, number] }} event - The moved pin and its new position.
+   *
+   * @param {{ equipmentId: string; point: readonly [number, number] }} event - The moved pin and
+   *   its new position.
+   *
    * @returns {void}
    */
   protected onPinMoved(event: {
@@ -1295,9 +1941,15 @@ export class FacilityDetailPage {
 
   /**
    * Method onEnterCoordinatesRequested
-   * @description The `draw-zone` mode's keyboard alternative — opens the coordinate dialog for the picked draw target instead of tapping the plan.
+   * @method onEnterCoordinatesRequested
+   *
+   * @description
+   * The `draw-zone` mode's keyboard alternative — opens the coordinate dialog for the picked draw
+   * target instead of tapping the plan.
+   *
    * @access protected
    * @since 1.4.1
+   *
    * @returns {void}
    */
   protected onEnterCoordinatesRequested(): void {
@@ -1309,9 +1961,15 @@ export class FacilityDetailPage {
 
   /**
    * Method onEnterPositionRequested
-   * @description The `place-pin` mode's keyboard alternative — opens the position dialog for the picked equipment instead of tapping the plan.
+   * @method onEnterPositionRequested
+   *
+   * @description
+   * The `place-pin` mode's keyboard alternative — opens the position dialog for the picked
+   * equipment instead of tapping the plan.
+   *
    * @access protected
    * @since 1.4.1
+   *
    * @returns {void}
    */
   protected onEnterPositionRequested(): void {
@@ -1323,10 +1981,16 @@ export class FacilityDetailPage {
 
   /**
    * Method openZoneGeometryDialog
-   * @description Opens the non-pointer "Edit coordinates" dialog for the given zone.
+   * @method openZoneGeometryDialog
+   *
+   * @description
+   * Opens the non-pointer "Edit coordinates" dialog for the given zone.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {string} facilityId - The zone to edit.
+   *
    * @returns {void}
    */
   protected openZoneGeometryDialog(facilityId: string): void {
@@ -1335,10 +1999,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onZoneGeometryDialogVisibleChanged
-   * @description Closes the "Edit coordinates" dialog on any dismissal.
+   * @method onZoneGeometryDialogVisibleChanged
+   *
+   * @description
+   * Closes the "Edit coordinates" dialog on any dismissal.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {boolean} visible - The dialog's new visibility.
+   *
    * @returns {void}
    */
   protected onZoneGeometryDialogVisibleChanged(visible: boolean): void {
@@ -1349,10 +2019,17 @@ export class FacilityDetailPage {
 
   /**
    * Method onZoneGeometrySubmitted
-   * @description Submits the coordinates; only a confirmed success closes the dialog, so errors preserve its draft.
+   * @method onZoneGeometrySubmitted
+   *
+   * @description
+   * Submits the coordinates; only a confirmed success closes the dialog, so errors preserve its
+   * draft.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {ReadonlyArray<readonly [number, number]>} points - The submitted outline.
+   *
    * @returns {void}
    */
   protected onZoneGeometrySubmitted(points: ReadonlyArray<readonly [number, number]>): void {
@@ -1364,9 +2041,14 @@ export class FacilityDetailPage {
 
   /**
    * Method onZoneGeometryCleared
-   * @description The "Clear geometry" action, from either the dialog or a zone's row.
+   * @method onZoneGeometryCleared
+   *
+   * @description
+   * The "Clear geometry" action, from either the dialog or a zone's row.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected onZoneGeometryCleared(): void {
@@ -1378,10 +2060,16 @@ export class FacilityDetailPage {
 
   /**
    * Method openPinPositionDialog
-   * @description Opens the non-pointer "Edit position" dialog for the given equipment pin.
+   * @method openPinPositionDialog
+   *
+   * @description
+   * Opens the non-pointer "Edit position" dialog for the given equipment pin.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {string} equipmentId - The pin to edit.
+   *
    * @returns {void}
    */
   protected openPinPositionDialog(equipmentId: string): void {
@@ -1390,10 +2078,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onPinPositionDialogVisibleChanged
-   * @description Closes the "Edit position" dialog on any dismissal.
+   * @method onPinPositionDialogVisibleChanged
+   *
+   * @description
+   * Closes the "Edit position" dialog on any dismissal.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {boolean} visible - The dialog's new visibility.
+   *
    * @returns {void}
    */
   protected onPinPositionDialogVisibleChanged(visible: boolean): void {
@@ -1404,10 +2098,18 @@ export class FacilityDetailPage {
 
   /**
    * Method onPinPositionSubmitted
-   * @description The "Edit position" dialog's submit path — a first placement while `place-pin` mode targets this equipment routes through the store's placement write, a reposition through the move write.
+   * @method onPinPositionSubmitted
+   *
+   * @description
+   * The "Edit position" dialog's submit path — a first placement while `place-pin` mode targets
+   * this equipment routes through the store's placement write, a reposition through the move
+   * write.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {readonly [number, number]} point - The submitted position.
+   *
    * @returns {void}
    */
   protected onPinPositionSubmitted(point: readonly [number, number]): void {
@@ -1423,10 +2125,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onPinPositionRemoved
-   * @description The "Remove from plan" action, from either the dialog or a pin's row.
+   * @method onPinPositionRemoved
+   *
+   * @description
+   * The "Remove from plan" action, from either the dialog or a pin's row.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {string} equipmentId - The pin to remove.
+   *
    * @returns {void}
    */
   protected onPinPositionRemoved(equipmentId: string): void {
@@ -1435,10 +2143,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onHierarchyNodeSelected
-   * @description A hierarchy chart node was activated; navigates the record to that facility.
+   * @method onHierarchyNodeSelected
+   *
+   * @description
+   * A hierarchy chart node was activated; navigates the record to that facility.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FacilityOutput} facility - The selected node's facility.
+   *
    * @returns {void}
    */
   protected onHierarchyNodeSelected(facility: FacilityOutput): void {
@@ -1449,9 +2163,14 @@ export class FacilityDetailPage {
 
   /**
    * Method retryLoad
-   * @description The load-failed state's retry — re-runs {@link ActiveFacilityStore}'s resolve for this record.
+   * @method retryLoad
+   *
+   * @description
+   * The load-failed state's retry — re-runs {@link ActiveFacilityStore}'s resolve for this record.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected retryLoad(): void {
@@ -1463,10 +2182,16 @@ export class FacilityDetailPage {
 
   /**
    * Method typeLabelOf
-   * @description The facility's type, humanized through the shared type catalog.
+   * @method typeLabelOf
+   *
+   * @description
+   * The facility's type, humanized through the shared type catalog.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {FacilityType} type - The raw type value.
+   *
    * @returns {string} The localized label, or the raw value when unknown.
    */
   protected typeLabelOf(type: FacilityType): string {
@@ -1475,10 +2200,17 @@ export class FacilityDetailPage {
 
   /**
    * Method updatedRelativeLabel
-   * @description The record's `updatedAt`, as a localized relative label ("3 days ago") — the identity header's visible text, paired with the absolute value in a tooltip.
+   * @method updatedRelativeLabel
+   *
+   * @description
+   * The record's `updatedAt`, as a localized relative label ("3 days ago") — the identity header's
+   * visible text, paired with the absolute value in a tooltip.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {string} updatedAt - The record's `updatedAt` timestamp.
+   *
    * @returns {string} The localized relative label.
    */
   protected updatedRelativeLabel(updatedAt: string): string {
@@ -1487,6 +2219,7 @@ export class FacilityDetailPage {
 
   /**
    * Method nextInspectionRelativeLabel
+   * @method nextInspectionRelativeLabel
    *
    * @description
    * `overview.nextInspectionAt()` as a localized "today"/"tomorrow"/"in N
@@ -1497,6 +2230,7 @@ export class FacilityDetailPage {
    *
    * @access protected
    * @since 2.2.0
+   *
    * @returns {string | null} The localized relative label, or `null`.
    */
   protected nextInspectionRelativeLabel(): string | null {
@@ -1508,10 +2242,20 @@ export class FacilityDetailPage {
 
   /**
    * Method dueRelativeLabel
-   * @description An intervention's `dueAt` as a localized "today"/"in N days"/"N days ago" suffix — read alongside the visible absolute date, never behind a tooltip, since a deadline must be readable without hover. `dueAt` is a date-only value (`'YYYY-MM-DD'` or a UTC-midnight instant), so it is compared as written, never converted through the organization's timezone — only "today" is resolved there, matching the visible `'dateOnly'` date it sits beside.
+   * @method dueRelativeLabel
+   *
+   * @description
+   * An intervention's `dueAt` as a localized "today"/"in N days"/"N days ago" suffix — read
+   * alongside the visible absolute date, never behind a tooltip, since a deadline must be readable
+   * without hover. `dueAt` is a date-only value (`'YYYY-MM-DD'` or a UTC-midnight instant), so it
+   * is compared as written, never converted through the organization's timezone — only "today" is
+   * resolved there, matching the visible `'dateOnly'` date it sits beside.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @param {string} dueAt - The intervention's due date.
+   *
    * @returns {string} The localized relative label.
    */
   protected dueRelativeLabel(dueAt: string): string {
@@ -1525,10 +2269,18 @@ export class FacilityDetailPage {
 
   /**
    * Method relativeDayLabel
-   * @description Calendar-day math behind {@link nextInspectionRelativeLabel} — resolves both the target instant and "today" to the organization's own timezone before comparing, since `nextInspectionAt` carries a real time of day rather than a date-only value.
+   * @method relativeDayLabel
+   *
+   * @description
+   * Calendar-day math behind {@link nextInspectionRelativeLabel} — resolves both the target instant
+   * and "today" to the organization's own timezone before comparing, since `nextInspectionAt`
+   * carries a real time of day rather than a date-only value.
+   *
    * @access private
    * @since 2.2.0
+   *
    * @param {string} instantIso - The ISO instant to compare against today.
+   *
    * @returns {string} The localized relative label.
    */
   private relativeDayLabel(instantIso: string): string {
@@ -1543,11 +2295,19 @@ export class FacilityDetailPage {
 
   /**
    * Method calendarDateIn
-   * @description The `YYYY-MM-DD` calendar day an instant falls on within the given timezone, falling back to the instant's own written date when the timezone identifier is not one `Intl.DateTimeFormat` accepts (a fixed `+HHMM` offset).
+   * @method calendarDateIn
+   *
+   * @description
+   * The `YYYY-MM-DD` calendar day an instant falls on within the given timezone, falling back to
+   * the instant's own written date when the timezone identifier is not one `Intl.DateTimeFormat`
+   * accepts (a fixed `+HHMM` offset).
+   *
    * @access private
    * @since 2.2.0
+   *
    * @param {string} instantIso - The ISO instant to resolve.
    * @param {string} timezone - An IANA timezone name, `'UTC'`, or a fixed offset.
+   *
    * @returns {string} The resolved `YYYY-MM-DD` calendar day.
    */
   private calendarDateIn(instantIso: string, timezone: string): string {
@@ -1560,10 +2320,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onEditTargetChanged
-   * @description Opens or closes an in-place field, clearing any rejection left from the previous attempt.
+   * @method onEditTargetChanged
+   *
+   * @description
+   * Opens or closes an in-place field, clearing any rejection left from the previous attempt.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FacilityEditTarget | null} target - The field to open, or null to close.
+   *
    * @returns {void}
    */
   protected onEditTargetChanged(target: FacilityEditTarget | null): void {
@@ -1574,6 +2340,7 @@ export class FacilityDetailPage {
 
   /**
    * Method onGeocodeRequested
+   * @method onGeocodeRequested
    *
    * @description
    * Resolves the record's stored address to coordinates
@@ -1588,6 +2355,7 @@ export class FacilityDetailPage {
    * @since 1.6.0
    *
    * @param {string} address - The address the panel asked to locate.
+   *
    * @returns {void}
    */
   protected onGeocodeRequested(address: string): void {
@@ -1624,10 +2392,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onDetailsChanged
-   * @description Sends an in-place patch. The field stays open until the write settles.
+   * @method onDetailsChanged
+   *
+   * @description
+   * Sends an in-place patch. The field stays open until the write settles.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {UpdateFacilityInput} patch - The single-property patch.
+   *
    * @returns {void}
    */
   protected onDetailsChanged(patch: UpdateFacilityInput): void {
@@ -1644,9 +2418,14 @@ export class FacilityDetailPage {
 
   /**
    * Method requestDelete
-   * @description Opens the Delete confirmation.
+   * @method requestDelete
+   *
+   * @description
+   * Opens the Delete confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected requestDelete(): void {
@@ -1655,9 +2434,14 @@ export class FacilityDetailPage {
 
   /**
    * Method openQrDialog
-   * @description Opens the printable QR code dialog.
+   * @method openQrDialog
+   *
+   * @description
+   * Opens the printable QR code dialog.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected openQrDialog(): void {
@@ -1666,9 +2450,14 @@ export class FacilityDetailPage {
 
   /**
    * Method onQrDialogDismissed
-   * @description Closes the QR code dialog.
+   * @method onQrDialogDismissed
+   *
+   * @description
+   * Closes the QR code dialog.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected onQrDialogDismissed(): void {
@@ -1677,9 +2466,14 @@ export class FacilityDetailPage {
 
   /**
    * Method confirmDelete
-   * @description Sends the delete write. The dialog closes once the store settles, via the constructor effect.
+   * @method confirmDelete
+   *
+   * @description
+   * Sends the delete write. The dialog closes once the store settles, via the constructor effect.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirmDelete(): void {
@@ -1688,10 +2482,16 @@ export class FacilityDetailPage {
 
   /**
    * Method onDeleteDialogVisibleChanged
-   * @description Clears the pending flag on any dismissal — Cancel, the backdrop or Escape.
+   * @method onDeleteDialogVisibleChanged
+   *
+   * @description
+   * Clears the pending flag on any dismissal — Cancel, the backdrop or Escape.
+   *
    * @access protected
    * @since 1.7.0
+   *
    * @param {boolean} visible - The dialog's new visibility.
+   *
    * @returns {void}
    */
   protected onDeleteDialogVisibleChanged(visible: boolean): void {
@@ -1702,6 +2502,7 @@ export class FacilityDetailPage {
 
   /**
    * Method activateTab
+   * @method activateTab
    *
    * @description
    * The single path that opens a tab, whether requested by the `?tab=` query
@@ -1712,7 +2513,9 @@ export class FacilityDetailPage {
    *
    * @access private
    * @since 1.10.0
+   *
    * @param {FacilityDetailTabId} target - The tab to activate.
+   *
    * @returns {void}
    */
   private activateTab(target: FacilityDetailTabId): void {
@@ -1728,6 +2531,7 @@ export class FacilityDetailPage {
 
   /**
    * Method syncPlanSelectionFocus
+   * @method syncPlanSelectionFocus
    *
    * @description
    * Moves real DOM focus on the Plans tab's zone/equipment selection edge,
@@ -1745,8 +2549,10 @@ export class FacilityDetailPage {
    *
    * @access private
    * @since 1.13.0
+   *
    * @param {boolean} isPlansTab - Whether the Plans tab is currently active.
    * @param {boolean} isSelected - Whether a zone or equipment pin is currently selected.
+   *
    * @returns {void}
    */
   private syncPlanSelectionFocus(isPlansTab: boolean, isSelected: boolean): void {
@@ -1786,10 +2592,16 @@ export class FacilityDetailPage {
 
   /**
    * Method settleUpdateWrite
-   * @description Closes the open field on a successful write, or attributes the rejection to it.
+   * @method settleUpdateWrite
+   *
+   * @description
+   * Closes the open field on a successful write, or attributes the rejection to it.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {CallState<FacilityOutput | null>} callState - The update write's call state.
+   *
    * @returns {void}
    */
   private settleUpdateWrite(callState: CallState<FacilityOutput | null>): void {
@@ -1812,10 +2624,17 @@ export class FacilityDetailPage {
 
 /**
  * Function normalizeFacilityDetailTabId
+ *
+ * @description
+ * Resolves a query parameter to a supported facility detail tab.
+ *
  * @access private
  * @since 1.10.0
+ *
  * @param {string | undefined} value - The raw `?tab=` query parameter value.
- * @returns {FacilityDetailTabId} `value` narrowed to a known tab id, defaulting to `overview` for anything absent or unrecognized.
+ *
+ * @returns {FacilityDetailTabId} `value` narrowed to a known tab id, defaulting to `overview` for
+ *   anything absent or unrecognized.
  */
 function normalizeFacilityDetailTabId(value: string | undefined): FacilityDetailTabId {
   return value === 'information' || value === 'plans' ? value : 'overview';
@@ -1823,10 +2642,17 @@ function normalizeFacilityDetailTabId(value: string | undefined): FacilityDetail
 
 /**
  * Function isTextEntryTarget
+ *
+ * @description
+ * Identifies key event targets where editor shortcuts should not intercept typing.
+ *
  * @access private
  * @since 1.4.1
+ *
  * @param {EventTarget | null} target - A key event's target.
- * @returns {boolean} `true` when the target is a text entry surface the editor shortcuts must not steal keys from.
+ *
+ * @returns {boolean} `true` when the target is a text entry surface the editor shortcuts must not
+ *   steal keys from.
  */
 function isTextEntryTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;

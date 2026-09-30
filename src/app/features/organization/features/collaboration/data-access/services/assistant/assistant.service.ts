@@ -12,6 +12,9 @@ import type {
 } from '@features/organization/features/collaboration/models';
 
 /**
+ * Constant ASSISTANT_MESSAGES_PAGE_SIZE
+ *
+ * @description
  * Largest message page the thread read accepts. Asking for more silently
  * returns 200, so the ceiling has to be respected client-side.
  */
@@ -20,11 +23,9 @@ export const ASSISTANT_MESSAGES_PAGE_SIZE = 50;
 /**
  * Service AssistantService
  * @class AssistantService
- * @extends {HydraApiService}
  *
  * @description
  * Transport boundary for the AI assistant.
- *
  * The surface is deliberately narrower than the API's. `model` is never sent:
  * it is validated against an operator allowlist that is not exposed by any
  * endpoint, an unknown value is a `422`, and generation ignores it anyway.
@@ -34,6 +35,8 @@ export const ASSISTANT_MESSAGES_PAGE_SIZE = 50;
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class AssistantService extends HydraApiService {
@@ -66,7 +69,6 @@ export class AssistantService extends HydraApiService {
    *
    * @description
    * Reads a thread and one page of its messages.
-   *
    * Messages come back oldest-first with a plain offset, so `page` 1 is the
    * beginning of the conversation. Callers wanting the tail read
    * `messagesTotal` first.
@@ -130,7 +132,6 @@ export class AssistantService extends HydraApiService {
    *
    * @description
    * Mints credentials for the thread's Mercure topic.
-   *
    * The token expires after 900 seconds and nothing renews it, so a long-lived
    * panel has to call this again before then.
    *
@@ -156,14 +157,19 @@ export class AssistantService extends HydraApiService {
   /**
    * Method controlAttempt
    * @method controlAttempt
-   * @description Controls one expected attempt without reposting the question.
+   *
+   * @description
+   * Controls one expected attempt without reposting the question.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @param {string} organizationId - Owning organization.
    * @param {string} threadId - Private thread.
    * @param {string} messageId - Reply identifier.
    * @param {string} attemptId - Expected attempt identity.
    * @param {boolean} retry - Retry instead of cancel.
+   *
    * @returns {Observable<AssistantMessageOutput>} Canonical reply state.
    */
   public controlAttempt(
@@ -183,12 +189,15 @@ export class AssistantService extends HydraApiService {
    * Method threadsEndpoint
    * @method threadsEndpoint
    *
+   * @description
+   * Builds the organization-scoped API path for assistant threads.
+   *
    * @access private
    * @since 1.0.0
    *
    * @param {string} organizationId - Bare organization UUID.
    *
-   * @return {string} The organization-scoped threads collection path.
+   * @returns {string} The organization-scoped threads collection path.
    */
   private threadsEndpoint(organizationId: string): string {
     return `/api/organizations/${organizationId}/assistant/threads`;

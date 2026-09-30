@@ -38,6 +38,17 @@ import { ActiveFacilityStore } from '../active-facility/active-facility.store';
 import { facilityStoreEvents } from './events';
 import type { FacilityState } from './models';
 
+/**
+ * Function toChildFacilityIdsByParent
+ *
+ * @description
+ * Groups the loaded descendant facility ids by their immediate parent and includes the root group.
+ *
+ * @param {string} rootFacilityId - Root facility whose loaded descendants are grouped.
+ * @param {readonly FacilityOutput[]} descendants - Loaded descendants to group by parent.
+ *
+ * @returns {Readonly<Record<string, ReadonlyArray<string>>>} Facility ids indexed by parent id.
+ */
 function toChildFacilityIdsByParent(
   rootFacilityId: string,
   descendants: readonly FacilityOutput[],
@@ -56,6 +67,17 @@ function toChildFacilityIdsByParent(
   return { [rootFacilityId]: idsByParent[rootFacilityId] ?? [], ...idsByParent };
 }
 
+/**
+ * Function toLoadedHierarchyParentIds
+ *
+ * @description
+ * Lists the root facility and every loaded descendant once for hierarchy expansion.
+ *
+ * @param {string} rootFacilityId - Root facility to include.
+ * @param {readonly FacilityOutput[]} descendants - Loaded descendants to include.
+ *
+ * @returns {readonly string[]} Unique ids in the loaded hierarchy.
+ */
 function toLoadedHierarchyParentIds(
   rootFacilityId: string,
   descendants: readonly FacilityOutput[],
@@ -66,7 +88,6 @@ function toLoadedHierarchyParentIds(
 //#region Initial State
 /**
  * Constant INITIAL_FACILITY_STATE
- * @const INITIAL_FACILITY_STATE
  *
  * @description
  * Initial state for the FacilityStore. Entity state (`facilityEntities`,
@@ -76,6 +97,8 @@ function toLoadedHierarchyParentIds(
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_FACILITY_STATE
  */
 const INITIAL_FACILITY_STATE: FacilityState = {
   totalFacilities: 0,
@@ -96,8 +119,7 @@ const INITIAL_FACILITY_STATE: FacilityState = {
 //#endregion
 
 /**
- * Store FacilityStore
- * @const FacilityStore
+ * Constant FacilityStore
  *
  * @description
  * Component-scoped NgRx SignalStore for facility list management, CRUD,
@@ -112,6 +134,12 @@ const INITIAL_FACILITY_STATE: FacilityState = {
  * For reading the currently active/selected facility use the root-level
  * {@link ActiveFacilityStore} instead.
  *
+ * @version 2.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const FacilityStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [FacilityStore] })
@@ -119,16 +147,12 @@ const INITIAL_FACILITY_STATE: FacilityState = {
  *   readonly store = inject<FacilityStore>(FacilityStore);
  * }
  * ```
- *
- * @version 2.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const FacilityStore = signalStore(
   //#region Features
   /**
-   * Feature withEntities
-   *
    * @description
+   * Feature withEntities
    * Adds NgRx entity state and entity-adapter updater functions for
    * `FacilityOutput` objects keyed by their `id` field.
    *
@@ -139,9 +163,8 @@ export const FacilityStore = signalStore(
   withEntities({ entity: type<FacilityOutput>(), collection: 'facility' }),
 
   /**
-   * Feature withState
-   *
    * @description
+   * Feature withState
    * Adds auxiliary state to the store. Entity state is handled separately by
    * `withEntities`.
    *
@@ -152,9 +175,8 @@ export const FacilityStore = signalStore(
   withState<FacilityState>(INITIAL_FACILITY_STATE),
 
   /**
-   * Feature withComputed
-   *
    * @description
+   * Feature withComputed
    * Adds computed properties to the store for common derived state
    * related to the facility list and its operations.
    *
@@ -167,13 +189,14 @@ export const FacilityStore = signalStore(
   withComputed((store) => {
     /**
      * Constant activeFacilityStore
-     * @const activeFacilityStore
      *
      * @description
      * The root-level store that tracks the currently active facility and
      * its associated loading state.
      *
      * @type {ActiveFacilityStore} The injected ActiveFacilityStore instance.
+     *
+     * @constant activeFacilityStore
      */
     const activeFacilityStore: ActiveFacilityStore =
       inject<ActiveFacilityStore>(ActiveFacilityStore);
@@ -371,9 +394,8 @@ export const FacilityStore = signalStore(
   }),
 
   /**
-   * Feature withMethods
-   *
    * @description
+   * Feature withMethods
    * Adds methods to the store for managing the facility list, including
    * loading a paginated list, creating, updating, archiving, moving
    * facilities, and resetting operations.
@@ -381,12 +403,16 @@ export const FacilityStore = signalStore(
    * @since 1.0.0
    *
    * @param {SignalStore} store - The store instance to which the methods will be added.
-   * @param {ActiveFacilityStore} activeFacilityStore - The root store tracking the currently active facility.
-   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on errors.
+   * @param {ActiveFacilityStore} activeFacilityStore - The root store tracking the currently active
+   *   facility.
+   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on
+   *   errors.
    * @param {FacilityService} facilityService - The service used to interact with the facility API.
    *
    * @returns {object} An object containing the methods to add to the store.
    */
+  //#endregion
+
   //#region Methods
   withMethods(
     (
@@ -398,7 +424,6 @@ export const FacilityStore = signalStore(
     ) => {
       /**
        * Constant loadFn
-       * @const loadFn
        *
        * @description
        * Shared rxMethod implementation for loading a paginated facility list.
@@ -409,6 +434,8 @@ export const FacilityStore = signalStore(
        * @since 2.0.0
        *
        * @type {RxMethod<{ organizationId: string; options?: RequestOptions }>}
+       *
+       * @constant loadFn
        */
       const loadFn = rxMethod<{ organizationId: string; options?: RequestOptions }>(
         pipe(
@@ -442,7 +469,6 @@ export const FacilityStore = signalStore(
 
       /**
        * Constant loadChildFacilitiesFn
-       * @const loadChildFacilitiesFn
        *
        * @description
        * Shared rxMethod implementation that lazily loads the direct children of
@@ -456,6 +482,8 @@ export const FacilityStore = signalStore(
        * @since 3.0.0
        *
        * @type {RxMethod<{ organizationId: string; parentFacilityId: string }>}
+       *
+       * @constant loadChildFacilitiesFn
        */
       const loadChildFacilitiesFn = rxMethod<{
         organizationId: string;
@@ -691,7 +719,8 @@ export const FacilityStore = signalStore(
          *
          * @since 3.1.0
          *
-         * @param {{ organizationId: string; parentFacilityId: string }} params - Organization and parent facility identifiers.
+         * @param {{ organizationId: string; parentFacilityId: string }} params - Organization and
+         *   parent facility identifiers.
          *
          * @returns {void}
          */
@@ -777,7 +806,11 @@ export const FacilityStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; facilityId: string; input: UpdateFacilityInput }>}
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   facilityId: string;
+         *   input: UpdateFacilityInput;
+         * }>}
          */
         update: rxMethod<{
           organizationId: string;
@@ -870,6 +903,7 @@ export const FacilityStore = signalStore(
         ),
 
         /**
+         * @description
          * Restores an archived facility and synchronises the active facility.
          */
         restore: rxMethod<{ organizationId: string; facilityId: string }>(
@@ -969,7 +1003,11 @@ export const FacilityStore = signalStore(
          *
          * @since 1.0.0
          *
-         * @type {RxMethod<{ organizationId: string; facilityId: string; input: MoveFacilityInput }>}
+         * @type {RxMethod<{
+         *   organizationId: string;
+         *   facilityId: string;
+         *   input: MoveFacilityInput;
+         * }>}
          */
         move: rxMethod<{ organizationId: string; facilityId: string; input: MoveFacilityInput }>(
           pipe(
@@ -1044,7 +1082,6 @@ export const FacilityStore = signalStore(
 
 /**
  * Type FacilityStore
- * @type FacilityStore
  *
  * @description
  * Instance type of the {@link FacilityStore} signal store.
@@ -1052,5 +1089,7 @@ export const FacilityStore = signalStore(
  * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type FacilityStore
  */
 export type FacilityStore = InstanceType<typeof FacilityStore>;

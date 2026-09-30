@@ -2,11 +2,9 @@ import type { UserLocale } from '@features/account/models';
 
 /**
  * Constant USER_LOCALE_OPTIONS
- * @const USER_LOCALE_OPTIONS
  *
  * @description
  * Choices for the interface-language picker on the account profile form.
- *
  * Each language names itself rather than being translated — someone who has
  * landed on the wrong locale needs to recognise their own, and "Spanish" in
  * Spanish is the only label that works for a reader who cannot read the current
@@ -15,7 +13,12 @@ import type { UserLocale } from '@features/account/models';
  *
  * @since 1.0.0
  *
- * @type {readonly [{ readonly label: string; readonly value: UserLocale; readonly icon: string }, ...Array<{ readonly label: string; readonly value: UserLocale; readonly icon: string }>]}
+ * @type {readonly [
+ *   { readonly label: string; readonly value: UserLocale; readonly icon: string },
+ *   ...{ readonly label: string; readonly value: UserLocale; readonly icon: string }[],
+ * ]}
+ *
+ * @constant USER_LOCALE_OPTIONS
  */
 export const USER_LOCALE_OPTIONS: readonly [
   {

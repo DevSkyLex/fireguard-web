@@ -93,10 +93,21 @@ import {
 } from '../../dialogs/calendar-event-dialog';
 import { CalendarFeedSubscribeDialog } from '../../dialogs/calendar-feed-subscribe-dialog';
 
-/** How many facilities the event dialog's facility select offers, mirroring `equipment-detail-page`'s own facility picker. */
+/**
+ * Constant FACILITY_OPTIONS_PAGE_SIZE
+ *
+ * @description
+ * How many facilities the event dialog's facility select offers, mirroring
+ * `equipment-detail-page`'s own facility picker.
+ */
 const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
 
-/** The local wall-clock time a quick-created event defaults to on its picked day. */
+/**
+ * Constant QUICK_CREATE_DEFAULT_TIME
+ *
+ * @description
+ * The local wall-clock time a quick-created event defaults to on its picked day.
+ */
 const QUICK_CREATE_DEFAULT_TIME: string = '09:00';
 
 /**
@@ -108,6 +119,8 @@ const QUICK_CREATE_DEFAULT_TIME: string = '09:00';
  * bounded date-range fetch, never a paginated collection.
  *
  * @since 2.2.0
+ *
+ * @type
  */
 type CalendarGranularity = 'month' | 'week' | 'day';
 
@@ -119,16 +132,65 @@ type CalendarGranularity = 'month' | 'week' | 'day';
  * groups also carry a compact heading for the seven-column layout.
  *
  * @since 1.1.0
+ *
+ * @type
  */
 type CalendarPageAgendaGroup = {
+  /**
+   * Property day
+   * @readonly
+   *
+   * @description
+   * Identifies the calendar day that groups these entries.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly day: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Provides the text displayed to identify this calendar page agenda group.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property shortLabel
+   * @readonly
+   *
+   * @description
+   * Provides the compact day label displayed in the agenda.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly shortLabel?: string;
+
+  /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * Contains the calendar entries scheduled for this day.
+   *
+   * @access public
+   *
+   * @type {readonly CalendarFeedItemOutput[]}
+   */
   readonly items: readonly CalendarFeedItemOutput[];
 };
 
 /**
- * Component CalendarPage
+ * Class CalendarPage
  * @class CalendarPage
  *
  * @description
@@ -218,9 +280,13 @@ export class CalendarPage {
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Chooses the month agenda without changing the selected period or view.
+   *
+   * @description
+   * Chooses the month agenda without changing the selected period or view.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -231,13 +297,29 @@ export class CalendarPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The organization whose calendar is shown, from the route.
+   *
+   * @description
+   * The organization whose calendar is shown, from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
-  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+
+  /**
+   * Property listForbidden
+   * @readonly
+   *
+   * @description
+   * Whether the last list read was refused for lack of permission, which a retry cannot fix.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(
     () => this.store.queryError()?.code === 403,
   );
@@ -245,52 +327,164 @@ export class CalendarPage {
   //#endregion
 
   //#region Properties
-  /** The unified feed of the displayed window. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The unified feed of the displayed window.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {CalendarFeedStoreType}
+   */
   protected readonly store: CalendarFeedStoreType =
     inject<CalendarFeedStoreType>(CalendarFeedStore);
 
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Identifies the current Angular platform for server and browser checks.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {object}
+   */
   private readonly platformId: object = inject(PLATFORM_ID);
 
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * Provides the active locale used to format calendar dates and times.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject(LOCALE_ID);
 
-  /** Organization permission checks gating the "New event" action and every row's Edit/Delete. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating the "New event" action and every row's Edit/Delete.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Read-only source of the facility options offered by the event dialog. */
+  /**
+   * Property facilityService
+   * @readonly
+   *
+   * @description
+   * Read-only source of the facility options offered by the event dialog.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FacilityService}
+   */
   private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
 
-  /** The active organization context, source of the regional first-day-of-week preference. */
+  /**
+   * Property organizationContext
+   * @readonly
+   *
+   * @description
+   * The active organization context, source of the regional first-day-of-week preference.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationContextPort}
+   */
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, forwarded to the subscribe dialog's `createdAt`/`lastUsedAt` rendering.
+   *
+   * @description
+   * The active organization's date pattern and timezone, forwarded to the subscribe dialog's
+   * `createdAt`/`lastUsedAt` rendering.
+   *
    * @access protected
    * @since 2.3.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** Whether the "Subscribe (iCal)" dialog is open. */
+  /**
+   * Property feedSubscribeDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the "Subscribe (iCal)" dialog is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly feedSubscribeDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Provides the component lifecycle scope used to clean up owned work.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /**
    * Property canWriteEvents
    * @readonly
-   * @description Whether the member holds `organization.events.write` — gates "New event" and every row's Edit/Delete.
+   *
+   * @description
+   * Whether the member holds `organization.events.write` — gates "New event" and every row's
+   * Edit/Delete.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canWriteEvents: Signal<boolean> = computed<boolean>(() =>
@@ -300,9 +494,13 @@ export class CalendarPage {
   /**
    * Property firstDayOfWeek
    * @readonly
-   * @description The organization's regional first-day-of-week preference, Monday when unset.
+   *
+   * @description
+   * The organization's regional first-day-of-week preference, Monday when unset.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<CalendarFirstDayOfWeek>}
    */
   protected readonly firstDayOfWeek: Signal<CalendarFirstDayOfWeek> =
@@ -312,31 +510,93 @@ export class CalendarPage {
         'monday',
     );
 
-  /** The organization's facilities, preloaded for the event dialog's optional association. */
+  /**
+   * Property facilityOptions
+   * @readonly
+   *
+   * @description
+   * The organization's facilities, preloaded for the event dialog's optional association.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<
+   *     ReadonlyArray<{ readonly value: string; readonly label: string }>
+   *   >}
+   */
   protected readonly facilityOptions: WritableSignal<
     ReadonlyArray<{ readonly value: string; readonly label: string }>
   > = signal([]);
 
-  /** Today's local day, resolved once, for the week view's "Today" badge. */
+  /**
+   * Property todayIso
+   * @readonly
+   *
+   * @description
+   * Today's local day, resolved once, for the week view's "Today" badge.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly todayIso: string = toIsoDay(new Date());
 
-  /** Whether the create/edit dialog is open. */
+  /**
+   * Property eventDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the create/edit dialog is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly eventDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The `event`-source entry being edited, or `null` when the dialog is creating a new one. */
+  /**
+   * Property editingEvent
+   * @readonly
+   *
+   * @description
+   * The `event`-source entry being edited, or `null` when the dialog is creating a new one.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CalendarFeedItemOutput | null>}
+   */
   protected readonly editingEvent: WritableSignal<CalendarFeedItemOutput | null> =
     signal<CalendarFeedItemOutput | null>(null);
 
-  /** The `event`-source entry awaiting delete confirmation, or `null` when the dialog is closed. */
+  /**
+   * Property pendingDeleteEvent
+   * @readonly
+   *
+   * @description
+   * The `event`-source entry awaiting delete confirmation, or `null` when the dialog is closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CalendarFeedItemOutput | null>}
+   */
   protected readonly pendingDeleteEvent: WritableSignal<CalendarFeedItemOutput | null> =
     signal<CalendarFeedItemOutput | null>(null);
 
   /**
    * Property isEventWritePending
    * @readonly
-   * @description Whether the create/edit dialog's own write is in flight — the create write while creating, the update write while editing.
+   *
+   * @description
+   * Whether the create/edit dialog's own write is in flight — the create write while creating, the
+   * update write while editing.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isEventWritePending: Signal<boolean> = computed<boolean>(() =>
@@ -348,9 +608,13 @@ export class CalendarPage {
   /**
    * Property eventWriteError
    * @readonly
-   * @description The create/edit dialog's own last rejection, when any.
+   *
+   * @description
+   * The create/edit dialog's own last rejection, when any.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<StoreError | null>}
    */
   protected readonly eventWriteError: Signal<StoreError | null> = computed<StoreError | null>(
@@ -359,20 +623,65 @@ export class CalendarPage {
         .error ?? null,
   );
 
-  /** Whether the delete confirmation's write is in flight. */
+  /**
+   * Property isDeletePending
+   * @readonly
+   *
+   * @description
+   * Whether the delete confirmation's write is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly isDeletePending: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.deleteEventCallState()),
   );
 
-  /** The delete confirmation's last rejection, when any. */
+  /**
+   * Property deleteErrorMessage
+   * @readonly
+   *
+   * @description
+   * The delete confirmation's last rejection, when any.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
   protected readonly deleteErrorMessage: Signal<string | null> = computed<string | null>(
     () => this.store.deleteEventCallState().error?.message ?? null,
   );
 
-  /** Anchor of the displayed period — any date inside the month, the day anchoring the week, or the shown day. Driven two-way by the grid (month view) and by the toolbar. */
+  /**
+   * Property month
+   * @readonly
+   *
+   * @description
+   * Anchor of the displayed period — any date inside the month, the day anchoring the week, or the
+   * shown day. Driven two-way by the grid (month view) and by the toolbar.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<Date>}
+   */
   protected readonly month: WritableSignal<Date> = signal<Date>(new Date());
 
-  /** The selected day (`yyyy-MM-dd`), today on arrival. */
+  /**
+   * Property selectedDay
+   * @readonly
+   *
+   * @description
+   * The selected day (`yyyy-MM-dd`), today on arrival.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly selectedDay: WritableSignal<string | null> = signal<string | null>(
     toIsoDay(new Date()),
   );
@@ -380,28 +689,60 @@ export class CalendarPage {
   /**
    * Property granularity
    * @readonly
-   * @description Which period the page shows — month grid, week agenda, or day list. See {@link CalendarGranularity}.
+   *
+   * @description
+   * Which period the page shows — month grid, week agenda, or day list. See
+   * {@link CalendarGranularity}.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @type {WritableSignal<CalendarGranularity>}
    */
   protected readonly granularity: WritableSignal<CalendarGranularity> =
     signal<CalendarGranularity>('month');
 
-  /** The `yyyy-MM-ddTHH:mm` start pre-filling the create dialog when it was opened from a day's quick-create affordance, `null` otherwise. */
+  /**
+   * Property createDefaultStart
+   * @readonly
+   *
+   * @description
+   * The `yyyy-MM-ddTHH:mm` start pre-filling the create dialog when it was opened from a day's
+   * quick-create affordance, `null` otherwise.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly createDefaultStart: WritableSignal<string | null> = signal<string | null>(
     null,
   );
 
-  /** The `aria-live="polite"` announcement text — reflects the last drag-reschedule's outcome. */
+  /**
+   * Property moveAnnouncement
+   * @readonly
+   *
+   * @description
+   * The `aria-live="polite"` announcement text — reflects the last drag-reschedule's outcome.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly moveAnnouncement: WritableSignal<string> = signal<string>('');
 
   /**
    * Property events
    * @readonly
-   * @description Feed items mapped onto shared calendar chips; only writable standalone events are draggable.
+   *
+   * @description
+   * Feed items mapped onto shared calendar chips; only writable standalone events are draggable.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly CalendarDisplayEvent[]>}
    */
   protected readonly events: Signal<readonly CalendarDisplayEvent[]> = computed(() =>
@@ -425,9 +766,14 @@ export class CalendarPage {
   /**
    * Property periodLabel
    * @readonly
-   * @description The toolbar's period label — "Month Year", the week's localized date range, or the day's full date, per {@link granularity}. The grid's own title, hidden, mirrors the month form.
+   *
+   * @description
+   * The toolbar's period label — "Month Year", the week's localized date range, or the day's full
+   * date, per {@link granularity}. The grid's own title, hidden, mirrors the month form.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @type {Signal<string>}
    */
   protected readonly periodLabel: Signal<string> = computed<string>(() => {
@@ -456,9 +802,13 @@ export class CalendarPage {
   /**
    * Property previousAriaLabel
    * @readonly
-   * @description The prev button's accessible name, matching the active {@link granularity}.
+   *
+   * @description
+   * The prev button's accessible name, matching the active {@link granularity}.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @type {Signal<string>}
    */
   protected readonly previousAriaLabel: Signal<string> = computed<string>(() => {
@@ -475,9 +825,13 @@ export class CalendarPage {
   /**
    * Property nextAriaLabel
    * @readonly
-   * @description The next button's accessible name, matching the active {@link granularity}.
+   *
+   * @description
+   * The next button's accessible name, matching the active {@link granularity}.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @type {Signal<string>}
    */
   protected readonly nextAriaLabel: Signal<string> = computed<string>(() => {
@@ -527,15 +881,30 @@ export class CalendarPage {
     });
   });
 
-  /** The day view's `yyyy-MM-dd` day — the anchor itself. */
+  /**
+   * Property dayViewIso
+   * @readonly
+   *
+   * @description
+   * The day view's `yyyy-MM-dd` day — the anchor itself.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly dayViewIso: Signal<string> = computed<string>(() => toIsoDay(this.month()));
 
   /**
    * Property dayViewItems
    * @readonly
-   * @description Entries for the day view, earliest first.
+   *
+   * @description
+   * Entries for the day view, earliest first.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly CalendarFeedItemOutput[]>}
    */
   protected readonly dayViewItems: Signal<readonly CalendarFeedItemOutput[]> = computed(() => {
@@ -550,9 +919,13 @@ export class CalendarPage {
   /**
    * Property dayItems
    * @readonly
-   * @description Entries for the selected day in the contextual panel, earliest first.
+   *
+   * @description
+   * Entries for the selected day in the contextual panel, earliest first.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly CalendarFeedItemOutput[]>}
    */
   protected readonly dayItems: Signal<readonly CalendarFeedItemOutput[]> = computed(() => {
@@ -565,7 +938,18 @@ export class CalendarPage {
       .toSorted((a, b) => a.startsAt.localeCompare(b.startsAt));
   });
 
-  /** The selected day as a full localized heading. */
+  /**
+   * Property selectedDayLabel
+   * @readonly
+   *
+   * @description
+   * The selected day as a full localized heading.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly selectedDayLabel: Signal<string> = computed<string>(() => {
     const day: string | null = this.selectedDay();
     if (day === null) return '';
@@ -625,15 +1009,49 @@ export class CalendarPage {
       }));
   });
 
-  /** Whether the last feed read failed. */
+  /**
+   * Property loadFailed
+   * @readonly
+   *
+   * @description
+   * Whether the last feed read failed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly loadFailed: Signal<boolean> = computed<boolean>(
     () => this.store.queryError() !== null,
   );
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** "Subscribe (iCal)" and "New event", registered on the shell's title band rather than left in the toolbar — the toolbar keeps only what scopes the view (Today, prev/next, granularity). */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * "Subscribe (iCal)" and "New event", registered on the shell's title band rather than left in
+   * the toolbar — the toolbar keeps only what scopes the view (Today, prev/next, granularity).
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
 
@@ -669,9 +1087,13 @@ export class CalendarPage {
   /**
    * Property dayPanel
    * @readonly
-   * @description Month view's selected-day template, rendered in the dashboard's right slot.
+   *
+   * @description
+   * Month view's selected-day template, rendered in the dashboard's right slot.
+   *
    * @access private
    * @since 2.4.0
+   *
    * @type {Signal<TemplateRef<unknown> | undefined>}
    */
   private readonly dayPanel: Signal<TemplateRef<unknown> | undefined> =
@@ -680,9 +1102,13 @@ export class CalendarPage {
   /**
    * Property panelRegistry
    * @readonly
-   * @description Shell-scoped registry retaining this page template's declaration context.
+   *
+   * @description
+   * Shell-scoped registry retaining this page template's declaration context.
+   *
    * @access private
    * @since 2.4.0
+   *
    * @type {DashboardPanelRegistry}
    */
   private readonly panelRegistry: DashboardPanelRegistry = inject(DashboardPanelRegistry);
@@ -691,6 +1117,7 @@ export class CalendarPage {
   //#region Constructor
   /**
    * Constructor
+   * @constructor
    *
    * @description
    * Loads the displayed window on arrival and on every navigation, loads the
@@ -698,10 +1125,8 @@ export class CalendarPage {
    * own write settles successfully — the store's own re-read of the loaded
    * window (see `CalendarFeedStore`) is what makes the new/changed/removed
    * entry show up, this page only owns the dialogs' visibility.
-   *
    * Also registers {@link pageActions}.
    *
-   * @constructor
    * @access public
    * @since 2.2.0
    */
@@ -789,9 +1214,14 @@ export class CalendarPage {
   //#region Methods
   /**
    * Method reload
-   * @description Re-reads the displayed window after a failure.
+   * @method reload
+   *
+   * @description
+   * Re-reads the displayed window after a failure.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected reload(): void {
@@ -800,10 +1230,17 @@ export class CalendarPage {
 
   /**
    * Method switchGranularity
-   * @description The toolbar's Month/Week/Day tab handler — the anchor stays, so the new granularity shows the period containing it.
+   * @method switchGranularity
+   *
+   * @description
+   * The toolbar's Month/Week/Day tab handler — the anchor stays, so the new granularity shows the
+   * period containing it.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @param {CalendarGranularity} granularity - The activated granularity.
+   *
    * @returns {void}
    */
   protected switchGranularity(granularity: CalendarGranularity): void {
@@ -812,10 +1249,17 @@ export class CalendarPage {
 
   /**
    * Method onGranularityTabActivated
-   * @description Narrows `hlm-tabs`' plain-string `tabActivated` payload to {@link CalendarGranularity} before delegating to {@link switchGranularity}.
+   * @method onGranularityTabActivated
+   *
+   * @description
+   * Narrows `hlm-tabs`' plain-string `tabActivated` payload to {@link CalendarGranularity} before
+   * delegating to {@link switchGranularity}.
+   *
    * @access protected
    * @since 2.4.0
+   *
    * @param {string} tab - The `hlm-tabs` id that just activated.
+   *
    * @returns {void}
    */
   protected onGranularityTabActivated(tab: string): void {
@@ -824,9 +1268,14 @@ export class CalendarPage {
 
   /**
    * Method goToday
-   * @description Re-anchors the toolbar on today's period and selects today.
+   * @method goToday
+   *
+   * @description
+   * Re-anchors the toolbar on today's period and selects today.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected goToday(): void {
@@ -837,10 +1286,17 @@ export class CalendarPage {
 
   /**
    * Method stepPeriod
-   * @description Moves the toolbar's anchor one period — month, week, or day per {@link granularity} — backwards or forwards.
+   * @method stepPeriod
+   *
+   * @description
+   * Moves the toolbar's anchor one period — month, week, or day per {@link granularity} — backwards
+   * or forwards.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @param {number} offset - `-1` or `1`.
+   *
    * @returns {void}
    */
   protected stepPeriod(offset: number): void {
@@ -864,10 +1320,16 @@ export class CalendarPage {
 
   /**
    * Method startOfWeekOf
-   * @description Local midnight on the first day of the anchor's week, honouring {@link firstDayOfWeek}.
+   * @method startOfWeekOf
+   *
+   * @description
+   * Local midnight on the first day of the anchor's week, honouring {@link firstDayOfWeek}.
+   *
    * @access private
    * @since 2.2.0
+   *
    * @param {Date} anchor - Any date inside the week.
+   *
    * @returns {Date} The week's first day.
    */
   private startOfWeekOf(anchor: Date): Date {
@@ -879,11 +1341,17 @@ export class CalendarPage {
 
   /**
    * Method itemCoversDay
-   * @description Includes every local day of a feed item, excluding a timed end exactly at midnight.
+   * @method itemCoversDay
+   *
+   * @description
+   * Includes every local day of a feed item, excluding a timed end exactly at midnight.
+   *
    * @access private
    * @since 2.4.0
+   *
    * @param {CalendarFeedItemOutput} item - The feed item to inspect.
    * @param {string} day - The local ISO day being displayed.
+   *
    * @returns {boolean} Whether the item occurs on that day.
    */
   private itemCoversDay(item: CalendarFeedItemOutput, day: string): boolean {
@@ -910,6 +1378,7 @@ export class CalendarPage {
 
   /**
    * Method windowOf
+   * @method windowOf
    *
    * @description
    * The feed command covering the displayed period — the anchor's month plus
@@ -972,9 +1441,14 @@ export class CalendarPage {
 
   /**
    * Method openCreateDialog
-   * @description Opens the event dialog in create mode.
+   * @method openCreateDialog
+   *
+   * @description
+   * Opens the event dialog in create mode.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected openCreateDialog(): void {
@@ -985,6 +1459,7 @@ export class CalendarPage {
 
   /**
    * Method onCreateRequested
+   * @method onCreateRequested
    *
    * @description
    * Quick create from a day — the grid cell's "+" button or a week/day
@@ -1008,10 +1483,17 @@ export class CalendarPage {
 
   /**
    * Method sourceLabelOf
-   * @description Names a feed source for the "Partial results" banner, through the same resolver `CalendarEntryList` renders its row badges with.
+   * @method sourceLabelOf
+   *
+   * @description
+   * Names a feed source for the "Partial results" banner, through the same resolver
+   * `CalendarEntryList` renders its row badges with.
+   *
    * @access protected
    * @since 2.5.0
+   *
    * @param {CalendarSourceKey} sourceKey - The partial source to name.
+   *
    * @returns {string} A short localized source name.
    */
   protected sourceLabelOf(sourceKey: CalendarSourceKey): string {
@@ -1019,11 +1501,20 @@ export class CalendarPage {
   }
 
   /**
-   * Method entryFacilityLabelOf
-   * @description Resolves a bare facility id — as `CalendarFeedItemOutput.facilityId` and {@link facilityOptions} both already are — to its name, passed to `CalendarEntryList` as its `facilityLabelOf` input.
+   * Property entryFacilityLabelOf
+   * @readonly
+   *
+   * @description
+   * Resolves a bare facility id — as `CalendarFeedItemOutput.facilityId` and {@link facilityOptions}
+   * both already are — to its name, passed to `CalendarEntryList` as its `facilityLabelOf` input.
+   *
    * @access protected
    * @since 2.5.0
+   *
+   * @type {(facilityId: string) => string | null}
+   *
    * @param {string} facilityId - The bare facility id.
+   *
    * @returns {string | null} The facility's name, or `null` when it does not resolve.
    */
   protected readonly entryFacilityLabelOf: (facilityId: string) => string | null = (
@@ -1033,10 +1524,16 @@ export class CalendarPage {
 
   /**
    * Method isToday
-   * @description Whether a `yyyy-MM-dd` day is today, for the week view's "Today" badge.
+   * @method isToday
+   *
+   * @description
+   * Whether a `yyyy-MM-dd` day is today, for the week view's "Today" badge.
+   *
    * @access protected
    * @since 2.5.0
+   *
    * @param {string} day - The day to check.
+   *
    * @returns {boolean} Whether the day is today.
    */
   protected isToday(day: string): boolean {
@@ -1045,10 +1542,17 @@ export class CalendarPage {
 
   /**
    * Method createOnDayAriaLabelOf
-   * @description A week/day section's quick-create button's accessible name, dated so repeated sections stay distinguishable.
+   * @method createOnDayAriaLabelOf
+   *
+   * @description
+   * A week/day section's quick-create button's accessible name, dated so repeated sections stay
+   * distinguishable.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @param {string} label - The section's localized full date.
+   *
    * @returns {string} The localized dated label.
    */
   protected createOnDayAriaLabelOf(label: string): string {
@@ -1057,6 +1561,7 @@ export class CalendarPage {
 
   /**
    * Method onEventDropped
+   * @method onEventDropped
    *
    * @description
    * A `calendar_event` chip was dropped onto another grid day: keeps the
@@ -1120,10 +1625,16 @@ export class CalendarPage {
 
   /**
    * Method openEditDialog
-   * @description Opens the event dialog seeded with the given `calendar_event` entry.
+   * @method openEditDialog
+   *
+   * @description
+   * Opens the event dialog seeded with the given `calendar_event` entry.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry to edit.
+   *
    * @returns {void}
    */
   protected openEditDialog(item: CalendarFeedItemOutput): void {
@@ -1133,10 +1644,16 @@ export class CalendarPage {
 
   /**
    * Method onEventDialogVisibleChanged
-   * @description Closes the event dialog on any dismissal, clearing the record it was editing.
+   * @method onEventDialogVisibleChanged
+   *
+   * @description
+   * Closes the event dialog on any dismissal, clearing the record it was editing.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {boolean} visible - The dialog's new visibility.
+   *
    * @returns {void}
    */
   protected onEventDialogVisibleChanged(visible: boolean): void {
@@ -1149,6 +1666,7 @@ export class CalendarPage {
 
   /**
    * Method onEventFormSubmitted
+   * @method onEventFormSubmitted
    *
    * @description
    * Sends the create write for a new event, or the merge-patch update write
@@ -1190,10 +1708,16 @@ export class CalendarPage {
 
   /**
    * Method requestDelete
-   * @description Opens the Delete confirmation for a `calendar_event` entry.
+   * @method requestDelete
+   *
+   * @description
+   * Opens the Delete confirmation for a `calendar_event` entry.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {CalendarFeedItemOutput} item - The entry whose deletion was requested.
+   *
    * @returns {void}
    */
   protected requestDelete(item: CalendarFeedItemOutput): void {
@@ -1202,10 +1726,16 @@ export class CalendarPage {
 
   /**
    * Method onDeleteDialogVisibleChanged
-   * @description Clears the pending target on any dismissal.
+   * @method onDeleteDialogVisibleChanged
+   *
+   * @description
+   * Clears the pending target on any dismissal.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {boolean} visible - The dialog's new visibility.
+   *
    * @returns {void}
    */
   protected onDeleteDialogVisibleChanged(visible: boolean): void {
@@ -1216,9 +1746,15 @@ export class CalendarPage {
 
   /**
    * Method confirmDelete
-   * @description Sends the delete write for the pending target. The dialog closes once the store settles, via the constructor effect.
+   * @method confirmDelete
+   *
+   * @description
+   * Sends the delete write for the pending target. The dialog closes once the store settles, via
+   * the constructor effect.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected confirmDelete(): void {
@@ -1230,10 +1766,17 @@ export class CalendarPage {
 
   /**
    * Method settleEventDialogWrite
-   * @description Closes the event dialog once its own write — create or edit — succeeds; a rejection is left for the dialog's own inline error to render.
+   * @method settleEventDialogWrite
+   *
+   * @description
+   * Closes the event dialog once its own write — create or edit — succeeds; a rejection is left for
+   * the dialog's own inline error to render.
+   *
    * @access private
    * @since 1.2.0
+   *
    * @param {CallState<CalendarEventOutput>} callState - The write's call state.
+   *
    * @returns {void}
    */
   private settleEventDialogWrite(callState: CallState<CalendarEventOutput>): void {
@@ -1245,6 +1788,7 @@ export class CalendarPage {
 
   /**
    * Method buildUpdatePatch
+   * @method buildUpdatePatch
    *
    * @description
    * Diffs the dialog's validated values against the record being edited,
@@ -1292,11 +1836,18 @@ export class CalendarPage {
 
 /**
  * Function isSameInstant
+ *
+ * @description
+ * Compares nullable ISO instants by parsed timestamp so equivalent offsets match.
+ *
  * @access private
  * @since 1.2.0
+ *
  * @param {string | null} a - The first ISO instant, or `null`.
  * @param {string | null} b - The second ISO instant, or `null`.
- * @returns {boolean} Whether both represent the same instant — string equality would false-positive on differing timezone offsets.
+ *
+ * @returns {boolean} Whether both represent the same instant — string equality would false-positive
+ *   on differing timezone offsets.
  */
 function isSameInstant(a: string | null, b: string | null): boolean {
   if (a === null || b === null) return a === b;

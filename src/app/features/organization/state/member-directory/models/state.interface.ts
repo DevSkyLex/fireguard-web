@@ -13,9 +13,39 @@ import type { MemberDirectoryEntry } from '@features/organization/models';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface MemberDirectoryState {
-  /** Organization the loaded directory belongs to, or `null` before any load. */
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Organization the loaded directory belongs to, or `null` before any load.
+   *
+   * @type {string | null}
+   */
   readonly organizationId: string | null;
-  /** Loaded members, keyed by bare member id. */
+
+  /**
+   * Property byId
+   * @readonly
+   *
+   * @description
+   * Loaded members, keyed by bare member id.
+   *
+   * @type {ReadonlyMap<string, MemberDirectoryEntry>}
+   */
   readonly byId: ReadonlyMap<string, MemberDirectoryEntry>;
+
+  /**
+   * Property callState
+   * @readonly
+   *
+   * @description
+   * Outcome of loading the directory for the selected organization.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {CallState}
+   */
   readonly callState: CallState;
 }

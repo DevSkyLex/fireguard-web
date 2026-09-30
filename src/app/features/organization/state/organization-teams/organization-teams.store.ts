@@ -32,10 +32,18 @@ import type {
 import { organizationTeamsStoreEvents } from './events';
 import type { OrganizationTeamsState } from './models';
 
-/** Fallback error message dispatched with `mutationFailed` when a `StoreError` carries none. */
+/**
+ * Constant MUTATION_FAILURE_FALLBACK
+ *
+ * @description
+ * Fallback error message dispatched with `mutationFailed` when a `StoreError` carries none.
+ */
 const MUTATION_FAILURE_FALLBACK = $localize`:@@org.teams.toast.mutationFailed:The action could not be completed.`;
 
 /**
+ * Constant INITIAL_STATE
+ *
+ * @description
  * Initial organization teams workflow state. Teams and their member rosters
  * are held in `withEntities` collections (`team`, `teamMember`); only the
  * currently selected team id and the per-operation call states live in plain
@@ -53,17 +61,29 @@ const INITIAL_STATE: OrganizationTeamsState = {
 };
 
 /**
+ * Function selectTeamMemberId
+ *
+ * @description
  * `teamMember` selectId — `TeamMemberOutput` carries no `id` field of its
  * own; membership rows are addressed by the underlying member's id
  * (`memberId`), matching `TeamService.removeMember`'s own parameter.
+ *
+ * @param {TeamMemberOutput} member - Team membership whose ID becomes the entity key.
+ *
+ * @returns {string}
  */
 const selectTeamMemberId = (member: TeamMemberOutput): string => member.memberId;
 
-/** Typed empty roster, so `setAllEntities` does not infer `Entity` as `never`. */
+/**
+ * Constant NO_TEAM_MEMBERS
+ *
+ * @description
+ * Typed empty roster, so `setAllEntities` does not infer `Entity` as `never`.
+ */
 const NO_TEAM_MEMBERS: TeamMemberOutput[] = [];
 
 /**
- * Store OrganizationTeamsStore
+ * Constant OrganizationTeamsStore
  *
  * @description
  * Component-scoped workflow store for the dedicated teams page
@@ -78,7 +98,6 @@ const NO_TEAM_MEMBERS: TeamMemberOutput[] = [];
  * with a toast, or the shared `mutationFailed` event for a live-region error
  * announcement (inline `*Error` computeds still carry the detail for the
  * page's own error state).
- *
  * `memberCount` on a `TeamOutput` is kept in sync by patching the affected
  * team entity locally (`updateEntity` +/- 1) on `addMember`/`removeMember`
  * success, rather than reloading the teams list — the same "patch in place,
@@ -95,37 +114,100 @@ export const OrganizationTeamsStore = signalStore(
   withEntities({ entity: type<TeamMemberOutput>(), collection: 'teamMember' }),
   withState(INITIAL_STATE),
   withComputed((store) => ({
-    /** Loaded organization teams. */
+    /**
+     * @description
+     * Loaded organization teams.
+     */
     teams: computed(() => store.teamEntities()),
-    /** Member roster of the currently selected team. */
+
+    /**
+     * @description
+     * Member roster of the currently selected team.
+     */
     members: computed(() => store.teamMemberEntities()),
-    /** Whether the teams list is loading. */
+
+    /**
+     * @description
+     * Whether the teams list is loading.
+     */
     isLoading: computed(() => isCallPending(store.listCallState())),
-    /** Whether a team creation is pending. */
+
+    /**
+     * @description
+     * Whether a team creation is pending.
+     */
     isCreating: computed(() => isCallPending(store.createCallState())),
-    /** Whether a team update is pending. */
+
+    /**
+     * @description
+     * Whether a team update is pending.
+     */
     isUpdating: computed(() => isCallPending(store.updateCallState())),
-    /** Whether a team deletion is pending. */
+
+    /**
+     * @description
+     * Whether a team deletion is pending.
+     */
     isRemoving: computed(() => isCallPending(store.removeCallState())),
-    /** Whether the selected team's member roster is loading. */
+
+    /**
+     * @description
+     * Whether the selected team's member roster is loading.
+     */
     isLoadingMembers: computed(() => isCallPending(store.membersCallState())),
-    /** Whether a member is being added to the selected team. */
+
+    /**
+     * @description
+     * Whether a member is being added to the selected team.
+     */
     isAddingMember: computed(() => isCallPending(store.addMemberCallState())),
-    /** Whether a member is being removed from the selected team. */
+
+    /**
+     * @description
+     * Whether a member is being removed from the selected team.
+     */
     isRemovingMember: computed(() => isCallPending(store.removeMemberCallState())),
-    /** Error from the last teams list load. */
+
+    /**
+     * @description
+     * Error from the last teams list load.
+     */
     listError: computed(() => store.listCallState().error),
-    /** Error from the last team creation attempt. */
+
+    /**
+     * @description
+     * Error from the last team creation attempt.
+     */
     createError: computed(() => store.createCallState().error),
-    /** Error from the last team update attempt. */
+
+    /**
+     * @description
+     * Error from the last team update attempt.
+     */
     updateError: computed(() => store.updateCallState().error),
-    /** Error from the last team deletion attempt. */
+
+    /**
+     * @description
+     * Error from the last team deletion attempt.
+     */
     removeError: computed(() => store.removeCallState().error),
-    /** Error from the last member roster load. */
+
+    /**
+     * @description
+     * Error from the last member roster load.
+     */
     membersError: computed(() => store.membersCallState().error),
-    /** Error from the last add-member attempt. */
+
+    /**
+     * @description
+     * Error from the last add-member attempt.
+     */
     addMemberError: computed(() => store.addMemberCallState().error),
-    /** Error from the last remove-member attempt. */
+
+    /**
+     * @description
+     * Error from the last remove-member attempt.
+     */
     removeMemberError: computed(() => store.removeMemberCallState().error),
   })),
   withMethods(
@@ -134,7 +216,10 @@ export const OrganizationTeamsStore = signalStore(
       teamService = inject<TeamService>(TeamService),
       dispatcher = inject<Dispatcher>(Dispatcher),
     ) => ({
-      /** Loads the organization's teams. */
+      /**
+       * @description
+       * Loads the organization's teams.
+       */
       loadTeams: rxMethod<{ organizationId: string }>(
         pipe(
           tap(() => patchState(store, { listCallState: pendingCallState() })),
@@ -152,7 +237,11 @@ export const OrganizationTeamsStore = signalStore(
           ),
         ),
       ),
-      /** Creates a team inside the organization. */
+
+      /**
+       * @description
+       * Creates a team inside the organization.
+       */
       createTeam: rxMethod<{ organizationId: string; input: CreateTeamInput }>(
         pipe(
           tap(() => patchState(store, { createCallState: pendingCallState() })),
@@ -183,7 +272,11 @@ export const OrganizationTeamsStore = signalStore(
           ),
         ),
       ),
-      /** Renames a team or changes its description. */
+
+      /**
+       * @description
+       * Renames a team or changes its description.
+       */
       updateTeam: rxMethod<{ organizationId: string; teamId: string; input: UpdateTeamInput }>(
         pipe(
           tap(() => patchState(store, { updateCallState: pendingCallState() })),
@@ -216,7 +309,9 @@ export const OrganizationTeamsStore = signalStore(
           ),
         ),
       ),
+
       /**
+       * @description
        * Deletes a team. Clears the member panel selection and roster when the
        * removed team was the selected one.
        */
@@ -262,7 +357,9 @@ export const OrganizationTeamsStore = signalStore(
           ),
         ),
       ),
+
       /**
+       * @description
        * Selects a team for the member panel and loads its member roster.
        * Passing `null` closes the panel and clears the roster without a
        * request.
@@ -301,7 +398,9 @@ export const OrganizationTeamsStore = signalStore(
           }),
         ),
       ),
+
       /**
+       * @description
        * Adds a member to the selected team and increments its `memberCount`
        * locally.
        */
@@ -346,7 +445,9 @@ export const OrganizationTeamsStore = signalStore(
           ),
         ),
       ),
+
       /**
+       * @description
        * Removes a member from the selected team and decrements its
        * `memberCount` locally.
        */
@@ -399,6 +500,11 @@ export const OrganizationTeamsStore = signalStore(
 );
 
 /**
+ * Type OrganizationTeamsStore
+ *
+ * @description
  * Injectable instance type exposed by {@link OrganizationTeamsStore}.
+ *
+ * @type {OrganizationTeamsStore}
  */
 export type OrganizationTeamsStore = InstanceType<typeof OrganizationTeamsStore>;

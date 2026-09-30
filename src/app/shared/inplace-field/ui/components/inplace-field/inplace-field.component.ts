@@ -19,7 +19,6 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
 
 /**
  * Constant FOCUSABLE_SELECTOR
- * @const FOCUSABLE_SELECTOR
  *
  * @description
  * Matches the first element the editor can hand focus to when it opens.
@@ -27,14 +26,20 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
  * @since 1.0.0
  *
  * @type {string}
+ *
+ * @constant FOCUSABLE_SELECTOR
  */
 const FOCUSABLE_SELECTOR: string =
   'input,select,textarea,button,[href],[tabindex]:not([tabindex="-1"])';
 
 /**
  * Constant instanceCount
- * @description Seeds the per-instance editor id that `aria-controls` points at.
+ *
+ * @description
+ * Seeds the per-instance editor id that `aria-controls` points at.
+ *
  * @since 1.0.0
+ *
  * @type {number}
  */
 let instanceCount: number = 0;
@@ -64,6 +69,8 @@ let instanceCount: number = 0;
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-inplace-field
@@ -79,8 +86,6 @@ let instanceCount: number = 0;
  *   <hlm-select fieldEditor [(ngModel)]="draft">…</hlm-select>
  * </app-inplace-field>
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-inplace-field',
@@ -213,7 +218,6 @@ export class InplaceField {
    * width, which is what a field already framed by its own card needs: there,
    * the fixed column is chrome the card already provides, and it is what
    * truncates a long value.
-   *
    * Mirrors `hlm-field`'s own `orientation`, so the vocabulary is the one the
    * design system already uses.
    *
@@ -296,9 +300,13 @@ export class InplaceField {
   /**
    * Property triggerLayout
    * @readonly
-   * @description The resting row's own axis, literal so Tailwind scans it.
+   *
+   * @description
+   * The resting row's own axis, literal so Tailwind scans it.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly triggerLayout: Signal<string> = computed<string>(() =>
@@ -308,9 +316,13 @@ export class InplaceField {
   /**
    * Property labelLayout
    * @readonly
-   * @description The label's own width, fixed only when the fields must line up.
+   *
+   * @description
+   * The label's own width, fixed only when the fields must line up.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly labelLayout: Signal<string> = computed<string>(() =>
@@ -320,9 +332,13 @@ export class InplaceField {
   /**
    * Property triggerPadding
    * @readonly
-   * @description The resting trigger's inset, delegated to the host when it owns the framing.
+   *
+   * @description
+   * The resting trigger's inset, delegated to the host when it owns the framing.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<string>}
    */
   protected readonly triggerPadding: Signal<string> = computed<string>(() =>
@@ -332,9 +348,13 @@ export class InplaceField {
   /**
    * Property editorId
    * @readonly
-   * @description The editor's DOM id, which the trigger's `aria-controls` names.
+   *
+   * @description
+   * The editor's DOM id, which the trigger's `aria-controls` names.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string}
    */
   public readonly editorId: string;
@@ -357,9 +377,13 @@ export class InplaceField {
   /**
    * Property trigger
    * @readonly
-   * @description The resting button, which regains focus when the field closes.
+   *
+   * @description
+   * The resting button, which regains focus when the field closes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ElementRef<HTMLButtonElement> | undefined>}
    */
   protected readonly trigger: Signal<ElementRef<HTMLButtonElement> | undefined> =
@@ -368,9 +392,13 @@ export class InplaceField {
   /**
    * Property editor
    * @readonly
-   * @description The editor wrapper, whose first focusable receives focus on open.
+   *
+   * @description
+   * The editor wrapper, whose first focusable receives focus on open.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
    */
   protected readonly editor: Signal<ElementRef<HTMLElement> | undefined> =
@@ -378,6 +406,16 @@ export class InplaceField {
   //#endregion
 
   //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Assigns stable editor IDs and coordinates editor and trigger focus with edit state.
+   *
+   * @access public
+   * @since unreleased
+   */
   constructor() {
     instanceCount += 1;
     this.editorId = `inplace-field-editor-${instanceCount}`;
@@ -405,6 +443,7 @@ export class InplaceField {
   //#region Methods
   /**
    * Method requestOpen
+   * @method requestOpen
    *
    * @description
    * Asks the host to open this field. A disabled trigger never reaches it.
@@ -422,6 +461,7 @@ export class InplaceField {
 
   /**
    * Method requestCancel
+   * @method requestCancel
    *
    * @description
    * Abandons the edit. Refused while a write is in flight — that request has
@@ -441,6 +481,7 @@ export class InplaceField {
 
   /**
    * Method onEscape
+   * @method onEscape
    *
    * @description
    * Cancels the field, unless the projected control already consumed the key to
@@ -463,6 +504,7 @@ export class InplaceField {
 
   /**
    * Method focusEditor
+   * @method focusEditor
    *
    * @description
    * Moves focus into the freshly opened editor so the keyboard lands where the
@@ -486,6 +528,7 @@ export class InplaceField {
 
   /**
    * Method restoreTriggerFocus
+   * @method restoreTriggerFocus
    *
    * @description
    * Returns focus to the trigger when the field closes, but only if focus was

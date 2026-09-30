@@ -8,7 +8,8 @@ import { hasAnyOrganizationPermission } from '../../utils/has-any-permission/has
  * Service OrganizationPermissionService
  * @class OrganizationPermissionService
  *
- * @description Feature-owned helper service exposing ergonomic checks for the authenticated
+ * @description
+ * Feature-owned helper service exposing ergonomic checks for the authenticated
  * user's effective permissions in the current active organization.
  * Because this helper is owned and consumed inside the organization feature,
  * it reads the concrete `OrganizationMemberAccessStore` directly.
@@ -26,7 +27,8 @@ export class OrganizationPermissionService {
    * Property organizationMemberAccessStore
    * @readonly
    *
-   * @description Organization-owned store exposing the authenticated user's effective
+   * @description
+   * Organization-owned store exposing the authenticated user's effective
    * access state in the currently active organization.
    *
    * @access private
@@ -41,7 +43,8 @@ export class OrganizationPermissionService {
    * Property permissions
    * @readonly
    *
-   * @description Effective permission names currently granted to the authenticated user in
+   * @description
+   * Effective permission names currently granted to the authenticated user in
    * the active organization.
    *
    * @access public
@@ -56,7 +59,8 @@ export class OrganizationPermissionService {
    * Property isLoadingPermissions
    * @readonly
    *
-   * @description Indicates whether the organization-scoped permission payload is currently
+   * @description
+   * Indicates whether the organization-scoped permission payload is currently
    * loading.
    *
    * @access public
@@ -71,7 +75,8 @@ export class OrganizationPermissionService {
    * Property permissionError
    * @readonly
    *
-   * @description Last organization-scoped permission loading error exposed by the
+   * @description
+   * Last organization-scoped permission loading error exposed by the
    * organization access store.
    *
    * @access public
@@ -86,7 +91,8 @@ export class OrganizationPermissionService {
    * Property permissionSet
    * @readonly
    *
-   * @description Internal computed set of effective permission names used to keep permission
+   * @description
+   * Internal computed set of effective permission names used to keep permission
    * checks constant-time while remaining fully reactive to signal updates.
    *
    * @access private
@@ -103,16 +109,16 @@ export class OrganizationPermissionService {
   //#region Methods
   /**
    * Method reload
+   * @method reload
    *
-   * @description Forces the organization feature to reload the authenticated user's access
+   * @description
+   * Forces the organization feature to reload the authenticated user's access
    * payload for the currently active organization.
    *
    * @access public
    * @since 0.1.0
    *
    * @returns {void}
-   *
-   * @function reload
    */
   public reload(): void {
     this.organizationMemberAccessStore.reload();
@@ -120,8 +126,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method hasPermission
+   * @method hasPermission
    *
-   * @description Returns whether the authenticated user currently has the requested
+   * @description
+   * Returns whether the authenticated user currently has the requested
    * organization-scoped permission.
    * Blank and whitespace-only permission names are rejected.
    *
@@ -131,8 +139,6 @@ export class OrganizationPermissionService {
    * @param {string} permission - Permission name to check.
    *
    * @returns {boolean} `true` when the permission is currently granted.
-   *
-   * @function hasPermission
    */
   public hasPermission(permission: OrganizationPermissionName): boolean {
     const normalizedPermission: string | null = this.normalizePermission(permission);
@@ -146,8 +152,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method hasAnyPermission
+   * @method hasAnyPermission
    *
-   * @description Returns whether at least one permission from the provided list is currently
+   * @description
+   * Returns whether at least one permission from the provided list is currently
    * granted in the active organization.
    *
    * @access public
@@ -156,8 +164,6 @@ export class OrganizationPermissionService {
    * @param {ReadonlyArray<string>} permissions - Permission names to evaluate.
    *
    * @returns {boolean} `true` when any permission is currently granted.
-   *
-   * @function hasAnyPermission
    */
   public hasAnyPermission(permissions: ReadonlyArray<OrganizationPermissionName>): boolean {
     return permissions.some((permission: OrganizationPermissionName) =>
@@ -167,8 +173,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method hasAllPermissions
+   * @method hasAllPermissions
    *
-   * @description Returns whether every permission from the provided list is currently
+   * @description
+   * Returns whether every permission from the provided list is currently
    * granted in the active organization.
    *
    * @access public
@@ -177,8 +185,6 @@ export class OrganizationPermissionService {
    * @param {ReadonlyArray<string>} permissions - Permission names to evaluate.
    *
    * @returns {boolean} `true` when all permissions are currently granted.
-   *
-   * @function hasAllPermissions
    */
   public hasAllPermissions(permissions: ReadonlyArray<OrganizationPermissionName>): boolean {
     return permissions.every((permission: OrganizationPermissionName) =>
@@ -188,8 +194,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method canAccessOrganization
+   * @method canAccessOrganization
    *
-   * @description Evaluates whether the authenticated user can access organization-scoped
+   * @description
+   * Evaluates whether the authenticated user can access organization-scoped
    * navigation requiring the provided permissions.
    * When the requested organization already matches the loaded access store and
    * the access payload is in a successful state, the check is resolved from the
@@ -206,8 +214,6 @@ export class OrganizationPermissionService {
    * @param {'all' | 'any'} [match='all'] - Matching strategy.
    *
    * @returns {boolean} `true` when route access should be granted.
-   *
-   * @function canAccessOrganization
    */
   public canAccessOrganization(
     organizationId: string,
@@ -229,8 +235,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method normalizePermission
+   * @method normalizePermission
    *
-   * @description Trims a permission name and rejects empty values so that the public check
+   * @description
+   * Trims a permission name and rejects empty values so that the public check
    * methods can remain strict and predictable.
    *
    * @access private
@@ -239,8 +247,6 @@ export class OrganizationPermissionService {
    * @param {string} permission - Raw permission value to normalize.
    *
    * @returns {string | null} The trimmed permission or `null` when empty.
-   *
-   * @function normalizePermission
    */
   private normalizePermission(permission: string): string | null {
     const normalizedPermission: string = permission.trim();
@@ -249,8 +255,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method normalizePermissions
+   * @method normalizePermissions
    *
-   * @description Trims permission names and removes blank values from a permission list.
+   * @description
+   * Trims permission names and removes blank values from a permission list.
    *
    * @access private
    * @since 0.1.0
@@ -258,8 +266,6 @@ export class OrganizationPermissionService {
    * @param {ReadonlyArray<string>} permissions - Raw permission names.
    *
    * @returns {ReadonlyArray<string>} Normalized non-empty permission names.
-   *
-   * @function normalizePermissions
    */
   private normalizePermissions(
     permissions: ReadonlyArray<OrganizationPermissionName>,
@@ -271,8 +277,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method matchesPermissions
+   * @method matchesPermissions
    *
-   * @description Evaluates a granted permission set against a required permission list using
+   * @description
+   * Evaluates a granted permission set against a required permission list using
    * the provided matching strategy.
    *
    * @access private
@@ -282,8 +290,6 @@ export class OrganizationPermissionService {
    * @param {'all' | 'any'} match - Matching strategy.
    *
    * @returns {boolean} `true` when the requirement is satisfied.
-   *
-   * @function matchesPermissions
    */
   private matchesPermissions(
     requiredPermissions: ReadonlyArray<string>,
@@ -296,8 +302,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method hasResolvedAccessForOrganization
+   * @method hasResolvedAccessForOrganization
    *
-   * @description Returns whether the shared organization access store currently holds a
+   * @description
+   * Returns whether the shared organization access store currently holds a
    * successful access payload for the requested organization.
    *
    * @access private
@@ -306,8 +314,6 @@ export class OrganizationPermissionService {
    * @param {string} organizationId - Organization identifier to validate.
    *
    * @returns {boolean} `true` when the store is resolved for the target organization.
-   *
-   * @function hasResolvedAccessForOrganization
    */
   private hasResolvedAccessForOrganization(organizationId: string): boolean {
     return (
@@ -318,8 +324,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method hasGrantedPermission
+   * @method hasGrantedPermission
    *
-   * @description Returns whether the current granted permission set satisfies the provided
+   * @description
+   * Returns whether the current granted permission set satisfies the provided
    * normalized permission name, including wildcard matches.
    *
    * @access private
@@ -328,8 +336,6 @@ export class OrganizationPermissionService {
    * @param {string} permission - Normalized permission name to evaluate.
    *
    * @returns {boolean} `true` when the permission is granted.
-   *
-   * @function hasGrantedPermission
    */
   private hasGrantedPermission(permission: string): boolean {
     const grantedPermissionSet: ReadonlySet<string> = this.permissionSet();
@@ -345,8 +351,10 @@ export class OrganizationPermissionService {
 
   /**
    * Method matchesPermissionName
+   * @method matchesPermissionName
    *
-   * @description Evaluates whether a granted permission name satisfies a required
+   * @description
+   * Evaluates whether a granted permission name satisfies a required
    * permission name, including wildcard permissions such as `organization.*`.
    *
    * @access private
@@ -356,8 +364,6 @@ export class OrganizationPermissionService {
    * @param {string} requiredPermission - Required permission name.
    *
    * @returns {boolean} `true` when the granted permission satisfies the requirement.
-   *
-   * @function matchesPermissionName
    */
   private matchesPermissionName(grantedPermission: string, requiredPermission: string): boolean {
     return hasAnyOrganizationPermission([grantedPermission], [requiredPermission]);

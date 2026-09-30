@@ -22,7 +22,6 @@ import { MaintenanceCampaignForm } from '../../forms/maintenance-campaign-form';
  * @description
  * The spartan sheet hosting one persistent {@link MaintenanceCampaignForm}, which
  * generates an inspection campaign from the schedules currently due.
- *
  * Purely presentational: it owns the overlay chrome, forwards every input
  * to the form, and re-emits {@link submitted} — the page keeps the store
  * call, the success toast/navigation and the organization IRI, which this
@@ -43,9 +42,13 @@ export class MaintenanceCampaignDialog {
   /**
    * Property side
    * @readonly
-   * @description The central interaction mode chooses bottom or right without recreating the campaign draft.
+   *
+   * @description
+   * The central interaction mode chooses bottom or right without recreating the campaign draft.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -53,9 +56,13 @@ export class MaintenanceCampaignDialog {
   /**
    * Property visible
    * @readonly
-   * @description Whether the dialog is open. Owned by the page.
+   *
+   * @description
+   * Whether the dialog is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -63,9 +70,14 @@ export class MaintenanceCampaignDialog {
   /**
    * Property pending
    * @readonly
-   * @description Whether the campaign-generation request is in flight, forwarded to the form and blocking dismissal.
+   *
+   * @description
+   * Whether the campaign-generation request is in flight, forwarded to the form and blocking
+   * dismissal.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -73,9 +85,13 @@ export class MaintenanceCampaignDialog {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the last generation attempt failed with, forwarded to the form.
+   *
+   * @description
+   * Whatever the last generation attempt failed with, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<StoreError | null>}
    */
   public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
@@ -83,9 +99,13 @@ export class MaintenanceCampaignDialog {
   /**
    * Property facilityOptions
    * @readonly
-   * @description The organization's facilities, forwarded to the form as the optional scoping choice.
+   *
+   * @description
+   * The organization's facilities, forwarded to the form as the optional scoping choice.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ReadonlyArray<{ readonly label: string; readonly value: string }>>}
    */
   public readonly facilityOptions: InputSignal<
@@ -97,9 +117,13 @@ export class MaintenanceCampaignDialog {
   /**
    * Property visibleChange
    * @readonly
-   * @description The dialog wants to open or close.
+   *
+   * @description
+   * The dialog wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -107,9 +131,13 @@ export class MaintenanceCampaignDialog {
   /**
    * Property submitted
    * @readonly
-   * @description The form's validated scope, forwarded untouched.
+   *
+   * @description
+   * The form's validated scope, forwarded untouched.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<Omit<GenerateMaintenanceCampaignInput, 'organization'>>}
    */
   public readonly submitted: OutputEmitterRef<
@@ -121,9 +149,13 @@ export class MaintenanceCampaignDialog {
   /**
    * Property dialogState
    * @readonly
-   * @description The overlay state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @description
+   * The overlay state, derived from {@link visible} so there is no second copy of the truth.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>

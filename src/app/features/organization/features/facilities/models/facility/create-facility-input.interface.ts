@@ -1,5 +1,13 @@
 import type { FacilityOutput } from './facility-output.interface';
 
+/**
+ * Type FacilityWritableFields
+ *
+ * @description
+ * Contains facility fields accepted by create and update operations.
+ *
+ * @type FacilityWritableFields
+ */
 type FacilityWritableFields = Pick<
   FacilityOutput,
   | 'type'
@@ -19,19 +27,38 @@ type FacilityWritableFields = Pick<
  * @description
  * Payload used to create a facility within an
  * organization.
+ *
+ * @type
  */
 export type CreateFacilityInput = Pick<FacilityWritableFields, 'type' | 'name'> &
   Partial<Omit<FacilityWritableFields, 'type' | 'name'>> & {
     /**
-     * Optional client-generated id used by offline replay idempotency.
+     * Property clientId
+     * @readonly
+     *
+     * @access public
+     *
+     * @type {string}
      */
     readonly clientId?: string;
+
     /**
-     * Optional organization IRI override for intervention orchestrations.
+     * Property organization
+     * @readonly
+     *
+     * @access public
+     *
+     * @type {string}
      */
     readonly organization?: string;
+
     /**
-     * Optional intervention IRI used to attach created facilities to one intervention.
+     * Property intervention
+     * @readonly
+     *
+     * @access public
+     *
+     * @type {string}
      */
     readonly intervention?: string;
   };

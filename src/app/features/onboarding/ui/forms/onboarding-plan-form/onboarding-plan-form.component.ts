@@ -24,7 +24,17 @@ import { HlmRadioGroupImports } from '@shared/ui/radio-group';
 import { HlmSeparator } from '@shared/ui/separator';
 import type { OnboardingPlanDraft, OnboardingPlanSelection } from './models';
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description
+ * A blank draft used before the operator selects a plan.
+ *
+ * @access private
+ * @since unreleased
+ *
+ * @type {OnboardingPlanDraft}
+ */
 const EMPTY_VALUES: OnboardingPlanDraft = { planKey: '' };
 
 /**
@@ -37,18 +47,100 @@ const EMPTY_VALUES: OnboardingPlanDraft = { planKey: '' };
  * @since 1.0.0
  */
 interface OnboardingPlanRow {
+  /**
+   * Property key
+   * @readonly
+   *
+   * @description
+   * Stable catalog identifier used to match the selected plan.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly key: string;
+
+  /**
+   * Property name
+   * @readonly
+   *
+   * @description
+   * Localized plan name displayed in the choice row.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly name: string;
+
+  /**
+   * Property description
+   * @readonly
+   *
+   * @description
+   * Optional catalog explanation shown beneath the plan name.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   readonly description: string | null;
+
+  /**
+   * Property priceLabel
+   * @readonly
+   *
+   * @description
+   * Localized monthly amount or the explicit free or unavailable label.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly priceLabel: string;
+
+  /**
+   * Property pricingState
+   * @readonly
+   *
+   * @description
+   * Distinguishes the free offer from payable and unavailable pricing.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {'free' | 'priced' | 'unavailable'}
+   */
   readonly pricingState: 'free' | 'priced' | 'unavailable';
+
+  /**
+   * Property isDefault
+   * @readonly
+   *
+   * @description
+   * Marks the catalog plan selected by default in the radio group.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   readonly isDefault: boolean;
+
   /**
    * Property quotas
    * @readonly
-   * @description Billing-provided allowance summaries for this offer.
+   *
+   * @description
+   * Billing-provided allowance summaries for this offer.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {readonly PlanQuotaOutput[]}
    */
   readonly quotas: readonly PlanQuotaOutput[];
@@ -56,13 +148,20 @@ interface OnboardingPlanRow {
 
 /**
  * Function priceLabelOf
- * @description Distinguishes the explicit Free offer from commercial monthly pricing, including zero-priced commercial offers.
+ *
+ * @description
+ * Distinguishes the explicit Free offer from commercial monthly pricing, including zero-priced
+ * commercial offers.
+ *
  * @access private
  * @since 1.1.0
+ *
  * @param {PlanOutput} plan - The catalog offer.
  * @param {readonly PlanPricingOutput[]} pricing - The authoritative billing prices.
  * @param {string} localeId - The active locale.
- * @returns {{ label: string; state: 'free' | 'priced' | 'unavailable' }} The display price and eligibility.
+ *
+ * @returns {{ label: string; state: 'free' | 'priced' | 'unavailable' }} The display price and
+ *   eligibility.
  */
 function priceLabelOf(
   plan: PlanOutput,
@@ -118,12 +217,12 @@ function priceLabelOf(
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-onboarding-plan-form [plans]="plans()" [pricing]="pricing()" (submitted)="selectPlan($event)" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-onboarding-plan-form',
@@ -146,9 +245,13 @@ export class OnboardingPlanForm {
   /**
    * Property plans
    * @readonly
-   * @description The selectable subscription plans. Empty until the page loads them.
+   *
+   * @description
+   * The selectable subscription plans. Empty until the page loads them.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly PlanOutput[]>}
    */
   public readonly plans: InputSignal<readonly PlanOutput[]> = input<readonly PlanOutput[]>([]);
@@ -156,9 +259,13 @@ export class OnboardingPlanForm {
   /**
    * Property pricing
    * @readonly
-   * @description Display pricing for the payable plans. Empty until the page loads it.
+   *
+   * @description
+   * Display pricing for the payable plans. Empty until the page loads it.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly PlanPricingOutput[]>}
    */
   public readonly pricing: InputSignal<readonly PlanPricingOutput[]> = input<
@@ -168,9 +275,13 @@ export class OnboardingPlanForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether the choice is being confirmed, which locks the controls.
+   *
+   * @description
+   * Whether the choice is being confirmed, which locks the controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -178,9 +289,14 @@ export class OnboardingPlanForm {
   /**
    * Property skippable
    * @readonly
-   * @description Whether the backend currently lets this step be skipped, which renders the footer's skip control.
+   *
+   * @description
+   * Whether the backend currently lets this step be skipped, which renders the footer's skip
+   * control.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly skippable: InputSignal<boolean> = input<boolean>(false);
@@ -190,9 +306,13 @@ export class OnboardingPlanForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the chosen plan once one is picked.
+   *
+   * @description
+   * Emits the chosen plan once one is picked.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<OnboardingPlanSelection>}
    */
   public readonly submitted: OutputEmitterRef<OnboardingPlanSelection> =
@@ -201,9 +321,13 @@ export class OnboardingPlanForm {
   /**
    * Property skipped
    * @readonly
-   * @description Relays the footer's skip request to the page.
+   *
+   * @description
+   * Relays the footer's skip request to the page.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly skipped: OutputEmitterRef<void> = output<void>();
@@ -213,23 +337,42 @@ export class OnboardingPlanForm {
   /**
    * Property localeId
    * @readonly
-   * @description The active Angular locale, used to format each row's price.
+   *
+   * @description
+   * The active Angular locale, used to format each row's price.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private readonly localeId: string = inject<string>(LOCALE_ID);
 
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * Holds the plan choice edited by this form.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<OnboardingPlanDraft>}
+   */
   protected readonly model: WritableSignal<OnboardingPlanDraft> =
     signal<OnboardingPlanDraft>(EMPTY_VALUES);
 
   /**
    * Property planForm
    * @readonly
-   * @description The field tree and its one rule.
+   *
+   * @description
+   * The field tree and its one rule.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<OnboardingPlanDraft>}
    */
   protected readonly planForm: FieldTree<OnboardingPlanDraft> = form(this.model, (path) => {
@@ -241,9 +384,13 @@ export class OnboardingPlanForm {
   /**
    * Property rows
    * @readonly
-   * @description Each plan joined with its formatted monthly price.
+   *
+   * @description
+   * Each plan joined with its formatted monthly price.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly OnboardingPlanRow[]>}
    */
   protected readonly rows: Signal<readonly OnboardingPlanRow[]> = computed<
@@ -267,9 +414,13 @@ export class OnboardingPlanForm {
   /**
    * Property selectedKey
    * @readonly
-   * @description The picked plan's key, driving the card's selected ring.
+   *
+   * @description
+   * The picked plan's key, driving the card's selected ring.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly selectedKey: Signal<string> = computed<string>(() => this.model().planKey);
@@ -277,9 +428,14 @@ export class OnboardingPlanForm {
   /**
    * Property submitLabel
    * @readonly
-   * @description Names where the primary action leads: Checkout for a priced plan, a plain confirmation otherwise.
+   *
+   * @description
+   * Names where the primary action leads: Checkout for a priced plan, a plain confirmation
+   * otherwise.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly submitLabel: Signal<string> = computed<string>(() => {
@@ -295,9 +451,13 @@ export class OnboardingPlanForm {
   /**
    * Property unavailableReason
    * @readonly
-   * @description Blocks an offer whose monthly billing price became unavailable after selection.
+   *
+   * @description
+   * Blocks an offer whose monthly billing price became unavailable after selection.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly unavailableReason: Signal<string | null> = computed(() =>
@@ -306,7 +466,18 @@ export class OnboardingPlanForm {
       : null,
   );
 
-  /** The footer's label while the choice is being confirmed. */
+  /**
+   * Property pendingLabel
+   * @readonly
+   *
+   * @description
+   * Supplies the footer's action label while plan selection is pending.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly pendingLabel: string = $localize`:@@onboarding.planForm.submitting:Confirming…`;
 
   //#endregion
@@ -315,7 +486,10 @@ export class OnboardingPlanForm {
   /**
    * Constructor
    * @constructor
-   * @description Selects the catalog default once, preserving an explicit user choice.
+   *
+   * @description
+   * Selects the catalog default once, preserving an explicit user choice.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -331,6 +505,7 @@ export class OnboardingPlanForm {
   //#region Methods
   /**
    * Method submit
+   * @method submit
    *
    * @description
    * Marks the tree touched so the unmet rule shows, then emits when valid.

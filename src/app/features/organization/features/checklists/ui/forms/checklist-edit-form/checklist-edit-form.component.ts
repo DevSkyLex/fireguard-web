@@ -39,14 +39,36 @@ import { HlmInput } from '@shared/ui/input';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmTooltipImports } from '@shared/ui/tooltip';
 
-/** Matches `UpdateChecklistInput.name`'s server-side bound (`Assert\Length(max: 255)`). */
+/**
+ * Constant NAME_MAX_LENGTH
+ *
+ * @description
+ * Matches `UpdateChecklistInput.name`'s server-side bound (`Assert\Length(max: 255)`).
+ */
 const NAME_MAX_LENGTH: number = 255;
-/** Matches `ChecklistItemInput.label`'s server-side bound. */
+
+/**
+ * Constant ITEM_LABEL_MAX_LENGTH
+ *
+ * @description
+ * Matches `ChecklistItemInput.label`'s server-side bound.
+ */
 const ITEM_LABEL_MAX_LENGTH: number = 255;
-/** Matches `ChecklistItemInput.description`'s server-side bound. */
+
+/**
+ * Constant ITEM_DESCRIPTION_MAX_LENGTH
+ *
+ * @description
+ * Matches `ChecklistItemInput.description`'s server-side bound.
+ */
 const ITEM_DESCRIPTION_MAX_LENGTH: number = 1000;
 
-/** A blank item row. */
+/**
+ * Constant EMPTY_ITEM
+ *
+ * @description
+ * A blank item row.
+ */
 const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: true };
 
 /**
@@ -73,6 +95,8 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
  *
  * @version 2.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-checklist-edit-form
@@ -83,8 +107,6 @@ const EMPTY_ITEM: ChecklistItemDraft = { label: '', description: '', required: t
  *   (cancelled)="editDialogVisible.set(false)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-checklist-edit-form',
@@ -109,18 +131,27 @@ export class ChecklistEditForm {
   /**
    * Property error
    * @readonly
-   * @description Server or validation error retained beside the current draft.
+   *
+   * @description
+   * Server or validation error retained beside the current draft.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly error = input<string | null>(null);
+
   /**
    * Property creating
    * @readonly
-   * @description Whether this editor creates a checklist rather than updating one.
+   *
+   * @description
+   * Whether this editor creates a checklist rather than updating one.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly creating = input(false);
@@ -128,9 +159,13 @@ export class ChecklistEditForm {
   /**
    * Property itemsEditable
    * @readonly
-   * @since 1.0.0
-   * @description Whether the server permits structural changes, or a distinct checklist is being created.
+   *
+   * @description
+   * Whether the server permits structural changes, or a distinct checklist is being created.
+   *
    * @access protected
+   * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly itemsEditable: Signal<boolean> = computed(
@@ -142,27 +177,41 @@ export class ChecklistEditForm {
   /**
    * Property dirtyChanged
    * @readonly
-   * @description Reports unsaved input to the owning overlay or route guard.
+   *
+   * @description
+   * Reports unsaved input to the owning overlay or route guard.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly dirtyChanged = output<boolean>();
+
   /**
    * Property baseline
    * @readonly
-   * @description Serialized last accepted draft used to identify unsaved changes.
+   *
+   * @description
+   * Serialized last accepted draft used to identify unsaved changes.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<string>}
    */
   private readonly baseline = signal('');
+
   /**
    * Property draftError
    * @readonly
-   * @description Validation feedback for staged checklist items.
+   *
+   * @description
+   * Validation feedback for staged checklist items.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly draftError = signal<string | null>(null);
@@ -171,9 +220,14 @@ export class ChecklistEditForm {
   /**
    * Property visible
    * @readonly
-   * @description Whether the hosting overlay is open. Watched to reseed the draft from {@link checklist} every time it opens.
+   *
+   * @description
+   * Whether the hosting overlay is open. Watched to reseed the draft from {@link checklist} every
+   * time it opens.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -181,9 +235,13 @@ export class ChecklistEditForm {
   /**
    * Property checklist
    * @readonly
-   * @description The checklist being edited, seeding the draft on every open.
+   *
+   * @description
+   * The checklist being edited, seeding the draft on every open.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ChecklistOutput | null>}
    */
   public readonly checklist: InputSignal<ChecklistOutput | null> = input<ChecklistOutput | null>(
@@ -193,9 +251,13 @@ export class ChecklistEditForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether the update write is in flight, which locks the submit control.
+   *
+   * @description
+   * Whether the update write is in flight, which locks the submit control.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -205,9 +267,13 @@ export class ChecklistEditForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the validated update payload.
+   *
+   * @description
+   * Emits the validated update payload.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<UpdateChecklistInput | CreateChecklistInput>}
    */
   public readonly submitted: OutputEmitterRef<UpdateChecklistInput | CreateChecklistInput> = output<
@@ -217,9 +283,13 @@ export class ChecklistEditForm {
   /**
    * Property cancelled
    * @readonly
-   * @description The operator backed out without saving anything.
+   *
+   * @description
+   * The operator backed out without saving anything.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
@@ -229,9 +299,13 @@ export class ChecklistEditForm {
   /**
    * Property model
    * @readonly
-   * @description Checklist metadata staged in the editor.
+   *
+   * @description
+   * Checklist metadata staged in the editor.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<{ name: string; referenceCode: string; version: string }>}
    */
   protected readonly model: WritableSignal<{
@@ -240,22 +314,52 @@ export class ChecklistEditForm {
     readonly version: string;
   }> = signal({ name: '', referenceCode: '', version: '1.0' });
 
-  /** Item rows staged for submission. */
+  /**
+   * Property staged
+   * @readonly
+   *
+   * @description
+   * Item rows staged for submission.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlyArray<ChecklistItemDraft>>}
+   */
   protected readonly staged: WritableSignal<ReadonlyArray<ChecklistItemDraft>> = signal<
     ReadonlyArray<ChecklistItemDraft>
   >([]);
 
-  /** The row currently being drafted. */
+  /**
+   * Property itemDraft
+   * @readonly
+   *
+   * @description
+   * The row currently being drafted.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ChecklistItemDraft>}
+   */
   protected readonly itemDraft: WritableSignal<ChecklistItemDraft> =
     signal<ChecklistItemDraft>(EMPTY_ITEM);
 
   /**
    * Property nameForm
    * @readonly
-   * @description The field tree and its rules for the checklist name.
+   *
+   * @description
+   * The field tree and its rules for the checklist name.
+   *
    * @access protected
    * @since 1.0.0
-   * @type {FieldTree<{ readonly name: string; readonly referenceCode: string; readonly version: string }>}
+   *
+   * @type {FieldTree<{
+   *   readonly name: string;
+   *   readonly referenceCode: string;
+   *   readonly version: string;
+   * }>}
    */
   protected readonly nameForm: FieldTree<{
     readonly name: string;
@@ -279,9 +383,13 @@ export class ChecklistEditForm {
   /**
    * Property itemDraftForm
    * @readonly
-   * @description The field tree and its rules for the item row being drafted.
+   *
+   * @description
+   * The field tree and its rules for the item row being drafted.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<ChecklistItemDraft>}
    */
   protected readonly itemDraftForm: FieldTree<ChecklistItemDraft> = form(
@@ -298,12 +406,17 @@ export class ChecklistEditForm {
       });
     },
   );
+
   /**
    * Property stagedForm
    * @readonly
-   * @description Signal Forms validation tree for editable checklist labels.
+   *
+   * @description
+   * Signal Forms validation tree for editable checklist labels.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<readonly ChecklistItemDraft[]>}
    */
   protected readonly stagedForm: FieldTree<readonly ChecklistItemDraft[]> = form(
@@ -319,12 +432,17 @@ export class ChecklistEditForm {
       });
     },
   );
+
   /**
    * Property dirty
    * @readonly
-   * @description Whether the current draft differs from its accepted baseline.
+   *
+   * @description
+   * Whether the current draft differs from its accepted baseline.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly dirty: Signal<boolean> = computed(
@@ -337,9 +455,13 @@ export class ChecklistEditForm {
 
   //#region Lifecycle
   /**
-   * Method constructor
+   * Constructor
    * @constructor
-   * @description Reseeds the name, staged items and item draft from {@link checklist} every time the hosting overlay opens.
+   *
+   * @description
+   * Reseeds the name, staged items and item draft from {@link checklist} every time the hosting
+   * overlay opens.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -376,9 +498,14 @@ export class ChecklistEditForm {
   //#region Methods
   /**
    * Method addItem
-   * @description Stages the current item row and resets the draft.
+   * @method addItem
+   *
+   * @description
+   * Stages the current item row and resets the draft.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected addItem(): void {
@@ -394,10 +521,16 @@ export class ChecklistEditForm {
 
   /**
    * Method removeItem
-   * @description Drops a staged row before submission.
+   * @method removeItem
+   *
+   * @description
+   * Drops a staged row before submission.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} index - Position of the row to remove.
+   *
    * @returns {void}
    */
   protected removeItem(index: number): void {
@@ -407,11 +540,17 @@ export class ChecklistEditForm {
 
   /**
    * Method moveItem
-   * @description Swaps a staged row with its previous or next neighbour.
+   * @method moveItem
+   *
+   * @description
+   * Swaps a staged row with its previous or next neighbour.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} index - Position of the row to move.
    * @param {-1 | 1} direction - `-1` moves the row up, `1` moves it down.
+   *
    * @returns {void}
    */
   protected moveItem(index: number, direction: -1 | 1): void {
@@ -430,10 +569,16 @@ export class ChecklistEditForm {
 
   /**
    * Method submit
-   * @description Marks the name field touched so an unmet rule shows, then emits once valid.
+   * @method submit
+   *
+   * @description
+   * Marks the name field touched so an unmet rule shows, then emits once valid.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {Event} event - The submit event.
+   *
    * @returns {void}
    */
   protected submit(event: Event): void {

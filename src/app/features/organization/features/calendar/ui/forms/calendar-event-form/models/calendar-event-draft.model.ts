@@ -1,5 +1,6 @@
 /**
  * Interface CalendarEventDraft
+ * @interface
  *
  * @description
  * The form's own field shape: a start/end each split into a calendar-day
@@ -14,18 +15,114 @@
  * @since 1.0.0
  */
 export interface CalendarEventDraft {
+  /**
+   * Property title
+   * @readonly
+   *
+   * @description
+   * Provides the title displayed for this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly title: string;
+
+  /**
+   * Property description
+   * @readonly
+   *
+   * @description
+   * Provides descriptive text entered for this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly description: string;
+
+  /**
+   * Property startsAtDate
+   * @readonly
+   *
+   * @description
+   * Date portion of the event start value before form submission.
+   *
+   * @access public
+   *
+   * @type {Date | null}
+   */
   readonly startsAtDate: Date | null;
+
+  /**
+   * Property startsAtTime
+   * @readonly
+   *
+   * @description
+   * Local time portion used with startsAtDate to build the event start value.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly startsAtTime: string;
+
+  /**
+   * Property endsAtDate
+   * @readonly
+   *
+   * @description
+   * Date portion of the event end value before form submission.
+   *
+   * @access public
+   *
+   * @type {Date | null}
+   */
   readonly endsAtDate: Date | null;
+
+  /**
+   * Property endsAtTime
+   * @readonly
+   *
+   * @description
+   * Local time portion used with endsAtDate to build the event end value.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly endsAtTime: string;
+
+  /**
+   * Property allDay
+   * @readonly
+   *
+   * @description
+   * Indicates that the event spans whole calendar days.
+   *
+   * @access public
+   *
+   * @type {boolean}
+   */
   readonly allDay: boolean;
+
+  /**
+   * Property facilityId
+   * @readonly
+   *
+   * @description
+   * Identifies the facility associated with this event.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly facilityId: string;
 }
 
 /**
  * Interface CalendarEventFormValues
+ * @interface
  *
  * @description
  * The form's validated submit payload: `startsAt` and — when set —
@@ -40,10 +137,81 @@ export interface CalendarEventDraft {
  * @since 1.0.0
  */
 export interface CalendarEventFormValues {
+  /**
+   * Property title
+   * @readonly
+   *
+   * @description
+   * Provides the title displayed for this record.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly title: string;
+
+  /**
+   * Property description
+   * @readonly
+   *
+   * @description
+   * Provides descriptive text entered for this record.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly description: string | null;
+
+  /**
+   * Property startsAt
+   * @readonly
+   *
+   * @description
+   * Records when this calendar event form starts.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly startsAt: string;
+
+  /**
+   * Property endsAt
+   * @readonly
+   *
+   * @description
+   * Records when this calendar event form ends.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly endsAt: string | null;
+
+  /**
+   * Property allDay
+   * @readonly
+   *
+   * @description
+   * Indicates that the event spans whole calendar days.
+   *
+   * @access public
+   *
+   * @type {boolean}
+   */
   readonly allDay: boolean;
+
+  /**
+   * Property facilityId
+   * @readonly
+   *
+   * @description
+   * Identifies the facility associated with this event.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly facilityId: string | null;
 }

@@ -116,12 +116,12 @@ export function redirectToStripe(documentRef: Document, url: string): void {
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-onboarding-wizard-page />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-onboarding-wizard-page',
@@ -155,9 +155,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property addressSearch
    * @readonly
-   * @description Page-scoped suggestions; the form only consumes state and emits query changes.
+   *
+   * @description
+   * Page-scoped suggestions; the form only consumes state and emits query changes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {InstanceType<typeof FacilityAddressSearchStore>}
    */
   protected readonly addressSearch: InstanceType<typeof FacilityAddressSearchStore> = inject(
@@ -167,10 +171,15 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Method searchFacilityAddress
    * @method searchFacilityAddress
-   * @description Queries suggestions only for the current creator organization; clearing cancels obsolete work.
+   *
+   * @description
+   * Queries suggestions only for the current creator organization; clearing cancels obsolete work.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} query - Typed address query.
+   *
    * @returns {void}
    */
   protected searchFacilityAddress(query: string): void {
@@ -182,11 +191,46 @@ export class OnboardingWizardPage implements OnInit {
     this.addressSearch.search({ organizationId, query });
   }
 
-  /** @description Releases in-flight setup work when the route closes. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Releases in-flight setup work when the route closes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Supplies the validated return URL used after onboarding completes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
-  /** @description The lifecycle phases are separate from resource creation and remain locally retryable. */
+  /**
+   * Property lifecycleError
+   * @readonly
+   *
+   * @description
+   * Exposes retryable lifecycle failures separately from resource creation failures.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly lifecycleError: Signal<StoreError | null> = computed(
     () =>
       this.store.startCallState().error ??
@@ -221,10 +265,62 @@ export class OnboardingWizardPage implements OnInit {
     }
     return null;
   });
+
+  /**
+   * Property planCatalogCallState
+   * @readonly
+   *
+   * @description
+   * Tracks plan and pricing catalog loading for the selection step and its retry action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CallState<void>>}
+   */
   protected readonly planCatalogCallState: WritableSignal<CallState<void>> =
     signal(idleCallState());
+
+  /**
+   * Property rolesCallState
+   * @readonly
+   *
+   * @description
+   * Tracks role catalog loading for the invitation step and its retry action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CallState<void>>}
+   */
   protected readonly rolesCallState: WritableSignal<CallState<void>> = signal(idleCallState());
+
+  /**
+   * Property facilitiesCallState
+   * @readonly
+   *
+   * @description
+   * Tracks facility catalog loading for the first equipment step and its retry action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CallState<void>>}
+   */
   protected readonly facilitiesCallState: WritableSignal<CallState<void>> = signal(idleCallState());
+
+  /**
+   * Property catalogError
+   * @readonly
+   *
+   * @description
+   * Exposes only the catalog failure belonging to the currently active step.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly catalogError: Signal<StoreError | null> = computed(() => {
     switch (this.currentStep()?.key) {
       case 'select_plan':
@@ -237,12 +333,17 @@ export class OnboardingWizardPage implements OnInit {
         return null;
     }
   });
+
   /**
    * Property setupStore
    * @readonly
-   * @description Browser journal that owns preparation, durable replay and batch request state.
+   *
+   * @description
+   * Browser journal that owns preparation, durable replay and batch request state.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {InstanceType<typeof OnboardingSetupStore>}
    */
   protected readonly setupStore = inject(OnboardingSetupStore);
@@ -250,9 +351,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property restoredInvitations
    * @readonly
-   * @description Prepared member rows restored from the server.
+   *
+   * @description
+   * Prepared member rows restored from the server.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly SetupInviteMemberInput[]>}
    */
   protected readonly restoredInvitations = computed(() =>
@@ -261,12 +366,17 @@ export class OnboardingWizardPage implements OnInit {
       .filter((op) => op.stepKey === 'invite_members')
       .map((op) => op.payload as SetupInviteMemberInput),
   );
+
   /**
    * Property completedInvitations
    * @readonly
-   * @description Member rows durably created by this session.
+   *
+   * @description
+   * Member rows durably created by this session.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly SetupInviteMemberInput[]>}
    */
   protected readonly completedInvitations = computed(() =>
@@ -275,12 +385,17 @@ export class OnboardingWizardPage implements OnInit {
       .filter((op) => op.stepKey === 'invite_members' && op.status === 'completed')
       .map((op) => op.payload as SetupInviteMemberInput),
   );
+
   /**
    * Property restoredFacilities
    * @readonly
-   * @description Prepared facility rows restored from the server.
+   *
+   * @description
+   * Prepared facility rows restored from the server.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly SetupCreateFacilityInput[]>}
    */
   protected readonly restoredFacilities = computed(() =>
@@ -289,12 +404,17 @@ export class OnboardingWizardPage implements OnInit {
       .filter((op) => op.stepKey === 'create_first_facility')
       .map((op) => op.payload as SetupCreateFacilityInput),
   );
+
   /**
    * Property completedFacilityDrafts
    * @readonly
-   * @description Facility rows durably created by this session.
+   *
+   * @description
+   * Facility rows durably created by this session.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly SetupCreateFacilityInput[]>}
    */
   protected readonly completedFacilityDrafts = computed(() =>
@@ -303,12 +423,17 @@ export class OnboardingWizardPage implements OnInit {
       .filter((op) => op.stepKey === 'create_first_facility' && op.status === 'completed')
       .map((op) => op.payload as SetupCreateFacilityInput),
   );
+
   /**
    * Property singleOperation
    * @readonly
-   * @description Persisted result or draft for the singleton organization/equipment step.
+   *
+   * @description
+   * Persisted result or draft for the singleton organization/equipment step.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<OnboardingSetupOperation | undefined>}
    */
   protected readonly singleOperation = computed(() =>
@@ -320,12 +445,17 @@ export class OnboardingWizardPage implements OnInit {
           (op.stepKey === 'create_organization' || op.stepKey === 'create_first_equipment'),
       ),
   );
+
   /**
    * Property restoredOrganization
    * @readonly
-   * @description Prepared organization name, only editable before creation.
+   *
+   * @description
+   * Prepared organization name, only editable before creation.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<SetupCreateOrganizationInput | null>}
    */
   protected readonly restoredOrganization: Signal<SetupCreateOrganizationInput | null> = computed(
@@ -336,12 +466,17 @@ export class OnboardingWizardPage implements OnInit {
         : null;
     },
   );
+
   /**
    * Property restoredEquipment
    * @readonly
-   * @description Prepared equipment fields and assigned facility.
+   *
+   * @description
+   * Prepared equipment fields and assigned facility.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<SetupCreateEquipmentInput | null>}
    */
   protected readonly restoredEquipment = computed(() => {
@@ -352,12 +487,17 @@ export class OnboardingWizardPage implements OnInit {
     };
     return { ...payload, facilityId: facility?.split('/').pop() };
   });
+
   /**
    * Property failedInvitations
    * @readonly
-   * @description Failed member rows remain identifiable beside their retry action.
+   *
+   * @description
+   * Failed member rows remain identifiable beside their retry action.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly failedInvitations = computed(() =>
@@ -369,12 +509,17 @@ export class OnboardingWizardPage implements OnInit {
       )
       .map((op) => (op.payload as SetupInviteMemberInput).email),
   );
+
   /**
    * Property failedFacilities
    * @readonly
-   * @description Failed facility rows remain identifiable beside their retry action.
+   *
+   * @description
+   * Failed facility rows remain identifiable beside their retry action.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly failedFacilities = computed(() =>
@@ -387,12 +532,17 @@ export class OnboardingWizardPage implements OnInit {
       )
       .map((op) => (op.payload as SetupCreateFacilityInput).name),
   );
+
   /**
    * Property host
    * @readonly
-   * @description Locates the rendered step heading for keyboard focus after progression.
+   *
+   * @description
+   * Locates the rendered step heading for keyboard focus after progression.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {ElementRef<HTMLElement>}
    */
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
@@ -400,13 +550,29 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property injector
    * @readonly
-   * @description Schedules browser-only focus after the new step has rendered.
+   *
+   * @description
+   * Schedules browser-only focus after the new step has rendered.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {Injector}
    */
   private readonly injector: Injector = inject(Injector);
 
+  /**
+   * Property stepNumberLabel
+   * @readonly
+   *
+   * @description
+   * Formats the next step's position and the total step count for the page.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly stepNumberLabel: Signal<string> = computed(() => {
     const position = Math.max(
       1,
@@ -415,6 +581,19 @@ export class OnboardingWizardPage implements OnInit {
     const total = this.store.progress().total;
     return $localize`:@@onboarding.wizard.stepPosition:Step ${position}:position: of ${total}:total:`;
   });
+
+  /**
+   * Property progressValue
+   * @readonly
+   *
+   * @description
+   * Converts completed steps into the percentage consumed by the progress indicator.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   protected readonly progressValue: Signal<number> = computed(() => {
     const { done, total } = this.store.progress();
     return total > 0 ? (done / total) * 100 : 0;
@@ -423,9 +602,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property store
    * @readonly
-   * @description Root-provided onboarding record and lifecycle actions.
+   *
+   * @description
+   * Root-provided onboarding record and lifecycle actions.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OnboardingStore}
    */
   protected readonly store: OnboardingStore = inject<OnboardingStore>(OnboardingStore);
@@ -433,9 +616,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property organizationSetupService
    * @readonly
-   * @description The one organization surface onboarding creates resources through.
+   *
+   * @description
+   * The one organization surface onboarding creates resources through.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationSetupService}
    */
   private readonly organizationSetupService: OrganizationSetupService =
@@ -444,9 +631,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property planService
    * @readonly
-   * @description Root-provided plan catalog, consumed directly per `FEATURE.md` "Cross-Feature Dependencies".
+   *
+   * @description
+   * Root-provided plan catalog, consumed directly per `FEATURE.md` "Cross-Feature Dependencies".
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {PlanService}
    */
   private readonly planService: PlanService = inject<PlanService>(PlanService);
@@ -454,9 +645,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property billingService
    * @readonly
-   * @description Root-provided billing service, used for pricing and to start Checkout for a paid plan.
+   *
+   * @description
+   * Root-provided billing service, used for pricing and to start Checkout for a paid plan.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {BillingService}
    */
   private readonly billingService: BillingService = inject<BillingService>(BillingService);
@@ -464,9 +659,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property router
    * @readonly
-   * @description Used to leave the wizard once onboarding is complete.
+   *
+   * @description
+   * Used to leave the wizard once onboarding is complete.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
@@ -474,9 +673,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property feedback
    * @readonly
-   * @description Announces the completed activation before the dashboard takes over.
+   *
+   * @description
+   * Announces the completed activation before the dashboard takes over.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {FeedbackService}
    */
   private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
@@ -484,18 +687,26 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property document
    * @readonly
-   * @description Used for the SSR-safe Stripe Checkout redirect.
+   *
+   * @description
+   * Used for the SSR-safe Stripe Checkout redirect.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Document}
    */
   private readonly document: Document = inject<Document>(DOCUMENT);
 
   /**
    * Property actionFocus
-   * @description Remembers the initiating control while a request temporarily disables it.
+   *
+   * @description
+   * Remembers the initiating control while a request temporarily disables it.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {{ element: HTMLElement; stepKey: OnboardingStepKey | null } | null}
    */
   private actionFocus: { element: HTMLElement; stepKey: OnboardingStepKey | null } | null = null;
@@ -503,9 +714,14 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Method rememberActionFocus
    * @method rememberActionFocus
-   * @description Captures the initiating control before native disabling blurs it; restoration never overrides another focused control.
+   *
+   * @description
+   * Captures the initiating control before native disabling blurs it; restoration never overrides
+   * another focused control.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @returns {void}
    */
   private rememberActionFocus(): void {
@@ -519,9 +735,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property currentStep
    * @readonly
-   * @description The step the operator should act on next, or `null` once every step is resolved.
+   *
+   * @description
+   * The step the operator should act on next, or `null` once every step is resolved.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OnboardingStepOutput | null>}
    */
   protected readonly currentStep: Signal<OnboardingStepOutput | null> = computed(() => {
@@ -534,9 +754,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property stepPresentation
    * @readonly
-   * @description The active step's title and description, or `null` when there is no active step.
+   *
+   * @description
+   * The active step's title and description, or `null` when there is no active step.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<(typeof ONBOARDING_STEP_PRESENTATION)[OnboardingStepKey] | null>}
    */
   protected readonly stepPresentation: Signal<
@@ -550,9 +774,14 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property canSkip
    * @readonly
-   * @description Whether the active step may be skipped right now — the backend both declares it skippable and currently offers the skip.
+   *
+   * @description
+   * Whether the active step may be skipped right now — the backend both declares it skippable and
+   * currently offers the skip.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSkip: Signal<boolean> = computed<boolean>(() => {
@@ -564,9 +793,15 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property nextStepHint
    * @readonly
-   * @description Names the step that follows the active one — "Next: Choose a plan" — or says this is the last step, so the flow's shape is visible from inside any step. A step the backend reports `blocked` only because this one is not done yet still counts as what comes next.
+   *
+   * @description
+   * Names the step that follows the active one — "Next: Choose a plan" — or says this is the last
+   * step, so the flow's shape is visible from inside any step. A step the backend reports `blocked`
+   * only because this one is not done yet still counts as what comes next.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly nextStepHint: Signal<string> = computed<string>(() => {
@@ -589,9 +824,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property plans
    * @readonly
-   * @description The `select_plan` step's catalog, loaded lazily once that step becomes active.
+   *
+   * @description
+   * The `select_plan` step's catalog, loaded lazily once that step becomes active.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<readonly PlanOutput[]>}
    */
   protected readonly plans: WritableSignal<readonly PlanOutput[]> = signal<readonly PlanOutput[]>(
@@ -601,9 +840,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property pricing
    * @readonly
-   * @description The `select_plan` step's display pricing, loaded lazily alongside {@link plans}.
+   *
+   * @description
+   * The `select_plan` step's display pricing, loaded lazily alongside {@link plans}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<readonly PlanPricingOutput[]>}
    */
   protected readonly pricing: WritableSignal<readonly PlanPricingOutput[]> = signal<
@@ -613,9 +856,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property roles
    * @readonly
-   * @description The `invite_members` step's assignable roles, loaded lazily once that step becomes active.
+   *
+   * @description
+   * The `invite_members` step's assignable roles, loaded lazily once that step becomes active.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<readonly SetupOrganizationRole[]>}
    */
   protected readonly roles: WritableSignal<readonly SetupOrganizationRole[]> = signal<
@@ -625,9 +872,14 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property createdFacilities
    * @readonly
-   * @description The facilities the `create_first_facility` step created, kept so `create_first_equipment` can attach the equipment to one of them. Reloaded from setup when the wizard resumes at equipment.
+   *
+   * @description
+   * The facilities the `create_first_facility` step created, kept so `create_first_equipment` can
+   * attach the equipment to one of them. Reloaded from setup when the wizard resumes at equipment.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<readonly SetupFacilitySummary[]>}
    */
   protected readonly createdFacilities: WritableSignal<readonly SetupFacilitySummary[]> = signal<
@@ -637,9 +889,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property catalogPending
    * @readonly
-   * @description Whether a step's own catalog (plans, pricing, or roles) is loading.
+   *
+   * @description
+   * Whether a step's own catalog (plans, pricing, or roles) is loading.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly catalogPending: Signal<boolean> = computed(() =>
@@ -651,9 +907,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property actionState
    * @readonly
-   * @description The Billing checkout request state; resource creation belongs to OnboardingSetupStore.
+   *
+   * @description
+   * The Billing checkout request state; resource creation belongs to OnboardingSetupStore.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<CallState<void>>}
    */
   protected readonly actionState: WritableSignal<CallState<void>> = signal(idleCallState());
@@ -661,9 +921,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Property stepPending
    * @readonly
-   * @description Combines durable setup, Billing and progression requests to prevent competing commands.
+   *
+   * @description
+   * Combines durable setup, Billing and progression requests to prevent competing commands.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly stepPending: Signal<boolean> = computed(
@@ -677,7 +941,17 @@ export class OnboardingWizardPage implements OnInit {
 
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Connects step completion, catalog loading and focus restoration to the page lifecycle.
+   *
+   * @access public
+   * @since unreleased
+   */
   constructor() {
     let wasPending = false;
     effect(() => {
@@ -780,12 +1054,19 @@ export class OnboardingWizardPage implements OnInit {
     });
   }
 
+  //#endregion
+
+  //#region Lifecycle
   /**
    * Method ngOnInit
    * @method ngOnInit
-   * @description Loads the route-critical onboarding record after component creation.
+   *
+   * @description
+   * Loads the route-critical onboarding record after component creation.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {void}
    */
   public ngOnInit(): void {
@@ -804,6 +1085,7 @@ export class OnboardingWizardPage implements OnInit {
    *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected chooseWorkspace(): void {
@@ -819,10 +1101,16 @@ export class OnboardingWizardPage implements OnInit {
 
   /**
    * Method submitOrganization
-   * @description Creates the organization, then confirms `create_organization`.
+   * @method submitOrganization
+   *
+   * @description
+   * Creates the organization, then confirms `create_organization`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {SetupCreateOrganizationInput} input - The organization draft.
+   *
    * @returns {void}
    */
   protected submitOrganization(input: SetupCreateOrganizationInput): void {
@@ -832,10 +1120,16 @@ export class OnboardingWizardPage implements OnInit {
 
   /**
    * Method submitMembers
-   * @description Sends the staged invitations, then confirms `invite_members`.
+   * @method submitMembers
+   *
+   * @description
+   * Sends the staged invitations, then confirms `invite_members`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {readonly SetupInviteMemberInput[]} invitations - The non-empty staged batch.
+   *
    * @returns {void}
    */
   protected submitMembers(invitations: readonly SetupInviteMemberInput[]): void {
@@ -846,10 +1140,16 @@ export class OnboardingWizardPage implements OnInit {
 
   /**
    * Method submitFacilities
-   * @description Prepares and creates the facility batch through the durable setup store.
+   * @method submitFacilities
+   *
+   * @description
+   * Prepares and creates the facility batch through the durable setup store.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {readonly SetupCreateFacilityInput[]} facilities - The staged batch.
+   *
    * @returns {void}
    */
   protected submitFacilities(facilities: readonly SetupCreateFacilityInput[]): void {
@@ -859,10 +1159,16 @@ export class OnboardingWizardPage implements OnInit {
 
   /**
    * Method submitEquipment
-   * @description Registers the equipment, then confirms `create_first_equipment`.
+   * @method submitEquipment
+   *
+   * @description
+   * Registers the equipment, then confirms `create_first_equipment`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {SetupCreateEquipmentInput} input - The equipment draft.
+   *
    * @returns {void}
    */
   protected submitEquipment(input: SetupCreateEquipmentInput): void {
@@ -879,9 +1185,13 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Method confirmSavedStep
    * @method confirmSavedStep
-   * @description Confirms a server-recorded singleton resource without recreating it.
+   *
+   * @description
+   * Confirms a server-recorded singleton resource without recreating it.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected confirmSavedStep(): void {
@@ -893,6 +1203,7 @@ export class OnboardingWizardPage implements OnInit {
 
   /**
    * Method submitPlan
+   * @method submitPlan
    *
    * @description
    * A free plan confirms `select_plan` directly. A paid plan starts a Stripe
@@ -938,6 +1249,7 @@ export class OnboardingWizardPage implements OnInit {
 
   /**
    * Method skipCurrentStep
+   * @method skipCurrentStep
    *
    * @description
    * Skips the active step through the store, when the backend marked it
@@ -958,6 +1270,7 @@ export class OnboardingWizardPage implements OnInit {
 
   /**
    * Method rollbackStep
+   * @method rollbackStep
    *
    * @description
    * Rolls back the last completed step through the store, when
@@ -979,10 +1292,15 @@ export class OnboardingWizardPage implements OnInit {
   /**
    * Method reportActionFailure
    * @method reportActionFailure
-   * @description Keeps retry state and publishes one toast for a failed resource or batch request.
+   *
+   * @description
+   * Keeps retry state and publishes one toast for a failed resource or batch request.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {StoreError} failure - Normalized API failure.
+   *
    * @returns {void}
    */
   private reportActionFailure(failure: StoreError): void {
@@ -997,9 +1315,14 @@ export class OnboardingWizardPage implements OnInit {
 
   /**
    * Method loadPlanCatalog
-   * @description Loads the plan catalog and its display pricing together, once.
+   * @method loadPlanCatalog
+   *
+   * @description
+   * Loads the plan catalog and its display pricing together, once.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private loadPlanCatalog(): void {
@@ -1025,7 +1348,18 @@ export class OnboardingWizardPage implements OnInit {
       });
   }
 
-  /** @description Loads roles once; an empty catalog is a successful response. */
+  /**
+   * Method loadRoles
+   * @method loadRoles
+   *
+   * @description
+   * Loads roles once; an empty catalog is a successful response.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   private loadRoles(): void {
     const organizationId = this.store.targetOrganizationId();
     if (!organizationId) return;
@@ -1051,7 +1385,18 @@ export class OnboardingWizardPage implements OnInit {
       });
   }
 
-  /** @description Restores persisted sites when resuming directly at equipment. */
+  /**
+   * Method loadFacilities
+   * @method loadFacilities
+   *
+   * @description
+   * Restores persisted sites when resuming directly at equipment.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   private loadFacilities(): void {
     const organizationId = this.store.targetOrganizationId();
     if (!organizationId) return;
@@ -1077,7 +1422,18 @@ export class OnboardingWizardPage implements OnInit {
       });
   }
 
-  /** @description Explicit retries never depend on a catalog's item count. */
+  /**
+   * Method retryCatalog
+   * @method retryCatalog
+   *
+   * @description
+   * Explicit retries never depend on a catalog's item count.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected retryCatalog(): void {
     if (this.catalogPending()) return;
     switch (this.currentStep()?.key) {
@@ -1093,7 +1449,18 @@ export class OnboardingWizardPage implements OnInit {
     }
   }
 
-  /** @description Retries the failed lifecycle command without creating a resource again. */
+  /**
+   * Method retryLifecycle
+   * @method retryLifecycle
+   *
+   * @description
+   * Retries the failed lifecycle command without creating a resource again.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected retryLifecycle(): void {
     this.rememberActionFocus();
     if (this.store.isBusy()) return;
@@ -1102,4 +1469,5 @@ export class OnboardingWizardPage implements OnInit {
     else if (this.store.rollbackCallState().error) this.rollbackStep();
     else this.store.load();
   }
+  //#endregion
 }

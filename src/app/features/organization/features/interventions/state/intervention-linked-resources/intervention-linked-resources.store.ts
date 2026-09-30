@@ -28,16 +28,24 @@ import type { InterventionLinkedResourcesState } from './models';
 
 /**
  * Constant LINKED_RESOURCES_PAGE_SIZE
- * @description Explicit canonical collection page size; endpoints remain unchanged.
+ *
+ * @description
+ * Explicit canonical collection page size; endpoints remain unchanged.
+ *
  * @since 1.1.0
+ *
  * @type {number}
  */
 export const LINKED_RESOURCES_PAGE_SIZE: number = 30;
 
 /**
  * Constant INITIAL_STATE
- * @description Page-scoped linked resource caches and independent request lifecycles.
+ *
+ * @description
+ * Page-scoped linked resource caches and independent request lifecycles.
+ *
  * @since 6.2.0
+ *
  * @type {InterventionLinkedResourcesState}
  */
 const INITIAL_STATE: InterventionLinkedResourcesState = {
@@ -81,9 +89,12 @@ const INITIAL_STATE: InterventionLinkedResourcesState = {
 };
 
 /**
- * Store InterventionLinkedResourcesStore
- * @description Owns three lazy paged collections, criteria and invalidation per intervention.
+ * Constant InterventionLinkedResourcesStore
+ *
+ * @description
+ * Owns three lazy paged collections, criteria and invalidation per intervention.
  * Cancellation happens before debounce and every result is guarded by context and generation.
+ *
  * @since 6.2.0
  */
 export const InterventionLinkedResourcesStore = signalStore(
@@ -200,13 +211,19 @@ export const InterventionLinkedResourcesStore = signalStore(
           }),
         ),
       );
+
       /**
        * Method loadFacilities
-       * @description Starts a cancellable page read while preserving existing results.
+       *
+       * @description
+       * Starts a cancellable page read while preserving existing results.
+       *
        * @since 6.2.0
+       *
        * @param {string} interventionId - Current context.
        * @param {number} page - Requested page.
        * @param {number} delay - Text-only debounce.
+       *
        * @returns {void}
        */
       function loadFacilities(interventionId: string, page: number, delay: number = 0): void {
@@ -313,13 +330,19 @@ export const InterventionLinkedResourcesStore = signalStore(
           }),
         ),
       );
+
       /**
        * Method loadEquipment
-       * @description Starts a cancellable page read while preserving existing results.
+       *
+       * @description
+       * Starts a cancellable page read while preserving existing results.
+       *
        * @since 6.2.0
+       *
        * @param {string} interventionId - Current context.
        * @param {number} page - Requested page.
        * @param {number} delay - Text-only debounce.
+       *
        * @returns {void}
        */
       function loadEquipment(interventionId: string, page: number, delay: number = 0): void {
@@ -422,13 +445,19 @@ export const InterventionLinkedResourcesStore = signalStore(
           }),
         ),
       );
+
       /**
        * Method loadInspections
-       * @description Starts a cancellable page read while preserving existing results.
+       *
+       * @description
+       * Starts a cancellable page read while preserving existing results.
+       *
        * @since 6.2.0
+       *
        * @param {string} interventionId - Current context.
        * @param {number} page - Requested page.
        * @param {number} delay - Text-only debounce.
+       *
        * @returns {void}
        */
       function loadInspections(interventionId: string, page: number, delay: number = 0): void {
@@ -469,9 +498,14 @@ export const InterventionLinkedResourcesStore = signalStore(
 
       /**
        * Method setContext
-       * @description Cancels every previous collection before switching intervention.
+       *
+       * @description
+       * Cancels every previous collection before switching intervention.
+       *
        * @since 6.2.0
+       *
        * @param {string} interventionId - Current context.
+       *
        * @returns {void}
        */
       function setContext(interventionId: string): void {
@@ -491,12 +525,18 @@ export const InterventionLinkedResourcesStore = signalStore(
           inspectionsGeneration: store.inspectionsGeneration() + 1,
         });
       }
+
       /**
        * Function loadCachedLinkedRows
-       * @description Re-evaluates only collections that had been read before switching offline.
+       *
+       * @description
+       * Re-evaluates only collections that had been read before switching offline.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {string | null} interventionId - Current intervention.
+       *
        * @returns {void}
        */
       const loadCachedLinkedRows = (interventionId: string | null): void => {
@@ -507,7 +547,11 @@ export const InterventionLinkedResourcesStore = signalStore(
       };
       return {
         setContext,
-        /** Keeps last available linked rows in memory; offline criteria are never evaluated locally. */
+
+        /**
+         * @description
+         * Keeps last available linked rows in memory; offline criteria are never evaluated locally.
+         */
         setOnline(online: boolean): void {
           if (store.online() === online) return;
           requestFacilities(null);
@@ -540,21 +584,32 @@ export const InterventionLinkedResourcesStore = signalStore(
           });
           if (!online) loadCachedLinkedRows(store.loadedForInterventionId());
         },
+
         /**
          * Method deactivate
-         * @description Retains cache and criteria while another panel is active.
+         *
+         * @description
+         * Retains cache and criteria while another panel is active.
+         *
          * @since 6.2.0
+         *
          * @returns {void}
          */
         deactivate(): void {
           patchState(store, { activeResource: null });
         },
+
         /**
          * Method invalidate
-         * @description Refreshes only the active affected collection and marks the others dirty.
+         *
+         * @description
+         * Refreshes only the active affected collection and marks the others dirty.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Mutation owner.
          * @param {readonly string[]} collections - Affected collections.
+         *
          * @returns {void}
          */
         invalidate(interventionId: string, collections: readonly string[]): void {
@@ -587,9 +642,15 @@ export const InterventionLinkedResourcesStore = signalStore(
 
         /**
          * Method queryFacilities
-         * @description Accepts controlled criteria; only a changed text query waits 300 ms.
+         *
+         * @description
+         * Accepts controlled criteria; only a changed text query waits 300 ms.
+         *
          * @since 6.2.0
-         * @param {InterventionFacilitiesTableQuery & { interventionId: string }} query - Current criteria.
+         *
+         * @param {InterventionFacilitiesTableQuery & { interventionId: string }} query - Current
+         *   criteria.
+         *
          * @returns {void}
          */
         queryFacilities(
@@ -611,12 +672,19 @@ export const InterventionLinkedResourcesStore = signalStore(
             sameFilters && !sameSearch && query.search.trim() ? 300 : 0,
           );
         },
+
         /**
          * Method ensureFacilitiesLoaded
-         * @description Activates the table and reuses its criteria until the intervention changes.
+         *
+         * @description
+         * Activates the table and reuses its criteria until the intervention changes.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
-         * @param {FacilityOutput['recordStatus']} [recordStatus] - Linked draft or published records to request.
+         * @param {FacilityOutput['recordStatus']} [recordStatus] - Linked draft or published
+         *   records to request.
+         *
          * @returns {void}
          */
         ensureFacilitiesLoaded(
@@ -633,12 +701,20 @@ export const InterventionLinkedResourcesStore = signalStore(
           )
             loadFacilities(interventionId, 1);
         },
+
         /**
          * Method reloadFacilities
-         * @description Reloads the first page after creation, preserving table filters and the requested record status.
+         *
+         * @description
+         * Reloads the first page after creation, preserving table filters and the requested record
+         * status.
+         *
          * @since 8.0.0
+         *
          * @param {string} interventionId - Current context.
-         * @param {FacilityOutput['recordStatus']} [recordStatus] - Linked draft or published records to request.
+         * @param {FacilityOutput['recordStatus']} [recordStatus] - Linked draft or published
+         *   records to request.
+         *
          * @returns {void}
          */
         reloadFacilities(
@@ -649,32 +725,50 @@ export const InterventionLinkedResourcesStore = signalStore(
           patchState(store, { facilitiesRecordStatus: recordStatus });
           loadFacilities(interventionId, 1);
         },
+
         /**
          * Method refreshFacilities
-         * @description Forces the first page with unchanged saved criteria.
+         *
+         * @description
+         * Forces the first page with unchanged saved criteria.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         refreshFacilities(interventionId: string): void {
           if (store.loadedForInterventionId() === interventionId) loadFacilities(interventionId, 1);
         },
+
         /**
          * Method retryFacilities
-         * @description Retries the failed page, retaining previous pages and criteria.
+         *
+         * @description
+         * Retries the failed page, retaining previous pages and criteria.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         retryFacilities(interventionId: string): void {
           if (store.loadedForInterventionId() === interventionId)
             loadFacilities(interventionId, store.facilitiesFailedPage() ?? 1);
         },
+
         /**
          * Method loadMoreFacilities
-         * @description Appends the next page with identity deduplication and guards concurrent loads.
+         *
+         * @description
+         * Appends the next page with identity deduplication and guards concurrent loads.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         loadMoreFacilities(interventionId: string): void {
@@ -685,9 +779,15 @@ export const InterventionLinkedResourcesStore = signalStore(
 
         /**
          * Method queryEquipment
-         * @description Accepts controlled criteria; only a changed text query waits 300 ms.
+         *
+         * @description
+         * Accepts controlled criteria; only a changed text query waits 300 ms.
+         *
          * @since 6.2.0
-         * @param {InterventionEquipmentTableQuery & { interventionId: string }} query - Current criteria.
+         *
+         * @param {InterventionEquipmentTableQuery & { interventionId: string }} query - Current
+         *   criteria.
+         *
          * @returns {void}
          */
         queryEquipment(query: InterventionEquipmentTableQuery & { interventionId: string }): void {
@@ -707,11 +807,17 @@ export const InterventionLinkedResourcesStore = signalStore(
             sameFilters && !sameSearch && query.search.trim() ? 300 : 0,
           );
         },
+
         /**
          * Method ensureEquipmentLoaded
-         * @description Activates the table and reuses its criteria until the intervention changes.
+         *
+         * @description
+         * Activates the table and reuses its criteria until the intervention changes.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         ensureEquipmentLoaded(interventionId: string): void {
@@ -720,32 +826,50 @@ export const InterventionLinkedResourcesStore = signalStore(
           if (store.equipmentCallState().status === 'idle' || store.equipmentInvalidated())
             loadEquipment(interventionId, 1);
         },
+
         /**
          * Method refreshEquipment
-         * @description Forces the first page with unchanged saved criteria.
+         *
+         * @description
+         * Forces the first page with unchanged saved criteria.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         refreshEquipment(interventionId: string): void {
           if (store.loadedForInterventionId() === interventionId) loadEquipment(interventionId, 1);
         },
+
         /**
          * Method retryEquipment
-         * @description Retries the failed page, retaining previous pages and criteria.
+         *
+         * @description
+         * Retries the failed page, retaining previous pages and criteria.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         retryEquipment(interventionId: string): void {
           if (store.loadedForInterventionId() === interventionId)
             loadEquipment(interventionId, store.equipmentFailedPage() ?? 1);
         },
+
         /**
          * Method loadMoreEquipment
-         * @description Appends the next page with identity deduplication and guards concurrent loads.
+         *
+         * @description
+         * Appends the next page with identity deduplication and guards concurrent loads.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         loadMoreEquipment(interventionId: string): void {
@@ -756,9 +880,15 @@ export const InterventionLinkedResourcesStore = signalStore(
 
         /**
          * Method queryInspections
-         * @description Accepts controlled criteria; only a changed text query waits 300 ms.
+         *
+         * @description
+         * Accepts controlled criteria; only a changed text query waits 300 ms.
+         *
          * @since 6.2.0
-         * @param {InterventionInspectionsTableQuery & { interventionId: string }} query - Current criteria.
+         *
+         * @param {InterventionInspectionsTableQuery & { interventionId: string }} query - Current
+         *   criteria.
+         *
          * @returns {void}
          */
         queryInspections(
@@ -780,11 +910,17 @@ export const InterventionLinkedResourcesStore = signalStore(
             sameFilters && !sameSearch && query.search.trim() ? 300 : 0,
           );
         },
+
         /**
          * Method ensureInspectionsLoaded
-         * @description Activates the table and reuses its criteria until the intervention changes.
+         *
+         * @description
+         * Activates the table and reuses its criteria until the intervention changes.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         ensureInspectionsLoaded(interventionId: string): void {
@@ -793,33 +929,51 @@ export const InterventionLinkedResourcesStore = signalStore(
           if (store.inspectionsCallState().status === 'idle' || store.inspectionsInvalidated())
             loadInspections(interventionId, 1);
         },
+
         /**
          * Method refreshInspections
-         * @description Forces the first page with unchanged saved criteria.
+         *
+         * @description
+         * Forces the first page with unchanged saved criteria.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         refreshInspections(interventionId: string): void {
           if (store.loadedForInterventionId() === interventionId)
             loadInspections(interventionId, 1);
         },
+
         /**
          * Method retryInspections
-         * @description Retries the failed page, retaining previous pages and criteria.
+         *
+         * @description
+         * Retries the failed page, retaining previous pages and criteria.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         retryInspections(interventionId: string): void {
           if (store.loadedForInterventionId() === interventionId)
             loadInspections(interventionId, store.inspectionsFailedPage() ?? 1);
         },
+
         /**
          * Method loadMoreInspections
-         * @description Appends the next page with identity deduplication and guards concurrent loads.
+         *
+         * @description
+         * Appends the next page with identity deduplication and guards concurrent loads.
+         *
          * @since 6.2.0
+         *
          * @param {string} interventionId - Current context.
+         *
          * @returns {void}
          */
         loadMoreInspections(interventionId: string): void {
@@ -835,8 +989,13 @@ export const InterventionLinkedResourcesStore = signalStore(
 
 /**
  * Type InterventionLinkedResourcesStoreType
- * @description Injectable instance of the page-owned linked resource store.
+ *
+ * @description
+ * Injectable instance of the page-owned linked resource store.
+ *
  * @since 6.2.0
+ *
+ * @type {InterventionLinkedResourcesStoreType}
  */
 export type InterventionLinkedResourcesStoreType = InstanceType<
   typeof InterventionLinkedResourcesStore

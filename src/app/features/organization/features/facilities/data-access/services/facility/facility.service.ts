@@ -22,7 +22,6 @@ import type {
 /**
  * Service FacilityService
  * @class FacilityService
- * @extends {HydraApiService}
  *
  * @description
  * API service for facility management operations.
@@ -30,7 +29,10 @@ import type {
  * organization facilities (site/building/floor/zone/area).
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class FacilityService extends HydraApiService {
@@ -41,7 +43,6 @@ export class FacilityService extends HydraApiService {
    *
    * @description
    * The base API path for all facility-related endpoints.
-   *
    * This constant is used to construct the full endpoint URLs for
    * all methods in this service, ensuring consistency and ease of maintenance.
    * If the API path changes, only this constant needs to be updated.
@@ -65,18 +66,19 @@ export class FacilityService extends HydraApiService {
    *
    * @access public
    * @since 1.0.0
+   *   Mirrors the backend contract for the hierarchical TreeTable:
    *
-   * Mirrors the backend contract for the hierarchical TreeTable:
-   * - `rootsOnly: true` returns only root facilities (no parent),
-   * - `includeArchived`, `status`, `hasCoordinates` and `search` are
-   *   forwarded as query parameters, and the typed `sort` option is
-   *   serialized by `HydraApiService.buildParams` as `order[<field>]=<direction>`,
-   * - direct children are fetched separately via {@link listChildren}.
+   *   - `rootsOnly: true` returns only root facilities (no parent),
+   *   - `includeArchived`, `status`, `hasCoordinates` and `search` are forwarded as query parameters,
+   *     and the typed `sort` option is serialized by `HydraApiService.buildParams` as
+   *     `order[<field>]=<direction>`,
+   *   - direct children are fetched separately via {@link listChildren}.
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {FacilityListOptions} [options] - Optional pagination, root scoping and filters.
    *
-   * @return {Observable<HydraCollection<FacilityOutput>>} An observable emitting the facilities collection.
+   * @returns {Observable<HydraCollection<FacilityOutput>>} An observable emitting the facilities
+   *   collection.
    */
   public list(
     organizationId: string,
@@ -123,7 +125,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {FacilityExportOptions} [options] - The narrowing to apply.
    *
-   * @return {Observable<Blob>} The export's CSV binary content.
+   * @returns {Observable<Blob>} The export's CSV binary content.
    */
   public exportCsv(organizationId: string, options?: FacilityExportOptions): Observable<Blob> {
     const params: NonNullable<RequestOptions['params']> = {};
@@ -165,7 +167,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} address - The free-text address to resolve.
    *
-   * @return {Observable<FacilityGeocodeOutput>} An observable emitting the match.
+   * @returns {Observable<FacilityGeocodeOutput>} An observable emitting the match.
    */
   public geocode(organizationId: string, address: string): Observable<FacilityGeocodeOutput> {
     return this.getOne<FacilityGeocodeOutput>(
@@ -177,11 +179,17 @@ export class FacilityService extends HydraApiService {
   /**
    * Method addressSuggestions
    * @method addressSuggestions
-   * @description Searches the organization-scoped address suggestion endpoint. An empty collection means no match; provider outages and authorization failures remain HTTP errors.
+   *
+   * @description
+   * Searches the organization-scoped address suggestion endpoint. An empty collection means no
+   * match; provider outages and authorization failures remain HTTP errors.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization whose facility is being configured.
    * @param {string} query - Address query of three to 250 characters.
+   *
    * @returns {Observable<FacilityAddressSuggestionsOutput>} Up to five address suggestions.
    */
   public addressSuggestions(
@@ -195,7 +203,20 @@ export class FacilityService extends HydraApiService {
   }
 
   /**
+   * Method listAll
+   * @method listAll
+   *
+   * @description
    * Lists every facility by consuming the server-paginated collection.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {string} organizationId - Organization whose complete resource collection is requested.
+   * @param {FacilityListOptions} options - Request filters and ordering applied while fetching all
+   *   pages.
+   *
+   * @returns {Observable<readonly FacilityOutput[]>}
    */
   public listAll(
     organizationId: string,
@@ -229,7 +250,6 @@ export class FacilityService extends HydraApiService {
    * organization-scoped {@link list} endpoint has no `intervention` filter,
    * so this bypasses it and queries the bare resource directly, the same way
    * {@link getCanonical} already does.
-   *
    * `CanonicalFacilityProvider` defaults `recordStatus` to `'draft'` whenever
    * the `intervention` filter is present, so an intervention published after
    * `FacilityInterventionResourceAdapter::publishDrafts` flips its linked
@@ -243,9 +263,13 @@ export class FacilityService extends HydraApiService {
    * @since 4.5.0
    *
    * @param {string} interventionId - The intervention to scope the query to.
-   * @param {FacilityListOptions & { readonly recordStatus?: NonNullable<FacilityOutput['recordStatus']> }} [options] - Optional pagination, search, filters and record status.
+   * @param {FacilityListOptions & {
+   *   readonly recordStatus?: NonNullable<FacilityOutput['recordStatus']>;
+   * }} [options]
+   *   - Optional pagination, search, filters and record status.
    *
-   * @returns {Observable<HydraCollection<FacilityOutput>>} An observable emitting the linked facilities.
+   * @returns {Observable<HydraCollection<FacilityOutput>>} An observable emitting the linked
+   *   facilities.
    */
   public listByIntervention(
     interventionId: string,
@@ -285,7 +309,8 @@ export class FacilityService extends HydraApiService {
    * @param {string} facilityId - The ID of the parent facility.
    * @param {FacilityChildrenOptions} [options] - Optional pagination.
    *
-   * @return {Observable<HydraCollection<FacilityOutput>>} An observable emitting the direct children collection.
+   * @returns {Observable<HydraCollection<FacilityOutput>>} An observable emitting the direct
+   *   children collection.
    */
   public listChildren(
     organizationId: string,
@@ -317,7 +342,8 @@ export class FacilityService extends HydraApiService {
    * @param {string} facilityId - The ID of the root facility.
    * @param {FacilityDescendantsOptions} [options] - Optional descendants filters.
    *
-   * @return {Observable<HydraCollection<FacilityOutput>>} An observable emitting the descendant collection.
+   * @returns {Observable<HydraCollection<FacilityOutput>>} An observable emitting the descendant
+   *   collection.
    */
   public listDescendants(
     organizationId: string,
@@ -348,7 +374,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} facilityId - The ID of the facility to retrieve.
    *
-   * @return {Observable<FacilityOutput>} An observable emitting the facility details.
+   * @returns {Observable<FacilityOutput>} An observable emitting the facility details.
    */
   public get(organizationId: string, facilityId: string): Observable<FacilityOutput> {
     return this.getOne<FacilityOutput>(
@@ -361,13 +387,12 @@ export class FacilityService extends HydraApiService {
    * @method getPlanOverlay
    *
    * @description
-   * Reads one floor plan's read-only overlay — its zone polygons and
-   * equipment pins (`GET /api/organizations/{organizationId}/facilities/{facilityId}/plan-overlay`).
-   * Omitting `attachmentId` resolves the facility's primary plan
-   * server-side. Calls `this.http` directly, like
-   * `FacilityAttachmentService.download`: the response is a computed
-   * projection, not a stored Hydra item, so it carries no `@id`/`@type` and
-   * cannot satisfy `getOne`'s `T extends HydraItem` bound.
+   * Reads one floor plan's read-only overlay — its zone polygons and equipment pins (`GET
+   * /api/organizations/{organizationId}/facilities/{facilityId}/plan-overlay`). Omitting
+   * `attachmentId` resolves the facility's primary plan server-side. Calls `this.http` directly,
+   * like `FacilityAttachmentService.download`: the response is a computed projection, not a stored
+   * Hydra item, so it carries no `@id`/`@type` and cannot satisfy `getOne`'s `T extends HydraItem`
+   * bound.
    *
    * @access public
    * @since 1.0.0
@@ -376,7 +401,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} facilityId - The ID of the facility owning the plan.
    * @param {string} [attachmentId] - The plan to read; defaults to the facility's primary plan.
    *
-   * @return {Observable<FacilityPlanOverlayOutput>} An observable emitting the overlay.
+   * @returns {Observable<FacilityPlanOverlayOutput>} An observable emitting the overlay.
    */
   public getPlanOverlay(
     organizationId: string,
@@ -402,12 +427,11 @@ export class FacilityService extends HydraApiService {
    * @method getBuildingModel
    *
    * @description
-   * Reads one building facility's 3D model — its floors, each with its plan,
-   * outline and rooms (`GET /api/organizations/{organizationId}/facilities/{facilityId}/building-model`).
-   * Calls `this.http` directly, like {@link getPlanOverlay}: the response is
-   * a computed projection, not a stored Hydra item, so it carries no
-   * `@id`/`@type` and cannot satisfy `getOne`'s `T extends HydraItem` bound.
-   * `floors` arrives in server render order — never re-sort it.
+   * Reads one building facility's 3D model — its floors, each with its plan, outline and rooms
+   * (`GET /api/organizations/{organizationId}/facilities/{facilityId}/building-model`). Calls
+   * `this.http` directly, like {@link getPlanOverlay}: the response is a computed projection, not a
+   * stored Hydra item, so it carries no `@id`/`@type` and cannot satisfy `getOne`'s `T extends
+   * HydraItem` bound. `floors` arrives in server render order — never re-sort it.
    *
    * @access public
    * @since 1.7.0
@@ -415,7 +439,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} facilityId - The ID of the building facility.
    *
-   * @return {Observable<FacilityBuildingModelOutput>} An observable emitting the building model.
+   * @returns {Observable<FacilityBuildingModelOutput>} An observable emitting the building model.
    */
   public getBuildingModel(
     organizationId: string,
@@ -449,7 +473,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} facilityId - The ID of the facility whose outline is set.
    * @param {SetPlanGeometryInput} input - The geometry to write, or nulls to clear it.
    *
-   * @return {Observable<void>} An observable completing once the write lands.
+   * @returns {Observable<void>} An observable completing once the write lands.
    */
   public setPlanGeometry(
     organizationId: string,
@@ -481,7 +505,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {CreateFacilityInput} input - The data required to create the facility.
    *
-   * @return {Observable<FacilityOutput>} An observable emitting the created facility details.
+   * @returns {Observable<FacilityOutput>} An observable emitting the created facility details.
    */
   public create(organizationId: string, input: CreateFacilityInput): Observable<FacilityOutput> {
     return this.post<CreateFacilityInput, FacilityOutput>(
@@ -504,7 +528,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} interventionId - intervention Id value.
    * @param {CreateFacilityInput} input - input value.
    *
-   * @return {Observable<FacilityOutput>} Result of the create for intervention operation.
+   * @returns {Observable<FacilityOutput>} Result of the create for intervention operation.
    */
   public createForIntervention(
     organizationId: string,
@@ -542,7 +566,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} facilityId - The ID of the facility to update.
    * @param {UpdateFacilityInput} input - The partial data to apply to the facility.
    *
-   * @return {Observable<FacilityOutput>} An observable emitting the updated facility details.
+   * @returns {Observable<FacilityOutput>} An observable emitting the updated facility details.
    */
   public update(
     organizationId: string,
@@ -569,7 +593,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} facilityId - The ID of the facility to archive.
    *
-   * @return {Observable<FacilityOutput>} An observable emitting the archived facility details.
+   * @returns {Observable<FacilityOutput>} An observable emitting the archived facility details.
    */
   public archive(organizationId: string, facilityId: string): Observable<FacilityOutput> {
     return this.postAction<FacilityOutput>(
@@ -578,7 +602,19 @@ export class FacilityService extends HydraApiService {
   }
 
   /**
+   * Method restore
+   * @method restore
+   *
+   * @description
    * Restores an archived facility.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {string} organizationId - Organization that owns the archived facility.
+   * @param {string} facilityId - Archived facility to restore.
+   *
+   * @returns {Observable<FacilityOutput>}
    */
   public restore(organizationId: string, facilityId: string): Observable<FacilityOutput> {
     return this.patch<Record<string, never>, FacilityOutput>(
@@ -602,7 +638,7 @@ export class FacilityService extends HydraApiService {
    *
    * @param {string} facilityId - The ID of the facility.
    *
-   * @return {Observable<FacilityOutput>} An observable emitting the canonical facility.
+   * @returns {Observable<FacilityOutput>} An observable emitting the canonical facility.
    */
   private getCanonical(facilityId: string): Observable<FacilityOutput> {
     return this.getOne<FacilityOutput>(`/api/facilities/${facilityId}`);
@@ -627,7 +663,7 @@ export class FacilityService extends HydraApiService {
    *
    * @param {string} facilityId - The ID of the facility to delete.
    *
-   * @return {Observable<void>} An observable completing once the facility is deleted.
+   * @returns {Observable<void>} An observable completing once the facility is deleted.
    */
   public remove(facilityId: string): Observable<void> {
     return this.getCanonical(facilityId).pipe(
@@ -654,7 +690,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} facilityId - The ID of the facility to move.
    * @param {MoveFacilityInput} input - Input containing the new parent facility ID.
    *
-   * @return {Observable<FacilityOutput>} An observable emitting the moved facility details.
+   * @returns {Observable<FacilityOutput>} An observable emitting the moved facility details.
    */
   public move(
     organizationId: string,
@@ -682,7 +718,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} facilityId - The ID of the facility to duplicate.
    * @param {DuplicateFacilityInput} [input] - Optional name and target parent for the copy.
    *
-   * @return {Observable<FacilityOutput>} An observable emitting the duplicated root facility.
+   * @returns {Observable<FacilityOutput>} An observable emitting the duplicated root facility.
    */
   public duplicate(
     organizationId: string,

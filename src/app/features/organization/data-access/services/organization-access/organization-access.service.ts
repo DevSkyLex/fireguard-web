@@ -27,9 +27,13 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method options
    * @method options
-   * @description Lists private workspace choices for the current identity.
+   *
+   * @description
+   * Lists private workspace choices for the current identity.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {Observable<OrganizationJoinOptionsOutput>} Server response.
    */
   public options(): Observable<OrganizationJoinOptionsOutput> {
@@ -39,10 +43,15 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method policy
    * @method policy
-   * @description Reads admission settings and roles eligible for immediate membership.
+   *
+   * @description
+   * Reads admission settings and roles eligible for immediate membership.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization identifier.
+   *
    * @returns {Observable<OrganizationAccessPolicyOutput>} Server response.
    */
   public policy(organizationId: string): Observable<OrganizationAccessPolicyOutput> {
@@ -54,11 +63,16 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method updatePolicy
    * @method updatePolicy
-   * @description Updates the explicit admission policy.
+   *
+   * @description
+   * Updates the explicit admission policy.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization identifier.
    * @param {OrganizationAccessPolicyInput} input - Policy and eligible role.
+   *
    * @returns {Observable<OrganizationAccessPolicyOutput>} Server response.
    */
   public updatePolicy(
@@ -74,11 +88,16 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method addDomain
    * @method addDomain
-   * @description Creates a domain ownership challenge.
+   *
+   * @description
+   * Creates a domain ownership challenge.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization identifier.
    * @param {string} domain - Exact email domain.
+   *
    * @returns {Observable<OrganizationDomainOutput>} Server response.
    */
   public addDomain(organizationId: string, domain: string): Observable<OrganizationDomainOutput> {
@@ -91,11 +110,16 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method verifyDomain
    * @method verifyDomain
-   * @description Checks the organization-specific DNS TXT record.
+   *
+   * @description
+   * Checks the organization-specific DNS TXT record.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization identifier.
    * @param {string} domainId - Domain challenge identifier.
+   *
    * @returns {Observable<OrganizationDomainOutput>} Server response.
    */
   public verifyDomain(
@@ -110,11 +134,16 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method removeDomain
    * @method removeDomain
-   * @description Removes a domain without removing current members.
+   *
+   * @description
+   * Removes a domain without removing current members.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization identifier.
    * @param {string} domainId - Domain identifier.
+   *
    * @returns {Observable<void>} Server response.
    */
   public removeDomain(organizationId: string, domainId: string): Observable<void> {
@@ -124,10 +153,15 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method join
    * @method join
-   * @description Explicitly admits the current user when the server policy permits it.
+   *
+   * @description
+   * Explicitly admits the current user when the server policy permits it.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Selected organization.
+   *
    * @returns {Observable<OrganizationAdmissionOutput>} Server response.
    */
   public join(organizationId: string): Observable<OrganizationAdmissionOutput> {
@@ -139,10 +173,15 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method acceptInvitation
    * @method acceptInvitation
-   * @description Accepts an invitation addressed to the authenticated identity.
+   *
+   * @description
+   * Accepts an invitation addressed to the authenticated identity.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} invitationId - Invitation identifier without its secret.
+   *
    * @returns {Observable<OrganizationAdmissionOutput>} Server response.
    */
   public acceptInvitation(invitationId: string): Observable<OrganizationAdmissionOutput> {
@@ -154,10 +193,15 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method request
    * @method request
-   * @description Requests membership without reserving a member seat.
+   *
+   * @description
+   * Requests membership without reserving a member seat.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Selected organization.
+   *
    * @returns {Observable<OrganizationJoinRequestOutput>} Server response.
    */
   public request(organizationId: string): Observable<OrganizationJoinRequestOutput> {
@@ -169,10 +213,15 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method requests
    * @method requests
-   * @description Lists requests visible to an organization administrator.
+   *
+   * @description
+   * Lists requests visible to an organization administrator.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization identifier.
+   *
    * @returns {Observable<OrganizationJoinRequestCollectionOutput>} Server response.
    */
   public requests(organizationId: string): Observable<OrganizationJoinRequestCollectionOutput> {
@@ -184,9 +233,13 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method myRequests
    * @method myRequests
-   * @description Lists membership requests belonging to the current account.
+   *
+   * @description
+   * Lists membership requests belonging to the current account.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {Observable<HydraCollection<OrganizationJoinRequestOutput>>} Server response.
    */
   public myRequests(): Observable<HydraCollection<OrganizationJoinRequestOutput>> {
@@ -196,10 +249,15 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method cancel
    * @method cancel
-   * @description Cancels the current user's pending request.
+   *
+   * @description
+   * Cancels the current user's pending request.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} requestId - Owned request identifier.
+   *
    * @returns {Observable<OrganizationJoinRequestOutput>} Server response.
    */
   public cancel(requestId: string): Observable<OrganizationJoinRequestOutput> {
@@ -211,12 +269,17 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method approve
    * @method approve
-   * @description Approves a request with explicitly assignable organization roles.
+   *
+   * @description
+   * Approves a request with explicitly assignable organization roles.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization identifier.
    * @param {string} requestId - Pending request.
    * @param {string[]} roleIds - Roles selected by the reviewer.
+   *
    * @returns {Observable<OrganizationJoinRequestOutput>} Server response.
    */
   public approve(
@@ -233,11 +296,16 @@ export class OrganizationAccessService extends HydraApiService {
   /**
    * Method reject
    * @method reject
-   * @description Rejects a pending request.
+   *
+   * @description
+   * Rejects a pending request.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization identifier.
    * @param {string} requestId - Pending request.
+   *
    * @returns {Observable<OrganizationJoinRequestOutput>} Server response.
    */
   public reject(

@@ -10,29 +10,66 @@ import type { FeedbackEventPayload, FeedbackSeverity } from '../../models';
  * @since 1.0.0
  */
 interface FeedbackPayloadOptions {
-  /** Optional short bold title rendered above the message. */
+  /**
+   * Property summary
+   * @readonly
+   *
+   * @description
+   * Optional short bold title rendered above the message.
+   *
+   * @type {string}
+   */
   readonly summary?: string;
-  /** Machine-readable error code (HTTP status). Defaults to `null`. */
+
+  /**
+   * Property code
+   * @readonly
+   *
+   * @description
+   * Machine-readable error code (HTTP status). Defaults to `null`.
+   *
+   * @type {string | number | null}
+   */
   readonly code?: string | number | null;
-  /** Whether the failed operation may be retried. Defaults to `false`. */
+
+  /**
+   * Property retryable
+   * @readonly
+   *
+   * @description
+   * Whether the failed operation may be retried. Defaults to `false`.
+   *
+   * @type {boolean}
+   */
   readonly retryable?: boolean;
-  /** Production time (ms). Defaults to `Date.now()`. */
+
+  /**
+   * Property timestamp
+   * @readonly
+   *
+   * @description
+   * Production time (ms). Defaults to `Date.now()`.
+   *
+   * @type {number}
+   */
   readonly timestamp?: number;
 }
 
 /**
  * Function createFeedbackPayload
- * @function createFeedbackPayload
  *
  * @description
  * Builds a normalized {@link FeedbackEventPayload} for the given severity.
  * Shared base used by the per-severity factories below.
  *
- * @param severity The feedback severity.
- * @param message The already-localized, human-readable message.
- * @param options Optional summary, code, retryable and timestamp overrides.
+ * @param {FeedbackSeverity} severity The feedback severity.
+ * @param {string} message The already-localized, human-readable message.
+ * @param {FeedbackPayloadOptions} options Optional summary, code, retryable and timestamp
+ *   overrides.
  *
- * @return A fully-populated `FeedbackEventPayload`.
+ * @returns {FeedbackEventPayload} A fully-populated `FeedbackEventPayload`.
+ *
+ * @function createFeedbackPayload
  */
 function createFeedbackPayload(
   severity: FeedbackSeverity,
@@ -52,16 +89,17 @@ function createFeedbackPayload(
 
 /**
  * Function successFeedback
- * @function successFeedback
  *
  * @description
  * Builds a `success` feedback payload, typically dispatched after a mutation
  * succeeds to confirm the action ("Facility created").
  *
- * @param message The already-localized success message.
- * @param summary Optional bold title rendered above the message.
+ * @param {string} message The already-localized success message.
+ * @param {string} summary Optional bold title rendered above the message.
  *
- * @return A `success` `FeedbackEventPayload`.
+ * @returns {FeedbackEventPayload} A `success` `FeedbackEventPayload`.
+ *
+ * @function successFeedback
  */
 export function successFeedback(message: string, summary?: string): FeedbackEventPayload {
   return createFeedbackPayload('success', message, { summary });
@@ -69,15 +107,16 @@ export function successFeedback(message: string, summary?: string): FeedbackEven
 
 /**
  * Function infoFeedback
- * @function infoFeedback
  *
  * @description
  * Builds an `info` feedback payload for neutral, non-blocking notices.
  *
- * @param message The already-localized info message.
- * @param summary Optional bold title rendered above the message.
+ * @param {string} message The already-localized info message.
+ * @param {string} summary Optional bold title rendered above the message.
  *
- * @return An `info` `FeedbackEventPayload`.
+ * @returns {FeedbackEventPayload} An `info` `FeedbackEventPayload`.
+ *
+ * @function infoFeedback
  */
 export function infoFeedback(message: string, summary?: string): FeedbackEventPayload {
   return createFeedbackPayload('info', message, { summary });
@@ -85,15 +124,16 @@ export function infoFeedback(message: string, summary?: string): FeedbackEventPa
 
 /**
  * Function warnFeedback
- * @function warnFeedback
  *
  * @description
  * Builds a `warn` feedback payload for recoverable, attention-worthy states.
  *
- * @param message The already-localized warning message.
- * @param summary Optional bold title rendered above the message.
+ * @param {string} message The already-localized warning message.
+ * @param {string} summary Optional bold title rendered above the message.
  *
- * @return A `warn` `FeedbackEventPayload`.
+ * @returns {FeedbackEventPayload} A `warn` `FeedbackEventPayload`.
+ *
+ * @function warnFeedback
  */
 export function warnFeedback(message: string, summary?: string): FeedbackEventPayload {
   return createFeedbackPayload('warn', message, { summary });
@@ -101,16 +141,18 @@ export function warnFeedback(message: string, summary?: string): FeedbackEventPa
 
 /**
  * Function errorFeedback
- * @function errorFeedback
  *
  * @description
  * Builds an `error` feedback payload. Used by `toStoreFailureEventPayload` to
  * map a normalized `StoreError` into a dispatchable feedback event.
  *
- * @param message The already-localized error message.
- * @param options Optional summary, code, retryable and timestamp overrides.
+ * @param {string} message The already-localized error message.
+ * @param {FeedbackPayloadOptions} options Optional summary, code, retryable and timestamp
+ *   overrides.
  *
- * @return An `error` `FeedbackEventPayload`.
+ * @returns {FeedbackEventPayload} An `error` `FeedbackEventPayload`.
+ *
+ * @function errorFeedback
  */
 export function errorFeedback(
   message: string,
@@ -121,16 +163,17 @@ export function errorFeedback(
 
 /**
  * Function isFeedbackEventPayload
- * @function isFeedbackEventPayload
  *
  * @description
  * Type guard narrowing an unknown event payload to a `FeedbackEventPayload`.
  * Lets the app-wide feedback listener pick feedback events out of the global
  * event stream without importing any feature event group.
  *
- * @param value The raw event payload to test.
+ * @param {unknown} value The raw event payload to test.
  *
- * @return `true` when `value` is a `FeedbackEventPayload`.
+ * @returns {boolean} `true` when `value` is a `FeedbackEventPayload`.
+ *
+ * @function isFeedbackEventPayload
  */
 export function isFeedbackEventPayload(value: unknown): value is FeedbackEventPayload {
   return (

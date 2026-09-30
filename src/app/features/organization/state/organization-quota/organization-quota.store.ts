@@ -31,6 +31,17 @@ import { ActiveOrganizationStore } from '../active-organization';
 import type { OrganizationQuotaState } from './models';
 
 //#region Initial State
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Starts quota loading without a selected organization or existing response.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @type {OrganizationQuotaState}
+ */
 const INITIAL_STATE: OrganizationQuotaState = {
   currentOrganizationId: null,
   quotaCallState: idleCallState(),
@@ -38,8 +49,7 @@ const INITIAL_STATE: OrganizationQuotaState = {
 //#endregion
 
 /**
- * Store OrganizationQuotaStore
- * @const OrganizationQuotaStore
+ * Constant OrganizationQuotaStore
  *
  * @description
  * Root-level NgRx SignalStore exposing the active organization's quota usage
@@ -51,7 +61,12 @@ const INITIAL_STATE: OrganizationQuotaState = {
  * the new plan; {@link reload} resyncs the meters after a quota-affecting action.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant OrganizationQuotaStore
+ *
+ * @constant OrganizationQuotaStore
  */
 export const OrganizationQuotaStore = signalStore(
   { providedIn: 'root' },
@@ -59,16 +74,23 @@ export const OrganizationQuotaStore = signalStore(
   withState<OrganizationQuotaState>(INITIAL_STATE),
 
   withComputed((store) => ({
-    /** Per-resource quota usage items. */
+    /**
+     * @description
+     * Per-resource quota usage items.
+     */
     items: computed<ReadonlyArray<OrganizationQuotaItemOutput>>(() => {
       const state = store.quotaCallState();
       return state.data?.items ?? [];
     }),
 
-    /** Whether the quota payload is currently loading. */
+    /**
+     * @description
+     * Whether the quota payload is currently loading.
+     */
     isLoadingQuota: computed<boolean>(() => store.quotaCallState().status === 'pending'),
 
     /**
+     * @description
      * Quota status (`ok` / `near` / `full`) per capped resource. Resources
      * without quota data default to `ok` so consumers can index safely.
      */
@@ -110,10 +132,15 @@ export const OrganizationQuotaStore = signalStore(
       const cancellation = new Subject<void>();
       let generation = 0;
       let sessionRevision = authSession.sessionRevision();
+
       /**
        * Function clear
-       * @description Invalidates quota reads and drops usage from a previous context.
+       *
+       * @description
+       * Invalidates quota reads and drops usage from a previous context.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const clear = (): void => {
@@ -121,10 +148,15 @@ export const OrganizationQuotaStore = signalStore(
         cancellation.next();
         patchState(store, INITIAL_STATE);
       };
+
       /**
        * Function synchronizeSession
-       * @description Invalidates cached limits whenever the authenticated session changes.
+       *
+       * @description
+       * Invalidates cached limits whenever the authenticated session changes.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const synchronizeSession = (): void => {
@@ -137,12 +169,17 @@ export const OrganizationQuotaStore = signalStore(
       return {
         clear,
         synchronizeSession,
+
         /**
          * Method load
          * @method load
-         * @description Loads quota usage, retaining values only for a refresh of the same context.
+         *
+         * @description
+         * Loads quota usage, retaining values only for a refresh of the same context.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @type {RxMethod<string>}
          */
         load: rxMethod<string>(
@@ -228,11 +265,12 @@ export const OrganizationQuotaStore = signalStore(
 
 /**
  * Type OrganizationQuotaStore
- * @type OrganizationQuotaStore
  *
  * @description
  * Instance type of the {@link OrganizationQuotaStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type OrganizationQuotaStore
  */
 export type OrganizationQuotaStore = InstanceType<typeof OrganizationQuotaStore>;

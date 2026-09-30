@@ -21,7 +21,7 @@ import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmTextareaImports } from '@shared/ui/textarea';
 
 /**
- * Component InterventionConfirmDialog
+ * Class InterventionConfirmDialog
  * @class InterventionConfirmDialog
  *
  * @description
@@ -32,7 +32,6 @@ import { HlmTextareaImports } from '@shared/ui/textarea';
  * own state; it resets whenever {@link request} changes. Skipping is also the
  * one variant that is not destructive, which is why the accept button's
  * variant is bound rather than fixed.
- *
  * Purely presentational (`ARCHITECTURE.md` §10.5): it owns no store and takes
  * its open state from {@link request} being non-null. The caller keeps every
  * write — `accepted` carries what was confirmed, with the typed reason on the
@@ -54,9 +53,13 @@ export class InterventionConfirmDialog {
   /**
    * Property request
    * @readonly
-   * @description What is pending confirmation, or `null` to keep the dialog closed.
+   *
+   * @description
+   * What is pending confirmation, or `null` to keep the dialog closed.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<InterventionConfirmRequest | null>}
    */
   public readonly request: InputSignal<InterventionConfirmRequest | null> =
@@ -65,9 +68,13 @@ export class InterventionConfirmDialog {
   /**
    * Property busy
    * @readonly
-   * @description Whether the caller's write for this confirmation is in flight, which disables accepting again.
+   *
+   * @description
+   * Whether the caller's write for this confirmation is in flight, which disables accepting again.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly busy: InputSignal<boolean> = input<boolean>(false);
@@ -77,9 +84,13 @@ export class InterventionConfirmDialog {
   /**
    * Property accepted
    * @readonly
-   * @description The confirmed request, with the typed reason attached on the skip variant.
+   *
+   * @description
+   * The confirmed request, with the typed reason attached on the skip variant.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionConfirmAcceptedEvent>}
    */
   public readonly accepted: OutputEmitterRef<InterventionConfirmAcceptedEvent> =
@@ -88,15 +99,29 @@ export class InterventionConfirmDialog {
   /**
    * Property dismissed
    * @readonly
-   * @description The dialog was closed without accepting — Escape, the backdrop, or Cancel.
+   *
+   * @description
+   * The dialog was closed without accepting — Escape, the backdrop, or Cancel.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly dismissed: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Connects the dialog’s reactive effects to its current input state.
+   *
+   * @access public
+   * @since unreleased
+   */
   constructor() {
     effect((): void => {
       this.request();
@@ -107,15 +132,48 @@ export class InterventionConfirmDialog {
   //#endregion
 
   //#region Properties
-  /** The reason typed into the skip variant, cleared whenever a new request opens. */
+  /**
+   * Property skipReasonDraft
+   * @readonly
+   *
+   * @description
+   * Holds the operator’s unsaved explanation before a work item is marked skipped.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly skipReasonDraft: WritableSignal<string> = signal<string>('');
 
-  /** The dialog state, derived from {@link request} so there is no second copy of the truth. */
+  /**
+   * Property dialogState
+   * @readonly
+   *
+   * @description
+   * Reflects whether the current confirmation request keeps the dialog open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<BrnDialogState>}
+   */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.request() === null ? 'closed' : 'open',
   );
 
-  /** The confirmation's heading. */
+  /**
+   * Property title
+   * @readonly
+   *
+   * @description
+   * Selects the heading shown for the active delete or skip request.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly title: Signal<string> = computed<string>(() => {
     switch (this.request()?.kind) {
       case 'deleteIntervention':
@@ -127,7 +185,18 @@ export class InterventionConfirmDialog {
     }
   });
 
-  /** The confirmation's body. */
+  /**
+   * Property description
+   * @readonly
+   *
+   * @description
+   * Supplies the confirmation or skip guidance associated with the active request.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly description: Signal<string> = computed<string>(() => {
     switch (this.request()?.kind) {
       case 'deleteIntervention':
@@ -139,7 +208,18 @@ export class InterventionConfirmDialog {
     }
   });
 
-  /** The accept button's label. */
+  /**
+   * Property acceptLabel
+   * @readonly
+   *
+   * @description
+   * Selects the action label for the active delete or skip request.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly acceptLabel: Signal<string> = computed<string>(() => {
     switch (this.request()?.kind) {
       case 'deleteWorkItem':
@@ -150,12 +230,34 @@ export class InterventionConfirmDialog {
     }
   });
 
-  /** The accept button's variant: skipping a work item is a field decision, not a destructive act. */
+  /**
+   * Property acceptVariant
+   * @readonly
+   *
+   * @description
+   * Marks destructive confirmations separately from the non-destructive skip action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<'default' | 'destructive'>}
+   */
   protected readonly acceptVariant: Signal<'default' | 'destructive'> = computed<
     'default' | 'destructive'
   >(() => (this.request()?.kind === 'skipWorkItem' ? 'default' : 'destructive'));
 
-  /** Whether the confirmation may be accepted. */
+  /**
+   * Property canAccept
+   * @readonly
+   *
+   * @description
+   * Disables acceptance while saving or while a skip request has no reason.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canAccept: Signal<boolean> = computed<boolean>(
     () =>
       !this.busy() &&
@@ -166,6 +268,7 @@ export class InterventionConfirmDialog {
   //#region Methods
   /**
    * Method onStateChanged
+   * @method onStateChanged
    *
    * @description
    * Relays a dismissal — Escape or the backdrop — as {@link dismissed}. The
@@ -187,6 +290,7 @@ export class InterventionConfirmDialog {
 
   /**
    * Method accept
+   * @method accept
    *
    * @description
    * Emits {@link accepted} for the pending request, attaching the trimmed
@@ -216,10 +320,16 @@ export class InterventionConfirmDialog {
 
   /**
    * Method onSkipReasonInput
-   * @description Updates the skip reason draft from the textarea.
+   * @method onSkipReasonInput
+   *
+   * @description
+   * Updates the skip reason draft from the textarea.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {Event} event - The textarea's input event.
+   *
    * @returns {void}
    */
   protected onSkipReasonInput(event: Event): void {

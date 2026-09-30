@@ -24,6 +24,16 @@ import { REPLY_PAGE_SIZE } from './constants';
 import { messageRepliesStoreEvents } from './events';
 import type { MessageRepliesState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {MessageRepliesState}
+ */
 const INITIAL_STATE: MessageRepliesState = {
   parentMessageId: null,
   total: 0,
@@ -31,25 +41,32 @@ const INITIAL_STATE: MessageRepliesState = {
   postCallState: idleCallState(),
 };
 
-/** Oldest-first ordering, which is how a thread reads. */
+/**
+ * Function byCreatedAt
+ *
+ * @description
+ * Oldest-first ordering, which is how a thread reads.
+ *
+ * @param {MessageOutput} first - First reply to compare.
+ * @param {MessageOutput} second - Second reply to compare.
+ *
+ * @returns {number} Negative, zero, or positive ordering by creation time.
+ */
 function byCreatedAt(first: MessageOutput, second: MessageOutput): number {
   return first.createdAt.localeCompare(second.createdAt);
 }
 
 /**
  * Constant MessageRepliesStore
- * @const MessageRepliesStore
  *
  * @description
  * One message's threaded replies. Component-scoped by the reply sheet, which
  * must {@link reset} before loading another parent — the sheet outlives the
  * message it was opened for.
- *
  * The conversation's own message list excludes replies (`parentMessage IS
  * NULL` server-side), so this second collection is the only way to read them.
  * Threading is single-level: the server refuses a reply to a reply, which is
  * why the rows here never offer a reply action of their own.
- *
  * Replies are read at the server's cap in one request. A thread longer than
  * {@link REPLY_PAGE_SIZE} shows its oldest page only — an honest limit; the
  * count on the parent row still tells the whole truth.
@@ -57,6 +74,8 @@ function byCreatedAt(first: MessageOutput, second: MessageOutput): number {
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant MessageRepliesStore
  */
 export const MessageRepliesStore = signalStore(
   withEntities({ entity: type<MessageOutput>(), collection: 'reply' }),
@@ -68,7 +87,10 @@ export const MessageRepliesStore = signalStore(
     loadError: computed(() => store.listCallState().error),
     postError: computed(() => store.postCallState().error),
 
-    /** The replies in reading order — insertion order is not chronological after a post. */
+    /**
+     * @description
+     * The replies in reading order — insertion order is not chronological after a post.
+     */
     sortedReplies: computed((): readonly MessageOutput[] =>
       store.replyEntities().toSorted(byCreatedAt),
     ),
@@ -76,6 +98,7 @@ export const MessageRepliesStore = signalStore(
 
   withMethods((store, service = inject(MessageService), dispatcher = inject(Dispatcher)) => ({
     /**
+     * @description
      * Opens a parent message's reply thread.
      */
     load: rxMethod<string>(
@@ -107,8 +130,8 @@ export const MessageRepliesStore = signalStore(
     ),
 
     /**
+     * @description
      * Posts a reply under the loaded parent.
-     *
      * `concatMap` rather than `switchMap`: two replies in quick succession
      * are two intentions, and the server orders them by arrival anyway.
      */
@@ -148,6 +171,9 @@ export const MessageRepliesStore = signalStore(
     ),
 
     /**
+     * Method reset
+     *
+     * @description
      * Empties the store so another parent's thread can be opened into it.
      */
     reset(): void {
@@ -163,5 +189,7 @@ export const MessageRepliesStore = signalStore(
  * Injection type of {@link MessageRepliesStore}.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type MessageRepliesStoreType = InstanceType<typeof MessageRepliesStore>;

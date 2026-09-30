@@ -26,6 +26,16 @@ import { PINNED_PAGE_SIZE } from './constants';
 import { pinnedMessagesStoreEvents } from './events';
 import type { PinnedMessagesState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {PinnedMessagesState}
+ */
 const INITIAL_STATE: PinnedMessagesState = {
   conversationId: null,
   total: 0,
@@ -33,20 +43,28 @@ const INITIAL_STATE: PinnedMessagesState = {
   unpinCallState: idleCallState(),
 };
 
-/** Newest pin first — the order a "what matters here" list reads in. */
+/**
+ * Function byCreatedAtDesc
+ *
+ * @description
+ * Orders pinned messages from newest to oldest by their creation timestamp.
+ *
+ * @param {MessageOutput} first - First message in the comparison.
+ * @param {MessageOutput} second - Second message in the comparison.
+ *
+ * @returns {number} Negative, zero, or positive ordering result.
+ */
 function byCreatedAtDesc(first: MessageOutput, second: MessageOutput): number {
   return second.createdAt.localeCompare(first.createdAt);
 }
 
 /**
  * Constant PinnedMessagesStore
- * @const PinnedMessagesStore
  *
  * @description
  * One conversation's pinned messages, as the channel info sheet lists them.
  * Loaded fresh each time the sheet opens — a pin added from another client
  * has no event this store consumes.
- *
  * Unpinning here is allowed to the pinning member or a manager, and the
  * server treats unpinning an unpinned message as a no-op — so the sheet's
  * control mirrors the server's check but a stale click still cannot fail
@@ -55,6 +73,8 @@ function byCreatedAtDesc(first: MessageOutput, second: MessageOutput): number {
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant PinnedMessagesStore
  */
 export const PinnedMessagesStore = signalStore(
   withEntities({ entity: type<MessageOutput>(), collection: 'pinnedMessage' }),
@@ -65,7 +85,10 @@ export const PinnedMessagesStore = signalStore(
     isUnpinning: computed((): boolean => isCallPending(store.unpinCallState())),
     loadError: computed(() => store.listCallState().error),
 
-    /** The pins newest-first, whatever order the server returned them in. */
+    /**
+     * @description
+     * The pins newest-first, whatever order the server returned them in.
+     */
     sortedPins: computed((): readonly MessageOutput[] =>
       store.pinnedMessageEntities().toSorted(byCreatedAtDesc),
     ),
@@ -73,6 +96,7 @@ export const PinnedMessagesStore = signalStore(
 
   withMethods((store, service = inject(MessageService), dispatcher = inject(Dispatcher)) => ({
     /**
+     * @description
      * Loads a conversation's pins, first page at the server's cap — a channel
      * with more than a hundred pins has larger problems than truncation.
      */
@@ -106,6 +130,7 @@ export const PinnedMessagesStore = signalStore(
     ),
 
     /**
+     * @description
      * Withdraws one pin and drops its row, then announces it so the open
      * thread can clear its own copy of the message.
      */
@@ -138,7 +163,7 @@ export const PinnedMessagesStore = signalStore(
     ),
 
     /**
-     * Empties the store so another conversation's pins can be loaded into it.
+     * Method reset
      */
     reset(): void {
       patchState(store, removeAllEntities({ collection: 'pinnedMessage' }), INITIAL_STATE);
@@ -153,5 +178,7 @@ export const PinnedMessagesStore = signalStore(
  * Injection type of {@link PinnedMessagesStore}.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type PinnedMessagesStoreType = InstanceType<typeof PinnedMessagesStore>;

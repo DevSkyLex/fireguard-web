@@ -4,7 +4,10 @@ import type { ImportTemplateOutput } from '@features/organization/features/impor
 
 /**
  * Constant importJobsStoreEvents
- * @description Communicates accepted reports and requested downloads to the owning page.
+ *
+ * @description
+ * Communicates accepted reports and requested downloads to the owning page.
+ *
  * @since 1.1.0
  */
 export const importJobsStoreEvents = eventGroup({

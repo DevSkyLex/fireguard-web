@@ -43,11 +43,13 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * kills it outright.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 type CalendarFeedTokenAction = 'regenerate' | 'revoke';
 
 /**
- * Component CalendarFeedSubscribeDialog
+ * Class CalendarFeedSubscribeDialog
  * @class CalendarFeedSubscribeDialog
  *
  * @description
@@ -70,6 +72,8 @@ type CalendarFeedTokenAction = 'regenerate' | 'revoke';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-calendar-feed-subscribe-dialog
@@ -79,8 +83,6 @@ type CalendarFeedTokenAction = 'regenerate' | 'revoke';
  *   (visibleChange)="feedSubscribeDialogVisible.set($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-calendar-feed-subscribe-dialog',
@@ -93,9 +95,14 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Property visible
    * @readonly
-   * @description Whether the dialog is open. Each opening reloads the token metadata and clears any previously shown secret.
+   *
+   * @description
+   * Whether the dialog is open. Each opening reloads the token metadata and clears any previously
+   * shown secret.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -103,9 +110,13 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Property organizationId
    * @readonly
-   * @description The organization whose calendar the feed token exposes.
+   *
+   * @description
+   * The organization whose calendar the feed token exposes.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -113,9 +124,14 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by the `appOrgDate` bindings on `createdAt`/`lastUsedAt`.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by the `appOrgDate` bindings on
+   * `createdAt`/`lastUsedAt`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -126,52 +142,172 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Property visibleChange
    * @readonly
-   * @description Reports the dialog opening or closing, including a dismissal.
+   *
+   * @description
+   * Reports the dialog opening or closing, including a dismissal.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
-  /** The feature's calendar transport — direct on purpose, see the class doc. */
+  /**
+   * Property calendarService
+   * @readonly
+   *
+   * @description
+   * The feature's calendar transport — direct on purpose, see the class doc.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {CalendarService}
+   */
   private readonly calendarService: CalendarService = inject<CalendarService>(CalendarService);
 
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Identifies the current Angular platform for server and browser checks.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {object}
+   */
   private readonly platformId: object = inject(PLATFORM_ID);
 
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Provides the component lifecycle scope used to clean up owned work.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Whether the opening metadata read is in flight. */
+  /**
+   * Property loading
+   * @readonly
+   *
+   * @description
+   * Whether the opening metadata read is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly loading: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether a generate/regenerate/revoke write is in flight. */
+  /**
+   * Property busy
+   * @readonly
+   *
+   * @description
+   * Whether a generate/regenerate/revoke write is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly busy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The active token's secret-less metadata, `null` while the member holds none. */
+  /**
+   * Property metadata
+   * @readonly
+   *
+   * @description
+   * The active token's secret-less metadata, `null` while the member holds none.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CalendarFeedTokenOutput | null>}
+   */
   protected readonly metadata: WritableSignal<CalendarFeedTokenOutput | null> =
     signal<CalendarFeedTokenOutput | null>(null);
 
-  /** The one-time secret payload of a generation done in this opening, `null` otherwise. */
+  /**
+   * Property secret
+   * @readonly
+   *
+   * @description
+   * The one-time secret payload of a generation done in this opening, `null` otherwise.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CalendarFeedTokenSecretOutput | null>}
+   */
   protected readonly secret: WritableSignal<CalendarFeedTokenSecretOutput | null> =
     signal<CalendarFeedTokenSecretOutput | null>(null);
 
-  /** The last call's rejection, rendered inline; `null` when there is nothing to show. */
+  /**
+   * Property errorMessage
+   * @readonly
+   *
+   * @description
+   * The last call's rejection, rendered inline; `null` when there is nothing to show.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly errorMessage: WritableSignal<string | null> = signal<string | null>(null);
 
-  /** Whether the shown feed URL was copied — drives the Copy button's label and the live region. */
+  /**
+   * Property copied
+   * @readonly
+   *
+   * @description
+   * Whether the shown feed URL was copied — drives the Copy button's label and the live region.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly copied: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The destructive action awaiting its confirmation step, `null` when none. */
+  /**
+   * Property confirming
+   * @readonly
+   *
+   * @description
+   * The destructive action awaiting its confirmation step, `null` when none.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CalendarFeedTokenAction | null>}
+   */
   protected readonly confirming: WritableSignal<CalendarFeedTokenAction | null> =
     signal<CalendarFeedTokenAction | null>(null);
 
   /**
    * Property dialogState
    * @readonly
-   * @description The overlay's own open/closed state, derived from {@link visible}.
+   *
+   * @description
+   * The overlay's own open/closed state, derived from {@link visible}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly dialogState: Signal<BrnDialogState> = computed((): BrnDialogState =>
@@ -182,6 +318,7 @@ export class CalendarFeedSubscribeDialog {
   //#region Constructor
   /**
    * Constructor
+   * @constructor
    *
    * @description
    * Resets the dialog's ephemeral state — the shown secret above all — and
@@ -213,10 +350,16 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method onStateChanged
    * @method onStateChanged
-   * @description Reports a dismissal — the backdrop or Escape — back to the host. Ignored while a call is in flight, matching the bound `disableClose`.
+   *
+   * @description
+   * Reports a dismissal — the backdrop or Escape — back to the host. Ignored while a call is in
+   * flight, matching the bound `disableClose`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - The overlay's new state.
+   *
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
@@ -232,9 +375,13 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method close
    * @method close
-   * @description The footer Close button — ignored while a call is in flight.
+   *
+   * @description
+   * The footer Close button — ignored while a call is in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected close(): void {
@@ -246,9 +393,13 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method generate
    * @method generate
-   * @description The no-token state's Generate button: mints the token and swaps to the one-time secret view.
+   *
+   * @description
+   * The no-token state's Generate button: mints the token and swaps to the one-time secret view.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected generate(): void {
@@ -260,10 +411,15 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method requestAction
    * @method requestAction
-   * @description Arms the in-dialog confirmation step for Regenerate or Revoke.
+   *
+   * @description
+   * Arms the in-dialog confirmation step for Regenerate or Revoke.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {CalendarFeedTokenAction} action - The destructive action to confirm.
+   *
    * @returns {void}
    */
   protected requestAction(action: CalendarFeedTokenAction): void {
@@ -276,9 +432,13 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method cancelAction
    * @method cancelAction
-   * @description Disarms the confirmation step without acting.
+   *
+   * @description
+   * Disarms the confirmation step without acting.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected cancelAction(): void {
@@ -290,9 +450,13 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method confirmAction
    * @method confirmAction
-   * @description Runs the armed destructive action — the rotate-on-create for Regenerate, the DELETE for Revoke.
+   *
+   * @description
+   * Runs the armed destructive action — the rotate-on-create for Regenerate, the DELETE for Revoke.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirmAction(): void {
@@ -306,9 +470,13 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method copyFeedUrl
    * @method copyFeedUrl
-   * @description Copies the one-time feed URL to the clipboard and announces "Copied" through the live region.
+   *
+   * @description
+   * Copies the one-time feed URL to the clipboard and announces "Copied" through the live region.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected copyFeedUrl(): void {
@@ -321,10 +489,15 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method loadMetadata
    * @method loadMetadata
-   * @description Reads the active token's metadata; a 404 is the no-token state, not an error.
+   *
+   * @description
+   * Reads the active token's metadata; a 404 is the no-token state, not an error.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string} organizationId - The organization to read.
+   *
    * @returns {void}
    */
   private loadMetadata(organizationId: string): void {
@@ -352,9 +525,13 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method createToken
    * @method createToken
-   * @description The create/rotate write behind Generate and a confirmed Regenerate.
+   *
+   * @description
+   * The create/rotate write behind Generate and a confirmed Regenerate.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private createToken(): void {
@@ -384,9 +561,13 @@ export class CalendarFeedSubscribeDialog {
   /**
    * Method revokeToken
    * @method revokeToken
-   * @description The confirmed Revoke's DELETE — success returns the dialog to the no-token state.
+   *
+   * @description
+   * The confirmed Revoke's DELETE — success returns the dialog to the no-token state.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private revokeToken(): void {

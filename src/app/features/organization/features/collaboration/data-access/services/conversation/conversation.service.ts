@@ -17,7 +17,6 @@ import type {
 /**
  * Service ConversationService
  * @class ConversationService
- * @extends {HydraApiService}
  *
  * @description
  * Transport boundary for conversations: subject threads, direct
@@ -25,7 +24,6 @@ import type {
  * The API also exposes archive, activity buckets, attachments and links, but
  * no UI consumes them — their transport methods were pruned rather than left
  * dead (2026-08-20).
- *
  * `GET /api/conversations` never returns channels or direct conversations —
  * both have their own lists — so callers assembling a full sidebar must query
  * all three.
@@ -33,6 +31,8 @@ import type {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class ConversationService extends HydraApiService {
@@ -59,7 +59,6 @@ export class ConversationService extends HydraApiService {
    *
    * @description
    * Lists an organization's subject threads.
-   *
    * Presence-based filters are only sent when set: `buildParams` drops
    * `undefined`, and passing a falsy empty value would narrow the result
    * instead of widening it.
@@ -111,7 +110,6 @@ export class ConversationService extends HydraApiService {
    *
    * @description
    * Opens the thread attached to a record, creating it on first use.
-   *
    * Idempotent, and answers `201` in both cases — the status does not tell you
    * whether anything was created.
    *
@@ -132,7 +130,6 @@ export class ConversationService extends HydraApiService {
    *
    * @description
    * Moves the acting member's read marker.
-   *
    * The response is the snapshot from *before* the write, so its `unreadCount`
    * is stale by construction — patch the local row to zero instead of merging.
    *
@@ -166,7 +163,8 @@ export class ConversationService extends HydraApiService {
    *
    * @param {string} conversationId - Bare conversation UUID.
    *
-   * @returns {Observable<ConversationOutput>} The conversation, `isFavorite` true but `unreadCount` fabricated.
+   * @returns {Observable<ConversationOutput>} The conversation, `isFavorite` true but `unreadCount`
+   *   fabricated.
    */
   public favorite(conversationId: string): Observable<ConversationOutput> {
     return this.postAction<ConversationOutput>(`${this.endpoint}/${conversationId}/favorite`);
@@ -212,12 +210,39 @@ export class ConversationService extends HydraApiService {
     );
   }
 
-  /** Reads confirmed delivery and read positions for current participants. */
+  /**
+   * Method getReceipts
+   * @method getReceipts
+   *
+   * @description
+   * Reads confirmed delivery and read positions for current participants.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} conversationId - Conversation whose delivery and read receipts are requested.
+   *
+   * @returns {Observable<ConversationReceiptsOutput>}
+   */
   public getReceipts(conversationId: string): Observable<ConversationReceiptsOutput> {
     return this.getOne<ConversationReceiptsOutput>(`${this.endpoint}/${conversationId}/receipts`);
   }
 
-  /** Acknowledges the last message this browser actually received. */
+  /**
+   * Method acknowledgeDelivery
+   * @method acknowledgeDelivery
+   *
+   * @description
+   * Acknowledges the last message this browser actually received.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} conversationId - Conversation in which delivery is acknowledged.
+   * @param {string} messageId - Latest delivered message included in the acknowledgement.
+   *
+   * @returns {Observable<ConversationSignalOutput>}
+   */
   public acknowledgeDelivery(
     conversationId: string,
     messageId: string,
@@ -228,7 +253,21 @@ export class ConversationService extends HydraApiService {
     );
   }
 
-  /** Broadcasts an ephemeral typing state on the conversation's private topic. */
+  /**
+   * Method publishTyping
+   * @method publishTyping
+   *
+   * @description
+   * Broadcasts an ephemeral typing state on the conversation's private topic.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} conversationId - Conversation receiving the typing activity signal.
+   * @param {boolean} active - Whether the current member is actively composing a message.
+   *
+   * @returns {Observable<ConversationSignalOutput>}
+   */
   public publishTyping(
     conversationId: string,
     active: boolean,
@@ -246,7 +285,6 @@ export class ConversationService extends HydraApiService {
    * @description
    * Opens the 1-to-1 conversation with another member, creating it on first
    * use. Answers `200`, not `201`, in both cases.
-   *
    * The response carries no `counterpartMember`, so a caller maintaining a
    * list must reload it rather than insert this row — it would render
    * unlabeled.

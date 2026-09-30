@@ -62,12 +62,12 @@ import { DirectMessagePicker } from '../direct-message-picker';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-direct-messages-panel />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-direct-messages-panel',
@@ -98,9 +98,14 @@ export class DirectMessagesPanel {
   /**
    * Property presences
    * @readonly
-   * @description Presence for visible conversation counterparts; the sidebar registers independently of the active thread.
+   *
+   * @description
+   * Presence for visible conversation counterparts; the sidebar registers independently of the
+   * active thread.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
    */
   protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
@@ -224,7 +229,6 @@ export class DirectMessagesPanel {
    * @description
    * Whether the block belongs in the column at all: there is an organization
    * to read conversations from, and the reader is allowed to read them.
-   *
    * The contribution gates route activation; this check retains the organization
    * and permission boundary while its content is mounted.
    *
@@ -263,7 +267,6 @@ export class DirectMessagesPanel {
    *
    * @description
    * The list rows, with each counterpart resolved to a name and a face.
-   *
    * A row whose counterpart cannot be resolved keeps a neutral label rather
    * than falling back to the member id: the directory needs a permission
    * messaging does not imply, and a UUID is not a name.
@@ -452,7 +455,7 @@ export class DirectMessagesPanel {
 
   //#region Lifecycle
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description
@@ -497,6 +500,7 @@ export class DirectMessagesPanel {
    * @since 1.0.0
    *
    * @param {string} value - Name or query entered by the reader.
+   *
    * @returns {string} Trimmed, case-insensitive text without combining accents.
    */
   private normalizeSearch(value: string): string {

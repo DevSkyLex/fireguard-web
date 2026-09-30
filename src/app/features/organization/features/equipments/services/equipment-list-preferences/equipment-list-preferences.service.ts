@@ -11,12 +11,17 @@ import {
 } from '@shared/list-sort-preferences';
 
 /**
+ * Constant PREFERENCES_COOKIE_NAME
+ *
+ * @description
  * Cookie holding the equipment list's remembered shape.
  */
 const PREFERENCES_COOKIE_NAME = 'fg-equipment-list';
 
 /**
- * Ordering used when nothing has been remembered. `type` rather than the
+ * Constant DEFAULT_SORT
+ *
+ * @description
  * backend's own `createdAt` default, since "Equipment" is the one sortable
  * head the table actually renders — a `createdAt` default left every head
  * showing `aria-sort="none"` on first load, with no way to tell the list was
@@ -25,16 +30,49 @@ const PREFERENCES_COOKIE_NAME = 'fg-equipment-list';
 const DEFAULT_SORT: EquipmentListSort = { field: 'type', direction: 'asc' };
 
 /**
- * Shape persisted in the cookie. Deliberately not exported: it is an encoding
+ * Interface PersistedPreferences
+ * @interface
+ *
+ * @description
  * detail, and every caller goes through the accessors below.
  */
 interface PersistedPreferences {
+  /**
+   * Property sortField
+   * @readonly
+   *
+   * @description
+   * Names the field used to order the equipment list.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly sortField?: string;
+
+  /**
+   * Property sortDirection
+   * @readonly
+   *
+   * @description
+   * Selects ascending or descending order for the equipment list.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly sortDirection?: string;
 }
 
 /**
- * Narrows a decoded sort field to one this build's equipment list supports.
+ * Function isEquipmentSortField
+ *
+ * @description
+ * Checks whether a field is supported by equipment-list sorting.
+ *
+ * @param {string} field - Candidate equipment field name.
+ *
+ * @returns {field is EquipmentSortField} Whether the field belongs to the supported sort fields.
  */
 function isEquipmentSortField(field: string): field is EquipmentSortField {
   return (
@@ -48,7 +86,7 @@ function isEquipmentSortField(field: string): field is EquipmentSortField {
 }
 
 /**
- * Service EquipmentListPreferencesService
+ * Class EquipmentListPreferencesService
  * @class EquipmentListPreferencesService
  *
  * @description
@@ -56,7 +94,6 @@ function isEquipmentSortField(field: string): field is EquipmentSortField {
  * shape `InterventionListPreferencesService` and
  * `FacilityListPreferencesService` keep, narrowed to sort alone since this
  * list has neither hideable columns nor a remembered page size.
- *
  * A behavioral service rather than a util (`ARCHITECTURE.md` §10.7): it needs
  * `CookieService`, and a util may not inject. `CookieService` already no-ops
  * on the server, so every method here is safe during SSR. The persisted-shape
@@ -65,6 +102,7 @@ function isEquipmentSortField(field: string): field is EquipmentSortField {
  * the cookie name, field whitelist, and default stay local here.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -88,6 +126,7 @@ export class EquipmentListPreferencesService {
   //#region Methods
   /**
    * Method readSort
+   * @method readSort
    *
    * @description
    * The remembered ordering, or type/asc when none was stored or the
@@ -111,6 +150,7 @@ export class EquipmentListPreferencesService {
 
   /**
    * Method write
+   * @method write
    *
    * @description
    * Persists the active ordering in one cookie.
@@ -133,6 +173,7 @@ export class EquipmentListPreferencesService {
 
   /**
    * Method read
+   * @method read
    *
    * @description
    * Decodes the cookie, answering with an empty record for anything that is

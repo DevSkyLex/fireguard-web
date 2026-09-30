@@ -22,6 +22,16 @@ import type {
 import { channelParticipantsStoreEvents } from './events';
 import type { ChannelParticipantsState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {ChannelParticipantsState}
+ */
 const INITIAL_STATE: ChannelParticipantsState = {
   channelId: null,
   listCallState: idleCallState(),
@@ -30,14 +40,11 @@ const INITIAL_STATE: ChannelParticipantsState = {
 
 /**
  * Constant ChannelParticipantsStore
- * @const ChannelParticipantsStore
  *
  * @description
  * One channel's roster, for the participants sheet's own add/remove flow.
- *
  * The roster is loaded as a plain `CallState` rather than an entity
  * collection, since nothing here is looked up by id outside the list.
- *
  * Component-scoped: provided by `ChannelConversationPage` alongside
  * `MessageThreadStore`, and reset the same way — the router reuses the page
  * when only `:channelId` changes, so `load` is the caller's job on every
@@ -46,6 +53,8 @@ const INITIAL_STATE: ChannelParticipantsState = {
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant ChannelParticipantsStore
  */
 export const ChannelParticipantsStore = signalStore(
   withState<ChannelParticipantsState>(INITIAL_STATE),
@@ -82,8 +91,8 @@ export const ChannelParticipantsStore = signalStore(
       load,
 
       /**
+       * @description
        * Adds a member, then re-reads the roster.
-       *
        * A re-add answers `201` built from the request rather than from
        * storage, so its `role`/`addedAt` may not be what is actually stored
        * — refetching is the only way to show the roster as it truly is.
@@ -114,6 +123,7 @@ export const ChannelParticipantsStore = signalStore(
       ),
 
       /**
+       * @description
        * Removes a member. The `204` carries no body, so the row is dropped
        * from the loaded roster locally rather than refetched.
        */
@@ -151,8 +161,10 @@ export const ChannelParticipantsStore = signalStore(
       ),
 
       /**
-       * Empties the roster so another channel can be loaded into it.
+       * Method reset
        *
+       * @description
+       * Empties the roster so another channel can be loaded into it.
        * Required rather than inferred, for the same reason
        * `MessageThreadStore.reset` is: the router reuses the page component
        * across a channel-id change, so this instance can outlive the channel
@@ -172,5 +184,7 @@ export const ChannelParticipantsStore = signalStore(
  * Injection type of {@link ChannelParticipantsStore}.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type ChannelParticipantsStoreType = InstanceType<typeof ChannelParticipantsStore>;

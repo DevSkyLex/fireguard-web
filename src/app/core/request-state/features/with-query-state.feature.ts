@@ -11,12 +11,39 @@ import type { QueryState, StoreError } from '../models';
 
 /**
  * Type QueryStateFeatureResult
- * @type QueryStateFeatureResult
- * @description Query state composition contract with plain public signals and no commands.
+ *
+ * @description
+ * Query state composition contract with plain public signals and no commands.
+ *
  * @template TData - The successful query payload.
+ *
+ * @type QueryStateFeatureResult
  */
 type QueryStateFeatureResult<TData> = {
+  /**
+   * Property state
+   *
+   * @description
+   * Internal request lifecycle state managed by the query feature.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {Prettify<QueryState<TData>>}
+   */
   state: Prettify<QueryState<TData>>;
+
+  /**
+   * Property props
+   *
+   * @description
+   * Computed store signals exposing query lifecycle, result data and normalized failure.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {QueryStateFeatureResult<TData>['props']}
+   */
   props: {
     isQueryLoading: Signal<boolean>;
     isQueryLoaded: Signal<boolean>;
@@ -24,12 +51,24 @@ type QueryStateFeatureResult<TData> = {
     queryData: Signal<TData | null>;
     queryError: Signal<StoreError | null>;
   };
+
+  /**
+   * Property methods
+   *
+   * @description
+   * Preserves the base store's methods; query transitions are driven by the exported state updater
+   * functions.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {EmptyFeatureResult['methods']}
+   */
   methods: EmptyFeatureResult['methods'];
 };
 
 /**
  * Function withQueryState
- * @function withQueryState
  *
  * @description
  * NgRx SignalStore custom feature for stores that have exactly ONE primary
@@ -58,6 +97,8 @@ type QueryStateFeatureResult<TData> = {
  * @template TData The type of the successful query result data.
  *
  * @returns {SignalStoreFeature<EmptyFeatureResult, QueryStateFeatureResult<TData>>} Query feature to apply when creating the store.
+ *
+ * @function withQueryState
  */
 export function withQueryState<TData>(): SignalStoreFeature<
   EmptyFeatureResult,

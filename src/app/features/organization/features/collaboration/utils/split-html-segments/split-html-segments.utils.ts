@@ -2,14 +2,20 @@ import { findHtmlTagClose } from '../find-html-tag-close/find-html-tag-close.uti
 
 /**
  * Function splitHtmlSegments
- * @function splitHtmlSegments
- * @description Splits serialized HTML into tags and text with a single forward scan.
+ *
+ * @description
+ * Splits serialized HTML into tags and text with a single forward scan.
  * A `>` inside a quoted attribute does not close its tag. An unterminated tag
  * remains text so malformed content is preserved for the caller.
+ *
  * @access public
  * @since 1.0.0
+ *
  * @param {string} html - Serialized editor content.
+ *
  * @returns {readonly { readonly value: string; readonly isTag: boolean }[]} Ordered tags and text.
+ *
+ * @function splitHtmlSegments
  */
 export function splitHtmlSegments(
   html: string,

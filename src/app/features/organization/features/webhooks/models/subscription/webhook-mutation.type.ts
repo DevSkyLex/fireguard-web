@@ -2,9 +2,13 @@ import type { WebhookSubscriptionInput } from './webhook-subscription-input.inte
 
 /**
  * Type WebhookMutation
- * @type WebhookMutation
- * @description An explicit management action; redelivery keeps its original delivery identity.
+ *
+ * @description
+ * An explicit management action; redelivery keeps its original delivery identity.
+ *
  * @since 1.0.0
+ *
+ * @type WebhookMutation
  */
 export type WebhookMutation =
   | { kind: 'create'; input: WebhookSubscriptionInput }

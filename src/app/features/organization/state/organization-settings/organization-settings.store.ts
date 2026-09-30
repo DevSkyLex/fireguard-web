@@ -36,6 +36,17 @@ import type {
 } from './models';
 
 //#region Initial State
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Starts each settings command in its own idle request state.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @type {OrganizationSettingsState}
+ */
 const INITIAL_STATE: OrganizationSettingsState = {
   saveCallState: idleCallState(),
   uploadLogoCallState: idleCallState(),
@@ -48,19 +59,20 @@ const INITIAL_STATE: OrganizationSettingsState = {
 //#endregion
 
 /**
- * Store OrganizationSettingsStore
- * @const OrganizationSettingsStore
+ * Constant OrganizationSettingsStore
  *
  * @description
  * Component-scoped NgRx SignalStore backing the organization settings page.
  * Owns the general & branding mutations — saving the settings form and
  * uploading the logo — and refreshes the {@link ActiveOrganizationStore} on
  * success so the switcher, breadcrumb and navigation reflect the change.
- *
  * Designed to be provided at **component level** (no `providedIn: 'root'`).
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant OrganizationSettingsStore
  */
 export const OrganizationSettingsStore = signalStore(
   withState<OrganizationSettingsState>(INITIAL_STATE),
@@ -105,10 +117,15 @@ export const OrganizationSettingsStore = signalStore(
       let generation = 0;
       let currentOrganizationId = activeOrganizationStore.selectedOrganizationId();
       let sessionRevision = authSession.sessionRevision();
+
       /**
        * Function synchronizeContext
-       * @description Resets action state when a mounted settings page changes organization or session.
+       *
+       * @description
+       * Resets action state when a mounted settings page changes organization or session.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const synchronizeContext = (): void => {
@@ -121,11 +138,21 @@ export const OrganizationSettingsStore = signalStore(
           patchState(store, INITIAL_STATE);
         }
       };
+
       /**
        * Function captureContext
-       * @description Captures the owner of an accepted command independently of later navigation.
+       *
+       * @description
+       * Captures the owner of an accepted command independently of later navigation.
+       *
        * @since 1.0.0
-       * @returns {{ generation: number; revision: number; organization: OrganizationOutput | null }} Command context.
+       *
+       * @returns {{
+       *   generation: number;
+       *   revision: number;
+       *   organization: OrganizationOutput | null;
+       * }}
+       *   Command context.
        */
       const captureContext = () => {
         synchronizeContext();
@@ -135,11 +162,17 @@ export const OrganizationSettingsStore = signalStore(
           organization: activeOrganizationStore.selectedOrganization(),
         };
       };
+
       /**
        * Function isCurrent
-       * @description Checks command ownership before changing active data, action state or page feedback.
+       *
+       * @description
+       * Checks command ownership before changing active data, action state or page feedback.
+       *
        * @since 1.0.0
+       *
        * @param {ReturnType<typeof captureContext>} context - Context captured at acceptance.
+       *
        * @returns {boolean} Whether the command still belongs to this page and session.
        */
       const isCurrent = (context: ReturnType<typeof captureContext>): boolean => {
@@ -152,6 +185,7 @@ export const OrganizationSettingsStore = signalStore(
       };
       return {
         synchronizeContext,
+
         /**
          * Method save
          * @method save
@@ -347,7 +381,8 @@ export const OrganizationSettingsStore = signalStore(
          * routine rather than exceptional — the page shows the error in place and
          * keeps the dialog open.
          *
-         * @param {OrganizationSettingsTransferOwnershipParams} params - Organization id, the new owner's user id and the slug confirmation.
+         * @param {OrganizationSettingsTransferOwnershipParams} params - Organization id, the new
+         *   owner's user id and the slug confirmation.
          */
         transferOwnership: rxMethod<OrganizationSettingsTransferOwnershipParams>(
           pipe(
@@ -586,7 +621,8 @@ export const OrganizationSettingsStore = signalStore(
          * {@link restore}. On success the page is responsible for clearing the
          * active organization context and navigating away.
          *
-         * @param {OrganizationSettingsDeleteParams} params - Organization id and the slug confirmation.
+         * @param {OrganizationSettingsDeleteParams} params - Organization id and the slug
+         *   confirmation.
          */
         deleteOrganization: rxMethod<OrganizationSettingsDeleteParams>(
           pipe(
@@ -653,11 +689,12 @@ export const OrganizationSettingsStore = signalStore(
 
 /**
  * Type OrganizationSettingsStore
- * @type OrganizationSettingsStore
  *
  * @description
  * Instance type of the {@link OrganizationSettingsStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type OrganizationSettingsStore
  */
 export type OrganizationSettingsStore = InstanceType<typeof OrganizationSettingsStore>;

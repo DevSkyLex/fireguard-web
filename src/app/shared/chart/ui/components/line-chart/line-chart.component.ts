@@ -25,13 +25,55 @@ import type { ChartSeries } from '../../../models';
 
 /**
  * Type LineChartDatum
- * @type
- * @description One named series value at a shared category; missing samples remain gaps.
+ *
+ * @description
+ * One named series value at a shared category; missing samples remain gaps.
+ *
  * @since 3.0.0
+ *
+ * @type
  */
 type LineChartDatum = {
+  /**
+   * Property category
+   * @readonly
+   *
+   * @description
+   * Shared horizontal axis category for aligning values across chart series.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly category: string;
+
+  /**
+   * Property value
+   * @readonly
+   *
+   * @description
+   * Numeric plotted sample, or null to preserve a gap in the series.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number | null}
+   */
   readonly value: number | null;
+
+  /**
+   * Property series
+   * @readonly
+   *
+   * @description
+   * Series name used to distinguish this sample in the legend and tooltip.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly series: string;
 };
 
@@ -45,6 +87,7 @@ type LineChartDatum = {
  * Loading and server rendering reserve the plot height; empty data gets an explicit state.
  *
  * @version 3.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -58,30 +101,44 @@ export class LineChart {
   /**
    * Property locale
    * @readonly
-   * @description Active application locale for numeric axis and tooltip labels.
+   *
+   * @description
+   * Active application locale for numeric axis and tooltip labels.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private readonly locale: string = inject(LOCALE_ID);
+
   /**
    * Property showPoints
    * @readonly
-   * @description Controls persistent sample markers; native focus markers remain available.
+   *
+   * @description
+   * Controls persistent sample markers; native focus markers remain available.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly showPoints: InputSignalWithTransform<boolean, BooleanInput> = input<
     boolean,
     BooleanInput
   >(true, { transform: booleanAttribute });
+
   /**
    * Property integerAxis
    * @readonly
-   * @description Uses whole-number ticks for event volumes without changing other chart consumers.
+   *
+   * @description
+   * Uses whole-number ticks for event volumes without changing other chart consumers.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly integerAxis: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -90,7 +147,7 @@ export class LineChart {
   >(false, {
     transform: booleanAttribute,
   });
-  //#region Inputs
+  //#region Properties
   /**
    * Property series
    * @readonly
@@ -252,14 +309,19 @@ export class LineChart {
    * @type {string}
    */
   protected readonly emptyTitle: string = $localize`:@@shared.chart.lineChart.empty.title:No data`;
+
   /**
    * Property chartOptions
    * @readonly
-   * @description Aligns categories across series and configures the native Spartan plot.
+   *
+   * @description
+   * Aligns categories across series and configures the native Spartan plot.
    * Missing samples are null rather than fabricated zeroes. Semantic CSS variables keep
    * the plot and its tooltip synchronized with the current theme without DOM reads.
+   *
    * @access protected
    * @since 3.0.0
+   *
    * @type {Signal<ChartOptions<LineChartDatum, string, number>>}
    */
   protected readonly chartOptions: Signal<ChartOptions<LineChartDatum, string, number>> = computed(
@@ -357,4 +419,5 @@ export class LineChart {
       };
     },
   );
+  //#endregion
 }

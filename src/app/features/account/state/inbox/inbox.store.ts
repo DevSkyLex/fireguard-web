@@ -40,7 +40,10 @@ import { inboxStoreEvents } from './inbox.events';
 
 /**
  * Constant INITIAL_STATE
- * @description Empty account cache with separate query and acknowledgement states.
+ *
+ * @description
+ * Empty account cache with separate query and acknowledgement states.
+ *
  * @since 1.0.0
  */
 const INITIAL_STATE: InboxState = {
@@ -59,10 +62,15 @@ const INITIAL_STATE: InboxState = {
 
 /**
  * Function selectId
- * @description Keeps equal identifiers from different sources distinct.
+ *
+ * @description
+ * Keeps equal identifiers from different sources distinct.
+ *
  * @access private
  * @since 1.0.0
+ *
  * @param {InboxItemOutput} item - Contributor-owned item.
+ *
  * @returns {string} Composite entity identity.
  */
 function selectId(item: InboxItemOutput): string {
@@ -70,8 +78,12 @@ function selectId(item: InboxItemOutput): string {
 }
 
 /**
- * Store InboxStore
- * @description Shared page and bell cache, fenced by account and organization. Secondary reads run only in the browser; cursors remain opaque.
+ * Constant InboxStore
+ *
+ * @description
+ * Shared page and bell cache, fenced by account and organization. Secondary reads run only in the
+ * browser; cursors remain opaque.
+ *
  * @since 1.0.0
  */
 export const InboxStore = signalStore(
@@ -82,36 +94,55 @@ export const InboxStore = signalStore(
     /**
      * Property isLoading
      * @readonly
-     * @description First-page request activity.
+     *
+     * @description
+     * First-page request activity.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     isLoading: computed(() => store.listCallState().status === 'pending'),
+
     /**
      * Property isLoadingMore
      * @readonly
-     * @description Pagination request activity.
+     *
+     * @description
+     * Pagination request activity.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     isLoadingMore: computed(() => store.moreCallState().status === 'pending'),
+
     /**
      * Property listError
      * @readonly
-     * @description Most recent feed request failure without hiding acquired entries.
+     *
+     * @description
+     * Most recent feed request failure without hiding acquired entries.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<StoreError | null>}
      */
     listError: computed(() => store.listCallState().error ?? store.moreCallState().error),
+
     /**
      * Property hasMore
      * @readonly
-     * @description Pagination is available only after a complete server page.
+     *
+     * @description
+     * Pagination is available only after a complete server page.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     hasMore: computed(() => store.complete() && store.nextPageCursor() !== null),
@@ -130,9 +161,13 @@ export const InboxStore = signalStore(
 
       /**
        * Method loadCount
-       * @description Refreshes the server total independently of loaded entries.
+       *
+       * @description
+       * Refreshes the server total independently of loaded entries.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const loadCount = rxMethod<void>(
@@ -163,9 +198,14 @@ export const InboxStore = signalStore(
 
       /**
        * Method load
-       * @description Activates the feed and restarts pagination while preserving acquired entries on failures or partial responses.
+       *
+       * @description
+       * Activates the feed and restarts pagination while preserving acquired entries on failures or
+       * partial responses.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const load = rxMethod<void>(
@@ -211,34 +251,52 @@ export const InboxStore = signalStore(
       return {
         load,
         loadCount,
+
         /**
          * Method ensureLoaded
-         * @description Loads the first page when a visible surface first opens; explicit retries handle failures.
+         *
+         * @description
+         * Loads the first page when a visible surface first opens; explicit retries handle
+         * failures.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         ensureLoaded(): void {
           if (!store.activated()) load();
         },
+
         /**
          * Method refresh
-         * @description Invalidates after a source-owned mutation or realtime delivery.
+         *
+         * @description
+         * Invalidates after a source-owned mutation or realtime delivery.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         refresh(): void {
           loadCount();
           if (store.activated()) load();
         },
+
         /**
          * Method setScope
-         * @description Cancels previous-scope requests and removes their entries before querying a new account or workspace.
+         *
+         * @description
+         * Cancels previous-scope requests and removes their entries before querying a new account
+         * or workspace.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string | null} accountId - Current authenticated account.
          * @param {string | null} organizationId - Selected workspace.
+         *
          * @returns {void}
          */
         setScope(accountId: string | null, organizationId: string | null): void {
@@ -258,11 +316,16 @@ export const InboxStore = signalStore(
             if (activated) load();
           }
         },
+
         /**
          * Method loadMore
-         * @description Appends the next complete cursor page, deduplicating repeated clicks and identities.
+         *
+         * @description
+         * Appends the next complete cursor page, deduplicating repeated clicks and identities.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         loadMore: rxMethod<void>(
@@ -298,12 +361,19 @@ export const InboxStore = signalStore(
             }),
           ),
         ),
+
         /**
          * Method markAsRead
-         * @description Acknowledges notification-source entries only. Conversation read markers belong to Messaging.
+         *
+         * @description
+         * Acknowledges notification-source entries only. Conversation read markers belong to
+         * Messaging.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {InboxItemOutput} item - Selected contributor item.
+         *
          * @returns {void}
          */
         markAsRead: rxMethod<InboxItemOutput>(
@@ -378,8 +448,12 @@ export const InboxStore = signalStore(
 
 /**
  * Type InboxStoreType
- * @type InboxStoreType
- * @description Injectable unified inbox store instance.
+ *
+ * @description
+ * Injectable unified inbox store instance.
+ *
  * @since 1.0.0
+ *
+ * @type InboxStoreType
  */
 export type InboxStoreType = InstanceType<typeof InboxStore>;

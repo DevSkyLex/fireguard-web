@@ -14,10 +14,11 @@ import type { WorkloadAssessment } from '@features/organization/features/workloa
 import { InterventionDatabaseService } from './intervention-database.service';
 
 /**
- * Repository InterventionOutboxRepository
+ * Class InterventionOutboxRepository
  * @class InterventionOutboxRepository
  *
  * @description
+ * Repository InterventionOutboxRepository
  * Owns the intervention offline outbox: queues create/update operations for replay,
  * exposes pending-status for UI and update flows, and lets the sync service
  * dequeue or mark operations. Persists onto {@link InterventionDatabaseService}.
@@ -238,7 +239,7 @@ export class InterventionOutboxRepository {
    * @param {InterventionOutboxType} type - Operation type.
    * @param {InterventionOutboxPayloadMap[Type]} payload - Operation payload.
    *
-   * @return {Promise<void>} A promise resolving once the operation is queued.
+   * @returns {Promise<void>} A promise resolving once the operation is queued.
    */
   public async queue<Type extends InterventionOutboxType>(
     interventionId: string,
@@ -266,7 +267,20 @@ export class InterventionOutboxRepository {
   }
 
   /**
+   * Method queueMany
+   * @method queueMany
+   *
+   * @description
    * Atomically queues every operation belonging to one field intention.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {string} interventionId - Intervention that owns the queued mutations.
+   * @param {readonly InterventionOutboxQueueEntry[]} entries - Ordered mutations to persist for
+   *   later replay.
+   *
+   * @returns {Promise<readonly string[]>}
    */
   public async queueMany(
     interventionId: string,
@@ -314,7 +328,8 @@ export class InterventionOutboxRepository {
    *
    * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with the queued operations.
+   * @returns {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with the queued
+   *   operations.
    */
   public async listOutbox(interventionId: string): Promise<readonly InterventionOutboxOperation[]> {
     if (!this.database.browser) return [];
@@ -341,7 +356,8 @@ export class InterventionOutboxRepository {
    * @access public
    * @since 7.0.0
    *
-   * @return {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with every queued operation.
+   * @returns {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with every
+   *   queued operation.
    */
   public async listAllOutbox(): Promise<readonly InterventionOutboxOperation[]> {
     if (!this.database.browser) return [];
@@ -366,7 +382,7 @@ export class InterventionOutboxRepository {
    * @access public
    * @since 6.0.0
    *
-   * @return {Promise<{ count: number; bytes: number }>} Queued file count and summed byte size.
+   * @returns {Promise<{ count: number; bytes: number }>} Queued file count and summed byte size.
    */
   public async attachmentQueueUsage(): Promise<{ count: number; bytes: number }> {
     if (!this.database.browser) return { count: 0, bytes: 0 };
@@ -393,7 +409,8 @@ export class InterventionOutboxRepository {
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<readonly string[]>} Result of the list intervention ids with outbox operation.
+   * @returns {Promise<readonly string[]>} Result of the list intervention ids with outbox
+   *   operation.
    */
   public async listInterventionIdsWithOutbox(): Promise<readonly string[]> {
     if (!this.database.browser) return [];
@@ -414,7 +431,7 @@ export class InterventionOutboxRepository {
    *
    * @param {string} id - Outbox operation identifier.
    *
-   * @return {Promise<void>} A promise resolving once the operation is removed.
+   * @returns {Promise<void>} A promise resolving once the operation is removed.
    */
   public async removeOutbox(id: string): Promise<void> {
     await this.database.ensureOwnerBound();
@@ -434,9 +451,14 @@ export class InterventionOutboxRepository {
    *
    * @param {string} id - id value.
    * @param {string} error - error value.
+   * @param {WorkloadAssessment | null} workloadAssessment - Overload assessment awaiting explicit
+   *   consent.
+   * @param {{
+   *   readonly revision: number;
+   *   readonly values: Readonly<Record<string, string | number | boolean | null>>;
+   * } | null} review
+   *   - Current server values for human conflict review.
    *
-   * @param {WorkloadAssessment | null} workloadAssessment - Overload assessment awaiting explicit consent.
-   * @param {{ readonly revision: number; readonly values: Readonly<Record<string, string | number | boolean | null>> } | null} review - Current server values for human conflict review.
    * @returns {Promise<void>} Resolves once the conflict is persisted.
    */
   public async markOutboxConflict(
@@ -466,7 +488,19 @@ export class InterventionOutboxRepository {
   }
 
   /**
+   * Method markOutboxFailed
+   * @method markOutboxFailed
+   *
+   * @description
    * Marks one permanently rejected operation as failed for explicit user resolution.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {string} id - Outbox operation whose last replay attempt failed.
+   * @param {string} error - Failure detail retained on the outbox operation.
+   *
+   * @returns {Promise<void>}
    */
   public async markOutboxFailed(id: string, error: string): Promise<void> {
     await this.database.ensureOwnerBound();
@@ -493,7 +527,7 @@ export class InterventionOutboxRepository {
    * @param {number} revision - Current server revision to rebase the payload onto.
    * @param {string} error - Conflict detail surfaced to the user.
    *
-   * @return {Promise<void>} Resolves once the operation is rebased and marked.
+   * @returns {Promise<void>} Resolves once the operation is rebased and marked.
    */
   public async rebaseOutboxRevision(id: string, revision: number, error: string): Promise<void> {
     await this.database.ensureOwnerBound();
@@ -550,6 +584,7 @@ export class InterventionOutboxRepository {
    *
    * @param {string} id - Operation identifier.
    * @param {string} token - Reviewed workload token.
+   *
    * @returns {Promise<void>}
    */
   public async confirmWorkload(id: string, token: string): Promise<void> {
@@ -583,6 +618,7 @@ export class InterventionOutboxRepository {
    *
    * @param {string} id - Operation identifier.
    * @param {number} revision - Revision explicitly reviewed alongside current server values.
+   *
    * @returns {Promise<void>}
    */
   public async confirmRevision(id: string, revision: number): Promise<void> {
@@ -606,6 +642,7 @@ export class InterventionOutboxRepository {
     });
     await this.refresh();
   }
+
   /**
    * Method refresh
    * @method refresh
@@ -617,7 +654,7 @@ export class InterventionOutboxRepository {
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<void>} A promise resolving once the state is recomputed.
+   * @returns {Promise<void>} A promise resolving once the state is recomputed.
    */
   public async refresh(): Promise<void> {
     if (!this.database.browser) return;

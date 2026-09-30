@@ -4,7 +4,8 @@ import type { ShortcutPlatformEvidence } from '../../models/shortcut-platform-ev
 /**
  * Function resolveShortcutModifier
  *
- * @description Resolves the platform modifier without assuming a browser global, so the result remains safe to
+ * @description
+ * Resolves the platform modifier without assuming a browser global, so the result remains safe to
  * use during server rendering. Explicit platform fields win over the user agent because privacy
  * tools can expose a reduced or synthetic browser identity.
  *
@@ -35,7 +36,8 @@ export function resolveShortcutModifier(
 /**
  * Function formatShortcut
  *
- * @description Formats a shortcut key with the
+ * @description
+ * Formats a shortcut key with the
  * platform-specific modifier.
  *
  * @access public

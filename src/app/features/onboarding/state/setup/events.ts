@@ -4,10 +4,15 @@ import type { FeedbackEventPayload } from '@core/request-state';
 import type { OnboardingOutput, OnboardingSetupStep } from '@features/onboarding/models';
 
 /**
+ * Constant onboardingSetupEvents
+ *
+ * @description
  * Events onboardingSetupEvents
- * @const onboardingSetupEvents
- * @description Publishes one batch failure and requests progression only after all durable writes succeed.
+ * Publishes one batch failure and requests progression only after all durable writes succeed.
+ *
  * @since 1.1.0
+ *
+ * @constant onboardingSetupEvents
  */
 export const onboardingSetupEvents = eventGroup({
   source: 'Onboarding Setup',

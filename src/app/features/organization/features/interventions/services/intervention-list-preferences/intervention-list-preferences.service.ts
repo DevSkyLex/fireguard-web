@@ -11,35 +11,102 @@ import {
 } from '@shared/list-sort-preferences';
 
 /**
+ * Constant PREFERENCES_COOKIE_NAME
+ *
+ * @description
  * Cookie holding the interventions list's remembered shape.
  */
 const PREFERENCES_COOKIE_NAME = 'fg-intervention-list';
 
 /**
- * Ordering used when nothing has been remembered: soonest deadline first, which
+ * Constant DEFAULT_SORT
+ *
+ * @description
  * is the question the list is opened to answer.
  */
 const DEFAULT_SORT: InterventionListSort = { field: 'dueAt', direction: 'asc' };
 
 /**
- * Cookies cap out around 4 KB. Nothing here should approach that, but a
+ * Constant MAX_HIDDEN_COLUMNS
+ *
+ * @description
  * corrupted or hand-edited value must not be written back unbounded.
  */
 const MAX_HIDDEN_COLUMNS = 24;
 
 /**
- * Shape persisted in the cookie. Deliberately not exported: it is an encoding
+ * Interface PersistedPreferences
+ * @interface
+ *
+ * @description
  * detail, and every caller goes through the accessors below.
  */
 interface PersistedPreferences {
+  /**
+   * Property sortField
+   * @readonly
+   *
+   * @description
+   * Names the field used to order the equipment list.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly sortField?: string;
+
+  /**
+   * Property sortDirection
+   * @readonly
+   *
+   * @description
+   * Selects ascending or descending order for the equipment list.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly sortDirection?: string;
+
+  /**
+   * Property hiddenColumns
+   * @readonly
+   *
+   * @description
+   * Lists table columns hidden by the saved preference.
+   *
+   * @access public
+   *
+   * @type {readonly string[]}
+   */
   readonly hiddenColumns?: readonly string[];
+
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * Sets the maximum number of persisted preferences records requested on each page.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
   readonly pageSize?: number;
 }
 
 /**
- * Narrows a decoded sort field to one this build's interventions list supports.
+ * Function isInterventionSortField
+ *
+ * @description
+ * Checks whether a persisted sort-field value is supported by the interventions list.
+ *
+ * @access public
+ * @since unreleased
+ *
+ * @param {string} field - Candidate sort-field value read from persisted preferences.
+ *
+ * @returns {field is InterventionSortField} Whether the field is a supported intervention sort key.
  */
 function isInterventionSortField(field: string): field is InterventionSortField {
   return (
@@ -53,7 +120,7 @@ function isInterventionSortField(field: string): field is InterventionSortField 
 }
 
 /**
- * Service InterventionListPreferencesService
+ * Class InterventionListPreferencesService
  * @class InterventionListPreferencesService
  *
  * @description
@@ -61,7 +128,6 @@ function isInterventionSortField(field: string): field is InterventionSortField 
  * was ordered, which optional columns were hidden, and how many rows a page
  * held. Filters are deliberately not remembered — they are questions asked
  * now, not stored preferences.
- *
  * A behavioral service rather than a util (ARCHITECTURE.md §10.7): it needs
  * `CookieService`, and a util may not inject. Cookies are the only persistence
  * this application uses — there is no `localStorage` anywhere — and
@@ -70,13 +136,13 @@ function isInterventionSortField(field: string): field is InterventionSortField 
  * field reuses `@shared/list-sort-preferences` unchanged — the hidden-column
  * and page-size handling below has no equivalent in the other list-sort
  * preference services and stays local.
- *
  * Every read is defensive. A cookie is user-editable and survives deployments,
  * so a malformed or outdated value falls back to the default instead of
  * propagating into the query; column ids and page sizes are returned raw and
  * narrowed by the page against what this build actually offers.
  *
  * @version 2.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -100,6 +166,7 @@ export class InterventionListPreferencesService {
   //#region Methods
   /**
    * Method readSort
+   * @method readSort
    *
    * @description
    * The remembered ordering, or soonest-deadline-first when none was stored or
@@ -123,6 +190,7 @@ export class InterventionListPreferencesService {
 
   /**
    * Method readHiddenColumns
+   * @method readHiddenColumns
    *
    * @description
    * Ids of the optional columns the operator hid, as stored. The page narrows
@@ -145,6 +213,7 @@ export class InterventionListPreferencesService {
 
   /**
    * Method readPageSize
+   * @method readPageSize
    *
    * @description
    * The remembered rows-per-page, or `null` when none was stored or the value
@@ -164,6 +233,7 @@ export class InterventionListPreferencesService {
 
   /**
    * Method write
+   * @method write
    *
    * @description
    * Persists the whole remembered shape in one cookie. Callers pass the current
@@ -176,6 +246,7 @@ export class InterventionListPreferencesService {
    * @param {InterventionListSort} sort - Active ordering.
    * @param {ReadonlySet<string>} hiddenColumns - Ids of the hidden columns.
    * @param {number} pageSize - Rows per page.
+   *
    * @returns {void}
    */
   public write(
@@ -193,6 +264,7 @@ export class InterventionListPreferencesService {
 
   /**
    * Method persist
+   * @method persist
    *
    * @description
    * Writes the whole record in one cookie, so it is never left half-updated.
@@ -201,6 +273,7 @@ export class InterventionListPreferencesService {
    * @since 1.1.0
    *
    * @param {PersistedPreferences} payload - Full record to store.
+   *
    * @returns {void}
    */
   private persist(payload: PersistedPreferences): void {
@@ -211,6 +284,7 @@ export class InterventionListPreferencesService {
 
   /**
    * Method read
+   * @method read
    *
    * @description
    * Decodes the cookie, answering with an empty record for anything that is not

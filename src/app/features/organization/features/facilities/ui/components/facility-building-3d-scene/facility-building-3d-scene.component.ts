@@ -37,16 +37,104 @@ import {
 import type { SceneObjectUserData, ScenePalette, ScenePickCandidate } from './models';
 import { buildFloorGroup, pickTarget, readScenePalette } from './utils';
 
-/** The three.js module's own type, imported dynamically so it never enters the initial bundle. */
+/**
+ * Type ThreeModule
+ *
+ * @description
+ * Names the Three.js module type used by the browser-only scene loader.
+ *
+ * @type {typeof import('three')}
+ */
 type ThreeModule = typeof import('three');
+
+/**
+ * Type ThreeScene
+ *
+ * @description
+ * Represents the Three.js scene instance used by the facility viewer.
+ *
+ * @type ThreeScene
+ */
 type ThreeScene = InstanceType<ThreeModule['Scene']>;
+
+/**
+ * Type ThreeCamera
+ *
+ * @description
+ * Represents the Three.js perspective camera used by the facility viewer.
+ *
+ * @type ThreeCamera
+ */
 type ThreeCamera = InstanceType<ThreeModule['PerspectiveCamera']>;
+
+/**
+ * Type ThreeRenderer
+ *
+ * @description
+ * Represents the WebGL renderer used by the facility viewer.
+ *
+ * @type ThreeRenderer
+ */
 type ThreeRenderer = InstanceType<ThreeModule['WebGLRenderer']>;
+
+/**
+ * Type ThreeGroup
+ *
+ * @description
+ * Represents a Three.js group used to organize facility meshes.
+ *
+ * @type ThreeGroup
+ */
 type ThreeGroup = InstanceType<ThreeModule['Group']>;
+
+/**
+ * Type ThreeMesh
+ *
+ * @description
+ * Represents a Three.js mesh rendered in the facility scene.
+ *
+ * @type ThreeMesh
+ */
 type ThreeMesh = InstanceType<ThreeModule['Mesh']>;
+
+/**
+ * Type ThreeColorMaterial
+ *
+ * @description
+ * Represents the material used to color facility scene meshes.
+ *
+ * @type ThreeColorMaterial
+ */
 type ThreeColorMaterial = InstanceType<ThreeModule['MeshLambertMaterial']>;
+
+/**
+ * Type ThreeRaycaster
+ *
+ * @description
+ * Represents the Three.js raycaster used for scene hit testing.
+ *
+ * @type ThreeRaycaster
+ */
 type ThreeRaycaster = InstanceType<ThreeModule['Raycaster']>;
+
+/**
+ * Type ThreeVector2
+ *
+ * @description
+ * Represents the two-dimensional pointer coordinates used by the scene.
+ *
+ * @type ThreeVector2
+ */
 type ThreeVector2 = InstanceType<ThreeModule['Vector2']>;
+
+/**
+ * Type ThreeLineSegments
+ *
+ * @description
+ * Represents line segments rendered in the facility scene.
+ *
+ * @type ThreeLineSegments
+ */
 type ThreeLineSegments = InstanceType<ThreeModule['LineSegments']>;
 
 /**
@@ -63,7 +151,7 @@ type ThreeLineSegments = InstanceType<ThreeModule['LineSegments']>;
 const TAP_THRESHOLD_PX = 6;
 
 /**
- * Component FacilityBuilding3dScene
+ * Class FacilityBuilding3dScene
  * @class FacilityBuilding3dScene
  *
  * @description
@@ -76,7 +164,6 @@ const TAP_THRESHOLD_PX = 6;
  * through `await import()`, mounted only in the browser
  * (`afterNextRender`-style `isPlatformBrowser` guard, mirroring `Map`), so
  * neither ships in this route's initial chunk.
- *
  * Rendering is **on demand**: nothing here runs a permanent
  * `requestAnimationFrame` loop. `invalidate` coalesces any number of
  * triggers (an `OrbitControls` `change` event, a resize, a selection/
@@ -85,7 +172,6 @@ const TAP_THRESHOLD_PX = 6;
  * (`animateExploded`), which stops itself once its duration elapses and is
  * skipped outright — jumping straight to the target — under
  * `prefers-reduced-motion`.
- *
  * A monotonic `generation` counter guards every asynchronous continuation
  * (`await import('three')`, `await import(OrbitControls)`): a
  * `mountAsync` that resolves after the component already tore down checks
@@ -98,7 +184,6 @@ const TAP_THRESHOLD_PX = 6;
  * distinct geometry and material a single time — the utils share materials
  * across meshes, so a naive per-mesh `dispose()` would double-free some and
  * miss others.
- *
  * Hover is coalesced to at most one raycast per animation frame
  * (`onPointerMove` schedules a single pending frame) and never touches a
  * store — `roomHovered` is the only trace it leaves, matching
@@ -106,7 +191,6 @@ const TAP_THRESHOLD_PX = 6;
  * (`TAP_THRESHOLD_PX`) is disambiguated from an `OrbitControls` drag by
  * travel distance alone, exactly like `FacilityPlanEditor`'s own gesture,
  * so a tablet with no hover still selects directly on tap.
- *
  * Isolation dims a non-isolated floor's materials to `DIMMED_OPACITY`
  * rather than hiding the group — picking exclusion is already `pickTarget`'s
  * job, given `isolatedFloorId`. A room's tint comes from
@@ -119,12 +203,12 @@ const TAP_THRESHOLD_PX = 6;
  * outline in `selectionOutline`'s colour (`--ring`) is added as a sibling
  * of the selected mesh, a non-chromatic redundancy that survives a
  * colour-blind or greyscale render.
- *
  * Presentational: inputs and outputs only, no store or service
  * (`ARCHITECTURE.md` §10.3) — `FacilityBuilding3dPage` owns every store
  * call this scene's outputs trigger.
  *
  * @since 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -139,9 +223,13 @@ export class FacilityBuilding3dScene {
   /**
    * Property model
    * @readonly
-   * @description The building's floors, plans, outlines and rooms to render.
+   *
+   * @description
+   * The building's floors, plans, outlines and rooms to render.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<FacilityBuildingModelOutput>}
    */
   public readonly model: InputSignal<FacilityBuildingModelOutput> =
@@ -150,9 +238,13 @@ export class FacilityBuilding3dScene {
   /**
    * Property selectedRoomId
    * @readonly
-   * @description The currently selected room's facility id, highlighted with the theme's `roomSelected` colour.
+   *
+   * @description
+   * The currently selected room's facility id, highlighted with the theme's `roomSelected` colour.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly selectedRoomId: InputSignal<string | null> = input<string | null>(null);
@@ -160,9 +252,13 @@ export class FacilityBuilding3dScene {
   /**
    * Property selectedFloorId
    * @readonly
-   * @description The currently selected floor's facility id, highlighted the same way as a selected room's slab.
+   *
+   * @description
+   * The currently selected floor's facility id, highlighted the same way as a selected room's slab.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly selectedFloorId: InputSignal<string | null> = input<string | null>(null);
@@ -170,9 +266,14 @@ export class FacilityBuilding3dScene {
   /**
    * Property isolatedFloorId
    * @readonly
-   * @description The floor isolated for display, or `null` when every floor renders. Dims non-isolated floors and, through `pickTarget`, excludes them from picking.
+   *
+   * @description
+   * The floor isolated for display, or `null` when every floor renders. Dims non-isolated floors
+   * and, through `pickTarget`, excludes them from picking.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly isolatedFloorId: InputSignal<string | null> = input<string | null>(null);
@@ -180,9 +281,14 @@ export class FacilityBuilding3dScene {
   /**
    * Property exploded
    * @readonly
-   * @description Whether floors render vertically spread apart. Tweens on change, unless `prefers-reduced-motion` jumps straight to the target.
+   *
+   * @description
+   * Whether floors render vertically spread apart. Tweens on change, unless
+   * `prefers-reduced-motion` jumps straight to the target.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly exploded: InputSignal<boolean> = input<boolean>(false);
@@ -190,9 +296,14 @@ export class FacilityBuilding3dScene {
   /**
    * Property cameraResetToken
    * @readonly
-   * @description Recentres the camera on the building's bounding box whenever this value changes — only the change is observed, never its magnitude.
+   *
+   * @description
+   * Recentres the camera on the building's bounding box whenever this value changes — only the
+   * change is observed, never its magnitude.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<number>}
    */
   public readonly cameraResetToken: InputSignal<number> = input<number>(0);
@@ -202,9 +313,13 @@ export class FacilityBuilding3dScene {
   /**
    * Property roomActivated
    * @readonly
-   * @description A room mesh was tapped/clicked — emits its facility id.
+   *
+   * @description
+   * A room mesh was tapped/clicked — emits its facility id.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly roomActivated: OutputEmitterRef<string> = output<string>();
@@ -212,9 +327,13 @@ export class FacilityBuilding3dScene {
   /**
    * Property floorActivated
    * @readonly
-   * @description A floor's slab was tapped/clicked (no room hit) — emits the floor's facility id.
+   *
+   * @description
+   * A floor's slab was tapped/clicked (no room hit) — emits the floor's facility id.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly floorActivated: OutputEmitterRef<string> = output<string>();
@@ -222,9 +341,14 @@ export class FacilityBuilding3dScene {
   /**
    * Property roomHovered
    * @readonly
-   * @description The hovered room's facility id, or `null` once the pointer leaves it — coalesced to at most one raycast per frame, never written to a store.
+   *
+   * @description
+   * The hovered room's facility id, or `null` once the pointer leaves it — coalesced to at most one
+   * raycast per frame, never written to a store.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string | null>}
    */
   public readonly roomHovered: OutputEmitterRef<string | null> = output<string | null>();
@@ -232,9 +356,13 @@ export class FacilityBuilding3dScene {
   /**
    * Property backgroundActivated
    * @readonly
-   * @description A tap/click hit nothing pickable — the page's cue to clear the current selection.
+   *
+   * @description
+   * A tap/click hit nothing pickable — the page's cue to clear the current selection.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly backgroundActivated: OutputEmitterRef<void> = output<void>();
@@ -242,46 +370,133 @@ export class FacilityBuilding3dScene {
   /**
    * Property renderingUnavailable
    * @readonly
-   * @description The renderer could not be created, or its WebGL context was lost — the page's cue to fall back to a non-3D state.
+   *
+   * @description
+   * The renderer could not be created, or its WebGL context was lost — the page's cue to fall back
+   * to a non-3D state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly renderingUnavailable: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** Guards the browser-only mount. */
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Provides the Angular platform identifier used to guard browser-only rendering.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {object}
+   */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
 
-  /** Whether this instance runs on the browser platform. */
+  /**
+   * Property isBrowser
+   * @readonly
+   *
+   * @description
+   * Indicates whether the scene can create browser graphics and event listeners.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   protected readonly isBrowser: boolean = isPlatformBrowser(this.platformId);
 
-  /** Whether the exploded-layout tween may animate, or must jump straight to its target. */
+  /**
+   * Property reducedMotion
+   * @readonly
+   *
+   * @description
+   * Indicates whether the browser requests reduced motion for scene transitions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   private readonly reducedMotion: boolean =
     this.isBrowser &&
     (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false);
 
-  /** The app-wide appearance contract driving the palette refresh. */
+  /**
+   * Property themePort
+   * @readonly
+   *
+   * @description
+   * Provides the current FireGuard theme colors used to render the scene.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThemePort}
+   */
   private readonly themePort: ThemePort = inject<ThemePort>(THEME_PORT);
 
-  /** Injection context carried into the async mount, for the effects it creates there. */
+  /**
+   * Property injector
+   * @readonly
+   *
+   * @description
+   * Provides the injection context for loading browser-only scene dependencies.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Injector}
+   */
   private readonly injector: Injector = inject(Injector);
 
-  /** The element the renderer sizes itself against. */
+  /**
+   * Property containerRef
+   * @readonly
+   *
+   * @description
+   * References the element that sizes the facility scene viewport.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLDivElement> | undefined>}
+   */
   private readonly containerRef: Signal<ElementRef<HTMLDivElement> | undefined> =
     viewChild<ElementRef<HTMLDivElement>>('container');
 
-  /** The canvas the renderer mounts into. */
+  /**
+   * Property canvasRef
+   * @readonly
+   *
+   * @description
+   * References the canvas that receives the WebGL rendering context.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLCanvasElement> | undefined>}
+   */
   private readonly canvasRef: Signal<ElementRef<HTMLCanvasElement> | undefined> =
     viewChild<ElementRef<HTMLCanvasElement>>('canvas');
 
   /**
    * Property ready
    * @readonly
-   * @description Whether the renderer has painted at least one frame — the template overlays a skeleton until it does.
+   *
+   * @description
+   * Whether the renderer has painted at least one frame — the template overlays a skeleton until it
+   * does.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly ready: WritableSignal<boolean> = signal<boolean>(false);
@@ -289,9 +504,13 @@ export class FacilityBuilding3dScene {
   /**
    * Property ariaLabel
    * @readonly
-   * @description The canvas's accessible name, naming the building and its floor count.
+   *
+   * @description
+   * The canvas's accessible name, naming the building and its floor count.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly ariaLabel: Signal<string> = computed<string>(() => {
@@ -299,64 +518,345 @@ export class FacilityBuilding3dScene {
     return $localize`:@@facility.building3dScene.ariaLabel:3D view of ${data.buildingName}:buildingName: — ${data.floors.length}:floorCount: floor(s)`;
   });
 
-  /** A monotonic token: every async continuation checks it before touching live state. */
+  /**
+   * Property generation
+   *
+   * @description
+   * Invalidates scene mounts that finish after a newer mount or teardown.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {number}
+   */
   private generation = 0;
 
-  /** The three.js module, once loaded — reused by every method needing a `THREE.*` constructor. */
+  /**
+   * Property threeModule
+   *
+   * @description
+   * Caches the dynamically imported Three.js module while the scene is mounted.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeModule | null}
+   */
   private threeModule: ThreeModule | null = null;
 
+  /**
+   * Property renderer
+   *
+   * @description
+   * Holds the WebGL renderer while the 3D facility scene is initialized.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeRenderer | null}
+   */
   private renderer: ThreeRenderer | null = null;
+
+  /**
+   * Property scene
+   *
+   * @description
+   * Holds the Three.js scene that contains the facility model.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeScene | null}
+   */
   private scene: ThreeScene | null = null;
+
+  /**
+   * Property camera
+   *
+   * @description
+   * Holds the camera used to view the facility scene.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeCamera | null}
+   */
   private camera: ThreeCamera | null = null;
+
+  /**
+   * Property controls
+   *
+   * @description
+   * Holds the orbit controls attached to the facility scene camera.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrbitControls | null}
+   */
   private controls: OrbitControls | null = null;
+
+  /**
+   * Property raycaster
+   *
+   * @description
+   * Holds the raycaster used to detect pointer targets in the scene.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeRaycaster | null}
+   */
   private raycaster: ThreeRaycaster | null = null;
+
+  /**
+   * Property pointerVector
+   *
+   * @description
+   * Holds the normalized pointer coordinates used for scene hit testing.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeVector2 | null}
+   */
   private pointerVector: ThreeVector2 | null = null;
+
+  /**
+   * Property buildingGroup
+   *
+   * @description
+   * Groups the rendered building meshes within the scene.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeGroup | null}
+   */
   private buildingGroup: ThreeGroup | null = null;
+
+  /**
+   * Property resizeObserver
+   *
+   * @description
+   * Tracks container size changes so the renderer can update its viewport.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ResizeObserver | null}
+   */
   private resizeObserver: ResizeObserver | null = null;
+
+  /**
+   * Property palette
+   *
+   * @description
+   * Holds the colors used to render facility status in the scene.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ScenePalette | null}
+   */
   private palette: ScenePalette | null = null;
 
-  /** Every room mesh, keyed by its own facility id — read back on selection change. */
+  /**
+   * Property roomMeshes
+   * @readonly
+   *
+   * @description
+   * Indexes rendered room meshes by their facility id.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Map<string, ThreeMesh>}
+   */
   private readonly roomMeshes = new Map<string, ThreeMesh>();
 
-  /** Each room's untinted-by-selection colour, keyed by facility id — restored when deselected. */
+  /**
+   * Property roomBaseColors
+   * @readonly
+   *
+   * @description
+   * Stores each room mesh base color so selection highlighting can be cleared.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Map<string, InstanceType<ThreeModule['Color']>>}
+   */
   private readonly roomBaseColors = new Map<string, InstanceType<ThreeModule['Color']>>();
 
-  /** Every floor's slab mesh, keyed by the floor's facility id. */
+  /**
+   * Property slabMeshes
+   * @readonly
+   *
+   * @description
+   * Indexes floor slab meshes by their floor id.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Map<string, ThreeMesh>}
+   */
   private readonly slabMeshes = new Map<string, ThreeMesh>();
 
   /**
-   * The selected room's `EdgesGeometry` outline, added as a sibling of its
+   * Property selectedRoomOutline
+   *
+   * @description
    * mesh so it inherits the same floor group's transform (including the
    * exploded-layout tween) — the non-chromatic redundancy `PRODUCT.md`
    * requires alongside `roomSelected`'s fill tint. `null` when no room is
    * selected.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeLineSegments | null}
    */
   private selectedRoomOutline: ThreeLineSegments | null = null;
 
-  /** The selected floor slab's own outline, built the same way as {@link selectedRoomOutline}. */
+  /**
+   * Property selectedFloorOutline
+   *
+   * @description
+   * Holds the outline drawn around the currently selected floor.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ThreeLineSegments | null}
+   */
   private selectedFloorOutline: ThreeLineSegments | null = null;
 
-  /** Every floor's group and stack ordinal, keyed by the floor's facility id — read by `animateExploded`. */
+  /**
+   * Property floorGroups
+   * @readonly
+   *
+   * @description
+   * Indexes rendered floor groups together with their display order.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Map<string, { readonly group: ThreeGroup; readonly ordinal: number }>}
+   */
   private readonly floorGroups = new Map<
     string,
     { readonly group: ThreeGroup; readonly ordinal: number }
   >();
 
+  /**
+   * Property renderRaf
+   *
+   * @description
+   * Stores the scheduled animation-frame id for scene rendering.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {number | null}
+   */
   private renderRaf: number | null = null;
+
+  /**
+   * Property hoverRaf
+   *
+   * @description
+   * Stores the scheduled animation-frame id for hover updates.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {number | null}
+   */
   private hoverRaf: number | null = null;
+
+  /**
+   * Property explodeRaf
+   *
+   * @description
+   * Stores the scheduled animation-frame id for the exploded-view animation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {number | null}
+   */
   private explodeRaf: number | null = null;
+
+  /**
+   * Property pointerDownPoint
+   *
+   * @description
+   * Stores the pointer coordinates captured when a drag begins.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {{ readonly x: number; readonly y: number } | null}
+   */
   private pointerDownPoint: { readonly x: number; readonly y: number } | null = null;
+
+  /**
+   * Property lastPointerEvent
+   *
+   * @description
+   * Retains the latest pointer event while the scene handles interaction.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PointerEvent | null}
+   */
   private lastPointerEvent: PointerEvent | null = null;
+
+  /**
+   * Property hoveredFacilityId
+   *
+   * @description
+   * Identifies the facility currently under the pointer, when one is hovered.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   private hoveredFacilityId: string | null = null;
   //#endregion
 
   //#region Pointer handlers
-  /** Records where a pointer sequence on the canvas started, for tap-vs-orbit-drag disambiguation. */
+  /**
+   * Property onPointerDown
+   * @readonly
+   *
+   * @description
+   * Captures the pointer origin used to distinguish a tap from a drag.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {(event: PointerEvent) => void}
+   */
   private readonly onPointerDown = (event: PointerEvent): void => {
     this.pointerDownPoint = { x: event.clientX, y: event.clientY };
   };
 
-  /** Completes a tap: picks under the pointer and emits the matching activation output, or `backgroundActivated` when nothing was hit. */
+  /**
+   * Property onPointerUp
+   * @readonly
+   *
+   * @description
+   * Resolves a pointer tap and emits the selected room or floor event.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {(event: PointerEvent) => void}
+   */
   private readonly onPointerUp = (event: PointerEvent): void => {
     const down: { readonly x: number; readonly y: number } | null = this.pointerDownPoint;
     this.pointerDownPoint = null;
@@ -375,7 +875,18 @@ export class FacilityBuilding3dScene {
     }
   };
 
-  /** Schedules at most one raycast per animation frame, emitting `roomHovered` only when the hovered room changes. */
+  /**
+   * Property onPointerMove
+   * @readonly
+   *
+   * @description
+   * Throttles pointer hit testing and emits room hover changes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {(event: PointerEvent) => void}
+   */
   private readonly onPointerMove = (event: PointerEvent): void => {
     this.lastPointerEvent = event;
     if (this.hoverRaf !== null) return;
@@ -396,7 +907,18 @@ export class FacilityBuilding3dScene {
     });
   };
 
-  /** A lost WebGL context tears the scene down and reports it — no implicit restoration loop. */
+  /**
+   * Property onContextLost
+   * @readonly
+   *
+   * @description
+   * Tears down the scene when the browser loses the WebGL context.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {(event: Event) => void}
+   */
   private readonly onContextLost = (event: Event): void => {
     event.preventDefault();
     this.teardown();
@@ -408,7 +930,11 @@ export class FacilityBuilding3dScene {
   /**
    * Constructor
    * @constructor
-   * @description Kicks off the browser-only, dynamically-imported mount once the canvas renders, tearing it down on destroy.
+   *
+   * @description
+   * Kicks off the browser-only, dynamically-imported mount once the canvas renders, tearing it down
+   * on destroy.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -428,7 +954,19 @@ export class FacilityBuilding3dScene {
   //#endregion
 
   //#region Mount / teardown
-  /** Bumps the generation token and starts an async mount attempt for it. */
+  //#region Methods
+  /**
+   * Method mount
+   * @method mount
+   *
+   * @description
+   * Starts the asynchronous scene mount for the current generation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void} No value is returned.
+   */
   private mount(): void {
     this.generation += 1;
     void this.mountAsync(this.generation);
@@ -436,6 +974,7 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method mountAsync
+   * @method mountAsync
    *
    * @description
    * Loads `three` and `OrbitControls`, creates the renderer/scene/camera/
@@ -527,6 +1066,7 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method teardown
+   * @method teardown
    *
    * @description
    * Invalidates the generation token, cancels every pending
@@ -538,6 +1078,7 @@ export class FacilityBuilding3dScene {
    *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private teardown(): void {
@@ -601,6 +1142,7 @@ export class FacilityBuilding3dScene {
   //#region Reactive effects
   /**
    * Method registerReactiveEffects
+   * @method registerReactiveEffects
    *
    * @description
    * Registers one effect per input the initial mount already applied once
@@ -609,6 +1151,7 @@ export class FacilityBuilding3dScene {
    *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private registerReactiveEffects(): void {
@@ -696,6 +1239,7 @@ export class FacilityBuilding3dScene {
   //#region Scene building
   /**
    * Method rebuildBuilding
+   * @method rebuildBuilding
    *
    * @description
    * Disposes the previous building group (if any) and rebuilds it from
@@ -706,7 +1250,9 @@ export class FacilityBuilding3dScene {
    *
    * @access private
    * @since 1.0.0
+   *
    * @param {FacilityBuildingModelOutput} model - The building to render.
+   *
    * @returns {void}
    */
   private rebuildBuilding(model: FacilityBuildingModelOutput): void {
@@ -779,6 +1325,7 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method disposeBuildingGroup
+   * @method disposeBuildingGroup
    *
    * @description
    * Walks every descendant of `group` exactly once, disposing each distinct
@@ -789,7 +1336,9 @@ export class FacilityBuilding3dScene {
    *
    * @access private
    * @since 1.0.0
+   *
    * @param {ThreeGroup} group - The building group being torn down.
+   *
    * @returns {void}
    */
   private disposeBuildingGroup(group: ThreeGroup): void {
@@ -824,6 +1373,7 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method applySelection
+   * @method applySelection
    *
    * @description
    * Recolours every room/slab mesh: the selected one to `roomSelected`,
@@ -837,8 +1387,10 @@ export class FacilityBuilding3dScene {
    *
    * @access private
    * @since 1.0.0
+   *
    * @param {string | null} selectedRoomId - The selected room's facility id, or `null`.
    * @param {string | null} selectedFloorId - The selected floor's facility id, or `null`.
+   *
    * @returns {void}
    */
   private applySelection(selectedRoomId: string | null, selectedFloorId: string | null): void {
@@ -880,11 +1432,20 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method buildSelectionOutline
-   * @description Builds one `EdgesGeometry` outline over `mesh`'s own geometry and adds it as a sibling of `mesh`, so it renders at the exact same transform.
+   * @method buildSelectionOutline
+   *
+   * @description
+   * Builds one `EdgesGeometry` outline over `mesh`'s own geometry and adds it as a sibling of
+   * `mesh`, so it renders at the exact same transform.
+   *
    * @access private
    * @since 1.0.0
-   * @param {ThreeMesh | undefined} mesh - The mesh to outline, or `undefined` when its id resolved to nothing (a stale selection against a rebuilt model).
-   * @returns {ThreeLineSegments | null} The outline, or `null` when `mesh` is absent or the three.js module/palette are not ready.
+   *
+   * @param {ThreeMesh | undefined} mesh - The mesh to outline, or `undefined` when its id resolved
+   *   to nothing (a stale selection against a rebuilt model).
+   *
+   * @returns {ThreeLineSegments | null} The outline, or `null` when `mesh` is absent or the
+   *   three.js module/palette are not ready.
    */
   private buildSelectionOutline(mesh: ThreeMesh | undefined): ThreeLineSegments | null {
     const THREE: ThreeModule | null = this.threeModule;
@@ -906,10 +1467,16 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method disposeOutline
-   * @description Removes `outline` from its parent and disposes its geometry and material — a no-op for `null`.
+   * @method disposeOutline
+   *
+   * @description
+   * Removes `outline` from its parent and disposes its geometry and material — a no-op for `null`.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {ThreeLineSegments | null} outline - The outline to dispose, or `null`.
+   *
    * @returns {void}
    */
   private disposeOutline(outline: ThreeLineSegments | null): void {
@@ -922,10 +1489,17 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method applyIsolation
-   * @description Dims every mesh/edge belonging to a floor other than `isolatedFloorId` to `DIMMED_OPACITY`; restores full opacity when `null`. Placeholders are skipped — they render nothing regardless.
+   * @method applyIsolation
+   *
+   * @description
+   * Dims every mesh/edge belonging to a floor other than `isolatedFloorId` to `DIMMED_OPACITY`;
+   * restores full opacity when `null`. Placeholders are skipped — they render nothing regardless.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string | null} isolatedFloorId - The isolated floor's facility id, or `null` for none.
+   *
    * @returns {void}
    */
   private applyIsolation(isolatedFloorId: string | null): void {
@@ -951,6 +1525,7 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method animateExploded
+   * @method animateExploded
    *
    * @description
    * Tweens every floor group's `position.y` between its stacked base
@@ -962,7 +1537,9 @@ export class FacilityBuilding3dScene {
    *
    * @access private
    * @since 1.0.0
+   *
    * @param {boolean} exploded - The exploded layout's new state.
+   *
    * @returns {void}
    */
   private animateExploded(exploded: boolean): void {
@@ -1002,9 +1579,15 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method resetCameraView
-   * @description Frames the building's bounding box in a three-quarter view and points `OrbitControls`' target at its centre.
+   * @method resetCameraView
+   *
+   * @description
+   * Frames the building's bounding box in a three-quarter view and points `OrbitControls`' target
+   * at its centre.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private resetCameraView(): void {
@@ -1030,9 +1613,15 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method applyTheme
-   * @description Re-reads the theme palette off the container and rebuilds the building group so every material picks up the new colours.
+   * @method applyTheme
+   *
+   * @description
+   * Re-reads the theme palette off the container and rebuilds the building group so every material
+   * picks up the new colours.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private applyTheme(): void {
@@ -1047,9 +1636,14 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method handleResize
-   * @description Resizes the renderer and updates the camera aspect ratio when the container's size changes.
+   * @method handleResize
+   *
+   * @description
+   * Resizes the renderer and updates the camera aspect ratio when the container's size changes.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private handleResize(): void {
@@ -1068,11 +1662,19 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method pickAt
-   * @description Raycasts from the pointer event through the camera and resolves the nearest eligible object via `pickTarget`.
+   * @method pickAt
+   *
+   * @description
+   * Raycasts from the pointer event through the camera and resolves the nearest eligible object via
+   * `pickTarget`.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {PointerEvent} event - The pointer event to raycast from.
-   * @returns {SceneObjectUserData | null} The picked object's `userData`, or `null` when nothing eligible was hit.
+   *
+   * @returns {SceneObjectUserData | null} The picked object's `userData`, or `null` when nothing
+   *   eligible was hit.
    */
   private pickAt(event: PointerEvent): SceneObjectUserData | null {
     const canvas: HTMLCanvasElement | undefined = this.canvasRef()?.nativeElement;
@@ -1102,9 +1704,15 @@ export class FacilityBuilding3dScene {
 
   /**
    * Method invalidate
-   * @description Schedules at most one `renderer.render` per animation frame — the sole rendering trigger, since this scene runs no permanent render loop.
+   * @method invalidate
+   *
+   * @description
+   * Schedules at most one `renderer.render` per animation frame — the sole rendering trigger, since
+   * this scene runs no permanent render loop.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private invalidate(): void {
@@ -1117,5 +1725,6 @@ export class FacilityBuilding3dScene {
       }
     });
   }
+  //#endregion
   //#endregion
 }

@@ -5,12 +5,13 @@ import type {
 
 /**
  * Type CapacityCommand
- * @type CapacityCommand
  *
  * @description
  * Non-cancellable capacity write with a fixed organization and target.
  *
  * @since 1.0.0
+ *
+ * @type CapacityCommand
  */
 export type CapacityCommand =
   | {

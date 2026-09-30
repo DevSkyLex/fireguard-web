@@ -42,7 +42,6 @@ import type { ActiveOrganizationState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_ACTIVE_ORGANIZATION_STATE
- * @const INITIAL_ACTIVE_ORGANIZATION_STATE
  *
  * @description
  * Initial state for the ActiveOrganizationStore, representing an idle
@@ -51,6 +50,8 @@ import type { ActiveOrganizationState } from './models';
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_ACTIVE_ORGANIZATION_STATE
  */
 const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
   routedOrganizationId: null,
@@ -61,29 +62,28 @@ const INITIAL_ACTIVE_ORGANIZATION_STATE: ActiveOrganizationState = {
 //#endregion
 
 /**
- * Store ActiveOrganizationStore
- * @const ActiveOrganizationStore
+ * Constant ActiveOrganizationStore
  *
  * @description
  * Root-level NgRx SignalStore that tracks only the **currently active /
  * selected organization** and its associated dashboard analytics.
- *
  * This store is intentionally minimal — its single responsibility is
  * answering "which organization are we looking at right now?". All list
  * management and CRUD live in the component-scoped {@link OrganizationStore}.
- *
  * The URL wins whenever it names one: the store mirrors `:organizationId` on
  * every navigation and only exposes the cached entity while it matches. A
  * global page — the account, and every other route outside `/organizations` —
  * names none, and there the last organization worked in stands in, so the
  * workspace stays open instead of emptying out. Nothing else sets it: the
  * fallback is a memory of a previous URL, not a second way to choose.
- *
  * Provided at the root level (`providedIn: 'root'`) so that any service or
  * component can read `selectedOrganization` without providing anything.
  *
  * @version 1.2.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant ActiveOrganizationStore
  */
 export const ActiveOrganizationStore = signalStore(
   { providedIn: 'root' },
@@ -115,7 +115,6 @@ export const ActiveOrganizationStore = signalStore(
      * @description
      * The active organization resource, or `null` while the active identifier
      * designates an organization whose entity is not loaded yet.
-     *
      * Gated on that identifier on purpose: without it, switching organization
      * would leave the rail, the navigation and the page header showing the
      * previous organization's name until the fetch resolved.
@@ -271,13 +270,19 @@ export const ActiveOrganizationStore = signalStore(
             getCallState: idleCallState(),
           });
         },
+
         /**
          * Method forgetOrganization
          * @method forgetOrganization
-         * @description Removes a revoked selection and cancels responses that could restore it.
+         *
+         * @description
+         * Removes a revoked selection and cancels responses that could restore it.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string | null} organizationId - Revoked organization, or null at session end.
+         *
          * @returns {void}
          */
         forgetOrganization(organizationId: string | null): void {
@@ -314,9 +319,9 @@ export const ActiveOrganizationStore = signalStore(
         });
 
         /**
+         * @description
          * Remember the routed organization as the user's default workspace,
          * in state and in the cookie that survives the session.
-         *
          * Tracks {@link routedOrganizationId} rather than the active
          * identifier, which already includes what is being written and would
          * feed the effect its own output; nothing is forgotten on
@@ -343,9 +348,9 @@ export const ActiveOrganizationStore = signalStore(
         });
 
         /**
+         * @description
          * Mirror `:organizationId` from the URL, which owns the answer to
          * "which organization is open".
-         *
          * Seeded synchronously from the current router state before the first
          * `NavigationEnd`: on the server the store is built during a render
          * that has already navigated, so waiting for the event would paint a
@@ -376,11 +381,12 @@ export const ActiveOrganizationStore = signalStore(
 
 /**
  * Type ActiveOrganizationStore
- * @type ActiveOrganizationStore
  *
  * @description
  * Instance type of the {@link ActiveOrganizationStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type ActiveOrganizationStore
  */
 export type ActiveOrganizationStore = InstanceType<typeof ActiveOrganizationStore>;

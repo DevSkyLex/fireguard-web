@@ -21,7 +21,6 @@ import type { ActiveFacilityState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_ACTIVE_FACILITY_STATE
- * @const INITIAL_ACTIVE_FACILITY_STATE
  *
  * @description
  * Initial state for the ActiveFacilityStore, representing an idle
@@ -30,6 +29,8 @@ import type { ActiveFacilityState } from './models';
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_ACTIVE_FACILITY_STATE
  */
 const INITIAL_ACTIVE_FACILITY_STATE: ActiveFacilityState = {
   selectedFacility: null,
@@ -38,31 +39,30 @@ const INITIAL_ACTIVE_FACILITY_STATE: ActiveFacilityState = {
 //#endregion
 
 /**
- * Store ActiveFacilityStore
- * @const ActiveFacilityStore
+ * Constant ActiveFacilityStore
  *
  * @description
  * Root-level NgRx SignalStore that tracks only the **currently active /
  * selected facility** and its associated loading state.
- *
  * This store is intentionally minimal — its single responsibility is
  * answering "which facility are we looking at right now?". All list
  * management and CRUD live in the component-scoped {@link FacilityStore}.
- *
  * Provided at the root level (`providedIn: 'root'`) so that any service or
  * component can read `selectedFacility` without providing anything.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant ActiveFacilityStore
  */
 export const ActiveFacilityStore = signalStore(
   { providedIn: 'root' },
 
   //#region Features
   /**
-   * Feature withState
-   *
    * @description
+   * Feature withState
    * Adds the ActiveFacilityState to the store, initialized with
    * INITIAL_ACTIVE_FACILITY_STATE.
    *
@@ -73,9 +73,8 @@ export const ActiveFacilityStore = signalStore(
   withState<ActiveFacilityState>(INITIAL_ACTIVE_FACILITY_STATE),
 
   /**
-   * Feature withComputed
-   *
    * @description
+   * Feature withComputed
    * Adds computed properties to the store for common
    * derived state related to the active facility.
    *
@@ -107,15 +106,15 @@ export const ActiveFacilityStore = signalStore(
      *
      * @since 1.0.0
      *
-     * @type {StoreError | null} The error object if the get operation is in error, or null otherwise.
+     * @type {StoreError | null} The error object if the get operation is in error, or null
+     *   otherwise.
      */
     getError: computed<StoreError | null>(() => store.getCallState().error),
   })),
 
   /**
-   * Feature withMethods
-   *
    * @description
+   * Feature withMethods
    * Adds methods to the store for managing the active facility state, including
    * setting the active facility, resolving it by ID,
    * and clearing the selection.
@@ -123,8 +122,10 @@ export const ActiveFacilityStore = signalStore(
    * @since 1.0.0
    *
    * @param {SignalStore} store - The store instance to which the methods will be added.
-   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on errors.
-   * @param {FacilityService} facilityService - The service used to fetch facility data from the API.
+   * @param {Dispatcher} dispatcher - The NgRx Signals event dispatcher, used to dispatch events on
+   *   errors.
+   * @param {FacilityService} facilityService - The service used to fetch facility data from the
+   *   API.
    *
    * @returns {object} An object containing the methods to add to the store.
    */
@@ -170,7 +171,8 @@ export const ActiveFacilityStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @param {{ organizationId: string; facilityId: string }} params - Organization and facility identifiers.
+       * @param {{ organizationId: string; facilityId: string }} params - Organization and facility
+       *   identifiers.
        *
        * @returns {void} No return value — progress is observable through `getCallState`.
        */
@@ -217,7 +219,7 @@ export const ActiveFacilityStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @return {void} No return value.
+       * @returns {void} No return value.
        */
       clearSelectedFacility(): void {
         patchState(store, { selectedFacility: null });
@@ -245,11 +247,12 @@ export const ActiveFacilityStore = signalStore(
 
 /**
  * Type ActiveFacilityStore
- * @type ActiveFacilityStore
  *
  * @description
  * Instance type of the {@link ActiveFacilityStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type ActiveFacilityStore
  */
 export type ActiveFacilityStore = InstanceType<typeof ActiveFacilityStore>;

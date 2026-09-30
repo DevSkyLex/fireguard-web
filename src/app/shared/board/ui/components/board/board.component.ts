@@ -37,14 +37,16 @@ import { HlmButton } from '@shared/ui/button';
  * @class Board
  *
  * @description
- * Renders caller-owned columns and typed card templates, with validated move requests and bounded scrolling.
- * Drag feedback identifies legal destinations before release without changing drop-zone geometry.
- * Browser-only geometry and focus handling preserve SSR and keyboard navigation.
+ * Renders caller-owned columns and typed card templates, with validated move requests and bounded
+ * scrolling. Drag feedback identifies legal destinations before release without changing drop-zone
+ * geometry. Browser-only geometry and focus handling preserve SSR and keyboard navigation.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @template T - The caller-owned card data.
  * @template K - The column identifier type.
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-board',
@@ -122,7 +124,8 @@ export class Board<T, K extends string = string> {
    * @readonly
    *
    * @description
-   * Optional caller-owned explanation for a forbidden destination; absent reasons use the generic hint.
+   * Optional caller-owned explanation for a forbidden destination; absent reasons use the generic
+   * hint.
    *
    * @access public
    * @since 1.1.0
@@ -153,9 +156,13 @@ export class Board<T, K extends string = string> {
   /**
    * Property loadMoreRequested
    * @readonly
-   * @description Requests the next page or retries a failed page; data access belongs to the consumer.
+   *
+   * @description
+   * Requests the next page or retries a failed page; data access belongs to the consumer.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<K>}
    */
   public readonly loadMoreRequested: OutputEmitterRef<K> = output<K>();
@@ -298,7 +305,8 @@ export class Board<T, K extends string = string> {
    * @readonly
    *
    * @description
-   * Derives destination feedback from the same current policy as the drop predicate, preserving the source column.
+   * Derives destination feedback from the same current policy as the drop predicate, preserving the
+   * source column.
    *
    * @access protected
    * @since 1.1.0
@@ -416,6 +424,7 @@ export class Board<T, K extends string = string> {
    * @since 1.0.0
    *
    * @param {K} key - The column identifier.
+   *
    * @returns {string}
    */
   protected columnId(key: K): string {
@@ -433,6 +442,7 @@ export class Board<T, K extends string = string> {
    * @since 1.0.0
    *
    * @param {BoardColumn<T, K>} column - The counted column.
+   *
    * @returns {string}
    */
   protected countLabel(column: BoardColumn<T, K>): string {
@@ -451,6 +461,7 @@ export class Board<T, K extends string = string> {
    *
    * @param {BoardItem<T>} item - The rendered card.
    * @param {BoardColumn<T, K>} column - Its current column.
+   *
    * @returns {BoardCardContext<T, K>}
    */
   protected cardContext(item: BoardItem<T>, column: BoardColumn<T, K>): BoardCardContext<T, K> {
@@ -469,6 +480,7 @@ export class Board<T, K extends string = string> {
    *
    * @param {BoardItem<T>} item - The candidate card.
    * @param {BoardColumn<T, K>} column - Its current column.
+   *
    * @returns {boolean}
    */
   protected dragDisabled(item: BoardItem<T>, column: BoardColumn<T, K>): boolean {
@@ -482,8 +494,8 @@ export class Board<T, K extends string = string> {
   }
 
   /**
-   * Method canDrop
-   * @method canDrop
+   * Property canDrop
+   * @readonly
    *
    * @description
    * Rechecks current inputs so in-flight updates cannot leave stale drag permissions.
@@ -491,9 +503,14 @@ export class Board<T, K extends string = string> {
    * @access protected
    * @since 1.0.0
    *
+   * @type {(drag: CdkDrag<BoardItem<T>>, drop: CdkDropList<K>) => boolean}
+   *
    * @param {CdkDrag<BoardItem<T>>} drag - The dragged card.
    * @param {CdkDropList<K>} drop - The candidate drop zone.
+   *
    * @returns {boolean}
+   *
+   * @function canDrop
    */
   protected readonly canDrop = (drag: CdkDrag<BoardItem<T>>, drop: CdkDropList<K>): boolean =>
     this.allowedItem(drag.data.id, drop.data) !== undefined;
@@ -509,6 +526,7 @@ export class Board<T, K extends string = string> {
    * @since 1.1.0
    *
    * @param {BoardItem<T>} item - The dragged card.
+   *
    * @returns {void}
    */
   protected onDragStarted(item: BoardItem<T>): void {
@@ -527,12 +545,14 @@ export class Board<T, K extends string = string> {
    * @method dropBlockedReason
    *
    * @description
-   * Resolves the caller's explanation against the current dragged item without retaining stale card data.
+   * Resolves the caller's explanation against the current dragged item without retaining stale card
+   * data.
    *
    * @access protected
    * @since 1.1.0
    *
    * @param {K} target - The forbidden destination.
+   *
    * @returns {string | null}
    */
   protected dropBlockedReason(target: K): string | null {
@@ -554,6 +574,7 @@ export class Board<T, K extends string = string> {
    * @since 1.0.0
    *
    * @param {CdkDragDrop<K, K, BoardItem<T>>} event - The completed CDK drop.
+   *
    * @returns {void}
    */
   protected onDropped(event: CdkDragDrop<K, K, BoardItem<T>>): void {
@@ -564,9 +585,13 @@ export class Board<T, K extends string = string> {
   /**
    * Property pendingMoveFocus
    * @readonly
-   * @description Restores focus only after the caller confirms and renders the destination card.
+   *
+   * @description
+   * Restores focus only after the caller confirms and renders the destination card.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<{ id: string; target: K } | null>}
    */
   private readonly pendingMoveFocus = signal<{ id: string; target: K } | null>(null);
@@ -583,6 +608,7 @@ export class Board<T, K extends string = string> {
    *
    * @param {string} id - The card identifier.
    * @param {K} target - The destination column.
+   *
    * @returns {void}
    */
   private requestMove(id: string, target: K): void {
@@ -609,6 +635,7 @@ export class Board<T, K extends string = string> {
    *
    * @param {string} id - The card identifier.
    * @param {K} target - The destination column.
+   *
    * @returns {BoardItem<T> | undefined}
    */
   private allowedItem(id: string, target: K): BoardItem<T> | undefined {
@@ -635,6 +662,7 @@ export class Board<T, K extends string = string> {
    * @since 1.0.0
    *
    * @param {-1 | 1} direction - Earlier (-1) or later (1) columns.
+   *
    * @returns {void}
    */
   protected scrollColumns(direction: -1 | 1): void {

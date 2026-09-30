@@ -30,8 +30,11 @@ import { workspaceStoreEvents } from './events';
 import type { WorkspaceState } from './workspace-state.interface';
 
 /**
- * Store WorkspaceStore
- * @description Coordinates private workspace choices and explicit admission. Proof challenges remain page-local.
+ * Constant WorkspaceStore
+ *
+ * @description
+ * Coordinates private workspace choices and explicit admission. Proof challenges remain page-local.
+ *
  * @since 1.0.0
  */
 export const WorkspaceStore = signalStore(
@@ -76,10 +79,16 @@ export const WorkspaceStore = signalStore(
     ) => {
       /**
        * Function reportFailure
-       * @description Normalizes a command failure once and publishes localized feedback through the global toast listener.
+       *
+       * @description
+       * Normalizes a command failure once and publishes localized feedback through the global toast
+       * listener.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {unknown} error - Command failure.
+       *
        * @returns {StoreError} Error retained by the command state.
        */
       const reportFailure = (error: unknown): StoreError => {
@@ -95,22 +104,34 @@ export const WorkspaceStore = signalStore(
         );
         return normalized;
       };
+
       /**
        * Function reportSuccess
-       * @description Publishes one result message for a completed command.
+       *
+       * @description
+       * Publishes one result message for a completed command.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {string} message - Localized result.
+       *
        * @returns {void}
        */
       const reportSuccess = (message: string): void => {
         dispatcher.dispatch(workspaceStoreEvents.commandSucceeded(successFeedback(message)));
       };
+
       /**
        * Function resetFeedback
-       * @description Keeps commands exclusive and retains only the active challenge while clearing obsolete result state.
+       *
+       * @description
+       * Keeps commands exclusive and retains only the active challenge while clearing obsolete
+       * result state.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const resetFeedback = (): void => {
@@ -146,9 +167,13 @@ export const WorkspaceStore = signalStore(
         /**
          * Method create
          * @method create
-         * @description Starts or resumes creation only after an explicit user commitment.
+         *
+         * @description
+         * Starts or resumes creation only after an explicit user commitment.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void} Starts the creation workflow.
          */
         create: rxMethod<void>(
@@ -174,20 +199,33 @@ export const WorkspaceStore = signalStore(
             ),
           ),
         ),
-        /** Method load
+
+        /**
+         * Method load
          * @method load
-         * @description Refreshes caller-owned invitations, requests and discoverable organizations.
+         *
+         * @description
+         * Refreshes caller-owned invitations, requests and discoverable organizations.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void} Starts the query.
          */
         load,
-        /** Method admit
+
+        /**
+         * Method admit
          * @method admit
-         * @description Explicitly accepts an invitation or an immediate membership offer.
+         *
+         * @description
+         * Explicitly accepts an invitation or an immediate membership offer.
+         *
          * @access public
          * @since 1.0.0
-         * @param {{id: string; invitation: boolean}} input - Selected offer.
+         *
+         * @param {{ id: string; invitation: boolean }} input - Selected offer.
+         *
          * @returns {void} Starts the admission command.
          */
         admit: rxMethod<{ id: string; invitation: boolean }>(
@@ -224,12 +262,19 @@ export const WorkspaceStore = signalStore(
             ),
           ),
         ),
-        /** Method request
+
+        /**
+         * Method request
          * @method request
-         * @description Requests admission and refreshes the pending request summary.
+         *
+         * @description
+         * Requests admission and refreshes the pending request summary.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} organizationId - Selected organization.
+         *
          * @returns {void} Starts the request command.
          */
         request: rxMethod<string>(
@@ -261,12 +306,19 @@ export const WorkspaceStore = signalStore(
             ),
           ),
         ),
-        /** Method cancel
+
+        /**
+         * Method cancel
          * @method cancel
-         * @description Cancels an owned pending request and refreshes available actions.
+         *
+         * @description
+         * Cancels an owned pending request and refreshes available actions.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} requestId - Owned request identifier.
+         *
          * @returns {void} Starts cancellation.
          */
         cancel: rxMethod<string>(
@@ -298,11 +350,17 @@ export const WorkspaceStore = signalStore(
             ),
           ),
         ),
-        /** Method startProof
+
+        /**
+         * Method startProof
          * @method startProof
-         * @description Sends a verification code on explicit user action.
+         *
+         * @description
+         * Sends a verification code on explicit user action.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void} Starts the OTP challenge.
          */
         startProof: rxMethod<void>(
@@ -338,12 +396,19 @@ export const WorkspaceStore = signalStore(
             ),
           ),
         ),
-        /** Method confirmProof
+
+        /**
+         * Method confirmProof
          * @method confirmProof
-         * @description Confirms a user-bound mailbox challenge before refreshing discovery.
+         *
+         * @description
+         * Confirms a user-bound mailbox challenge before refreshing discovery.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} code - Submitted verification digits.
+         *
          * @returns {void} Starts the proof command.
          */
         confirmProof: rxMethod<string>(
@@ -377,10 +442,15 @@ export const WorkspaceStore = signalStore(
     },
   ),
 );
+
 /**
  * Type WorkspaceStore
- * @type WorkspaceStore
- * @description Injectable workspace flow store instance.
+ *
+ * @description
+ * Injectable workspace flow store instance.
+ *
  * @since 1.0.0
+ *
+ * @type WorkspaceStore
  */
 export type WorkspaceStore = InstanceType<typeof WorkspaceStore>;

@@ -211,20 +211,36 @@ import {
 import type { InterventionListItemViewModel } from './models';
 import type { InterventionBatchAction } from './models/intervention-batch-action.type';
 
-/** How close a deadline must be to count as "due soon". */
+/**
+ * Constant DUE_SOON_WINDOW_MS
+ *
+ * @description
+ * How close a deadline must be to count as "due soon".
+ */
 const DUE_SOON_WINDOW_MS: number = 48 * 60 * 60 * 1000;
 
-/** The page sizes offered under the table — the server default first, its clamp last. */
+/**
+ * Constant PAGE_SIZES
+ *
+ * @description
+ * The page sizes offered under the table — the server default first, its clamp last.
+ */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 
-/** How long typing settles before the search reaches the wire. */
+/**
+ * Constant SEARCH_DEBOUNCE_MS
+ *
+ * @description
+ * How long typing settles before the search reaches the wire.
+ */
 const SEARCH_DEBOUNCE_MS: number = 300;
 
 /**
- * * The one large page the Board asks for — see {@link InterventionsPage}'s class doc, "Board".
+ * Constant NO_FILTERS
+ *
+ * @description
+ * The narrowing "Clear filters" restores — none.
  */
-
-/** The narrowing "Clear filters" restores — none. */
 const NO_FILTERS: InterventionListFilters = {
   status: null,
   type: null,
@@ -240,35 +256,59 @@ const NO_FILTERS: InterventionListFilters = {
 
 /**
  * Type InterventionView
- * @description Which of the four collection surfaces this page currently shows — driven by the `?view=` query param (`board`/`calendar`/`recurrences`; absent or any other value ⇒ `list`) and written back on a tab switch with `queryParamsHandling: 'merge'`, so the active narrowing survives the switch. `recurrences` falls back to `list` for a viewer without `INTERVENTIONS_READ` — see {@link activeView}.
+ *
+ * @description
+ * Which of the four collection surfaces this page currently shows — driven by the `?view=` query
+ * param (`board`/`calendar`/`recurrences`; absent or any other value ⇒ `list`) and written back on
+ * a tab switch with `queryParamsHandling: 'merge'`, so the active narrowing survives the switch.
+ * `recurrences` falls back to `list` for a viewer without `INTERVENTIONS_READ` — see
+ * {@link activeView}.
+ *
  * @since 11.0.0
+ *
+ * @type {InterventionView}
  */
 type InterventionView = 'list' | 'board' | 'calendar' | 'recurrences';
 
 /**
  * Type InterventionDueRangeOperator
- * @description The three operators the "Deadline" chip's own `dueRange` field declares.
+ *
+ * @description
+ * The three operators the "Deadline" chip's own `dueRange` field declares.
+ *
  * @since 1.0.0
+ *
+ * @type {InterventionDueRangeOperator}
  */
 type InterventionDueRangeOperator = 'greaterThan' | 'lessThan' | 'between';
 
 /**
  * Type InterventionPlannedStartRangeOperator
- * @description The three operators the "Planned start" chip's own `plannedStartRange` field declares.
+ *
+ * @description
+ * The three operators the "Planned start" chip's own `plannedStartRange` field declares.
+ *
  * @since 1.0.0
+ *
+ * @type {InterventionPlannedStartRangeOperator}
  */
 type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'between';
 
 /**
  * Type InterventionEnumFilterKey
- * @description The six {@link InterventionFilterFieldKey} entries whose value discriminates its own operator by shape (a scalar under `equals`, a readonly array under `isAnyOf`).
+ *
+ * @description
+ * The six {@link InterventionFilterFieldKey} entries whose value discriminates its own operator by
+ * shape (a scalar under `equals`, a readonly array under `isAnyOf`).
+ *
  * @since 1.0.0
+ *
+ * @type {InterventionEnumFilterKey}
  */
 type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'responsible' | 'label';
 
 /**
  * Constant INTERVENTION_VIEW_HONOURED_FILTER_KEYS
- * @const INTERVENTION_VIEW_HONOURED_FILTER_KEYS
  *
  * @description
  * Which of the filter bar's eight fields each {@link InterventionView}
@@ -289,6 +329,8 @@ type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'resp
  * @since 11.0.0
  *
  * @type {Readonly<Record<InterventionView, readonly InterventionFilterFieldKey[]>>}
+ *
+ * @constant INTERVENTION_VIEW_HONOURED_FILTER_KEYS
  */
 const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
   Record<InterventionView, readonly InterventionFilterFieldKey[]>
@@ -328,7 +370,6 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * Calendar or Recurrences before the shared search/filter controls.
  * Creation is a single sheet with blank
  * and template modes, reached from the header’s primary action.
- *
  * **One page, four tabs, replacing three routes.** `InterventionsShellPage`,
  * `InterventionsBoardPage` and `InterventionsCalendarPage` are retired: the
  * List/Board/Calendar/Recurrences switcher is a native `hlm-tabs` composition
@@ -346,7 +387,6 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * switch — `/interventions/board` and `/interventions/calendar` still exist
  * as addressable URLs, as functional `redirectTo` entries onto this one
  * (`interventions.routes.ts`).
- *
  * **Board and Calendar share this page's own stores rather than injecting
  * their own.** The Board renders the same `InterventionStore` the table
  * does — {@link boardFilters} forces `status` to `null` (its columns are the
@@ -363,11 +403,9 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * it exists — behind `@defer`, on the Calendar view's first
  * activation — so visiting List or Board first never fetches the calendar's
  * window.
- *
  * It owns what a table, a board or a calendar must not — the query each
  * sends, the `?q=`/`?create=`/filter params it round-trips, the ordering,
  * the column visibility and the page window (`ARCHITECTURE.md` §2.5).
- *
  * Paging, filtering and sorting are server-side end to end for the List
  * tab: the loaded entities ARE the current page, the footer derives its page
  * count from the server's `totalItems`, and any narrowing or search change
@@ -375,7 +413,6 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * {@link filters} and {@link searchTerm}. The selection clears on every List
  * load: it only ever refers to rows of the page on screen, so the
  * bulk-delete dialog can never promise rows the operator no longer sees.
- *
  * Deletion is confirm-gated: a row's Delete entry and the toolbar's "Delete
  * selected" both set a `pending*` target signal instead of calling the store
  * directly, driving the single `hlm-alert-dialog` shared by both paths. A
@@ -383,20 +420,17 @@ const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
  * `allowedActions.canDelete` is true before the dialog opens, so the count it
  * shows is always what will actually delete — never a promise the API would
  * refuse with a 409.
- *
  * "Duplicate" reuses the same creation sheet, prefilled — from a row's own
  * menu, or from a cross-route handoff `InterventionStore.pendingDuplicatePrefill`
  * carries when the detail page navigates here with `?create=1`. Never a
  * server-side copy: it ends in the normal `create` call, and never carries
  * `status`, the planned window or the review note.
- *
  * The "Display" toolbar button is a `hlm-popover` trigger opening a panel
  * that groups every presentation preference the List tab owns — ordering and
  * column visibility — the way Linear's own Display control does. Display,
  * Export and the bulk-actions menu render only while
  * {@link activeView} is `list`: the Board and the Calendar have no use for
  * any of them.
- *
  * The "Deadline" and "Planned start" chips' six operator-branched value
  * controls (`greaterThan`/`lessThan` → `app-collection-filter-date`,
  * `between` → `app-collection-filter-date-range`, both
@@ -502,9 +536,13 @@ export class InterventionsPage {
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Central interaction mode; viewport width only controls geometry.
+   *
+   * @description
+   * Central interaction mode; viewport width only controls geometry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -514,82 +552,278 @@ export class InterventionsPage {
   /**
    * Property mobileToolsVisible
    * @readonly
-   * @description Keeps an open tools drawer mounted until dismissal restores focus after an interaction mode change.
+   *
+   * @description
+   * Keeps an open tools drawer mounted until dismissal restores focus after an interaction mode
+   * change.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly mobileToolsVisible: WritableSignal<boolean> = signal(false);
 
   //#region Inputs
-  /** The workspace whose interventions are shown, bound from the route. */
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * The workspace whose interventions are shown, bound from the route.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
   public readonly organizationId: InputSignal<string> = input.required<string>();
 
   /**
-   * * The search term the URL carries. See {@link searchTerm}.
+   * Property q
+   * @readonly
+   *
+   * @description
+   * - The search term the URL carries. See {@link searchTerm}.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
    */
   public readonly q: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
   /**
    * Property collectionPage
    * @readonly
-   * @description One-based list page restored from the collection URL after detail navigation.
+   *
+   * @description
+   * One-based list page restored from the collection URL after detail navigation.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly collectionPage = input<string | undefined>(undefined, { alias: 'p' });
 
-  /** `?create=1` opens the creation sheet on arrival — the contract the parent feature's landing page uses to start an intervention. */
+  /**
+   * Property create
+   * @readonly
+   *
+   * @description
+   * `?create=1` opens the creation sheet on arrival — the contract the parent feature's landing
+   * page uses to start an intervention.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
   /**
-   * * Which tab is shown — `board`/`calendar`, absent (or any other value) meaning `list`. See {@link activeView}.
+   * Property view
+   * @readonly
+   *
+   * @description
+   * - Which tab is shown — `board`/`calendar`, absent (or any other value) meaning `list`. See
+   *   {@link activeView}.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
    */
   public readonly view: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The status filter the URL carries. */
+  /**
+   * Property status
+   * @readonly
+   *
+   * @description
+   * The status filter the URL carries.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly status: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The type filter the URL carries. */
+  /**
+   * Property type
+   * @readonly
+   *
+   * @description
+   * The type filter the URL carries.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly type: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The priority filter the URL carries. */
+  /**
+   * Property priority
+   * @readonly
+   *
+   * @description
+   * The priority filter the URL carries.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly priority: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The site filter the URL carries, as a raw facility id. */
+  /**
+   * Property site
+   * @readonly
+   *
+   * @description
+   * The site filter the URL carries, as a raw facility id.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly site: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The responsible filter the URL carries, as a raw member id. */
+  /**
+   * Property responsible
+   * @readonly
+   *
+   * @description
+   * The responsible filter the URL carries, as a raw member id.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly responsible: InputSignal<string | undefined> = input<string | undefined>(
     undefined,
   );
 
-  /** The label filter the URL carries, as a raw label id. */
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * The label filter the URL carries, as a raw label id.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly label: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** `?mine=1` narrows to the signed-in member (responsible OR participant). */
+  /**
+   * Property mine
+   * @readonly
+   *
+   * @description
+   * `?mine=1` narrows to the signed-in member (responsible OR participant).
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly mine: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The named due-date window the URL carries — the segmented views' and the Today page's own legacy preset. */
+  /**
+   * Property due
+   * @readonly
+   *
+   * @description
+   * The named due-date window the URL carries — the segmented views' and the Today page's own
+   * legacy preset.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly due: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The filter bar's "Deadline" chip lower bound, `YYYY-MM-DD`. */
+  /**
+   * Property dueAfter
+   * @readonly
+   *
+   * @description
+   * The filter bar's "Deadline" chip lower bound, `YYYY-MM-DD`.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly dueAfter: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The filter bar's "Deadline" chip upper bound, `YYYY-MM-DD`. */
+  /**
+   * Property dueBefore
+   * @readonly
+   *
+   * @description
+   * The filter bar's "Deadline" chip upper bound, `YYYY-MM-DD`.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly dueBefore: InputSignal<string | undefined> = input<string | undefined>(undefined);
 
-  /** The filter bar's "Planned start" chip lower bound, `YYYY-MM-DD`. */
+  /**
+   * Property plannedStartAfter
+   * @readonly
+   *
+   * @description
+   * The filter bar's "Planned start" chip lower bound, `YYYY-MM-DD`.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly plannedStartAfter: InputSignal<string | undefined> = input<string | undefined>(
     undefined,
   );
 
-  /** The filter bar's "Planned start" chip upper bound, `YYYY-MM-DD`. */
+  /**
+   * Property plannedStartBefore
+   * @readonly
+   *
+   * @description
+   * The filter bar's "Planned start" chip upper bound, `YYYY-MM-DD`.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
   public readonly plannedStartBefore: InputSignal<string | undefined> = input<string | undefined>(
     undefined,
   );
-  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+
+  /**
+   * Property listForbidden
+   * @readonly
+   *
+   * @description
+   * Whether the last list read was refused for lack of permission, which a retry cannot fix.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(
     () => this.store.listError()?.code === 403,
   );
@@ -597,26 +831,64 @@ export class InterventionsPage {
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** The List/Board tabs' shared dataset. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The List/Board tabs' shared dataset.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InterventionStoreType}
+   */
   protected readonly store: InterventionStoreType =
     inject<InterventionStoreType>(InterventionStore);
 
-  /** Site, member and label choices for the filter bar and the creation form. */
+  /**
+   * Property planningOptions
+   * @readonly
+   *
+   * @description
+   * Site, member and label choices for the filter bar and the creation form.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InterventionPlanningOptionsStoreType}
+   */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
     inject<InterventionPlanningOptionsStoreType>(InterventionPlanningOptionsStore);
 
@@ -638,29 +910,78 @@ export class InterventionsPage {
    */
   protected readonly selectionMode: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The organization's recurring intervention schedules, backing the Recurrences tab. */
+  /**
+   * Property recurrenceStore
+   * @readonly
+   *
+   * @description
+   * The organization's recurring intervention schedules, backing the Recurrences tab.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InterventionRecurrenceStoreType}
+   */
   protected readonly recurrenceStore: InterventionRecurrenceStoreType =
     inject<InterventionRecurrenceStoreType>(InterventionRecurrenceStore);
 
-  /** The Calendar tab's own bounded-window dataset — component-scoped here since only a page may inject a store; see class doc. */
+  /**
+   * Property calendarStore
+   * @readonly
+   *
+   * @description
+   * The Calendar tab's own bounded-window dataset — component-scoped here since only a page may
+   * inject a store; see class doc.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InterventionCalendarStoreType}
+   */
   protected readonly calendarStore: InterventionCalendarStoreType =
     inject<InterventionCalendarStoreType>(InterventionCalendarStore);
 
-  /** Organization permission checks gating every tab's write actions. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating every tab's write actions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** The active organization context, source of the regional first-day-of-week preference. */
+  /**
+   * Property organizationContext
+   * @readonly
+   *
+   * @description
+   * The active organization context, source of the regional first-day-of-week preference.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationContextPort}
+   */
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
   /**
    * Property firstDayOfWeek
    * @readonly
-   * @description The organization's regional first-day-of-week preference, Monday when unset.
+   *
+   * @description
+   * The organization's regional first-day-of-week preference, Monday when unset.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<CalendarFirstDayOfWeek>}
    */
   protected readonly firstDayOfWeek: Signal<CalendarFirstDayOfWeek> =
@@ -670,40 +991,148 @@ export class InterventionsPage {
         'monday',
     );
 
-  /** Whether the app runs in the browser — gates the Calendar's fetch, a dated authenticated read that would immediately refetch after hydration. */
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Whether the app runs in the browser — gates the Calendar's fetch, a dated authenticated read
+   * that would immediately refetch after hydration.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {object}
+   */
   private readonly platformId: object = inject(PLATFORM_ID);
 
-  /** The active locale, resolving each row's day-granular due label. */
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * The active locale, resolving each row's day-granular due label.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject(LOCALE_ID);
 
-  /** Router used to open a created intervention's detail page and to round-trip every `?q=`/filter/`?view=` query param. */
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Router used to open a created intervention's detail page and to round-trip every
+   * `?q=`/filter/`?view=` query param.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject(Router);
 
-  /** Current route, anchoring the relative query-param navigations. */
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Current route, anchoring the relative query-param navigations.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
-  /** The cookie-backed memory of how the List tab was left (sort, columns, page size). */
+  /**
+   * Property preferences
+   * @readonly
+   *
+   * @description
+   * The cookie-backed memory of how the List tab was left (sort, columns, page size).
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionListPreferencesService}
+   */
   private readonly preferences: InterventionListPreferencesService =
     inject<InterventionListPreferencesService>(InterventionListPreferencesService);
 
   /**
+   * Property interventionService
+   * @readonly
+   *
+   * @description
    * Read directly rather than through {@link InterventionStore}: the export
    * is a one-shot, page-local drain of every matching row, and the store's
    * public surface only ever loads and caches one server page at a time.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionService}
    */
   private readonly interventionService: InterventionService = inject(InterventionService);
 
-  /** Saves the generated CSV to the visitor's device, browser-only. */
+  /**
+   * Property browserDownload
+   * @readonly
+   *
+   * @description
+   * Saves the generated CSV to the visitor's device, browser-only.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
   private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
-  /** Reports the export's outcome — a truncation warning or a failure. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Reports the export's outcome — a truncation warning or a failure.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject(FeedbackService);
 
-  /** Unsubscribes the export's in-flight drain if the page is left mid-fetch. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Unsubscribes the export's in-flight drain if the page is left mid-fetch.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /**
-   * * Registers {@link pageActions} on the layout header.
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * - Registers {@link pageActions} on the layout header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
    */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
@@ -724,9 +1153,13 @@ export class InterventionsPage {
   /**
    * Property calendarView
    * @readonly
-   * @description Lazily mounted calendar owning the selected-day template and selection signals.
+   *
+   * @description
+   * Lazily mounted calendar owning the selected-day template and selection signals.
+   *
    * @access private
    * @since 14.0.0
+   *
    * @type {Signal<InterventionCalendar | undefined>}
    */
   private readonly calendarView: Signal<InterventionCalendar | undefined> =
@@ -735,14 +1168,29 @@ export class InterventionsPage {
   /**
    * Property panelRegistry
    * @readonly
-   * @description Shell-scoped registry for the active Calendar tab's day panel.
+   *
+   * @description
+   * Shell-scoped registry for the active Calendar tab's day panel.
+   *
    * @access private
    * @since 14.0.0
+   *
    * @type {DashboardPanelRegistry}
    */
   private readonly panelRegistry: DashboardPanelRegistry = inject(DashboardPanelRegistry);
 
-  /** The signed-in member, resolving the "my interventions" chip and the List tab's identity gates. */
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * The signed-in member, resolving the "my interventions" chip and the List tab's identity gates.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessStoreType}
+   */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
     inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
 
@@ -781,9 +1229,14 @@ export class InterventionsPage {
   /**
    * Property activeView
    * @readonly
-   * @description Which tab is currently shown. See {@link InterventionView} and the `view` input. `recurrences` falls back to `list` for a viewer without {@link canReadRecurrences}.
+   *
+   * @description
+   * Which tab is currently shown. See {@link InterventionView} and the `view` input. `recurrences`
+   * falls back to `list` for a viewer without {@link canReadRecurrences}.
+   *
    * @access protected
    * @since 11.0.0
+   *
    * @type {Signal<InterventionView>}
    */
   protected readonly activeView: Signal<InterventionView> = computed<InterventionView>(() => {
@@ -798,9 +1251,14 @@ export class InterventionsPage {
   /**
    * Property memberIri
    * @readonly
-   * @description The signed-in member's IRI in this organization, null until the profile resolves — the same identity the detail page's submit gate reads.
+   *
+   * @description
+   * The signed-in member's IRI in this organization, null until the profile resolves — the same
+   * identity the detail page's submit gate reads.
+   *
    * @access protected
    * @since 5.2.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly memberIri: Signal<string | null> = computed<string | null>(() => {
@@ -814,9 +1272,14 @@ export class InterventionsPage {
   /**
    * Property filters
    * @readonly
-   * @description The active narrowing, parsed from the URL's query params — the URL is the single source of truth, so a filtered collection is shareable and the back button restores it.
+   *
+   * @description
+   * The active narrowing, parsed from the URL's query params — the URL is the single source of
+   * truth, so a filtered collection is shareable and the back button restores it.
+   *
    * @access protected
    * @since 5.2.0
+   *
    * @type {Signal<InterventionListFilters>}
    */
   protected readonly filters: Signal<InterventionListFilters> = computed<InterventionListFilters>(
@@ -841,36 +1304,107 @@ export class InterventionsPage {
   );
 
   /**
-   * * {@link filters}, `status` forced to `null` — the Board's columns are the status narrowing, so a `status` value left in the URL by another tab must never reach its query.
+   * Property boardFilters
+   * @readonly
+   *
+   * @description
+   * - {@link filters}, `status` forced to `null` — the Board's columns are the status narrowing, so a
+   *   `status` value left in the URL by another tab must never reach its query.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<InterventionListFilters>}
    */
   protected readonly boardFilters: Signal<InterventionListFilters> =
     computed<InterventionListFilters>(() => ({ ...this.filters(), status: null }));
 
-  /** The search as everything downstream reads it: trimmed, never `undefined`. */
+  /**
+   * Property searchTerm
+   * @readonly
+   *
+   * @description
+   * The search as everything downstream reads it: trimmed, never `undefined`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
 
-  /** What the search box holds, before the debounce settles. */
+  /**
+   * Property draftSearch
+   * @readonly
+   *
+   * @description
+   * What the search box holds, before the debounce settles.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly draftSearch: WritableSignal<string> = signal<string>('');
 
-  /** The active ordering, restored from the preferences cookie. */
+  /**
+   * Property sortOrder
+   * @readonly
+   *
+   * @description
+   * The active ordering, restored from the preferences cookie.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionListSort>}
+   */
   protected readonly sortOrder: WritableSignal<InterventionListSort> = signal<InterventionListSort>(
     this.preferences.readSort(),
   );
 
-  /** Which optional columns the operator has hidden, restored from the preferences cookie. */
+  /**
+   * Property hiddenColumns
+   * @readonly
+   *
+   * @description
+   * Which optional columns the operator has hidden, restored from the preferences cookie.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlySet<InterventionTableColumn>>}
+   */
   protected readonly hiddenColumns: WritableSignal<ReadonlySet<InterventionTableColumn>> = signal<
     ReadonlySet<InterventionTableColumn>
   >(this.restoreHiddenColumns());
 
-  /** Whether an export request is currently in flight. */
+  /**
+   * Property exportBusy
+   * @readonly
+   *
+   * @description
+   * Whether an export request is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property page
    * @readonly
-   * @description The List tab's page window, one-based — a `linkedSignal` over {@link filters} and {@link searchTerm} and the page query parameter, preserving the window when returning from a detail.
+   *
+   * @description
+   * The List tab's page window, one-based — a `linkedSignal` over {@link filters} and
+   * {@link searchTerm} and the page query parameter, preserving the window when returning from a
+   * detail.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<number>}
    */
   protected readonly page: WritableSignal<number> = linkedSignal<number>((): number => {
@@ -880,25 +1414,73 @@ export class InterventionsPage {
     return Number.isSafeInteger(value) && value > 0 ? value : 1;
   });
 
-  /** How many rows a page holds, restored from the preferences cookie. */
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * How many rows a page holds, restored from the preferences cookie.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly pageSize: WritableSignal<number> = signal<number>(this.restorePageSize());
 
-  /** Whether the creation sheet is open. */
+  /**
+   * Property createSheetVisible
+   * @readonly
+   *
+   * @description
+   * Whether the creation sheet is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The header menu prepares a template in the sheet before any API mutation. */
+  /**
+   * Property createTemplateId
+   * @readonly
+   *
+   * @description
+   * The header menu prepares a template in the sheet before any API mutation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly createTemplateId: WritableSignal<string | null> = signal<string | null>(null);
 
-  /** What the recurrence sheet is open on: `'create'`, an existing row for edit, `null` for closed. */
+  /**
+   * Property recurrenceTarget
+   * @readonly
+   *
+   * @description
+   * What the recurrence sheet is open on: `'create'`, an existing row for edit, `null` for closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionRecurrenceFormTarget>}
+   */
   protected readonly recurrenceTarget: WritableSignal<InterventionRecurrenceFormTarget> =
     signal<InterventionRecurrenceFormTarget>(null);
 
   /**
    * Property awaitingRecurrenceWrite
    * @readonly
-   * @description Captures the sheet's accepted operation and target until its matching result arrives.
+   *
+   * @description
+   * Captures the sheet's accepted operation and target until its matching result arrives.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<'create' | { readonly recurrenceId: string } | null>}
    */
   protected readonly awaitingRecurrenceWrite: WritableSignal<
@@ -908,61 +1490,210 @@ export class InterventionsPage {
   /**
    * Property awaitingRecurrenceRemove
    * @readonly
-   * @description Captures the confirmed recurrence id until its matching deletion settles.
+   *
+   * @description
+   * Captures the confirmed recurrence id until its matching deletion settles.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly awaitingRecurrenceRemove: WritableSignal<string | null> = signal(null);
 
-  /** The recurrence a row's Delete action asked to remove, pending the confirm dialog. */
+  /**
+   * Property pendingRecurrenceDelete
+   * @readonly
+   *
+   * @description
+   * The recurrence a row's Delete action asked to remove, pending the confirm dialog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionRecurrenceOutput | null>}
+   */
   protected readonly pendingRecurrenceDelete: WritableSignal<InterventionRecurrenceOutput | null> =
     signal<InterventionRecurrenceOutput | null>(null);
 
-  /** What the creation sheet is currently prefilled with, from a "Duplicate" request. `null` for a plain "New intervention". */
+  /**
+   * Property duplicatePrefill
+   * @readonly
+   *
+   * @description
+   * What the creation sheet is currently prefilled with, from a "Duplicate" request. `null` for a
+   * plain "New intervention".
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionDuplicatePrefill | null>}
+   */
   protected readonly duplicatePrefill: WritableSignal<InterventionDuplicatePrefill | null> =
     signal<InterventionDuplicatePrefill | null>(null);
 
-  /** Currently selected row ids, scoped to the loaded List page — cleared on every List load. */
+  /**
+   * Property selectedIds
+   * @readonly
+   *
+   * @description
+   * Currently selected row ids, scoped to the loaded List page — cleared on every List load.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlySet<string>>}
+   */
   protected readonly selectedIds: WritableSignal<ReadonlySet<string>> = signal<ReadonlySet<string>>(
     new Set<string>(),
   );
 
-  /** The intervention a row's menu asked to delete, pending confirmation. */
+  /**
+   * Property pendingDelete
+   * @readonly
+   *
+   * @description
+   * The intervention a row's menu asked to delete, pending confirmation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionOutput | null>}
+   */
   protected readonly pendingDelete: WritableSignal<InterventionOutput | null> =
     signal<InterventionOutput | null>(null);
 
-  /** The selected, deletable ids the toolbar asked to bulk-delete, pending confirmation. */
+  /**
+   * Property pendingBulkDeleteIds
+   * @readonly
+   *
+   * @description
+   * The selected, deletable ids the toolbar asked to bulk-delete, pending confirmation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlyArray<string> | null>}
+   */
   protected readonly pendingBulkDeleteIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
 
-  /** What `InterventionAssignDialog` is currently asking to assign, or `null` to keep it closed. */
+  /**
+   * Property assignRequest
+   * @readonly
+   *
+   * @description
+   * What `InterventionAssignDialog` is currently asking to assign, or `null` to keep it closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionAssignRequest | null>}
+   */
   protected readonly assignRequest: WritableSignal<InterventionAssignRequest | null> =
     signal<InterventionAssignRequest | null>(null);
 
-  /** The selected, assignable ids the toolbar asked to bulk-assign, pending the dialog. */
+  /**
+   * Property pendingBulkAssignIds
+   * @readonly
+   *
+   * @description
+   * The selected, assignable ids the toolbar asked to bulk-assign, pending the dialog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReadonlyArray<string> | null>}
+   */
   protected readonly pendingBulkAssignIds: WritableSignal<ReadonlyArray<string> | null> =
     signal<ReadonlyArray<string> | null>(null);
 
-  /** The Calendar tab's displayed anchor — `null` until `InterventionCalendar` reports its first one, which gates the load effect until the tab actually activates. */
+  /**
+   * Property calendarMonth
+   * @readonly
+   *
+   * @description
+   * The Calendar tab's displayed anchor — `null` until `InterventionCalendar` reports its first
+   * one, which gates the load effect until the tab actually activates.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<Date | null>}
+   */
   protected readonly calendarMonth: WritableSignal<Date | null> = signal<Date | null>(null);
 
-  /** Every hideable column, for the Display popover's column list. */
+  /**
+   * Property allColumns
+   * @readonly
+   *
+   * @description
+   * Every hideable column, for the Display popover's column list.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<InterventionTableColumn>}
+   */
   protected readonly allColumns: ReadonlyArray<InterventionTableColumn> =
     INTERVENTION_TABLE_COLUMNS;
 
-  /** Orderings the Display popover's field select offers. */
+  /**
+   * Property sortOptions
+   * @readonly
+   *
+   * @description
+   * Orderings the Display popover's field select offers.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {SelectOption<InterventionSortField>[]}
+   */
   protected readonly sortOptions: SelectOption<InterventionSortField>[] = INTERVENTION_SORT_OPTIONS;
 
-  /** Named deadline windows the `?due=` chip offers — the same catalog the URL parser reads. */
+  /**
+   * Property dueWindowOptions
+   * @readonly
+   *
+   * @description
+   * Named deadline windows the `?due=` chip offers — the same catalog the URL parser reads.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {SelectOption<InterventionDueWindow>[]}
+   */
   protected readonly dueWindowOptions: SelectOption<InterventionDueWindow>[] =
     INTERVENTION_DUE_WINDOW_OPTIONS;
 
-  /** The active named deadline window, or `null` — the `?due=` chip's value. */
+  /**
+   * Property dueWindowValue
+   * @readonly
+   *
+   * @description
+   * The active named deadline window, or `null` — the `?due=` chip's value.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<InterventionDueWindow | null>}
+   */
   protected readonly dueWindowValue: Signal<InterventionDueWindow | null> =
     computed<InterventionDueWindow | null>(() => this.filters().dueWindow);
 
-  /** Renders a named deadline window in the `?due=` chip's trigger. */
+  /**
+   * Property dueWindowLabelOf
+   * @readonly
+   *
+   * @description
+   * Renders a named deadline window in the `?due=` chip's trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: InterventionDueWindow | null) => string}
+   */
   protected readonly dueWindowLabelOf: (value: InterventionDueWindow | null) => string = (
     value: InterventionDueWindow | null,
   ): string =>
@@ -970,19 +1701,64 @@ export class InterventionsPage {
       (option: SelectOption<InterventionDueWindow>): boolean => option.value === value,
     )?.label ?? '';
 
-  /** Status choices offered in the filter bar. */
+  /**
+   * Property statusOptions
+   * @readonly
+   *
+   * @description
+   * Status choices offered in the filter bar.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {SelectOption<InterventionStatus>[]}
+   */
   protected readonly statusOptions: SelectOption<InterventionStatus>[] =
     INTERVENTION_STATUS_FILTER_OPTIONS;
 
-  /** Type choices offered in the filter bar. */
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Intervention type choices displayed by the list filters.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {SelectOption<InterventionType>[]}
+   */
   protected readonly typeOptions: SelectOption<InterventionType>[] =
     INTERVENTION_TYPE_FILTER_OPTIONS;
 
-  /** Priority choices offered in the filter bar. */
+  /**
+   * Property priorityOptions
+   * @readonly
+   *
+   * @description
+   * Priority choices offered in the filter bar.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {SelectOption<InterventionPriority>[]}
+   */
   protected readonly priorityOptions: SelectOption<InterventionPriority>[] =
     INTERVENTION_PRIORITY_FILTER_OPTIONS;
 
-  /** Whether the export button should be inert: nothing loaded yet, nothing matches the current query, or an export is already in flight. */
+  /**
+   * Property exportDisabled
+   * @readonly
+   *
+   * @description
+   * Whether the export button should be inert: nothing loaded yet, nothing matches the current
+   * query, or an export is already in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly exportDisabled: Signal<boolean> = computed(
     (): boolean =>
       this.store.isLoadingInterventions() ||
@@ -1013,12 +1789,35 @@ export class InterventionsPage {
       : null,
   );
 
-  /** Where a row's link points, on every tab. */
+  /**
+   * Property detailRouteBase
+   * @readonly
+   *
+   * @description
+   * Where a row's link points, on every tab.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly string[]>}
+   */
   protected readonly detailRouteBase: Signal<readonly string[]> = computed<readonly string[]>(
     () => ['/organizations', this.organizationId(), 'interventions'],
   );
 
-  /** Whether the member may move an intervention along — the List row menu's and the Board card's own gate. */
+  /**
+   * Property canTransition
+   * @readonly
+   *
+   * @description
+   * Whether the member may move an intervention along — the List row menu's and the Board card's
+   * own gate.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canTransition: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasAnyPermission([
       ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN,
@@ -1027,7 +1826,18 @@ export class InterventionsPage {
     ]),
   );
 
-  /** Whether the member may delete an intervention. */
+  /**
+   * Property canDelete
+   * @readonly
+   *
+   * @description
+   * Whether the member may delete an intervention.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canDelete: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasAnyPermission([
       ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN,
@@ -1035,17 +1845,50 @@ export class InterventionsPage {
     ]),
   );
 
-  /** Whether the member may assign a responsible. */
+  /**
+   * Property canAssign
+   * @readonly
+   *
+   * @description
+   * Whether the member may assign a responsible.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canAssign: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /** Whether the Recurrences tab renders at all. */
+  /**
+   * Property canReadRecurrences
+   * @readonly
+   *
+   * @description
+   * Whether the Recurrences tab renders at all.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canReadRecurrences: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
   );
 
-  /** Whether the Recurrences tab offers create/edit/delete/toggle, or renders read-only. */
+  /**
+   * Property canWriteRecurrences
+   * @readonly
+   *
+   * @description
+   * Whether the Recurrences tab offers create/edit/delete/toggle, or renders read-only.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canWriteRecurrences: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
@@ -1053,9 +1896,13 @@ export class InterventionsPage {
   /**
    * Property recurrencePending
    * @readonly
-   * @description Whether the current sheet target has an accepted command in flight.
+   *
+   * @description
+   * Whether the current sheet target has an accepted command in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly recurrencePending: Signal<boolean> = computed(() => {
@@ -1071,9 +1918,13 @@ export class InterventionsPage {
   /**
    * Property recurrenceServerError
    * @readonly
-   * @description Failure belonging exclusively to the current form target.
+   *
+   * @description
+   * Failure belonging exclusively to the current form target.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly recurrenceServerError: Signal<string | null> = computed(() => {
@@ -1090,9 +1941,13 @@ export class InterventionsPage {
   /**
    * Property recurrenceRemovePending
    * @readonly
-   * @description Locks confirmation only while its target is being updated or removed.
+   *
+   * @description
+   * Locks confirmation only while its target is being updated or removed.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly recurrenceRemovePending: Signal<boolean> = computed(() => {
@@ -1104,17 +1959,50 @@ export class InterventionsPage {
     );
   });
 
-  /** Creation and its URL entry point share the planning permission. */
+  /**
+   * Property canCreate
+   * @readonly
+   *
+   * @description
+   * Creation and its URL entry point share the planning permission.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canCreate: Signal<boolean> = computed(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /** Whether the member may duplicate an intervention. */
+  /**
+   * Property canDuplicate
+   * @readonly
+   *
+   * @description
+   * Whether the member may duplicate an intervention.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canDuplicate: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_PLAN),
   );
 
-  /** Site names keyed by facility IRI. */
+  /**
+   * Property siteDisplayMap
+   * @readonly
+   *
+   * @description
+   * Site names keyed by facility IRI.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlyMap<string, string>>}
+   */
   private readonly siteDisplayMap: Signal<ReadonlyMap<string, string>> = computed(
     (): ReadonlyMap<string, string> =>
       new Map(
@@ -1124,7 +2012,18 @@ export class InterventionsPage {
       ),
   );
 
-  /** Members keyed by IRI. */
+  /**
+   * Property memberDisplayMap
+   * @readonly
+   *
+   * @description
+   * Members keyed by IRI.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlyMap<string, MemberSelectOption>>}
+   */
   private readonly memberDisplayMap: Signal<ReadonlyMap<string, MemberSelectOption>> = computed(
     (): ReadonlyMap<string, MemberSelectOption> =>
       new Map(
@@ -1137,7 +2036,18 @@ export class InterventionsPage {
       ),
   );
 
-  /** Every loaded intervention as a List row view model. */
+  /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * Every loaded intervention as a List row view model.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly InterventionListItemViewModel[]>}
+   */
   protected readonly items: Signal<readonly InterventionListItemViewModel[]> = computed(() =>
     this.store
       .interventionList()
@@ -1147,16 +2057,30 @@ export class InterventionsPage {
   /**
    * Property boardStore
    * @readonly
-   * @description Independent paginated status columns.
+   *
+   * @description
+   * Independent paginated status columns.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {InstanceType<typeof InterventionBoardStore>}
    */
   protected readonly boardStore: InstanceType<typeof InterventionBoardStore> =
     inject(InterventionBoardStore);
 
   /**
-   * * Every loaded intervention as a Board card view model — see {@link boardFilters}, which shapes what {@link InterventionStore.interventionList} holds while the Board tab is active.
+   * Property boardItems
+   * @readonly
+   *
+   * @description
+   * - Every loaded intervention as a Board card view model — see {@link boardFilters}, which shapes
+   *   what {@link InterventionStore.interventionList} holds while the Board tab is active.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly InterventionBoardCardViewModel[]>}
    */
   protected readonly boardItems: Signal<readonly InterventionBoardCardViewModel[]> = computed(() =>
     this.boardStore
@@ -1202,8 +2126,8 @@ export class InterventionsPage {
   });
 
   /**
-   * Method canMoveBoardItem
-   * @method canMoveBoardItem
+   * Property canMoveBoardItem
+   * @readonly
    *
    * @description
    * Applies the feature’s permission, pending-state and transition policy to board moves.
@@ -1211,9 +2135,14 @@ export class InterventionsPage {
    * @access protected
    * @since 15.0.0
    *
+   * @type {(item: InterventionBoardCardViewModel, status: InterventionStatus) => boolean}
+   *
    * @param {InterventionBoardCardViewModel} item - The candidate intervention card.
    * @param {InterventionStatus} status - The requested status.
+   *
    * @returns {boolean}
+   *
+   * @function canMoveBoardItem
    */
   protected readonly canMoveBoardItem = (
     item: InterventionBoardCardViewModel,
@@ -1224,8 +2153,8 @@ export class InterventionsPage {
     isInterventionBoardMoveAllowed(item.intervention, status, this.memberIri());
 
   /**
-   * Method boardMoveBlockedReason
-   * @method boardMoveBlockedReason
+   * Property boardMoveBlockedReason
+   * @readonly
    *
    * @description
    * Supplies feature-owned transition and membership explanations to the generic board.
@@ -1233,9 +2162,14 @@ export class InterventionsPage {
    * @access protected
    * @since 15.0.0
    *
+   * @type {(item: InterventionBoardCardViewModel, status: InterventionStatus) => string | null}
+   *
    * @param {InterventionBoardCardViewModel} item - The dragged intervention.
    * @param {InterventionStatus} status - The candidate destination.
+   *
    * @returns {string | null}
+   *
+   * @function boardMoveBlockedReason
    */
   protected readonly boardMoveBlockedReason = (
     item: InterventionBoardCardViewModel,
@@ -1253,7 +2187,9 @@ export class InterventionsPage {
    * @access protected
    * @since 15.0.0
    *
-   * @param {BoardMove<InterventionBoardCardViewModel, InterventionStatus>} event - The validated board move request.
+   * @param {BoardMove<InterventionBoardCardViewModel, InterventionStatus>} event - The validated
+   *   board move request.
+   *
    * @returns {void}
    */
   protected onBoardMoveRequested(
@@ -1279,7 +2215,8 @@ export class InterventionsPage {
    * @access protected
    * @since 6.4.0
    *
-   * @param {BoardColumn<InterventionBoardCardViewModel, InterventionStatus>} column - The counted column.
+   * @param {BoardColumn<InterventionBoardCardViewModel, InterventionStatus>} column - The counted
+   *   column.
    *
    * @returns {string} The localized accessible name.
    */
@@ -1289,7 +2226,19 @@ export class InterventionsPage {
     return $localize`:@@intervention.board.columnItemCount:${column.total ?? column.items.length}:count: items in ${column.label}:column:`;
   }
 
-  /** How many pages the whole server-side List collection fills — at least one, so the footer never reads "Page 1 of 0". */
+  /**
+   * Property pageCount
+   * @readonly
+   *
+   * @description
+   * How many pages the whole server-side List collection fills — at least one, so the footer never
+   * reads "Page 1 of 0".
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
     Math.max(1, Math.ceil(this.store.totalInterventions() / this.pageSize())),
   );
@@ -1297,65 +2246,100 @@ export class InterventionsPage {
   /**
    * Property batchSelectedCount
    * @readonly
-   * @description Selection size before eligibility filtering.
+   *
+   * @description
+   * Selection size before eligibility filtering.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<number>}
    */
   protected readonly batchSelectedCount = signal(0);
+
   /**
    * Property batchNames
    * @readonly
-   * @description Readable identities captured before successful rows leave the current page.
+   *
+   * @description
+   * Readable identities captured before successful rows leave the current page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<Record<string, string>>}
    */
   protected readonly batchNames = signal<Record<string, string>>({});
+
   /**
    * Property lastBatchAction
    * @readonly
-   * @description Last explicit batch intention, retained for a targeted retry.
+   *
+   * @description
+   * Last explicit batch intention, retained for a targeted retry.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<InterventionBatchAction | null>}
    */
   private readonly lastBatchAction = signal<InterventionBatchAction | null>(null);
+
   /**
    * Property batchPending
    * @readonly
-   * @description Whether at least one batch operation is still in flight.
+   *
+   * @description
+   * Whether at least one batch operation is still in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly batchPending = computed(() =>
     this.batchResults().some((result) => result.state?.status === 'pending'),
   );
+
   /**
    * Property batchIds
    * @readonly
-   * @description Eligible intervention identifiers whose results are tracked for this batch.
+   *
+   * @description
+   * Eligible intervention identifiers whose results are tracked for this batch.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<readonly string[]>}
    */
   protected readonly batchIds: WritableSignal<readonly string[]> = signal<readonly string[]>([]);
+
   /**
    * Property batchSettled
    * @readonly
-   * @description Prevents repeating the collection refresh after completion.
+   *
+   * @description
+   * Prevents repeating the collection refresh after completion.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   private readonly batchSettled: WritableSignal<boolean> = signal(false);
+
   /**
    * Property batchResults
    * @readonly
-   * @description Consolidated per-resource results; failures remain selected.
+   *
+   * @description
+   * Consolidated per-resource results; failures remain selected.
+   *
    * @access protected
    * @since 1.0.0
+   *
+   * @type {Signal<{ id: string; name: string; state: CallState | undefined }[]>}
    */
   protected readonly batchResults = computed(() =>
     this.batchIds().map((id) => ({
@@ -1364,28 +2348,52 @@ export class InterventionsPage {
       state: this.store.mutationCallStates()[id] as CallState | undefined,
     })),
   );
+
   /**
    * Property batchSucceededCount
    * @readonly
-   * @description Confirmed successful operations in the current batch.
+   *
+   * @description
+   * Confirmed successful operations in the current batch.
+   *
    * @access protected
    * @since 1.0.0
+   *
+   * @type {Signal<number>}
    */
   protected readonly batchSucceededCount = computed(
     () => this.batchResults().filter((result) => result.state?.status === 'success').length,
   );
+
   /**
    * Property batchFailedCount
    * @readonly
-   * @description Failed operations retained for retry.
+   *
+   * @description
+   * Failed operations retained for retry.
+   *
    * @access protected
    * @since 1.0.0
+   *
+   * @type {Signal<number>}
    */
   protected readonly batchFailedCount = computed(
     () => this.batchResults().filter((result) => result.state?.status === 'error').length,
   );
 
-  /** Ids of the current selection that are actually deletable — the rows whose server-computed `allowedActions.canDelete` is true. */
+  /**
+   * Property deletableSelectedIds
+   * @readonly
+   *
+   * @description
+   * Ids of the current selection that are actually deletable — the rows whose server-computed
+   * `allowedActions.canDelete` is true.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlyArray<string>>}
+   */
   protected readonly deletableSelectedIds: Signal<ReadonlyArray<string>> = computed(() => {
     const selected: ReadonlySet<string> = this.selectedIds();
 
@@ -1398,13 +2406,35 @@ export class InterventionsPage {
       .map((item: InterventionListItemViewModel): string => item.intervention.id);
   });
 
-  /** The bulk-delete button's label, counting only the deletable subset of the selection. */
+  /**
+   * Property bulkDeleteLabel
+   * @readonly
+   *
+   * @description
+   * The bulk-delete button's label, counting only the deletable subset of the selection.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly bulkDeleteLabel: Signal<string> = computed<string>(
     () =>
       $localize`:@@intervention.list.bulkDeleteButton:Delete (${this.deletableSelectedIds().length}:count:)`,
   );
 
-  /** Ids of the current selection that are actually assignable — status `draft` or `planned`. */
+  /**
+   * Property assignableSelectedIds
+   * @readonly
+   *
+   * @description
+   * Ids of the current selection that are actually assignable — status `draft` or `planned`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlyArray<string>>}
+   */
   protected readonly assignableSelectedIds: Signal<ReadonlyArray<string>> = computed(() => {
     const selected: ReadonlySet<string> = this.selectedIds();
 
@@ -1417,13 +2447,35 @@ export class InterventionsPage {
       .map((item: InterventionListItemViewModel): string => item.intervention.id);
   });
 
-  /** The bulk-assign menu entry's label, counting only the assignable subset of the selection. */
+  /**
+   * Property bulkAssignLabel
+   * @readonly
+   *
+   * @description
+   * The bulk-assign menu entry's label, counting only the assignable subset of the selection.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly bulkAssignLabel: Signal<string> = computed<string>(
     () =>
       $localize`:@@intervention.list.bulkAssignButton:Assign responsible… (${this.assignableSelectedIds().length}:count:)`,
   );
 
-  /** Every status the current selection could move to — the bulk "Move to" menu's own entries. */
+  /**
+   * Property bulkTransitionTargets
+   * @readonly
+   *
+   * @description
+   * Every status the current selection could move to — the bulk "Move to" menu's own entries.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly InterventionStatus[]>}
+   */
   protected readonly bulkTransitionTargets: Signal<readonly InterventionStatus[]> = computed(
     (): readonly InterventionStatus[] => {
       const selected: ReadonlySet<string> = this.selectedIds();
@@ -1443,9 +2495,13 @@ export class InterventionsPage {
   /**
    * Property selectionActions
    * @readonly
-   * @description Current permission- and row-eligible bulk commands for the shared selection bar.
+   *
+   * @description
+   * Current permission- and row-eligible bulk commands for the shared selection bar.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly CollectionSelectionAction[]>}
    */
   protected readonly selectionActions: Signal<readonly CollectionSelectionAction[]> = computed(
@@ -1507,9 +2563,13 @@ export class InterventionsPage {
   /**
    * Property assignAttemptIds
    * @readonly
-   * @description Resources in the current assignment attempt; successful rows are excluded from retries.
+   *
+   * @description
+   * Resources in the current assignment attempt; successful rows are excluded from retries.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<readonly string[]>}
    */
   private readonly assignAttemptIds: WritableSignal<readonly string[]> = signal([]);
@@ -1517,9 +2577,13 @@ export class InterventionsPage {
   /**
    * Property assignDialogBusy
    * @readonly
-   * @description Keeps the assignment draft locked until every resource has a confirmed result.
+   *
+   * @description
+   * Keeps the assignment draft locked until every resource has a confirmed result.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly assignDialogBusy: Signal<boolean> = computed(() =>
@@ -1532,9 +2596,13 @@ export class InterventionsPage {
   /**
    * Property assignErrors
    * @readonly
-   * @description Names failed resources without discarding the responsible selected in the dialog.
+   *
+   * @description
+   * Names failed resources without discarding the responsible selected in the dialog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly assignErrors: Signal<readonly string[]> = computed(() =>
@@ -1549,12 +2617,34 @@ export class InterventionsPage {
     }),
   );
 
-  /** The confirm dialog's open/closed state, derived from whichever `pending*` target signal is set. */
+  /**
+   * Property deleteDialogState
+   * @readonly
+   *
+   * @description
+   * The confirm dialog's open/closed state, derived from whichever `pending*` target signal is set.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<BrnDialogState>}
+   */
   protected readonly deleteDialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
     this.pendingDelete() !== null || this.pendingBulkDeleteIds() !== null ? 'open' : 'closed',
   );
 
-  /** The confirm dialog's title, naming the count for a bulk deletion. */
+  /**
+   * Property deleteDialogTitle
+   * @readonly
+   *
+   * @description
+   * The confirm dialog's title, naming the count for a bulk deletion.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly deleteDialogTitle: Signal<string> = computed<string>(() => {
     const bulkIds: ReadonlyArray<string> | null = this.pendingBulkDeleteIds();
 
@@ -1565,7 +2655,19 @@ export class InterventionsPage {
     return $localize`:@@intervention.list.deleteConfirmTitleOne:Delete intervention?`;
   });
 
-  /** The confirm dialog's body: names the intervention for a single row, counts them for a bulk selection. */
+  /**
+   * Property deleteDialogDescription
+   * @readonly
+   *
+   * @description
+   * The confirm dialog's body: names the intervention for a single row, counts them for a bulk
+   * selection.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly deleteDialogDescription: Signal<string> = computed<string>(() => {
     const bulkIds: ReadonlyArray<string> | null = this.pendingBulkDeleteIds();
 
@@ -1582,45 +2684,126 @@ export class InterventionsPage {
       : '';
   });
 
-  /** Whether a search is active, which decides between the no-results and the first-run empty state. */
+  /**
+   * Property hasSearch
+   * @readonly
+   *
+   * @description
+   * Whether a search is active, which decides between the no-results and the first-run empty state.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly hasSearch: Signal<boolean> = computed<boolean>(
     () => this.searchTerm().length > 0,
   );
 
-  /** Whether the List tab's last load failed. */
+  /**
+   * Property hasError
+   * @readonly
+   *
+   * @description
+   * Whether the List tab's last load failed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly hasError: Signal<boolean> = computed<boolean>(
     () => this.store.listError() !== null,
   );
 
-  /** Names a status on a closed select trigger, in the column menu, and in the bulk "Move to" menu. */
+  /**
+   * Property statusLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a status on a closed select trigger, in the column menu, and in the bulk "Move to" menu.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: InterventionStatus) => string}
+   */
   protected readonly statusLabelOf: (value: InterventionStatus) => string = (
     value: InterventionStatus,
   ): string => resolveInterventionTag('status', value).label;
 
-  /** Names a type on a closed select trigger. */
+  /**
+   * Property typeLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a type on a closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: InterventionType) => string}
+   */
   protected readonly typeLabelOf: (value: InterventionType) => string = (
     value: InterventionType,
   ): string => resolveInterventionTag('type', value).label;
 
-  /** Names a priority on a closed select trigger. */
+  /**
+   * Property priorityLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a priority on a closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: InterventionPriority) => string}
+   */
   protected readonly priorityLabelOf: (value: InterventionPriority) => string = (
     value: InterventionPriority,
   ): string => resolveInterventionTag('priority', value).label;
 
-  /** Names a site IRI on a closed select trigger. */
+  /**
+   * Property siteLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a site IRI on a closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly siteLabelOf: (value: string) => string = (value: string): string =>
     this.siteDisplayMap().get(value) ?? '';
 
-  /** Names a member IRI on a closed select trigger. */
+  /**
+   * Property responsibleLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a member IRI on a closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly responsibleLabelOf: (value: string) => string = (value: string): string =>
     this.memberDisplayMap().get(value)?.label ?? '';
 
   /**
    * Property labelOptions
    * @readonly
-   * @description The organization's intervention labels as filter options, including their semantic colors.
+   *
+   * @description
+   * The organization's intervention labels as filter options, including their semantic colors.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly SelectOption[]>}
    */
   protected readonly labelOptions: Signal<readonly SelectOption[]> = computed<
@@ -1633,7 +2816,18 @@ export class InterventionsPage {
     })),
   );
 
-  /** Labels keyed by IRI. */
+  /**
+   * Property labelDisplayMap
+   * @readonly
+   *
+   * @description
+   * Labels keyed by IRI.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlyMap<string, string>>}
+   */
   private readonly labelDisplayMap: Signal<ReadonlyMap<string, string>> = computed(
     (): ReadonlyMap<string, string> =>
       new Map(
@@ -1644,11 +2838,33 @@ export class InterventionsPage {
       ),
   );
 
-  /** Names a label IRI on a closed select trigger. */
+  /**
+   * Property labelLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a label IRI on a closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly labelLabelOf: (value: string) => string = (value: string): string =>
     this.labelDisplayMap().get(value) ?? '';
 
-  /** Names an ordering field on the Display popover's closed select trigger. */
+  /**
+   * Property sortFieldLabelOf
+   * @readonly
+   *
+   * @description
+   * Names an ordering field on the Display popover's closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: InterventionSortField) => string}
+   */
   protected readonly sortFieldLabelOf: (value: InterventionSortField) => string = (
     value: InterventionSortField,
   ): string =>
@@ -1656,14 +2872,37 @@ export class InterventionsPage {
       (option: SelectOption<InterventionSortField>): boolean => option.value === value,
     )?.label ?? '';
 
-  /** The Display popover's direction toggle button label, naming the active ordering rather than the action a click performs. */
+  /**
+   * Property sortDirectionLabel
+   * @readonly
+   *
+   * @description
+   * The Display popover's direction toggle button label, naming the active ordering rather than the
+   * action a click performs.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly sortDirectionLabel: Signal<string> = computed<string>(() =>
     this.sortOrder().direction === 'asc'
       ? $localize`:@@intervention.list.sortAscending:Ascending`
       : $localize`:@@intervention.list.sortDescending:Descending`,
   );
 
-  /** Names a filter chip's value segment, so each is distinguishable by screen reader. */
+  /**
+   * Property changeFilterLabel
+   * @readonly
+   *
+   * @description
+   * Names a filter chip's value segment, so each is distinguishable by screen reader.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(fieldLabel: string) => string}
+   */
   protected readonly changeFilterLabel: (fieldLabel: string) => string = (
     fieldLabel: string,
   ): string => $localize`:@@intervention.list.changeFilter:Change filter: ${fieldLabel}:field:`;
@@ -1671,9 +2910,13 @@ export class InterventionsPage {
   /**
    * Property honouredFilterKeys
    * @readonly
-   * @description The active tab's declared entry in {@link INTERVENTION_VIEW_HONOURED_FILTER_KEYS}.
+   *
+   * @description
+   * The active tab's declared entry in {@link INTERVENTION_VIEW_HONOURED_FILTER_KEYS}.
+   *
    * @access protected
    * @since 11.0.0
+   *
    * @type {Signal<ReadonlySet<InterventionFilterFieldKey>>}
    */
   protected readonly honouredFilterKeys: Signal<ReadonlySet<InterventionFilterFieldKey>> = computed<
@@ -1697,6 +2940,7 @@ export class InterventionsPage {
    *
    * @access protected
    * @since 13.0.0
+   *
    * @type {Signal<readonly CollectionFilterField[]>}
    */
   protected readonly offeredFilterFields: Signal<readonly CollectionFilterField[]> = computed<
@@ -1710,7 +2954,19 @@ export class InterventionsPage {
   });
 
   /**
-   * * Which of `INTERVENTION_FILTER_FIELDS` currently carry a value, over the whole catalog rather than {@link offeredFilterFields} — the base {@link honouredActiveFilterKeys} narrows to what the active tab actually renders, and {@link filtersVisible}'s own seed reads this one directly, so a filter set on another tab still auto-expands the bar on arrival.
+   * Property activeFilterKeys
+   * @readonly
+   *
+   * @description
+   * - Which of `INTERVENTION_FILTER_FIELDS` currently carry a value, over the whole catalog rather
+   *   than {@link offeredFilterFields} — the base {@link honouredActiveFilterKeys} narrows to what
+   *   the active tab actually renders, and {@link filtersVisible}'s own seed reads this one
+   *   directly, so a filter set on another tab still auto-expands the bar on arrival.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly InterventionFilterFieldKey[]>}
    */
   protected readonly activeFilterKeys: Signal<readonly InterventionFilterFieldKey[]> = computed<
     readonly InterventionFilterFieldKey[]
@@ -1737,6 +2993,7 @@ export class InterventionsPage {
    *
    * @access protected
    * @since 11.1.0
+   *
    * @type {Signal<readonly InterventionFilterFieldKey[]>}
    */
   protected readonly honouredActiveFilterKeys: Signal<readonly InterventionFilterFieldKey[]> =
@@ -1748,50 +3005,195 @@ export class InterventionsPage {
       );
     });
 
-  /** Whether `app-collection-filter-bar` is currently mounted below the toolbar. */
+  /**
+   * Property filtersVisible
+   * @readonly
+   *
+   * @description
+   * Whether `app-collection-filter-bar` is currently mounted below the toolbar.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
     computed<boolean>(() => this.activeFilterKeys().length > 0),
   );
 
-  /** Which field's value selector currently renders forced open — `null` when none is. */
+  /**
+   * Property openFilterKey
+   * @readonly
+   *
+   * @description
+   * Which field's value selector currently renders forced open — `null` when none is.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionFilterFieldKey | null>}
+   */
   protected readonly openFilterKey: WritableSignal<InterventionFilterFieldKey | null> =
     signal<InterventionFilterFieldKey | null>(null);
 
-  /** The operator pinned on one of the six `equals`/`isAnyOf` fields — set by an explicit pick or by any multi selection, dropped when the chip is removed or every filter is cleared. */
+  /**
+   * Property enumFilterOperatorOverrides
+   * @readonly
+   *
+   * @description
+   * The operator pinned on one of the six `equals`/`isAnyOf` fields — set by an explicit pick or by
+   * any multi selection, dropped when the chip is removed or every filter is cleared.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<
+   *   Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>
+   * >}
+   */
   private readonly enumFilterOperatorOverrides: WritableSignal<
     Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>
   > = signal<Readonly<Partial<Record<InterventionEnumFilterKey, 'equals' | 'isAnyOf'>>>>({});
 
-  /** The "Status" chip's value control, projected into the filter bar. */
+  /**
+   * Property statusChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Status" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
 
-  /** The "Type" chip's value control, projected into the filter bar. */
+  /**
+   * Property typeChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Type" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly typeChipTemplate = viewChild<TemplateRef<unknown>>('typeChip');
 
-  /** The "Priority" chip's value control, projected into the filter bar. */
+  /**
+   * Property priorityChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Priority" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly priorityChipTemplate = viewChild<TemplateRef<unknown>>('priorityChip');
 
-  /** The `?due=` chip's value control. */
+  /**
+   * Property dueWindowChipTemplate
+   * @readonly
+   *
+   * @description
+   * The `?due=` chip's value control.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly dueWindowChipTemplate = viewChild<TemplateRef<unknown>>('dueWindowChip');
 
-  /** The "Site" chip's value control, projected into the filter bar. */
+  /**
+   * Property siteChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Site" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly siteChipTemplate = viewChild<TemplateRef<unknown>>('siteChip');
 
-  /** The "Responsible" chip's value control, projected into the filter bar. */
+  /**
+   * Property responsibleChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Responsible" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly responsibleChipTemplate = viewChild<TemplateRef<unknown>>('responsibleChip');
 
-  /** The "Label" chip's value control, projected into the filter bar. */
+  /**
+   * Property labelChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Label" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly labelChipTemplate = viewChild<TemplateRef<unknown>>('labelChip');
 
-  /** The "Deadline" chip's value control, projected into the filter bar. */
+  /**
+   * Property dueRangeChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Deadline" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly dueRangeChipTemplate = viewChild<TemplateRef<unknown>>('dueRangeChip');
 
-  /** The "Planned start" chip's value control, projected into the filter bar. */
+  /**
+   * Property plannedStartRangeChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Planned start" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly plannedStartRangeChipTemplate =
     viewChild<TemplateRef<unknown>>('plannedStartRangeChip');
 
   /**
-   * * Every filter field's value-control `TemplateRef`, keyed by {@link InterventionFilterFieldKey}, for `app-collection-filter-bar`'s `templates` input.
+   * Property chipTemplates
+   * @readonly
+   *
+   * @description
+   * - Every filter field's value-control `TemplateRef`, keyed by {@link InterventionFilterFieldKey},
+   *   for `app-collection-filter-bar`'s `templates` input.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
    */
   protected readonly chipTemplates: Signal<
     Readonly<Record<string, TemplateRef<unknown> | undefined>>
@@ -1807,7 +3209,18 @@ export class InterventionsPage {
     dueWindow: this.dueWindowChipTemplate(),
   }));
 
-  /** The "Deadline" chip's own currently-selected operator. */
+  /**
+   * Property dueRangeOperator
+   * @readonly
+   *
+   * @description
+   * The "Deadline" chip's own currently-selected operator.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionDueRangeOperator>}
+   */
   protected readonly dueRangeOperator: WritableSignal<InterventionDueRangeOperator> = linkedSignal<
     InterventionDueRangeFilter | null,
     InterventionDueRangeOperator
@@ -1819,7 +3232,18 @@ export class InterventionsPage {
     ): InterventionDueRangeOperator => dueRange?.operator ?? previous?.value ?? 'greaterThan',
   });
 
-  /** The applied `dueRange`'s lower bound, when its operator carries one. */
+  /**
+   * Property dueRangeAfter
+   * @readonly
+   *
+   * @description
+   * The applied `dueRange`'s lower bound, when its operator carries one.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<Date | null>}
+   */
   protected readonly dueRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
     const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
 
@@ -1828,7 +3252,18 @@ export class InterventionsPage {
       : null;
   });
 
-  /** The applied `dueRange`'s upper bound, when its operator carries one. */
+  /**
+   * Property dueRangeBefore
+   * @readonly
+   *
+   * @description
+   * The applied `dueRange`'s upper bound, when its operator carries one.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<Date | null>}
+   */
   protected readonly dueRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
     const dueRange: InterventionDueRangeFilter | null = this.filters().dueRange;
 
@@ -1840,9 +3275,13 @@ export class InterventionsPage {
   /**
    * Property dueRangeBetween
    * @readonly
-   * @description The applied deadline bounds when the operator is `between`.
+   *
+   * @description
+   * The applied deadline bounds when the operator is `between`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<[Date, Date] | undefined>}
    */
   protected readonly dueRangeBetween: Signal<[Date, Date] | undefined> = computed<
@@ -1854,7 +3293,16 @@ export class InterventionsPage {
   });
 
   /**
-   * * The "Planned start" chip's own currently-selected operator. See {@link dueRangeOperator}.
+   * Property plannedStartRangeOperator
+   * @readonly
+   *
+   * @description
+   * - The "Planned start" chip's own currently-selected operator. See {@link dueRangeOperator}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionPlannedStartRangeOperator>}
    */
   protected readonly plannedStartRangeOperator: WritableSignal<InterventionPlannedStartRangeOperator> =
     linkedSignal<InterventionPlannedStartRangeFilter | null, InterventionPlannedStartRangeOperator>(
@@ -1869,7 +3317,17 @@ export class InterventionsPage {
     );
 
   /**
-   * * The applied `plannedStartRange`'s lower bound, when its operator carries one. See {@link dueRangeAfter}.
+   * Property plannedStartRangeAfter
+   * @readonly
+   *
+   * @description
+   * - The applied `plannedStartRange`'s lower bound, when its operator carries one. See
+   *   {@link dueRangeAfter}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<Date | null>}
    */
   protected readonly plannedStartRangeAfter: Signal<Date | null> = computed<Date | null>(() => {
     const plannedStartRange: InterventionPlannedStartRangeFilter | null =
@@ -1882,7 +3340,17 @@ export class InterventionsPage {
   });
 
   /**
-   * * The applied `plannedStartRange`'s upper bound, when its operator carries one. See {@link dueRangeBefore}.
+   * Property plannedStartRangeBefore
+   * @readonly
+   *
+   * @description
+   * - The applied `plannedStartRange`'s upper bound, when its operator carries one. See
+   *   {@link dueRangeBefore}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<Date | null>}
    */
   protected readonly plannedStartRangeBefore: Signal<Date | null> = computed<Date | null>(() => {
     const plannedStartRange: InterventionPlannedStartRangeFilter | null =
@@ -1897,9 +3365,13 @@ export class InterventionsPage {
   /**
    * Property plannedStartRangeBetween
    * @readonly
-   * @description The applied planned-start bounds when the operator is `between`.
+   *
+   * @description
+   * The applied planned-start bounds when the operator is `between`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<[Date, Date] | undefined>}
    */
   protected readonly plannedStartRangeBetween: Signal<[Date, Date] | undefined> = computed<
@@ -1913,7 +3385,19 @@ export class InterventionsPage {
       : undefined;
   });
 
-  /** The currently active operator per field key, for `app-collection-filter-bar`'s `activeOperators` input. */
+  /**
+   * Property filterOperators
+   * @readonly
+   *
+   * @description
+   * The currently active operator per field key, for `app-collection-filter-bar`'s
+   * `activeOperators` input.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<Readonly<Record<string, CollectionFilterOperator>>>}
+   */
   protected readonly filterOperators: Signal<Readonly<Record<string, CollectionFilterOperator>>> =
     computed<Readonly<Record<string, CollectionFilterOperator>>>(() => ({
       dueRange: this.dueRangeOperator(),
@@ -2203,6 +3687,8 @@ export class InterventionsPage {
   //#region Methods
   /**
    * Method switchView
+   * @method switchView
+   *
    * @description
    * The native Spartan tab list's activation handler writes
    * the new `?view=` and merges it with every other query param,
@@ -2214,7 +3700,9 @@ export class InterventionsPage {
    *
    * @access protected
    * @since 11.0.0
+   *
    * @param {string} tab - The activated tab id (`list`/`board`/`calendar`/`recurrences`).
+   *
    * @returns {void}
    */
   protected switchView(tab: string | readonly string[] | null | undefined): void {
@@ -2226,13 +3714,37 @@ export class InterventionsPage {
     this.navigateQuery({ view: view === 'list' ? null : view });
   }
 
-  /** Drops the search from the URL. */
+  /**
+   * Method clearSearch
+   * @method clearSearch
+   *
+   * @description
+   * Drops the search from the URL.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected clearSearch(): void {
     this.page.set(1);
     this.navigateQuery({ q: null });
   }
 
-  /** Orders by a column head. Re-picking the active field reverses it. */
+  /**
+   * Method applySortField
+   * @method applySortField
+   *
+   * @description
+   * Orders by a column head. Re-picking the active field reverses it.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionSortField} field - Sort field to commit to the intervention list query.
+   *
+   * @returns {void}
+   */
   protected applySortField(field: InterventionSortField): void {
     this.page.set(1);
     this.sortOrder.update((current: InterventionListSort) =>
@@ -2244,12 +3756,38 @@ export class InterventionsPage {
     this.persistListPreferences();
   }
 
-  /** The Display popover's field select emits `null`/`undefined` only while clearing, which this select never does. */
+  /**
+   * Method onSortFieldPicked
+   * @method onSortFieldPicked
+   *
+   * @description
+   * The Display popover's field select emits `null`/`undefined` only while clearing, which this
+   * select never does.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionSortField | null | undefined} field - Selected sort field; nullish
+   *   selections are ignored.
+   *
+   * @returns {void}
+   */
   protected onSortFieldPicked(field: InterventionSortField | null | undefined): void {
     if (field) this.applySortField(field);
   }
 
-  /** Flips the active ordering's direction without changing its field. */
+  /**
+   * Method toggleSortDirection
+   * @method toggleSortDirection
+   *
+   * @description
+   * Flips the active ordering's direction without changing its field.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected toggleSortDirection(): void {
     this.page.set(1);
     this.sortOrder.update((current: InterventionListSort) => ({
@@ -2259,7 +3797,20 @@ export class InterventionsPage {
     this.persistListPreferences();
   }
 
-  /** Shows or hides an optional column. */
+  /**
+   * Method toggleColumn
+   * @method toggleColumn
+   *
+   * @description
+   * Shows or hides an optional column.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionTableColumn} id - Table column whose visibility is toggled.
+   *
+   * @returns {void}
+   */
   protected toggleColumn(id: InterventionTableColumn): void {
     const next: Set<InterventionTableColumn> = new Set(this.hiddenColumns());
 
@@ -2269,12 +3820,38 @@ export class InterventionsPage {
     this.persistListPreferences();
   }
 
-  /** Whether a column currently renders, for the menu's checked state. */
+  /**
+   * Method isColumnVisible
+   * @method isColumnVisible
+   *
+   * @description
+   * Whether a column currently renders, for the menu's checked state.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionTableColumn} id - Table column whose current visibility is inspected.
+   *
+   * @returns {boolean}
+   */
   protected isColumnVisible(id: InterventionTableColumn): boolean {
     return !this.hiddenColumns().has(id);
   }
 
-  /** Names a column in the visibility menu. */
+  /**
+   * Method columnLabelOf
+   * @method columnLabelOf
+   *
+   * @description
+   * Names a column in the visibility menu.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionTableColumn} id - Table column whose localized label is requested.
+   *
+   * @returns {string}
+   */
   protected columnLabelOf(id: InterventionTableColumn): string {
     switch (id) {
       case 'status':
@@ -2298,14 +3875,40 @@ export class InterventionsPage {
     }
   }
 
-  /** Moves the List page window, clamped to the available range. */
+  /**
+   * Method goToPage
+   * @method goToPage
+   *
+   * @description
+   * Moves the List page window, clamped to the available range.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {number} target - One-based page requested by the list pager.
+   *
+   * @returns {void}
+   */
   protected goToPage(target: number): void {
     const next = Math.min(Math.max(1, target), this.pageCount());
     this.page.set(next);
     this.navigateQuery({ p: next > 1 ? String(next) : null });
   }
 
-  /** Changes how many rows a page holds and returns to the first one. */
+  /**
+   * Method setPageSize
+   * @method setPageSize
+   *
+   * @description
+   * Changes how many rows a page holds and returns to the first one.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {number} size - Maximum items requested for each list page.
+   *
+   * @returns {void}
+   */
   protected setPageSize(size: number): void {
     this.pageSize.set(size);
     this.page.set(1);
@@ -2314,10 +3917,19 @@ export class InterventionsPage {
   }
 
   /**
+   * Method restoreHiddenColumns
+   * @method restoreHiddenColumns
+   *
+   * @description
    * Narrows the cookie's raw hidden-column ids to the columns this build
    * offers. An operator who has never touched the Display popover has no
    * cookie at all, so this falls back to {@link INTERVENTION_TABLE_DEFAULT_HIDDEN_COLUMNS}
    * rather than showing every optional column.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {ReadonlySet<InterventionTableColumn>}
    */
   private restoreHiddenColumns(): ReadonlySet<InterventionTableColumn> {
     const stored: ReadonlySet<string> = this.preferences.readHiddenColumns();
@@ -2330,19 +3942,54 @@ export class InterventionsPage {
     );
   }
 
-  /** The remembered rows-per-page when it is one of the sizes this build offers, or the default otherwise. */
+  /**
+   * Method restorePageSize
+   * @method restorePageSize
+   *
+   * @description
+   * The remembered rows-per-page when it is one of the sizes this build offers, or the default
+   * otherwise.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {number}
+   */
   private restorePageSize(): number {
     const stored: number | null = this.preferences.readPageSize();
 
     return stored !== null && PAGE_SIZES.includes(stored) ? stored : PAGE_SIZES[0];
   }
 
-  /** Writes the List tab's current shape — sort, hidden columns, page size — to the preferences cookie in one pass. */
+  /**
+   * Method persistListPreferences
+   * @method persistListPreferences
+   *
+   * @description
+   * Writes the List tab's current shape — sort, hidden columns, page size — to the preferences
+   * cookie in one pass.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   private persistListPreferences(): void {
     this.preferences.write(this.sortOrder(), this.hiddenColumns(), this.pageSize());
   }
 
-  /** Opens the creation sheet blank — drops any prefill a previous "Duplicate" left behind. */
+  /**
+   * Method openCreate
+   * @method openCreate
+   *
+   * @description
+   * Opens the creation sheet blank — drops any prefill a previous "Duplicate" left behind.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected openCreate(): void {
     if (!this.canCreate()) return;
     this.createTemplateId.set(null);
@@ -2350,21 +3997,62 @@ export class InterventionsPage {
     this.createSheetVisible.set(true);
   }
 
-  /** Opens the creation sheet prefilled from a row's own "Duplicate" entry. */
+  /**
+   * Method requestDuplicate
+   * @method requestDuplicate
+   *
+   * @description
+   * Opens the creation sheet prefilled from a row's own "Duplicate" entry.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionOutput} intervention - Intervention whose data seeds the duplicate draft.
+   *
+   * @returns {void}
+   */
   protected requestDuplicate(intervention: InterventionOutput): void {
     this.createTemplateId.set(null);
     this.duplicatePrefill.set(buildInterventionDuplicatePrefill(intervention));
     this.createSheetVisible.set(true);
   }
 
-  /** Relays the sheet's open/closed state and, on close, drops any duplicate prefill. */
+  /**
+   * Method onCreateSheetVisibleChange
+   * @method onCreateSheetVisibleChange
+   *
+   * @description
+   * Relays the sheet's open/closed state and, on close, drops any duplicate prefill.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} visible - Whether the intervention creation sheet is open.
+   *
+   * @returns {void}
+   */
   protected onCreateSheetVisibleChange(visible: boolean): void {
     this.createSheetVisible.set(visible);
 
     if (!visible) this.duplicatePrefill.set(null);
   }
 
-  /** Hands the form's values to the store. The sheet closes and the page navigates once the store reports the new record. */
+  /**
+   * Method createIntervention
+   * @method createIntervention
+   *
+   * @description
+   * Hands the form's values to the store. The sheet closes and the page navigates once the store
+   * reports the new record.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionCreateFormValues} values - Validated creation-form values submitted by the
+   *   sheet.
+   *
+   * @returns {void}
+   */
   protected createIntervention(values: InterventionCreateFormValues): void {
     this.store.create({
       organizationId: this.organizationId(),
@@ -2378,12 +4066,39 @@ export class InterventionsPage {
     });
   }
 
-  /** Hands the chosen template, plus whichever overrides the sheet drafted, to the store. */
+  /**
+   * Method instantiateFromTemplate
+   * @method instantiateFromTemplate
+   *
+   * @description
+   * Hands the chosen template, plus whichever overrides the sheet drafted, to the store.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionTemplateInstantiateRequest} request - Template and draft values used to
+   *   create an intervention.
+   *
+   * @returns {void}
+   */
   protected instantiateFromTemplate(request: InterventionTemplateInstantiateRequest): void {
     this.store.instantiateFromTemplate(request);
   }
 
-  /** Opens the template mode without creating until the operator confirms the form. */
+  /**
+   * Method openTemplateCreate
+   * @method openTemplateCreate
+   *
+   * @description
+   * Opens the template mode without creating until the operator confirms the form.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} templateId - Template selected to seed the creation sheet.
+   *
+   * @returns {void}
+   */
   protected openTemplateCreate(templateId: string): void {
     if (!this.canCreate()) return;
     this.duplicatePrefill.set(null);
@@ -2391,7 +4106,22 @@ export class InterventionsPage {
     this.createSheetVisible.set(true);
   }
 
-  /** Moves an intervention to the status a List row's menu or a Board card's move requested. The store owns the optimistic patch, the `If-Match` revision and the rollback. */
+  /**
+   * Method applyTransition
+   * @method applyTransition
+   *
+   * @description
+   * Moves an intervention to the status a List row's menu or a Board card's move requested. The
+   * store owns the optimistic patch, the `If-Match` revision and the rollback.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionTransitionRequest} request - Intervention identity and target state
+   *   requested by the user.
+   *
+   * @returns {void}
+   */
   protected applyTransition(request: InterventionTransitionRequest): void {
     if (request.status === 'published') {
       void this.router.navigate([...this.detailRouteBase(), request.intervention.id]);
@@ -2404,12 +4134,38 @@ export class InterventionsPage {
     });
   }
 
-  /** Puts an intervention's `FG-…` reference on the clipboard. */
+  /**
+   * Method copyReference
+   * @method copyReference
+   *
+   * @description
+   * Puts an intervention's `FG-…` reference on the clipboard.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionOutput} intervention - Intervention whose reference is copied.
+   *
+   * @returns {void}
+   */
   protected copyReference(intervention: InterventionOutput): void {
     void navigator.clipboard?.writeText(`FG-${intervention.number}`);
   }
 
-  /** Records the List table's next row selection. */
+  /**
+   * Method onSelectionChanged
+   * @method onSelectionChanged
+   *
+   * @description
+   * Records the List table's next row selection.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {ReadonlySet<string>} ids - Selected intervention identities emitted by the collection.
+   *
+   * @returns {void}
+   */
   protected onSelectionChanged(ids: ReadonlySet<string>): void {
     this.selectedIds.set(ids);
   }
@@ -2417,10 +4173,15 @@ export class InterventionsPage {
   /**
    * Method onSelectionActionRequested
    * @method onSelectionActionRequested
-   * @description Routes a shared bar command through the existing permission-checked bulk handlers.
+   *
+   * @description
+   * Routes a shared bar command through the existing permission-checked bulk handlers.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} id - Command id emitted after any mobile drawer closes.
+   *
    * @returns {void}
    */
   protected onSelectionActionRequested(id: string): void {
@@ -2439,13 +4200,38 @@ export class InterventionsPage {
     if (target) this.confirmBulkTransition(target);
   }
 
-  /** Opens the confirm dialog for a single row's Delete entry. */
+  /**
+   * Method requestDelete
+   * @method requestDelete
+   *
+   * @description
+   * Opens the confirm dialog for a single row's Delete entry.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionOutput} intervention - Intervention selected for deletion confirmation.
+   *
+   * @returns {void}
+   */
   protected requestDelete(intervention: InterventionOutput): void {
     this.store.resetDeleteState();
     this.pendingDelete.set(intervention);
   }
 
-  /** Opens the confirm dialog for the selection's deletable subset. A no-op when nothing selected can actually be deleted. */
+  /**
+   * Method requestBulkDelete
+   * @method requestBulkDelete
+   *
+   * @description
+   * Opens the confirm dialog for the selection's deletable subset. A no-op when nothing selected
+   * can actually be deleted.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected requestBulkDelete(): void {
     const ids: ReadonlyArray<string> = this.deletableSelectedIds();
 
@@ -2455,7 +4241,18 @@ export class InterventionsPage {
     this.pendingBulkDeleteIds.set(ids);
   }
 
-  /** Sends the pending target(s) to the store. */
+  /**
+   * Method confirmDelete
+   * @method confirmDelete
+   *
+   * @description
+   * Sends the pending target(s) to the store.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected confirmDelete(): void {
     if (this.batchPending()) return;
     const single: InterventionOutput | null = this.pendingDelete();
@@ -2492,7 +4289,20 @@ export class InterventionsPage {
     this.pendingBulkDeleteIds.set(null);
   }
 
-  /** Clears both pending-delete signals on any dismissal — Cancel, the backdrop or Escape. */
+  /**
+   * Method onDeleteDialogStateChanged
+   * @method onDeleteDialogStateChanged
+   *
+   * @description
+   * Clears both pending-delete signals on any dismissal — Cancel, the backdrop or Escape.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {BrnDialogState} state - Delete-dialog lifecycle state emitted by the overlay.
+   *
+   * @returns {void}
+   */
   protected onDeleteDialogStateChanged(state: BrnDialogState): void {
     if (state === 'open') return;
 
@@ -2500,7 +4310,21 @@ export class InterventionsPage {
     this.pendingBulkDeleteIds.set(null);
   }
 
-  /** Ids of the current selection that may actually move to `target`. */
+  /**
+   * Method transitionableSelectedIds
+   * @method transitionableSelectedIds
+   *
+   * @description
+   * Ids of the current selection that may actually move to `target`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionStatus} target - Target status used to filter eligible selected
+   *   interventions.
+   *
+   * @returns {ReadonlyArray<string>}
+   */
   protected transitionableSelectedIds(target: InterventionStatus): ReadonlyArray<string> {
     if (target === 'published') return [];
     const selected: ReadonlySet<string> = this.selectedIds();
@@ -2525,10 +4349,15 @@ export class InterventionsPage {
   /**
    * Method confirmBulkTransition
    * @method confirmBulkTransition
-   * @description Starts transitions for the eligible selection and retains failed rows for targeted retries.
+   *
+   * @description
+   * Starts transitions for the eligible selection and retains failed rows for targeted retries.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionStatus} target - The requested destination status.
+   *
    * @returns {boolean}
    */
   protected confirmBulkTransition(target: InterventionStatus): boolean {
@@ -2565,10 +4394,17 @@ export class InterventionsPage {
     return true;
   }
 
-  /** Method retryFailedBatch
-   * @description Repeats the last intention only for failed rows still eligible in the refreshed collection. Deletion keeps its confirmation.
+  /**
+   * Method retryFailedBatch
+   * @method retryFailedBatch
+   *
+   * @description
+   * Repeats the last intention only for failed rows still eligible in the refreshed collection.
+   * Deletion keeps its confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected retryFailedBatch(): void {
@@ -2594,10 +4430,16 @@ export class InterventionsPage {
 
   /**
    * Method requestAssign
-   * @description Opens an individual assignment and resolves its existing responsible label.
+   * @method requestAssign
+   *
+   * @description
+   * Opens an individual assignment and resolves its existing responsible label.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionOutput} intervention - Selected row.
+   *
    * @returns {void}
    */
   protected requestAssign(intervention: InterventionOutput): void {
@@ -2614,7 +4456,11 @@ export class InterventionsPage {
 
   /**
    * Method requestBulkAssign
-   * @description Opens assignment for the selected eligible resources.
+   * @method requestBulkAssign
+   *
+   * @description
+   * Opens assignment for the selected eligible resources.
+   *
    * @access protected
    * @since 1.0.0
    *
@@ -2639,10 +4485,16 @@ export class InterventionsPage {
 
   /**
    * Method submitAssign
-   * @description Sends assignment writes while retaining the dialog draft; retries exclude confirmed successes.
+   * @method submitAssign
+   *
+   * @description
+   * Sends assignment writes while retaining the dialog draft; retries exclude confirmed successes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionAssignSubmittedEvent} event - Selected responsible.
+   *
    * @returns {void}
    */
   protected submitAssign(event: InterventionAssignSubmittedEvent): void {
@@ -2699,7 +4551,11 @@ export class InterventionsPage {
 
   /**
    * Method dismissAssign
-   * @description Closes only after requests have settled, preserving pending writes.
+   * @method dismissAssign
+   *
+   * @description
+   * Closes only after requests have settled, preserving pending writes.
+   *
    * @access protected
    * @since 1.0.0
    *
@@ -2715,9 +4571,13 @@ export class InterventionsPage {
   /**
    * Method openRecurrenceCreate
    * @method openRecurrenceCreate
-   * @description Opens the recurrence sheet on an empty draft and clears any previous wait.
+   *
+   * @description
+   * Opens the recurrence sheet on an empty draft and clears any previous wait.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected openRecurrenceCreate(): void {
@@ -2728,10 +4588,15 @@ export class InterventionsPage {
   /**
    * Method editRecurrence
    * @method editRecurrence
-   * @description Opens a recurrence draft and clears the previous target's wait.
+   *
+   * @description
+   * Opens a recurrence draft and clears the previous target's wait.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionRecurrenceOutput} recurrence - Recurrence to edit.
+   *
    * @returns {void}
    */
   protected editRecurrence(recurrence: InterventionRecurrenceOutput): void {
@@ -2742,9 +4607,14 @@ export class InterventionsPage {
   /**
    * Method closeRecurrenceSheet
    * @method closeRecurrenceSheet
-   * @description Closes the sheet after its dirty-close confirmation and discards its pending result correlation.
+   *
+   * @description
+   * Closes the sheet after its dirty-close confirmation and discards its pending result
+   * correlation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected closeRecurrenceSheet(): void {
@@ -2755,10 +4625,16 @@ export class InterventionsPage {
   /**
    * Method submitRecurrence
    * @method submitRecurrence
-   * @description Submits one create or update for the current target and waits for its matching result.
+   *
+   * @description
+   * Submits one create or update for the current target and waits for its matching result.
+   *
    * @access protected
    * @since 1.0.0
-   * @param {InterventionRecurrenceFormValues} values - Validated recurrence draft and optional existing id.
+   *
+   * @param {InterventionRecurrenceFormValues} values - Validated recurrence draft and optional
+   *   existing id.
+   *
    * @returns {void}
    */
   protected submitRecurrence(values: InterventionRecurrenceFormValues): void {
@@ -2802,10 +4678,15 @@ export class InterventionsPage {
   /**
    * Method requestRecurrenceDelete
    * @method requestRecurrenceDelete
-   * @description Opens confirmation for one recurrence and clears the previous deletion wait.
+   *
+   * @description
+   * Opens confirmation for one recurrence and clears the previous deletion wait.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionRecurrenceOutput} recurrence - Recurrence to remove.
+   *
    * @returns {void}
    */
   protected requestRecurrenceDelete(recurrence: InterventionRecurrenceOutput): void {
@@ -2816,9 +4697,13 @@ export class InterventionsPage {
   /**
    * Method confirmRecurrenceDelete
    * @method confirmRecurrenceDelete
-   * @description Submits deletion of the current confirmation target and closes only on its success.
+   *
+   * @description
+   * Submits deletion of the current confirmation target and closes only on its success.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirmRecurrenceDelete(): void {
@@ -2832,9 +4717,13 @@ export class InterventionsPage {
   /**
    * Method dismissRecurrenceDelete
    * @method dismissRecurrenceDelete
-   * @description Closes deletion confirmation and clears its pending result correlation.
+   *
+   * @description
+   * Closes deletion confirmation and clears its pending result correlation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected dismissRecurrenceDelete(): void {
@@ -2842,7 +4731,21 @@ export class InterventionsPage {
     this.pendingRecurrenceDelete.set(null);
   }
 
-  /** Pauses or resumes a recurrence from the table's toggle. */
+  /**
+   * Method toggleRecurrenceActive
+   * @method toggleRecurrenceActive
+   *
+   * @description
+   * Pauses or resumes a recurrence from the table's toggle.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {{ readonly recurrenceId: string; readonly isActive: boolean }} event - Recurrence
+   *   identity and requested enabled state.
+   *
+   * @returns {void}
+   */
   protected toggleRecurrenceActive(event: {
     readonly recurrenceId: string;
     readonly isActive: boolean;
@@ -2853,14 +4756,36 @@ export class InterventionsPage {
     });
   }
 
-  /** Re-runs the Recurrences tab's fetch after the table's own load failure. */
+  /**
+   * Method retryRecurrences
+   * @method retryRecurrences
+   *
+   * @description
+   * Re-runs the Recurrences tab's fetch after the table's own load failure.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected retryRecurrences(): void {
     this.recurrenceStore.load({
       organizationIri: `/api/organizations/${this.organizationId()}`,
     });
   }
 
-  /** Re-runs the List tab's current query after a failure. */
+  /**
+   * Method reload
+   * @method reload
+   *
+   * @description
+   * Re-runs the List tab's current query after a failure.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected reload(): void {
     this.store.load({
       organizationId: this.organizationId(),
@@ -2878,7 +4803,19 @@ export class InterventionsPage {
     });
   }
 
-  /** Downloads the current question as CSV, serialized server-side (`InterventionService.exportCsv`). */
+  /**
+   * Method exportCsv
+   * @method exportCsv
+   *
+   * @description
+   * Downloads the current question as CSV, serialized server-side
+   * (`InterventionService.exportCsv`).
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected exportCsv(): void {
     if (this.store.totalInterventions() === 0) return;
 
@@ -2917,13 +4854,28 @@ export class InterventionsPage {
       });
   }
 
-  /** Replaces one narrowing. */
+  /**
+   * Method applyFilter
+   * @method applyFilter
+   *
+   * @description
+   * Replaces one narrowing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {Partial<InterventionListFilters>} patch - Filter values to merge into the current
+   *   query.
+   *
+   * @returns {void}
+   */
   protected applyFilter(patch: Partial<InterventionListFilters>): void {
     this.navigateQuery(serializeInterventionListFilters({ ...this.filters(), ...patch }));
   }
 
   /**
    * Method toggleMine
+   * @method toggleMine
    *
    * @description
    * Flips the `?mine=1` narrowing. It stays a toolbar toggle rather than
@@ -2932,13 +4884,27 @@ export class InterventionsPage {
    *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected toggleMine(): void {
     this.applyFilter({ mine: !this.filters().mine });
   }
 
-  /** The catalog entry for one field. */
+  /**
+   * Method filterFieldOption
+   * @method filterFieldOption
+   *
+   * @description
+   * The catalog entry for one field.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionFilterFieldKey} key - Filter field whose option configuration is requested.
+   *
+   * @returns {InterventionFilterFieldOption}
+   */
   protected filterFieldOption(key: InterventionFilterFieldKey): InterventionFilterFieldOption {
     return (
       INTERVENTION_FILTER_FIELDS.find(
@@ -2947,17 +4913,38 @@ export class InterventionsPage {
     );
   }
 
-  /** Reacts to the filter bar's `fieldPicked` output. */
+  /**
+   * Method onFieldPicked
+   * @method onFieldPicked
+   *
+   * @description
+   * Reacts to the filter bar's `fieldPicked` output.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} key - Filter field selected from the add-filter menu.
+   *
+   * @returns {void}
+   */
   protected onFieldPicked(key: string): void {
     this.openFilterKey.set(key as InterventionFilterFieldKey);
   }
 
   /**
    * Method onFieldRemoved
-   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing, and forgets the operator pinned on it so re-adding the field opens on its declared default rather than on last visit's choice.
+   * @method onFieldRemoved
+   *
+   * @description
+   * Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing, and
+   * forgets the operator pinned on it so re-adding the field opens on its declared default rather
+   * than on last visit's choice.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} key - The removed field's key.
+   *
    * @returns {void}
    */
   protected onFieldRemoved(key: string): void {
@@ -2979,6 +4966,7 @@ export class InterventionsPage {
 
   /**
    * Method onFilterOperatorChanged
+   * @method onFilterOperatorChanged
    *
    * @description
    * Reacts to the filter bar's `operatorChanged` output. Each handler drops
@@ -2992,7 +4980,8 @@ export class InterventionsPage {
    * @access protected
    * @since 11.1.0
    *
-   * @param {CollectionFilterOperatorChangedEvent} event - The chip's key and its newly picked operator.
+   * @param {CollectionFilterOperatorChangedEvent} event - The chip's key and its newly picked
+   *   operator.
    *
    * @returns {void}
    */
@@ -3005,7 +4994,18 @@ export class InterventionsPage {
   }
 
   /**
-   * * Narrows a filter bar field key to {@link InterventionEnumFilterKey}.
+   * Method isEnumFilterKey
+   * @method isEnumFilterKey
+   *
+   * @description
+   * - Narrows a filter bar field key to {@link InterventionEnumFilterKey}.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {string} key - Filter key to test for enumerated value handling.
+   *
+   * @returns {boolean}
    */
   private isEnumFilterKey(key: string): key is InterventionEnumFilterKey {
     return (
@@ -3020,6 +5020,7 @@ export class InterventionsPage {
 
   /**
    * Method enumFieldOperator
+   * @method enumFieldOperator
    *
    * @description
    * Which operator one of the six `equals`/`isAnyOf` chips reads. An explicit
@@ -3046,6 +5047,7 @@ export class InterventionsPage {
 
   /**
    * Method onEnumFilterOperatorPicked
+   * @method onEnumFilterOperatorPicked
    *
    * @description
    * Switches one of the six `equals`/`isAnyOf` fields to the picked operator's
@@ -3088,81 +5090,240 @@ export class InterventionsPage {
     this.applyFilter({ [key]: carried } as Partial<InterventionListFilters>);
   }
 
-  /** Normalizes one of the six `equals`/`isAnyOf` fields' current value to a readonly array. */
+  /**
+   * Method toEnumValues
+   * @method toEnumValues
+   *
+   * @description
+   * Normalizes one of the six `equals`/`isAnyOf` fields' current value to a readonly array.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {T | readonly T[] | null} value - Scalar or multiple selection to normalize into enum
+   *   values.
+   *
+   * @returns {T[]}
+   */
   private toEnumValues<T>(value: T | readonly T[] | null): T[] {
     if (value === null) return [];
     return Array.isArray(value) ? [...(value as readonly T[])] : [value as T];
   }
 
   /**
-   * * The `equals`-mode counterpart of {@link toEnumValues}.
+   * Method toScalarValue
+   * @method toScalarValue
+   *
+   * @description
+   * - The `equals`-mode counterpart of {@link toEnumValues}.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {T | readonly T[] | null} value - Scalar or multiple selection from which one value is
+   *   retained.
+   *
+   * @returns {T | null}
    */
   private toScalarValue<T>(value: T | readonly T[] | null): T | null {
     return Array.isArray(value) ? null : (value as T | null);
   }
 
-  /** The "Status" chip's currently checked values, for its multi select. */
+  /**
+   * Method statusValues
+   * @method statusValues
+   *
+   * @description
+   * The "Status" chip's currently checked values, for its multi select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {InterventionStatus[]}
+   */
   protected statusValues(): InterventionStatus[] {
     return this.toEnumValues(this.filters().status);
   }
 
-  /** The "Status" chip's own scalar value, for its single select. */
+  /**
+   * Method statusScalar
+   * @method statusScalar
+   *
+   * @description
+   * The "Status" chip's own scalar value, for its single select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {InterventionStatus | null}
+   */
   protected statusScalar(): InterventionStatus | null {
     return this.toScalarValue(this.filters().status);
   }
 
-  /** The "Type" chip's currently checked values, for its multi select. */
+  /**
+   * Method typeValues
+   * @method typeValues
+   *
+   * @description
+   * The "Type" chip's currently checked values, for its multi select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {InterventionType[]}
+   */
   protected typeValues(): InterventionType[] {
     return this.toEnumValues(this.filters().type);
   }
 
-  /** The "Type" chip's own scalar value, for its single select. */
+  /**
+   * Method typeScalar
+   * @method typeScalar
+   *
+   * @description
+   * The "Type" chip's own scalar value, for its single select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {InterventionType | null}
+   */
   protected typeScalar(): InterventionType | null {
     return this.toScalarValue(this.filters().type);
   }
 
-  /** The "Priority" chip's currently checked values, for its multi select. */
+  /**
+   * Method priorityValues
+   * @method priorityValues
+   *
+   * @description
+   * The "Priority" chip's currently checked values, for its multi select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {InterventionPriority[]}
+   */
   protected priorityValues(): InterventionPriority[] {
     return this.toEnumValues(this.filters().priority);
   }
 
-  /** The "Priority" chip's own scalar value, for its single select. */
+  /**
+   * Method priorityScalar
+   * @method priorityScalar
+   *
+   * @description
+   * The "Priority" chip's own scalar value, for its single select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {InterventionPriority | null}
+   */
   protected priorityScalar(): InterventionPriority | null {
     return this.toScalarValue(this.filters().priority);
   }
 
-  /** The "Site" chip's currently checked values, for its multi select. */
+  /**
+   * Method siteValues
+   * @method siteValues
+   *
+   * @description
+   * The "Site" chip's currently checked values, for its multi select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {string[]}
+   */
   protected siteValues(): string[] {
     return this.toEnumValues(this.filters().site);
   }
 
-  /** The "Site" chip's own scalar value, for its single select. */
+  /**
+   * Method siteScalar
+   * @method siteScalar
+   *
+   * @description
+   * The "Site" chip's own scalar value, for its single select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {string | null}
+   */
   protected siteScalar(): string | null {
     return this.toScalarValue(this.filters().site);
   }
 
-  /** The "Responsible" chip's currently checked values, for its multi select. */
+  /**
+   * Method responsibleValues
+   * @method responsibleValues
+   *
+   * @description
+   * The "Responsible" chip's currently checked values, for its multi select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {string[]}
+   */
   protected responsibleValues(): string[] {
     return this.toEnumValues(this.filters().responsible);
   }
 
-  /** The "Responsible" chip's own scalar value, for its single select. */
+  /**
+   * Method responsibleScalar
+   * @method responsibleScalar
+   *
+   * @description
+   * The "Responsible" chip's own scalar value, for its single select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {string | null}
+   */
   protected responsibleScalar(): string | null {
     return this.toScalarValue(this.filters().responsible);
   }
 
-  /** The "Label" chip's currently checked values, for its multi select. */
+  /**
+   * Method labelValues
+   * @method labelValues
+   *
+   * @description
+   * The "Label" chip's currently checked values, for its multi select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {string[]}
+   */
   protected labelValues(): string[] {
     return this.toEnumValues(this.filters().label);
   }
 
-  /** The "Label" chip's own scalar value, for its single select. */
+  /**
+   * Method labelScalar
+   * @method labelScalar
+   *
+   * @description
+   * The "Label" chip's own scalar value, for its single select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {string | null}
+   */
   protected labelScalar(): string | null {
     return this.toScalarValue(this.filters().label);
   }
 
   /**
    * Method applyEnumSelection
+   * @method applyEnumSelection
    *
    * @description
    * Applies one of the six `equals`/`isAnyOf` fields' multi select selection,
@@ -3174,9 +5335,12 @@ export class InterventionsPage {
    *
    * @access private
    * @since 11.2.0
+   *
    * @template T
+   *
    * @param {InterventionEnumFilterKey} key - The field the selection belongs to.
    * @param {readonly T[] | null | undefined} values - Its next selection.
+   *
    * @returns {void}
    */
   private applyEnumSelection<T>(
@@ -3200,48 +5364,135 @@ export class InterventionsPage {
   }
 
   /**
-   * * Applies the "Status" chip's multi select selection. See {@link applyEnumSelection}.
+   * Method applyStatusFilter
+   * @method applyStatusFilter
+   *
+   * @description
+   * - Applies the "Status" chip's multi select selection. See {@link applyEnumSelection}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {readonly InterventionStatus[] | null | undefined} values - Selected intervention
+   *   statuses; nullish values clear the filter.
+   *
+   * @returns {void}
    */
   protected applyStatusFilter(values: readonly InterventionStatus[] | null | undefined): void {
     this.applyEnumSelection('status', values);
   }
 
   /**
-   * * Applies the "Type" chip's multi select selection. See {@link applyEnumSelection}.
+   * Method applyTypeFilter
+   * @method applyTypeFilter
+   *
+   * @description
+   * - Applies the "Type" chip's multi select selection. See {@link applyEnumSelection}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {readonly InterventionType[] | null | undefined} values - Selected intervention types;
+   *   nullish values clear the filter.
+   *
+   * @returns {void}
    */
   protected applyTypeFilter(values: readonly InterventionType[] | null | undefined): void {
     this.applyEnumSelection('type', values);
   }
 
   /**
-   * * Applies the "Priority" chip's multi select selection. See {@link applyEnumSelection}.
+   * Method applyPriorityFilter
+   * @method applyPriorityFilter
+   *
+   * @description
+   * - Applies the "Priority" chip's multi select selection. See {@link applyEnumSelection}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {readonly InterventionPriority[] | null | undefined} values - Selected priorities;
+   *   nullish values clear the filter.
+   *
+   * @returns {void}
    */
   protected applyPriorityFilter(values: readonly InterventionPriority[] | null | undefined): void {
     this.applyEnumSelection('priority', values);
   }
 
   /**
-   * * Applies the "Site" chip's multi select selection. See {@link applyEnumSelection}.
+   * Method applySiteFilter
+   * @method applySiteFilter
+   *
+   * @description
+   * - Applies the "Site" chip's multi select selection. See {@link applyEnumSelection}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {readonly string[] | null | undefined} values - Selected site identities; nullish values
+   *   clear the filter.
+   *
+   * @returns {void}
    */
   protected applySiteFilter(values: readonly string[] | null | undefined): void {
     this.applyEnumSelection('site', values);
   }
 
   /**
-   * * Applies the "Responsible" chip's multi select selection. See {@link applyEnumSelection}.
+   * Method applyResponsibleFilter
+   * @method applyResponsibleFilter
+   *
+   * @description
+   * - Applies the "Responsible" chip's multi select selection. See {@link applyEnumSelection}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {readonly string[] | null | undefined} values - Selected responsible-member identities;
+   *   nullish values clear the filter.
+   *
+   * @returns {void}
    */
   protected applyResponsibleFilter(values: readonly string[] | null | undefined): void {
     this.applyEnumSelection('responsible', values);
   }
 
   /**
-   * * Applies the "Label" chip's multi select selection. See {@link applyEnumSelection}.
+   * Method applyLabelFilter
+   * @method applyLabelFilter
+   *
+   * @description
+   * - Applies the "Label" chip's multi select selection. See {@link applyEnumSelection}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {readonly string[] | null | undefined} values - Selected label identities; nullish
+   *   values clear the filter.
+   *
+   * @returns {void}
    */
   protected applyLabelFilter(values: readonly string[] | null | undefined): void {
     this.applyEnumSelection('label', values);
   }
 
-  /** Switches the "Deadline" chip's value control to the picked operator's own shape and drops any already-applied narrowing. */
+  /**
+   * Method onDueRangeOperatorPicked
+   * @method onDueRangeOperatorPicked
+   *
+   * @description
+   * Switches the "Deadline" chip's value control to the picked operator's own shape and drops any
+   * already-applied narrowing.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {CollectionFilterOperator} operator - Date comparison operator selected for the due-date
+   *   filter.
+   *
+   * @returns {void}
+   */
   private onDueRangeOperatorPicked(operator: CollectionFilterOperator): void {
     if (operator !== 'greaterThan' && operator !== 'lessThan' && operator !== 'between') return;
 
@@ -3249,19 +5500,59 @@ export class InterventionsPage {
     if (this.filters().dueRange !== null) this.applyFilter({ dueRange: null });
   }
 
-  /** Applies the "Deadline" chip's `greaterThan` narrowing. */
+  /**
+   * Method pickDueAfter
+   * @method pickDueAfter
+   *
+   * @description
+   * Applies the "Deadline" chip's `greaterThan` narrowing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {Date | null | undefined} date - Lower due-date bound; nullish values clear the bound.
+   *
+   * @returns {void}
+   */
   protected pickDueAfter(date: Date | null | undefined): void {
     if (!date) return;
     this.applyFilter({ dueRange: { operator: 'greaterThan', after: date } });
   }
 
-  /** Applies the "Deadline" chip's `lessThan` narrowing. */
+  /**
+   * Method pickDueBefore
+   * @method pickDueBefore
+   *
+   * @description
+   * Applies the "Deadline" chip's `lessThan` narrowing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {Date | null | undefined} date - Upper due-date bound; nullish values clear the bound.
+   *
+   * @returns {void}
+   */
   protected pickDueBefore(date: Date | null | undefined): void {
     if (!date) return;
     this.applyFilter({ dueRange: { operator: 'lessThan', before: date } });
   }
 
-  /** Applies the "Deadline" chip's `between` narrowing. */
+  /**
+   * Method pickDueBetween
+   * @method pickDueBetween
+   *
+   * @description
+   * Applies the "Deadline" chip's `between` narrowing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {readonly [Date, Date] | null | undefined} range - Inclusive due-date bounds; nullish
+   *   values clear the range.
+   *
+   * @returns {void}
+   */
   protected pickDueBetween(range: readonly [Date, Date] | null | undefined): void {
     if (!range) return;
     const [after, before] = range;
@@ -3269,7 +5560,20 @@ export class InterventionsPage {
   }
 
   /**
-   * * Switches the "Planned start" chip's value control and drops any already-applied narrowing. See {@link onDueRangeOperatorPicked}.
+   * Method onPlannedStartRangeOperatorPicked
+   * @method onPlannedStartRangeOperatorPicked
+   *
+   * @description
+   * - Switches the "Planned start" chip's value control and drops any already-applied narrowing. See
+   *   {@link onDueRangeOperatorPicked}.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {CollectionFilterOperator} operator - Date comparison operator selected for the
+   *   planned-start filter.
+   *
+   * @returns {void}
    */
   private onPlannedStartRangeOperatorPicked(operator: CollectionFilterOperator): void {
     if (operator !== 'greaterThan' && operator !== 'lessThan' && operator !== 'between') return;
@@ -3278,37 +5582,117 @@ export class InterventionsPage {
     if (this.filters().plannedStartRange !== null) this.applyFilter({ plannedStartRange: null });
   }
 
-  /** Applies the "Planned start" chip's `greaterThan` narrowing. */
+  /**
+   * Method pickPlannedStartAfter
+   * @method pickPlannedStartAfter
+   *
+   * @description
+   * Applies the "Planned start" chip's `greaterThan` narrowing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {Date | null | undefined} date - Lower planned-start bound; nullish values clear the
+   *   bound.
+   *
+   * @returns {void}
+   */
   protected pickPlannedStartAfter(date: Date | null | undefined): void {
     if (!date) return;
     this.applyFilter({ plannedStartRange: { operator: 'greaterThan', after: date } });
   }
 
-  /** Applies the "Planned start" chip's `lessThan` narrowing. */
+  /**
+   * Method pickPlannedStartBefore
+   * @method pickPlannedStartBefore
+   *
+   * @description
+   * Applies the "Planned start" chip's `lessThan` narrowing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {Date | null | undefined} date - Upper planned-start bound; nullish values clear the
+   *   bound.
+   *
+   * @returns {void}
+   */
   protected pickPlannedStartBefore(date: Date | null | undefined): void {
     if (!date) return;
     this.applyFilter({ plannedStartRange: { operator: 'lessThan', before: date } });
   }
 
-  /** Applies the "Planned start" chip's `between` narrowing. */
+  /**
+   * Method pickPlannedStartBetween
+   * @method pickPlannedStartBetween
+   *
+   * @description
+   * Applies the "Planned start" chip's `between` narrowing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {readonly [Date, Date] | null | undefined} range - Inclusive planned-start bounds;
+   *   nullish values clear the range.
+   *
+   * @returns {void}
+   */
   protected pickPlannedStartBetween(range: readonly [Date, Date] | null | undefined): void {
     if (!range) return;
     const [after, before] = range;
     this.applyFilter({ plannedStartRange: { operator: 'between', after, before } });
   }
 
-  /** Reacts to `app-collection-filter-toggle`'s `visibleChange`. */
+  /**
+   * Method toggleFiltersVisible
+   * @method toggleFiltersVisible
+   *
+   * @description
+   * Reacts to `app-collection-filter-toggle`'s `visibleChange`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} visible - Whether the filter controls should be visible.
+   *
+   * @returns {void}
+   */
   protected toggleFiltersVisible(visible: boolean): void {
     this.filtersVisible.set(visible);
   }
 
-  /** Whether a field's value control should currently render open. */
+  /**
+   * Method fieldPopoverState
+   * @method fieldPopoverState
+   *
+   * @description
+   * Whether a field's value control should currently render open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionFilterFieldKey} key - Filter field whose popover state is requested.
+   *
+   * @returns {'open' | 'closed'}
+   */
   protected fieldPopoverState(key: InterventionFilterFieldKey): 'open' | 'closed' {
     return this.openFilterKey() === key ? 'open' : 'closed';
   }
 
   /**
-   * * Keeps {@link openFilterKey} in sync with a field's own value control.
+   * Method onFieldPopoverStateChanged
+   * @method onFieldPopoverStateChanged
+   *
+   * @description
+   * - Keeps {@link openFilterKey} in sync with a field's own value control.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionFilterFieldKey} key - Filter field whose popover changed state.
+   * @param {'open' | 'closed'} state - Open or closed state emitted by the field popover.
+   *
+   * @returns {void}
    */
   protected onFieldPopoverStateChanged(
     key: InterventionFilterFieldKey,
@@ -3322,13 +5706,38 @@ export class InterventionsPage {
     if (this.openFilterKey() === key) this.openFilterKey.set(null);
   }
 
-  /** Drops every narrowing at once — mine and the legacy due window included — along with every pinned operator. */
+  /**
+   * Method clearFilters
+   * @method clearFilters
+   *
+   * @description
+   * Drops every narrowing at once — mine and the legacy due window included — along with every
+   * pinned operator.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected clearFilters(): void {
     this.enumFilterOperatorOverrides.set({});
     this.navigateQuery(serializeInterventionListFilters(NO_FILTERS));
   }
 
-  /** The `applyFilter` patch that clears one field back to `null`. */
+  /**
+   * Method filterClearPatchOf
+   * @method filterClearPatchOf
+   *
+   * @description
+   * The `applyFilter` patch that clears one field back to `null`.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionFilterFieldKey} key - Filter field whose values should be cleared.
+   *
+   * @returns {Partial<InterventionListFilters>}
+   */
   private filterClearPatchOf(key: InterventionFilterFieldKey): Partial<InterventionListFilters> {
     switch (key) {
       case 'status':
@@ -3354,17 +5763,39 @@ export class InterventionsPage {
 
   /**
    * Method chipAccessibleName
-   * @description The chip's screen-reader name. A field never renders a chip on a tab that does not honour it (see {@link offeredFilterFields}), so this name never needs to explain an inert state — it is always the field's own label.
+   * @method chipAccessibleName
+   *
+   * @description
+   * The chip's screen-reader name. A field never renders a chip on a tab that does not honour it
+   * (see {@link offeredFilterFields}), so this name never needs to explain an inert state — it is
+   * always the field's own label.
+   *
    * @access protected
    * @since 11.0.0
+   *
    * @param {InterventionFilterFieldKey} key - The chip's field.
+   *
    * @returns {string} The localized accessible name.
    */
   protected chipAccessibleName(key: InterventionFilterFieldKey): string {
     return this.changeFilterLabel(this.filterFieldOption(key).fieldLabel);
   }
 
-  /** Merges query params into the URL without touching the path. */
+  /**
+   * Method navigateQuery
+   * @method navigateQuery
+   *
+   * @description
+   * Merges query params into the URL without touching the path.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {Record<string, string | null>} queryParams - Query-parameter updates merged into the
+   *   current route.
+   *
+   * @returns {void}
+   */
   private navigateQuery(queryParams: Record<string, string | null>): void {
     if (Object.keys(queryParams).some((key) => !['view', 'create', 'p'].includes(key)))
       queryParams = { ...queryParams, p: null };
@@ -3376,15 +5807,39 @@ export class InterventionsPage {
     });
   }
 
-  /** Records a keystroke into the draft term the debounce watches. */
+  /**
+   * Method onSearchQueryChanged
+   * @method onSearchQueryChanged
+   *
+   * @description
+   * Records a keystroke into the draft term the debounce watches.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} term - Search text retained in the filter draft.
+   *
+   * @returns {void}
+   */
   protected onSearchQueryChanged(term: string): void {
     this.draftSearch.set(term);
   }
 
   /**
+   * Method resolveExportErrorDetail
+   * @method resolveExportErrorDetail
+   *
+   * @description
    * Resolves the RFC 7807 `detail` a `422` export response carries — the
    * response is fetched as a blob, so a JSON error body arrives as one too
    * and must be read back through `Blob.text()` before it can be parsed.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {HttpErrorResponse} error - Failed export response whose user-facing detail is resolved.
+   *
+   * @returns {Promise<string | null>}
    */
   private async resolveExportErrorDetail(error: HttpErrorResponse): Promise<string | null> {
     if (!(error.error instanceof Blob)) return null;
@@ -3397,7 +5852,18 @@ export class InterventionsPage {
     }
   }
 
-  /** The export's filename: the organization, stamped with today's date (`yyyyMMdd`). */
+  /**
+   * Method exportFilename
+   * @method exportFilename
+   *
+   * @description
+   * The export's filename: the organization, stamped with today's date (`yyyyMMdd`).
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {string}
+   */
   private exportFilename(): string {
     const now: Date = new Date();
     const yyyy: string = String(now.getFullYear());
@@ -3407,7 +5873,20 @@ export class InterventionsPage {
     return `interventions-${this.organizationId()}-${yyyy}${mm}${dd}.csv`;
   }
 
-  /** Projects one intervention into the List row view model. */
+  /**
+   * Method toItemViewModel
+   * @method toItemViewModel
+   *
+   * @description
+   * Projects one intervention into the List row view model.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionOutput} intervention - Intervention projected into a list-row view model.
+   *
+   * @returns {InterventionListItemViewModel}
+   */
   private toItemViewModel(intervention: InterventionOutput): InterventionListItemViewModel {
     const isTerminal: boolean =
       intervention.status === 'published' || intervention.status === 'abandoned';
@@ -3438,7 +5917,20 @@ export class InterventionsPage {
     };
   }
 
-  /** Projects one intervention into the Board card view model. */
+  /**
+   * Method toBoardCardViewModel
+   * @method toBoardCardViewModel
+   *
+   * @description
+   * Projects one intervention into the Board card view model.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionOutput} intervention - Intervention projected into a board-card view model.
+   *
+   * @returns {InterventionBoardCardViewModel}
+   */
   private toBoardCardViewModel(intervention: InterventionOutput): InterventionBoardCardViewModel {
     const dueTime: number | null = intervention.dueAt
       ? new Date(intervention.dueAt).getTime()
@@ -3455,7 +5947,20 @@ export class InterventionsPage {
     };
   }
 
-  /** Resolves a member IRI to an avatar, naming them rather than showing a hole. */
+  /**
+   * Method toPerson
+   * @method toPerson
+   *
+   * @description
+   * Resolves a member IRI to an avatar, naming them rather than showing a hole.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {string} memberIri - Member resource identifier to resolve for display.
+   *
+   * @returns {MemberAvatar}
+   */
   private toPerson(memberIri: string): MemberAvatar {
     const member: MemberSelectOption | undefined = this.memberDisplayMap().get(memberIri);
 
@@ -3474,17 +5979,35 @@ export class InterventionsPage {
 
   /**
    * Method onCalendarMonthChanged
-   * @description Records the Calendar tab's displayed anchor — the load effect reads it back and gates on it being non-`null`.
+   * @method onCalendarMonthChanged
+   *
+   * @description
+   * Records the Calendar tab's displayed anchor — the load effect reads it back and gates on it
+   * being non-`null`.
+   *
    * @access protected
    * @since 11.0.0
+   *
    * @param {Date} month - The anchor `InterventionCalendar` reports.
+   *
    * @returns {void}
    */
   protected onCalendarMonthChanged(month: Date): void {
     this.calendarMonth.set(month);
   }
 
-  /** Re-fetches the Calendar tab's current window after a failure. */
+  /**
+   * Method calendarReload
+   * @method calendarReload
+   *
+   * @description
+   * Re-fetches the Calendar tab's current window after a failure.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected calendarReload(): void {
     const month: Date | null = this.calendarMonth();
     if (month === null) return;
@@ -3498,6 +6021,7 @@ export class InterventionsPage {
 
   /**
    * Method calendarWindowOf
+   * @method calendarWindowOf
    *
    * @description
    * The bounded date window the Calendar's store fetches — the displayed
@@ -3520,6 +6044,7 @@ export class InterventionsPage {
 
   /**
    * Method toCalendarFilters
+   * @method toCalendarFilters
    *
    * @description
    * Narrows the URL's full filter set down to the four fields
@@ -3550,12 +6075,17 @@ export class InterventionsPage {
       responsible: options.responsible,
     };
   }
+
   /**
    * Method toggleSelectionMode
    * @method toggleSelectionMode
-   * @description Enters or leaves the compact layout's selection mode, clearing the selection on the way out.
+   *
+   * @description
+   * Enters or leaves the compact layout's selection mode, clearing the selection on the way out.
+   *
    * @access protected
    * @since 15.0.0
+   *
    * @returns {void}
    */
   protected toggleSelectionMode(): void {

@@ -9,7 +9,6 @@ import type {
 
 /**
  * Constant interventionWorkspaceStoreEvents
- * @const interventionWorkspaceStoreEvents
  *
  * @description
  * Component-scoped intervention workspace store events. `commentAddFailed` is
@@ -27,7 +26,10 @@ import type {
  * mutations still report failures through the inline `error` field.
  *
  * @version 1.2.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant interventionWorkspaceStoreEvents
  */
 export const interventionWorkspaceStoreEvents = eventGroup({
   source: 'Intervention Workspace Store',

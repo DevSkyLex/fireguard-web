@@ -17,27 +17,133 @@ import type { MessageOutput } from '../message';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface BuildMessageViewsInput {
-  /** The thread in reading order, as `MessageThreadStore.sortedMessages` exposes it. */
-  readonly messages: readonly MessageOutput[];
-  readonly pendingMessageIds: readonly string[];
-  readonly failedMessageIds: readonly string[];
-  /** The reader's own member IRI, or `null` before the profile resolves. */
-  readonly ownMemberIri: string | null;
-  /** The resolved member directory, or `null` while it is unavailable. */
-  readonly directory: ReadonlyMap<string, MemberDirectoryEntry> | null;
-  /** Stands in wherever a member cannot be named. Never a raw id. */
-  readonly unknownMemberLabel: string;
   /**
-   * Whether the reader holds `organization.messaging.write`, which gates
+   * Property messages
+   * @readonly
+   *
+   * @description
+   * The thread in reading order, as `MessageThreadStore.sortedMessages` exposes it.
+   *
+   * @access public
+   *
+   * @type {readonly MessageOutput[]}
+   */
+  readonly messages: readonly MessageOutput[];
+
+  /**
+   * Property pendingMessageIds
+   * @readonly
+   *
+   * @description
+   * Lists local message ids whose optimistic rows are awaiting confirmation.
+   *
+   * @access public
+   *
+   * @type {readonly string[]}
+   */
+  readonly pendingMessageIds: readonly string[];
+
+  /**
+   * Property failedMessageIds
+   * @readonly
+   *
+   * @description
+   * Lists local message ids whose sends need a retry action.
+   *
+   * @access public
+   *
+   * @type {readonly string[]}
+   */
+  readonly failedMessageIds: readonly string[];
+
+  /**
+   * Property ownMemberIri
+   * @readonly
+   *
+   * @description
+   * The reader's own member IRI, or `null` before the profile resolves.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
+  readonly ownMemberIri: string | null;
+
+  /**
+   * Property directory
+   * @readonly
+   *
+   * @description
+   * The resolved member directory, or `null` while it is unavailable.
+   *
+   * @access public
+   *
+   * @type {ReadonlyMap<string, MemberDirectoryEntry> | null}
+   */
+  readonly directory: ReadonlyMap<string, MemberDirectoryEntry> | null;
+
+  /**
+   * Property unknownMemberLabel
+   * @readonly
+   *
+   * @description
+   * Stands in wherever a member cannot be named. Never a raw id.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
+  readonly unknownMemberLabel: string;
+
+  /**
+   * Property canWrite
+   * @readonly
+   *
+   * @description
    * editing their own messages (and, on the surface, replying and pinning).
+   *
+   * @access public
+   *
+   * @type {boolean}
    */
   readonly canWrite: boolean;
+
   /**
-   * Whether the reader holds `organization.messaging.manage`, which lets
+   * Property canManage
+   * @readonly
+   *
+   * @description
    * them delete another member's message.
+   *
+   * @access public
+   *
+   * @type {boolean}
    */
   readonly canManage: boolean;
-  /** Omitted for contextual subject threads, which do not expose receipts. */
+
+  /**
+   * Property receiptKind
+   * @readonly
+   *
+   * @description
+   * Omitted for contextual subject threads, which do not expose receipts.
+   *
+   * @access public
+   *
+   * @type {'direct' | 'channel'}
+   */
   readonly receiptKind?: 'direct' | 'channel';
+
+  /**
+   * Property receiptPositions
+   * @readonly
+   *
+   * @description
+   * Provides member delivery and read positions used to derive message receipts.
+   *
+   * @access public
+   *
+   * @type {readonly ConversationReceiptPositionOutput[]}
+   */
   readonly receiptPositions?: readonly ConversationReceiptPositionOutput[];
 }

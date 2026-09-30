@@ -47,7 +47,9 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
 import { HlmTooltipImports } from '@shared/ui/tooltip';
 
 /**
- * The backend's hard ceiling (`AttachmentConstraints::MAX_SIZE_BYTES`),
+ * Constant MAX_SIZE_BYTES
+ *
+ * @description
  * pre-checked here so an oversized pick fails fast instead of round-tripping.
  * Images are exempt from this local check: the page compresses them before
  * upload, so a multi-megabyte camera capture is exactly the input the
@@ -56,7 +58,9 @@ import { HlmTooltipImports } from '@shared/ui/tooltip';
 const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
 /**
- * The backend's MIME whitelist (`AttachmentCategory` IMAGE + DOCUMENT),
+ * Constant ACCEPTED_MIME_TYPES
+ *
+ * @description
  * byte for byte.
  */
 const ACCEPTED_MIME_TYPES: readonly string[] = [
@@ -68,24 +72,64 @@ const ACCEPTED_MIME_TYPES: readonly string[] = [
 ];
 
 /**
- * The backend's per-parent cardinality cap
+ * Constant MAX_ATTACHMENTS
+ *
+ * @description
  * (`AttachmentConstraints::MAX_ATTACHMENTS_PER_PARENT`), mirrored so the
  * pickers close at the ceiling instead of letting the upload fail with a 422.
  */
 const MAX_ATTACHMENTS = 25;
 
 /**
- * The file metadata shared by a synced attachment row and a queued one, so the
+ * Interface AttachmentFileMeta
+ * @interface
+ *
+ * @description
  * icon/extension/size helpers serve both.
  */
 interface AttachmentFileMeta {
+  /**
+   * Property fileName
+   * @readonly
+   *
+   * @description
+   * Provides the original name of the selected file.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly fileName: string;
+
+  /**
+   * Property mimeType
+   * @readonly
+   *
+   * @description
+   * Provides the MIME type declared for this attachment.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly mimeType: string;
+
+  /**
+   * Property size
+   * @readonly
+   *
+   * @description
+   * Reports the file size stored in this attachment metadata.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
   readonly size: number;
 }
 
 /**
- * Component InterventionAttachments
+ * Class InterventionAttachments
  * @class InterventionAttachments
  *
  * @description
@@ -113,6 +157,8 @@ interface AttachmentFileMeta {
  *
  * @version 1.4.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-intervention-attachments
@@ -127,8 +173,6 @@ interface AttachmentFileMeta {
  *   (downloadRequested)="downloadAttachment($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-intervention-attachments',
@@ -165,27 +209,41 @@ export class InterventionAttachments {
   /**
    * Property loading
    * @readonly
-   * @description Whether the current section is waiting for its data.
+   *
+   * @description
+   * Whether the current section is waiting for its data.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading = input(false);
+
   /**
    * Property loadError
    * @readonly
-   * @description Section read failure; it must not appear as an empty result.
+   *
+   * @description
+   * Section read failure; it must not appear as an empty result.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly loadError = input<string | null>(null);
+
   /**
    * Property reloadRequested
    * @readonly
-   * @description Requests another read of the current section.
+   *
+   * @description
+   * Requests another read of the current section.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly reloadRequested = output<void>();
@@ -193,9 +251,13 @@ export class InterventionAttachments {
   /**
    * Property attachments
    * @readonly
-   * @description The loaded attachments, upload order.
+   *
+   * @description
+   * The loaded attachments, upload order.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly InterventionAttachmentOutput[]>}
    */
   public readonly attachments: InputSignal<readonly InterventionAttachmentOutput[]> = input<
@@ -205,9 +267,14 @@ export class InterventionAttachments {
   /**
    * Property queuedAttachments
    * @readonly
-   * @description Uploads waiting in the offline outbox, rendered ahead of the synced rows with a pending-sync badge.
+   *
+   * @description
+   * Uploads waiting in the offline outbox, rendered ahead of the synced rows with a pending-sync
+   * badge.
+   *
    * @access public
    * @since 1.3.0
+   *
    * @type {InputSignal<readonly InterventionQueuedAttachment[]>}
    */
   public readonly queuedAttachments: InputSignal<readonly InterventionQueuedAttachment[]> = input<
@@ -217,9 +284,14 @@ export class InterventionAttachments {
   /**
    * Property workItems
    * @readonly
-   * @description The workspace's work items, used only to resolve a `workItemId` into a display label for the chip.
+   *
+   * @description
+   * The workspace's work items, used only to resolve a `workItemId` into a display label for the
+   * chip.
+   *
    * @access public
    * @since 5.4.0
+   *
    * @type {InputSignal<readonly InterventionWorkItemOutput[]>}
    */
   public readonly workItems: InputSignal<readonly InterventionWorkItemOutput[]> = input<
@@ -229,9 +301,13 @@ export class InterventionAttachments {
   /**
    * Property canManage
    * @readonly
-   * @description Whether the host grants uploading and deleting; the backend rules stay with the page.
+   *
+   * @description
+   * Whether the host grants uploading and deleting; the backend rules stay with the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly canManage: InputSignal<boolean> = input<boolean>(false);
@@ -239,9 +315,13 @@ export class InterventionAttachments {
   /**
    * Property pendingIds
    * @readonly
-   * @description Ids of the attachments whose delete is in flight, so each row locks on its own write.
+   *
+   * @description
+   * Ids of the attachments whose delete is in flight, so each row locks on its own write.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ReadonlySet<string>>}
    */
   public readonly pendingIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
@@ -251,9 +331,13 @@ export class InterventionAttachments {
   /**
    * Property downloadingIds
    * @readonly
-   * @description Ids of the attachments whose download is in flight, so each row locks on its own fetch.
+   *
+   * @description
+   * Ids of the attachments whose download is in flight, so each row locks on its own fetch.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<ReadonlySet<string>>}
    */
   public readonly downloadingIds: InputSignal<ReadonlySet<string>> = input<ReadonlySet<string>>(
@@ -263,9 +347,13 @@ export class InterventionAttachments {
   /**
    * Property uploading
    * @readonly
-   * @description Whether an upload is in flight, which locks the pickers.
+   *
+   * @description
+   * Whether an upload is in flight, which locks the pickers.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly uploading: InputSignal<boolean> = input<boolean>(false);
@@ -273,9 +361,14 @@ export class InterventionAttachments {
   /**
    * Property online
    * @readonly
-   * @description Whether the network is reachable — downloads and server-side deletes need it; uploads queue offline instead.
+   *
+   * @description
+   * Whether the network is reachable — downloads and server-side deletes need it; uploads queue
+   * offline instead.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly online: InputSignal<boolean> = input<boolean>(true);
@@ -283,9 +376,14 @@ export class InterventionAttachments {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, driving a row's "added" tooltip. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone, driving a row's "added" tooltip. The
+   * default keeps the component renderable with no context wired.
+   *
    * @access public
    * @since 1.4.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -296,9 +394,13 @@ export class InterventionAttachments {
   /**
    * Property filesPicked
    * @readonly
-   * @description Emits the valid picked files; the page compresses photos and calls the store.
+   *
+   * @description
+   * Emits the valid picked files; the page compresses photos and calls the store.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<readonly File[]>}
    */
   public readonly filesPicked: OutputEmitterRef<readonly File[]> = output<readonly File[]>();
@@ -306,9 +408,13 @@ export class InterventionAttachments {
   /**
    * Property deleteRequested
    * @readonly
-   * @description Emits the row's attachment on a delete click; the page confirms and calls the store.
+   *
+   * @description
+   * Emits the row's attachment on a delete click; the page confirms and calls the store.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionAttachmentOutput>}
    */
   public readonly deleteRequested: OutputEmitterRef<InterventionAttachmentOutput> =
@@ -317,9 +423,13 @@ export class InterventionAttachments {
   /**
    * Property queuedDeleteRequested
    * @readonly
-   * @description Emits the queued row on a delete click; the page confirms and discards the outbox operation.
+   *
+   * @description
+   * Emits the queued row on a delete click; the page confirms and discards the outbox operation.
+   *
    * @access public
    * @since 1.3.0
+   *
    * @type {OutputEmitterRef<InterventionQueuedAttachment>}
    */
   public readonly queuedDeleteRequested: OutputEmitterRef<InterventionQueuedAttachment> =
@@ -328,9 +438,13 @@ export class InterventionAttachments {
   /**
    * Property downloadRequested
    * @readonly
-   * @description Emits the attachment the page should fetch and save to the visitor's device.
+   *
+   * @description
+   * Emits the attachment the page should fetch and save to the visitor's device.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<InterventionAttachmentOutput>}
    */
   public readonly downloadRequested: OutputEmitterRef<InterventionAttachmentOutput> =
@@ -341,14 +455,29 @@ export class InterventionAttachments {
   /**
    * Property locale
    * @readonly
-   * @description Active locale used to format file sizes and labels.
+   *
+   * @description
+   * Active locale used to format file sizes and labels.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private readonly locale: string = inject(LOCALE_ID);
 
-  /** One number formatter per precision — the `Intl` constructor is too costly for per-row calls. */
+  /**
+   * Property sizeFormats
+   * @readonly
+   *
+   * @description
+   * Caches byte-size formatters by precision for attachment size labels.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ReadonlyMap<number, Intl.NumberFormat>}
+   */
   private readonly sizeFormats: ReadonlyMap<number, Intl.NumberFormat> = new Map<
     number,
     Intl.NumberFormat
@@ -357,28 +486,94 @@ export class InterventionAttachments {
     [1, new Intl.NumberFormat(this.locale, { maximumFractionDigits: 1 })],
   ]);
 
-  /** The last pick's local rejection, cleared on the next valid pick. */
+  /**
+   * Property pickError
+   * @readonly
+   *
+   * @description
+   * Holds the latest file-selection error shown beside the picker.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly pickError: WritableSignal<string | null> = signal<string | null>(null);
 
-  /** The `accept` attribute, straight from the whitelist. */
+  /**
+   * Property acceptedTypes
+   * @readonly
+   *
+   * @description
+   * Supplies the MIME-type allowlist to the native file picker.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly acceptedTypes: string = ACCEPTED_MIME_TYPES.join(',');
 
-  /** Synced plus queued rows — what the cap and counter reason about, since queued files consume server slots on replay. */
+  /**
+   * Property totalCount
+   * @readonly
+   *
+   * @description
+   * Counts persisted and queued attachments against the dialog limit.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   protected readonly totalCount: Signal<number> = computed<number>(
     () => this.attachments().length + this.queuedAttachments().length,
   );
 
-  /** How many more files this intervention may take, never below zero. */
+  /**
+   * Property remainingSlots
+   * @readonly
+   *
+   * @description
+   * Calculates how many additional files can be added before reaching the limit.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   protected readonly remainingSlots: Signal<number> = computed<number>(() =>
     Math.max(MAX_ATTACHMENTS - this.totalCount(), 0),
   );
 
-  /** Whether the intervention has reached the backend's attachment ceiling. */
+  /**
+   * Property atCapacity
+   * @readonly
+   *
+   * @description
+   * Indicates whether the attachment limit has been reached.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly atCapacity: Signal<boolean> = computed<boolean>(
     () => this.remainingSlots() === 0,
   );
 
-  /** The `n / 25` counter text. */
+  /**
+   * Property countLabel
+   * @readonly
+   *
+   * @description
+   * Formats the current attachment count against the maximum allowed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly countLabel: Signal<string> = computed<string>(
     () => `${this.totalCount()} / ${MAX_ATTACHMENTS}`,
   );
@@ -394,13 +589,25 @@ export class InterventionAttachments {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly showCounter: Signal<boolean> = computed<boolean>(
     () => this.totalCount() >= MAX_ATTACHMENTS / 2,
   );
 
-  /** Whether the pickers are usable right now. */
+  /**
+   * Property canPick
+   * @readonly
+   *
+   * @description
+   * Enables file selection only when uploads are allowed, idle, and below capacity.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canPick: Signal<boolean> = computed<boolean>(
     () => this.canManage() && !this.uploading() && !this.atCapacity(),
   );
@@ -416,6 +623,7 @@ export class InterventionAttachments {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly emptyDescription: Signal<string> = computed<string>(() =>
@@ -428,10 +636,16 @@ export class InterventionAttachments {
   //#region Methods
   /**
    * Method pick
-   * @description Opens the given hidden file input to start a pick.
+   * @method pick
+   *
+   * @description
+   * Opens the given hidden file input to start a pick.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {HTMLInputElement} fileInput - The hidden file input to open.
+   *
    * @returns {void}
    */
   protected pick(fileInput: HTMLInputElement): void {
@@ -440,6 +654,7 @@ export class InterventionAttachments {
 
   /**
    * Method onFilesSelected
+   * @method onFilesSelected
    *
    * @description
    * Validates a pick against the backend's cardinality, size and MIME policy,
@@ -498,10 +713,16 @@ export class InterventionAttachments {
 
   /**
    * Method iconOf
-   * @description The registered icon name matching the attachment's declared MIME type.
+   * @method iconOf
+   *
+   * @description
+   * The registered icon name matching the attachment's declared MIME type.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {AttachmentFileMeta} attachment - The row's attachment, synced or queued.
+   *
    * @returns {string} A name registered with `provideIcons`.
    */
   protected iconOf(attachment: AttachmentFileMeta): string {
@@ -510,10 +731,17 @@ export class InterventionAttachments {
 
   /**
    * Method extensionOf
-   * @description The attachment's file extension, badge-sized, read from the file name and falling back to the declared MIME subtype.
+   * @method extensionOf
+   *
+   * @description
+   * The attachment's file extension, badge-sized, read from the file name and falling back to the
+   * declared MIME subtype.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {AttachmentFileMeta} attachment - The row's attachment, synced or queued.
+   *
    * @returns {string} An uppercased extension of at most 4 characters, e.g. "PDF", "JPEG".
    */
   protected extensionOf(attachment: AttachmentFileMeta): string {
@@ -526,6 +754,7 @@ export class InterventionAttachments {
 
   /**
    * Method workItemLabelOf
+   * @method workItemLabelOf
    *
    * @description
    * The display label of the work item this attachment documents, resolved
@@ -551,10 +780,16 @@ export class InterventionAttachments {
 
   /**
    * Method isRowPending
-   * @description Whether this row's own delete is in flight.
+   * @method isRowPending
+   *
+   * @description
+   * Whether this row's own delete is in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   *
    * @returns {boolean} True while the row's write is pending.
    */
   protected isRowPending(attachment: InterventionAttachmentOutput): boolean {
@@ -563,10 +798,16 @@ export class InterventionAttachments {
 
   /**
    * Method isRowDownloading
-   * @description Whether this row's own download is in flight.
+   * @method isRowDownloading
+   *
+   * @description
+   * Whether this row's own download is in flight.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   *
    * @returns {boolean} True while the row's fetch is pending.
    */
   protected isRowDownloading(attachment: InterventionAttachmentOutput): boolean {
@@ -575,10 +816,16 @@ export class InterventionAttachments {
 
   /**
    * Method sizeLabelOf
-   * @description The attachment's size as a compact localized label.
+   * @method sizeLabelOf
+   *
+   * @description
+   * The attachment's size as a compact localized label.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {AttachmentFileMeta} attachment - The row's attachment, synced or queued.
+   *
    * @returns {string} e.g. "1.2 MB".
    */
   protected sizeLabelOf(attachment: AttachmentFileMeta): string {
@@ -591,10 +838,17 @@ export class InterventionAttachments {
 
   /**
    * Method uploadedRelativeOf
-   * @description When a synced attachment was added, as a relative label — the absolute instant reads in an adjacent tooltip.
+   * @method uploadedRelativeOf
+   *
+   * @description
+   * When a synced attachment was added, as a relative label — the absolute instant reads in an
+   * adjacent tooltip.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {InterventionAttachmentOutput} attachment - The row's attachment.
+   *
    * @returns {string} A localized relative label.
    */
   protected uploadedRelativeOf(attachment: InterventionAttachmentOutput): string {

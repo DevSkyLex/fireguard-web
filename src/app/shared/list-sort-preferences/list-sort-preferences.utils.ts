@@ -1,6 +1,9 @@
 import type { CookieOptions } from '@core/cookie';
 
 /**
+ * Constant LIST_SORT_PREFERENCES_COOKIE_MAX_AGE
+ *
+ * @description
  * One year. A working list-sort preference should outlive a session; nothing
  * persisted through this codec is sensitive — a sort field and a direction.
  */
@@ -8,7 +11,6 @@ const LIST_SORT_PREFERENCES_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 /**
  * Function decodeListSortCookie
- * @function decodeListSortCookie
  *
  * @description
  * Decodes a list-sort preferences cookie into a plain record, answering with
@@ -22,6 +24,8 @@ const LIST_SORT_PREFERENCES_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
  * @param {string | null} raw - The raw cookie value, as read from `CookieService`.
  *
  * @returns {Record<string, unknown>} The decoded record, or `{}` when it could not be decoded.
+ *
+ * @function decodeListSortCookie
  */
 export function decodeListSortCookie(raw: string | null): Record<string, unknown> {
   if (!raw) return {};
@@ -37,7 +41,6 @@ export function decodeListSortCookie(raw: string | null): Record<string, unknown
 
 /**
  * Function resolvePersistedListSort
- * @function resolvePersistedListSort
  *
  * @description
  * Validates a decoded sort field/direction pair against the field whitelist
@@ -53,10 +56,14 @@ export function decodeListSortCookie(raw: string | null): Record<string, unknown
  *
  * @param {unknown} storedField - The decoded field, before validation.
  * @param {unknown} storedDirection - The decoded direction, before validation.
- * @param {(field: string) => field is TField} isSupportedField - Narrows a string to a field this build supports.
- * @param {{ readonly field: TField; readonly direction: 'asc' | 'desc' }} defaultSort - Ordering used when nothing usable was stored.
+ * @param {(field: string) => field is TField} isSupportedField - Narrows a string to a field this
+ *   build supports.
+ * @param {{ readonly field: TField; readonly direction: 'asc' | 'desc' }} defaultSort - Ordering
+ *   used when nothing usable was stored.
  *
  * @returns {{ readonly field: TField; readonly direction: 'asc' | 'desc' }} The restored ordering.
+ *
+ * @function resolvePersistedListSort
  */
 export function resolvePersistedListSort<TField extends string>(
   storedField: unknown,
@@ -76,7 +83,6 @@ export function resolvePersistedListSort<TField extends string>(
 
 /**
  * Function buildListSortCookieOptions
- * @function buildListSortCookieOptions
  *
  * @description
  * Builds the `CookieOptions` a list-sort preference is written with: a
@@ -92,6 +98,8 @@ export function resolvePersistedListSort<TField extends string>(
  * @param {TValue} value - The value to persist, typically a JSON-serialized payload.
  *
  * @returns {CookieOptions<TValue>} The options to pass to `CookieService.setCookie`.
+ *
+ * @function buildListSortCookieOptions
  */
 export function buildListSortCookieOptions<TValue>(
   name: string,

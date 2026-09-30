@@ -6,7 +6,6 @@ import { isConstraintViolation } from '../constraint-violation/constraint-violat
  *
  * @description
  * Narrows an error to a `ConstraintViolation`, looking one level in.
- *
  * The same payload reaches callers in two shapes: services rethrow it directly
  * (`HydraApiService.handleError` unwraps `HttpErrorResponse.error`), while stores
  * hand out a `StoreError` that keeps the original under `.error`. Accepting both

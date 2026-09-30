@@ -61,9 +61,9 @@ const INITIAL_STATE: ImportJobsState = {
 };
 
 /**
- * Store ImportJobsStore
- * @const ImportJobsStore
+ * Constant ImportJobsStore
  *
+ * Store ImportJobsStore
  * @description
  * Component-scoped NgRx SignalStore for one organization's import jobs: the
  * paginated job list and submitting a new CSV upload. Entity state is
@@ -78,6 +78,12 @@ const INITIAL_STATE: ImportJobsState = {
  * manual refresh is the recovery path — there is no dedicated poll failure
  * copy to show.
  *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const ImportJobsStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [ImportJobsStore] })
@@ -85,9 +91,6 @@ const INITIAL_STATE: ImportJobsState = {
  *   protected readonly store = inject(ImportJobsStore);
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const ImportJobsStore = signalStore(
   withEntities({ entity: type<ImportJobOutput>(), collection: 'job' }),
@@ -95,31 +98,52 @@ export const ImportJobsStore = signalStore(
   withState<ImportJobsState>(INITIAL_STATE),
 
   withComputed((store) => ({
-    /** All cached jobs from the entity collection, in insertion order. */
+    /**
+     * @description
+     * All cached jobs from the entity collection, in insertion order.
+     */
     jobs: computed<ReadonlyArray<ImportJobOutput>>(() =>
       store
         .visibleIds()
         .flatMap((id) => (store.jobEntityMap()[id] ? [store.jobEntityMap()[id]] : [])),
     ),
 
-    /** True while the list is loading. */
+    /**
+     * @description
+     * True while the list is loading.
+     */
     isLoading: computed<boolean>(() => isCallPending(store.listCallState())),
 
-    /** True when the collection is empty and no list request is in flight. */
+    /**
+     * @description
+     * True when the collection is empty and no list request is in flight.
+     */
     isEmpty: computed<boolean>(
       () => store.visibleIds().length === 0 && !isCallPending(store.listCallState()),
     ),
 
-    /** True when the last list request failed. */
+    /**
+     * @description
+     * True when the last list request failed.
+     */
     hasListError: computed<boolean>(() => store.listCallState().status === 'error'),
 
-    /** True when the last list request was refused for lack of permission, which a retry cannot fix. */
+    /**
+     * @description
+     * True when the last list request was refused for lack of permission, which a retry cannot fix.
+     */
     isListForbidden: computed<boolean>(() => store.listCallState().error?.code === 403),
 
-    /** True while an upload submission is in flight. */
+    /**
+     * @description
+     * True while an upload submission is in flight.
+     */
     isCreating: computed<boolean>(() => isCallPending(store.createCallState())),
 
-    /** The last upload submission's normalized failure message, or `null`. */
+    /**
+     * @description
+     * The last upload submission's normalized failure message, or `null`.
+     */
     createError: computed<string | null>(() => store.createCallState().error?.message ?? null),
   })),
 
@@ -234,11 +258,16 @@ export const ImportJobsStore = signalStore(
       /**
        * Method create
        * @method create
-       * @description Accepts one upload per organization generation. An already accepted upload
+       *
+       * @description
+       * Accepts one upload per organization generation. An already accepted upload
        * keeps its subscription across context changes, but its result cannot affect a later visit.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @param {object} request - The organization, import kind, file and optional dry-run choice.
+       *
        * @returns {void}
        */
       const create = rxMethod<{
@@ -292,9 +321,13 @@ export const ImportJobsStore = signalStore(
 
         /**
          * Method confirm
-         * @description Serializes confirmation locally; the server retains the confirmation across retries.
+         *
+         * @description
+         * Serializes confirmation locally; the server retains the confirmation across retries.
+         *
          * @access public
          * @since 1.1.0
+         *
          * @type {RxMethod<string>}
          */
         confirm: rxMethod<string>(
@@ -359,9 +392,13 @@ export const ImportJobsStore = signalStore(
 
         /**
          * Method downloadTemplate
-         * @description Emits a requested CSV download only while its organization is still active.
+         *
+         * @description
+         * Emits a requested CSV download only while its organization is still active.
+         *
          * @access public
          * @since 1.1.0
+         *
          * @type {RxMethod<ImportJobKind>}
          */
         downloadTemplate: rxMethod<ImportJobKind>(
@@ -390,7 +427,10 @@ export const ImportJobsStore = signalStore(
           ),
         ),
 
-        /** Resumes only the existing server job; a rejected request keeps its last confirmed report. */
+        /**
+         * @description
+         * Resumes only the existing server job; a rejected request keeps its last confirmed report.
+         */
         resume: rxMethod<string>(
           pipe(
             mergeMap((jobId) => {
@@ -433,10 +473,14 @@ export const ImportJobsStore = signalStore(
          * Method refresh
          * @method refresh
          *
-         * @description Re-reads one job and replaces its cached row, for a manual retry.
+         * @description
+         * Re-reads one job and replaces its cached row, for a manual retry.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} jobId - The job to re-read.
+         *
          * @returns {void}
          */
         refresh: rxMethod<string>(
@@ -476,9 +520,13 @@ export const ImportJobsStore = signalStore(
 
         /**
          * Method resetCreateOperation
-         * @description Resets the upload submission back to idle, for the form's next attempt.
+         *
+         * @description
+         * Resets the upload submission back to idle, for the form's next attempt.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         resetCreateOperation(): void {
@@ -492,9 +540,12 @@ export const ImportJobsStore = signalStore(
 
 /**
  * Type ImportJobsStoreType
- * @type ImportJobsStoreType
  *
- * @description Instance type of the {@link ImportJobsStore} signal store.
+ * @description
+ * Instance type of the {@link ImportJobsStore} signal store.
+ *
  * @since 1.0.0
+ *
+ * @type ImportJobsStoreType
  */
 export type ImportJobsStoreType = InstanceType<typeof ImportJobsStore>;

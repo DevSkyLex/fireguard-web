@@ -24,6 +24,7 @@ import { HlmSheetImports } from '@shared/ui/sheet';
 
 /**
  * Interface PermissionDomainGroup
+ * @interface PermissionDomainGroup
  *
  * @description
  * One section of the permission checklist: every catalog entry that shares
@@ -31,8 +32,46 @@ import { HlmSheetImports } from '@shared/ui/sheet';
  * localized heading.
  */
 interface PermissionDomainGroup {
+  /**
+   * Property domain
+   * @readonly
+   *
+   * @description
+   * Groups permission entries by their organization permission namespace.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly domain: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Localized heading rendered above the permissions in this group.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Catalog permissions belonging to this domain section.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {readonly OrganizationPermissionOutput[]}
+   */
   readonly permissions: readonly OrganizationPermissionOutput[];
 }
 
@@ -110,16 +149,13 @@ function permissionDomainLabelOf(domain: string): string {
  * next to its list (`intervention-work-item-sheet`) — rather than a dialog
  * (too cramped for a full checklist) or a detail panel (this page has no
  * per-role route to host one against).
- *
  * A system role's permissions are canonical and merged in at read time by
  * the backend, so this sheet renders them read-only regardless of what the
  * caller passes — a second guard beside the grid only ever opening it for a
  * custom role.
- *
  * Presentational (`ARCHITECTURE.md` §10.3): it computes the next full
  * permission list from a toggle and emits it; the page decides how to apply
  * it (`updateRole`) and owns the resulting request state.
- *
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
  * instead of a right-hand panel, so its footer lands in the thumb zone.
  *
@@ -139,9 +175,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -149,9 +189,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property role
    * @readonly
-   * @description The role being edited, or `null` while nothing is selected.
+   *
+   * @description
+   * The role being edited, or `null` while nothing is selected.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<OrganizationRoleOutput | null>}
    */
   public readonly role: InputSignal<OrganizationRoleOutput | null> =
@@ -160,9 +204,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property catalog
    * @readonly
-   * @description The organization's assignable permissions.
+   *
+   * @description
+   * The organization's assignable permissions.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly OrganizationPermissionOutput[]>}
    */
   public readonly catalog: InputSignal<readonly OrganizationPermissionOutput[]> = input<
@@ -172,9 +220,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property pending
    * @readonly
-   * @description Whether an update request is in flight.
+   *
+   * @description
+   * Whether an update request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -182,9 +234,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the last update failed with.
+   *
+   * @description
+   * Whatever the last update failed with.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -194,9 +250,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property visibleChange
    * @readonly
-   * @description The panel wants to open or close.
+   *
+   * @description
+   * The panel wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -204,9 +264,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property permissionsChanged
    * @readonly
-   * @description The role's next full permission list, after one checklist toggle.
+   *
+   * @description
+   * The role's next full permission list, after one checklist toggle.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<ReadonlyArray<string>>}
    */
   public readonly permissionsChanged: OutputEmitterRef<ReadonlyArray<string>> =
@@ -217,9 +281,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property sheetState
    * @readonly
-   * @description The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @description
+   * The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -229,9 +297,14 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property side
    * @readonly
-   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   *
+   * @description
+   * The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action
+   * Surfaces" rule 2).
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -239,9 +312,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property readOnly
    * @readonly
-   * @description Whether the checklist accepts input — false for a system role or while a write is in flight.
+   *
+   * @description
+   * Whether the checklist accepts input — false for a system role or while a write is in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly readOnly: Signal<boolean> = computed<boolean>(
@@ -251,9 +328,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property domainGroups
    * @readonly
-   * @description The catalog, grouped by domain segment for the checklist.
+   *
+   * @description
+   * The catalog, grouped by domain segment for the checklist.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly PermissionDomainGroup[]>}
    */
   protected readonly domainGroups: Signal<readonly PermissionDomainGroup[]> = computed(
@@ -279,9 +360,13 @@ export class OrganizationRolePermissionsSheet {
   /**
    * Property serverMessages
    * @readonly
-   * @description Everything the API said about the rejected update, as flat lines above the checklist.
+   *
+   * @description
+   * Everything the API said about the rejected update, as flat lines above the checklist.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
@@ -296,10 +381,16 @@ export class OrganizationRolePermissionsSheet {
   //#region Methods
   /**
    * Method isChecked
-   * @description Whether the given permission is currently granted by the role being edited.
+   * @method isChecked
+   *
+   * @description
+   * Whether the given permission is currently granted by the role being edited.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} name - The permission's dotted name.
+   *
    * @returns {boolean} `true` when granted.
    */
   protected isChecked(name: string): boolean {
@@ -308,11 +399,17 @@ export class OrganizationRolePermissionsSheet {
 
   /**
    * Method toggle
-   * @description Computes the role's next full permission list and emits it.
+   * @method toggle
+   *
+   * @description
+   * Computes the role's next full permission list and emits it.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} name - The permission's dotted name.
    * @param {boolean} checked - The checkbox's new state.
+   *
    * @returns {void}
    */
   protected toggle(name: string, checked: boolean): void {

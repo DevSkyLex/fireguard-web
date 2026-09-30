@@ -1,7 +1,8 @@
 /**
  * Function hasAnyOrganizationPermission
  *
- * @description Matches effective grants against any required permission, including owner wildcards.
+ * @description
+ * Matches effective grants against any required permission, including owner wildcards.
  *
  * @param {readonly string[]} granted - Current effective grants.
  * @param {readonly string[]} required - Permissions accepted by the consumer.

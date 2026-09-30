@@ -1,13 +1,15 @@
 /**
  * Type HydraContext
- * @type {HydraContext}
  *
  * @description
  * Represents the JSON-LD @context field in Hydra responses.
  * Can be a simple string URI or a detailed context object.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type {HydraContext}
  *
  * @example
  * ```typescript

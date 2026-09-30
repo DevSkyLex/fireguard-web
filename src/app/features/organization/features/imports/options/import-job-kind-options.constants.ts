@@ -2,7 +2,6 @@ import type { ImportJobKind } from '@features/organization/features/imports/mode
 
 /**
  * Constant IMPORT_JOB_KIND_OPTIONS
- * @const IMPORT_JOB_KIND_OPTIONS
  *
  * @description
  * The collections a CSV upload can target, offered by the upload form's
@@ -11,6 +10,8 @@ import type { ImportJobKind } from '@features/organization/features/imports/mode
  * @since 1.0.0
  *
  * @type {ReadonlyArray<{ readonly label: string; readonly value: ImportJobKind }>}
+ *
+ * @constant IMPORT_JOB_KIND_OPTIONS
  */
 export const IMPORT_JOB_KIND_OPTIONS: ReadonlyArray<{
   readonly label: string;

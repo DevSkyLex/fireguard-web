@@ -1,6 +1,5 @@
 /**
  * Constant ORGANIZATION_APPROVAL_ROLE_OPTIONS
- * @const ORGANIZATION_APPROVAL_ROLE_OPTIONS
  *
  * @description
  * The minimum-approver-role picker's choices — the backend's only two legal
@@ -12,6 +11,8 @@
  * @since 1.0.0
  *
  * @type {ReadonlyArray<{ readonly label: string; readonly value: string }>}
+ *
+ * @constant ORGANIZATION_APPROVAL_ROLE_OPTIONS
  */
 export const ORGANIZATION_APPROVAL_ROLE_OPTIONS: ReadonlyArray<{
   readonly label: string;

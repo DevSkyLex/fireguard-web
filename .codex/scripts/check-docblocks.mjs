@@ -40,8 +40,8 @@ function commentLines(block) {
 }
 
 /** Keep the indentation provided by the native formatter for this declaration. */
-function renderComment(block, lines) {
-  const prefix = block.match(/\n([ \t]*)\*/)?.[1] ?? ' ';
+function renderComment(block, lines, indentation) {
+  const prefix = indentation ?? block.match(/\n([ \t]*)\*/)?.[1] ?? ' ';
   return (
     '/**\n' +
     lines.map((line) => prefix + '*' + (line ? ' ' + line : '')).join('\n') +
@@ -56,8 +56,35 @@ const TITLE =
 const IDENTITY = new Set(['class', 'interface', 'method', 'constructor', 'static', 'readonly']);
 const METADATA = ['access', 'category', 'version', 'since'];
 
+/** Record declaration tags outside authored fenced examples. */
+function tagNames(block, title) {
+  const names = new Set();
+  let fence;
+  for (const line of commentLines(block)) {
+    const marker = line.match(/^[ \t]*(\u0060{3,}|~{3,})/);
+    if (marker) {
+      if (!fence) fence = marker[1];
+      else if (
+        fence[0] === marker[1][0] &&
+        marker[1].length >= fence.length &&
+        line.slice(line.indexOf(marker[1]) + marker[1].length).trim() === ''
+      )
+        fence = undefined;
+      continue;
+    }
+    if (fence) continue;
+    let name = line.match(/^@([\w-]+)\b/)?.[1];
+    if (!name) continue;
+    if (title?.startsWith('Method ') && name === 'function') name = 'method';
+    if (title === 'Constructor' && name === 'class') name = 'constructor';
+    if (title?.startsWith('Type ') && name === 'typedef') name = 'type';
+    names.add(name);
+  }
+  return names;
+}
+
 /** Restore the title and FireGuard tag groups after native text wrapping. */
-function structureComment(block, title) {
+function structureComment(block, title, indentation) {
   const sections = [];
   let current;
   let fence;
@@ -84,9 +111,33 @@ function structureComment(block, title) {
   }
   for (const section of sections) {
     while (section.lines.length && !section.lines.at(-1).trim()) section.lines.pop();
+    if (title?.startsWith('Method ') && section.name === 'function') {
+      section.name = 'method';
+      section.lines[0] = section.lines[0].replace(/^@function\b/, '@method');
+    }
+    if (title === 'Constructor' && section.name === 'class') {
+      section.name = 'constructor';
+      section.lines[0] = section.lines[0].replace(/^@class\b/, '@constructor');
+    }
+    if (title?.startsWith('Type ') && section.name === 'typedef') {
+      section.name = 'type';
+      section.lines[0] = section.lines[0].replace(/^@typedef\b/, '@type');
+    }
+    if (section.name === 'description') {
+      const description = section.lines[0].replace(/^@description[ \t]*/, '');
+      section.lines[0] = '@description';
+      if (description) section.lines.splice(1, 0, description);
+    }
   }
+  const identity = new Set();
   const groups = [
-    sections.filter((section) => IDENTITY.has(section.name)),
+    sections.filter((section) => {
+      if (!IDENTITY.has(section.name)) return false;
+      const content = section.lines.join('\n');
+      if (identity.has(content)) return false;
+      identity.add(content);
+      return true;
+    }),
     sections.filter((section) => section.name === '' || section.name === 'description'),
     sections
       .filter((section) => METADATA.includes(section.name))
@@ -98,7 +149,10 @@ function structureComment(block, title) {
     sections.filter((section) => ['returns', 'return'].includes(section.name)),
     sections.filter((section) => ['throws', 'exception'].includes(section.name)),
   ];
-  const known = new Set(groups.flat());
+  const known = new Set([
+    ...groups.flat(),
+    ...sections.filter((section) => IDENTITY.has(section.name)),
+  ]);
   groups.push(...sections.filter((section) => !known.has(section)).map((section) => [section]));
   const lines = [];
   if (title) lines.push(title);
@@ -107,14 +161,14 @@ function structureComment(block, title) {
     if (lines.length && index !== 0) lines.push('');
     lines.push(...group.flatMap((section) => section.lines));
   }
-  return renderComment(block, lines);
+  return renderComment(block, lines, indentation);
 }
 
 /** Wrap prose with Oxfmt, preserving declaration titles, tag groups and executable bytes. */
 export async function formatDocblocks(text, file = 'source.ts') {
   const before = docblocks(text, file);
   const titles = before.map((range) => {
-    const first = commentLines(text.slice(range.pos, range.end))[0];
+    const first = commentLines(text.slice(range.pos, range.end))[0]?.trimEnd();
     return first && TITLE.test(first) ? first : undefined;
   });
   let prepared = text;
@@ -125,6 +179,8 @@ export async function formatDocblocks(text, file = 'source.ts') {
     const lines = commentLines(block);
     lines.shift();
     while (lines.length && !lines[0].trim()) lines.shift();
+    // A title-only block must stay nonempty for native formatting to retain it.
+    if (!lines.length) continue;
     prepared =
       prepared.slice(0, range.pos) + renderComment(block, lines) + prepared.slice(range.end);
   }
@@ -139,19 +195,31 @@ export async function formatDocblocks(text, file = 'source.ts') {
   for (let index = before.length - 1; index >= 0; index -= 1) {
     const original = before[index];
     const replacement = after[index];
+    const leading = text.slice(text.lastIndexOf('\n', original.pos - 1) + 1, original.pos);
+    const indentation = /^[ \t]*$/.test(leading) ? leading + ' ' : undefined;
     // Native Markdown formatting can rewrite fenced code, including its closing marker.
     // Preserve these authored examples and only normalize their surrounding tag groups.
     const originalBlock = text.slice(original.pos, original.end);
+    if (titles[index] && commentLines(originalBlock).length === 1) {
+      updated =
+        updated.slice(0, original.pos) +
+        renderComment(originalBlock, [titles[index]], indentation) +
+        updated.slice(original.end);
+      continue;
+    }
     const containsExample = commentLines(originalBlock).some((line) =>
       /^[ \t]*(\u0060{3,}|~{3,})/.test(line),
     );
     const preparedBlock = preparedBlocks[index];
-    const block = containsExample
-      ? prepared.slice(preparedBlock.pos, preparedBlock.end)
-      : result.code.slice(replacement.pos, replacement.end);
+    const preparedComment = prepared.slice(preparedBlock.pos, preparedBlock.end);
+    const nativeComment = result.code.slice(replacement.pos, replacement.end);
+    const expectedTags = tagNames(preparedComment, titles[index]);
+    const formattedTags = tagNames(nativeComment, titles[index]);
+    const losesTag = [...expectedTags].some((name) => !formattedTags.has(name));
+    const block = containsExample || losesTag ? preparedComment : nativeComment;
     updated =
       updated.slice(0, original.pos) +
-      structureComment(block, titles[index]) +
+      structureComment(block, titles[index], indentation) +
       updated.slice(original.end);
   }
   return updated;
@@ -165,6 +233,12 @@ export function declarationFindings(file, text) {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   const visit = (node) => {
     const documented = node.jsDoc?.at(-1);
+    const classMember =
+      node.parent && (ts.isClassDeclaration(node.parent) || ts.isClassExpression(node.parent));
+    const namedTypeMember =
+      node.parent &&
+      (ts.isInterfaceDeclaration(node.parent) ||
+        (ts.isTypeLiteralNode(node.parent) && ts.isTypeAliasDeclaration(node.parent.parent)));
     let kinds;
     let name = node.name && ts.isIdentifier(node.name) ? node.name.text : undefined;
     if (ts.isClassDeclaration(node))
@@ -172,18 +246,38 @@ export function declarationFindings(file, text) {
     else if (ts.isInterfaceDeclaration(node)) kinds = ['Interface'];
     else if (ts.isTypeAliasDeclaration(node)) kinds = ['Type'];
     else if (ts.isFunctionDeclaration(node) && ts.isSourceFile(node.parent)) kinds = ['Function'];
-    else if (ts.isMethodDeclaration(node) || ts.isMethodSignature(node)) kinds = ['Method'];
-    else if (ts.isPropertyDeclaration(node) || ts.isPropertySignature(node)) kinds = ['Property'];
+    else if (
+      (ts.isMethodDeclaration(node) && classMember) ||
+      (ts.isMethodSignature(node) && namedTypeMember)
+    )
+      kinds = ['Method'];
+    else if (
+      (ts.isPropertyDeclaration(node) && classMember) ||
+      (ts.isPropertySignature(node) && namedTypeMember)
+    )
+      kinds = ['Property'];
     else if (ts.isConstructorDeclaration(node)) kinds = ['Constructor'];
     else if (ts.isVariableStatement(node) && ts.isSourceFile(node.parent)) {
       kinds = ['Constant', 'Configuration'];
       const declaration = node.declarationList.declarations[0];
       if (declaration && ts.isIdentifier(declaration.name)) name = declaration.name.text;
+      if (
+        declaration?.initializer &&
+        (ts.isArrowFunction(declaration.initializer) ||
+          ts.isFunctionExpression(declaration.initializer))
+      )
+        kinds.unshift('Function');
     }
-    if (documented && kinds && (name || kinds[0] === 'Constructor')) {
-      const title = commentLines(documented.getText(source))[0];
+    if (kinds && (name || kinds[0] === 'Constructor')) {
       const expected = kinds.map((kind) => (kind === 'Constructor' ? kind : kind + ' ' + name));
-      if (!expected.includes(title))
+      if (!documented)
+        findings.push({
+          file,
+          line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1,
+          rule: 'docblock-missing',
+          message: 'Add a docblock for ' + expected[0] + '.',
+        });
+      else if (!expected.includes(commentLines(documented.getText(source))[0]))
         findings.push({
           file,
           line: source.getLineAndCharacterOfPosition(documented.pos).line + 1,
@@ -192,9 +286,10 @@ export function declarationFindings(file, text) {
         });
     }
     if (
-      ts.isFunctionDeclaration(node) ||
-      ts.isMethodDeclaration(node) ||
-      ts.isConstructorDeclaration(node)
+      kinds &&
+      (ts.isFunctionDeclaration(node) ||
+        ts.isMethodDeclaration(node) ||
+        ts.isConstructorDeclaration(node))
     ) {
       const expected = new Set(
         node.parameters

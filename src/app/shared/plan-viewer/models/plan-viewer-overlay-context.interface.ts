@@ -1,5 +1,6 @@
 /**
  * Interface PlanViewerOverlayContext
+ * @interface PlanViewerOverlayContext
  *
  * @description
  * The template context {@link PlanViewer} exposes to its projected overlay.
@@ -11,5 +12,17 @@
  * @since 1.0.0
  */
 export interface PlanViewerOverlayContext {
+  /**
+   * Property scale
+   * @readonly
+   *
+   * @description
+   * Current zoom multiplier for overlays that need to counter-scale their content.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number}
+   */
   readonly scale: number;
 }

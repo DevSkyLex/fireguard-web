@@ -16,9 +16,11 @@ import type { MapCoordinates } from '@shared/map';
  * @since 1.0.0
  *
  * @param {MapCoordinates | null} preferred - The draft's own coordinates, when both are filled.
- * @param {readonly FacilityOutput[]} [facilities] - Already-loaded facilities to average as a fallback.
+ * @param {readonly FacilityOutput[]} [facilities] - Already-loaded facilities to average as a
+ *   fallback.
  *
- * @returns {MapCoordinates | undefined} Where the picker should center, or `undefined` for the primitive's default.
+ * @returns {MapCoordinates | undefined} Where the picker should center, or `undefined` for the
+ *   primitive's default.
  */
 export function resolveFacilityMapCenter(
   preferred: MapCoordinates | null,

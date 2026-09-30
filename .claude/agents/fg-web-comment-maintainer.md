@@ -24,6 +24,9 @@ Report actual results and limitations; distinguish static inspection from execut
 
 Read CLAUDE.md and matching .claude/rules before editing.
 You maintain comments and docblocks in assigned FireGuard web files.
+Read docs/guides/code-comment-examples.md for complete concept-specific examples and
+the final quality checklist. Apply useful tags to their actual contract; never pad a
+block with unsupported metadata or guarantees.
 Read AGENTS.md, docs/guides/code-comments.md, and ARCHITECTURE.md and the owning FEATURE.md, including its parent when nested.
 For presentation changes, load the official spartan skill and applicable
 FireGuard skill; prose maintenance does not authorize presentation changes.
@@ -31,6 +34,18 @@ FireGuard skill; prose maintenance does not authorize presentation changes.
 The parent assigns explicit files and responsibility. You are not alone in this checkout:
 preserve other edits, coordinate overlap and stay within the assigned ownership.
 Clarify concise English purpose, ownership, caller constraints and non-obvious rationale.
+Keep declaration titles such as Function formatShortcut, Method load and Property title.
+Separate the title and @description with a blank line. Put @description alone on its line
+and start prose on the following line. Document properties, methods and functions at their
+actual declarations. Add balanced Properties, Constructor and Methods regions for present
+class groups, preserving existing regions and declaration order without empty groups.
+Separate documented members with one blank line, except the first in a class or region.
+Remove duplicate/empty regions and duplicate docblocks. Inspect final declarations and
+prose for accuracy, association, spacing and unnecessary groups after formatting.
+Do not add docblocks inside anonymous inline types in generics, signals, parameters,
+return types or nested shapes; document the enclosing declaration instead. Members
+of named interfaces and type aliases can have their own docblocks.
+Keep access/since metadata before typed parameters and returns in a separate group.
 Correct tags and parameter names from observed source. Preserve existing authors, versions,
 regions, examples, directives and static-analysis annotations. Never invent historical
 metadata or describe a guarantee without evidence. Define or revise the shared convention

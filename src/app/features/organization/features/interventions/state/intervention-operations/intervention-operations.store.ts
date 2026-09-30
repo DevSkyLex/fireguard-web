@@ -15,10 +15,11 @@ import { InterventionSyncCoordinatorService } from '@features/organization/featu
 import type { InterventionOperationsState } from './models/state.interface';
 
 /**
- * Store InterventionOperationsStore
+ * Constant InterventionOperationsStore
  *
  * @description
- * Reads and retries only the active intervention queue. Conflict retries require an explicit UI confirmation.
+ * Reads and retries only the active intervention queue. Conflict retries require an explicit UI
+ * confirmation.
  *
  * @since 1.0.0
  */
@@ -56,11 +57,18 @@ export const InterventionOperationsStore = signalStore(
       sync = inject(InterventionSyncCoordinatorService),
     ) => {
       let generation = 0;
-      /** Method load
-       * @description Refreshes local operations, ignoring responses from another account or workspace.
+
+      /**
+       * Method load
+       *
+       * @description
+       * Refreshes local operations, ignoring responses from another account or workspace.
+       *
        * @access public
        * @since 1.0.0
+       *
        * @param {{ organizationId: string; interventionId: string }} context - Workspace scope.
+       *
        * @returns {void}
        */
       const load = rxMethod<{ organizationId: string; interventionId: string }>(
@@ -97,12 +105,15 @@ export const InterventionOperationsStore = signalStore(
          * Method resolve
          *
          * @description
-         * Applies a confirmed operation decision, then refreshes this queue. No other intervention is retried or discarded.
+         * Applies a confirmed operation decision, then refreshes this queue. No other intervention
+         * is retried or discarded.
          *
          * @access public
          * @since 1.0.0
          *
-         * @param {{ id: string; action: 'retry' | 'discard' }} request - Explicit operation decision.
+         * @param {{ id: string; action: 'retry' | 'discard' }} request - Explicit operation
+         *   decision.
+         *
          * @returns {void}
          */
         resolve: rxMethod<{

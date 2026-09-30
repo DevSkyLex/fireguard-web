@@ -11,5 +11,16 @@
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface AddReactionInput {
+  /**
+   * Property emoji
+   * @readonly
+   *
+   * @description
+   * Provides the Unicode reaction selected for this message.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly emoji: string;
 }

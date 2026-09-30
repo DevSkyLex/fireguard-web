@@ -14,7 +14,6 @@ const QUOTA_EXCEEDED_STATUS = 409;
 
 /**
  * Function resolveQuotaStatus
- * @function resolveQuotaStatus
  *
  * @description
  * Classifies a capped resource's consumption against its plan limit. A `null`
@@ -24,12 +23,14 @@ const QUOTA_EXCEEDED_STATUS = 409;
  *
  * @since 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @param {number} used - Current usage count for the resource.
  * @param {number | null} limit - Plan limit for the resource, or `null` when unlimited.
  *
  * @returns {QuotaStatus} The resolved quota status.
  *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @function resolveQuotaStatus
  */
 export function resolveQuotaStatus(used: number, limit: number | null): QuotaStatus {
   if (limit === null || limit <= 0) {
@@ -45,7 +46,6 @@ export function resolveQuotaStatus(used: number, limit: number | null): QuotaSta
 
 /**
  * Function isQuotaExceededError
- * @function isQuotaExceededError
  *
  * @description
  * Determines whether a failed async call represents a plan quota being
@@ -55,11 +55,13 @@ export function resolveQuotaStatus(used: number, limit: number | null): QuotaSta
  *
  * @since 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @param {{ code: string | number | null }} error - The normalized failure to inspect.
  *
  * @returns {boolean} `true` when the error is a quota-exceeded (409) failure.
  *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @function isQuotaExceededError
  */
 export function isQuotaExceededError(error: { readonly code: string | number | null }): boolean {
   return error.code === QUOTA_EXCEEDED_STATUS;

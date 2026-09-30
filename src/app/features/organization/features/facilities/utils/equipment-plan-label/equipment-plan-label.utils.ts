@@ -2,17 +2,14 @@ import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipmen
 
 /**
  * Function equipmentPlanLabel
- * @function equipmentPlanLabel
  *
  * @description
  * Names an equipment item pinned on a floor plan, the way an operator would.
- *
  * Equipment carries no name field, so something has to be composed. The
  * backend used to do it and sent `"gas_detector (SEED-GAS-003)"` — a raw enum
  * a client can only print as-is, in English, underscore included. The parts
  * now travel separately and the label is built here, where the translated
  * type catalogue lives.
- *
  * The location label wins when there is one: "Server room — rack row A" tells
  * someone standing in the building far more than a type does. The type is the
  * fallback, and the serial number never leads — it identifies the item for a
@@ -26,6 +23,8 @@ import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipmen
  * @param {string | null} equipment.locationLabel - Where it sits, if recorded.
  *
  * @returns {string} A label safe to render to a user.
+ *
+ * @function equipmentPlanLabel
  */
 export function equipmentPlanLabel(equipment: {
   readonly type: string;
@@ -42,7 +41,6 @@ export function equipmentPlanLabel(equipment: {
 
 /**
  * Function equipmentPlanDetail
- * @function equipmentPlanDetail
  *
  * @description
  * The secondary line under {@link equipmentPlanLabel} — the type when the
@@ -58,6 +56,8 @@ export function equipmentPlanLabel(equipment: {
  * @param {string | null} equipment.locationLabel - Where it sits, if recorded.
  *
  * @returns {string} The secondary line, or an empty string when there is nothing to add.
+ *
+ * @function equipmentPlanDetail
  */
 export function equipmentPlanDetail(equipment: {
   readonly type: string;

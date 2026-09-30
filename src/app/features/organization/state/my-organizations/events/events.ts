@@ -4,7 +4,6 @@ import type { StoreFailureEventPayload } from '@core/request-state';
 
 /**
  * Constant myOrganizationsStoreEvents
- * @const myOrganizationsStoreEvents
  *
  * @description
  * Root-provided `MyOrganizationsStore` events, dispatched on a failed list
@@ -12,7 +11,10 @@ import type { StoreFailureEventPayload } from '@core/request-state';
  * raise a toast.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant myOrganizationsStoreEvents
  */
 export const myOrganizationsStoreEvents = eventGroup({
   source: 'My Organizations Store',

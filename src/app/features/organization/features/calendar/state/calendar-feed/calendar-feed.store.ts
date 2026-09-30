@@ -40,8 +40,43 @@ import { calendarFeedStoreEvents } from './events/events';
  * @since 1.0.0
  */
 export interface CalendarFeedLoadCommand {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Selects the organization scope for this operation.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property from
+   * @readonly
+   *
+   * @description
+   * Marks the beginning of the requested calendar feed load range.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly from: string;
+
+  /**
+   * Property to
+   * @readonly
+   *
+   * @description
+   * Marks the end of the requested calendar feed load range.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly to: string;
 }
 
@@ -49,11 +84,36 @@ export interface CalendarFeedLoadCommand {
  * Interface CalendarEventCreateCommand
  * @interface CalendarEventCreateCommand
  *
- * @description The organization and the event to create.
+ * @description
+ * The organization and the event to create.
+ *
  * @since 1.1.0
  */
 export interface CalendarEventCreateCommand {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Selects the organization scope for this operation.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property input
+   * @readonly
+   *
+   * @description
+   * Carries the values submitted to calendar event create.
+   *
+   * @access public
+   *
+   * @type {CreateCalendarEventInput}
+   */
   readonly input: CreateCalendarEventInput;
 }
 
@@ -61,12 +121,49 @@ export interface CalendarEventCreateCommand {
  * Interface CalendarEventUpdateCommand
  * @interface CalendarEventUpdateCommand
  *
- * @description The organization, the event to update, and its dirty fields only.
+ * @description
+ * The organization, the event to update, and its dirty fields only.
+ *
  * @since 1.1.0
  */
 export interface CalendarEventUpdateCommand {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Selects the organization scope for this operation.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property eventId
+   * @readonly
+   *
+   * @description
+   * Identifies the event associated with this calendar event update.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly eventId: string;
+
+  /**
+   * Property input
+   * @readonly
+   *
+   * @description
+   * Carries the values submitted to calendar event update.
+   *
+   * @access public
+   *
+   * @type {UpdateCalendarEventInput}
+   */
   readonly input: UpdateCalendarEventInput;
 }
 
@@ -83,9 +180,56 @@ export interface CalendarEventUpdateCommand {
  * @since 1.2.0
  */
 export interface CalendarEventMoveCommand {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Selects the organization scope for this operation.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property eventId
+   * @readonly
+   *
+   * @description
+   * Identifies the event associated with this calendar event move.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly eventId: string;
+
+  /**
+   * Property startsAt
+   * @readonly
+   *
+   * @description
+   * Records when this calendar event move starts.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly startsAt: string;
+
+  /**
+   * Property endsAt
+   * @readonly
+   *
+   * @description
+   * Records when this calendar event move ends.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly endsAt?: string;
 }
 
@@ -93,11 +237,36 @@ export interface CalendarEventMoveCommand {
  * Interface CalendarEventDeleteCommand
  * @interface CalendarEventDeleteCommand
  *
- * @description The organization and the event to delete.
+ * @description
+ * The organization and the event to delete.
+ *
  * @since 1.1.0
  */
 export interface CalendarEventDeleteCommand {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Selects the organization scope for this operation.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property eventId
+   * @readonly
+   *
+   * @description
+   * Identifies the event associated with this calendar event delete.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly eventId: string;
 }
 
@@ -116,28 +285,107 @@ interface CalendarFeedWriteState {
   /**
    * Property contextRevision
    * @readonly
-   * @description Distinguishes separate visits to an organization for queued move commands.
+   *
+   * @description
+   * Distinguishes separate visits to an organization for queued move commands.
+   *
    * @access private
    * @since 1.2.0
+   *
    * @type {number}
    */
   readonly contextRevision: number;
+
   /**
    * Property feedRevision
    * @readonly
-   * @description Invalidates optimistic snapshots as soon as a window read starts or resolves.
+   *
+   * @description
+   * Invalidates optimistic snapshots as soon as a window read starts or resolves.
+   *
    * @access private
    * @since 1.2.0
+   *
    * @type {number}
    */
   readonly feedRevision: number;
+
+  /**
+   * Property createEventCallState
+   * @readonly
+   *
+   * @description
+   * Tracks the request state for create event.
+   *
+   * @access public
+   *
+   * @type {CallState<CalendarEventOutput>}
+   */
   readonly createEventCallState: CallState<CalendarEventOutput>;
+
+  /**
+   * Property updateEventCallState
+   * @readonly
+   *
+   * @description
+   * Tracks the request state for update event.
+   *
+   * @access public
+   *
+   * @type {CallState<CalendarEventOutput>}
+   */
   readonly updateEventCallState: CallState<CalendarEventOutput>;
+
+  /**
+   * Property deleteEventCallState
+   * @readonly
+   *
+   * @description
+   * Tracks the request state for delete event.
+   *
+   * @access public
+   *
+   * @type {CallState<null>}
+   */
   readonly deleteEventCallState: CallState<null>;
+
+  /**
+   * Property moveEventCallState
+   * @readonly
+   *
+   * @description
+   * Tracks the request state for move event.
+   *
+   * @access public
+   *
+   * @type {CallState<CalendarEventOutput>}
+   */
   readonly moveEventCallState: CallState<CalendarEventOutput>;
+
+  /**
+   * Property lastLoadCommand
+   * @readonly
+   *
+   * @description
+   * Retains the last calendar range so the store can repeat the same load after invalidation.
+   *
+   * @access public
+   *
+   * @type {CalendarFeedLoadCommand | null}
+   */
   readonly lastLoadCommand: CalendarFeedLoadCommand | null;
 }
 
+/**
+ * Constant INITIAL_WRITE_STATE
+ *
+ * @description
+ * Initializes calendar event write states and revision counters before any event mutation runs.
+ *
+ * @access public
+ *
+ * @type {CalendarFeedWriteState}
+ */
 const INITIAL_WRITE_STATE: CalendarFeedWriteState = {
   contextRevision: 0,
   feedRevision: 0,
@@ -149,8 +397,7 @@ const INITIAL_WRITE_STATE: CalendarFeedWriteState = {
 };
 
 /**
- * Store CalendarFeedStore
- * @const CalendarFeedStore
+ * Constant CalendarFeedStore
  *
  * @description
  * Component-scoped store of the organization calendar page: the unified
@@ -166,40 +413,61 @@ const INITIAL_WRITE_STATE: CalendarFeedWriteState = {
  * reconciles through the window re-read on success.
  *
  * @version 1.2.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant CalendarFeedStore
  */
 export const CalendarFeedStore = signalStore(
   withQueryState<CalendarFeedOutput>(),
   withState<CalendarFeedWriteState>(INITIAL_WRITE_STATE),
   withComputed((store) => ({
-    /** The merged feed entries, empty until the first window resolves. */
+    /**
+     * @description
+     * The merged feed entries, empty until the first window resolves.
+     */
     items: computed<readonly CalendarFeedItemOutput[]>(() => store.queryData()?.items ?? []),
+
     /**
      * Property isComplete
      * @readonly
-     * @description Whether every authorized source returned its complete bounded window.
+     *
+     * @description
+     * Whether every authorized source returned its complete bounded window.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     isComplete: computed<boolean>(() => store.queryData()?.complete !== false),
+
     /**
      * Property partialSources
      * @readonly
-     * @description Server-declared unavailable or truncated contributors.
+     *
+     * @description
+     * Server-declared unavailable or truncated contributors.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<readonly CalendarFeedSourceOutput[]>}
      */
     partialSources: computed<readonly CalendarFeedSourceOutput[]>(() =>
       (store.queryData()?.sources ?? []).filter((source) => !source.available || source.truncated),
     ),
+
     /**
      * Property hasTruncation
      * @readonly
-     * @description Whether reducing the date range can recover omitted entries.
+     *
+     * @description
+     * Whether reducing the date range can recover omitted entries.
+     *
      * @access public
      * @since 1.0.0
+     *
      * @type {Signal<boolean>}
      */
     hasTruncation: computed<boolean>(() =>
@@ -485,6 +753,8 @@ export const CalendarFeedStore = signalStore(
  *
  * @description
  * Defines the supported calendar feed store type values.
+ *
+ * @type
  */
 export type CalendarFeedStoreType = InstanceType<typeof CalendarFeedStore>;
 
@@ -501,7 +771,30 @@ export type CalendarFeedStoreType = InstanceType<typeof CalendarFeedStore>;
  * @since 1.1.0
  */
 interface CalendarFeedLoadCapable {
+  /**
+   * Property lastLoadCommand
+   * @readonly
+   *
+   * @description
+   * Retains the last calendar range so the store can repeat the same load after invalidation.
+   *
+   * @access public
+   *
+   * @type {() => CalendarFeedLoadCommand | null}
+   */
   readonly lastLoadCommand: () => CalendarFeedLoadCommand | null;
+
+  /**
+   * Property load
+   * @readonly
+   *
+   * @description
+   * Reloads the calendar feed using the supplied organization and date range.
+   *
+   * @access public
+   *
+   * @type {(command: CalendarFeedLoadCommand) => void}
+   */
   readonly load: (command: CalendarFeedLoadCommand) => void;
 }
 

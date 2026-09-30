@@ -42,6 +42,8 @@ import { CalendarEventForm, type CalendarEventFormValues } from '../../forms/cal
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-calendar-event-dialog
@@ -54,8 +56,6 @@ import { CalendarEventForm, type CalendarEventFormValues } from '../../forms/cal
  *   (submitted)="onEventFormSubmitted($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-calendar-event-dialog',
@@ -67,9 +67,13 @@ export class CalendarEventDialog {
   /**
    * Property side
    * @readonly
-   * @description Mobile tasks open from the bottom; one mounted form survives interaction mode changes.
+   *
+   * @description
+   * Mobile tasks open from the bottom; one mounted form survives interaction mode changes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -78,9 +82,13 @@ export class CalendarEventDialog {
   /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -88,9 +96,13 @@ export class CalendarEventDialog {
   /**
    * Property pending
    * @readonly
-   * @description Whether the create/update write is in flight, forwarded to the form and blocking dismissal.
+   *
+   * @description
+   * Whether the create/update write is in flight, forwarded to the form and blocking dismissal.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -98,9 +110,13 @@ export class CalendarEventDialog {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the last write attempt failed with, forwarded to the form.
+   *
+   * @description
+   * Whatever the last write attempt failed with, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<StoreError | null>}
    */
   public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
@@ -108,9 +124,13 @@ export class CalendarEventDialog {
   /**
    * Property editing
    * @readonly
-   * @description The `event`-source entry being edited, or `null` when creating a new one.
+   *
+   * @description
+   * The `event`-source entry being edited, or `null` when creating a new one.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<CalendarFeedItemOutput | null>}
    */
   public readonly editing: InputSignal<CalendarFeedItemOutput | null> =
@@ -119,9 +139,13 @@ export class CalendarEventDialog {
   /**
    * Property facilityOptions
    * @readonly
-   * @description The organization's facilities, forwarded to the form as the optional association.
+   *
+   * @description
+   * The organization's facilities, forwarded to the form as the optional association.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ReadonlyArray<{ readonly label: string; readonly value: string }>>}
    */
   public readonly facilityOptions: InputSignal<
@@ -131,9 +155,14 @@ export class CalendarEventDialog {
   /**
    * Property initialStartsAt
    * @readonly
-   * @description A `yyyy-MM-ddTHH:mm` start pre-filling the create draft — set when the page opened the dialog from a day cell's quick-create. Ignored while {@link editing} holds a record.
+   *
+   * @description
+   * A `yyyy-MM-ddTHH:mm` start pre-filling the create draft — set when the page opened the dialog
+   * from a day cell's quick-create. Ignored while {@link editing} holds a record.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly initialStartsAt: InputSignal<string | null> = input<string | null>(null);
@@ -143,9 +172,13 @@ export class CalendarEventDialog {
   /**
    * Property visibleChange
    * @readonly
-   * @description Reports the panel opening or closing, including a dismissal.
+   *
+   * @description
+   * Reports the panel opening or closing, including a dismissal.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -153,9 +186,13 @@ export class CalendarEventDialog {
   /**
    * Property submitted
    * @readonly
-   * @description The form's validated draft, forwarded untouched.
+   *
+   * @description
+   * The form's validated draft, forwarded untouched.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CalendarEventFormValues>}
    */
   public readonly submitted: OutputEmitterRef<CalendarEventFormValues> =
@@ -166,7 +203,11 @@ export class CalendarEventDialog {
   /**
    * Constructor
    * @constructor
-   * @description Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next opening confirm over nothing.
+   *
+   * @description
+   * Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next
+   * opening confirm over nothing.
+   *
    * @access public
    * @since 1.1.0
    */
@@ -185,9 +226,13 @@ export class CalendarEventDialog {
   /**
    * Property dialogState
    * @readonly
-   * @description The overlay's own open/closed state, derived from {@link visible}.
+   *
+   * @description
+   * The overlay's own open/closed state, derived from {@link visible}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -197,9 +242,14 @@ export class CalendarEventDialog {
   /**
    * Property dirty
    * @readonly
-   * @description Whether closing right now would lose something — set from the form's `dirtyChanged`, in either create or edit mode. Gates {@link requestClose}.
+   *
+   * @description
+   * Whether closing right now would lose something — set from the form's `dirtyChanged`, in either
+   * create or edit mode. Gates {@link requestClose}.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly dirty: WritableSignal<boolean> = signal<boolean>(false);
@@ -207,9 +257,14 @@ export class CalendarEventDialog {
   /**
    * Property unsavedChangesDialogState
    * @readonly
-   * @description Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when {@link dirty} is true.
+   *
+   * @description
+   * Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when
+   * {@link dirty} is true.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {WritableSignal<BrnDialogState>}
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
@@ -218,9 +273,14 @@ export class CalendarEventDialog {
   /**
    * Property dialogRef
    * @readonly
-   * @description The panel directive, queried so {@link onStateChanged} can reopen it to undo an Escape/outside-click made while {@link dirty}.
+   *
+   * @description
+   * The panel directive, queried so {@link onStateChanged} can reopen it to undo an
+   * Escape/outside-click made while {@link dirty}.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<HlmSheet | undefined>}
    */
   protected readonly dialogRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
@@ -260,9 +320,15 @@ export class CalendarEventDialog {
 
   /**
    * Method requestClose
-   * @description The panel's own close action, reached from the form's Cancel. Closes right away when nothing would be lost; otherwise asks first.
+   * @method requestClose
+   *
+   * @description
+   * The panel's own close action, reached from the form's Cancel. Closes right away when nothing
+   * would be lost; otherwise asks first.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected requestClose(): void {
@@ -277,9 +343,14 @@ export class CalendarEventDialog {
 
   /**
    * Method onUnsavedChangesConfirmed
-   * @description The operator chose to discard the draft — closes both the confirmation and the panel.
+   * @method onUnsavedChangesConfirmed
+   *
+   * @description
+   * The operator chose to discard the draft — closes both the confirmation and the panel.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesConfirmed(): void {
@@ -289,9 +360,14 @@ export class CalendarEventDialog {
 
   /**
    * Method onUnsavedChangesDismissed
-   * @description The operator chose to keep editing — closes the confirmation only.
+   * @method onUnsavedChangesDismissed
+   *
+   * @description
+   * The operator chose to keep editing — closes the confirmation only.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesDismissed(): void {

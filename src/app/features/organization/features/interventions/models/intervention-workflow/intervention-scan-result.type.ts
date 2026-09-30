@@ -1,9 +1,14 @@
 import type { InterventionWorkItemOutput } from '../intervention-work-item/intervention-work-item-output.interface';
 
 /**
+ * Type InterventionScanResult
+ *
+ * @description
  * The outcome of decoding a captured QR image against an intervention's work
  * items. One union rather than a matched item plus two booleans, so a caller
  * always narrows on `kind` instead of checking flags in the wrong order.
+ *
+ * @type {InterventionScanResult}
  */
 export type InterventionScanResult =
   | { readonly kind: 'matched'; readonly item: InterventionWorkItemOutput }

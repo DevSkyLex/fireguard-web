@@ -74,7 +74,6 @@ import type {
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Empty starting state for the component-scoped InterventionWorkspaceStore.
@@ -83,6 +82,8 @@ import type {
  * @since 1.0.0
  *
  * @type {InterventionWorkspaceState}
+ *
+ * @constant INITIAL_STATE
  */
 const INITIAL_STATE: InterventionWorkspaceState = {
   planningConfirmation: null,
@@ -122,7 +123,6 @@ const INITIAL_STATE: InterventionWorkspaceState = {
 
 /**
  * Constant IDLE_WRITE_STATES
- * @const IDLE_WRITE_STATES
  *
  * @description
  * Every write concern reset to idle, with the per-row pending sets emptied.
@@ -132,6 +132,8 @@ const INITIAL_STATE: InterventionWorkspaceState = {
  * @since 4.2.0
  *
  * @type {Partial<InterventionWorkspaceState>}
+ *
+ * @constant IDLE_WRITE_STATES
  */
 const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
   planningConfirmation: null,
@@ -156,7 +158,6 @@ const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
 
 /**
  * Function withId
- * @function withId
  *
  * @description
  * Returns a new set with `id` added, leaving the source untouched so signal
@@ -167,7 +168,9 @@ const IDLE_WRITE_STATES: Partial<InterventionWorkspaceState> = {
  * @param {ReadonlySet<string>} ids - Current set.
  * @param {string} id - Id to add.
  *
- * @return {ReadonlySet<string>} New set containing `id`.
+ * @returns {ReadonlySet<string>} New set containing `id`.
+ *
+ * @function withId
  */
 function withId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
   const next = new Set(ids);
@@ -177,7 +180,6 @@ function withId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
 
 /**
  * Function withoutId
- * @function withoutId
  *
  * @description
  * Returns a new set with `id` removed, leaving the source untouched.
@@ -187,7 +189,9 @@ function withId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
  * @param {ReadonlySet<string>} ids - Current set.
  * @param {string} id - Id to remove.
  *
- * @return {ReadonlySet<string>} New set without `id`.
+ * @returns {ReadonlySet<string>} New set without `id`.
+ *
+ * @function withoutId
  */
 function withoutId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
   const next = new Set(ids);
@@ -197,11 +201,9 @@ function withoutId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
 
 /**
  * Function workspaceFailure
- * @function workspaceFailure
  *
  * @description
  * Normalizes a caught error and guarantees it carries a human-readable message.
- *
  * A structured API problem (RFC 7807) is trusted for its `detail`: it is the most
  * specific explanation available, and for a 422 it travels with the `violations` a
  * form can project onto its fields. Everything else — transport failures, bare
@@ -214,7 +216,9 @@ function withoutId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
  * @param {unknown} error - The caught error.
  * @param {string} fallback - Localized message to use when the API said nothing.
  *
- * @return {StoreError} Normalized error with a non-null message.
+ * @returns {StoreError} Normalized error with a non-null message.
+ *
+ * @function workspaceFailure
  */
 function workspaceFailure(error: unknown, fallback: string): StoreError {
   const storeError: StoreError = toStoreError(error);
@@ -225,7 +229,6 @@ function workspaceFailure(error: unknown, fallback: string): StoreError {
 
 /**
  * Function toQueuedAttachments
- * @function toQueuedAttachments
  *
  * @description
  * Projects the outbox's `attachment.upload` operations onto the view contract
@@ -233,9 +236,12 @@ function workspaceFailure(error: unknown, fallback: string): StoreError {
  *
  * @since 6.0.0
  *
- * @param {readonly InterventionOutboxOperation[]} operations - Queued operations of one intervention.
+ * @param {readonly InterventionOutboxOperation[]} operations - Queued operations of one
+ *   intervention.
  *
- * @return {readonly InterventionQueuedAttachment[]} Queued attachment rows, queue order.
+ * @returns {readonly InterventionQueuedAttachment[]} Queued attachment rows, queue order.
+ *
+ * @function toQueuedAttachments
  */
 function toQueuedAttachments(
   operations: readonly InterventionOutboxOperation[],
@@ -262,7 +268,6 @@ function toQueuedAttachments(
 
 /**
  * Function replaceWorkItem
- * @function replaceWorkItem
  *
  * @description
  * Returns a new array with the work item identified by `workItemId`
@@ -275,7 +280,9 @@ function toQueuedAttachments(
  * @param {string} workItemId - Id of the item to replace.
  * @param {InterventionWorkItemOutput} replacement - New item value to splice in.
  *
- * @return {readonly InterventionWorkItemOutput[]} Updated immutable list.
+ * @returns {readonly InterventionWorkItemOutput[]} Updated immutable list.
+ *
+ * @function replaceWorkItem
  */
 function replaceWorkItem(
   items: readonly InterventionWorkItemOutput[],
@@ -290,8 +297,7 @@ function replaceWorkItem(
 }
 
 /**
- * Store InterventionWorkspaceStore
- * @const InterventionWorkspaceStore
+ * Constant InterventionWorkspaceStore
  *
  * @description
  * Component-scoped NgRx SignalStore owning the full intervention workspace:
@@ -302,14 +308,22 @@ function replaceWorkItem(
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant InterventionWorkspaceStore
  */
 export const InterventionWorkspaceStore = signalStore(
   withState<InterventionWorkspaceState>(INITIAL_STATE),
   withComputed((store) => ({
-    /** Whether the workspace fetch is in flight. */
+    /**
+     * @description
+     * Whether the workspace fetch is in flight.
+     */
     loading: computed<boolean>(() => isCallPending(store.loadCallState())),
 
-    /** Whether any write is in flight, across every named write concern. */
+    /**
+     * @description
+     * Whether any write is in flight, across every named write concern.
+     */
     saving: computed<boolean>(
       () =>
         isCallPending(store.transitionCallState()) ||
@@ -325,8 +339,8 @@ export const InterventionWorkspaceStore = signalStore(
     ),
 
     /**
+     * @description
      * Message of the last failure, load or write, for the page banner.
-     *
      * A write failure wins over a stale load failure: it is the more recent thing
      * the user did. `addCommentCallState` is deliberately excluded — a rejected
      * comment already renders inline in the composer, and a failure shown where
@@ -348,8 +362,8 @@ export const InterventionWorkspaceStore = signalStore(
     ),
 
     /**
-     * Whether the last workspace *fetch* failed, as opposed to a write.
-     *
+     * @description
+     * Whether the last workspace _fetch_ failed, as opposed to a write.
      * A page needs the distinction to decide what to offer: re-running `load`
      * is the repair for a failed fetch and the wrong repair for a rejected
      * patch, which {@link error} alone cannot tell apart.
@@ -357,6 +371,7 @@ export const InterventionWorkspaceStore = signalStore(
     loadFailed: computed<boolean>(() => isCallError(store.loadCallState())),
 
     /**
+     * @description
      * Whether the timeline has entries older than the ones held, so a surface
      * can offer to walk further back instead of implying it shows everything.
      */
@@ -366,12 +381,18 @@ export const InterventionWorkspaceStore = signalStore(
       return oldest !== null && oldest > 1;
     }),
 
-    /** How many of the loaded issues are publication blockers, for the action box. */
+    /**
+     * @description
+     * How many of the loaded issues are publication blockers, for the action box.
+     */
     blockerCount: computed<number>(
       () => store.issues().filter((issue) => issue.severity === 'blocker').length,
     ),
 
-    /** The item an operator should pick up next: the in-progress one, else the first planned. */
+    /**
+     * @description
+     * The item an operator should pick up next: the in-progress one, else the first planned.
+     */
     nextWorkItem: computed<InterventionWorkItemOutput | null>(
       () =>
         store.workItems().find((item) => item.status === 'in_progress') ??
@@ -474,7 +495,10 @@ export const InterventionWorkspaceStore = signalStore(
               $localize`:@@intervention.workspace.loadFailed:The intervention workspace could not be loaded.`,
             );
 
-      /** A single request stream cancels both ordinary loads and in-place reloads. */
+      /**
+       * @description
+       * A single request stream cancels both ordinary loads and in-place reloads.
+       */
       const requestWorkspace = rxMethod<{
         interventionId: string;
         generation: number;
@@ -506,10 +530,15 @@ export const InterventionWorkspaceStore = signalStore(
 
       /**
        * Function load
-       * @description Starts a new context, clearing obsolete workspace and write state immediately.
-       * @param {string} interventionId - Requested route context.
-       * @returns {void}
+       *
+       * @description
+       * Starts a new context, clearing obsolete workspace and write state immediately.
+       *
        * @since 6.2.0
+       *
+       * @param {string} interventionId - Requested route context.
+       *
+       * @returns {void}
        */
       function load(interventionId: string): void {
         contextGeneration += 1;
@@ -535,10 +564,15 @@ export const InterventionWorkspaceStore = signalStore(
 
       /**
        * Function reload
-       * @description Forces a fresh workspace while retaining visible data and pending local intent.
-       * @param {string} interventionId - Current context only.
-       * @returns {void}
+       *
+       * @description
+       * Forces a fresh workspace while retaining visible data and pending local intent.
+       *
        * @since 6.2.0
+       *
+       * @param {string} interventionId - Current context only.
+       *
+       * @returns {void}
        */
       function reload(interventionId: string): void {
         if (store.contextId() !== interventionId) return;
@@ -594,7 +628,6 @@ export const InterventionWorkspaceStore = signalStore(
        *
        * @description
        * Loads the **newest** page of the intervention's activity timeline.
-       *
        * The API sorts `createdAt` ascending, so page 1 holds the oldest entries.
        * Reading it and stopping there showed a months-old history as the whole
        * timeline and made the page's "last touched" line report the *first*
@@ -603,14 +636,12 @@ export const InterventionWorkspaceStore = signalStore(
        * not the entire timeline the last page is fetched and page 1 discarded.
        * That is one extra request, and only for an intervention with more than
        * one page of history.
-       *
        * On a network failure while an in-memory snapshot already exists (the tab
        * was opened before going offline), keeps that snapshot and reports
        * success instead of surfacing a transient offline error; otherwise the
        * error is normalized into `activityCallState`.
        * Successful online writes that can create an activity event call this
        * method again after the server response so the timeline stays current.
-       *
        * ⚠️ Zoneless: this method reads and writes `activityCallState`. Never
        * call it from inside a tracked `effect()` without `untracked()`.
        *
@@ -665,7 +696,6 @@ export const InterventionWorkspaceStore = signalStore(
        * Prepends the page just above the oldest one currently held, walking the
        * timeline backwards from the tail {@link loadActivities} landed on. A
        * no-op once page 1 is loaded.
-       *
        * ⚠️ Zoneless: this method reads and writes `activityCallState`. Never
        * call it from inside a tracked `effect()` without `untracked()`.
        *
@@ -702,6 +732,7 @@ export const InterventionWorkspaceStore = signalStore(
       );
 
       /**
+       * @description
        * Reads the intervention's queued `attachment.upload` operations as list
        * rows; an IndexedDB failure degrades to an empty list rather than
        * failing the attachments fetch.
@@ -713,6 +744,7 @@ export const InterventionWorkspaceStore = signalStore(
         );
 
       /**
+       * @description
        * Queues an attachment upload in the outbox — the same durable path the
        * other field actions take — after enforcing the device-global storage
        * quota (25 files / 50 MB): IndexedDB space is finite and a silently
@@ -764,6 +796,7 @@ export const InterventionWorkspaceStore = signalStore(
       };
 
       /**
+       * @description
        * Queues a comment as an idempotent `comment.create` outbox operation and
        * appends an optimistic entry to the timeline. Reused by the offline
        * branch and by the online branch on a network failure, so a comment is
@@ -866,7 +899,6 @@ export const InterventionWorkspaceStore = signalStore(
          * 412 tells the user to refresh instead of retrying in a loop.
          * After a successful online transition, the activity timeline is
          * refreshed so the server-created status event is rendered immediately.
-         *
          * Requests flow through `exhaustMap`, not `switchMap`: a transition
          * must never be cancelled by a duplicate trigger. Cancelling the
          * client side of an already-sent PATCH loses the returned revision
@@ -888,6 +920,7 @@ export const InterventionWorkspaceStore = signalStore(
                 if (!currentContext()) return EMPTY;
 
                 /**
+                 * @description
                  * Queues the transition and applies it optimistically. Reused by
                  * the offline branch and by the online branch when the request
                  * fails on a network error.
@@ -1021,6 +1054,7 @@ export const InterventionWorkspaceStore = signalStore(
               if (!currentContext()) return EMPTY;
 
               /**
+               * @description
                * Queues the details update and applies it optimistically. Reused
                * by the offline branch and by the online branch on a network
                * failure (offline that slipped past `navigator.onLine`), so a
@@ -1220,12 +1254,14 @@ export const InterventionWorkspaceStore = signalStore(
          * @method updateWorkItem
          *
          * @description
-         * Persists explicit effort, period or assignment edits; offline proposals remain unverified until replay.
+         * Persists explicit effort, period or assignment edits; offline proposals remain unverified
+         * until replay.
          *
          * @access public
          * @since 1.0.0
          *
          * @param {InterventionWorkItemUpdateCommand} command - Captured task and explicit changes.
+         *
          * @returns {void}
          */
         updateWorkItem: rxMethod<InterventionWorkItemUpdateCommand>(
@@ -1646,7 +1682,6 @@ export const InterventionWorkspaceStore = signalStore(
          * path already exists in the sync service) and applied optimistically.
          * A genuine server rejection dispatches `rejectChangeFailed` for the
          * app-wide feedback listener and leaves the change untouched.
-         *
          * ⚠️ Zoneless: reads and writes its own call state — never call it from
          * a tracked `effect()` without `untracked()`.
          *
@@ -1926,7 +1961,6 @@ export const InterventionWorkspaceStore = signalStore(
          * Lazily reads the intervention's attachments — called by the
          * attachments section on the browser, never by the SSR-critical
          * workspace fetch.
-         *
          * ⚠️ Zoneless: reads and writes its own call state — never call it
          * from a tracked `effect()` without `untracked()`.
          *
@@ -2142,7 +2176,7 @@ export const InterventionWorkspaceStore = signalStore(
          * @access public
          * @since 1.0.0
          *
-         * @return {void}
+         * @returns {void}
          */
         clearError(): void {
           patchState(store, {
@@ -2181,6 +2215,7 @@ export const InterventionWorkspaceStore = signalStore(
      * @since 1.0.0
      *
      * @param {string} token - Explicitly reviewed assessment token.
+     *
      * @returns {void}
      */
     confirmPlanning(token: string): void {
@@ -2223,5 +2258,7 @@ export const InterventionWorkspaceStore = signalStore(
  *
  * @description
  * Defines the supported intervention workspace store type values.
+ *
+ * @type {InterventionWorkspaceStoreType}
  */
 export type InterventionWorkspaceStoreType = InstanceType<typeof InterventionWorkspaceStore>;

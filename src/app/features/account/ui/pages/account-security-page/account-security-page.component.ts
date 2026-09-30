@@ -52,12 +52,10 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * @description
  * The two things that protect the account: the second factor, and the
  * password.
- *
  * Both panels are presentational; this owns the stores and the wiring between
  * them. Neither shows an error surface of its own — a rejected code or a wrong
  * password is a whole-request failure, which the app-wide feedback listener
  * raises as a toast (`ARCHITECTURE.md` §10.4).
- *
  * The danger zone at the foot of the page carries self-service account
  * deactivation: a destructive card opening a confirmation dialog, and on
  * success the local session is purged and the reader lands on the login page.
@@ -241,6 +239,7 @@ export class AccountSecurityPage implements OnInit {
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
+
   /**
    * Property federatedStore
    * @readonly
@@ -250,6 +249,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access private
    * @since 1.4.0
+   *
    * @type {FederatedAuthStore}
    */
   private readonly federatedStore = inject(FederatedAuthStore);
@@ -263,6 +263,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access private
    * @since 1.4.0
+   *
    * @type {Document}
    */
   private readonly document = inject(DOCUMENT);
@@ -276,6 +277,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access private
    * @since 1.4.0
+   *
    * @type {object}
    */
   private readonly platformId = inject(PLATFORM_ID);
@@ -309,6 +311,7 @@ export class AccountSecurityPage implements OnInit {
    * @type {WritableSignal<boolean>}
    */
   protected readonly changingEmail: WritableSignal<boolean> = signal<boolean>(false);
+
   /**
    * Property settingPassword
    * @readonly
@@ -318,6 +321,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly settingPassword: WritableSignal<boolean> = signal<boolean>(false);
@@ -331,6 +335,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @type {FederatedAuthStore}
    */
   protected readonly signInMethods = this.federatedStore;
@@ -339,9 +344,12 @@ export class AccountSecurityPage implements OnInit {
    * Property signInMethodsError
    * @readonly
    *
-   * @description Localized error from the first failed sign-in-method operation.
+   * @description
+   * Localized error from the first failed sign-in-method operation.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly signInMethodsError: Signal<string | null> = computed<string | null>(() => {
@@ -358,9 +366,12 @@ export class AccountSecurityPage implements OnInit {
    * Property passwordSetupError
    * @readonly
    *
-   * @description Localized first-password failure without exposing raw API details.
+   * @description
+   * Localized first-password failure without exposing raw API details.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly passwordSetupError: Signal<string | null> = computed<string | null>(() => {
@@ -385,6 +396,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access private
    * @since 1.4.0
+   *
    * @type {EffectRef}
    */
   private readonly federatedRedirectEffect: EffectRef = effect((): void => {
@@ -406,6 +418,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access private
    * @since 1.4.0
+   *
    * @type {EffectRef}
    */
   private readonly passwordSetupOutcomeEffect: EffectRef = effect((): void => {
@@ -441,6 +454,8 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access private
    * @since 1.4.0
+   *
+   * @type {EffectRef}
    */
   private readonly closeDialogOnEmailRequest: EffectRef = effect((): void => {
     const status: string = this.emailChangeStore.requestCallState().status;
@@ -499,6 +514,8 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access private
    * @since 1.3.0
+   *
+   * @type {EffectRef}
    */
   private readonly leaveForLoginOnDeactivate: EffectRef = effect((): void => {
     const status: string = this.deactivationStore.deactivateCallState().status;
@@ -878,7 +895,9 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @param {FederatedProvider} provider - Provider selected for connection.
+   *
    * @returns {void}
    */
   protected connectProvider(provider: FederatedProvider): void {
@@ -894,7 +913,9 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @param {FederatedProvider} provider - Provider selected for removal.
+   *
    * @returns {void}
    */
   protected disconnectProvider(provider: FederatedProvider): void {
@@ -910,6 +931,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected openPasswordSetup(): void {
@@ -926,7 +948,9 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @param {boolean} visible - Latest dialog visibility.
+   *
    * @returns {void}
    */
   protected onPasswordSetupVisibilityChanged(visible: boolean): void {
@@ -943,6 +967,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected requestPasswordSetup(): void {
@@ -953,9 +978,12 @@ export class AccountSecurityPage implements OnInit {
    * Method restartPasswordSetup
    * @method restartPasswordSetup
    *
-   * @description Replaces an expired or exhausted OTP with a fresh challenge.
+   * @description
+   * Replaces an expired or exhausted OTP with a fresh challenge.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected restartPasswordSetup(): void {
@@ -972,7 +1000,9 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @param {PasswordSetupConfirmInput} input - Verified challenge and new password.
+   *
    * @returns {void}
    */
   protected confirmPasswordSetup(input: PasswordSetupConfirmInput): void {
@@ -989,6 +1019,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected retrySignInMethods(): void {

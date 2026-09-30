@@ -61,33 +61,54 @@ import { HlmTooltipImports } from '@shared/ui/tooltip';
 import { InterventionTag } from '../intervention-tag';
 
 import { HlmItemImports } from '@shared/ui/item';
+
 /**
  * Constant LABEL_PREVIEW_COUNT
- * @const LABEL_PREVIEW_COUNT
- * @description How many labels the properties view shows before folding the rest into a count.
+ *
+ * @description
+ * How many labels the properties view shows before folding the rest into a count.
+ *
  * @since 1.0.0
+ *
  * @type {number}
+ *
+ * @constant LABEL_PREVIEW_COUNT
  */
 const LABEL_PREVIEW_COUNT: number = 3;
 
 /**
  * Constant PRIORITY_VALUES
- * @const PRIORITY_VALUES
- * @description The priority ladder, in the order the select offers it.
+ *
+ * @description
+ * The priority ladder, in the order the select offers it.
+ *
  * @since 1.0.0
+ *
  * @type {readonly InterventionPriority[]}
+ *
+ * @constant PRIORITY_VALUES
  */
 const PRIORITY_VALUES: readonly InterventionPriority[] = ['low', 'normal', 'high', 'urgent'];
 
-/** The backend ceiling for an intervention description. */
+/**
+ * Constant DESCRIPTION_MAX_LENGTH
+ *
+ * @description
+ * The backend ceiling for an intervention description.
+ */
 const DESCRIPTION_MAX_LENGTH: number = 2000;
 
 /**
  * Constant PARTICIPANT_PREVIEW_COUNT
- * @const PARTICIPANT_PREVIEW_COUNT
- * @description How many participant avatars the group shows before folding the rest into a count.
+ *
+ * @description
+ * How many participant avatars the group shows before folding the rest into a count.
+ *
  * @since 1.3.0
+ *
  * @type {number}
+ *
+ * @constant PARTICIPANT_PREVIEW_COUNT
  */
 const PARTICIPANT_PREVIEW_COUNT: number = 4;
 
@@ -107,22 +128,18 @@ const PARTICIPANT_PREVIEW_COUNT: number = 4;
  * and finally, collapsed, audit metadata.
  * Both grids use this component's container width instead of viewport
  * breakpoints, keeping their values legible when the rail stacks.
- *
  * Two commit modes, chosen by the control rather than by taste: a value
  * picked in one gesture commits on that gesture, because a Save button after
  * choosing "Urgent" from four options is a click that means nothing.
  * Participants and labels are sets with no such moment, so they keep an
  * explicit Save.
- *
  * Nothing is dispatched for a value equal to the one already stored — every
  * accepted patch increments `revision`, which publication is pinned to.
- *
  * `plannedStartAt` and `dueAt` are one scheduling field: they are picked together and
  * sent in one patch, which §10.5 admits as "a small coherent group". Its
  * urgency ({@link dueSchedule}) is computed once by the page against the
  * organization's timezone, never re-derived here, so it never disagrees with
  * the identity row showing the same intervention.
- *
  * When the site is editable, its name opens the in-place picker. Once the
  * workflow freezes that field, the same name becomes the link to the facility
  * record. The conditional shapes avoid nesting an anchor inside
@@ -157,35 +174,60 @@ const PARTICIPANT_PREVIEW_COUNT: number = 4;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionPropertiesGrid {
-  /** The application's active locale, for relative-time formatting. */
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * The application's active locale, for relative-time formatting.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
   /**
    * Property catalogues
    * @readonly
-   * @description Independent request states and server coverage for preparation sources.
+   *
+   * @description
+   * Independent request states and server coverage for preparation sources.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>>}
    */
   public readonly catalogues = input<
     Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
   >({});
+
   /**
    * Property catalogueRequested
    * @readonly
-   * @description Requests the next page or retry of a selection source.
+   *
+   * @description
+   * Requests the next page or retry of a selection source.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<PlanningCatalogueKind>}
    */
   public readonly catalogueRequested = output<PlanningCatalogueKind>();
+
   /**
    * Property catalogueSearched
    * @readonly
-   * @description Requests server search while preserving the active draft and selected labels.
+   *
+   * @description
+   * Requests server search while preserving the active draft and selected labels.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<PlanningCatalogueRequest>}
    */
   public readonly catalogueSearched = output<PlanningCatalogueRequest>();
@@ -193,21 +235,34 @@ export class InterventionPropertiesGrid {
   /**
    * Property intervention
    * @readonly
-   * @description The loaded intervention whose properties this grid edits.
+   *
+   * @description
+   * The loaded intervention whose properties this grid edits.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<InterventionOutput>}
    */
   public readonly intervention: InputSignal<InterventionOutput> =
     input.required<InterventionOutput>();
 
   /**
+   * Property detailsExpanded
+   * @readonly
+   *
+   * @description
    * Whether the audit metadata (revision, created, updated) is visible. The
    * disclosure is local UI state and resets when the page moves to a
    * different intervention, while a refresh of the same intervention keeps
    * the operator's choice. Participants, labels and the description no
    * longer sit behind this — they read every time, per the norm that a
    * value gating publication or the day's work may not hide behind a toggle.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
    */
   protected readonly detailsExpanded: WritableSignal<boolean> = linkedSignal<string, boolean>({
     source: () => this.intervention().id,
@@ -217,9 +272,14 @@ export class InterventionPropertiesGrid {
   /**
    * Property descriptionExpanded
    * @readonly
-   * @description Whether a long description reads past its 3-line clamp. Resets on intervention change like {@link detailsExpanded}.
+   *
+   * @description
+   * Whether a long description reads past its 3-line clamp. Resets on intervention change like
+   * {@link detailsExpanded}.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly descriptionExpanded: WritableSignal<boolean> = linkedSignal<string, boolean>({
@@ -230,9 +290,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property descriptionOverflows
    * @readonly
-   * @description Whether the stored description is long enough to warrant the clamp and its "Show more" toggle.
+   *
+   * @description
+   * Whether the stored description is long enough to warrant the clamp and its "Show more" toggle.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly descriptionOverflows: Signal<boolean> = computed<boolean>(
@@ -242,9 +306,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning the intervention, so the site row can link into the facility's own record.
+   *
+   * @description
+   * The workspace owning the intervention, so the site row can link into the facility's own record.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -252,9 +320,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property siteOptions
    * @readonly
-   * @description The organization's root facilities, as the site choices.
+   *
+   * @description
+   * The organization's root facilities, as the site choices.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly SelectOption[]>}
    */
   public readonly siteOptions: InputSignal<readonly SelectOption[]> = input<
@@ -264,9 +336,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property memberOptions
    * @readonly
-   * @description The organization's members, used for both responsible and participants.
+   *
+   * @description
+   * The organization's members, used for both responsible and participants.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly MemberSelectOption[]>}
    */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
@@ -276,9 +352,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property labelOptions
    * @readonly
-   * @description The organization's intervention labels.
+   *
+   * @description
+   * The organization's intervention labels.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly InterventionLabelOutput[]>}
    */
   public readonly labelOptions: InputSignal<readonly InterventionLabelOutput[]> = input<
@@ -344,9 +424,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property canEditDetails
    * @readonly
-   * @description Whether labels accept a write, which holds until a terminal status.
+   *
+   * @description
+   * Whether labels accept a write, which holds until a terminal status.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly canEditDetails: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -377,9 +461,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property editState
    * @readonly
-   * @description Which field the page has open, writing, or showing a rejection.
+   *
+   * @description
+   * Which field the page has open, writing, or showing a rejection.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<InterventionEditState>}
    */
   public readonly editState: InputSignal<InterventionEditState> =
@@ -388,9 +476,14 @@ export class InterventionPropertiesGrid {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone, bound by the page. The default keeps the
+   * component renderable with no context wired.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -422,9 +515,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property detailsChanged
    * @readonly
-   * @description A patch the page should send. Never emitted for an unchanged value.
+   *
+   * @description
+   * A patch the page should send. Never emitted for an unchanged value.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<UpdateInterventionInput>}
    */
   public readonly detailsChanged: OutputEmitterRef<UpdateInterventionInput> =
@@ -433,9 +530,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property editTargetChanged
    * @readonly
-   * @description Asks the page to open or close an editor.
+   *
+   * @description
+   * Asks the page to open or close an editor.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionEditTarget | null>}
    */
   public readonly editTargetChanged: OutputEmitterRef<InterventionEditTarget | null> =
@@ -444,9 +545,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property manageLabelsRequested
    * @readonly
-   * @description The "Manage labels…" trigger was activated.
+   *
+   * @description
+   * The "Manage labels…" trigger was activated.
+   *
    * @access public
    * @since 1.8.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly manageLabelsRequested: OutputEmitterRef<void> = output<void>();
@@ -456,9 +561,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property priorityValues
    * @readonly
-   * @description Exposed for the priority select.
+   *
+   * @description
+   * Exposed for the priority select.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {readonly InterventionPriority[]}
    */
   protected readonly priorityValues: readonly InterventionPriority[] = PRIORITY_VALUES;
@@ -466,9 +575,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property descriptionMaxLength
    * @readonly
-   * @description Exposed so the textarea enforces the backend ceiling natively.
+   *
+   * @description
+   * Exposed so the textarea enforces the backend ceiling natively.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {number}
    */
   protected readonly descriptionMaxLength: number = DESCRIPTION_MAX_LENGTH;
@@ -476,9 +589,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property descriptionDraft
    * @readonly
-   * @description The in-flight description, seeded when the field opens.
+   *
+   * @description
+   * The in-flight description, seeded when the field opens.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string>}
    */
   protected readonly descriptionDraft: WritableSignal<string> = signal<string>('');
@@ -486,9 +603,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property canSaveDescription
    * @readonly
-   * @description Whether the description draft is valid and differs from the stored value.
+   *
+   * @description
+   * Whether the description draft is valid and differs from the stored value.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSaveDescription: Signal<boolean> = computed<boolean>(() => {
@@ -512,6 +633,7 @@ export class InterventionPropertiesGrid {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string[]>}
    */
   protected readonly participantsDraft: WritableSignal<string[]> = linkedSignal<boolean, string[]>({
@@ -532,6 +654,7 @@ export class InterventionPropertiesGrid {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string[]>}
    */
   protected readonly labelsDraft: WritableSignal<string[]> = linkedSignal<boolean, string[]>({
@@ -545,9 +668,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property siteLabel
    * @readonly
-   * @description The site's human name, resolved from its IRI.
+   *
+   * @description
+   * The site's human name, resolved from its IRI.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly siteLabel: Signal<string | null> = computed<string | null>(() => {
@@ -561,9 +688,14 @@ export class InterventionPropertiesGrid {
   /**
    * Property siteFacilityId
    * @readonly
-   * @description The site's bare facility id, extracted from its IRI, so the read-only site name can link to its facility record.
+   *
+   * @description
+   * The site's bare facility id, extracted from its IRI, so the read-only site name can link to its
+   * facility record.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly siteFacilityId: Signal<string | null> = computed<string | null>(() => {
@@ -575,9 +707,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property responsibleOption
    * @readonly
-   * @description The responsible member, resolved so the properties view can show a face.
+   *
+   * @description
+   * The responsible member, resolved so the properties view can show a face.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<MemberSelectOption | null>}
    */
   protected readonly responsibleOption: Signal<MemberSelectOption | null> =
@@ -586,9 +722,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property participantOptions
    * @readonly
-   * @description The participants, resolved from their IRIs and skipping any unknown one.
+   *
+   * @description
+   * The participants, resolved from their IRIs and skipping any unknown one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly MemberSelectOption[]>}
    */
   protected readonly participantOptions: Signal<readonly MemberSelectOption[]> = computed<
@@ -602,9 +742,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property visibleParticipants
    * @readonly
-   * @description The participants the avatar group shows before folding the rest into a count.
+   *
+   * @description
+   * The participants the avatar group shows before folding the rest into a count.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<readonly MemberSelectOption[]>}
    */
   protected readonly visibleParticipants: Signal<readonly MemberSelectOption[]> = computed<
@@ -614,9 +758,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property hiddenParticipantCount
    * @readonly
-   * @description How many participants the avatar group is not showing.
+   *
+   * @description
+   * How many participants the avatar group is not showing.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<number>}
    */
   protected readonly hiddenParticipantCount: Signal<number> = computed<number>(() =>
@@ -626,9 +774,14 @@ export class InterventionPropertiesGrid {
   /**
    * Property participantNamesLabel
    * @readonly
-   * @description The full participant name list, read by assistive technology in place of the avatar group's decorative initials.
+   *
+   * @description
+   * The full participant name list, read by assistive technology in place of the avatar group's
+   * decorative initials.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<string>}
    */
   protected readonly participantNamesLabel: Signal<string> = computed<string>(() =>
@@ -640,9 +793,14 @@ export class InterventionPropertiesGrid {
   /**
    * Property createdRelative
    * @readonly
-   * @description When the intervention was created, as a relative label — the absolute instant reads in an adjacent tooltip.
+   *
+   * @description
+   * When the intervention was created, as a relative label — the absolute instant reads in an
+   * adjacent tooltip.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<string>}
    */
   protected readonly createdRelative: Signal<string> = computed<string>(() =>
@@ -652,9 +810,14 @@ export class InterventionPropertiesGrid {
   /**
    * Property updatedRelative
    * @readonly
-   * @description When the intervention was last updated, as a relative label — the absolute instant reads in an adjacent tooltip.
+   *
+   * @description
+   * When the intervention was last updated, as a relative label — the absolute instant reads in an
+   * adjacent tooltip.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<string>}
    */
   protected readonly updatedRelative: Signal<string> = computed<string>(() =>
@@ -685,9 +848,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property visibleLabels
    * @readonly
-   * @description The labels the properties view shows before folding the rest into a count.
+   *
+   * @description
+   * The labels the properties view shows before folding the rest into a count.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly InterventionLabelSummary[]>}
    */
   protected readonly visibleLabels: Signal<readonly InterventionLabelSummary[]> = computed<
@@ -697,9 +864,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property hiddenLabelCount
    * @readonly
-   * @description How many labels the preview is not showing.
+   *
+   * @description
+   * How many labels the preview is not showing.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly hiddenLabelCount: Signal<number> = computed<number>(() =>
@@ -709,9 +880,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property canSaveParticipants
    * @readonly
-   * @description Whether the drafted participant set differs from the stored one.
+   *
+   * @description
+   * Whether the drafted participant set differs from the stored one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSaveParticipants: Signal<boolean> = computed<boolean>(
@@ -721,9 +896,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property canSaveLabels
    * @readonly
-   * @description Whether the drafted label set differs from the stored one.
+   *
+   * @description
+   * Whether the drafted label set differs from the stored one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSaveLabels: Signal<boolean> = computed<boolean>(
@@ -733,9 +912,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property memberLabelOf
    * @readonly
-   * @description Names a member IRI for the combobox trigger and its chips.
+   *
+   * @description
+   * Names a member IRI for the combobox trigger and its chips.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: string) => string}
    */
   protected readonly memberLabelOf: (value: string) => string = (value) =>
@@ -745,9 +928,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property siteLabelOf
    * @readonly
-   * @description Names a site IRI for the combobox trigger.
+   *
+   * @description
+   * Names a site IRI for the combobox trigger.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: string) => string}
    */
   protected readonly siteLabelOf: (value: string) => string = (value) =>
@@ -757,9 +944,13 @@ export class InterventionPropertiesGrid {
   /**
    * Property labelNameOf
    * @readonly
-   * @description Names a label id for the combobox chips.
+   *
+   * @description
+   * Names a label id for the combobox chips.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: string) => string}
    */
   protected readonly labelNameOf: (value: string) => string = (value) =>
@@ -770,10 +961,16 @@ export class InterventionPropertiesGrid {
   //#region Methods
   /**
    * Method isEditing
-   * @description Whether the page has this field open.
+   * @method isEditing
+   *
+   * @description
+   * Whether the page has this field open.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionEditTarget} target - The field in question.
+   *
    * @returns {boolean} True when it is the open one.
    */
   protected isEditing(target: InterventionEditTarget): boolean {
@@ -782,10 +979,16 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method isSaving
-   * @description Whether this field's own write is in flight.
+   * @method isSaving
+   *
+   * @description
+   * Whether this field's own write is in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionEditTarget} target - The field in question.
+   *
    * @returns {boolean} True while its patch is pending.
    */
   protected isSaving(target: InterventionEditTarget): boolean {
@@ -794,10 +997,16 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method errorFor
-   * @description The rejection message attributed to this field, if any.
+   * @method errorFor
+   *
+   * @description
+   * The rejection message attributed to this field, if any.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionEditTarget} target - The field in question.
+   *
    * @returns {string | null} Its failure message, or null.
    */
   protected errorFor(target: InterventionEditTarget): string | null {
@@ -808,6 +1017,7 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method onEditing
+   * @method onEditing
    *
    * @description
    * Forwards an open/close request to the page, which owns which field is
@@ -829,10 +1039,16 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method onDescriptionEditing
-   * @description Seeds the description draft on open and forwards the page-owned edit state change.
+   * @method onDescriptionEditing
+   *
+   * @description
+   * Seeds the description draft on open and forwards the page-owned edit state change.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {boolean} open - Whether the description field is being opened.
+   *
    * @returns {void}
    */
   protected onDescriptionEditing(open: boolean): void {
@@ -843,10 +1059,16 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method onDescriptionInput
-   * @description Keeps the description draft typed at the DOM boundary.
+   * @method onDescriptionInput
+   *
+   * @description
+   * Keeps the description draft typed at the DOM boundary.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {Event} event - The textarea input event.
+   *
    * @returns {void}
    */
   protected onDescriptionInput(event: Event): void {
@@ -858,9 +1080,14 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method saveDescription
-   * @description Emits a trimmed description, using null for an intentionally empty value.
+   * @method saveDescription
+   *
+   * @description
+   * Emits a trimmed description, using null for an intentionally empty value.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected saveDescription(): void {
@@ -871,10 +1098,16 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method pickPriority
-   * @description Commits a picked priority, unless it is the one already stored.
+   * @method pickPriority
+   *
+   * @description
+   * Commits a picked priority, unless it is the one already stored.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionPriority} priority - The chosen priority.
+   *
    * @returns {void}
    */
   protected pickPriority(priority: InterventionPriority): void {
@@ -885,10 +1118,16 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method pickSite
-   * @description Commits a picked site, unless it is the one already stored.
+   * @method pickSite
+   *
+   * @description
+   * Commits a picked site, unless it is the one already stored.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string | null} site - The chosen site IRI, or null to clear it.
+   *
    * @returns {void}
    */
   protected pickSite(site: string | null): void {
@@ -900,10 +1139,16 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method pickResponsible
-   * @description Commits a picked responsible, unless it is the one already stored.
+   * @method pickResponsible
+   *
+   * @description
+   * Commits a picked responsible, unless it is the one already stored.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string | null} responsible - The chosen member IRI, or null to clear it.
+   *
    * @returns {void}
    */
   protected pickResponsible(responsible: string | null): void {
@@ -915,6 +1160,7 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method pickSchedule
+   * @method pickSchedule
    *
    * @description
    * Commits the planned window. The picker emits once both ends are chosen, so
@@ -950,9 +1196,14 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method saveParticipants
-   * @description Emits the drafted participant set.
+   * @method saveParticipants
+   *
+   * @description
+   * Emits the drafted participant set.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected saveParticipants(): void {
@@ -961,6 +1212,7 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method saveLabels
+   * @method saveLabels
    *
    * @description
    * Emits the drafted label set. `labelIds` replaces the whole set rather than
@@ -977,6 +1229,7 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method memberOf
+   * @method memberOf
    *
    * @description
    * Resolves a member IRI against the loaded organization identities.
@@ -996,9 +1249,14 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method storedLabelIds
-   * @description The ids of the labels currently on the intervention.
+   * @method storedLabelIds
+   *
+   * @description
+   * The ids of the labels currently on the intervention.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {readonly string[]} The stored label ids.
    */
   private storedLabelIds(): readonly string[] {
@@ -1007,6 +1265,7 @@ export class InterventionPropertiesGrid {
 
   /**
    * Method sameSet
+   * @method sameSet
    *
    * @description
    * Whether two id collections hold the same members, order aside — the editor

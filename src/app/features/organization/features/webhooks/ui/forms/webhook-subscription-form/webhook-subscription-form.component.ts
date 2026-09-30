@@ -39,7 +39,11 @@ import type { WebhookDraft } from './models/webhook-draft.interface';
 /**
  * Component WebhookSubscriptionForm
  * @class WebhookSubscriptionForm
- * @description Local endpoint draft with Signal Forms, catalog-driven events and partial update output. No navigation or HTTP ownership.
+ *
+ * @description
+ * Local endpoint draft with Signal Forms, catalog-driven events and partial update output. No
+ * navigation or HTTP ownership.
+ *
  * @since 1.0.0
  */
 @Component({
@@ -52,75 +56,114 @@ export class WebhookSubscriptionForm {
   /**
    * Property initial
    * @readonly
-   * @description Initial snapshot, unchanged after a refused save.
+   *
+   * @description
+   * Initial snapshot, unchanged after a refused save.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<WebhookSubscriptionOutput | null>}
    */
   public readonly initial: InputSignal<WebhookSubscriptionOutput | null> =
     input<WebhookSubscriptionOutput | null>(null);
+
   /**
    * Property events
    * @readonly
-   * @description Authorized catalog entries.
+   *
+   * @description
+   * Authorized catalog entries.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly WebhookEventOutput[]>}
    */
   public readonly events: InputSignal<readonly WebhookEventOutput[]> =
     input.required<readonly WebhookEventOutput[]>();
+
   /**
    * Property pending
    * @readonly
-   * @description Submission state.
+   *
+   * @description
+   * Submission state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input(false);
+
   /**
    * Property serverError
    * @readonly
-   * @description Normalized server refusal.
+   *
+   * @description
+   * Normalized server refusal.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
+
   /**
    * Property submitted
    * @readonly
-   * @description Only changed fields for existing subscriptions.
+   *
+   * @description
+   * Only changed fields for existing subscriptions.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<Partial<WebhookSubscriptionInput>>}
    */
   public readonly submitted: OutputEmitterRef<Partial<WebhookSubscriptionInput>> =
     output<Partial<WebhookSubscriptionInput>>();
+
   /**
    * Property cancelled
    * @readonly
-   * @description Dismissal intent.
+   *
+   * @description
+   * Dismissal intent.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
+
   /**
    * Property dirtyChanged
    * @readonly
-   * @description Draft protection for the owning sheet.
+   *
+   * @description
+   * Draft protection for the owning sheet.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
+
   /**
    * Property model
    * @readonly
-   * @description Editable values.
+   *
+   * @description
+   * Editable values.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<WebhookDraft>}
    */
   protected readonly model: WritableSignal<WebhookDraft> = signal<WebhookDraft>({
@@ -129,23 +172,33 @@ export class WebhookSubscriptionForm {
     isActive: true,
     events: [],
   });
+
   /**
    * Property fieldErrors
    * @readonly
-   * @description Server validation matched to fields.
+   *
+   * @description
+   * Server validation matched to fields.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ServerFieldErrors>}
    */
   protected readonly fieldErrors: Signal<ServerFieldErrors> = computed(() =>
     toServerFieldErrors(this.serverError()),
   );
+
   /**
    * Property serverMessages
    * @readonly
-   * @description Global feedback keeps the draft visible.
+   *
+   * @description
+   * Global feedback keeps the draft visible.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly serverMessages: Signal<readonly string[]> = computed(() =>
@@ -155,12 +208,17 @@ export class WebhookSubscriptionForm {
       $localize`:@@webhooks.saveFailed:The webhook could not be saved.`,
     ),
   );
+
   /**
    * Property fields
    * @readonly
-   * @description Typed field tree with local validation; the API revalidates destinations and event choices.
+   *
+   * @description
+   * Typed field tree with local validation; the API revalidates destinations and event choices.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<WebhookDraft>}
    */
   protected readonly fields: FieldTree<WebhookDraft> = form(this.model, (path) => {
@@ -186,10 +244,14 @@ export class WebhookSubscriptionForm {
           },
     );
   });
+
   /**
    * Constructor
    * @constructor
-   * @description Seeds a fresh editor and reports dirty state without clearing failed submissions.
+   *
+   * @description
+   * Seeds a fresh editor and reports dirty state without clearing failed submissions.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -212,12 +274,20 @@ export class WebhookSubscriptionForm {
     });
     effect(() => this.dirtyChanged.emit(this.fields().dirty()));
   }
+
   /**
    * Method eventLabelOf
-   * @description The curated localized label for one catalog event row, falling back to the loaded catalog's own label, then to its raw key.
+   * @method eventLabelOf
+   *
+   * @description
+   * The curated localized label for one catalog event row, falling back to the loaded catalog's own
+   * label, then to its raw key.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {number} index - The row's position in {@link model}'s `events` array.
+   *
    * @returns {string} The resolved label.
    */
   protected eventLabelOf(index: number): string {
@@ -225,13 +295,19 @@ export class WebhookSubscriptionForm {
 
     return resolveWebhookEventLabel(entry.value, entry.label);
   }
+
   /**
    * Method submit
    * @method submit
-   * @description Validates and emits the edited fields; no transport is performed here.
+   *
+   * @description
+   * Validates and emits the edited fields; no transport is performed here.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {Event} event - Native form submission.
+   *
    * @returns {void}
    */
   protected submit(event: Event): void {

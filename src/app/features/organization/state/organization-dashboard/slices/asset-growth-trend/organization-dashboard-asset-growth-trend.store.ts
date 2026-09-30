@@ -44,28 +44,55 @@ import {
 
 /**
  * Type OrganizationDashboardAssetGrowthData
- * @type OrganizationDashboardAssetGrowthData
  *
  * @description
  * Combined payload returned by the parallel equipment + facilities
  * trend requests. Stored in state after a successful {@link load} call.
  *
  * @since 1.0.0
+ *
+ * @type OrganizationDashboardAssetGrowthData
  */
 type OrganizationDashboardAssetGrowthData = {
+  /**
+   * Property equipment
+   * @readonly
+   *
+   * @description
+   * Equipment trend response, or null until that request succeeds.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {OrganizationDashboardTrendOutput | null}
+   */
   readonly equipment: OrganizationDashboardTrendOutput | null;
+
+  /**
+   * Property facilities
+   * @readonly
+   *
+   * @description
+   * Facility trend response, or null until that request succeeds.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {OrganizationDashboardTrendOutput | null}
+   */
   readonly facilities: OrganizationDashboardTrendOutput | null;
 };
 
 /**
  * Type OrganizationDashboardAssetGrowthParams
- * @type OrganizationDashboardAssetGrowthParams
  *
  * @description
  * Parameters forwarded to the API on each load. Extends the base
  * trend resource params with equipment and facility dimension filters.
  *
  * @since 1.0.0
+ *
+ * @type OrganizationDashboardAssetGrowthParams
  */
 type OrganizationDashboardAssetGrowthParams = OrganizationDashboardTrendResourceParams & {
   readonly includeEquipment: boolean;
@@ -76,10 +103,9 @@ type OrganizationDashboardAssetGrowthParams = OrganizationDashboardTrendResource
 };
 
 /**
-
- * Store OrganizationDashboardAssetGrowthStore
- * @const OrganizationDashboardAssetGrowthStore
+ * Function createAssetGrowthTrendStore
  *
+ * Store OrganizationDashboardAssetGrowthStore
  * @description
  * Component-scoped NgRx SignalStore for the **Asset Growth Momentum**
  * dashboard card. Manages filter state, orchestrates parallel API calls
@@ -96,6 +122,14 @@ type OrganizationDashboardAssetGrowthParams = OrganizationDashboardTrendResource
  * the computed whenever any dependency changes, automatically triggering a new
  * parallel fetch without any imperative coordination in the component.
  *
+ * @version 2.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @returns {typeof AssetGrowthTrendStore}
+ *
+ * @const OrganizationDashboardAssetGrowthStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [OrganizationDashboardAssetGrowthStore] })
@@ -103,18 +137,14 @@ type OrganizationDashboardAssetGrowthParams = OrganizationDashboardTrendResource
  *   protected readonly store = inject<OrganizationDashboardAssetGrowthStore>(OrganizationDashboardAssetGrowthStore);
  * }
  * ```
- *
- * @version 2.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 function createAssetGrowthTrendStore() {
   return signalStore(
     //#region State
 
     /**
-     * Feature withState
-     *
      * @description
+     * Feature withState
      * Seeds the store with the initial filter state and async-operation
      * flags. All keys become deeply-signal-wrapped `SignalState` entries
      * that expose typed read signals on the store instance.
@@ -139,9 +169,8 @@ function createAssetGrowthTrendStore() {
     //#region Methods
 
     /**
-     * Feature withMethods
-     *
      * @description
+     * Feature withMethods
      * Adds the main async load action and all synchronous filter-state
      * mutation methods. Every setter patches state via `patchState`; the
      * reactive load flow is driven automatically by `withHooks`.
@@ -154,10 +183,14 @@ function createAssetGrowthTrendStore() {
         organizationService = inject<OrganizationService>(OrganizationService),
         activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
       ) => ({
-        /** Enables browser-only queries when the dashboard page activates the trend store. */
+        /**
+         * @description
+         * Enables browser-only queries when the dashboard page activates the trend store.
+         */
         activate(): void {
           patchState(store, { activated: true });
         },
+
         /**
          * Method load
          * @method load
@@ -168,7 +201,10 @@ function createAssetGrowthTrendStore() {
          *
          * @access public
          * @since 2.0.0
-         * @param {OrganizationDashboardAssetGrowthParams | undefined} params - Active query or cancellation.
+         *
+         * @param {OrganizationDashboardAssetGrowthParams | undefined} params - Active query or
+         *   cancellation.
+         *
          * @returns {void}
          */
         load: rxMethod<OrganizationDashboardAssetGrowthParams | undefined>(
@@ -237,10 +273,12 @@ function createAssetGrowthTrendStore() {
          * @description
          * Updates the optional equipment-type dimension filter.
          *
-         * @param {OrganizationDashboardEquipmentType | null} equipmentType - New filter value, or null.
-         * @returns {void}
-         *
          * @since 2.0.0
+         *
+         * @param {OrganizationDashboardEquipmentType | null} equipmentType - New filter value, or
+         *   null.
+         *
+         * @returns {void}
          */
         setEquipmentType(equipmentType: OrganizationDashboardEquipmentType | null): void {
           patchState(store, { selectedEquipmentType: equipmentType });
@@ -252,10 +290,12 @@ function createAssetGrowthTrendStore() {
          * @description
          * Updates the optional equipment-status dimension filter.
          *
-         * @param {OrganizationDashboardEquipmentStatus | null} equipmentStatus - New filter value, or null.
-         * @returns {void}
-         *
          * @since 2.0.0
+         *
+         * @param {OrganizationDashboardEquipmentStatus | null} equipmentStatus - New filter value,
+         *   or null.
+         *
+         * @returns {void}
          */
         setEquipmentStatus(equipmentStatus: OrganizationDashboardEquipmentStatus | null): void {
           patchState(store, { selectedEquipmentStatus: equipmentStatus });
@@ -267,10 +307,11 @@ function createAssetGrowthTrendStore() {
          * @description
          * Updates the optional facility-type dimension filter.
          *
-         * @param {FacilityType | null} facilityType - New filter value, or null.
-         * @returns {void}
-         *
          * @since 2.0.0
+         *
+         * @param {FacilityType | null} facilityType - New filter value, or null.
+         *
+         * @returns {void}
          */
         setFacilityType(facilityType: FacilityType | null): void {
           patchState(store, { selectedFacilityType: facilityType });
@@ -283,6 +324,7 @@ function createAssetGrowthTrendStore() {
          * Updates the draft date range edited inside the filter drawer.
          *
          * @param {Date[] | null} range - Draft range selected by the user.
+         *
          * @returns {void}
          */
         setDraftDateRange(range: Date[] | null): void {
@@ -298,6 +340,7 @@ function createAssetGrowthTrendStore() {
          * Updates the draft compare-mode toggle edited inside the filter drawer.
          *
          * @param {boolean} compareEnabled - Draft compare-mode value.
+         *
          * @returns {void}
          */
         setDraftCompareEnabled(compareEnabled: boolean): void {
@@ -311,6 +354,7 @@ function createAssetGrowthTrendStore() {
          * Updates the draft equipment-type value edited inside the filter drawer.
          *
          * @param {OrganizationDashboardEquipmentType | null} equipmentType - Draft equipment type.
+         *
          * @returns {void}
          */
         setDraftEquipmentType(equipmentType: OrganizationDashboardEquipmentType | null): void {
@@ -323,7 +367,9 @@ function createAssetGrowthTrendStore() {
          * @description
          * Updates the draft equipment-status value edited inside the filter drawer.
          *
-         * @param {OrganizationDashboardEquipmentStatus | null} equipmentStatus - Draft equipment status.
+         * @param {OrganizationDashboardEquipmentStatus | null} equipmentStatus - Draft equipment
+         *   status.
+         *
          * @returns {void}
          */
         setDraftEquipmentStatus(
@@ -339,6 +385,7 @@ function createAssetGrowthTrendStore() {
          * Updates the draft facility-type value edited inside the filter drawer.
          *
          * @param {FacilityType | null} facilityType - Draft facility type.
+         *
          * @returns {void}
          */
         setDraftFacilityType(facilityType: FacilityType | null): void {
@@ -429,9 +476,8 @@ function createAssetGrowthTrendStore() {
     //#region Computed
 
     /**
-     * Feature withComputed
-     *
      * @description
+     * Feature withComputed
      * Derives the aligned trend series shared by the chart and summary metrics.
      *
      * @since 2.0.0
@@ -472,9 +518,8 @@ function createAssetGrowthTrendStore() {
     //#region Hooks
 
     /**
-     * Feature withComputed (load params)
-     *
      * @description
+     * Feature withComputed (load params)
      * Derives the fully assembled API parameters object from all filter-state
      * signals. Declared in `withComputed` so that derived state is not
      * created imperatively inside `onInit`.
@@ -526,9 +571,8 @@ function createAssetGrowthTrendStore() {
 
     withHooks((store, activeOrganizationStore = inject(ActiveOrganizationStore)) => ({
       /**
-       * Hook onInit
-       *
        * @description
+       * Hook onInit
        * Connects {@link loadParams} to {@link load} via `rxMethod` so the card
        * refetches whenever a filter signal changes. Watches organization identity
        * separately so inactive queries cannot retain another organization's data.
@@ -550,12 +594,22 @@ function createAssetGrowthTrendStore() {
   );
 }
 
+/**
+ * Constant AssetGrowthTrendStore
+ *
+ * @description
+ * Root-provided NgRx store backing the dashboard's equipment and facility trends.
+ *
+ * @access public
+ * @since 0.1.0
+ *
+ * @type {ReturnType<typeof createAssetGrowthTrendStore>}
+ */
 export const AssetGrowthTrendStore: ReturnType<typeof createAssetGrowthTrendStore> =
   createAssetGrowthTrendStore();
 
 /**
- * Type OrganizationDashboardAssetGrowthStore
- * @type AssetGrowthTrendStore
+ * Type AssetGrowthTrendStore
  *
  * @description
  * Instance type of the {@link AssetGrowthTrendStore}
@@ -563,6 +617,9 @@ export const AssetGrowthTrendStore: ReturnType<typeof createAssetGrowthTrendStor
  * type annotations throughout the dashboard card component and its tests.
  *
  * @version 2.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type AssetGrowthTrendStore
  */
 export type AssetGrowthTrendStore = InstanceType<typeof AssetGrowthTrendStore>;

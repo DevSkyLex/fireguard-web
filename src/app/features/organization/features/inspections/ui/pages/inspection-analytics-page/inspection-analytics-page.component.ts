@@ -43,6 +43,8 @@ import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
  * decides the `{from, to}` pair sent to the statistics endpoint.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 type InspectionAnalyticsPeriodPreset = '7d' | '30d' | '90d' | '12m' | 'all';
 
@@ -56,12 +58,73 @@ type InspectionAnalyticsPeriodPreset = '7d' | '30d' | '90d' | '12m' | 'all';
  * never colour alone.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 type InspectionAnalyticsSeverityRow = {
+  /**
+   * Property severity
+   * @readonly
+   *
+   * @description
+   * Selects the severity represented by this non-conformity row.
+   *
+   * @access public
+   *
+   * @type {NonConformitySeverity}
+   */
   readonly severity: NonConformitySeverity;
+
+  /**
+   * Property open
+   * @readonly
+   *
+   * @description
+   * Identifies the record currently being edited, when one exists.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
   readonly open: number;
+
+  /**
+   * Property resolved
+   * @readonly
+   *
+   * @description
+   * Counts resolved non-conformities in the selected statistics window.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
   readonly resolved: number;
+
+  /**
+   * Property percent
+   * @readonly
+   *
+   * @description
+   * Reports the percentage represented by this statistics row.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
   readonly percent: number;
+
+  /**
+   * Property descriptor
+   * @readonly
+   *
+   * @description
+   * Provides the status label and icon used for this non-conformity.
+   *
+   * @access public
+   *
+   * @type {InspectionStatusTagDescriptor}
+   */
   readonly descriptor: InspectionStatusTagDescriptor;
 };
 
@@ -79,7 +142,7 @@ type InspectionAnalyticsSeverityRow = {
 const SEVERITY_ORDER: readonly NonConformitySeverity[] = ['critical', 'high', 'medium', 'low'];
 
 /**
- * Component InspectionAnalyticsPage
+ * Class InspectionAnalyticsPage
  * @class InspectionAnalyticsPage
  *
  * @description
@@ -90,25 +153,23 @@ const SEVERITY_ORDER: readonly NonConformitySeverity[] = ['critical', 'high', 'm
  * the top-10 facilities / equipment types by open count as tables. Reading
  * is gated by the feature's own `organization.inspection.read` guard on the
  * pathless parent route.
- *
  * The severity bars reuse the dashboard's pattern — `hlm-progress` behind a
  * label+icon descriptor from the inspection status-tag registry — rather
  * than extending the shared line-chart primitive: a four-row categorical
  * breakdown does not need a chart, and the achromatic-safe rule (severity
  * as label + icon, never colour alone) is already what the registry
  * enforces.
- *
  * The period selector mirrors the dashboard Trends presets and adds "All
  * time" as the default-adjacent widest window; presets resolve to inclusive
  * ISO 8601 `{from, to}` bounds on `createdAt` at select time, and every
  * organization or period change refetches the whole snapshot.
- *
  * The equipment-type table renders localized labels through the
  * `equipments` feature's public `EQUIPMENT_TYPE_OPTIONS` registry rather
  * than the raw backend enum key — this page is a new cross-feature consumer
  * of that registry (`organization/FEATURE.md`).
  *
  * @version 1.1.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -164,11 +225,33 @@ export class InspectionAnalyticsPage {
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
 
-  /** The active preset window. Defaults to 30 days, like the dashboard's Trends section. */
+  /**
+   * Property selectedPeriod
+   * @readonly
+   *
+   * @description
+   * Holds the period preset used to request the inspection analytics snapshot.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InspectionAnalyticsPeriodPreset>}
+   */
   protected readonly selectedPeriod: WritableSignal<InspectionAnalyticsPeriodPreset> =
     signal<InspectionAnalyticsPeriodPreset>('30d');
 
-  /** Placeholder row count shown while the severity breakdown loads. */
+  /**
+   * Property severitySkeletonRows
+   * @readonly
+   *
+   * @description
+   * Provides row indices used to render loading placeholders for severity data.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {readonly number[]}
+   */
   protected readonly severitySkeletonRows: readonly number[] = [0, 1, 2, 3];
 
   /**
@@ -206,12 +289,34 @@ export class InspectionAnalyticsPage {
     },
   );
 
-  /** The open total across every severity — the first KPI. */
+  /**
+   * Property totalOpen
+   * @readonly
+   *
+   * @description
+   * Counts open non-conformities across the loaded severity rows.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   protected readonly totalOpen: Signal<number> = computed<number>(() =>
     this.severityRows().reduce((sum, row) => sum + row.open, 0),
   );
 
-  /** The resolved total across every severity, shown as the open KPI's dynamic caption. */
+  /**
+   * Property totalResolved
+   * @readonly
+   *
+   * @description
+   * Counts resolved non-conformities across the loaded severity rows.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   protected readonly totalResolved: Signal<number> = computed<number>(() =>
     this.severityRows().reduce((sum, row) => sum + row.resolved, 0),
   );
@@ -219,9 +324,13 @@ export class InspectionAnalyticsPage {
   /**
    * Property openResolvedCaption
    * @readonly
-   * @description The open KPI's dynamic caption: how many were resolved in the same window.
+   *
+   * @description
+   * The open KPI's dynamic caption: how many were resolved in the same window.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<string>}
    */
   protected readonly openResolvedCaption: Signal<string> = computed<string>(() => {
@@ -232,17 +341,50 @@ export class InspectionAnalyticsPage {
       : $localize`:@@inspection.analytics.kpi.open.resolvedCaptionMany:${resolved}:count: resolved in the period`;
   });
 
-  /** Average resolution days, formatted to one decimal — an em dash when nothing was resolved in the window. */
+  /**
+   * Property averageDaysLabel
+   * @readonly
+   *
+   * @description
+   * Formats the average resolution time for display in the analytics summary.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly averageDaysLabel: Signal<string> = computed<string>(() =>
     this.formatDays(this.store.queryData()?.resolution?.averageDays),
   );
 
-  /** Median resolution days, formatted to one decimal — an em dash when nothing was resolved in the window. */
+  /**
+   * Property medianDaysLabel
+   * @readonly
+   *
+   * @description
+   * Formats the median resolution time for display in the analytics summary.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
   protected readonly medianDaysLabel: Signal<string> = computed<string>(() =>
     this.formatDays(this.store.queryData()?.resolution?.medianDays),
   );
 
-  /** Whether the loaded snapshot holds no non-conformity at all — open or resolved. */
+  /**
+   * Property isSnapshotEmpty
+   * @readonly
+   *
+   * @description
+   * Indicates that a loaded snapshot contains no open or resolved non-conformities.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly isSnapshotEmpty: Signal<boolean> = computed<boolean>(
     () => this.store.isQueryLoaded() && this.totalOpen() === 0 && this.totalResolved() === 0,
   );
@@ -251,11 +393,13 @@ export class InspectionAnalyticsPage {
   //#region Constructor
   /**
    * Constructor
+   * @constructor
    *
    * @description
    * Refetches the snapshot whenever the active organization or the period
    * preset changes.
    *
+   * @access public
    * @since 1.0.0
    */
   public constructor() {
@@ -271,10 +415,17 @@ export class InspectionAnalyticsPage {
   //#region Methods
   /**
    * Method onPeriodChanged
-   * @description Narrows `hlm-toggle-group`'s single/multi-select payload before writing {@link selectedPeriod}.
+   * @method onPeriodChanged
+   *
+   * @description
+   * Narrows `hlm-toggle-group`'s single/multi-select payload before writing {@link selectedPeriod}.
+   *
    * @access protected
    * @since 1.0.0
-   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   *
+   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted
+   *   value.
+   *
    * @returns {void}
    */
   protected onPeriodChanged(value: string | readonly string[] | null | undefined): void {
@@ -287,9 +438,14 @@ export class InspectionAnalyticsPage {
 
   /**
    * Method retry
-   * @description Re-runs the statistics query after a failure, same organization and window.
+   * @method retry
+   *
+   * @description
+   * Re-runs the statistics query after a failure, same organization and window.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected retry(): void {
@@ -301,10 +457,17 @@ export class InspectionAnalyticsPage {
 
   /**
    * Method resolveWindow
-   * @description Resolves one preset into the inclusive ISO 8601 `{from, to}` window the endpoint expects — `undefined` for "all time".
+   * @method resolveWindow
+   *
+   * @description
+   * Resolves one preset into the inclusive ISO 8601 `{from, to}` window the endpoint expects —
+   * `undefined` for "all time".
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InspectionAnalyticsPeriodPreset} preset - The selected preset window.
+   *
    * @returns {NonConformityStatisticsOptions | undefined} The resolved window, or none.
    */
   private resolveWindow(
@@ -335,10 +498,17 @@ export class InspectionAnalyticsPage {
 
   /**
    * Method formatDays
-   * @description Formats a fractional-days figure to one decimal, an em dash when the window resolved nothing (`null` server-side arrives as `undefined` — API Platform omits null fields).
+   * @method formatDays
+   *
+   * @description
+   * Formats a fractional-days figure to one decimal, an em dash when the window resolved nothing
+   * (`null` server-side arrives as `undefined` — API Platform omits null fields).
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {number | null | undefined} days - The raw fractional days.
+   *
    * @returns {string} The display label.
    */
   private formatDays(days: number | null | undefined): string {
@@ -347,10 +517,17 @@ export class InspectionAnalyticsPage {
 
   /**
    * Method typeLabelOf
-   * @description The localized equipment type label for a raw backend enum key, falling back to a humanized form of the key itself when the registry does not know it.
+   * @method typeLabelOf
+   *
+   * @description
+   * The localized equipment type label for a raw backend enum key, falling back to a humanized form
+   * of the key itself when the registry does not know it.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} type - The raw equipment type key.
+   *
    * @returns {string} The localized label, or a humanized fallback.
    */
   protected typeLabelOf(type: string): string {
@@ -362,10 +539,17 @@ export class InspectionAnalyticsPage {
 
   /**
    * Method severityAriaLabelOf
-   * @description The severity progress bar's accessible name, naming the severity and its open share together rather than relying on a nearby visual label alone.
+   * @method severityAriaLabelOf
+   *
+   * @description
+   * The severity progress bar's accessible name, naming the severity and its open share together
+   * rather than relying on a nearby visual label alone.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {InspectionAnalyticsSeverityRow} row - The severity row being rendered.
+   *
    * @returns {string} The bar's accessible name.
    */
   protected severityAriaLabelOf(row: InspectionAnalyticsSeverityRow): string {

@@ -19,7 +19,12 @@ import { InspectionService } from '@features/organization/features/inspections/d
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import type { OrganizationAssetsPaneState } from './models';
 
-/** Page size for the compact right-pane lists — each resource has its own server page and total. */
+/**
+ * Constant PANE_ITEMS_PER_PAGE
+ *
+ * @description
+ * Page size for the compact right-pane lists — each resource has its own server page and total.
+ */
 const PANE_ITEMS_PER_PAGE = 50;
 
 /**
@@ -42,9 +47,9 @@ const INITIAL_STATE: OrganizationAssetsPaneState = {
 };
 
 /**
- * Store OrganizationAssetsPaneStore
- * @const OrganizationAssetsPaneStore
+ * Constant OrganizationAssetsPaneStore
  *
+ * Store OrganizationAssetsPaneStore
  * @description
  * Component-scoped NgRx SignalStore backing the assets explorer's right
  * pane. It reuses `EquipmentService`/`InspectionService` from their owning
@@ -54,6 +59,12 @@ const INITIAL_STATE: OrganizationAssetsPaneState = {
  * uses `switchMap`, so switching the axis or the selected facility cancels
  * whatever was still in flight.
  *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const OrganizationAssetsPaneStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [OrganizationAssetsPaneStore] })
@@ -61,9 +72,6 @@ const INITIAL_STATE: OrganizationAssetsPaneState = {
  *   protected readonly pane = inject(OrganizationAssetsPaneStore);
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const OrganizationAssetsPaneStore = signalStore(
   //#region State
@@ -78,26 +86,45 @@ export const OrganizationAssetsPaneStore = signalStore(
     inspectionPageCount: computed(() =>
       Math.max(1, Math.ceil(store.inspectionTotal() / PANE_ITEMS_PER_PAGE)),
     ),
-    /** The equipment currently in view. */
+
+    /**
+     * @description
+     * The equipment currently in view.
+     */
     equipment: computed<readonly EquipmentOutput[]>(
       () => store.equipmentListCallState().data ?? [],
     ),
 
-    /** Whether the equipment list is resolving. */
+    /**
+     * @description
+     * Whether the equipment list is resolving.
+     */
     isLoadingEquipment: computed<boolean>(() => isCallPending(store.equipmentListCallState())),
 
-    /** Whether the equipment list failed to load. */
+    /**
+     * @description
+     * Whether the equipment list failed to load.
+     */
     hasEquipmentError: computed<boolean>(() => isCallError(store.equipmentListCallState())),
 
-    /** The inspections currently in view. */
+    /**
+     * @description
+     * The inspections currently in view.
+     */
     inspections: computed<readonly InspectionOutput[]>(
       () => store.inspectionListCallState().data ?? [],
     ),
 
-    /** Whether the inspections list is resolving. */
+    /**
+     * @description
+     * Whether the inspections list is resolving.
+     */
     isLoadingInspections: computed<boolean>(() => isCallPending(store.inspectionListCallState())),
 
-    /** Whether the inspections list failed to load. */
+    /**
+     * @description
+     * Whether the inspections list failed to load.
+     */
     hasInspectionsError: computed<boolean>(() => isCallError(store.inspectionListCallState())),
   })),
   //#endregion
@@ -236,5 +263,7 @@ export const OrganizationAssetsPaneStore = signalStore(
  * Instance type of the {@link OrganizationAssetsPaneStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type {OrganizationAssetsPaneStoreType}
  */
 export type OrganizationAssetsPaneStoreType = InstanceType<typeof OrganizationAssetsPaneStore>;

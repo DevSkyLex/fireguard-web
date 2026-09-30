@@ -36,7 +36,6 @@ import type { PlanItemListOption } from './models';
  * All three need exactly the same widget: browse every item and activate
  * one, since their respective canvas/SVG is pointer-reachable but not a
  * natural tab sequence to browse in order.
- *
  * Generalized from a zone-only `FacilityZoneList` once the 2D Plans tab's
  * own hand-rolled equipment roster turned out to duplicate it a second time
  * in the very same panel — `role="listbox"` and `role="option"` on the
@@ -44,7 +43,6 @@ import type { PlanItemListOption } from './models';
  * equipment one. The rule of three (`ARCHITECTURE.md` §2.9) is satisfied
  * here by locality, not count: the pattern was already duplicated once too
  * many inside a single component.
- *
  * A hand-built `role="listbox"` over a real, focus-moving roving tabindex
  * (`FocusKeyManager` from `@angular/cdk/a11y`) rather than the spartan
  * `command` combobox: `command`'s arrow-key navigation only wires up while
@@ -52,7 +50,6 @@ import type { PlanItemListOption } from './models';
  * the Space key as a filter character — neither fits a plain browse-and-pick
  * list. Real DOM focus (not `aria-activedescendant`) means the browser's own
  * Enter/Space `<button>` activation needs no extra wiring here.
- *
  * Browsing (arrow keys) and selecting (`Enter`/`Space`, or a click) are
  * deliberately distinct: {@link activeIndex} is a local, transient "which
  * row is focused" position that follows {@link selectedId} whenever it
@@ -63,17 +60,16 @@ import type { PlanItemListOption } from './models';
  * plus a leading check glyph — a redundant, non-chromatic cue standing
  * beside its background tint, matching `PRODUCT.md`'s rule that a state is
  * never colour alone.
- *
  * Each registry's own secondary decorator (a status tag, a status
  * icon+label pair) is content-projected through a single `ng-template`
  * read via {@link decorator} — this widget knows nothing about zones,
  * rooms, or equipment, only that a row has an id, a label, and a source
  * record to hand back to the caller's own markup.
- *
  * Presentational: inputs and outputs only, no store or service
  * (`ARCHITECTURE.md` §10.3).
  *
  * @since 1.13.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -89,9 +85,13 @@ export class FacilityPlanItemList<T> {
   /**
    * Property items
    * @readonly
-   * @description The browsable rows, in server order.
+   *
+   * @description
+   * The browsable rows, in server order.
+   *
    * @access public
    * @since 1.13.0
+   *
    * @type {InputSignal<ReadonlyArray<PlanItemListOption<T>>>}
    */
   public readonly items: InputSignal<ReadonlyArray<PlanItemListOption<T>>> =
@@ -100,9 +100,13 @@ export class FacilityPlanItemList<T> {
   /**
    * Property selectedId
    * @readonly
-   * @description The currently selected row's id, or `null` — matches the wrapping surface's own selection.
+   *
+   * @description
+   * The currently selected row's id, or `null` — matches the wrapping surface's own selection.
+   *
    * @access public
    * @since 1.13.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly selectedId: InputSignal<string | null> = input<string | null>(null);
@@ -110,9 +114,14 @@ export class FacilityPlanItemList<T> {
   /**
    * Property listLabel
    * @readonly
-   * @description This list's accessible name (`aria-label`) — the caller's own heading text, so the listbox never carries a second, disconnected translation for the same concept.
+   *
+   * @description
+   * This list's accessible name (`aria-label`) — the caller's own heading text, so the listbox
+   * never carries a second, disconnected translation for the same concept.
+   *
    * @access public
    * @since 1.13.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly listLabel: InputSignal<string> = input.required<string>();
@@ -120,9 +129,14 @@ export class FacilityPlanItemList<T> {
   /**
    * Property emptyMessage
    * @readonly
-   * @description The message shown instead of the listbox when {@link items} is empty — worded by the caller for its own registry ("No zones…", "No equipment…").
+   *
+   * @description
+   * The message shown instead of the listbox when {@link items} is empty — worded by the caller for
+   * its own registry ("No zones…", "No equipment…").
+   *
    * @access public
    * @since 1.13.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly emptyMessage: InputSignal<string> = input.required<string>();
@@ -130,9 +144,15 @@ export class FacilityPlanItemList<T> {
   /**
    * Property testId
    * @readonly
-   * @description The listbox root's `data-testid`. Defaults to the original `FacilityZoneList` value so the two zone/room consumers this widget was generalized from need no e2e change; the equipment consumer overrides it.
+   *
+   * @description
+   * The listbox root's `data-testid`. Defaults to the original `FacilityZoneList` value so the two
+   * zone/room consumers this widget was generalized from need no e2e change; the equipment consumer
+   * overrides it.
+   *
    * @access public
    * @since 1.13.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly testId: InputSignal<string> = input<string>('facility-zone-list');
@@ -140,9 +160,13 @@ export class FacilityPlanItemList<T> {
   /**
    * Property optionTestId
    * @readonly
-   * @description Each row's `data-testid`. Same default-preservation rationale as {@link testId}.
+   *
+   * @description
+   * Each row's `data-testid`. Same default-preservation rationale as {@link testId}.
+   *
    * @access public
    * @since 1.13.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly optionTestId: InputSignal<string> = input<string>('facility-zone-list-option');
@@ -152,30 +176,79 @@ export class FacilityPlanItemList<T> {
   /**
    * Property itemActivated
    * @readonly
-   * @description A row was activated by click, `Enter` or `Space` — emits its id.
+   *
+   * @description
+   * A row was activated by click, `Enter` or `Space` — emits its id.
+   *
    * @access public
    * @since 1.13.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly itemActivated: OutputEmitterRef<string> = output<string>();
   //#endregion
 
   //#region Properties
-  /** Injection context carried into the `ListKeyManager`'s signal-backed items. */
+  /**
+   * Property injector
+   * @readonly
+   *
+   * @description
+   * Injection context carried into the `ListKeyManager`'s signal-backed items.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Injector}
+   */
   private readonly injector: Injector = inject(Injector);
 
-  /** Every row's own `<button>`, in {@link items} order — the `@for` in the template iterates the same array. */
+  /**
+   * Property optionRefs
+   * @readonly
+   *
+   * @description
+   * Every row's own `<button>`, in {@link items} order — the `@for` in the template iterates the
+   * same array.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<readonly ElementRef<HTMLButtonElement>[]>}
+   */
   private readonly optionRefs: Signal<readonly ElementRef<HTMLButtonElement>[]> =
     viewChildren<ElementRef<HTMLButtonElement>>('itemOption');
 
-  /** {@link optionRefs} wrapped as `FocusableOption`s the key manager can move real DOM focus onto. */
+  /**
+   * Property focusableOptions
+   * @readonly
+   *
+   * @description
+   * {@link optionRefs} wrapped as `FocusableOption`s the key manager can move real DOM focus onto.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<readonly FocusableOption[]>}
+   */
   private readonly focusableOptions: Signal<readonly FocusableOption[]> = computed(() =>
     this.optionRefs().map((ref: ElementRef<HTMLButtonElement>): FocusableOption => ({
       focus: (): void => ref.nativeElement.focus(),
     })),
   );
 
-  /** Drives ArrowUp/Down (wrapping) and Home/End across {@link focusableOptions}. */
+  /**
+   * Property keyManager
+   * @readonly
+   *
+   * @description
+   * Drives ArrowUp/Down (wrapping) and Home/End across {@link focusableOptions}.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FocusKeyManager<FocusableOption>}
+   */
   private readonly keyManager: FocusKeyManager<FocusableOption> =
     new FocusKeyManager<FocusableOption>(this.focusableOptions, this.injector)
       .withVerticalOrientation()
@@ -185,9 +258,15 @@ export class FacilityPlanItemList<T> {
   /**
    * Property activeIndex
    * @readonly
-   * @description Which row currently carries `tabindex="0"` — the sole entry point into this list's roving tabindex. Re-synced to {@link selectedId} whenever it changes from outside; moved independently by arrow-key browsing in between.
+   *
+   * @description
+   * Which row currently carries `tabindex="0"` — the sole entry point into this list's roving
+   * tabindex. Re-synced to {@link selectedId} whenever it changes from outside; moved independently
+   * by arrow-key browsing in between.
+   *
    * @access protected
    * @since 1.13.0
+   *
    * @type {WritableSignal<number>}
    */
   protected readonly activeIndex: WritableSignal<number> = signal<number>(0);
@@ -195,9 +274,14 @@ export class FacilityPlanItemList<T> {
   /**
    * Property decorator
    * @readonly
-   * @description The caller's own secondary-content `ng-template`, projected beside each row's label with the row's {@link PlanItemListOption.data} as `$implicit`. `undefined` renders nothing extra.
+   *
+   * @description
+   * The caller's own secondary-content `ng-template`, projected beside each row's label with the
+   * row's {@link PlanItemListOption.data} as `$implicit`. `undefined` renders nothing extra.
+   *
    * @access protected
    * @since 1.13.0
+   *
    * @type {Signal<TemplateRef<{ $implicit: T }> | undefined>}
    */
   protected readonly decorator: Signal<TemplateRef<{ $implicit: T }> | undefined> =
@@ -208,7 +292,11 @@ export class FacilityPlanItemList<T> {
   /**
    * Constructor
    * @constructor
-   * @description Keeps {@link activeIndex} pointed at {@link selectedId} whenever it changes from outside, and mirrors the key manager's own browsing position back into it.
+   *
+   * @description
+   * Keeps {@link activeIndex} pointed at {@link selectedId} whenever it changes from outside, and
+   * mirrors the key manager's own browsing position back into it.
+   *
    * @access public
    * @since 1.13.0
    */
@@ -232,10 +320,17 @@ export class FacilityPlanItemList<T> {
   //#region Methods
   /**
    * Method onKeydown
-   * @description Forwards a keydown from any row to the `FocusKeyManager` — arrow keys and Home/End move real focus; every other key passes through untouched.
+   * @method onKeydown
+   *
+   * @description
+   * Forwards a keydown from any row to the `FocusKeyManager` — arrow keys and Home/End move real
+   * focus; every other key passes through untouched.
+   *
    * @access protected
    * @since 1.13.0
+   *
    * @param {KeyboardEvent} event - The keydown event, bubbled up from a focused row.
+   *
    * @returns {void}
    */
   protected onKeydown(event: KeyboardEvent): void {
@@ -244,10 +339,16 @@ export class FacilityPlanItemList<T> {
 
   /**
    * Method activate
-   * @description Commits a row as the selection — emits {@link itemActivated} with its id.
+   * @method activate
+   *
+   * @description
+   * Commits a row as the selection — emits {@link itemActivated} with its id.
+   *
    * @access protected
    * @since 1.13.0
+   *
    * @param {string} id - The activated row's id.
+   *
    * @returns {void}
    */
   protected activate(id: string): void {

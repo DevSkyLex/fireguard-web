@@ -79,8 +79,56 @@ export interface UpdateInterventionWorkItemInput {
    * @type {string}
    */
   readonly workloadConfirmationToken?: string;
+
+  /**
+   * Property resultResource
+   * @readonly
+   *
+   * @description
+   * Identifies the resource produced or updated by this work item, when one exists.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly resultResource?: string | null;
+
+  /**
+   * Property assignee
+   * @readonly
+   *
+   * @description
+   * Identifies the member assigned to the work item.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly assignee?: string | null;
+
+  /**
+   * Property status
+   * @readonly
+   *
+   * @description
+   * Reports the current lifecycle status of this update intervention work item.
+   *
+   * @access public
+   *
+   * @type {InterventionWorkItemStatus}
+   */
   readonly status?: InterventionWorkItemStatus;
+
+  /**
+   * Property skipReason
+   * @readonly
+   *
+   * @description
+   * Explains why the work item was skipped.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly skipReason?: string | null;
 }

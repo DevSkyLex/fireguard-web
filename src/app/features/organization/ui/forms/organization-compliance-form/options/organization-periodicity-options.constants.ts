@@ -1,6 +1,5 @@
 /**
  * Constant ORGANIZATION_PERIODICITY_OPTIONS
- * @const ORGANIZATION_PERIODICITY_OPTIONS
  *
  * @description
  * The standard inspection periodicity choices offered per equipment type, as
@@ -9,7 +8,13 @@
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly icon: string; readonly label: string; readonly value: string }>}
+ * @type {ReadonlyArray<{
+ *   readonly icon: string;
+ *   readonly label: string;
+ *   readonly value: string;
+ * }>}
+ *
+ * @constant ORGANIZATION_PERIODICITY_OPTIONS
  */
 export const ORGANIZATION_PERIODICITY_OPTIONS: ReadonlyArray<{
   readonly icon: string;

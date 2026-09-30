@@ -4,12 +4,13 @@ import type { InterventionTimeScope } from '@features/organization/features/inte
 
 /**
  * Constant interventionTimeEvents
- * @const interventionTimeEvents
  *
  * @description
  * Journal writes refresh spent totals without changing the operational revision.
  *
  * @since 1.0.0
+ *
+ * @constant interventionTimeEvents
  */
 export const interventionTimeEvents = eventGroup({
   source: 'Intervention Time',

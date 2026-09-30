@@ -43,6 +43,16 @@ import { messageThreadStoreEvents } from '../message-thread/events';
 import { channelsStoreEvents } from './events';
 import type { ChannelsState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {ChannelsState}
+ */
 const INITIAL_STATE: ChannelsState = {
   organizationId: null,
   includeArchived: null,
@@ -55,16 +65,13 @@ const INITIAL_STATE: ChannelsState = {
 
 /**
  * Constant ChannelsStore
- * @const ChannelsStore
  *
  * @description
  * Channel list and administration for one organization.
- *
  * Provided at the dashboard route so the sidebar extension and routed room share
  * one collection. Organization changes clear the previous collection; secondary
  * navigation loads in the browser. `load` drains every server page because the
  * channel API has no server-side search.
- *
  * Two contract hazards are handled here rather than left to callers:
  * rows are keyed off the scalar `id` because `@id` is a Skolem genid
  * regenerated on every response; and no write response is ever merged whole,
@@ -74,6 +81,8 @@ const INITIAL_STATE: ChannelsState = {
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant ChannelsStore
  */
 export const ChannelsStore = signalStore(
   withEntities({ entity: type<ChannelOutput>(), collection: 'channel' }),
@@ -87,6 +96,7 @@ export const ChannelsStore = signalStore(
     mutationError: computed(() => store.mutationCallState().error),
 
     /**
+     * @description
      * Root channels, in list order. Nesting is derived from the `parent` IRI
      * every row already carries, so building the tree costs no extra request.
      */
@@ -94,7 +104,10 @@ export const ChannelsStore = signalStore(
       store.channelEntities().filter((channel: ChannelOutput): boolean => !channel.parent),
     ),
 
-    /** Unread total across the loaded channels, for the navigation badge. */
+    /**
+     * @description
+     * Unread total across the loaded channels, for the navigation badge.
+     */
     unreadTotal: computed((): number =>
       store
         .channelEntities()
@@ -115,6 +128,7 @@ export const ChannelsStore = signalStore(
      * @since 1.0.0
      *
      * @param {ListChannelsQuery} query - Organization and optional archive filter.
+     *
      * @returns {RxMethodRef} Request subscription.
      */
     load: rxMethod<ListChannelsQuery>(
@@ -178,6 +192,7 @@ export const ChannelsStore = signalStore(
      * @since 1.0.0
      *
      * @param {string} channelId - Channel identifier.
+     *
      * @returns {RxMethodRef} Request subscription.
      */
     loadOne: rxMethod<string>(
@@ -214,6 +229,7 @@ export const ChannelsStore = signalStore(
      * @since 1.0.0
      *
      * @param {CreateChannelInput} input - Organization and channel name.
+     *
      * @returns {RxMethodRef} Request subscription.
      */
     create: rxMethod<CreateChannelInput>(
@@ -255,8 +271,8 @@ export const ChannelsStore = signalStore(
     ),
 
     /**
+     * @description
      * Renames and/or archives a channel.
-     *
      * Only the fields the caller asked to change are written back. Merging the
      * whole response would reset `unreadCount` to zero and `isFavorite` to
      * false, both of which the write endpoint fabricates.
@@ -294,6 +310,7 @@ export const ChannelsStore = signalStore(
     ),
 
     /**
+     * @description
      * Deletes a channel. The `204` carries no body, so the row is dropped
      * locally — there is nothing to merge.
      */
@@ -336,7 +353,9 @@ export const ChannelsStore = signalStore(
      * @access public
      * @since 1.0.0
      *
-     * @param {{ readonly channelId: string; readonly input: SetChannelParentInput }} command - Channel and destination.
+     * @param {{ readonly channelId: string; readonly input: SetChannelParentInput }} command -
+     *   Channel and destination.
+     *
      * @returns {RxMethodRef} Request subscription.
      */
     setParent: rxMethod<{ readonly channelId: string; readonly input: SetChannelParentInput }>(
@@ -374,6 +393,9 @@ export const ChannelsStore = signalStore(
     ),
 
     /**
+     * Method hasChannel
+     *
+     * @description
      * Whether a channel is loaded and readable, used by callers before they
      * act on an id.
      */
@@ -381,7 +403,12 @@ export const ChannelsStore = signalStore(
       return Boolean(store.channelEntityMap()[channelId]);
     },
 
-    /** Whether the last list request succeeded. */
+    /**
+     * Method isLoaded
+     *
+     * @description
+     * Whether the last list request succeeded.
+     */
     isLoaded(): boolean {
       return isCallSuccess(store.listCallState());
     },
@@ -414,5 +441,7 @@ export const ChannelsStore = signalStore(
  * Injection type of {@link ChannelsStore}.
  *
  * @since 1.0.0
+ *
+ * @type
  */
 export type ChannelsStoreType = InstanceType<typeof ChannelsStore>;

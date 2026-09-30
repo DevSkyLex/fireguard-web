@@ -35,7 +35,8 @@ const NON_CONFORMITY_SEVERITY_METRIC_KEYS: Readonly<Record<NonConformitySeverity
  * @access public
  * @since 1.0.0
  *
- * @param {OrganizationDashboardOverview | undefined} overview - The dashboard payload's `overview` map.
+ * @param {OrganizationDashboardOverview | undefined} overview - The dashboard payload's `overview`
+ *   map.
  * @param {string} widgetKey - The overview section, e.g. `'nonConformities'`.
  * @param {string} metricKey - The summary entry's key, e.g. `'open'`.
  *
@@ -66,9 +67,11 @@ export function getOrganizationDashboardOverviewMetricValue(
  * @access public
  * @since 1.0.0
  *
- * @param {OrganizationDashboardOverview | undefined} overview - The dashboard payload's `overview` map.
+ * @param {OrganizationDashboardOverview | undefined} overview - The dashboard payload's `overview`
+ *   map.
  *
- * @returns {ReadonlyArray<{ readonly severity: NonConformitySeverity; readonly count: number }>} One entry per severity, zero-filled when absent.
+ * @returns {ReadonlyArray<{ readonly severity: NonConformitySeverity; readonly count: number }>}
+ *   One entry per severity, zero-filled when absent.
  */
 export function getOrganizationDashboardNonConformitySeverityBreakdown(
   overview: OrganizationDashboardOverview | undefined,
@@ -124,10 +127,12 @@ export function getOrganizationDashboardHealthValue(
  * @access public
  * @since 1.0.0
  *
- * @param {OrganizationDashboardComparison | undefined} comparison - The dashboard payload's `comparison` block.
+ * @param {OrganizationDashboardComparison | undefined} comparison - The dashboard payload's
+ *   `comparison` block.
  * @param {string} metricKey - The health metric's key.
  *
- * @returns {{ readonly delta: number; readonly direction: string } | null} The signed delta in percentage points and its literal direction, or `null`.
+ * @returns {{ readonly delta: number; readonly direction: string } | null} The signed delta in
+ *   percentage points and its literal direction, or `null`.
  */
 export function getOrganizationDashboardHealthComparisonDelta(
   comparison: OrganizationDashboardComparison | undefined,

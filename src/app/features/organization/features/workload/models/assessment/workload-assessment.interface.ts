@@ -32,7 +32,14 @@ export interface WorkloadAssessment {
    * @access public
    * @since 1.0.0
    *
-   * @type {readonly { readonly memberId: string; readonly date?: string | null; readonly reason: string; readonly beforeMinutes: number; readonly afterMinutes: number; readonly capacityMinutes?: number | null }[]}
+   * @type {readonly {
+   *   readonly memberId: string;
+   *   readonly date?: string | null;
+   *   readonly reason: string;
+   *   readonly beforeMinutes: number;
+   *   readonly afterMinutes: number;
+   *   readonly capacityMinutes?: number | null;
+   * }[]}
    */
   readonly increases: readonly {
     readonly memberId: string;

@@ -49,9 +49,13 @@ import { onboardingSetupEvents } from './events';
 
 /**
  * Type DurableOnboardingOutput
- * @type {DurableOnboardingOutput}
- * @description Recovery response after verifying its server session and journal.
+ *
+ * @description
+ * Recovery response after verifying its server session and journal.
+ *
  * @since 1.1.0
+ *
+ * @type {DurableOnboardingOutput}
  */
 type DurableOnboardingOutput = OnboardingOutput & {
   readonly sessionId: string;
@@ -60,22 +64,56 @@ type DurableOnboardingOutput = OnboardingOutput & {
 
 /**
  * Type PreparedSetupItem
- * @type {PreparedSetupItem}
- * @description Stable key and payload submitted together before any resource creation.
+ *
+ * @description
+ * Stable key and payload submitted together before any resource creation.
+ *
  * @since 1.1.0
+ *
+ * @type {PreparedSetupItem}
  */
 type PreparedSetupItem = {
+  /**
+   * Property itemKey
+   * @readonly
+   *
+   * @description
+   * Stable key used to reconcile an item with its persisted setup receipt.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly itemKey: string;
+
+  /**
+   * Property payload
+   * @readonly
+   *
+   * @description
+   * Resource input persisted before the corresponding creation call runs.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OnboardingSetupPayload}
+   */
   readonly payload: OnboardingSetupPayload;
 };
 
 /**
  * Function requireJournal
- * @description Rejects incomplete or foreign recovery responses before any resource write or progression.
+ *
+ * @description
+ * Rejects incomplete or foreign recovery responses before any resource write or progression.
+ *
  * @access private
  * @since 1.1.0
+ *
  * @param {OnboardingOutput} flow - Server recovery response.
  * @param {string | undefined} sessionId - Expected session for an active batch.
+ *
  * @returns {DurableOnboardingOutput} Validated response.
  */
 function requireJournal(flow: OnboardingOutput, sessionId?: string): DurableOnboardingOutput {
@@ -101,21 +139,83 @@ function requireJournal(flow: OnboardingOutput, sessionId?: string): DurableOnbo
 /**
  * Interface OnboardingSetupState
  * @interface OnboardingSetupState
- * @description Browser-only journal snapshot and independent loading/creation request states.
+ *
+ * @description
+ * Browser-only journal snapshot and independent loading/creation request states.
+ *
  * @since 1.1.0
  */
 interface OnboardingSetupState {
+  /**
+   * Property flow
+   * @readonly
+   *
+   * @description
+   * Recovered durable journal for this page's active setup session, when available.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {DurableOnboardingOutput | null}
+   */
   readonly flow: DurableOnboardingOutput | null;
+
+  /**
+   * Property failedItemKeys
+   * @readonly
+   *
+   * @description
+   * Prepared item keys whose resource creation did not complete.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<string>}
+   */
   readonly failedItemKeys: readonly string[];
+
+  /**
+   * Property loadCallState
+   * @readonly
+   *
+   * @description
+   * Outcome of recovering the durable setup journal.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {CallState<void>}
+   */
   readonly loadCallState: CallState<void>;
+
+  /**
+   * Property batchCallState
+   * @readonly
+   *
+   * @description
+   * Outcome of preparing and applying the current setup batch.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {CallState<void>}
+   */
   readonly batchCallState: CallState<void>;
 }
 
 /**
- * Store OnboardingSetupStore
- * @const OnboardingSetupStore
- * @description Page-scoped durable setup. A complete batch is prepared before writes; retries replay stable receipts and completed items never consume quota again. No draft payload enters TransferState.
+ * Constant OnboardingSetupStore
+ *
+ * @description
+ * Page-scoped durable setup prepares a complete batch before writes. Retries replay stable
+ * receipts, completed items avoid duplicate quota use, and draft payloads stay out of
+ * TransferState.
+ *
  * @since 1.1.0
+ *
+ * @constant OnboardingSetupStore
+ *
+ * @constant OnboardingSetupStore
  */
 export const OnboardingSetupStore = signalStore(
   withState<OnboardingSetupState>({
@@ -128,30 +228,44 @@ export const OnboardingSetupStore = signalStore(
     /**
      * Property operations
      * @readonly
-     * @description Durable prepared and completed entries.
+     *
+     * @description
+     * Durable prepared and completed entries.
+     *
      * @access public
      * @since 1.1.0
+     *
      * @type {Signal<readonly OnboardingSetupOperation[]>}
      */
     operations: computed(() => store.flow()?.setupOperations ?? []),
+
     /**
      * Property pending
      * @readonly
-     * @description Blocks competing creation and refresh commands.
+     *
+     * @description
+     * Blocks competing creation and refresh commands.
+     *
      * @access public
      * @since 1.1.0
+     *
      * @type {Signal<boolean>}
      */
     pending: computed(
       () =>
         store.loadCallState().status === 'pending' || store.batchCallState().status === 'pending',
     ),
+
     /**
      * Property ready
      * @readonly
-     * @description Requires a server session and an explicit journal snapshot.
+     *
+     * @description
+     * Requires a server session and an explicit journal snapshot.
+     *
      * @access public
      * @since 1.1.0
+     *
      * @type {Signal<boolean>}
      */
     ready: computed(
@@ -171,10 +285,16 @@ export const OnboardingSetupStore = signalStore(
     ) => {
       /**
        * Function fail
-       * @description Retains the journal and reports a failed request through the shared feedback event contract.
+       *
+       * @description
+       * Retains the journal and reports a failed request through the shared feedback event
+       * contract.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {StoreError} failure - Already normalized transport or recovery failure.
+       *
        * @returns {StoreError} Normalized failure.
        */
       function fail(failure: StoreError): StoreError {
@@ -191,11 +311,17 @@ export const OnboardingSetupStore = signalStore(
 
       /**
        * Function execute
-       * @description Replays one prepared receipt through the owning resource service, never through an alternate creation endpoint.
+       *
+       * @description
+       * Replays one prepared receipt through the owning resource service, never through an
+       * alternate creation endpoint.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {OnboardingSetupOperation} operation - Durable item to create.
        * @param {OnboardingOutput} flow - Its current server scope.
+       *
        * @returns {Observable<unknown>} Owner endpoint response.
        */
       function execute(
@@ -245,11 +371,16 @@ export const OnboardingSetupStore = signalStore(
 
       /**
        * Function prepareItems
-       * @description Reuses receipt keys for matching payloads without assigning one receipt twice.
+       *
+       * @description
+       * Reuses receipt keys for matching payloads without assigning one receipt twice.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {OnboardingSetupStep} stepKey - Current server step.
        * @param {readonly OnboardingSetupPayload[]} payloads - Complete submitted batch.
+       *
        * @returns {PreparedSetupItem[]} Items carrying stable journal keys.
        */
       function prepareItems(
@@ -274,13 +405,18 @@ export const OnboardingSetupStore = signalStore(
 
       /**
        * Function requirePreparedItems
-       * @description Rejects a preparation response that omitted or changed a submitted receipt.
+       *
+       * @description
+       * Rejects a preparation response that omitted or changed a submitted receipt.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {OnboardingOutput} response - Server preparation response.
        * @param {string} sessionId - Session that owns this batch.
        * @param {OnboardingSetupStep} stepKey - Current server step.
        * @param {readonly PreparedSetupItem[]} items - Submitted receipts and payloads.
+       *
        * @returns {DurableOnboardingOutput} Validated journal snapshot.
        */
       function requirePreparedItems(
@@ -310,12 +446,17 @@ export const OnboardingSetupStore = signalStore(
 
       /**
        * Function executePendingItems
-       * @description Creates only submitted prepared receipts and records failed keys for retry.
+       *
+       * @description
+       * Creates only submitted prepared receipts and records failed keys for retry.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {DurableOnboardingOutput} flow - Validated prepared journal.
        * @param {OnboardingSetupStep} stepKey - Current server step.
        * @param {readonly PreparedSetupItem[]} items - Submitted receipts.
+       *
        * @returns {Observable<(StoreError | null)[]>} Per-item failures in submission order.
        */
       function executePendingItems(
@@ -347,14 +488,20 @@ export const OnboardingSetupStore = signalStore(
 
       /**
        * Function refreshBatch
-       * @description Reconciles server receipts after writes, preserving a first failure when work remains.
+       *
+       * @description
+       * Reconciles server receipts after writes, preserving a first failure when work remains.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {string} sessionId - Session that owns this batch.
        * @param {OnboardingSetupStep} stepKey - Current server step.
        * @param {readonly PreparedSetupItem[]} items - Submitted receipts.
        * @param {readonly (StoreError | null)[]} errors - Resource command outcomes.
-       * @returns {Observable<{flow: DurableOnboardingOutput; failure: StoreError | null}>} Reconciled journal and failure.
+       *
+       * @returns {Observable<{ flow: DurableOnboardingOutput; failure: StoreError | null }>}
+       *   Reconciled journal and failure.
        */
       function refreshBatch(
         sessionId: string,
@@ -394,12 +541,18 @@ export const OnboardingSetupStore = signalStore(
 
       /**
        * Function runBatch
-       * @description Prepares, creates and reconciles one durable batch before announcing completion.
+       *
+       * @description
+       * Prepares, creates and reconciles one durable batch before announcing completion.
+       *
        * @access private
        * @since 1.1.0
+       *
        * @param {OnboardingSetupStep} stepKey - Current server step.
        * @param {readonly OnboardingSetupPayload[]} payloads - Complete submitted batch.
-       * @returns {Observable<{flow: DurableOnboardingOutput; failure: StoreError | null}>} Reconciled result.
+       *
+       * @returns {Observable<{ flow: DurableOnboardingOutput; failure: StoreError | null }>}
+       *   Reconciled result.
        */
       function runBatch(
         stepKey: OnboardingSetupStep,
@@ -443,10 +596,17 @@ export const OnboardingSetupStore = signalStore(
         /**
          * Method load
          * @method load
-         * @description Reuses a browser route result or fetches the secondary journal omitted from the SSR handoff. A reload never creates a session implicitly.
+         *
+         * @description
+         * Reuses a browser route result or fetches the secondary journal omitted from the SSR
+         * handoff. A reload never creates a session implicitly.
+         *
          * @access public
          * @since 1.1.0
-         * @param {OnboardingOutput | null} snapshot - Existing full route response, or null for manual refresh.
+         *
+         * @param {OnboardingOutput | null} snapshot - Existing full route response, or null for
+         *   manual refresh.
+         *
          * @returns {void}
          */
         load: rxMethod<OnboardingOutput | null>(
@@ -484,10 +644,18 @@ export const OnboardingSetupStore = signalStore(
         /**
          * Method run
          * @method run
-         * @description Persists all pending inputs, creates remaining items sequentially, then refreshes the journal before progression. Lost creation responses retain their original item keys for a safe replay.
+         *
+         * @description
+         * Persists all pending inputs, creates remaining items sequentially, then refreshes the
+         * journal before progression. Lost creation responses retain their original item keys for a
+         * safe replay.
+         *
          * @access public
          * @since 1.1.0
-         * @param {{stepKey: OnboardingSetupStep; payloads: readonly OnboardingSetupPayload[]}} batch - Complete current form batch.
+         *
+         * @param {{ stepKey: OnboardingSetupStep; payloads: readonly OnboardingSetupPayload[] }} batch -
+         *   Complete current form batch.
+         *
          * @returns {void}
          */
         run: rxMethod<{
@@ -513,8 +681,12 @@ export const OnboardingSetupStore = signalStore(
 
 /**
  * Type OnboardingSetupStoreType
- * @type {OnboardingSetupStoreType}
- * @description Injectable setup store instance.
+ *
+ * @description
+ * Injectable setup store instance.
+ *
  * @since 1.1.0
+ *
+ * @type {OnboardingSetupStoreType}
  */
 export type OnboardingSetupStoreType = InstanceType<typeof OnboardingSetupStore>;

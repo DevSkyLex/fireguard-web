@@ -5,18 +5,55 @@ import type {
 import type { MessageThreadDayGroup, MessageThreadRenderGroup } from '../../models';
 
 /**
- * One in-progress run, kept mutable while entries are folded into it and
+ * Interface MutableRunGroup
+ * @interface
+ *
+ * @description
  * frozen into a {@link MessageThreadRenderGroup} once the fold completes.
  */
 interface MutableRunGroup {
+  /**
+   * Property kind
+   * @readonly
+   *
+   * @description
+   * Distinguishes the mutable run group variant represented by this value.
+   *
+   * @access public
+   *
+   * @type {'run'}
+   */
   readonly kind: 'run';
+
+  /**
+   * Property key
+   * @readonly
+   *
+   * @description
+   * Identifies the message run used to keep adjacent rows grouped.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly key: string;
+
+  /**
+   * Property entries
+   * @readonly
+   *
+   * @description
+   * Contains the message rows grouped together for rendering.
+   *
+   * @access public
+   *
+   * @type {MessageRowEntry[]}
+   */
   readonly entries: MessageRowEntry[];
 }
 
 /**
  * Function groupRenderEntries
- * @function groupRenderEntries
  *
  * @description
  * Folds the flat, date-ruled entry list into what the thread actually draws:
@@ -30,6 +67,8 @@ interface MutableRunGroup {
  * @param {readonly MessageThreadEntry[]} entries - Entries in render order.
  *
  * @returns {readonly MessageThreadRenderGroup[]} Groups in render order.
+ *
+ * @function groupRenderEntries
  *
  * @example
  * ```typescript

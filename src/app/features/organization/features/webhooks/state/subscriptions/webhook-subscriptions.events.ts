@@ -4,9 +4,13 @@ import type { WebhookMutation } from '@features/organization/features/webhooks/m
 
 /**
  * Constant webhookSubscriptionsEvents
- * @const webhookSubscriptionsEvents
- * @description Ephemeral command feedback. Secret values must be consumed only by the current dialog.
+ *
+ * @description
+ * Ephemeral command feedback. Secret values must be consumed only by the current dialog.
+ *
  * @since 1.0.0
+ *
+ * @constant webhookSubscriptionsEvents
  */
 export const webhookSubscriptionsEvents = eventGroup({
   source: 'Organization Webhooks',

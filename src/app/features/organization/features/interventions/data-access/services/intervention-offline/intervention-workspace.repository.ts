@@ -21,6 +21,7 @@ import type {
  * changes and issues) on top of {@link InterventionDatabaseService}.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -61,7 +62,7 @@ export class InterventionWorkspaceRepository {
    * @param {readonly unknown[]} [resources] - resources value.
    * @param {{ readonly replace?: boolean }} [options] - options value.
    *
-   * @return {Promise<void>} Result of the save workspace operation.
+   * @returns {Promise<void>} Result of the save workspace operation.
    */
   public async saveWorkspace(
     intervention: InterventionOutput,
@@ -135,12 +136,13 @@ export class InterventionWorkspaceRepository {
    *
    * @param {string} interventionId - intervention Id value.
    *
-   * @return {Promise<{
-   * intervention: InterventionOutput;
-   * workItems: readonly InterventionWorkItemOutput[];
-   * changes: readonly InterventionChangeOutput[];
-   * issues: readonly InterventionIssueOutput[];
-   * } | null>} Result of the get workspace operation.
+   * @returns {Promise<{
+   *   intervention: InterventionOutput;
+   *   workItems: readonly InterventionWorkItemOutput[];
+   *   changes: readonly InterventionChangeOutput[];
+   *   issues: readonly InterventionIssueOutput[];
+   * } | null>}
+   *   Result of the get workspace operation.
    */
   public async getWorkspace(interventionId: string): Promise<InterventionWorkspaceSnapshot | null> {
     await this.database.ensureOwnerBound();
@@ -180,7 +182,7 @@ export class InterventionWorkspaceRepository {
    *
    * @param {string} organizationId - Organization identifier.
    *
-   * @return {Promise<readonly InterventionOutput[]>} Locally persisted interventions.
+   * @returns {Promise<readonly InterventionOutput[]>} Locally persisted interventions.
    */
   public async listInterventions(organizationId: string): Promise<readonly InterventionOutput[]> {
     await this.database.ensureOwnerBound();
@@ -202,7 +204,7 @@ export class InterventionWorkspaceRepository {
    *
    * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<string | null>} Owning organization identifier when available.
+   * @returns {Promise<string | null>} Owning organization identifier when available.
    */
   public async organizationIdForIntervention(interventionId: string): Promise<string | null> {
     await this.database.ensureOwnerBound();

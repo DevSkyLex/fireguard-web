@@ -34,7 +34,6 @@ import type { AccountProfileEditState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial request states for the component-scoped profile edit workflow.
@@ -42,6 +41,8 @@ import type { AccountProfileEditState } from './models';
  * @since 1.0.0
  *
  * @type {AccountProfileEditState}
+ *
+ * @constant INITIAL_STATE
  */
 const INITIAL_STATE: AccountProfileEditState = {
   saveCallState: idleCallState(),
@@ -49,8 +50,7 @@ const INITIAL_STATE: AccountProfileEditState = {
 } as const;
 
 /**
- * Store AccountProfileEditStore
- * @const AccountProfileEditStore
+ * Constant AccountProfileEditStore
  *
  * @description
  * Component-scoped workflow store that persists edits to the authenticated
@@ -62,6 +62,8 @@ const INITIAL_STATE: AccountProfileEditState = {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant AccountProfileEditStore
  */
 export const AccountProfileEditStore = signalStore(
   //#region State
@@ -71,9 +73,8 @@ export const AccountProfileEditStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isSaving
-     *
      * @description
+     * Computed isSaving
      * Returns whether profile fields are currently being persisted.
      *
      * @since 1.0.0
@@ -83,9 +84,8 @@ export const AccountProfileEditStore = signalStore(
     isSaving: computed<boolean>(() => store.saveCallState().status === 'pending'),
 
     /**
-     * Computed isUploadingAvatar
-     *
      * @description
+     * Computed isUploadingAvatar
      * Returns whether an avatar is currently being uploaded.
      *
      * @since 1.0.0
@@ -95,9 +95,8 @@ export const AccountProfileEditStore = signalStore(
     isUploadingAvatar: computed<boolean>(() => store.avatarCallState().status === 'pending'),
 
     /**
-     * Computed saveError
-     *
      * @description
+     * Computed saveError
      * Returns the error from the latest profile-field save operation.
      *
      * @since 1.0.0
@@ -107,9 +106,8 @@ export const AccountProfileEditStore = signalStore(
     saveError: computed<StoreError | null>(() => store.saveCallState().error),
 
     /**
-     * Computed avatarError
-     *
      * @description
+     * Computed avatarError
      * Returns the error from the latest avatar upload operation.
      *
      * @since 1.0.0
@@ -135,8 +133,12 @@ export const AccountProfileEditStore = signalStore(
 
       /**
        * Function syncSession
-       * @description Clears visible command states when a new session replaces their owner.
+       *
+       * @description
+       * Clears visible command states when a new session replaces their owner.
+       *
        * @since 1.0.0
+       *
        * @returns {number} Current owning session revision.
        */
       function syncSession(): number {
@@ -150,6 +152,7 @@ export const AccountProfileEditStore = signalStore(
 
       return {
         syncSession: syncSession,
+
         /**
          * Method save
          *
@@ -281,11 +284,12 @@ export const AccountProfileEditStore = signalStore(
 
 /**
  * Type AccountProfileEditStore
- * @type AccountProfileEditStore
  *
  * @description
  * Injectable instance type exposed by {@link AccountProfileEditStore}.
  *
  * @since 1.0.0
+ *
+ * @type AccountProfileEditStore
  */
 export type AccountProfileEditStore = InstanceType<typeof AccountProfileEditStore>;

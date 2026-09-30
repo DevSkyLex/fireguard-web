@@ -6,12 +6,13 @@ import type {
 
 /**
  * Type InterventionTimePersistenceRequest
- * @type InterventionTimePersistenceRequest
  *
  * @description
  * Ordered local persistence and explicit journal submission.
  *
  * @since 1.0.0
+ *
+ * @type InterventionTimePersistenceRequest
  */
 export type InterventionTimePersistenceRequest =
   | {

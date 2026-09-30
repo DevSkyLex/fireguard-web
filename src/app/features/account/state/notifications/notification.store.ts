@@ -64,7 +64,6 @@ import type { NotificationStoreState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_NOTIFICATION_STATE
- * @const INITIAL_NOTIFICATION_STATE
  *
  * @description
  * Initial state for the NotificationStore. Entity state
@@ -75,6 +74,8 @@ import type { NotificationStoreState } from './models';
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_NOTIFICATION_STATE
  */
 const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
   revision: 0,
@@ -93,8 +94,7 @@ const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
 //#endregion
 
 /**
- * Store NotificationStore
- * @const NotificationStore
+ * Constant NotificationStore
  *
  * @description
  * Root-level NgRx SignalStore for notification management. Handles loading,
@@ -105,6 +105,14 @@ const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
  * Entity state is managed by `withEntities<NotificationOutput>({ collection:
  * 'notification' })`, which provides O(1) lookups and efficient
  * insertions/removals.
+ *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const NotificationStore
+ *
+ * @const NotificationStore
  *
  * @example
  * ```typescript
@@ -119,9 +127,6 @@ const INITIAL_NOTIFICATION_STATE: NotificationStoreState = {
  * // Load more (next page)
  * store.loadMore();
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const NotificationStore = signalStore(
   { providedIn: 'root' },
@@ -136,13 +141,15 @@ export const NotificationStore = signalStore(
 
   //#region Computed
   withComputed((store) => ({
-    /** Alias for notificationEntities — backward-compatible accessor. */
+    /**
+     * @description
+     * Alias for notificationEntities — backward-compatible accessor.
+     */
     notifications: computed<ReadonlyArray<NotificationOutput>>(() => store.notificationEntities()),
 
     /**
-     * Computed isLoading
-     *
      * @description
+     * Computed isLoading
      * Returns true while a notification list request is in-flight
      * (initial load or refresh, but not load-more).
      *
@@ -153,9 +160,8 @@ export const NotificationStore = signalStore(
     isLoading: computed<boolean>(() => store.listCallState().status === 'pending'),
 
     /**
-     * Computed isMarkingAsRead
-     *
      * @description
+     * Computed isMarkingAsRead
      * Returns true while a mark-as-read request is in-flight.
      *
      * @since 1.0.0
@@ -165,9 +171,8 @@ export const NotificationStore = signalStore(
     isMarkingAsRead: computed<boolean>(() => store.markAsReadCallState().status === 'pending'),
 
     /**
-     * Computed isMarkingAllAsRead
-     *
      * @description
+     * Computed isMarkingAllAsRead
      * Returns true while the bulk mark-as-read is in flight.
      *
      * @since 1.3.0
@@ -179,9 +184,8 @@ export const NotificationStore = signalStore(
     ),
 
     /**
-     * Computed listError
-     *
      * @description
+     * Computed listError
      * Returns the list call state error, or `null` if idle/pending/success.
      *
      * @since 1.0.0
@@ -191,9 +195,8 @@ export const NotificationStore = signalStore(
     listError: computed<StoreError | null>(() => store.listCallState().error),
 
     /**
-     * Computed hasUnread
-     *
      * @description
+     * Computed hasUnread
      * Quick check whether any unread notifications exist.
      *
      * @since 1.0.0
@@ -203,9 +206,8 @@ export const NotificationStore = signalStore(
     hasUnread: computed<boolean>(() => store.notificationEntities().some((n) => !n.isRead)),
 
     /**
-     * Computed hasMore
-     *
      * @description
+     * Computed hasMore
      * Returns true when additional pages of notifications are available
      * to load via `loadMore()`.
      *
@@ -218,9 +220,8 @@ export const NotificationStore = signalStore(
     ),
 
     /**
-     * Computed isLoadingMore
-     *
      * @description
+     * Computed isLoadingMore
      * Returns true specifically when a load-more (subsequent page)
      * request is in-flight, distinguished from initial loading by
      * `currentPage > 1`.
@@ -260,9 +261,13 @@ export const NotificationStore = signalStore(
 
       /**
        * Function invalidateFeed
-       * @description Cancels a replaced query without destroying the reusable reactive loaders.
+       *
+       * @description
+       * Cancels a replaced query without destroying the reusable reactive loaders.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const invalidateFeed = (): void => {
@@ -274,9 +279,13 @@ export const NotificationStore = signalStore(
 
       /**
        * Function invalidateUnreadCount
-       * @description Prevents an earlier count snapshot from undoing a confirmed acknowledgement.
+       *
+       * @description
+       * Prevents an earlier count snapshot from undoing a confirmed acknowledgement.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const invalidateUnreadCount = (): void => {
@@ -286,11 +295,16 @@ export const NotificationStore = signalStore(
 
       /**
        * Function requestPage
-       * @description Coordinates every feed reader against its session and query generation.
+       *
+       * @description
+       * Coordinates every feed reader against its session and query generation.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {NotificationListOptions} options - Requested page, size and filters.
        * @param {boolean} append - Whether this page extends the current collection.
+       *
        * @returns {Observable<HydraCollection<NotificationOutput>>} Shared cancellable page read.
        */
       const requestPage = (
@@ -365,9 +379,13 @@ export const NotificationStore = signalStore(
 
       /**
        * Function requestTypes
-       * @description Deduplicates browser-only catalog reads within the current session.
+       *
+       * @description
+       * Deduplicates browser-only catalog reads within the current session.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {Observable<ReadonlyArray<NotificationTypeOutput>>} Shared catalog read.
        */
       const requestTypes = (): Observable<ReadonlyArray<NotificationTypeOutput>> => {
@@ -398,9 +416,13 @@ export const NotificationStore = signalStore(
         /**
          * Method initialize
          * @method initialize
-         * @description Loads the feed on browser activation, sharing any current page read.
+         *
+         * @description
+         * Loads the feed on browser activation, sharing any current page read.
+         *
          * @access public
          * @since 1.2.0
+         *
          * @returns {Promise<void>} Resolves on completion, failure or session cancellation.
          */
         async initialize(): Promise<void> {
@@ -415,9 +437,13 @@ export const NotificationStore = signalStore(
         /**
          * Method initializeTypes
          * @method initializeTypes
-         * @description Loads the secondary type catalog only in the browser.
+         *
+         * @description
+         * Loads the secondary type catalog only in the browser.
+         *
          * @access public
          * @since 1.2.0
+         *
          * @returns {Promise<void>} Resolves on completion, failure or session cancellation.
          */
         async initializeTypes(): Promise<void> {
@@ -427,9 +453,13 @@ export const NotificationStore = signalStore(
         /**
          * Method load
          * @method load
-         * @description Replaces the feed with the first page of its active browser query.
+         *
+         * @description
+         * Replaces the feed with the first page of its active browser query.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         load: rxMethod<NotificationListOptions | void>(
@@ -448,10 +478,15 @@ export const NotificationStore = signalStore(
         /**
          * Method loadPage
          * @method loadPage
-         * @description Replaces the browser feed with the requested page and cancels old paging.
+         *
+         * @description
+         * Replaces the browser feed with the requested page and cancels old paging.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {NotificationListOptions} options - Page and filter options.
+         *
          * @returns {void}
          */
         loadPage: rxMethod<NotificationListOptions>(
@@ -469,9 +504,13 @@ export const NotificationStore = signalStore(
         /**
          * Method loadMore
          * @method loadMore
-         * @description Appends the next page unless another feed read is already pending.
+         *
+         * @description
+         * Appends the next page unless another feed read is already pending.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         loadMore: rxMethod<void>(
@@ -493,10 +532,14 @@ export const NotificationStore = signalStore(
         /**
          * Method connectMercure
          * @method connectMercure
-         * @description Starts one browser stream independently of feed activation. Session teardown
+         *
+         * @description
+         * Starts one browser stream independently of feed activation. Session teardown
          * cancels both the subscription-token request and the resulting SSE stream.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         connectMercure: rxMethod<void>(
@@ -535,10 +578,15 @@ export const NotificationStore = signalStore(
         /**
          * Method markAsRead
          * @method markAsRead
-         * @description Accepts one acknowledgement at a time and ignores departed-session results.
+         *
+         * @description
+         * Accepts one acknowledgement at a time and ignores departed-session results.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string} id - Notification identifier.
+         *
          * @returns {void}
          */
         markAsRead: rxMethod<string>(
@@ -590,9 +638,13 @@ export const NotificationStore = signalStore(
         /**
          * Method loadUnreadCount
          * @method loadUnreadCount
-         * @description Refreshes the notification page's count in the browser; InboxStore owns the bell.
+         *
+         * @description
+         * Refreshes the notification page's count in the browser; InboxStore owns the bell.
+         *
          * @access public
          * @since 1.1.0
+         *
          * @returns {void}
          */
         loadUnreadCount: rxMethod<void>(
@@ -619,9 +671,13 @@ export const NotificationStore = signalStore(
         /**
          * Method markAllAsRead
          * @method markAllAsRead
-         * @description Marks the current session's loaded rows read after its bulk acknowledgement.
+         *
+         * @description
+         * Marks the current session's loaded rows read after its bulk acknowledgement.
+         *
          * @access public
          * @since 1.3.0
+         *
          * @returns {void}
          */
         markAllAsRead: rxMethod<void>(
@@ -674,10 +730,15 @@ export const NotificationStore = signalStore(
         /**
          * Method synchronizeNotification
          * @method synchronizeNotification
-         * @description Replaces an already-loaded notification without inserting another page's row.
+         *
+         * @description
+         * Replaces an already-loaded notification without inserting another page's row.
+         *
          * @access public
          * @since 1.2.0
+         *
          * @param {NotificationOutput} notification - Updated notification.
+         *
          * @returns {void}
          */
         synchronizeNotification(notification: NotificationOutput): void {
@@ -690,9 +751,13 @@ export const NotificationStore = signalStore(
         /**
          * Method clear
          * @method clear
-         * @description Cancels all session work and clears private data, preserving reusable loaders.
+         *
+         * @description
+         * Cancels all session work and clears private data, preserving reusable loaders.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         clear(): void {
@@ -709,9 +774,13 @@ export const NotificationStore = signalStore(
         /**
          * Method loadTypes
          * @method loadTypes
-         * @description Loads the shared browser-only category catalog, retrying after failure.
+         *
+         * @description
+         * Loads the shared browser-only category catalog, retrying after failure.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         loadTypes: rxMethod<void>(pipe(exhaustMap(() => requestTypes()))),
@@ -719,10 +788,15 @@ export const NotificationStore = signalStore(
         /**
          * Method setFilter
          * @method setFilter
-         * @description Invalidates pending pages before selecting the next notification filter.
+         *
+         * @description
+         * Invalidates pending pages before selecting the next notification filter.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {NotificationFilter | null} notificationFilter - Filter, or null to clear.
+         *
          * @returns {void}
          */
         setFilter(notificationFilter: NotificationFilter | null): void {
@@ -737,11 +811,11 @@ export const NotificationStore = signalStore(
   //#region Hooks
   withHooks({
     /**
+     * @description
      * This store is root-provided and holds one user's notifications, but logging
      * out is a client-side navigation — the root injector survives it. Without
      * this, signing in as someone else in the same tab shows the previous user's
      * bell and unread badge.
-     *
      * Listens to `sessionEnded` rather than `logoutSucceeded`: the store drops the
      * session on both branches of logout, so a failed logout request must purge
      * just the same.
@@ -758,4 +832,14 @@ export const NotificationStore = signalStore(
   //#endregion
 );
 
+/**
+ * Type NotificationStore
+ *
+ * @description
+ * Instance type exposed by the root-provided notification SignalStore.
+ *
+ * @since 0.1.0
+ *
+ * @type NotificationStore
+ */
 export type NotificationStore = InstanceType<typeof NotificationStore>;

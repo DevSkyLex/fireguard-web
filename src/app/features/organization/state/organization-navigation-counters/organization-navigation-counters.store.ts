@@ -27,11 +27,12 @@ import type { OrganizationNavigationCountersState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial state for the OrganizationNavigationCountersStore: no query has
  * resolved for any organization yet.
+ *
+ * @constant INITIAL_STATE
  */
 const INITIAL_STATE: OrganizationNavigationCountersState = {
   currentOrganizationId: null,
@@ -39,15 +40,13 @@ const INITIAL_STATE: OrganizationNavigationCountersState = {
 //#endregion
 
 /**
- * Store OrganizationNavigationCountersStore
- * @const OrganizationNavigationCountersStore
+ * Constant OrganizationNavigationCountersStore
  *
  * @description
  * Root-level NgRx SignalStore holding the sidebar navigation badge counters
  * (`OrganizationNav`'s single consumer, contributed to the shell through
  * `withOrganizationNav()`) for the currently active organization — exactly
  * one query concern, so `withQueryState` carries the whole lifecycle.
- *
  * Reloads on organization switch only, mirroring
  * {@link OrganizationMemberAccessStore}'s own `ActiveOrganizationStore`
  * effect: there is no polling, since the badge is chrome a member may leave
@@ -55,7 +54,10 @@ const INITIAL_STATE: OrganizationNavigationCountersState = {
  * intervention submitted elsewhere.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant OrganizationNavigationCountersStore
  */
 export const OrganizationNavigationCountersStore = signalStore(
   { providedIn: 'root' },
@@ -103,10 +105,15 @@ export const OrganizationNavigationCountersStore = signalStore(
       const cancellation = new Subject<void>();
       let generation = 0;
       let sessionRevision = authSession.sessionRevision();
+
       /**
        * Function clear
-       * @description Clears counters and invalidates any outstanding organization read.
+       *
+       * @description
+       * Clears counters and invalidates any outstanding organization read.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const clear = (): void => {
@@ -114,10 +121,15 @@ export const OrganizationNavigationCountersStore = signalStore(
         cancellation.next();
         patchState(store, { currentOrganizationId: null }, resetQuery());
       };
+
       /**
        * Function synchronizeSession
-       * @description Invalidates counts retained across authentication transitions.
+       *
+       * @description
+       * Invalidates counts retained across authentication transitions.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const synchronizeSession = (): void => {
@@ -130,12 +142,17 @@ export const OrganizationNavigationCountersStore = signalStore(
       return {
         clear,
         synchronizeSession,
+
         /**
          * Method load
          * @method load
-         * @description Loads counters, retaining prior values only during a refresh of the same context.
+         *
+         * @description
+         * Loads counters, retaining prior values only during a refresh of the same context.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @type {RxMethod<string>}
          */
         load: rxMethod<string>(
@@ -197,12 +214,13 @@ export const OrganizationNavigationCountersStore = signalStore(
 
 /**
  * Type OrganizationNavigationCountersStore
- * @type OrganizationNavigationCountersStore
  *
  * @description
  * Instance type of the {@link OrganizationNavigationCountersStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type OrganizationNavigationCountersStore
  */
 export type OrganizationNavigationCountersStore = InstanceType<
   typeof OrganizationNavigationCountersStore

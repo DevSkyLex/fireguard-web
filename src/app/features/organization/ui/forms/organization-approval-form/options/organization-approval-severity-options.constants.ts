@@ -1,6 +1,5 @@
 /**
  * Constant ORGANIZATION_APPROVAL_SEVERITY_OPTIONS
- * @const ORGANIZATION_APPROVAL_SEVERITY_OPTIONS
  *
  * @description
  * The `nc_waiver` minimum-severity picker's choices — the same four
@@ -14,6 +13,8 @@
  * @since 1.0.0
  *
  * @type {ReadonlyArray<{ readonly label: string; readonly value: string }>}
+ *
+ * @constant ORGANIZATION_APPROVAL_SEVERITY_OPTIONS
  */
 export const ORGANIZATION_APPROVAL_SEVERITY_OPTIONS: ReadonlyArray<{
   readonly label: string;

@@ -132,7 +132,7 @@ export class ExampleNamePipe implements PipeTransform {
 - **pure** — never set `pure: false`; an impure pipe runs on every change-detection cycle and defeats the `OnPush` discipline §1.1 mandates on every component,
 - no DI, no side effects, no `inject()`. A pipe needing a service is a `computed` over that service instead,
 - strict TS: explicit parameter and return types, no `any`, no non-null assertions,
-- JSDoc with `@description`, `@access`, `@since`, `@param`, `@returns` — concise (§14.4).
+- Follow `docs/guides/code-comments.md` for class, property and method JSDoc: declaration title, `@description` alone on its line and prose on the following line, access, verified since metadata, typed parameters and returns. Use balanced `Properties`, `Constructor` and `Methods` regions for present class groups.
 
 The `name:` is what templates type, so it is `camelCase`. Prefix it with `app` to match the selector convention of §9.4 and to keep it clearly distinct from Angular's built-ins.
 

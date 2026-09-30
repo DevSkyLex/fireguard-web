@@ -32,9 +32,14 @@ import { toMemberSelectOption } from '@features/organization/utils';
 import { interventionPlanningOptionsStoreEvents } from './events';
 import type { InterventionPlanningOptionsState } from './models';
 
-/** Constant INITIAL_STATE
- * @description Empty account-scoped selection caches and independent catalogue requests.
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Empty account-scoped selection caches and independent catalogue requests.
+ *
  * @since 1.0.0
+ *
  * @type {InterventionPlanningOptionsState}
  */
 const INITIAL_STATE: InterventionPlanningOptionsState = {
@@ -47,10 +52,16 @@ const INITIAL_STATE: InterventionPlanningOptionsState = {
   templates: [],
   loadCallState: idleCallState(),
 };
-/** Function emptyCatalogue
- * @description Initial coverage of a selection catalogue.
+
+/**
+ * Function emptyCatalogue
+ *
+ * @description
+ * Initial coverage of a selection catalogue.
+ *
  * @access private
  * @since 1.0.0
+ *
  * @returns {PlanningCatalogueState} Empty request.
  */
 const emptyCatalogue = (): PlanningCatalogueState => ({
@@ -59,20 +70,32 @@ const emptyCatalogue = (): PlanningCatalogueState => ({
   loaded: 0,
   callState: idleCallState(),
 });
-/** Function mergeOptions
- * @description Retains selected labels from previous pages and searches without duplicating values.
+
+/**
+ * Function mergeOptions
+ *
+ * @description
+ * Retains selected labels from previous pages and searches without duplicating values.
+ *
  * @access private
  * @since 1.0.0
+ *
  * @param {readonly T[]} current - Cached options.
  * @param {readonly T[]} next - Received options.
+ *
  * @returns {T[]} Merged options.
  */
 const mergeOptions = <T extends SelectOption>(current: readonly T[], next: readonly T[]): T[] => [
   ...new Map([...current, ...next].map((value) => [value.value, value])).values(),
 ];
 
-/** Store InterventionPlanningOptionsStore
- * @description Independent paginated catalogues. Successful sources are usable immediately; searches preserve cached selected labels.
+/**
+ * Constant InterventionPlanningOptionsStore
+ *
+ * @description
+ * Independent paginated catalogues. Successful sources are usable immediately; searches preserve
+ * cached selected labels.
+ *
  * @since 1.0.0
  */
 export const InterventionPlanningOptionsStore = signalStore(
@@ -99,10 +122,16 @@ export const InterventionPlanningOptionsStore = signalStore(
       let generation = 0;
       let labelsStatus = idleCallState();
       const requests: Partial<Record<PlanningCatalogueKind, number>> = {};
-      /** Method summarize
-       * @description Reports overall degradation without replacing each source's request state.
+
+      /**
+       * Method summarize
+       *
+       * @description
+       * Reports overall degradation without replacing each source's request state.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const summarize = (): void => {
@@ -149,15 +178,21 @@ export const InterventionPlanningOptionsStore = signalStore(
           }),
         ),
       );
+
       /**
        * Function cataloguePageSource
-       * @description Selects the transport and normalizes one catalogue page for the shared paging flow.
+       *
+       * @description
+       * Selects the transport and normalizes one catalogue page for the shared paging flow.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {PlanningCatalogueKind} kind - Requested catalogue.
        * @param {string} org - Active organization.
        * @param {string} query - Current search.
        * @param {{ page: number; itemsPerPage: number }} options - Pagination.
+       *
        * @returns {Observable<object>} Normalized catalogue page.
        */
       const cataloguePageSource = (
@@ -330,12 +365,20 @@ export const InterventionPlanningOptionsStore = signalStore(
           }),
         ),
       );
-      /** Method initialize
-       * @description Loads missing sources only, retaining selections when another form opens in the same organization.
+
+      /**
+       * Method initialize
+       *
+       * @description
+       * Loads missing sources only, retaining selections when another form opens in the same
+       * organization.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {string | null} org - Organization.
        * @param {readonly PlanningCatalogueKind[]} kinds - Required sources.
+       *
        * @returns {void}
        */
       const initialize = (org: string | null, kinds: readonly PlanningCatalogueKind[]): void => {
@@ -362,12 +405,19 @@ export const InterventionPlanningOptionsStore = signalStore(
         for (const kind of missing) loadPage({ kind });
         if (labelsStatus.status === 'idle' || labelsStatus.status === 'error') loadLabels(org);
       };
+
       /**
        * Method loadSelection
-       * @description Resolves a selected site or member independently of catalogue pagination, with scoped and deduplicated requests.
+       *
+       * @description
+       * Resolves a selected site or member independently of catalogue pagination, with scoped and
+       * deduplicated requests.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {string} iri - Selected resource in the current organization.
+       *
        * @returns {void}
        */
       const loadSelection = rxMethod<string>(
@@ -428,56 +478,87 @@ export const InterventionPlanningOptionsStore = signalStore(
       return {
         /**
          * Method ensureSelected
-         * @description Resolves existing site and member references without advancing catalogue pages or changing their totals.
+         *
+         * @description
+         * Resolves existing site and member references without advancing catalogue pages or
+         * changing their totals.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string | null} org - Owning organization.
          * @param {readonly (string | null | undefined)[]} iris - Existing selections.
+         *
          * @returns {void}
          */
         ensureSelected(org: string | null, iris: readonly (string | null | undefined)[]): void {
           initialize(org, []);
           for (const iri of new Set(iris)) if (iri) loadSelection(iri);
         },
+
         /**
          * Method loadCreationOptions
-         * @description Loads the independent sources needed for creation and filtering.
+         *
+         * @description
+         * Loads the independent sources needed for creation and filtering.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string | null} org - Organization.
+         *
          * @returns {void}
          */
         loadCreationOptions(org: string | null): void {
           initialize(org, ['sites', 'members', 'templates']);
         },
+
         /**
          * Method loadWorkspaceOptions
-         * @description Loads preparation sources while preserving existing selections.
+         *
+         * @description
+         * Loads preparation sources while preserving existing selections.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {string | null} org - Organization.
+         *
          * @returns {void}
          */
         loadWorkspaceOptions(org: string | null): void {
           initialize(org, ['sites', 'members', 'facilities', 'equipment']);
         },
+
         /**
          * Method loadMore
-         * @description Fetches the next page for the current source query.
+         *
+         * @description
+         * Fetches the next page for the current source query.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {PlanningCatalogueKind} kind - Source.
+         *
          * @returns {void}
          */
         loadMore(kind: PlanningCatalogueKind): void {
           loadPage({ kind });
         },
+
         /**
          * Method search
-         * @description Debounces remote searches independently and ignores obsolete queries or organization contexts.
+         *
+         * @description
+         * Debounces remote searches independently and ignores obsolete queries or organization
+         * contexts.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {PlanningCatalogueRequest} request - Source and text.
+         *
          * @returns {void}
          */
         search: rxMethod<PlanningCatalogueRequest>(
@@ -502,10 +583,16 @@ export const InterventionPlanningOptionsStore = signalStore(
     },
   ),
 );
+
 /**
  * Type InterventionPlanningOptionsStoreType
- * @description Injectable planning catalogue store instance.
+ *
+ * @description
+ * Injectable planning catalogue store instance.
+ *
  * @since 1.0.0
+ *
+ * @type {InterventionPlanningOptionsStoreType}
  */
 export type InterventionPlanningOptionsStoreType = InstanceType<
   typeof InterventionPlanningOptionsStore

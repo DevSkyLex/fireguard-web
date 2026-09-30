@@ -93,7 +93,7 @@ const INITIAL_STATE: FacilityOverviewState = {
 };
 
 /**
- * Store FacilityOverviewStore
+ * Constant FacilityOverviewStore
  * @class FacilityOverviewStore
  *
  * @description
@@ -102,7 +102,6 @@ const INITIAL_STATE: FacilityOverviewState = {
  * active facility and exposes derived KPI metrics (compliance, overdue, next
  * inspection, equipment counts) plus summary view models consumed by the
  * overview sub-components.
- *
  * The intervention preview reads `InterventionService.list` straight from
  * the sibling interventions feature's root barrel, filtered by `site` and
  * capped to {@link RECENT_INTERVENTIONS_LIMIT} — the mirror of the pattern
@@ -110,7 +109,6 @@ const INITIAL_STATE: FacilityOverviewState = {
  * direction (`interventions/FEATURE.md` "Cross-Feature Dependencies").
  * Read-only: this store lists interventions touching the facility and owns
  * no intervention state.
- *
  * All loading is browser-triggered by the page; the store performs no work
  * on the server during SSR.
  *
@@ -122,6 +120,7 @@ export const FacilityOverviewStore = signalStore(
   withState<FacilityOverviewState>(INITIAL_STATE),
   withComputed((store) => ({
     /**
+     * @description
      * Whether the inspection preview request is in flight.
      */
     isLoadingInspections: computed<boolean>(
@@ -129,11 +128,13 @@ export const FacilityOverviewStore = signalStore(
     ),
 
     /**
+     * @description
      * Whether the equipment preview request is in flight.
      */
     isLoadingEquipment: computed<boolean>(() => store.equipmentCallState().status === 'pending'),
 
     /**
+     * @description
      * Whether the intervention preview request is in flight.
      */
     isLoadingInterventions: computed<boolean>(
@@ -141,6 +142,7 @@ export const FacilityOverviewStore = signalStore(
     ),
 
     /**
+     * @description
      * Inspection pass rate as a whole percentage, or `null` when there is
      * no inspection data.
      */
@@ -157,6 +159,7 @@ export const FacilityOverviewStore = signalStore(
     }),
 
     /**
+     * @description
      * Number of inspections past their due date and not yet closed.
      */
     overdueInspectionsCount: computed<number>(() => {
@@ -172,6 +175,7 @@ export const FacilityOverviewStore = signalStore(
     }),
 
     /**
+     * @description
      * ISO timestamp of the soonest upcoming inspection, or `null`.
      */
     nextInspectionAt: computed<string | null>(() => {
@@ -186,6 +190,7 @@ export const FacilityOverviewStore = signalStore(
     }),
 
     /**
+     * @description
      * Most recent past inspections, newest first, capped for preview.
      * Future-dated and unparseable rows are excluded before the cap applies.
      */
@@ -202,12 +207,14 @@ export const FacilityOverviewStore = signalStore(
     }),
 
     /**
+     * @description
      * Total number of equipment items assigned to the facility, read from the
      * collection `totalItems` rather than the length of the preview page.
      */
     equipmentCount: computed<number>(() => store.equipmentTotal()),
 
     /**
+     * @description
      * Equipment items that require attention (maintenance or decommissioned).
      */
     equipmentNeedingAttentionCount: computed<number>(
@@ -221,6 +228,7 @@ export const FacilityOverviewStore = signalStore(
     ),
 
     /**
+     * @description
      * Per-status equipment breakdown rows used by the progress-bar summary.
      * Label and icon come from the facility-owned
      * {@link resolveEquipmentStatusTag} registry — the same one the plan
@@ -278,6 +286,7 @@ export const FacilityOverviewStore = signalStore(
   })),
   withComputed((store) => ({
     /**
+     * @description
      * Whether the loaded inspection preview (capped at
      * {@link PREVIEW_ITEMS_PER_PAGE}) is a partial sample of the facility's
      * inspections — the compliance rate, overdue count and next-inspection
@@ -289,6 +298,7 @@ export const FacilityOverviewStore = signalStore(
     ),
 
     /**
+     * @description
      * Whether the loaded equipment preview (capped at
      * {@link PREVIEW_ITEMS_PER_PAGE}) is a partial sample of the facility's
      * equipment — the equipment count, "to monitor" subtitle and status
@@ -300,6 +310,7 @@ export const FacilityOverviewStore = signalStore(
     ),
 
     /**
+     * @description
      * Compliance rate formatted for display, or an em dash placeholder.
      */
     complianceDisplay: computed<string>(() => {
@@ -308,6 +319,7 @@ export const FacilityOverviewStore = signalStore(
     }),
 
     /**
+     * @description
      * Whole-day countdown until the next inspection, or `null`.
      */
     nextInspectionInDays: computed<number | null>(() => {
@@ -321,6 +333,7 @@ export const FacilityOverviewStore = signalStore(
     }),
 
     /**
+     * @description
      * Equipment KPI subtitle (e.g. "3 to monitor").
      */
     equipmentDescription: computed<string>(() => {
@@ -424,10 +437,14 @@ export const FacilityOverviewStore = signalStore(
       loadInspections,
       loadEquipment,
       loadInterventions,
+
       /**
+       * @description
        * Loads the inspection, equipment and intervention previews for a facility.
        *
-       * @param {{ organizationId: string; facilityId: string }} params
+       * @param {{ organizationId: string; facilityId: string }} params - Organization and facility
+       *   identities shared by the three preview requests.
+       *
        * @returns {void}
        */
       load(params: { organizationId: string; facilityId: string }): void {
@@ -444,5 +461,7 @@ export const FacilityOverviewStore = signalStore(
  *
  * @description
  * Instance type of the {@link FacilityOverviewStore} signal store.
+ *
+ * @type {FacilityOverviewStore}
  */
 export type FacilityOverviewStore = InstanceType<typeof FacilityOverviewStore>;

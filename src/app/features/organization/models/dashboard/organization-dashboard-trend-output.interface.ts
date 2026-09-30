@@ -20,6 +20,8 @@ import type {
  * @description
  * Supported dashboard trend resource keys exposed by the
  * organization dashboard API.
+ *
+ * @type {OrganizationDashboardTrendKey}
  */
 export type OrganizationDashboardTrendKey =
   | 'inspections'
@@ -34,6 +36,8 @@ export type OrganizationDashboardTrendKey =
  * @description
  * Primitive value supported inside the summary
  * block of a dashboard trend payload.
+ *
+ * @type {OrganizationDashboardTrendSummaryValue}
  */
 export type OrganizationDashboardTrendSummaryValue = number | string;
 
@@ -43,6 +47,8 @@ export type OrganizationDashboardTrendSummaryValue = number | string;
  * @description
  * Summary metrics returned alongside a trend series,
  * keyed by backend-defined field names.
+ *
+ * @type {OrganizationDashboardTrendSummary}
  */
 export type OrganizationDashboardTrendSummary = Readonly<
   Record<string, OrganizationDashboardTrendSummaryValue>
@@ -53,6 +59,8 @@ export type OrganizationDashboardTrendSummary = Readonly<
  *
  * @description
  * Primitive value supported inside one trend-series point.
+ *
+ * @type {OrganizationDashboardTrendSeriesPointValue}
  */
 export type OrganizationDashboardTrendSeriesPointValue = number | string;
 
@@ -61,6 +69,8 @@ export type OrganizationDashboardTrendSeriesPointValue = number | string;
  *
  * @description
  * One data point in a dedicated dashboard trend series.
+ *
+ * @type {OrganizationDashboardTrendSeriesPoint}
  */
 export type OrganizationDashboardTrendSeriesPoint = Readonly<
   Record<string, OrganizationDashboardTrendSeriesPointValue>
@@ -72,6 +82,8 @@ export type OrganizationDashboardTrendSeriesPoint = Readonly<
  * @description
  * Named numeric values returned inside the trend
  * comparison block.
+ *
+ * @type {OrganizationDashboardTrendComparisonScalarMap}
  */
 export type OrganizationDashboardTrendComparisonScalarMap = Readonly<Record<string, number>>;
 
@@ -80,6 +92,8 @@ export type OrganizationDashboardTrendComparisonScalarMap = Readonly<Record<stri
  *
  * @description
  * Value returned inside the dashboard trend comparison object.
+ *
+ * @type {OrganizationDashboardTrendComparisonValue}
  */
 export type OrganizationDashboardTrendComparisonValue =
   | OrganizationDashboardTrendComparisonScalarMap
@@ -92,6 +106,8 @@ export type OrganizationDashboardTrendComparisonValue =
  *
  * @description
  * Comparison block returned for a dashboard trend resource.
+ *
+ * @type {OrganizationDashboardTrendComparison}
  */
 export type OrganizationDashboardTrendComparison = Readonly<
   Record<string, OrganizationDashboardTrendComparisonValue>
@@ -99,7 +115,9 @@ export type OrganizationDashboardTrendComparison = Readonly<
   readonly mode?: string | null;
   readonly from?: string | null;
   readonly to?: string | null;
+
   /**
+   * @description
    * Period-total scalars (`total`, `delta`), not a series — a single
    * `{total?: int, delta?: float}` map per
    * `GetOrganizationDashboardTrendProvider::normalizeComparison()`.
@@ -197,10 +215,50 @@ export interface OrganizationDashboardTrendOutput extends HydraItem {
  * Shape of the `rxResource` value for the overview trend card,
  * which combines all three dashboard trend datasets in a single
  * parallel load.
+ *
+ * @type {OrganizationDashboardOverviewTrendResource}
  */
 export type OrganizationDashboardOverviewTrendResource = {
+  /**
+   * Property inspections
+   * @readonly
+   *
+   * @description
+   * Trend dataset for inspection activity over the selected period.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {OrganizationDashboardTrendOutput}
+   */
   readonly inspections: OrganizationDashboardTrendOutput;
+
+  /**
+   * Property ncOpened
+   * @readonly
+   *
+   * @description
+   * Trend dataset for non-conformities opened over the selected period.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {OrganizationDashboardTrendOutput}
+   */
   readonly ncOpened: OrganizationDashboardTrendOutput;
+
+  /**
+   * Property ncResolved
+   * @readonly
+   *
+   * @description
+   * Trend dataset for non-conformities resolved over the selected period.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {OrganizationDashboardTrendOutput}
+   */
   readonly ncResolved: OrganizationDashboardTrendOutput;
 };
 
@@ -212,12 +270,78 @@ export type OrganizationDashboardOverviewTrendResource = {
  * Combines the active organization identifier with the selected
  * time granularity and optional date range / comparison flag
  * to drive automatic re-fetching.
+ *
+ * @type {OrganizationDashboardTrendResourceParams}
  */
 export type OrganizationDashboardTrendResourceParams = {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Organization whose trend data is being requested.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {string}
+   */
   readonly organizationId: string;
+
+  /**
+   * Property granularity
+   * @readonly
+   *
+   * @description
+   * Time bucket size used to group the trend points.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {OrganizationDashboardGranularity}
+   */
   readonly granularity: OrganizationDashboardGranularity;
+
+  /**
+   * Property from
+   * @readonly
+   *
+   * @description
+   * Optional inclusive start date for the requested range.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {string | undefined}
+   */
   readonly from?: string;
+
+  /**
+   * Property to
+   * @readonly
+   *
+   * @description
+   * Optional inclusive end date for the requested range.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {string | undefined}
+   */
   readonly to?: string;
+
+  /**
+   * Property compare
+   * @readonly
+   *
+   * @description
+   * Whether the trend response includes a comparison period.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @type {boolean | undefined}
+   */
   readonly compare?: boolean;
 };
 
@@ -227,6 +351,8 @@ export type OrganizationDashboardTrendResourceParams = {
  * @description
  * Reactive params shape for the inspections trend `rxResource`.
  * Extends the base params with inspection-specific filters.
+ *
+ * @type {OrganizationDashboardInspectionTrendResourceParams}
  */
 export type OrganizationDashboardInspectionTrendResourceParams =
   OrganizationDashboardTrendResourceParams & {
@@ -241,6 +367,8 @@ export type OrganizationDashboardInspectionTrendResourceParams =
  * @description
  * Reactive params shape for the non-conformity trend `rxResource` instances.
  * Extends the base params with non-conformity-specific filters.
+ *
+ * @type {OrganizationDashboardNonConformityTrendResourceParams}
  */
 export type OrganizationDashboardNonConformityTrendResourceParams =
   OrganizationDashboardTrendResourceParams & {
@@ -254,6 +382,8 @@ export type OrganizationDashboardNonConformityTrendResourceParams =
  * @description
  * Reactive params shape for the equipment-created trend `rxResource`.
  * Extends the base params with equipment-specific filters.
+ *
+ * @type {OrganizationDashboardEquipmentTrendResourceParams}
  */
 export type OrganizationDashboardEquipmentTrendResourceParams =
   OrganizationDashboardTrendResourceParams & {
@@ -267,6 +397,8 @@ export type OrganizationDashboardEquipmentTrendResourceParams =
  * @description
  * Reactive params shape for the facilities-created trend `rxResource`.
  * Extends the base params with facility-specific filters.
+ *
+ * @type {OrganizationDashboardFacilityTrendResourceParams}
  */
 export type OrganizationDashboardFacilityTrendResourceParams =
   OrganizationDashboardTrendResourceParams & {

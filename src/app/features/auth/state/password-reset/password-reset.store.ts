@@ -29,17 +29,30 @@ import {
 import { passwordResetStoreEvents } from './events';
 import type { PasswordResetState } from './models';
 
+/**
+ * Type PasswordResetConfirmPayload
+ *
+ * @description
+ * Confirmation fields supplied by the page; the store retains the challenge token.
+ *
+ * @since 0.1.0
+ *
+ * @type {Omit<PasswordResetVerifyInput, 'token'>}
+ */
 type PasswordResetConfirmPayload = Omit<PasswordResetVerifyInput, 'token'>;
 
 /**
- * Store PasswordResetStore
+ * Constant PasswordResetStore
  *
  * @description
  * NGRX SignalStore for password reset state management.
  * Handles password reset request and verification flow.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const PasswordResetStore
  *
  * @example
  * ```typescript
@@ -69,10 +82,10 @@ export const PasswordResetStore = signalStore(
 
   withComputed((store) => ({
     /**
-     * Computed isRequesting
      * @readonly
      *
      * @description
+     * Computed isRequesting
      * Whether a password reset request is in progress.
      *
      * @access public
@@ -83,10 +96,10 @@ export const PasswordResetStore = signalStore(
     isRequesting: computed<boolean>(() => store.requestCallState().status === 'pending'),
 
     /**
-     * Computed requestError
      * @readonly
      *
      * @description
+     * Computed requestError
      * Password reset request error if any.
      *
      * @access public
@@ -97,10 +110,10 @@ export const PasswordResetStore = signalStore(
     requestError: computed(() => store.requestCallState().error),
 
     /**
-     * Computed isConfirming
      * @readonly
      *
      * @description
+     * Computed isConfirming
      * Whether password reset confirmation is in progress.
      *
      * @access public
@@ -111,10 +124,10 @@ export const PasswordResetStore = signalStore(
     isConfirming: computed<boolean>(() => store.confirmCallState().status === 'pending'),
 
     /**
-     * Computed confirmError
      * @readonly
      *
      * @description
+     * Computed confirmError
      * Confirmation error if any.
      *
      * @access public
@@ -125,10 +138,10 @@ export const PasswordResetStore = signalStore(
     confirmError: computed(() => store.confirmCallState().error),
 
     /**
-     * Computed isResending
      * @readonly
      *
      * @description
+     * Computed isResending
      * Whether password reset code resend is in progress.
      *
      * @access public
@@ -139,10 +152,10 @@ export const PasswordResetStore = signalStore(
     isResending: computed<boolean>(() => store.resendCallState().status === 'pending'),
 
     /**
-     * Computed resendError
      * @readonly
      *
      * @description
+     * Computed resendError
      * Resend error if any.
      *
      * @access public
@@ -153,10 +166,10 @@ export const PasswordResetStore = signalStore(
     resendError: computed(() => store.resendCallState().error),
 
     /**
-     * Computed resendAvailableIn
      * @readonly
      *
      * @description
+     * Computed resendAvailableIn
      * Whole seconds before a new reset code may be requested, `0` when none. A
      * snapshot, not a ticking clock — the OTP form runs the countdown from it.
      *
@@ -394,11 +407,12 @@ export const PasswordResetStore = signalStore(
 
 /**
  * Type PasswordResetStore
- * @type PasswordResetStore
  *
  * @description
  * Type of the PasswordResetStore instance.
  *
  * @since 1.0.0
+ *
+ * @type PasswordResetStore
  */
 export type PasswordResetStore = InstanceType<typeof PasswordResetStore>;

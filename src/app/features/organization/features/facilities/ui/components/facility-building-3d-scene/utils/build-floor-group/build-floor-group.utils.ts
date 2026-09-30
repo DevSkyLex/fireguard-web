@@ -10,7 +10,6 @@ import { buildRoomMesh, extrudeContour } from '../build-room-mesh/build-room-mes
 
 /**
  * Function buildFloorGroup
- * @function buildFloorGroup
  *
  * @description
  * Builds one floor's `THREE.Group` — its slab, its rooms, and its edge
@@ -25,21 +24,32 @@ import { buildRoomMesh, extrudeContour } from '../build-room-mesh/build-room-mes
  * @access public
  * @since 1.0.0
  *
- * @param {typeof import('three')} THREE - The three.js module, passed in rather than imported so this stays testable without WebGL.
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @param {typeof import('three')} THREE - The three.js module, passed in rather than imported so
+ *   this stays testable without WebGL.
  * @param {object} params - This floor's geometry and presentation inputs.
  * @param {string} params.floorId - This floor's own facility id.
  * @param {number} params.ordinal - This floor's zero-based rank in the building stack.
- * @param {number | null} params.imageWidth - The owning plan's natural pixel width, or `null` when undimensioned.
- * @param {number | null} params.imageHeight - The owning plan's natural pixel height, or `null` when undimensioned.
- * @param {ReadonlyArray<readonly [number, number]> | null} params.outline - The floor's sanitized outline, or `null` when none could be derived.
- * @param {ReadonlyArray<{ facilityId: string; points: ReadonlyArray<readonly [number, number]> }>} params.rooms - This floor's sanitized room contours.
+ * @param {number | null} params.imageWidth - The owning plan's natural pixel width, or `null` when
+ *   undimensioned.
+ * @param {number | null} params.imageHeight - The owning plan's natural pixel height, or `null`
+ *   when undimensioned.
+ * @param {ReadonlyArray<readonly [number, number]> | null} params.outline - The floor's sanitized
+ *   outline, or `null` when none could be derived.
+ * @param {ReadonlyArray<{
+ *   facilityId: string;
+ *   points: ReadonlyArray<readonly [number, number]>;
+ * }>} params.rooms
+ *   - This floor's sanitized room contours.
  * @param {number | string} params.roomColor - A room mesh's fill colour.
  * @param {number | string} params.slabColor - The slab's fill colour.
  * @param {number | string} params.edgesColor - The `EdgesGeometry` line colour.
  *
- * @returns {InstanceType<(typeof import('three'))['Group']>} The floor's group, placed at its stack height.
+ * @returns {InstanceType<(typeof import('three'))['Group']>} The floor's group, placed at its stack
+ *   height.
  *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @function buildFloorGroup
  */
 export function buildFloorGroup(
   THREE: typeof import('three'),

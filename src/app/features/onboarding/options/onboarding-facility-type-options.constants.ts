@@ -2,7 +2,6 @@ import type { SetupFacilityType } from '@features/organization/setup';
 
 /**
  * Constant ONBOARDING_FACILITY_TYPE_OPTIONS
- * @const ONBOARDING_FACILITY_TYPE_OPTIONS
  *
  * @description
  * Localized select options for the `create_first_facility` step's type
@@ -14,7 +13,13 @@ import type { SetupFacilityType } from '@features/organization/setup';
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly label: string; readonly value: SetupFacilityType; readonly icon: string }>}
+ * @type {ReadonlyArray<{
+ *   readonly label: string;
+ *   readonly value: SetupFacilityType;
+ *   readonly icon: string;
+ * }>}
+ *
+ * @constant ONBOARDING_FACILITY_TYPE_OPTIONS
  */
 export const ONBOARDING_FACILITY_TYPE_OPTIONS: ReadonlyArray<{
   readonly label: string;

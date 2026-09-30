@@ -157,7 +157,7 @@ private readonly feedback: FeedbackService = inject(FeedbackService);
 - Booleans are `is…`/`has…`/`can…`; overlay visibility is `<thing>Visible`; outputs are **past-tense or noun** (`submitted`, `cancelled`, `visibleChange`, `pageChange`) — never `submit`, never `onSubmit`. The `_` prefix is reserved for `withQueryState` internals.
 - **Every user-visible string is `$localize` with an explicit dotted id** (§9.10): `` $localize`:@@org.usage.atLimit:At limit` ``.
 - **Every new id is a translation debt.** `src/locale/messages.fr.xlf` and `messages.es.xlf` are actively maintained, and `npm run build` emits `No translation found` for any id missing from them. Do **not** invent French or Spanish copy — **list every id you introduced in your report** so the catalogs get filled deliberately.
-- JSDoc per class and per member — `@description` (one or two sentences), `@access`, `@since`, `@type`/`@param`/`@returns`, and `@author Valentin FORTIN <contact@valentin-fortin.pro>` on components. §14.4: keep it concise; never narrate the implementation.
+- Follow `docs/guides/code-comments.md` for class, property and method JSDoc: declaration title, `@description` alone on its line and prose on the following line, typed tags and verified metadata. Use balanced `Properties`, `Constructor` and `Methods` regions for present class groups. Keep it concise; never narrate the implementation or invent author/version metadata.
 - Page/section root elements carry a kebab-case DOM `id` as the e2e hook (`id="organization-overview"`); `data-testid` is kebab-case prefixed by the owning component (§9.10).
 
 ## Who may inject what

@@ -30,6 +30,17 @@ import { ActiveOrganizationStore } from '../active-organization';
 import type { MemberDirectoryState } from './models';
 import { toDirectoryEntry } from './utils';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Empty organization member lookup before a directory request completes.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @type {MemberDirectoryState}
+ */
 const INITIAL_STATE: MemberDirectoryState = {
   organizationId: null,
   byId: new Map<string, MemberDirectoryEntry>(),
@@ -38,15 +49,12 @@ const INITIAL_STATE: MemberDirectoryState = {
 
 /**
  * Constant MemberDirectoryStore
- * @const MemberDirectoryStore
  *
  * @description
  * Root-provided lookup from a bare member id to a name and an avatar, backing
  * `MEMBER_DIRECTORY_PORT`.
- *
  * Root-provided on purpose: its consumers are shell-level (a workspace panel,
  * a message row) and it would otherwise reload on every navigation.
- *
  * Two behaviours are deliberate. It refuses to call the API without
  * `organization.members.read` — messaging permissions do not imply it, so the
  * request would be a guaranteed 403 on every workspace visit. And it reads the
@@ -57,6 +65,8 @@ const INITIAL_STATE: MemberDirectoryState = {
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant MemberDirectoryStore
  */
 export const MemberDirectoryStore = signalStore(
   { providedIn: 'root' },
@@ -66,6 +76,7 @@ export const MemberDirectoryStore = signalStore(
     isLoading: computed((): boolean => isCallPending(store.callState())),
 
     /**
+     * @description
      * Whether the directory is readable at all. Callers must degrade to raw
      * ids when this is false rather than surface an error.
      */
@@ -84,10 +95,15 @@ export const MemberDirectoryStore = signalStore(
       const cancellation = new Subject<void>();
       let generation = 0;
       let sessionRevision = authSession.sessionRevision();
+
       /**
        * Function clear
-       * @description Drops names from a previous organization or session and cancels its directory read.
+       *
+       * @description
+       * Drops names from a previous organization or session and cancels its directory read.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const clear = (): void => {
@@ -95,10 +111,15 @@ export const MemberDirectoryStore = signalStore(
         cancellation.next();
         patchState(store, INITIAL_STATE);
       };
+
       /**
        * Function synchronizeSession
-       * @description Invalidates the cache before a caller can reuse it after a new login.
+       *
+       * @description
+       * Invalidates the cache before a caller can reuse it after a new login.
+       *
        * @since 1.0.0
+       *
        * @returns {void}
        */
       const synchronizeSession = (): void => {
@@ -147,7 +168,9 @@ export const MemberDirectoryStore = signalStore(
       return {
         clear,
         synchronizeSession,
+
         /**
+         * @description
          * Loads the directory for an organization unless it is already loaded
          * or loading for that same organization. A no-op without the
          * permission.
@@ -168,6 +191,7 @@ export const MemberDirectoryStore = signalStore(
         },
 
         /**
+         * @description
          * Best available label for a member reference, accepting a bare id or
          * an IRI without exposing the transport identifier when unresolved.
          */
@@ -180,7 +204,10 @@ export const MemberDirectoryStore = signalStore(
           );
         },
 
-        /** Forces a reload of the currently loaded organization. */
+        /**
+         * @description
+         * Forces a reload of the currently loaded organization.
+         */
         reload(): void {
           const organizationId: string | null = store.organizationId();
 
@@ -233,5 +260,7 @@ export const MemberDirectoryStore = signalStore(
  * Injection type of {@link MemberDirectoryStore}.
  *
  * @since 1.0.0
+ *
+ * @type {MemberDirectoryStoreType}
  */
 export type MemberDirectoryStoreType = InstanceType<typeof MemberDirectoryStore>;

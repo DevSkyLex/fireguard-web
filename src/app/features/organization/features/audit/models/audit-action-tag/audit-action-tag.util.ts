@@ -2,7 +2,12 @@ import type { AuditActionId } from '../audit-action/audit-action-id.type';
 import type { AuditActionModule } from '../audit-action/audit-action-module.type';
 import type { AuditActionTagDescriptor } from './audit-action-tag-descriptor.interface';
 
-/** Every real backend module. */
+/**
+ * Constant AUDIT_ACTION_MODULES
+ *
+ * @description
+ * Every real backend module.
+ */
 const AUDIT_ACTION_MODULES: ReadonlySet<AuditActionModule> = new Set([
   'organization',
   'facility',
@@ -19,7 +24,12 @@ const AUDIT_ACTION_MODULES: ReadonlySet<AuditActionModule> = new Set([
   'approval',
 ] satisfies AuditActionModule[]);
 
-/** Localized label and registered icon per module, including the frontend-only `'other'` fallback. */
+/**
+ * Constant AUDIT_ACTION_MODULE_DESCRIPTORS
+ *
+ * @description
+ * Localized label and registered icon per module, including the frontend-only `'other'` fallback.
+ */
 const AUDIT_ACTION_MODULE_DESCRIPTORS: Record<
   AuditActionModule,
   { readonly label: string; readonly icon: string }
@@ -52,7 +62,12 @@ const AUDIT_ACTION_MODULE_DESCRIPTORS: Record<
   other: { label: $localize`:@@audit.module.other:Other`, icon: 'lucideTag' },
 };
 
-/** Localized per-action label, keyed by the full `AuditActionId`. */
+/**
+ * Constant AUDIT_ACTION_LABELS
+ *
+ * @description
+ * Localized per-action label, keyed by the full `AuditActionId`.
+ */
 const AUDIT_ACTION_LABELS: Record<AuditActionId, string> = {
   'organization.created': $localize`:@@audit.action.organization.created:Organization created`,
   'organization.archived': $localize`:@@audit.action.organization.archived:Organization archived`,
@@ -133,7 +148,6 @@ const AUDIT_ACTION_LABELS: Record<AuditActionId, string> = {
 
 /**
  * Function humanizeAuditActionId
- * @function humanizeAuditActionId
  *
  * @description
  * Turns an unrecognized raw action id into a sentence-cased fallback label,
@@ -146,6 +160,8 @@ const AUDIT_ACTION_LABELS: Record<AuditActionId, string> = {
  * @param {string} value - The raw action id.
  *
  * @returns {string} A sentence-cased label with normalized spacing.
+ *
+ * @function humanizeAuditActionId
  */
 function humanizeAuditActionId(value: string): string {
   const words: string = value
@@ -204,7 +220,8 @@ export function resolveAuditActionTag(value: string): AuditActionTagDescriptor {
  * @access public
  * @since 1.0.0
  *
- * @returns {ReadonlyArray<{ value: AuditActionId; descriptor: AuditActionTagDescriptor }>} Every known action, with its resolved descriptor.
+ * @returns {ReadonlyArray<{ value: AuditActionId; descriptor: AuditActionTagDescriptor }>} Every
+ *   known action, with its resolved descriptor.
  */
 export function listAuditActionOptions(): ReadonlyArray<{
   readonly value: AuditActionId;

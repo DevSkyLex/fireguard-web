@@ -215,7 +215,12 @@ import { InterventionFacilitiesTable } from '../../tables/intervention-facilitie
 import { InterventionInspectionsTable } from '../../tables/intervention-inspections-table';
 import { InterventionWorkItemTable } from '../../tables/intervention-work-item-table';
 
-/** The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string. */
+/**
+ * Constant LINKED_RESOURCE_TAB_IDS
+ *
+ * @description
+ * The rail tabs, as a runtime set — `?tab=` arrives as an unvalidated string.
+ */
 const LINKED_RESOURCE_TAB_IDS: ReadonlySet<string> = new Set<string>([
   'overview',
   'changes',
@@ -245,7 +250,12 @@ function isInterventionLinkedResourceTabId(
   return value !== undefined && LINKED_RESOURCE_TAB_IDS.has(value);
 }
 
-/** The edit state before anything is open. */
+/**
+ * Constant IDLE_EDIT_STATE
+ *
+ * @description
+ * The edit state before anything is open.
+ */
 const IDLE_EDIT_STATE: InterventionEditState = {
   open: null,
   saving: null,
@@ -271,29 +281,23 @@ const IDLE_EDIT_STATE: InterventionEditState = {
  * `ResizeObserver` on the wrapper. Below 896px everything stacks;
  * `activeLinkedTab` drives which panel renders and lazy-loads a tab's data on
  * first activation.
- *
  * Four decisions a reviewer should know about.
- *
  * The properties rail owns intervention identity and planning metadata. The
  * phase's forward action (Plan / Submit / Publish) remains in the shell
  * header on desktop and the fixed footer on mobile, both driven by the
  * `workflowActions` template and `commandAction`.
- *
  * The store exposes one named call state per write concern, so nothing here
  * approximates attribution anymore: the in-place fields settle on
  * `updateDetailsCallState`, a work-item row locks through the store's
  * `pendingWorkItemIds`, a change row through `pendingChangeIds`, and each
  * overlay binds the call state of the write it actually performs.
- *
  * Deletion goes through `InterventionStore`, not the workspace store. Only the
  * list store removes the entity and repairs `orderedIds()`, which this page's
  * prev/next footer walks.
- *
  * "Duplicate", gated on {@link canPlan}, cannot open the list's own creation
  * sheet from here — it hands a prefill to `InterventionStore`'s
  * `pendingDuplicatePrefill` and navigates to the list with `?create=1`,
  * which reads and clears it once.
- *
  * The intervention's name is the shell breadcrumb's title, resolved by
  * `interventionTitleResolver`. Status, recording state and the split command
  * register on the shell header through `PageActionsService`.
@@ -403,7 +407,10 @@ export class InterventionDetailPage {
    * @access protected
    * @since 1.0.0
    *
-   * @type {WritableSignal<{ readonly item: InterventionWorkItemOutput; readonly mode: 'remaining' | 'planning' } | null>}
+   * @type {WritableSignal<{
+   *   readonly item: InterventionWorkItemOutput;
+   *   readonly mode: 'remaining' | 'planning';
+   * } | null>}
    */
   protected readonly effortItem: WritableSignal<{
     readonly item: InterventionWorkItemOutput;
@@ -489,30 +496,45 @@ export class InterventionDetailPage {
   protected readonly timeToday: Signal<string> = computed(
     () => DateTime.now().setZone(this.regionalFormatting().timezone).toISODate() ?? '',
   );
+
   /**
    * Property tableQueriesReady
    * @readonly
-   * @description Allows secondary table queries only after browser mounting, never during SSR.
+   *
+   * @description
+   * Allows secondary table queries only after browser mounting, never during SSR.
+   *
    * @access private
    * @since 6.2.0
+   *
    * @type {WritableSignal<boolean>}
    */
   private readonly tableQueriesReady: WritableSignal<boolean> = signal(false);
+
   /**
    * Property reloadCollections
    * @readonly
-   * @description Consequences waiting for a complete, context-guarded workspace reload.
+   *
+   * @description
+   * Consequences waiting for a complete, context-guarded workspace reload.
+   *
    * @access private
    * @since 6.2.0
+   *
    * @type {Set<InterventionCollectionsChange['collections'][number]>}
    */
   private readonly reloadCollections: Set<InterventionCollectionsChange['collections'][number]> =
     new Set<InterventionCollectionsChange['collections'][number]>();
+
   /**
    * Property connectionContext
-   * @description Observed route/network pair; criteria never persist beyond this page context.
+   *
+   * @description
+   * Observed route/network pair; criteria never persist beyond this page context.
+   *
    * @access private
    * @since 6.2.0
+   *
    * @type {{ id: string; online: boolean } | null}
    */
   private connectionContext: { id: string; online: boolean } | null = null;
@@ -520,11 +542,17 @@ export class InterventionDetailPage {
   /**
    * Method refreshAfterWorkspace
    * @method refreshAfterWorkspace
-   * @description Refreshes complete data before dependent queries while preserving pending operations.
+   *
+   * @description
+   * Refreshes complete data before dependent queries while preserving pending operations.
+   *
    * @access private
    * @since 6.2.0
+   *
    * @param {string} interventionId - Intervention whose workspace must be refreshed.
-   * @param {InterventionCollectionsChange['collections']} collections - Dependent queries to invalidate.
+   * @param {InterventionCollectionsChange['collections']} collections - Dependent queries to
+   *   invalidate.
+   *
    * @returns {void}
    */
   private refreshAfterWorkspace(
@@ -539,18 +567,27 @@ export class InterventionDetailPage {
   /**
    * Property mobileActionsVisible
    * @readonly
-   * @description Keeps the mobile action host mounted until its drawer closes.
+   *
+   * @description
+   * Keeps the mobile action host mounted until its drawer closes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly mobileActionsVisible: WritableSignal<boolean> = signal(false);
+
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Central interaction mode; viewport width only controls geometry.
+   *
+   * @description
+   * Central interaction mode; viewport width only controls geometry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -560,38 +597,57 @@ export class InterventionDetailPage {
   /**
    * Property proofItem
    * @readonly
-   * @description Work item whose associated evidence is being consulted.
+   *
+   * @description
+   * Work item whose associated evidence is being consulted.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<InterventionWorkItemOutput | null>}
    */
   protected readonly proofItem = signal<InterventionWorkItemOutput | null>(null);
+
   /**
    * Property proofSheetSide
    * @readonly
-   * @description Responsive placement of the contextual evidence sheet.
+   *
+   * @description
+   * Responsive placement of the contextual evidence sheet.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly proofSheetSide = sheetSide();
+
   /**
    * Property proofAttachments
    * @readonly
-   * @description Server files associated with the selected work item.
+   *
+   * @description
+   * Server files associated with the selected work item.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly InterventionAttachmentOutput[]>}
    */
   protected readonly proofAttachments = computed(() =>
     this.store.attachments().filter((attachment) => attachment.workItemId === this.proofItem()?.id),
   );
+
   /**
    * Property proofQueuedAttachments
    * @readonly
-   * @description Locally queued files associated with the selected work item.
+   *
+   * @description
+   * Locally queued files associated with the selected work item.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly InterventionQueuedAttachment[]>}
    */
   protected readonly proofQueuedAttachments = computed(() =>
@@ -603,9 +659,13 @@ export class InterventionDetailPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The active organization, from the route.
+   *
+   * @description
+   * The active organization, from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -613,9 +673,13 @@ export class InterventionDetailPage {
   /**
    * Property interventionId
    * @readonly
-   * @description The intervention this page shows, from the route.
+   *
+   * @description
+   * The intervention this page shows, from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly interventionId: InputSignal<string> = input.required<string>();
@@ -642,9 +706,13 @@ export class InterventionDetailPage {
   /**
    * Property store
    * @readonly
-   * @description The workspace, scoped to this route so it resets on navigation.
+   *
+   * @description
+   * The workspace, scoped to this route so it resets on navigation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {InterventionWorkspaceStoreType}
    */
   protected readonly store: InterventionWorkspaceStoreType = inject<InterventionWorkspaceStoreType>(
@@ -654,9 +722,13 @@ export class InterventionDetailPage {
   /**
    * Property planningOptions
    * @readonly
-   * @description Sites, members and labels the properties grid edits against.
+   *
+   * @description
+   * Sites, members and labels the properties grid edits against.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {InterventionPlanningOptionsStoreType}
    */
   protected readonly planningOptions: InterventionPlanningOptionsStoreType =
@@ -674,6 +746,7 @@ export class InterventionDetailPage {
    *
    * @access protected
    * @since 4.5.0
+   *
    * @type {InterventionLinkedResourcesStoreType}
    */
   protected readonly linkedResources: InterventionLinkedResourcesStoreType =
@@ -682,9 +755,13 @@ export class InterventionDetailPage {
   /**
    * Property tableQueries
    * @readonly
-   * @description Server-filtered rows and criteria for the Work and Changes tables.
+   *
+   * @description
+   * Server-filtered rows and criteria for the Work and Changes tables.
+   *
    * @access protected
    * @since 6.2.0
+   *
    * @type {InterventionTableQueryStoreType}
    */
   protected readonly tableQueries: InterventionTableQueryStoreType =
@@ -701,6 +778,7 @@ export class InterventionDetailPage {
    *
    * @access protected
    * @since 5.2.0
+   *
    * @type {InterventionPublicationStoreType}
    */
   protected readonly publicationStore: InterventionPublicationStoreType =
@@ -709,16 +787,30 @@ export class InterventionDetailPage {
   /**
    * Property labelStore
    * @readonly
-   * @description The organization's intervention label catalog, backing the "Manage labels" dialog.
+   *
+   * @description
+   * The organization's intervention label catalog, backing the "Manage labels" dialog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {InterventionLabelStoreType}
    */
   protected readonly labelStore: InterventionLabelStoreType =
     inject<InterventionLabelStoreType>(InterventionLabelStore);
 
   /**
-   * * Lists organization teams for the "Assign team…" picker — read directly, not through a store: a one-shot fetch on dialog open, mirroring {@link downloadAttachment}.
+   * Property teamService
+   * @readonly
+   *
+   * @description
+   * - Lists organization teams for the "Assign team…" picker — read directly, not through a store: a
+   *   one-shot fetch on dialog open, mirroring {@link downloadAttachment}.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {TeamService}
    */
   private readonly teamService: TeamService = inject(TeamService);
 
@@ -738,68 +830,147 @@ export class InterventionDetailPage {
   private readonly listStore: InterventionStoreType =
     inject<InterventionStoreType>(InterventionStore);
 
-  /** Permission checks for the four intervention capabilities. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Permission checks for the four intervention capabilities.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** The signed-in member, to decide who may submit. */
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * The signed-in member, to decide who may submit.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessStoreType}
+   */
   private readonly memberAccess: OrganizationMemberAccessStoreType =
     inject<OrganizationMemberAccessStoreType>(OrganizationMemberAccessStore);
 
-  /** Whether the browser can reach the API, which gates publication. */
+  /**
+   * Property connectivity
+   * @readonly
+   *
+   * @description
+   * Whether the browser can reach the API, which gates publication.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ConnectivityService}
+   */
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
 
-  /** The outbox replay coordinator, read for the on-page blocked-sync alert and its retry. */
+  /**
+   * Property sync
+   * @readonly
+   *
+   * @description
+   * The outbox replay coordinator, read for the on-page blocked-sync alert and its retry.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionSyncCoordinatorService}
+   */
   private readonly sync: InterventionSyncCoordinatorService = inject(
     InterventionSyncCoordinatorService,
   );
 
-  /** The outbox itself, read so the blocked-sync alert can name what failed on this intervention. */
+  /**
+   * Property offline
+   * @readonly
+   *
+   * @description
+   * The outbox itself, read so the blocked-sync alert can name what failed on this intervention.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionOfflineService}
+   */
   private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
 
   /**
    * Property operationsStore
    * @readonly
-   * @description Owns operation reads and explicit recovery decisions scoped to this intervention.
+   *
+   * @description
+   * Owns operation reads and explicit recovery decisions scoped to this intervention.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {InstanceType<typeof InterventionOperationsStore>}
    */
   protected readonly operationsStore = inject(InterventionOperationsStore);
+
   /**
    * Property operationsVisible
    * @readonly
-   * @description Visibility of this intervention’s local operations sheet.
+   *
+   * @description
+   * Visibility of this intervention’s local operations sheet.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly operationsVisible = signal(false);
+
   /**
    * Property blockedSyncOperations
    * @readonly
-   * @description Failed and conflicted operations belonging only to this intervention.
+   *
+   * @description
+   * Failed and conflicted operations belonging only to this intervention.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly InterventionOutboxOperation[]>}
    */
   protected readonly blockedSyncOperations = this.operationsStore.blocked;
+
   /**
    * Property syncOnline
    * @readonly
-   * @description Current connectivity used to explain unavailable synchronization actions.
+   *
+   * @description
+   * Current connectivity used to explain unavailable synchronization actions.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly syncOnline = this.connectivity.online;
+
   /**
    * Property recordingLabel
    * @readonly
-   * @description Readable state of local persistence and synchronization, including unresolved reads.
+   *
+   * @description
+   * Readable state of local persistence and synchronization, including unresolved reads.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly recordingLabel = computed(() => {
@@ -820,43 +991,122 @@ export class InterventionDetailPage {
   /**
    * Property syncProblem
    * @readonly
-   * @description Known replay failure for this intervention, excluding other device queues.
+   *
+   * @description
+   * Known replay failure for this intervention, excluding other device queues.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly syncProblem: Signal<string | null> = computed(
     () => this.blockedSyncOperations().find((operation) => operation.error)?.error ?? null,
   );
 
-  /** Whether a replay is in flight, so the alert's retry reads as busy rather than dead. */
+  /**
+   * Property syncRetrying
+   * @readonly
+   *
+   * @description
+   * Whether a replay is in flight, so the alert's retry reads as busy rather than dead.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly syncRetrying: Signal<boolean> = this.sync.syncing;
 
-  /** Shrinks camera captures under the backend's 10 MiB attachment ceiling. */
+  /**
+   * Property photoCompressor
+   * @readonly
+   *
+   * @description
+   * Shrinks camera captures under the backend's 10 MiB attachment ceiling.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionPhotoCompressorService}
+   */
   private readonly photoCompressor: InterventionPhotoCompressorService = inject(
     InterventionPhotoCompressorService,
   );
 
-  /** Field toolbox: QR scan support and decoding. */
+  /**
+   * Property fieldExecution
+   * @readonly
+   *
+   * @description
+   * Field toolbox: QR scan support and decoding.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionFieldExecutionService}
+   */
   private readonly fieldExecution: InterventionFieldExecutionService = inject(
     InterventionFieldExecutionService,
   );
 
   /**
+   * Property interventionService
+   * @readonly
+   *
+   * @description
    * Read directly rather than through {@link InterventionStore}: an
    * attachment download is a one-shot fetch-then-save with no state the
    * store needs to own, mirroring `InterventionsPage`'s direct
    * `InterventionService` call for its CSV export.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionService}
    */
   private readonly interventionService: InterventionService = inject(InterventionService);
 
-  /** Saves a downloaded attachment to the visitor's device, browser-only. */
+  /**
+   * Property browserDownload
+   * @readonly
+   *
+   * @description
+   * Saves a downloaded attachment to the visitor's device, browser-only.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
   private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
-  /** Confirms a silent in-place commit so it is never invisible. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Confirms a silent in-place commit so it is never invisible.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject(FeedbackService);
 
-  /** Listens for the list store's delete outcome. */
+  /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * Listens for the list store's delete outcome.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Events}
+   */
   private readonly events: Events = inject(Events);
 
   /**
@@ -875,42 +1125,100 @@ export class InterventionDetailPage {
   private readonly router: Router = inject(Router);
 
   /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Current intervention route used to resolve the selected workspace.
+   *
    * @access private
    * @since 5.3.0
+   *
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
-  /** The application's language, used to phrase the meta line and the timeline. */
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * The application's language, used to phrase the meta line and the timeline.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
-  /** Document title channel — the title resolver only returned a neutral label until the workspace loads. */
+  /**
+   * Property titleService
+   * @readonly
+   *
+   * @description
+   * Document title channel — the title resolver only returned a neutral label until the workspace
+   * loads.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {TitleService}
+   */
   private readonly titleService: TitleService = inject<TitleService>(TitleService);
 
-  /** Disconnects the detail-columns width `ResizeObserver` on teardown. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Disconnects the detail-columns width `ResizeObserver` on teardown.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /**
    * Property renderInjector
    * @readonly
-   * @description Schedules page-local post-render navigation without accessing the DOM during SSR.
+   *
+   * @description
+   * Schedules page-local post-render navigation without accessing the DOM during SSR.
+   *
    * @access private
    * @since 6.2.0
+   *
    * @type {Injector}
    */
   private readonly renderInjector: Injector = inject(Injector);
 
   /**
    * Property tabNavigationGeneration
-   * @description Cancels ordinary tab scrolls when a newer targeted navigation takes precedence.
+   *
+   * @description
+   * Cancels ordinary tab scrolls when a newer targeted navigation takes precedence.
+   *
    * @access private
    * @since 6.2.0
+   *
    * @type {number}
    */
   private tabNavigationGeneration: number = 0;
 
   /**
-   * * Registers {@link pageActions} on the shell header.
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * - Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
    */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
@@ -963,16 +1271,28 @@ export class InterventionDetailPage {
   /**
    * Property workItemTable
    * @readonly
-   * @description Work dataview public focus API for QR matches.
+   *
+   * @description
+   * Work dataview public focus API for QR matches.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Signal<InterventionWorkItemTable | undefined>}
    */
   private readonly workItemTable: Signal<InterventionWorkItemTable | undefined> =
     viewChild(InterventionWorkItemTable);
 
   /**
-   * * The deferred focus tick {@link revealFieldWork} schedules on a tab switch, cleared on teardown.
+   * Property pendingFocusTimeout
+   *
+   * @description
+   * - The deferred focus tick {@link revealFieldWork} schedules on a tab switch, cleared on teardown.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ReturnType<typeof setTimeout> | null}
    */
   private pendingFocusTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -981,7 +1301,8 @@ export class InterventionDetailPage {
    * @constructor
    *
    * @description
-   * Registers page actions and tabs, route-driven loading, mutation feedback, and lifecycle cleanup.
+   * Registers page actions and tabs, route-driven loading, mutation feedback, and lifecycle
+   * cleanup.
    *
    * @access public
    * @since 1.0.0
@@ -1342,6 +1663,7 @@ export class InterventionDetailPage {
       });
 
     /**
+     * @description
      * Reloads the workspace options (which carry `labelOptions`) after every
      * catalog mutation, so the properties grid's label picker reflects the
      * change without a page reload — see `InterventionLabelStore`'s own
@@ -1364,16 +1686,32 @@ export class InterventionDetailPage {
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
@@ -1382,28 +1720,47 @@ export class InterventionDetailPage {
   /**
    * Property detailColumns
    * @readonly
+   *
    * @description
    * The `@container/detail` element wrapping the two-track grid, whose measured
    * width drives {@link propertiesRailVisible}. It is a separate parent of the
    * grid because a container query never matches the element that declares the
    * container. See the class doc for the threshold.
+   *
    * @access private
    * @since 6.6.0
+   *
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
    */
   private readonly detailColumns: Signal<ElementRef<HTMLElement> | undefined> =
     viewChild<ElementRef<HTMLElement>>('detailColumns');
 
-  /** The field-work section, focused when the phase action sends the operator there. */
+  /**
+   * Property workItemsSection
+   * @readonly
+   *
+   * @description
+   * The field-work section, focused when the phase action sends the operator there.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
   private readonly workItemsSection: Signal<ElementRef<HTMLElement> | undefined> =
     viewChild<ElementRef<HTMLElement>>('workItemsSection');
 
   /**
    * Property mobileIssuesSection
    * @readonly
-   * @description The Overview tab's issues checklist wrapper, visible while {@link propertiesRailVisible} is `false`, which {@link revealBlockers} targets there.
+   *
+   * @description
+   * The Overview tab's issues checklist wrapper, visible while {@link propertiesRailVisible} is
+   * `false`, which {@link revealBlockers} targets there.
+   *
    * @access private
    * @since 5.0.0
+   *
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
    */
   private readonly mobileIssuesSection: Signal<ElementRef<HTMLElement> | undefined> =
@@ -1412,9 +1769,14 @@ export class InterventionDetailPage {
   /**
    * Property desktopIssuesSection
    * @readonly
-   * @description The second column's issues checklist wrapper, visible while {@link propertiesRailVisible} is `true`, which {@link revealBlockers} targets there.
+   *
+   * @description
+   * The second column's issues checklist wrapper, visible while {@link propertiesRailVisible} is
+   * `true`, which {@link revealBlockers} targets there.
+   *
    * @access private
    * @since 5.0.0
+   *
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
    */
   private readonly desktopIssuesSection: Signal<ElementRef<HTMLElement> | undefined> =
@@ -1479,15 +1841,48 @@ export class InterventionDetailPage {
    */
   protected readonly propertiesRailVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** What the text confirmation is asking about, if anything. */
+  /**
+   * Property pendingConfirm
+   * @readonly
+   *
+   * @description
+   * What the text confirmation is asking about, if anything.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionConfirmRequest | null>}
+   */
   protected readonly pendingConfirm: WritableSignal<InterventionConfirmRequest | null> =
     signal<InterventionConfirmRequest | null>(null);
 
-  /** The intervention pending abandonment, if the abandon confirmation is open. */
+  /**
+   * Property pendingAbandon
+   * @readonly
+   *
+   * @description
+   * The intervention pending abandonment, if the abandon confirmation is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionOutput | null>}
+   */
   protected readonly pendingAbandon: WritableSignal<InterventionOutput | null> =
     signal<InterventionOutput | null>(null);
 
-  /** Whether the abandon transition is in flight, which locks its dialog open. */
+  /**
+   * Property abandonPending
+   * @readonly
+   *
+   * @description
+   * Whether the abandon transition is in flight, which locks its dialog open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly abandonPending: Signal<boolean> = computed<boolean>(
     () => this.pendingAbandon() !== null && isCallPending(this.store.transitionCallState()),
   );
@@ -1524,18 +1919,44 @@ export class InterventionDetailPage {
   /**
    * Property publishConfirmVisible
    * @readonly
-   * @description Whether the publication confirmation dialog is visible.
+   *
+   * @description
+   * Whether the publication confirmation dialog is visible.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly publishConfirmVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** What the attachment delete confirmation is asking about, if anything. */
+  /**
+   * Property pendingAttachmentDelete
+   * @readonly
+   *
+   * @description
+   * What the attachment delete confirmation is asking about, if anything.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionAttachmentOutput | null>}
+   */
   protected readonly pendingAttachmentDelete: WritableSignal<InterventionAttachmentOutput | null> =
     signal<InterventionAttachmentOutput | null>(null);
 
-  /** What the queued-attachment discard confirmation is asking about, if anything. */
+  /**
+   * Property pendingQueuedAttachmentDelete
+   * @readonly
+   *
+   * @description
+   * What the queued-attachment discard confirmation is asking about, if anything.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionQueuedAttachment | null>}
+   */
   protected readonly pendingQueuedAttachmentDelete: WritableSignal<InterventionQueuedAttachment | null> =
     signal<InterventionQueuedAttachment | null>(null);
 
@@ -1551,6 +1972,7 @@ export class InterventionDetailPage {
    *
    * @access protected
    * @since 6.0.0
+   *
    * @type {Signal<InterventionAttachmentOutput | null>}
    */
   protected readonly queuedAttachmentDeleteRequest: Signal<InterventionAttachmentOutput | null> =
@@ -1573,13 +1995,46 @@ export class InterventionDetailPage {
       };
     });
 
-  /** Whether the "Manage labels" dialog is open. */
+  /**
+   * Property manageLabelsVisible
+   * @readonly
+   *
+   * @description
+   * Whether the "Manage labels" dialog is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly manageLabelsVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the "Assign team" dialog is open. */
+  /**
+   * Property teamAssignVisible
+   * @readonly
+   *
+   * @description
+   * Whether the "Assign team" dialog is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly teamAssignVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The organization's teams, fetched on the "Assign team" dialog's first open. */
+  /**
+   * Property teams
+   * @readonly
+   *
+   * @description
+   * The organization's teams, fetched on the "Assign team" dialog's first open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<readonly TeamOutput[]>}
+   */
   protected readonly teams: WritableSignal<readonly TeamOutput[]> = signal<readonly TeamOutput[]>(
     [],
   );
@@ -1587,9 +2042,14 @@ export class InterventionDetailPage {
   /**
    * Property teamMemberIds
    * @readonly
-   * @description Keeps the first three membership ids returned for each team so the dialog can render a compact preview without loading full rosters.
+   *
+   * @description
+   * Keeps the first three membership ids returned for each team so the dialog can render a compact
+   * preview without loading full rosters.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<Readonly<Record<string, readonly string[]>>>}
    */
   protected readonly teamMemberIds: WritableSignal<Readonly<Record<string, readonly string[]>>> =
@@ -1598,9 +2058,14 @@ export class InterventionDetailPage {
   /**
    * Property teamMemberOptions
    * @readonly
-   * @description Resolves team membership ids against the already-loaded organization member catalogue for avatar and initials previews.
+   *
+   * @description
+   * Resolves team membership ids against the already-loaded organization member catalogue for
+   * avatar and initials previews.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, readonly MemberSelectOption[]>>>}
    */
   protected readonly teamMemberOptions: Signal<
@@ -1635,12 +2100,29 @@ export class InterventionDetailPage {
   });
 
   /**
-   * * Whether {@link teams} is loading.
+   * Property teamsLoading
+   * @readonly
+   *
+   * @description
+   * - Whether {@link teams} is loading.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
    */
   protected readonly teamsLoading: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * * Whether {@link teams} has already been fetched once, so reopening the dialog does not refetch.
+   * Property teamsLoaded
+   *
+   * @description
+   * - Whether {@link teams} has already been fetched once, so reopening the dialog does not refetch.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
    */
   private teamsLoaded = false;
 
@@ -1661,24 +2143,63 @@ export class InterventionDetailPage {
    */
   private readonly offlineBlockReason: WritableSignal<string | null> = signal<string | null>(null);
 
-  /** Whether a publication request and its poll are running. */
+  /**
+   * Property publicationPreparing
+   * @readonly
+   *
+   * @description
+   * Whether a publication request and its poll are running.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly publicationPreparing = signal(false);
+
   /**
    * Property publishing
    * @readonly
-   * @description Whether publication preflight or server observation is running.
+   *
+   * @description
+   * Whether publication preflight or server observation is running.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly publishing: Signal<boolean> = computed(
     () => this.publicationPreparing() || this.publicationStore.publishing(),
   );
 
-  /** Whether the current publish attempt has been pending long enough to say so. */
+  /**
+   * Property publicationLongRunning
+   * @readonly
+   *
+   * @description
+   * Whether the current publish attempt has been pending long enough to say so.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly publicationLongRunning: Signal<boolean> = this.publicationStore.longRunning;
 
-  /** Whether the last attempt ended because the poll gave up while the publication was still running server-side. */
+  /**
+   * Property publicationTimedOut
+   * @readonly
+   *
+   * @description
+   * Whether the last attempt ended because the poll gave up while the publication was still running
+   * server-side.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly publicationTimedOut: Signal<boolean> = this.publicationStore.timedOut;
 
   /**
@@ -1702,13 +2223,46 @@ export class InterventionDetailPage {
     return this.offlineBlockReason() ?? this.publicationStore.error();
   });
 
-  /** Whether the request-changes panel is open. */
+  /**
+   * Property requestChangesVisible
+   * @readonly
+   *
+   * @description
+   * Whether the request-changes panel is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly requestChangesVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the completion-signature dialog interposed on submit is open. */
+  /**
+   * Property signatureDialogVisible
+   * @readonly
+   *
+   * @description
+   * Whether the completion-signature dialog interposed on submit is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly signatureDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the signature just captured is uploading, which disables the dialog's Confirm. */
+  /**
+   * Property signatureUploading
+   * @readonly
+   *
+   * @description
+   * Whether the signature just captured is uploading, which disables the dialog's Confirm.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly signatureUploading: Signal<boolean> = computed<boolean>(
     () => this.signingSubmitPending() && isCallPending(this.store.attachmentWriteCallState()),
   );
@@ -1723,27 +2277,82 @@ export class InterventionDetailPage {
    * aborts the chain, so a later, unrelated attachment upload never
    * mistakenly triggers a submit.
    *
-   * @access private
+   * @access protected
    * @since 5.5.0
    *
    * @type {WritableSignal<boolean>}
    */
   protected readonly signingSubmitPending: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the add-work-item panel is open. */
+  /**
+   * Property workItemSheetVisible
+   * @readonly
+   *
+   * @description
+   * Whether the add-work-item panel is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly workItemSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the add-facility panel is open. */
+  /**
+   * Property facilitySheetVisible
+   * @readonly
+   *
+   * @description
+   * Whether the add-facility panel is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly facilitySheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the live discussion sheet is open — also what defers `SubjectDiscussion`'s own load. */
+  /**
+   * Property discussionSheetVisible
+   * @readonly
+   *
+   * @description
+   * Whether the live discussion sheet is open — also what defers `SubjectDiscussion`'s own load.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly discussionSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Activity region used only after the explicit Discussion action. */
+  /**
+   * Property activityContent
+   * @readonly
+   *
+   * @description
+   * Activity region used only after the explicit Discussion action.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ElementRef<HTMLElement> | undefined>}
+   */
   private readonly activityContent: Signal<ElementRef<HTMLElement> | undefined> =
     viewChild('activityContent');
 
-  /** Reveals the activity and moves the keyboard cursor into its comment field. */
+  /**
+   * Method openActivity
+   * @method openActivity
+   *
+   * @description
+   * Reveals the activity and moves the keyboard cursor into its comment field.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected openActivity(): void {
     this.setLinkedTab('overview');
     setTimeout((): void => {
@@ -1777,16 +2386,32 @@ export class InterventionDetailPage {
   /**
    * Property canReadTeams
    * @readonly
-   * @description Whether the member may list organization teams — gates the "Assign team…" entry, since it cannot list its own picker's options without it.
+   *
+   * @description
+   * Whether the member may list organization teams — gates the "Assign team…" entry, since it
+   * cannot list its own picker's options without it.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canReadTeams: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.TEAMS_READ),
   );
 
-  /** Whether the browser can reach the API. */
+  /**
+   * Property online
+   * @readonly
+   *
+   * @description
+   * Whether the browser can reach the API.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly online: Signal<boolean> = this.connectivity.online;
 
   /**
@@ -1811,7 +2436,18 @@ export class InterventionDetailPage {
     scanSupported: () => this.fieldExecution.scanSupported(),
   });
 
-  /** Where the intervention sits in its lifecycle, derived from its status. */
+  /**
+   * Property phase
+   * @readonly
+   *
+   * @description
+   * Where the intervention sits in its lifecycle, derived from its status.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<InterventionPhase>}
+   */
   protected readonly phase: Signal<InterventionPhase> = this.caps.phase;
 
   /**
@@ -1855,16 +2491,60 @@ export class InterventionDetailPage {
   private readonly commandTransitionTarget: Signal<InterventionStatus | null> =
     this.caps.commandTransitionTarget;
 
-  /** Whether the member may plan. */
+  /**
+   * Property canPlan
+   * @readonly
+   *
+   * @description
+   * Whether the member may plan.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canPlan: Signal<boolean> = this.caps.canPlan;
 
-  /** Whether the member may record field work. */
+  /**
+   * Property canExecute
+   * @readonly
+   *
+   * @description
+   * Whether the member may record field work.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canExecute: Signal<boolean> = this.caps.canExecute;
 
-  /** Whether the member may review. */
+  /**
+   * Property canReview
+   * @readonly
+   *
+   * @description
+   * Whether the member may review.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canReview: Signal<boolean> = this.caps.canReview;
 
-  /** Whether the member may publish. */
+  /**
+   * Property canPublish
+   * @readonly
+   *
+   * @description
+   * Whether the member may publish.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canPublish: Signal<boolean> = this.caps.canPublish;
 
   /**
@@ -1883,19 +2563,74 @@ export class InterventionDetailPage {
    */
   protected readonly canSubmit: Signal<boolean> = this.caps.canSubmit;
 
-  /** Whether dates, priority and participants accept a write, per the replanning matrix. */
+  /**
+   * Property canEditSchedule
+   * @readonly
+   *
+   * @description
+   * Whether dates, priority and participants accept a write, per the replanning matrix.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canEditSchedule: Signal<boolean> = this.caps.canEditSchedule;
 
-  /** Whether the site accepts a write — draft only, as the backend enforces. */
+  /**
+   * Property canEditSite
+   * @readonly
+   *
+   * @description
+   * Whether the site accepts a write — draft only, as the backend enforces.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canEditSite: Signal<boolean> = this.caps.canEditSite;
 
-  /** Whether the responsible accepts a handover — draft and planned only. */
+  /**
+   * Property canEditResponsible
+   * @readonly
+   *
+   * @description
+   * Whether the responsible accepts a handover — draft and planned only.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canEditResponsible: Signal<boolean> = this.caps.canEditResponsible;
 
-  /** Whether description and labels accept a write, which holds until a terminal status. */
+  /**
+   * Property canEditDetails
+   * @readonly
+   *
+   * @description
+   * Whether description and labels accept a write, which holds until a terminal status.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canEditDetails: Signal<boolean> = this.caps.canEditDetails;
 
-  /** Whether the "Manage labels…" trigger renders — `organization.interventions.write`. */
+  /**
+   * Property canManageLabels
+   * @readonly
+   *
+   * @description
+   * Whether the "Manage labels…" trigger renders — `organization.interventions.write`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canManageLabels: Signal<boolean> = this.caps.canManageLabels;
 
   /**
@@ -1911,16 +2646,40 @@ export class InterventionDetailPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canAssignTeam: Signal<boolean> = computed<boolean>(
     () => this.caps.canAssignTeam() && this.canReadTeams(),
   );
 
-  /** Whether the scope may still grow. */
+  /**
+   * Property canAddWorkItem
+   * @readonly
+   *
+   * @description
+   * Whether the scope may still grow.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canAddWorkItem: Signal<boolean> = this.caps.canAddWorkItem;
 
-  /** Whether a facility may be attached to this intervention — the same mutable-window gate the backend enforces on `POST /api/facilities`. */
+  /**
+   * Property canAddFacility
+   * @readonly
+   *
+   * @description
+   * Whether a facility may be attached to this intervention — the same mutable-window gate the
+   * backend enforces on `POST /api/facilities`.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canAddFacility: Signal<boolean> = this.caps.canAddFacility;
 
   /**
@@ -1946,13 +2705,46 @@ export class InterventionDetailPage {
     FacilityOutput['recordStatus']
   >(() => (this.store.intervention()?.status === 'published' ? 'published' : undefined));
 
-  /** Whether an item may be skipped with a reason. */
+  /**
+   * Property canSkipWorkItem
+   * @readonly
+   *
+   * @description
+   * Whether an item may be skipped with a reason.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canSkipWorkItem: Signal<boolean> = this.caps.canSkipWorkItem;
 
-  /** Whether the intervention may be abandoned from its current status. */
+  /**
+   * Property canAbandon
+   * @readonly
+   *
+   * @description
+   * Whether the intervention may be abandoned from its current status.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canAbandon: Signal<boolean> = this.caps.canAbandon;
 
-  /** Whether the intervention may be deleted outright rather than abandoned. */
+  /**
+   * Property canDeleteIntervention
+   * @readonly
+   *
+   * @description
+   * Whether the intervention may be deleted outright rather than abandoned.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canDeleteIntervention: Signal<boolean> = this.caps.canDeleteIntervention;
 
   /**
@@ -1963,18 +2755,16 @@ export class InterventionDetailPage {
    * The statuses this menu offers — the moves the status band does **not**
    * own: starting or reopening field work, and sending an intervention back
    * for changes. In practice that leaves `in_progress` and `changes_requested`.
-   *
    * Four exclusions, each for its own reason:
    *
-   * - {@link commandTransitionTarget}, because the phase's forward move belongs
-   *   to the band and its readiness gate. Offering it here too made that
-   *   gate advisory: an agent could submit from this menu with work items still
-   *   open, which the band deliberately refuses.
+   * - {@link commandTransitionTarget}, because the phase's forward move belongs to the band and its
+   *   readiness gate. Offering it here too made that gate advisory: an agent could submit from this
+   *   menu with work items still open, which the band deliberately refuses.
    * - `abandoned`, because it is destructive and has its own confirmed action.
    * - anything the member lacks the capability for.
-   * - withdrawing a submission (`submitted` → `in_progress`) when the member is
-   *   not the responsible — the backend reserves it to that identity and would
-   *   answer 403 ({@link canSubmit} is the same identity gate).
+   * - withdrawing a submission (`submitted` → `in_progress`) when the member is not the responsible —
+   *   the backend reserves it to that identity and would answer 403 ({@link canSubmit} is the same
+   *   identity gate).
    *
    * @access protected
    * @since 1.0.0
@@ -2021,7 +2811,18 @@ export class InterventionDetailPage {
    */
   protected readonly canManageAttachments: Signal<boolean> = this.caps.canManageAttachments;
 
-  /** Whether an attachment upload is in flight. */
+  /**
+   * Property attachmentUploading
+   * @readonly
+   *
+   * @description
+   * Whether an attachment upload is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly attachmentUploading: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.attachmentWriteCallState()),
   );
@@ -2038,6 +2839,7 @@ export class InterventionDetailPage {
    *
    * @access protected
    * @since 4.7.0
+   *
    * @type {WritableSignal<ReadonlySet<string>>}
    */
   protected readonly pendingDownloadIds: WritableSignal<ReadonlySet<string>> = signal<
@@ -2055,6 +2857,7 @@ export class InterventionDetailPage {
    *
    * @access protected
    * @since 4.8.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly reportExporting: WritableSignal<boolean> = signal<boolean>(false);
@@ -2071,6 +2874,7 @@ export class InterventionDetailPage {
    *
    * @access protected
    * @since 5.4.0
+   *
    * @type {WritableSignal<ReadonlySet<string>>}
    */
   protected readonly evidenceUploadingWorkItemIds: WritableSignal<ReadonlySet<string>> = signal<
@@ -2087,6 +2891,7 @@ export class InterventionDetailPage {
    *
    * @access private
    * @since 5.4.0
+   *
    * @type {WritableSignal<string | null>}
    */
   private readonly evidenceTargetWorkItemId: WritableSignal<string | null> = signal<string | null>(
@@ -2096,63 +2901,188 @@ export class InterventionDetailPage {
   /**
    * Property evidenceInput
    * @readonly
-   * @description The hidden file input {@link onEvidenceRequested} opens for the targeted row.
+   *
+   * @description
+   * The hidden file input {@link onEvidenceRequested} opens for the targeted row.
+   *
    * @access private
    * @since 5.4.0
+   *
    * @type {Signal<ElementRef<HTMLInputElement> | undefined>}
    */
   private readonly evidenceInput: Signal<ElementRef<HTMLInputElement> | undefined> =
     viewChild<ElementRef<HTMLInputElement>>('evidenceInput');
 
-  /** Whether the device can decode a QR from a camera capture, shown in the execute phase only. */
+  /**
+   * Property canScanWorkItem
+   * @readonly
+   *
+   * @description
+   * Whether the device can decode a QR from a camera capture, shown in the execute phase only.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canScanWorkItem: Signal<boolean> = this.caps.canScanWorkItem;
 
-  /** Whether the comment composer's own write is in flight. */
+  /**
+   * Property commentPending
+   * @readonly
+   *
+   * @description
+   * Whether the comment composer's own write is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly commentPending: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.addCommentCallState()),
   );
 
-  /** The comment composer's own write error, if any. */
+  /**
+   * Property commentError
+   * @readonly
+   *
+   * @description
+   * The comment composer's own write error, if any.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly commentError: Signal<StoreError | null> = computed<StoreError | null>(
     () => this.store.addCommentCallState().error,
   );
 
-  /** Whether the add-work-item sheet's own write is in flight. */
+  /**
+   * Property workItemCreatePending
+   * @readonly
+   *
+   * @description
+   * Whether the add-work-item sheet's own write is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly workItemCreatePending: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.createWorkItemCallState()),
   );
 
-  /** The add-work-item sheet's own write error, if any. */
+  /**
+   * Property workItemCreateError
+   * @readonly
+   *
+   * @description
+   * The add-work-item sheet's own write error, if any.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly workItemCreateError: Signal<StoreError | null> = computed<StoreError | null>(
     () => this.store.createWorkItemCallState().error,
   );
 
-  /** Whether the add-facility sheet's own write is in flight. */
+  /**
+   * Property facilityCreatePending
+   * @readonly
+   *
+   * @description
+   * Whether the add-facility sheet's own write is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly facilityCreatePending: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.createFacilityCallState()),
   );
 
-  /** The add-facility sheet's own write error, if any. */
+  /**
+   * Property facilityCreateError
+   * @readonly
+   *
+   * @description
+   * The add-facility sheet's own write error, if any.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly facilityCreateError: Signal<StoreError | null> = computed<StoreError | null>(
     () => this.store.createFacilityCallState().error,
   );
 
-  /** Whether the request-changes sheet's own transition is in flight. */
+  /**
+   * Property requestChangesPending
+   * @readonly
+   *
+   * @description
+   * Whether the request-changes sheet's own transition is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly requestChangesPending: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.transitionCallState()),
   );
 
-  /** The request-changes sheet's own transition error, if any. */
+  /**
+   * Property requestChangesError
+   * @readonly
+   *
+   * @description
+   * The request-changes sheet's own transition error, if any.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
   protected readonly requestChangesError: Signal<StoreError | null> = computed<StoreError | null>(
     () => this.store.transitionCallState().error,
   );
 
-  /** How many proposed changes publication would apply. */
+  /**
+   * Property pendingChangesCount
+   * @readonly
+   *
+   * @description
+   * How many proposed changes publication would apply.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   protected readonly pendingChangesCount: Signal<number> = computed<number>(
     () => this.store.changes().filter((change) => change.status === 'proposed').length,
   );
 
-  /** How many work items are still open. */
+  /**
+   * Property remainingWorkItems
+   * @readonly
+   *
+   * @description
+   * How many work items are still open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   protected readonly remainingWorkItems: Signal<number> = computed<number>(
     () =>
       this.store
@@ -2160,7 +3090,18 @@ export class InterventionDetailPage {
         .filter((item) => item.status !== 'completed' && item.status !== 'skipped').length,
   );
 
-  /** Whether the activity timeline's first fetch is in flight. */
+  /**
+   * Property activitiesLoading
+   * @readonly
+   *
+   * @description
+   * Whether the activity timeline's first fetch is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly activitiesLoading: Signal<boolean> = computed<boolean>(() =>
     isCallPending(this.store.activityCallState()),
   );
@@ -2182,7 +3123,18 @@ export class InterventionDetailPage {
     () => this.store.activityCallState().error?.message ?? null,
   );
 
-  /** Whether everything is in place for publication. */
+  /**
+   * Property readyToPublish
+   * @readonly
+   *
+   * @description
+   * Whether everything is in place for publication.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly readyToPublish: Signal<boolean> = computed<boolean>(
     () => this.store.intervention()?.status === 'submitted' && this.store.blockerCount() === 0,
   );
@@ -2264,7 +3216,6 @@ export class InterventionDetailPage {
    * it — `prepare` phase only, and empty once an intervention has left it (an
    * abandoned intervention falls back to `prepare`, and offering to plan
    * something that left the workflow reads as a bug).
-   *
    * `== null` rather than `=== null`: API Platform omits null fields, so an
    * unset site arrives as `undefined`.
    *
@@ -2322,7 +3273,6 @@ export class InterventionDetailPage {
    * The single forward action for the current phase, or `null` when the member
    * has nothing to do here. Rendered exactly once, in
    * the adaptive workflow action surface, whatever the phase.
-   *
    * In `execute` it is a living action: while work remains it sends the
    * operator to the checklist rather than offering a submit they cannot use,
    * and it only becomes the submit gate once everything is resolved.
@@ -2359,29 +3309,84 @@ export class InterventionDetailPage {
     this.editState().failed === null ? this.store.error() : null,
   );
 
-  /** The item the operator should pick up next, shown only during execution. */
+  /**
+   * Property nextWorkItemId
+   * @readonly
+   *
+   * @description
+   * The item the operator should pick up next, shown only during execution.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
   protected readonly nextWorkItemId: Signal<string | null> = computed<string | null>(() =>
     this.phase() === 'execute' ? (this.store.nextWorkItem()?.id ?? null) : null,
   );
 
-  /** Where in the list this intervention sits, or -1 on a deep link. */
+  /**
+   * Property currentIndex
+   * @readonly
+   *
+   * @description
+   * Where in the list this intervention sits, or -1 on a deep link.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
   private readonly currentIndex: Signal<number> = computed<number>(() =>
     this.listStore.orderedIds().indexOf(this.interventionId()),
   );
 
-  /** Whether prev/next can be offered at all. */
+  /**
+   * Property showPrevNext
+   * @readonly
+   *
+   * @description
+   * Whether prev/next can be offered at all.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly showPrevNext: Signal<boolean> = computed<boolean>(
     () => this.currentIndex() >= 0 && this.listStore.orderedIds().length > 1,
   );
 
-  /** The previous intervention's id, or null at the start or on a deep link. */
+  /**
+   * Property prevInterventionId
+   * @readonly
+   *
+   * @description
+   * The previous intervention's id, or null at the start or on a deep link.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
   protected readonly prevInterventionId: Signal<string | null> = computed<string | null>(() => {
     const index: number = this.currentIndex();
 
     return index < 0 ? null : (this.listStore.orderedIds()[index - 1] ?? null);
   });
 
-  /** The next intervention's id, or null at the end or on a deep link. */
+  /**
+   * Property nextInterventionId
+   * @readonly
+   *
+   * @description
+   * The next intervention's id, or null at the end or on a deep link.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
   protected readonly nextInterventionId: Signal<string | null> = computed<string | null>(() => {
     const index: number = this.currentIndex();
 
@@ -2392,9 +3397,14 @@ export class InterventionDetailPage {
 
   /**
    * Method retrySelectedResources
-   * @description Retries unresolved site and member labels without altering the intervention draft.
+   * @method retrySelectedResources
+   *
+   * @description
+   * Retries unresolved site and member labels without altering the intervention draft.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected retrySelectedResources(): void {
@@ -2409,10 +3419,16 @@ export class InterventionDetailPage {
   //#region Methods
   /**
    * Method prepareCommandAction
-   * @description Resolves the planning action from permissions and readiness.
+   * @method prepareCommandAction
+   *
+   * @description
+   * Resolves the planning action from permissions and readiness.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutput} intervention - Current intervention.
+   *
    * @returns {InterventionCommandAction | null} Available action.
    */
   private prepareCommandAction(intervention: InterventionOutput): InterventionCommandAction | null {
@@ -2430,9 +3446,14 @@ export class InterventionDetailPage {
 
   /**
    * Method executeCommandAction
-   * @description Chooses the next field-work action from transition, remaining tasks and access.
+   * @method executeCommandAction
+   *
+   * @description
+   * Chooses the next field-work action from transition, remaining tasks and access.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {InterventionCommandAction | null} Available action.
    */
   private executeCommandAction(): InterventionCommandAction | null {
@@ -2479,10 +3500,16 @@ export class InterventionDetailPage {
 
   /**
    * Method publishCommandAction
-   * @description Resolves publication blockers without changing the submitted record.
+   * @method publishCommandAction
+   *
+   * @description
+   * Resolves publication blockers without changing the submitted record.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {InterventionOutput} intervention - Current intervention.
+   *
    * @returns {InterventionCommandAction | null} Available action.
    */
   private publishCommandAction(intervention: InterventionOutput): InterventionCommandAction | null {
@@ -2509,6 +3536,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onEditTargetChanged
+   * @method onEditTargetChanged
    *
    * @description
    * Opens or closes an in-place field, clearing any rejection left from the
@@ -2527,6 +3555,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onReadinessActivated
+   * @method onReadinessActivated
    *
    * @description
    * Sends the operator to the gap they picked: the work-items section for
@@ -2553,6 +3582,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onIssueActivated
+   * @method onIssueActivated
    *
    * @description
    * Sends the operator to the address a publication issue resolved to: a
@@ -2583,6 +3613,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onDetailsChanged
+   * @method onDetailsChanged
    *
    * @description
    * Sends an in-place patch. The field stays open until the write settles, so a
@@ -2605,10 +3636,16 @@ export class InterventionDetailPage {
 
   /**
    * Method onWorkItemStatusChanged
-   * @description Records progress on one row and marks it as the pending write.
+   * @method onWorkItemStatusChanged
+   *
+   * @description
+   * Records progress on one row and marks it as the pending write.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionWorkItemStatusChange} change - The recorded change.
+   *
    * @returns {void}
    */
   protected onWorkItemStatusChanged(change: InterventionWorkItemStatusChange): void {
@@ -2617,6 +3654,7 @@ export class InterventionDetailPage {
 
   /**
    * Method rejectChange
+   * @method rejectChange
    *
    * @description
    * Rejects one proposed change; the row locks itself through the store's
@@ -2636,6 +3674,7 @@ export class InterventionDetailPage {
 
   /**
    * Method uploadAttachments
+   * @method uploadAttachments
    *
    * @description
    * Compresses the picked files — camera captures are multi-megabyte and the
@@ -2670,6 +3709,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onEvidenceRequested
+   * @method onEvidenceRequested
    *
    * @description
    * Targets one work item for the next pick and opens the hidden evidence
@@ -2689,6 +3729,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onEvidenceFileSelected
+   * @method onEvidenceFileSelected
    *
    * @description
    * Compresses the picked files and uploads the ones that compressed
@@ -2735,6 +3776,7 @@ export class InterventionDetailPage {
 
   /**
    * Method confirmAttachmentDelete
+   * @method confirmAttachmentDelete
    *
    * @description
    * Deletes the confirmed attachment and closes
@@ -2755,6 +3797,7 @@ export class InterventionDetailPage {
 
   /**
    * Method confirmQueuedAttachmentDelete
+   * @method confirmQueuedAttachmentDelete
    *
    * @description
    * Discards the confirmed queued upload from the offline outbox and closes
@@ -2773,6 +3816,7 @@ export class InterventionDetailPage {
 
   /**
    * Method downloadAttachment
+   * @method downloadAttachment
    *
    * @description
    * Fetches one attachment's binary content and saves it to the visitor's
@@ -2819,6 +3863,7 @@ export class InterventionDetailPage {
 
   /**
    * Method exportReport
+   * @method exportReport
    *
    * @description
    * Fetches the intervention's PDF report and saves it to the visitor's
@@ -2856,20 +3901,25 @@ export class InterventionDetailPage {
   /**
    * Property scanProblem
    * @readonly
-   * @description Recoverable scan feedback beside the manual work list and capture action.
+   *
+   * @description
+   * Recoverable scan feedback beside the manual work list and capture action.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly scanProblem = signal<string | null>(null);
 
   /**
    * Method onScanFileSelected
+   * @method onScanFileSelected
    *
    * @description
-   * Decodes a captured QR against the intervention's work items and reveals
-   * the match — scroll plus focus, the same landing `revealFieldWork` gives
-   * the phase actions. Failed captures remain visible beside the list for a manual lookup or another capture.
+   * Decodes a captured QR against the intervention's work items and reveals the match — scroll plus
+   * focus, the same landing `revealFieldWork` gives the phase actions. Failed captures remain
+   * visible beside the list for a manual lookup or another capture.
    *
    * @access protected
    * @since 4.4.0
@@ -2932,13 +3982,14 @@ export class InterventionDetailPage {
 
   /**
    * Method invokeCommandAction
+   * @method invokeCommandAction
    *
    * @description
-   * Runs the phase's forward action. In `review` this only opens the
-   * confirmation — publication is never invoked directly. In `execute`, once
-   * the field work is actually done, submitting an intervention that carries
-   * no completion signature yet opens {@link signatureDialogVisible} instead
-   * of transitioning outright. Signing and the explicit unsigned action submit; passive dismissal only closes the dialog.
+   * Runs the phase's forward action. In `review` this only opens the confirmation — publication is
+   * never invoked directly. In `execute`, once the field work is actually done, submitting an
+   * intervention that carries no completion signature yet opens {@link signatureDialogVisible}
+   * instead of transitioning outright. Signing and the explicit unsigned action submit; passive
+   * dismissal only closes the dialog.
    *
    * @access protected
    * @since 1.0.0
@@ -2975,6 +4026,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onSignatureCaptured
+   * @method onSignatureCaptured
    *
    * @description
    * Closes the signature dialog and uploads the captured drawing as the
@@ -3002,9 +4054,14 @@ export class InterventionDetailPage {
 
   /**
    * Method onSignatureDismissed
-   * @description Cancels the signature prompt without submitting the intervention.
+   * @method onSignatureDismissed
+   *
+   * @description
+   * Cancels the signature prompt without submitting the intervention.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onSignatureDismissed(): void {
@@ -3014,9 +4071,14 @@ export class InterventionDetailPage {
 
   /**
    * Method onSignatureSkipped
-   * @description Submits unsigned only after the operator explicitly chooses that action.
+   * @method onSignatureSkipped
+   *
+   * @description
+   * Submits unsigned only after the operator explicitly chooses that action.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onSignatureSkipped(): void {
@@ -3027,6 +4089,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onTransitionSelect
+   * @method onTransitionSelect
    *
    * @description
    * Moves the intervention. `changes_requested` needs a reviewer note, so it
@@ -3051,10 +4114,16 @@ export class InterventionDetailPage {
 
   /**
    * Method requestChanges
-   * @description Sends the intervention back with the reviewer's note.
+   * @method requestChanges
+   *
+   * @description
+   * Sends the intervention back with the reviewer's note.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {{ note: string }} values - The validated note.
+   *
    * @returns {void}
    */
   protected requestChanges(values: { readonly note: string }): void {
@@ -3067,6 +4136,7 @@ export class InterventionDetailPage {
 
   /**
    * Method createWorkItem
+   * @method createWorkItem
    *
    * @description
    * Adds a task to the prepared scope. The optional fields are sent as `null`
@@ -3099,6 +4169,7 @@ export class InterventionDetailPage {
 
   /**
    * Method createFacility
+   * @method createFacility
    *
    * @description
    * Attaches a facility to this intervention. The form emits only the
@@ -3123,26 +4194,48 @@ export class InterventionDetailPage {
 
   /**
    * Method postComment
-   * @description Posts a comment onto the activity thread from the composer.
+   * @method postComment
+   *
+   * @description
+   * Posts a comment onto the activity thread from the composer.
+   *
    * @access protected
    * @since 3.0.0
+   *
    * @param {string} body - The validated, trimmed comment body.
+   *
    * @returns {void}
    */
   protected postComment(body: string): void {
     this.store.addComment({ interventionId: this.interventionId(), body });
   }
 
-  /** Asks to abandon, through the terminal transition's own confirmation. */
+  /**
+   * Method requestAbandon
+   * @method requestAbandon
+   *
+   * @description
+   * Asks to abandon, through the terminal transition's own confirmation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected requestAbandon(): void {
     this.pendingAbandon.set(this.store.intervention());
   }
 
   /**
    * Method onAbandonConfirmed
-   * @description Dispatches the terminal transition. The dialog stays open and locked until it settles.
+   * @method onAbandonConfirmed
+   *
+   * @description
+   * Dispatches the terminal transition. The dialog stays open and locked until it settles.
+   *
    * @access protected
    * @since 5.3.0
+   *
    * @returns {void}
    */
   protected onAbandonConfirmed(): void {
@@ -3152,9 +4245,14 @@ export class InterventionDetailPage {
 
   /**
    * Method onAbandonDismissed
-   * @description Closes the abandon confirmation without transitioning.
+   * @method onAbandonDismissed
+   *
+   * @description
+   * Closes the abandon confirmation without transitioning.
+   *
    * @access protected
    * @since 5.3.0
+   *
    * @returns {void}
    */
   protected onAbandonDismissed(): void {
@@ -3186,12 +4284,34 @@ export class InterventionDetailPage {
     });
   }
 
-  /** Asks to delete the intervention. */
+  /**
+   * Method requestDeleteIntervention
+   * @method requestDeleteIntervention
+   *
+   * @description
+   * Asks to delete the intervention.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected requestDeleteIntervention(): void {
     this.pendingConfirm.set({ kind: 'deleteIntervention' });
   }
 
-  /** Opens the label catalog dialog, fetching it on first open. */
+  /**
+   * Method openManageLabels
+   * @method openManageLabels
+   *
+   * @description
+   * Opens the label catalog dialog, fetching it on first open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected openManageLabels(): void {
     this.manageLabelsVisible.set(true);
     this.labelStore.load(
@@ -3199,18 +4319,34 @@ export class InterventionDetailPage {
     );
   }
 
-  /** Closes the label catalog dialog. */
+  /**
+   * Method closeManageLabels
+   * @method closeManageLabels
+   *
+   * @description
+   * Closes the label catalog dialog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected closeManageLabels(): void {
     this.manageLabelsVisible.set(false);
   }
 
   /**
    * Method createLabel
+   * @method createLabel
    *
-   * @description Creates a label from the manage dialog's "New label" form.
+   * @description
+   * Creates a label from the manage dialog's "New label" form.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionLabelCreateSubmittedEvent} event - The drafted name/color.
+   *
    * @returns {void}
    */
   protected createLabel(event: InterventionLabelCreateSubmittedEvent): void {
@@ -3225,11 +4361,16 @@ export class InterventionDetailPage {
 
   /**
    * Method updateLabel
+   * @method updateLabel
    *
-   * @description Renames/recolors a label from the manage dialog's row editor.
+   * @description
+   * Renames/recolors a label from the manage dialog's row editor.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionLabelUpdateSubmittedEvent} event - The row's draft.
+   *
    * @returns {void}
    */
   protected updateLabel(event: InterventionLabelUpdateSubmittedEvent): void {
@@ -3239,13 +4380,27 @@ export class InterventionDetailPage {
     });
   }
 
-  /** Deletes a label the manage dialog's inline confirmation approved. */
+  /**
+   * Method removeLabel
+   * @method removeLabel
+   *
+   * @description
+   * Deletes a label the manage dialog's inline confirmation approved.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} labelId - Label association to remove from the intervention.
+   *
+   * @returns {void}
+   */
   protected removeLabel(labelId: string): void {
     this.labelStore.remove(labelId);
   }
 
   /**
    * Method openTeamAssign
+   * @method openTeamAssign
    *
    * @description
    * Opens the team-assignment dialog, fetching the organization's teams
@@ -3253,6 +4408,7 @@ export class InterventionDetailPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected openTeamAssign(): void {
@@ -3283,11 +4439,17 @@ export class InterventionDetailPage {
   /**
    * Method loadTeamMemberIds
    * @method loadTeamMemberIds
-   * @description Loads only the first three memberships per team; the team's authoritative member count supplies the overflow amount.
+   *
+   * @description
+   * Loads only the first three memberships per team; the team's authoritative member count supplies
+   * the overflow amount.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string} organizationId - The owning organization's id.
    * @param {readonly TeamOutput[]} teams - Teams whose compact previews are needed.
+   *
    * @returns {void}
    */
   private loadTeamMemberIds(organizationId: string, teams: readonly TeamOutput[]): void {
@@ -3336,18 +4498,35 @@ export class InterventionDetailPage {
       });
   }
 
-  /** Closes the team-assignment dialog. */
+  /**
+   * Method closeTeamAssign
+   * @method closeTeamAssign
+   *
+   * @description
+   * Closes the team-assignment dialog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected closeTeamAssign(): void {
     this.teamAssignVisible.set(false);
   }
 
   /**
    * Method submitTeamAssign
+   * @method submitTeamAssign
    *
-   * @description Submits the picked team for assignment. The dialog stays open on failure so the inline error is visible; it closes on success.
+   * @description
+   * Submits the picked team for assignment. The dialog stays open on failure so the inline error is
+   * visible; it closes on success.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} teamId - The picked team's id.
+   *
    * @returns {void}
    */
   protected submitTeamAssign(teamId: string): void {
@@ -3355,18 +4534,45 @@ export class InterventionDetailPage {
     this.store.assignTeam({ interventionId: this.interventionId(), input: body });
   }
 
-  /** Asks to remove a prepared work item. */
+  /**
+   * Method requestDeleteWorkItem
+   * @method requestDeleteWorkItem
+   *
+   * @description
+   * Asks to remove a prepared work item.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionWorkItemOutput} workItem - Work item selected for removal confirmation.
+   *
+   * @returns {void}
+   */
   protected requestDeleteWorkItem(workItem: InterventionWorkItemOutput): void {
     this.pendingConfirm.set({ kind: 'deleteWorkItem', workItem });
   }
 
-  /** Asks to skip a work item, which needs a reason. */
+  /**
+   * Method requestSkipWorkItem
+   * @method requestSkipWorkItem
+   *
+   * @description
+   * Asks to skip a work item, which needs a reason.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionWorkItemOutput} workItem - Work item selected for skip confirmation.
+   *
+   * @returns {void}
+   */
   protected requestSkipWorkItem(workItem: InterventionWorkItemOutput): void {
     this.pendingConfirm.set({ kind: 'skipWorkItem', workItem });
   }
 
   /**
    * Method onConfirmAccepted
+   * @method onConfirmAccepted
    *
    * @description
    * Runs whichever confirmation the dialog just accepted, then closes it.
@@ -3410,17 +4616,34 @@ export class InterventionDetailPage {
     this.pendingConfirm.set(null);
   }
 
-  /** Any dismissal drops the pending request. */
+  /**
+   * Method onConfirmDismissed
+   * @method onConfirmDismissed
+   *
+   * @description
+   * Any dismissal drops the pending request.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected onConfirmDismissed(): void {
     this.pendingConfirm.set(null);
   }
 
   /**
    * Method onPublishDialogStateChanged
-   * @description Any dismissal closes the publish confirmation.
+   * @method onPublishDialogStateChanged
+   *
+   * @description
+   * Any dismissal closes the publish confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - The dialog's new state.
+   *
    * @returns {void}
    */
   protected onPublishDialogStateChanged(state: BrnDialogState): void {
@@ -3431,6 +4654,7 @@ export class InterventionDetailPage {
 
   /**
    * Method confirmPublish
+   * @method confirmPublish
    *
    * @description
    * Runs the publication from the confirmation's accept — the only place that
@@ -3510,27 +4734,66 @@ export class InterventionDetailPage {
 
   /**
    * Method recheckPublication
-   * @description Asks the store to re-read the timed-out publication once, offered from the confirmation while {@link publicationTimedOut} is set.
+   * @method recheckPublication
+   *
+   * @description
+   * Asks the store to re-read the timed-out publication once, offered from the confirmation while
+   * {@link publicationTimedOut} is set.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected recheckPublication(): void {
     this.publicationStore.recheck();
   }
 
-  /** Clears the load error and tries again. */
+  /**
+   * Method retryLoad
+   * @method retryLoad
+   *
+   * @description
+   * Clears the load error and tries again.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected retryLoad(): void {
     this.store.clearError();
     this.store.load(this.interventionId());
   }
 
-  /** Walks the timeline one page further back. */
+  /**
+   * Method loadOlderActivities
+   * @method loadOlderActivities
+   *
+   * @description
+   * Walks the timeline one page further back.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected loadOlderActivities(): void {
     this.store.loadOlderActivities(this.interventionId());
   }
 
-  /** Reads the timeline again after a failed fetch. */
+  /**
+   * Method reloadActivities
+   * @method reloadActivities
+   *
+   * @description
+   * Reads the timeline again after a failed fetch.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected reloadActivities(): void {
     this.store.loadActivities(this.interventionId());
   }
@@ -3545,7 +4808,6 @@ export class InterventionDetailPage {
    * blockedSyncOperations} afterwards whatever the outcome: a retry that
    * fails again leaves the same blocked count, so the effect watching that
    * count would not re-run, and the per-operation errors would go stale.
-   *
    * Discarding is deliberately not offered here — it is data loss, and stays
    * confirm-gated in `app-intervention-sync-indicator`.
    *
@@ -3561,6 +4823,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onLinkedTabActivated
+   * @method onLinkedTabActivated
    *
    * @description
    * Narrows `hlm-tabs`' plain-string `tabActivated` payload to
@@ -3594,6 +4857,7 @@ export class InterventionDetailPage {
 
   /**
    * Method setLinkedTab
+   * @method setLinkedTab
    *
    * @description
    * Switches the rail and mirrors the choice into `?tab=`, dropping the param
@@ -3623,17 +4887,50 @@ export class InterventionDetailPage {
     });
   }
 
-  /** Walks to the previous intervention in the list's order. */
+  /**
+   * Method navigatePrev
+   * @method navigatePrev
+   *
+   * @description
+   * Walks to the previous intervention in the list's order.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected navigatePrev(): void {
     this.navigateToNeighbour(this.prevInterventionId());
   }
 
-  /** Walks to the next intervention in the list's order. */
+  /**
+   * Method navigateNext
+   * @method navigateNext
+   *
+   * @description
+   * Walks to the next intervention in the list's order.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected navigateNext(): void {
     this.navigateToNeighbour(this.nextInterventionId());
   }
 
-  /** Returns to the list. */
+  /**
+   * Method navigateToList
+   * @method navigateToList
+   *
+   * @description
+   * Returns to the list.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   protected navigateToList(): void {
     void this.router.navigate(['/organizations', this.organizationId(), 'interventions'], {
       queryParams: { tab: null },
@@ -3643,6 +4940,7 @@ export class InterventionDetailPage {
 
   /**
    * Method onDocumentKeydown
+   * @method onDocumentKeydown
    *
    * @description
    * `j` and `k` walk the list without leaving the keyboard. Ignored while the
@@ -3684,6 +4982,7 @@ export class InterventionDetailPage {
 
   /**
    * Method applyDetailColumnsWidth
+   * @method applyDetailColumnsWidth
    *
    * @description
    * Applies the two-track wrapper's measured width to
@@ -3703,6 +5002,7 @@ export class InterventionDetailPage {
 
   /**
    * Method settleDetailsWrite
+   * @method settleDetailsWrite
    *
    * @description
    * Settles the open in-place field once its own write — and only its own:
@@ -3736,6 +5036,7 @@ export class InterventionDetailPage {
 
   /**
    * Method revealFieldWork
+   * @method revealFieldWork
    *
    * @description
    * Sends the operator to the work-items section: opens the add-item sheet
@@ -3772,6 +5073,7 @@ export class InterventionDetailPage {
 
   /**
    * Method revealBlockers
+   * @method revealBlockers
    *
    * @description
    * Sends the operator to the issues checklist, where the blocker list the
@@ -3794,6 +5096,7 @@ export class InterventionDetailPage {
 
   /**
    * Method focusIssuesChecklist
+   * @method focusIssuesChecklist
    *
    * @description
    * Scrolls to and focuses whichever issues checklist copy
@@ -3822,15 +5125,38 @@ export class InterventionDetailPage {
     this.scrollToAndFocus(preferredHidden && fallbackVisible ? fallback : (preferred ?? fallback));
   }
 
-  /** Scrolls to and focuses the field-work section. */
+  /**
+   * Method focusFieldWorkPanel
+   * @method focusFieldWorkPanel
+   *
+   * @description
+   * Scrolls to and focuses the field-work section.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   private focusFieldWorkPanel(): void {
     this.scrollToAndFocus(this.workItemsSection()?.nativeElement);
   }
 
   /**
+   * Method scrollToAndFocus
+   * @method scrollToAndFocus
+   *
+   * @description
    * Scrolls a section into view and moves focus into it, so a keyboard user is
    * not left behind on the trigger that sent them there (WCAG 2.4.3). Honours
    * `prefers-reduced-motion`.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {HTMLElement | undefined} section - Section to reveal and focus; absent sections are
+   *   ignored.
+   *
+   * @returns {void}
    */
   private scrollToAndFocus(section: HTMLElement | undefined): void {
     if (!section) return;
@@ -3841,13 +5167,16 @@ export class InterventionDetailPage {
     section.focus();
   }
 
-  /** Navigates to a neighbour, if there is one. */
   /**
    * Method refreshOperations
    * @method refreshOperations
-   * @description Reads the active intervention queue, preserving explicit local read errors.
+   *
+   * @description
+   * Reads the active intervention queue, preserving explicit local read errors.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected refreshOperations(): void {
@@ -3860,10 +5189,16 @@ export class InterventionDetailPage {
   /**
    * Method navigateToNeighbour
    * @method navigateToNeighbour
-   * @description Navigates to a sibling intervention while preserving collection query parameters.
+   *
+   * @description
+   * Navigates to a sibling intervention, if one exists, while preserving collection query
+   * parameters.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string | null} interventionId - Neighbour identifier.
+   *
    * @returns {void}
    */
   private navigateToNeighbour(interventionId: string | null): void {
@@ -3879,10 +5214,15 @@ export class InterventionDetailPage {
   /**
    * Method onMobileActionsClosed
    * @method onMobileActionsClosed
-   * @description Opens a permitted secondary surface after the actions drawer has closed and restored focus.
+   *
+   * @description
+   * Opens a permitted secondary surface after the actions drawer has closed and restored focus.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {unknown} action - The explicit native drawer close result.
+   *
    * @returns {void}
    */
   protected onMobileActionsClosed(action: unknown): void {
@@ -3921,11 +5261,17 @@ export class InterventionDetailPage {
   /**
    * Method onMobileTransitionSelected
    * @method onMobileTransitionSelected
-   * @description Commits direct transitions before closing, or defers the changes-request form until the drawer is closed.
+   *
+   * @description
+   * Commits direct transitions before closing, or defers the changes-request form until the drawer
+   * is closed.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {InterventionStatus} target - The requested destination status.
    * @param {BrnDialogContext<unknown>} drawer - The native drawer portal context.
+   *
    * @returns {void}
    */
   protected onMobileTransitionSelected(

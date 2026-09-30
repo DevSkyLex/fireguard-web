@@ -35,9 +35,9 @@ const INITIAL_STATE: AuditEventsState = {
 };
 
 /**
- * Store AuditEventsStore
- * @const AuditEventsStore
+ * Constant AuditEventsStore
  *
+ * Store AuditEventsStore
  * @description
  * Component-scoped NgRx SignalStore for one organization's audit journal: a
  * single, read-only, filterable and server-paginated event list — the
@@ -48,6 +48,12 @@ const INITIAL_STATE: AuditEventsState = {
  * an in-flight request so a fast filter change never races an older
  * response.
  *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const AuditEventsStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [AuditEventsStore] })
@@ -55,9 +61,6 @@ const INITIAL_STATE: AuditEventsState = {
  *   protected readonly store = inject(AuditEventsStore);
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const AuditEventsStore = signalStore(
   withEntities({ entity: type<AuditEventOutput>(), collection: 'event' }),
@@ -65,21 +68,37 @@ export const AuditEventsStore = signalStore(
   withState<AuditEventsState>(INITIAL_STATE),
 
   withComputed((store) => ({
-    /** All cached events from the entity collection, in server (newest-first) order. */
+    /**
+     * @description
+     * All cached events from the entity collection, in server (newest-first) order.
+     */
     events: computed<ReadonlyArray<AuditEventOutput>>(() => store.eventEntities()),
 
-    /** True while the list is loading. */
+    /**
+     * @description
+     * True while the list is loading.
+     */
     isLoading: computed<boolean>(() => isCallPending(store.listCallState())),
 
-    /** True when the collection is empty and no list request is in flight. */
+    /**
+     * @description
+     * True when the collection is empty and no list request is in flight.
+     */
     isEmpty: computed<boolean>(
       () => store.eventIds().length === 0 && !isCallPending(store.listCallState()),
     ),
 
-    /** True when the last list request failed. */
+    /**
+     * @description
+     * True when the last list request failed.
+     */
     hasListError: computed<boolean>(() => store.listCallState().status === 'error'),
 
-    /** True when the last list request failed with a 403 — a permission denial, not a generic failure. */
+    /**
+     * @description
+     * True when the last list request failed with a 403 — a permission denial, not a generic
+     * failure.
+     */
     isForbidden: computed<boolean>(() => store.listCallState().error?.code === 403),
   })),
 
@@ -95,7 +114,11 @@ export const AuditEventsStore = signalStore(
      *
      * @since 1.0.0
      *
-     * @type {RxMethod<{ organizationId: string; options?: RequestOptions; query?: AuditEventListQuery }>}
+     * @type {RxMethod<{
+     *   organizationId: string;
+     *   options?: RequestOptions;
+     *   query?: AuditEventListQuery;
+     * }>}
      */
     load: rxMethod<{
       organizationId: string;
@@ -128,9 +151,12 @@ export const AuditEventsStore = signalStore(
 
 /**
  * Type AuditEventsStoreType
- * @type AuditEventsStoreType
  *
- * @description Instance type of the {@link AuditEventsStore} signal store.
+ * @description
+ * Instance type of the {@link AuditEventsStore} signal store.
+ *
  * @since 1.0.0
+ *
+ * @type AuditEventsStoreType
  */
 export type AuditEventsStoreType = InstanceType<typeof AuditEventsStore>;

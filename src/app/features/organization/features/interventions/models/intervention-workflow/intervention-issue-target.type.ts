@@ -2,6 +2,9 @@ import type { InterventionEditTarget } from '../intervention-edit/intervention-e
 import type { InterventionLinkedResourceTabId } from './intervention-linked-resource-tab-id.type';
 
 /**
+ * Type InterventionIssueTarget
+ *
+ * @description
  * Where activating a publication issue sends the operator, resolved by
  * `resolveInterventionIssueTarget` from the issue's `resource` IRI and
  * `field`. `railTab` switches the left-hand rail to the sibling-resource
@@ -9,6 +12,8 @@ import type { InterventionLinkedResourceTabId } from './intervention-linked-reso
  * intervention-level field at fault; `workItems` is the safe fallback — the
  * field-work section — for every issue the mapper cannot address more
  * precisely.
+ *
+ * @type {InterventionIssueTarget}
  */
 export type InterventionIssueTarget =
   | { readonly kind: 'railTab'; readonly tab: InterventionLinkedResourceTabId }

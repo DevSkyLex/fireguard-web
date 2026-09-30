@@ -8,28 +8,66 @@ import {
 } from '@shared/list-sort-preferences';
 
 /**
+ * Constant PREFERENCES_COOKIE_NAME
+ *
+ * @description
  * Cookie holding the inspections list's remembered ordering.
  */
 const PREFERENCES_COOKIE_NAME = 'fg-inspection-list';
 
 /**
- * Ordering used when nothing has been remembered: most recently performed
+ * Constant DEFAULT_SORT
+ *
+ * @description
  * inspection first, the question the list is opened to answer.
  */
 const DEFAULT_SORT: InspectionListSort = { field: 'performedAt', direction: 'desc' };
 
 /**
- * Shape persisted in the cookie. Deliberately not exported: it is an encoding
+ * Interface PersistedPreferences
+ * @interface
+ *
+ * @description
  * detail, and every caller goes through {@link InspectionListPreferencesService.readSort}
  * and {@link InspectionListPreferencesService.writeSort}.
  */
 interface PersistedPreferences {
+  /**
+   * Property sortField
+   * @readonly
+   *
+   * @description
+   * Names the field used to order the equipment list.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly sortField?: string;
+
+  /**
+   * Property sortDirection
+   * @readonly
+   *
+   * @description
+   * Selects ascending or descending order for the equipment list.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly sortDirection?: string;
 }
 
 /**
- * Narrows a decoded sort field to one this build's inspections list supports.
+ * Function isInspectionSortField
+ *
+ * @description
+ * Checks whether a field is supported by inspection-list sorting.
+ *
+ * @param {string} field - Candidate inspection field name.
+ *
+ * @returns {field is InspectionListSort['field']} Whether the field is supported for sorting.
  */
 function isInspectionSortField(field: string): field is InspectionListSort['field'] {
   return (
@@ -38,7 +76,7 @@ function isInspectionSortField(field: string): field is InspectionListSort['fiel
 }
 
 /**
- * Service InspectionListPreferencesService
+ * Class InspectionListPreferencesService
  * @class InspectionListPreferencesService
  *
  * @description
@@ -47,7 +85,6 @@ function isInspectionSortField(field: string): field is InspectionListSort['fiel
  * service, which also remembers hidden columns and page size. Filters and
  * search are deliberately not remembered — they are questions asked now, not
  * stored preferences.
- *
  * A behavioral service rather than a util (`ARCHITECTURE.md` §10.7): it needs
  * `CookieService`, and a util may not inject. `CookieService` already no-ops
  * on the server, so {@link readSort} is safe during SSR. The persisted-shape
@@ -56,6 +93,7 @@ function isInspectionSortField(field: string): field is InspectionListSort['fiel
  * the cookie name, field whitelist, and default stay local here.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -64,9 +102,13 @@ export class InspectionListPreferencesService {
   /**
    * Property cookies
    * @readonly
-   * @description Transport for the persisted preference.
+   *
+   * @description
+   * Transport for the persisted preference.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {CookieService}
    */
   private readonly cookies: CookieService = inject<CookieService>(CookieService);
@@ -75,6 +117,7 @@ export class InspectionListPreferencesService {
   //#region Methods
   /**
    * Method readSort
+   * @method readSort
    *
    * @description
    * The remembered ordering, or most-recently-performed-first when none was
@@ -98,10 +141,16 @@ export class InspectionListPreferencesService {
 
   /**
    * Method writeSort
-   * @description Persists the current ordering.
+   * @method writeSort
+   *
+   * @description
+   * Persists the current ordering.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {InspectionListSort} sort - The ordering to remember.
+   *
    * @returns {void}
    */
   public writeSort(sort: InspectionListSort): void {
@@ -118,6 +167,7 @@ export class InspectionListPreferencesService {
 
   /**
    * Method read
+   * @method read
    *
    * @description
    * Decodes the cookie, answering with an empty record for anything that is

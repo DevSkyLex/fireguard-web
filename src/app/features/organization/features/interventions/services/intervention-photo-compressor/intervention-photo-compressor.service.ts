@@ -8,11 +8,11 @@ import { PHOTO_JPEG_QUALITY, PHOTO_MAX_DIMENSION } from './constants';
  *
  * @description
  * Browser-only image compression service for intervention evidence photos.
- *
  * Downscales and re-encodes captured photos to JPEG so offline storage and
  * uploads stay lightweight on field connections.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -48,7 +48,8 @@ export class InterventionPhotoCompressorService {
    *
    * @param {File} file - Original captured photo.
    *
-   * @return {Promise<File>} A promise resolving with the compressed JPEG file, or the original file.
+   * @returns {Promise<File>} A promise resolving with the compressed JPEG file, or the original
+   *   file.
    */
   public async compress(file: File): Promise<File> {
     if (!this.browser || !file.type.startsWith('image/')) {
@@ -102,7 +103,8 @@ export class InterventionPhotoCompressorService {
    *
    * @param {readonly File[]} files - The picked files.
    *
-   * @return {Promise<{ ready: File[]; failed: string[] }>} The compressed files and the names that failed.
+   * @returns {Promise<{ ready: File[]; failed: string[] }>} The compressed files and the names that
+   *   failed.
    */
   public async prepareAll(files: readonly File[]): Promise<{ ready: File[]; failed: string[] }> {
     const settled: readonly PromiseSettledResult<File>[] = await Promise.allSettled(

@@ -29,8 +29,12 @@ import type { InterventionPublicationState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @description Idle state before loading account-bound recovery metadata.
+ *
+ * @description
+ * Idle state before loading account-bound recovery metadata.
+ *
  * @since 1.0.0
+ *
  * @type {InterventionPublicationState}
  */
 const INITIAL_STATE: InterventionPublicationState = {
@@ -44,8 +48,12 @@ const INITIAL_STATE: InterventionPublicationState = {
 };
 
 /**
- * Store InterventionPublicationStore
- * @description Owns publication launch and observation independently. Accepted identifiers survive observation failures and page revisits.
+ * Constant InterventionPublicationStore
+ *
+ * @description
+ * Owns publication launch and observation independently. Accepted identifiers survive observation
+ * failures and page revisits.
+ *
  * @since 1.0.0
  */
 export const InterventionPublicationStore = signalStore(
@@ -77,10 +85,15 @@ export const InterventionPublicationStore = signalStore(
 
       /**
        * Function persist
-       * @description Serializes metadata writes so an older observation cannot overwrite a terminal result.
+       *
+       * @description
+       * Serializes metadata writes so an older observation cannot overwrite a terminal result.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {PublicationTracking} tracking - Last observed state.
+       *
        * @returns {Promise<void>}
        */
       const persist = (tracking: PublicationTracking): Promise<void> => {
@@ -106,10 +119,15 @@ export const InterventionPublicationStore = signalStore(
 
       /**
        * Function settle
-       * @description Records a server observation and emits success only for a completed publication.
+       *
+       * @description
+       * Records a server observation and emits success only for a completed publication.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {PublicationOutput} result - Observed publication.
+       *
        * @returns {void}
        */
       const settle = (result: PublicationOutput): void => {
@@ -150,10 +168,15 @@ export const InterventionPublicationStore = signalStore(
 
       /**
        * Function failObservation
-       * @description Keeps accepted identifiers on network failure and treats a lost launch response as unknown.
+       *
+       * @description
+       * Keeps accepted identifiers on network failure and treats a lost launch response as unknown.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {unknown} error - Request or observation error.
+       *
        * @returns {void}
        */
       const failObservation = (error: unknown): void => {
@@ -196,10 +219,15 @@ export const InterventionPublicationStore = signalStore(
       return {
         /**
          * Method restore
-         * @description Restores only the active intervention's recovery record; stale reads are ignored.
+         *
+         * @description
+         * Restores only the active intervention's recovery record; stale reads are ignored.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {{ organization: string; interventionId: string }} context - Active scope.
+         *
          * @returns {void}
          */
         restore: rxMethod<{ organization: string; interventionId: string }>(
@@ -238,12 +266,19 @@ export const InterventionPublicationStore = signalStore(
             }),
           ),
         ),
+
         /**
          * Method publish
-         * @description Launches once, persists the accepted identifier, then observes that publication. Unresolved attempts cannot be posted again.
+         *
+         * @description
+         * Launches once, persists the accepted identifier, then observes that publication.
+         * Unresolved attempts cannot be posted again.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {InterventionOutput} intervention - Revision to publish.
+         *
          * @returns {void}
          */
         publish: rxMethod<InterventionOutput>(
@@ -310,11 +345,16 @@ export const InterventionPublicationStore = signalStore(
             }),
           ),
         ),
+
         /**
          * Method recheck
-         * @description Reads the existing publication without starting another operation.
+         *
+         * @description
+         * Reads the existing publication without starting another operation.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         recheck: rxMethod<void>(
@@ -337,12 +377,18 @@ export const InterventionPublicationStore = signalStore(
             }),
           ),
         ),
+
         /**
          * Method reconcilePublished
-         * @description Reconciles a previously unknown result with a freshly loaded published intervention.
-         * @param {InterventionOutput} intervention - Fresh server representation.
+         *
+         * @description
+         * Reconciles a previously unknown result with a freshly loaded published intervention.
+         *
          * @access public
          * @since 1.0.0
+         *
+         * @param {InterventionOutput} intervention - Fresh server representation.
+         *
          * @returns {void}
          */
         reconcilePublished(intervention: InterventionOutput): void {
@@ -366,12 +412,17 @@ export const InterventionPublicationStore = signalStore(
           });
           void persist(tracking);
         },
+
         /**
          * Method reset
          * @method reset
-         * @description Clears resolved feedback while retaining unresolved publication tracking.
+         *
+         * @description
+         * Clears resolved feedback while retaining unresolved publication tracking.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         reset(): void {
@@ -384,7 +435,12 @@ export const InterventionPublicationStore = signalStore(
 
 /**
  * Type InterventionPublicationStoreType
- * @description Injectable publication state instance.
+ *
+ * @description
+ * Injectable publication state instance.
+ *
  * @since 1.0.0
+ *
+ * @type {InterventionPublicationStoreType}
  */
 export type InterventionPublicationStoreType = InstanceType<typeof InterventionPublicationStore>;

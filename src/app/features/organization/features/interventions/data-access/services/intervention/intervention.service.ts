@@ -39,7 +39,6 @@ import type {
 
 /**
  * Constant PUBLICATION_POLL_INTERVAL_MS
- * @const PUBLICATION_POLL_INTERVAL_MS
  *
  * @description
  * Delay between two successive publication status reads while polling.
@@ -47,12 +46,13 @@ import type {
  * @since 1.0.0
  *
  * @type {number}
+ *
+ * @constant PUBLICATION_POLL_INTERVAL_MS
  */
 const PUBLICATION_POLL_INTERVAL_MS = 1_000;
 
 /**
  * Constant PUBLICATION_POLL_MAX_EMISSIONS
- * @const PUBLICATION_POLL_MAX_EMISSIONS
  *
  * @description
  * Upper bound on the polling stream's emissions (initial state + one per
@@ -64,14 +64,29 @@ const PUBLICATION_POLL_INTERVAL_MS = 1_000;
  * @since 1.0.0
  *
  * @type {number}
+ *
+ * @constant PUBLICATION_POLL_MAX_EMISSIONS
  */
 const PUBLICATION_POLL_MAX_EMISSIONS = 121;
 
+/**
+ * Function toSecondsUtc
+ *
+ * @description
+ * Formats a date as a UTC ISO timestamp without fractional seconds for the outbox record.
+ *
+ * @access public
+ *
+ * @type {(date: Date) => string}
+ *
+ * @param {Date} date - Instant to serialize as Unix seconds.
+ *
+ * @returns {string}
+ */
 const toSecondsUtc = (date: Date): string => `${date.toISOString().slice(0, 19)}Z`;
 
 /**
  * Constant WORKSPACE_PAGE_SIZE
- * @const WORKSPACE_PAGE_SIZE
  *
  * @description
  * Page size the `listAll*` helpers request per call while draining a
@@ -80,12 +95,13 @@ const toSecondsUtc = (date: Date): string => `${date.toISOString().slice(0, 19)}
  * @since 1.0.0
  *
  * @type {number}
+ *
+ * @constant WORKSPACE_PAGE_SIZE
  */
 const WORKSPACE_PAGE_SIZE = 100;
 
 /**
- * Constant isPublicationRunning
- * @const isPublicationRunning
+ * Function isPublicationRunning
  *
  * @description
  * Whether a publication is still `pending` or `processing` server-side, i.e.
@@ -94,24 +110,34 @@ const WORKSPACE_PAGE_SIZE = 100;
  * @since 1.0.0
  *
  * @type {(publication: PublicationOutput) => boolean}
+ *
+ * @param {PublicationOutput} publication - Publication whose state determines whether polling
+ *   should continue.
+ *
+ * @returns {boolean}
+ *
+ * @constant isPublicationRunning
  */
 const isPublicationRunning = (publication: PublicationOutput): boolean =>
   publication.status === 'pending' || publication.status === 'processing';
 
 /**
- * Service InterventionService
+ * Class InterventionService
  * @class InterventionService
- * @extends {HydraApiService}
  *
  * @description
  * Owns the canonical intervention workflow resources. Facility, Equipment,
  * Inspection and Media operations remain in their owning feature services.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class InterventionService extends HydraApiService {
+  //#region Methods
   /**
    * Method list
    * @method list
@@ -131,7 +157,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} organizationId - organization Id value.
    * @param {InterventionListOptions} [options] - options value.
    *
-   * @return {Observable<HydraCollection<InterventionOutput>>} Result of the list operation.
+   * @returns {Observable<HydraCollection<InterventionOutput>>} Result of the list operation.
    */
   public list(
     organizationId: string,
@@ -174,17 +200,18 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} organizationId - organization Id value.
    * @param {Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
-   * name?: string;
-   * responsible?: string;
-   * participant?: string;
-   * type?: string;
-   * status?: string;
-   * site?: string;
-   * dueAtAfter?: string;
-   * dueAtBefore?: string;
-   * }} [options] - options value.
+   *   name?: string;
+   *   responsible?: string;
+   *   participant?: string;
+   *   type?: string;
+   *   status?: string;
+   *   site?: string;
+   *   dueAtAfter?: string;
+   *   dueAtBefore?: string;
+   * }} [options]
+   *   - options value.
    *
-   * @return {Observable<readonly InterventionOutput[]>} Result of the list all operation.
+   * @returns {Observable<readonly InterventionOutput[]>} Result of the list all operation.
    */
   public listAll(
     organizationId: string,
@@ -209,7 +236,6 @@ export class InterventionService extends HydraApiService {
    * merged and de-duped by id. Both bounds are inclusive; over-fetching (an
    * intervention whose anchor lands outside the visible cells) is harmless since
    * the calendar grid only renders anchors inside its cells.
-   *
    * `filters` narrows both queries the same way the list and board are narrowed,
    * so switching render does not silently widen the result. It deliberately
    * carries no date bound: the window already is the calendar's date filter.
@@ -222,7 +248,8 @@ export class InterventionService extends HydraApiService {
    * @param {Date} before - Inclusive upper window bound.
    * @param {InterventionCalendarFilters} [filters] - Non-date narrowing to apply to both queries.
    *
-   * @return {Observable<readonly InterventionOutput[]>} Interventions inside the window, de-duped by id.
+   * @returns {Observable<readonly InterventionOutput[]>} Interventions inside the window, de-duped
+   *   by id.
    */
   public listCalendarWindow(
     organizationId: string,
@@ -272,7 +299,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} organizationId - organization Id value.
    * @param {InterventionExportOptions} [options] - The accepted narrowing to apply.
    *
-   * @return {Observable<Blob>} The export's CSV binary content.
+   * @returns {Observable<Blob>} The export's CSV binary content.
    */
   public exportCsv(organizationId: string, options?: InterventionExportOptions): Observable<Blob> {
     const params: Record<string, string | readonly string[]> = {
@@ -305,7 +332,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} interventionId - intervention Id value.
    *
-   * @return {Observable<InterventionOutput>} Result of the get operation.
+   * @returns {Observable<InterventionOutput>} Result of the get operation.
    */
   public get(interventionId: string): Observable<InterventionOutput> {
     return this.getOne<InterventionOutput>(`/api/interventions/${interventionId}`);
@@ -326,7 +353,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} organizationId - organization Id value.
    *
-   * @return {Observable<InterventionStatisticsOutput>} Result of the statistics operation.
+   * @returns {Observable<InterventionStatisticsOutput>} Result of the statistics operation.
    */
   public statistics(organizationId: string): Observable<InterventionStatisticsOutput> {
     return this.getOne<InterventionStatisticsOutput>('/api/interventions/statistics', {
@@ -349,7 +376,8 @@ export class InterventionService extends HydraApiService {
    * @param {string} interventionId - intervention Id value.
    * @param {number} [page] - Page number, forwarded as-is to the API.
    *
-   * @return {Observable<HydraCollection<InterventionActivityOutput>>} Result of the list activities operation.
+   * @returns {Observable<HydraCollection<InterventionActivityOutput>>} Result of the list
+   *   activities operation.
    */
   public listActivities(
     interventionId: string,
@@ -378,7 +406,7 @@ export class InterventionService extends HydraApiService {
    *   appending a second one — a response lost in the field is indistinguishable,
    *   from the device, from a request that never arrived.
    *
-   * @return {Observable<InterventionActivityOutput>} The created comment activity entry.
+   * @returns {Observable<InterventionActivityOutput>} The created comment activity entry.
    */
   public addComment(
     interventionId: string,
@@ -406,18 +434,19 @@ export class InterventionService extends HydraApiService {
    * @param {string} organizationId - organization Id value.
    * @param {string} name - name value.
    * @param {Partial<{
-   * type: InterventionOutput['type'];
-   * site: string;
-   * responsible: string;
-   * participants: readonly string[];
-   * priority: InterventionOutput['priority'];
-   * plannedStartAt: Date;
-   * dueAt: Date;
-   * description: string | null;
-   * labelIds: readonly string[];
-   * }>} [options] - options value.
+   *   type: InterventionOutput['type'];
+   *   site: string;
+   *   responsible: string;
+   *   participants: readonly string[];
+   *   priority: InterventionOutput['priority'];
+   *   plannedStartAt: Date;
+   *   dueAt: Date;
+   *   description: string | null;
+   *   labelIds: readonly string[];
+   * }>} [options]
+   *   - options value.
    *
-   * @return {Observable<InterventionOutput>} Result of the create operation.
+   * @returns {Observable<InterventionOutput>} Result of the create operation.
    */
   public create(
     organizationId: string,
@@ -463,11 +492,11 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} interventionId - intervention Id value.
    * @param {UpdateInterventionInput} input - The subset of fields to patch.
-   * `labelIds`, when present, replaces the intervention's whole label set
-   * (merge-patch semantics); omit the key to leave labels untouched.
+   *   `labelIds`, when present, replaces the intervention's whole label set
+   *   (merge-patch semantics); omit the key to leave labels untouched.
    * @param {number} [revision] - revision value.
    *
-   * @return {Observable<InterventionOutput>} Result of the update operation.
+   * @returns {Observable<InterventionOutput>} Result of the update operation.
    */
   public update(
     interventionId: string,
@@ -509,7 +538,7 @@ export class InterventionService extends HydraApiService {
    * @param {AssignInterventionTeamInput} input - The team to assign.
    * @param {number} [revision] - Known revision for the `If-Match` guard.
    *
-   * @return {Observable<InterventionOutput>} The full updated intervention.
+   * @returns {Observable<InterventionOutput>} The full updated intervention.
    */
   public assignTeam(
     interventionId: string,
@@ -538,9 +567,10 @@ export class InterventionService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} interventionId - intervention Id value.
-   * @param {number} revision - Current intervention revision, required as the `If-Match` precondition.
+   * @param {number} revision - Current intervention revision, required as the `If-Match`
+   *   precondition.
    *
-   * @return {Observable<void>} Result of the remove operation.
+   * @returns {Observable<void>} Result of the remove operation.
    */
   public remove(interventionId: string, revision: number): Observable<void> {
     return this.delete(`/api/interventions/${interventionId}`, {
@@ -562,14 +592,16 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} interventionId - intervention Id value.
    * @param {RequestOptions & {
-   * assignee?: string;
-   * source?: string;
-   * action?: string;
-   * status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
-   * prioritizeAssignee?: string;
-   * }} [options] - options value.
+   *   assignee?: string;
+   *   source?: string;
+   *   action?: string;
+   *   status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
+   *   prioritizeAssignee?: string;
+   * }} [options]
+   *   - options value.
    *
-   * @returns {Observable<HydraCollection<InterventionWorkItemOutput>>} Result of the list work items operation.
+   * @returns {Observable<HydraCollection<InterventionWorkItemOutput>>} Result of the list work
+   *   items operation.
    */
   public listWorkItems(
     interventionId: string,
@@ -612,13 +644,15 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} interventionId - intervention Id value.
    * @param {Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
-   * assignee?: string;
-   * source?: string;
-   * action?: string;
-   * status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
-   * }} [options] - options value.
+   *   assignee?: string;
+   *   source?: string;
+   *   action?: string;
+   *   status?: InterventionWorkItemStatus | readonly InterventionWorkItemStatus[];
+   * }} [options]
+   *   - options value.
    *
-   * @returns {Observable<readonly InterventionWorkItemOutput[]>} Result of the list all work items operation.
+   * @returns {Observable<readonly InterventionWorkItemOutput[]>} Result of the list all work items
+   *   operation.
    */
   public listAllWorkItems(
     interventionId: string,
@@ -653,7 +687,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {CreateInterventionWorkItemInput} input - input value.
    *
-   * @return {Observable<InterventionWorkItemOutput>} Result of the create work item operation.
+   * @returns {Observable<InterventionWorkItemOutput>} Result of the create work item operation.
    */
   public createWorkItem(
     input: CreateInterventionWorkItemInput,
@@ -688,7 +722,7 @@ export class InterventionService extends HydraApiService {
    * @param {UpdateInterventionWorkItemInput} input - input value.
    * @param {number} [revision] - revision value.
    *
-   * @return {Observable<InterventionWorkItemOutput>} Result of the update work item operation.
+   * @returns {Observable<InterventionWorkItemOutput>} Result of the update work item operation.
    */
   public updateWorkItem(
     workItemId: string,
@@ -716,7 +750,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} workItemId - work Item Id value.
    * @param {number} revision - revision value.
    *
-   * @return {Observable<void>} Result of the remove work item operation.
+   * @returns {Observable<void>} Result of the remove work item operation.
    */
   public removeWorkItem(workItemId: string, revision: number): Observable<void> {
     return this.delete(`/api/intervention-work-items/${workItemId}`, {
@@ -738,7 +772,8 @@ export class InterventionService extends HydraApiService {
    * @param {string} interventionId - intervention Id value.
    * @param {PaginationOptions & { resource?: string; status?: string }} [options] - options value.
    *
-   * @returns {Observable<HydraCollection<InterventionChangeOutput>>} Result of the list changes operation.
+   * @returns {Observable<HydraCollection<InterventionChangeOutput>>} Result of the list changes
+   *   operation.
    */
   public listChanges(
     interventionId: string,
@@ -773,11 +808,13 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} interventionId - intervention Id value.
    * @param {Omit<PaginationOptions, 'page' | 'itemsPerPage'> & {
-   * resource?: string;
-   * status?: string;
-   * }} [options] - options value.
+   *   resource?: string;
+   *   status?: string;
+   * }} [options]
+   *   - options value.
    *
-   * @returns {Observable<readonly InterventionChangeOutput[]>} Result of the list all changes operation.
+   * @returns {Observable<readonly InterventionChangeOutput[]>} Result of the list all changes
+   *   operation.
    */
   public listAllChanges(
     interventionId: string,
@@ -806,7 +843,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {CreateInterventionChangeInput} input - input value.
    *
-   * @return {Observable<InterventionChangeOutput>} Result of the create change operation.
+   * @returns {Observable<InterventionChangeOutput>} Result of the create change operation.
    */
   public createChange(input: CreateInterventionChangeInput): Observable<InterventionChangeOutput> {
     if (input.clientId) {
@@ -841,7 +878,7 @@ export class InterventionService extends HydraApiService {
    * @param {UpdateInterventionChangeInput} input - input value.
    * @param {number} [revision] - revision value.
    *
-   * @return {Observable<InterventionChangeOutput>} Result of the update change operation.
+   * @returns {Observable<InterventionChangeOutput>} Result of the update change operation.
    */
   public updateChange(
     changeId: string,
@@ -870,7 +907,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} interventionId - intervention Id value.
    * @param {string} [workItemId] - Narrows the list to attachments scoped to this work item.
    *
-   * @return {Observable<HydraCollection<InterventionAttachmentOutput>>} The attachments.
+   * @returns {Observable<HydraCollection<InterventionAttachmentOutput>>} The attachments.
    */
   public listAttachments(
     interventionId: string,
@@ -908,9 +945,10 @@ export class InterventionService extends HydraApiService {
    * @param {string} [label] - optional operator label.
    * @param {string} [workItemId] - Work item this upload documents, when scoped to one.
    * @param {InterventionAttachmentKind} [kind] - `'file'` (default) or `'signature'`.
-   * @param {string} [clientId] - Client-generated UUID making an offline replay idempotent (the endpoint returns the existing attachment instead of duplicating).
+   * @param {string} [clientId] - Client-generated UUID making an offline replay idempotent (the
+   *   endpoint returns the existing attachment instead of duplicating).
    *
-   * @return {Observable<InterventionAttachmentOutput>} The created attachment.
+   * @returns {Observable<InterventionAttachmentOutput>} The created attachment.
    */
   public uploadAttachment(
     interventionId: string,
@@ -948,7 +986,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} attachmentId - attachment Id value.
    * @param {number} revision - revision value.
    *
-   * @return {Observable<void>} Completion of the delete.
+   * @returns {Observable<void>} Completion of the delete.
    */
   public removeAttachment(attachmentId: string, revision: number): Observable<void> {
     return this.delete(`/api/intervention-attachments/${attachmentId}`, {
@@ -974,7 +1012,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} attachmentId - attachment Id value.
    *
-   * @return {Observable<Blob>} The attachment's binary content.
+   * @returns {Observable<Blob>} The attachment's binary content.
    */
   public downloadAttachment(attachmentId: string): Observable<Blob> {
     return this.http.get(this.buildUrl(`/api/intervention-attachments/${attachmentId}/download`), {
@@ -999,7 +1037,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} interventionId - intervention Id value.
    *
-   * @return {Observable<Blob>} The report's PDF binary content.
+   * @returns {Observable<Blob>} The report's PDF binary content.
    */
   public exportReport(interventionId: string): Observable<Blob> {
     return this.http.get(this.buildUrl(`/api/interventions/${interventionId}/report`), {
@@ -1021,7 +1059,8 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} interventionId - intervention Id value.
    *
-   * @return {Observable<HydraCollection<InterventionIssueOutput>>} Result of the list issues operation.
+   * @returns {Observable<HydraCollection<InterventionIssueOutput>>} Result of the list issues
+   *   operation.
    */
   public listIssues(interventionId: string): Observable<HydraCollection<InterventionIssueOutput>> {
     return this.getCollection<InterventionIssueOutput>(
@@ -1043,7 +1082,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {InterventionOutput} intervention - intervention value.
    *
-   * @return {Observable<PublicationOutput>} Result of the publish operation.
+   * @returns {Observable<PublicationOutput>} Result of the publish operation.
    */
   public publish(intervention: InterventionOutput): Observable<PublicationOutput> {
     return this.post<{ intervention: string; interventionRevision: number }, PublicationOutput>(
@@ -1068,7 +1107,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} publicationId - publication Id value.
    *
-   * @return {Observable<PublicationOutput>} Result of the get publication operation.
+   * @returns {Observable<PublicationOutput>} Result of the get publication operation.
    */
   public getPublication(publicationId: string): Observable<PublicationOutput> {
     return this.getOne<PublicationOutput>(`/api/publications/${publicationId}`);
@@ -1090,7 +1129,8 @@ export class InterventionService extends HydraApiService {
    *
    * @param {PublicationOutput} initial - The publication as the create call returned it.
    *
-   * @return {Observable<PublicationOutput>} Every polled state, ending on the terminal one or at the bound.
+   * @returns {Observable<PublicationOutput>} Every polled state, ending on the terminal one or at
+   *   the bound.
    */
   public pollPublication(initial: PublicationOutput): Observable<PublicationOutput> {
     return of(initial).pipe(
@@ -1120,7 +1160,7 @@ export class InterventionService extends HydraApiService {
    *
    * @param {(page: number) => Observable<HydraCollection<T>>} loadPage - load Page value.
    *
-   * @return {Observable<readonly T[]>} Result of the collect pages operation.
+   * @returns {Observable<readonly T[]>} Result of the collect pages operation.
    */
   private collectPages<T extends HydraItem>(
     loadPage: (page: number) => Observable<HydraCollection<T>>,
@@ -1134,4 +1174,5 @@ export class InterventionService extends HydraApiService {
       reduce((items, collection) => [...items, ...collection.member], [] as readonly T[]),
     );
   }
+  //#endregion
 }

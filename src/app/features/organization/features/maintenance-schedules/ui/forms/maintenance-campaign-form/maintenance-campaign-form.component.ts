@@ -29,10 +29,20 @@ import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { MaintenanceCampaignDraft } from './models';
 
-/** The select's value for "every facility"/"every equipment type" — no narrowing. */
+/**
+ * Constant NO_SCOPE_VALUE
+ *
+ * @description
+ * The select's value for "every facility"/"every equipment type" — no narrowing.
+ */
 const NO_SCOPE_VALUE: string = '';
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_DRAFT
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_DRAFT: MaintenanceCampaignDraft = {
   name: '',
   dueBefore: '',
@@ -40,7 +50,12 @@ const EMPTY_DRAFT: MaintenanceCampaignDraft = {
   equipmentType: NO_SCOPE_VALUE,
 };
 
-/** How long a campaign name may be, mirroring the backend's `Assert\Length` constraint. */
+/**
+ * Constant NAME_MAX_LENGTH
+ *
+ * @description
+ * How long a campaign name may be, mirroring the backend's `Assert\Length` constraint.
+ */
 const NAME_MAX_LENGTH: number = 160;
 
 /**
@@ -54,7 +69,6 @@ const NAME_MAX_LENGTH: number = 160;
  * schedules — is rendered inline from {@link serverError} rather than as a
  * generic toast (`ARCHITECTURE.md` API contract), keeping the form usable
  * so the operator can widen the scope and retry.
- *
  * Presentational: it validates and emits {@link submitted}; the hosting
  * `MaintenanceCampaignDialog` forwards it untouched and the page keeps the
  * store call, the success toast/navigation and the organization IRI, which
@@ -84,9 +98,13 @@ export class MaintenanceCampaignForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether the campaign-generation request is in flight, which locks the footer controls.
+   *
+   * @description
+   * Whether the campaign-generation request is in flight, which locks the footer controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -94,9 +112,13 @@ export class MaintenanceCampaignForm {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the last generation attempt failed with, including the documented no-match 422.
+   *
+   * @description
+   * Whatever the last generation attempt failed with, including the documented no-match 422.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<StoreError | null>}
    */
   public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
@@ -104,9 +126,13 @@ export class MaintenanceCampaignForm {
   /**
    * Property facilityOptions
    * @readonly
-   * @description The organization's facilities, offered as the optional scoping choice.
+   *
+   * @description
+   * The organization's facilities, offered as the optional scoping choice.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ReadonlyArray<{ readonly label: string; readonly value: string }>>}
    */
   public readonly facilityOptions: InputSignal<
@@ -118,9 +144,13 @@ export class MaintenanceCampaignForm {
   /**
    * Property submitted
    * @readonly
-   * @description The validated scope, minus the organization IRI the page folds in.
+   *
+   * @description
+   * The validated scope, minus the organization IRI the page folds in.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<Omit<GenerateMaintenanceCampaignInput, 'organization'>>}
    */
   public readonly submitted: OutputEmitterRef<
@@ -130,31 +160,72 @@ export class MaintenanceCampaignForm {
   /**
    * Property cancelled
    * @readonly
-   * @description The operator backed out without generating a campaign.
+   *
+   * @description
+   * The operator backed out without generating a campaign.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The equipment-type choices offered, reused from the equipments feature's public catalog. */
+  /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * The equipment-type choices offered, reused from the equipments feature's public catalog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   */
   protected readonly equipmentTypeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
 
-  /** The sentinel value representing "no facility/equipment-type narrowing". */
+  /**
+   * Property noScopeValue
+   * @readonly
+   *
+   * @description
+   * The sentinel value representing "no facility/equipment-type narrowing".
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly noScopeValue: string = NO_SCOPE_VALUE;
 
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * The edited draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<MaintenanceCampaignDraft>}
+   */
   protected readonly model: WritableSignal<MaintenanceCampaignDraft> =
     signal<MaintenanceCampaignDraft>(EMPTY_DRAFT);
 
   /**
    * Property campaignForm
    * @readonly
-   * @description The field tree and its rules.
+   *
+   * @description
+   * The field tree and its rules.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<MaintenanceCampaignDraft>}
    */
   protected readonly campaignForm: FieldTree<MaintenanceCampaignDraft> = form(
@@ -178,9 +249,14 @@ export class MaintenanceCampaignForm {
   /**
    * Property serverMessage
    * @readonly
-   * @description The last failed attempt's message, including the documented no-match 422 — `null` when there is nothing to show.
+   *
+   * @description
+   * The last failed attempt's message, including the documented no-match 422 — `null` when there is
+   * nothing to show.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly serverMessage: Signal<string | null> = computed<string | null>(() => {
@@ -197,11 +273,19 @@ export class MaintenanceCampaignForm {
 
   //#region Methods
   /**
-   * Method facilityLabelOf
-   * @description Names a facility value on the closed select trigger, including the sentinel "every facility" entry.
+   * Property facilityLabelOf
+   *
+   * @description
+   * Names a facility value on the closed select trigger, including the sentinel "every facility"
+   * entry.
+   *
    * @access protected
    * @since 1.0.0
+   *
+   * @type {(value: string) => string}
+   *
    * @param {string} value - The select's current value.
+   *
    * @returns {string} The localized label.
    */
   protected facilityLabelOf = (value: string): string => {
@@ -216,11 +300,19 @@ export class MaintenanceCampaignForm {
   };
 
   /**
-   * Method equipmentTypeLabelOf
-   * @description Names an equipment-type value on the closed select trigger, including the sentinel "every type" entry.
+   * Property equipmentTypeLabelOf
+   *
+   * @description
+   * Names an equipment-type value on the closed select trigger, including the sentinel "every type"
+   * entry.
+   *
    * @access protected
    * @since 1.0.0
+   *
+   * @type {(value: string) => string}
+   *
    * @param {string} value - The select's current value.
+   *
    * @returns {string} The localized label.
    */
   protected equipmentTypeLabelOf = (value: string): string => {
@@ -236,6 +328,7 @@ export class MaintenanceCampaignForm {
 
   /**
    * Method submit
+   * @method submit
    *
    * @description
    * Marks the tree touched so every unmet rule shows at once, then emits the

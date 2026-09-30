@@ -45,7 +45,6 @@ import { nonConformityStatusErrorMessage } from './utils/non-conformity-status-e
 //#region Initial State
 /**
  * Constant INITIAL_INSPECTION_STATE
- * @const INITIAL_INSPECTION_STATE
  *
  * @description
  * Initial state for the InspectionStore. Entity state is initialised by
@@ -54,6 +53,8 @@ import { nonConformityStatusErrorMessage } from './utils/non-conformity-status-e
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_INSPECTION_STATE
  */
 const INITIAL_INSPECTION_STATE: InspectionState = {
   totalInspections: 0,
@@ -74,8 +75,7 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
 //#endregion
 
 /**
- * Store InspectionStore
- * @const InspectionStore
+ * Constant InspectionStore
  *
  * @description
  * Component-scoped NgRx SignalStore for inspection list management, CRUD,
@@ -98,6 +98,12 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
  * so a consumer can render the message inline under the offending row
  * instead of a page-wide banner nothing ties to a specific record.
  *
+ * @version 2.1.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const InspectionStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [InspectionStore] })
@@ -105,9 +111,6 @@ const INITIAL_INSPECTION_STATE: InspectionState = {
  *   readonly store = inject<InspectionStore>(InspectionStore);
  * }
  * ```
- *
- * @version 2.1.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const InspectionStore = signalStore(
   //#region Features
@@ -116,9 +119,8 @@ export const InspectionStore = signalStore(
   withState<InspectionState>(INITIAL_INSPECTION_STATE),
 
   /**
-   * Feature withComputed
-   *
    * @description
+   * Feature withComputed
    * Adds computed properties to the store for common derived state
    * related to the inspection list and its operations.
    *
@@ -129,15 +131,22 @@ export const InspectionStore = signalStore(
       inject<ActiveInspectionStore>(ActiveInspectionStore);
 
     return {
-      /** All cached inspections from the entity collection. */
+      /**
+       * @description
+       * All cached inspections from the entity collection.
+       */
       inspections: computed<ReadonlyArray<InspectionOutput>>(() => store.inspectionEntities()),
 
-      /** All cached non-conformities from the entity collection. */
+      /**
+       * @description
+       * All cached non-conformities from the entity collection.
+       */
       nonConformities: computed<ReadonlyArray<NonConformityOutput>>(() =>
         store.nonConformityEntities(),
       ),
 
       /**
+       * @description
        * Normalized error from the last failed list load, or `null` when the load
        * is idle, pending or successful. Lets the page distinguish a failed fetch
        * from a legitimately empty collection.
@@ -149,6 +158,7 @@ export const InspectionStore = signalStore(
       }),
 
       /**
+       * @description
        * True only when the collection is empty and the last list load neither is
        * in flight nor failed — a failed load surfaces an error, not the empty
        * state.
@@ -159,27 +169,48 @@ export const InspectionStore = signalStore(
         return store.inspectionIds().length === 0 && status !== 'pending' && status !== 'error';
       }),
 
-      /** Proxied from {@link ActiveInspectionStore}. */
+      /**
+       * @description
+       * Proxied from {@link ActiveInspectionStore}.
+       */
       selectedInspection: computed<InspectionOutput | null>(() =>
         activeInspectionStore.selectedInspection(),
       ),
 
-      /** True while the inspection list is loading. */
+      /**
+       * @description
+       * True while the inspection list is loading.
+       */
       isLoadingInspections: computed<boolean>(() => store.listCallState().status === 'pending'),
 
-      /** Proxied from {@link ActiveInspectionStore}. */
+      /**
+       * @description
+       * Proxied from {@link ActiveInspectionStore}.
+       */
       isLoadingInspection: computed<boolean>(() => activeInspectionStore.isLoadingInspection()),
 
-      /** True while a create operation is in-flight. */
+      /**
+       * @description
+       * True while a create operation is in-flight.
+       */
       isCreating: computed<boolean>(() => store.createCallState().status === 'pending'),
 
-      /** True while an update operation is in-flight. */
+      /**
+       * @description
+       * True while an update operation is in-flight.
+       */
       isUpdating: computed<boolean>(() => store.updateCallState().status === 'pending'),
 
-      /** True while a cancellation is in-flight. */
+      /**
+       * @description
+       * True while a cancellation is in-flight.
+       */
       isCancelling: computed<boolean>(() => store.cancelCallState().status === 'pending'),
 
-      /** True while an inspection lifecycle transition is in-flight. */
+      /**
+       * @description
+       * True while an inspection lifecycle transition is in-flight.
+       */
       isChangingLifecycle: computed<boolean>(
         () =>
           store.submitCallState().status === 'pending' ||
@@ -187,17 +218,26 @@ export const InspectionStore = signalStore(
           store.cancelCallState().status === 'pending',
       ),
 
-      /** True while the inspection non-conformity list is loading. */
+      /**
+       * @description
+       * True while the inspection non-conformity list is loading.
+       */
       isLoadingNonConformities: computed<boolean>(
         () => store.nonConformitiesListCallState().status === 'pending',
       ),
 
-      /** True while a non-conformity is being added. */
+      /**
+       * @description
+       * True while a non-conformity is being added.
+       */
       isAddingNonConformity: computed<boolean>(
         () => store.addNonConformityCallState().status === 'pending',
       ),
 
-      /** True while a non-conformity status is being updated. */
+      /**
+       * @description
+       * True while a non-conformity status is being updated.
+       */
       isUpdatingNonConformity: computed<boolean>(
         () => store.updateNonConformityStatusCallState().status === 'pending',
       ),
@@ -214,6 +254,7 @@ export const InspectionStore = signalStore(
        *
        * @access public
        * @since 1.1.0
+       *
        * @type {Signal<string | null>}
        */
       nonConformityStatusErrorText: computed<string | null>(() => {
@@ -222,7 +263,10 @@ export const InspectionStore = signalStore(
         return error ? nonConformityStatusErrorMessage(error) : null;
       }),
 
-      /** Error from the last create operation, if any. */
+      /**
+       * @description
+       * Error from the last create operation, if any.
+       */
       createError: computed<StoreError | null>(() => store.createCallState().error),
 
       /**
@@ -241,14 +285,15 @@ export const InspectionStore = signalStore(
   }),
 
   /**
-   * Feature withMethods
-   *
    * @description
+   * Feature withMethods
    * Adds methods to the store for managing the inspection list, including
    * loading, creating, submitting, closing, non-conformities, and resetting operations.
    *
    * @since 1.0.0
    */
+  //#endregion
+
   //#region Methods
   withMethods(
     (
@@ -261,13 +306,14 @@ export const InspectionStore = signalStore(
     ) => {
       /**
        * Constant loadFn
-       * @const loadFn
        *
        * @description
        * Shared rxMethod implementation for loading a paginated inspection list.
        * Uses `switchMap` so that a new request cancels any previous in-flight one.
        *
        * @since 2.0.0
+       *
+       * @constant loadFn
        */
       const loadFn = rxMethod<{ organizationId: string; options?: InspectionListOptions }>(
         pipe(
@@ -304,7 +350,6 @@ export const InspectionStore = signalStore(
 
       /**
        * Constant loadNonConformityFn
-       * @const loadNonConformityFn
        *
        * @description
        * Shared rxMethod implementation for re-reading one non-conformity and
@@ -314,6 +359,8 @@ export const InspectionStore = signalStore(
        * cached row is already stale and must be refreshed from the server.
        *
        * @since 1.1.0
+       *
+       * @constant loadNonConformityFn
        */
       const loadNonConformityFn = rxMethod<{
         organizationId: string;
@@ -349,7 +396,6 @@ export const InspectionStore = signalStore(
 
       /**
        * Constant updateNonConformityStatusFn
-       * @const updateNonConformityStatusFn
        *
        * @description
        * Shared rxMethod implementation for a non-conformity status write.
@@ -368,6 +414,8 @@ export const InspectionStore = signalStore(
        * one row's error survives while another is edited.
        *
        * @since 1.1.0
+       *
+       * @constant updateNonConformityStatusFn
        */
       const updateNonConformityStatusFn = rxMethod<{
         organizationId: string;
@@ -450,10 +498,16 @@ export const InspectionStore = signalStore(
       return {
         // ── Inspection List ────────────────────────────────────────────────────
 
-        /** Fetches one page of inspections. Alias: {@link loadInspections}. */
+        /**
+         * @description
+         * Fetches one page of inspections. Alias: {@link loadInspections}.
+         */
         load: loadFn,
 
-        /** Alias for {@link load} — kept for backward-compatibility. */
+        /**
+         * @description
+         * Alias for {@link load} — kept for backward-compatibility.
+         */
         loadInspections: loadFn,
 
         // ── Inspection CRUD ────────────────────────────────────────────────────
@@ -507,6 +561,7 @@ export const InspectionStore = signalStore(
         ),
 
         /**
+         * @description
          * Updates a draft inspection and synchronizes the active inspection.
          */
         update: rxMethod<{
@@ -543,6 +598,7 @@ export const InspectionStore = signalStore(
         ),
 
         /**
+         * @description
          * Cancels an inspection and removes it from the local collection.
          */
         cancel: rxMethod<{ organizationId: string; inspectionId: string }>(
@@ -715,7 +771,10 @@ export const InspectionStore = signalStore(
           ),
         ),
 
-        /** Re-reads one non-conformity and replaces its cached row. See {@link loadNonConformityFn}. */
+        /**
+         * @description
+         * Re-reads one non-conformity and replaces its cached row. See {@link loadNonConformityFn}.
+         */
         loadNonConformity: loadNonConformityFn,
 
         /**
@@ -761,22 +820,35 @@ export const InspectionStore = signalStore(
           ),
         ),
 
-        /** Writes a non-conformity status change. See {@link updateNonConformityStatusFn}. */
+        /**
+         * @description
+         * Writes a non-conformity status change. See {@link updateNonConformityStatusFn}.
+         */
         updateNonConformityStatus: updateNonConformityStatusFn,
 
         // ── Sync Helpers ───────────────────────────────────────────────────────
 
-        /** Resets the create operation back to its idle state. */
+        /**
+         * @description
+         * Resets the create operation back to its idle state.
+         */
         resetCreateOperation(): void {
           patchState(store, { createCallState: idleCallState() });
         },
 
-        /** Resets the add non-conformity operation back to its idle state, for the dialog's close/reopen. */
+        /**
+         * @description
+         * Resets the add non-conformity operation back to its idle state, for the dialog's
+         * close/reopen.
+         */
         resetAddNonConformityOperation(): void {
           patchState(store, { addNonConformityCallState: idleCallState() });
         },
 
-        /** Resets the update non-conformity status operation back to its idle state. */
+        /**
+         * @description
+         * Resets the update non-conformity status operation back to its idle state.
+         */
         resetUpdateNonConformityStatusOperation(): void {
           patchState(store, { updateNonConformityStatusCallState: idleCallState() });
         },
@@ -788,7 +860,6 @@ export const InspectionStore = signalStore(
 
 /**
  * Type InspectionStore
- * @type InspectionStore
  *
  * @description
  * Instance type of the {@link InspectionStore} signal store.
@@ -796,5 +867,7 @@ export const InspectionStore = signalStore(
  * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @type InspectionStore
  */
 export type InspectionStore = InstanceType<typeof InspectionStore>;

@@ -142,7 +142,7 @@ Why folder-per-util, in §10.13's own words: _"Each helper then owns its spec, s
 - **Pure**: no Angular DI, no `inject()`, no HTTP, no store access, no side effects, no mutation of arguments. Anything that needs DI is a service.
 - **One declaration per file**, named after its purpose. A tightly-cohesive pair may share a file (`resolveQuotaStatus` + `isQuotaExceededError`) — that is the observed granularity, not a licence to bundle unrelated helpers.
 - Strict TS: explicit parameter and return types, `ReadonlyArray<T>` for array inputs, no `any`, no non-null assertions.
-- JSDoc with `@description`, `@access`, `@since`, `@param`, `@returns` — concise (§14.4).
+- Follow `docs/guides/code-comments.md`: a `Function <name>` title, `@description` alone on its line and prose on the following line, access, verified since metadata, typed parameters and returns. Keep it concise.
 - Plural `.utils.ts`, matching the folder. The singular `.util.ts` is reserved for the resolver of a `<concept>-tag/` presentation registry inside `models/` (§9.2) — not yours.
 
 The spec needs no `TestBed`: import the function and assert directly, covering the edge cases — `null`, `undefined`, empty input, boundary values, and the fallback branch.

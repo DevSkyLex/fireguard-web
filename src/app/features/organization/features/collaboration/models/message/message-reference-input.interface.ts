@@ -14,9 +14,55 @@ import type { MessageReferenceType } from './message-reference-type.type';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface MessageReferenceInput {
+  /**
+   * Property type
+   * @readonly
+   *
+   * @description
+   * Classifies this message reference for feature-specific handling.
+   *
+   * @access public
+   *
+   * @type {MessageReferenceType}
+   */
   readonly type: MessageReferenceType;
-  /** Bare record UUID, at most 36 characters. */
+
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Bare record UUID, at most 36 characters.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Provides the text displayed to identify this message reference.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly label?: string;
+
+  /**
+   * Property code
+   * @readonly
+   *
+   * @description
+   * Carries the optional reference code for the linked resource.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly code?: string;
 }

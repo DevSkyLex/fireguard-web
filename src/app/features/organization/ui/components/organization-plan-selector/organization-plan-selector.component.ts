@@ -31,10 +31,54 @@ import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { OrganizationPlanChangeDialog } from '../../dialogs/organization-plan-change-dialog';
 import type { OrganizationPlanRow } from './models';
 
-/** Visual and accessible parts of a localized recurring plan price. */
+/**
+ * Interface OrganizationPlanPriceDisplay
+ * @interface OrganizationPlanPriceDisplay
+ *
+ * @description
+ * Visual and accessible parts of a localized recurring plan price.
+ */
 interface OrganizationPlanPriceDisplay {
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Localized price text rendered in the plan choice.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property amount
+   * @readonly
+   *
+   * @description
+   * Formatted amount portion kept separate for the plan row layout.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly amount: string;
+
+  /**
+   * Property cadence
+   * @readonly
+   *
+   * @description
+   * Localized recurring interval, or null for a non-recurring free plan.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   readonly cadence: string | null;
 }
 
@@ -129,6 +173,8 @@ function priceDisplayOf(
  *
  * @version 1.2.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-organization-plan-selector
@@ -137,8 +183,6 @@ function priceDisplayOf(
  *   [pricing]="billingStore.pricing()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-plan-selector',
@@ -250,9 +294,13 @@ export class OrganizationPlanSelector implements OnInit {
   /**
    * Property localeId
    * @readonly
-   * @description The active Angular locale, used to format each card's price.
+   *
+   * @description
+   * The active Angular locale, used to format each card's price.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private readonly localeId: string = inject<string>(LOCALE_ID);
@@ -260,9 +308,13 @@ export class OrganizationPlanSelector implements OnInit {
   /**
    * Property isLoading
    * @readonly
-   * @description Whether the plan catalog is loading.
+   *
+   * @description
+   * Whether the plan catalog is loading.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isLoading: Signal<boolean> = this.planStore.isLoadingPlans;
@@ -270,9 +322,13 @@ export class OrganizationPlanSelector implements OnInit {
   /**
    * Property loadError
    * @readonly
-   * @description The catalog load failure, if any.
+   *
+   * @description
+   * The catalog load failure, if any.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<StoreError | null>}
    */
   protected readonly loadError: Signal<StoreError | null> = this.planStore.plansError;
@@ -280,9 +336,13 @@ export class OrganizationPlanSelector implements OnInit {
   /**
    * Property isChanging
    * @readonly
-   * @description Whether a plan change is in flight, which locks every card.
+   *
+   * @description
+   * Whether a plan change is in flight, which locks every card.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isChanging: Signal<boolean> = this.planStore.isChangingPlan;
@@ -290,9 +350,13 @@ export class OrganizationPlanSelector implements OnInit {
   /**
    * Property changeError
    * @readonly
-   * @description The last plan change failure, if any.
+   *
+   * @description
+   * The last plan change failure, if any.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<StoreError | null>}
    */
   protected readonly changeError: Signal<StoreError | null> = this.planStore.changePlanError;
@@ -300,9 +364,13 @@ export class OrganizationPlanSelector implements OnInit {
   /**
    * Property changeSucceeded
    * @readonly
-   * @description Whether the last plan change succeeded.
+   *
+   * @description
+   * Whether the last plan change succeeded.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly changeSucceeded: Signal<boolean> = this.planStore.changePlanSucceeded;
@@ -325,9 +393,13 @@ export class OrganizationPlanSelector implements OnInit {
   /**
    * Property rows
    * @readonly
-   * @description Each catalog plan joined with its formatted price and current-plan marker.
+   *
+   * @description
+   * Each catalog plan joined with its formatted price and current-plan marker.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ReadonlyArray<OrganizationPlanRow>>}
    */
   protected readonly rows: Signal<ReadonlyArray<OrganizationPlanRow>> = computed<
@@ -364,9 +436,13 @@ export class OrganizationPlanSelector implements OnInit {
   /**
    * Property pendingPlan
    * @readonly
-   * @description The plan awaiting switch confirmation, if any.
+   *
+   * @description
+   * The plan awaiting switch confirmation, if any.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<OrganizationPlanRow | null>}
    */
   protected readonly pendingPlan: WritableSignal<OrganizationPlanRow | null> =
@@ -383,6 +459,8 @@ export class OrganizationPlanSelector implements OnInit {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
   private readonly emitCurrentPlanKey: EffectRef = effect((): void => {
     const current: OrganizationPlanRow | undefined = this.rows().find(
@@ -423,6 +501,7 @@ export class OrganizationPlanSelector implements OnInit {
    * @since 1.1.0
    *
    * @param {string | readonly string[] | null | undefined} value - Toggle-group selection.
+   *
    * @returns {void}
    */
   protected selectBillingInterval(value: string | readonly string[] | null | undefined): void {

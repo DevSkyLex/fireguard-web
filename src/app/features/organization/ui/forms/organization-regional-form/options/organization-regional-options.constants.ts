@@ -6,7 +6,6 @@ import type {
 
 /**
  * Constant ORGANIZATION_DATE_FORMAT_OPTIONS
- * @const ORGANIZATION_DATE_FORMAT_OPTIONS
  *
  * @description
  * Choices for the regional form's date format picker, each shown against
@@ -15,6 +14,8 @@ import type {
  * @since 1.0.0
  *
  * @type {ReadonlyArray<{ readonly label: string; readonly value: OrganizationDateFormat }>}
+ *
+ * @constant ORGANIZATION_DATE_FORMAT_OPTIONS
  */
 export const ORGANIZATION_DATE_FORMAT_OPTIONS: ReadonlyArray<{
   readonly label: string;
@@ -44,7 +45,6 @@ export const ORGANIZATION_DATE_FORMAT_OPTIONS: ReadonlyArray<{
 
 /**
  * Constant ORGANIZATION_FIRST_DAY_OF_WEEK_OPTIONS
- * @const ORGANIZATION_FIRST_DAY_OF_WEEK_OPTIONS
  *
  * @description
  * Choices for the regional form's first-day-of-week picker.
@@ -52,6 +52,8 @@ export const ORGANIZATION_DATE_FORMAT_OPTIONS: ReadonlyArray<{
  * @since 1.0.0
  *
  * @type {ReadonlyArray<{ readonly label: string; readonly value: OrganizationFirstDayOfWeek }>}
+ *
+ * @constant ORGANIZATION_FIRST_DAY_OF_WEEK_OPTIONS
  */
 export const ORGANIZATION_FIRST_DAY_OF_WEEK_OPTIONS: ReadonlyArray<{
   readonly label: string;
@@ -63,14 +65,18 @@ export const ORGANIZATION_FIRST_DAY_OF_WEEK_OPTIONS: ReadonlyArray<{
 
 /**
  * Constant ORGANIZATION_MEASUREMENT_SYSTEM_OPTIONS
- * @const ORGANIZATION_MEASUREMENT_SYSTEM_OPTIONS
  *
  * @description
  * Choices for the regional form's measurement system picker.
  *
  * @since 1.0.0
  *
- * @type {ReadonlyArray<{ readonly label: string; readonly value: OrganizationMeasurementSystem }>}
+ * @type {ReadonlyArray<{
+ *   readonly label: string;
+ *   readonly value: OrganizationMeasurementSystem;
+ * }>}
+ *
+ * @constant ORGANIZATION_MEASUREMENT_SYSTEM_OPTIONS
  */
 export const ORGANIZATION_MEASUREMENT_SYSTEM_OPTIONS: ReadonlyArray<{
   readonly label: string;

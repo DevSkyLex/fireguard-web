@@ -8,13 +8,21 @@ import type {
   InterventionTemplateOutput,
 } from '@features/organization/features/interventions/models';
 
-/** `Date` → the ATOM-with-seconds format the backend's `Assert\DateTime` expects. */
+/**
+ * Function toSecondsUtc
+ *
+ * @description
+ * `Date` → the ATOM-with-seconds format the backend's `Assert\DateTime` expects.
+ *
+ * @param {Date} date - Instant to serialize as Unix seconds.
+ *
+ * @returns {string}
+ */
 const toSecondsUtc = (date: Date): string => `${date.toISOString().slice(0, 19)}Z`;
 
 /**
  * Service InterventionTemplateService
  * @class InterventionTemplateService
- * @extends {HydraApiService}
  *
  * @description
  * Owns the organization-scoped intervention template resource: listing the
@@ -22,7 +30,10 @@ const toSecondsUtc = (date: Date): string => `${date.toISOString().slice(0, 19)}
  * intervention draft.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class InterventionTemplateService extends HydraApiService {
@@ -43,7 +54,8 @@ export class InterventionTemplateService extends HydraApiService {
    * @param {number} [options.itemsPerPage] - Items per page.
    * @param {string} [options.search] - Case-insensitive partial match on the template name.
    *
-   * @return {Observable<HydraCollection<InterventionTemplateOutput>>} Result of the list operation.
+   * @returns {Observable<HydraCollection<InterventionTemplateOutput>>} Result of the list
+   *   operation.
    */
   public list(
     organizationIri: string,
@@ -77,7 +89,8 @@ export class InterventionTemplateService extends HydraApiService {
    * @param {string} templateId - The template to instantiate.
    * @param {InstantiateInterventionTemplateInput} [input] - Optional overrides.
    *
-   * @return {Observable<InterventionTemplateInstantiationOutput>} Result of the instantiate operation.
+   * @returns {Observable<InterventionTemplateInstantiationOutput>} Result of the instantiate
+   *   operation.
    */
   public instantiate(
     templateId: string,

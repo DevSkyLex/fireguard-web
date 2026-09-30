@@ -132,9 +132,13 @@ export class InterventionOfflineService {
   /**
    * Method publicationOwner
    * @method publicationOwner
-   * @description Captures the account identity for local recovery metadata and stale-response guards.
+   *
+   * @description
+   * Captures the account identity for local recovery metadata and stale-response guards.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {string | null} Authenticated subject, or null.
    */
   public publicationOwner(): string | null {
@@ -143,12 +147,19 @@ export class InterventionOfflineService {
 
   /**
    * Method savePublicationTracking
-   * @description Persists recovery metadata in the account-bound database, scoped by organization and intervention.
+   * @method savePublicationTracking
+   *
+   * @description
+   * Persists recovery metadata in the account-bound database, scoped by organization and
+   * intervention.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organization - Organization IRI.
    * @param {string} interventionId - Intervention identifier.
    * @param {PublicationTracking} tracking - Last known publication state.
+   *
    * @returns {Promise<void>}
    */
   public async savePublicationTracking(
@@ -169,11 +180,17 @@ export class InterventionOfflineService {
 
   /**
    * Method loadPublicationTracking
-   * @description Reads recovery metadata after binding the database to the current account.
+   * @method loadPublicationTracking
+   *
+   * @description
+   * Reads recovery metadata after binding the database to the current account.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organization - Organization IRI.
    * @param {string} interventionId - Intervention identifier.
+   *
    * @returns {Promise<PublicationTracking | null>}
    */
   public async loadPublicationTracking(
@@ -209,7 +226,7 @@ export class InterventionOfflineService {
    * @param {readonly unknown[]} [resources] - resources value.
    * @param {{ readonly replace?: boolean }} [options] - options value.
    *
-   * @return {Promise<void>} Result of the save workspace operation.
+   * @returns {Promise<void>} Result of the save workspace operation.
    */
   public async saveWorkspace(
     intervention: InterventionOutput,
@@ -247,12 +264,13 @@ export class InterventionOfflineService {
    *
    * @param {string} interventionId - intervention Id value.
    *
-   * @return {Promise<{
-   * intervention: InterventionOutput;
-   * workItems: readonly InterventionWorkItemOutput[];
-   * changes: readonly InterventionChangeOutput[];
-   * issues: readonly InterventionIssueOutput[];
-   * } | null>} Result of the get workspace operation.
+   * @returns {Promise<{
+   *   intervention: InterventionOutput;
+   *   workItems: readonly InterventionWorkItemOutput[];
+   *   changes: readonly InterventionChangeOutput[];
+   *   issues: readonly InterventionIssueOutput[];
+   * } | null>}
+   *   Result of the get workspace operation.
    */
   public getWorkspace(interventionId: string): Promise<InterventionWorkspaceSnapshot | null> {
     return this.workspace.getWorkspace(interventionId);
@@ -270,7 +288,7 @@ export class InterventionOfflineService {
    *
    * @param {string} organizationId - Organization identifier.
    *
-   * @return {Promise<readonly InterventionOutput[]>} Locally persisted interventions.
+   * @returns {Promise<readonly InterventionOutput[]>} Locally persisted interventions.
    */
   public listInterventions(organizationId: string): Promise<readonly InterventionOutput[]> {
     return this.workspace.listInterventions(organizationId);
@@ -288,7 +306,7 @@ export class InterventionOfflineService {
    *
    * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<string | null>} Owning organization identifier when available.
+   * @returns {Promise<string | null>} Owning organization identifier when available.
    */
   public organizationIdForIntervention(interventionId: string): Promise<string | null> {
     return this.workspace.organizationIdForIntervention(interventionId);
@@ -310,7 +328,7 @@ export class InterventionOfflineService {
    * @param {InterventionOutboxType} type - Operation type.
    * @param {InterventionOutboxPayloadMap[Type]} payload - Operation payload.
    *
-   * @return {Promise<void>} A promise resolving once the operation is queued.
+   * @returns {Promise<void>} A promise resolving once the operation is queued.
    */
   public queue<Type extends InterventionOutboxType>(
     interventionId: string,
@@ -321,7 +339,20 @@ export class InterventionOfflineService {
   }
 
   /**
+   * Method queueMany
+   * @method queueMany
+   *
+   * @description
    * Atomically queues every operation belonging to one field intention.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {string} interventionId - Intervention that owns the queued mutations.
+   * @param {readonly InterventionOutboxQueueEntry[]} entries - Ordered mutations to persist for
+   *   later replay.
+   *
+   * @returns {Promise<readonly string[]>}
    */
   public queueMany(
     interventionId: string,
@@ -342,7 +373,8 @@ export class InterventionOfflineService {
    *
    * @param {string} interventionId - Intervention identifier.
    *
-   * @return {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with the queued operations.
+   * @returns {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with the queued
+   *   operations.
    */
   public listOutbox(interventionId: string): Promise<readonly InterventionOutboxOperation[]> {
     return this.outbox.listOutbox(interventionId);
@@ -359,7 +391,8 @@ export class InterventionOfflineService {
    * @access public
    * @since 7.0.0
    *
-   * @return {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with every queued operation.
+   * @returns {Promise<readonly InterventionOutboxOperation[]>} A promise resolving with every
+   *   queued operation.
    */
   public listAllOutbox(): Promise<readonly InterventionOutboxOperation[]> {
     return this.outbox.listAllOutbox();
@@ -376,7 +409,7 @@ export class InterventionOfflineService {
    * @access public
    * @since 6.0.0
    *
-   * @return {Promise<{ count: number; bytes: number }>} Queued file count and summed byte size.
+   * @returns {Promise<{ count: number; bytes: number }>} Queued file count and summed byte size.
    */
   public attachmentQueueUsage(): Promise<{ count: number; bytes: number }> {
     return this.outbox.attachmentQueueUsage();
@@ -392,7 +425,8 @@ export class InterventionOfflineService {
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<readonly string[]>} Result of the list intervention ids with outbox operation.
+   * @returns {Promise<readonly string[]>} Result of the list intervention ids with outbox
+   *   operation.
    */
   public listInterventionIdsWithOutbox(): Promise<readonly string[]> {
     return this.outbox.listInterventionIdsWithOutbox();
@@ -410,7 +444,7 @@ export class InterventionOfflineService {
    *
    * @param {string} id - Outbox operation identifier.
    *
-   * @return {Promise<void>} A promise resolving once the operation is removed.
+   * @returns {Promise<void>} A promise resolving once the operation is removed.
    */
   public removeOutbox(id: string): Promise<void> {
     return this.outbox.removeOutbox(id);
@@ -428,9 +462,13 @@ export class InterventionOfflineService {
    *
    * @param {string} id - id value.
    * @param {string} error - error value.
-   *
    * @param {WorkloadAssessment | null} assessment - Overload assessment awaiting explicit consent.
-   * @param {{ readonly revision: number; readonly values: Readonly<Record<string, string | number | boolean | null>> } | null} review - Current server values for human conflict review.
+   * @param {{
+   *   readonly revision: number;
+   *   readonly values: Readonly<Record<string, string | number | boolean | null>>;
+   * } | null} review
+   *   - Current server values for human conflict review.
+   *
    * @returns {Promise<void>} Resolves once the conflict is persisted.
    */
   public markOutboxConflict(
@@ -446,16 +484,41 @@ export class InterventionOfflineService {
   }
 
   /**
+   * Method markOutboxFailed
+   * @method markOutboxFailed
+   *
+   * @description
    * Marks one permanently rejected operation as failed.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {string} id - Outbox operation whose last replay attempt failed.
+   * @param {string} error - Failure detail retained on the outbox operation.
+   *
+   * @returns {Promise<void>}
    */
   public markOutboxFailed(id: string, error: string): Promise<void> {
     return this.outbox.markOutboxFailed(id, error);
   }
 
   /**
+   * Method rebaseOutboxRevision
+   * @method rebaseOutboxRevision
+   *
+   * @description
    * Rebases one stale-revision operation onto the current server revision and
    * marks it as a conflict, so a retry sends a valid `If-Match` instead of
    * looping on the stale revision.
+   *
+   * @access public
+   * @since 0.1.0
+   *
+   * @param {string} id - Outbox operation to rebase after conflict review.
+   * @param {number} revision - Current server revision used as the new replay baseline.
+   * @param {string} error - Conflict detail retained while updating the replay baseline.
+   *
+   * @returns {Promise<void>}
    */
   public rebaseOutboxRevision(id: string, revision: number, error: string): Promise<void> {
     return this.outbox.rebaseOutboxRevision(id, revision, error);
@@ -473,7 +536,7 @@ export class InterventionOfflineService {
    *
    * @param {string} id - id value.
    *
-   * @return {Promise<void>} Result of the retry outbox operation.
+   * @returns {Promise<void>} Result of the retry outbox operation.
    */
   public retryOutbox(id: string): Promise<void> {
     return this.outbox.retryOutbox(id);
@@ -491,6 +554,7 @@ export class InterventionOfflineService {
    *
    * @param {string} id - Queued operation.
    * @param {string} token - Explicitly confirmed assessment.
+   *
    * @returns {Promise<void>}
    */
   public confirmOutboxWorkload(id: string, token: string): Promise<void> {
@@ -509,6 +573,7 @@ export class InterventionOfflineService {
    *
    * @param {string} id - Queued operation.
    * @param {number} revision - Explicitly reviewed revision.
+   *
    * @returns {Promise<void>}
    */
   public confirmOutboxRevision(id: string, revision: number): Promise<void> {
@@ -579,7 +644,7 @@ export class InterventionOfflineService {
    * @access public
    * @since 1.0.0
    *
-   * @return {Promise<void>} A promise resolving once every store is cleared.
+   * @returns {Promise<void>} A promise resolving once every store is cleared.
    */
   public async clearAll(): Promise<void> {
     await this.database.clearAll();

@@ -103,15 +103,120 @@ import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
  * Period controls affect the charts only; the overdue badge qualifies open findings.
  *
  * @since 1.0.0
+ *
+ * @type {OrganizationDashboardKpiTile}
  */
 type OrganizationDashboardKpiTile = {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Stable tile key used by the KPI row to track its rendered entry.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Accessible metric name shown with the KPI value.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property value
+   * @readonly
+   *
+   * @description
+   * Formatted aggregate metric, or a placeholder when the source value is unavailable.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string | number}
+   */
   readonly value: string | number;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Registered icon name that identifies the metric category.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly icon: string;
+
+  /**
+   * Property link
+   * @readonly
+   *
+   * @description
+   * Permission-authorized destination for the metric, or null when none is exposed.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {StatTileLink | null}
+   */
   readonly link: StatTileLink | null;
+
+  /**
+   * Property delta
+   * @readonly
+   *
+   * @description
+   * Comparison with the previous period, omitted when the tile has no comparison value.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {StatTileDelta | null}
+   */
   readonly delta: StatTileDelta | null;
+
+  /**
+   * Property tone
+   * @readonly
+   *
+   * @description
+   * Semantic visual tone used to communicate the metric's operational state.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {StatTileTone}
+   */
   readonly tone: StatTileTone;
+
+  /**
+   * Property badge
+   * @readonly
+   *
+   * @description
+   * Optional compact status indicator associated with the metric.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {StatTileBadge | null}
+   */
   readonly badge: StatTileBadge | null;
 };
 
@@ -124,6 +229,8 @@ type OrganizationDashboardKpiTile = {
  * granularity forwarded to the trend stores.
  *
  * @since 1.0.0
+ *
+ * @type {OrganizationDashboardTrendsPeriodPreset}
  */
 type OrganizationDashboardTrendsPeriodPreset = '7d' | '30d' | '90d' | '12m';
 
@@ -136,11 +243,64 @@ type OrganizationDashboardTrendsPeriodPreset = '7d' | '30d' | '90d' | '12m';
  * that count is (0 when the total itself is 0).
  *
  * @since 1.0.0
+ *
+ * @type {OrganizationDashboardSeverityEntry}
  */
 type OrganizationDashboardSeverityEntry = {
+  /**
+   * Property severity
+   * @readonly
+   *
+   * @description
+   * Non-conformity severity represented by this breakdown row.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {NonConformitySeverity}
+   */
   readonly severity: NonConformitySeverity;
+
+  /**
+   * Property count
+   * @readonly
+   *
+   * @description
+   * Number of non-conformities at the represented severity.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number}
+   */
   readonly count: number;
+
+  /**
+   * Property percent
+   * @readonly
+   *
+   * @description
+   * Share of the total breakdown used to size the proportional bar.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number}
+   */
   readonly percent: number;
+
+  /**
+   * Property descriptor
+   * @readonly
+   *
+   * @description
+   * Localized status label and icon metadata rendered for the severity.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InspectionStatusTagDescriptor}
+   */
   readonly descriptor: InspectionStatusTagDescriptor;
 };
 
@@ -153,10 +313,50 @@ type OrganizationDashboardSeverityEntry = {
  * zero when its denominator is empty.
  *
  * @since 1.0.0
+ *
+ * @type {OrganizationDashboardHealthRow}
  */
 type OrganizationDashboardHealthRow = {
+  /**
+   * Property key
+   * @readonly
+   *
+   * @description
+   * Stable metric key used to match the health row with its source value.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly key: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Localized name displayed for this health metric.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property value
+   * @readonly
+   *
+   * @description
+   * Aggregate health percentage, or null when the denominator is empty.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number | null}
+   */
   readonly value: number | null;
 };
 
@@ -227,34 +427,77 @@ type OrganizationDashboardHealthRow = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationDashboardPage {
-  /** The routed organization, used to name the page and to build destinations. */
+  //#region Properties
+  /**
+   * Property organizationContext
+   * @readonly
+   *
+   * @description
+   * The routed organization, used to name the page and to build destinations.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {OrganizationContextPort}
+   */
   protected readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
   /**
    * Property dashboardStore
    * @readonly
-   * @description Owns the aggregate metrics, comparisons and severity breakdown.
+   *
+   * @description
+   * Owns the aggregate metrics, comparisons and severity breakdown.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {DashboardStore}
    */
   protected readonly dashboardStore: DashboardStore = inject<DashboardStore>(DashboardStore);
 
-  /** Organization-owned helper exposing reactive permission checks. */
+  /**
+   * Property permissionService
+   * @readonly
+   *
+   * @description
+   * Organization-owned helper exposing reactive permission checks.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissionService: OrganizationPermissionService =
     inject<OrganizationPermissionService>(OrganizationPermissionService);
 
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
@@ -263,9 +506,13 @@ export class OrganizationDashboardPage {
   /**
    * Property canReadInterventions
    * @readonly
-   * @description Gates the open-interventions metric using the collection read permission.
+   *
+   * @description
+   * Gates the open-interventions metric using the collection read permission.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canReadInterventions: Signal<boolean> = computed((): boolean =>
@@ -396,9 +643,12 @@ export class OrganizationDashboardPage {
    * Property overviewTrendStore
    * @readonly
    *
-   * @description Owns the inspection and non-conformity activity trend requests.
+   * @description
+   * Owns the inspection and non-conformity activity trend requests.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OverviewTrendStore}
    */
   protected readonly overviewTrendStore: OverviewTrendStore =
@@ -408,9 +658,12 @@ export class OrganizationDashboardPage {
    * Property assetGrowthTrendStore
    * @readonly
    *
-   * @description Owns the equipment and facility growth trend requests.
+   * @description
+   * Owns the equipment and facility growth trend requests.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {AssetGrowthTrendStore}
    */
   protected readonly assetGrowthTrendStore: AssetGrowthTrendStore =
@@ -420,9 +673,12 @@ export class OrganizationDashboardPage {
    * Property selectedPeriod
    * @readonly
    *
-   * @description Active trend preset, initialized to the dashboard's 30-day default.
+   * @description
+   * Active trend preset, initialized to the dashboard's 30-day default.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<OrganizationDashboardTrendsPeriodPreset>}
    */
   protected readonly selectedPeriod: WritableSignal<OrganizationDashboardTrendsPeriodPreset> =
@@ -432,9 +688,12 @@ export class OrganizationDashboardPage {
    * Property compareToPreviousPeriod
    * @readonly
    *
-   * @description Whether activity charts request their previous-period comparison.
+   * @description
+   * Whether activity charts request their previous-period comparison.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly compareToPreviousPeriod: WritableSignal<boolean> = signal<boolean>(true);
@@ -443,9 +702,12 @@ export class OrganizationDashboardPage {
    * Property severitySkeletonRows
    * @readonly
    *
-   * @description Stable placeholder rows shown while the severity breakdown loads.
+   * @description
+   * Stable placeholder rows shown while the severity breakdown loads.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {readonly number[]}
    */
   protected readonly severitySkeletonRows: readonly number[] = [0, 1, 2, 3];
@@ -453,9 +715,14 @@ export class OrganizationDashboardPage {
   /**
    * Property healthSkeletonRows
    * @readonly
-   * @description Stable placeholder rows shown while the Health card's snapshot loads, matching {@link healthRows}'s fixed row count.
+   *
+   * @description
+   * Stable placeholder rows shown while the Health card's snapshot loads, matching
+   * {@link healthRows}'s fixed row count.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {readonly number[]}
    */
   protected readonly healthSkeletonRows: readonly number[] = [0, 1, 2];
@@ -464,9 +731,12 @@ export class OrganizationDashboardPage {
    * Property forbiddenMessage
    * @readonly
    *
-   * @description Permission-specific chart error shown for a denied trend request.
+   * @description
+   * Permission-specific chart error shown for a denied trend request.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly forbiddenMessage: string = $localize`:@@org.statistics.forbidden:Not available with your permissions.`;
@@ -475,9 +745,12 @@ export class OrganizationDashboardPage {
    * Property trendLoadErrorMessage
    * @readonly
    *
-   * @description Generic chart error shown when a trend request fails.
+   * @description
+   * Generic chart error shown when a trend request fails.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly trendLoadErrorMessage: string = $localize`:@@org.statistics.trend.loadError:This chart could not be loaded.`;
@@ -486,9 +759,12 @@ export class OrganizationDashboardPage {
    * Property inspectionsSeriesName
    * @readonly
    *
-   * @description Localized label shared by the inspection card and series.
+   * @description
+   * Localized label shared by the inspection card and series.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly inspectionsSeriesName: string = $localize`:@@org.dashboard.inspections.title:Inspections performed`;
@@ -497,9 +773,12 @@ export class OrganizationDashboardPage {
    * Property inspectionsChartLabel
    * @readonly
    *
-   * @description Accessible label for the inspection activity chart.
+   * @description
+   * Accessible label for the inspection activity chart.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly inspectionsChartLabel: string = $localize`:@@org.statistics.trend.inspections.chartLabel:Inspections performed over time`;
@@ -508,9 +787,12 @@ export class OrganizationDashboardPage {
    * Property nonConformitiesChartTitle
    * @readonly
    *
-   * @description Visible title for the opened-versus-resolved chart.
+   * @description
+   * Visible title for the opened-versus-resolved chart.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly nonConformitiesChartTitle: string = $localize`:@@org.statistics.trend.nonConformities.title:Non-conformities opened vs resolved`;
@@ -519,9 +801,12 @@ export class OrganizationDashboardPage {
    * Property nonConformitiesChartLabel
    * @readonly
    *
-   * @description Accessible label for the opened-versus-resolved chart.
+   * @description
+   * Accessible label for the opened-versus-resolved chart.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly nonConformitiesChartLabel: string = $localize`:@@org.statistics.trend.nonConformities.chartLabel:Non-conformities opened and resolved over time`;
@@ -530,9 +815,12 @@ export class OrganizationDashboardPage {
    * Property nonConformitiesOpenedSeriesName
    * @readonly
    *
-   * @description Localized name for the opened non-conformity series.
+   * @description
+   * Localized name for the opened non-conformity series.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly nonConformitiesOpenedSeriesName: string = $localize`:@@org.statistics.trend.nonConformities.seriesOpened:Opened`;
@@ -541,9 +829,12 @@ export class OrganizationDashboardPage {
    * Property nonConformitiesResolvedSeriesName
    * @readonly
    *
-   * @description Localized name for the resolved non-conformity series.
+   * @description
+   * Localized name for the resolved non-conformity series.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly nonConformitiesResolvedSeriesName: string = $localize`:@@org.statistics.trend.nonConformities.seriesResolved:Resolved`;
@@ -552,9 +843,12 @@ export class OrganizationDashboardPage {
    * Property equipmentSeriesName
    * @readonly
    *
-   * @description Localized name for the equipment growth series.
+   * @description
+   * Localized name for the equipment growth series.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly equipmentSeriesName: string = $localize`:@@org.statistics.trend.equipment.title:Equipment added`;
@@ -563,9 +857,12 @@ export class OrganizationDashboardPage {
    * Property equipmentChartLabel
    * @readonly
    *
-   * @description Accessible label for the equipment growth chart.
+   * @description
+   * Accessible label for the equipment growth chart.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly equipmentChartLabel: string = $localize`:@@org.statistics.trend.equipment.chartLabel:Equipment added over time`;
@@ -574,9 +871,12 @@ export class OrganizationDashboardPage {
    * Property facilitiesSeriesName
    * @readonly
    *
-   * @description Localized name for the facility growth series.
+   * @description
+   * Localized name for the facility growth series.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly facilitiesSeriesName: string = $localize`:@@org.statistics.trend.facilities.title:Facilities added`;
@@ -585,9 +885,12 @@ export class OrganizationDashboardPage {
    * Property facilitiesChartLabel
    * @readonly
    *
-   * @description Accessible label for the facility growth chart.
+   * @description
+   * Accessible label for the facility growth chart.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly facilitiesChartLabel: string = $localize`:@@org.statistics.trend.facilities.chartLabel:Facilities added over time`;
@@ -602,6 +905,7 @@ export class OrganizationDashboardPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly OrganizationDashboardSeverityEntry[]>}
    */
   protected readonly severityBreakdown: Signal<readonly OrganizationDashboardSeverityEntry[]> =
@@ -623,9 +927,12 @@ export class OrganizationDashboardPage {
    * Property severityTotal
    * @readonly
    *
-   * @description Total count represented by the available all-status severity breakdown.
+   * @description
+   * Total count represented by the available all-status severity breakdown.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly severityTotal: Signal<number> = computed(() =>
@@ -642,6 +949,7 @@ export class OrganizationDashboardPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly severitySummaryLine: Signal<string | null> = computed(() => {
@@ -665,6 +973,7 @@ export class OrganizationDashboardPage {
    *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly OrganizationDashboardHealthRow[]>}
    */
   protected readonly healthRows: Signal<readonly OrganizationDashboardHealthRow[]> = computed(
@@ -740,9 +1049,12 @@ export class OrganizationDashboardPage {
    * Property inspectionsChartSeries
    * @readonly
    *
-   * @description Period-scoped inspection volume series with the semantic primary color.
+   * @description
+   * Period-scoped inspection volume series with the semantic primary color.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ChartSeries[]>}
    */
   protected readonly inspectionsChartSeries: Signal<ChartSeries[]> = computed(() =>
@@ -759,9 +1071,12 @@ export class OrganizationDashboardPage {
    * Property nonConformitiesChartSeries
    * @readonly
    *
-   * @description Period-scoped opened and resolved non-conformity series.
+   * @description
+   * Period-scoped opened and resolved non-conformity series.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ChartSeries[]>}
    */
   protected readonly nonConformitiesChartSeries: Signal<ChartSeries[]> = computed(() =>
@@ -779,9 +1094,12 @@ export class OrganizationDashboardPage {
    * Property equipmentChartSeries
    * @readonly
    *
-   * @description Period-scoped equipment growth series for additional analysis.
+   * @description
+   * Period-scoped equipment growth series for additional analysis.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ChartSeries[]>}
    */
   protected readonly equipmentChartSeries: Signal<ChartSeries[]> = computed(() =>
@@ -794,9 +1112,12 @@ export class OrganizationDashboardPage {
    * Property facilitiesChartSeries
    * @readonly
    *
-   * @description Period-scoped facility growth series for additional analysis.
+   * @description
+   * Period-scoped facility growth series for additional analysis.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ChartSeries[]>}
    */
   protected readonly facilitiesChartSeries: Signal<ChartSeries[]> = computed(() =>
@@ -809,9 +1130,12 @@ export class OrganizationDashboardPage {
    * Property nonConformitiesSummaryLine
    * @readonly
    *
-   * @description Localized opened and resolved totals for the loaded activity period.
+   * @description
+   * Localized opened and resolved totals for the loaded activity period.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly nonConformitiesSummaryLine: Signal<string | null> = computed(() => {
@@ -835,9 +1159,12 @@ export class OrganizationDashboardPage {
    * Property equipmentSummaryLine
    * @readonly
    *
-   * @description Localized equipment total and comparison for the loaded activity period.
+   * @description
+   * Localized equipment total and comparison for the loaded activity period.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly equipmentSummaryLine: Signal<string | null> = computed(() => {
@@ -855,9 +1182,12 @@ export class OrganizationDashboardPage {
    * Property facilitiesSummaryLine
    * @readonly
    *
-   * @description Localized facility total and comparison for the loaded activity period.
+   * @description
+   * Localized facility total and comparison for the loaded activity period.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly facilitiesSummaryLine: Signal<string | null> = computed(() => {
@@ -875,9 +1205,13 @@ export class OrganizationDashboardPage {
   /**
    * Property locale
    * @readonly
-   * @description Active application locale.
+   *
+   * @description
+   * Active application locale.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private readonly locale: string = inject(LOCALE_ID);
@@ -885,9 +1219,13 @@ export class OrganizationDashboardPage {
   /**
    * Property aggregateLoading
    * @readonly
-   * @description Reserve skeletons only before the first successful aggregate.
+   *
+   * @description
+   * Reserve skeletons only before the first successful aggregate.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly aggregateLoading: Signal<boolean> = computed(
@@ -897,9 +1235,13 @@ export class OrganizationDashboardPage {
   /**
    * Property alertRows
    * @readonly
-   * @description Permission-checked presentation rows without summing overlapping alerts.
+   *
+   * @description
+   * Permission-checked presentation rows without summing overlapping alerts.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly OrganizationDashboardAlertRow[] | null>}
    */
   protected readonly alertRows: Signal<readonly OrganizationDashboardAlertRow[] | null> = computed(
@@ -960,9 +1302,13 @@ export class OrganizationDashboardPage {
   /**
    * Property severityAvailable
    * @readonly
-   * @description Missing severity data is distinct from zero recorded issues.
+   *
+   * @description
+   * Missing severity data is distinct from zero recorded issues.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly severityAvailable: Signal<boolean> = computed(() =>
@@ -979,9 +1325,13 @@ export class OrganizationDashboardPage {
   /**
    * Property inspectionsTotal
    * @readonly
-   * @description Performed inspection count for the loaded period, not the closed-inspection snapshot.
+   *
+   * @description
+   * Performed inspection count for the loaded period, not the closed-inspection snapshot.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number | null>}
    */
   protected readonly inspectionsTotal: Signal<number | null> = computed(() => {
@@ -992,9 +1342,13 @@ export class OrganizationDashboardPage {
   /**
    * Property inspectionsDeltaLine
    * @readonly
-   * @description Comparison only when its denominator and delta are meaningful.
+   *
+   * @description
+   * Comparison only when its denominator and delta are meaningful.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly inspectionsDeltaLine: Signal<string | null> = computed(() => {
@@ -1021,10 +1375,14 @@ export class OrganizationDashboardPage {
    * Method formatLoadedPeriod
    * @method formatLoadedPeriod
    *
-   * @description Labels the period returned with the displayed data, including during a refresh.
+   * @description
+   * Labels the period returned with the displayed data, including during a refresh.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {OrganizationDashboardPeriod | undefined} period - Loaded API period.
+   *
    * @returns {string} Localized range, or no fabricated date when absent.
    */
   protected formatLoadedPeriod(period: OrganizationDashboardPeriod | undefined): string {
@@ -1045,8 +1403,8 @@ export class OrganizationDashboardPage {
    * @constructor
    *
    * @description
-   * Activates browser-only trends on entry and wires the Trends section's period selector to both trend stores so a preset
-   * or compare-toggle change refetches every trend chart in one place.
+   * Activates browser-only trends on entry and wires the Trends section's period selector to both
+   * trend stores so a preset or compare-toggle change refetches every trend chart in one place.
    *
    * @access public
    * @since 1.0.0
@@ -1064,10 +1422,17 @@ export class OrganizationDashboardPage {
   //#region Methods — trends
   /**
    * Method onPeriodChanged
-   * @description Narrows `hlm-toggle-group`'s single/multi-select payload before writing {@link selectedPeriod}.
+   * @method onPeriodChanged
+   *
+   * @description
+   * Narrows `hlm-toggle-group`'s single/multi-select payload before writing {@link selectedPeriod}.
+   *
    * @access protected
    * @since 1.0.0
-   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted value.
+   *
+   * @param {string | readonly string[] | null | undefined} value - The toggle group's emitted
+   *   value.
+   *
    * @returns {void}
    */
   protected onPeriodChanged(value: string | readonly string[] | null | undefined): void {
@@ -1080,10 +1445,17 @@ export class OrganizationDashboardPage {
 
   /**
    * Method isForbidden
-   * @description Whether a normalized store error is a 403 — the signal a chart card renders as a muted "not available with your permissions" notice rather than the generic error state.
+   * @method isForbidden
+   *
+   * @description
+   * Whether a normalized store error is a 403 — the signal a chart card renders as a muted "not
+   * available with your permissions" notice rather than the generic error state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {StoreError | null} error - The store's normalized query error.
+   *
    * @returns {boolean} Whether the error is a permission denial.
    */
   protected isForbidden(error: StoreError | null): boolean {
@@ -1092,9 +1464,14 @@ export class OrganizationDashboardPage {
 
   /**
    * Method retryDashboard
-   * @description Re-runs the aggregate dashboard query after a non-permission failure.
+   * @method retryDashboard
+   *
+   * @description
+   * Re-runs the aggregate dashboard query after a non-permission failure.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected retryDashboard(): void {
@@ -1103,9 +1480,14 @@ export class OrganizationDashboardPage {
 
   /**
    * Method retryOverviewTrend
-   * @description Re-runs the Inspections / Non-conformities trend query with the currently applied filters.
+   * @method retryOverviewTrend
+   *
+   * @description
+   * Re-runs the Inspections / Non-conformities trend query with the currently applied filters.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected retryOverviewTrend(): void {
@@ -1114,9 +1496,14 @@ export class OrganizationDashboardPage {
 
   /**
    * Method retryAssetGrowthTrend
-   * @description Re-runs the Equipment / Facilities trend query with the currently applied filters.
+   * @method retryAssetGrowthTrend
+   *
+   * @description
+   * Re-runs the Equipment / Facilities trend query with the currently applied filters.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected retryAssetGrowthTrend(): void {
@@ -1125,13 +1512,21 @@ export class OrganizationDashboardPage {
 
   /**
    * Method formatTrendSummaryLine
-   * @description Formats one trend card's summary line: the period total alone, or the total plus its signed percentage change when a previous-period comparison was fetched.
+   * @method formatTrendSummaryLine
+   *
+   * @description
+   * Formats one trend card's summary line: the period total alone, or the total plus its signed
+   * percentage change when a previous-period comparison was fetched.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {number | string | undefined} total - The trend output's `summary.total`.
    * @param {string | null | undefined} comparisonMode - The trend output's `comparison.mode`.
    * @param {number | string | undefined} delta - The trend output's `comparison.summary.delta`.
-   * @param {number | undefined} previousTotal - Prior period denominator; zero has no relative change.
+   * @param {number | undefined} previousTotal - Prior period denominator; zero has no relative
+   *   change.
+   *
    * @returns {string | null} The formatted line, or `null` when no total is available.
    */
   private formatTrendSummaryLine(
@@ -1165,10 +1560,15 @@ export class OrganizationDashboardPage {
   /**
    * Method nonConformityBadgeOf
    * @method nonConformityBadgeOf
-   * @description Describes a known overdue count without treating missing data as an on-track result.
+   *
+   * @description
+   * Describes a known overdue count without treating missing data as an on-track result.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {number | null} overdue - The authoritative overdue count, or null when unavailable.
+   *
    * @returns {StatTileBadge | null} The overdue or on-track badge, or null for an unknown count.
    */
   private nonConformityBadgeOf(overdue: number | null): StatTileBadge | null {
@@ -1191,11 +1591,19 @@ export class OrganizationDashboardPage {
 
   /**
    * Method resolvePeriodRange
-   * @description Maps one preset to a concrete `[from, to]` date range ending now and the granularity best suited to it — days for the two short ranges, weeks for the quarter, months for the year.
+   * @method resolvePeriodRange
+   *
+   * @description
+   * Maps one preset to a concrete `[from, to]` date range ending now and the granularity best
+   * suited to it — days for the two short ranges, weeks for the quarter, months for the year.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {OrganizationDashboardTrendsPeriodPreset} preset - The selected preset range.
-   * @returns {{ readonly range: Date[]; readonly granularity: OrganizationDashboardGranularity }} The resolved range and granularity.
+   *
+   * @returns {{ readonly range: Date[]; readonly granularity: OrganizationDashboardGranularity }}
+   *   The resolved range and granularity.
    */
   private resolvePeriodRange(preset: OrganizationDashboardTrendsPeriodPreset): {
     readonly range: Date[];
@@ -1222,11 +1630,19 @@ export class OrganizationDashboardPage {
 
   /**
    * Method applyPeriodToTrendStores
-   * @description Resolves one preset into a date range and granularity, then applies it — along with the compare toggle — to both trend stores. Granularity is set before the date range on each store, since the stores clamp the range to the granularity's own maximum span.
+   * @method applyPeriodToTrendStores
+   *
+   * @description
+   * Resolves one preset into a date range and granularity, then applies it — along with the compare
+   * toggle — to both trend stores. Granularity is set before the date range on each store, since
+   * the stores clamp the range to the granularity's own maximum span.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {OrganizationDashboardTrendsPeriodPreset} preset - The selected preset range.
    * @param {boolean} compare - Whether to fetch the previous-period comparison.
+   *
    * @returns {void}
    */
   private applyPeriodToTrendStores(

@@ -15,10 +15,55 @@ import type { ChannelParticipantSource } from './channel-participant-source.type
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface ChannelParticipantOutput extends HydraItem {
-  /** Bare organization-member UUID. The entity key. */
+  /**
+   * Property memberId
+   * @readonly
+   *
+   * @description
+   * Bare organization-member UUID. The entity key.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly memberId: string;
-  /** Free-form participation role, at most 50 characters. */
+
+  /**
+   * Property role
+   * @readonly
+   *
+   * @description
+   * Free-form participation role, at most 50 characters.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly role?: string;
+
+  /**
+   * Property source
+   * @readonly
+   *
+   * @description
+   * Identifies the source that added this channel participant.
+   *
+   * @access public
+   *
+   * @type {ChannelParticipantSource}
+   */
   readonly source: ChannelParticipantSource;
+
+  /**
+   * Property addedAt
+   * @readonly
+   *
+   * @description
+   * Records when this channel participant was added.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly addedAt: string;
 }

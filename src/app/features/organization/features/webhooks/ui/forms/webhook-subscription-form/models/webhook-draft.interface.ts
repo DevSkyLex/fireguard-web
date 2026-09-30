@@ -1,36 +1,62 @@
 /**
  * Interface WebhookDraft
  * @interface WebhookDraft
- * @description Local Signal Forms model, including server catalog checkbox values.
+ *
+ * @description
+ * Local Signal Forms model, including server catalog checkbox values.
+ *
  * @since 1.0.0
  */
 export interface WebhookDraft {
-  /** Property url
-   * @description HTTPS destination.
+  /**
+   * Property url
+   *
+   * @description
+   * HTTPS destination.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string}
    */
   url: string;
-  /** Property description
-   * @description Operator description.
+
+  /**
+   * Property description
+   *
+   * @description
+   * Operator description.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string}
    */
   description: string;
-  /** Property isActive
-   * @description Whether new events may be queued.
+
+  /**
+   * Property isActive
+   *
+   * @description
+   * Whether new events may be queued.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   isActive: boolean;
-  /** Property events
-   * @description Catalog items and their draft selection.
+
+  /**
+   * Property events
+   *
+   * @description
+   * Catalog items and their draft selection.
+   *
    * @access public
    * @since 1.0.0
-   * @type {Array<{ value: string; label: string; checked: boolean }>}
+   *
+   * @type {{ value: string; label: string; checked: boolean }[]}
    */
   events: Array<{ value: string; label: string; checked: boolean }>;
 }

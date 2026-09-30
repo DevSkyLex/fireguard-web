@@ -18,15 +18,56 @@ import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import type { OrganizationLegalFormValues } from './models';
 
-/** The value standing in for "not set" in the legal-type select — a real catalog value is never an empty string. */
+/**
+ * Constant UNSET_LEGAL_TYPE
+ *
+ * @description
+ * The value standing in for "not set" in the legal-type select — a real catalog value is never an
+ * empty string.
+ */
 const UNSET_LEGAL_TYPE = '';
 
-/** Backend `Assert\Length` caps mirrored client-side so a reader sees the limit before the round trip (`UpdateOrganizationSettingsInput`). */
+/**
+ * Constant LEGAL_NAME_MAX_LENGTH
+ *
+ * @description
+ * Backend `Assert\Length` caps mirrored client-side so a reader sees the limit before the round
+ * trip (`UpdateOrganizationSettingsInput`).
+ */
 const LEGAL_NAME_MAX_LENGTH = 255;
+
+/**
+ * Constant REGISTRATION_NUMBER_MAX_LENGTH
+ *
+ * @description
+ * Mirrors the API validation limit so the form can reject an oversized registration number early.
+ *
+ * @access private
+ * @since unreleased
+ *
+ * @type {number}
+ */
 const REGISTRATION_NUMBER_MAX_LENGTH = 64;
+
+/**
+ * Constant VAT_NUMBER_MAX_LENGTH
+ *
+ * @description
+ * Mirrors the API validation limit for an organization's VAT number.
+ *
+ * @access private
+ * @since unreleased
+ *
+ * @type {number}
+ */
 const VAT_NUMBER_MAX_LENGTH = 64;
 
-/** Backend `Assert\Regex` on `country`: exactly two letters (ISO 3166-1 alpha-2), or empty to clear. */
+/**
+ * Constant COUNTRY_PATTERN
+ *
+ * @description
+ * Backend `Assert\Regex` on `country`: exactly two letters (ISO 3166-1 alpha-2), or empty to clear.
+ */
 const COUNTRY_PATTERN: RegExp = /^[A-Za-z]{2}$/;
 
 /**
@@ -48,6 +89,8 @@ const COUNTRY_PATTERN: RegExp = /^[A-Za-z]{2}$/;
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-organization-legal-form
@@ -57,8 +100,6 @@ const COUNTRY_PATTERN: RegExp = /^[A-Za-z]{2}$/;
  *   (submitted)="saveLegal($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-legal-form',
@@ -86,9 +127,13 @@ export class OrganizationLegalForm {
   /**
    * Property legalTypeOptions
    * @readonly
-   * @description The legal entity type catalog (`GET /organizations/legal-types`), fetched by the page.
+   *
+   * @description
+   * The legal entity type catalog (`GET /organizations/legal-types`), fetched by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<ReadonlyArray<OptionOutput>>}
    */
   public readonly legalTypeOptions: InputSignal<ReadonlyArray<OptionOutput>> = input<
@@ -98,9 +143,13 @@ export class OrganizationLegalForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether a save is in flight, which disables the submit control.
+   *
+   * @description
+   * Whether a save is in flight, which disables the submit control.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -110,9 +159,13 @@ export class OrganizationLegalForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the edited values once the form is valid and has changed.
+   *
+   * @description
+   * Emits the edited values once the form is valid and has changed.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<OrganizationLegalFormValues>}
    */
   public readonly submitted: OutputEmitterRef<OrganizationLegalFormValues> =
@@ -120,18 +173,44 @@ export class OrganizationLegalForm {
   //#endregion
 
   //#region Properties
-  /** The value standing in for "not set" — projected for the template's root option. */
+  /**
+   * Property unsetLegalType
+   * @readonly
+   *
+   * @description
+   * The value standing in for "not set" — projected for the template's root option.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly unsetLegalType: string = UNSET_LEGAL_TYPE;
 
-  /** The localized label standing for "not set" in the legal-type select. */
+  /**
+   * Property unsetLegalTypeLabel
+   * @readonly
+   *
+   * @description
+   * The localized label standing for "not set" in the legal-type select.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly unsetLegalTypeLabel: string = $localize`:@@org.settings.legal.typeUnset:Not set`;
 
   /**
    * Property legalTypeLabel
    * @readonly
-   * @description Renders the selected legal type in the closed trigger, including the unset option.
+   *
+   * @description
+   * Renders the selected legal type in the closed trigger, including the unset option.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: string) => string}
    */
   protected readonly legalTypeLabel = (value: string): string =>
@@ -143,9 +222,13 @@ export class OrganizationLegalForm {
   /**
    * Property model
    * @readonly
-   * @description The edited values, re-seeded from {@link legal} whenever it changes.
+   *
+   * @description
+   * The edited values, re-seeded from {@link legal} whenever it changes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<OrganizationLegalFormValues>}
    */
   protected readonly model: WritableSignal<OrganizationLegalFormValues> = linkedSignal(
@@ -188,9 +271,14 @@ export class OrganizationLegalForm {
   /**
    * Property canSubmit
    * @readonly
-   * @description Whether the submit control should be enabled: the tree is valid, has changed from the seeded values, and no save is already in flight.
+   *
+   * @description
+   * Whether the submit control should be enabled: the tree is valid, has changed from the seeded
+   * values, and no save is already in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSubmit: Signal<boolean> = computed<boolean>(

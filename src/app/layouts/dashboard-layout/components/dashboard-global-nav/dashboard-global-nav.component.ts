@@ -72,7 +72,8 @@ export class DashboardGlobalNav {
    * Property items
    * @readonly
    *
-   * @description The destinations to render, in catalog order, with an organization-scoped
+   * @description
+   * The destinations to render, in catalog order, with an organization-scoped
    * route completed by the open organization and a permission-gated row
    * dropped when the member could not reach it.
    * A row that names a permission is withheld until the grants have arrived
@@ -97,7 +98,8 @@ export class DashboardGlobalNav {
    * Property organizationContext
    * @readonly
    *
-   * @description The organization an organization-scoped row points into, read through the
+   * @description
+   * The organization an organization-scoped row points into, read through the
    * published port rather than the owning store (`ARCHITECTURE.md` §4).
    *
    * @access private
@@ -112,7 +114,8 @@ export class DashboardGlobalNav {
    * Property memberAccess
    * @readonly
    *
-   * @description The reader's grants in that organization, which decide whether a gated row
+   * @description
+   * The reader's grants in that organization, which decide whether a gated row
    * is listed at all.
    * The published access port and pure permission matcher preserve wildcard grants.
    * An owner holds `organization.*`, and a
@@ -130,7 +133,8 @@ export class DashboardGlobalNav {
    * Property soonLabel
    * @readonly
    *
-   * @description Badge marking a row whose page does not exist yet. Kept to one short word:
+   * @description
+   * Badge marking a row whose page does not exist yet. Kept to one short word:
    * the badge is absolutely positioned over the end of the row, so a sentence
    * would sit on top of the label it qualifies.
    *

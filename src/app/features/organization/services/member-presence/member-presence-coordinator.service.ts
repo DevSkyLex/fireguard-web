@@ -36,8 +36,12 @@ import {
 /**
  * Service MemberPresenceCoordinatorService
  * @class MemberPresenceCoordinatorService
- * @description Starts presence after hydration independently of shell widgets. Registrations are keyed by
- * consumer and organization, so opening a second surface cannot overwrite the first one's watched members.
+ *
+ * @description
+ * Starts presence after hydration independently of shell widgets. Registrations are keyed by
+ * consumer and organization, so opening a second surface cannot overwrite the first one's watched
+ * members.
+ *
  * @since 1.0.0
  */
 @Service()
@@ -45,111 +49,172 @@ export class MemberPresenceCoordinatorService implements MemberPresencePort {
   /**
    * Property store
    * @readonly
-   * @description Shared snapshots, requests and connection lifecycle.
+   *
+   * @description
+   * Shared snapshots, requests and connection lifecycle.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {MemberPresenceStoreType}
    */
   private readonly store: MemberPresenceStoreType = inject(MemberPresenceStore);
+
   /**
    * Property context
    * @readonly
-   * @description Selected organization published by its owner.
+   *
+   * @description
+   * Selected organization published by its owner.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationContextPort}
    */
   private readonly context: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
+
   /**
    * Property access
    * @readonly
-   * @description Verified active membership for the selected organization.
+   *
+   * @description
+   * Verified active membership for the selected organization.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationMemberAccessPort}
    */
   private readonly access: OrganizationMemberAccessPort = inject(ORGANIZATION_MEMBER_ACCESS_PORT);
+
   /**
    * Property permissions
    * @readonly
-   * @description Presence read authorization, independent of heartbeat authorization.
+   *
+   * @description
+   * Presence read authorization, independent of heartbeat authorization.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationPermissionService}
    */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
+
   /**
    * Property session
    * @readonly
-   * @description Authenticated session identity and revision.
+   *
+   * @description
+   * Authenticated session identity and revision.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {AuthSessionPort}
    */
   private readonly session: AuthSessionPort = inject(AUTH_SESSION_PORT);
+
   /**
    * Property connectivity
    * @readonly
-   * @description Browser network availability.
+   *
+   * @description
+   * Browser network availability.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ConnectivityService}
    */
   private readonly connectivity: ConnectivityService = inject(ConnectivityService);
+
   /**
    * Property document
    * @readonly
-   * @description Injected document for visibility events.
+   *
+   * @description
+   * Injected document for visibility events.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Document}
    */
   private readonly document: Document = inject(DOCUMENT);
+
   /**
    * Property destroyRef
    * @readonly
-   * @description Lifetime for browser listeners and timers.
+   *
+   * @description
+   * Lifetime for browser listeners and timers.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {DestroyRef}
    */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
+
   /**
    * Property browser
    * @readonly
-   * @description Prevents browser work in server contexts.
+   *
+   * @description
+   * Prevents browser work in server contexts.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   private readonly browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+
   /**
    * Property ready
    * @readonly
-   * @description Hydration completion gate.
+   *
+   * @description
+   * Hydration completion gate.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   private readonly ready: WritableSignal<boolean> = signal(false);
+
   /**
    * Property visible
    * @readonly
-   * @description Whether the browser document is visible.
+   *
+   * @description
+   * Whether the browser document is visible.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   private readonly visible: WritableSignal<boolean> = signal(false);
+
   /**
    * Property registrations
    * @readonly
-   * @description References owned independently by each currently rendered surface.
+   *
+   * @description
+   * References owned independently by each currently rendered surface.
+   *
    * @access private
    * @since 1.0.0
-   * @type {WritableSignal<ReadonlyMap<object, { organization: string | null; ids: readonly string[] }>>}
+   *
+   * @type {WritableSignal<
+   *   ReadonlyMap<object, { organization: string | null; ids: readonly string[] }>
+   * >}
    */
   private readonly registrations: WritableSignal<
     ReadonlyMap<object, { organization: string | null; ids: readonly string[] }>
@@ -158,9 +223,13 @@ export class MemberPresenceCoordinatorService implements MemberPresencePort {
   /**
    * Property byId
    * @readonly
-   * @description Fresh confirmed member statuses in the selected organization.
+   *
+   * @description
+   * Fresh confirmed member statuses in the selected organization.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
    */
   public readonly byId: Signal<Readonly<Record<string, PresenceStatus>>> = this.store.byId;
@@ -168,9 +237,13 @@ export class MemberPresenceCoordinatorService implements MemberPresencePort {
   /**
    * Property ownStatus
    * @readonly
-   * @description Acknowledged availability of the signed-in member.
+   *
+   * @description
+   * Acknowledged availability of the signed-in member.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {Signal<PresenceStatus | null>}
    */
   public readonly ownStatus: Signal<PresenceStatus | null> = this.store.ownStatus;
@@ -178,9 +251,13 @@ export class MemberPresenceCoordinatorService implements MemberPresencePort {
   /**
    * Property active
    * @readonly
-   * @description Whether browser exchanges may run now.
+   *
+   * @description
+   * Whether browser exchanges may run now.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   private readonly active: Signal<boolean> = computed(
@@ -194,7 +271,10 @@ export class MemberPresenceCoordinatorService implements MemberPresencePort {
   /**
    * Constructor
    * @constructor
-   * @description Wires browser-only lifecycle listeners and cancels every timer on scope teardown.
+   *
+   * @description
+   * Wires browser-only lifecycle listeners and cancels every timer on scope teardown.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -263,11 +343,16 @@ export class MemberPresenceCoordinatorService implements MemberPresencePort {
   /**
    * Method register
    * @method register
-   * @description Replaces one surface's references in the currently selected organization.
+   *
+   * @description
+   * Replaces one surface's references in the currently selected organization.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {object} owner - Stable consumer identity.
    * @param {readonly string[]} memberIds - Members currently rendered by this consumer.
+   *
    * @returns {void}
    */
   public register(owner: object, memberIds: readonly string[]): void {
@@ -284,10 +369,15 @@ export class MemberPresenceCoordinatorService implements MemberPresencePort {
   /**
    * Method unregister
    * @method unregister
-   * @description Releases only the closing consumer's members.
+   *
+   * @description
+   * Releases only the closing consumer's members.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {object} owner - Consumer identity used during registration.
+   *
    * @returns {void}
    */
   public unregister(owner: object): void {

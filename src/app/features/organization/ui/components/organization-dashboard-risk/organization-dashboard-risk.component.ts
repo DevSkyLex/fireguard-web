@@ -22,8 +22,13 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 /**
  * Component OrganizationDashboardRisk
  * @class OrganizationDashboardRisk
- * @description Read-only current status distribution. Missing status counts remain unavailable instead of claiming a healthy zero.
+ *
+ * @description
+ * Read-only current status distribution. Missing status counts remain unavailable instead of
+ * claiming a healthy zero.
+ *
  * @version 1.1.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -44,9 +49,13 @@ export class OrganizationDashboardRisk {
   /**
    * Property overview
    * @readonly
-   * @description Aggregate snapshot supplied by the page.
+   *
+   * @description
+   * Aggregate snapshot supplied by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<OrganizationDashboardOverview | null>}
    */
   public readonly overview: InputSignal<OrganizationDashboardOverview | null> =
@@ -55,9 +64,13 @@ export class OrganizationDashboardRisk {
   /**
    * Property loading
    * @readonly
-   * @description First-load skeleton state.
+   *
+   * @description
+   * First-load skeleton state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input(false);
@@ -65,9 +78,13 @@ export class OrganizationDashboardRisk {
   /**
    * Property legendSkeletonRows
    * @readonly
-   * @description Stable placeholder rows mirroring the loaded legend's four status entries.
+   *
+   * @description
+   * Stable placeholder rows mirroring the loaded legend's four status entries.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {readonly number[]}
    */
   protected readonly legendSkeletonRows: readonly number[] = [0, 1, 2, 3];
@@ -75,9 +92,13 @@ export class OrganizationDashboardRisk {
   /**
    * Property segments
    * @readonly
-   * @description Complete status counts sharing the same denominator.
+   *
+   * @description
+   * Complete status counts sharing the same denominator.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly ChartSegment[] | null>}
    */
   protected readonly segments: Signal<readonly ChartSegment[] | null> = computed(() => {
@@ -118,9 +139,13 @@ export class OrganizationDashboardRisk {
   /**
    * Property total
    * @readonly
-   * @description Denominator used by the visible percentage legend.
+   *
+   * @description
+   * Denominator used by the visible percentage legend.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly total: Signal<number> = computed(

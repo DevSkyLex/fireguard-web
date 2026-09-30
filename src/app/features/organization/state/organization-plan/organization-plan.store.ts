@@ -23,6 +23,17 @@ import { organizationPlanStoreEvents } from './events';
 import type { OrganizationPlanChangeParams, OrganizationPlanState } from './models';
 
 //#region Initial State
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Starts plan listing and plan changes in their idle request states.
+ *
+ * @access private
+ * @since 0.1.0
+ *
+ * @type {OrganizationPlanState}
+ */
 const INITIAL_STATE: OrganizationPlanState = {
   plansCallState: idleCallState(),
   changePlanCallState: idleCallState(),
@@ -30,8 +41,7 @@ const INITIAL_STATE: OrganizationPlanState = {
 //#endregion
 
 /**
- * Store OrganizationPlanStore
- * @const OrganizationPlanStore
+ * Constant OrganizationPlanStore
  *
  * @description
  * Component-scoped NgRx SignalStore backing the organization subscription page.
@@ -39,11 +49,15 @@ const INITIAL_STATE: OrganizationPlanState = {
  * {@link ActiveOrganizationStore} (so the switcher and plan badge reflect the
  * new plan) and reloads the {@link OrganizationMemberAccessStore} (so the
  * feature-gated navigation and route guards pick up the new feature set).
- *
  * Designed to be provided at **component level** (no `providedIn: 'root'`).
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant OrganizationPlanStore
+ *
+ * @constant OrganizationPlanStore
  */
 export const OrganizationPlanStore = signalStore(
   withState<OrganizationPlanState>(INITIAL_STATE),
@@ -134,11 +148,12 @@ export const OrganizationPlanStore = signalStore(
 
 /**
  * Type OrganizationPlanStore
- * @type OrganizationPlanStore
  *
  * @description
  * Instance type of the {@link OrganizationPlanStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type OrganizationPlanStore
  */
 export type OrganizationPlanStore = InstanceType<typeof OrganizationPlanStore>;

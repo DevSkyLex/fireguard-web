@@ -41,7 +41,8 @@ export class OnboardingShowcase {
    * Property store
    * @readonly
    *
-   * @description The root-provided onboarding record the rail renders.
+   * @description
+   * The root-provided onboarding record the rail renders.
    *
    * @access protected
    * @since 1.0.0

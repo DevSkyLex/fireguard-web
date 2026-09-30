@@ -26,21 +26,130 @@ import {
  * rather than carry a fabricated trend. `caption` and `context` fill the
  * tile's footer zone with a stable fact about what the number means — never
  * a time-series trend the backend does not report.
+ *
+ * @type
  */
 type InterventionKpiTile = {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Uniquely identifies this intervention kpi tile.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Provides the text displayed to identify this intervention kpi tile.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property value
+   * @readonly
+   *
+   * @description
+   * Provides the value submitted when this intervention kpi tile is selected.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly value: string;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Names the icon displayed for this intervention kpi tile.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
   readonly icon: string | null;
+
+  /**
+   * Property tone
+   * @readonly
+   *
+   * @description
+   * Selects the semantic visual treatment for this KPI tile.
+   *
+   * @access public
+   *
+   * @type {StatTileTone}
+   */
   readonly tone: StatTileTone;
+
+  /**
+   * Property queryParams
+   * @readonly
+   *
+   * @description
+   * Contains the route query parameters used to open this KPI’s filtered view.
+   *
+   * @access public
+   *
+   * @type {Readonly<Record<string, string>> | null}
+   */
   readonly queryParams: Readonly<Record<string, string>> | null;
+
+  /**
+   * Property badge
+   * @readonly
+   *
+   * @description
+   * Provides the optional badge displayed with this KPI tile.
+   *
+   * @access public
+   *
+   * @type {StatTileBadge | null}
+   */
   readonly badge: StatTileBadge | null;
+
+  /**
+   * Property caption
+   * @readonly
+   *
+   * @description
+   * Provides the supporting text displayed beneath this KPI value.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly caption: string;
+
+  /**
+   * Property context
+   * @readonly
+   *
+   * @description
+   * Provides the short context label displayed with this KPI tile.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly context: string;
 };
 
 /**
- * Component InterventionKpiStrip
+ * Class InterventionKpiStrip
  * @class InterventionKpiStrip
  *
  * @description
@@ -50,7 +159,6 @@ type InterventionKpiTile = {
  * hand-rolled card. Purely derived from {@link statistics}, {@link loading}
  * and {@link baseRoute} — it injects no store and calls no service
  * (`ARCHITECTURE.md` §10.2).
- *
  * A plain total count is deliberately not a tile: the strip reports the
  * work still awaiting action, and a grand total says nothing about what to
  * do next. The count line that used to sit above the strip was removed with
@@ -58,24 +166,20 @@ type InterventionKpiTile = {
  * `planned` and `changes_requested` from `byStatus` — the three statuses
  * still awaiting forward motion, as opposed to `draft` (not yet started) or
  * the terminal `submitted` / `published` / `abandoned`.
- *
  * The overdue and awaiting-review tiles carry a {@link StatTile.link} into
  * the interventions list, narrowed — one click from a glanced-at count to
  * the filtered list behind it, through the same `?due=`/`?status=` query
  * params `InterventionsPage.filters` already parses off the URL.
- *
  * The strip always renders exactly four tiles, so the wrapper sizes its
  * columns with `grid-cols-2 lg:grid-cols-4`: two even columns on narrow
  * viewports, four on a row once there is width for all of them, rather than
  * the `auto-fit` track-filling the strip needed while its tile count varied.
- *
  * Each tile's footer states a stable fact about what its number means —
  * never a fabricated time-series trend, which the statistics endpoint does
  * not report. The overdue and awaiting-review badges read the same counts
  * the tile itself displays; the open tile's badge is its share of
  * {@link InterventionStatisticsOutput.total}, omitted rather than divided
  * by zero when the organization has no interventions yet.
- *
  * Each grid cell's wrapper `div` and the `app-stat-tile` it holds are both
  * `h-full`, propagating the row's stretched height (the grid's default
  * `align-items: stretch`) down to the card so every tile's footer lands on

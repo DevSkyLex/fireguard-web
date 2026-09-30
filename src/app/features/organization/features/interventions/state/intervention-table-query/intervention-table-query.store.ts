@@ -34,8 +34,12 @@ import type { InterventionWorkItemPage } from './models/intervention-work-item-p
 
 /**
  * Constant INITIAL_STATE
- * @description Criteria and independent request lifecycles scoped to one detail page.
+ *
+ * @description
+ * Criteria and independent request lifecycles scoped to one detail page.
+ *
  * @since 6.2.0
+ *
  * @type {InterventionTableQueryState}
  */
 const INITIAL_STATE: InterventionTableQueryState = {
@@ -65,9 +69,12 @@ const INITIAL_STATE: InterventionTableQueryState = {
 };
 
 /**
- * Store InterventionTableQueryStore
- * @description Owns controlled criteria and cancellable server queries, independently of the
+ * Constant InterventionTableQueryStore
+ *
+ * @description
+ * Owns controlled criteria and cancellable server queries, independently of the
  * complete workspace snapshot. Only user text edits debounce; activation, refresh and retry do not.
+ *
  * @since 6.2.0
  */
 export const InterventionTableQueryStore = signalStore(
@@ -90,7 +97,11 @@ export const InterventionTableQueryStore = signalStore(
       offline = inject(InterventionOfflineService),
       connectivity = inject(ConnectivityService),
     ) => {
-      /** Reads complete persisted data and overlays operations which may not yet be in that snapshot. */
+      /**
+       * @description
+       * Reads complete persisted data and overlays operations which may not yet be in that
+       * snapshot.
+       */
       async function savedWorkspace(interventionId: string): Promise<InterventionWorkspaceData> {
         const [snapshot, operations] = await Promise.all([
           offline.getWorkspace(interventionId),
@@ -249,10 +260,15 @@ export const InterventionTableQueryStore = signalStore(
 
       /**
        * Function setContext
-       * @description Cancels both streams immediately and clears criteria only on intervention change.
-       * @param {string} interventionId - Current route context.
-       * @returns {void}
+       *
+       * @description
+       * Cancels both streams immediately and clears criteria only on intervention change.
+       *
        * @since 6.2.0
+       *
+       * @param {string} interventionId - Current route context.
+       *
+       * @returns {void}
        */
       function setContext(interventionId: string): void {
         if (store.contextId() === interventionId) return;
@@ -269,11 +285,17 @@ export const InterventionTableQueryStore = signalStore(
 
       /**
        * Function loadWorkItems
-       * @description Accepts controlled Work criteria and cancels the previous execution before waiting.
-       * @param {InterventionWorkItemTableQuery & { interventionId: string }} query - Requested criteria.
-       * @param {boolean} force - Bypass identical-criteria deduplication and debounce.
-       * @returns {void}
+       *
+       * @description
+       * Accepts controlled Work criteria and cancels the previous execution before waiting.
+       *
        * @since 6.2.0
+       *
+       * @param {InterventionWorkItemTableQuery & { interventionId: string }} query - Requested
+       *   criteria.
+       * @param {boolean} force - Bypass identical-criteria deduplication and debounce.
+       *
+       * @returns {void}
        */
       function loadWorkItems(
         query: InterventionWorkItemTableQuery & { interventionId: string },
@@ -322,11 +344,17 @@ export const InterventionTableQueryStore = signalStore(
 
       /**
        * Function loadChanges
-       * @description Accepts controlled Changes criteria; facet changes always take effect immediately.
-       * @param {InterventionChangeTableQuery & { interventionId: string }} query - Requested criteria.
-       * @param {boolean} force - Bypass identical-criteria deduplication and debounce.
-       * @returns {void}
+       *
+       * @description
+       * Accepts controlled Changes criteria; facet changes always take effect immediately.
+       *
        * @since 6.2.0
+       *
+       * @param {InterventionChangeTableQuery & { interventionId: string }} query - Requested
+       *   criteria.
+       * @param {boolean} force - Bypass identical-criteria deduplication and debounce.
+       *
+       * @returns {void}
        */
       function loadChanges(
         query: InterventionChangeTableQuery & { interventionId: string },
@@ -361,9 +389,13 @@ export const InterventionTableQueryStore = signalStore(
 
       /**
        * Function refreshWorkItems
-       * @description Forces an API read with the saved Work criteria, including after an error.
-       * @returns {void}
+       *
+       * @description
+       * Forces an API read with the saved Work criteria, including after an error.
+       *
        * @since 6.2.0
+       *
+       * @returns {void}
        */
       function refreshWorkItems(): void {
         const interventionId = store.contextId();
@@ -372,9 +404,13 @@ export const InterventionTableQueryStore = signalStore(
 
       /**
        * Function refreshChanges
-       * @description Forces an API read with the saved Changes criteria, including after an error.
-       * @returns {void}
+       *
+       * @description
+       * Forces an API read with the saved Changes criteria, including after an error.
+       *
        * @since 6.2.0
+       *
+       * @returns {void}
        */
       function refreshChanges(): void {
         const interventionId = store.contextId();
@@ -383,7 +419,11 @@ export const InterventionTableQueryStore = signalStore(
 
       return {
         setContext,
-        /** Switches provenance, cancels obsolete requests and invalidates only visited tables. */
+
+        /**
+         * @description
+         * Switches provenance, cancels obsolete requests and invalidates only visited tables.
+         */
         setOffline(offlineMode: boolean, refresh: boolean = true): void {
           if (store.offline() === offlineMode) return;
           requestWorkItems(null);
@@ -404,13 +444,19 @@ export const InterventionTableQueryStore = signalStore(
         refreshChanges,
         retryWorkItems: refreshWorkItems,
         retryChanges: refreshChanges,
+
         /**
          * Method activateWorkItems
-         * @description Initializes business defaults once, then reuses criteria and valid cached rows.
+         *
+         * @description
+         * Initializes business defaults once, then reuses criteria and valid cached rows.
+         *
+         * @since 6.2.0
+         *
          * @param {string} interventionId - Current intervention.
          * @param {InterventionWorkItemTableQuery} initial - First activation defaults.
+         *
          * @returns {void}
-         * @since 6.2.0
          */
         activateWorkItems(interventionId: string, initial: InterventionWorkItemTableQuery): void {
           setContext(interventionId);
@@ -418,13 +464,19 @@ export const InterventionTableQueryStore = signalStore(
           if (!store.workItemsVisited()) loadWorkItems({ interventionId, ...initial }, true);
           else if (store.workItemsInvalidated()) refreshWorkItems();
         },
+
         /**
          * Method activateChanges
-         * @description Initializes history defaults once and refreshes invalidated history on activation.
+         *
+         * @description
+         * Initializes history defaults once and refreshes invalidated history on activation.
+         *
+         * @since 6.2.0
+         *
          * @param {string} interventionId - Current intervention.
          * @param {InterventionChangeTableQuery} initial - First activation defaults.
+         *
          * @returns {void}
-         * @since 6.2.0
          */
         activateChanges(interventionId: string, initial: InterventionChangeTableQuery): void {
           setContext(interventionId);
@@ -432,22 +484,33 @@ export const InterventionTableQueryStore = signalStore(
           if (!store.changesVisited()) loadChanges({ interventionId, ...initial }, true);
           else if (store.changesInvalidated()) refreshChanges();
         },
+
         /**
          * Method deactivate
-         * @description Retains visited criteria while another panel is active.
-         * @returns {void}
+         *
+         * @description
+         * Retains visited criteria while another panel is active.
+         *
          * @since 6.2.0
+         *
+         * @returns {void}
          */
         deactivate(): void {
           patchState(store, { activeTable: null });
         },
+
         /**
          * Method invalidate
-         * @description Refreshes only the affected active table; other visited tables reload on activation.
+         *
+         * @description
+         * Refreshes only the affected active table; other visited tables reload on activation.
+         *
+         * @since 6.2.0
+         *
          * @param {string} interventionId - Mutation owner.
          * @param {readonly string[]} collections - Invalidated collections.
+         *
          * @returns {void}
-         * @since 6.2.0
          */
         invalidate(interventionId: string, collections: readonly string[]): void {
           if (store.contextId() !== interventionId) return;
@@ -468,12 +531,18 @@ export const InterventionTableQueryStore = signalStore(
             }
           }
         },
+
         /**
          * Method reconcileWorkItem
-         * @description Updates an affected visible row without replacing server rows with a workspace snapshot.
-         * @param {InterventionWorkItemOutput} item - Successful mutation result.
-         * @returns {void}
+         *
+         * @description
+         * Updates an affected visible row without replacing server rows with a workspace snapshot.
+         *
          * @since 6.2.0
+         *
+         * @param {InterventionWorkItemOutput} item - Successful mutation result.
+         *
+         * @returns {void}
          */
         reconcileWorkItem(item: InterventionWorkItemOutput): void {
           if (item.intervention !== '/api/interventions/' + store.contextId()) return;
@@ -489,12 +558,18 @@ export const InterventionTableQueryStore = signalStore(
               },
             });
         },
+
         /**
          * Method reconcileChange
-         * @description Applies a changed row before the API recalculates membership.
-         * @param {InterventionChangeOutput} change - Successful mutation result.
-         * @returns {void}
+         *
+         * @description
+         * Applies a changed row before the API recalculates membership.
+         *
          * @since 6.2.0
+         *
+         * @param {InterventionChangeOutput} change - Successful mutation result.
+         *
+         * @returns {void}
          */
         reconcileChange(change: InterventionChangeOutput): void {
           if (change.intervention !== '/api/interventions/' + store.contextId()) return;
@@ -507,13 +582,19 @@ export const InterventionTableQueryStore = signalStore(
               },
             });
         },
+
         /**
          * Method removeWorkItems
-         * @description Removes remotely deleted rows without disturbing the rest of the current query.
+         *
+         * @description
+         * Removes remotely deleted rows without disturbing the rest of the current query.
+         *
+         * @since 6.2.0
+         *
          * @param {string} interventionId - Mutation owner.
          * @param {readonly string[]} ids - Deleted identifiers.
+         *
          * @returns {void}
-         * @since 6.2.0
          */
         removeWorkItems(interventionId: string, ids: readonly string[]): void {
           if (store.contextId() !== interventionId) return;
@@ -541,8 +622,12 @@ export const InterventionTableQueryStore = signalStore(
 
 /**
  * Type InterventionTableQueryStoreType
- * @description Injectable instance of the page-owned table-query store.
+ *
+ * @description
+ * Injectable instance of the page-owned table-query store.
+ *
  * @since 6.2.0
+ *
  * @type {InstanceType<typeof InterventionTableQueryStore>}
  */
 export type InterventionTableQueryStoreType = InstanceType<typeof InterventionTableQueryStore>;

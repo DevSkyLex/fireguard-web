@@ -30,6 +30,9 @@ import { facilityMapStoreEvents } from './events';
 import type { FacilityMapState, WorstFacility } from './models';
 
 /**
+ * Constant WORST_FACILITIES_LIMIT
+ *
+ * @description
  * How many of the lowest-rate located facilities the "worst sites"
  * affordance ranks.
  */
@@ -38,7 +41,6 @@ const WORST_FACILITIES_LIMIT = 5;
 //#region Initial State
 /**
  * Constant INITIAL_FACILITY_MAP_STATE
- * @const INITIAL_FACILITY_MAP_STATE
  *
  * @description
  * Initial state for the FacilityMapStore: no facilities loaded yet, no
@@ -47,6 +49,8 @@ const WORST_FACILITIES_LIMIT = 5;
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant INITIAL_FACILITY_MAP_STATE
  */
 const INITIAL_FACILITY_MAP_STATE: FacilityMapState = {
   mappedCallState: idleCallState(),
@@ -57,8 +61,7 @@ const INITIAL_FACILITY_MAP_STATE: FacilityMapState = {
 //#endregion
 
 /**
- * Store FacilityMapStore
- * @const FacilityMapStore
+ * Constant FacilityMapStore
  *
  * @description
  * Component-scoped NgRx SignalStore for the facilities map surface
@@ -68,7 +71,6 @@ const INITIAL_FACILITY_MAP_STATE: FacilityMapState = {
  * `FEATURE.md` "Unplaced facilities affordance"). `FacilityStore`'s
  * roots-only, entity-keyed shape does not fit this flat, location-scoped
  * read, so this sits beside it as its own slice (`ARCHITECTURE.md` §10.11).
- *
  * Also owns the optional compliance layer: the Compliance-owned facility
  * tree (`ComplianceTreeService.getTree`, flattened by
  * `flattenComplianceTree`) loads lazily, only once, the first time the
@@ -77,48 +79,76 @@ const INITIAL_FACILITY_MAP_STATE: FacilityMapState = {
  * "worst sites" ranking (`worstFacilities`).
  *
  * @version 1.1.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant FacilityMapStore
  */
 export const FacilityMapStore = signalStore(
   withState<FacilityMapState>(INITIAL_FACILITY_MAP_STATE),
 
   withComputed((store) => ({
-    /** Every located facility loaded for the map. */
+    /**
+     * @description
+     * Every located facility loaded for the map.
+     */
     mappedFacilities: computed<readonly FacilityOutput[]>(() => {
       const state = store.mappedCallState();
       return isCallSuccess(state) ? state.data : [];
     }),
 
-    /** True while the located-facilities request is in flight. */
+    /**
+     * @description
+     * True while the located-facilities request is in flight.
+     */
     isLoadingMapped: computed<boolean>(() => isCallPending(store.mappedCallState())),
 
-    /** True when the located-facilities request failed. */
+    /**
+     * @description
+     * True when the located-facilities request failed.
+     */
     hasMappedError: computed<boolean>(() => isCallError(store.mappedCallState())),
 
-    /** How many facilities in the organization have no coordinates yet. */
+    /**
+     * @description
+     * How many facilities in the organization have no coordinates yet.
+     */
     unplacedCount: computed<number>(() => {
       const state = store.unplacedCallState();
       return isCallSuccess(state) ? state.data : 0;
     }),
 
-    /** Every known compliance rate, keyed by facility id. Empty until the layer has loaded. */
+    /**
+     * @description
+     * Every known compliance rate, keyed by facility id. Empty until the layer has loaded.
+     */
     complianceMap: computed<ReadonlyMap<string, number | null>>(() => {
       const state = store.complianceCallState();
       return isCallSuccess(state) ? state.data : new Map<string, number | null>();
     }),
 
-    /** True while the compliance tree is in flight. */
+    /**
+     * @description
+     * True while the compliance tree is in flight.
+     */
     isLoadingCompliance: computed<boolean>(() => isCallPending(store.complianceCallState())),
 
-    /** True when loading the compliance tree failed. */
+    /**
+     * @description
+     * True when loading the compliance tree failed.
+     */
     hasComplianceError: computed<boolean>(() => isCallError(store.complianceCallState())),
 
-    /** True once the compliance tree has been requested at least once, whatever the outcome. */
+    /**
+     * @description
+     * True once the compliance tree has been requested at least once, whatever the outcome.
+     */
     hasLoadedCompliance: computed<boolean>(() => store.complianceCallState().status !== 'idle'),
   })),
 
   withComputed((store) => ({
     /**
+     * @description
      * The lowest-rate located facilities, most critical first, capped to
      * `WORST_FACILITIES_LIMIT`. Only facilities with a known numeric rate
      * are ranked.
@@ -319,11 +349,12 @@ export const FacilityMapStore = signalStore(
 
 /**
  * Type FacilityMapStore
- * @type FacilityMapStore
  *
  * @description
  * Instance type of the {@link FacilityMapStore} signal store.
  *
  * @version 1.0.0
+ *
+ * @type FacilityMapStore
  */
 export type FacilityMapStore = InstanceType<typeof FacilityMapStore>;

@@ -26,6 +26,9 @@ import type {
 import type { OrganizationTeamLoadOptions, OrganizationTeamState } from './models';
 
 /**
+ * Constant INITIAL_STATE
+ *
+ * @description
  * Initial organization team workflow state.
  */
 const INITIAL_STATE: OrganizationTeamState = {
@@ -38,7 +41,7 @@ const INITIAL_STATE: OrganizationTeamState = {
 };
 
 /**
- * Store OrganizationTeamStore
+ * Constant OrganizationTeamStore
  *
  * @description
  * Component-scoped workflow store responsible for members, invitations,
@@ -49,13 +52,28 @@ const INITIAL_STATE: OrganizationTeamState = {
 export const OrganizationTeamStore = signalStore(
   withState(INITIAL_STATE),
   withComputed((store) => ({
-    /** Whether team resources are loading. */
+    /**
+     * @description
+     * Whether team resources are loading.
+     */
     isLoading: computed(() => store.loadCallState().status === 'pending'),
-    /** Whether a team mutation is pending. */
+
+    /**
+     * @description
+     * Whether a team mutation is pending.
+     */
     isMutating: computed(() => store.mutationCallState().status === 'pending'),
-    /** Error from the last team resource load. */
+
+    /**
+     * @description
+     * Error from the last team resource load.
+     */
     loadError: computed(() => store.loadCallState().error),
-    /** Error from the last team mutation. */
+
+    /**
+     * @description
+     * Error from the last team mutation.
+     */
     mutationError: computed(() => store.mutationCallState().error),
   })),
   withMethods(
@@ -66,7 +84,10 @@ export const OrganizationTeamStore = signalStore(
       invitationService = inject<OrganizationInvitationService>(OrganizationInvitationService),
       organizationService = inject<OrganizationService>(OrganizationService),
     ) => ({
-      /** Loads the team resources permitted for the active member. */
+      /**
+       * @description
+       * Loads the team resources permitted for the active member.
+       */
       load: rxMethod<OrganizationTeamLoadOptions>(
         pipe(
           tap(() => patchState(store, { loadCallState: pendingCallState() })),
@@ -114,7 +135,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Adds an existing user to the organization. */
+
+      /**
+       * @description
+       * Adds an existing user to the organization.
+       */
       addMember: rxMethod<{
         organizationId: string;
         input: AddOrganizationMemberInput;
@@ -136,7 +161,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Removes a member from the organization. */
+
+      /**
+       * @description
+       * Removes a member from the organization.
+       */
       removeMember: rxMethod<{ organizationId: string; memberId: string }>(
         pipe(
           tap(() => patchState(store, { mutationCallState: pendingCallState() })),
@@ -155,7 +184,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Sends an organization invitation. */
+
+      /**
+       * @description
+       * Sends an organization invitation.
+       */
       invite: rxMethod<{ organizationId: string; input: InviteOrganizationMemberInput }>(
         pipe(
           tap(() => patchState(store, { mutationCallState: pendingCallState() })),
@@ -174,7 +207,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Revokes a pending organization invitation. */
+
+      /**
+       * @description
+       * Revokes a pending organization invitation.
+       */
       revokeInvitation: rxMethod<{ organizationId: string; invitationId: string }>(
         pipe(
           tap(() => patchState(store, { mutationCallState: pendingCallState() })),
@@ -195,7 +232,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Creates an organization role. */
+
+      /**
+       * @description
+       * Creates an organization role.
+       */
       createRole: rxMethod<{ organizationId: string; input: CreateOrganizationRoleInput }>(
         pipe(
           tap(() => patchState(store, { mutationCallState: pendingCallState() })),
@@ -214,7 +255,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Updates an organization role. */
+
+      /**
+       * @description
+       * Updates an organization role.
+       */
       updateRole: rxMethod<{
         organizationId: string;
         roleId: string;
@@ -239,7 +284,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Removes an organization role. */
+
+      /**
+       * @description
+       * Removes an organization role.
+       */
       removeRole: rxMethod<{ organizationId: string; roleId: string }>(
         pipe(
           tap(() => patchState(store, { mutationCallState: pendingCallState() })),
@@ -258,7 +307,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Assigns an organization role to a member. */
+
+      /**
+       * @description
+       * Assigns an organization role to a member.
+       */
       assignRole: rxMethod<{
         organizationId: string;
         memberId: string;
@@ -283,7 +336,11 @@ export const OrganizationTeamStore = signalStore(
           ),
         ),
       ),
-      /** Removes an assigned role from an organization member. */
+
+      /**
+       * @description
+       * Removes an assigned role from an organization member.
+       */
       removeRoleFromMember: rxMethod<{
         organizationId: string;
         memberId: string;
@@ -320,6 +377,11 @@ export const OrganizationTeamStore = signalStore(
 );
 
 /**
+ * Type OrganizationTeamStore
+ *
+ * @description
  * Injectable instance type exposed by {@link OrganizationTeamStore}.
+ *
+ * @type {OrganizationTeamStore}
  */
 export type OrganizationTeamStore = InstanceType<typeof OrganizationTeamStore>;

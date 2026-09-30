@@ -62,22 +62,19 @@ import { MessageComposer } from '../../forms/message-composer';
 import { MessageReplySheet } from '../../sheets/message-reply-sheet';
 
 /**
- * Component DirectConversationPage
+ * Class DirectConversationPage
  * @class DirectConversationPage
  *
  * @description
  * One direct conversation: its counterpart, the thread, and the composer.
- *
  * The desktop column header and mobile shell title use the counterpart resolved
  * from the already-loaded conversation list and member directory. No title-only
  * query is needed.
- *
  * **The name is never a raw member id.** Only the list endpoint reports a
  * counterpart, and reading the directory needs a permission messaging does not
  * imply — so a deep link, a conversation past the first page of the list, and a
  * member without `members.read` all land on the same neutral label instead of a
  * UUID.
- *
  * The store is provided here but the router reuses this component when only the
  * conversation id changes, so the route effect resets it before loading rather
  * than trusting a fresh instance.
@@ -112,9 +109,13 @@ export class DirectConversationPage {
   /**
    * Property presences
    * @readonly
-   * @description Live availability for the counterpart and authors rendered in this conversation.
+   *
+   * @description
+   * Live availability for the counterpart and authors rendered in this conversation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<Readonly<Record<string, PresenceStatus>>>}
    */
   protected readonly presences: Signal<Readonly<Record<string, PresenceStatus>>> =
@@ -126,9 +127,13 @@ export class DirectConversationPage {
   /**
    * Property counterpartPresence
    * @readonly
-   * @description Confirmed availability of the conversation counterpart.
+   *
+   * @description
+   * Confirmed availability of the conversation counterpart.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<PresenceStatus | null>}
    */
   protected readonly counterpartPresence: Signal<PresenceStatus | null> = computed(() => {
@@ -158,9 +163,13 @@ export class DirectConversationPage {
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Selects the shell-owned conversation heading on mobile.
+   *
+   * @description
+   * Selects the shell-owned conversation heading on mobile.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -170,9 +179,13 @@ export class DirectConversationPage {
   /**
    * Property titleService
    * @readonly
-   * @description Publishes the already-resolved counterpart through the existing shell title.
+   *
+   * @description
+   * Publishes the already-resolved counterpart through the existing shell title.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {TitleService}
    */
   private readonly titleService: TitleService = inject(TitleService);
@@ -256,9 +269,14 @@ export class DirectConversationPage {
   /**
    * Property getOrganizationInitials
    * @readonly
-   * @description Template-bound reference to the shared initials util, used for the counterpart's avatar fallback.
+   *
+   * @description
+   * Template-bound reference to the shared initials util, used for the counterpart's avatar
+   * fallback.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {typeof getOrganizationInitials}
    */
   protected readonly getOrganizationInitials: typeof getOrganizationInitials =
@@ -293,7 +311,18 @@ export class DirectConversationPage {
       }),
   );
 
-  /** The counterpart's transient typing state, never the reader's own. */
+  /**
+   * Property typingLabel
+   * @readonly
+   *
+   * @description
+   * Shows the localized typing status when the direct-conversation counterpart is typing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
   protected readonly typingLabel: Signal<string | null> = computed((): string | null => {
     const typingMemberIds = this.thread.typingMemberIds();
     if (typingMemberIds.length === 0) return null;
@@ -311,7 +340,6 @@ export class DirectConversationPage {
    *
    * @description
    * Who can be mentioned here: the two people in the conversation, nobody else.
-   *
    * The directory holds the whole organization, but a mention creates an inbox
    * item — so offering a third party would notify someone about a conversation
    * they cannot open. The counterpart appears only once the directory has
@@ -508,9 +536,13 @@ export class DirectConversationPage {
   /**
    * Property editDialogBusy
    * @readonly
-   * @description Whether the submitted edit is in flight.
+   *
+   * @description
+   * Whether the submitted edit is in flight.
+   *
    * @access protected
    * @since 3.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly editDialogBusy: Signal<boolean> = this.editGate.isBusy;
@@ -518,9 +550,13 @@ export class DirectConversationPage {
   /**
    * Property editDialogError
    * @readonly
-   * @description The edit write's own error, scoped to a submit from this dialog.
+   *
+   * @description
+   * The edit write's own error, scoped to a submit from this dialog.
+   *
    * @access protected
    * @since 3.0.0
+   *
    * @type {Signal<StoreError | null>}
    */
   protected readonly editDialogError: Signal<StoreError | null> = this.editGate.error;
@@ -528,9 +564,13 @@ export class DirectConversationPage {
   /**
    * Property deleteDialogBusy
    * @readonly
-   * @description Whether the confirmed delete is in flight.
+   *
+   * @description
+   * Whether the confirmed delete is in flight.
+   *
    * @access protected
    * @since 3.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly deleteDialogBusy: Signal<boolean> = this.deleteGate.isBusy;
@@ -538,9 +578,13 @@ export class DirectConversationPage {
   /**
    * Property deleteDialogError
    * @readonly
-   * @description The delete write's own error, scoped to a confirm from this dialog.
+   *
+   * @description
+   * The delete write's own error, scoped to a confirm from this dialog.
+   *
    * @access protected
    * @since 3.0.0
+   *
    * @type {Signal<StoreError | null>}
    */
   protected readonly deleteDialogError: Signal<StoreError | null> = this.deleteGate.error;
@@ -596,45 +640,200 @@ export class DirectConversationPage {
     (): string | null => this.thread.loadError()?.message ?? null,
   );
 
-  /** The counterpart's member IRI, reported only by the conversation list. */
+  /**
+   * Property counterpart
+   * @readonly
+   *
+   * @description
+   * Resolves the other member in the active direct conversation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<string | undefined>}
+   */
   private readonly counterpart: Signal<string | undefined> = computed((): string | undefined =>
     this.conversations.counterpartFor(this.conversationId()),
   );
 
+  /**
+   * Property conversations
+   * @readonly
+   *
+   * @description
+   * Loads and mutates the conversation data owned by this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DirectConversationsStoreType}
+   */
   private readonly conversations: DirectConversationsStoreType =
     inject<DirectConversationsStoreType>(DirectConversationsStore);
 
+  /**
+   * Property directory
+   * @readonly
+   *
+   * @description
+   * Resolves display information for members referenced in messages.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {MemberDirectoryPort}
+   */
   private readonly directory: MemberDirectoryPort =
     inject<MemberDirectoryPort>(MEMBER_DIRECTORY_PORT);
 
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Provides the active member permissions used to gate messaging actions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessPort}
+   */
   private readonly memberAccess: OrganizationMemberAccessPort =
     inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
 
+  /**
+   * Property organizationContext
+   * @readonly
+   *
+   * @description
+   * Provides the active organization context for conversation requests.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationContextPort}
+   */
   private readonly organizationContext: OrganizationContextPort =
     inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT);
 
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Provides the injected document used by browser-only conversation behavior.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Document}
+   */
   private readonly document: Document = inject<Document>(DOCUMENT);
+
+  /**
+   * Property browser
+   * @readonly
+   *
+   * @description
+   * Indicates whether this instance is running in a browser.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   private readonly browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Provides the component lifecycle scope used to clean up owned work.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private readonly destroyRef = inject(DestroyRef);
+
+  /**
+   * Property typingIdleTimer
+   *
+   * @description
+   * Tracks the pending timeout that clears this page’s typing state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ReturnType<typeof setTimeout> | null}
+   */
   private typingIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Property typingActive
+   *
+   * @description
+   * Tracks whether this page has published a typing indication.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private typingActive = false;
+
+  /**
+   * Property typingConversationId
+   *
+   * @description
+   * Identifies the conversation for the current typing indication.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
   private typingConversationId: string | null = null;
+
+  /**
+   * Property lastTypingPublishedAt
+   *
+   * @description
+   * Records the time of the most recent typing indication publication.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private lastTypingPublishedAt = 0;
 
-  /** Stands in wherever a member cannot be named. Never a raw id. */
+  /**
+   * Property unknownLabel
+   * @readonly
+   *
+   * @description
+   * Fallback display name used when the counterpart’s member record is unavailable.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly unknownLabel: string = $localize`:@@messages.unknownMember:Unknown member`;
   //#endregion
 
-  //#region Lifecycle
+  //#region Constructor
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description
    * Wires the routed conversation to the thread. The order matters: the store
    * survives a conversation change, so it is emptied before the new one is
    * read, and the read marker moves only once the messages are on their way.
-   *
    * Every store read here is untracked — the conversation list zeroes its own
    * unread badge in response to the very marker this moves, and tracking that
    * would make the effect re-run on its own consequence.
@@ -903,7 +1102,20 @@ export class DirectConversationPage {
     this.thread.markRead({ conversationId: this.conversationId(), lastReadMessageId: latest.id });
   }
 
-  /** Sends at most one typing refresh every two seconds and stops after an idle pause. */
+  /**
+   * Method onTypingActivity
+   * @method onTypingActivity
+   *
+   * @description
+   * Publishes typing activity while the visible direct conversation is writable.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} active - Whether typing activity is currently active.
+   *
+   * @returns {void}
+   */
   protected onTypingActivity(active: boolean): void {
     if (
       !this.browser ||
@@ -930,7 +1142,18 @@ export class DirectConversationPage {
     this.typingIdleTimer = setTimeout((): void => this.stopTyping(), 3_500);
   }
 
-  /** Clears local activity; the remote indicator also expires if a stop cannot arrive. */
+  /**
+   * Method stopTyping
+   * @method stopTyping
+   *
+   * @description
+   * Cancels the typing timeout and publishes the inactive state for the current conversation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
   private stopTyping(): void {
     if (this.typingIdleTimer !== null) clearTimeout(this.typingIdleTimer);
     this.typingIdleTimer = null;

@@ -596,6 +596,7 @@ export class ChannelsPanel {
    *
    * @param {string} channelId - Channel being moved.
    * @param {string | null} parentId - Destination, or null for the root.
+   *
    * @returns {boolean}
    */
   protected canMoveTo(channelId: string, parentId: string | null): boolean {
@@ -643,6 +644,7 @@ export class ChannelsPanel {
    * @since 1.0.0
    *
    * @param {ChannelOutput} channel - Channel being moved.
+   *
    * @returns {string}
    */
   protected moveLabel(channel: ChannelOutput): string {
@@ -661,6 +663,7 @@ export class ChannelsPanel {
    *
    * @param {string} channelId - Channel being moved.
    * @param {string | null} parentId - Destination, or null for the root.
+   *
    * @returns {void}
    */
   protected moveChannel(channelId: string, parentId: string | null): void {
@@ -679,6 +682,7 @@ export class ChannelsPanel {
    * @since 1.0.0
    *
    * @param {CdkDragMove<string>} event - Browser pointer coordinates and drag source.
+   *
    * @returns {void}
    */
   protected trackDrop(event: CdkDragMove<string>): void {
@@ -716,6 +720,7 @@ export class ChannelsPanel {
    * @since 1.0.0
    *
    * @param {CdkDragDrop<unknown, unknown, string>} event - Completed drag in the channel tree.
+   *
    * @returns {void}
    */
   protected dropChannel(event: CdkDragDrop<unknown, unknown, string>): void {
@@ -754,6 +759,7 @@ export class ChannelsPanel {
    * @since 1.0.0
    *
    * @param {ChannelOutput} channel - Parent channel whose children can be toggled.
+   *
    * @returns {string} Accessible disclosure label; the primitive reports expanded state.
    */
   protected subchannelsLabel(channel: ChannelOutput): string {

@@ -11,12 +11,25 @@ comment adapter preserves the project structure and executable source bytes.
 Write English documentation on the declaration it explains. Start with a title
 such as `Class Client`, `Property title`, `Method load` or `Function formatShortcut`.
 Keep the title and optional declaration tags (`@class`, `@method`, `@readonly`,
-etc.) in the first group. After a blank line, start prose on the `@description`
-line and continue on following lines when needed. Use one or two sentences about
+etc.) in the first group. After a blank line, put `@description` alone on its
+line and start prose on the following line. Use one or two sentences about
 purpose, ownership or a non-obvious caller constraint. Keep the title separate;
 do not merge it into the description or remove it.
 
-Keep `//#region` markers. Do not add paragraphs between statements, comments
+Document properties, methods and functions at their actual declarations, including
+members of named interfaces and type aliases. Do not add docblocks inside anonymous
+inline types in generics, signals, parameters, return types or nested shapes. Document
+the enclosing declaration instead; preserve existing analysis directives.
+Keep existing `//#region` markers and add `Properties`,
+`Constructor` and `Methods` regions around the corresponding class member groups.
+Include the member's docblock inside its region. Omit empty groups, keep regions
+balanced and preserve declaration order; close and reopen a group when interleaved
+members require it. Constructor parameter properties stay in the constructor group.
+Separate documented members with one blank line before the next docblock; the
+first member after a class opening or a region marker needs no leading blank line.
+Remove duplicate or empty regions. Use one docblock per declaration and inspect
+the final source for misplaced blocks, redundant groups and inaccurate prose.
+Do not add paragraphs between statements, comments
 inside object/array literals, or `<!-- -->` rationale in templates. A single
 inline line is allowed where a statement would otherwise read as a mistake.
 Longer design rationale belongs in the owning `FEATURE.md`.
@@ -27,6 +40,10 @@ that it is unknown. Preserve directives, suppressions, examples and annotations
 that affect tooling; review them separately from prose.
 
 ## Declaration contract
+
+See [complete examples by declaration](code-comment-examples.md) for classes,
+signals, inputs/outputs, constructors, methods, named contracts, constants,
+functions and generics. Use applicable tags without copying unverified metadata.
 
 | Declaration                          | Tags                                                                                                                           |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -48,7 +65,7 @@ parameters and returns with blank lines. Omit absent groups without inventing
 metadata. Keep existing regions and declaration spacing.
 
 The comment adapter protects titles while native Oxfmt formats prose, then
-restores these groups. The profile uses multiline blocks, `@description`, no
+restores these groups and the line break after `@description`. The profile uses multiline blocks, no
 automatic capitalization or default-value prose, and balanced wrapping that
 preserves existing line breaks within the 100-character width. For example:
 
@@ -56,7 +73,8 @@ preserves existing line breaks within the 100-character width. For example:
 /**
  * Function formatShortcut
  *
- * @description Formats a shortcut key with the
+ * @description
+ * Formats a shortcut key with the
  * platform-specific modifier.
  *
  * @access public

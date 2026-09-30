@@ -11,6 +11,8 @@ import {
  * item becomes reachable.
  *
  * @since 1.0.0
+ *
+ * @type OrganizationNavigationMatch
  */
 export type OrganizationNavigationMatch = 'all' | 'any';
 
@@ -23,6 +25,8 @@ export type OrganizationNavigationMatch = 'all' | 'any';
  * this config stays permission-only and knows no counts itself.
  *
  * @since 3.1.0
+ *
+ * @type OrganizationNavigationCounterKey
  */
 export type OrganizationNavigationCounterKey = 'submittedInterventions';
 
@@ -34,11 +38,14 @@ export type OrganizationNavigationCounterKey = 'submittedInterventions';
  * sections instead of one catch-all list.
  *
  * @since 1.1.0
+ *
+ * @type OrganizationNavigationGroupId
  */
 export type OrganizationNavigationGroupId = 'operations' | 'assets';
 
 /**
  * Interface OrganizationNavigationGroup
+ * @interface OrganizationNavigationGroup
  *
  * @description
  * An ordered navigation section and its heading.
@@ -46,12 +53,38 @@ export type OrganizationNavigationGroupId = 'operations' | 'assets';
  * @since 1.1.0
  */
 export interface OrganizationNavigationGroup {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Identifies the section used to group organization destinations.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OrganizationNavigationGroupId}
+   */
   readonly id: OrganizationNavigationGroupId;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Supplies the visible heading for the navigation section.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
 }
 
 /**
  * Interface OrganizationNavigationItem
+ * @interface OrganizationNavigationItem
  *
  * @description
  * One organization-owned destination and the permissions that expose it. The
@@ -60,19 +93,136 @@ export interface OrganizationNavigationGroup {
  * @since 1.0.0
  */
 export interface OrganizationNavigationItem {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Stable destination key used to match routes and navigation state.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Localized text shown beside the destination icon.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Registered lucide icon name resolved by the navigation renderer.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly icon: string;
+
+  /**
+   * Property path
+   * @readonly
+   *
+   * @description
+   * Organization-relative destination path consumed by the router.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly path: string;
+
+  /**
+   * Property group
+   * @readonly
+   *
+   * @description
+   * Selects the navigation section that contains this destination.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OrganizationNavigationGroupId}
+   */
   readonly group: OrganizationNavigationGroupId;
+
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Lists the organization permissions required to expose this destination.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<OrganizationPermissionName>}
+   */
   readonly permissions: ReadonlyArray<OrganizationPermissionName>;
+
+  /**
+   * Property match
+   * @readonly
+   *
+   * @description
+   * Chooses whether every listed permission or any one permission is required.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OrganizationNavigationMatch}
+   */
   readonly match?: OrganizationNavigationMatch;
+
+  /**
+   * Property counterKey
+   * @readonly
+   *
+   * @description
+   * Selects the optional live counter displayed with this destination.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OrganizationNavigationCounterKey}
+   */
   readonly counterKey?: OrganizationNavigationCounterKey;
+
+  /**
+   * Property exact
+   * @readonly
+   *
+   * @description
+   * Requires an exact route match instead of matching nested child paths.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   readonly exact?: boolean;
 }
 
 /**
  * Interface OrganizationNavigationLink
+ * @interface OrganizationNavigationLink
  *
  * @description
  * A resolved destination: the item with its route already prefixed by the
@@ -81,16 +231,94 @@ export interface OrganizationNavigationItem {
  * @since 2.0.0
  */
 export interface OrganizationNavigationLink {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Carries the source destination key into the resolved organization link.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly id: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Carries the localized source label into the resolved link.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Carries the registered icon name used by the navigation renderer.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly icon: string;
+
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Provides the destination path prefixed for the active organization.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly route: string;
+
+  /**
+   * Property counterKey
+   * @readonly
+   *
+   * @description
+   * Carries the source destination's optional live counter selector.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OrganizationNavigationCounterKey}
+   */
   readonly counterKey?: OrganizationNavigationCounterKey;
+
+  /**
+   * Property exact
+   * @readonly
+   *
+   * @description
+   * Indicates whether the resolved route requires an exact match.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
   readonly exact: boolean;
 }
 
 /**
  * Interface OrganizationNavigationSection
+ * @interface OrganizationNavigationSection
  *
  * @description
  * A group and the links inside it that the active member may actually reach.
@@ -98,8 +326,46 @@ export interface OrganizationNavigationLink {
  * @since 2.0.0
  */
 export interface OrganizationNavigationSection {
+  /**
+   * Property id
+   * @readonly
+   *
+   * @description
+   * Identifies the group represented by this resolved section.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OrganizationNavigationGroupId}
+   */
   readonly id: OrganizationNavigationGroupId;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Supplies the visible heading for this resolved section.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
   readonly label: string;
+
+  /**
+   * Property links
+   * @readonly
+   *
+   * @description
+   * Contains only the destinations available to the active member.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<OrganizationNavigationLink>}
+   */
   readonly links: ReadonlyArray<OrganizationNavigationLink>;
 }
 
@@ -113,7 +379,6 @@ export interface OrganizationNavigationSection {
  * Dashboard is the membership-gated organization home for members able to read
  * either interventions or dashboard aggregates. Assets replaces the earlier
  * facilities/equipment pair, while Imports remains available to either reader.
- *
  * `exact` marks the one entry whose `path` is empty, so `routerLinkActive`
  * matches the workspace root exactly instead of as a prefix of every sibling
  * route. Declaring it here rather than inferring it from an id is what stops a
@@ -239,12 +504,12 @@ export const ORGANIZATION_NAVIGATION_GROUPS: ReadonlyArray<OrganizationNavigatio
  * @description
  * Checks an exact permission or a namespace wildcard grant such as `organization.*`.
  *
+ * @since 1.0.0
+ *
  * @param {string} grantedPermission - Permission granted to the active member.
  * @param {OrganizationPermissionName} requiredPermission - Permission the destination requires.
  *
  * @returns {boolean} Whether the grant satisfies the requirement.
- *
- * @since 1.0.0
  */
 export function matchesOrganizationPermission(
   grantedPermission: string,
@@ -266,12 +531,13 @@ export function matchesOrganizationPermission(
  * @description
  * Evaluates one item's permission contract against the active member's grants.
  *
- * @param {Pick<OrganizationNavigationItem, 'permissions' | 'match'>} item - Permission contract to evaluate.
+ * @since 1.0.0
+ *
+ * @param {Pick<OrganizationNavigationItem, 'permissions' | 'match'>} item - Permission contract to
+ *   evaluate.
  * @param {ReadonlySet<string>} grantedPermissions - Active member permissions.
  *
  * @returns {boolean} Whether the destination is reachable.
- *
- * @since 1.0.0
  */
 export function hasOrganizationNavigationAccess(
   item: Pick<OrganizationNavigationItem, 'permissions' | 'match'>,
@@ -296,12 +562,12 @@ export function hasOrganizationNavigationAccess(
  * least one destination the member may reach, with routes already prefixed. A
  * section whose items are all denied is dropped rather than rendered empty.
  *
+ * @since 2.0.0
+ *
  * @param {string} organizationId - The active organization.
  * @param {ReadonlySet<string>} grantedPermissions - Active member permissions.
  *
  * @returns {ReadonlyArray<OrganizationNavigationSection>} The sections to render.
- *
- * @since 2.0.0
  */
 export function buildOrganizationNavigation(
   organizationId: string,

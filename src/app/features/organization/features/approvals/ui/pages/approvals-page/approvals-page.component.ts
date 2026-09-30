@@ -57,13 +57,28 @@ import {
 } from '../../dialogs/approval-decision-dialog';
 import { ApprovalRequestTable } from '../../tables/approval-request-table';
 
-/** The page sizes offered under the table — the server default first. */
+/**
+ * Constant PAGE_SIZES
+ *
+ * @description
+ * The page sizes offered under the table — the server default first.
+ */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 
-/** How long typing settles before the search reaches the wire. */
+/**
+ * Constant SEARCH_DEBOUNCE_MS
+ *
+ * @description
+ * How long typing settles before the search reaches the wire.
+ */
 const SEARCH_DEBOUNCE_MS: number = 300;
 
-/** Every status chip offered in the status field's value control. */
+/**
+ * Constant STATUS_VALUES
+ *
+ * @description
+ * Every status chip offered in the status field's value control.
+ */
 const STATUS_VALUES: readonly ApprovalStatus[] = [
   'pending',
   'approved',
@@ -73,7 +88,14 @@ const STATUS_VALUES: readonly ApprovalStatus[] = [
   'expired',
 ];
 
-/** The two keys {@link ApprovalsPage.filterFields} declares. */
+/**
+ * Type ApprovalFilterKey
+ *
+ * @description
+ * The two keys {@link ApprovalsPage.filterFields} declares.
+ *
+ * @type {ApprovalFilterKey}
+ */
 type ApprovalFilterKey = 'status' | 'actionType';
 
 /**
@@ -98,7 +120,6 @@ type ApprovalFilterKey = 'status' | 'actionType';
  * (`ApprovalRequestListQuery`), so clearing either chip narrows to "any"
  * rather than being disabled. Free-text search is debounced before it is
  * forwarded through the list request's shared `RequestOptions` contract.
- *
  * Owns the query the table renders (filters, paging) and the decision
  * dialog's target. On a 409 decide failure the row may have moved out from
  * under the reader (already decided, or cancelled because its subject
@@ -144,13 +165,29 @@ export class ApprovalsPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace whose approval requests are listed, bound from the route.
+   *
+   * @description
+   * The workspace whose approval requests are listed, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
-  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+
+  /**
+   * Property listForbidden
+   * @readonly
+   *
+   * @description
+   * Whether the last list read was refused for lack of permission, which a retry cannot fix.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(() =>
     this.store.isListForbidden(),
   );
@@ -158,20 +195,47 @@ export class ApprovalsPage {
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
-  /** Member directory used only to turn approval actor references into names. */
+  /**
+   * Property memberDirectory
+   * @readonly
+   *
+   * @description
+   * Member directory used only to turn approval actor references into names.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {MemberDirectoryPort}
+   */
   private readonly memberDirectory: MemberDirectoryPort =
     inject<MemberDirectoryPort>(MEMBER_DIRECTORY_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
@@ -181,10 +245,12 @@ export class ApprovalsPage {
    * Property memberLabelOf
    * @readonly
    *
-   * @description Resolves an approval requester or decider through the organization member directory.
+   * @description
+   * Resolves an approval requester or decider through the organization member directory.
    *
    * @access protected
    * @since 1.3.0
+   *
    * @type {(memberId: string) => string}
    */
   protected readonly memberLabelOf: (memberId: string) => string = (memberId: string): string =>
@@ -194,26 +260,61 @@ export class ApprovalsPage {
    * Property memberAvatarOf
    * @readonly
    *
-   * @description Resolves an approval requester to their directory avatar URL, when set.
+   * @description
+   * Resolves an approval requester to their directory avatar URL, when set.
    *
    * @access protected
    * @since 1.3.0
+   *
    * @type {(memberId: string) => string | undefined}
    */
   protected readonly memberAvatarOf: (memberId: string) => string | undefined = (
     memberId: string,
   ): string | undefined => this.memberDirectory.byId().get(memberId)?.avatarUrl;
 
-  /** The list and decision dataset, provided by this route. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The list and decision dataset, provided by this route.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ApprovalRequestsStoreType}
+   */
   protected readonly store: ApprovalRequestsStoreType =
     inject<ApprovalRequestsStoreType>(ApprovalRequestsStore);
 
-  /** Organization permission checks gating the decision dialog. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating the decision dialog.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Every status offered by the status field's single-value selector. */
+  /**
+   * Property statusOptions
+   * @readonly
+   *
+   * @description
+   * Every status offered by the status field's single-value selector.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {readonly CollectionFilterOption[]}
+   */
   protected readonly statusOptions: readonly CollectionFilterOption[] = STATUS_VALUES.map(
     (status: ApprovalStatus): CollectionFilterOption => ({
       value: status,
@@ -224,40 +325,115 @@ export class ApprovalsPage {
   /**
    * Property status
    * @readonly
-   * @description The active status narrowing, or `null` for every status. `pending` is the default, actionable view on arrival — the reader clears the chip to see every status.
+   *
+   * @description
+   * The active status narrowing, or `null` for every status. `pending` is the default, actionable
+   * view on arrival — the reader clears the chip to see every status.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<ApprovalStatus | null>}
    */
   protected readonly status: WritableSignal<ApprovalStatus | null> = signal<ApprovalStatus | null>(
     'pending',
   );
 
-  /** The active action-type narrowing, or `null` for every type. */
+  /**
+   * Property actionType
+   * @readonly
+   *
+   * @description
+   * The active action-type narrowing, or `null` for every type.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly actionType: WritableSignal<string | null> = signal<string | null>(null);
 
-  /** What the search box holds before the debounce settles. */
+  /**
+   * Property draftSearch
+   * @readonly
+   *
+   * @description
+   * What the search box holds before the debounce settles.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly draftSearch: WritableSignal<string> = signal<string>('');
 
-  /** The trimmed free-text search currently sent to the list endpoint. */
+  /**
+   * Property searchTerm
+   * @readonly
+   *
+   * @description
+   * The trimmed free-text search currently sent to the list endpoint.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly searchTerm: WritableSignal<string> = signal<string>('');
 
-  /** The page window, one-based. */
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * The page window, one-based.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly page: WritableSignal<number> = signal<number>(1);
 
-  /** How many rows a page holds. */
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * How many rows a page holds.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
-  /** The row and decision currently opened in the confirm dialog, or `null` when it is closed. */
+  /**
+   * Property decisionTarget
+   * @readonly
+   *
+   * @description
+   * The row and decision currently opened in the confirm dialog, or `null` when it is closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ApprovalDecisionTarget | null>}
+   */
   protected readonly decisionTarget: WritableSignal<ApprovalDecisionTarget | null> =
     signal<ApprovalDecisionTarget | null>(null);
 
   /**
    * Property currentDecisionTarget
    * @readonly
-   * @description Retains dialog identity while showing the latest server resource.
+   *
+   * @description
+   * Retains dialog identity while showing the latest server resource.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<ApprovalDecisionTarget | null>}
    */
   protected readonly currentDecisionTarget: Signal<ApprovalDecisionTarget | null> = computed(() => {
@@ -267,7 +443,18 @@ export class ApprovalsPage {
     return { ...target, request: current ?? target.request };
   });
 
-  /** The filter bar's field catalog: status, then action type. */
+  /**
+   * Property filterFields
+   * @readonly
+   *
+   * @description
+   * The filter bar's field catalog: status, then action type.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {readonly CollectionFilterField[]}
+   */
   protected readonly filterFields: readonly CollectionFilterField[] = [
     {
       key: 'status',
@@ -286,9 +473,13 @@ export class ApprovalsPage {
   /**
    * Property activeFilterKeys
    * @readonly
-   * @description Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input.
+   *
+   * @description
+   * Which of {@link filterFields} currently carry a value — the bar's `activeKeys` input.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
@@ -298,16 +489,32 @@ export class ApprovalsPage {
     ],
   );
 
-  /** Which field's value control currently renders forced open — `null` when none is. */
+  /**
+   * Property openFilterKey
+   * @readonly
+   *
+   * @description
+   * Which field's value control currently renders forced open — `null` when none is.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ApprovalFilterKey | null>}
+   */
   protected readonly openFilterKey: WritableSignal<ApprovalFilterKey | null> =
     signal<ApprovalFilterKey | null>(null);
 
   /**
    * Property isDefaultPendingView
    * @readonly
-   * @description Whether the page sits on its arrival narrowing — `pending` status, no action-type chip, no search — the actionable "nothing to decide yet" view rather than a filtered miss.
+   *
+   * @description
+   * Whether the page sits on its arrival narrowing — `pending` status, no action-type chip, no
+   * search — the actionable "nothing to decide yet" view rather than a filtered miss.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isDefaultPendingView: Signal<boolean> = computed<boolean>(
@@ -317,9 +524,15 @@ export class ApprovalsPage {
   /**
    * Property isFilteredMiss
    * @readonly
-   * @description Whether an empty result comes from a narrowing other than the default arrival view — status cleared or changed, an action-type chip, or a search term — so the empty state should offer to clear filters rather than repeat the default copy.
+   *
+   * @description
+   * Whether an empty result comes from a narrowing other than the default arrival view — status
+   * cleared or changed, an action-type chip, or a search term — so the empty state should offer to
+   * clear filters rather than repeat the default copy.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isFilteredMiss: Signal<boolean> = computed<boolean>(
@@ -331,27 +544,60 @@ export class ApprovalsPage {
   /**
    * Property filtersVisible
    * @readonly
-   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   *
+   * @description
+   * Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only.
+   * Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely
+   * driven by `app-collection-filter-toggle`.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
     computed<boolean>(() => this.activeFilterKeys().length > 0),
   );
 
-  /** The "Status" chip's value control, projected into the filter bar. */
+  /**
+   * Property statusChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Status" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly statusChipTemplate = viewChild<TemplateRef<unknown>>('statusChip');
 
-  /** The "Action type" chip's value control, projected into the filter bar. */
+  /**
+   * Property actionTypeChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Action type" chip's value control, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly actionTypeChipTemplate = viewChild<TemplateRef<unknown>>('actionTypeChip');
 
   /**
    * Property chipTemplates
    * @readonly
-   * @description Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   *
+   * @description
+   * Every filter field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates`
+   * input.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
    */
   protected readonly chipTemplates: Signal<
@@ -361,7 +607,18 @@ export class ApprovalsPage {
     actionType: this.actionTypeChipTemplate(),
   }));
 
-  /** The rows the table currently renders. */
+  /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * The rows the table currently renders.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly ApprovalRequestOutput[]>}
+   */
   protected readonly items: Signal<readonly ApprovalRequestOutput[]> = computed(() =>
     this.store.requests(),
   );
@@ -369,28 +626,64 @@ export class ApprovalsPage {
   /**
    * Property pageCount
    * @readonly
-   * @description How many pages the current total spans, at least one.
+   *
+   * @description
+   * How many pages the current total spans, at least one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
     Math.max(1, Math.ceil(this.store.totalRequests() / this.pageSize())),
   );
 
-  /** Whether the active member may open the decision dialog. */
+  /**
+   * Property canDecide
+   * @readonly
+   *
+   * @description
+   * Whether the active member may open the decision dialog.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canDecide: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.APPROVALS_DECIDE),
   );
 
-  /** The action-type select's choices, from the catalog endpoint. */
+  /**
+   * Property actionTypeOptions
+   * @readonly
+   *
+   * @description
+   * The action-type select's choices, from the catalog endpoint.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlyArray<{ readonly label: string; readonly value: string }>>}
+   */
   protected readonly actionTypeOptions: Signal<
     ReadonlyArray<{ readonly label: string; readonly value: string }>
   > = computed(() =>
     this.store.actionTypes().map((type) => ({ label: type.label, value: type.value })),
   );
 
-  /** The last decide failure was a 409 — the row must be re-read once the dialog reflects it. */
+  /**
+   * Property previousDecideStatus
+   *
+   * @description
+   * The last decide failure was a 409 — the row must be re-read once the dialog reflects it.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private previousDecideStatus: string = 'idle';
   //#endregion
 
@@ -467,13 +760,27 @@ export class ApprovalsPage {
   //#endregion
 
   //#region Methods
-  /** Records a keystroke into the draft term watched by the debounce. */
+  /**
+   * Method onSearchQueryChanged
+   * @method onSearchQueryChanged
+   *
+   * @description
+   * Records a keystroke into the draft term watched by the debounce.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} term - Search text retained in the filter draft.
+   *
+   * @returns {void}
+   */
   protected onSearchQueryChanged(term: string): void {
     this.draftSearch.set(term);
   }
 
   /**
    * Method applyStatus
+   * @method applyStatus
    *
    * @description
    * Narrows the list to one status from the status chip's single-value
@@ -481,7 +788,9 @@ export class ApprovalsPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string | null | undefined} value - The selector's emitted value.
+   *
    * @returns {void}
    */
   protected applyStatus(value: string | null | undefined): void {
@@ -495,9 +804,15 @@ export class ApprovalsPage {
 
   /**
    * Method showAllStatuses
-   * @description Clears the default `pending` status narrowing only, leaving any action-type or search narrowing untouched — the empty state's arrival-view action.
+   * @method showAllStatuses
+   *
+   * @description
+   * Clears the default `pending` status narrowing only, leaving any action-type or search narrowing
+   * untouched — the empty state's arrival-view action.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @returns {void}
    */
   protected showAllStatuses(): void {
@@ -506,10 +821,16 @@ export class ApprovalsPage {
 
   /**
    * Method applyActionType
-   * @description Narrows the list to one action type, or clears the narrowing.
+   * @method applyActionType
+   *
+   * @description
+   * Narrows the list to one action type, or clears the narrowing.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string | null | undefined} value - The select's emitted value.
+   *
    * @returns {void}
    */
   protected applyActionType(value: string | null | undefined): void {
@@ -520,10 +841,16 @@ export class ApprovalsPage {
 
   /**
    * Method fieldPopoverState
-   * @description Whether one filter chip's `app-collection-filter-select` should currently render open.
+   * @method fieldPopoverState
+   *
+   * @description
+   * Whether one filter chip's `app-collection-filter-select` should currently render open.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {ApprovalFilterKey} key - The field whose selector state is requested.
+   *
    * @returns {BrnOverlayState} `'open'` or `'closed'`.
    */
   protected fieldPopoverState(key: ApprovalFilterKey): BrnOverlayState {
@@ -532,11 +859,17 @@ export class ApprovalsPage {
 
   /**
    * Method onFieldPopoverStateChanged
-   * @description Keeps {@link openFilterKey} in sync with one chip's value control.
+   * @method onFieldPopoverStateChanged
+   *
+   * @description
+   * Keeps {@link openFilterKey} in sync with one chip's value control.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {ApprovalFilterKey} key - The field whose selector changed state.
    * @param {BrnOverlayState} state - Its next state.
+   *
    * @returns {void}
    */
   protected onFieldPopoverStateChanged(key: ApprovalFilterKey, state: BrnOverlayState): void {
@@ -549,12 +882,20 @@ export class ApprovalsPage {
   }
 
   /**
-   * Method actionTypeLabelOf
-   * @description Resolves an action-type value to its catalog label, for the select trigger and the table.
+   * Property actionTypeLabelOf
+   *
+   * @description
+   * Resolves an action-type value to its catalog label, for the select trigger and the table.
+   *
    * @access protected
    * @since 1.0.0
+   *
+   * @type {(value: string) => string}
+   *
    * @param {string} value - The raw action-type key.
-   * @returns {string} The catalog label, or a localized "Unknown type" while the catalog has not answered — never the raw key.
+   *
+   * @returns {string} The catalog label, or a localized "Unknown type" while the catalog has not
+   *   answered — never the raw key.
    */
   protected actionTypeLabelOf = (value: string): string =>
     this.actionTypeOptions().find((option) => option.value === value)?.label ??
@@ -562,10 +903,17 @@ export class ApprovalsPage {
 
   /**
    * Method onFieldPicked
-   * @description Reacts to the filter bar's `fieldPicked` output by rendering the picked field's chip before it carries a value.
+   * @method onFieldPicked
+   *
+   * @description
+   * Reacts to the filter bar's `fieldPicked` output by rendering the picked field's chip before it
+   * carries a value.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   *
    * @returns {void}
    */
   protected onFieldPicked(key: string): void {
@@ -574,10 +922,16 @@ export class ApprovalsPage {
 
   /**
    * Method onFieldRemoved
-   * @description Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   * @method onFieldRemoved
+   *
+   * @description
+   * Reacts to the filter bar's `fieldRemoved` output by clearing that field's narrowing.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} key - The field key whose chip was removed.
+   *
    * @returns {void}
    */
   protected onFieldRemoved(key: string): void {
@@ -591,10 +945,17 @@ export class ApprovalsPage {
 
   /**
    * Method toggleFiltersVisible
-   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   * @method toggleFiltersVisible
+   *
+   * @description
+   * Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to
+   * the value it reports.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {boolean} visible - The toggle button's intended next state.
+   *
    * @returns {void}
    */
   protected toggleFiltersVisible(visible: boolean): void {
@@ -603,9 +964,14 @@ export class ApprovalsPage {
 
   /**
    * Method clearFilters
-   * @description Drops every narrowing at once, returning to the first page.
+   * @method clearFilters
+   *
+   * @description
+   * Drops every narrowing at once, returning to the first page.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected clearFilters(): void {
@@ -619,10 +985,16 @@ export class ApprovalsPage {
 
   /**
    * Method setPageSize
-   * @description Changes the page size and returns to the first page.
+   * @method setPageSize
+   *
+   * @description
+   * Changes the page size and returns to the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} size - The chosen page size.
+   *
    * @returns {void}
    */
   protected setPageSize(size: number): void {
@@ -632,10 +1004,16 @@ export class ApprovalsPage {
 
   /**
    * Method goToPage
-   * @description Moves to a page within bounds.
+   * @method goToPage
+   *
+   * @description
+   * Moves to a page within bounds.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} target - The requested page.
+   *
    * @returns {void}
    */
   protected goToPage(target: number): void {
@@ -644,9 +1022,14 @@ export class ApprovalsPage {
 
   /**
    * Method reload
-   * @description Re-runs the current query, for the error state's retry.
+   * @method reload
+   *
+   * @description
+   * Re-runs the current query, for the error state's retry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected reload(): void {
@@ -663,10 +1046,16 @@ export class ApprovalsPage {
 
   /**
    * Method openApprove
-   * @description Opens the confirm dialog for approving one row.
+   * @method openApprove
+   *
+   * @description
+   * Opens the confirm dialog for approving one row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ApprovalRequestOutput} request - The row activated.
+   *
    * @returns {void}
    */
   protected openApprove(request: ApprovalRequestOutput): void {
@@ -676,10 +1065,16 @@ export class ApprovalsPage {
 
   /**
    * Method openReject
-   * @description Opens the confirm dialog for rejecting one row.
+   * @method openReject
+   *
+   * @description
+   * Opens the confirm dialog for rejecting one row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ApprovalRequestOutput} request - The row activated.
+   *
    * @returns {void}
    */
   protected openReject(request: ApprovalRequestOutput): void {
@@ -689,10 +1084,16 @@ export class ApprovalsPage {
 
   /**
    * Method openWithdraw
-   * @description Opens the confirm dialog for withdrawing one row.
+   * @method openWithdraw
+   *
+   * @description
+   * Opens the confirm dialog for withdrawing one row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ApprovalRequestOutput} request - The row activated.
+   *
    * @returns {void}
    */
   protected openWithdraw(request: ApprovalRequestOutput): void {
@@ -702,9 +1103,14 @@ export class ApprovalsPage {
 
   /**
    * Method closeDecisionDialog
-   * @description Closes the decision dialog and resets its operation state.
+   * @method closeDecisionDialog
+   *
+   * @description
+   * Closes the decision dialog and resets its operation state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected closeDecisionDialog(): void {
@@ -714,10 +1120,16 @@ export class ApprovalsPage {
 
   /**
    * Method submitDecision
-   * @description Calls the store for the currently opened row, with the confirmed note.
+   * @method submitDecision
+   *
+   * @description
+   * Calls the store for the currently opened row, with the confirmed note.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} note - The trimmed decision note, possibly empty.
+   *
    * @returns {void}
    */
   protected submitDecision(note: string): void {

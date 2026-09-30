@@ -64,11 +64,13 @@ export class ThemeService {
   /**
    * Property faviconOverrideHref
    *
-   * @description Optional browser-tab icon supplied by an owning feature.
+   * @description
+   * Optional browser-tab icon supplied by an owning feature.
    * Theme changes keep the override until that feature clears it.
    *
    * @access private
    * @since 1.4.0
+   *
    * @type {string | null}
    */
   private faviconOverrideHref: string | null = null;
@@ -90,27 +92,39 @@ export class ThemeService {
   /**
    * Property injector
    * @readonly
-   * @description Injection context for waiting until theme-dependent views have rendered.
+   *
+   * @description
+   * Injection context for waiting until theme-dependent views have rendered.
+   *
    * @access private
    * @since 1.4.0
+   *
    * @type {Injector}
    */
   private readonly injector: Injector = inject(Injector);
 
   /**
    * Property activeTransition
-   * @description Current theme animation, replaced when a newer choice arrives.
+   *
+   * @description
+   * Current theme animation, replaced when a newer choice arrives.
+   *
    * @access private
    * @since 1.4.0
+   *
    * @type {ViewTransition | null}
    */
   private activeTransition: ViewTransition | null = null;
 
   /**
    * Property themeChangeId
-   * @description Prevents a skipped transition's deferred callback from applying an old choice.
+   *
+   * @description
+   * Prevents a skipped transition's deferred callback from applying an old choice.
+   *
    * @access private
    * @since 1.4.0
+   *
    * @type {number}
    */
   private themeChangeId: number = 0;
@@ -215,12 +229,15 @@ export class ThemeService {
    * Method setFaviconOverride
    * @method setFaviconOverride
    *
-   * @description Replaces the browser favicon until the caller passes null.
+   * @description
+   * Replaces the browser favicon until the caller passes null.
    * The primary brand icon remains the default across theme changes.
    *
    * @access public
    * @since 1.4.0
+   *
    * @param {string | null} href - Alternate icon URL, or null to restore the default.
+   *
    * @returns {void} - Nothing.
    */
   public setFaviconOverride(href: string | null): void {
@@ -259,6 +276,8 @@ export class ThemeService {
    * @since 1.0.0
    *
    * @param {ThemeMode} mode - The theme mode to set.
+   * @param {{ x: number; y: number }} origin - Viewport coordinates of the circular transition
+   *   origin; omitted to use the center.
    *
    * @returns {void} - Nothing.
    */
@@ -307,9 +326,13 @@ export class ThemeService {
   /**
    * Method canAnimateThemeChange
    * @method canAnimateThemeChange
-   * @description Checks browser support, visibility and the current reduced-motion preference.
+   *
+   * @description
+   * Checks browser support, visibility and the current reduced-motion preference.
+   *
    * @access private
    * @since 1.4.0
+   *
    * @returns {boolean} Whether an explicit appearance change can animate.
    */
   private canAnimateThemeChange(): boolean {
@@ -324,10 +347,15 @@ export class ThemeService {
   /**
    * Method commitTheme
    * @method commitTheme
-   * @description Applies the preference and document colors together inside the snapshot update.
+   *
+   * @description
+   * Applies the preference and document colors together inside the snapshot update.
+   *
    * @access private
    * @since 1.4.0
+   *
    * @param {ThemeMode} mode - Requested preference, including system mode.
+   *
    * @returns {void} Nothing.
    */
   private commitTheme(mode: ThemeMode): void {
@@ -338,9 +366,13 @@ export class ThemeService {
   /**
    * Method cancelThemeTransition
    * @method cancelThemeTransition
-   * @description Invalidates pending updates and releases the previous animation's CSS scope.
+   *
+   * @description
+   * Invalidates pending updates and releases the previous animation's CSS scope.
+   *
    * @access private
    * @since 1.4.0
+   *
    * @returns {void} Nothing.
    */
   private cancelThemeTransition(): void {
@@ -353,10 +385,15 @@ export class ThemeService {
   /**
    * Method finishThemeTransition
    * @method finishThemeTransition
-   * @description Clears animation styles only when the finishing transition still owns them.
+   *
+   * @description
+   * Clears animation styles only when the finishing transition still owns them.
+   *
    * @access private
    * @since 1.4.0
+   *
    * @param {ViewTransition} transition - Settled browser transition.
+   *
    * @returns {void} Nothing.
    */
   private finishThemeTransition(transition: ViewTransition): void {
@@ -368,6 +405,7 @@ export class ThemeService {
 
   /**
    * Method getTheme
+   * @method getTheme
    *
    * @description
    * Gets the current theme mode.
@@ -383,6 +421,7 @@ export class ThemeService {
 
   /**
    * Method getInitialTheme
+   * @method getInitialTheme
    *
    * @description
    * Reads theme from cookie or returns default.
@@ -404,6 +443,7 @@ export class ThemeService {
 
   /**
    * Method persistThemeToCookie
+   * @method persistThemeToCookie
    *
    * @description
    * Persists theme value to cookie.
@@ -427,6 +467,7 @@ export class ThemeService {
 
   /**
    * Method applyThemeToDocument
+   * @method applyThemeToDocument
    *
    * @description
    * Applies the theme attribute to the document's html element.
@@ -474,6 +515,7 @@ export class ThemeService {
 
   /**
    * Method resolveTheme
+   * @method resolveTheme
    *
    * @description
    * Resolves 'system' theme to actual 'light' or 'dark' based on

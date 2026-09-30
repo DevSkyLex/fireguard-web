@@ -14,63 +14,282 @@ import type { ConversationReceiptPositionOutput } from '@features/organization/f
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface MessageThreadState {
-  /** Generation distinguishing repeated visits to the same conversation. */
-  readonly readGeneration: number;
-  /** Conversation the loaded page belongs to, or `null` before the first load. */
-  readonly conversationId: string | null;
-  /** Server-reported total. Paging must be driven from this, not the row count. */
-  readonly total: number;
   /**
-   * Lowest page fetched so far, or `0` before the first load.
+   * Property readGeneration
+   * @readonly
    *
+   * @description
+   * Generation distinguishing repeated visits to the same conversation.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly readGeneration: number;
+
+  /**
+   * Property conversationId
+   * @readonly
+   *
+   * @description
+   * Conversation the loaded page belongs to, or `null` before the first load.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
+  readonly conversationId: string | null;
+
+  /**
+   * Property total
+   * @readonly
+   *
+   * @description
+   * Server-reported total. Paging must be driven from this, not the row count.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly total: number;
+
+  /**
+   * Property oldestLoadedPage
+   * @readonly
+   *
+   * @description
    * The API returns messages oldest-first, so the *last* page holds the newest
    * ones and a thread opens there. Reading history therefore walks page numbers
    * **down** from that page, and this marks how far down it has gone.
+   *
+   * @access public
+   *
+   * @type {number}
    */
   readonly oldestLoadedPage: number;
+
   /**
-   * Highest page fetched so far, or `0` before the first load. This is the
+   * Property newestLoadedPage
+   * @readonly
+   *
+   * @description
    * newest end of the conversation, and the page a background refresh re-reads.
+   *
+   * @access public
+   *
+   * @type {number}
    */
   readonly newestLoadedPage: number;
-  /** `GET /conversations/{id}/messages`. */
-  readonly listCallState: CallState;
-  /** Posting. */
-  readonly postCallState: CallState;
-  /** Local outbox restoration after a successful conversation read. */
-  readonly outboxCallState: CallState;
-  /** Reactions, pins and saves — light, frequent, and worth keeping apart from posting. */
-  readonly interactionCallState: CallState;
-  /** Editing a message — its own state so the edit dialog can busy-lock and show its error inline. */
-  readonly editCallState: CallState;
-  /** Tombstone deletion — its own state so the confirm dialog stays open, busy-locked, until it settles. */
-  readonly deleteCallState: CallState;
+
   /**
-   * Mercure topic the thread is listening on, or `null` when not connected.
+   * Property listCallState
+   * @readonly
    *
+   * @description
+   * `GET /conversations/{id}/messages`.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly listCallState: CallState;
+
+  /**
+   * Property postCallState
+   * @readonly
+   *
+   * @description
+   * Posting.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly postCallState: CallState;
+
+  /**
+   * Property outboxCallState
+   * @readonly
+   *
+   * @description
+   * Local outbox restoration after a successful conversation read.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly outboxCallState: CallState;
+
+  /**
+   * Property interactionCallState
+   * @readonly
+   *
+   * @description
+   * Reactions, pins and saves — light, frequent, and worth keeping apart from posting.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly interactionCallState: CallState;
+
+  /**
+   * Property editCallState
+   * @readonly
+   *
+   * @description
+   * Editing a message — its own state so the edit dialog can busy-lock and show its error inline.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly editCallState: CallState;
+
+  /**
+   * Property deleteCallState
+   * @readonly
+   *
+   * @description
+   * Tombstone deletion — its own state so the confirm dialog stays open, busy-locked, until it
+   * settles.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly deleteCallState: CallState;
+
+  /**
+   * Property realtimeTopic
+   * @readonly
+   *
+   * @description
    * Kept so the store can watch that topic's health and catch up after a
    * reconnection — the hub replays nothing.
+   *
+   * @access public
+   *
+   * @type {string | null}
    */
   readonly realtimeTopic: string | null;
-  /** Browser-confirmed participant positions restored from the API. */
-  readonly receiptPositions: readonly ConversationReceiptPositionOutput[];
-  readonly receiptsCallState: CallState;
-  readonly deliveryCallState: CallState;
-  readonly typingCallState: CallState;
-  /** Avoids repeatedly acknowledging the same loaded message. */
-  readonly lastDeliveryAttemptId: string | null;
-  /** Avoids repeatedly moving the same visible read position. */
-  readonly lastReadAttemptId: string | null;
-  /** Other members with an unexpired typing signal. */
-  readonly typingMemberIds: readonly string[];
+
   /**
-   * Messages shown optimistically that the server has not confirmed yet.
+   * Property receiptPositions
+   * @readonly
    *
+   * @description
+   * Browser-confirmed participant positions restored from the API.
+   *
+   * @access public
+   *
+   * @type {readonly ConversationReceiptPositionOutput[]}
+   */
+  readonly receiptPositions: readonly ConversationReceiptPositionOutput[];
+
+  /**
+   * Property receiptsCallState
+   * @readonly
+   *
+   * @description
+   * Tracks the request state for receipts.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly receiptsCallState: CallState;
+
+  /**
+   * Property deliveryCallState
+   * @readonly
+   *
+   * @description
+   * Tracks the request state for delivery.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly deliveryCallState: CallState;
+
+  /**
+   * Property typingCallState
+   * @readonly
+   *
+   * @description
+   * Tracks the request state for typing.
+   *
+   * @access public
+   *
+   * @type {CallState}
+   */
+  readonly typingCallState: CallState;
+
+  /**
+   * Property lastDeliveryAttemptId
+   * @readonly
+   *
+   * @description
+   * Avoids repeatedly acknowledging the same loaded message.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
+  readonly lastDeliveryAttemptId: string | null;
+
+  /**
+   * Property lastReadAttemptId
+   * @readonly
+   *
+   * @description
+   * Avoids repeatedly moving the same visible read position.
+   *
+   * @access public
+   *
+   * @type {string | null}
+   */
+  readonly lastReadAttemptId: string | null;
+
+  /**
+   * Property typingMemberIds
+   * @readonly
+   *
+   * @description
+   * Other members with an unexpired typing signal.
+   *
+   * @access public
+   *
+   * @type {readonly string[]}
+   */
+  readonly typingMemberIds: readonly string[];
+
+  /**
+   * Property pendingMessageIds
+   * @readonly
+   *
+   * @description
    * Kept beside the collection rather than as a field on `MessageOutput`: the
    * entity mirrors the wire contract, and "not sent yet" is a fact about this
    * client, not about the message.
+   *
+   * @access public
+   *
+   * @type {readonly string[]}
    */
   readonly pendingMessageIds: readonly string[];
-  /** Optimistic messages whose send failed and that are waiting on the member. */
+
+  /**
+   * Property failedMessageIds
+   * @readonly
+   *
+   * @description
+   * Optimistic messages whose send failed and that are waiting on the member.
+   *
+   * @access public
+   *
+   * @type {readonly string[]}
+   */
   readonly failedMessageIds: readonly string[];
 }

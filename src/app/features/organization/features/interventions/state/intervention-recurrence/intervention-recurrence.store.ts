@@ -44,6 +44,16 @@ import type {
 import { interventionRecurrenceStoreEvents } from './events';
 import type { InterventionRecurrenceState } from './models';
 
+/**
+ * Constant INITIAL_STATE
+ *
+ * @description
+ * Provides the data required by this record.
+ *
+ * @access public
+ *
+ * @type {InterventionRecurrenceState}
+ */
 const INITIAL_STATE: InterventionRecurrenceState = {
   organizationIri: null,
   listCallState: idleCallState(),
@@ -53,8 +63,7 @@ const INITIAL_STATE: InterventionRecurrenceState = {
 };
 
 /**
- * Store InterventionRecurrenceStore
- * @const InterventionRecurrenceStore
+ * Constant InterventionRecurrenceStore
  *
  * @description
  * Component-scoped CRUD store for the organization's recurring intervention
@@ -72,6 +81,8 @@ const INITIAL_STATE: InterventionRecurrenceState = {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @constant InterventionRecurrenceStore
  */
 export const InterventionRecurrenceStore = signalStore(
   withEntities({ entity: type<InterventionRecurrenceOutput>(), collection: 'recurrence' }),
@@ -101,10 +112,15 @@ export const InterventionRecurrenceStore = signalStore(
 
       /**
        * Function setOrganization
-       * @description Invalidates reads and command results when the owning organization changes.
-       * @param {string} organizationIri - Organization owning subsequent reads and commands.
-       * @returns {void}
+       *
+       * @description
+       * Invalidates reads and command results when the owning organization changes.
+       *
        * @since 1.0.0
+       *
+       * @param {string} organizationIri - Organization owning subsequent reads and commands.
+       *
+       * @returns {void}
        */
       function setOrganization(organizationIri: string): void {
         if (store.organizationIri() === organizationIri) return;
@@ -118,14 +134,21 @@ export const InterventionRecurrenceStore = signalStore(
 
       return {
         setOrganization,
+
         /**
          * Method load
          * @method load
          *
-         * @description Fetches one server page of recurrences.
+         * @description
+         * Fetches one server page of recurrences.
+         *
          * @access public
          * @since 1.0.0
-         * @type {RxMethod<{ organizationIri: string; options?: InterventionRecurrenceListOptions }>}
+         *
+         * @type {RxMethod<{
+         *   organizationIri: string;
+         *   options?: InterventionRecurrenceListOptions;
+         * }>}
          */
         load: rxMethod<{ organizationIri: string; options?: InterventionRecurrenceListOptions }>(
           pipe(
@@ -164,9 +187,12 @@ export const InterventionRecurrenceStore = signalStore(
          * Method create
          * @method create
          *
-         * @description Creates a recurrence.
+         * @description
+         * Creates a recurrence.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @type {RxMethod<CreateInterventionRecurrenceInput>}
          */
         create: rxMethod<CreateInterventionRecurrenceInput>(
@@ -220,9 +246,12 @@ export const InterventionRecurrenceStore = signalStore(
          * Method update
          * @method update
          *
-         * @description Merge-patches a recurrence — including the active-toggle's own write.
+         * @description
+         * Merge-patches a recurrence — including the active-toggle's own write.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @type {RxMethod<{ recurrenceId: string; input: UpdateInterventionRecurrenceInput }>}
          */
         update: rxMethod<{ recurrenceId: string; input: UpdateInterventionRecurrenceInput }>(
@@ -294,9 +323,12 @@ export const InterventionRecurrenceStore = signalStore(
          * Method remove
          * @method remove
          *
-         * @description Deletes a recurrence. Already-materialized interventions are unaffected.
+         * @description
+         * Deletes a recurrence. Already-materialized interventions are unaffected.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @type {RxMethod<string>}
          */
         remove: rxMethod<string>(
@@ -363,9 +395,12 @@ export const InterventionRecurrenceStore = signalStore(
 
 /**
  * Type InterventionRecurrenceStoreType
- * @type InterventionRecurrenceStoreType
  *
- * @description Instance type of the InterventionRecurrenceStore signal store.
+ * @description
+ * Instance type of the InterventionRecurrenceStore signal store.
+ *
  * @since 1.0.0
+ *
+ * @type InterventionRecurrenceStoreType
  */
 export type InterventionRecurrenceStoreType = InstanceType<typeof InterventionRecurrenceStore>;

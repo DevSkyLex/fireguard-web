@@ -53,8 +53,12 @@ import type { MemberPresenceEntry, MemberPresenceState } from './models/state.in
 
 /**
  * Constant INITIAL_STATE
- * @description Empty session state; presence is never seeded during SSR.
+ *
+ * @description
+ * Empty session state; presence is never seeded during SSR.
+ *
  * @since 1.0.0
+ *
  * @type {MemberPresenceState}
  */
 const INITIAL_STATE: MemberPresenceState = {
@@ -73,9 +77,12 @@ const INITIAL_STATE: MemberPresenceState = {
 };
 
 /**
- * Store MemberPresenceStore
- * @description Root state shared by organization surfaces. Requests and streams are cancelled before
- * context replacement; periodic reconciliation repairs missed push events and expired cache entries.
+ * Constant MemberPresenceStore
+ *
+ * @description
+ * Root state shared by organization surfaces. Requests and streams are cancelled before context
+ * replacement; periodic reconciliation repairs missed push events and expired cache entries.
+ *
  * @since 1.0.0
  */
 export const MemberPresenceStore = signalStore(
@@ -115,7 +122,10 @@ export const MemberPresenceStore = signalStore(
 
       /**
        * Constant refresh
-       * @description Replaces the currently watched snapshot, cancelling an older read when the set changes.
+       *
+       * @description
+       * Replaces the currently watched snapshot, cancelling an older read when the set changes.
+       *
        * @since 1.0.0
        */
       const refresh = rxMethod<void>(
@@ -174,7 +184,11 @@ export const MemberPresenceStore = signalStore(
 
       /**
        * Constant ping
-       * @description Acknowledges this member without modifying their account preference or another device's lease.
+       *
+       * @description
+       * Acknowledges this member without modifying their account preference or another device's
+       * lease.
+       *
        * @since 1.0.0
        */
       const ping = rxMethod<void>(
@@ -218,12 +232,19 @@ export const MemberPresenceStore = signalStore(
 
       /**
        * Function requestSubscription
-       * @description A failed renewal emits null so the renewal loop survives while retaining the existing socket.
+       *
+       * @description
+       * A failed renewal emits null so the renewal loop survives while retaining the existing
+       * socket.
+       *
        * @access private
        * @since 1.0.0
+       *
        * @param {string} organization - Current organization.
        * @param {number} requestGeneration - Session and organization generation.
-       * @returns {Observable<PresenceSubscriptionOutput | null>} Fresh credentials or a recoverable failure.
+       *
+       * @returns {Observable<PresenceSubscriptionOutput | null>} Fresh credentials or a recoverable
+       *   failure.
        */
       function requestSubscription(
         organization: string,
@@ -249,7 +270,10 @@ export const MemberPresenceStore = signalStore(
 
       /**
        * Constant connect
-       * @description One organization stream with credential renewal; events invalidate only tracked members.
+       *
+       * @description
+       * One organization stream with credential renewal; events invalidate only tracked members.
+       *
        * @since 1.0.0
        */
       const connect = rxMethod<void>(
@@ -303,15 +327,23 @@ export const MemberPresenceStore = signalStore(
       return {
         refresh,
         ping,
+
         /**
          * Method configure
          * @method configure
-         * @description Invalidates the old context before accepting a new session, organization or permission scope.
+         *
+         * @description
+         * Invalidates the old context before accepting a new session, organization or permission
+         * scope.
+         *
          * @access public
          * @since 1.0.0
-         * @param {string | null} organizationId - Selected organization with verified active membership.
+         *
+         * @param {string | null} organizationId - Selected organization with verified active
+         *   membership.
          * @param {number} sessionRevision - Auth session identity.
          * @param {boolean} canRead - Presence read permission.
+         *
          * @returns {void}
          */
         configure(organizationId: string | null, sessionRevision: number, canRead: boolean): void {
@@ -332,13 +364,19 @@ export const MemberPresenceStore = signalStore(
             clock: Date.now(),
           });
         },
+
         /**
          * Method watch
          * @method watch
-         * @description Replaces the aggregate set; a consumer-specific registry lives in the coordinator.
+         *
+         * @description
+         * Replaces the aggregate set; a consumer-specific registry lives in the coordinator.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {readonly string[]} memberIds - Current aggregate references.
+         *
          * @returns {void}
          */
         watch(memberIds: readonly string[]): void {
@@ -349,12 +387,17 @@ export const MemberPresenceStore = signalStore(
           patchState(store, { watched });
           refresh();
         },
+
         /**
          * Method resume
          * @method resume
-         * @description Starts browser work once and acknowledges presence before normal interval ticks.
+         *
+         * @description
+         * Starts browser work once and acknowledges presence before normal interval ticks.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         resume(): void {
@@ -364,12 +407,18 @@ export const MemberPresenceStore = signalStore(
           refresh();
           connect();
         },
+
         /**
          * Method pause
          * @method pause
-         * @description Cancels all pending work and releases the stream without deleting a shared server heartbeat.
+         *
+         * @description
+         * Cancels all pending work and releases the stream without deleting a shared server
+         * heartbeat.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         pause(): void {
@@ -378,12 +427,17 @@ export const MemberPresenceStore = signalStore(
           invalidated.next();
           patchState(store, { running: false, realtimeTopic: null, clock: Date.now() });
         },
+
         /**
          * Method tick
          * @method tick
-         * @description Advances freshness even when API requests fail.
+         *
+         * @description
+         * Advances freshness even when API requests fail.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @returns {void}
          */
         tick(): void {
@@ -411,8 +465,12 @@ export const MemberPresenceStore = signalStore(
 
 /**
  * Type MemberPresenceStoreType
- * @type {MemberPresenceStoreType}
- * @description Injectable member presence store instance.
+ *
+ * @description
+ * Injectable member presence store instance.
+ *
  * @since 1.0.0
+ *
+ * @type {MemberPresenceStoreType}
  */
 export type MemberPresenceStoreType = InstanceType<typeof MemberPresenceStore>;

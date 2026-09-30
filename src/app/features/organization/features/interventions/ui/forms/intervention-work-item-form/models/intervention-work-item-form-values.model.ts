@@ -52,7 +52,43 @@ export interface InterventionWorkItemFormValues {
    * @type {string}
    */
   readonly workEndsOn: string;
+
+  /**
+   * Property action
+   * @readonly
+   *
+   * @description
+   * Selects the action represented by this work-item form.
+   *
+   * @access public
+   *
+   * @type {InterventionWorkItemAction}
+   */
   readonly action: InterventionWorkItemAction;
+
+  /**
+   * Property target
+   * @readonly
+   *
+   * @description
+   * Identifies the selected target for this work item.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly target: string;
+
+  /**
+   * Property assignee
+   * @readonly
+   *
+   * @description
+   * Identifies the member assigned to the work item.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
   readonly assignee: string;
 }

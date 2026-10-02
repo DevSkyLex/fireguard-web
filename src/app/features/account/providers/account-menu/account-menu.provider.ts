@@ -1,9 +1,8 @@
 import type { AdditiveSlotFeature } from '@shared/layout-slot';
-import { AccountMenu } from '../../ui/components';
+import { AccountMenu } from '../../ui/components/account-menu';
 
 /**
  * Function withAccountMenu
- * @function withAccountMenu
  *
  * @description
  * Contributes {@link AccountMenu} to a shell's sidebar-footer slot. The shell
@@ -14,6 +13,8 @@ import { AccountMenu } from '../../ui/components';
  * @since 1.0.0
  *
  * @returns {AdditiveSlotFeature} The contribution factory, run by the layout's injector.
+ *
+ * @function withAccountMenu
  *
  * @example
  * ```typescript

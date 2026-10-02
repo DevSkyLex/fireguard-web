@@ -87,10 +87,12 @@ the UI.
   `ui/forms/inspection-create-form`, asking for what
   `CreateInspectionInput` requires — `equipmentId` (a combobox sourced from
   `InspectionCreationOptionsStore`), `result`, `performedAt`, `inspectorType`
-  and `inspectorName` — plus the optional `checklistId` select, sourced from
-  a component-scoped `ChecklistStore` provided on this page
-  (`ChecklistStore.ensureInspectionCreateOptionsLoaded`, active checklists
-  only). `notes` and `signature` are filled in afterward, in place, on the
+  and `inspectorName` — plus the optional `checklistId` combobox. The page's
+  `InspectionCreationOptionsStore` independently pages equipment by 100 and
+  active checklists by 100, matching each API's maximum, with server search,
+  errors and retries. Every page remains accessible beyond 100 records. The form
+  retains the chosen record's label when another page or search is loaded.
+  `notes` and `signature` are filled in afterward, in place, on the
   created record.
 - `ui/pages/inspection-detail-page` (`InspectionDetailPage`) — a header
   naming the record with its status, result and non-conformity count, a
@@ -145,9 +147,9 @@ Primary stores:
   `data-access` barrel — the same cross-feature pattern
   `InterventionPlanningOptionsStore` already established for its own
   site/member pickers)
-- `ChecklistStore` (component-scoped to the list page for the create sheet, imported from the
-  sibling `checklists` feature's `state` barrel; feeds the create form's
-  optional checklist select through `ensureInspectionCreateOptionsLoaded`)
+- The same creation option store consumes `ChecklistService` through the
+  `checklists/data-access` public barrel. Secondary picker reads run only in
+  the browser and cancel when the organization, session or owning page changes.
 
 Primary service:
 

@@ -137,6 +137,20 @@ describe('NonConformityList', () => {
     expect(rows[1].textContent).toContain('Second');
   });
 
+  it('should render an API row with omitted nullable fields without date or note labels', async () => {
+    await createList([
+      nonConformity({ dueAt: undefined, resolvedAt: undefined, notes: undefined }),
+    ]);
+
+    expect(root().querySelector('[data-testid="non-conformity-row"]')?.textContent).toContain(
+      'Pressure gauge out of range',
+    );
+    expect(root().querySelector('[data-testid="non-conformity-due"]')).toBeNull();
+    expect(root().querySelector('[data-testid="non-conformity-resolved"]')).toBeNull();
+    expect(root().querySelector('[data-testid="non-conformity-notes"]')).toBeNull();
+    expect(root().textContent).not.toContain('Overdue');
+  });
+
   it('should not render a status select for a read-only viewer', async () => {
     await createList([nonConformity()], { canWrite: false });
 

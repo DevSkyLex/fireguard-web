@@ -158,8 +158,6 @@ test.describe('Create an account', () => {
 });
 
 test.describe('visual evidence', () => {
-  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
-
   test('renders the registration form à 375px en mode sombre', async ({
     page,
     context,

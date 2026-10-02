@@ -1,6 +1,9 @@
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { Dispatcher, Events } from '@ngrx/signals/events';
+import { of, Subject, throwError } from 'rxjs';
+import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
@@ -15,6 +18,7 @@ import type {
   InterventionOutboxPayloadMap,
   InterventionOutboxType,
 } from '@features/organization/features/interventions/models';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { InterventionSyncService } from '../intervention-sync.service';
 
 function operation<Type extends InterventionOutboxType>(
@@ -33,6 +37,10 @@ function operation<Type extends InterventionOutboxType>(
 
 describe('InterventionSyncService', () => {
   let service: InterventionSyncService;
+  let revision: WritableSignal<number>;
+  let profile: WritableSignal<ShellUserProfile | null>;
+  let organizationId: WritableSignal<string | null>;
+  let sessionEnded: Subject<void>;
   let mockInterventionService: {
     createWorkItem: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
@@ -57,9 +65,14 @@ describe('InterventionSyncService', () => {
     markOutboxConflict: ReturnType<typeof vi.fn>;
     markOutboxFailed: ReturnType<typeof vi.fn>;
     rebaseOutboxRevision: ReturnType<typeof vi.fn>;
+    organizationIdForIntervention: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
+    sessionEnded = new Subject<void>();
+    revision = signal(1);
+    profile = signal<ShellUserProfile | null>({ id: 'account-a' });
+    organizationId = signal<string | null>('org-1');
     mockInterventionService = {
       createWorkItem: vi.fn().mockReturnValue(of({})),
       update: vi.fn().mockReturnValue(of({})),
@@ -84,11 +97,22 @@ describe('InterventionSyncService', () => {
       markOutboxConflict: vi.fn().mockResolvedValue(undefined),
       markOutboxFailed: vi.fn().mockResolvedValue(undefined),
       rebaseOutboxRevision: vi.fn().mockResolvedValue(undefined),
+      organizationIdForIntervention: vi.fn().mockResolvedValue('org-1'),
     };
 
     TestBed.configureTestingModule({
       providers: [
         InterventionSyncService,
+        { provide: Events, useValue: { on: vi.fn(() => sessionEnded) } },
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision: revision, isAuthenticated: signal(true) },
+        },
+        { provide: USER_IDENTITY_PORT, useValue: { profile } },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganizationId: organizationId },
+        },
         {
           provide: InterventionTimeService,
           useValue: {
@@ -107,6 +131,113 @@ describe('InterventionSyncService', () => {
     });
 
     service = TestBed.inject(InterventionSyncService);
+  });
+
+  it.each([
+    { change: 'replacement', response: 'success' },
+    { change: 'same-account return', response: 'success' },
+    { change: 'owner', response: 'failure' },
+    { change: 'organization', response: 'duplicate' },
+  ])('stops after $change and ignores the late $response', async ({ change, response }) => {
+    const held = new Subject<Record<string, never>>();
+    const dispatch = vi.spyOn(TestBed.inject(Dispatcher), 'dispatch');
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'facility.create', { name: 'First.', type: 'building' }),
+      operation('op-2', 'equipment.create', { type: 'fire_extinguisher' }),
+    ]);
+    mockFacilities.createForIntervention.mockReturnValueOnce(held);
+    const pass = service.replayOutbox('org-1', 'intervention-1');
+    await vi.waitFor(() => expect(mockFacilities.createForIntervention).toHaveBeenCalledTimes(1));
+
+    if (change === 'organization') organizationId.set('org-2');
+    else if (change === 'owner') profile.set({ id: 'account-b' });
+    else {
+      revision.set(2);
+      profile.set({ id: 'account-b' });
+      if (change === 'same-account return') {
+        revision.set(3);
+        profile.set({ id: 'account-a' });
+      }
+      sessionEnded.next();
+      expect(held.observed).toBe(false);
+    }
+    if (response === 'success') held.next({});
+    else
+      held.error({
+        status: response === 'duplicate' ? 409 : 403,
+        type: '/problems/client-resource-already-exists',
+      });
+
+    expect(await pass).toBe(0);
+    expect(mockEquipment.createForIntervention).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxConflict).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxFailed).not.toHaveBeenCalled();
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('captures the session before loading the local organization', async () => {
+    let resolveOrganization!: (id: string) => void;
+    mockOffline.organizationIdForIntervention.mockReturnValue(
+      new Promise<string>((resolve) => {
+        resolveOrganization = resolve;
+      }),
+    );
+    const pass = service.replayOutbox('org-1', 'intervention-1');
+    revision.set(2);
+    resolveOrganization('org-1');
+
+    expect(await pass).toBe(0);
+    expect(mockOffline.listOutbox).not.toHaveBeenCalled();
+    expect(mockFacilities.createForIntervention).not.toHaveBeenCalled();
+  });
+
+  it('refuses a replay in an organization other than the local intervention owner', async () => {
+    mockOffline.organizationIdForIntervention.mockResolvedValue('org-2');
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'facility.create', { name: 'Other organization.', type: 'building' }),
+    ]);
+
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+    expect(mockOffline.listOutbox).not.toHaveBeenCalled();
+    expect(mockFacilities.createForIntervention).not.toHaveBeenCalled();
+  });
+
+  it('ignores a conflict lookup that resolves after the session changes', async () => {
+    const held = new Subject<{ revision: number }>();
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'intervention.update', { name: 'Local edit.', revision: 1 }),
+    ]);
+    mockInterventionService.update.mockReturnValue(throwError(() => ({ status: 412 })));
+    mockInterventionService.get.mockReturnValueOnce(held);
+    const pass = service.replayOutbox('org-1', 'intervention-1');
+    await vi.waitFor(() => expect(mockInterventionService.get).toHaveBeenCalledTimes(1));
+    revision.set(2);
+    held.next({ revision: 2 });
+
+    expect(await pass).toBe(0);
+    expect(mockOffline.markOutboxConflict).not.toHaveBeenCalled();
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
+  });
+
+  it('settles a cancelled session without waiting for the old write response', async () => {
+    const held = new Subject<Record<string, never>>();
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'facility.create', { name: 'First.', type: 'building' }),
+      operation('op-2', 'equipment.create', { type: 'fire_extinguisher' }),
+    ]);
+    mockFacilities.createForIntervention.mockReturnValueOnce(held);
+    const pass = service.replayOutbox('org-1', 'intervention-1');
+    await vi.waitFor(() => expect(mockFacilities.createForIntervention).toHaveBeenCalledTimes(1));
+    revision.set(2);
+    sessionEnded.next();
+
+    expect(await pass).toBe(0);
+    expect(held.observed).toBe(false);
+    expect(mockEquipment.createForIntervention).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxFailed).not.toHaveBeenCalled();
   });
 
   it('should replay queued operations in order and dequeue each of them', async () => {

@@ -117,6 +117,28 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
 
 ## Invariants
 
+- **Organization civil time is authoritative.** Feed boundaries, covered days, quick-create,
+  editing and drag-rescheduling use the organization IANA timezone through Luxon. Native grid
+  and picker `Date` values are date-only adapters. Timed midnight ends exclude that final day;
+  all-day ends remain inclusive and submit organization midnight with its explicit offset.
+  Spring DST gaps are rejected. Untouched repeated autumn-hour edits keep their original instant;
+  newly chosen repeated hours use the earlier occurrence.
+- **Shareable calendar state belongs to the route.** `date=yyyy-MM-dd` and `view=month|week|day`
+  restore the civil anchor and displayed view. Invalid values fall back to organization-local today
+  and Month. Toolbar/grid navigation preserves unrelated query parameters. Route/history updates
+  and local navigation share one feed-loading owner, with no duplicate read for an unchanged window.
+- **Facility options are lazy server pages.** The page-scoped `CalendarFacilityOptionsStore`
+  loads only on an open event form in the browser, with named page/selected-value `CallState`
+  fields. Search and page changes remain server-owned; an existing or newly selected facility is
+  resolved independently so later pages preserve its id and label. Errors remain visible with
+  retry. Closing the form or changing organization cancels reads and clears the old context.
+- **Accepted CRUD writes cannot be superseded by double submission.** Create/update/delete guard
+  the current action's pending state; accepted writes finish independently, allowing a new
+  organization to write while a departed context settles. Their callbacks are guarded by the
+  organization visit revision, including A→B→A.
+  Organization changes clear dialogs/drafts, and a draft never submits under a different context.
+  Each start/end group has separate Spartan date/hour fields with individual labels and errors.
+
 - **Completeness is server-owned.** The additive `complete` and `sources` fields distinguish
   unavailable contributors and source truncation. Only authorized sources are described. The page
   keeps available entries visible, offers retry and a one-day window for truncation, and suppresses

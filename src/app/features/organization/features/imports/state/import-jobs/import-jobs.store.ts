@@ -177,8 +177,21 @@ export const ImportJobsStore = signalStore(
               takeUntil(changedOrganization),
               tapResponse({
                 next: (polled) => {
-                  if (scope === organization)
-                    patchState(store, setEntity(polled, { collection: 'job' }), {
+                  if (scope === organization) {
+                    const current = store.jobEntityMap()[job.id];
+                    const preservedReport =
+                      current?.reportPage && current.reportPage > 1
+                        ? {
+                            ...polled,
+                            errorReport: current.errorReport,
+                            reportPage: current.reportPage,
+                            reportItemsPerPage: current.reportItemsPerPage,
+                            reportHasNextPage:
+                              current.reportPage * (current.reportItemsPerPage ?? 100) <
+                              (polled.reportTotal ?? 0),
+                          }
+                        : polled;
+                    patchState(store, setEntity(preservedReport, { collection: 'job' }), {
                       pollCallStates: {
                         ...store.pollCallStates(),
                         [job.id]: ['pending', 'processing'].includes(polled.status)
@@ -186,6 +199,7 @@ export const ImportJobsStore = signalStore(
                           : successCallState(null),
                       },
                     });
+                  }
                 },
                 error: (error: unknown) => {
                   if (scope === organization)
@@ -239,7 +253,20 @@ export const ImportJobsStore = signalStore(
             service.list(organizationId, options, query).pipe(
               tapResponse({
                 next: (response: HydraCollection<ImportJobOutput>): void => {
-                  patchState(store, setEntities([...response.member], { collection: 'job' }), {
+                  const rows = response.member.map((summary) => {
+                    const current = store.jobEntityMap()[summary.id];
+                    return current?.reportPage
+                      ? {
+                          ...summary,
+                          errorReport: current.errorReport,
+                          reportPage: current.reportPage,
+                          reportItemsPerPage: current.reportItemsPerPage,
+                          reportTotal: current.reportTotal,
+                          reportHasNextPage: current.reportHasNextPage,
+                        }
+                      : summary;
+                  });
+                  patchState(store, setEntities(rows, { collection: 'job' }), {
                     visibleIds: response.member.map((job) => job.id),
                     totalJobs: response.totalItems,
                     listCallState: successCallState(null),
@@ -483,14 +510,18 @@ export const ImportJobsStore = signalStore(
          *
          * @returns {void}
          */
-        refresh: rxMethod<string>(
+        refresh: rxMethod<string | { jobId: string; reportPage: number }>(
           pipe(
-            mergeMap((jobId) => {
+            switchMap((input) => {
+              const { jobId, reportPage } =
+                typeof input === 'string' ? { jobId: input, reportPage: undefined } : input;
               const scope = organization;
               patchState(store, {
                 pollCallStates: { ...store.pollCallStates(), [jobId]: pendingCallState() },
               });
-              return service.get(jobId).pipe(
+              const request =
+                reportPage === undefined ? service.get(jobId) : service.get(jobId, reportPage);
+              return request.pipe(
                 takeUntil(changedOrganization),
                 tapResponse({
                   next: (job) => {

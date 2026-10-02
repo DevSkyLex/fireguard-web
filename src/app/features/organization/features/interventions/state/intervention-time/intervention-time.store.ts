@@ -1,6 +1,14 @@
-import { inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, DOCUMENT, effect, inject, PLATFORM_ID } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { withEntities, setAllEntities, removeAllEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
@@ -43,9 +51,42 @@ const initialState: InterventionTimeState = {
   writeCallState: idleCallState(),
   draftCallState: idleCallState(),
   draft: null,
+  persistedDraft: null,
+  draftPersistenceFailed: false,
   offline: false,
   historyUnavailable: false,
 };
+
+/**
+ * Function sameDraft
+ *
+ * @description
+ * Compares input content with its durable snapshot so rereading an equivalent object stays safe.
+ *
+ * @access private
+ * @since unreleased
+ *
+ * @param {InterventionTimeDraft | null} left - Latest input.
+ * @param {InterventionTimeDraft | null} right - Confirmed device snapshot.
+ *
+ * @returns {boolean} Whether both drafts represent the same version of the input.
+ */
+function sameDraft(
+  left: InterventionTimeDraft | null,
+  right: InterventionTimeDraft | null,
+): boolean {
+  return (
+    left === right ||
+    (left !== null &&
+      right !== null &&
+      left.id === right.id &&
+      left.memberId === right.memberId &&
+      left.workedOn === right.workedOn &&
+      left.minutes === right.minutes &&
+      left.note === right.note &&
+      left.baseRevision === right.baseRevision)
+  );
+}
 
 /**
  * Constant InterventionTimeStore
@@ -61,6 +102,26 @@ const initialState: InterventionTimeState = {
 export const InterventionTimeStore = signalStore(
   withState<InterventionTimeState>(initialState),
   withEntities<InterventionTimeEntryView>(),
+  withComputed((store) => ({
+    /**
+     * Property hasUnpersistedFailedDraft
+     * @readonly
+     *
+     * @description
+     * Distinguishes input at risk on browser close from durable drafts and failed network writes.
+     *
+     * @access public
+     * @since unreleased
+     *
+     * @type {Signal<boolean>}
+     */
+    hasUnpersistedFailedDraft: computed(
+      () =>
+        store.draftPersistenceFailed() &&
+        store.draft() !== null &&
+        !sameDraft(store.draft(), store.persistedDraft()),
+    ),
+  })),
   withMethods((store, journal = inject(InterventionTimeJournalService)) => ({
     /**
      * Method load
@@ -93,6 +154,7 @@ export const InterventionTimeStore = signalStore(
               next: (value) =>
                 patchState(store, setAllEntities([...value.entries]), {
                   readCallState: successCallState(null),
+                  persistedDraft: value.draft,
                   ...(['pending', 'error'].includes(store.draftCallState().status)
                     ? {}
                     : { draft: value.draft }),
@@ -154,14 +216,23 @@ export const InterventionTimeStore = signalStore(
               ).pipe(
                 tapResponse({
                   next: () => {
-                    if (current() && store.draft() === request.draft)
+                    if (current())
                       patchState(store, {
-                        draftCallState: successCallState(null),
+                        persistedDraft: request.draft,
+                        ...(store.draft() === request.draft
+                          ? {
+                              draftCallState: successCallState(null),
+                              draftPersistenceFailed: false,
+                            }
+                          : {}),
                       });
                   },
                   error: (error: unknown) => {
                     if (current() && store.draft() === request.draft)
-                      patchState(store, { draftCallState: errorCallState(toStoreError(error)) });
+                      patchState(store, {
+                        draftCallState: errorCallState(toStoreError(error)),
+                        draftPersistenceFailed: true,
+                      });
                   },
                 }),
               );
@@ -242,6 +313,37 @@ export const InterventionTimeStore = signalStore(
       if (store.writeCallState().status === 'pending') return;
       patchState(store, { draft: request.draft, draftCallState: pendingCallState() });
       store['_persist']({ kind: 'draft', ...request });
+    },
+  })),
+  withHooks((store, document = inject(DOCUMENT), platform = inject(PLATFORM_ID)) => ({
+    onInit(): void {
+      if (!isPlatformBrowser(platform)) return;
+      const view = document.defaultView;
+      if (!view) return;
+      effect((onCleanup) => {
+        if (!store.hasUnpersistedFailedDraft()) return;
+        /**
+         * Function beforeUnload
+         *
+         * @description
+         * Requests the browser's native warning only while failed local input remains volatile.
+         * Browsers may suppress this event or prompt, especially on mobile.
+         *
+         * @access private
+         * @since unreleased
+         *
+         * @param {BeforeUnloadEvent} event - Browser document departure.
+         *
+         * @returns {void}
+         */
+        const beforeUnload = (event: BeforeUnloadEvent): void => {
+          if (!store.hasUnpersistedFailedDraft()) return;
+          event.preventDefault();
+          event.returnValue = '';
+        };
+        view.addEventListener('beforeunload', beforeUnload);
+        onCleanup(() => view.removeEventListener('beforeunload', beforeUnload));
+      });
     },
   })),
 );

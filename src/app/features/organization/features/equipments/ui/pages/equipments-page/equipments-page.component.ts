@@ -29,6 +29,7 @@ import {
   lucideQrCode,
   lucideTag,
 } from '@ng-icons/lucide';
+import { Events } from '@ngrx/signals/events';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import { debounceTime, distinctUntilChanged, take } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
@@ -53,6 +54,10 @@ import {
   type EquipmentKpisStoreType,
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
+import {
+  EquipmentLabelsStore,
+  equipmentLabelsStoreEvents,
+} from '@features/organization/features/equipments/state/equipment-labels';
 import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
@@ -74,6 +79,7 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { EquipmentKpiStrip } from '../../components/equipment-kpi-strip';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
+import { EquipmentLabelsDialog } from '../../dialogs/equipment-labels-dialog';
 import { EquipmentCreateSheet } from '../../sheets/equipment-create-sheet';
 import { EquipmentTable } from '../../tables/equipment-table';
 
@@ -107,7 +113,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
 ];
 
 /**
- * Component EquipmentsPage
+ * Class EquipmentsPage
  * @class EquipmentsPage
  *
  * @description
@@ -134,6 +140,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
 @Component({
   selector: 'app-equipments-page',
   imports: [
+    EquipmentLabelsDialog,
     NgIcon,
     ...HlmEmptyImports,
     ResourceIllustration,
@@ -152,6 +159,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     HlmSpinner,
   ],
   providers: [
+    EquipmentLabelsStore,
     FacilityOptionsStore,
     provideIcons({
       lucideCircleAlert,
@@ -246,6 +254,33 @@ export class EquipmentsPage {
   //#endregion
 
   //#region Properties
+  /**
+   * Property labelsStore
+   * @readonly
+   *
+   * @description
+   * Owns count previews and exports for explicit QR printing scopes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentLabelsStore}
+   */
+  protected readonly labelsStore: EquipmentLabelsStore = inject(EquipmentLabelsStore);
+
+  /**
+   * Property labelsDialogVisible
+   * @readonly
+   *
+   * @description
+   * Opens the scope sheet before any PDF export is requested.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly labelsDialogVisible: WritableSignal<boolean> = signal(false);
   /**
    * Property store
    * @readonly
@@ -357,9 +392,11 @@ export class EquipmentsPage {
    * @access protected
    * @since unreleased
    *
-   * @type {WritableSignal<boolean>}
+   * @type {Signal<boolean>}
    */
-  protected readonly labelsBusy: WritableSignal<boolean> = signal<boolean>(false);
+  protected readonly labelsBusy: Signal<boolean> = computed(
+    () => this.labelsStore.printCallState().status === 'pending',
+  );
 
   /**
    * Property permissions
@@ -449,7 +486,7 @@ export class EquipmentsPage {
    * @type {WritableSignal<{
    *   readonly type: EquipmentType | null;
    *   readonly status: EquipmentStatus | null;
-   * }>}
+   * }>} >}
    */
   protected readonly filters: WritableSignal<{
     readonly type: EquipmentType | null;
@@ -578,8 +615,7 @@ export class EquipmentsPage {
    * @type {Signal<boolean>}
    */
   protected readonly labelsDisabled: Signal<boolean> = computed(
-    (): boolean =>
-      this.store.isLoadingEquipment() || this.labelsBusy() || this.store.totalEquipment() === 0,
+    (): boolean => this.store.isLoadingEquipment() || this.labelsBusy(),
   );
 
   /**
@@ -899,6 +935,24 @@ export class EquipmentsPage {
    * @since 1.0.0
    */
   public constructor() {
+    inject(Events)
+      .on(equipmentLabelsStoreEvents.printReady)
+      .pipe(takeUntilDestroyed())
+      .subscribe(({ payload }) => {
+        if (payload.organizationId !== this.organizationId()) return;
+        this.browserDownload.trigger(
+          payload.blob,
+          `equipment-labels-${payload.organizationId}.pdf`,
+        );
+      });
+    this.destroyRef.onDestroy(() => this.labelsStore.clear());
+    effect(() => {
+      this.organizationId();
+      untracked(() => {
+        this.labelsDialogVisible.set(false);
+        this.labelsStore.clear();
+      });
+    });
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
 
     effect((): void => {
@@ -1253,29 +1307,10 @@ export class EquipmentsPage {
    * @returns {void}
    */
   protected printLabels(): void {
-    if (this.labelsBusy() || this.store.totalEquipment() === 0) return;
-
-    this.labelsBusy.set(true);
-
-    this.equipmentService
-      .exportLabels(this.organizationId())
-      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (blob: Blob): void => {
-          this.labelsBusy.set(false);
-          this.browserDownload.trigger(blob, `equipment-labels-${this.organizationId()}.pdf`);
-        },
-        error: (error: HttpErrorResponse): void => {
-          this.labelsBusy.set(false);
-          void resolveCsvExportErrorDetail(error).then((detail: string | null): void => {
-            this.feedback.error(
-              detail ?? $localize`:@@equipment.list.labelsFailed:Couldn't print the QR labels.`,
-            );
-          });
-        },
-      });
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.facilityOptionsStore.ensureLoaded(this.organizationId());
+    this.labelsDialogVisible.set(true);
   }
-
   /**
    * Method reload
    * @method reload

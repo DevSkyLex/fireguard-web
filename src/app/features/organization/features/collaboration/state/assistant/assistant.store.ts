@@ -1,4 +1,5 @@
-import { computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -19,9 +20,12 @@ import {
   of,
   pipe,
   switchMap,
+  Subject,
+  takeUntil,
   tap,
   timer,
 } from 'rxjs';
+import type { HydraCollection } from '@core/api/models';
 import { CookieService } from '@core/cookie';
 import { MercureService } from '@core/mercure';
 import {
@@ -33,6 +37,7 @@ import {
   successCallState,
   toStoreError,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import {
   ASSISTANT_MESSAGES_PAGE_SIZE,
@@ -74,12 +79,17 @@ const INITIAL_THREAD_STATE = {
   topic: null,
   messages: [],
   messagesTotal: 0,
+  messagesPage: 0,
+  earlierCallState: idleCallState(),
   threadCallState: idleCallState(),
   askCallState: idleCallState(),
   controlCallState: idleCallState(),
   generatingMessageId: null,
   generationStalled: false,
-} satisfies Omit<AssistantState, 'panelOpen'>;
+} satisfies Omit<
+  AssistantState,
+  'panelOpen' | 'threads' | 'historyPage' | 'historyTotal' | 'historyCallState'
+>;
 
 /**
  * Constant INITIAL_STATE
@@ -94,6 +104,10 @@ const INITIAL_THREAD_STATE = {
 const INITIAL_STATE: AssistantState = {
   ...INITIAL_THREAD_STATE,
   panelOpen: false,
+  threads: [],
+  historyPage: 1,
+  historyTotal: 0,
+  historyCallState: idleCallState(),
 };
 
 /**
@@ -156,39 +170,68 @@ function toFrame(message: AssistantMessageOutput): AssistantFrame {
 export const AssistantStore = signalStore(
   withState<AssistantState>(INITIAL_STATE),
 
-  withComputed((store, permissions = inject(OrganizationPermissionService)) => ({
-    /**
-     * @description
-     * Whether the member may use the assistant at all.
-     * Every endpoint is guarded by this permission, so without it the panel
-     * and its toggle must not appear — a control whose only outcome is a 403
-     * is worse than no control.
-     */
-    isAvailable: computed((): boolean =>
-      permissions.hasPermission(ORGANIZATION_PERMISSION.ASSISTANT_USE),
-    ),
+  withComputed(
+    (
+      store,
+      permissions = inject(OrganizationPermissionService),
+      authSession = inject(AUTH_SESSION_PORT),
+    ) => ({
+      /**
+       * Property isHistoryLoading
+       *
+       * @description
+       * Whether the history page is being refreshed.
+       */
+      isHistoryLoading: computed((): boolean => isCallPending(store.historyCallState())),
+      /**
+       * Property historyError
+       *
+       * @description
+       * Recoverable history query error.
+       */
+      historyError: computed((): StoreError | null => store.historyCallState().error),
+      /**
+       * Property isEarlierLoading
+       *
+       * @description
+       * Whether an older message page is loading.
+       */
+      isEarlierLoading: computed((): boolean => isCallPending(store.earlierCallState())),
+      /**
+       * @description
+       * Whether the member may use the assistant at all.
+       * Every endpoint is guarded by this permission, so without it the panel
+       * and its toggle must not appear — a control whose only outcome is a 403
+       * is worse than no control.
+       */
+      isAvailable: computed(
+        (): boolean =>
+          authSession.isAuthenticated() &&
+          permissions.hasPermission(ORGANIZATION_PERMISSION.ASSISTANT_USE),
+      ),
 
-    isLoading: computed((): boolean => isCallPending(store.threadCallState())),
-    isControlling: computed((): boolean => isCallPending(store.controlCallState())),
-    controlError: computed((): StoreError | null => store.controlCallState().error),
-    isAsking: computed((): boolean => isCallPending(store.askCallState())),
-    loadError: computed((): StoreError | null => store.threadCallState().error),
-    askError: computed((): StoreError | null => store.askCallState().error),
+      isLoading: computed((): boolean => isCallPending(store.threadCallState())),
+      isControlling: computed((): boolean => isCallPending(store.controlCallState())),
+      controlError: computed((): StoreError | null => store.controlCallState().error),
+      isAsking: computed((): boolean => isCallPending(store.askCallState())),
+      loadError: computed((): StoreError | null => store.threadCallState().error),
+      askError: computed((): StoreError | null => store.askCallState().error),
 
-    /**
-     * @description
-     * Whether a reply is being produced right now.
-     */
-    isGenerating: computed((): boolean => store.generatingMessageId() !== null),
+      /**
+       * @description
+       * Whether a reply is being produced right now.
+       */
+      isGenerating: computed((): boolean => store.generatingMessageId() !== null),
 
-    /**
-     * @description
-     * Whether turns exist before the loaded page.
-     * Surfaced rather than paged: messages come back oldest-first with a plain
-     * offset, so a correct history pager is its own design problem.
-     */
-    hasEarlierMessages: computed((): boolean => store.messagesTotal() > store.messages().length),
-  })),
+      /**
+       * @description
+       * Whether turns exist before the loaded page.
+       * Surfaced rather than paged: messages come back oldest-first with a plain
+       * offset, so a correct history pager is its own design problem.
+       */
+      hasEarlierMessages: computed((): boolean => store.messagesTotal() > store.messages().length),
+    }),
+  ),
 
   withMethods(
     (
@@ -197,12 +240,14 @@ export const AssistantStore = signalStore(
       mercure = inject(MercureService),
       cookies = inject(CookieService),
       organizationContext = inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT),
+      platformId: object = inject(PLATFORM_ID),
     ) => {
       /**
        * @description
        * Bare id of the organization the panel is scoped to, from the URL.
        */
       let scopeRevision = 0;
+      const scopeCancelled = new Subject<void>();
 
       function organizationId(): string | null {
         return organizationContext.selectedOrganizationId();
@@ -287,6 +332,10 @@ export const AssistantStore = signalStore(
           threadId: detail.id,
           messages,
           messagesTotal: Math.max(detail.messagesTotal, messages.length),
+          messagesPage:
+            store.messagesPage() === 0
+              ? detail.messagesPage
+              : Math.min(store.messagesPage(), detail.messagesPage),
           generatingMessageId: generating,
           generationStalled: false,
         });
@@ -423,6 +472,7 @@ export const AssistantStore = signalStore(
 
             const revision = scopeRevision;
             return readLatest(organization, threadId).pipe(
+              takeUntil(scopeCancelled),
               tapResponse({
                 next: (detail: AssistantThreadDetailOutput): void => {
                   if (scopeRevision !== revision) return;
@@ -450,6 +500,94 @@ export const AssistantStore = signalStore(
         ),
       );
 
+      /**
+       * Method loadHistory
+       * @method loadHistory
+       *
+       * @description
+       * Loads a browser-only history page and fences obsolete organization responses.
+       */
+      const loadHistory = rxMethod<number>(
+        pipe(
+          switchMap((page: number) => {
+            const organization = organizationId();
+            if (!isPlatformBrowser(platformId) || !organization || !store.isAvailable())
+              return EMPTY;
+            const revision = scopeRevision;
+            patchState(store, {
+              historyPage: Math.max(1, page),
+              historyCallState: pendingCallState(),
+            });
+            return service.listThreads(organization, Math.max(1, page)).pipe(
+              takeUntil(scopeCancelled),
+              tapResponse({
+                next: (response: HydraCollection<AssistantThreadOutput>): void => {
+                  if (scopeRevision !== revision) return;
+                  patchState(store, {
+                    threads: response.member,
+                    historyTotal: response.totalItems,
+                    historyCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown): void => {
+                  if (scopeRevision !== revision) return;
+                  patchState(store, { historyCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            );
+          }),
+        ),
+      );
+
+      /**
+       * Method loadEarlier
+       * @method loadEarlier
+       *
+       * @description
+       * Prepends an earlier server page without replacing accepted or streamed turns.
+       */
+      const loadEarlier = rxMethod<void>(
+        exhaustMap(() => {
+          const organization = organizationId();
+          const threadId = store.threadId();
+          if (
+            !isPlatformBrowser(platformId) ||
+            !store.isAvailable() ||
+            !organization ||
+            !threadId ||
+            store.messagesPage() <= 1
+          )
+            return EMPTY;
+          const revision = scopeRevision;
+          const page = store.messagesPage() - 1;
+          patchState(store, { earlierCallState: pendingCallState() });
+          return service.getThread(organization, threadId, page).pipe(
+            takeUntil(scopeCancelled),
+            tapResponse({
+              next: (detail: AssistantThreadDetailOutput): void => {
+                if (scopeRevision !== revision) return;
+                const current = store.messages();
+                patchState(store, {
+                  messages: [
+                    ...detail.messages.filter(
+                      (message) => !current.some((item) => item.id === message.id),
+                    ),
+                    ...current,
+                  ],
+                  messagesPage: page,
+                  messagesTotal: Math.max(detail.messagesTotal, current.length),
+                  earlierCallState: successCallState(null),
+                });
+              },
+              error: (error: unknown): void => {
+                if (scopeRevision !== revision) return;
+                patchState(store, { earlierCallState: errorCallState(toStoreError(error)) });
+              },
+            }),
+          );
+        }),
+      );
+
       const controlAttempt = rxMethod<{ messageId: string; retry: boolean }>(
         pipe(
           exhaustMap(({ messageId, retry }) => {
@@ -468,6 +606,7 @@ export const AssistantStore = signalStore(
             return service
               .controlAttempt(organization, threadId, messageId, message.attemptId, retry)
               .pipe(
+                takeUntil(scopeCancelled),
                 tapResponse({
                   next: (reply) => {
                     if (scopeRevision !== revision) return;
@@ -486,6 +625,36 @@ export const AssistantStore = signalStore(
       );
 
       return {
+        loadHistory,
+        loadEarlier,
+        /**
+         * Method selectThread
+         * @method selectThread
+         *
+         * @description
+         * Opens a chosen private history record through the existing thread read and subscription.
+         *
+         * @param {string} threadId - Server-owned conversation identity.
+         *
+         * @returns {void}
+         */
+        selectThread(threadId: string): void {
+          const organization = organizationId();
+          if (!store.isAvailable() || !organization || store.isAsking() || store.isControlling())
+            return;
+          ++scopeRevision;
+          scopeCancelled.next();
+          watchForStall(null);
+          connect(null);
+          patchState(store, {
+            ...INITIAL_THREAD_STATE,
+            threadId,
+            historyCallState: idleCallState(),
+          });
+          rememberThread(organization, threadId);
+          connect(threadId);
+          loadThread(threadId);
+        },
         controlAttempt,
 
         /**
@@ -499,11 +668,19 @@ export const AssistantStore = signalStore(
         resume: rxMethod<string | null>(
           tap((organization: string | null): void => {
             ++scopeRevision;
+            scopeCancelled.next();
             watchForStall(null);
             connect(null);
-            patchState(store, { ...INITIAL_THREAD_STATE });
+            patchState(store, {
+              ...INITIAL_THREAD_STATE,
+              threads: [],
+              historyPage: 1,
+              historyTotal: 0,
+              historyCallState: idleCallState(),
+            });
 
-            if (organization === null) return;
+            if (organization === null || !store.isAvailable() || !isPlatformBrowser(platformId))
+              return;
 
             const remembered: string | null = cookies.getCookie<string>(cookieName(organization));
 
@@ -547,6 +724,7 @@ export const AssistantStore = signalStore(
                 : of(threadId as string);
 
               return thread.pipe(
+                takeUntil(scopeCancelled),
                 switchMap((id: string) =>
                   scopeRevision !== revision
                     ? EMPTY
@@ -609,6 +787,7 @@ export const AssistantStore = signalStore(
          */
         startNewThread(): void {
           ++scopeRevision;
+          scopeCancelled.next();
           const organization: string | null = organizationId();
 
           if (organization !== null) rememberThread(organization, null);
@@ -651,9 +830,23 @@ export const AssistantStore = signalStore(
   ),
 
   withHooks(
-    (store, organizationContext = inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT)) => ({
+    (
+      store,
+      organizationContext = inject<OrganizationContextPort>(ORGANIZATION_CONTEXT_PORT),
+      authSession = inject(AUTH_SESSION_PORT),
+    ) => ({
       onInit(): void {
-        store.resume(organizationContext.selectedOrganizationId);
+        let previousRevision = authSession.sessionRevision();
+        effect(() => {
+          const organization = organizationContext.selectedOrganizationId();
+          const revision = authSession.sessionRevision();
+          const authenticated = authSession.isAuthenticated();
+          untracked(() => {
+            if (revision !== previousRevision) store.startNewThread();
+            previousRevision = revision;
+            store.resume(authenticated ? organization : null);
+          });
+        });
       },
     }),
   ),

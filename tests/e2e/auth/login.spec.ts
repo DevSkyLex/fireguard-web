@@ -72,8 +72,6 @@ test.describe('Sign in', () => {
 });
 
 test.describe('visual evidence', () => {
-  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
-
   test('renders the sign-in form à 375px en mode sombre', async ({
     page,
     context,

@@ -1,0 +1,106 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="visible() ? 'open' : 'closed'"
+  [disableClose]="printCallState().status === 'pending'"
+  (stateChanged)="visibleChange.emit($event === 'open')"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-w-none! overflow-y-auto mobile-ui:max-h-[85svh] desktop-ui:w-[min(540px,100vw)]!"
+    data-testid="equipment-labels-dialog"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@equipment.labels.title">Print QR labels</h3>
+      <p hlmSheetDescription i18n="@@equipment.labels.description">
+        Choose the equipment to label. Each PDF supports up to 500 labels.
+      </p>
+    </hlm-sheet-header>
+    <fieldset hlmFieldSet class="px-4">
+      <legend hlmFieldLegend i18n="@@equipment.labels.scope">Equipment scope</legend>
+      <hlm-toggle-group type="single" [value]="model().mode" (valueChange)="setMode($event)">
+        <button hlmToggleGroupItem value="selection" i18n="@@equipment.labels.selection">
+          Selected equipment
+        </button>
+        <button hlmToggleGroupItem value="facility" i18n="@@equipment.labels.facility">
+          One facility
+        </button>
+        <button hlmToggleGroupItem value="inventory" i18n="@@equipment.labels.inventory">
+          Whole inventory
+        </button>
+      </hlm-toggle-group>
+      @if (model().mode === 'facility') {
+        <app-facility-option-picker
+          [formField]="labelForm.facilityId"
+          [options]="facilityOptions()"
+          [page]="facilityPage()"
+          [pageCount]="facilityPageCount()"
+          [callState]="facilityCallState()"
+          (searchChanged)="facilitySearchChanged.emit($event)"
+          (pageChanged)="facilityPageChanged.emit($event)"
+        />
+      } @else if (model().mode === 'selection') {
+        <p hlmFieldDescription i18n="@@equipment.labels.visibleSelection">
+          Select equipment from the current list page.
+        </p>
+        <div class="flex flex-col gap-3">
+          @for (item of items(); track item.id) {
+            <div hlmField orientation="horizontal">
+              <hlm-checkbox
+                [id]="'label-' + item.id"
+                [checked]="model().ids.includes(item.id)"
+                (checkedChange)="toggleId(item.id)"
+              />
+              <label hlmFieldLabel [for]="'label-' + item.id">{{ equipmentLabel(item) }}</label>
+            </div>
+          }
+        </div>
+      }
+      <p class="text-sm" role="status" aria-live="polite" i18n="@@equipment.labels.count">
+        {{ count() }} labels selected
+      </p>
+      @if (count() > 500) {
+        <p class="text-sm text-destructive" role="alert" i18n="@@equipment.labels.tooMany">
+          Choose a facility or select up to 500 equipment records.
+        </p>
+      }
+      @if (previewCallState().error; as error) {
+        <p class="text-sm text-destructive" role="alert">{{ error.message }}</p>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          (click)="scopeChanged.emit(scope())"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      }
+      @if (printCallState().error; as error) {
+        <p class="text-sm text-destructive" role="alert">{{ error.message }}</p>
+      }
+    </fieldset>
+    <hlm-sheet-footer>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        [disabled]="printCallState().status === 'pending'"
+        (click)="visibleChange.emit(false)"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        [disabled]="!canPrint()"
+        [attr.aria-busy]="printCallState().status === 'pending'"
+        (click)="submitted.emit(scope())"
+        data-testid="equipment-labels-submit"
+        i18n="@@equipment.labels.print"
+      >
+        Print labels
+      </button>
+    </hlm-sheet-footer>
+  </hlm-sheet-content>
+</hlm-sheet>

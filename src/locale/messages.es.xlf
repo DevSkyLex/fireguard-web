@@ -1295,8 +1295,8 @@
         <target>Elija una instalación en la jerarquía para ver su resumen de cumplimiento.</target>
       </trans-unit>
       <trans-unit id="org.assets.compliance.summaryTitle" datatype="html">
-        <source>Compliance summary</source>
-        <target>Resumen de cumplimiento</target>
+        <source>Monitoring summary</source>
+        <target>Resumen del seguimiento</target>
       </trans-unit>
       <trans-unit id="org.assets.compliance.summaryError" datatype="html">
         <source>Couldn't load the compliance summary.</source>
@@ -1449,8 +1449,8 @@
         <target>No conformidades abiertas</target>
       </trans-unit>
       <trans-unit id="complianceBucket.ok" datatype="html">
-        <source>Compliant</source>
-        <target>Conforme</target>
+        <source>Up to date</source>
+        <target>Al día</target>
       </trans-unit>
       <trans-unit id="complianceBucket.attention" datatype="html">
         <source>Needs attention</source>
@@ -8151,8 +8151,8 @@
         <target> Plazo de resolución de no conformidades </target>
       </trans-unit>
       <trans-unit id="org.settings.compliance.slaDescription" datatype="html">
-        <source> Days allowed to resolve a non-conformity, by severity. </source>
-        <target> Días permitidos para resolver una no conformidad, según la gravedad. </target>
+        <source> Resolution deadline configured by the organization, in days for each severity. </source>
+        <target>Plazo de resolución configurado por la organización, en días para cada nivel de gravedad.</target>
       </trans-unit>
       <trans-unit id="org.settings.compliance.customizedBadge" datatype="html">
         <source>Customized</source>
@@ -8163,8 +8163,8 @@
         <target> Periodicidad de las inspecciones </target>
       </trans-unit>
       <trans-unit id="org.settings.compliance.periodicityDescription" datatype="html">
-        <source> How often each equipment type must be inspected. </source>
-        <target> Frecuencia con la que debe inspeccionarse cada tipo de equipo. </target>
+        <source> Default inspection interval configured for each equipment type. </source>
+        <target>Periodicidad predeterminada configurada para cada tipo de equipo.</target>
       </trans-unit>
       <trans-unit id="org.settings.compliance.reminderTitle" datatype="html">
         <source> Reminders </source>
@@ -16985,6 +16985,243 @@
       <trans-unit id="messages.row.seenBy" datatype="html">
         <source>Seen by <x id="INTERPOLATION"/></source>
         <target>Visto por <x id="INTERPOLATION"/></target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.addressTooLong" datatype="html">
+        <source>This address field is too long</source>
+        <target>Este campo de dirección es demasiado largo</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.privacyEmailInvalid" datatype="html">
+        <source>Enter a valid email address</source>
+        <target>Introduce una dirección de correo electrónico válida</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.privacyEmailTooLong" datatype="html">
+        <source>This email address is too long</source>
+        <target>Esta dirección de correo electrónico es demasiado larga</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.missingDocumentIdentity" datatype="html">
+        <source> Add a registered legal name and office address to identify the entity in documents. You can continue with a partial profile. </source>
+        <target>Añade el nombre legal y el domicilio social para identificar la entidad en los documentos. Puedes continuar con un perfil parcial.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.addressLegend" datatype="html">
+        <source> Registered office (optional) </source>
+        <target>Domicilio social (opcional)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.addressDescription" datatype="html">
+        <source> The legal entity&apos;s address, which may differ from an operational site&apos;s address. </source>
+        <target>Dirección de la entidad jurídica, que puede ser distinta de la de un establecimiento.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.address.line1Label" datatype="html">
+        <source>Address line 1</source>
+        <target>Dirección — línea 1</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.address.line2Label" datatype="html">
+        <source>Address line 2</source>
+        <target>Dirección — línea 2</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.address.postalCodeLabel" datatype="html">
+        <source>Postal code</source>
+        <target>Código postal</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.address.cityLabel" datatype="html">
+        <source>City</source>
+        <target>Ciudad</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.address.regionLabel" datatype="html">
+        <source>Region</source>
+        <target>Región</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.address.countryLabel" datatype="html">
+        <source>Country code</source>
+        <target>País del domicilio social (código ISO)</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.privacyEmailLabel" datatype="html">
+        <source>Data protection contact</source>
+        <target>Contacto de protección de datos</target>
+      </trans-unit>
+      <trans-unit id="org.settings.legal.privacyEmailDescription" datatype="html">
+        <source> Optional email for requests about personal data processed by this organization. This contact does not designate a data protection officer. </source>
+        <target>Correo electrónico opcional para solicitudes sobre los datos personales tratados por esta organización. Este contacto no designa a un delegado de protección de datos.</target>
+      </trans-unit>
+      <trans-unit id="org.more.privacyContactTitle" datatype="html">
+        <source> Data protection contact </source>
+        <target>Contacto de protección de datos</target>
+      </trans-unit>
+      <trans-unit id="org.more.privacyContactDescription" datatype="html">
+        <source> For personal data processed by this organization. Fireguard&apos;s own processing is handled separately. </source>
+        <target>Para los datos personales tratados por esta organización. Los tratamientos propios de Fireguard se gestionan por separado.</target>
+      </trans-unit>
+      <trans-unit id="org.more.privacyContactMissing" datatype="html">
+        <source> No contact provided. Use the organization&apos;s usual contact channels. </source>
+        <target>No se ha indicado ningún contacto. Utiliza los canales habituales de contacto de la organización.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.monitoringDescription" datatype="html">
+        <source> Monitoring status according to the rules configured in this organization. </source>
+        <target>Estado del seguimiento según las reglas configuradas en esta organización.</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.rateAriaLabel" datatype="html">
+        <source>Equipment up-to-date rate</source>
+        <target>Porcentaje de equipos al día</target>
+      </trans-unit>
+      <trans-unit id="org.assets.compliance.status.compliant" datatype="html">
+        <source>Up to date</source>
+        <target>Al día</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.location" datatype="html">
+        <source>Sign-in location</source>
+        <target>Lugar de inicio de sesión</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.locationUnavailable" datatype="html">
+        <source>Location unavailable</source>
+        <target>Ubicación no disponible</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.locationApproximate" datatype="html">
+        <source>Approximate location. VPNs and mobile networks may show a different place.</source>
+        <target>Ubicación aproximada. Las VPN y las redes móviles pueden indicar otro lugar.</target>
+      </trans-unit>
+      <trans-unit id="account.sessions.geoIpAttribution" datatype="html">
+        <source>Geolocation by DB-IP</source>
+        <target>Geolocalización por DB-IP</target>
+      </trans-unit>
+      <trans-unit id="auth.logout.pending.title" datatype="html">
+        <source>Local changes are waiting</source>
+        <target>Hay cambios locales pendientes</target>
+      </trans-unit>
+      <trans-unit id="auth.logout.pending.description" datatype="html">
+        <source> Signing out removes the changes saved on this device. Synchronize them first, cancel, or explicitly discard them. </source>
+        <target>Al cerrar sesión se eliminan los cambios guardados en este dispositivo. Sincronízalos primero, cancela o elige descartarlos explícitamente.</target>
+      </trans-unit>
+      <trans-unit id="auth.logout.pending.count" datatype="html">
+        <source> Pending operations: <x id="INTERPOLATION" equiv-text="{{ count() }}"/>
+</source>
+        <target>Operaciones pendientes: <x id="INTERPOLATION" equiv-text="{{ count() }}"/></target>
+      </trans-unit>
+      <trans-unit id="auth.logout.pending.failed" datatype="html">
+        <source> Some changes could not be synchronized. They are still saved on this device. </source>
+        <target>Algunos cambios no se pudieron sincronizar. Siguen guardados en este dispositivo.</target>
+      </trans-unit>
+      <trans-unit id="auth.logout.pending.cancel" datatype="html">
+        <source> Cancel </source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="auth.logout.pending.discard" datatype="html">
+        <source> Discard local changes and sign out </source>
+        <target>Descartar los cambios locales y cerrar sesión</target>
+      </trans-unit>
+      <trans-unit id="auth.logout.pending.sync" datatype="html">
+        <source>Synchronize and sign out</source>
+        <target>Sincronizar y cerrar sesión</target>
+      </trans-unit>
+      <trans-unit id="auth.logout.pending.unavailable" datatype="html">
+        <source>Local changes could not be checked. Signing out was cancelled.</source>
+        <target>No se pudieron comprobar los cambios locales. Se ha cancelado el cierre de sesión.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.startDate" datatype="html">
+        <source>Start date</source>
+        <target>Fecha de inicio</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.endDate" datatype="html">
+        <source>End date</source>
+        <target>Fecha de fin</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.endsAtTimeRequired" datatype="html">
+        <source>An end time is required.</source>
+        <target>La hora de fin es obligatoria.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.invalidTime" datatype="html">
+        <source>This time does not exist in the organization timezone.</source>
+        <target>Esta hora no existe en la zona horaria de la organización.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.facilitiesLoading" datatype="html">
+        <source> Loading facilities… </source>
+        <target>Cargando instalaciones…</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.nextFacilities" datatype="html">
+        <source> Next facilities </source>
+        <target>Instalaciones siguientes</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.previousFacilities" datatype="html">
+        <source> Previous facilities </source>
+        <target>Instalaciones anteriores</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.noMatchingFacility" datatype="html">
+        <source>No facility matches.</source>
+        <target>Ninguna instalación coincide.</target>
+      </trans-unit>
+      <trans-unit id="calendar.eventDialog.searchFacility" datatype="html">
+        <source>Search a facility</source>
+        <target>Buscar una instalación</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.title" datatype="html">
+        <source>Print QR labels</source>
+        <target>Imprimir etiquetas QR</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.description" datatype="html">
+        <source> Choose the equipment to label. Each PDF supports up to 500 labels. </source>
+        <target>Elige los equipos que se van a etiquetar. Cada PDF admite hasta 500 etiquetas.</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.scope" datatype="html">
+        <source>Equipment scope</source>
+        <target>Equipos que se van a etiquetar</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.selection" datatype="html">
+        <source> Selected equipment </source>
+        <target>Equipos seleccionados</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.facility" datatype="html">
+        <source> One facility </source>
+        <target>Una instalación</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.inventory" datatype="html">
+        <source> Whole inventory </source>
+        <target>Todo el inventario</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.visibleSelection" datatype="html">
+        <source> Select equipment from the current list page. </source>
+        <target>Selecciona equipos de la página actual de la lista.</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.count" datatype="html">
+        <source> <x id="INTERPOLATION" equiv-text="{{ count() }}"/> labels selected </source>
+        <target><x id="INTERPOLATION" equiv-text="{{ count() }}"/> etiquetas seleccionadas</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.tooMany" datatype="html">
+        <source> Choose a facility or select up to 500 equipment records. </source>
+        <target>Elige una instalación o selecciona un máximo de 500 equipos.</target>
+      </trans-unit>
+      <trans-unit id="equipment.labels.print" datatype="html">
+        <source> Print labels </source>
+        <target>Imprimir etiquetas</target>
+      </trans-unit>
+      <trans-unit id="facility.picker.search" datatype="html">
+        <source>Search facilities</source>
+        <target>Buscar instalaciones</target>
+      </trans-unit>
+      <trans-unit id="facility.picker.any" datatype="html">
+        <source>Any facility</source>
+        <target>Cualquier instalación</target>
+      </trans-unit>
+      <trans-unit id="inspection.form.checklistSearch" datatype="html">
+        <source>Search checklists</source>
+        <target>Buscar listas de verificación</target>
+      </trans-unit>
+      <trans-unit id="workspace.assistant.history" datatype="html">
+        <source> Conversation history </source>
+        <target>Historial de conversaciones</target>
+      </trans-unit>
+      <trans-unit id="workspace.assistant.historyLoading" datatype="html">
+        <source> Loading conversation history… </source>
+        <target>Cargando el historial de conversaciones…</target>
+      </trans-unit>
+      <trans-unit id="workspace.assistant.historyEmpty" datatype="html">
+        <source> No previous conversations. </source>
+        <target>No hay conversaciones anteriores.</target>
+      </trans-unit>
+      <trans-unit id="workspace.assistant.loadEarlier" datatype="html">
+        <source> Load earlier messages </source>
+        <target>Cargar mensajes anteriores</target>
+      </trans-unit>
+      <trans-unit id="intervention.pwa.waitingLocalWork" datatype="html">
+        <source>Local changes must be synchronized or reviewed before applying this update.</source>
+        <target>Los cambios locales deben sincronizarse o revisarse antes de aplicar esta actualización.</target>
       </trans-unit>
     </body>
   </file>

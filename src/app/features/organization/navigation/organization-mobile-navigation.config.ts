@@ -89,8 +89,10 @@ const MEMBERSHIP_TAB_LINKS: readonly OrganizationAdministrationLinkDefinition[] 
  *
  * @access public
  * @since 1.0.0
+ *
  * @param {string | null} organizationId - Current workspace from the owner context.
  * @param {ReadonlySet<string>} grantedPermissions - Effective member grants.
+ *
  * @returns {OrganizationMobileNavigationModel} Navigation derived without side effects.
  */
 export function buildOrganizationMobileNavigation(
@@ -155,7 +157,7 @@ export function buildOrganizationMobileNavigation(
     id: section.id,
     label: section.label,
     links: [
-      ...section.links.filter((link) => !primaryIds.includes(link.id)),
+      ...section.links.filter((link) => !primaryIds.includes(link.id) && link.id !== 'more'),
       ...(section.id === 'assets' &&
       hasOrganizationNavigationAccess(
         { permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ] },
@@ -228,8 +230,10 @@ export function buildOrganizationMobileNavigation(
  *
  * @access public
  * @since 1.0.0
+ *
  * @param {OrganizationMobileNavigationModel} navigation - Allowed destinations.
  * @param {string} url - Current router URL, including any query or fragment.
+ *
  * @returns {string | null} Stable destination id, or null outside this workspace.
  */
 export function activeOrganizationMobileDestination(

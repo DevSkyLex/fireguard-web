@@ -1,7 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { createContractValidator, loadOpenApi } from '../../contracts/support/openapi';
 import { E2E_ORGANIZATION_ID } from '../support/fixtures/api-fixtures';
+import { channelOutput } from '../support/fixtures/channel-fixtures';
 import { directConversationOutput } from '../support/fixtures/direct-messages-fixtures';
+import { equipmentOutput } from '../support/fixtures/equipment-fixtures';
+import { importJobOutput } from '../support/fixtures/import-fixtures';
+import { inspectionOutput } from '../support/fixtures/inspection-fixtures';
+import { interventionOutput } from '../support/fixtures/intervention-fixtures';
+import { maintenanceScheduleOutput } from '../support/fixtures/maintenance-fixtures';
 import { API_BASE_URL, ApiMock } from '../support/mocks/api-mock';
 
 const validator = createContractValidator(loadOpenApi());
@@ -27,6 +33,8 @@ const cases = [
   ['GET', '/api/maintenance/schedules?organization=' + encodeURIComponent(organization)],
   ['GET', '/api/imports?organization=' + E2E_ORGANIZATION_ID],
   ['GET', '/api/saved-messages?organization=' + E2E_ORGANIZATION_ID],
+  ['GET', organization + '/equipment'],
+  ['GET', organization + '/inspections'],
 ] as const;
 
 test.beforeEach(async ({ page }) => {
@@ -42,9 +50,12 @@ for (const [method, path] of cases) {
     await api.mockAuthenticatedSession();
     await api.mockOrganizationAccess(E2E_ORGANIZATION_ID);
     await api.mockDirectConversationList([directConversationOutput()]);
-    await api.mockInterventionList(E2E_ORGANIZATION_ID);
-    await api.mockMaintenanceScheduleList();
-    await api.mockImportJobList();
+    await api.mockChannelList([channelOutput()]);
+    await api.mockEquipmentList(E2E_ORGANIZATION_ID, [equipmentOutput()]);
+    await api.mockInspectionList(E2E_ORGANIZATION_ID, [inspectionOutput()]);
+    await api.mockInterventionList(E2E_ORGANIZATION_ID, [interventionOutput()]);
+    await api.mockMaintenanceScheduleList([maintenanceScheduleOutput()]);
+    await api.mockImportJobList([importJobOutput()]);
     await api.mockSavedMessages();
     const requestBody =
       method === 'PATCH'

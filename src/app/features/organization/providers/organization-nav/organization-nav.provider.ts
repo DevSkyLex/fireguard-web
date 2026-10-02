@@ -1,9 +1,8 @@
 import type { AdditiveSlotFeature } from '@shared/layout-slot';
-import { OrganizationNav } from '../../ui/components';
+import { OrganizationNav } from '../../ui/components/organization-nav';
 
 /**
  * Function withOrganizationNav
- * @function withOrganizationNav
  *
  * @description
  * Contributes {@link OrganizationNav} to the top of a shell's sidebar-nav slot:
@@ -15,6 +14,8 @@ import { OrganizationNav } from '../../ui/components';
  * @since 1.0.0
  *
  * @returns {AdditiveSlotFeature} The contribution factory, run by the layout's injector.
+ *
+ * @function withOrganizationNav
  *
  * @example
  * ```typescript

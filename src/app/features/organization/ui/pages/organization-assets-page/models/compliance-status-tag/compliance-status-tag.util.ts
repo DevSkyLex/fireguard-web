@@ -16,7 +16,7 @@ import type {
  */
 const STATUS: Readonly<Record<ComplianceStatus, ComplianceBucketTagDescriptor>> = {
   compliant: {
-    label: $localize`:@@org.assets.compliance.status.compliant:Compliant`,
+    label: $localize`:@@org.assets.compliance.status.compliant:Up to date`,
     severity: 'success',
     icon: 'lucideCircleCheck',
   },

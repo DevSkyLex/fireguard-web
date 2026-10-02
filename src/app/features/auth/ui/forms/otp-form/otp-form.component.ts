@@ -29,12 +29,7 @@ import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCheckbox } from '@shared/ui/checkbox';
 import { HlmFieldImports } from '@shared/ui/field';
-import {
-  HlmInputOtp,
-  HlmInputOtpGroup,
-  HlmInputOtpSeparator,
-  HlmInputOtpSlot,
-} from '@shared/ui/input-otp';
+import { HlmInputOtp, HlmInputOtpGroup, HlmInputOtpSlot } from '@shared/ui/input-otp';
 import { HlmSpinner } from '@shared/ui/spinner';
 import type { OtpFormValues } from './models';
 
@@ -86,12 +81,12 @@ const OTP_LENGTH = 6;
  *
  * @version 1.2.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-otp-form [pending]="isVerifying()" (submitted)="verify($event)" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-otp-form',
@@ -105,7 +100,6 @@ const OTP_LENGTH = 6;
     HlmCheckbox,
     HlmInputOtp,
     HlmInputOtpGroup,
-    HlmInputOtpSeparator,
     HlmInputOtpSlot,
     ...HlmFieldImports,
   ],
@@ -206,10 +200,14 @@ export class OtpForm {
   /**
    * Property challengeKey
    * @readonly
-   * @description Identifies a replacement challenge in memory so the resend cooldown
+   *
+   * @description
+   * Identifies a replacement challenge in memory so the resend cooldown
    * restarts even when the server returns the same delay. Never rendered as an attribute.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly challengeKey: InputSignal<string | null> = input<string | null>(null);
@@ -429,6 +427,8 @@ export class OtpForm {
    *
    * @access protected
    * @since 1.0.0
+   *
+   * @param {Event} event - Native form submission prevented before validating the code.
    *
    * @returns {void}
    */

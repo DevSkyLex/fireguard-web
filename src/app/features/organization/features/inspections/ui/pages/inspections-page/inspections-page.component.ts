@@ -37,7 +37,7 @@ import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import type { CallState } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { ChecklistStore } from '@features/organization/features/checklists/state';
+
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
   CreateInspectionInput,
@@ -117,7 +117,7 @@ const STATUS_VALUES: readonly InspectionStatus[] = ['draft', 'submitted', 'close
 const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
 
 /**
- * Component InspectionsPage
+ * Class InspectionsPage
  * @class InspectionsPage
  *
  * @description
@@ -174,7 +174,6 @@ const RESULT_VALUES: readonly InspectionResult[] = ['pass', 'partial', 'fail'];
     HlmSpinner,
   ],
   providers: [
-    ChecklistStore,
     InspectionCreationOptionsStore,
     provideIcons({
       lucideChartColumn,
@@ -402,7 +401,7 @@ export class InspectionsPage {
    * @type {WritableSignal<{
    *   readonly status: InspectionStatus | null;
    *   readonly result: InspectionResult | null;
-   * }>}
+   * }>} >}
    */
   protected readonly filters: WritableSignal<{
     readonly status: InspectionStatus | null;
@@ -915,21 +914,6 @@ export class InspectionsPage {
     InspectionCreationOptionsStore,
   );
 
-  /**
-   * Property checklistStore
-   * @readonly
-   *
-   * @description
-   * The active checklist templates the sheet's optional picker offers — the checklists subfeature's
-   * documented cross-feature consumer.
-   *
-   * @access protected
-   * @since 1.6.0
-   *
-   * @type {ChecklistStore}
-   */
-  protected readonly checklistStore: ChecklistStore = inject<ChecklistStore>(ChecklistStore);
-
   //#region Constructor
   /**
    * Constructor
@@ -947,6 +931,11 @@ export class InspectionsPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    this.destroyRef.onDestroy(() => this.creationOptions.clear());
+    effect(() => {
+      this.organizationId();
+      untracked(() => this.creationOptions.clear());
+    });
 
     effect((): void => {
       const requested: boolean = this.create() === '1';
@@ -1372,7 +1361,7 @@ export class InspectionsPage {
   protected openCreate(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.creationOptions.loadEquipmentOptions(this.organizationId());
-      this.checklistStore.ensureInspectionCreateOptionsLoaded(this.organizationId());
+      this.creationOptions.loadChecklists({ organizationId: this.organizationId() });
     }
     this.createSheetVisible.set(true);
   }

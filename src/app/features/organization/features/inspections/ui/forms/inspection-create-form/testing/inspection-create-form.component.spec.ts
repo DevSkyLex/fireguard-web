@@ -73,6 +73,37 @@ describe('InspectionCreateForm', () => {
     element = fixture.nativeElement as HTMLElement;
   });
 
+  it.each([101, 151, 201])(
+    'preserves equipment and checklist %i labels when their selected records leave a server page',
+    async (ordinal) => {
+      fixture.componentRef.setInput('equipmentOptions', [
+        { value: 'equipment-101', label: 'SN-101', typeLabel: 'Extinguisher', secondary: null },
+      ]);
+      fixture.componentRef.setInput('checklists', [
+        { id: `checklist-${ordinal}`, name: `Checklist ${ordinal}` },
+      ]);
+      await setModel({
+        equipmentId: 'equipment-101',
+        checklistId: `checklist-${ordinal}`,
+        inspectorName: 'Ada',
+        result: '',
+        performedAt: new Date('2026-10-02'),
+        inspectorType: 'user',
+      });
+      fixture.componentRef.setInput('equipmentOptions', []);
+      fixture.componentRef.setInput('checklists', []);
+      await fixture.whenStable();
+      expect(fixture.componentInstance['equipmentLabelOf']('equipment-101')).toBe('SN-101');
+      expect(fixture.componentInstance['checklistLabelOf'](`checklist-${ordinal}`)).toBe(
+        `Checklist ${ordinal}`,
+      );
+      expect(fixture.componentInstance['createForm'].equipmentId().value()).toBe('equipment-101');
+      expect(fixture.componentInstance['createForm'].checklistId().value()).toBe(
+        `checklist-${ordinal}`,
+      );
+    },
+  );
+
   it('should choose equipment in the mobile drawer without replacing the draft when interaction mode changes', async () => {
     fixture.componentRef.setInput('equipmentOptions', [
       {
@@ -109,7 +140,7 @@ describe('InspectionCreateForm', () => {
     expect(element.textContent).not.toContain('Choose the inspected equipment.');
   });
 
-  it('shows the equipment empty state only when the mobile search has no matches', async () => {
+  it('shows the server search results and its empty state in the mobile selector', async () => {
     mobile.set(true);
     fixture.componentRef.setInput('equipmentOptions', [
       {
@@ -129,16 +160,29 @@ describe('InspectionCreateForm', () => {
     const search = drawer?.querySelector<HTMLInputElement>('#inspection-equipment-search');
     expect(search).not.toBeNull();
     if (!search) throw new Error('Equipment search is missing');
+    const searched = vi.fn();
+    fixture.componentInstance.equipmentSearchChanged.subscribe(searched);
     search.value = 'no-such-equipment';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.componentRef.setInput('equipmentOptions', []);
     await fixture.whenStable();
+    expect(searched).toHaveBeenCalledWith('no-such-equipment');
     expect(drawer?.querySelector('[hlmCommandEmpty]')?.textContent).toContain(
       'No equipment matches.',
     );
     search.value = 'North';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.componentRef.setInput('equipmentOptions', [
+      {
+        value: 'equipment-remote',
+        label: 'Unrelated display label',
+        typeLabel: 'Detector',
+        secondary: null,
+      },
+    ]);
     await fixture.whenStable();
     expect(drawer?.querySelector('[hlmCommandEmpty]')).toBeNull();
+    expect(drawer?.textContent).toContain('Unrelated display label');
   });
 
   it('should refuse to emit while required fields are missing, and show the reasons', async () => {

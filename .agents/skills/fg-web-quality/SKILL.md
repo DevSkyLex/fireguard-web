@@ -24,8 +24,9 @@ For tooling-only changes, validate the actual scripts/configuration rather than 
 
 For an authored-code review, run `npm run review:check -- --base <review-base>` after focused
 tests. This diff-scoped structural check complements rather than replaces semantic review.
-The current Oxlint command does not run type-aware promise rules; report that limitation and
-do not install a new engine or migrate TypeScript implicitly. See `.codex/README.md`.
+`npm run lint` includes a focused type-aware promise pass and a real rule sentinel.
+Use the installed engine and committed configs; do not broaden rule families or migrate
+TypeScript implicitly. See `.codex/maintenance.md`.
 
 Every `ng test --include` glob ends in `*.spec.ts`; use `npx ng test --watch=false`, never
 bare Vitest. Browser tests belong to `fg-web-e2e`. Preserve visual artifacts before any runner

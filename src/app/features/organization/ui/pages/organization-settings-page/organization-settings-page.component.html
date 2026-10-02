@@ -189,6 +189,8 @@
               </header>
               <app-organization-legal-form
                 [legal]="legalFormValues()"
+                [organizationId]="organizationId() ?? ''"
+                [resetRevision]="legalResetRevision()"
                 [legalTypeOptions]="legalTypeOptions()"
                 [pending]="settingsStore.isSaving()"
                 (submitted)="saveLegal($event)"

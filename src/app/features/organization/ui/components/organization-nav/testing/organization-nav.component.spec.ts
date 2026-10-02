@@ -87,12 +87,12 @@ describe('OrganizationNav', () => {
     permissions.set([ORGANIZATION_PERMISSION.INTERVENTIONS_READ]);
     await fixture.whenStable();
 
-    expect(rows()).toEqual(['Dashboard', 'Interventions', 'Workload']);
+    expect(rows()).toEqual(['Dashboard', 'Interventions', 'Workload', 'More']);
     expect(fixture.nativeElement.querySelectorAll('[aria-disabled="true"]')).toHaveLength(0);
   });
 
   it('keeps personal workload available without a team-workload grant', () => {
-    expect(routes()).toEqual(['/organizations/org-1/workload']);
+    expect(routes()).toEqual(['/organizations/org-1/workload', '/organizations/org-1/more']);
   });
 
   it('should prefix every destination with the routed organization', async () => {
@@ -103,6 +103,7 @@ describe('OrganizationNav', () => {
       '/organizations/org-1',
       '/organizations/org-1/interventions',
       '/organizations/org-1/workload',
+      '/organizations/org-1/more',
     ]);
   });
 

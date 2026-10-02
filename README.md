@@ -1,8 +1,8 @@
-# FireGuard Web
+# Fireguard Web
 
-Angular frontend for FireGuard: organization-scoped fire-safety work, field
+Angular frontend for Fireguard: organization-scoped fire-safety work, field
 interventions, offline workflows and collaboration. It uses the
-[FireGuard API](https://github.com/DevSkyLex/fireguard-api).
+[Fireguard API](https://github.com/DevSkyLex/fireguard-api).
 
 ## Tech stack
 

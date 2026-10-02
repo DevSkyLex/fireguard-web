@@ -42,35 +42,16 @@
       <label hlmFieldLabel for="equipment-create-facility" i18n="@@equipment.form.facility"
         >Site</label
       >
-      <hlm-select [itemToString]="facilityLabelOf" [formField]="createForm.facility">
-        <hlm-select-trigger
-          buttonId="equipment-create-facility"
-          class="w-full mobile-ui:min-h-11"
-          data-testid="equipment-create-facility"
-        >
-          <hlm-select-value
-            placeholder="Unassigned"
-            i18n-placeholder="@@equipment.form.facilityPlaceholder"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            @for (option of facilityOptions(); track option.value) {
-              <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">
-                <div class="flex min-w-0 flex-col">
-                  <span class="truncate">{{ option.label }}</span>
-                  <span class="truncate text-xs text-muted-foreground"
-                    >{{ option.typeLabel }}
-                    @if (option.pathLabel; as path) {
-                      · {{ path }}
-                    }
-                  </span>
-                </div>
-              </hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+      <app-facility-option-picker
+        [formField]="createForm.facility"
+        [options]="facilityOptions()"
+        inputId="equipment-create-facility"
+        [page]="facilityPage()"
+        [pageCount]="facilityPageCount()"
+        [callState]="facilityCallState()"
+        (searchChanged)="facilitySearchChanged.emit($event)"
+        (pageChanged)="facilityPageChanged.emit($event)"
+      />
     </hlm-field>
 
     <hlm-field>

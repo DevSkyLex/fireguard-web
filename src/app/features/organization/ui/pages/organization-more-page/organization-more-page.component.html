@@ -19,6 +19,32 @@
   }
 
   <div class="flex flex-col gap-6 @[40rem]/more:block @[40rem]/more:columns-2 mobile-ui:gap-8">
+    @if (navigation().organizationId !== null) {
+      <section
+        id="organization-more-privacy"
+        aria-labelledby="organization-more-privacy-title"
+        class="flex min-w-0 break-inside-avoid flex-col gap-3 @[40rem]/more:mb-6"
+      >
+        <h2 id="organization-more-privacy-title" hlmLarge i18n="@@org.more.privacyContactTitle">
+          Data protection contact
+        </h2>
+        <div hlmItem size="sm">
+          <div hlmItemContent>
+            <p hlmItemDescription i18n="@@org.more.privacyContactDescription">
+              For personal data processed by this organization. Fireguard's own processing is
+              handled separately.
+            </p>
+            @if (privacyContactEmail(); as email) {
+              <a hlmItemTitle class="wrap-anywhere" [href]="privacyContactHref()">{{ email }}</a>
+            } @else {
+              <p hlmItemDescription i18n="@@org.more.privacyContactMissing">
+                No contact provided. Use the organization's usual contact channels.
+              </p>
+            }
+          </div>
+        </div>
+      </section>
+    }
     @for (section of navigation().sections; track section.id) {
       <nav
         [attr.aria-labelledby]="'organization-more-' + section.id + '-title'"

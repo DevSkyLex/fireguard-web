@@ -1,7 +1,10 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ConnectivityService } from '@core/connectivity';
+import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { MessagingOutboxRepository } from '@features/organization/features/collaboration/data-access';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { MessagingSyncService, type MessagingReplayResult } from '../../messaging-sync';
 import { MessagingSyncCoordinatorService } from '../messaging-sync-coordinator.service';
 
@@ -9,11 +12,24 @@ describe('MessagingSyncCoordinatorService', () => {
   let online: WritableSignal<boolean>;
   let pendingCount: WritableSignal<number>;
   let replay: ReturnType<typeof vi.fn>;
+  let revision: WritableSignal<number>;
+  let authenticated: WritableSignal<boolean>;
+  let profile: WritableSignal<ShellUserProfile | null>;
+  let organizationId: WritableSignal<string | null>;
 
   function build(): MessagingSyncCoordinatorService {
     TestBed.configureTestingModule({
       providers: [
         MessagingSyncCoordinatorService,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision: revision, isAuthenticated: authenticated },
+        },
+        { provide: USER_IDENTITY_PORT, useValue: { profile } },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganizationId: organizationId },
+        },
         { provide: ConnectivityService, useValue: { online } },
         { provide: MessagingSyncService, useValue: { replay } },
         {
@@ -31,6 +47,10 @@ describe('MessagingSyncCoordinatorService', () => {
   }
 
   beforeEach(() => {
+    revision = signal(1);
+    authenticated = signal(true);
+    profile = signal<ShellUserProfile | null>({ id: 'account-a' });
+    organizationId = signal<string | null>('org-1');
     online = signal(true);
     pendingCount = signal(0);
     replay = vi
@@ -52,6 +72,52 @@ describe('MessagingSyncCoordinatorService', () => {
     TestBed.tick();
     await vi.waitFor(() => expect(replay).toHaveBeenCalled());
 
+    expect(coordinator.syncing()).toBe(false);
+  });
+
+  it('waits for session establishment before automatic replay', async () => {
+    pendingCount.set(2);
+    authenticated.set(false);
+    const coordinator = build();
+    TestBed.runInInjectionContext(() => coordinator.start());
+    TestBed.tick();
+    expect(replay).not.toHaveBeenCalled();
+
+    authenticated.set(true);
+    TestBed.tick();
+    await vi.waitFor(() => expect(replay).toHaveBeenCalledTimes(1));
+  });
+
+  it.each(['session', 'organization'])(
+    'does not execute an obsolete retry after the %s changes',
+    async (change) => {
+      replay.mockResolvedValueOnce({
+        replayed: 0,
+        deferred: 1,
+        failed: 0,
+      } satisfies MessagingReplayResult);
+      await build().flush();
+      if (change === 'session') revision.set(2);
+      else organizationId.set('org-2');
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(replay).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it('does not schedule a retry from a replay completion belonging to an old session', async () => {
+    let resolveReplay!: (result: MessagingReplayResult) => void;
+    replay.mockReturnValueOnce(
+      new Promise<MessagingReplayResult>((resolve) => {
+        resolveReplay = resolve;
+      }),
+    );
+    const coordinator = build();
+    const pass = coordinator.flush();
+    revision.set(2);
+    resolveReplay({ replayed: 0, deferred: 1, failed: 0 });
+    await pass;
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(replay).toHaveBeenCalledTimes(1);
     expect(coordinator.syncing()).toBe(false);
   });
 

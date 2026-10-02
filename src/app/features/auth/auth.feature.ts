@@ -10,17 +10,22 @@ import {
 } from '@angular/core';
 import { BOOT_READINESS_PORT } from '@core/boot-readiness';
 import { USER_PROFILE_PORT, type UserProfilePort } from '@features/account/ports';
-import { AUTH_LOGOUT_PORT, AUTH_SESSION_PORT } from '@features/auth/ports';
-import { AuthSessionNavigationService } from '@features/auth/services';
+import { AUTH_LOGOUT_PORT, AUTH_SESSION_PORT, LOGOUT_PROTECTION_PORT } from '@features/auth/ports';
+import { AuthSessionNavigationService, LogoutProtectionService } from '@features/auth/services';
 import { AuthStore } from '@features/auth/state';
 
 /**
  * Function initializeAuthSessionNavigation
- * @function initializeAuthSessionNavigation
- * @description Starts auth-owned browser navigation before any logout outcome can be emitted.
+ *
+ * @description
+ * Starts auth-owned browser navigation before any logout outcome can be emitted.
+ *
  * @access private
  * @since 1.0.0
+ *
  * @returns {void}
+ *
+ * @function initializeAuthSessionNavigation
  */
 function initializeAuthSessionNavigation(): void {
   inject(AuthSessionNavigationService).start();
@@ -28,11 +33,16 @@ function initializeAuthSessionNavigation(): void {
 
 /**
  * Function initializeAuthState
- * @function initializeAuthState
- * @description Restores authentication only in browser or request-bound SSR runtimes.
+ *
+ * @description
+ * Restores authentication only in browser or request-bound SSR runtimes.
+ *
  * @access private
  * @since 1.0.0
+ *
  * @returns {Promise<void> | void} Initialization completion, or nothing during prerender.
+ *
+ * @function initializeAuthState
  */
 function initializeAuthState(): Promise<void> | void {
   const platformId: object = inject<object>(PLATFORM_ID);
@@ -46,10 +56,9 @@ function initializeAuthState(): Promise<void> | void {
 }
 
 /**
- * ProvideAuth
+ * Function provideAuthFeature
  *
  * Provides authentication services and initializes auth state.
- *
  * @description
  * This provider:
  * - Initializes the AuthStore on app startup (browser + SSR request)
@@ -58,7 +67,10 @@ function initializeAuthState(): Promise<void> | void {
  * - Skips initialization only when no browser/runtime request context is available
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @returns {EnvironmentProviders} Authentication providers and startup hooks.
  *
  * @example
  * ```typescript
@@ -69,7 +81,6 @@ function initializeAuthState(): Promise<void> | void {
  *   ]
  * };
  * ```
- * @returns {EnvironmentProviders} Authentication providers and startup hooks.
  */
 export function provideAuthFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
@@ -92,13 +103,24 @@ export function provideAuthFeature(): EnvironmentProviders {
     },
     {
       provide: AUTH_LOGOUT_PORT,
-      useFactory: (authStore: AuthStore) => ({
+      useFactory: (authStore: AuthStore, protection: LogoutProtectionService) => ({
         isLoggingOut: authStore.isLoggingOut,
         logout: (): void => {
-          authStore.logout();
+          const revision = authStore.sessionRevision();
+          void protection.requestLogout(
+            () => authStore.logout(),
+            () =>
+              authStore.sessionRevision() === revision &&
+              authStore.isAuthenticated() &&
+              !authStore.isLoggingOut(),
+          );
         },
       }),
-      deps: [AuthStore],
+      deps: [AuthStore, LogoutProtectionService],
+    },
+    {
+      provide: LOGOUT_PROTECTION_PORT,
+      useExisting: LogoutProtectionService,
     },
     {
       provide: BOOT_READINESS_PORT,

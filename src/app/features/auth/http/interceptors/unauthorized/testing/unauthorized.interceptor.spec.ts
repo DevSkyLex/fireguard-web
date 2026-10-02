@@ -3,8 +3,10 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
+import { ENV_CONFIG } from '@core/config/environment';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AuthSessionNavigationService } from '@features/auth/services';
+import { authInterceptor } from '../../auth/auth.interceptor';
 import { unauthorizedInterceptor } from '../unauthorized.interceptor';
 
 describe('unauthorizedInterceptor', () => {
@@ -24,16 +26,17 @@ describe('unauthorizedInterceptor', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(withInterceptors([unauthorizedInterceptor])),
+        provideHttpClient(withInterceptors([authInterceptor, unauthorizedInterceptor])),
         provideHttpClientTesting(),
+        { provide: ENV_CONFIG, useValue: { apiUrl: 'https://api.fireguard.test' } },
         { provide: AuthSessionNavigationService, useValue: mockSessionNavigation },
         {
           provide: AUTH_SESSION_PORT,
           useValue: {
             ...mockSession,
             sessionRevision,
-            accessToken: signal<string | null>(null),
-            isAuthenticated: signal(false),
+            accessToken: signal<string | null>('expired-token'),
+            isAuthenticated: signal(true),
             initialized: signal(true),
           },
         },
@@ -74,6 +77,36 @@ describe('unauthorizedInterceptor', () => {
 
     expect(mockSession.clearSession).not.toHaveBeenCalled();
     expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    'https://outside.test/api/equipment',
+    '//outside.test/api/equipment',
+    'https://api.fireguard.test.outside.test/api/equipment',
+    'http://api.fireguard.test/api/equipment',
+    'https://api.fireguard.test:8443/api/equipment',
+    'https://user:password@api.fireguard.test/api/equipment',
+    'https://api.fireguard.test/asset?path=/api/equipment',
+  ])('does not renew or replay credentials for an untrusted 401 from %s', (url) => {
+    mockSession.renewSession.mockReturnValue(of('fresh-token'));
+    const failed = vi.fn();
+    httpClient.get(url).subscribe({ error: failed });
+    const request = httpMock.expectOne(url);
+    expect(request.request.headers.has('Authorization')).toBe(false);
+    request.flush(null, { status: 401, statusText: 'Unauthorized' });
+    expect(failed).toHaveBeenCalledOnce();
+    expect(mockSession.renewSession).not.toHaveBeenCalled();
+    expect(mockSession.clearSession).not.toHaveBeenCalled();
+    expect(mockSessionNavigation.navigateToLogin).not.toHaveBeenCalled();
+    httpMock.expectNone(url);
+  });
+
+  it('does not renew for an excluded endpoint with query parameters', () => {
+    const url = 'https://api.fireguard.test/api/auth/login?locale=fr';
+    httpClient.post(url, {}).subscribe({ error: () => undefined });
+    httpMock.expectOne(url).flush(null, { status: 401, statusText: 'Unauthorized' });
+    expect(mockSession.renewSession).not.toHaveBeenCalled();
+    expect(mockSession.clearSession).not.toHaveBeenCalled();
   });
 
   it.each([

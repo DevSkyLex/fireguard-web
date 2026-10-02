@@ -4,6 +4,7 @@ import type { OrganizationComplianceSettings } from '../organization-settings/or
 import type { OrganizationNotificationSettings } from '../organization-settings/organization-notification-settings.interface';
 import type { OrganizationRegionalSettings } from '../organization-settings/organization-regional-settings.interface';
 import type { UpdateOrganizationApprovalInput } from '../organization-settings/update-organization-approval-input.interface';
+import type { OrganizationRegisteredAddress } from './organization-registered-address.interface';
 
 /**
  * Interface UpdateOrganizationInput
@@ -19,47 +20,221 @@ import type { UpdateOrganizationApprovalInput } from '../organization-settings/u
  * `approval` is now writable: the approvals inbox
  * (`features/approvals/FEATURE.md`) gives a reader a surface to act on a
  * gated request, which is what the read-only restriction was waiting on.
- *
  * The five legal-profile fields (`country`, `legalType`, `legalName`,
  * `registrationNumber`, `vatNumber`) each clear on an **empty string**, not
  * `null` like `description` above. Omit a field to leave it unchanged.
  */
 export interface UpdateOrganizationInput {
   //#region Properties
-  /** @type {(string | undefined)} */
+  /**
+   * Property name
+   *
+   * @description
+   * Organization display name.
+   *
+   * @access public
+   *
+   * @type {string | undefined}
+   */
   readonly name?: string;
-  /** @type {(string | undefined)} */
+
+  /**
+   * Property slug
+   *
+   * @description
+   * Organization URL identifier.
+   *
+   * @access public
+   *
+   * @type {string | undefined}
+   */
   readonly slug?: string;
-  /** @type {(string | null | undefined)} */
+
+  /**
+   * Property description
+   *
+   * @description
+   * Optional organization description.
+   *
+   * @access public
+   *
+   * @type {string | null | undefined}
+   */
   readonly description?: string | null;
-  /** @type {(boolean | undefined)} */
+
+  /**
+   * Property isActive
+   *
+   * @description
+   * Whether the organization is currently active.
+   *
+   * @access public
+   *
+   * @type {boolean | undefined}
+   */
   readonly isActive?: boolean;
-  /** @type {(Partial<OrganizationNotificationSettings> | undefined)} */
+
+  /**
+   * Property notifications
+   *
+   * @description
+   * Partial notification policy update.
+   *
+   * @access public
+   *
+   * @type {Partial<OrganizationNotificationSettings> | undefined}
+   */
   readonly notifications?: Partial<OrganizationNotificationSettings>;
-  /** @type {(Partial<OrganizationRegionalSettings> | undefined)} */
+
+  /**
+   * Property regional
+   *
+   * @description
+   * Partial regional display policy update.
+   *
+   * @access public
+   *
+   * @type {Partial<OrganizationRegionalSettings> | undefined}
+   */
   readonly regional?: Partial<OrganizationRegionalSettings>;
-  /** @type {(Partial<Pick<OrganizationComplianceSettings, 'nonConformitySlaDays' | 'inspectionPeriodicityDefaults' | 'reminderWindowDays'>> | undefined)} */
+
+  /**
+   * Property compliance
+   *
+   * @description
+   * Partial operational follow-up policy update; server-only customization hints are excluded.
+   *
+   * @access public
+   *
+   * @type {Partial<
+   *       Pick<
+   *         OrganizationComplianceSettings,
+   *         'nonConformitySlaDays' | 'inspectionPeriodicityDefaults' | 'reminderWindowDays'
+   *       >
+   *     >
+   *   | undefined}
+   */
   readonly compliance?: Partial<
     Pick<
       OrganizationComplianceSettings,
       'nonConformitySlaDays' | 'inspectionPeriodicityDefaults' | 'reminderWindowDays'
     >
   >;
-  /** @type {(Partial<OrganizationAutomationSettings> | undefined)} */
+
+  /**
+   * Property automation
+   *
+   * @description
+   * Partial automation policy update.
+   *
+   * @access public
+   *
+   * @type {Partial<OrganizationAutomationSettings> | undefined}
+   */
   readonly automation?: Partial<OrganizationAutomationSettings>;
-  /** @type {(UpdateOrganizationApprovalInput | undefined)} */
+
+  /**
+   * Property approval
+   *
+   * @description
+   * Organization approval-policy update.
+   *
+   * @access public
+   *
+   * @type {UpdateOrganizationApprovalInput | undefined}
+   */
   readonly approval?: UpdateOrganizationApprovalInput;
-  /** @type {(Partial<OrganizationAssistantSettings> | undefined)} */
+
+  /**
+   * Property assistant
+   *
+   * @description
+   * Partial assistant policy update.
+   *
+   * @access public
+   *
+   * @type {Partial<OrganizationAssistantSettings> | undefined}
+   */
   readonly assistant?: Partial<OrganizationAssistantSettings>;
-  /** ISO 3166-1 alpha-2 legal country code. Empty string clears it. @type {(string | undefined)} */
+
+  /**
+   * Property country
+   *
+   * @description
+   * ISO 3166-1 alpha-2 legal country code. Empty string clears it. @type {(string | undefined)}
+   *
+   * @access public
+   */
   readonly country?: string;
-  /** See `GET /api/organizations/legal-types`. Empty string clears it. @type {(string | undefined)} */
+
+  /**
+   * Property legalType
+   *
+   * @description
+   * See `GET /api/organizations/legal-types`. Empty string clears it. @type {(string | undefined)}
+   *
+   * @access public
+   */
   readonly legalType?: string;
-  /** @type {(string | undefined)} Empty string clears it. */
+
+  /**
+   * Property legalName
+   *
+   * @description
+   * Registered legal name; an empty string clears it.
+   *
+   * @access public
+   *
+   * @type {string | undefined} Empty string clears it.
+   */
   readonly legalName?: string;
-  /** @type {(string | undefined)} Empty string clears it. */
+
+  /**
+   * Property registrationNumber
+   *
+   * @description
+   * Entity registration identifier; an empty string clears it.
+   *
+   * @access public
+   *
+   * @type {string | undefined} Empty string clears it.
+   */
   readonly registrationNumber?: string;
-  /** @type {(string | undefined)} Empty string clears it. */
+
+  /**
+   * Property vatNumber
+   *
+   * @description
+   * Optional VAT identifier.
+   *
+   * @access public
+   *
+   * @type {string | undefined} Empty string clears it.
+   */
   readonly vatNumber?: string;
+
+  /**
+   * Property registeredAddress
+   *
+   * @description
+   * Omission or null preserves the address; an object replaces it and an empty object clears it.
+   *
+   * @access public
+   *
+   * @type {OrganizationRegisteredAddress | null | undefined}
+   */
+  readonly registeredAddress?: OrganizationRegisteredAddress | null;
+
+  /**
+   * Property privacyContactEmail
+   *
+   * @description
+   * Omission or null preserves the contact; an empty string clears it.
+   *
+   * @access public
+   *
+   * @type {string | null | undefined}
+   */
+  readonly privacyContactEmail?: string | null;
   //#endregion
 }

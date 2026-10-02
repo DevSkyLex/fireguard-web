@@ -21,18 +21,17 @@ import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
 import { provideSplashScreen } from '@core/splash-screen';
 import { provideTheme } from '@core/theme';
 import { environment } from '@env/environment';
-import { provideAccountFeature } from '@features/account';
+import { provideAccountFeature } from '@features/account/providers/bootstrap';
 import { authInterceptor, provideAuthFeature, unauthorizedInterceptor } from '@features/auth';
 import { maintenanceInterceptor } from '@features/maintenance/http/interceptors';
 import { provideMaintenanceMode } from '@features/maintenance/state';
-import { provideOrganizationFeature } from '@features/organization';
 import { provideCollaborationFeature } from '@features/organization/features/collaboration/providers/bootstrap';
 import { provideInterventionsFeature } from '@features/organization/features/interventions/providers/bootstrap';
+import { provideOrganizationFeature } from '@features/organization/providers/bootstrap';
 import { provideSpartanHlm } from '@shared/ui/utils';
 
 /**
  * Configuration appConfig
- * @type {ApplicationConfig}
  *
  * @description
  * This configuration is used to provide the
@@ -40,6 +39,8 @@ import { provideSpartanHlm } from '@shared/ui/utils';
  * browser-native animations without Angular's legacy animation engine.
  *
  * @version 1.0.0
+ *
+ * @type {ApplicationConfig}
  *
  * @example
  * ```typescript

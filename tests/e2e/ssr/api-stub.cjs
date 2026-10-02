@@ -1,5 +1,6 @@
 require('../scripts/register-typescript.cjs');
 const {
+  E2E_ACCESS_TOKEN,
   loginOutput,
   userProfileOutput,
   organizationOutput,
@@ -82,7 +83,7 @@ function createApiStub(appOrigin, onShutdown) {
     ]);
     const authenticated =
       (request.headers.cookie ?? '').includes('refresh_token=ssr-harness-session') ||
-      request.headers.authorization === 'Bearer e2e-access-token' ||
+      request.headers.authorization === 'Bearer ' + E2E_ACCESS_TOKEN ||
       (request.method === 'OPTIONS' && origin === appOrigin);
     if (authenticated) {
       const org = '/api/organizations/e2e-org-1';

@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { devices, expect, test } from '@playwright/test';
+import { E2E_ACCESS_TOKEN } from '../support/fixtures/api-fixtures';
 import { emulateMobilePlatform } from '../support/helpers/interaction-mode';
 import { sourceFingerprint } from '../support/helpers/visual-run';
 import { AuthPages } from '../support/pages/auth.page';
@@ -37,7 +38,7 @@ for (const direct of [false, true]) {
       expect(response.status()).toBe(200);
       const html = await response.text();
       expect(html).not.toContain('fireguard-notifications');
-      expect(html).not.toContain('e2e-access-token');
+      expect(html).not.toContain(E2E_ACCESS_TOKEN);
       const afterServer = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
       expect(
         afterServer.requests
@@ -319,7 +320,7 @@ test('serves authenticated client routes without server reads or serialized priv
       const html = await response.text();
       expect(html).toContain('<app-root></app-root>');
       expect(html).not.toMatch(/\sngh="/);
-      expect(html).not.toContain('e2e-access-token');
+      expect(html).not.toContain(E2E_ACCESS_TOKEN);
       const after = await (await request.get(`${apiOrigin}/__harness/requests`)).json();
       expect(after.unexpected).toEqual([]);
       const serverReads: Array<{ path: string }> = after.requests.slice(before.requests.length);

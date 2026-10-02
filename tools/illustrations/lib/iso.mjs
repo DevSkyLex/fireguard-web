@@ -1,5 +1,5 @@
 /**
- * Isometric drawing kit for the FireGuard illustration catalogs.
+ * Isometric drawing kit for the Fireguard illustration catalogs.
  *
  * Coordinates are plan units: x runs toward the lower right of the screen, y toward
  * the lower left and z upward, projected with a true 30° isometric. Shapes are built
@@ -430,7 +430,7 @@ export const plane =
   ([u, v]) =>
     combo(o, [U, u * s], [V, v * s]);
 
-/** FireGuard mark (three lamellae) as path data in a 96-unit box. */
+/** Fireguard mark (three lamellae) as path data in a 96-unit box. */
 export const MARK =
   'M4 47Q4 40 8.95 35.05L23.05 20.95Q28 16 35 16h2Q44 16 39.05 20.95L24.95 35.05Q20 40 20 47v16Q20 70 15.05 74.95L8.95 81.05Q4 86 4 79V47Z' +
   'M28 47Q28 40 32.95 35.05L47.05 20.95Q52 16 59 16h2Q68 16 63.05 20.95L48.95 35.05Q44 40 44 47v16Q44 70 39.05 74.95L32.95 81.05Q28 86 28 79V47Z' +

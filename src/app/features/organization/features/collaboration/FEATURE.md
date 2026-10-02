@@ -164,6 +164,13 @@ decides what a failure _means_; `MessagingSyncCoordinatorService` decides _when_
 coordinator is started from an app initializer, not from the shell route: a message queued
 yesterday must not wait for someone to navigate back to its channel.
 
+Each replay captures the authenticated session revision, account owner and workspace before
+loading durable operations. Session replacement, including returning to the same account,
+owner loss or workspace change stops further sends and suppresses obsolete queue mutations,
+events and retries. Forced logout retains immediate local purge.
+Session-end notifications cancel active transport subscriptions. A request already accepted
+by the server may finish there, but an obsolete pass never retries it under another session.
+
 Replay classification, in one place so it is not re-derived:
 
 | Outcome                 | Meaning                                               | Action                                                    |
@@ -250,6 +257,14 @@ Opening channel information also tracks its visible roster and pinned-message au
 Unknown status hides the dot. Do-not-disturb never suspends messaging, unread counts or inbox updates.
 
 ## Assistant
+
+The panel exposes the member's existing conversations through the existing
+paginated thread collection (30 records per page), with accessible loading,
+empty, error and retry states. Selecting a conversation reuses the existing
+detail read and subscription; no new history fields are assumed. Earlier
+message pages prepend without duplicate turns or losing streamed content,
+and the panel preserves scroll position. Session or organization changes clear
+private history/transcripts and cancel their outstanding reads.
 
 **The assistant is summoned from the header, not navigated to.** It has no route and never will:
 it opens over whatever page is showing. So its control lives in the shell's header-actions slot
@@ -338,6 +353,8 @@ Currently consumed by `features/interventions` (its own `FEATURE.md` records the
 
 ## Cross-Feature Dependencies
 
+- Consumes Auth's `AUTH_SESSION_PORT` and Account's `USER_IDENTITY_PORT` to bind offline replay
+  and retries to an established session and the owner of durable message operations.
 - Consumes the parent feature's `ORGANIZATION_CONTEXT_PORT` wherever a unit needs the active
   organization as a parameter — messaging navigation and panel, the assistant store.
 - Consumes `MEMBER_PRESENCE_PORT`, `registerMemberPresence` from `services/member-presence`,

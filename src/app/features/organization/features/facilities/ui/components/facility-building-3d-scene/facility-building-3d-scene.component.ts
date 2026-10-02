@@ -433,7 +433,7 @@ export class FacilityBuilding3dScene {
    * @readonly
    *
    * @description
-   * Provides the current FireGuard theme colors used to render the scene.
+   * Provides the current Fireguard theme colors used to render the scene.
    *
    * @access private
    * @since unreleased

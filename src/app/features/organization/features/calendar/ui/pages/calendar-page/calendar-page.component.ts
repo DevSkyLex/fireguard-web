@@ -17,7 +17,8 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, type ParamMap } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCalendar,
@@ -35,6 +36,7 @@ import {
   lucideTriangleAlert,
   lucideWrench,
 } from '@ng-icons/lucide';
+import { DateTime } from 'luxon';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { PageTabsService, registerPageTabs } from '@core/page-tabs';
@@ -51,13 +53,13 @@ import type {
 } from '@features/organization/features/calendar/models';
 import {
   CalendarFeedStore,
+  CalendarFacilityOptionsStore,
   type CalendarFeedStoreType,
 } from '@features/organization/features/calendar/state';
 import {
   calendarSourceLabelOf,
   toApiDateTime,
 } from '@features/organization/features/calendar/utils';
-import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -92,15 +94,6 @@ import {
   type CalendarEventFormValues,
 } from '../../dialogs/calendar-event-dialog';
 import { CalendarFeedSubscribeDialog } from '../../dialogs/calendar-feed-subscribe-dialog';
-
-/**
- * Constant FACILITY_OPTIONS_PAGE_SIZE
- *
- * @description
- * How many facilities the event dialog's facility select offers, mirroring
- * `equipment-detail-page`'s own facility picker.
- */
-const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
 
 /**
  * Constant QUICK_CREATE_DEFAULT_TIME
@@ -144,6 +137,7 @@ type CalendarPageAgendaGroup = {
    * Identifies the calendar day that groups these entries.
    *
    * @access public
+   * @since unreleased
    *
    * @type {string}
    */
@@ -157,6 +151,7 @@ type CalendarPageAgendaGroup = {
    * Provides the text displayed to identify this calendar page agenda group.
    *
    * @access public
+   * @since unreleased
    *
    * @type {string}
    */
@@ -170,6 +165,7 @@ type CalendarPageAgendaGroup = {
    * Provides the compact day label displayed in the agenda.
    *
    * @access public
+   * @since unreleased
    *
    * @type {string}
    */
@@ -183,6 +179,7 @@ type CalendarPageAgendaGroup = {
    * Contains the calendar entries scheduled for this day.
    *
    * @access public
+   * @since unreleased
    *
    * @type {readonly CalendarFeedItemOutput[]}
    */
@@ -255,6 +252,7 @@ type CalendarPageAgendaGroup = {
   ],
   providers: [
     CalendarFeedStore,
+    CalendarFacilityOptionsStore,
     provideIcons({
       lucideChevronLeft,
       lucideChevronRight,
@@ -387,18 +385,20 @@ export class CalendarPage {
   );
 
   /**
-   * Property facilityService
+   * Property facilityStore
    * @readonly
    *
    * @description
    * Read-only source of the facility options offered by the event dialog.
    *
-   * @access private
+   * @access protected
    * @since unreleased
    *
-   * @type {FacilityService}
+   * @type {InstanceType<typeof CalendarFacilityOptionsStore>}
    */
-  private readonly facilityService: FacilityService = inject<FacilityService>(FacilityService);
+  protected readonly facilityStore: InstanceType<typeof CalendarFacilityOptionsStore> = inject(
+    CalendarFacilityOptionsStore,
+  );
 
   /**
    * Property organizationContext
@@ -461,20 +461,6 @@ export class CalendarPage {
   protected readonly feedSubscribeDialogVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
-   * Property destroyRef
-   * @readonly
-   *
-   * @description
-   * Provides the component lifecycle scope used to clean up owned work.
-   *
-   * @access private
-   * @since unreleased
-   *
-   * @type {DestroyRef}
-   */
-  private readonly destroyRef: DestroyRef = inject(DestroyRef);
-
-  /**
    * Property canWriteEvents
    * @readonly
    *
@@ -515,32 +501,34 @@ export class CalendarPage {
    * @readonly
    *
    * @description
-   * The organization's facilities, preloaded for the event dialog's optional association.
+   * The lazy picker page and independently resolved selection for an open event form.
    *
    * @access protected
    * @since unreleased
    *
-   * @type {WritableSignal<
+   * @type {Signal<
    *     ReadonlyArray<{ readonly value: string; readonly label: string }>
    *   >}
    */
-  protected readonly facilityOptions: WritableSignal<
+  protected readonly facilityOptions: Signal<
     ReadonlyArray<{ readonly value: string; readonly label: string }>
-  > = signal([]);
+  > = this.facilityStore.options;
 
   /**
    * Property todayIso
    * @readonly
    *
    * @description
-   * Today's local day, resolved once, for the week view's "Today" badge.
+   * Today's organization day, recomputed when the regional timezone changes.
    *
    * @access protected
    * @since unreleased
    *
-   * @type {string}
+   * @type {Signal<string>}
    */
-  protected readonly todayIso: string = toIsoDay(new Date());
+  protected readonly todayIso: Signal<string> = computed(() =>
+    DateTime.now().setZone(this.regionalFormatting().timezone).toFormat('yyyy-MM-dd'),
+  );
 
   /**
    * Property eventDialogVisible
@@ -668,7 +656,9 @@ export class CalendarPage {
    *
    * @type {WritableSignal<Date>}
    */
-  protected readonly month: WritableSignal<Date> = signal<Date>(new Date());
+  protected readonly month: WritableSignal<Date> = signal<Date>(
+    new Date(`${this.todayIso()}T00:00:00`),
+  );
 
   /**
    * Property selectedDay
@@ -683,7 +673,7 @@ export class CalendarPage {
    * @type {WritableSignal<string | null>}
    */
   protected readonly selectedDay: WritableSignal<string | null> = signal<string | null>(
-    toIsoDay(new Date()),
+    this.todayIso(),
   );
 
   /**
@@ -751,8 +741,14 @@ export class CalendarPage {
 
       return {
         id: `${item.sourceKey}:${item.id}`,
-        date: item.startsAt,
-        endDate: item.endsAt,
+        date: DateTime.fromISO(item.startsAt, {
+          zone: this.regionalFormatting().timezone,
+        }).toFormat("yyyy-MM-dd'T'HH:mm:ss"),
+        endDate: item.endsAt
+          ? DateTime.fromISO(item.endsAt, { zone: this.regionalFormatting().timezone }).toFormat(
+              "yyyy-MM-dd'T'HH:mm:ss",
+            )
+          : null,
         allDay: item.allDay,
         label: item.title,
         tone: SOURCE_TONE[key] ?? 'outline',
@@ -976,7 +972,9 @@ export class CalendarPage {
   protected readonly agendaGroups: Signal<readonly CalendarPageAgendaGroup[]> = computed(() => {
     const grouped = new Map<string, CalendarFeedItemOutput[]>();
     for (const item of this.store.items()) {
-      const day = toIsoDay(new Date(item.startsAt));
+      const day = DateTime.fromISO(item.startsAt, {
+        zone: this.regionalFormatting().timezone,
+      }).toFormat('yyyy-MM-dd');
       const bucket = grouped.get(day) ?? [];
       bucket.push(item);
       grouped.set(day, bucket);
@@ -990,7 +988,13 @@ export class CalendarPage {
     while (date <= last) {
       const day = toIsoDay(date);
       for (const item of this.store.items()) {
-        if (toIsoDay(new Date(item.startsAt)) === day || !this.itemCoversDay(item, day)) continue;
+        if (
+          DateTime.fromISO(item.startsAt, { zone: this.regionalFormatting().timezone }).toFormat(
+            'yyyy-MM-dd',
+          ) === day ||
+          !this.itemCoversDay(item, day)
+        )
+          continue;
         const bucket = grouped.get(day) ?? [];
         bucket.push(item);
         grouped.set(day, bucket);
@@ -1112,6 +1116,76 @@ export class CalendarPage {
    * @type {DashboardPanelRegistry}
    */
   private readonly panelRegistry: DashboardPanelRegistry = inject(DashboardPanelRegistry);
+
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Reads the shareable calendar date and view from the owning route.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
+  private readonly route: ActivatedRoute = inject(ActivatedRoute);
+
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Preserves unrelated query parameters when the displayed calendar period changes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
+  private readonly router: Router = inject(Router);
+
+  /**
+   * Property queryParams
+   * @readonly
+   *
+   * @description
+   * Route updates, including browser back navigation, drive the same feed window.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ParamMap>}
+   */
+  private readonly queryParams: Signal<ParamMap> = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  /**
+   * Property dialogOrganizationId
+   *
+   * @description
+   * Prevents a draft from being submitted under a newly selected organization.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
+  private dialogOrganizationId: string | null = null;
+
+  /**
+   * Property lastRequestedWindow
+   *
+   * @description
+   * Avoids duplicate reads when route synchronization keeps the same calendar window.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
+  private lastRequestedWindow: string | null = null;
   //#endregion
 
   //#region Constructor
@@ -1121,7 +1195,7 @@ export class CalendarPage {
    *
    * @description
    * Loads the displayed window on arrival and on every navigation, loads the
-   * facility options for the event dialog, and closes each dialog once its
+   * facility options only when its form opens, and closes each dialog once its
    * own write settles successfully — the store's own re-read of the loaded
    * window (see `CalendarFeedStore`) is what makes the new/changed/removed
    * entry show up, this page only owns the dialogs' visibility.
@@ -1134,6 +1208,37 @@ export class CalendarPage {
     const destroyRef: DestroyRef = inject(DestroyRef);
     registerPageActions(this.pageActions, this.pageActionsService, destroyRef);
     registerPageTabs(this.pageTabs, this.pageTabsService, destroyRef);
+
+    effect((): void => {
+      const params = this.queryParams();
+      const zone = this.regionalFormatting().timezone;
+      const rawDate = params.get('date');
+      const parsed =
+        rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? DateTime.fromISO(rawDate, { zone }) : null;
+      const day = parsed?.isValid
+        ? parsed.toFormat('yyyy-MM-dd')
+        : DateTime.now().setZone(zone).toFormat('yyyy-MM-dd');
+      const view = params.get('view');
+      untracked((): void => {
+        if (toIsoDay(this.month()) !== day) this.month.set(new Date(`${day}T00:00:00`));
+        this.selectedDay.set(day);
+        this.granularity.set(view === 'week' || view === 'day' ? view : 'month');
+      });
+    });
+
+    effect((): void => {
+      const organizationId = this.organizationId();
+      untracked((): void => {
+        if (this.dialogOrganizationId && this.dialogOrganizationId !== organizationId) {
+          this.eventDialogVisible.set(false);
+          this.editingEvent.set(null);
+          this.createDefaultStart.set(null);
+          this.pendingDeleteEvent.set(null);
+          this.feedSubscribeDialogVisible.set(false);
+          this.dialogOrganizationId = null;
+        }
+      });
+    });
 
     effect((onCleanup): void => {
       const template = this.dayPanel();
@@ -1150,11 +1255,16 @@ export class CalendarPage {
       const anchor: Date = this.month();
       const granularity: CalendarGranularity = this.granularity();
       this.firstDayOfWeek();
+      const timezone = this.regionalFormatting().timezone;
 
       untracked((): void => {
         if (!isPlatformBrowser(this.platformId)) return;
 
-        this.store.load(this.windowOf(organizationId, anchor, granularity));
+        const command = this.windowOf(organizationId, anchor, granularity);
+        const key = `${organizationId}:${timezone}:${command.from}:${command.to}`;
+        if (key === this.lastRequestedWindow) return;
+        this.lastRequestedWindow = key;
+        this.store.load(command);
       });
     });
 
@@ -1171,19 +1281,13 @@ export class CalendarPage {
     });
 
     effect((): void => {
-      const organizationId: string = this.organizationId();
-
+      const organizationId = this.organizationId();
+      const visible = this.eventDialogVisible();
+      const editing = this.editingEvent();
       untracked((): void => {
         if (!isPlatformBrowser(this.platformId)) return;
-
-        this.facilityService
-          .list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE })
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe((response) => {
-            this.facilityOptions.set(
-              response.member.map((facility) => ({ label: facility.name, value: facility.id })),
-            );
-          });
+        if (visible) this.facilityStore.open(organizationId, editing?.facilityId ?? null);
+        else this.facilityStore.close();
       });
     });
 
@@ -1203,7 +1307,8 @@ export class CalendarPage {
       const callState: CallState<null> = this.store.deleteEventCallState();
 
       untracked((): void => {
-        if (callState.status !== 'success') return;
+        if (callState.status !== 'success' || this.dialogOrganizationId !== this.organizationId())
+          return;
 
         this.pendingDeleteEvent.set(null);
       });
@@ -1212,6 +1317,65 @@ export class CalendarPage {
   //#endregion
 
   //#region Methods
+  /**
+   * Method syncCalendarUrl
+   * @method syncCalendarUrl
+   *
+   * @description
+   * Writes the civil anchor and view while preserving unrelated route parameters.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
+  private syncCalendarUrl(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { date: toIsoDay(this.month()), view: this.granularity() },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /**
+   * Method onCalendarMonthChanged
+   * @method onCalendarMonthChanged
+   *
+   * @description
+   * Synchronizes month-grid navigation with the shareable route anchor.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {Date} month - Civil date reported by the generic grid.
+   *
+   * @returns {void}
+   */
+  protected onCalendarMonthChanged(month: Date): void {
+    this.month.set(month);
+    this.syncCalendarUrl();
+  }
+
+  /**
+   * Method onCalendarDaySelected
+   * @method onCalendarDaySelected
+   *
+   * @description
+   * Persists a selected civil day without issuing a second read for the same month.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string | null} day - Selected ISO day.
+   *
+   * @returns {void}
+   */
+  protected onCalendarDaySelected(day: string | null): void {
+    this.selectedDay.set(day);
+    if (!day) return;
+    this.month.set(new Date(`${day}T00:00:00`));
+    this.syncCalendarUrl();
+  }
   /**
    * Method reload
    * @method reload
@@ -1245,6 +1409,7 @@ export class CalendarPage {
    */
   protected switchGranularity(granularity: CalendarGranularity): void {
     this.granularity.set(granularity);
+    this.syncCalendarUrl();
   }
 
   /**
@@ -1279,9 +1444,9 @@ export class CalendarPage {
    * @returns {void}
    */
   protected goToday(): void {
-    const today: Date = new Date();
-    this.month.set(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
-    this.selectedDay.set(toIsoDay(today));
+    this.month.set(new Date(`${this.todayIso()}T00:00:00`));
+    this.selectedDay.set(this.todayIso());
+    this.syncCalendarUrl();
   }
 
   /**
@@ -1305,17 +1470,18 @@ export class CalendarPage {
     switch (this.granularity()) {
       case 'month':
         this.month.set(new Date(current.getFullYear(), current.getMonth() + offset, 1));
-        return;
+        break;
       case 'week':
         this.month.set(
           new Date(current.getFullYear(), current.getMonth(), current.getDate() + offset * 7),
         );
-        return;
+        break;
       case 'day':
         this.month.set(
           new Date(current.getFullYear(), current.getMonth(), current.getDate() + offset),
         );
     }
+    this.syncCalendarUrl();
   }
 
   /**
@@ -1355,25 +1521,26 @@ export class CalendarPage {
    * @returns {boolean} Whether the item occurs on that day.
    */
   private itemCoversDay(item: CalendarFeedItemOutput, day: string): boolean {
-    const start = new Date(item.startsAt);
-    if (Number.isNaN(start.getTime())) return false;
-    const startDay = toIsoDay(start);
+    const zone = this.regionalFormatting().timezone;
+    const start = DateTime.fromISO(item.startsAt, { zone });
+    if (!start.isValid) return false;
+    const startDay = start.toFormat('yyyy-MM-dd');
     if (day < startDay) return false;
 
     if (!item.endsAt) return day === startDay;
-    const end = new Date(item.endsAt);
-    if (Number.isNaN(end.getTime()) || end <= start) return day === startDay;
+    let end = DateTime.fromISO(item.endsAt, { zone });
+    if (!end.isValid || end <= start) return day === startDay;
     if (
       !item.allDay &&
-      end.getHours() === 0 &&
-      end.getMinutes() === 0 &&
-      end.getSeconds() === 0 &&
-      end.getMilliseconds() === 0
+      end.hour === 0 &&
+      end.minute === 0 &&
+      end.second === 0 &&
+      end.millisecond === 0
     ) {
-      end.setMilliseconds(-1);
+      end = end.minus({ milliseconds: 1 });
     }
 
-    return day <= toIsoDay(end);
+    return day <= end.toFormat('yyyy-MM-dd');
   }
 
   /**
@@ -1400,41 +1567,32 @@ export class CalendarPage {
     anchor: Date,
     granularity: CalendarGranularity,
   ): { readonly organizationId: string; readonly from: string; readonly to: string } {
+    const date = DateTime.fromObject(
+      { year: anchor.getFullYear(), month: anchor.getMonth() + 1, day: anchor.getDate() },
+      { zone: this.regionalFormatting().timezone },
+    );
     switch (granularity) {
       case 'month':
         return {
           organizationId,
-          from: new Date(anchor.getFullYear(), anchor.getMonth(), 1 - 7).toISOString(),
-          to: new Date(anchor.getFullYear(), anchor.getMonth() + 1, 7, 23, 59, 59).toISOString(),
+          from: toApiDateTime(date.startOf('month').minus({ days: 7 })),
+          to: toApiDateTime(date.endOf('month').plus({ days: 7 }).set({ millisecond: 0 })),
         };
       case 'week': {
-        const start: Date = this.startOfWeekOf(anchor);
+        const offset = this.firstDayOfWeek() === 'monday' ? date.weekday - 1 : date.weekday % 7;
+        const start = date.startOf('day').minus({ days: offset });
 
         return {
           organizationId,
-          from: start.toISOString(),
-          to: new Date(
-            start.getFullYear(),
-            start.getMonth(),
-            start.getDate() + 6,
-            23,
-            59,
-            59,
-          ).toISOString(),
+          from: toApiDateTime(start),
+          to: toApiDateTime(start.plus({ days: 6 }).endOf('day').set({ millisecond: 0 })),
         };
       }
       case 'day':
         return {
           organizationId,
-          from: new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate()).toISOString(),
-          to: new Date(
-            anchor.getFullYear(),
-            anchor.getMonth(),
-            anchor.getDate(),
-            23,
-            59,
-            59,
-          ).toISOString(),
+          from: toApiDateTime(date.startOf('day')),
+          to: toApiDateTime(date.endOf('day').set({ millisecond: 0 })),
         };
     }
   }
@@ -1452,6 +1610,9 @@ export class CalendarPage {
    * @returns {void}
    */
   protected openCreateDialog(): void {
+    if (!this.canWriteEvents() || this.isEventWritePending()) return;
+    this.store.resetWriteCallStates();
+    this.dialogOrganizationId = this.organizationId();
     this.createDefaultStart.set(null);
     this.editingEvent.set(null);
     this.eventDialogVisible.set(true);
@@ -1474,7 +1635,9 @@ export class CalendarPage {
    * @returns {void}
    */
   protected onCreateRequested(day: string): void {
-    if (!this.canWriteEvents()) return;
+    if (!this.canWriteEvents() || this.isEventWritePending()) return;
+    this.store.resetWriteCallStates();
+    this.dialogOrganizationId = this.organizationId();
 
     this.createDefaultStart.set(`${day}T${QUICK_CREATE_DEFAULT_TIME}`);
     this.editingEvent.set(null);
@@ -1537,7 +1700,7 @@ export class CalendarPage {
    * @returns {boolean} Whether the day is today.
    */
   protected isToday(day: string): boolean {
-    return day === this.todayIso;
+    return day === this.todayIso();
   }
 
   /**
@@ -1590,21 +1753,23 @@ export class CalendarPage {
       );
     if (item === undefined) return;
 
-    const start: Date = new Date(item.startsAt);
-    const target: Date = new Date(`${drop.day}T00:00:00`);
-    const moved: Date = new Date(
-      target.getFullYear(),
-      target.getMonth(),
-      target.getDate(),
-      start.getHours(),
-      start.getMinutes(),
-      start.getSeconds(),
-    );
-    if (moved.getTime() === start.getTime()) return;
+    const zone = this.regionalFormatting().timezone;
+    const start = DateTime.fromISO(item.startsAt, { zone });
+    const target = DateTime.fromISO(drop.day, { zone });
+    if (!start.isValid || !target.isValid) return;
+    const moved = target.set({ hour: start.hour, minute: start.minute, second: start.second });
+    if (moved.hour !== start.hour || moved.minute !== start.minute) return;
+    if (moved.toMillis() === start.toMillis()) return;
 
-    const deltaMs: number = moved.getTime() - start.getTime();
+    const deltaDays = target.startOf('day').diff(start.startOf('day'), 'days').days;
     const endsAt: string | undefined = item.endsAt
-      ? toApiDateTime(new Date(new Date(item.endsAt).getTime() + deltaMs))
+      ? toApiDateTime(
+          DateTime.fromISO(item.endsAt, { zone }).plus(
+            item.allDay
+              ? { days: deltaDays }
+              : { milliseconds: moved.toMillis() - start.toMillis() },
+          ),
+        )
       : undefined;
 
     this.store.moveEvent({
@@ -1616,7 +1781,7 @@ export class CalendarPage {
 
     const eventTitle: string = item.title;
     const dayLabel: string = new Intl.DateTimeFormat(this.locale, { dateStyle: 'full' }).format(
-      target,
+      new Date(target.year, target.month - 1, target.day),
     );
     this.moveAnnouncement.set(
       $localize`:@@calendar.moveAnnounce:${eventTitle}:eventTitle: moved to ${dayLabel}:date:`,
@@ -1638,6 +1803,10 @@ export class CalendarPage {
    * @returns {void}
    */
   protected openEditDialog(item: CalendarFeedItemOutput): void {
+    if (!this.canWriteEvents() || item.sourceKey !== 'calendar_event' || this.isEventWritePending())
+      return;
+    this.store.resetWriteCallStates();
+    this.dialogOrganizationId = this.organizationId();
     this.editingEvent.set(item);
     this.eventDialogVisible.set(true);
   }
@@ -1657,6 +1826,7 @@ export class CalendarPage {
    * @returns {void}
    */
   protected onEventDialogVisibleChanged(visible: boolean): void {
+    if (this.isEventWritePending()) return;
     this.eventDialogVisible.set(visible);
     if (!visible) {
       this.editingEvent.set(null);
@@ -1682,6 +1852,13 @@ export class CalendarPage {
    */
   protected onEventFormSubmitted(values: CalendarEventFormValues): void {
     const organizationId: string = this.organizationId();
+    if (
+      !this.canWriteEvents() ||
+      this.isEventWritePending() ||
+      !this.eventDialogVisible() ||
+      this.dialogOrganizationId !== organizationId
+    )
+      return;
     const editing: CalendarFeedItemOutput | null = this.editingEvent();
 
     if (editing) {
@@ -1721,6 +1898,10 @@ export class CalendarPage {
    * @returns {void}
    */
   protected requestDelete(item: CalendarFeedItemOutput): void {
+    if (!this.canWriteEvents() || item.sourceKey !== 'calendar_event' || this.isDeletePending())
+      return;
+    this.store.resetWriteCallStates();
+    this.dialogOrganizationId = this.organizationId();
     this.pendingDeleteEvent.set(item);
   }
 
@@ -1759,7 +1940,13 @@ export class CalendarPage {
    */
   protected confirmDelete(): void {
     const item: CalendarFeedItemOutput | null = this.pendingDeleteEvent();
-    if (!item) return;
+    if (
+      !item ||
+      !this.canWriteEvents() ||
+      this.isDeletePending() ||
+      this.dialogOrganizationId !== this.organizationId()
+    )
+      return;
 
     this.store.deleteEvent({ organizationId: this.organizationId(), eventId: item.id });
   }
@@ -1780,7 +1967,8 @@ export class CalendarPage {
    * @returns {void}
    */
   private settleEventDialogWrite(callState: CallState<CalendarEventOutput>): void {
-    if (callState.status !== 'success') return;
+    if (callState.status !== 'success' || this.dialogOrganizationId !== this.organizationId())
+      return;
 
     this.eventDialogVisible.set(false);
     this.editingEvent.set(null);

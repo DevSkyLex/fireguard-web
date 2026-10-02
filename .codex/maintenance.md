@@ -52,9 +52,11 @@ The TypeScript/Angular parsers check explicit types, docblocks, type-only models
 warnings to review. This check does not replace the build, semantic review, or
 recent screenshots that were actually inspected.
 
-Current Oxlint limitation: `typescript/no-floating-promises` is configured, but
-the type-aware engine is neither enabled nor installed. Review changed flows
-and keep strict typing; do not add an engine or migrate TypeScript implicitly.
+`npm run lint` runs the existing syntax rules, then the installed `oxlint-tsgolint`
+engine with `--type-aware` and `.oxlintrc.type-aware.json`. This focused pass enforces
+`typescript/no-floating-promises` without enabling unrelated type-aware rule families.
+`npm run lint:type-aware:check` first compiles a real handled/unhandled promise sentinel
+and requires exactly one diagnostic; missing engines or silently disabled rules fail.
 Reference: [Oxlint compatibility](https://oxc.rs/docs/guide/usage/linter/type-aware).
 
 ## Update a third-party skill

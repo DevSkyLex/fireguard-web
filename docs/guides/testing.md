@@ -39,6 +39,8 @@ npm run test:contracts:drift
 The [contract suite](../../tests/contracts/README.md) validates the actual SSR stub responses
 and selected SPA mocks against a reviewed OpenAPI export. Positive and negative validator
 cases cover missing routes/methods, statuses, media types, required fields, enums and formats.
+Path/query parameters also enforce required values and scalar/form-array serialization;
+populated fixtures cover eight collection families and omitted nullable non-conformity fields.
 The API owns the reference; synchronize and review it when its HTTP contract changes.
 
 ## Browser boundaries
@@ -54,6 +56,14 @@ The [E2E reference](../../tests/e2e/README.md) defines ports, resource ownership
 limits. Use role-based locators and settled-state assertions. Touch devices and
 narrow desktop viewports exercise different contracts. Retain dated captures for
 visual claims; historical reviews do not certify a later revision.
+
+Each PR runs desktop Chromium, Mobile Chrome and Mobile Safari, the real SSR harness
+in Chromium/WebKit, and French/Spanish localized checks. Releases run all five SPA
+projects, adding desktop Firefox and WebKit; a manual `full_browser_matrix` run does
+the same. Translation catalog drift fails CI. These gates still use hermetic API
+fixtures; the separate [live API scenario](../../tests/e2e/live-api/README.md) requires
+an isolated real stack, durable workers, trusted HTTPS and successful readiness probes.
+An authored or listed live scenario does not establish a passing integration run.
 
 ## Tooling checks
 

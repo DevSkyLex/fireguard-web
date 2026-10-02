@@ -90,22 +90,24 @@
   </ng-template>
 
   <ng-template #facilityChip>
-    <app-collection-filter-select
+    <app-facility-option-picker
+      [value]="filters().facility ?? ''"
+      (valueChange)="applyFilter({ facility: $event || null })"
       [options]="facilityOptions()"
-      [value]="filters().facility"
-      placeholder="Any facility"
-      i18n-placeholder="@@maintenance.filter.anyFacility"
-      searchPlaceholder="Search a facility"
-      i18n-searchPlaceholder="@@maintenance.filter.facilitySearchPlaceholder"
-      emptyLabel="No facility matches."
-      i18n-emptyLabel="@@maintenance.filter.noFacility"
-      accessibleName="Facility"
-      i18n-accessibleName="@@maintenance.filter.facility"
-      triggerId="maintenance-filter-facility"
-      testId="maintenance-filter-facility"
-      [state]="fieldPopoverState('facility')"
-      (valueChanged)="applyFilter({ facility: $any($event) })"
-      (stateChanged)="onFieldPopoverStateChanged('facility', $event)"
+      inputId="maintenance-filter-facility"
+      [page]="facilityOptionsStore.page()"
+      [pageCount]="facilityOptionsStore.pageCount()"
+      [callState]="facilityOptionsStore.loadCallState()"
+      (searchChanged)="
+        facilityOptionsStore.searchOptions({ organizationId: organizationId(), search: $event })
+      "
+      (pageChanged)="
+        facilityOptionsStore.load({
+          organizationId: organizationId(),
+          search: facilityOptionsStore.search(),
+          page: $event,
+        })
+      "
     />
   </ng-template>
 
@@ -246,6 +248,19 @@
   [pending]="store.isGeneratingCampaign()"
   [serverError]="store.campaignError()"
   [facilityOptions]="facilityOptions()"
+  [facilityPage]="facilityOptionsStore.page()"
+  [facilityPageCount]="facilityOptionsStore.pageCount()"
+  [facilityCallState]="facilityOptionsStore.loadCallState()"
+  (facilitySearchChanged)="
+    facilityOptionsStore.searchOptions({ organizationId: organizationId(), search: $event })
+  "
+  (facilityPageChanged)="
+    facilityOptionsStore.load({
+      organizationId: organizationId(),
+      search: facilityOptionsStore.search(),
+      page: $event,
+    })
+  "
   (visibleChange)="$event ? campaignDialogVisible.set(true) : closeCampaignDialog()"
   (submitted)="submitCampaign($event)"
 />

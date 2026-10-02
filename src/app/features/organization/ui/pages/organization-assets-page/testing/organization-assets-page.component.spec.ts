@@ -1071,8 +1071,9 @@ describe('OrganizationAssetsPage', () => {
     ).toBeNull();
   });
 
-  it('labels the compliance summary pane with a visible heading', async () => {
+  it('labels configured monitoring without changing the server rate or backend status', async () => {
     fixture = await createPage();
+    summarySignal.set(complianceSummary());
 
     fixture.componentInstance['onAxisActivated']('compliance');
     fixture.componentInstance['onComplianceNodeSelected']({
@@ -1089,7 +1090,19 @@ describe('OrganizationAssetsPage', () => {
     const heading: HTMLElement | null =
       pane?.querySelector('h2#assets-compliance-summary-title') ?? null;
     expect(pane?.getAttribute('aria-labelledby')).toBe('assets-compliance-summary-title');
-    expect(heading?.textContent).toContain('Compliance summary');
+    expect(heading?.textContent).toContain('Monitoring summary');
+    expect(pane?.textContent).toContain(
+      'Monitoring status according to the rules configured in this organization.',
+    );
+    const progress = pane?.querySelector('[aria-label="Equipment up-to-date rate"]');
+    expect(progress?.getAttribute('aria-valuenow')).toBe('95');
+    expect(
+      pane?.querySelector('[data-testid="assets-compliance-summary-badge"]')?.textContent,
+    ).toContain('95%');
+    expect(
+      pane?.querySelector('[data-testid="assets-compliance-summary-badge"]')?.textContent,
+    ).toContain('Up to date');
+    expect(summarySignal()?.organizationStatus).toBe('compliant');
   });
 
   it('treats a summary still carrying the previous site as loading, not as stale data (as-03)', async () => {

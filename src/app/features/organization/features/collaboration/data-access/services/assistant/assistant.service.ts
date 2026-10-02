@@ -1,7 +1,7 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
-import type { HydraItem } from '@core/api/models';
+import type { HydraCollection, HydraItem } from '@core/api/models';
 import type {
   AskAssistantQuestionInput,
   AskAssistantQuestionOutput,
@@ -21,7 +21,7 @@ import type {
 export const ASSISTANT_MESSAGES_PAGE_SIZE = 50;
 
 /**
- * Service AssistantService
+ * Class AssistantService
  * @class AssistantService
  *
  * @description
@@ -41,6 +41,31 @@ export const ASSISTANT_MESSAGES_PAGE_SIZE = 50;
 @Service()
 export class AssistantService extends HydraApiService {
   //#region Methods
+  /**
+   * Method listThreads
+   * @method listThreads
+   *
+   * @description
+   * Reads one page of the current member's private conversations in server activity order.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the conversations.
+   * @param {number} page - One-based collection page.
+   *
+   * @returns {Observable<HydraCollection<AssistantThreadOutput>>} Private conversation page.
+   */
+  public listThreads(
+    organizationId: string,
+    page: number = 1,
+  ): Observable<HydraCollection<AssistantThreadOutput>> {
+    return this.getCollection<AssistantThreadOutput>(this.threadsEndpoint(organizationId), {
+      page,
+      itemsPerPage: 30,
+    });
+  }
+
   /**
    * Method startThread
    * @method startThread

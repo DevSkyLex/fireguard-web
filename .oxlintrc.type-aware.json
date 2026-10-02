@@ -1,0 +1,25 @@
+{
+  "plugins": ["typescript"],
+  "ignorePatterns": [
+    "dist/**",
+    "out-tsc/**",
+    ".angular/**",
+    "coverage/**",
+    "tmp/**",
+    ".claude/skills/**",
+    ".github/skills/**",
+    ".github/hooks/**",
+    "src/app/shared/ui/**",
+    "public/**",
+    ".agents/skills/design-taste-frontend/**",
+    ".agents/skills/spartan/**"
+  ],
+  "categories": {
+    "correctness": "off",
+    "suspicious": "off",
+    "perf": "off",
+    "style": "off",
+    "pedantic": "off"
+  },
+  "rules": { "typescript/no-floating-promises": "error" }
+}

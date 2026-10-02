@@ -20,13 +20,14 @@ export interface EnvironmentConfig {
   //#region Properties
   /**
    * Property production
-   * @type {boolean}
    * @readonly
    *
    * @description
    * Whether the application is in production mode.
    *
    * @version 1.0.0
+   *
+   * @type {boolean}
    *
    * @example
    * ```typescript
@@ -37,13 +38,14 @@ export interface EnvironmentConfig {
 
   /**
    * Property apiUrl
-   * @type {string}
    * @readonly
    *
    * @description
    * API URL of the application.
    *
    * @version 1.0.0
+   *
+   * @type {string}
    *
    * @example
    * ```typescript
@@ -54,7 +56,6 @@ export interface EnvironmentConfig {
 
   /**
    * Property appName
-   * @type {string}
    * @readonly
    *
    * @description
@@ -62,22 +63,25 @@ export interface EnvironmentConfig {
    *
    * @version 1.0.0
    *
+   * @type {string}
+   *
    * @example
    * ```typescript
-   * appName: 'FireGuard'
+   * appName: 'Fireguard'
    * ```
    */
   readonly appName: string;
 
   /**
    * Property mercureHubUrl
-   * @type {string}
    * @readonly
    *
    * @description
    * URL of the Mercure hub used for server-sent events.
    *
    * @version 1.0.0
+   *
+   * @type {string}
    *
    * @example
    * ```typescript
@@ -88,7 +92,6 @@ export interface EnvironmentConfig {
 
   /**
    * Property maintenance
-   * @type {boolean | undefined}
    * @readonly
    *
    * @description
@@ -97,6 +100,8 @@ export interface EnvironmentConfig {
    * and activates the `MaintenanceStore` before any routing occurs.
    *
    * @version 1.0.0
+   *
+   * @type {boolean | undefined}
    *
    * @example
    * ```typescript

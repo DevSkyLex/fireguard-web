@@ -5,7 +5,11 @@ inputs:
   node-version:
     description: Node.js version to install
     required: false
-    default: '22'
+    default: '22.23.3'
+  npm-version:
+    description: Exact npm version used to reproduce the reviewed lockfile
+    required: false
+    default: '11.16.0'
   install-dependencies:
     description: Whether npm dependencies should be installed
     required: false
@@ -23,10 +27,20 @@ runs:
   using: composite
   steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       with:
         node-version: ${{ inputs.node-version }}
         cache: npm
+
+    - name: Pin npm on the disposable CI runner
+      shell: bash
+      env:
+        NPM_VERSION: ${{ inputs.npm-version }}
+      run: |
+        [[ "$NPM_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'An exact npm version is required'; exit 1; }
+        npm install --global "npm@$NPM_VERSION" --ignore-scripts --no-audit --no-fund
+        node --version
+        npm --version
 
     - name: Install dependencies
       if: ${{ inputs.install-dependencies == 'true' }}
@@ -35,7 +49,7 @@ runs:
 
     - name: Cache Playwright browsers
       if: ${{ inputs.install-playwright-browsers == 'true' }}
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: ~/.cache/ms-playwright
         key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}-${{ inputs.playwright-browsers }}

@@ -1,9 +1,8 @@
 import type { AdditiveSlotFeature } from '@shared/layout-slot';
-import { NotificationBell } from '../../ui/components';
+import { NotificationBell } from '../../ui/components/notification-bell';
 
 /**
  * Function withNotificationBell
- * @function withNotificationBell
  *
  * @description
  * Contributes {@link NotificationBell} — the bell, its unread dot, and the menu
@@ -15,6 +14,8 @@ import { NotificationBell } from '../../ui/components';
  * @since 1.0.0
  *
  * @returns {AdditiveSlotFeature} The contribution factory, run by the layout's injector.
+ *
+ * @function withNotificationBell
  *
  * @example
  * ```typescript

@@ -8,6 +8,7 @@ import { AuthSessionNavigationService } from '../auth-session-navigation.service
 describe('AuthSessionNavigationService', () => {
   let logoutSucceeded: Subject<void>;
   let logoutFailed: Subject<void>;
+  let sessionInvalidated: Subject<void>;
   let navigate: ReturnType<typeof vi.fn>;
   let events: { on: ReturnType<typeof vi.fn> };
   let router: { url: string; navigate: ReturnType<typeof vi.fn> };
@@ -15,13 +16,15 @@ describe('AuthSessionNavigationService', () => {
   beforeEach(() => {
     logoutSucceeded = new Subject<void>();
     logoutFailed = new Subject<void>();
+    sessionInvalidated = new Subject<void>();
     navigate = vi.fn().mockResolvedValue(true);
     router = { url: '/organizations/current', navigate };
     events = {
       on: vi
         .fn()
         .mockReturnValueOnce(logoutSucceeded.asObservable())
-        .mockReturnValueOnce(logoutFailed.asObservable()),
+        .mockReturnValueOnce(logoutFailed.asObservable())
+        .mockReturnValueOnce(sessionInvalidated.asObservable()),
     };
 
     TestBed.configureTestingModule({
@@ -55,7 +58,7 @@ describe('AuthSessionNavigationService', () => {
     service.start();
     logoutSucceeded.next();
 
-    expect(events.on).toHaveBeenCalledTimes(2);
+    expect(events.on).toHaveBeenCalledTimes(3);
     expect(navigate).toHaveBeenCalledTimes(1);
   });
 
@@ -67,6 +70,12 @@ describe('AuthSessionNavigationService', () => {
     logoutSucceeded.next();
 
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('leaves the old account context after remote or refresh-owner invalidation', () => {
+    TestBed.inject(AuthSessionNavigationService).start();
+    sessionInvalidated.next();
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(['/auth/login'], { replaceUrl: true });
   });
 
   it('does not subscribe or navigate during server rendering', () => {

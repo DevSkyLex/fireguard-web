@@ -1,0 +1,7 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "@angular/localize"]
+  },
+  "include": ["./**/*.ts", "../support/pages/auth.page.ts"]
+}

@@ -402,6 +402,36 @@ describe('IndexedDbService', () => {
       await Promise.resolve();
     }
 
+    it.each(['put', 'remove', 'putTransaction'] as const)(
+      'rejects obsolete %s before opening a write transaction after an A-B-A session change',
+      async (method) => {
+        let owner = 'account-a';
+        let revision = 1;
+        const capturedOwner = owner;
+        const capturedRevision = revision;
+        const isCurrent = (): boolean => owner === capturedOwner && revision === capturedRevision;
+        const write =
+          method === 'put'
+            ? service.put('outbox', 'old-operation', { saved: true }, isCurrent)
+            : method === 'remove'
+              ? service.remove('outbox', 'old-operation', isCurrent)
+              : service.putTransaction(
+                  { outbox: [{ key: 'old-operation', value: { saved: true } }] },
+                  isCurrent,
+                );
+        const rejected = expect(write).rejects.toMatchObject({ name: 'AbortError' });
+        owner = 'account-b';
+        revision = 2;
+        owner = 'account-a';
+        revision = 3;
+        await opened();
+        await rejected;
+        expect(database.transaction).not.toHaveBeenCalled();
+        expect(store.put).not.toHaveBeenCalled();
+        expect(store.delete).not.toHaveBeenCalled();
+      },
+    );
+
     it.each([
       {
         method: 'get',
@@ -455,7 +485,7 @@ describe('IndexedDbService', () => {
         args: ['draft-1'],
       },
     ] as const)(
-      'writes $method with the correct key and waits for the request',
+      'writes $method with the correct key and waits for the transaction commit',
       async ({ method, invoke, args }) => {
         const write = invoke(service);
         const settled = vi.fn();
@@ -465,7 +495,32 @@ describe('IndexedDbService', () => {
         expect(store[method]).toHaveBeenCalledWith(...args);
         expect(settled).not.toHaveBeenCalled();
         valueRequest.dispatchEvent(new Event('success'));
+        await Promise.resolve();
+        expect(settled).not.toHaveBeenCalled();
+        transaction.dispatchEvent(new Event('complete'));
         await expect(write).resolves.toBeUndefined();
+      },
+    );
+
+    it.each([
+      { method: 'put', event: 'abort' },
+      { method: 'put', event: 'error' },
+      { method: 'remove', event: 'abort' },
+      { method: 'remove', event: 'error' },
+    ] as const)(
+      'rejects $method when its transaction reports $event after the request succeeds',
+      async ({ method, event }) => {
+        const failure = new DOMException('Storage quota exceeded', 'QuotaExceededError');
+        const write =
+          method === 'put'
+            ? service.put('outbox', 'draft-1', { saved: true })
+            : service.remove('outbox', 'draft-1');
+        const rejected = expect(write).rejects.toBe(failure);
+        await opened();
+        valueRequest.dispatchEvent(new Event('success'));
+        Object.assign(transaction, { error: failure });
+        transaction.dispatchEvent(new Event(event));
+        await rejected;
       },
     );
 

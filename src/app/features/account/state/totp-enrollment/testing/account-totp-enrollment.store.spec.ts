@@ -29,7 +29,7 @@ const SETUP_OUTPUT: SetupTotpOutput = {
   '@id': '',
   '@type': 'Totp',
   secret: 'JBSWY3DPEHPK3PXP',
-  qrCodeUri: 'otpauth://totp/FireGuard%20Auth:user@example.com?secret=JBSWY3DPEHPK3PXP',
+  qrCodeUri: 'otpauth://totp/Fireguard%20Auth:user@example.com?secret=JBSWY3DPEHPK3PXP',
 };
 
 describe('AccountTotpEnrollmentStore', () => {

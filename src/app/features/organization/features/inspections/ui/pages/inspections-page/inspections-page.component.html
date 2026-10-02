@@ -264,7 +264,33 @@
   [pending]="store.isCreating()"
   [serverError]="store.createError()"
   [equipmentOptions]="creationOptions.equipmentOptions()"
-  [checklists]="checklistStore.checklists()"
+  [checklists]="creationOptions.checklists()"
+  [equipmentPage]="creationOptions.equipmentPage()"
+  [equipmentPageCount]="creationOptions.equipmentPageCount()"
+  [checklistPage]="creationOptions.checklistPage()"
+  [checklistPageCount]="creationOptions.checklistPageCount()"
+  [equipmentQueryState]="creationOptions.loadCallState()"
+  [checklistQueryState]="creationOptions.checklistCallState()"
+  (equipmentSearchChanged)="
+    creationOptions.searchEquipment({ organizationId: organizationId(), search: $event })
+  "
+  (equipmentPageChanged)="
+    creationOptions.loadEquipmentOptions({
+      organizationId: organizationId(),
+      search: creationOptions.equipmentSearch(),
+      page: $event,
+    })
+  "
+  (checklistSearchChanged)="
+    creationOptions.searchChecklists({ organizationId: organizationId(), search: $event })
+  "
+  (checklistPageChanged)="
+    creationOptions.loadChecklists({
+      organizationId: organizationId(),
+      search: creationOptions.checklistSearch(),
+      page: $event,
+    })
+  "
   (visibleChange)="onCreateSheetVisibleChange($event)"
   (submitted)="onCreateSubmitted($event)"
 />

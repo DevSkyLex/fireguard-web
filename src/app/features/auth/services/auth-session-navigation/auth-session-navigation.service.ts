@@ -108,6 +108,7 @@ export class AuthSessionNavigationService {
     merge(
       this.events.on(authStoreEvents.logoutSucceeded),
       this.events.on(authStoreEvents.logoutFailed),
+      this.events.on(authStoreEvents.sessionInvalidated),
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((): void => this.navigateToLogin());

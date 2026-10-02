@@ -256,11 +256,52 @@
   }
 </ng-template>
 
+@if (labelsDialogVisible()) {
+  <app-equipment-labels-dialog
+    [visible]="labelsDialogVisible()"
+    [items]="items()"
+    [facilityOptions]="facilityOptionsStore.options()"
+    [facilityPage]="facilityOptionsStore.page()"
+    [facilityPageCount]="facilityOptionsStore.pageCount()"
+    [facilityCallState]="facilityOptionsStore.loadCallState()"
+    [count]="labelsStore.count()"
+    [previewCallState]="labelsStore.previewCallState()"
+    [printCallState]="labelsStore.printCallState()"
+    [canPrint]="labelsStore.canPrint()"
+    (scopeChanged)="labelsStore.preview({ organizationId: organizationId(), scope: $event })"
+    (submitted)="labelsStore.print({ organizationId: organizationId(), scope: $event })"
+    (facilitySearchChanged)="
+      facilityOptionsStore.searchOptions({ organizationId: organizationId(), search: $event })
+    "
+    (facilityPageChanged)="
+      facilityOptionsStore.load({
+        organizationId: organizationId(),
+        search: facilityOptionsStore.search(),
+        page: $event,
+      })
+    "
+    (visibleChange)="labelsDialogVisible.set($event)"
+  />
+}
+
 <app-equipment-create-sheet
   [visible]="createSheetVisible()"
   [pending]="store.isCreating()"
   [serverError]="store.createError()"
   [facilityOptions]="facilityOptionsStore.options()"
+  [facilityPage]="facilityOptionsStore.page()"
+  [facilityPageCount]="facilityOptionsStore.pageCount()"
+  [facilityCallState]="facilityOptionsStore.loadCallState()"
+  (facilitySearchChanged)="
+    facilityOptionsStore.searchOptions({ organizationId: organizationId(), search: $event })
+  "
+  (facilityPageChanged)="
+    facilityOptionsStore.load({
+      organizationId: organizationId(),
+      search: facilityOptionsStore.search(),
+      page: $event,
+    })
+  "
   [initialFacilityId]="pendingScopeId()"
   (visibleChange)="onCreateSheetVisibleChange($event)"
   (submitted)="onCreateSubmitted($event)"

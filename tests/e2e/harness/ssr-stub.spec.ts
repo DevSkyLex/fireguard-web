@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
+import { E2E_ACCESS_TOKEN } from '../support/fixtures/api-fixtures';
 
 const loadModule = createRequire(resolve('tests/e2e/harness/ssr-stub.spec.ts'));
 const { createApiStub } = loadModule('../ssr/api-stub.cjs') as {
@@ -34,7 +35,7 @@ test('serves the real HTTP stub locally and records wrong methods and endpoints'
         expect.objectContaining({ method: 'GET', path: '/api/auth/refresh' }),
       ]),
     );
-    const headers = { authorization: 'Bearer e2e-access-token' };
+    const headers = { authorization: 'Bearer ' + E2E_ACCESS_TOKEN };
     const preference = await request.get(origin + '/api/me/presence-preference', { headers });
     expect(preference.status()).toBe(200);
     expect(await preference.json()).toMatchObject({

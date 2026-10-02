@@ -1,4 +1,5 @@
 export type { OrganizationOutput } from './organization-entity/organization-output.interface';
+export type { OrganizationRegisteredAddress } from './organization-entity/organization-registered-address.interface';
 export type { OrganizationMembershipRoleOutput } from './organization-entity/organization-membership-role-output.interface';
 export type { OrganizationTransferOwnershipConfirmedEvent } from './organization-transfer-ownership/organization-transfer-ownership-confirmed-event.interface';
 export type { CreateOrganizationInput } from './organization-entity/create-organization-input.interface';

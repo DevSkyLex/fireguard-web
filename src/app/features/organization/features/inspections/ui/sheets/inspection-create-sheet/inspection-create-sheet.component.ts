@@ -14,6 +14,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { idleCallState, type CallState } from '@core/request-state';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type {
   CreateInspectionInput,
@@ -25,8 +26,9 @@ import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import { InspectionCreateForm } from '../../forms/inspection-create-form';
 
 /**
- * Component InspectionCreateSheet
+ * Class InspectionCreateSheet
  * @class InspectionCreateSheet
+ *
  * @description
  * The spartan sheet hosting {@link InspectionCreateForm} on the inspections list: the
  * record is created without leaving the list, the same surface every other
@@ -38,7 +40,9 @@ import { InspectionCreateForm } from '../../forms/inspection-create-form';
  * undone and turned into the shared unsaved-changes confirmation, exactly as
  * `intervention-work-item-sheet` does. Below `sm` the panel is a bottom
  * drawer (`@shared/sheet-side`).
+ *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -50,11 +54,98 @@ import { InspectionCreateForm } from '../../forms/inspection-create-form';
 export class InspectionCreateSheet {
   //#region Inputs
   /**
+   * Property equipmentPage
+   * @readonly
+   *
+   * @description
+   * Current equipment server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly equipmentPage: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property equipmentPageCount
+   * @readonly
+   *
+   * @description
+   * Number of equipment server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly equipmentPageCount: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property checklistPage
+   * @readonly
+   *
+   * @description
+   * Current active checklist server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly checklistPage: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property checklistPageCount
+   * @readonly
+   *
+   * @description
+   * Number of active checklist server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly checklistPageCount: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property equipmentQueryState
+   * @readonly
+   *
+   * @description
+   * Request state of equipment choices.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly equipmentQueryState: InputSignal<CallState> = input<CallState>(idleCallState());
+
+  /**
+   * Property checklistQueryState
+   * @readonly
+   *
+   * @description
+   * Request state of active checklist choices.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly checklistQueryState: InputSignal<CallState> = input<CallState>(idleCallState());
+  /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -62,9 +153,13 @@ export class InspectionCreateSheet {
   /**
    * Property pending
    * @readonly
-   * @description Whether the creation request is in flight.
+   *
+   * @description
+   * Whether the creation request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -72,9 +167,13 @@ export class InspectionCreateSheet {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the creation failed with, forwarded to the form.
+   *
+   * @description
+   * Whatever the creation failed with, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -82,9 +181,13 @@ export class InspectionCreateSheet {
   /**
    * Property equipmentOptions
    * @readonly
-   * @description The organization's equipment offered by the combobox.
+   *
+   * @description
+   * The organization's equipment offered by the combobox.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly EquipmentSelectOption[]>}
    */
   public readonly equipmentOptions: InputSignal<readonly EquipmentSelectOption[]> = input<
@@ -94,9 +197,13 @@ export class InspectionCreateSheet {
   /**
    * Property checklists
    * @readonly
-   * @description The active checklist templates offered by the optional picker.
+   *
+   * @description
+   * The active checklist templates offered by the optional picker.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly ChecklistOutput[]>}
    */
   public readonly checklists: InputSignal<readonly ChecklistOutput[]> = input<
@@ -106,11 +213,70 @@ export class InspectionCreateSheet {
 
   //#region Outputs
   /**
+   * Property equipmentSearchChanged
+   * @readonly
+   *
+   * @description
+   * Search entered in the equipment picker.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly equipmentSearchChanged: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property equipmentPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested equipment server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly equipmentPageChanged: OutputEmitterRef<number> = output<number>();
+
+  /**
+   * Property checklistSearchChanged
+   * @readonly
+   *
+   * @description
+   * Search entered in the checklist picker.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly checklistSearchChanged: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property checklistPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested active checklist server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly checklistPageChanged: OutputEmitterRef<number> = output<number>();
+  /**
    * Property visibleChange
    * @readonly
-   * @description The panel wants to open or close.
+   *
+   * @description
+   * The panel wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -118,9 +284,13 @@ export class InspectionCreateSheet {
   /**
    * Property submitted
    * @readonly
-   * @description The form's validated payload, forwarded untouched.
+   *
+   * @description
+   * The form's validated payload, forwarded untouched.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CreateInspectionInput>}
    */
   public readonly submitted: OutputEmitterRef<CreateInspectionInput> =
@@ -131,7 +301,11 @@ export class InspectionCreateSheet {
   /**
    * Constructor
    * @constructor
-   * @description Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next opening confirm over nothing.
+   *
+   * @description
+   * Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next
+   * opening confirm over nothing.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -150,9 +324,13 @@ export class InspectionCreateSheet {
   /**
    * Property sheetState
    * @readonly
-   * @description The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @description
+   * The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -162,9 +340,13 @@ export class InspectionCreateSheet {
   /**
    * Property side
    * @readonly
-   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it.
+   *
+   * @description
+   * The panel's side — `'bottom'` below `sm`, `'right'` at and above it.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -172,9 +354,14 @@ export class InspectionCreateSheet {
   /**
    * Property dirty
    * @readonly
-   * @description Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates {@link requestClose}.
+   *
+   * @description
+   * Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates
+   * {@link requestClose}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly dirty: WritableSignal<boolean> = signal<boolean>(false);
@@ -182,9 +369,14 @@ export class InspectionCreateSheet {
   /**
    * Property unsavedChangesDialogState
    * @readonly
-   * @description Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when {@link dirty} is true.
+   *
+   * @description
+   * Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when
+   * {@link dirty} is true.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<BrnDialogState>}
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
@@ -193,9 +385,14 @@ export class InspectionCreateSheet {
   /**
    * Property sheetRef
    * @readonly
-   * @description The panel directive, queried so {@link onStateChanged} can reopen it to undo an Escape/outside-click made while {@link dirty}.
+   *
+   * @description
+   * The panel directive, queried so {@link onStateChanged} can reopen it to undo an
+   * Escape/outside-click made while {@link dirty}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<HlmSheet | undefined>}
    */
   protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
@@ -205,10 +402,16 @@ export class InspectionCreateSheet {
   /**
    * Method onStateChanged
    * @method onStateChanged
-   * @description Relays a dismissal, ignoring the echo of a change the page already made; a dismissal reaching here while {@link dirty} is undone and redirected to the confirmation.
+   *
+   * @description
+   * Relays a dismissal, ignoring the echo of a change the page already made; a dismissal reaching
+   * here while {@link dirty} is undone and redirected to the confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - The panel's new state.
+   *
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
@@ -229,9 +432,14 @@ export class InspectionCreateSheet {
   /**
    * Method requestClose
    * @method requestClose
-   * @description The panel's own close action, reached from the form's Cancel. Closes right away when nothing would be lost; otherwise asks first.
+   *
+   * @description
+   * The panel's own close action, reached from the form's Cancel. Closes right away when nothing
+   * would be lost; otherwise asks first.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected requestClose(): void {
@@ -247,9 +455,13 @@ export class InspectionCreateSheet {
   /**
    * Method onUnsavedChangesConfirmed
    * @method onUnsavedChangesConfirmed
-   * @description The operator chose to discard the draft — closes both the confirmation and the panel.
+   *
+   * @description
+   * The operator chose to discard the draft — closes both the confirmation and the panel.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesConfirmed(): void {
@@ -260,9 +472,13 @@ export class InspectionCreateSheet {
   /**
    * Method onUnsavedChangesDismissed
    * @method onUnsavedChangesDismissed
-   * @description The operator chose to keep editing — closes the confirmation only.
+   *
+   * @description
+   * The operator chose to keep editing — closes the confirmation only.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesDismissed(): void {

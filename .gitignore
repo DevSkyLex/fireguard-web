@@ -3,6 +3,7 @@
 # Compiled output
 /dist
 /tmp
+/.tmp
 /out-tsc
 /bazel-out
 /.build-check-*
@@ -51,6 +52,7 @@ Thumbs.db
 /playwright/.cache/
 /tests/e2e/artifacts/
 /tests/e2e/test-results-*/
+/tests/e2e/live-api/test-results-live-api/
 /debug.log
 
 # Impeccable (état local de l'outillage design)

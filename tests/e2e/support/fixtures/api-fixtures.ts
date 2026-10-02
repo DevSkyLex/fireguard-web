@@ -10,6 +10,15 @@
 /** Organization the equipment/facility/inspection/onboarding e2e scenarios run against. */
 export const E2E_ORGANIZATION_ID = 'e2e-org-1';
 
+/** Builds a synthetic ownership claim; the token's signature is deliberately invalid. */
+export function accessTokenForSubject(subject: string): string {
+  const payload = Buffer.from(JSON.stringify({ sub: subject })).toString('base64url');
+  return 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.' + payload + '.fixture-signature';
+}
+
+/** Synthetic API token identifying the default fixture owner. */
+export const E2E_ACCESS_TOKEN = accessTokenForSubject('e2e-user-1');
+
 export interface LoginOutputFixture {
   readonly '@id': string;
   readonly '@type': string;
@@ -31,7 +40,7 @@ export function loginOutput(overrides: Partial<LoginOutputFixture> = {}): LoginO
   return {
     '@id': '/api/auth/login',
     '@type': 'Token',
-    access_token: 'e2e-access-token',
+    access_token: E2E_ACCESS_TOKEN,
     token_type: 'Bearer',
     expires_in: 3600,
     scope: 'openid profile email',

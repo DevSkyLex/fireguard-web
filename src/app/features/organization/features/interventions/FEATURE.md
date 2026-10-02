@@ -62,9 +62,20 @@ Time journals and drafts are account-scoped IndexedDB records separate from oper
 workspace snapshots. Authorized journals are prefetched with saved workspaces; missing
 offline history remains explicitly unknown. Stable entry IDs and independent revisions
 make replay idempotent. Drafts survive failed writes; failed device persistence retains
-the latest input in memory and guards dismissal. Time, effort and assignment conflicts
+the latest input in memory and guards dismissal. A native browser departure warning is requested
+only after local persistence fails and the latest draft differs from its confirmed device snapshot;
+retry retains this protection until persistence succeeds. Durable drafts and network write failures
+do not trigger it. Success, explicit discard, scope reset and destruction remove the protection.
+Browsers may suppress this event or warning, especially on mobile; it is no durability guarantee.
+Time, effort and assignment conflicts
 preserve local intent and server values until human review; generic retry cannot bypass
 revision review or overload consent. No offline workspace implies global availability.
+
+Service-worker activation uses auth's published durable-work registry. Intervention and messaging
+operations, including failed and conflicted rows, block the update until synchronized, resolved or
+explicitly discarded. The offer tracks registered queue indicators, while activation and the final
+reload each reread persisted queues. Storage errors, session replacement and newly queued work keep
+the update waiting. No persistent-storage permission is requested automatically.
 
 ## Entry Points
 
@@ -147,9 +158,18 @@ Internal code imports deep paths directly.
 
 ## Cross-Feature Dependencies
 
-- Consumes Auth's `AUTH_SESSION_PORT` for offline prefetch. Background member and intervention
+- Consumes Auth's `AUTH_SESSION_PORT` for offline prefetch and replay ownership. Background member and intervention
   reads wait for an authenticated session; losing that session cancels pending reads even when
   an organization identifier remains remembered.
+
+- Offline replay and its coordinator capture the session revision, Account's `USER_IDENTITY_PORT`
+  owner and parent organization context before loading operations. Session replacement, including
+  returning to the same account, owner loss or workspace change stops further writes and suppresses
+  obsolete queue mutations, conflict recovery and replay events. A replay organization must match
+  the locally persisted intervention owner; device-wide cycles may still synchronize that account's
+  interventions from multiple organizations. Forced logout retains immediate local purge.
+  Session-end notifications cancel active replay transport subscriptions. An already accepted
+  request may finish on the server, but its obsolete pass never continues under another session.
 
 - Depends on organization route context and permissions from the parent `features/organization`
   feature (`organizationPermissionGuard` from `@features/organization/http/guards`,
@@ -249,6 +269,9 @@ capabilities denies server-controlled actions until synchronization. The page ow
 command orchestration, selected-resource focus and approved sibling composition.
 One `workflowActions` template mounts in the desktop header or mobile footer; use
 the central interaction-capabilities contract and preserve reserved footer space.
+The page-local command projection chooses the visible phase action from a plain
+capability/readiness snapshot. It neither authorizes nor executes writes: the page
+retains confirmation, current-context checks and publication preflight.
 Publication waits for relevant local replay, checks queued/conflicting work and
 rereads the intervention/issues before POST. Accepted publication remains recoverable.
 
@@ -373,19 +396,18 @@ See the [intervention form and collection reference](../../../../../../docs/arch
   session.
 
 - **A filter the active tab does not honour is never silently applied and
-  never silently lost (13.0).** `InterventionsPage.honouredFilterKeys` reads
-  `INTERVENTION_VIEW_HONOURED_FILTER_KEYS[activeView()]`; `offeredFilterFields`
+  never silently lost (13.0).** The page-local view criteria projection owns
+  permitted-view fallback and the honoured-field catalogue; `offeredFilterFields`
   narrows the "+ Filter" menu's own catalog to it, and `honouredActiveFilterKeys`
   narrows both the bar's `activeKeys` input and the "Filters" badge count the
   same way — an unhonoured field renders no chip here at all, active or not,
   and the badge never counts it, since it narrows nothing on this tab. Nothing
   is dropped from the URL: `switchView` merges every param forward regardless,
-  and each tab's own query builder (`boardFilters`, `toCalendarFilters`)
+  and each tab's own query builder (`boardFilters`, the page-local Calendar projection)
   already reads only the fields it declares, so the value is inert here and
   reapplies the moment the operator switches to a tab that honours it. Adding
   a tenth filter field, or changing which fields a tab honours, means updating
-  that `Record`'s entry in the same change, or the new field silently reads as
-  honoured everywhere.
+  the view catalogue and the affected query projection in the same change.
 - **`Board` and `InterventionCalendar` inject no store and call no
   service (11.0, `ARCHITECTURE.md` §10.3).** Only `InterventionsPage` may —
   a Board move is emitted as `moveRequested` and the page decides whether to

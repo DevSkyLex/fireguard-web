@@ -2,6 +2,7 @@ import { effect, inject, Service, signal, type Signal, type WritableSignal } fro
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { authStoreEvents } from '@features/auth/state';
 import type {
   InterventionOutboxOperation,
@@ -30,6 +31,20 @@ import { InterventionDatabaseService } from './intervention-database.service';
 @Service()
 export class InterventionOutboxRepository {
   //#region Properties
+  /**
+   * Property session
+   * @readonly
+   *
+   * @description
+   * Auth-owned revision fencing asynchronous outbox mutations and reads.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {AuthSessionPort}
+   */
+  private readonly session: AuthSessionPort = inject(AUTH_SESSION_PORT);
+
   /**
    * Property database
    * @readonly
@@ -246,7 +261,9 @@ export class InterventionOutboxRepository {
     type: Type,
     payload: InterventionOutboxPayloadMap[Type],
   ): Promise<void> {
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const clientId: string =
       typeof payload['clientId'] === 'string' ? payload['clientId'] : crypto.randomUUID();
     const queuedAt = Math.max(Date.now(), this.lastQueuedAt + 1);
@@ -260,7 +277,8 @@ export class InterventionOutboxRepository {
       status: 'pending',
       error: null,
     };
-    await this.database.put('outbox', operation.id, operation);
+    await this.database.put('outbox', operation.id, operation, isCurrent);
+    this.assertCurrent(isCurrent);
     this.unsynced.set(true);
     this.pending.set(true);
     this.pendingOps.update((count: number) => count + 1);
@@ -286,7 +304,9 @@ export class InterventionOutboxRepository {
     interventionId: string,
     entries: readonly InterventionOutboxQueueEntry[],
   ): Promise<readonly string[]> {
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operations = entries.map((entry): InterventionOutboxOperation => {
       const clientId =
         typeof entry.payload['clientId'] === 'string'
@@ -305,9 +325,13 @@ export class InterventionOutboxRepository {
       } as InterventionOutboxOperation;
     });
 
-    await this.database.putTransaction({
-      outbox: operations.map((operation) => ({ key: operation.id, value: operation })),
-    });
+    await this.database.putTransaction(
+      {
+        outbox: operations.map((operation) => ({ key: operation.id, value: operation })),
+      },
+      isCurrent,
+    );
+    this.assertCurrent(isCurrent);
     if (operations.length > 0) {
       this.unsynced.set(true);
       this.pending.set(true);
@@ -333,8 +357,11 @@ export class InterventionOutboxRepository {
    */
   public async listOutbox(interventionId: string): Promise<readonly InterventionOutboxOperation[]> {
     if (!this.database.browser) return [];
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    this.assertCurrent(isCurrent);
     return operations
       .filter((operation) => operation.interventionId === interventionId)
       .toSorted(
@@ -361,8 +388,11 @@ export class InterventionOutboxRepository {
    */
   public async listAllOutbox(): Promise<readonly InterventionOutboxOperation[]> {
     if (!this.database.browser) return [];
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    this.assertCurrent(isCurrent);
     return operations.toSorted(
       (left, right) =>
         left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
@@ -386,8 +416,11 @@ export class InterventionOutboxRepository {
    */
   public async attachmentQueueUsage(): Promise<{ count: number; bytes: number }> {
     if (!this.database.browser) return { count: 0, bytes: 0 };
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    this.assertCurrent(isCurrent);
     return operations
       .filter((operation) => operation.type === 'attachment.upload')
       .reduce(
@@ -414,8 +447,11 @@ export class InterventionOutboxRepository {
    */
   public async listInterventionIdsWithOutbox(): Promise<readonly string[]> {
     if (!this.database.browser) return [];
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    this.assertCurrent(isCurrent);
     return [...new Set(operations.map((operation) => operation.interventionId))];
   }
 
@@ -434,8 +470,11 @@ export class InterventionOutboxRepository {
    * @returns {Promise<void>} A promise resolving once the operation is removed.
    */
   public async removeOutbox(id: string): Promise<void> {
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
-    await this.database.remove('outbox', id);
+    this.assertCurrent(isCurrent);
+    await this.database.remove('outbox', id, isCurrent);
+    this.assertCurrent(isCurrent);
     await this.refresh();
   }
 
@@ -470,20 +509,29 @@ export class InterventionOutboxRepository {
       readonly values: Readonly<Record<string, string | number | boolean | null>>;
     } | null = null,
   ): Promise<void> {
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    this.assertCurrent(isCurrent);
     if (!operation) return;
-    await this.database.put('outbox', id, {
-      ...operation,
-      baseRevision:
-        operation.baseRevision ??
-        ('revision' in operation.payload ? (operation.payload.revision ?? null) : null),
-      serverRevision: review?.revision ?? null,
-      serverValues: review?.values ?? null,
-      workloadAssessment,
-      status: 'conflict',
-      error,
-    });
+    await this.database.put(
+      'outbox',
+      id,
+      {
+        ...operation,
+        baseRevision:
+          operation.baseRevision ??
+          ('revision' in operation.payload ? (operation.payload.revision ?? null) : null),
+        serverRevision: review?.revision ?? null,
+        serverValues: review?.values ?? null,
+        workloadAssessment,
+        status: 'conflict',
+        error,
+      },
+      isCurrent,
+    );
+    this.assertCurrent(isCurrent);
     await this.refresh();
   }
 
@@ -503,10 +551,14 @@ export class InterventionOutboxRepository {
    * @returns {Promise<void>}
    */
   public async markOutboxFailed(id: string, error: string): Promise<void> {
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    this.assertCurrent(isCurrent);
     if (!operation) return;
-    await this.database.put('outbox', id, { ...operation, status: 'failed', error });
+    await this.database.put('outbox', id, { ...operation, status: 'failed', error }, isCurrent);
+    this.assertCurrent(isCurrent);
     await this.refresh();
   }
 
@@ -530,19 +582,28 @@ export class InterventionOutboxRepository {
    * @returns {Promise<void>} Resolves once the operation is rebased and marked.
    */
   public async rebaseOutboxRevision(id: string, revision: number, error: string): Promise<void> {
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    this.assertCurrent(isCurrent);
     if (!operation) return;
-    await this.database.put('outbox', id, {
-      ...operation,
-      payload: { ...operation.payload, revision },
-      baseRevision:
-        operation.baseRevision ??
-        ('revision' in operation.payload ? (operation.payload.revision ?? null) : null),
-      serverRevision: revision,
-      status: 'conflict',
-      error,
-    });
+    await this.database.put(
+      'outbox',
+      id,
+      {
+        ...operation,
+        payload: { ...operation.payload, revision },
+        baseRevision:
+          operation.baseRevision ??
+          ('revision' in operation.payload ? (operation.payload.revision ?? null) : null),
+        serverRevision: revision,
+        status: 'conflict',
+        error,
+      },
+      isCurrent,
+    );
+    this.assertCurrent(isCurrent);
     await this.refresh();
   }
 
@@ -561,10 +622,19 @@ export class InterventionOutboxRepository {
    * @returns {Promise<void>} Result of the retry outbox operation.
    */
   public async retryOutbox(id: string): Promise<void> {
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    this.assertCurrent(isCurrent);
     if (!operation || operation.workloadAssessment || operation.serverValues) return;
-    await this.database.put('outbox', id, { ...operation, status: 'pending', error: null });
+    await this.database.put(
+      'outbox',
+      id,
+      { ...operation, status: 'pending', error: null },
+      isCurrent,
+    );
+    this.assertCurrent(isCurrent);
     this.unsynced.set(true);
     this.pending.set(true);
     if (operation.status !== 'pending') {
@@ -590,19 +660,28 @@ export class InterventionOutboxRepository {
   public async confirmWorkload(id: string, token: string): Promise<void> {
     const owner = this.database.currentOwnerId();
     if (!owner) return;
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    if (!isCurrent()) return;
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    if (!isCurrent()) return;
     if (this.database.currentOwnerId() !== owner) return;
     if (operation?.workloadAssessment?.confirmationToken !== token) return;
     if (!['work-item.create', 'work-item.update', 'intervention.update'].includes(operation.type))
       return;
-    await this.database.put('outbox', id, {
-      ...operation,
-      payload: { ...operation.payload, workloadConfirmationToken: token },
-      workloadAssessment: null,
-      status: 'pending',
-      error: null,
-    });
+    await this.database.put(
+      'outbox',
+      id,
+      {
+        ...operation,
+        payload: { ...operation.payload, workloadConfirmationToken: token },
+        workloadAssessment: null,
+        status: 'pending',
+        error: null,
+      },
+      isCurrent,
+    );
+    this.assertCurrent(isCurrent);
     await this.refresh();
   }
 
@@ -624,8 +703,11 @@ export class InterventionOutboxRepository {
   public async confirmRevision(id: string, revision: number): Promise<void> {
     const owner = this.database.currentOwnerId();
     if (!owner) return;
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    if (!isCurrent()) return;
     const operation = await this.database.get<InterventionOutboxOperation>('outbox', id);
+    if (!isCurrent()) return;
     if (this.database.currentOwnerId() !== owner) return;
     if (
       !operation?.serverValues ||
@@ -633,13 +715,19 @@ export class InterventionOutboxRepository {
       !('revision' in operation.payload)
     )
       return;
-    await this.database.put('outbox', id, {
-      ...operation,
-      payload: { ...operation.payload, revision },
-      serverValues: null,
-      status: 'pending',
-      error: null,
-    });
+    await this.database.put(
+      'outbox',
+      id,
+      {
+        ...operation,
+        payload: { ...operation.payload, revision },
+        serverValues: null,
+        status: 'pending',
+        error: null,
+      },
+      isCurrent,
+    );
+    this.assertCurrent(isCurrent);
     await this.refresh();
   }
 
@@ -658,14 +746,56 @@ export class InterventionOutboxRepository {
    */
   public async refresh(): Promise<void> {
     if (!this.database.browser) return;
+    const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
     const operations = await this.database.getAll<InterventionOutboxOperation>('outbox');
+    this.assertCurrent(isCurrent);
     const pendingOperations: number = operations.filter(
       (operation) => operation.status === 'pending' || operation.status === undefined,
     ).length;
     this.unsynced.set(operations.length > 0);
     this.pending.set(pendingOperations > 0);
     this.pendingOps.set(pendingOperations);
+  }
+  /**
+   * Method captureMutationContext
+   * @method captureMutationContext
+   *
+   * @description
+   * Captures the session and durable owner before asynchronous database setup.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {() => boolean} Guard also evaluated immediately before opening a write transaction.
+   */
+  private captureMutationContext(): () => boolean {
+    const revision = this.session.sessionRevision();
+    const owner = this.database.currentOwnerId();
+    return (): boolean =>
+      owner !== null &&
+      this.session.isAuthenticated() &&
+      revision === this.session.sessionRevision() &&
+      owner === this.database.currentOwnerId();
+  }
+
+  /**
+   * Method assertCurrent
+   * @method assertCurrent
+   *
+   * @description
+   * Stops obsolete local work without publishing counts or mutating the replacement owner's queue.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {() => boolean} isCurrent - Captured session and owner guard.
+   *
+   * @returns {void}
+   */
+  private assertCurrent(isCurrent: () => boolean): void {
+    if (!isCurrent()) throw new DOMException('Offline operation ownership changed.', 'AbortError');
   }
   //#endregion
 }

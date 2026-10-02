@@ -12,11 +12,10 @@ composition conventions, not a separate design system.
 - The source of truth is the semantic token set in `src/styles.css`, based on
   [Spartan theming](https://www.spartan.ng/documentation/theming).
 - Theme switching uses `html[data-theme="dark"]`. Primary controls use Fireguard
-  vermilion orange: `#F4511E` with white text in light mode, and `#FF7043` with `#0A0A0A`
-  text in dark mode. Keep the light foreground white on all primary surfaces, including buttons
-  and the auth showcase. This explicit product choice preserves the current orange; compact
-  white text on that light-theme fill has a known contrast ratio below 4.5:1. Sidebar primary
-  tokens reference the same pair.
+  deep vermilion `#BF360C` with white text in light mode, and `#FF7043` with `#0A0A0A`
+  text in dark mode. The light pair reaches 5.60:1, including 4.80:1 for the default 90% hover
+  fill on white. The dark pair reaches 7.21:1. Sidebar primary tokens reference the same pair.
+  The brighter `#F4511E` remains a decorative brand color; use semantic primary tokens for controls.
 - Explicit appearance changes reveal the new theme from the bottom center with a
   700 ms circle and a fading blur through the native View Transition API. Initial
   rendering and automatic system-theme changes are immediate; reduced motion and

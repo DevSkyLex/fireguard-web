@@ -1,9 +1,8 @@
 import type { AdditiveSlotFeature } from '@shared/layout-slot';
-import { OrganizationSwitcher } from '../../ui/components';
+import { OrganizationSwitcher } from '../../ui/components/organization-switcher';
 
 /**
  * Function withOrganizationSwitcher
- * @function withOrganizationSwitcher
  *
  * @description
  * Contributes {@link OrganizationSwitcher} to a shell's sidebar-header slot.
@@ -14,6 +13,8 @@ import { OrganizationSwitcher } from '../../ui/components';
  * @since 1.0.0
  *
  * @returns {AdditiveSlotFeature} The contribution factory, run by the layout's injector.
+ *
+ * @function withOrganizationSwitcher
  *
  * @example
  * ```typescript

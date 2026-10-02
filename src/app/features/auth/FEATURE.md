@@ -16,6 +16,19 @@ This feature is responsible for:
 - auth guards and auth-related HTTP interceptors,
 - publishing the application auth session contract.
 
+Intervention and messaging outbox services consume the published session revision and
+`sessionEnded` event. Every loaded replay batch and local write remains bound to the
+session that started it, including A→B→A replacement. Ending a session cancels pending
+HTTP subscriptions; an already accepted server write can still commit. Bearer attachment
+and 401 renewal use the same configured API-origin and path boundary.
+
+An established session renews only when the trusted API token keeps the same JWT
+subject. A changed or unreadable owner ends the local session before any 401 replay.
+Explicit login, replacement and logout notify other browser tabs through credential-free
+broadcast/storage events; receivers purge their previous context without rebroadcasting.
+Blocked browser transports leave the refresh-owner check in place. Server rendering does
+not open a browser channel, and token decoding does not replace server authentication.
+
 This feature does not own user profile presentation or notification UX. Those belong to `features/account`.
 
 ## Entry Points
@@ -179,6 +192,13 @@ every surface at once.
 - Publishes `LogoutControl` through the root barrel for the organization More hub.
   The hub composes this control without owning session state or duplicating logout navigation.
 - `AuthSessionNavigationService` is the single browser-side owner of post-logout navigation.
+  Voluntary logout first checks durable queues registered through `LOGOUT_PROTECTION_PORT`.
+  Pending operations require synchronization, cancellation, or explicit discard in the auth-owned
+  dialog. Storage failures cancel logout. Synchronization must leave zero persisted operations;
+  conflicts and failed operations remain local. Confirmations are bound to the original session
+  revision. Forced revocation still clears the session and purges local data immediately.
+  The same public registry exposes `hasUnsyncedWork` and `countPendingWork()` for service-worker
+  updates; its indicators include blocked work and persisted inspection rejects storage failures.
   Successful and failed remote logout outcomes both replace the current history entry with
   `/auth/login`; the 401 interceptor uses the same navigation owner after clearing local state.
   Controls issue logout commands only and never subscribe for routing consequences.
@@ -255,3 +275,13 @@ every surface at once.
 Onboarding consumes `EmailOwnershipService`, its proof contracts and `OtpForm` through the
 published data-access, models and ui/forms barrels. Proof challenges stay page-local. This
 Fireguard mailbox proof is distinct from OAuth profile verification and does not alter MFA.
+
+## Session sign-in location
+
+The auth session transport includes optional nullable `country` (ISO code) and `city` snapshots
+computed by the API at sign-in. Reads, renewal and frontend rendering do not locate the browser
+or recalculate geography. Revoked sessions expose no location; legacy sessions remain unavailable.
+The account panel formats country names using its explicit account-locale input, remains
+presentational, and preserves existing revoke/confirm/retry events. It displays city and country,
+country only, or a discreet unavailable label, with en/fr/es copy, approximate-location guidance
+and DB-IP attribution when geography is shown. Values render through escaped interpolation.

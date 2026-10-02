@@ -50,6 +50,20 @@ describe('ImportJobService', () => {
     httpMock.verify();
   });
 
+  it('reads a bounded report page without changing the existing endpoint', () => {
+    service.get(jobId, 2).subscribe();
+    const request = httpMock.expectOne((req) => req.url === `${importsUrl}/${jobId}`);
+    expect(request.request.params.get('reportPage')).toBe('2');
+    expect(request.request.params.get('reportItemsPerPage')).toBe('100');
+    request.flush({
+      ...job,
+      reportPage: 2,
+      reportItemsPerPage: 100,
+      reportTotal: 201,
+      reportHasNextPage: true,
+    });
+  });
+
   it('confirms a simulation without uploading another file', () => {
     service.confirm(jobId).subscribe();
     const request = httpMock.expectOne(`${importsUrl}/${jobId}/confirm`);

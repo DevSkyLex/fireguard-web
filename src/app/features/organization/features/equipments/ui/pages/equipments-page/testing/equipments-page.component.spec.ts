@@ -34,6 +34,7 @@ import {
   EquipmentKpisStore,
   EquipmentStore,
 } from '@features/organization/features/equipments/state';
+import { EquipmentLabelsStore } from '@features/organization/features/equipments/state/equipment-labels';
 import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { EquipmentsPage } from '../equipments-page.component';
 
@@ -168,9 +169,28 @@ describe('EquipmentsPage', () => {
       set: {
         providers: [
           {
+            provide: EquipmentLabelsStore,
+            useValue: {
+              count: signal(0),
+              previewCallState: signal(idleCallState()),
+              printCallState: signal(idleCallState()),
+              canPrint: signal(false),
+              clear: vi.fn(),
+              preview: vi.fn(),
+              print: vi.fn(),
+            },
+          },
+          {
             provide: FacilityOptionsStore,
             useValue: {
               options: signal([]),
+              page: signal(1),
+              pageCount: signal(1),
+              loadCallState: signal(idleCallState()),
+              search: signal(''),
+              load: vi.fn(),
+              searchOptions: vi.fn(),
+              clear: vi.fn(),
               mapCenter: signal(undefined),
               ensureLoaded: ensureFacilitiesLoaded,
             },
@@ -450,17 +470,17 @@ describe('EquipmentsPage', () => {
     expect(load.mock.calls.at(-1)?.[0].options.params).toEqual({});
   });
 
+  function toggleButton(): HTMLButtonElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="equipments-filters-toggle"]',
+    );
+  }
+
+  function filterBar(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector('#equipments-filter-bar');
+  }
+
   describe('filters visibility', () => {
-    function toggleButton(): HTMLButtonElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="equipments-filters-toggle"]',
-      );
-    }
-
-    function filterBar(): HTMLElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector('#equipments-filter-bar');
-    }
-
     it('should render collapsed with no badge when nothing is filtered on arrival', async () => {
       fixture = await createPage();
 
@@ -579,81 +599,13 @@ describe('EquipmentsPage', () => {
   });
 
   describe('the "Print QR labels" sheet', () => {
-    beforeEach(() => {
-      URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
-      URL.revokeObjectURL = vi.fn();
-    });
-
-    it('should skip label generation when the inventory is empty', async () => {
+    it('opens explicit scope selection without exporting the inventory', async () => {
       fixture = await createPage();
-
       fixture.componentInstance['printLabels']();
-
+      await fixture.whenStable();
+      expect(fixture.componentInstance['labelsDialogVisible']()).toBe(true);
       expect(exportLabels).not.toHaveBeenCalled();
-      expect(fixture.componentInstance['labelsBusy']()).toBe(false);
-    });
-
-    it('should disable the button while the list is loading, busy or empty', async () => {
-      totalEquipment.set(0);
-      fixture = await createPage();
-
-      expect(fixture.componentInstance['labelsDisabled']()).toBe(true);
-
-      totalEquipment.set(5);
-      await fixture.whenStable();
-
-      expect(fixture.componentInstance['labelsDisabled']()).toBe(false);
-
-      fixture.componentInstance['labelsBusy'].set(true);
-      expect(fixture.componentInstance['labelsDisabled']()).toBe(true);
-    });
-
-    it('should request the whole-inventory sheet and trigger the download', async () => {
-      totalEquipment.set(2);
-      fixture = await createPage();
-
-      fixture.componentInstance['printLabels']();
-      await fixture.whenStable();
-
-      expect(exportLabels).toHaveBeenCalledTimes(1);
-      expect(exportLabels).toHaveBeenCalledWith('org-1');
-      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
-      expect(fixture.componentInstance['labelsBusy']()).toBe(false);
-    });
-
-    it('should surface the 422 over-500-labels detail as an error toast', async () => {
-      totalEquipment.set(2);
-      const detail = 'The selection matches 623 labels; at most 500 are printable per sheet.';
-      exportLabels.mockReturnValue(
-        throwError(
-          () =>
-            new HttpErrorResponse({
-              status: 422,
-              error: new Blob(
-                [
-                  JSON.stringify({
-                    '@id': '/errors/422',
-                    '@type': 'Error',
-                    status: 422,
-                    type: 'about:blank',
-                    title: 'Unprocessable Entity',
-                    detail,
-                  }),
-                ],
-                { type: 'application/problem+json' },
-              ),
-            }),
-        ),
-      );
-      fixture = await createPage();
-
-      fixture.componentInstance['printLabels']();
-      await fixture.whenStable();
-      await vi.waitFor(() => expect(feedbackError).toHaveBeenCalled());
-
-      expect(feedbackError).toHaveBeenCalledWith(detail);
-      expect(fixture.componentInstance['labelsBusy']()).toBe(false);
-      expect(URL.createObjectURL).not.toHaveBeenCalled();
+      expect(ensureFacilitiesLoaded).toHaveBeenCalledWith('org-1');
     });
   });
 });

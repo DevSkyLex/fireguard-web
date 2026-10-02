@@ -5,6 +5,7 @@ import { USER_PROFILE_PORT } from '@features/account/ports';
 import { AuthService } from '@features/auth/data-access';
 import type { LoginInput, LoginOutput, LogoutOutput, MfaVerifyInput } from '@features/auth/models';
 import { ActiveTrustedDeviceStore } from '@features/auth/state';
+import { SessionCoordinationService } from '../../../services/session-coordination/session-coordination.service';
 import { AuthStore } from '../auth.store';
 import { authStoreEvents } from '../events';
 
@@ -15,6 +16,13 @@ const dispatchedTypes = (dispatcher: { dispatch: ReturnType<typeof vi.fn> }): st
 const flushEffects = async (): Promise<void> => {
   await Promise.resolve();
 };
+
+const tokenFor = (subject: string, identifier = 'access'): string =>
+  `eyJhbGciOiJSUzI1NiJ9.${btoa(JSON.stringify({ sub: subject, jti: identifier }))
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')}.signature`;
+const ACCESS_TOKEN = tokenFor('user-a');
 
 describe('AuthStore', () => {
   let store: AuthStore;
@@ -36,6 +44,8 @@ describe('AuthStore', () => {
     trustDevice: ReturnType<typeof vi.fn>;
     clear: ReturnType<typeof vi.fn>;
   };
+  let remoteInvalidation: () => void;
+  let coordination: { publish: ReturnType<typeof vi.fn>; subscribe: ReturnType<typeof vi.fn> };
 
   const credentials: LoginInput = {
     email: 'test@example.com',
@@ -45,12 +55,19 @@ describe('AuthStore', () => {
   const loginResponse: LoginOutput = {
     '@id': '/api/auth/login',
     '@type': 'Token',
-    access_token: 'access-token',
+    access_token: ACCESS_TOKEN,
     token_type: 'Bearer',
     expires_in: 3600,
   };
 
   beforeEach(() => {
+    coordination = {
+      publish: vi.fn(),
+      subscribe: vi.fn((listener: () => void) => {
+        remoteInvalidation = listener;
+        return (): void => undefined;
+      }),
+    };
     mockDispatcher = { dispatch: vi.fn() };
     mockAuthService = {
       login: vi.fn(),
@@ -76,6 +93,7 @@ describe('AuthStore', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: USER_PROFILE_PORT, useValue: mockUserProfilePort },
         { provide: ActiveTrustedDeviceStore, useValue: mockTrustedDeviceStore },
+        { provide: SessionCoordinationService, useValue: coordination },
       ],
     });
 
@@ -140,7 +158,7 @@ describe('AuthStore', () => {
 
   it('applies an external session and exposes renewal and logout progress until completion', () => {
     store.applySession(loginResponse);
-    expect(store.accessToken()).toBe('access-token');
+    expect(store.accessToken()).toBe(ACCESS_TOKEN);
     expect(store.isAuthenticated()).toBe(true);
     expect(mockUserProfilePort.load).toHaveBeenCalledOnce();
     const refreshing = new Subject<LoginOutput>();
@@ -170,7 +188,7 @@ describe('AuthStore', () => {
 
     expect(mockAuthService.login).toHaveBeenCalledWith(credentials);
     expect(store.loginCallState().status).toBe('success');
-    expect(store.accessToken()).toBe('access-token');
+    expect(store.accessToken()).toBe(ACCESS_TOKEN);
     expect(store.expiresAt()).not.toBeNull();
     expect(store.mfaRequired()).toBe(false);
     expect(mockUserProfilePort.load).toHaveBeenCalledTimes(1);
@@ -243,7 +261,7 @@ describe('AuthStore', () => {
     await store.initialize();
 
     expect(store.initialized()).toBe(true);
-    expect(store.accessToken()).toBe('access-token');
+    expect(store.accessToken()).toBe(ACCESS_TOKEN);
     expect(store.refreshCallState().status).toBe('success');
     expect(mockUserProfilePort.initialize).toHaveBeenCalledTimes(1);
   });
@@ -284,7 +302,7 @@ describe('AuthStore', () => {
 
     expect(store.mfaVerifyCallState().status).toBe('success');
     expect(store.mfaRequired()).toBe(false);
-    expect(store.accessToken()).toBe('access-token');
+    expect(store.accessToken()).toBe(ACCESS_TOKEN);
     expect(mockUserProfilePort.load).toHaveBeenCalledTimes(1);
     expect(mockTrustedDeviceStore.trustDevice).toHaveBeenCalledTimes(1);
   });
@@ -305,7 +323,7 @@ describe('AuthStore', () => {
       message: 'Logged out',
     };
     mockAuthService.logout.mockReturnValue(of(logoutResponse));
-    store.setToken('access-token', 3600);
+    store.setToken(ACCESS_TOKEN, 3600);
     mockUserProfilePort.clear.mockClear();
 
     store.logout();
@@ -324,7 +342,7 @@ describe('AuthStore', () => {
 
   it('should clear state and dispatch an event on logout error', async () => {
     mockAuthService.logout.mockReturnValue(throwError(() => new Error('Network error')));
-    store.setToken('access-token', 3600);
+    store.setToken(ACCESS_TOKEN, 3600);
     mockUserProfilePort.clear.mockClear();
 
     store.logout();
@@ -476,7 +494,7 @@ describe('AuthStore', () => {
 
     expect(mockAuthService.refresh).toHaveBeenCalledTimes(1);
     expect(store.initialized()).toBe(true);
-    expect(store.accessToken()).toBe('access-token');
+    expect(store.accessToken()).toBe(ACCESS_TOKEN);
     expect(mockUserProfilePort.initialize).toHaveBeenCalledTimes(1);
   });
 
@@ -617,7 +635,7 @@ describe('AuthStore', () => {
     await flushEffects();
 
     expect(store.refreshCallState().status).toBe('success');
-    expect(store.accessToken()).toBe('access-token');
+    expect(store.accessToken()).toBe(ACCESS_TOKEN);
     expect(store.expiresAt()).not.toBeNull();
   });
 
@@ -655,7 +673,7 @@ describe('AuthStore', () => {
   });
 
   it('should dispatch sessionEnded when the session is dropped without a logout call', () => {
-    store.setToken('access-token', 3600);
+    store.setToken(ACCESS_TOKEN, 3600);
     mockDispatcher.dispatch.mockClear();
 
     store.clearToken();
@@ -668,6 +686,63 @@ describe('AuthStore', () => {
   });
 
   describe('renewSession', () => {
+    it('refuses a refresh belonging to another account and purges the original session', async () => {
+      store.setToken(tokenFor('user-a', 'old'), 1);
+      const revision = store.sessionRevision();
+      mockDispatcher.dispatch.mockClear();
+      mockUserProfilePort.clear.mockClear();
+      coordination.publish.mockClear();
+      mockAuthService.refresh.mockReturnValue(
+        of({ ...loginResponse, access_token: tokenFor('user-b') }),
+      );
+      expect(await firstValueFrom(store.renewSession())).toBeNull();
+      expect(store.sessionRevision()).toBeGreaterThan(revision);
+      expect(store.accessToken()).toBeNull();
+      expect(mockUserProfilePort.clear).toHaveBeenCalledOnce();
+      expect(mockUserProfilePort.load).not.toHaveBeenCalled();
+      expect(dispatchedTypes(mockDispatcher)).toEqual([
+        authStoreEvents.sessionEnded.type,
+        authStoreEvents.sessionInvalidated.type,
+      ]);
+      expect(coordination.publish).toHaveBeenCalledOnce();
+    });
+
+    it.each(['malformed', tokenFor(''), tokenFor('user-b')])(
+      'refuses an unreadable or different refreshed owner: %s',
+      async (token) => {
+        store.setToken(ACCESS_TOKEN, 1);
+        mockAuthService.refresh.mockReturnValue(of({ ...loginResponse, access_token: token }));
+        expect(await firstValueFrom(store.renewSession())).toBeNull();
+        expect(store.isAuthenticated()).toBe(false);
+      },
+    );
+
+    it('invalidates and cancels pending refreshes on a remote session change without rebroadcasting', async () => {
+      store.setToken(ACCESS_TOKEN, 1);
+      const response = new Subject<LoginOutput>();
+      mockAuthService.refresh.mockReturnValue(response);
+      const renewal = firstValueFrom(store.renewSession());
+      const revision = store.sessionRevision();
+      coordination.publish.mockClear();
+      remoteInvalidation();
+      expect(await renewal).toBeNull();
+      expect(response.observed).toBe(false);
+      expect(store.sessionRevision()).toBeGreaterThan(revision);
+      expect(store.isAuthenticated()).toBe(false);
+      expect(coordination.publish).not.toHaveBeenCalled();
+      response.next({ ...loginResponse, access_token: tokenFor('user-b') });
+      expect(store.accessToken()).toBeNull();
+    });
+
+    it('retains the local owner and revision during an ordinary same-owner refresh', async () => {
+      store.setToken(tokenFor('user-a', 'old'), 1);
+      const revision = store.sessionRevision();
+      coordination.publish.mockClear();
+      mockAuthService.refresh.mockReturnValue(of(loginResponse));
+      expect(await firstValueFrom(store.renewSession())).toBe(ACCESS_TOKEN);
+      expect(store.sessionRevision()).toBe(revision);
+      expect(coordination.publish).not.toHaveBeenCalled();
+    });
     it('invalidates a refused renewal after its callers can end the originating session', async () => {
       store.setToken('expired', 1);
       const revision = store.sessionRevision();
@@ -732,16 +807,16 @@ describe('AuthStore', () => {
       const old = firstValueFrom(store.renewSession());
       store.clearToken();
       expect(await old).toBeNull();
-      store.setToken('new', 3600);
+      store.setToken(tokenFor('user-a', 'new'), 3600);
       const currentRevision = store.sessionRevision();
       expect(currentRevision).toBeGreaterThan(revision);
       const current = firstValueFrom(store.renewSession());
       oldResponse.error(new Error('late old failure'));
-      expect(store.accessToken()).toBe('new');
+      expect(store.accessToken()).toBe(tokenFor('user-a', 'new'));
       expect(store.isRefreshing()).toBe(true);
       currentResponse.next(loginResponse);
       currentResponse.complete();
-      expect(await current).toBe('access-token');
+      expect(await current).toBe(ACCESS_TOKEN);
       expect(store.sessionRevision()).toBe(currentRevision);
     });
 
@@ -755,7 +830,7 @@ describe('AuthStore', () => {
       response.next(loginResponse);
       response.complete();
       await initialization;
-      expect(await renewal).toBe('access-token');
+      expect(await renewal).toBe(ACCESS_TOKEN);
       expect(store.initialized()).toBe(true);
       expect(mockUserProfilePort.initialize).toHaveBeenCalledOnce();
     });
@@ -815,8 +890,8 @@ describe('AuthStore', () => {
 
       const token = await firstValueFrom(store.renewSession());
 
-      expect(token).toBe('access-token');
-      expect(store.accessToken()).toBe('access-token');
+      expect(token).toBe(ACCESS_TOKEN);
+      expect(store.accessToken()).toBe(ACCESS_TOKEN);
       expect(store.refreshCallState().status).toBe('success');
     });
 
@@ -844,8 +919,8 @@ describe('AuthStore', () => {
       // The refresh token rotates server-side: firing two refreshes at once looks
       // like replay and can invalidate the session outright.
       expect(mockAuthService.refresh).toHaveBeenCalledTimes(1);
-      expect(first).toBe('access-token');
-      expect(second).toBe('access-token');
+      expect(first).toBe(ACCESS_TOKEN);
+      expect(second).toBe(ACCESS_TOKEN);
     });
 
     it('should start a new request once the previous one settled', async () => {

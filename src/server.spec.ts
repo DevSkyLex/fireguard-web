@@ -15,7 +15,7 @@ vi.mock('@angular/ssr/node', () => ({
   writeResponseToNodeResponse: writeAngularResponse,
 }));
 
-import { reqHandler } from './server';
+import { drainServer, reqHandler } from './server';
 
 describe('SSR public runtime configuration', () => {
   let server: Server;
@@ -55,10 +55,19 @@ describe('SSR public runtime configuration', () => {
     expect(response.headers.get('x-content-type-options')).toBe('nosniff');
   });
 
+  it('checks readiness without rendering Angular or resolving runtime configuration', async () => {
+    vi.stubEnv('FIREGUARD_RUNTIME_CONFIG', 'true');
+    vi.stubEnv('APP_API_URL', '');
+    const response = await fetch(`${baseUrl}/healthz`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(handle).not.toHaveBeenCalled();
+  });
+
   it('serves only public configuration with strict cache and framing headers', async () => {
     vi.stubEnv('FIREGUARD_RUNTIME_CONFIG', 'true');
     vi.stubEnv('APP_API_URL', 'https://api.example.test');
-    vi.stubEnv('APP_NAME', 'FireGuard');
+    vi.stubEnv('APP_NAME', 'Fireguard');
     vi.stubEnv('APP_MERCURE_HUB_URL', 'https://mercure.example.test');
     vi.stubEnv('APP_MAINTENANCE', 'false');
 
@@ -71,7 +80,7 @@ describe('SSR public runtime configuration', () => {
     expect(await response.json()).toEqual({
       production: true,
       apiUrl: 'https://api.example.test',
-      appName: 'FireGuard',
+      appName: 'Fireguard',
       mercureHubUrl: 'https://mercure.example.test',
       maintenance: false,
     });
@@ -135,5 +144,41 @@ describe('SSR public runtime configuration', () => {
     expect(asset.status).toBe(404);
     expect(localized.status).toBe(404);
     expect(handle).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('SSR process shutdown', () => {
+  it('drains a request already accepted before shutdown', async () => {
+    let finish: (() => void) | undefined;
+    let acceptedRequest: (() => void) | undefined;
+    const accepted = new Promise<void>((resolve) => {
+      acceptedRequest = resolve;
+    });
+    const local = createServer((_request, response) => {
+      finish = () => response.end('finished');
+      acceptedRequest?.();
+    });
+    await new Promise<void>((resolve) => local.listen(0, '127.0.0.1', resolve));
+    const pending = fetch(`http://127.0.0.1:${(local.address() as AddressInfo).port}`);
+    await accepted;
+    const stopped = drainServer(local);
+    finish?.();
+    expect(await (await pending).text()).toBe('finished');
+    expect(await stopped).toBe(true);
+  });
+
+  it('bounds shutdown when a request never completes', async () => {
+    let accepted: (() => void) | undefined;
+    const received = new Promise<void>((resolve) => {
+      accepted = resolve;
+    });
+    const local = createServer(() => accepted?.());
+    await new Promise<void>((resolve) => local.listen(0, '127.0.0.1', resolve));
+    const pending = fetch(`http://127.0.0.1:${(local.address() as AddressInfo).port}`).catch(
+      () => null,
+    );
+    await received;
+    expect(await drainServer(local, 10)).toBe(false);
+    await pending;
   });
 });

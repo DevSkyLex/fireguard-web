@@ -446,4 +446,145 @@ describe('CalendarFeedStore', () => {
       expect(store.moveEventCallState().status).toBe('idle');
     });
   });
+
+  describe('write context isolation', () => {
+    it.each(['create', 'update', 'delete'] as const)(
+      'accepts a new organization %s while a departed write is still settling',
+      (kind) => {
+        const oldResponse = new Subject<CalendarEventOutput>();
+        const currentResponse = new Subject<CalendarEventOutput>();
+        const method =
+          kind === 'create'
+            ? mockCalendarService.createEvent
+            : kind === 'update'
+              ? mockCalendarService.updateEvent
+              : mockCalendarService.deleteEvent;
+        method.mockReturnValueOnce(oldResponse).mockReturnValueOnce(currentResponse);
+        const write = (organizationId: string): void => {
+          if (kind === 'create')
+            store.createEvent({
+              organizationId,
+              input: { title: 'Fire drill', startsAt: event.startsAt },
+            });
+          if (kind === 'update')
+            store.updateEvent({ organizationId, eventId: 'evt-1', input: { title: 'Updated' } });
+          if (kind === 'delete') store.deleteEvent({ organizationId, eventId: 'evt-1' });
+        };
+        store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+        write('org-1');
+        store.load({ organizationId: 'org-2', from: feed.from, to: feed.to });
+        write('org-2');
+        expect(method).toHaveBeenCalledTimes(2);
+        expect(oldResponse.observed).toBe(true);
+        expect(currentResponse.observed).toBe(true);
+        oldResponse.next(event);
+        oldResponse.complete();
+        const callState =
+          kind === 'create'
+            ? store.createEventCallState
+            : kind === 'update'
+              ? store.updateEventCallState
+              : store.deleteEventCallState;
+        expect(callState().status).toBe('pending');
+        currentResponse.next(event);
+        currentResponse.complete();
+        expect(callState().status).toBe('success');
+      },
+    );
+
+    it.each(['create', 'update', 'delete'] as const)(
+      'ignores a late %s result after an A-B-A organization visit',
+      (kind) => {
+        const response = new Subject<CalendarEventOutput>();
+        mockCalendarService.createEvent.mockReturnValue(response);
+        mockCalendarService.updateEvent.mockReturnValue(response);
+        mockCalendarService.deleteEvent.mockReturnValue(response);
+        store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+        if (kind === 'create')
+          store.createEvent({
+            organizationId: 'org-1',
+            input: { title: 'Fire drill', startsAt: event.startsAt },
+          });
+        if (kind === 'update')
+          store.updateEvent({
+            organizationId: 'org-1',
+            eventId: 'evt-1',
+            input: { title: 'Updated' },
+          });
+        if (kind === 'delete') store.deleteEvent({ organizationId: 'org-1', eventId: 'evt-1' });
+        store.load({ organizationId: 'org-2', from: feed.from, to: feed.to });
+        store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+        mockCalendarService.getFeed.mockClear();
+        response.next(event);
+        response.complete();
+        expect(store.createEventCallState().status).toBe('idle');
+        expect(store.updateEventCallState().status).toBe('idle');
+        expect(store.deleteEventCallState().status).toBe('idle');
+        expect(mockCalendarService.getFeed).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['create', 'update', 'delete'] as const)(
+      'ignores a late %s failure after leaving its organization',
+      (kind) => {
+        const response = new Subject<CalendarEventOutput>();
+        mockCalendarService.createEvent.mockReturnValue(response);
+        mockCalendarService.updateEvent.mockReturnValue(response);
+        mockCalendarService.deleteEvent.mockReturnValue(response);
+        store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+        if (kind === 'create')
+          store.createEvent({
+            organizationId: 'org-1',
+            input: { title: 'Fire drill', startsAt: event.startsAt },
+          });
+        if (kind === 'update')
+          store.updateEvent({
+            organizationId: 'org-1',
+            eventId: 'evt-1',
+            input: { title: 'Updated' },
+          });
+        if (kind === 'delete') store.deleteEvent({ organizationId: 'org-1', eventId: 'evt-1' });
+        store.load({ organizationId: 'org-2', from: feed.from, to: feed.to });
+        response.error(new Error('Old failure'));
+        expect(store.createEventCallState().status).toBe('idle');
+        expect(store.updateEventCallState().status).toBe('idle');
+        expect(store.deleteEventCallState().status).toBe('idle');
+      },
+    );
+
+    it.each(['create', 'update', 'delete'] as const)(
+      'accepts only one simultaneous %s write without cancelling it',
+      (kind) => {
+        const response = new Subject<CalendarEventOutput>();
+        mockCalendarService.createEvent.mockReturnValue(response);
+        mockCalendarService.updateEvent.mockReturnValue(response);
+        mockCalendarService.deleteEvent.mockReturnValue(response);
+        store.load({ organizationId: 'org-1', from: feed.from, to: feed.to });
+        for (let attempt = 0; attempt < 2; attempt++) {
+          if (kind === 'create')
+            store.createEvent({
+              organizationId: 'org-1',
+              input: { title: 'Fire drill', startsAt: event.startsAt },
+            });
+          if (kind === 'update')
+            store.updateEvent({
+              organizationId: 'org-1',
+              eventId: 'evt-1',
+              input: { title: 'Updated' },
+            });
+          if (kind === 'delete') store.deleteEvent({ organizationId: 'org-1', eventId: 'evt-1' });
+        }
+        const method =
+          kind === 'create'
+            ? mockCalendarService.createEvent
+            : kind === 'update'
+              ? mockCalendarService.updateEvent
+              : mockCalendarService.deleteEvent;
+        expect(method).toHaveBeenCalledTimes(1);
+        expect(response.observed).toBe(true);
+        response.next(event);
+        response.complete();
+      },
+    );
+  });
 });

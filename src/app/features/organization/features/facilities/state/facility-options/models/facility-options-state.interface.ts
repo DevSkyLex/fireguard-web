@@ -4,26 +4,80 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
 /**
  * Interface FacilityOptionsState
  * @interface FacilityOptionsState
+ *
  * @description
  * The organization's facilities as loaded for a picker, and the lifecycle
  * of that load. The raw records are kept so the map centre can be averaged
  * from their coordinates; the picker reads the derived `options` signal.
+ *
  * @since 1.0.0
  */
 export interface FacilityOptionsState {
   /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * One-based facility server page.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly page: number;
+
+  /**
+   * Property total
+   * @readonly
+   *
+   * @description
+   * Server count of facilities matching the current search.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly total: number;
+
+  /**
+   * Property search
+   * @readonly
+   *
+   * @description
+   * Search applied to the facility selector.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
+  readonly search: string;
+  /**
    * Property organizationId
    * @readonly
-   * @description Organization owning the cached options, including an empty successful list.
+   *
+   * @description
+   * Organization owning the cached options, including an empty successful list.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {string | null}
    */
   readonly organizationId: string | null;
 
-  /** The loaded facilities, in API order. */
+  /**
+   * Property facilities
+   *
+   * @description
+   * The loaded facilities, in API order.
+   */
   readonly facilities: readonly FacilityOutput[];
 
-  /** Lifecycle of the options load (pending / success / error). */
+  /**
+   * Property loadCallState
+   *
+   * @description
+   * Lifecycle of the options load (pending / success / error).
+   */
   readonly loadCallState: CallState;
 }

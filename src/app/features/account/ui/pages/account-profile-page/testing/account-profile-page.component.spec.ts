@@ -76,7 +76,7 @@ describe('AccountProfilePage', () => {
       saveCallState: signal<{ status: string }>({ status: 'idle' }),
     };
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         { provide: LOCALE_ID, useValue: 'en-US' },

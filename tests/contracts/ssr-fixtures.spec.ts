@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { E2E_ACCESS_TOKEN } from '../e2e/support/fixtures/api-fixtures';
 import { createContractValidator, loadOpenApi } from './support/openapi';
 
 const require = createRequire(import.meta.url);
@@ -44,13 +45,14 @@ describe('versioned API reference', () => {
   });
 
   it('matches the canonical local API export when the sibling repository is present', () => {
-    const source = fileURLToPath(new URL('../../../fireguard-api/openapi.json', import.meta.url));
+    const source =
+      process.env['FIREGUARD_OPENAPI_PATH'] ??
+      fileURLToPath(new URL('../../../fireguard-api/openapi.json', import.meta.url));
     if (existsSync(source)) expect(contract).toEqual(JSON.parse(readFileSync(source, 'utf8')));
     else
-      expect(
-        process.env['CI'],
-        'Missing sibling API: use FIREGUARD_OPENAPI_PATH or restore the local API checkout.',
-      ).toBeTruthy();
+      throw new Error(
+        'Missing canonical API export: use FIREGUARD_OPENAPI_PATH or restore the sibling API checkout.',
+      );
   });
 });
 
@@ -68,7 +70,7 @@ describe('real SSR HTTP fixtures', () => {
   });
   it('validates every registered authenticated API response against canonical routes and schemas', async () => {
     const headers = {
-      authorization: 'Bearer e2e-access-token',
+      authorization: 'Bearer ' + E2E_ACCESS_TOKEN,
       'content-type': 'application/ld+json',
     };
     await fetch(origin + '/api/me', { headers });
@@ -81,12 +83,17 @@ describe('real SSR HTTP fixtures', () => {
     const errors: string[] = [];
     await Promise.all(
       fixtures.map(async (fixture) => {
-        const response = await fetch(origin + fixture.path, { method: fixture.method, headers });
+        const path = ['/api/channels', '/api/direct-conversations', '/api/interventions'].includes(
+          fixture.path,
+        )
+          ? fixture.path + '?organization=' + encodeURIComponent('/api/organizations/e2e-org-1')
+          : fixture.path;
+        const response = await fetch(origin + path, { method: fixture.method, headers });
         const body = await response.json();
         try {
           validator.response(
             fixture.method,
-            fixture.path,
+            path,
             response.status,
             response.headers.get('content-type') ?? '',
             body,

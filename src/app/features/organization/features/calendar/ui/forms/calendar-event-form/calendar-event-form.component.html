@@ -47,92 +47,127 @@
       }
     </hlm-field>
 
-    <div class="grid grid-cols-1 gap-4 mobile-ui:border-t mobile-ui:border-border mobile-ui:pt-4">
-      <hlm-field>
-        <label hlmFieldLabel for="calendar-event-starts-at-date"
-          ><span i18n="@@calendar.eventDialog.startsAt">Starts</span><app-required-marker
-        /></label>
-        <div class="flex gap-2 mobile-ui:max-sm:flex-col">
-          <div class="min-w-0 flex-1">
-            <hlm-date-picker
-              class="w-full [&>hlm-date-picker-trigger]:block"
-              [formField]="eventForm.startsAtDate"
-            >
-              <hlm-date-picker-trigger
-                buttonId="calendar-event-starts-at-date"
-                class="w-full justify-between mobile-ui:min-h-11"
-                data-testid="calendar-event-starts-at"
-              >
-                <span i18n="@@calendar.eventDialog.pickDate">Pick a date</span>
-              </hlm-date-picker-trigger>
-            </hlm-date-picker>
-          </div>
-          <label
-            class="sr-only mobile-ui:max-sm:not-sr-only mobile-ui:max-sm:text-sm mobile-ui:max-sm:font-medium"
-            for="calendar-event-starts-at-time"
-            ><span i18n="@@calendar.eventDialog.startsAtTimeLabel">Start time</span
-            ><span aria-hidden="true">&nbsp;*</span></label
+    <fieldset hlmFieldSet class="mobile-ui:border-t mobile-ui:border-border mobile-ui:pt-4">
+      <legend hlmFieldLegend i18n="@@calendar.eventDialog.startsAt">Starts</legend>
+      <hlm-field-group class="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_8rem]">
+        <hlm-field>
+          <label hlmFieldLabel for="calendar-event-starts-at-date"
+            ><span i18n="@@calendar.eventDialog.startDate">Start date</span><app-required-marker
+          /></label>
+          <hlm-date-picker
+            class="w-full [&>hlm-date-picker-trigger]:block"
+            [formField]="eventForm.startsAtDate"
           >
-          <input
-            hlmInput
-            id="calendar-event-starts-at-time"
-            type="time"
-            data-testid="calendar-event-starts-at-time"
-            class="w-28 shrink-0 mobile-ui:min-h-11 mobile-ui:max-sm:w-full"
-            [formField]="eventForm.startsAtTime"
-            [attr.aria-required]="true"
-            [attr.aria-invalid]="
-              eventForm.startsAtTime().touched() && eventForm.startsAtTime().invalid()
-            "
-          />
-        </div>
-        @if (eventForm.startsAtDate().touched() && eventForm.startsAtDate().invalid()) {
-          <hlm-field-error>{{ eventForm.startsAtDate().errors()[0].message }}</hlm-field-error>
-        } @else if (eventForm.startsAtTime().touched() && eventForm.startsAtTime().invalid()) {
-          <hlm-field-error>{{ eventForm.startsAtTime().errors()[0].message }}</hlm-field-error>
-        }
-      </hlm-field>
-
-      <hlm-field>
-        <label hlmFieldLabel for="calendar-event-ends-at-date" i18n="@@calendar.eventDialog.endsAt"
-          >Ends</label
-        >
-        <div class="flex gap-2 mobile-ui:max-sm:flex-col">
-          <div class="min-w-0 flex-1">
-            <hlm-date-picker
-              class="w-full [&>hlm-date-picker-trigger]:block"
-              [formField]="eventForm.endsAtDate"
+            <hlm-date-picker-trigger
+              buttonId="calendar-event-starts-at-date"
+              class="w-full justify-between mobile-ui:min-h-11"
+              data-testid="calendar-event-starts-at"
+              ><span i18n="@@calendar.eventDialog.pickDate"
+                >Pick a date</span
+              ></hlm-date-picker-trigger
             >
-              <hlm-date-picker-trigger
-                buttonId="calendar-event-ends-at-date"
-                class="w-full justify-between mobile-ui:min-h-11"
-                data-testid="calendar-event-ends-at"
-              >
-                <span i18n="@@calendar.eventDialog.pickDate">Pick a date</span>
-              </hlm-date-picker-trigger>
-            </hlm-date-picker>
-          </div>
-          <label
-            class="sr-only mobile-ui:max-sm:not-sr-only mobile-ui:max-sm:text-sm mobile-ui:max-sm:font-medium"
-            for="calendar-event-ends-at-time"
-            i18n="@@calendar.eventDialog.endsAtTimeLabel"
-            >End time</label
-          >
-          <input
-            hlmInput
-            id="calendar-event-ends-at-time"
-            type="time"
-            data-testid="calendar-event-ends-at-time"
-            class="w-28 shrink-0 mobile-ui:min-h-11 mobile-ui:max-sm:w-full"
-            [formField]="eventForm.endsAtTime"
-          />
-        </div>
-        @if (eventForm.endsAtDate().touched() && eventForm.endsAtDate().invalid()) {
-          <hlm-field-error>{{ eventForm.endsAtDate().errors()[0].message }}</hlm-field-error>
+          </hlm-date-picker>
+          @if (eventForm.startsAtDate().touched() && eventForm.startsAtDate().invalid()) {
+            <hlm-field-error id="calendar-start-date-error">{{
+              eventForm.startsAtDate().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </hlm-field>
+        @if (!model().allDay) {
+          <hlm-field>
+            <label hlmFieldLabel for="calendar-event-starts-at-time"
+              ><span i18n="@@calendar.eventDialog.startsAtTimeLabel">Start time</span
+              ><app-required-marker
+            /></label>
+            <input
+              hlmInput
+              id="calendar-event-starts-at-time"
+              type="time"
+              data-testid="calendar-event-starts-at-time"
+              class="w-full mobile-ui:min-h-11"
+              [formField]="eventForm.startsAtTime"
+              aria-required="true"
+              [attr.aria-invalid]="
+                eventForm.startsAtTime().touched() && eventForm.startsAtTime().invalid()
+              "
+              [attr.aria-describedby]="
+                eventForm.startsAtTime().touched() && eventForm.startsAtTime().invalid()
+                  ? 'calendar-start-time-error'
+                  : null
+              "
+            />
+            @if (eventForm.startsAtTime().touched() && eventForm.startsAtTime().invalid()) {
+              <hlm-field-error id="calendar-start-time-error">{{
+                eventForm.startsAtTime().errors()[0].message
+              }}</hlm-field-error>
+            }
+          </hlm-field>
         }
-      </hlm-field>
-    </div>
-
+      </hlm-field-group>
+    </fieldset>
+    <fieldset hlmFieldSet>
+      <legend hlmFieldLegend i18n="@@calendar.eventDialog.endsAt">Ends</legend>
+      <hlm-field-group class="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_8rem]">
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            for="calendar-event-ends-at-date"
+            i18n="@@calendar.eventDialog.endDate"
+            >End date</label
+          >
+          <hlm-date-picker
+            class="w-full [&>hlm-date-picker-trigger]:block"
+            [formField]="eventForm.endsAtDate"
+          >
+            <hlm-date-picker-trigger
+              buttonId="calendar-event-ends-at-date"
+              class="w-full justify-between mobile-ui:min-h-11"
+              data-testid="calendar-event-ends-at"
+              ><span i18n="@@calendar.eventDialog.pickDate"
+                >Pick a date</span
+              ></hlm-date-picker-trigger
+            >
+          </hlm-date-picker>
+          @if (eventForm.endsAtDate().touched() && eventForm.endsAtDate().invalid()) {
+            <hlm-field-error id="calendar-end-date-error">{{
+              eventForm.endsAtDate().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </hlm-field>
+        @if (!model().allDay) {
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="calendar-event-ends-at-time"
+              i18n="@@calendar.eventDialog.endsAtTimeLabel"
+              >End time</label
+            >
+            <input
+              hlmInput
+              id="calendar-event-ends-at-time"
+              type="time"
+              data-testid="calendar-event-ends-at-time"
+              class="w-full mobile-ui:min-h-11"
+              [formField]="eventForm.endsAtTime"
+              [attr.aria-required]="model().endsAtDate !== null"
+              [attr.aria-invalid]="
+                eventForm.endsAtTime().touched() && eventForm.endsAtTime().invalid()
+              "
+              [attr.aria-describedby]="
+                eventForm.endsAtTime().touched() && eventForm.endsAtTime().invalid()
+                  ? 'calendar-end-time-error'
+                  : null
+              "
+            />
+            @if (eventForm.endsAtTime().touched() && eventForm.endsAtTime().invalid()) {
+              <hlm-field-error id="calendar-end-time-error">{{
+                eventForm.endsAtTime().errors()[0].message
+              }}</hlm-field-error>
+            }
+          </hlm-field>
+        }
+      </hlm-field-group>
+    </fieldset>
     <hlm-field
       orientation="horizontal"
       class="justify-between mobile-ui:border-b mobile-ui:border-border mobile-ui:pb-4"
@@ -151,33 +186,93 @@
       <label hlmFieldLabel for="calendar-event-facility" i18n="@@calendar.eventDialog.facility"
         >Facility</label
       >
-      <hlm-select [formField]="eventForm.facilityId" [itemToString]="facilityLabelOf">
-        <hlm-select-trigger
-          buttonId="calendar-event-facility"
-          class="w-full mobile-ui:min-h-11"
+      <hlm-combobox
+        [formField]="eventForm.facilityId"
+        [itemToString]="facilityLabelOf"
+        [filter]="facilityFilter"
+        (searchChange)="facilitySearched.emit($event)"
+        (valueChange)="facilitySelected.emit($event ?? null)"
+      >
+        <hlm-combobox-input
+          inputId="calendar-event-facility"
           data-testid="calendar-event-facility"
-        >
-          <hlm-select-value
-            placeholder="No facility"
-            i18n-placeholder="@@calendar.eventDialog.noFacility"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            <hlm-select-item
-              [value]="noFacilityValue"
-              i18n="@@calendar.eventDialog.noFacility"
-              class="mobile-ui:min-h-11"
-              >No facility</hlm-select-item
+          class="w-full mobile-ui:min-h-11"
+          placeholder="Search a facility"
+          i18n-placeholder="@@calendar.eventDialog.searchFacility"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@calendar.eventDialog.noMatchingFacility"
+            >No facility matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            <hlm-combobox-item [value]="noFacilityValue" i18n="@@calendar.eventDialog.noFacility"
+              >No facility</hlm-combobox-item
             >
             @for (option of facilityOptions(); track option.value) {
-              <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">{{
+              <hlm-combobox-item [value]="option.value" class="mobile-ui:min-h-11">{{
                 option.label
-              }}</hlm-select-item>
+              }}</hlm-combobox-item>
             }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+      @if (facilityCallState()?.status === 'pending') {
+        <p hlmFieldDescription role="status" i18n="@@calendar.eventDialog.facilitiesLoading">
+          Loading facilities…
+        </p>
+      }
+      @if (facilityCallState()?.error; as error) {
+        <p hlmFieldDescription role="alert">{{ error.message }}</p>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          (click)="facilityPageRequested.emit(facilityPage())"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      }
+      @if (facilitySelectedError(); as error) {
+        <p hlmFieldDescription role="alert">{{ error.message }}</p>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          (click)="facilitySelectedRetried.emit()"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      }
+      <div class="flex items-center gap-2">
+        @if (facilityPage() > 1) {
+          <button
+            hlmBtn
+            type="button"
+            size="sm"
+            variant="outline"
+            [disabled]="facilityCallState()?.status === 'pending'"
+            (click)="facilityPageRequested.emit(facilityPage() - 1)"
+            i18n="@@calendar.eventDialog.previousFacilities"
+          >
+            Previous facilities
+          </button>
+        }
+        @if (facilityHasNextPage()) {
+          <button
+            hlmBtn
+            type="button"
+            size="sm"
+            variant="outline"
+            [disabled]="facilityCallState()?.status === 'pending'"
+            (click)="facilityPageRequested.emit(facilityPage() + 1)"
+            i18n="@@calendar.eventDialog.nextFacilities"
+          >
+            Next facilities
+          </button>
+        }
+      </div>
     </hlm-field>
   </hlm-field-group>
 

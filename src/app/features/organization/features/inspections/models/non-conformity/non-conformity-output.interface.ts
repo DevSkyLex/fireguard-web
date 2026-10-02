@@ -5,6 +5,8 @@ import type { HydraItem } from '@core/api/models';
  *
  * @description
  * Supported severity levels for a non-conformity.
+ *
+ * @type NonConformitySeverity
  */
 export type NonConformitySeverity = 'low' | 'medium' | 'high' | 'critical';
 
@@ -13,6 +15,8 @@ export type NonConformitySeverity = 'low' | 'medium' | 'high' | 'critical';
  *
  * @description
  * Supported lifecycle statuses for a non-conformity.
+ *
+ * @type NonConformityStatus
  */
 export type NonConformityStatus = 'open' | 'in_progress' | 'done' | 'waived';
 
@@ -25,22 +29,63 @@ export type NonConformityStatus = 'open' | 'in_progress' | 'done' | 'waived';
  */
 export interface NonConformityOutput extends HydraItem {
   //#region Properties
-  /** @type {string} */
+  /**
+   * Property id
+   *
+   * @type {string}
+   */
   readonly id: string;
-  /** @type {string} */
+  /**
+   * Property inspectionId
+   *
+   * @type {string}
+   */
   readonly inspectionId: string;
-  /** @type {string} */
+  /**
+   * Property description
+   *
+   * @type {string}
+   */
   readonly description: string;
-  /** @type {NonConformitySeverity} */
+  /**
+   * Property severity
+   *
+   * @type {NonConformitySeverity}
+   */
   readonly severity: NonConformitySeverity;
-  /** @type {NonConformityStatus} */
+  /**
+   * Property status
+   *
+   * @type {NonConformityStatus}
+   */
   readonly status: NonConformityStatus;
-  /** @type {string | null} */
-  readonly dueAt: string | null;
-  /** @type {string | null} */
-  readonly resolvedAt: string | null;
-  /** @type {string | null} */
-  readonly notes: string | null;
+  /**
+   * Property dueAt
+   *
+   * @description
+   * Unset deadlines may be omitted by API skip-null serialization.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly dueAt?: string | null;
+  /**
+   * Property resolvedAt
+   *
+   * @description
+   * Unset resolution dates may be omitted by API skip-null serialization.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly resolvedAt?: string | null;
+  /**
+   * Property notes
+   *
+   * @description
+   * Unset notes may be omitted by API skip-null serialization.
+   *
+   * @type {string | null | undefined}
+   */
+  readonly notes?: string | null;
 
   /**
    * Property equipmentId
@@ -68,9 +113,17 @@ export interface NonConformityOutput extends HydraItem {
    */
   readonly equipmentSerialNumber?: string | null;
 
-  /** @type {string} */
+  /**
+   * Property createdAt
+   *
+   * @type {string}
+   */
   readonly createdAt: string;
-  /** @type {string} */
+  /**
+   * Property updatedAt
+   *
+   * @type {string}
+   */
   readonly updatedAt: string;
   //#endregion
 }

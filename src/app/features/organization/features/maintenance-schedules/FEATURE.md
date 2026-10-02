@@ -99,11 +99,13 @@ toast.
   published public API (`@features/organization/features/equipments`) for
   the equipment-type filter, the table's type label and the campaign
   dialog's scoping select — the same catalog `onboarding` already imports.
-- Consumes `FacilityService` directly from the `facilities` subfeature's
-  `data-access` barrel to populate the facility filter/scoping selects —
-  the same direct cross-feature service dependency `equipments/FEATURE.md`
-  already documents for `FacilityPlansStore` → `EquipmentService`. This
-  feature does not own facility records and publishes nothing back.
+- Consumes `FacilityOptionsStore` through `facilities/state`, `FacilityOption`
+  through `facilities/models`, and the published `FacilityOptionPicker` through
+  `facilities/ui/components` for filter and campaign scope controls. Options
+  load on first use in the browser, never on SSR or page construction, in
+  server pages of 200 with search. Failed reads can retry; organization/session
+  changes cancel reads and delayed searches. Selected labels remain available
+  while another option page is shown. Facility records stay owned by facilities.
 - May be referenced by other organization subfeatures for its route path,
   but the schedule domain stays local to this subfeature.
 

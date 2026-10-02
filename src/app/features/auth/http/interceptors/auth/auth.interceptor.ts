@@ -6,7 +6,9 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { ENV_CONFIG } from '@core/config/environment';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
+import { trustedApiUrl } from '../trusted-api-url';
 
 /**
  * Constant PUBLIC_ENDPOINTS
@@ -18,6 +20,7 @@ import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
  * identity requires the current Fireguard session.
  *
  * @since 1.1.0
+ *
  * @type {RegExp[]}
  */
 const PUBLIC_ENDPOINTS: RegExp[] = [
@@ -31,13 +34,14 @@ const PUBLIC_ENDPOINTS: RegExp[] = [
 ];
 
 /**
- * Auth Interceptor
+ * Function authInterceptor
  *
  * @description
  * Adds Bearer token to outgoing API requests.
  * Skips requests that don't require authentication.
  *
  * @version 2.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const authInterceptor: HttpInterceptorFn = (
@@ -45,10 +49,11 @@ export const authInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
   const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
-
-  if (!req.url.includes('/api/')) return next(req);
+  const environment = inject(ENV_CONFIG);
+  const target = trustedApiUrl(req.url, environment.apiUrl);
+  if (target === null) return next(req);
   if (req.headers.has('Authorization')) return next(req);
-  if (PUBLIC_ENDPOINTS.some((pattern: RegExp) => pattern.test(req.url))) return next(req);
+  if (PUBLIC_ENDPOINTS.some((pattern: RegExp) => pattern.test(target.pathname))) return next(req);
   if (!authSession.isAuthenticated()) return next(req);
 
   const token: string | null = authSession.accessToken();

@@ -85,6 +85,34 @@ export interface InterventionTimeState {
   readonly draft: InterventionTimeDraft | null;
 
   /**
+   * Property persistedDraft
+   * @readonly
+   *
+   * @description
+   * Last confirmed device snapshot, compared with the latest input before warning about reload.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InterventionTimeDraft | null}
+   */
+  readonly persistedDraft: InterventionTimeDraft | null;
+
+  /**
+   * Property draftPersistenceFailed
+   * @readonly
+   *
+   * @description
+   * Retains a local persistence failure through retry until the latest input becomes durable.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
+  readonly draftPersistenceFailed: boolean;
+
+  /**
    * Property offline
    * @readonly
    *

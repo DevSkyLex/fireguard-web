@@ -20,6 +20,7 @@ describe('resolveComplianceStatusTag', () => {
 
   it('carries success severity for a compliant status', () => {
     expect(resolveComplianceStatusTag('compliant').severity).toBe('success');
+    expect(resolveComplianceStatusTag('compliant').label).toBe('Up to date');
   });
 
   it('carries warning severity for an at-risk status', () => {

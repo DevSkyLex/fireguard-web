@@ -5,6 +5,18 @@ services:
     image: ${IMAGE_REF:?IMAGE_REF is required}
     container_name: ${CONTAINER_NAME:-fireguard-web}
     restart: unless-stopped
+    init: true
+    stop_grace_period: 25s
+    mem_limit: ${WEB_MEMORY_LIMIT:-768m}
+    cpus: ${WEB_CPU_LIMIT:-1.0}
+    pids_limit: 128
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    logging:
+      driver: json-file
+      options:
+        max-size: '${LOG_MAX_SIZE:-10m}'
+        max-file: '${LOG_MAX_FILES:-5}'
     environment:
       NODE_ENV: production
       PORT: ${APP_PORT:-4000}

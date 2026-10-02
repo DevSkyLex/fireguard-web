@@ -4,6 +4,17 @@ import { buildOrganizationNavigation } from '../organization-navigation.config';
 describe('buildOrganizationNavigation', () => {
   const grantedPermissions = new Set<string>(['organization.*']);
 
+  it('keeps More reachable on desktop without settings permission', () => {
+    const links = buildOrganizationNavigation('org-1', new Set<string>()).flatMap(
+      (section) => section.links,
+    );
+    expect(links.find((link) => link.id === 'more')).toMatchObject({
+      route: '/organizations/org-1/more',
+      exact: true,
+      icon: 'lucideEllipsis',
+    });
+  });
+
   it('should keep the submittedInterventions counterKey on the interventions link', () => {
     const sections = buildOrganizationNavigation('org-1', grantedPermissions);
     const operations = sections.find((section) => section.id === 'operations');

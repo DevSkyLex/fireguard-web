@@ -164,6 +164,9 @@
   [regionalFormatting]="regionalFormatting()"
   [visible]="detailVisible()"
   [job]="selectedJob()"
+  (reportPageChanged)="
+    selectedJobId() && store.refresh({ jobId: selectedJobId()!, reportPage: $event })
+  "
   [trackingError]="
     selectedJobId() ? (store.pollCallStates()[selectedJobId()!]?.error?.message ?? null) : null
   "

@@ -11,32 +11,30 @@ import {
 
 /**
  * Function provideInterventionsFeature
- * @function provideInterventionsFeature
  *
  * @description
  * Registers intervention-scoped bootstrap providers, started once at app startup:
- *
  * - `InterventionOfflineLifecycleService` — purges locally persisted intervention
- *   data when the session ends,
+ * data when the session ends,
  * - `InterventionPwaUpdateService` — keeps intervention offline outbox integrity by
- *   preventing reload prompts while local unsynchronized operations exist,
+ * preventing reload prompts while local unsynchronized operations exist,
  * - `InterventionPrefetchService` — warms locally persisted intervention workspaces,
  * - `InterventionSyncCoordinatorService` — replays the outbox when connectivity or
- *   page visibility is regained.
- *
+ * page visibility is regained.
  * These must run without anyone visiting an intervention route — work queued
  * yesterday has to leave on a cold boot — but they pull in the whole offline graph:
  * IndexedDB repositories, the sync coordinator, the prefetcher. A static import
  * welded all of that into the initial bundle for every visitor, including the ones
  * who only ever reach a login screen. Importing dynamically keeps the behaviour and
  * moves the code off the critical path.
- *
  * Browser-only: this is IndexedDB, service-worker and connectivity work with no
  * meaning while rendering on the server.
  *
  * @since 1.1.0
  *
- * @return {EnvironmentProviders} Feature-level providers for intervention startup.
+ * @returns {EnvironmentProviders} Feature-level providers for intervention startup.
+ *
+ * @function provideInterventionsFeature
  */
 export function provideInterventionsFeature(): EnvironmentProviders {
   return makeEnvironmentProviders([
@@ -45,7 +43,7 @@ export function provideInterventionsFeature(): EnvironmentProviders {
 
       const injector: EnvironmentInjector = inject(EnvironmentInjector);
 
-      void import('./services').then((services) => {
+      return import('./services').then((services) => {
         runInInjectionContext(injector, () => {
           inject(services.InterventionOfflineLifecycleService).start();
           inject(services.InterventionPwaUpdateService).start();

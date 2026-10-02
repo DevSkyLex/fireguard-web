@@ -11,6 +11,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import {
+  disabled,
   form,
   FormField,
   maxLength,
@@ -18,8 +19,11 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
+import { idleCallState, type CallState } from '@core/request-state';
 import type { StoreError } from '@core/request-state';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
+import type { FacilityOption } from '@features/organization/features/facilities/models';
+import { FacilityOptionPicker } from '@features/organization/features/facilities/ui/components';
 import type { GenerateMaintenanceCampaignInput } from '@features/organization/features/maintenance-schedules/models';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmAlertImports } from '@shared/ui/alert';
@@ -59,7 +63,7 @@ const EMPTY_DRAFT: MaintenanceCampaignDraft = {
 const NAME_MAX_LENGTH: number = 160;
 
 /**
- * Component MaintenanceCampaignForm
+ * Class MaintenanceCampaignForm
  * @class MaintenanceCampaignForm
  *
  * @description
@@ -81,6 +85,7 @@ const NAME_MAX_LENGTH: number = 160;
 @Component({
   selector: 'app-maintenance-campaign-form',
   imports: [
+    FacilityOptionPicker,
     RequiredMarker,
     FormField,
     ...HlmAlertImports,
@@ -95,6 +100,45 @@ const NAME_MAX_LENGTH: number = 160;
 })
 export class MaintenanceCampaignForm {
   //#region Inputs
+  /**
+   * Property facilityPage
+   * @readonly
+   *
+   * @description
+   * Current facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPage: InputSignal<number> = input<number>(1);
+  /**
+   * Property facilityPageCount
+   * @readonly
+   *
+   * @description
+   * Number of facility server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPageCount: InputSignal<number> = input<number>(1);
+  /**
+   * Property facilityCallState
+   * @readonly
+   *
+   * @description
+   * Request state for facility options.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly facilityCallState: InputSignal<CallState> = input<CallState>(idleCallState());
   /**
    * Property pending
    * @readonly
@@ -133,14 +177,40 @@ export class MaintenanceCampaignForm {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<ReadonlyArray<{ readonly label: string; readonly value: string }>>}
+   * @type {InputSignal<readonly FacilityOption[]>}
    */
-  public readonly facilityOptions: InputSignal<
-    ReadonlyArray<{ readonly label: string; readonly value: string }>
-  > = input<ReadonlyArray<{ readonly label: string; readonly value: string }>>([]);
+  public readonly facilityOptions: InputSignal<readonly FacilityOption[]> = input<
+    readonly FacilityOption[]
+  >([]);
   //#endregion
 
   //#region Outputs
+  /**
+   * Property facilitySearchChanged
+   * @readonly
+   *
+   * @description
+   * Search entered in the server facility selector.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly facilitySearchChanged: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property facilityPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly facilityPageChanged: OutputEmitterRef<number> = output<number>();
   /**
    * Property submitted
    * @readonly
@@ -151,7 +221,7 @@ export class MaintenanceCampaignForm {
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<Omit<GenerateMaintenanceCampaignInput, 'organization'>>}
+   * @type {OutputEmitterRef< Omit<GenerateMaintenanceCampaignInput, 'organization'> >}
    */
   public readonly submitted: OutputEmitterRef<
     Omit<GenerateMaintenanceCampaignInput, 'organization'>
@@ -231,6 +301,7 @@ export class MaintenanceCampaignForm {
   protected readonly campaignForm: FieldTree<MaintenanceCampaignDraft> = form(
     this.model,
     (path) => {
+      disabled(path, () => this.pending());
       required(path.name, {
         message: $localize`:@@maintenance.campaignDialog.nameRequired:Name is required.`,
       });
@@ -272,32 +343,6 @@ export class MaintenanceCampaignForm {
   //#endregion
 
   //#region Methods
-  /**
-   * Property facilityLabelOf
-   *
-   * @description
-   * Names a facility value on the closed select trigger, including the sentinel "every facility"
-   * entry.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {(value: string) => string}
-   *
-   * @param {string} value - The select's current value.
-   *
-   * @returns {string} The localized label.
-   */
-  protected facilityLabelOf = (value: string): string => {
-    if (value === NO_SCOPE_VALUE) {
-      return $localize`:@@maintenance.campaignDialog.everyFacility:Every facility`;
-    }
-
-    return (
-      this.facilityOptions().find((option) => option.value === value)?.label ??
-      $localize`:@@common.unknownFacility:Unknown facility`
-    );
-  };
 
   /**
    * Property equipmentTypeLabelOf

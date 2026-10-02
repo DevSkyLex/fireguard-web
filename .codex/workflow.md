@@ -77,3 +77,10 @@ browser execution are separate responsibilities with explicit limits.
 Report behavior, changed files, actual commands/results and meaningful limits with absolute
 clickable paths. Preserve unrelated changes, generated/dependency trees, third-party payloads
 and the existing configuration of other clients.
+
+## Planning
+
+For preparation or revision of a plan, load [fg-web-plan](../.agents/skills/fg-web-plan/SKILL.md).
+It guides the principal agent in read-only source exploration and concrete validation choices.
+It does not automatically delegate. Keep AI-facing procedures in `.agents` or tooling
+directories, outside `docs/`; human operating and product documentation remains in its owning area.

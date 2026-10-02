@@ -322,6 +322,20 @@ describe('InterventionDetailPage', () => {
   let uploadAttachment: ReturnType<typeof vi.fn>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
+
+  /**
+   * Function propertiesGrid
+   *
+   * @description
+   * Finds the current fixture's properties grid to exercise its page-owned editing outputs.
+   *
+   * @access private
+   *
+   * @returns {DebugElement} The mounted properties grid.
+   */
+  const propertiesGrid = (): DebugElement =>
+    fixture.debugElement.query(By.css('app-intervention-properties-grid'));
+
   const byTestId = (id: string): HTMLElement =>
     (root().querySelector(`[data-testid="${id}"]`) ??
       document.querySelector(`[data-testid="${id}"]`)) as HTMLElement;
@@ -962,6 +976,33 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('the phase action', () => {
+    it('keeps planning available when field work has not been recorded yet', async () => {
+      workItems.set([]);
+      fixture = await createPage();
+
+      expect(byTestId('intervention-detail-command').textContent).toContain('Plan intervention');
+      expect((byTestId('intervention-detail-command') as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('starts planned work before offering to record an empty checklist', async () => {
+      current.set(intervention({ status: 'planned' }));
+      workItems.set([]);
+      fixture = await createPage();
+
+      expect(byTestId('intervention-detail-command').textContent).toContain('Start field work');
+    });
+
+    it('prioritizes the offline publication reason over outstanding blockers', async () => {
+      current.set(intervention({ status: 'submitted' }));
+      blockerCount.set(2);
+      online.set(false);
+      fixture = await createPage();
+
+      expect(root().querySelector('#intervention-command-reason')?.textContent?.trim()).toBe(
+        'Connect to the network to publish.',
+      );
+    });
+
     it('moves the single workflow action to the mobile footer without replacing the comment form', async () => {
       fixture = await createPage();
       const commentForm = root().querySelector('app-intervention-comment-form');
@@ -1768,15 +1809,12 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('in-place editing', () => {
-    const grid = (): DebugElement =>
-      fixture.debugElement.query(By.css('app-intervention-properties-grid'));
-
     it('should route a patch from the open field to the store', async () => {
       fixture = await createPage();
 
       byTestId('intervention-field-priority').querySelector('button')?.click();
       await fixture.whenStable();
-      grid().triggerEventHandler('detailsChanged', { priority: 'urgent' });
+      propertiesGrid().triggerEventHandler('detailsChanged', { priority: 'urgent' });
 
       expect(updateDetails).toHaveBeenCalledWith({
         interventionId: 'intervention-1',
@@ -1787,7 +1825,7 @@ describe('InterventionDetailPage', () => {
     it('should ignore a patch that belongs to no open field', async () => {
       fixture = await createPage();
 
-      grid().triggerEventHandler('detailsChanged', { priority: 'urgent' });
+      propertiesGrid().triggerEventHandler('detailsChanged', { priority: 'urgent' });
 
       expect(updateDetails).not.toHaveBeenCalled();
     });
@@ -1811,7 +1849,7 @@ describe('InterventionDetailPage', () => {
 
       byTestId('intervention-field-priority').querySelector('button')?.click();
       await fixture.whenStable();
-      grid().triggerEventHandler('detailsChanged', { priority: 'urgent' });
+      propertiesGrid().triggerEventHandler('detailsChanged', { priority: 'urgent' });
       updateDetailsCallState.set(pendingCallState());
       await fixture.whenStable();
       updateDetailsCallState.set(

@@ -2,26 +2,31 @@ name: CI
 
 on:
   workflow_call:
+    inputs:
+      full_browser_matrix:
+        description: Run all supported browser engines before a release
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
-      e2e_browsers:
-        description: Space-separated Playwright projects for the end-to-end job
-        required: false
-        type: string
-        default: chromium
+      full_browser_matrix:
+        description: Run all supported browser engines
+        type: boolean
+        default: true
   pull_request:
   push:
     branches: [main, develop]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # A reusable CI invocation inherits the caller's github.workflow name.
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '22.23.3'
   CI: true
 
 jobs:
@@ -30,14 +35,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Configure the temporary browser cache
         run: echo "PUPPETEER_CACHE_DIR=$RUNNER_TEMP/documentation-browser" >> "$GITHUB_ENV"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: .github/documentation/package-lock.json
+      - name: Pin npm on the disposable CI runner
+        run: npm install --global npm@11.16.0 --ignore-scripts --no-audit --no-fund
       - name: Install isolated documentation tools
         run: npm ci
         working-directory: .github/documentation
@@ -52,7 +59,7 @@ jobs:
         working-directory: .github/documentation
       - name: Retain diagram review artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: documentation-diagrams
           path: ${{ runner.temp }}/documentation-diagrams
@@ -63,19 +70,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Test deployment validation
         run: node --test .github/scripts/*.test.mjs
+      - name: Require immutable action pins
+        run: python3 -B .github/scripts/check-action-pins.py
+      - name: Test immutable API reference validation
+        run: node --test tests/contracts/check-reference.test.mjs tests/contracts/sync-openapi.test.mjs
 
   deployment-validation:
     name: Ansible Deployment Validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Build the pinned Ansible test controller
         run: docker build -t fireguard-web-ansible-tests -f ansible/tests/Dockerfile .
       - name: Validate playbook syntax and isolated Compose deployment
@@ -97,7 +108,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
@@ -124,7 +135,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Prepare Node workspace
         uses: ./.github/actions/prepare-node-workspace
@@ -139,7 +150,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Resolve the reviewed immutable API revision
+        id: api-reference
+        run: node tests/contracts/check-reference.mjs --resolve
+      - name: Checkout the canonical API export
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: DevSkyLex/fireguard-api
+          ref: ${{ steps.api-reference.outputs.commit }}
+          path: tmp/api-contract
+          token: ${{ secrets.API_CONTRACT_READ_TOKEN || github.token }}
+          persist-credentials: false
+      - name: Require the canonical export to match its reviewed digest
+        env:
+          FIREGUARD_OPENAPI_PATH: tmp/api-contract/openapi.json
+        run: node tests/contracts/check-reference.mjs
       - name: Prepare Node workspace
         uses: ./.github/actions/prepare-node-workspace
         with:
@@ -147,6 +175,8 @@ jobs:
           install-playwright-browsers: 'true'
           playwright-browsers: chromium
       - name: Validate OpenAPI reference and SSR fixtures
+        env:
+          FIREGUARD_OPENAPI_PATH: tmp/api-contract/openapi.json
         run: npm run test:contracts
       - name: Validate actual SPA mock responses
         run: npm run e2e:harness -- api-contract.spec.ts --project=chromium
@@ -163,7 +193,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Prepare Node workspace
         uses: ./.github/actions/prepare-node-workspace
@@ -181,7 +211,7 @@ jobs:
         run: node .github/scripts/coverage-threshold.mjs --report
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: frontend-coverage
           path: |
@@ -195,7 +225,7 @@ jobs:
         run: echo 'ready=true' >> "$GITHUB_OUTPUT"
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
         if: github.event_name != 'workflow_call'
         with:
           directory: coverage
@@ -221,7 +251,7 @@ jobs:
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
       - name: Prepare Node workspace
@@ -229,7 +259,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Download this run's coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: frontend-coverage
           path: coverage/fireguard-web
@@ -284,7 +314,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Prepare Node workspace
         uses: ./.github/actions/prepare-node-workspace
@@ -295,7 +325,7 @@ jobs:
         run: npm run build
 
       - name: Upload build output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: github.event_name != 'workflow_call'
         with:
           name: dist
@@ -304,17 +334,16 @@ jobs:
         continue-on-error: true
 
   # ==========================================================================
-  # Translation Catalog Drift (non-blocking)
+  # Translation Catalog Drift
   # ==========================================================================
   i18n:
     name: Translation Catalog Drift
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Prepare Node workspace
         uses: ./.github/actions/prepare-node-workspace
@@ -331,7 +360,7 @@ jobs:
             exit 0
           fi
 
-          echo "::warning::Translation catalogs are out of sync. Run 'npm run i18n:extract' and commit src/locale."
+          echo "::error::Translation catalogs are out of sync. Run 'npm run i18n:extract' and commit src/locale."
           {
             echo "### Translation catalog drift"
             echo
@@ -341,6 +370,7 @@ jobs:
             git diff --stat -- src/locale
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
 
   # ==========================================================================
   # Security Check
@@ -352,7 +382,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Prepare Node workspace
         uses: ./.github/actions/prepare-node-workspace
@@ -360,61 +390,96 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           install-dependencies: 'false'
 
-      - name: Check for security vulnerabilities
+      - name: Produce production SBOM and license declarations
         run: |
-          if npm audit --omit=dev --audit-level=high; then
-            echo "No high or critical runtime advisory." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
+          mkdir -p tmp/dependency-evidence
+          npm sbom --package-lock-only --omit=dev --sbom-format=cyclonedx > tmp/dependency-evidence/npm-sbom.cdx.json
+          node .github/scripts/dependency-inventory.mjs tmp/dependency-evidence/npm-sbom.cdx.json tmp/dependency-evidence/npm-licenses.json
 
-          echo "::warning::npm audit reported high or critical runtime advisories."
-          {
-            echo "### npm audit"
-            echo
-            echo '```'
-            npm audit --omit=dev --audit-level=high || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Reject high or critical runtime and build advisories
+        run: npm audit --audit-level=high --json > tmp/dependency-evidence/npm-audit.json
 
-          exit 1
+      - name: Retain dependency evidence from this revision
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: web-dependency-evidence
+          path: tmp/dependency-evidence/
+          if-no-files-found: error
+          retention-days: 14
 
   # ==========================================================================
   # End-to-End Tests
   # ==========================================================================
-  # Runs on every pull request and on main. Defaults to chromium; pass
-  # `e2e_browsers` on a manual run to widen the matrix (e.g. "chromium webkit").
+  # Every PR covers desktop Chrome, Android Chrome and iOS Safari. Releases
+  # additionally cover desktop Firefox and Safari with the same committed tests.
   tests-end-to-end:
-    name: End-to-End Tests
+    name: End-to-End Tests (${{ matrix.project }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON((inputs.full_browser_matrix || startsWith(github.ref, 'refs/tags/')) && '["chromium","Mobile Chrome","Mobile Safari","firefox","webkit"]' || '["chromium","Mobile Chrome","Mobile Safari"]') }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Prepare Node workspace
         uses: ./.github/actions/prepare-node-workspace
         with:
           node-version: ${{ env.NODE_VERSION }}
           install-playwright-browsers: 'true'
-          playwright-browsers: ${{ inputs.e2e_browsers || 'chromium' }}
+          playwright-browsers: ${{ matrix.project == 'firefox' && 'firefox' || (matrix.project == 'webkit' || matrix.project == 'Mobile Safari') && 'webkit' || 'chromium' }}
 
       - name: Run Playwright tests
         env:
-          E2E_BROWSERS: ${{ inputs.e2e_browsers || 'chromium' }}
+          E2E_PROJECT: ${{ matrix.project }}
         run: |
-          projects=()
-          for browser in ${E2E_BROWSERS:-chromium}; do
-            projects+=("--project=${browser}")
-          done
-
-          npx playwright test --config=tests/e2e/playwright.config.ts "${projects[@]}"
+          npx playwright test --config=tests/e2e/playwright.config.ts --project="$E2E_PROJECT"
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: playwright-report
           retention-days: 7
         continue-on-error: true
+
+  tests-ssr:
+    name: SSR Authentication and Request Boundaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          install-playwright-browsers: 'true'
+          playwright-browsers: chromium webkit
+      - name: Build the real SSR harness
+        run: npm run e2e:ssr:build
+      - name: Check authenticated SSR and hydration traffic
+        run: npm run e2e:ssr
+
+  tests-localized:
+    name: Localized Browser Tests (${{ matrix.locale }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        locale: [fr, es]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: ./.github/actions/prepare-node-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          install-playwright-browsers: 'true'
+          playwright-browsers: chromium
+      - name: Check translated desktop and touch routes
+        env:
+          E2E_LOCALE: ${{ matrix.locale }}
+        run: npm run e2e:localized

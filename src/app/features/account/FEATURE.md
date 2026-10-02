@@ -372,3 +372,22 @@ The central interaction-capabilities contract selects account action and notific
 the native desktop menu/popover. The notification three-row cap applies only to desktop; mobile
 has a bounded scrolling list. Both surfaces share loading, mark-read and navigation handlers.
 Touch density never changes the profile Signal Form, locale reconciliation or preference commits.
+
+## Session sign-in location
+
+The auth session transport includes optional nullable `country` (ISO code) and `city` snapshots
+computed by the API at sign-in. Reads, renewal and frontend rendering do not locate the browser
+or recalculate geography. Revoked sessions expose no location; legacy sessions remain unavailable.
+The account panel formats country names using its explicit account-locale input, remains
+presentational, and preserves existing revoke/confirm/retry events. It displays city and country,
+country only, or a discreet unavailable label, with en/fr/es copy, approximate-location guidance
+and DB-IP attribution when geography is shown. Values render through escaped interpolation.
+
+## Public entry points
+
+The application composition root uses the narrow bootstrap entry point so global account
+initialization does not load dashboard widgets. The same feature provider remains globally scoped.
+
+| Entry point           | Consumers |
+| --------------------- | --------- |
+| `providers/bootstrap` | `app`     |

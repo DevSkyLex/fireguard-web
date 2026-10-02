@@ -17,6 +17,7 @@ import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
 import { THEME_PORT, type ThemePort } from '@core/theme';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { MaintenanceScheduleService } from '@features/organization/features/maintenance-schedules/data-access';
@@ -116,6 +117,10 @@ describe('MaintenanceSchedulesPage', () => {
           } satisfies ThemePort,
         },
         provideZonelessChangeDetection(),
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { isAuthenticated: signal(true), sessionRevision: signal(0) },
+        },
         {
           provide: REGIONAL_FORMATTING_PORT,
           useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
@@ -301,15 +306,30 @@ describe('MaintenanceSchedulesPage', () => {
     listFacilities.mockReturnValue(
       of({
         member: [
-          { '@id': '/api/organizations/org-1/facilities/site-1', name: 'North site' },
-          { '@id': '/api/organizations/org-1/facilities/site-2', name: 'South site' },
+          {
+            id: 'site-1',
+            '@id': '/api/organizations/org-1/facilities/site-1',
+            name: 'North site',
+            type: 'site',
+            path: [],
+          },
+          {
+            id: 'site-2',
+            '@id': '/api/organizations/org-1/facilities/site-2',
+            name: 'South site',
+            type: 'site',
+            path: [],
+          },
         ],
         totalItems: 2,
       }),
     );
     fixture = await createPage();
 
-    expect(listFacilities).toHaveBeenCalledWith('org-1', { itemsPerPage: 200 });
+    expect(listFacilities).not.toHaveBeenCalled();
+    fixture.componentInstance['openCampaignDialog']();
+    await fixture.whenStable();
+    expect(listFacilities).toHaveBeenCalledWith('org-1', { page: 1, itemsPerPage: 200 });
     expect(fixture.componentInstance['tableFacilityLabelOf']('site-2')).toBe('South site');
     expect(fixture.componentInstance['tableFacilityLabelOf']('unknown')).toBeNull();
   });

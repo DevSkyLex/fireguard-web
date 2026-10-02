@@ -59,11 +59,14 @@ This subfeature does not own top-level organization context or inspection workfl
   label sheet as PDF (`EquipmentService.exportLabels`, `GET
 /api/organizations/{organizationId}/equipment/labels`, same
   direct-`this.http` blob shape, saved as
-  `equipment-labels-{organizationId}.pdf`). From this toolbar the scope is
-  the **whole active inventory** — no `ids[]`/`facilityId` narrowing is
-  sent. The endpoint refuses a selection past 500 labels with a 422 whose
-  RFC 7807 `detail` (read back through `resolveCsvExportErrorDetail`) is
-  surfaced as the error toast. The facility-scoped variant of the same
+  `equipment-labels-{organizationId}.pdf`). Its action surface explicitly
+  selects inventory, one facility, or checked records from the current
+  list page. Inventory/site counts come from the server's filtered total;
+  selections count distinct identities. `EquipmentLabelsStore` enables printing
+  only after a matching preview resolves between 1 and 500 labels, exposes
+  independent preview/export errors, and cancels obsolete scope/session reads.
+  An empty explicit selection is rejected rather than expanding to inventory.
+  The facility-scoped variant of the same
   endpoint lives on the estate explorer (`organization/FEATURE.md`
   "Assets"), which prints the selected node's subtree via `facilityId`.
 - The detail page's header carries **Export equipment sheet**
@@ -230,19 +233,17 @@ Utility:
   assigned facility's floor plan; the 409 the backend returns when the
   equipment carries no facility assignment is reworded client-side by the
   calling store, not here.
-- The reverse dependency: `EquipmentDetailPage` injects the `facilities`
-  subfeature's `FacilityService.list` directly, read-only, to preload the
-  organization's facilities as options for `EquipmentAssignFacilityDialog` —
-  the same pattern `maintenance-schedules`' `MaintenanceSchedulesPage` already
-  uses for its facility-scoping select. No write ever crosses into
-  `facilities`; the equipment side of the assignment stays on
+- The reverse dependency uses the facilities feature's `FacilityOptionsStore`
+  for read-only site choices. No write crosses into `facilities`; assignment stays on
   `EquipmentStore.assignToFacility` / `unassignFromFacility`.
 
 - Facility pickers (`equipment-create-form`, `equipment-assign-facility-dialog`)
   take `FacilityOption[]` from the facilities feature's `models` barrel, and the
   list/detail pages provide the facilities feature's `FacilityOptionsStore`
   (its `state` barrel) instead of listing facilities inline — one loader, one
-  option shape, no raw id on a trigger.
+  option shape, no raw id on a trigger. They render `FacilityOptionPicker`
+  from the documented `facilities/ui/components` public barrel, using server
+  pages of 200 and server search while keeping a chosen label outside its page.
 
 ## Deletion (data-access only, no duplicate UI)
 

@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.json",
-  "compilerOptions": { "types": ["node", "vitest"], "noEmit": true },
+  "compilerOptions": { "types": ["node", "vitest", "@angular/localize"], "noEmit": true },
   "include": ["./**/*.ts"]
 }

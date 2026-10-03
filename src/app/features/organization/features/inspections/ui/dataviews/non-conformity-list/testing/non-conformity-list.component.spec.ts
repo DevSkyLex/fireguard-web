@@ -16,29 +16,6 @@ function isoDaysFromToday(days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-/**
- * An ISO instant `days` away from the real, unmocked "now", written at
- * 22:00 UTC — Europe/Paris local midnight during its summer (UTC+2) offset —
- * so its UTC calendar day and its Europe/Paris calendar day disagree by one,
- * proving {@link NonConformityList} resolves `dueAt` through the
- * organization's timezone rather than the instant's raw UTC date.
- */
-function isoInstantAtParisMidnight(days: number): string {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() + days - 1);
-  date.setUTCHours(22, 0, 0, 0);
-
-  return date.toISOString();
-}
-
-/** The `'YYYY-MM-DD'` calendar day `days` away from today in Europe/Paris, matching {@link isoInstantAtParisMidnight}'s intended day. */
-function parisIsoDaysFromToday(days: number): string {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() + days);
-
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(date);
-}
-
 function nonConformity(overrides: Partial<NonConformityOutput> = {}): NonConformityOutput {
   return {
     '@id': '/api/organizations/org-1/inspections/inspection-1/non-conformities/nc-1',
@@ -63,6 +40,8 @@ describe('NonConformityList', () => {
   let retryRequested: number;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
+
+  afterEach(() => vi.useRealTimers());
 
   async function createList(
     items: readonly NonConformityOutput[] = [],
@@ -286,33 +265,68 @@ describe('NonConformityList', () => {
     expect(due?.querySelector('ng-icon')).not.toBeNull();
   });
 
-  it("should read a due instant's calendar day through the organization's timezone, not its raw UTC date", async () => {
-    const dueAt: string = isoInstantAtParisMidnight(0);
-    await createList([nonConformity({ dueAt, status: 'open' })]);
-    fixture.componentRef.setInput('regionalFormatting', {
-      dateFormat: 'yyyy-MM-dd',
-      timezone: 'Europe/Paris',
-    });
-    await fixture.whenStable();
+  it.each([
+    {
+      season: 'summer',
+      now: '2026-10-02T23:57:50.000Z',
+      dueAt: '2026-10-02T22:00:00.000Z',
+      day: '2026-10-03',
+    },
+    {
+      season: 'winter',
+      now: '2026-01-15T23:30:00.000Z',
+      dueAt: '2026-01-15T23:00:00.000Z',
+      day: '2026-01-16',
+    },
+  ])(
+    "should read a due instant's calendar day through the organization's timezone in $season, not its raw UTC date",
+    async ({ now, dueAt, day }) => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(now));
+      await createList([nonConformity({ dueAt, status: 'open' })]);
+      fixture.componentRef.setInput('regionalFormatting', {
+        dateFormat: 'yyyy-MM-dd',
+        timezone: 'Europe/Paris',
+      });
+      await fixture.whenStable();
 
-    const due = root().querySelector('[data-testid="non-conformity-due"]');
-    expect(due?.querySelector('time')?.textContent).toContain(parisIsoDaysFromToday(0));
-    expect(due?.textContent).not.toContain('Overdue');
-  });
+      const due = root().querySelector('[data-testid="non-conformity-due"]');
+      expect(due?.querySelector('time')?.textContent).toBe(day);
+      expect(due?.querySelector('time')?.getAttribute('datetime')).toBe(dueAt);
+      expect(due?.textContent).not.toContain('Overdue');
+    },
+  );
 
-  it('should flag as Overdue a due instant whose organization-timezone day has passed, even when its raw UTC day has not', async () => {
-    const dueAt: string = isoInstantAtParisMidnight(-5);
-    await createList([nonConformity({ dueAt, status: 'open' })]);
-    fixture.componentRef.setInput('regionalFormatting', {
-      dateFormat: 'yyyy-MM-dd',
-      timezone: 'Europe/Paris',
-    });
-    await fixture.whenStable();
+  it.each([
+    {
+      season: 'summer',
+      now: '2026-10-02T23:57:50.000Z',
+      dueAt: '2026-10-02T21:59:00.000Z',
+      day: '2026-10-02',
+    },
+    {
+      season: 'winter',
+      now: '2026-01-15T23:30:00.000Z',
+      dueAt: '2026-01-15T22:59:00.000Z',
+      day: '2026-01-15',
+    },
+  ])(
+    'should flag as Overdue a due instant whose organization-timezone day has passed in $season, even when its raw UTC day has not',
+    async ({ now, dueAt, day }) => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(now));
+      await createList([nonConformity({ dueAt, status: 'open' })]);
+      fixture.componentRef.setInput('regionalFormatting', {
+        dateFormat: 'yyyy-MM-dd',
+        timezone: 'Europe/Paris',
+      });
+      await fixture.whenStable();
 
-    const due = root().querySelector('[data-testid="non-conformity-due"]');
-    expect(due?.querySelector('time')?.textContent).toContain(parisIsoDaysFromToday(-5));
-    expect(due?.textContent).toContain('Overdue');
-  });
+      const due = root().querySelector('[data-testid="non-conformity-due"]');
+      expect(due?.querySelector('time')?.textContent).toBe(day);
+      expect(due?.textContent).toContain('Overdue');
+    },
+  );
 
   it('should not flag a resolved (terminal) row as Overdue even past its due date', async () => {
     await createList([nonConformity({ dueAt: isoDaysFromToday(-5), status: 'done' })]);

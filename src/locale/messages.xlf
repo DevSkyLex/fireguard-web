@@ -12009,14 +12009,14 @@
         <source>The model action could not be completed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-models/facility-models.store.ts</context>
-          <context context-type="linenumber">185</context>
+          <context context-type="linenumber">216</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.model.uploadType" datatype="html">
         <source>Choose an autonomous GLB file no larger than 10 MiB.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-models/facility-models.store.ts</context>
-          <context context-type="linenumber">324</context>
+          <context context-type="linenumber">355</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-model-manager/facility-model-manager.component.ts</context>
@@ -12331,7 +12331,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-scene/facility-building-3d-scene.component.ts</context>
-          <context context-type="linenumber">2232</context>
+          <context context-type="linenumber">2353</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.placement.uncalibrated" datatype="html">
@@ -12373,7 +12373,7 @@
         <source>3D view of <x id="buildingName" equiv-text="data.buildingName"/> — <x id="floorCount" equiv-text="data.floors.length"/> floor(s)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-scene/facility-building-3d-scene.component.ts</context>
-          <context context-type="linenumber">610</context>
+          <context context-type="linenumber">619</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.map.compliance.worstSitesEmpty" datatype="html">
@@ -15296,25 +15296,25 @@
         <source>The model must be no larger than 10 MiB.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/utils/facility-glb/facility-glb.utils.ts</context>
-          <context context-type="linenumber">20</context>
+          <context context-type="linenumber">46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.model.unsupportedExtension" datatype="html">
         <source>The model requires an unsupported GLB extension.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/utils/facility-glb/facility-glb.utils.ts</context>
-          <context context-type="linenumber">70</context>
+          <context context-type="linenumber">191</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.model.externalResources" datatype="html">
         <source>Embed all model textures and buffers in the GLB file.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/utils/facility-glb/facility-glb.utils.ts</context>
-          <context context-type="linenumber">106</context>
+          <context context-type="linenumber">247</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/utils/facility-glb/facility-glb.utils.ts</context>
-          <context context-type="linenumber">135</context>
+          <context context-type="linenumber">352</context>
         </context-group>
       </trans-unit>
       <trans-unit id="route.imports" datatype="html">

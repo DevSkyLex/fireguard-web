@@ -1032,6 +1032,59 @@ describe('FacilityBuilding3dScene', () => {
     },
   );
 
+  it.each([
+    { kind: 'Points', depths: [0.5], selectable: false },
+    { kind: 'Points', depths: [2], selectable: true },
+    { kind: 'Points', depths: [20], selectable: false },
+    { kind: 'LineSegments', depths: [0.5, 2], selectable: true },
+    { kind: 'LineSegments', depths: [20, 2], selectable: true },
+    { kind: 'LineSegments', depths: [0.2, 0.5], selectable: false },
+    { kind: 'LineSegments', depths: [20, 30], selectable: false },
+  ])(
+    'respects near/far clipping for $kind at depths $depths',
+    async ({ kind, depths, selectable }) => {
+      const canvas = await mount();
+      const source = new Group();
+      const geometry = new BufferGeometry().setAttribute(
+        'position',
+        new Float32BufferAttribute(
+          depths.flatMap((depth) => [0, 0, -depth]),
+          3,
+        ),
+      );
+      const primitive =
+        kind === 'Points'
+          ? new Points(geometry, new PointsMaterial({ size: 1, sizeAttenuation: false }))
+          : new LineSegments(geometry, new LineBasicMaterial());
+      primitive.userData = { facilityModelNodeIndex: 0 };
+      source.add(primitive);
+      fixture.componentRef.setInput('model', { ...MODEL, floors: [] });
+      fixture.componentRef.setInput('importedModel', { ...IMPORTED_MODEL, bindings: [] });
+      fixture.componentRef.setInput('importedModelAsset', { scene: source, nodes: [] });
+      await fixture.whenStable();
+      const scene = fixture.componentInstance;
+      const camera = sceneObject(scene['camera']);
+      camera.position.set(0, 0, 0);
+      camera.lookAt(0, 0, -1);
+      camera.near = 1;
+      camera.far = 10;
+      camera.aspect = 2;
+      camera.updateProjectionMatrix();
+      const activated = vi.fn();
+      const background = vi.fn();
+      scene.importedNodeSelected.subscribe(activated);
+      scene.backgroundActivated.subscribe(background);
+      canvas.dispatchEvent(new MouseEvent('pointerdown', { clientX: 400, clientY: 200 }));
+      canvas.dispatchEvent(new MouseEvent('pointerup', { clientX: 400, clientY: 200 }));
+      expect(activated).toHaveBeenCalledTimes(selectable ? 1 : 0);
+      if (selectable) expect(activated).toHaveBeenCalledWith(0);
+      expect(background).toHaveBeenCalledTimes(selectable ? 0 : 1);
+      expect([...geometry.getAttribute('position').array]).toEqual(
+        depths.flatMap((depth) => [0, 0, -depth]).map(Math.fround),
+      );
+    },
+  );
+
   it('retains calibrated marker frames when an exploded generated scene switches to a GLB', async () => {
     await mount();
     fixture.componentRef.setInput('model', {

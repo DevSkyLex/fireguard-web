@@ -246,6 +246,73 @@ describe('FacilityModelsStore', () => {
     expect(store.facilityOptions()).toEqual([]);
   });
 
+  it('requires the complete ancestry and retains the nearest floor in historical nested floors', () => {
+    const floor: FacilityOutput = {
+      ...building,
+      id: 'floor-1',
+      type: 'floor',
+      parentFacilityId: building.id,
+    };
+    const nestedFloor: FacilityOutput = {
+      ...floor,
+      id: 'nested-floor',
+      parentFacilityId: floor.id,
+    };
+    const zone: FacilityOutput = {
+      ...building,
+      id: 'zone-1',
+      type: 'zone',
+      parentFacilityId: nestedFloor.id,
+    };
+    const disconnected: FacilityOutput = {
+      ...zone,
+      id: 'disconnected',
+      parentFacilityId: 'missing-parent',
+    };
+    const foreignParent: FacilityOutput = {
+      ...zone,
+      id: 'foreign-parent',
+      organizationId: 'org-2',
+      parentFacilityId: building.id,
+    };
+    const foreignDescendant: FacilityOutput = {
+      ...zone,
+      id: 'foreign-descendant',
+      parentFacilityId: foreignParent.id,
+    };
+    const cycleA: FacilityOutput = { ...zone, id: 'cycle-a', parentFacilityId: 'cycle-b' };
+    const cycleB: FacilityOutput = { ...zone, id: 'cycle-b', parentFacilityId: 'cycle-a' };
+    const rootZone: FacilityOutput = { ...zone, id: 'root-zone', parentFacilityId: null };
+    const descendants = [
+      floor,
+      nestedFloor,
+      zone,
+      disconnected,
+      foreignParent,
+      foreignDescendant,
+      cycleA,
+      cycleB,
+      rootZone,
+    ];
+    facilities.listDescendants.mockReturnValue(
+      of({ member: descendants, totalItems: descendants.length }),
+    );
+    store.load(context);
+
+    expect(store.bindingFloorIds()).toEqual({
+      [building.id]: null,
+      [floor.id]: floor.id,
+      [nestedFloor.id]: nestedFloor.id,
+      [zone.id]: nestedFloor.id,
+    });
+    expect(store.facilityOptions().map((option) => option.value)).toEqual([
+      building.id,
+      floor.id,
+      nestedFloor.id,
+      zone.id,
+    ]);
+  });
+
   it('does not let an abandoned collection response settle an A-B-A context', () => {
     const abandoned = new Subject<HydraCollection<FacilityModelOutput>>();
     service.list.mockReturnValueOnce(abandoned);

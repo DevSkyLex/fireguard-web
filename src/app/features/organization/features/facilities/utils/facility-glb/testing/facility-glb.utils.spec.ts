@@ -65,4 +65,108 @@ describe('readFacilityGlb', () => {
     new DataView(truncated).setUint32(12, truncated.byteLength, true);
     expect(() => readFacilityGlb(truncated)).toThrow();
   });
+
+  it('preserves the validation order when a file has multiple incompatible resources', () => {
+    const invalid = 'Choose a valid autonomous GLB 2.0 file.';
+    const external = 'Embed all model textures and buffers in the GLB file.';
+    const unsupported = 'The model requires an unsupported GLB extension.';
+    expect(() =>
+      readFacilityGlb(glb({ asset: { version: '1.0' }, extensionsRequired: ['custom'] })),
+    ).toThrow(invalid);
+    expect(() =>
+      readFacilityGlb(
+        glb({ asset: { version: '2.0' }, extensionsRequired: ['custom'], buffers: [false] }),
+      ),
+    ).toThrow(unsupported);
+    expect(() =>
+      readFacilityGlb(
+        glb({ asset: { version: '2.0' }, buffers: [false], images: [{ uri: 'remote.png' }] }),
+      ),
+    ).toThrow(invalid);
+    expect(() =>
+      readFacilityGlb(
+        glb({ asset: { version: '2.0' }, images: [{ uri: 'remote.png' }], nodes: [false] }),
+      ),
+    ).toThrow(external);
+    expect(() =>
+      readFacilityGlb(
+        glb({
+          asset: { version: '2.0' },
+          nodes: [false],
+          extensions: { custom: { uri: 'remote.bin' } },
+        }),
+      ),
+    ).toThrow(invalid);
+    expect(() =>
+      readFacilityGlb(
+        glb({
+          asset: { version: '2.0', minVersion: '2.1' },
+          extensions: { custom: { uri: 'remote.bin' } },
+        }),
+      ),
+    ).toThrow(invalid);
+  });
+
+  it.each([
+    { buffers: [{ byteLength: -1 }] },
+    { buffers: [{ byteLength: 1.5 }] },
+    { buffers: [{ byteLength: 5 }] },
+    { buffers: [{ byteLength: 0 }] },
+    { buffers: [{ byteLength: 4 }, { byteLength: 4 }] },
+    { images: [{}] },
+    { images: [{ bufferView: 0, uri: 'remote.png' }] },
+    { images: [{ uri: 'data:image/svg+xml;base64,YQ==' }] },
+    { nodes: [[]] },
+    { nodes: [{ name: 1 }] },
+    { asset: { version: '2.0', minVersion: '2.1' } },
+    { extensions: { custom: [{ nested: { uri: false } }] } },
+  ])('rejects malformed embedded metadata: %j', (extra) => {
+    expect(() =>
+      readFacilityGlb(glb({ asset: { version: '2.0' }, ...extra }, new Uint8Array([1, 2, 3, 4]))),
+    ).toThrow();
+  });
+
+  it('rejects invalid UTF-8 and JSON without leaking decoder diagnostics', () => {
+    const invalid = 'Choose a valid autonomous GLB 2.0 file.';
+    const invalidUtf8 = glb({ asset: { version: '2.0' } });
+    new Uint8Array(invalidUtf8)[20] = 255;
+    expect(() => readFacilityGlb(invalidUtf8)).toThrow(invalid);
+    const invalidJson = glb({ asset: { version: '2.0' } });
+    new Uint8Array(invalidJson)[20] = 0;
+    expect(() => readFacilityGlb(invalidJson)).toThrow(invalid);
+  });
+
+  it('rejects wrong chunk kinds, a partial trailing header and extra chunks', () => {
+    const bytes = glb({ asset: { version: '2.0' } });
+    const wrongJsonKind = bytes.slice(0);
+    new DataView(wrongJsonKind).setUint32(16, 0x004e4942, true);
+    expect(() => readFacilityGlb(wrongJsonKind)).toThrow();
+    const wrongBinKind = glb({ asset: { version: '2.0' } }, new Uint8Array([1]));
+    new DataView(wrongBinKind).setUint32(bytes.byteLength + 4, 0x4e4f534a, true);
+    expect(() => readFacilityGlb(wrongBinKind)).toThrow();
+    const trailingHeader = new ArrayBuffer(bytes.byteLength + 4);
+    new Uint8Array(trailingHeader).set(new Uint8Array(bytes));
+    new DataView(trailingHeader).setUint32(8, trailingHeader.byteLength, true);
+    expect(() => readFacilityGlb(trailingHeader)).toThrow();
+    const bin = glb({ asset: { version: '2.0' } }, new Uint8Array([1]));
+    const extraChunk = new ArrayBuffer(bin.byteLength + 8);
+    new Uint8Array(extraChunk).set(new Uint8Array(bin));
+    new DataView(extraChunk).setUint32(8, extraChunk.byteLength, true);
+    new DataView(extraChunk).setUint32(bin.byteLength + 4, 0x004e4942, true);
+    expect(() => readFacilityGlb(extraChunk)).toThrow();
+  });
+
+  it('accepts absent catalogues and supported embedded references nested in extension arrays', () => {
+    expect(
+      readFacilityGlb(
+        glb({
+          asset: { version: '2.0', minVersion: '2.0' },
+          extensionsRequired: [],
+          buffers: [],
+          images: [{ bufferView: 0 }],
+          extensions: { custom: [{ uri: 'data:image/webp;base64,YQ==' }] },
+        }),
+      ).nodes,
+    ).toEqual([]);
+  });
 });

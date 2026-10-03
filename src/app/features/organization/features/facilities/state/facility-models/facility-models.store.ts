@@ -49,6 +49,7 @@ import type {
   FacilityModelOutput,
   FacilityModelUploadInput,
   FacilityOption,
+  FacilityOutput,
 } from '@features/organization/features/facilities/models';
 import { resolveFacilityStatusTag } from '@features/organization/features/facilities/models';
 import { FacilityModelAssetService } from '@features/organization/features/facilities/services';
@@ -85,6 +86,47 @@ const INITIAL_STATE: FacilityModelsState = {
 };
 
 /**
+ * Function resolveBindingFloorId
+ *
+ * @description
+ * Resolves the nearest floor only when the complete ancestry reaches the selected owning building.
+ *
+ * @access private
+ *
+ * @param {FacilityOutput} facility - Candidate binding target.
+ * @param {ReadonlyMap<string, FacilityOutput>} facilities - Loaded building and descendant records.
+ * @param {string | null} organizationId - Selected organization scope.
+ * @param {string | null} buildingId - Selected owning building.
+ *
+ * @returns {string | null | undefined} Nearest floor, no floor for a valid target, or invalid
+ *   ancestry.
+ */
+function resolveBindingFloorId(
+  facility: FacilityOutput,
+  facilities: ReadonlyMap<string, FacilityOutput>,
+  organizationId: string | null,
+  buildingId: string | null,
+): string | null | undefined {
+  const seen = new Set<string>();
+  let current = facility;
+  let floorId: string | null = null;
+  let reachesBuilding = false;
+  while (!seen.has(current.id) && current.organizationId === organizationId) {
+    seen.add(current.id);
+    if (current.type === 'floor' && floorId === null) floorId = current.id;
+    if (current.id === buildingId) {
+      reachesBuilding = true;
+      break;
+    }
+    if (current.type === 'building') break;
+    const parent = current.parentFacilityId ? facilities.get(current.parentFacilityId) : undefined;
+    if (!parent) break;
+    current = parent;
+  }
+  return reachesBuilding ? floorId : undefined;
+}
+
+/**
  * Constant FacilityModelsStore
  *
  * @description
@@ -104,24 +146,13 @@ export const FacilityModelsStore = signalStore(
       );
       const result: Record<string, string | null> = {};
       for (const facility of facilities.values()) {
-        const seen = new Set<string>();
-        let current = facility;
-        let floorId: string | null = null;
-        while (!seen.has(current.id)) {
-          seen.add(current.id);
-          if (current.organizationId !== store.organizationId()) break;
-          if (current.type === 'floor' && floorId === null) floorId = current.id;
-          if (current.id === store.buildingId()) {
-            result[facility.id] = floorId;
-            break;
-          }
-          if (current.type === 'building') break;
-          const parent = current.parentFacilityId
-            ? facilities.get(current.parentFacilityId)
-            : undefined;
-          if (!parent) break;
-          current = parent;
-        }
+        const floorId = resolveBindingFloorId(
+          facility,
+          facilities,
+          store.organizationId(),
+          store.buildingId(),
+        );
+        if (floorId !== undefined) result[facility.id] = floorId;
       }
       return result;
     }),

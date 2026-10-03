@@ -33,7 +33,16 @@ import {
   lucidePackage,
   lucideWaves,
 } from '@ng-icons/lucide';
-import type { Mesh, Material, Texture, BufferGeometry, Object3D, Line, Points } from 'three';
+import type {
+  Mesh,
+  Material,
+  Texture,
+  BufferGeometry,
+  Object3D,
+  Line,
+  Points,
+  Vector3,
+} from 'three';
 import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { resolveEquipmentStatusTag } from '@features/organization/features/equipments/models';
@@ -1935,10 +1944,10 @@ export class FacilityBuilding3dScene {
     const positions = object.geometry.getAttribute('position');
     if (!positions) return null;
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
-    const pointsMaterial = material as InstanceType<ThreeModule['PointsMaterial']>;
     const isPoints = (object as Points).isPoints;
     const isSegments = (object as ThreeLineSegments).isLineSegments;
     const isLoop = (object as InstanceType<ThreeModule['LineLoop']>).isLineLoop;
+    const step = isSegments ? 2 : 1;
     const indices = object.geometry.index;
     const start = Math.max(0, object.geometry.drawRange.start);
     const end = Math.min(
@@ -1947,95 +1956,207 @@ export class FacilityBuilding3dScene {
     );
     const worldStart = new THREE.Vector3();
     const worldEnd = new THREE.Vector3();
-    const viewStart = new THREE.Vector3();
-    const viewEnd = new THREE.Vector3();
-    const screenStart = new THREE.Vector3();
-    const screenEnd = new THREE.Vector3();
+    const projection = {
+      viewStart: new THREE.Vector3(),
+      viewEnd: new THREE.Vector3(),
+      screenStart: new THREE.Vector3(),
+      screenEnd: new THREE.Vector3(),
+    };
     let distance = Number.POSITIVE_INFINITY;
-    for (let offset = start; offset < end; offset += isSegments ? 2 : 1) {
+    for (let offset = start; offset < end; offset += step) {
       worldStart
         .fromBufferAttribute(positions, indices?.getX(offset) ?? offset)
         .applyMatrix4(object.matrixWorld);
-      const depth = -viewStart.copy(worldStart).applyMatrix4(camera.matrixWorldInverse).z;
       if (isPoints) {
-        if (depth < camera.near || depth > camera.far) continue;
-        screenStart.copy(worldStart).project(camera);
-        const size =
-          (pointsMaterial.size ?? 1) *
-          (pointsMaterial.sizeAttenuation ? rect.height / (2 * depth) : 1);
-        const tolerance = PRIMITIVE_PICK_TOLERANCE_PX + size / 2;
-        const pixelX = rect.left + ((screenStart.x + 1) * rect.width) / 2;
-        const pixelY = rect.top + ((1 - screenStart.y) * rect.height) / 2;
-        if (Math.hypot(event.clientX - pixelX, event.clientY - pixelY) <= tolerance)
-          distance = Math.min(
-            distance,
-            viewStart
-              .copy(worldStart)
-              .sub(this.raycaster.ray.origin)
-              .dot(this.raycaster.ray.direction),
-          );
+        distance = Math.min(
+          distance,
+          this.pickPrimitivePoint(
+            worldStart,
+            material as InstanceType<ThreeModule['PointsMaterial']>,
+            event,
+            rect,
+            projection,
+          ),
+        );
         continue;
       }
-      const next = offset + 1 < end ? offset + 1 : isLoop ? start : null;
-      if (next === null) continue;
+      const nextOffset = offset + 1;
+      if (nextOffset >= end && !isLoop) continue;
+      const next = nextOffset < end ? nextOffset : start;
       worldEnd
         .fromBufferAttribute(positions, indices?.getX(next) ?? next)
         .applyMatrix4(object.matrixWorld);
-      const endDepth = -viewEnd.copy(worldEnd).applyMatrix4(camera.matrixWorldInverse).z;
-      const depthDelta = endDepth - depth;
-      if (depthDelta === 0) {
-        if (depth < camera.near || depth > camera.far) continue;
-      } else {
-        const nearT = (camera.near - depth) / depthDelta;
-        const farT = (camera.far - depth) / depthDelta;
-        const firstT = Math.max(0, Math.min(nearT, farT));
-        const lastT = Math.min(1, Math.max(nearT, farT));
-        if (firstT > lastT) continue;
-        viewStart.copy(worldStart);
-        worldStart.lerp(worldEnd, firstT);
-        worldEnd.lerpVectors(viewStart, worldEnd, lastT);
-      }
-      screenStart.copy(worldStart).project(camera);
-      screenEnd.copy(worldEnd).project(camera);
-      const pixelX = rect.left + ((screenStart.x + 1) * rect.width) / 2;
-      const pixelY = rect.top + ((1 - screenStart.y) * rect.height) / 2;
-      const deltaX = ((screenEnd.x - screenStart.x) * rect.width) / 2;
-      const deltaY = ((screenStart.y - screenEnd.y) * rect.height) / 2;
-      const lengthSquared = deltaX * deltaX + deltaY * deltaY;
-      const fraction =
-        lengthSquared === 0
-          ? 0
-          : Math.max(
-              0,
-              Math.min(
-                1,
-                ((event.clientX - pixelX) * deltaX + (event.clientY - pixelY) * deltaY) /
-                  lengthSquared,
-              ),
-            );
-      const tolerance =
-        PRIMITIVE_PICK_TOLERANCE_PX +
-        ((material as InstanceType<ThreeModule['LineBasicMaterial']>).linewidth ?? 1) / 2;
-      if (
-        Math.hypot(
-          event.clientX - pixelX - fraction * deltaX,
-          event.clientY - pixelY - fraction * deltaY,
-        ) > tolerance
-      )
-        continue;
-      const startDepth = -viewStart.copy(worldStart).applyMatrix4(camera.matrixWorldInverse).z;
-      const lastDepth = -viewEnd.copy(worldEnd).applyMatrix4(camera.matrixWorldInverse).z;
-      const worldFraction =
-        (fraction * startDepth) / (lastDepth * (1 - fraction) + fraction * startDepth);
-      worldStart.lerp(worldEnd, worldFraction);
       distance = Math.min(
         distance,
-        viewStart.copy(worldStart).sub(this.raycaster.ray.origin).dot(this.raycaster.ray.direction),
+        this.pickPrimitiveSegment(
+          worldStart,
+          worldEnd,
+          material as InstanceType<ThreeModule['LineBasicMaterial']>,
+          event,
+          rect,
+          projection,
+        ),
       );
     }
     return Number.isFinite(distance)
       ? { userData: object.userData as SceneObjectUserData, distance }
       : null;
+  }
+
+  /**
+   * Method pickPrimitivePoint
+   *
+   * @description
+   * Measures a point hit in CSS pixels, including its rendered size and the camera depth range.
+   * Scratch vectors are reused across vertices to avoid allocating on every hit test.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {Vector3} worldPoint - Point transformed into the building's world frame.
+   * @param {PointsMaterial} material - Source point size and attenuation settings.
+   * @param {PointerEvent} event - Pointer position in viewport coordinates.
+   * @param {DOMRect} rect - Canvas CSS-pixel bounds.
+   * @param {object} projection - Reusable view and screen projection vectors.
+   *
+   * @returns {number} Distance along the pick ray, or infinity for a point outside its footprint.
+   */
+  private pickPrimitivePoint(
+    worldPoint: Vector3,
+    material: InstanceType<ThreeModule['PointsMaterial']>,
+    event: PointerEvent,
+    rect: DOMRect,
+    projection: { readonly viewStart: Vector3; readonly screenStart: Vector3 },
+  ): number {
+    const camera = this.camera;
+    const ray = this.raycaster?.ray;
+    if (!camera || !ray) return Number.POSITIVE_INFINITY;
+    const { viewStart, screenStart } = projection;
+    const depth = -viewStart.copy(worldPoint).applyMatrix4(camera.matrixWorldInverse).z;
+    if (depth < camera.near || depth > camera.far) return Number.POSITIVE_INFINITY;
+    screenStart.copy(worldPoint).project(camera);
+    const size = (material.size ?? 1) * (material.sizeAttenuation ? rect.height / (2 * depth) : 1);
+    const tolerance = PRIMITIVE_PICK_TOLERANCE_PX + size / 2;
+    const pixelX = rect.left + ((screenStart.x + 1) * rect.width) / 2;
+    const pixelY = rect.top + ((1 - screenStart.y) * rect.height) / 2;
+    const withinFootprint = Math.hypot(event.clientX - pixelX, event.clientY - pixelY) <= tolerance;
+    if (!withinFootprint) return Number.POSITIVE_INFINITY;
+    return viewStart.copy(worldPoint).sub(ray.origin).dot(ray.direction);
+  }
+
+  /**
+   * Method pickPrimitiveSegment
+   *
+   * @description
+   * Tests the visible part of a line against its CSS-pixel stroke and converts the projected
+   * position into a perspective-correct distance along the pick ray.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {Vector3} worldStart - Segment start, clipped in place to the camera depth range.
+   * @param {Vector3} worldEnd - Segment end, clipped in place to the camera depth range.
+   * @param {LineBasicMaterial} material - Source line width settings.
+   * @param {PointerEvent} event - Pointer position in viewport coordinates.
+   * @param {DOMRect} rect - Canvas CSS-pixel bounds.
+   * @param {object} projection - Reusable view and screen projection vectors.
+   *
+   * @returns {number} Distance along the pick ray, or infinity for background or clipped geometry.
+   */
+  private pickPrimitiveSegment(
+    worldStart: Vector3,
+    worldEnd: Vector3,
+    material: InstanceType<ThreeModule['LineBasicMaterial']>,
+    event: PointerEvent,
+    rect: DOMRect,
+    projection: {
+      readonly viewStart: Vector3;
+      readonly viewEnd: Vector3;
+      readonly screenStart: Vector3;
+      readonly screenEnd: Vector3;
+    },
+  ): number {
+    const camera = this.camera;
+    const ray = this.raycaster?.ray;
+    if (!camera || !ray) return Number.POSITIVE_INFINITY;
+    const { viewStart, viewEnd, screenStart, screenEnd } = projection;
+    if (!this.clipPrimitiveSegment(worldStart, worldEnd, viewStart, viewEnd, camera))
+      return Number.POSITIVE_INFINITY;
+    screenStart.copy(worldStart).project(camera);
+    screenEnd.copy(worldEnd).project(camera);
+    const pixelX = rect.left + ((screenStart.x + 1) * rect.width) / 2;
+    const pixelY = rect.top + ((1 - screenStart.y) * rect.height) / 2;
+    const deltaX = ((screenEnd.x - screenStart.x) * rect.width) / 2;
+    const deltaY = ((screenStart.y - screenEnd.y) * rect.height) / 2;
+    const lengthSquared = deltaX * deltaX + deltaY * deltaY;
+    const fraction =
+      lengthSquared === 0
+        ? 0
+        : Math.max(
+            0,
+            Math.min(
+              1,
+              ((event.clientX - pixelX) * deltaX + (event.clientY - pixelY) * deltaY) /
+                lengthSquared,
+            ),
+          );
+    const tolerance = PRIMITIVE_PICK_TOLERANCE_PX + (material.linewidth ?? 1) / 2;
+    if (
+      Math.hypot(
+        event.clientX - pixelX - fraction * deltaX,
+        event.clientY - pixelY - fraction * deltaY,
+      ) > tolerance
+    )
+      return Number.POSITIVE_INFINITY;
+    const startDepth = -viewStart.copy(worldStart).applyMatrix4(camera.matrixWorldInverse).z;
+    const lastDepth = -viewEnd.copy(worldEnd).applyMatrix4(camera.matrixWorldInverse).z;
+    const worldFraction =
+      (fraction * startDepth) / (lastDepth * (1 - fraction) + fraction * startDepth);
+    worldStart.lerp(worldEnd, worldFraction);
+    return viewStart.copy(worldStart).sub(ray.origin).dot(ray.direction);
+  }
+
+  /**
+   * Method clipPrimitiveSegment
+   *
+   * @description
+   * Clips a segment in place against the camera's near and far planes while retaining its
+   * endpoints in world coordinates for perspective-correct projection.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {Vector3} worldStart - Mutable segment start.
+   * @param {Vector3} worldEnd - Mutable segment end.
+   * @param {Vector3} viewStart - Reusable view-space scratch vector.
+   * @param {Vector3} viewEnd - Reusable view-space scratch vector.
+   * @param {ThreeCamera} camera - Active camera depth range and world transform.
+   *
+   * @returns {boolean} Whether any part of the segment lies within the camera depth range.
+   */
+  private clipPrimitiveSegment(
+    worldStart: Vector3,
+    worldEnd: Vector3,
+    viewStart: Vector3,
+    viewEnd: Vector3,
+    camera: ThreeCamera,
+  ): boolean {
+    const depth = -viewStart.copy(worldStart).applyMatrix4(camera.matrixWorldInverse).z;
+    const endDepth = -viewEnd.copy(worldEnd).applyMatrix4(camera.matrixWorldInverse).z;
+    const depthDelta = endDepth - depth;
+    if (depthDelta === 0) {
+      const outsideDepthRange = depth < camera.near || depth > camera.far;
+      return !outsideDepthRange;
+    }
+    const nearT = (camera.near - depth) / depthDelta;
+    const farT = (camera.far - depth) / depthDelta;
+    const firstT = Math.max(0, Math.min(nearT, farT));
+    const lastT = Math.min(1, Math.max(nearT, farT));
+    if (firstT > lastT) return false;
+    viewStart.copy(worldStart);
+    worldStart.lerp(worldEnd, firstT);
+    worldEnd.lerpVectors(viewStart, worldEnd, lastT);
+    return true;
   }
   /**
    * Method invalidate

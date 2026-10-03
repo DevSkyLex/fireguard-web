@@ -200,6 +200,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Verify Spartan generator dependency compatibility
+        run: node --test tools/ci/spartan-generator-compatibility.test.mjs
+
       - name: Run tests and collect complete coverage
         run: |
           npm run test:ci -- --coverage \

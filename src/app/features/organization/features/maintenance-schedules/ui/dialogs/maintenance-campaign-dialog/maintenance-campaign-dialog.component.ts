@@ -9,8 +9,7 @@ import {
   type Signal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { idleCallState, type CallState } from '@core/request-state';
-import type { StoreError } from '@core/request-state';
+import { idleCallState, type CallState, type StoreError } from '@core/request-state';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import type { GenerateMaintenanceCampaignInput } from '@features/organization/features/maintenance-schedules/models';
 import { sheetSide } from '@shared/sheet-side';

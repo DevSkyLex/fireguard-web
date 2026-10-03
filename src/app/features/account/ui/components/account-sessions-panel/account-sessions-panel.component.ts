@@ -301,10 +301,9 @@ export class AccountSessionsPanel {
           const code = session.country;
           const country =
             code && /^[A-Z]{2}$/.test(code) ? (this.countryNames().of(code) ?? code) : null;
-          return [
-            session.id,
-            country ? (session.city ? `${session.city} · ${country}` : country) : null,
-          ];
+          if (!country) return [session.id, null];
+
+          return [session.id, session.city ? `${session.city} · ${country}` : country];
         }),
       ),
   );

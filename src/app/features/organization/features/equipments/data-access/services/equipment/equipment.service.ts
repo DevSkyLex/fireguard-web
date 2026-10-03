@@ -289,7 +289,7 @@ export class EquipmentService extends HydraApiService {
     organizationId: string,
     options?: { readonly ids?: readonly string[]; readonly facilityId?: string },
   ): Observable<Blob> {
-    if (options?.ids !== undefined && options.ids.length === 0) {
+    if (options?.ids?.length === 0) {
       return throwError(() => new Error('Select at least one equipment record to print.'));
     }
     const params: NonNullable<RequestOptions['params']> = {};

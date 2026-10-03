@@ -46,7 +46,7 @@
           @for (item of items(); track item.id) {
             <div hlmField orientation="horizontal">
               <hlm-checkbox
-                [id]="'label-' + item.id"
+                [inputId]="'label-' + item.id"
                 [checked]="model().ids.includes(item.id)"
                 (checkedChange)="toggleId(item.id)"
               />
@@ -55,9 +55,9 @@
           }
         </div>
       }
-      <p class="text-sm" role="status" aria-live="polite" i18n="@@equipment.labels.count">
+      <output class="text-sm" aria-live="polite" i18n="@@equipment.labels.count">
         {{ count() }} labels selected
-      </p>
+      </output>
       @if (count() > 500) {
         <p class="text-sm text-destructive" role="alert" i18n="@@equipment.labels.tooMany">
           Choose a facility or select up to 500 equipment records.

@@ -19,56 +19,106 @@ export function resolveInterventionCommandAction(
   context: InterventionCommandContext,
 ): InterventionCommandAction | null {
   if (context.status === null) return null;
-  if (context.phase === 'prepare') {
-    if (!context.canPlan || context.status !== 'draft') return null;
-    const missing = context.readiness.filter((item) => item.id !== 'workItems' && !item.done);
+  if (context.phase === 'prepare') return resolvePlanningAction(context);
+  if (context.phase === 'execute') return resolveExecutionAction(context);
+  return resolvePublicationAction(context);
+}
+
+/**
+ * Function resolvePlanningAction
+ *
+ * @description
+ * Requires draft planning access and reports missing required prerequisites in checklist order.
+ *
+ * @access private
+ *
+ * @param {InterventionCommandContext} context - Planning capabilities and readiness snapshot.
+ *
+ * @returns {InterventionCommandAction | null} Planning action when the phase permits it.
+ */
+function resolvePlanningAction(
+  context: InterventionCommandContext,
+): InterventionCommandAction | null {
+  if (!context.canPlan || context.status !== 'draft') return null;
+  const missing = context.readiness.filter((item) => item.id !== 'workItems' && !item.done);
+  return {
+    label: $localize`:@@intervention.cta.plan:Plan intervention`,
+    icon: 'lucideCalendarCheck',
+    disabled: missing.length > 0,
+    disabledReason: missing.length === 0 ? null : missing.map((item) => item.label).join(' · '),
+    loading: context.saving,
+  };
+}
+
+/**
+ * Function resolveExecutionAction
+ *
+ * @description
+ * Prioritizes starting field work, recording tasks and completing tasks before submission.
+ *
+ * @access private
+ *
+ * @param {InterventionCommandContext} context - Execution access, transitions and task counts.
+ *
+ * @returns {InterventionCommandAction | null} Execution action allowed by current capabilities.
+ */
+function resolveExecutionAction(
+  context: InterventionCommandContext,
+): InterventionCommandAction | null {
+  if (!context.canExecute) return null;
+  if (context.transitionTarget === 'in_progress')
     return {
-      label: $localize`:@@intervention.cta.plan:Plan intervention`,
-      icon: 'lucideCalendarCheck',
-      disabled: missing.length > 0,
-      disabledReason: missing.length === 0 ? null : missing.map((item) => item.label).join(' · '),
+      label: $localize`:@@intervention.cta.startWork:Start field work`,
+      icon: 'lucidePlay',
+      disabled: false,
+      disabledReason: null,
       loading: context.saving,
     };
-  }
-  if (context.phase === 'execute') {
-    if (!context.canExecute) return null;
-    if (context.transitionTarget === 'in_progress')
-      return {
-        label: $localize`:@@intervention.cta.startWork:Start field work`,
-        icon: 'lucidePlay',
-        disabled: false,
-        disabledReason: null,
-        loading: context.saving,
-      };
-    if (context.workItemCount === 0)
-      return {
-        label: $localize`:@@intervention.cta.recordWork:Record field work`,
-        icon: 'lucideListChecks',
-        disabled: false,
-        disabledReason: null,
-        loading: context.saving,
-      };
-    if (context.remainingWorkItems > 0)
-      return {
-        label:
-          context.remainingWorkItems === 1
-            ? $localize`:@@intervention.cta.completeOne:Complete 1 remaining item`
-            : $localize`:@@intervention.cta.completeMany:Complete ${context.remainingWorkItems}:count: remaining items`,
-        icon: 'lucideListChecks',
-        disabled: false,
-        disabledReason: null,
-        loading: context.saving,
-      };
+  if (context.workItemCount === 0)
     return {
-      label: $localize`:@@intervention.cta.submit:Submit for review`,
-      icon: 'lucideSend',
-      disabled: !context.canSubmit,
-      disabledReason: context.canSubmit
-        ? null
-        : $localize`:@@intervention.cta.submissionUnavailable:Submission is not currently available. Check your access and the intervention requirements.`,
+      label: $localize`:@@intervention.cta.recordWork:Record field work`,
+      icon: 'lucideListChecks',
+      disabled: false,
+      disabledReason: null,
       loading: context.saving,
     };
-  }
+  if (context.remainingWorkItems > 0)
+    return {
+      label:
+        context.remainingWorkItems === 1
+          ? $localize`:@@intervention.cta.completeOne:Complete 1 remaining item`
+          : $localize`:@@intervention.cta.completeMany:Complete ${context.remainingWorkItems}:count: remaining items`,
+      icon: 'lucideListChecks',
+      disabled: false,
+      disabledReason: null,
+      loading: context.saving,
+    };
+  return {
+    label: $localize`:@@intervention.cta.submit:Submit for review`,
+    icon: 'lucideSend',
+    disabled: !context.canSubmit,
+    disabledReason: context.canSubmit
+      ? null
+      : $localize`:@@intervention.cta.submissionUnavailable:Submission is not currently available. Check your access and the intervention requirements.`,
+    loading: context.saving,
+  };
+}
+
+/**
+ * Function resolvePublicationAction
+ *
+ * @description
+ * Requires submitted publication access and prioritizes connectivity over blocker explanations.
+ *
+ * @access private
+ *
+ * @param {InterventionCommandContext} context - Publication capabilities and blocking conditions.
+ *
+ * @returns {InterventionCommandAction | null} Publication action with its current unavailability.
+ */
+function resolvePublicationAction(
+  context: InterventionCommandContext,
+): InterventionCommandAction | null {
   if (!context.canPublish || context.status !== 'submitted') return null;
   const ready: boolean = context.online && context.blockerCount === 0;
   let disabledReason: string | null = null;

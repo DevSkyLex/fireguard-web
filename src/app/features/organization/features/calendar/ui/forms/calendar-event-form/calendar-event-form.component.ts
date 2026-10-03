@@ -647,6 +647,24 @@ export class CalendarEventForm {
     const draft: CalendarEventDraft = this.model();
     if (!draft.startsAtDate) return;
 
+    let endsAt: string | null = null;
+    if (draft.endsAtDate) {
+      if (draft.allDay) {
+        endsAt = combineDateAndTime(draft.endsAtDate, '00:00', this.timezone()).toISO({
+          suppressMilliseconds: true,
+        });
+      } else {
+        endsAt = toApiDateTime(
+          combineDateAndTime(
+            draft.endsAtDate,
+            draft.endsAtTime,
+            this.timezone(),
+            this.editing()?.endsAt ?? undefined,
+          ),
+        );
+      }
+    }
+
     this.submitted.emit({
       title: draft.title.trim(),
       description: draft.description.trim() === '' ? null : draft.description.trim(),
@@ -662,20 +680,7 @@ export class CalendarEventForm {
               this.editing()?.startsAt,
             ),
           ),
-      endsAt: draft.endsAtDate
-        ? draft.allDay
-          ? combineDateAndTime(draft.endsAtDate, '00:00', this.timezone()).toISO({
-              suppressMilliseconds: true,
-            })
-          : toApiDateTime(
-              combineDateAndTime(
-                draft.endsAtDate,
-                draft.endsAtTime,
-                this.timezone(),
-                this.editing()?.endsAt ?? undefined,
-              ),
-            )
-        : null,
+      endsAt,
       allDay: draft.allDay,
       facilityId: draft.facilityId === NO_FACILITY_VALUE ? null : draft.facilityId,
     });

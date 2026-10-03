@@ -339,7 +339,6 @@ export const InterventionTimeStore = signalStore(
         const beforeUnload = (event: BeforeUnloadEvent): void => {
           if (!store.hasUnpersistedFailedDraft()) return;
           event.preventDefault();
-          event.returnValue = '';
         };
         view.addEventListener('beforeunload', beforeUnload);
         onCleanup(() => view.removeEventListener('beforeunload', beforeUnload));

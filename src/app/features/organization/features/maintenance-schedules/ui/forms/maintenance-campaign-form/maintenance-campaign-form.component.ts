@@ -19,8 +19,7 @@ import {
   required,
   type FieldTree,
 } from '@angular/forms/signals';
-import { idleCallState, type CallState } from '@core/request-state';
-import type { StoreError } from '@core/request-state';
+import { idleCallState, type CallState, type StoreError } from '@core/request-state';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { FacilityOptionPicker } from '@features/organization/features/facilities/ui/components';
@@ -301,7 +300,7 @@ export class MaintenanceCampaignForm {
   protected readonly campaignForm: FieldTree<MaintenanceCampaignDraft> = form(
     this.model,
     (path) => {
-      disabled(path, () => this.pending());
+      disabled(path, { when: () => this.pending() });
       required(path.name, {
         message: $localize`:@@maintenance.campaignDialog.nameRequired:Name is required.`,
       });

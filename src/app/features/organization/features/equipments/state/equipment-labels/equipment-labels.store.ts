@@ -4,12 +4,12 @@ import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
   signalStore,
+  type,
   withComputed,
   withHooks,
   withMethods,
   withState,
 } from '@ngrx/signals';
-import { type } from '@ngrx/signals';
 import { Dispatcher, eventGroup } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, exhaustMap, of, Subject, switchMap, takeUntil, type Observable } from 'rxjs';
@@ -195,12 +195,12 @@ export const EquipmentLabelsStore = signalStore(
             if (scope.kind === 'selection' && scope.ids.length === 0) return EMPTY;
             const requestRevision = revision;
             patchState(store, { printCallState: pendingCallState() });
-            const options =
-              scope.kind === 'inventory'
-                ? undefined
-                : scope.kind === 'facility'
-                  ? { facilityId: scope.facilityId }
-                  : { ids: [...new Set(scope.ids)] };
+            let options: Parameters<EquipmentService['exportLabels']>[1];
+            if (scope.kind === 'facility') {
+              options = { facilityId: scope.facilityId };
+            } else if (scope.kind === 'selection') {
+              options = { ids: [...new Set(scope.ids)] };
+            }
             return service.exportLabels(organizationId, options).pipe(
               takeUntil(cancellation),
               tapResponse({

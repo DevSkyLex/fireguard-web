@@ -254,7 +254,7 @@ describe('CalendarEventForm', () => {
     fixture.componentRef.setInput('editing', {
       ...EVENT,
       startsAt: '2026-10-25T02:30:00+01:00',
-      endsAt: null,
+      endsAt: '2026-10-25T02:45:00+01:00',
     });
     await fixture.whenStable();
     const submitted: CalendarEventFormValues[] = [];
@@ -262,6 +262,7 @@ describe('CalendarEventForm', () => {
     document.querySelector<HTMLFormElement>('form')?.requestSubmit();
     await fixture.whenStable();
     expect(submitted[0].startsAt).toBe('2026-10-25T01:30:00+00:00');
+    expect(submitted[0].endsAt).toBe('2026-10-25T01:45:00+00:00');
   });
 
   it('submits all-day dates at organization midnight without using hidden hour values', async () => {

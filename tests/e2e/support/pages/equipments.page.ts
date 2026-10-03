@@ -29,6 +29,7 @@ export class EquipmentsPage {
   public readonly tableRows: Locator = this.page.getByTestId('equipment-table-row');
 
   public readonly createTypeSelect: Locator = this.page.getByTestId('equipment-create-type');
+  public readonly createFacility: Locator = this.createRoot.getByLabel('Site', { exact: true });
   public readonly createError: Locator = this.page.getByTestId('equipment-create-error');
   public readonly createSubmit: Locator = this.page.getByTestId('equipment-create-submit');
 
@@ -55,6 +56,12 @@ export class EquipmentsPage {
   /** Submits the create form empty, so only the required `type` rule fires. */
   public async submitEmptyCreateForm(): Promise<void> {
     await this.createSubmit.click();
+  }
+
+  /** Chooses the equipment type while preserving the form's preselected site. */
+  public async selectCreateType(typeLabel: string): Promise<void> {
+    await this.createTypeSelect.click();
+    await this.page.getByRole('option', { name: typeLabel, exact: true }).click();
   }
 
   /** Expands the filter bar via the toolbar's "Filters" toggle, when it is not already open. */

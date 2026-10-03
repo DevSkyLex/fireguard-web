@@ -7301,7 +7301,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">839,840</context>
+          <context context-type="linenumber">837,838</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/imports/ui/sheets/import-job-detail-sheet/import-job-detail-sheet.component.html</context>
@@ -7759,7 +7759,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">998,1000</context>
+          <context context-type="linenumber">996,998</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/dataviews/non-conformity-list/non-conformity-list.component.html</context>
@@ -11672,7 +11672,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.ts</context>
-          <context context-type="linenumber">602</context>
+          <context context-type="linenumber">605</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.list.exportFiltersIgnored" datatype="html">
@@ -12016,7 +12016,7 @@
         <source>Choose an autonomous GLB file no larger than 10 MiB.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-models/facility-models.store.ts</context>
-          <context context-type="linenumber">355</context>
+          <context context-type="linenumber">356</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-model-manager/facility-model-manager.component.ts</context>
@@ -12285,95 +12285,95 @@
         <source>Building rooms</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">416</context>
+          <context context-type="linenumber">414</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.roomPanel.floorSelectorLabel" datatype="html">
         <source>Floors</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">429</context>
+          <context context-type="linenumber">427</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.roomPanel.close" datatype="html">
         <source>Close</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">442</context>
+          <context context-type="linenumber">440</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.roomPanel.plan2dAction" datatype="html">
         <source>View on 2D plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">455</context>
+          <context context-type="linenumber">453</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.roomPanel.roomListLabel" datatype="html">
         <source>Rooms on this floor</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">469</context>
+          <context context-type="linenumber">467</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.roomPanel.roomListEmpty" datatype="html">
         <source>This floor has no rooms yet.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">482</context>
+          <context context-type="linenumber">480</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.equipment" datatype="html">
         <source>Equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">567</context>
+          <context context-type="linenumber">565</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-scene/facility-building-3d-scene.component.ts</context>
-          <context context-type="linenumber">2353</context>
+          <context context-type="linenumber">2415</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.placement.uncalibrated" datatype="html">
         <source>Floor calibration incomplete</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">606</context>
+          <context context-type="linenumber">604</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.spatial.facilityLabel" datatype="html">
         <source>Facility <x id="facilityId" equiv-text="id"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">677</context>
+          <context context-type="linenumber">675</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.outline.missing" datatype="html">
         <source>Missing outline</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">694</context>
+          <context context-type="linenumber">692</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.outline.drawn" datatype="html">
         <source>Drawn outline</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">696</context>
+          <context context-type="linenumber">694</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.outline.estimated" datatype="html">
         <source>Estimated outline</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-room-panel/facility-building-3d-room-panel.component.ts</context>
-          <context context-type="linenumber">697</context>
+          <context context-type="linenumber">695</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3dScene.ariaLabel" datatype="html">
         <source>3D view of <x id="buildingName" equiv-text="data.buildingName"/> — <x id="floorCount" equiv-text="data.floors.length"/> floor(s)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-building-3d-scene/facility-building-3d-scene.component.ts</context>
-          <context context-type="linenumber">619</context>
+          <context context-type="linenumber">621</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.map.compliance.worstSitesEmpty" datatype="html">
@@ -12981,21 +12981,21 @@
         <source>On this plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">505</context>
+          <context context-type="linenumber">503</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.close" datatype="html">
         <source>Close</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">519</context>
+          <context context-type="linenumber">517</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.viewZoneRecord" datatype="html">
         <source>View facility record</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">533</context>
+          <context context-type="linenumber">531</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.html</context>
@@ -13006,77 +13006,77 @@
         <source>View equipment record</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">547</context>
+          <context context-type="linenumber">545</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.editCoordinates" datatype="html">
         <source>Edit coordinates</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">561</context>
+          <context context-type="linenumber">559</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.editPosition" datatype="html">
         <source>Edit position</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">575</context>
+          <context context-type="linenumber">573</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.removeFromPlan" datatype="html">
         <source>Remove from plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">589</context>
+          <context context-type="linenumber">587</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.equipmentListTitle" datatype="html">
         <source>Equipment on this plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">604</context>
+          <context context-type="linenumber">602</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.zoneListHeading" datatype="html">
         <source>Zones on this plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">618</context>
+          <context context-type="linenumber">616</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.zoneListEmpty" datatype="html">
         <source>No zones on this plan.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">632</context>
+          <context context-type="linenumber">630</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.equipmentListEmpty" datatype="html">
         <source>No equipment on this plan yet.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">647</context>
+          <context context-type="linenumber">645</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.noContentTitle" datatype="html">
         <source>Nothing drawn on this plan yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">661</context>
+          <context context-type="linenumber">659</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.noContentDescription" datatype="html">
         <source>Draw a zone outline or place equipment from the toolbar above to see it here.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">678</context>
+          <context context-type="linenumber">676</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.noContentDescriptionReadOnly" datatype="html">
         <source>Ask a member with edit access to draw a zone outline or place equipment on this plan.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-plan-panel/facility-plan-panel.component.ts</context>
-          <context context-type="linenumber">679</context>
+          <context context-type="linenumber">677</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.overlay.toggleZonesLabel" datatype="html">
@@ -13101,7 +13101,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1079,1083</context>
+          <context context-type="linenumber">1077,1081</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.traceFloor" datatype="html">
@@ -13455,7 +13455,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">624</context>
+          <context context-type="linenumber">623</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.moveDialog.message" datatype="html">
@@ -13538,70 +13538,70 @@
         <source>Enter an orientation from -360 to 360 degrees or an offset from -100000 to 100000 metres.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">289</context>
+          <context context-type="linenumber">290</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.width" datatype="html">
         <source>Image width (m)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">314</context>
+          <context context-type="linenumber">315</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.rotation" datatype="html">
         <source>Orientation (degrees)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">317</context>
+          <context context-type="linenumber">318</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.offsetX" datatype="html">
         <source>X offset (m)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">319</context>
+          <context context-type="linenumber">320</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.offsetZ" datatype="html">
         <source>Z offset (m)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">320</context>
+          <context context-type="linenumber">321</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.x1" datatype="html">
         <source>Point 1 X (%)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">342</context>
+          <context context-type="linenumber">343</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.y1" datatype="html">
         <source>Point 1 Y (%)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">343</context>
+          <context context-type="linenumber">344</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.x2" datatype="html">
         <source>Point 2 X (%)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">344</context>
+          <context context-type="linenumber">345</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.y2" datatype="html">
         <source>Point 2 Y (%)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">345</context>
+          <context context-type="linenumber">346</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.distance" datatype="html">
         <source>Known distance (m)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-calibration-dialog/facility-plan-calibration-dialog.component.ts</context>
-          <context context-type="linenumber">348</context>
+          <context context-type="linenumber">349</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.deleteTitle" datatype="html">
@@ -13924,88 +13924,88 @@
         <source>A site must be at the root of the hierarchy.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">619</context>
+          <context context-type="linenumber">618</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.invalidParentType" datatype="html">
         <source>This parent cannot contain the selected type.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">632</context>
+          <context context-type="linenumber">631</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.elevationRange" datatype="html">
         <source>Enter an elevation between -10000 and 10000 metres.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">641</context>
+          <context context-type="linenumber">640</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.heightRange" datatype="html">
         <source>Enter a height greater than 0 and no more than 1000 metres.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">651</context>
+          <context context-type="linenumber">650</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.typeRequired" datatype="html">
         <source>Facility type is required.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">655</context>
+          <context context-type="linenumber">654</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.nameRequired" datatype="html">
         <source>Name is required.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">658</context>
+          <context context-type="linenumber">657</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.coordinatesIncomplete" datatype="html">
         <source>Enter both latitude and longitude, or leave both empty.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">669</context>
+          <context context-type="linenumber">668</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">688</context>
+          <context context-type="linenumber">687</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.latitudeRange" datatype="html">
         <source>Enter a latitude between -90 and 90.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">677</context>
+          <context context-type="linenumber">676</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.longitudeRange" datatype="html">
         <source>Enter a longitude between -180 and 180.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">696</context>
+          <context context-type="linenumber">695</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.form.levelIndexRange" datatype="html">
         <source>Enter a whole number between -100 and 200.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">704</context>
+          <context context-type="linenumber">703</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.cf.createFailed" datatype="html">
         <source>The facility could not be created.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">741</context>
+          <context context-type="linenumber">740</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.cf.createErrorTitle" datatype="html">
         <source>Couldn&apos;t create the facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/forms/facility-create-form/facility-create-form.component.ts</context>
-          <context context-type="linenumber">757</context>
+          <context context-type="linenumber">756</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.model.saveError" datatype="html">
@@ -14232,15 +14232,15 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">266,268</context>
+          <context context-type="linenumber">264,266</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">357,359</context>
+          <context context-type="linenumber">355,357</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">471,473</context>
+          <context context-type="linenumber">469,471</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-map-page/facility-map-page.component.html</context>
@@ -14329,7 +14329,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.ts</context>
-          <context context-type="linenumber">588</context>
+          <context context-type="linenumber">591</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.list.gridRegion" datatype="html">
@@ -14354,7 +14354,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">2839</context>
+          <context context-type="linenumber">2840</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.manageModel" datatype="html">
@@ -14568,32 +14568,32 @@
         <source>Selected <x id="room" equiv-text="importedFacility.name"/> on <x id="floor" equiv-text="floor.name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.ts</context>
-          <context context-type="linenumber">514</context>
+          <context context-type="linenumber">510</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.ts</context>
-          <context context-type="linenumber">519</context>
+          <context context-type="linenumber">515</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.equipmentSelectionAnnouncement" datatype="html">
         <source>Selected equipment on <x id="floor" equiv-text="floor.name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.ts</context>
-          <context context-type="linenumber">517</context>
+          <context context-type="linenumber">513</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.floorSelectionAnnouncement" datatype="html">
         <source>Selected floor <x id="floor" equiv-text="floor.name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.ts</context>
-          <context context-type="linenumber">522</context>
+          <context context-type="linenumber">518</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.building3d.pageRootLabel" datatype="html">
         <source>3D building view</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-building-3d-page/facility-building-3d-page.component.ts</context>
-          <context context-type="linenumber">580</context>
+          <context context-type="linenumber">576</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.ancestorsAriaLabel" datatype="html">
@@ -14639,408 +14639,408 @@
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentScope.aria" datatype="html">
-        <source>Equipment scope</source>
+        <source> Equipment scope </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">120,121</context>
+          <context context-type="linenumber">119,121</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentScope.subtree" datatype="html">
         <source> This place and its descendants </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">132,134</context>
+          <context context-type="linenumber">130,132</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentScope.direct" datatype="html">
         <source> Assigned directly </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">143,145</context>
+          <context context-type="linenumber">141,143</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.metric.sectionTitle" datatype="html">
         <source> Key metrics </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">152,154</context>
+          <context context-type="linenumber">150,152</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.metric.compliance.title" datatype="html">
         <source> Compliance rate </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">171,173</context>
+          <context context-type="linenumber">169,171</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.metric.equipments.title" datatype="html">
         <source> Equipment </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">191,193</context>
+          <context context-type="linenumber">189,191</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.metric.nextInspection.title" datatype="html">
         <source> Next inspection </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">211,213</context>
+          <context context-type="linenumber">209,211</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.metric.partialDataCaption" datatype="html">
         <source> Based on <x id="INTERPOLATION" equiv-text="{{ overview.inspections().length }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ overview.inspectionsTotal() }}"/> records </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">236,239</context>
+          <context context-type="linenumber">234,237</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentBreakdown.errorTitle" datatype="html">
         <source> Couldn&apos;t load equipment status </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">247,249</context>
+          <context context-type="linenumber">245,247</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentBreakdown.errorDesc" datatype="html">
         <source> The equipment status breakdown could not be loaded. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">250,253</context>
+          <context context-type="linenumber">248,251</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentBreakdown.title" datatype="html">
         <source> Equipment status </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">281,283</context>
+          <context context-type="linenumber">279,281</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentBreakdown.seeAllAria" datatype="html">
         <source>See all equipment on this site</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">291,292</context>
+          <context context-type="linenumber">289,290</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.seeAll" datatype="html">
         <source> See all </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">295,297</context>
+          <context context-type="linenumber">293,295</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">497,499</context>
+          <context context-type="linenumber">495,497</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.equipmentBreakdown.loadingAria" datatype="html">
         <source>Loading equipment status</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">301,303</context>
+          <context context-type="linenumber">299,301</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInspections.errorTitle" datatype="html">
         <source> Couldn&apos;t load recent inspections </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">339,341</context>
+          <context context-type="linenumber">337,339</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInspections.errorDesc" datatype="html">
         <source> The recent inspections could not be loaded. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">342,345</context>
+          <context context-type="linenumber">340,343</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInspections.title" datatype="html">
         <source> Recent inspections </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">371,373</context>
+          <context context-type="linenumber">369,371</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInspections.loadingAria" datatype="html">
         <source>Loading recent inspections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">376,378</context>
+          <context context-type="linenumber">374,376</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInspections.ncAbbrev" datatype="html">
         <source>NC</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">436,438</context>
+          <context context-type="linenumber">434,436</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.errorTitle" datatype="html">
         <source> Couldn&apos;t load interventions on this site </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">453,455</context>
+          <context context-type="linenumber">451,453</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.errorDesc" datatype="html">
         <source> The interventions on this site could not be loaded. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">456,459</context>
+          <context context-type="linenumber">454,457</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.title" datatype="html">
         <source> Interventions on this site </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">486,488</context>
+          <context context-type="linenumber">484,486</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.seeAllAria" datatype="html">
         <source>See all interventions on this site</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">493,494</context>
+          <context context-type="linenumber">491,492</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.loadingAria" datatype="html">
         <source>Loading interventions on this site</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">503,505</context>
+          <context context-type="linenumber">501,503</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.empty" datatype="html">
         <source> No interventions on this site. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">514,516</context>
+          <context context-type="linenumber">512,514</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.dueLabel" datatype="html">
         <source>Due</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">548,549</context>
+          <context context-type="linenumber">546,547</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.recentInterventions.workItemsSrLabel" datatype="html">
         <source><x id="INTERPOLATION" equiv-text="{{ intervention.completedWorkItemsCount }}"/> of <x id="INTERPOLATION_1" equiv-text="{{ total }}"/> work items</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">566,567</context>
+          <context context-type="linenumber">564,565</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.hierarchyTitle" datatype="html">
         <source> Hierarchy </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">588,590</context>
+          <context context-type="linenumber">586,588</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.noChildren" datatype="html">
         <source> This facility has no sub-facilities. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">600,602</context>
+          <context context-type="linenumber">598,600</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.addSubFacility" datatype="html">
         <source>Add sub-facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">613,616</context>
+          <context context-type="linenumber">611,614</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1101,1102</context>
+          <context context-type="linenumber">1099,1100</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1107,1112</context>
+          <context context-type="linenumber">1105,1110</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.info.title" datatype="html">
         <source> Facility information </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">627,629</context>
+          <context context-type="linenumber">625,627</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.loadingAria" datatype="html">
         <source>Loading floor plans</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">665,666</context>
+          <context context-type="linenumber">663,664</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.errorTitle" datatype="html">
         <source>Couldn&apos;t load the floor plans</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">676,677</context>
+          <context context-type="linenumber">674,675</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.errorRetry" datatype="html">
         <source>Retry</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">681,683</context>
+          <context context-type="linenumber">679,681</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.emptyTitle" datatype="html">
         <source>No floor plan yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">689,691</context>
+          <context context-type="linenumber">687,689</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.emptyDescription" datatype="html">
         <source> Upload an image to give this facility a floor plan. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">692,694</context>
+          <context context-type="linenumber">690,692</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.emptyDescReadOnly" datatype="html">
         <source> No floor plan has been added for this facility yet. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">696,698</context>
+          <context context-type="linenumber">694,696</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.pickerDescription" datatype="html">
         <source> Choose the floor plan to display and manage. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">809,810</context>
+          <context context-type="linenumber">807,808</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.viewerAlt" datatype="html">
         <source>Floor plan: <x id="INTERPOLATION" equiv-text="{{ selected.fileName }}"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">894,895</context>
+          <context context-type="linenumber">892,893</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.imageLoadingAria" datatype="html">
         <source>Loading floor plan image</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">922,924</context>
+          <context context-type="linenumber">920,922</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.loadingAria" datatype="html">
         <source>Loading facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">961,962</context>
+          <context context-type="linenumber">959,960</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.loadFailedTitle" datatype="html">
         <source> This facility could not be opened </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">985,987</context>
+          <context context-type="linenumber">983,985</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.qr" datatype="html">
         <source>QR code</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1090,1091</context>
+          <context context-type="linenumber">1088,1089</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1093,1095</context>
+          <context context-type="linenumber">1091,1093</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.moreActions" datatype="html">
         <source>More actions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1120,1121</context>
+          <context context-type="linenumber">1118,1119</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1124,1127</context>
+          <context context-type="linenumber">1122,1125</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.moveDialog.title" datatype="html">
         <source>Move to…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1136,1138</context>
+          <context context-type="linenumber">1134,1136</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.delete" datatype="html">
         <source>Delete</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.html</context>
-          <context context-type="linenumber">1146,1148</context>
+          <context context-type="linenumber">1144,1146</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.pickerLabel" datatype="html">
         <source>Floor plans</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">739</context>
+          <context context-type="linenumber">740</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.pickerEmpty" datatype="html">
         <source>Choose a plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">753</context>
+          <context context-type="linenumber">754</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.zoneSelectionAnnouncement" datatype="html">
         <source>Selected zone <x id="name" equiv-text="zone.name"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">938</context>
+          <context context-type="linenumber">939</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.panel.equipmentSelectionAnnouncement" datatype="html">
         <source>Selected equipment <x id="name" equiv-text="equipmentPlanLabel(pin)"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">946</context>
+          <context context-type="linenumber">947</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.status.drawZone" datatype="html">
         <source>Click the plan to add a vertex (<x id="count" equiv-text="count"/> placed)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1308</context>
+          <context context-type="linenumber">1309</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.clickPoints" datatype="html">
         <source>Select two points whose distance you know.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1311</context>
+          <context context-type="linenumber">1312</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.status.placePin" datatype="html">
         <source>Click the plan to place the equipment</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1314</context>
+          <context context-type="linenumber">1315</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.pageRootLabel" datatype="html">
         <source>Facility record</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1377</context>
+          <context context-type="linenumber">1378</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.moveDialog.conflict" datatype="html">
         <source>This place changed. Your selected parent is preserved. Retry with its latest revision.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1612</context>
+          <context context-type="linenumber">1613</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.ts</context>
@@ -15051,7 +15051,7 @@
         <source>Unable to move this place. Your selected parent is preserved. Retry or choose another parent.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/pages/facility-detail-page/facility-detail-page.component.ts</context>
-          <context context-type="linenumber">1613</context>
+          <context context-type="linenumber">1614</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.ts</context>
@@ -16305,7 +16305,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.ts</context>
-          <context context-type="linenumber">560</context>
+          <context context-type="linenumber">563</context>
         </context-group>
       </trans-unit>
       <trans-unit id="inspection.info.inspector" datatype="html">
@@ -30924,24 +30924,24 @@
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.equipmentScope" datatype="html">
-        <source>Equipment scope</source>
+        <source> Equipment scope </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">222,223</context>
+          <context context-type="linenumber">221,223</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.equipmentSubtree" datatype="html">
         <source> This place and descendants </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">234,236</context>
+          <context context-type="linenumber">233,234</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.detail.equipmentDirect" datatype="html">
         <source> Directly assigned </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.html</context>
-          <context context-type="linenumber">245,247</context>
+          <context context-type="linenumber">244,245</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.treeError" datatype="html">
@@ -31489,7 +31489,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.ts</context>
-          <context context-type="linenumber">616</context>
+          <context context-type="linenumber">619</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.snapshotDownload" datatype="html">
@@ -31503,7 +31503,7 @@
         <source>Open menu</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/pages/organization-assets-page/organization-assets-page.component.ts</context>
-          <context context-type="linenumber">574</context>
+          <context context-type="linenumber">577</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.assets.compliance.archiveSuccess" datatype="html">

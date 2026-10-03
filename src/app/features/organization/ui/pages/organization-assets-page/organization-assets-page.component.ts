@@ -117,6 +117,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmCardImports } from '@shared/ui/card';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmFieldLegend, HlmFieldSet } from '@shared/ui/field';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmSeparator } from '@shared/ui/separator';
@@ -184,6 +185,8 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
     CollectionSkeletonRows,
     NgIcon,
     ...HlmEmptyImports,
+    HlmFieldLegend,
+    HlmFieldSet,
     OrgDatePipe,
     NgTemplateOutlet,
     RouterLink,
@@ -1062,7 +1065,7 @@ export class OrganizationAssetsPage {
    */
   protected readonly equipmentIncludeDescendants: WritableSignal<boolean> = signal(true);
   /**
-   * Property equipmentScopeParam
+   * Property equipmentScope
    * @readonly
    *
    * @description
@@ -1073,10 +1076,7 @@ export class OrganizationAssetsPage {
    *
    * @type {InputSignal<string | undefined>}
    */
-  public readonly equipmentScopeParam: InputSignal<string | undefined> = input<string | undefined>(
-    undefined,
-    { alias: 'equipmentScope' },
-  );
+  public readonly equipmentScope: InputSignal<string | undefined> = input<string | undefined>();
   /**
    * Property moveErrorMessage
    * @readonly
@@ -1282,7 +1282,7 @@ export class OrganizationAssetsPage {
     });
 
     effect(() => {
-      const scope = this.equipmentScopeParam();
+      const scope = this.equipmentScope();
       untracked(() => this.equipmentIncludeDescendants.set(scope !== 'direct'));
     });
     effect(() => {
@@ -1939,14 +1939,16 @@ export class OrganizationAssetsPage {
    */
   private writeUrlState(): void {
     const axis: OrganizationAssetsAxis = this.axis();
+    const equipmentScope: 'subtree' | 'direct' = this.equipmentIncludeDescendants()
+      ? 'subtree'
+      : 'direct';
 
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
         axis: axis === 'site' ? null : axis,
         facility: axis === 'site' ? this.selectedFacilityId() : null,
-        equipmentScope:
-          axis === 'site' ? (this.equipmentIncludeDescendants() ? 'subtree' : 'direct') : null,
+        equipmentScope: axis === 'site' ? equipmentScope : null,
         compliance: axis === 'compliance' ? this.selectedComplianceFacilityId() : null,
       },
       queryParamsHandling: 'merge',

@@ -121,4 +121,28 @@ describe('FacilityPlanCalibrationDialog', () => {
     expect(submitted).not.toHaveBeenCalled();
     expect(document.body.textContent).toContain('Enter an image width');
   });
+
+  it.each([
+    ['rotationDegrees', '360', '361'],
+    ['rotationDegrees', '-360', '-361'],
+    ['offsetXMeters', '100000', '100001'],
+    ['offsetXMeters', '-100000', '-100001'],
+    ['offsetZMeters', '100000', '100001'],
+    ['offsetZMeters', '-100000', '-100001'],
+  ])('keeps the signed %s limit of %s and rejects %s', async (field, limit, invalid) => {
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    await type('widthMeters', '20');
+    await type(field, limit);
+    button('facility-calibration-save').click();
+    expect(submitted).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ [field]: Number(limit) }),
+    );
+    submitted.mockClear();
+    await type(field, invalid);
+    button('facility-calibration-save').click();
+    await fixture.whenStable();
+    expect(submitted).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain('Enter an orientation from -360 to 360 degrees');
+  });
 });

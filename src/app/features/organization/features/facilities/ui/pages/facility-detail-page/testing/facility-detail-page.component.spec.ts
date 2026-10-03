@@ -587,6 +587,17 @@ describe('FacilityDetailPage', () => {
     expect(overviewLoadInterventions).not.toHaveBeenCalled();
   });
 
+  it('names the native equipment scope group and preserves its selected-button state', async () => {
+    await createPage();
+    const scope = root().querySelector<HTMLFieldSetElement>('fieldset[hlmFieldSet]');
+    expect(scope?.querySelector('legend')?.textContent?.trim()).toBe('Equipment scope');
+    const buttons = Array.from(scope?.querySelectorAll('button') ?? []);
+    expect(buttons.map((button) => button.getAttribute('aria-pressed'))).toEqual(['true', 'false']);
+    fixture.componentRef.setInput('equipmentScope', 'direct');
+    await fixture.whenStable();
+    expect(buttons.map((button) => button.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
+  });
+
   it('should load the descendant subtree only when the facility has children', async () => {
     selectedFacility.set(facility({ hasChildren: true }));
     await createPage();

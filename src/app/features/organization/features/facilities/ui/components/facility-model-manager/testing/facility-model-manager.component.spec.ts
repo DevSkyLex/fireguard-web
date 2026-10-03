@@ -62,4 +62,13 @@ describe('FacilityModelManager spatial diagnostics', () => {
     expect(selected).toHaveBeenCalledExactlyOnceWith(0);
     expect(element.textContent).not.toContain('target_unavailable');
   });
+
+  it('announces loading through a native output and removes it when preview completes', async () => {
+    fixture.componentRef.setInput('previewPending', true);
+    await fixture.whenStable();
+    expect(element.querySelector('output')?.textContent).toContain('Loading the model…');
+    fixture.componentRef.setInput('previewPending', false);
+    await fixture.whenStable();
+    expect(element.querySelector('output')).toBeNull();
+  });
 });

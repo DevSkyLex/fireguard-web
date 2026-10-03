@@ -604,10 +604,9 @@ export class FacilityCreateForm {
    * @type {FieldTree<FacilityCreateFormDraft>}
    */
   protected readonly createForm: FieldTree<FacilityCreateFormDraft> = form(this.model, (path) => {
-    disabled(
-      path.parentFacilityId,
-      () => this.pending() || this.model().type === '' || this.model().type === 'site',
-    );
+    disabled(path.parentFacilityId, {
+      when: () => this.pending() || this.model().type === '' || this.model().type === 'site',
+    });
     validate(path.parentFacilityId, ({ value, valueOf }): ValidationError | null => {
       const type = valueOf(path.type);
       if (type === '') return null;

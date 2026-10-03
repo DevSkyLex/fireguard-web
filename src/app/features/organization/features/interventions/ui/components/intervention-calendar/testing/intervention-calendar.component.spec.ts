@@ -12,6 +12,7 @@ import { provideRouter } from '@angular/router';
 import type { StoreError } from '@core/request-state';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
+import { toIsoDay } from '@shared/calendar';
 import { InterventionCalendar } from '../intervention-calendar.component';
 
 /** A `ThemePort` test double resolving `light` for every rendered illustration. */
@@ -70,6 +71,15 @@ const intervention = (overrides: Partial<InterventionOutput> = {}): Intervention
 describe('InterventionCalendar', () => {
   let fixture: ComponentFixture<InterventionCalendar>;
 
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 4, 12));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
   async function render(
@@ -119,7 +129,7 @@ describe('InterventionCalendar', () => {
   });
 
   it("lists the selected day's interventions in the day panel, placed by plannedStartAt falling back to dueAt", async () => {
-    const today: string = new Date().toISOString().slice(0, 10);
+    const today: string = toIsoDay(new Date());
     await render({
       interventions: [
         intervention({ id: 'a', name: 'Riser check', plannedStartAt: `${today}T09:00:00+00:00` }),
@@ -161,12 +171,8 @@ describe('InterventionCalendar', () => {
 
   it('excludes neighbouring-month entries from the agenda, which shows only the displayed month', async () => {
     const now = new Date();
-    const displayedMonthDay = new Date(now.getFullYear(), now.getMonth(), 15)
-      .toISOString()
-      .slice(0, 10);
-    const nextMonthDay = new Date(now.getFullYear(), now.getMonth() + 1, 3)
-      .toISOString()
-      .slice(0, 10);
+    const displayedMonthDay = toIsoDay(new Date(now.getFullYear(), now.getMonth(), 15));
+    const nextMonthDay = toIsoDay(new Date(now.getFullYear(), now.getMonth() + 1, 3));
     await render({
       interventions: [
         intervention({ id: 'this-month', dueAt: `${displayedMonthDay}T09:00:00+00:00` }),
@@ -178,18 +184,26 @@ describe('InterventionCalendar', () => {
     expect(groups.map((group) => group.day)).toEqual([displayedMonthDay]);
   });
 
-  it("marks today's agenda group and no other", async () => {
-    const todayIso = new Date().toISOString().slice(0, 10);
+  it.each([0, 23])("marks only the user's local today near midnight at %i:30", async (hour) => {
+    vi.setSystemTime(new Date(2026, 9, 4, hour, 30));
     await render({
-      interventions: [intervention({ id: 'today', dueAt: `${todayIso}T09:00:00+00:00` })],
+      interventions: [
+        intervention({ id: 'yesterday', dueAt: '2026-10-03T09:00:00+00:00' }),
+        intervention({ id: 'today', dueAt: '2026-10-04T09:00:00+00:00' }),
+        intervention({ id: 'tomorrow', dueAt: '2026-10-05T09:00:00+00:00' }),
+      ],
     });
 
     const groups = fixture.componentInstance['agendaGroups']();
-    expect(groups.find((group) => group.day === todayIso)?.isToday).toBe(true);
+    expect(groups.map(({ day, isToday }) => ({ day, isToday }))).toEqual([
+      { day: '2026-10-03', isToday: false },
+      { day: '2026-10-04', isToday: true },
+      { day: '2026-10-05', isToday: false },
+    ]);
   });
 
   it('narrows the "See all" link with the anchor the day actually used, not always dueAfter/dueBefore', async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toIsoDay(new Date());
     await render({
       interventions: [
         intervention({ id: 'a', plannedStartAt: `${today}T09:00:00+00:00`, dueAt: null }),
@@ -205,7 +219,7 @@ describe('InterventionCalendar', () => {
   });
 
   it('falls back to dueAfter/dueBefore when the day is not wholly start-anchored', async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toIsoDay(new Date());
     await render({
       interventions: [
         intervention({ id: 'a', plannedStartAt: null, dueAt: `${today}T09:00:00+00:00` }),
@@ -220,7 +234,7 @@ describe('InterventionCalendar', () => {
   });
 
   it('treats an absent plannedStartAt (not sent by the API) the same as null, never as start-anchored', async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toIsoDay(new Date());
     await render({
       interventions: [
         intervention({

@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
@@ -1231,6 +1232,77 @@ describe('OrganizationAssetsPage', () => {
       organizationId: 'org-1',
       facilityId: 'facility-1',
       includeDescendants: true,
+    });
+  });
+
+  it('binds equipment scope from the existing URL key and writes it only for the site axis', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(
+          [{ path: 'organizations/:organizationId/assets', component: OrganizationAssetsPage }],
+          withComponentInputBinding(),
+        ),
+      ],
+    });
+    const harness: RouterTestingHarness = await RouterTestingHarness.create();
+    const page: OrganizationAssetsPage = await harness.navigateByUrl(
+      '/organizations/org-1/assets?facility=facility-1&equipmentScope=direct',
+      OrganizationAssetsPage,
+    );
+
+    expect(page.equipmentScope()).toBe('direct');
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: false,
+    });
+
+    await harness.navigateByUrl(
+      '/organizations/org-1/assets?facility=facility-1&equipmentScope=subtree',
+      OrganizationAssetsPage,
+    );
+    expect(page.equipmentScope()).toBe('subtree');
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: true,
+    });
+
+    page['changeEquipmentScope'](false);
+    await harness.fixture.whenStable();
+    const router: Router = TestBed.inject(Router);
+    expect(router.parseUrl(router.url).queryParams['equipmentScope']).toBe('direct');
+
+    page['onAxisActivated']('everything');
+    await harness.fixture.whenStable();
+    expect(router.parseUrl(router.url).queryParams['equipmentScope']).toBeUndefined();
+    expect(router.parseUrl(router.url).queryParams['axis']).toBe('everything');
+  });
+
+  it('names the equipment scope through a native fieldset legend and preserves pressed states', async () => {
+    fixture = await createPage({ organizationId: 'org-1', facility: 'facility-1' });
+    const host: HTMLElement = fixture.nativeElement as HTMLElement;
+    const subtree: HTMLButtonElement | null = host.querySelector(
+      '[data-testid="assets-equipment-scope-subtree"]',
+    );
+    const direct: HTMLButtonElement | null = host.querySelector(
+      '[data-testid="assets-equipment-scope-direct"]',
+    );
+    const fieldset: HTMLFieldSetElement | null = subtree?.closest('fieldset') ?? null;
+
+    expect(fieldset?.querySelector('legend')?.textContent?.trim()).toBe('Equipment scope');
+    expect(direct?.closest('fieldset')).toBe(fieldset);
+    expect(subtree?.getAttribute('aria-pressed')).toBe('true');
+    expect(direct?.getAttribute('aria-pressed')).toBe('false');
+
+    direct?.click();
+    await fixture.whenStable();
+    expect(subtree?.getAttribute('aria-pressed')).toBe('false');
+    expect(direct?.getAttribute('aria-pressed')).toBe('true');
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: false,
     });
   });
 });

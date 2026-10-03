@@ -238,7 +238,7 @@ export class FacilityMoveDialog {
   protected readonly moveForm: FieldTree<{ parentFacilityId: string }> = form(
     this.draft,
     (path) => {
-      disabled(path.parentFacilityId, () => this.busy());
+      disabled(path.parentFacilityId, { when: () => this.busy() });
       validate(path.parentFacilityId, ({ value }) =>
         this.request()?.facilityType === 'site' || value()
           ? null

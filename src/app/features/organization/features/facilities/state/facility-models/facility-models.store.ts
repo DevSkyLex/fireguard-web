@@ -334,12 +334,13 @@ export const FacilityModelsStore = signalStore(
             if (isCurrent(request.scopeRevision))
               patchState(store, { [stateKey]: pendingCallState() });
             const model = request.kind === 'upload' ? null : store.modelEntityMap()[request.id];
-            const revision =
-              request.kind === 'upload'
-                ? null
-                : ((isCurrent(request.scopeRevision) ? model?.revision : undefined) ??
-                  acceptedRevisions.get(request.id) ??
-                  request.revision);
+            let revision: number | null = null;
+            if (request.kind !== 'upload') {
+              const currentRevision = isCurrent(request.scopeRevision)
+                ? model?.revision
+                : undefined;
+              revision = currentRevision ?? acceptedRevisions.get(request.id) ?? request.revision;
+            }
             if (request.kind !== 'upload' && revision === null) {
               if (isCurrent(request.scopeRevision))
                 patchState(store, { [stateKey]: idleCallState() });

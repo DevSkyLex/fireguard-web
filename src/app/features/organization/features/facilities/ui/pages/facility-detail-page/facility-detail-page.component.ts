@@ -50,23 +50,21 @@ import { isCallPending, type CallState } from '@core/request-state';
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
-import type {
-  FacilityAttachmentOutput,
-  FacilityPlanCalibration,
-  FacilityEditState,
-  FacilityEditTarget,
-  FacilityGeocodeOutput,
-  FacilityOutput,
-  FacilityMoveRequest,
-  FacilityMoveSubmittedEvent,
-  FacilityPlanOverlayEquipment,
-  FacilityPlanOverlayZone,
-  FacilityType,
-  UpdateFacilityInput,
-} from '@features/organization/features/facilities/models';
 import {
   resolveFacilitySpatialIssueLabel,
   resolveFacilityHierarchyIssueLabel,
+  type FacilityAttachmentOutput,
+  type FacilityPlanCalibration,
+  type FacilityEditState,
+  type FacilityEditTarget,
+  type FacilityGeocodeOutput,
+  type FacilityOutput,
+  type FacilityMoveRequest,
+  type FacilityMoveSubmittedEvent,
+  type FacilityPlanOverlayEquipment,
+  type FacilityPlanOverlayZone,
+  type FacilityType,
+  type UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
 import {
@@ -98,6 +96,7 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmDrawerImports } from '@shared/ui/drawer';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
+import { HlmFieldLegend, HlmFieldSet } from '@shared/ui/field';
 import { HlmItemImports } from '@shared/ui/item';
 import { HlmPopoverImports } from '@shared/ui/popover';
 import { HlmProgressImports } from '@shared/ui/progress';
@@ -227,6 +226,8 @@ const IDLE_EDIT_STATE: FacilityEditState = {
   imports: [
     NgIcon,
     ...HlmEmptyImports,
+    HlmFieldLegend,
+    HlmFieldSet,
     ...HlmDropdownMenuImports,
     OrgDatePipe,
     RouterLink,

@@ -249,4 +249,51 @@ describe('FacilityOptionsStore', () => {
     });
     expect(store.interventionId()).toBeNull();
   });
+
+  it('clears incompatible creation, move and intervention contexts while retaining scoped paging', () => {
+    configure('browser');
+    store.load({
+      organizationId: 'org-1',
+      interventionId: 'intervention-1',
+      parentForType: 'zone',
+    });
+    store.load({ organizationId: 'org-1', parentForFacilityId: 'moving-zone' });
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 200,
+      includePath: true,
+      parentForFacilityId: 'moving-zone',
+    });
+    expect(store.parentForType()).toBeNull();
+    expect(store.interventionId()).toBeNull();
+    store.load({ organizationId: 'org-1', page: 2 });
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 2,
+      itemsPerPage: 200,
+      includePath: true,
+      parentForFacilityId: 'moving-zone',
+    });
+    store.load({
+      organizationId: 'org-1',
+      parentForType: 'building',
+      interventionId: 'intervention-2',
+    });
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 200,
+      includePath: true,
+      parentForType: 'building',
+      interventionId: 'intervention-2',
+    });
+    expect(store.parentForFacilityId()).toBeNull();
+    store.load('org-1');
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 200,
+      includePath: true,
+    });
+    expect(store.parentForType()).toBeNull();
+    expect(store.parentForFacilityId()).toBeNull();
+    expect(store.interventionId()).toBeNull();
+  });
 });

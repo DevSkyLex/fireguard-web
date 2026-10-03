@@ -102,6 +102,10 @@ describe('FacilityMoveDialog', () => {
     await fixture.whenStable();
 
     expect(submitButton().disabled).toBe(true);
+    expect(fixture.componentInstance['moveForm'].parentFacilityId().disabled()).toBe(true);
+    fixture.componentRef.setInput('busy', false);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['moveForm'].parentFacilityId().disabled()).toBe(false);
   });
 
   it('should reset the selection when a new request opens', async () => {

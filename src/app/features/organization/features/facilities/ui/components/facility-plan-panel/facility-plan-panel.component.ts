@@ -23,16 +23,14 @@ import {
 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
-import type {
-  FacilityPlanOverlayEquipment,
-  FacilityPlanOverlayZone,
-  FacilityType,
-  FacilityPlanOverlayOutput,
-} from '@features/organization/features/facilities/models';
-import { resolveEquipmentStatusTag } from '@features/organization/features/facilities/models';
 import {
+  resolveEquipmentStatusTag,
   resolveFacilitySpatialIssueLabel,
   resolveFacilityEquipmentPlacementIssueLabel,
+  type FacilityPlanOverlayEquipment,
+  type FacilityPlanOverlayZone,
+  type FacilityType,
+  type FacilityPlanOverlayOutput,
 } from '@features/organization/features/facilities/models';
 import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmBadgeImports } from '@shared/ui/badge';

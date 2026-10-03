@@ -94,6 +94,44 @@ interface FacilityOptionsQuery {
 }
 
 /**
+ * Function resolveFacilityOptionsScope
+ *
+ * @description
+ * Retains paging scope while explicit creation or move contexts clear their incompatible fallback.
+ *
+ * @access private
+ *
+ * @param {string | FacilityOptionsQuery} input - Organization reset or scoped picker query.
+ * @param {Pick<
+ *   FacilityOptionsState,
+ *   'parentForType' | 'parentForFacilityId' | 'interventionId'
+ * >} previous
+ *   - Current picker scope.
+ *
+ * @returns {Pick<
+ *   FacilityOptionsState,
+ *   'parentForType' | 'parentForFacilityId' | 'interventionId'
+ * >}
+ *   Resolved parent and intervention context.
+ */
+function resolveFacilityOptionsScope(
+  input: string | FacilityOptionsQuery,
+  previous: Pick<FacilityOptionsState, 'parentForType' | 'parentForFacilityId' | 'interventionId'>,
+): Pick<FacilityOptionsState, 'parentForType' | 'parentForFacilityId' | 'interventionId'> {
+  if (typeof input === 'string')
+    return { parentForType: null, parentForFacilityId: null, interventionId: null };
+  const fallbackType = input.parentForFacilityId ? null : previous.parentForType;
+  const fallbackFacilityId = input.parentForType ? null : previous.parentForFacilityId;
+  const fallbackInterventionId =
+    input.parentForType || input.parentForFacilityId ? null : previous.interventionId;
+  return {
+    parentForType: input.parentForType ?? fallbackType,
+    parentForFacilityId: input.parentForFacilityId ?? fallbackFacilityId,
+    interventionId: input.interventionId ?? fallbackInterventionId,
+  };
+}
+
+/**
  * Constant INITIAL_FACILITY_OPTIONS_STATE
  *
  * @description
@@ -248,23 +286,12 @@ export const FacilityOptionsStore = signalStore(
             } = typeof input === 'string' ? { organizationId: input } : input;
             synchronizeSession();
             if (!isPlatformBrowser(platformId) || !authSession.isAuthenticated()) return EMPTY;
-            const parentForType =
-              typeof input === 'string'
-                ? null
-                : (input.parentForType ??
-                  (input.parentForFacilityId ? null : store.parentForType()));
-            const parentForFacilityId =
-              typeof input === 'string'
-                ? null
-                : (input.parentForFacilityId ??
-                  (input.parentForType ? null : store.parentForFacilityId()));
-            const interventionId =
-              typeof input === 'string'
-                ? null
-                : (input.interventionId ??
-                  (input.parentForType || input.parentForFacilityId
-                    ? null
-                    : store.interventionId()));
+            const { parentForType, parentForFacilityId, interventionId } =
+              resolveFacilityOptionsScope(input, {
+                parentForType: store.parentForType(),
+                parentForFacilityId: store.parentForFacilityId(),
+                interventionId: store.interventionId(),
+              });
             const sameScope =
               store.organizationId() === organizationId &&
               store.parentForType() === parentForType &&

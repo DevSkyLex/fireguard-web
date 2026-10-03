@@ -1,4 +1,5 @@
 import { deflateSync } from 'node:zlib';
+import type { FacilityBuildingModelFloor } from '@features/organization/features/facilities/models';
 import { E2E_ORGANIZATION_ID } from './api-fixtures';
 import {
   E2E_FACILITY_ID,
@@ -133,7 +134,7 @@ export function spatialBuildingModel() {
     ],
     hierarchyIssues: [],
     diagnostics: { invalidGeometryCount: 0, unpositionedEquipmentCount: 1, geometryIssues: [] },
-  };
+  } satisfies FacilityBuildingModelFloor;
   return {
     '@id': `/api/organizations/${E2E_ORGANIZATION_ID}/facilities/${E2E_FACILITY_ID}/building-model`,
     '@type': 'FacilityBuildingModel',
@@ -164,7 +165,7 @@ export function spatialLegacyBuildingModel() {
     floors: [
       {
         ...model.floors[0],
-        hierarchyIssues: ['invalid_parent_type', 'invalid_ancestor'],
+        hierarchyIssues: ['invalid_parent_type', 'invalid_ancestor'] as const,
       },
       model.floors[1],
     ],

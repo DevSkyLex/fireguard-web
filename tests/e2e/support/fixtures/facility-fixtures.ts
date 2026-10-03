@@ -5,6 +5,7 @@
  * spread.
  */
 
+import type { FacilityBuildingModelOutput } from '@features/organization/features/facilities/models';
 import { E2E_ORGANIZATION_ID } from './api-fixtures';
 import type { EquipmentOutputFixture } from './equipment-fixtures';
 
@@ -322,32 +323,8 @@ export function coherenceBuilding(
   });
 }
 
-export interface FacilityBuildingModelOutputFixture {
-  readonly buildingId: string;
-  readonly buildingName: string;
-  readonly floors: ReadonlyArray<{
-    readonly facilityId: string;
-    readonly name: string;
-    readonly levelIndex: number | null;
-    readonly status: string;
-    readonly plan: {
-      readonly attachmentId: string;
-      readonly imageWidth: number | null;
-      readonly imageHeight: number | null;
-    } | null;
-    readonly outline: {
-      readonly source: 'plan_geometry' | 'rooms_bbox' | 'image_rect';
-      readonly points: ReadonlyArray<readonly [number, number]>;
-    } | null;
-    readonly rooms: ReadonlyArray<{
-      readonly facilityId: string;
-      readonly name: string;
-      readonly type: string;
-      readonly status: string;
-      readonly points: ReadonlyArray<readonly [number, number]>;
-    }>;
-  }>;
-}
+/** Uses the transport contract so incomplete building projections fail fixture typechecking. */
+export type FacilityBuildingModelOutputFixture = FacilityBuildingModelOutput;
 
 /**
  * The 3D building view's model for {@link facilityOutput} — one floor with a
@@ -365,8 +342,18 @@ export function facilityBuildingModelOutput(
         facilityId: E2E_FACILITY_CHILD_ID,
         name: 'Ground Floor',
         levelIndex: 0,
+        elevationMeters: null,
+        heightMeters: null,
         status: 'active',
-        plan: { attachmentId: E2E_FACILITY_PLAN_ID, imageWidth: 1200, imageHeight: 800 },
+        hierarchyIssues: [],
+        plan: {
+          attachmentId: E2E_FACILITY_PLAN_ID,
+          imageWidth: 1200,
+          imageHeight: 800,
+          calibration: null,
+          calibrationBuildingId: null,
+          calibrationIssue: null,
+        },
         outline: {
           source: 'image_rect',
           points: [
@@ -390,6 +377,12 @@ export function facilityBuildingModelOutput(
             ],
           },
         ],
+        equipment: [],
+        diagnostics: {
+          invalidGeometryCount: 0,
+          unpositionedEquipmentCount: 0,
+          geometryIssues: [],
+        },
       },
     ],
     ...overrides,

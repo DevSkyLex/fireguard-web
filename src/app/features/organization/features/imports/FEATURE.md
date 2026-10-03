@@ -42,7 +42,11 @@ and server totals. Upload acceptance refreshes the current query; a cached job m
 be inserted into a filtered page. Each job has its own polling state and explicit recovery.
 The open report resolves its selected id from the live cache, even outside the current page.
 Polling errors and interrupted observation preserve the last known job without pretending
-completion. Reports paginate the received rows locally. Organization changes cancel polls
+completion. Reports read server pages of at most 100 rows through the existing detail
+endpoint's `reportPage`/`reportItemsPerPage` parameters and
+`reportTotal`/`reportHasNextPage` metadata. Collection summaries carry no report rows.
+An open report keeps its selected page when summaries or page-one polling refresh the
+job's status. Organization changes cancel polls
 and discard the previous context. Upload inputs reset only after server acceptance.
 An upload becomes pending only once accepted locally. One upload may run per organization
 generation; switching organizations permits another upload immediately without cancelling an

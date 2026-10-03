@@ -10,7 +10,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
@@ -29,11 +29,15 @@ import type {
   CalendarFeedItemOutput,
   CalendarFeedSourceOutput,
 } from '@features/organization/features/calendar/models';
-import { CalendarFeedStore } from '@features/organization/features/calendar/state';
+import {
+  CalendarFeedStore,
+  CalendarFacilityOptionsStore,
+} from '@features/organization/features/calendar/state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { ORGANIZATION_CONTEXT_PORT, REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { DashboardPanelRegistry } from '@layouts/dashboard-layout';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
+import type { RegionalFormatSettings } from '@shared/regional-format';
 import { CalendarPage } from '../calendar-page.component';
 
 function feedItem(overrides: Partial<CalendarFeedItemOutput> = {}): CalendarFeedItemOutput {
@@ -101,6 +105,14 @@ const byPageActionsTestId = (id: string): HTMLElement | null =>
   renderPageActions().querySelector(`[data-testid="${id}"]`);
 
 describe('CalendarPage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    // Paris is already in October while the UTC organization remains in September.
+    vi.setSystemTime(new Date('2026-09-30T23:30:00Z'));
+  });
+
+  afterEach(() => vi.useRealTimers());
+
   let mobile: WritableSignal<boolean>;
   let fixture: ComponentFixture<CalendarPage>;
   let items: WritableSignal<readonly CalendarFeedItemOutput[]>;
@@ -118,10 +130,16 @@ describe('CalendarPage', () => {
   let updateEventCallState: WritableSignal<CallState<unknown>>;
   let deleteEventCallState: WritableSignal<CallState<unknown>>;
   let moveEventCallState: WritableSignal<CallState<unknown>>;
+  let regionalFormatting: WritableSignal<RegionalFormatSettings>;
 
   const root = (): HTMLElement => fixture.nativeElement as HTMLElement;
 
-  async function render(canWrite: boolean = false): Promise<void> {
+  async function render(
+    canWrite: boolean = false,
+    timezone: string = 'UTC',
+    initialUrl: string | null = null,
+  ): Promise<void> {
+    regionalFormatting = signal({ ...DEFAULT_REGIONAL_FORMAT_SETTINGS, timezone });
     mobile = signal(false);
     items = signal<readonly CalendarFeedItemOutput[]>([]);
     queryError = signal<StoreError | null>(null);
@@ -155,6 +173,12 @@ describe('CalendarPage', () => {
       updateEventCallState,
       deleteEventCallState,
       moveEventCallState,
+      resetWriteCallStates: vi.fn(() => {
+        createEventCallState.set(idleCallState());
+        updateEventCallState.set(idleCallState());
+        deleteEventCallState.set(idleCallState());
+        moveEventCallState.set(idleCallState());
+      }),
     };
 
     TestBed.configureTestingModule({
@@ -170,14 +194,22 @@ describe('CalendarPage', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: OrganizationPermissionService, useValue: { hasPermission: () => canWrite } },
-        { provide: FacilityService, useValue: { list: () => of({ member: [], totalItems: 0 }) } },
+        {
+          provide: FacilityService,
+          useValue: {
+            list: vi.fn(() => of({ member: [], totalItems: 0 })),
+            get: vi.fn((organizationId: string, id: string) =>
+              of({ id, name: 'Selected facility' }),
+            ),
+          },
+        },
         {
           provide: ORGANIZATION_CONTEXT_PORT,
           useValue: { selectedOrganization: signal(null) },
         },
         {
           provide: REGIONAL_FORMATTING_PORT,
-          useValue: { regionalFormatting: signal(DEFAULT_REGIONAL_FORMAT_SETTINGS) },
+          useValue: { regionalFormatting },
         },
         {
           provide: THEME_PORT,
@@ -199,9 +231,15 @@ describe('CalendarPage', () => {
     });
 
     TestBed.overrideComponent(CalendarPage, {
-      set: { providers: [{ provide: CalendarFeedStore, useValue: storeMock }] },
+      set: {
+        providers: [
+          { provide: CalendarFeedStore, useValue: storeMock },
+          CalendarFacilityOptionsStore,
+        ],
+      },
     });
 
+    if (initialUrl) await TestBed.inject(Router).navigateByUrl(initialUrl);
     fixture = TestBed.createComponent(CalendarPage);
     fixture.componentRef.setInput('organizationId', 'org-1');
     await fixture.whenStable();
@@ -240,16 +278,51 @@ describe('CalendarPage', () => {
     expect(load).toHaveBeenCalledTimes(calls);
   });
 
+  it('loads facility options only while an event form is open', async () => {
+    await render(true);
+    const service = TestBed.inject(FacilityService);
+    expect(service.list).not.toHaveBeenCalled();
+    fixture.componentInstance['openCreateDialog']();
+    await fixture.whenStable();
+    expect(service.list).toHaveBeenCalledExactlyOnceWith('org-1', {
+      search: '',
+      page: 1,
+      itemsPerPage: 25,
+    });
+    fixture.componentInstance['onEventDialogVisibleChanged'](false);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['facilityOptions']()).toEqual([]);
+  });
+
+  it('closes a departed organization draft and blocks a submit before its close effect runs', async () => {
+    await render(true);
+    fixture.componentInstance['openCreateDialog']();
+    await fixture.whenStable();
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    fixture.componentInstance['onEventFormSubmitted']({
+      title: 'Old draft',
+      description: null,
+      startsAt: '2026-08-01T09:00:00+00:00',
+      endsAt: null,
+      allDay: false,
+      facilityId: null,
+    });
+    expect(createEvent).not.toHaveBeenCalled();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['eventDialogVisible']()).toBe(false);
+    expect(fixture.componentInstance['editingEvent']()).toBeNull();
+    expect(fixture.componentInstance['facilityOptions']()).toEqual([]);
+  });
+
   it('loads the current month window on arrival', async () => {
     await render();
 
     expect(load).toHaveBeenCalledTimes(1);
-    const command = load.mock.calls[0]?.[0] as { organizationId: string; from: string; to: string };
-    expect(command.organizationId).toBe('org-1');
-
-    const now: Date = new Date();
-    const expectedFrom: Date = new Date(now.getFullYear(), now.getMonth(), 1 - 7);
-    expect(new Date(command.from).toDateString()).toBe(expectedFrom.toDateString());
+    expect(load).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      from: '2026-08-25T00:00:00+00:00',
+      to: '2026-10-07T23:59:59+00:00',
+    });
   });
 
   it('steps the window back and forward a month through the toolbar, reloading each time', async () => {
@@ -269,7 +342,8 @@ describe('CalendarPage', () => {
     expect(load).toHaveBeenCalledTimes(1);
     const backCommand = load.mock.calls[0]?.[0] as { from: string };
 
-    expect(new Date(backCommand.from).getMonth()).not.toBe(new Date(nextCommand.from).getMonth());
+    expect(nextCommand.from).toBe('2026-09-24T00:00:00+00:00');
+    expect(backCommand.from).toBe('2026-08-25T00:00:00+00:00');
   });
 
   it('returns to the current month and reloads when Today is pressed', async () => {
@@ -284,9 +358,7 @@ describe('CalendarPage', () => {
 
     expect(load).toHaveBeenCalledTimes(1);
     const command = load.mock.calls[0]?.[0] as { from: string };
-    const now: Date = new Date();
-    const expectedFrom: Date = new Date(now.getFullYear(), now.getMonth(), 1 - 7);
-    expect(new Date(command.from).toDateString()).toBe(expectedFrom.toDateString());
+    expect(command.from).toBe('2026-08-25T00:00:00+00:00');
   });
 
   it('shows the current period label in the toolbar', async () => {
@@ -295,13 +367,7 @@ describe('CalendarPage', () => {
     const period: HTMLElement | null = root().querySelector(
       '[data-testid="calendar-toolbar-period"]',
     );
-    const now: Date = new Date();
-    const expectedLabel: string = new Intl.DateTimeFormat('en-US', {
-      month: 'long',
-      year: 'numeric',
-    }).format(now);
-
-    expect(period?.textContent?.trim().toLowerCase()).toBe(expectedLabel.toLowerCase());
+    expect(period?.textContent?.trim()).toBe('September 2026');
   });
 
   it('renders the error state and retries through the store on a failed load', async () => {
@@ -623,6 +689,68 @@ describe('CalendarPage', () => {
   });
 
   describe('granularities', () => {
+    it('loads day windows with their organization DST offsets', async () => {
+      await render(false, 'Europe/Paris');
+      const page = fixture.componentInstance as unknown as {
+        windowOf(organizationId: string, anchor: Date, view: 'day'): { from: string; to: string };
+      };
+      expect(page.windowOf('org-1', new Date(2026, 2, 29), 'day')).toEqual({
+        organizationId: 'org-1',
+        from: '2026-03-28T23:00:00+00:00',
+        to: '2026-03-29T21:59:59+00:00',
+      });
+      expect(page.windowOf('org-1', new Date(2026, 9, 25), 'day')).toEqual({
+        organizationId: 'org-1',
+        from: '2026-10-24T22:00:00+00:00',
+        to: '2026-10-25T22:59:59+00:00',
+      });
+    });
+
+    it('groups entries by organization days and excludes a timed midnight end', async () => {
+      await render(false, 'America/Los_Angeles');
+      fixture.componentInstance['month'].set(new Date(2026, 6, 31));
+      fixture.componentInstance['selectedDay'].set('2026-07-31');
+      items.set([
+        feedItem({
+          id: 'across-zone',
+          startsAt: '2026-08-01T01:30:00Z',
+          endsAt: '2026-08-01T07:00:00Z',
+        }),
+      ]);
+      await fixture.whenStable();
+      expect(fixture.componentInstance['dayItems']().map((item) => item.id)).toEqual([
+        'across-zone',
+      ]);
+      fixture.componentInstance['selectedDay'].set('2026-08-01');
+      expect(fixture.componentInstance['dayItems']()).toEqual([]);
+      expect(fixture.componentInstance['events']()[0].date).toBe('2026-07-31T18:30:00');
+    });
+
+    it('restores date/view from the URL, preserves unrelated parameters and follows history updates once', async () => {
+      await render(false, 'Europe/Paris', '/?date=2026-03-29&view=day&filter=active');
+      expect(fixture.componentInstance['dayViewIso']()).toBe('2026-03-29');
+      expect(fixture.componentInstance['granularity']()).toBe('day');
+      expect(load).toHaveBeenCalledTimes(1);
+      load.mockClear();
+      fixture.componentInstance['stepPeriod'](1);
+      await fixture.whenStable();
+      expect(TestBed.inject(Router).url).toContain('filter=active');
+      expect(TestBed.inject(Router).url).toContain('date=2026-03-30');
+      expect(load).toHaveBeenCalledTimes(1);
+      load.mockClear();
+      await TestBed.inject(Router).navigateByUrl('/?date=2026-03-29&view=day&filter=active');
+      await fixture.whenStable();
+      expect(fixture.componentInstance['dayViewIso']()).toBe('2026-03-29');
+      expect(load).toHaveBeenCalledTimes(1);
+    });
+
+    it('falls back to an organization-local today and month for invalid URL state', async () => {
+      vi.setSystemTime(new Date('2026-10-01T02:30:00Z'));
+      await render(false, 'America/New_York', '/?date=2026-02-30&view=invalid');
+      expect(fixture.componentInstance['dayViewIso']()).toBe('2026-09-30');
+      expect(fixture.componentInstance['granularity']()).toBe('month');
+      expect(load).toHaveBeenCalledTimes(1);
+    });
     it('switches to the week view and reloads a seven-day window', async () => {
       await render();
       load.mockClear();
@@ -637,9 +765,8 @@ describe('CalendarPage', () => {
       expect(load).toHaveBeenCalledTimes(1);
 
       const command = load.mock.calls[0]?.[0] as { from: string; to: string };
-      const spanMs: number = new Date(command.to).getTime() - new Date(command.from).getTime();
-      expect(Math.round(spanMs / 3_600_000)).toBe(7 * 24);
-      expect(new Date(command.from).getDay()).toBe(1);
+      expect(command.from).toBe('2026-09-28T00:00:00+00:00');
+      expect(command.to).toBe('2026-10-04T23:59:59+00:00');
     });
 
     it('renders all seven day sections in the week view, empty days included', async () => {
@@ -659,6 +786,7 @@ describe('CalendarPage', () => {
       await fixture.whenStable();
 
       expect(root().querySelector('[data-testid="calendar-day-view"]')).not.toBeNull();
+      expect(fixture.componentInstance['dayViewIso']()).toBe('2026-09-30');
       load.mockClear();
 
       root().querySelector<HTMLButtonElement>('[data-testid="calendar-toolbar-next"]')?.click();
@@ -666,10 +794,8 @@ describe('CalendarPage', () => {
 
       expect(load).toHaveBeenCalledTimes(1);
       const command = load.mock.calls[0]?.[0] as { from: string; to: string };
-      const tomorrow: Date = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      expect(new Date(command.from).toDateString()).toBe(tomorrow.toDateString());
-      expect(new Date(command.to).toDateString()).toBe(tomorrow.toDateString());
+      expect(command.from).toBe('2026-10-01T00:00:00+00:00');
+      expect(command.to).toBe('2026-10-01T23:59:59+00:00');
     });
   });
 
@@ -704,6 +830,53 @@ describe('CalendarPage', () => {
   });
 
   describe('drag reschedule', () => {
+    it('keeps organization wall time and the elapsed duration of a timed event across spring DST', async () => {
+      await render(true, 'Europe/Paris');
+      items.set([
+        feedItem({
+          sourceKey: 'calendar_event',
+          id: 'dst-event',
+          startsAt: '2026-03-28T09:00:00+01:00',
+          endsAt: '2026-03-29T09:00:00+02:00',
+        }),
+      ]);
+      fixture.componentInstance['onEventDropped']({
+        id: 'calendar_event:dst-event',
+        day: '2026-03-29',
+      });
+      expect(moveEvent).toHaveBeenCalledExactlyOnceWith({
+        organizationId: 'org-1',
+        eventId: 'dst-event',
+        startsAt: '2026-03-29T07:00:00+00:00',
+        endsAt: '2026-03-30T06:00:00+00:00',
+      });
+    });
+
+    it('moves inclusive all-day dates by calendar days across spring DST', async () => {
+      await render(true, 'Europe/Paris');
+      items.set([
+        feedItem({
+          sourceKey: 'calendar_event',
+          id: 'all-day',
+          allDay: true,
+          startsAt: '2026-03-28T00:00:00+01:00',
+          endsAt: '2026-03-29T00:00:00+01:00',
+        }),
+      ]);
+      fixture.componentInstance['onEventDropped']({
+        id: 'calendar_event:all-day',
+        day: '2026-03-29',
+      });
+      expect(moveEvent).toHaveBeenCalledExactlyOnceWith({
+        organizationId: 'org-1',
+        eventId: 'all-day',
+        startsAt: '2026-03-28T23:00:00+00:00',
+        endsAt: '2026-03-29T22:00:00+00:00',
+      });
+      fixture.componentInstance['selectedDay'].set('2026-03-29');
+      expect(fixture.componentInstance['dayItems']().map((item) => item.id)).toEqual(['all-day']);
+    });
+
     it('moves a dropped standalone event to the target day, keeping its wall-clock time, and announces it', async () => {
       await render(true);
       const item: CalendarFeedItemOutput = feedItem({

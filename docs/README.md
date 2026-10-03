@@ -21,9 +21,11 @@ contracts from explanations and environment-specific operational information.
 - [Organization and access](guides/organization-and-access.md)
 - [Testing](guides/testing.md)
 - [Current installation](operations/current-installation.md)
+- [Implementation follow up October 2026](operations/review-implementation-2026-10.md)
 - [SSR and hydration](guides/ssr-and-hydration.md)
 - [Collaboration](guides/collaboration.md)
 - [Interventions and offline](guides/interventions-and-offline.md)
+- [Product iterations after stabilization](product/next-iterations.md)
 - [Facilities and spatial views](guides/facilities-and-spatial-views.md)
 - [Troubleshooting](operations/troubleshooting.md)
 

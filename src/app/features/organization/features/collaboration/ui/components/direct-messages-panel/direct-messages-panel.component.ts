@@ -483,7 +483,7 @@ export class DirectMessagesPanel {
       .pipe(takeUntilDestroyed())
       .subscribe(({ payload }: { payload: ConversationOutput }): void => {
         this.pickerVisible.set(false);
-        this.router.navigate([this.messagesRouteBase(), payload.id]);
+        void this.router.navigate([this.messagesRouteBase(), payload.id]);
       });
   }
   //#endregion

@@ -85,7 +85,10 @@ import {
   organizationBillingStoreEvents,
   type BillingCheckoutExpectation,
 } from '@features/organization/state/organization-billing';
-import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import {
+  OrganizationSettingsStore,
+  organizationSettingsStoreEvents,
+} from '@features/organization/state/organization-settings';
 import { OrganizationAccessPanel } from '@features/organization/ui/components/organization-access-panel';
 import { toMemberSelectOption } from '@features/organization/utils';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
@@ -253,18 +256,15 @@ const DEFAULT_APPROVAL: OrganizationApprovalSettings = {
  * catalog owned by `OrganizationPlanSelector`) and the approval-policy
  * form's action-type catalog each load only once the reader opens their tab,
  * per `AGENTS.md`'s hidden-UI SSR guidance.
- *
  * The page owns orchestration: it holds the settings and billing stores,
  * resolves permissions, seeds every form from the active organization, and
  * performs navigation; its children only render (`ARCHITECTURE.md` §10.1).
- *
  * Each tab trigger carries an icon ahead of its label — the Danger zone
  * trigger tints its icon destructive, never colour alone, while its label
  * stays neutral like its siblings. The section list is a paginated Spartan
  * `line` tab list projected beneath the shell page title. Every settings panel
  * fills the shell content width; structured forms use responsive label/content
  * rows so controls gain room without stretching their explanatory copy.
- *
  * Its title lives in the shell's own `DashboardPageHeader`; this page
  * renders no title band of its own. `app-organization-page-header` is
  * retired, and this page has no header actions of its own to register.
@@ -339,9 +339,13 @@ export class OrganizationSettingsPage {
   /**
    * Property accessStore
    * @readonly
-   * @description Page-owned admission settings state.
+   *
+   * @description
+   * Page-owned admission settings state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OrganizationAccessAdminStoreType}
    */
   protected readonly accessStore: OrganizationAccessAdminStoreType = inject(
@@ -350,9 +354,13 @@ export class OrganizationSettingsPage {
   /**
    * Property canManageAccess
    * @readonly
-   * @description Requires both settings-write and membership-management permissions.
+   *
+   * @description
+   * Requires both settings-write and membership-management permissions.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canManageAccess: Signal<boolean> = computed(
@@ -379,9 +387,13 @@ export class OrganizationSettingsPage {
   /**
    * Property checkout
    * @readonly
-   * @description Checkout return marker; subscription confirmation always comes from the API.
+   *
+   * @description
+   * Checkout return marker; subscription confirmation always comes from the API.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly checkout: InputSignal<string | undefined> = input<string>();
@@ -389,9 +401,13 @@ export class OrganizationSettingsPage {
   /**
    * Property checkoutPlan
    * @readonly
-   * @description Expected plan key in the server-generated return URL.
+   *
+   * @description
+   * Expected plan key in the server-generated return URL.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly checkoutPlan: InputSignal<string | undefined> = input<string>();
@@ -399,9 +415,13 @@ export class OrganizationSettingsPage {
   /**
    * Property checkoutInterval
    * @readonly
-   * @description Expected interval in the server-generated return URL.
+   *
+   * @description
+   * Expected interval in the server-generated return URL.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly checkoutInterval: InputSignal<string | undefined> = input<string>();
@@ -411,9 +431,14 @@ export class OrganizationSettingsPage {
   /**
    * Property settingsStore
    * @readonly
-   * @description Component-scoped store owning the general & branding mutations, the logo upload and the deletion.
+   *
+   * @description
+   * Component-scoped store owning the general & branding mutations, the logo upload and the
+   * deletion.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OrganizationSettingsStore}
    */
   protected readonly settingsStore: OrganizationSettingsStore =
@@ -422,9 +447,13 @@ export class OrganizationSettingsPage {
   /**
    * Property billingStore
    * @readonly
-   * @description Component-scoped store owning the subscription tab's Stripe data.
+   *
+   * @description
+   * Component-scoped store owning the subscription tab's Stripe data.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OrganizationBillingStore}
    */
   protected readonly billingStore: OrganizationBillingStore =
@@ -433,38 +462,74 @@ export class OrganizationSettingsPage {
   /**
    * Property activeOrganizationStore
    * @readonly
-   * @description Root-provided resolved organization, seeding every form on this page.
+   *
+   * @description
+   * Root-provided resolved organization, seeding every form on this page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {ActiveOrganizationStore}
    */
   protected readonly activeOrganizationStore: ActiveOrganizationStore =
     inject<ActiveOrganizationStore>(ActiveOrganizationStore);
 
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by the invoice list's `appOrgDate` bindings and by {@link formatDate}.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by the invoice list's `appOrgDate`
+   * bindings and by {@link formatDate}.
+   *
    * @access protected
    * @since 1.8.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** Formats {@link renewalDate} in the organization's regional format and timezone; dependency-free by design (see {@link OrgDatePipe}). */
+  /**
+   * Property orgDatePipe
+   * @readonly
+   *
+   * @description
+   * Formats {@link renewalDate} in the organization's regional format and timezone; dependency-free
+   * by design (see {@link OrgDatePipe}).
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrgDatePipe}
+   */
   private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
 
   /**
    * Property quotaStore
    * @readonly
-   * @description Root-provided quota usage feeding the Usage tab's meters.
+   *
+   * @description
+   * Root-provided quota usage feeding the Usage tab's meters.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OrganizationQuotaStore}
    */
   protected readonly quotaStore: OrganizationQuotaStore =
@@ -473,9 +538,13 @@ export class OrganizationSettingsPage {
   /**
    * Property permissionService
    * @readonly
-   * @description Organization-owned helper exposing reactive permission checks.
+   *
+   * @description
+   * Organization-owned helper exposing reactive permission checks.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationPermissionService}
    */
   private readonly permissionService: OrganizationPermissionService =
@@ -493,6 +562,7 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.4.0
+   *
    * @type {ApprovalRequestService}
    */
   private readonly approvalRequestService: ApprovalRequestService =
@@ -510,6 +580,7 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.6.0
+   *
    * @type {OrganizationMemberService}
    */
   private readonly memberService: OrganizationMemberService =
@@ -518,9 +589,15 @@ export class OrganizationSettingsPage {
   /**
    * Property organizationService
    * @readonly
-   * @description Loads the legal entity type catalog for the Legal information section. The page injects it directly rather than routing it through {@link settingsStore}, which owns mutations, not reference catalogs.
+   *
+   * @description
+   * Loads the legal entity type catalog for the Legal information section. The page injects it
+   * directly rather than routing it through {@link settingsStore}, which owns mutations, not
+   * reference catalogs.
+   *
    * @access private
    * @since 1.6.0
+   *
    * @type {OrganizationService}
    */
   private readonly organizationService: OrganizationService =
@@ -529,9 +606,13 @@ export class OrganizationSettingsPage {
   /**
    * Property route
    * @readonly
-   * @description Used to keep tab navigation relative to this route.
+   *
+   * @description
+   * Used to keep tab navigation relative to this route.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
@@ -539,9 +620,13 @@ export class OrganizationSettingsPage {
   /**
    * Property router
    * @readonly
-   * @description Used to write the `?tab=` query parameter and to navigate away after deletion.
+   *
+   * @description
+   * Used to write the `?tab=` query parameter and to navigate away after deletion.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Router}
    */
   private readonly router: Router = inject<Router>(Router);
@@ -549,14 +634,29 @@ export class OrganizationSettingsPage {
   /**
    * Property locale
    * @readonly
-   * @description The active Angular locale, used to format dates and to seed a never-persisted regional locale.
+   *
+   * @description
+   * The active Angular locale, used to format dates and to seed a never-persisted regional locale.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private readonly locale: string = inject<string>(LOCALE_ID);
 
-  /** Owns shell-tab registration for this page. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Owns shell-tab registration for this page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject<DestroyRef>(DestroyRef);
 
   /**
@@ -599,6 +699,7 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationRegionalSettings}
    */
   private readonly defaultRegional: OrganizationRegionalSettings = {
@@ -612,9 +713,13 @@ export class OrganizationSettingsPage {
   /**
    * Property organization
    * @readonly
-   * @description The active organization resource, seeding every form.
+   *
+   * @description
+   * The active organization resource, seeding every form.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationOutput | null>}
    */
   protected readonly organization: Signal<OrganizationOutput | null> =
@@ -623,9 +728,13 @@ export class OrganizationSettingsPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The active organization's identifier, keying every mutation on this page.
+   *
+   * @description
+   * The active organization's identifier, keying every mutation on this page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly organizationId: Signal<string | null> =
@@ -643,6 +752,7 @@ export class OrganizationSettingsPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly organizationReady: Signal<boolean> = computed(
@@ -652,9 +762,13 @@ export class OrganizationSettingsPage {
   /**
    * Property canDelete
    * @readonly
-   * @description Whether the danger-zone tab and its trigger may render.
+   *
+   * @description
+   * Whether the danger-zone tab and its trigger may render.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canDelete: Signal<boolean> = computed((): boolean =>
@@ -674,6 +788,7 @@ export class OrganizationSettingsPage {
    *
    * @access protected
    * @since 1.6.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isOwner: Signal<boolean> = computed(
@@ -683,9 +798,13 @@ export class OrganizationSettingsPage {
   /**
    * Property canSuspend
    * @readonly
-   * @description Whether the Suspend control may render — the organization is currently active.
+   *
+   * @description
+   * Whether the Suspend control may render — the organization is currently active.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSuspend: Signal<boolean> = computed(
@@ -695,9 +814,13 @@ export class OrganizationSettingsPage {
   /**
    * Property canRestore
    * @readonly
-   * @description Whether the Restore control may render — the organization is currently suspended or archived.
+   *
+   * @description
+   * Whether the Restore control may render — the organization is currently suspended or archived.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canRestore: Signal<boolean> = computed((): boolean => {
@@ -708,9 +831,14 @@ export class OrganizationSettingsPage {
   /**
    * Property organizationStatusTag
    * @readonly
-   * @description The active organization's status descriptor for the Danger zone's Suspend/restore row, or `null` before it has loaded.
+   *
+   * @description
+   * The active organization's status descriptor for the Danger zone's Suspend/restore row, or
+   * `null` before it has loaded.
+   *
    * @access protected
    * @since 1.9.0
+   *
    * @type {Signal<OrganizationStatusTagDescriptor | null>}
    */
   protected readonly organizationStatusTag: Signal<OrganizationStatusTagDescriptor | null> =
@@ -722,9 +850,13 @@ export class OrganizationSettingsPage {
   /**
    * Property organizationStatusIconClass
    * @readonly
-   * @description Maps the organization status severity to its icon colour.
+   *
+   * @description
+   * Maps the organization status severity to its icon colour.
+   *
    * @access protected
    * @since 1.9.0
+   *
    * @type {typeof ORGANIZATION_STATUS_TAG_ICON_CLASS}
    */
   protected readonly organizationStatusIconClass: typeof ORGANIZATION_STATUS_TAG_ICON_CLASS =
@@ -741,6 +873,7 @@ export class OrganizationSettingsPage {
    *
    * @access protected
    * @since 1.6.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canTransferOwnership: Signal<boolean> = computed(
@@ -758,6 +891,7 @@ export class OrganizationSettingsPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationSettingsTabId>}
    */
   protected readonly activeTab: Signal<OrganizationSettingsTabId> = computed(
@@ -776,9 +910,13 @@ export class OrganizationSettingsPage {
   /**
    * Property generalFormValues
    * @readonly
-   * @description The active organization mapped onto the general & branding form's shape.
+   *
+   * @description
+   * The active organization mapped onto the general & branding form's shape.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationGeneralFormValues>}
    */
   protected readonly generalFormValues: Signal<OrganizationGeneralFormValues> = computed(
@@ -796,9 +934,13 @@ export class OrganizationSettingsPage {
   /**
    * Property legalFormValues
    * @readonly
-   * @description The active organization mapped onto the legal information form's shape.
+   *
+   * @description
+   * The active organization mapped onto the legal information form's shape.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {Signal<OrganizationLegalFormValues>}
    */
   protected readonly legalFormValues: Signal<OrganizationLegalFormValues> = computed(
@@ -811,16 +953,58 @@ export class OrganizationSettingsPage {
         legalName: organization?.legalName ?? '',
         registrationNumber: organization?.registrationNumber ?? '',
         vatNumber: organization?.vatNumber ?? '',
+        registeredAddress: {
+          line1: organization?.registeredAddress?.line1 ?? '',
+          line2: organization?.registeredAddress?.line2 ?? '',
+          postalCode: organization?.registeredAddress?.postalCode ?? '',
+          city: organization?.registeredAddress?.city ?? '',
+          region: organization?.registeredAddress?.region ?? '',
+          countryCode: organization?.registeredAddress?.countryCode ?? '',
+        },
+        privacyContactEmail: organization?.privacyContactEmail ?? '',
       };
     },
   );
 
   /**
+   * Property legalResetRevision
+   * @readonly
+   *
+   * @description
+   * Successful-save acknowledgement for the legal form's draft and field state.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
+  protected readonly legalResetRevision: WritableSignal<number> = signal(0);
+
+  /**
+   * Property pendingLegalOrganizationId
+   *
+   * @description
+   * Owner of the legal save awaiting an acknowledgement; other settings saves never reset its
+   * draft.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
+  private pendingLegalOrganizationId: string | null = null;
+
+  /**
    * Property notificationsSeed
    * @readonly
-   * @description The active organization's notification policy, defaulted for an organization that has never persisted one.
+   *
+   * @description
+   * The active organization's notification policy, defaulted for an organization that has never
+   * persisted one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationNotificationSettings>}
    */
   protected readonly notificationsSeed: Signal<OrganizationNotificationSettings> = computed(
@@ -831,9 +1015,14 @@ export class OrganizationSettingsPage {
   /**
    * Property regionalSeed
    * @readonly
-   * @description The active organization's regional preferences, defaulted for an organization that has never persisted them.
+   *
+   * @description
+   * The active organization's regional preferences, defaulted for an organization that has never
+   * persisted them.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationRegionalSettings>}
    */
   protected readonly regionalSeed: Signal<OrganizationRegionalSettings> = computed(
@@ -844,9 +1033,14 @@ export class OrganizationSettingsPage {
   /**
    * Property complianceSeed
    * @readonly
-   * @description The active organization's compliance policy, defaulted for an organization that has never customized it.
+   *
+   * @description
+   * The active organization's compliance policy, defaulted for an organization that has never
+   * customized it.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationComplianceSettings>}
    */
   protected readonly complianceSeed: Signal<OrganizationComplianceSettings> = computed(
@@ -857,9 +1051,14 @@ export class OrganizationSettingsPage {
   /**
    * Property automationSeed
    * @readonly
-   * @description The active organization's automation toggles, defaulted for an organization that has never persisted any.
+   *
+   * @description
+   * The active organization's automation toggles, defaulted for an organization that has never
+   * persisted any.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationAutomationSettings>}
    */
   protected readonly automationSeed: Signal<OrganizationAutomationSettings> = computed(
@@ -870,9 +1069,14 @@ export class OrganizationSettingsPage {
   /**
    * Property approvalSeed
    * @readonly
-   * @description The active organization's four-eyes approval policy, defaulted for an organization that has never customized it.
+   *
+   * @description
+   * The active organization's four-eyes approval policy, defaulted for an organization that has
+   * never customized it.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationApprovalSettings>}
    */
   protected readonly approvalSeed: Signal<OrganizationApprovalSettings> = computed(
@@ -882,9 +1086,14 @@ export class OrganizationSettingsPage {
   /**
    * Property subscriptionStatusTag
    * @readonly
-   * @description The current subscription's status descriptor, or `null` when there is no subscription to describe.
+   *
+   * @description
+   * The current subscription's status descriptor, or `null` when there is no subscription to
+   * describe.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<SubscriptionStatusTagDescriptor | null>}
    */
   protected readonly subscriptionStatusTag: Signal<SubscriptionStatusTagDescriptor | null> =
@@ -896,9 +1105,13 @@ export class OrganizationSettingsPage {
   /**
    * Property subscriptionStatusIconClass
    * @readonly
-   * @description Maps the subscription status severity to its icon colour.
+   *
+   * @description
+   * Maps the subscription status severity to its icon colour.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {typeof SUBSCRIPTION_STATUS_TAG_ICON_CLASS}
    */
   protected readonly subscriptionStatusIconClass: typeof SUBSCRIPTION_STATUS_TAG_ICON_CLASS =
@@ -907,9 +1120,13 @@ export class OrganizationSettingsPage {
   /**
    * Property invoiceStatusTagIconClass
    * @readonly
-   * @description Maps an invoice status severity to its icon colour.
+   *
+   * @description
+   * Maps an invoice status severity to its icon colour.
+   *
    * @access protected
    * @since 1.8.0
+   *
    * @type {typeof INVOICE_STATUS_TAG_ICON_CLASS}
    */
   protected readonly invoiceStatusTagIconClass: typeof INVOICE_STATUS_TAG_ICON_CLASS =
@@ -918,9 +1135,13 @@ export class OrganizationSettingsPage {
   /**
    * Property renewalDate
    * @readonly
-   * @description The current subscription's renewal or expiry date, formatted for display.
+   *
+   * @description
+   * The current subscription's renewal or expiry date, formatted for display.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly renewalDate: Signal<string | null> = computed((): string | null =>
@@ -940,6 +1161,7 @@ export class OrganizationSettingsPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly renewalStatusText: Signal<string | null> = computed((): string | null => {
@@ -954,9 +1176,14 @@ export class OrganizationSettingsPage {
   /**
    * Property billingIntervalText
    * @readonly
-   * @description The current subscription's billing cadence ("Billed monthly"/"Billed annually"), or `null` while there is no subscription to describe.
+   *
+   * @description
+   * The current subscription's billing cadence ("Billed monthly"/"Billed annually"), or `null`
+   * while there is no subscription to describe.
+   *
    * @access protected
    * @since 1.8.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly billingIntervalText: Signal<string | null> = computed((): string | null => {
@@ -973,9 +1200,13 @@ export class OrganizationSettingsPage {
   /**
    * Property confirmingDelete
    * @readonly
-   * @description Whether the danger-zone confirmation dialog is open.
+   *
+   * @description
+   * Whether the danger-zone confirmation dialog is open.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly confirmingDelete: WritableSignal<boolean> = signal<boolean>(false);
@@ -983,9 +1214,13 @@ export class OrganizationSettingsPage {
   /**
    * Property confirmingSuspend
    * @readonly
-   * @description Whether the danger-zone suspend confirmation dialog is open.
+   *
+   * @description
+   * Whether the danger-zone suspend confirmation dialog is open.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly confirmingSuspend: WritableSignal<boolean> = signal<boolean>(false);
@@ -993,9 +1228,13 @@ export class OrganizationSettingsPage {
   /**
    * Property confirmingTransfer
    * @readonly
-   * @description Whether the danger-zone ownership-transfer confirmation dialog is open.
+   *
+   * @description
+   * Whether the danger-zone ownership-transfer confirmation dialog is open.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly confirmingTransfer: WritableSignal<boolean> = signal<boolean>(false);
@@ -1003,9 +1242,13 @@ export class OrganizationSettingsPage {
   /**
    * Property confirmingCancelSubscription
    * @readonly
-   * @description Whether the subscription tab's cancel confirmation dialog is open.
+   *
+   * @description
+   * Whether the subscription tab's cancel confirmation dialog is open.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly confirmingCancelSubscription: WritableSignal<boolean> = signal<boolean>(false);
@@ -1013,9 +1256,14 @@ export class OrganizationSettingsPage {
   /**
    * Property legalTypeOptions
    * @readonly
-   * @description The legal entity type catalog, feeding the Legal information section's type picker. Loaded once, the first time the General tab opens (it is the default tab, so effectively on mount).
+   *
+   * @description
+   * The legal entity type catalog, feeding the Legal information section's type picker. Loaded
+   * once, the first time the General tab opens (it is the default tab, so effectively on mount).
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<ReadonlyArray<OptionOutput>>}
    */
   protected readonly legalTypeOptions: WritableSignal<ReadonlyArray<OptionOutput>> = signal<
@@ -1033,6 +1281,7 @@ export class OrganizationSettingsPage {
    *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<readonly MemberSelectOption[]>}
    */
   protected readonly transferCandidates: WritableSignal<readonly MemberSelectOption[]> = signal<
@@ -1042,9 +1291,14 @@ export class OrganizationSettingsPage {
   /**
    * Property approvalActionTypes
    * @readonly
-   * @description The regulated action-type catalog, feeding the approval-policy form's rows. Loaded once, the first time the Compliance tab opens.
+   *
+   * @description
+   * The regulated action-type catalog, feeding the approval-policy form's rows. Loaded once, the
+   * first time the Compliance tab opens.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {WritableSignal<ReadonlyArray<ApprovalActionTypeOutput>>}
    */
   protected readonly approvalActionTypes: WritableSignal<ReadonlyArray<ApprovalActionTypeOutput>> =
@@ -1061,6 +1315,7 @@ export class OrganizationSettingsPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly currentPlanKey: WritableSignal<string | null> = signal<string | null>(null);
@@ -1073,15 +1328,20 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {string | null}
    */
   private requestedBillingContext: string | null = null;
 
   /**
    * Property requestedBillingOrganization
-   * @description Cancels obsolete billing reads even when changing organization from a hidden tab.
+   *
+   * @description
+   * Cancels obsolete billing reads even when changing organization from a hidden tab.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {string | null}
    */
   private requestedBillingOrganization: string | null = null;
@@ -1089,9 +1349,13 @@ export class OrganizationSettingsPage {
   /**
    * Property browser
    * @readonly
-   * @description Restricts secondary billing reads and polling to the browser.
+   *
+   * @description
+   * Restricts secondary billing reads and polling to the browser.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   private readonly browser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
@@ -1099,9 +1363,13 @@ export class OrganizationSettingsPage {
   /**
    * Property checkoutExpectation
    * @readonly
-   * @description Normalizes the return target without deriving subscription rights from query parameters.
+   *
+   * @description
+   * Normalizes the return target without deriving subscription rights from query parameters.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Signal<BillingCheckoutExpectation | null>}
    */
   private readonly checkoutExpectation: Signal<BillingCheckoutExpectation | null> = computed(() => {
@@ -1125,6 +1393,7 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.4.0
+   *
    * @type {boolean}
    */
   private hasRequestedApprovalActionTypes: boolean = false;
@@ -1139,6 +1408,7 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.6.0
+   *
    * @type {boolean}
    */
   private hasRequestedLegalTypes: boolean = false;
@@ -1153,6 +1423,7 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.6.0
+   *
    * @type {boolean}
    */
   private hasRequestedTransferCandidates: boolean = false;
@@ -1167,33 +1438,47 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private previousDeleteStatus: string = 'idle';
 
   /**
    * Property previousStatusChangeStatus
-   * @description The suspend/restore call state as of the last time {@link closeSuspendDialogOnSuccess} ran.
+   *
+   * @description
+   * The suspend/restore call state as of the last time {@link closeSuspendDialogOnSuccess} ran.
+   *
    * @access private
    * @since 1.6.0
+   *
    * @type {string}
    */
   private previousStatusChangeStatus: string = 'idle';
 
   /**
    * Property previousTransferStatus
-   * @description The transfer-ownership call state as of the last time {@link closeTransferDialogOnSuccess} ran.
+   *
+   * @description
+   * The transfer-ownership call state as of the last time {@link closeTransferDialogOnSuccess} ran.
+   *
    * @access private
    * @since 1.6.0
+   *
    * @type {string}
    */
   private previousTransferStatus: string = 'idle';
 
   /**
    * Property previousCancelSubscriptionStatus
-   * @description The subscription cancel call state as of the last time {@link closeCancelSubscriptionDialogOnSuccess} ran.
+   *
+   * @description
+   * The subscription cancel call state as of the last time
+   * {@link closeCancelSubscriptionDialogOnSuccess} ran.
+   *
    * @access private
    * @since 1.6.0
+   *
    * @type {string}
    */
   private previousCancelSubscriptionStatus: string = 'idle';
@@ -1210,6 +1495,7 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {EffectRef}
    */
   private readonly loadSubscriptionTabData: EffectRef = effect((): void => {
@@ -1260,6 +1546,8 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.4.0
+   *
+   * @type {EffectRef}
    */
   private readonly loadApprovalActionTypes: EffectRef = effect((): void => {
     const tabId: OrganizationSettingsTabId = this.activeTab();
@@ -1285,6 +1573,8 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.6.0
+   *
+   * @type {EffectRef}
    */
   private readonly loadLegalTypes: EffectRef = effect((): void => {
     const tabId: OrganizationSettingsTabId = this.activeTab();
@@ -1310,6 +1600,8 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.6.0
+   *
+   * @type {EffectRef}
    */
   private readonly loadTransferCandidates: EffectRef = effect((): void => {
     const tabId: OrganizationSettingsTabId = this.activeTab();
@@ -1353,6 +1645,8 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
   private readonly navigateAwayOnDelete: EffectRef = effect((): void => {
     const status: string = this.settingsStore.deleteCallState().status;
@@ -1379,6 +1673,8 @@ export class OrganizationSettingsPage {
    *
    * @access private
    * @since 1.6.0
+   *
+   * @type {EffectRef}
    */
   private readonly closeSuspendDialogOnSuccess: EffectRef = effect((): void => {
     const status: string = this.settingsStore.statusCallState().status;
@@ -1393,9 +1689,15 @@ export class OrganizationSettingsPage {
   /**
    * Property closeTransferDialogOnSuccess
    * @readonly
-   * @description Closes the ownership-transfer confirmation once it succeeds. Keyed on the transition into success.
+   *
+   * @description
+   * Closes the ownership-transfer confirmation once it succeeds. Keyed on the transition into
+   * success.
+   *
    * @access private
    * @since 1.6.0
+   *
+   * @type {EffectRef}
    */
   private readonly closeTransferDialogOnSuccess: EffectRef = effect((): void => {
     const status: string = this.settingsStore.transferOwnershipCallState().status;
@@ -1410,9 +1712,15 @@ export class OrganizationSettingsPage {
   /**
    * Property closeCancelSubscriptionDialogOnSuccess
    * @readonly
-   * @description Closes the subscription cancel confirmation once it succeeds, mirroring {@link closeSuspendDialogOnSuccess}.
+   *
+   * @description
+   * Closes the subscription cancel confirmation once it succeeds, mirroring
+   * {@link closeSuspendDialogOnSuccess}.
+   *
    * @access private
    * @since 1.6.0
+   *
+   * @type {EffectRef}
    */
   private readonly closeCancelSubscriptionDialogOnSuccess: EffectRef = effect((): void => {
     const status: string = this.billingStore.cancelCallState().status;
@@ -1440,6 +1748,31 @@ export class OrganizationSettingsPage {
   public constructor() {
     const memberAccess = inject(OrganizationMemberAccessStore);
     const organizationChanges = toObservable(this.organizationId);
+    const events = inject(Events);
+    events
+      .on(organizationSettingsStoreEvents.saveSucceeded)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (
+          this.pendingLegalOrganizationId !== this.organizationId() ||
+          this.pendingLegalOrganizationId === null
+        )
+          return;
+        this.pendingLegalOrganizationId = null;
+        this.legalResetRevision.update((revision) => revision + 1);
+      });
+    events
+      .on(organizationSettingsStoreEvents.saveFailed)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.pendingLegalOrganizationId = null;
+      });
+    effect(() => {
+      this.organizationId();
+      untracked(() => {
+        this.pendingLegalOrganizationId = null;
+      });
+    });
     inject(Events)
       .on(organizationBillingStoreEvents.checkoutReconciled)
       .pipe(
@@ -1472,9 +1805,13 @@ export class OrganizationSettingsPage {
   /**
    * Method refreshCheckout
    * @method refreshCheckout
-   * @description Restarts a bounded confirmation check after a delayed reconciliation or lost connection.
+   *
+   * @description
+   * Restarts a bounded confirmation check after a delayed reconciliation or lost connection.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected refreshCheckout(): void {
@@ -1596,9 +1933,15 @@ export class OrganizationSettingsPage {
    */
   protected saveLegal(values: OrganizationLegalFormValues): void {
     const organizationId: string | null = this.organizationId();
-    if (organizationId === null) return;
+    if (organizationId === null || this.settingsStore.isSaving()) return;
 
-    this.settingsStore.save({ organizationId, input: { ...values } });
+    const registeredAddress = Object.values(values.registeredAddress).some(
+      (value) => value.trim().length > 0,
+    )
+      ? { ...values.registeredAddress }
+      : {};
+    this.pendingLegalOrganizationId = organizationId;
+    this.settingsStore.save({ organizationId, input: { ...values, registeredAddress } });
   }
 
   /**
@@ -1851,7 +2194,6 @@ export class OrganizationSettingsPage {
    * @description
    * Archives the organization — a reversible soft delete — once the dialog's
    * typed-name gate has been satisfied.
-   *
    * The endpoint's own confirmation is the **slug**, not the name, so it is
    * read from the resolved organization rather than from what was typed: the
    * dialog proves intent in the reader's own terms, and this supplies the
@@ -1873,9 +2215,13 @@ export class OrganizationSettingsPage {
   /**
    * Method openSuspendDialog
    * @method openSuspendDialog
-   * @description Opens the danger-zone suspend confirmation dialog.
+   *
+   * @description
+   * Opens the danger-zone suspend confirmation dialog.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected openSuspendDialog(): void {
@@ -1885,9 +2231,13 @@ export class OrganizationSettingsPage {
   /**
    * Method suspendOrganization
    * @method suspendOrganization
-   * @description Suspends the organization once the reader confirms.
+   *
+   * @description
+   * Suspends the organization once the reader confirms.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected suspendOrganization(): void {
@@ -1921,9 +2271,13 @@ export class OrganizationSettingsPage {
   /**
    * Method openTransferDialog
    * @method openTransferDialog
-   * @description Opens the danger-zone ownership-transfer confirmation dialog.
+   *
+   * @description
+   * Opens the danger-zone ownership-transfer confirmation dialog.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected openTransferDialog(): void {
@@ -1962,10 +2316,15 @@ export class OrganizationSettingsPage {
   /**
    * Method invoiceStatusTagOf
    * @method invoiceStatusTagOf
-   * @description The presentation descriptor for an invoice's raw Stripe status.
+   *
+   * @description
+   * The presentation descriptor for an invoice's raw Stripe status.
+   *
    * @access protected
    * @since 1.8.0
+   *
    * @param {InvoiceOutput} invoice - The invoice row.
+   *
    * @returns {InvoiceStatusTagDescriptor} The matching descriptor.
    */
   protected invoiceStatusTagOf(invoice: InvoiceOutput): InvoiceStatusTagDescriptor {
@@ -1975,10 +2334,15 @@ export class OrganizationSettingsPage {
   /**
    * Method invoiceNumberOf
    * @method invoiceNumberOf
-   * @description The invoice's human number, or a neutral fallback for the rare row the provider sent none for.
+   *
+   * @description
+   * The invoice's human number, or a neutral fallback for the rare row the provider sent none for.
+   *
    * @access protected
    * @since 1.8.0
+   *
    * @param {InvoiceOutput} invoice - The invoice row.
+   *
    * @returns {string} The invoice number to display.
    */
   protected invoiceNumberOf(invoice: InvoiceOutput): string {
@@ -2035,10 +2399,15 @@ export class OrganizationSettingsPage {
   /**
    * Method saveAccessPolicy
    * @method saveAccessPolicy
-   * @description Persists a confirmed policy only for the active authorized organization.
+   *
+   * @description
+   * Persists a confirmed policy only for the active authorized organization.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {OrganizationAccessPolicyInput} policy - Confirmed policy.
+   *
    * @returns {void}
    */
   protected saveAccessPolicy(policy: OrganizationAccessPolicyInput): void {

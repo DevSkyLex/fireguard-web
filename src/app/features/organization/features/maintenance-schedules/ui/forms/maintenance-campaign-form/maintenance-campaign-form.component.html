@@ -55,30 +55,16 @@
         i18n="@@maintenance.campaignDialog.facility"
         >Facility</label
       >
-      <hlm-select [formField]="campaignForm.facility" [itemToString]="facilityLabelOf">
-        <hlm-select-trigger
-          buttonId="maintenance-campaign-facility"
-          class="w-full mobile-ui:min-h-11"
-          data-testid="maintenance-campaign-facility"
-        >
-          <hlm-select-value
-            placeholder="Every facility"
-            i18n-placeholder="@@maintenance.campaignDialog.everyFacility"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            <hlm-select-item
-              [value]="noScopeValue"
-              i18n="@@maintenance.campaignDialog.everyFacility"
-              >Every facility</hlm-select-item
-            >
-            @for (option of facilityOptions(); track option.value) {
-              <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
-            }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+      <app-facility-option-picker
+        [formField]="campaignForm.facility"
+        [options]="facilityOptions()"
+        inputId="maintenance-campaign-facility"
+        [page]="facilityPage()"
+        [pageCount]="facilityPageCount()"
+        [callState]="facilityCallState()"
+        (searchChanged)="facilitySearchChanged.emit($event)"
+        (pageChanged)="facilityPageChanged.emit($event)"
+      />
     </hlm-field>
 
     <hlm-field>

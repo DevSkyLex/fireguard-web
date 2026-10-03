@@ -66,13 +66,11 @@ import {
   resolveInterventionTag,
   type InterventionAssignRequest,
   type InterventionAssignSubmittedEvent,
-  type InterventionCalendarFilters,
   type InterventionDueRangeFilter,
   type InterventionDuplicatePrefill,
   type InterventionFilterFieldKey,
   type InterventionFilterFieldOption,
   type InterventionListFilters,
-  type InterventionListOptions,
   type InterventionListSort,
   type InterventionOutput,
   type InterventionPlannedStartRangeFilter,
@@ -208,8 +206,13 @@ import {
   type InterventionTableColumn,
   type InterventionTransitionRequest,
 } from '../../tables/intervention-table';
-import type { InterventionListItemViewModel } from './models';
+import type {
+  InterventionListItemViewModel,
+  InterventionView,
+  InterventionViewCriteria,
+} from './models';
 import type { InterventionBatchAction } from './models/intervention-batch-action.type';
+import { projectInterventionCalendarCriteria, resolveInterventionViewCriteria } from './utils';
 
 /**
  * Constant DUE_SOON_WINDOW_MS
@@ -255,22 +258,6 @@ const NO_FILTERS: InterventionListFilters = {
 };
 
 /**
- * Type InterventionView
- *
- * @description
- * Which of the four collection surfaces this page currently shows — driven by the `?view=` query
- * param (`board`/`calendar`/`recurrences`; absent or any other value ⇒ `list`) and written back on
- * a tab switch with `queryParamsHandling: 'merge'`, so the active narrowing survives the switch.
- * `recurrences` falls back to `list` for a viewer without `INTERVENTIONS_READ` — see
- * {@link activeView}.
- *
- * @since 11.0.0
- *
- * @type {InterventionView}
- */
-type InterventionView = 'list' | 'board' | 'calendar' | 'recurrences';
-
-/**
  * Type InterventionDueRangeOperator
  *
  * @description
@@ -306,59 +293,6 @@ type InterventionPlannedStartRangeOperator = 'greaterThan' | 'lessThan' | 'betwe
  * @type {InterventionEnumFilterKey}
  */
 type InterventionEnumFilterKey = 'status' | 'type' | 'priority' | 'site' | 'responsible' | 'label';
-
-/**
- * Constant INTERVENTION_VIEW_HONOURED_FILTER_KEYS
- *
- * @description
- * Which of the filter bar's eight fields each {@link InterventionView}
- * actually applies — the sole consumer is this page's own
- * {@link InterventionsPage.honouredFilterKeys}, so it lives beside the page
- * rather than in a shared `constants/` or `options/` unit (rule of three).
- * The list honours all eight; the board omits `status` (its columns already
- * narrow by status); the calendar honours only `status`, `type`, `site` and
- * `responsible` (`InterventionCalendarFilters`'s own `Pick`). A field the
- * active view does not honour is simply absent from that view's own filter
- * catalog ({@link InterventionsPage.offeredFilterFields}): the "+ Filter"
- * menu never lists it and, if the URL still carries a value for it from
- * another tab, no chip renders for it here either — the narrowing is neither
- * applied (each view's own query builder already ignores what it does not
- * declare) nor lost (the URL still carries it, and the chip reappears the
- * moment the operator returns to a view that honours the field).
- *
- * @since 11.0.0
- *
- * @type {Readonly<Record<InterventionView, readonly InterventionFilterFieldKey[]>>}
- *
- * @constant INTERVENTION_VIEW_HONOURED_FILTER_KEYS
- */
-const INTERVENTION_VIEW_HONOURED_FILTER_KEYS: Readonly<
-  Record<InterventionView, readonly InterventionFilterFieldKey[]>
-> = {
-  list: [
-    'status',
-    'type',
-    'priority',
-    'site',
-    'responsible',
-    'label',
-    'dueRange',
-    'plannedStartRange',
-    'dueWindow',
-  ],
-  board: [
-    'type',
-    'priority',
-    'site',
-    'responsible',
-    'label',
-    'dueRange',
-    'plannedStartRange',
-    'dueWindow',
-  ],
-  calendar: ['status', 'type', 'site', 'responsible'],
-  recurrences: [],
-};
 
 /**
  * Component InterventionsPage
@@ -1239,14 +1173,9 @@ export class InterventionsPage {
    *
    * @type {Signal<InterventionView>}
    */
-  protected readonly activeView: Signal<InterventionView> = computed<InterventionView>(() => {
-    const requested: string | undefined = this.view();
-
-    if (requested === 'board' || requested === 'calendar') return requested;
-    if (requested === 'recurrences' && this.canReadRecurrences()) return 'recurrences';
-
-    return 'list';
-  });
+  protected readonly activeView: Signal<InterventionView> = computed<InterventionView>(
+    () => this.viewCriteria().view,
+  );
 
   /**
    * Property memberIri
@@ -1302,6 +1231,24 @@ export class InterventionsPage {
         this.organizationId(),
       ),
   );
+
+  /**
+   * Property viewCriteria
+   * @readonly
+   *
+   * @description
+   * Resolves the permitted collection view and its supported filter catalogue without changing the
+   * URL.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<InterventionViewCriteria>}
+   */
+  private readonly viewCriteria: Signal<InterventionViewCriteria> =
+    computed<InterventionViewCriteria>(() =>
+      resolveInterventionViewCriteria(this.view(), this.canReadRecurrences()),
+    );
 
   /**
    * Property boardFilters
@@ -2912,7 +2859,7 @@ export class InterventionsPage {
    * @readonly
    *
    * @description
-   * The active tab's declared entry in {@link INTERVENTION_VIEW_HONOURED_FILTER_KEYS}.
+   * The supported filter catalogue resolved by the page-local view criteria policy.
    *
    * @access protected
    * @since 11.0.0
@@ -2921,7 +2868,7 @@ export class InterventionsPage {
    */
   protected readonly honouredFilterKeys: Signal<ReadonlySet<InterventionFilterFieldKey>> = computed<
     ReadonlySet<InterventionFilterFieldKey>
-  >(() => new Set(INTERVENTION_VIEW_HONOURED_FILTER_KEYS[this.activeView()]));
+  >(() => new Set(this.viewCriteria().filterKeys));
 
   /**
    * Property offeredFilterFields
@@ -2935,8 +2882,8 @@ export class InterventionsPage {
    * {@link honouredActiveFilterKeys} is what the bar's `activeKeys` input
    * reads — a value the URL still carries for it from another tab renders no
    * chip here either. The narrowing itself is unaffected: each tab's own
-   * query builder (`boardFilters`, `toCalendarFilters`) already reads only
-   * the fields it declares, regardless of what the bar renders.
+   * Board criteria and the Calendar projection already apply only the fields each view declares,
+   * regardless of what the bar renders.
    *
    * @access protected
    * @since 13.0.0
@@ -3562,7 +3509,7 @@ export class InterventionsPage {
         this.calendarStore.load({
           organizationId,
           window: this.calendarWindowOf(month),
-          filters: this.toCalendarFilters(filters),
+          filters: projectInterventionCalendarCriteria(filters, new Date()),
         });
       });
     });
@@ -6015,7 +5962,7 @@ export class InterventionsPage {
     this.calendarStore.load({
       organizationId: this.organizationId(),
       window: this.calendarWindowOf(month),
-      filters: this.toCalendarFilters(this.filters()),
+      filters: projectInterventionCalendarCriteria(this.filters(), new Date()),
     });
   }
 
@@ -6039,40 +5986,6 @@ export class InterventionsPage {
     return {
       after: new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1),
       before: new Date(anchor.getFullYear(), anchor.getMonth() + 2, 0, 23, 59, 59),
-    };
-  }
-
-  /**
-   * Method toCalendarFilters
-   * @method toCalendarFilters
-   *
-   * @description
-   * Narrows the URL's full filter set down to the four fields
-   * `InterventionCalendarFilters` accepts, reusing
-   * {@link buildInterventionListOptions} rather than duplicating its
-   * `equals`/`isAnyOf` folding logic — the sort and search it also computes
-   * are discarded, since the Calendar's store neither sorts nor searches.
-   *
-   * @access private
-   * @since 1.0.0
-   *
-   * @param {InterventionListFilters} filters - The URL's active narrowing.
-   *
-   * @returns {InterventionCalendarFilters} The narrowing the store accepts.
-   */
-  private toCalendarFilters(filters: InterventionListFilters): InterventionCalendarFilters {
-    const options: InterventionListOptions = buildInterventionListOptions(
-      filters,
-      { field: 'dueAt', direction: 'asc' },
-      '',
-      new Date(),
-    );
-
-    return {
-      status: options.status,
-      type: options.type,
-      site: options.site,
-      responsible: options.responsible,
     };
   }
 

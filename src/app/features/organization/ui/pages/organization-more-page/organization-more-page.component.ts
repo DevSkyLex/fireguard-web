@@ -97,9 +97,13 @@ export class OrganizationMorePage {
   /**
    * Property organizationContext
    * @readonly
-   * @description Current organization context supplied by the parent resolver.
+   *
+   * @description
+   * Current organization context supplied by the parent resolver.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationContextPort}
    */
   private readonly organizationContext: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
@@ -107,9 +111,13 @@ export class OrganizationMorePage {
   /**
    * Property memberAccess
    * @readonly
-   * @description Effective member grants shared with the bottom destinations.
+   *
+   * @description
+   * Effective member grants shared with the bottom destinations.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {OrganizationMemberAccessPort}
    */
   private readonly memberAccess: OrganizationMemberAccessPort = inject(
@@ -119,11 +127,53 @@ export class OrganizationMorePage {
 
   //#region Properties
   /**
+   * Property privacyContactEmail
+   * @readonly
+   *
+   * @description
+   * Reads the optional organization contact from the resolved member context without
+   * requesting settings access. A stale organization resource is never displayed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly privacyContactEmail: Signal<string | null> = computed(() => {
+    const organization = this.organizationContext.selectedOrganization();
+    return organization?.id === this.organizationContext.selectedOrganizationId()
+      ? organization?.privacyContactEmail?.trim() || null
+      : null;
+  });
+
+  /**
+   * Property privacyContactHref
+   * @readonly
+   *
+   * @description
+   * Encodes the address as an email recipient so reserved characters cannot become
+   * prefilled message parameters.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly privacyContactHref: Signal<string | null> = computed(() => {
+    const email = this.privacyContactEmail();
+    return email === null ? null : `mailto:${encodeURIComponent(email).replace(/%40/gu, '@')}`;
+  });
+
+  /**
    * Property navigation
    * @readonly
-   * @description Allowed secondary groups resolved without any collection requests.
+   *
+   * @description
+   * Allowed secondary groups resolved without any collection requests.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<OrganizationMobileNavigationModel>}
    */
   protected readonly navigation: Signal<OrganizationMobileNavigationModel> = computed(() =>

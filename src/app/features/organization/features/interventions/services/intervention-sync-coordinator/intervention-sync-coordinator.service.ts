@@ -9,7 +9,13 @@ import {
 } from '@angular/core';
 import { pageVisibility } from '@signality/core';
 import { ConnectivityService } from '@core/connectivity';
+import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  type OrganizationContextPort,
+} from '@features/organization/ports';
 import { InterventionSyncService } from '../intervention-sync';
 
 /**
@@ -29,6 +35,49 @@ import { InterventionSyncService } from '../intervention-sync';
  */
 @Service()
 export class InterventionSyncCoordinatorService {
+  //#region Properties
+  /**
+   * Property session
+   * @readonly
+   *
+   * @description
+   * Auth-owned revision binding each synchronization cycle to its initiating session.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {AuthSessionPort}
+   */
+  private readonly session: AuthSessionPort = inject(AUTH_SESSION_PORT);
+
+  /**
+   * Property identity
+   * @readonly
+   *
+   * @description
+   * Account identity owning durable intervention operations.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {UserIdentityPort}
+   */
+  private readonly identity: UserIdentityPort = inject(USER_IDENTITY_PORT);
+
+  /**
+   * Property organization
+   * @readonly
+   *
+   * @description
+   * Workspace context invalidating an obsolete synchronization cycle.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationContextPort}
+   */
+  private readonly organization: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
+
   /**
    * Property syncingState
    * @readonly
@@ -230,7 +279,9 @@ export class InterventionSyncCoordinatorService {
    * @type {WritableSignal<boolean>}
    */
   private readonly started: WritableSignal<boolean> = signal<boolean>(false);
+  //#endregion
 
+  //#region Constructor
   /**
    * Constructor
    * @constructor
@@ -248,12 +299,17 @@ export class InterventionSyncCoordinatorService {
   public constructor() {
     effect((): void => {
       if (!this.started()) return;
+      if (!this.session.isAuthenticated() || !this.identity.profile()) return;
+      this.session.sessionRevision();
+      this.organization.selectedOrganizationId();
       if (this.connectivity.online() && this.visibility() === 'visible') {
         untracked(() => void this.syncAll());
       }
     });
   }
+  //#endregion
 
+  //#region Methods
   /**
    * Method start
    * @method start
@@ -265,7 +321,7 @@ export class InterventionSyncCoordinatorService {
    * @access public
    * @since 1.0.0
    *
-   * @return {void}
+   * @returns {void}
    */
   public start(): void {
     if (typeof window === 'undefined') return;
@@ -275,19 +331,27 @@ export class InterventionSyncCoordinatorService {
   /**
    * Method syncIntervention
    * @method syncIntervention
-   * @description Awaits replay for one intervention before a publication or explicit operation retry.
+   *
+   * @description
+   * Awaits replay for one intervention before a publication or explicit operation retry.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Owning organization.
    * @param {string} interventionId - Intervention to synchronize.
+   *
    * @returns {Promise<void>} Resolves after replay and status refresh.
    */
   public async syncIntervention(organizationId: string, interventionId: string): Promise<void> {
+    const isCurrent = this.captureReplayContext();
+    if (!isCurrent()) return;
     if (this.connectivity.isOffline())
       throw new Error(
         $localize`:@@intervention.sync.connectBeforePublish:Connect before publishing this intervention.`,
       );
     await this.sync.replayOutbox(organizationId, interventionId);
+    if (!isCurrent()) return;
     await this.refreshStatus();
   }
 
@@ -309,7 +373,8 @@ export class InterventionSyncCoordinatorService {
    * @returns {Promise<void>} Resolves once every intervention outbox has been replayed.
    */
   public async syncAll(): Promise<void> {
-    if (this.connectivity.isOffline() || this.syncing()) {
+    const isCurrent = this.captureReplayContext();
+    if (!isCurrent() || this.connectivity.isOffline() || this.syncing()) {
       return;
     }
     this.syncingState.set(true);
@@ -319,11 +384,13 @@ export class InterventionSyncCoordinatorService {
       await interventionIds.reduce(
         (previous, interventionId) =>
           previous.then(async (): Promise<void> => {
+            if (!isCurrent()) return;
             const organizationId = await this.offline.organizationIdForIntervention(interventionId);
-            if (!organizationId) return;
+            if (!isCurrent() || !organizationId) return;
             try {
               await this.sync.replayOutbox(organizationId, interventionId);
             } catch {
+              if (!isCurrent()) return;
               this.problemState.set(
                 $localize`:@@intervention.sync.problem:A temporary synchronization error interrupted this intervention.`,
               );
@@ -332,8 +399,8 @@ export class InterventionSyncCoordinatorService {
         Promise.resolve(),
       );
     } finally {
-      await this.refreshStatus();
-      if (this.blockedOperationsState() === 0 && this.problemState() === null) {
+      if (isCurrent()) await this.refreshStatus();
+      if (isCurrent() && this.blockedOperationsState() === 0 && this.problemState() === null) {
         this.lastSyncedAtState.set(new Date());
       }
       this.syncingState.set(false);
@@ -354,17 +421,24 @@ export class InterventionSyncCoordinatorService {
    * @returns {Promise<void>} Resolves once blocked operations are reset and replayed.
    */
   public async retryBlocked(): Promise<void> {
+    const isCurrent = this.captureReplayContext();
+    if (!isCurrent()) return;
     const interventionIds = await this.offline.listInterventionIdsWithOutbox();
+    if (!isCurrent()) return;
     const operations = (
       await Promise.all(
         interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)),
       )
     ).flat();
+    if (!isCurrent()) return;
     await Promise.all(
       operations
         .filter((operation) => operation.status === 'conflict' || operation.status === 'failed')
-        .map((operation) => this.offline.retryOutbox(operation.id)),
+        .map((operation) =>
+          isCurrent() ? this.offline.retryOutbox(operation.id) : Promise.resolve(),
+        ),
     );
+    if (!isCurrent()) return;
     await this.syncAll();
   }
 
@@ -383,17 +457,24 @@ export class InterventionSyncCoordinatorService {
    * @returns {Promise<void>} Resolves once blocked operations are removed and status refreshed.
    */
   public async discardBlocked(): Promise<void> {
+    const isCurrent = this.captureReplayContext();
+    if (!isCurrent()) return;
     const interventionIds = await this.offline.listInterventionIdsWithOutbox();
+    if (!isCurrent()) return;
     const operations = (
       await Promise.all(
         interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)),
       )
     ).flat();
+    if (!isCurrent()) return;
     await Promise.all(
       operations
         .filter((operation) => operation.status === 'conflict' || operation.status === 'failed')
-        .map((operation) => this.offline.removeOutbox(operation.id)),
+        .map((operation) =>
+          isCurrent() ? this.offline.removeOutbox(operation.id) : Promise.resolve(),
+        ),
     );
+    if (!isCurrent()) return;
     await this.refreshStatus();
   }
 
@@ -412,16 +493,47 @@ export class InterventionSyncCoordinatorService {
    * @returns {Promise<void>} Resolves once the status signals are updated.
    */
   public async refreshStatus(): Promise<void> {
+    const isCurrent = this.captureReplayContext();
+    if (!isCurrent()) return;
     const interventionIds = await this.offline.listInterventionIdsWithOutbox();
+    if (!isCurrent()) return;
     const operations = (
       await Promise.all(
         interventionIds.map((interventionId) => this.offline.listOutbox(interventionId)),
       )
     ).flat();
+    if (!isCurrent()) return;
     const blocked = operations.filter(
       (operation) => operation.status === 'conflict' || operation.status === 'failed',
     );
     this.blockedOperationsState.set(blocked.length);
     this.problemState.set(blocked[0]?.error ?? null);
   }
+
+  /**
+   * Method captureReplayContext
+   * @method captureReplayContext
+   *
+   * @description
+   * Captures ownership before reading operations and keeps obsolete cycles from continuing in a
+   * replacement session.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {() => boolean} Whether the initiating account, session and workspace still own this
+   *   cycle.
+   */
+  private captureReplayContext(): () => boolean {
+    const revision = this.session.sessionRevision();
+    const owner = this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null;
+    const organizationId = this.organization.selectedOrganizationId();
+    return (): boolean =>
+      owner !== null &&
+      this.session.isAuthenticated() &&
+      revision === this.session.sessionRevision() &&
+      owner === (this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null) &&
+      organizationId === this.organization.selectedOrganizationId();
+  }
+  //#endregion
 }

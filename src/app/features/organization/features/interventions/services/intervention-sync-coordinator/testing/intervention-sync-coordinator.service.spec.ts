@@ -1,7 +1,10 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ConnectivityService } from '@core/connectivity';
+import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { InterventionOfflineService } from '@features/organization/features/interventions/data-access';
+import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { InterventionSyncService } from '../../intervention-sync';
 import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator.service';
 
@@ -17,11 +20,24 @@ describe('InterventionSyncCoordinatorService', () => {
     removeOutbox: ReturnType<typeof vi.fn>;
   };
   let sync: { replayOutbox: ReturnType<typeof vi.fn> };
+  let revision: WritableSignal<number>;
+  let authenticated: WritableSignal<boolean>;
+  let profile: WritableSignal<ShellUserProfile | null>;
+  let organizationId: WritableSignal<string | null>;
 
   function build(): InterventionSyncCoordinatorService {
     TestBed.configureTestingModule({
       providers: [
         InterventionSyncCoordinatorService,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision: revision, isAuthenticated: authenticated },
+        },
+        { provide: USER_IDENTITY_PORT, useValue: { profile } },
+        {
+          provide: ORGANIZATION_CONTEXT_PORT,
+          useValue: { selectedOrganizationId: organizationId },
+        },
         { provide: ConnectivityService, useValue: connectivity },
         { provide: InterventionOfflineService, useValue: offline },
         { provide: InterventionSyncService, useValue: sync },
@@ -32,6 +48,10 @@ describe('InterventionSyncCoordinatorService', () => {
   }
 
   beforeEach(() => {
+    revision = signal(1);
+    authenticated = signal(true);
+    profile = signal<ShellUserProfile | null>({ id: 'account-a' });
+    organizationId = signal<string | null>('org-1');
     connectivity = { isOffline: vi.fn().mockReturnValue(false), online: () => true };
     offline = {
       listInterventionIdsWithOutbox: vi.fn().mockResolvedValue([]),
@@ -41,6 +61,62 @@ describe('InterventionSyncCoordinatorService', () => {
       removeOutbox: vi.fn().mockResolvedValue(undefined),
     };
     sync = { replayOutbox: vi.fn().mockResolvedValue(undefined) };
+  });
+
+  it.each(['explicit', 'background'])(
+    'stops an obsolete %s cycle before the next intervention and status refresh',
+    async (trigger) => {
+      let resolveReplay!: () => void;
+      sync.replayOutbox.mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          resolveReplay = resolve;
+        }),
+      );
+      offline.listInterventionIdsWithOutbox.mockResolvedValue(['i-1', 'i-2']);
+      const service = build();
+      const pass = trigger === 'explicit' ? service.syncAll() : undefined;
+      if (trigger === 'background') {
+        service.start();
+        TestBed.tick();
+      }
+      await vi.waitFor(() => expect(sync.replayOutbox).toHaveBeenCalledTimes(1));
+      revision.set(2);
+      profile.set({ id: 'account-b' });
+      revision.set(3);
+      profile.set({ id: 'account-a' });
+      authenticated.set(false);
+      resolveReplay();
+      if (pass) await pass;
+      else await flush();
+
+      expect(sync.replayOutbox).toHaveBeenCalledTimes(1);
+      expect(offline.organizationIdForIntervention).toHaveBeenCalledTimes(1);
+      expect(offline.listOutbox).not.toHaveBeenCalled();
+      expect(service.lastSyncedAt()).toBeNull();
+      expect(service.syncing()).toBe(false);
+    },
+  );
+
+  it('does not refresh a publication replay status after its session changes', async () => {
+    let resolveReplay!: () => void;
+    sync.replayOutbox.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveReplay = resolve;
+      }),
+    );
+    const service = build();
+    const pass = service.syncIntervention('org-1', 'i-1');
+    revision.set(2);
+    resolveReplay();
+    await pass;
+    expect(offline.listInterventionIdsWithOutbox).not.toHaveBeenCalled();
+    expect(service.lastSyncedAt()).toBeNull();
+  });
+
+  it('does not load a queue before session establishment', async () => {
+    authenticated.set(false);
+    await build().syncAll();
+    expect(offline.listInterventionIdsWithOutbox).not.toHaveBeenCalled();
   });
 
   it('should not replay the outbox while offline', async () => {
@@ -118,6 +194,15 @@ describe('InterventionSyncCoordinatorService', () => {
       TestBed.configureTestingModule({
         providers: [
           InterventionSyncCoordinatorService,
+          {
+            provide: AUTH_SESSION_PORT,
+            useValue: { sessionRevision: revision, isAuthenticated: authenticated },
+          },
+          { provide: USER_IDENTITY_PORT, useValue: { profile } },
+          {
+            provide: ORGANIZATION_CONTEXT_PORT,
+            useValue: { selectedOrganizationId: organizationId },
+          },
           { provide: ConnectivityService, useValue: connectivityWithSignal },
           { provide: InterventionOfflineService, useValue: offline },
           { provide: InterventionSyncService, useValue: sync },

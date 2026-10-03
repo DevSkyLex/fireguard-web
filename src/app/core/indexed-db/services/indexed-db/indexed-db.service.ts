@@ -2,7 +2,14 @@ import { isPlatformBrowser } from '@angular/common';
 import { inject, PLATFORM_ID } from '@angular/core';
 import type { IndexedDbSchema, IndexedEntry } from '@core/indexed-db/models';
 
-/** Key the owner binding is recorded under, inside the schema's owner store. */
+/**
+ * Constant OWNER_KEY
+ *
+ * @description
+ * Key the owner binding is recorded under, inside the schema's owner store.
+ *
+ * @type {string}
+ */
 const OWNER_KEY = 'ownerUserId';
 
 /**
@@ -13,22 +20,20 @@ const OWNER_KEY = 'ownerUserId';
  * Base class for a feature's local IndexedDB database: the connection, the
  * store-agnostic CRUD primitives, and the per-user owner binding that stops
  * locally persisted data from leaking across authenticated users.
- *
  * Extend it and declare a {@link schema}, the same way feature API services
  * extend `HydraApiService`. It is deliberately not injectable on its own —
  * there is no such thing as "the" database, only a feature's.
- *
  * Two properties are inherited and worth knowing about. It never caches the
  * connection: every primitive re-opens the database, which keeps the class free
  * of invalidation logic at the cost of a handle per call. And it creates no
  * indexes, so every filtered read is a full `getAll()` plus an in-memory
  * filter — fine for the small, per-user working sets it is meant to hold, and
  * something to reconsider before storing anything large.
- *
  * `core` cannot depend on a feature, so the owner id is a parameter rather than
  * something read from an identity port: the owning feature passes it in.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export abstract class IndexedDbService {
@@ -39,7 +44,6 @@ export abstract class IndexedDbService {
    *
    * @description
    * Whether the service runs in a browser platform with IndexedDB access.
-   *
    * Public on purpose: the layers above guard on it too, so that an effect or
    * a repository never schedules work that would no-op on the server.
    *
@@ -120,7 +124,6 @@ export abstract class IndexedDbService {
    * Ensures locally persisted data never crosses authenticated users: if the
    * stores belonged to someone else they are wiped before the new owner is
    * recorded.
-   *
    * Binding work is chained on a serialized promise so concurrent callers
    * await the same operation rather than racing two wipes.
    *
@@ -186,18 +189,31 @@ export abstract class IndexedDbService {
    * @param {string} storeName - Target object store.
    * @param {string} key - Record key.
    * @param {unknown} value - Record value.
+   * @param {(() => boolean) | undefined} isCurrent - Optional owner/session guard rechecked before
+   *   the transaction opens.
    *
    * @returns {Promise<void>} A promise resolving once the value is stored.
    */
-  public async put(storeName: string, key: string, value: unknown): Promise<void> {
+  public async put(
+    storeName: string,
+    key: string,
+    value: unknown,
+    isCurrent?: () => boolean,
+  ): Promise<void> {
     if (!this.browser) return;
     const database = await this.open();
+    if (isCurrent && !isCurrent())
+      throw new DOMException('Offline operation ownership changed.', 'AbortError');
     await new Promise<void>((resolve, reject) => {
-      const request = database
-        .transaction(storeName, 'readwrite')
-        .objectStore(storeName)
-        .put(value, key);
-      request.addEventListener('success', () => resolve());
+      const transaction = database.transaction(storeName, 'readwrite');
+      const request = transaction.objectStore(storeName).put(value, key);
+      transaction.addEventListener('complete', () => resolve());
+      transaction.addEventListener('abort', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction aborted')),
+      );
+      transaction.addEventListener('error', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction failed')),
+      );
       request.addEventListener('error', () =>
         reject(request.error ?? new Error('IndexedDB request failed')),
       );
@@ -258,12 +274,16 @@ export abstract class IndexedDbService {
    * @access public
    * @since 1.0.0
    *
-   * @param {Readonly<Record<string, readonly IndexedEntry<unknown>[]>>} entries - Store name to entries.
+   * @param {Readonly<Record<string, readonly IndexedEntry<unknown>[]>>} entries - Store name to
+   *   entries.
+   * @param {(() => boolean) | undefined} isCurrent - Optional owner/session guard rechecked before
+   *   the transaction opens.
    *
    * @returns {Promise<void>} A promise resolving once the transaction commits.
    */
   public async putTransaction(
     entries: Readonly<Record<string, readonly IndexedEntry<unknown>[]>>,
+    isCurrent?: () => boolean,
   ): Promise<void> {
     if (!this.browser) return;
     const storeNames = Object.keys(entries).filter(
@@ -272,6 +292,8 @@ export abstract class IndexedDbService {
     if (storeNames.length === 0) return;
 
     const database = await this.open();
+    if (isCurrent && !isCurrent())
+      throw new DOMException('Offline operation ownership changed.', 'AbortError');
     await new Promise<void>((resolve, reject) => {
       const transaction = database.transaction(storeNames, 'readwrite');
       for (const storeName of storeNames) {
@@ -390,18 +412,26 @@ export abstract class IndexedDbService {
    *
    * @param {string} storeName - Target object store.
    * @param {string} key - Record key.
+   * @param {(() => boolean) | undefined} isCurrent - Optional owner/session guard rechecked before
+   *   the transaction opens.
    *
    * @returns {Promise<void>} A promise resolving once the record is deleted.
    */
-  public async remove(storeName: string, key: string): Promise<void> {
+  public async remove(storeName: string, key: string, isCurrent?: () => boolean): Promise<void> {
     if (!this.browser) return;
     const database = await this.open();
+    if (isCurrent && !isCurrent())
+      throw new DOMException('Offline operation ownership changed.', 'AbortError');
     await new Promise<void>((resolve, reject) => {
-      const request = database
-        .transaction(storeName, 'readwrite')
-        .objectStore(storeName)
-        .delete(key);
-      request.addEventListener('success', () => resolve());
+      const transaction = database.transaction(storeName, 'readwrite');
+      const request = transaction.objectStore(storeName).delete(key);
+      transaction.addEventListener('complete', () => resolve());
+      transaction.addEventListener('abort', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction aborted')),
+      );
+      transaction.addEventListener('error', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction failed')),
+      );
       request.addEventListener('error', () =>
         reject(request.error ?? new Error('IndexedDB request failed')),
       );
@@ -495,19 +525,17 @@ export abstract class IndexedDbService {
    * @description
    * Opens the database, creating any missing store and dropping any retired
    * one on the way.
-   *
    * The upgrade path never reads `oldVersion`: it is idempotent by
    * construction, which is what lets a schema change be a one-line edit rather
    * than a migration ladder.
-   *
    * Two listeners make that one-line edit survivable in the field:
    *
-   * - `blocked` fires when another tab still holds the previous version open.
-   *   Without it the promise never settles, and because every primitive awaits
-   *   `open()`, the whole offline queue silently hangs — a field agent keeps
-   *   working and loses everything on close. Rejecting surfaces the failure.
-   * - `versionchange` fires on *this* handle when another tab starts an upgrade.
-   *   Closing lets that upgrade proceed instead of being the tab that blocks it.
+   * - `blocked` fires when another tab still holds the previous version open. Without it the promise
+   *   never settles, and because every primitive awaits `open()`, the whole offline queue silently
+   *   hangs — a field agent keeps working and loses everything on close. Rejecting surfaces the
+   *   failure.
+   * - `versionchange` fires on _this_ handle when another tab starts an upgrade. Closing lets that
+   *   upgrade proceed instead of being the tab that blocks it.
    *
    * @access private
    * @since 1.0.0

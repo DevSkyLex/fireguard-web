@@ -153,7 +153,23 @@ describe('InspectionsPage', () => {
         providers: [
           {
             provide: InspectionCreationOptionsStore,
-            useValue: { equipmentOptions: signal([]), loadEquipmentOptions },
+            useValue: {
+              equipmentOptions: signal([]),
+              loadEquipmentOptions,
+              loadChecklists: loadChecklistOptions,
+              checklists: signal([]),
+              equipmentPage: signal(1),
+              equipmentPageCount: signal(1),
+              checklistPage: signal(1),
+              checklistPageCount: signal(1),
+              equipmentSearch: signal(''),
+              checklistSearch: signal(''),
+              loadCallState: signal(idleCallState()),
+              checklistCallState: signal(idleCallState()),
+              clear: vi.fn(),
+              searchEquipment: vi.fn(),
+              searchChecklists: vi.fn(),
+            },
           },
           {
             provide: ChecklistStore,
@@ -281,7 +297,7 @@ describe('InspectionsPage', () => {
 
     expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
     expect(loadEquipmentOptions).toHaveBeenCalledWith('org-1');
-    expect(loadChecklistOptions).toHaveBeenCalledWith('org-1');
+    expect(loadChecklistOptions).toHaveBeenCalledWith({ organizationId: 'org-1' });
   });
 
   it('should open an equipment-scoped creation deep link and clear its one-shot query params', async () => {
@@ -290,7 +306,7 @@ describe('InspectionsPage', () => {
     expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
     expect(fixture.componentInstance['pendingScopeId']()).toBe('equipment-2');
     expect(loadEquipmentOptions).toHaveBeenCalledWith('org-1');
-    expect(loadChecklistOptions).toHaveBeenCalledWith('org-1');
+    expect(loadChecklistOptions).toHaveBeenCalledWith({ organizationId: 'org-1' });
     expect(navigate).toHaveBeenCalledWith(
       [],
       expect.objectContaining({ queryParams: { create: null, equipment: null } }),
@@ -436,17 +452,17 @@ describe('InspectionsPage', () => {
     expect(load.mock.calls.at(-1)?.[0].options.result).toBeUndefined();
   });
 
+  function toggleButton(): HTMLButtonElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="inspections-filters-toggle"]',
+    );
+  }
+
+  function filterBar(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector('#inspections-filter-bar');
+  }
+
   describe('filters visibility', () => {
-    function toggleButton(): HTMLButtonElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="inspections-filters-toggle"]',
-      );
-    }
-
-    function filterBar(): HTMLElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector('#inspections-filter-bar');
-    }
-
     it('should render collapsed with no badge when nothing is filtered on arrival', async () => {
       fixture = await createPage();
 

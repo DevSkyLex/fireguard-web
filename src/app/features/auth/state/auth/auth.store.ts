@@ -47,6 +47,8 @@ import {
   toResendAvailableIn,
   toResendDelaySeconds,
 } from '@features/auth/utils';
+import { SessionCoordinationService } from '../../services/session-coordination/session-coordination.service';
+import { readJwtSubject } from '../../utils/token-subject/token-subject.utils';
 import { ActiveTrustedDeviceStore } from '../trusted-device';
 import { authStoreEvents } from './events';
 import type { AuthState } from './models';
@@ -297,6 +299,7 @@ export const AuthStore = signalStore(
       userProfilePort = inject<UserProfilePort>(USER_PROFILE_PORT),
       activeTrustedDeviceStore = inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore),
       destroyRef = inject(DestroyRef),
+      coordination = inject(SessionCoordinationService),
     ) => {
       /**
        * @description
@@ -332,6 +335,38 @@ export const AuthStore = signalStore(
       }
 
       /**
+       * Function clearLocalSession
+       *
+       * @description
+       * Ends local identity before queue purges and optionally invalidates other tabs.
+       *
+       * @access private
+       *
+       * @param {boolean} announce - Whether this tab originated the session change.
+       *
+       * @returns {void}
+       */
+      function clearLocalSession(announce: boolean): void {
+        invalidateSession();
+        activeTrustedDeviceStore.clear();
+        userProfilePort.clear();
+        patchState(store, {
+          ...INITIAL_AUTH_STATE,
+          initialized: true,
+          sessionRevision: store.sessionRevision(),
+        });
+        dispatcher.dispatch(authStoreEvents.sessionEnded());
+        if (announce) coordination.publish();
+      }
+
+      destroyRef.onDestroy(
+        coordination.subscribe(() => {
+          clearLocalSession(false);
+          dispatcher.dispatch(authStoreEvents.sessionInvalidated());
+        }),
+      );
+
+      /**
        * Function renewSession
        *
        * @description
@@ -345,6 +380,8 @@ export const AuthStore = signalStore(
       function renewSession(): Observable<string | null> {
         if (renewal) return renewal;
         const revision = store.sessionRevision();
+        const previousToken = store.accessToken();
+        const previousSubject = previousToken ? readJwtSubject(previousToken) : null;
         const request$: Observable<string | null> = defer(() => {
           if (revision !== store.sessionRevision() || store.isLoggingOut()) return of(null);
           patchState(store, { refreshCallState: pendingCallState() });
@@ -353,6 +390,14 @@ export const AuthStore = signalStore(
             takeUntilDestroyed(destroyRef),
             map((response: AuthenticatedLoginOutput): string | null => {
               if (revision !== store.sessionRevision()) return null;
+              if (
+                previousToken &&
+                (!previousSubject || readJwtSubject(response.access_token) !== previousSubject)
+              ) {
+                clearLocalSession(true);
+                dispatcher.dispatch(authStoreEvents.sessionInvalidated());
+                return null;
+              }
               patchState(store, {
                 accessToken: response.access_token,
                 expiresAt: calculateExpiresAt(response.expires_in),
@@ -382,6 +427,7 @@ export const AuthStore = signalStore(
                   activeTrustedDeviceStore.clear();
                   userProfilePort.clear();
                   dispatcher.dispatch(authStoreEvents.sessionEnded());
+                  coordination.publish();
                 }),
               );
             }),
@@ -424,6 +470,7 @@ export const AuthStore = signalStore(
           challengeToken: null,
         });
         userProfilePort.load();
+        coordination.publish();
       };
 
       /**
@@ -542,6 +589,7 @@ export const AuthStore = signalStore(
                     userProfilePort.clear();
                     dispatcher.dispatch(authStoreEvents.sessionEnded());
                     dispatcher.dispatch(authStoreEvents.logoutSucceeded());
+                    coordination.publish();
                   },
                   error: (error: unknown) => {
                     if (revision !== store.sessionRevision()) return;
@@ -564,6 +612,7 @@ export const AuthStore = signalStore(
                         toStoreFailureEventPayload(storeError, 'Logout failed'),
                       ),
                     );
+                    coordination.publish();
                   },
                 }),
               );
@@ -769,6 +818,7 @@ export const AuthStore = signalStore(
             mfaToken: null,
             challengeToken: null,
           });
+          coordination.publish();
         },
 
         /**
@@ -818,20 +868,7 @@ export const AuthStore = signalStore(
          * @fires authStoreEvents.sessionEnded
          */
         clearToken(): void {
-          invalidateSession();
-          activeTrustedDeviceStore.clear();
-          patchState(store, {
-            ...INITIAL_AUTH_STATE,
-            initialized: true,
-            sessionRevision: store.sessionRevision(),
-            accessToken: null,
-            expiresAt: null,
-            mfaRequired: false,
-            mfaToken: null,
-            challengeToken: null,
-            mfaResendAvailableAt: null,
-          });
-          dispatcher.dispatch(authStoreEvents.sessionEnded());
+          clearLocalSession(true);
         },
 
         /**

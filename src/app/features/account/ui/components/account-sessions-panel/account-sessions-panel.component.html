@@ -88,6 +88,16 @@
                   <span i18n="@@account.sessions.created">Signed in</span>
                   {{ session.createdAt | date: 'medium' }}
                 </span>
+                <p
+                  class="text-xs wrap-anywhere text-muted-foreground"
+                  data-testid="account-sessions-location"
+                >
+                  @if (locations().get(session.id); as location) {
+                    <span i18n="@@account.sessions.location">Sign-in location</span>: {{ location }}
+                  } @else {
+                    <span i18n="@@account.sessions.locationUnavailable">Location unavailable</span>
+                  }
+                </p>
               </div>
             </div>
 
@@ -108,6 +118,25 @@
           </li>
         }
       </ul>
+      @if (hasLocations()) {
+        <p
+          class="text-xs leading-relaxed text-muted-foreground"
+          data-testid="account-sessions-attribution"
+        >
+          <span i18n="@@account.sessions.locationApproximate"
+            >Approximate location. VPNs and mobile networks may show a different place.</span
+          >
+          &ngsp;
+          <a
+            href="https://db-ip.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="underline underline-offset-4 hover:text-foreground"
+            i18n="@@account.sessions.geoIpAttribution"
+            >Geolocation by DB-IP</a
+          >
+        </p>
+      }
     }
 
     @if (hasOtherSessions()) {

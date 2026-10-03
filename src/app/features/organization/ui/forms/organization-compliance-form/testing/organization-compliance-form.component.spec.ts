@@ -58,6 +58,12 @@ describe('OrganizationComplianceForm', () => {
   });
 
   it('should render one periodicity row per equipment type the seed carries', async () => {
+    expect(root().textContent).toContain(
+      'Default inspection interval configured for each equipment type.',
+    );
+    expect(root().textContent).toContain(
+      'Resolution deadline configured by the organization, in days for each severity.',
+    );
     expect(root().textContent).toContain('Fire extinguisher');
     expect(root().textContent).toContain('Camera');
     expect(

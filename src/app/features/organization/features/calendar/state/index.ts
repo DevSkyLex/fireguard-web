@@ -6,3 +6,4 @@ export {
   type CalendarFeedLoadCommand,
   type CalendarFeedStoreType,
 } from './calendar-feed';
+export { CalendarFacilityOptionsStore } from './calendar-facility-options';

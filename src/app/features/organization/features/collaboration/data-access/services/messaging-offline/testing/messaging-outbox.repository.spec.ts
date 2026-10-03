@@ -1,4 +1,7 @@
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import type { MessagingOutboxOperation } from '@features/organization/features/collaboration/models';
 import { MessagingDatabaseService } from '../messaging-database.service';
 import { MessagingOutboxRepository } from '../messaging-outbox.repository';
@@ -27,11 +30,18 @@ function send(conversationId: string, body: string) {
 describe('MessagingOutboxRepository', () => {
   let store: Map<string, unknown>;
   let database: ReturnType<typeof inMemoryDatabase>;
+  let revision: WritableSignal<number>;
+  let profile: WritableSignal<ShellUserProfile | null>;
 
   function build(): MessagingOutboxRepository {
     TestBed.configureTestingModule({
       providers: [
         MessagingOutboxRepository,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision: revision, isAuthenticated: signal(true) },
+        },
+        { provide: USER_IDENTITY_PORT, useValue: { profile } },
         { provide: MessagingDatabaseService, useValue: database },
       ],
     });
@@ -40,6 +50,8 @@ describe('MessagingOutboxRepository', () => {
   }
 
   beforeEach(() => {
+    revision = signal(1);
+    profile = signal<ShellUserProfile | null>({ id: 'account-a' });
     store = new Map<string, unknown>();
     database = inMemoryDatabase(store);
   });
@@ -54,6 +66,54 @@ describe('MessagingOutboxRepository', () => {
     expect(repository.pendingCount()).toBe(1);
     expect(repository.failedCount()).toBe(0);
     expect(database.ensureOwnerBound).toHaveBeenCalled();
+  });
+
+  it.each(['replacement', 'same-account return'])(
+    'does not queue old work when owner binding resolves after $s',
+    async (change) => {
+      let resolveBinding!: () => void;
+      database.ensureOwnerBound.mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          resolveBinding = resolve;
+        }),
+      );
+      const repository = build();
+      const queued = repository.queue('c1', 'message.send', send('c1', 'Old intent.'));
+      const rejected = expect(queued).rejects.toMatchObject({ name: 'AbortError' });
+      revision.set(2);
+      profile.set({ id: 'account-b' });
+      if (change === 'same-account return') {
+        revision.set(3);
+        profile.set({ id: 'account-a' });
+      }
+      resolveBinding();
+      await rejected;
+      expect(database.put).not.toHaveBeenCalled();
+      expect(store.size).toBe(0);
+      expect(repository.pendingCount()).toBe(0);
+    },
+  );
+
+  it('does not mark the replacement owner queue after a held row read', async () => {
+    const repository = build();
+    await repository.queue('c1', 'message.send', send('c1', 'Old intent.'));
+    const [operation] = await repository.list();
+    let resolveRead!: (operation: MessagingOutboxOperation) => void;
+    database.get.mockReturnValueOnce(
+      new Promise<MessagingOutboxOperation>((resolve) => {
+        resolveRead = resolve;
+      }),
+    );
+    const marked = repository.markFailed(operation.id, 'Old response.');
+    const rejected = expect(marked).rejects.toMatchObject({ name: 'AbortError' });
+    await vi.waitFor(() => expect(database.get).toHaveBeenCalled());
+    revision.set(2);
+    profile.set({ id: 'account-b' });
+    database.put.mockClear();
+    resolveRead(operation);
+    await rejected;
+    expect(database.put).not.toHaveBeenCalled();
+    expect((store.get(operation.id) as MessagingOutboxOperation).status).toBe('pending');
   });
 
   it('should keep same-millisecond writes in order', async () => {

@@ -1,3 +1,4 @@
+import type { Server } from 'node:http';
 import { join } from 'node:path';
 import {
   AngularNodeAppEngine,
@@ -18,6 +19,35 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+let draining = false;
+
+/**
+ * Function drainServer
+ *
+ * @description
+ * Stops accepting connections and lets active requests finish within the shutdown deadline.
+ * Closes remaining connections when the deadline expires.
+ *
+ * @access public
+ *
+ * @param {Server} server - HTTP server owned by this process.
+ * @param {number} timeoutMs - Maximum request drain duration in milliseconds.
+ * @returns {Promise<boolean>} Whether every connection closed before the deadline.
+ */
+export const drainServer = (server: Server, timeoutMs = 15000): Promise<boolean> =>
+  new Promise((resolve, reject) => {
+    const deadline = setTimeout(() => {
+      server.closeAllConnections();
+      resolve(false);
+    }, timeoutMs);
+    deadline.unref();
+    server.close((error) => {
+      clearTimeout(deadline);
+      if (error) reject(error);
+      else resolve(true);
+    });
+    server.closeIdleConnections();
+  });
 
 /**
  * Function serveRuntimeEnvironment
@@ -86,6 +116,10 @@ app.use((_req, res, next) => {
 });
 
 app.get('/runtime-config.json', serveRuntimeEnvironment);
+app.get('/healthz', (_request, response) => {
+  response.setHeader('Cache-Control', 'no-store');
+  response.sendStatus(draining ? 503 : 200);
+});
 
 /**
  * Serve static files from /browser
@@ -167,11 +201,25 @@ app.use((req, res, next) => {
  */
 if (isMainModule(import.meta.url) || process.env['pm_id']) {
   const port = process.env['PORT'] || 4000;
-  app.listen(port, (error) => {
+  const server = app.listen(port, (error) => {
     if (error) {
       throw error;
     }
   });
+  const shutdown = (): void => {
+    if (draining) return;
+    draining = true;
+    void drainServer(server).then(
+      (completed) => {
+        process.exit(completed ? 0 : 1);
+      },
+      () => {
+        process.exit(1);
+      },
+    );
+  };
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 }
 
 /**

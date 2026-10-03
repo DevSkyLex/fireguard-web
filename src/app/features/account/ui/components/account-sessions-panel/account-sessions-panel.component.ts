@@ -52,6 +52,8 @@ import { HlmSpinner } from '@shared/ui/spinner';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-account-sessions-panel
@@ -67,8 +69,6 @@ import { HlmSpinner } from '@shared/ui/spinner';
  *   (retried)="sessionStore.load()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-account-sessions-panel',
@@ -99,6 +99,20 @@ import { HlmSpinner } from '@shared/ui/spinner';
 })
 export class AccountSessionsPanel {
   //#region Inputs
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * Account display locale supplied by the owning page.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly locale: InputSignal<string> = input<string>('en');
+
   /**
    * Property sessions
    * @readonly
@@ -250,6 +264,68 @@ export class AccountSessionsPanel {
 
   //#region Properties
   /**
+   * Property countryNames
+   * @readonly
+   *
+   * @description
+   * Localized region names using the same locale on server and browser.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Signal<Intl.DisplayNames>}
+   */
+  private readonly countryNames: Signal<Intl.DisplayNames> = computed(
+    () =>
+      new Intl.DisplayNames([this.locale()], {
+        type: 'region',
+      }),
+  );
+
+  /**
+   * Property locations
+   * @readonly
+   *
+   * @description
+   * Presentation of the sign-in snapshot; no lookup or tracking on reads.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<ReadonlyMap<string, string | null>>}
+   */
+  protected readonly locations: Signal<ReadonlyMap<string, string | null>> = computed(
+    () =>
+      new Map(
+        this.sessions().map((session) => {
+          const code = session.country;
+          const country =
+            code && /^[A-Z]{2}$/.test(code) ? (this.countryNames().of(code) ?? code) : null;
+          return [
+            session.id,
+            country ? (session.city ? `${session.city} · ${country}` : country) : null,
+          ];
+        }),
+      ),
+  );
+
+  /**
+   * Property hasLocations
+   * @readonly
+   *
+   * @description
+   * Whether attribution applies to at least one displayed location.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasLocations: Signal<boolean> = computed(() =>
+    [...this.locations().values()].some((location) => location !== null),
+  );
+
+  /**
    * Property confirmOthersOpen
    * @readonly
    *
@@ -308,6 +384,8 @@ export class AccountSessionsPanel {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
   private readonly closeConfirmOnceSettled: EffectRef = effect((): void => {
     if (this.revokingOthers()) return;

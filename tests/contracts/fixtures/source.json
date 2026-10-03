@@ -1,5 +1,6 @@
 {
   "repository": "DevSkyLex/fireguard-api",
   "source": "openapi.json",
-  "sha256": "69172a1c044d57c8231b8d39badd1ff14bc9f26b061c86889960fd61833198c4"
+  "sha256": "94730f5e25b5a12d7e4348783d43dc2bd486ff0a598dbf7b4d1f3bbf12ff6903",
+  "commit": "009d93d6c61ed6665d85722efb2a15d8c0dc2666"
 }

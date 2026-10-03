@@ -280,6 +280,19 @@
   [visible]="assignFacilityDialogVisible()"
   [currentFacilityId]="activeEquipmentStore.selectedEquipment()?.facilityId ?? null"
   [options]="facilityOptions()"
+  [facilityPage]="facilityOptionsStore.page()"
+  [facilityPageCount]="facilityOptionsStore.pageCount()"
+  [facilityCallState]="facilityOptionsStore.loadCallState()"
+  (facilitySearchChanged)="
+    facilityOptionsStore.searchOptions({ organizationId: organizationId(), search: $event })
+  "
+  (facilityPageChanged)="
+    facilityOptionsStore.load({
+      organizationId: organizationId(),
+      search: facilityOptionsStore.search(),
+      page: $event,
+    })
+  "
   [assigning]="store.assignToFacilityCallState().status === 'pending'"
   [unassigning]="store.unassignFromFacilityCallState().status === 'pending'"
   (visibleChange)="assignFacilityDialogVisible.set($event)"

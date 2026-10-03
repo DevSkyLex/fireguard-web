@@ -1,8 +1,13 @@
 import { DestroyRef, ErrorHandler, inject, Service } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
+import { LOGOUT_PROTECTION_PORT, type LogoutProtectionPort } from '@features/auth/ports';
 import { authStoreEvents } from '@features/auth/state';
-import { InterventionDatabaseService } from '@features/organization/features/interventions/data-access';
+import {
+  InterventionDatabaseService,
+  InterventionOfflineService,
+} from '@features/organization/features/interventions/data-access';
+import { InterventionSyncCoordinatorService } from '../intervention-sync-coordinator/intervention-sync-coordinator.service';
 
 /**
  * Service InterventionOfflineLifecycleService
@@ -19,6 +24,47 @@ import { InterventionDatabaseService } from '@features/organization/features/int
  */
 @Service()
 export class InterventionOfflineLifecycleService {
+  /**
+   * Property logoutProtection
+   * @readonly
+   *
+   * @description
+   * Auth-owned registration boundary for voluntary logout review.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {LogoutProtectionPort}
+   */
+  private readonly logoutProtection: LogoutProtectionPort = inject(LOGOUT_PROTECTION_PORT);
+  /**
+   * Property offline
+   * @readonly
+   *
+   * @description
+   * Reads all persisted local operations, including blocked changes.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionOfflineService}
+   */
+  private readonly offline: InterventionOfflineService = inject(InterventionOfflineService);
+  /**
+   * Property sync
+   * @readonly
+   *
+   * @description
+   * Existing feature replay coordinator preserving intervention ordering and conflicts.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {InterventionSyncCoordinatorService}
+   */
+  private readonly sync: InterventionSyncCoordinatorService = inject(
+    InterventionSyncCoordinatorService,
+  );
   //#region Properties
   /**
    * Property database
@@ -113,6 +159,12 @@ export class InterventionOfflineLifecycleService {
   public start(): void {
     if (this.started) return;
     this.started = true;
+    const unregister = this.logoutProtection.register({
+      hasUnsyncedWork: this.offline.hasUnsyncedChanges,
+      count: async () => (await this.offline.listAllOutbox()).length,
+      synchronize: () => this.sync.syncAll(),
+    });
+    this.destroyRef.onDestroy(unregister);
     // `sessionEnded`, not `logoutSucceeded`: a failed logout request still ends the
     // local session, and the offline data must not survive it.
     this.events

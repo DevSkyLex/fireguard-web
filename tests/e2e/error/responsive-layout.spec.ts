@@ -60,8 +60,6 @@ for (const viewport of [
 }
 
 test.describe('visual evidence', () => {
-  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
-
   test('renders the not-found page à 375px en mode sombre', async ({
     page,
     context,

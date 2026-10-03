@@ -12,13 +12,17 @@ import type {
 
 /**
  * Constant IMPORTS_PATH
- * @description The canonical, non-organization-scoped import job collection.
+ *
+ * @description
+ * The canonical, non-organization-scoped import job collection.
  */
 const IMPORTS_PATH: string = '/api/imports';
 
 /**
  * Constant IMPORT_JOB_POLL_INTERVAL_MS
- * @description How often {@link ImportJobService.pollJob} re-reads a running job.
+ *
+ * @description
+ * How often {@link ImportJobService.pollJob} re-reads a running job.
  */
 const IMPORT_JOB_POLL_INTERVAL_MS: number = 2_500;
 
@@ -36,8 +40,12 @@ const IMPORT_JOB_POLL_MAX_EMISSIONS: number = 240;
 
 /**
  * Function isImportJobRunning
- * @description Whether a job has not yet reached a terminal status.
+ *
+ * @description
+ * Whether a job has not yet reached a terminal status.
+ *
  * @param {ImportJobOutput} job - The job to check.
+ *
  * @returns {boolean} `true` while `pending` or `processing`.
  */
 function isImportJobRunning(job: ImportJobOutput): boolean {
@@ -45,9 +53,8 @@ function isImportJobRunning(job: ImportJobOutput): boolean {
 }
 
 /**
- * Service ImportJobService
+ * Class ImportJobService
  * @class ImportJobService
- * @extends {HydraApiService}
  *
  * @description
  * Transport for the Import module: submitting a CSV upload
@@ -59,15 +66,22 @@ function isImportJobRunning(job: ImportJobOutput): boolean {
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class ImportJobService extends HydraApiService {
   /**
    * Method confirm
-   * @description Confirms a retained simulation; repeated requests return the same real import.
+   *
+   * @description
+   * Confirms a retained simulation; repeated requests return the same real import.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @param {string} simulationId - The completed simulation identifier.
+   *
    * @returns {Observable<ImportJobOutput>} The one server-confirmed import.
    */
   public confirm(simulationId: string): Observable<ImportJobOutput> {
@@ -79,11 +93,16 @@ export class ImportJobService extends HydraApiService {
 
   /**
    * Method template
-   * @description Reads the CSV template allowed by current organization access.
+   *
+   * @description
+   * Reads the CSV template allowed by current organization access.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @param {string} organizationId - The owning organization.
    * @param {ImportJobKind} kind - The resource kind.
+   *
    * @returns {Observable<ImportTemplateOutput>} Filename, CSV content and media type.
    */
   public template(organizationId: string, kind: ImportJobKind): Observable<ImportTemplateOutput> {
@@ -111,7 +130,7 @@ export class ImportJobService extends HydraApiService {
    * @param {File} file - The CSV file to upload.
    * @param {boolean} [dryRun] - Validates and reports without writing any row.
    *
-   * @return {Observable<ImportJobOutput>} The created job, without report fields.
+   * @returns {Observable<ImportJobOutput>} The created job, without report fields.
    */
   public create(
     organizationId: string,
@@ -147,7 +166,7 @@ export class ImportJobService extends HydraApiService {
    * @param {RequestOptions} [options] - Pagination options.
    * @param {ImportJobListQuery} [query] - Optional kind narrowing.
    *
-   * @return {Observable<HydraCollection<ImportJobOutput>>} The jobs collection.
+   * @returns {Observable<HydraCollection<ImportJobOutput>>} The jobs collection.
    */
   public list(
     organizationId: string,
@@ -168,22 +187,35 @@ export class ImportJobService extends HydraApiService {
    * Method get
    * @method get
    *
-   * @description Re-reads one import job's current state (`GET /api/imports/{id}`).
+   * @description
+   * Re-reads one import job's current state (`GET /api/imports/{id}`).
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} jobId - The job to read.
-   * @return {Observable<ImportJobOutput>} The job's current state.
+   * @param {number} [reportPage] - One-based report page, bounded to 100 rows.
+   *
+   * @returns {Observable<ImportJobOutput>} The job's current state.
    */
-  public get(jobId: string): Observable<ImportJobOutput> {
-    return this.getOne<ImportJobOutput>(`${IMPORTS_PATH}/${jobId}`);
+  public get(jobId: string, reportPage?: number): Observable<ImportJobOutput> {
+    return this.getOne<ImportJobOutput>(
+      `${IMPORTS_PATH}/${jobId}`,
+      reportPage === undefined ? undefined : { params: { reportPage, reportItemsPerPage: 100 } },
+    );
   }
 
   /**
    * Method resume
-   * @description Resumes an existing import while retaining every server-confirmed row.
+   *
+   * @description
+   * Resumes an existing import while retaining every server-confirmed row.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} jobId - Existing import identifier.
+   *
    * @returns {Observable<ImportJobOutput>} Accepted import state.
    */
   public resume(jobId: string): Observable<ImportJobOutput> {
@@ -207,7 +239,8 @@ export class ImportJobService extends HydraApiService {
    *
    * @param {ImportJobOutput} initial - The job as the create call, or a previous poll, returned it.
    *
-   * @return {Observable<ImportJobOutput>} Every polled state, ending on the terminal one or at the bound.
+   * @returns {Observable<ImportJobOutput>} Every polled state, ending on the terminal one or at the
+   *   bound.
    */
   public pollJob(initial: ImportJobOutput): Observable<ImportJobOutput> {
     return of(initial).pipe(

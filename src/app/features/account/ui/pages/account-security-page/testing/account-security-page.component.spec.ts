@@ -38,7 +38,7 @@ const SETUP: SetupTotpOutput = {
   '@id': '/api/otp/totp/setup',
   '@type': 'Totp',
   secret: 'JBSWY3DPEHPK3PXP',
-  qrCodeUri: 'otpauth://totp/FireGuard:ada@example.com?secret=JBSWY3DPEHPK3PXP',
+  qrCodeUri: 'otpauth://totp/Fireguard:ada@example.com?secret=JBSWY3DPEHPK3PXP',
 };
 
 describe('AccountSecurityPage', () => {
@@ -235,7 +235,7 @@ describe('AccountSecurityPage', () => {
     };
     authSession = { clearSession: vi.fn() };
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),

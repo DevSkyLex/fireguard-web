@@ -28,7 +28,7 @@ describe('notFoundRedirectGuard', () => {
   it('should carry the query string of the failed address as-is', () => {
     const state = { url: '/organizations/org-1/facilities?tab=all' } as RouterStateSnapshot;
 
-    TestBed.runInInjectionContext(() => notFoundRedirectGuard({} as never, state));
+    void TestBed.runInInjectionContext(() => notFoundRedirectGuard({} as never, state));
 
     expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/error/404'], {
       queryParams: { from: '/organizations/org-1/facilities?tab=all' },

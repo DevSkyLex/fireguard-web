@@ -4,14 +4,16 @@ import type { StoreFailureEventPayload } from '@core/request-state';
 
 /**
  * Constant authStoreEvents
- * @const authStoreEvents
  *
  * @description
  * Authentication store events for handling login
  * and MFA operation failures.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const authStoreEvents
  */
 export const authStoreEvents = eventGroup({
   source: 'Auth Store',
@@ -20,8 +22,8 @@ export const authStoreEvents = eventGroup({
     logoutSucceeded: type<void>(),
     logoutFailed: type<StoreFailureEventPayload>(),
     /**
+     * @description
      * The local session is over, whatever the server answered.
-     *
      * `logoutSucceeded` and `logoutFailed` report the *outcome of the call* and
      * exist for navigation and toasts. But the store drops the session locally on
      * both branches, so a listener that only watches `logoutSucceeded` keeps the
@@ -31,6 +33,11 @@ export const authStoreEvents = eventGroup({
      * instead, which is dispatched on both paths.
      */
     sessionEnded: type<void>(),
+    /**
+     * @description
+     * A remote tab or changed refresh owner requires leaving the old account context.
+     */
+    sessionInvalidated: type<void>(),
     mfaVerifyFailed: type<StoreFailureEventPayload>(),
     mfaResendFailed: type<StoreFailureEventPayload>(),
   },

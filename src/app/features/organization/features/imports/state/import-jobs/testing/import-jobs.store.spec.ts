@@ -49,6 +49,39 @@ describe('ImportJobsStore', () => {
     member: [job],
   };
 
+  it('reads report page two and preserves it across summary refreshes and status polling', () => {
+    const stream = new Subject<ImportJobOutput>();
+    mockService.pollJob.mockReturnValue(stream);
+    store.load({ organizationId });
+    const pageTwo = {
+      ...job,
+      reportPage: 2,
+      reportItemsPerPage: 100,
+      reportTotal: 201,
+      reportHasNextPage: true,
+      errorReport: [{ rowNumber: 101, column: null, code: 'would_create', message: 'Valid.' }],
+    };
+    mockService.get.mockReturnValue(of(pageTwo));
+    store.refresh({ jobId: job.id, reportPage: 2 });
+    expect(mockService.get).toHaveBeenCalledWith(job.id, 2);
+    store.load({ organizationId });
+    expect(store.jobEntityMap()[job.id].errorReport).toEqual(pageTwo.errorReport);
+    stream.next({
+      ...job,
+      status: 'completed',
+      reportPage: 1,
+      reportItemsPerPage: 100,
+      reportTotal: 250,
+      reportHasNextPage: true,
+    });
+    expect(store.jobEntityMap()[job.id]).toMatchObject({
+      status: 'completed',
+      reportPage: 2,
+      reportTotal: 250,
+      errorReport: pageTwo.errorReport,
+    });
+  });
+
   beforeEach(() => {
     dispatcher = { dispatch: vi.fn() };
     mockService = {

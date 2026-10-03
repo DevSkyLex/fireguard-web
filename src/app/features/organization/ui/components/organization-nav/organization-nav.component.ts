@@ -5,6 +5,7 @@ import {
   lucideCalendarDays,
   lucideClipboardList,
   lucideCompass,
+  lucideEllipsis,
   lucideHistory,
   lucideLayoutDashboard,
   lucideListChecks,
@@ -63,12 +64,12 @@ import {
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-organization-nav />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-nav',
@@ -89,6 +90,7 @@ import {
       lucideCalendarDays,
       lucideClipboardList,
       lucideCompass,
+      lucideEllipsis,
       lucideHistory,
       lucideLayoutDashboard,
       lucideListChecks,

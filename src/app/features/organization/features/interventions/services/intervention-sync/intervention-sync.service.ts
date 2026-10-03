@@ -1,6 +1,9 @@
 import { inject, Service } from '@angular/core';
-import { Dispatcher } from '@ngrx/signals/events';
-import { firstValueFrom } from 'rxjs';
+import { Dispatcher, Events } from '@ngrx/signals/events';
+import { firstValueFrom, takeUntil, type Observable } from 'rxjs';
+import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
+import { authStoreEvents } from '@features/auth/state';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
@@ -15,6 +18,10 @@ import type {
   InterventionOutboxOperationFor,
 } from '@features/organization/features/interventions/models';
 import { workloadAssessmentFromError } from '@features/organization/features/workload/utils';
+import {
+  ORGANIZATION_CONTEXT_PORT,
+  type OrganizationContextPort,
+} from '@features/organization/ports';
 import {
   CLIENT_RESOURCE_ALREADY_EXISTS_PROBLEM_TYPE,
   HTTP_CONFLICT,
@@ -91,6 +98,49 @@ interface BlockedResources {
  */
 @Service()
 export class InterventionSyncService {
+  //#region Properties
+  /**
+   * Property session
+   * @readonly
+   *
+   * @description
+   * Auth-owned revision invalidating queued work when the local session changes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {AuthSessionPort}
+   */
+  private readonly session: AuthSessionPort = inject(AUTH_SESSION_PORT);
+
+  /**
+   * Property identity
+   * @readonly
+   *
+   * @description
+   * Account identity owning the intervention outbox.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {UserIdentityPort}
+   */
+  private readonly identity: UserIdentityPort = inject(USER_IDENTITY_PORT);
+
+  /**
+   * Property organization
+   * @readonly
+   *
+   * @description
+   * Workspace context invalidating an obsolete replay pass.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationContextPort}
+   */
+  private readonly organization: OrganizationContextPort = inject(ORGANIZATION_CONTEXT_PORT);
+
   /**
    * Property dispatcher
    * @readonly
@@ -106,6 +156,20 @@ export class InterventionSyncService {
   private readonly dispatcher: Dispatcher = inject(Dispatcher);
 
   /**
+   * Property events
+   * @readonly
+   *
+   * @description
+   * Session-end notifications cancelling the departing account's active replay subscription.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Events}
+   */
+  private readonly events: Events = inject(Events);
+
+  /**
    * Property time
    * @readonly
    *
@@ -118,7 +182,6 @@ export class InterventionSyncService {
    * @type {InterventionTimeService}
    */
   private readonly time: InterventionTimeService = inject(InterventionTimeService);
-  //#region Properties
   /**
    * Property service
    * @readonly
@@ -254,6 +317,10 @@ export class InterventionSyncService {
     organizationId: string,
     interventionId: string,
   ): Promise<number> {
+    const isCurrent = this.captureReplayContext();
+    if (!isCurrent()) return 0;
+    const owningOrganizationId = await this.offline.organizationIdForIntervention(interventionId);
+    if (!isCurrent() || owningOrganizationId !== organizationId) return 0;
     const operations = await this.offline.listOutbox(interventionId);
     const collections = new Set<InterventionCollectionsChange['collections'][number]>();
     const applied = (operation: InterventionOutboxOperation): void => {
@@ -312,9 +379,10 @@ export class InterventionSyncService {
           transient: new Set<string>(),
         },
         applied,
+        isCurrent,
       );
     } finally {
-      if (collections.size)
+      if (isCurrent() && collections.size)
         this.dispatcher.dispatch(
           interventionSyncEvents.replaySucceeded({
             interventionId,
@@ -342,6 +410,8 @@ export class InterventionSyncService {
    * @param {BlockedResources} blocked - Resources blocking their dependents this cycle.
    * @param {(operation: InterventionOutboxOperation) => void} applied - Records affected
    *   collections.
+   * @param {() => boolean} isCurrent - Whether the initiating session and workspace still own
+   *   replay.
    *
    * @returns {Promise<number>} Result of the replay operations operation.
    */
@@ -352,22 +422,37 @@ export class InterventionSyncService {
     replayed: number,
     blocked: BlockedResources,
     applied: (operation: InterventionOutboxOperation) => void,
+    isCurrent: () => boolean,
   ): Promise<number> {
+    if (!isCurrent()) return replayed;
     const operation = operations[index];
     if (!operation) return replayed;
 
     const advance = (next: number): Promise<number> =>
-      this.replayOperations(organizationId, operations, index + 1, next, blocked, applied);
+      this.replayOperations(
+        organizationId,
+        operations,
+        index + 1,
+        next,
+        blocked,
+        applied,
+        isCurrent,
+      );
 
     if (await this.skipBlockedOperation(operation, blocked)) return advance(replayed);
+    if (!isCurrent()) return replayed;
 
     try {
       await this.replay(organizationId, operation);
+      if (!isCurrent()) return replayed;
       await this.offline.removeOutbox(operation.id);
+      if (!isCurrent()) return replayed;
       applied(operation);
       return advance(replayed + 1);
     } catch (error: unknown) {
-      const outcome = await this.handleReplayFailure(operation, error, blocked);
+      if (!isCurrent()) return replayed;
+      const outcome = await this.handleReplayFailure(operation, error, blocked, isCurrent);
+      if (!isCurrent()) return replayed;
       if (outcome === 'applied') {
         applied(operation);
         return advance(replayed + 1);
@@ -424,6 +509,8 @@ export class InterventionSyncService {
    * @param {InterventionOutboxOperation} operation - Rejected operation.
    * @param {unknown} error - Transport failure.
    * @param {BlockedResources} blocked - Resource blockers for this replay cycle.
+   * @param {() => boolean} isCurrent - Whether the initiating session and workspace still own
+   *   replay.
    *
    * @returns {Promise<'applied' | 'blocked'>} Replay disposition.
    */
@@ -431,6 +518,7 @@ export class InterventionSyncService {
     operation: InterventionOutboxOperation,
     error: unknown,
     blocked: BlockedResources,
+    isCurrent: () => boolean,
   ): Promise<'applied' | 'blocked'> {
     const response = error as SyncProblemResponse;
     const detail =
@@ -453,7 +541,7 @@ export class InterventionSyncService {
       return 'blocked';
     }
     if (response.status === HTTP_PRECONDITION_FAILED) {
-      await this.handlePreconditionFailure(operation, detail, blocked.permanent);
+      await this.handlePreconditionFailure(operation, detail, blocked.permanent, isCurrent);
       return 'blocked';
     }
     if (this.isPermanentFailure(error, response)) {
@@ -481,6 +569,8 @@ export class InterventionSyncService {
    * @param {InterventionOutboxOperation} operation - Rejected operation.
    * @param {string} detail - Server problem detail.
    * @param {Set<string>} permanent - Resource blockers for this replay cycle.
+   * @param {() => boolean} isCurrent - Whether the initiating session and workspace still own
+   *   replay.
    *
    * @returns {Promise<void>}
    */
@@ -488,14 +578,17 @@ export class InterventionSyncService {
     operation: InterventionOutboxOperation,
     detail: string,
     permanent: Set<string>,
+    isCurrent: () => boolean,
   ): Promise<void> {
     if (this.requiresCurrentValueReview(operation)) {
       const review = await this.currentValues(operation);
+      if (!isCurrent()) return;
       await this.offline.markOutboxConflict(operation.id, detail, null, review);
       this.block(operation, permanent);
       return;
     }
     const rebasedRevision = await this.currentRevision(operation);
+    if (!isCurrent()) return;
     if (rebasedRevision !== null)
       await this.offline.rebaseOutboxRevision(operation.id, rebasedRevision, detail);
     else await this.offline.markOutboxConflict(operation.id, detail);
@@ -555,7 +648,7 @@ export class InterventionSyncService {
   ): Promise<void> {
     switch (operation.type) {
       case 'time-entry.create':
-        await firstValueFrom(
+        await this.awaitReplay(
           this.time.createEntry(operation.payload.workItemId, {
             id: operation.payload.id,
             memberId: operation.payload.memberId,
@@ -566,7 +659,7 @@ export class InterventionSyncService {
         );
         break;
       case 'time-entry.correct':
-        await firstValueFrom(
+        await this.awaitReplay(
           this.time.correctEntry(
             operation.payload.workItemId,
             {
@@ -581,7 +674,7 @@ export class InterventionSyncService {
         );
         break;
       case 'time-entry.cancel':
-        await firstValueFrom(
+        await this.awaitReplay(
           this.time.cancelEntry(
             operation.payload.workItemId,
             operation.payload.id,
@@ -590,7 +683,7 @@ export class InterventionSyncService {
         );
         break;
       case 'facility.create':
-        await firstValueFrom(
+        await this.awaitReplay(
           this.facilities.createForIntervention(
             organizationId,
             operation.interventionId,
@@ -599,7 +692,7 @@ export class InterventionSyncService {
         );
         break;
       case 'equipment.create':
-        await firstValueFrom(
+        await this.awaitReplay(
           this.equipment.createForIntervention(
             organizationId,
             operation.interventionId,
@@ -608,7 +701,7 @@ export class InterventionSyncService {
         );
         break;
       case 'inspection.create':
-        await firstValueFrom(
+        await this.awaitReplay(
           this.inspections.createForIntervention(
             organizationId,
             operation.interventionId,
@@ -633,14 +726,14 @@ export class InterventionSyncService {
         break;
       }
       case 'work-item.create':
-        await firstValueFrom(this.service.createWorkItem(operation.payload));
+        await this.awaitReplay(this.service.createWorkItem(operation.payload));
         break;
       case 'work-item.update': {
         await this.replayWorkItemUpdate(operation);
         break;
       }
       case 'change.create':
-        await firstValueFrom(this.service.createChange(operation.payload));
+        await this.awaitReplay(this.service.createChange(operation.payload));
         break;
       case 'change.update': {
         await this.replayChangeUpdate(operation);
@@ -676,7 +769,7 @@ export class InterventionSyncService {
     ) {
       throw new TypeError('Invalid offline media operation');
     }
-    await firstValueFrom(
+    await this.awaitReplay(
       this.equipment.uploadEvidence(
         equipmentId,
         file,
@@ -709,7 +802,7 @@ export class InterventionSyncService {
     if (!(file instanceof Blob) || typeof fileName !== 'string') {
       throw new TypeError('Invalid offline attachment operation');
     }
-    await firstValueFrom(
+    await this.awaitReplay(
       this.service.uploadAttachment(
         operation.interventionId,
         file,
@@ -742,7 +835,7 @@ export class InterventionSyncService {
     const body = operation.payload['body'];
     if (typeof body !== 'string') throw new TypeError('Invalid offline comment operation');
     const clientId = operation.payload['clientId'];
-    await firstValueFrom(
+    await this.awaitReplay(
       this.service.addComment(
         operation.interventionId,
         body,
@@ -777,7 +870,7 @@ export class InterventionSyncService {
       dueAt,
       ...input
     } = operation.payload;
-    await firstValueFrom(
+    await this.awaitReplay(
       this.service.update(
         operation.interventionId,
         {
@@ -818,7 +911,7 @@ export class InterventionSyncService {
       clientId: _clientId,
       ...input
     } = operation.payload;
-    await firstValueFrom(
+    await this.awaitReplay(
       this.service.updateWorkItem(
         workItemId,
         input,
@@ -853,7 +946,7 @@ export class InterventionSyncService {
       clientId: _clientId,
       ...input
     } = operation.payload;
-    await firstValueFrom(
+    await this.awaitReplay(
       this.service.updateChange(
         changeId,
         input,
@@ -1005,19 +1098,19 @@ export class InterventionSyncService {
     try {
       switch (operation.type) {
         case 'intervention.update': {
-          const intervention = await firstValueFrom(this.service.get(operation.interventionId));
+          const intervention = await this.awaitReplay(this.service.get(operation.interventionId));
           return intervention.revision;
         }
         case 'work-item.update': {
           const workItemId = operation.payload['workItemId'];
-          const items = await firstValueFrom(
+          const items = await this.awaitReplay(
             this.service.listAllWorkItems(operation.interventionId),
           );
           return items.find((item) => item.id === workItemId)?.revision ?? null;
         }
         case 'change.update': {
           const changeId = operation.payload['changeId'];
-          const changes = await firstValueFrom(
+          const changes = await this.awaitReplay(
             this.service.listAllChanges(operation.interventionId),
           );
           return changes.find((change) => change.id === changeId)?.revision ?? null;
@@ -1053,7 +1146,7 @@ export class InterventionSyncService {
   } | null> {
     try {
       if (operation.type === 'time-entry.correct' || operation.type === 'time-entry.cancel') {
-        const journal = await firstValueFrom(this.time.journal(operation.payload.workItemId));
+        const journal = await this.awaitReplay(this.time.journal(operation.payload.workItemId));
         const entry = journal.entries.find((row) => row.id === operation.payload.id);
         return entry
           ? {
@@ -1069,7 +1162,9 @@ export class InterventionSyncService {
           : null;
       }
       if (operation.type === 'work-item.update') {
-        const rows = await firstValueFrom(this.service.listAllWorkItems(operation.interventionId));
+        const rows = await this.awaitReplay(
+          this.service.listAllWorkItems(operation.interventionId),
+        );
         const item = rows.find((row) => row.id === operation.payload.workItemId);
         return item
           ? {
@@ -1086,7 +1181,7 @@ export class InterventionSyncService {
           : null;
       }
       if (operation.type === 'intervention.update') {
-        const item = await firstValueFrom(this.service.get(operation.interventionId));
+        const item = await this.awaitReplay(this.service.get(operation.interventionId));
         return {
           revision: item.revision,
           values: {
@@ -1166,6 +1261,52 @@ export class InterventionSyncService {
     return Object.values(value).some((item: unknown): boolean =>
       this.containsBlockedResource(item, blockedResources),
     );
+  }
+
+  /**
+   * Method captureReplayContext
+   * @method captureReplayContext
+   *
+   * @description
+   * Captures ownership before loading the queue; replacement sessions invalidate it even for the
+   * same account.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {() => boolean} Guard checked before every send and replay consequence.
+   */
+  private captureReplayContext(): () => boolean {
+    const revision = this.session.sessionRevision();
+    const owner = this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null;
+    const organizationId = this.organization.selectedOrganizationId();
+    return (): boolean =>
+      owner !== null &&
+      this.session.isAuthenticated() &&
+      revision === this.session.sessionRevision() &&
+      owner === (this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null) &&
+      organizationId === this.organization.selectedOrganizationId();
+  }
+
+  /**
+   * Method awaitReplay
+   * @method awaitReplay
+   *
+   * @description
+   * Cancels this account's transport subscription on session end; guards still suppress late replay
+   * consequences.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @template Response
+   *
+   * @param {Observable<Response>} request - Transport request belonging to the current replay pass.
+   *
+   * @returns {Promise<Response>} First response while the initiating session remains active.
+   */
+  private awaitReplay<Response>(request: Observable<Response>): Promise<Response> {
+    return firstValueFrom(request.pipe(takeUntil(this.events.on(authStoreEvents.sessionEnded))));
   }
   //#endregion
 }

@@ -14,6 +14,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { idleCallState, type CallState } from '@core/request-state';
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { sheetSide } from '@shared/sheet-side';
@@ -22,8 +23,9 @@ import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import { EquipmentCreateForm } from '../../forms/equipment-create-form';
 
 /**
- * Component EquipmentCreateSheet
+ * Class EquipmentCreateSheet
  * @class EquipmentCreateSheet
+ *
  * @description
  * The spartan sheet hosting {@link EquipmentCreateForm} on the equipment list: the
  * record is created without leaving the list, the same surface every other
@@ -35,7 +37,9 @@ import { EquipmentCreateForm } from '../../forms/equipment-create-form';
  * undone and turned into the shared unsaved-changes confirmation, exactly as
  * `intervention-work-item-sheet` does. Below `sm` the panel is a bottom
  * drawer (`@shared/sheet-side`).
+ *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -47,11 +51,54 @@ import { EquipmentCreateForm } from '../../forms/equipment-create-form';
 export class EquipmentCreateSheet {
   //#region Inputs
   /**
+   * Property facilityPage
+   * @readonly
+   *
+   * @description
+   * Current facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPage: InputSignal<number> = input<number>(1);
+  /**
+   * Property facilityPageCount
+   * @readonly
+   *
+   * @description
+   * Number of facility server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPageCount: InputSignal<number> = input<number>(1);
+  /**
+   * Property facilityCallState
+   * @readonly
+   *
+   * @description
+   * Request state for facility options.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly facilityCallState: InputSignal<CallState> = input<CallState>(idleCallState());
+  /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -59,9 +106,13 @@ export class EquipmentCreateSheet {
   /**
    * Property pending
    * @readonly
-   * @description Whether the creation request is in flight.
+   *
+   * @description
+   * Whether the creation request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -69,9 +120,13 @@ export class EquipmentCreateSheet {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the creation failed with, forwarded to the form.
+   *
+   * @description
+   * Whatever the creation failed with, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -79,9 +134,13 @@ export class EquipmentCreateSheet {
   /**
    * Property facilityOptions
    * @readonly
-   * @description The organization's facilities offered by the Site field.
+   *
+   * @description
+   * The organization's facilities offered by the Site field.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly FacilityOption[]>}
    */
   public readonly facilityOptions: InputSignal<readonly FacilityOption[]> = input<
@@ -91,9 +150,13 @@ export class EquipmentCreateSheet {
   /**
    * Property initialFacilityId
    * @readonly
-   * @description The site the caller pre-picked (`?facility=`), or `null` for an unassigned record.
+   *
+   * @description
+   * The site the caller pre-picked (`?facility=`), or `null` for an unassigned record.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly initialFacilityId: InputSignal<string | null> = input<string | null>(null);
@@ -101,11 +164,41 @@ export class EquipmentCreateSheet {
 
   //#region Outputs
   /**
+   * Property facilitySearchChanged
+   * @readonly
+   *
+   * @description
+   * Search entered in the server facility selector.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly facilitySearchChanged: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property facilityPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly facilityPageChanged: OutputEmitterRef<number> = output<number>();
+  /**
    * Property visibleChange
    * @readonly
-   * @description The panel wants to open or close.
+   *
+   * @description
+   * The panel wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -113,9 +206,13 @@ export class EquipmentCreateSheet {
   /**
    * Property submitted
    * @readonly
-   * @description The form's validated payload, forwarded untouched.
+   *
+   * @description
+   * The form's validated payload, forwarded untouched.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CreateEquipmentInput>}
    */
   public readonly submitted: OutputEmitterRef<CreateEquipmentInput> =
@@ -126,7 +223,11 @@ export class EquipmentCreateSheet {
   /**
    * Constructor
    * @constructor
-   * @description Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next opening confirm over nothing.
+   *
+   * @description
+   * Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next
+   * opening confirm over nothing.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -145,9 +246,13 @@ export class EquipmentCreateSheet {
   /**
    * Property sheetState
    * @readonly
-   * @description The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @description
+   * The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -157,9 +262,13 @@ export class EquipmentCreateSheet {
   /**
    * Property side
    * @readonly
-   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it.
+   *
+   * @description
+   * The panel's side — `'bottom'` below `sm`, `'right'` at and above it.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -167,9 +276,14 @@ export class EquipmentCreateSheet {
   /**
    * Property dirty
    * @readonly
-   * @description Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates {@link requestClose}.
+   *
+   * @description
+   * Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates
+   * {@link requestClose}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly dirty: WritableSignal<boolean> = signal<boolean>(false);
@@ -177,9 +291,14 @@ export class EquipmentCreateSheet {
   /**
    * Property unsavedChangesDialogState
    * @readonly
-   * @description Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when {@link dirty} is true.
+   *
+   * @description
+   * Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when
+   * {@link dirty} is true.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<BrnDialogState>}
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
@@ -188,9 +307,14 @@ export class EquipmentCreateSheet {
   /**
    * Property sheetRef
    * @readonly
-   * @description The panel directive, queried so {@link onStateChanged} can reopen it to undo an Escape/outside-click made while {@link dirty}.
+   *
+   * @description
+   * The panel directive, queried so {@link onStateChanged} can reopen it to undo an
+   * Escape/outside-click made while {@link dirty}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<HlmSheet | undefined>}
    */
   protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
@@ -200,10 +324,16 @@ export class EquipmentCreateSheet {
   /**
    * Method onStateChanged
    * @method onStateChanged
-   * @description Relays a dismissal, ignoring the echo of a change the page already made; a dismissal reaching here while {@link dirty} is undone and redirected to the confirmation.
+   *
+   * @description
+   * Relays a dismissal, ignoring the echo of a change the page already made; a dismissal reaching
+   * here while {@link dirty} is undone and redirected to the confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - The panel's new state.
+   *
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
@@ -224,9 +354,14 @@ export class EquipmentCreateSheet {
   /**
    * Method requestClose
    * @method requestClose
-   * @description The panel's own close action, reached from the form's Cancel. Closes right away when nothing would be lost; otherwise asks first.
+   *
+   * @description
+   * The panel's own close action, reached from the form's Cancel. Closes right away when nothing
+   * would be lost; otherwise asks first.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected requestClose(): void {
@@ -242,9 +377,13 @@ export class EquipmentCreateSheet {
   /**
    * Method onUnsavedChangesConfirmed
    * @method onUnsavedChangesConfirmed
-   * @description The operator chose to discard the draft — closes both the confirmation and the panel.
+   *
+   * @description
+   * The operator chose to discard the draft — closes both the confirmation and the panel.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesConfirmed(): void {
@@ -255,9 +394,13 @@ export class EquipmentCreateSheet {
   /**
    * Method onUnsavedChangesDismissed
    * @method onUnsavedChangesDismissed
-   * @description The operator chose to keep editing — closes the confirmation only.
+   *
+   * @description
+   * The operator chose to keep editing — closes the confirmation only.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesDismissed(): void {

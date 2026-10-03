@@ -218,6 +218,7 @@
         </header>
 
         <app-account-sessions-panel
+          [locale]="userStore.profile()?.locale ?? 'en'"
           [sessions]="sessionStore.sessions()"
           [currentSessionId]="sessionStore.currentSession()?.id ?? null"
           [loading]="sessionsLoading()"

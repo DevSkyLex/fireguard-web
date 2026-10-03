@@ -7,13 +7,26 @@ import Ajv2020 from 'ajv/dist/2020.js';
 interface Media {
   schema?: AnySchema;
 }
+interface Parameter {
+  name: string;
+  in: string;
+  required?: boolean;
+  style?: string;
+  explode?: boolean;
+  schema?: AnySchema;
+}
 interface Operation {
+  parameters?: Parameter[];
   responses: Record<string, { content?: Record<string, Media> }>;
   requestBody?: { required?: boolean; content: Record<string, Media> };
 }
+interface PathItem {
+  parameters?: Parameter[];
+  [method: string]: Operation | Parameter[] | undefined;
+}
 export interface OpenApiDocument {
   openapi: string;
-  paths: Record<string, Record<string, Operation>>;
+  paths: Record<string, PathItem>;
   components: { schemas: Record<string, AnySchema> };
 }
 
@@ -70,7 +83,8 @@ export function createContractValidator(document: OpenApiDocument) {
       );
   }
   function operation(method: string, url: string): { operation: Operation; context: string } {
-    const pathname = new URL(url, 'https://contract.invalid').pathname;
+    const address = new URL(url, 'https://contract.invalid');
+    const pathname = address.pathname;
     const candidates = Object.keys(document.paths)
       .filter((template) => {
         const pattern = template
@@ -85,8 +99,82 @@ export function createContractValidator(document: OpenApiDocument) {
     const route = candidates[0];
     if (!route) throw new Error(method + ' ' + pathname + ': route absent from OpenAPI');
     const selected = document.paths[route]?.[method.toLowerCase()];
-    if (!selected) throw new Error(method + ' ' + pathname + ': method absent from OpenAPI');
-    return { operation: selected, context: method.toUpperCase() + ' ' + pathname };
+    if (!selected || Array.isArray(selected))
+      throw new Error(method + ' ' + pathname + ': method absent from OpenAPI');
+    const context = method.toUpperCase() + ' ' + pathname;
+    const names = [...route.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
+    const captures = new RegExp(
+      '^' +
+        route
+          .split(/(\{[^}]+\})/)
+          .map((segment) =>
+            segment.startsWith('{') ? '([^/]+)' : segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          )
+          .join('') +
+        '$',
+    ).exec(pathname);
+    const pathValues = new Map(
+      names.map((name, index) => [name, decodeURIComponent(captures?.[index + 1] ?? '')]),
+    );
+    const parameters = new Map<string, Parameter>();
+    for (const parameter of [
+      ...(document.paths[route]?.parameters ?? []),
+      ...(selected.parameters ?? []),
+    ])
+      parameters.set(parameter.in + ':' + parameter.name, parameter);
+    for (const parameter of parameters.values()) {
+      if (parameter.in !== 'query' && parameter.in !== 'path') continue;
+      const values =
+        parameter.in === 'query'
+          ? address.searchParams.getAll(parameter.name)
+          : pathValues.has(parameter.name)
+            ? [pathValues.get(parameter.name) ?? '']
+            : [];
+      const parameterContext = context + ' ' + parameter.in + ' parameter ' + parameter.name;
+      if (values.length === 0) {
+        if (parameter.required) throw new Error(parameterContext + ': missing required parameter');
+        continue;
+      }
+      const schema = parameter.schema;
+      if (!schema || typeof schema === 'boolean')
+        throw new Error(parameterContext + ': unsupported parameter schema');
+      const style = parameter.style ?? (parameter.in === 'query' ? 'form' : 'simple');
+      const explode = parameter.explode ?? parameter.in === 'query';
+      function scalar(value: string, type: unknown): string | number | boolean {
+        if (type === 'integer') {
+          if (!/^-?(?:0|[1-9]\d*)$/.test(value) || !Number.isSafeInteger(Number(value)))
+            throw new Error(parameterContext + ': invalid integer serialization');
+          return Number(value);
+        }
+        if (type === 'boolean') {
+          if (value !== 'true' && value !== 'false')
+            throw new Error(parameterContext + ': invalid boolean serialization');
+          return value === 'true';
+        }
+        if (type !== 'string') throw new Error(parameterContext + ': unsupported scalar type');
+        return value;
+      }
+      if (schema['type'] === 'array') {
+        if (
+          parameter.in !== 'query' ||
+          style !== 'form' ||
+          !explode ||
+          !schema['items'] ||
+          typeof schema['items'] === 'boolean'
+        )
+          throw new Error(parameterContext + ': unsupported array serialization');
+        validate(
+          schema,
+          values.map((value) => scalar(value, schema['items']['type'])),
+          parameterContext,
+        );
+      } else {
+        if (values.length !== 1 || style !== (parameter.in === 'query' ? 'form' : 'simple'))
+          throw new Error(parameterContext + ': invalid scalar serialization');
+        validate(schema, scalar(values[0] ?? '', schema['type']), parameterContext);
+      }
+    }
+    return { operation: selected, context };
   }
   return {
     response(

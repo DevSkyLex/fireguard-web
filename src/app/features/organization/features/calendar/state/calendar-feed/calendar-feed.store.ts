@@ -3,7 +3,7 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { concatMap, EMPTY, map, pipe, switchMap, tap } from 'rxjs';
+import { concatMap, EMPTY, map, mergeMap, pipe, switchMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -287,7 +287,7 @@ interface CalendarFeedWriteState {
    * @readonly
    *
    * @description
-   * Distinguishes separate visits to an organization for queued move commands.
+   * Distinguishes separate organization visits for accepted CRUD writes and queued moves.
    *
    * @access private
    * @since 1.2.0
@@ -539,19 +539,29 @@ export const CalendarFeedStore = signalStore(
        */
       createEvent: rxMethod<CalendarEventCreateCommand>(
         pipe(
-          tap(() => patchState(store, { createEventCallState: pendingCallState() })),
-          switchMap((command) =>
-            service.createEvent(command.organizationId, command.input).pipe(
+          map((command) => ({ command, contextRevision: store.contextRevision() })),
+          mergeMap(({ command, contextRevision }) => {
+            if (store.createEventCallState().status === 'pending') return EMPTY;
+            if (
+              store.lastLoadCommand() !== null &&
+              store.lastLoadCommand()?.organizationId !== command.organizationId
+            )
+              return EMPTY;
+            patchState(store, { createEventCallState: pendingCallState() });
+            return service.createEvent(command.organizationId, command.input).pipe(
               tapResponse({
                 next: (event) => {
+                  if (contextRevision !== store.contextRevision()) return;
                   patchState(store, { createEventCallState: successCallState(event) });
                   refreshLastWindow(store);
                 },
-                error: (error: unknown) =>
-                  patchState(store, { createEventCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  if (contextRevision !== store.contextRevision()) return;
+                  patchState(store, { createEventCallState: errorCallState(toStoreError(error)) });
+                },
               }),
-            ),
-          ),
+            );
+          }),
         ),
       ),
 
@@ -570,19 +580,29 @@ export const CalendarFeedStore = signalStore(
        */
       updateEvent: rxMethod<CalendarEventUpdateCommand>(
         pipe(
-          tap(() => patchState(store, { updateEventCallState: pendingCallState() })),
-          switchMap((command) =>
-            service.updateEvent(command.organizationId, command.eventId, command.input).pipe(
+          map((command) => ({ command, contextRevision: store.contextRevision() })),
+          mergeMap(({ command, contextRevision }) => {
+            if (store.updateEventCallState().status === 'pending') return EMPTY;
+            if (
+              store.lastLoadCommand() !== null &&
+              store.lastLoadCommand()?.organizationId !== command.organizationId
+            )
+              return EMPTY;
+            patchState(store, { updateEventCallState: pendingCallState() });
+            return service.updateEvent(command.organizationId, command.eventId, command.input).pipe(
               tapResponse({
                 next: (event) => {
+                  if (contextRevision !== store.contextRevision()) return;
                   patchState(store, { updateEventCallState: successCallState(event) });
                   refreshLastWindow(store);
                 },
-                error: (error: unknown) =>
-                  patchState(store, { updateEventCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  if (contextRevision !== store.contextRevision()) return;
+                  patchState(store, { updateEventCallState: errorCallState(toStoreError(error)) });
+                },
               }),
-            ),
-          ),
+            );
+          }),
         ),
       ),
 
@@ -601,19 +621,29 @@ export const CalendarFeedStore = signalStore(
        */
       deleteEvent: rxMethod<CalendarEventDeleteCommand>(
         pipe(
-          tap(() => patchState(store, { deleteEventCallState: pendingCallState() })),
-          switchMap((command) =>
-            service.deleteEvent(command.organizationId, command.eventId).pipe(
+          map((command) => ({ command, contextRevision: store.contextRevision() })),
+          mergeMap(({ command, contextRevision }) => {
+            if (store.deleteEventCallState().status === 'pending') return EMPTY;
+            if (
+              store.lastLoadCommand() !== null &&
+              store.lastLoadCommand()?.organizationId !== command.organizationId
+            )
+              return EMPTY;
+            patchState(store, { deleteEventCallState: pendingCallState() });
+            return service.deleteEvent(command.organizationId, command.eventId).pipe(
               tapResponse({
                 next: () => {
+                  if (contextRevision !== store.contextRevision()) return;
                   patchState(store, { deleteEventCallState: successCallState(null) });
                   refreshLastWindow(store);
                 },
-                error: (error: unknown) =>
-                  patchState(store, { deleteEventCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  if (contextRevision !== store.contextRevision()) return;
+                  patchState(store, { deleteEventCallState: errorCallState(toStoreError(error)) });
+                },
               }),
-            ),
-          ),
+            );
+          }),
         ),
       ),
 
@@ -728,8 +758,8 @@ export const CalendarFeedStore = signalStore(
        * @method resetWriteCallStates
        *
        * @description
-       * Idles the three write call states — called once a dialog that surfaced
-       * a rejection is dismissed, so re-opening it never shows a stale error.
+       * Clears settled write states before reopening a dialog, while retaining accepted pending
+       * operations until they finish.
        *
        * @access public
        * @since 1.1.0
@@ -738,10 +768,22 @@ export const CalendarFeedStore = signalStore(
        */
       resetWriteCallStates(): void {
         patchState(store, {
-          createEventCallState: idleCallState(),
-          updateEventCallState: idleCallState(),
-          deleteEventCallState: idleCallState(),
-          moveEventCallState: idleCallState(),
+          createEventCallState:
+            store.createEventCallState().status === 'pending'
+              ? store.createEventCallState()
+              : idleCallState(),
+          updateEventCallState:
+            store.updateEventCallState().status === 'pending'
+              ? store.updateEventCallState()
+              : idleCallState(),
+          deleteEventCallState:
+            store.deleteEventCallState().status === 'pending'
+              ? store.deleteEventCallState()
+              : idleCallState(),
+          moveEventCallState:
+            store.moveEventCallState().status === 'pending'
+              ? store.moveEventCallState()
+              : idleCallState(),
         });
       },
     }),

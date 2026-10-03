@@ -47,12 +47,22 @@ describe('CalendarEventForm', () => {
   let fixture: ComponentFixture<CalendarEventForm>;
 
   beforeEach(async () => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        public observe(): void {}
+        public unobserve(): void {}
+        public disconnect(): void {}
+      },
+    );
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
     fixture = TestBed.createComponent(CalendarEventForm);
     fixture.componentRef.setInput('visible', true);
     await fixture.whenStable();
   });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it('should not submit and should show field errors when required fields are empty', async () => {
     const submitted: CalendarEventFormValues[] = [];
@@ -189,5 +199,105 @@ describe('CalendarEventForm', () => {
     await fixture.whenStable();
 
     expect(dirtyChanges).not.toContain(true);
+  });
+
+  it('interprets the picked time in the organization zone instead of the device zone', async () => {
+    fixture.componentRef.setInput('timezone', 'America/New_York');
+    await fixture.whenStable();
+    setValue('calendar-event-title', 'Fire drill');
+    setDraftDates(fixture, { startsAtDate: new Date(2026, 7, 1) });
+    setValue('calendar-event-starts-at-time', '09:00');
+    const submitted: CalendarEventFormValues[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => submitted.push(value));
+    document.querySelector<HTMLFormElement>('form')?.requestSubmit();
+    await fixture.whenStable();
+    expect(submitted[0].startsAt).toBe('2026-08-01T13:00:00+00:00');
+  });
+
+  it('seeds dates and hours from the organization zone across a device-day boundary', async () => {
+    fixture.componentRef.setInput('timezone', 'America/Los_Angeles');
+    fixture.componentRef.setInput('editing', { ...EVENT, startsAt: '2026-08-01T01:30:00Z' });
+    await fixture.whenStable();
+    const draft = fixture.componentInstance['model']();
+    expect(draft.startsAtDate?.getDate()).toBe(31);
+    expect(draft.startsAtDate?.getMonth()).toBe(6);
+    expect(draft.startsAtTime).toBe('18:30');
+  });
+
+  it('rejects a nonexistent spring DST time with the error linked only to its hour field', async () => {
+    fixture.componentRef.setInput('timezone', 'Europe/Paris');
+    await fixture.whenStable();
+    setValue('calendar-event-title', 'Fire drill');
+    setDraftDates(fixture, { startsAtDate: new Date(2026, 2, 29) });
+    setValue('calendar-event-starts-at-time', '02:30');
+    const submitted: CalendarEventFormValues[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => submitted.push(value));
+    document.querySelector<HTMLFormElement>('form')?.requestSubmit();
+    await fixture.whenStable();
+    expect(submitted).toHaveLength(0);
+    const time = document.querySelector<HTMLInputElement>('#calendar-event-starts-at-time');
+    expect(time?.getAttribute('aria-invalid')).toBe('true');
+    expect(time?.getAttribute('aria-describedby')).toContain('calendar-start-time-error');
+    expect(document.querySelector('#calendar-start-time-error')?.textContent).toContain(
+      'does not exist',
+    );
+    expect(
+      document.querySelector('#calendar-event-starts-at-date')?.getAttribute('aria-describedby'),
+    ).toBeNull();
+    expect(time?.closest('hlm-field')).not.toBe(
+      document.querySelector('#calendar-event-starts-at-date')?.closest('hlm-field'),
+    );
+  });
+
+  it('preserves the original instant when an unchanged edit is in the repeated autumn hour', async () => {
+    fixture.componentRef.setInput('timezone', 'Europe/Paris');
+    fixture.componentRef.setInput('editing', {
+      ...EVENT,
+      startsAt: '2026-10-25T02:30:00+01:00',
+      endsAt: null,
+    });
+    await fixture.whenStable();
+    const submitted: CalendarEventFormValues[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => submitted.push(value));
+    document.querySelector<HTMLFormElement>('form')?.requestSubmit();
+    await fixture.whenStable();
+    expect(submitted[0].startsAt).toBe('2026-10-25T01:30:00+00:00');
+  });
+
+  it('submits all-day dates at organization midnight without using hidden hour values', async () => {
+    fixture.componentRef.setInput('timezone', 'Europe/Paris');
+    await fixture.whenStable();
+    fixture.componentInstance['model'].set({
+      ...fixture.componentInstance['model'](),
+      title: 'All-day drill',
+      startsAtDate: new Date(2026, 2, 29),
+      startsAtTime: '',
+      endsAtDate: new Date(2026, 2, 30),
+      endsAtTime: '',
+      allDay: true,
+    });
+    await fixture.whenStable();
+    const submitted: CalendarEventFormValues[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => submitted.push(value));
+    document.querySelector<HTMLFormElement>('form')?.requestSubmit();
+    await fixture.whenStable();
+    expect(submitted).toHaveLength(1);
+    expect(submitted[0].startsAt).toBe('2026-03-29T00:00:00+01:00');
+    expect(submitted[0].endsAt).toBe('2026-03-30T00:00:00+02:00');
+    expect(document.querySelector('#calendar-event-starts-at-time')).toBeNull();
+    expect(document.querySelector('#calendar-event-ends-at-time')).toBeNull();
+  });
+
+  it('guards programmatic submits while a write is pending', async () => {
+    setValue('calendar-event-title', 'Fire drill');
+    setDraftDates(fixture, { startsAtDate: new Date(2026, 7, 1) });
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    document
+      .querySelector<HTMLFormElement>('form')
+      ?.dispatchEvent(new Event('submit', { cancelable: true }));
+    expect(submitted).not.toHaveBeenCalled();
   });
 });

@@ -7,18 +7,21 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Observable, catchError, switchMap, throwError } from 'rxjs';
+import { ENV_CONFIG } from '@core/config/environment';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { AuthSessionNavigationService } from '@features/auth/services';
+import { trustedApiUrl } from '../trusted-api-url';
 
 /**
- * Endpoints excluded from 401 handling.
+ * Constant EXCLUDED_ENDPOINTS
  *
+ * @description
+ * Endpoints excluded from 401 handling.
  * These all answer 401 to mean *"the value you supplied is wrong"* — bad
  * credentials, a mistyped one-time code, an expired reset token — not *"your
  * session is gone"*. Treating them as a dead session logs the user out mid-flow:
  * on `/api/me/password/confirm` the caller is fully authenticated, so a typo in
  * the OTP used to end their session outright.
- *
  * The API reuses 401 for both meanings, so the distinction has to be made here by
  * path. The durable fix is server-side — a rejected *value* belongs in 422 — and
  * this list should shrink as endpoints are corrected.
@@ -40,24 +43,22 @@ const EXCLUDED_ENDPOINTS: RegExp[] = [
 ];
 
 /**
- * Unauthorized Interceptor
+ * Function unauthorizedInterceptor
  *
  * @description
  * Handles 401 Unauthorized responses from the API.
- *
  * An access token expiring is not a reason to sign someone out: the
  * `refresh_token` cookie usually outlives it by a wide margin. So a 401 first
  * triggers one session renewal and replays the request; only when that renewal
  * fails is the session cleared and the user sent to the login page.
- *
  * The renewal itself is shared by the session port, so a page firing several
  * requests at once refreshes once rather than racing a rotating token.
- *
  * The replay is safe for non-idempotent methods too: it only ever fires for a
  * request the server refused with 401 — one it never processed — and runs at
  * most once, so a POST replayed here cannot duplicate a side effect.
  *
  * @version 1.1.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const unauthorizedInterceptor: HttpInterceptorFn = (
@@ -66,12 +67,14 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<unknown>> => {
   const authSession: AuthSessionPort = inject<AuthSessionPort>(AUTH_SESSION_PORT);
   const sessionNavigation: AuthSessionNavigationService = inject(AuthSessionNavigationService);
+  const target = trustedApiUrl(req.url, inject(ENV_CONFIG).apiUrl);
+  if (target === null) return next(req);
   const sessionRevision = authSession.sessionRevision();
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       const isExcluded: boolean = EXCLUDED_ENDPOINTS.some((pattern: RegExp) =>
-        pattern.test(req.url),
+        pattern.test(target.pathname),
       );
 
       // A 403 is intentionally not handled here: it does not block the page,

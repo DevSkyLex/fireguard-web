@@ -30,10 +30,19 @@ executable lines. Adding exclusions to satisfy the threshold is not acceptable.
 
 ## GitHub enforcement
 
-The CI job **Unit and Integration Tests** runs `npm run test:coverage` on pull
-requests, pushes to `develop`/`main`, manual runs and reusable-workflow calls.
-The threshold comes from `angular.json`, so the local and CI commands share the
-same scope and minimum. A failed test or coverage below 90% fails the job.
+The CI job **Unit and Integration Tests** collects complete coverage on pull
+requests, pushes to `develop`/`main`, manual runs and reusable-workflow calls:
+
+```sh
+npm run test:ci -- --coverage --coverage-reporters=lcovonly --coverage-reporters=json-summary --coverage-reporters=text-summary
+node .github/scripts/coverage-threshold.mjs --report
+node .github/scripts/coverage-threshold.mjs --enforce
+```
+
+Collection precedes threshold enforcement so the failed gate still retains a
+complete report. The enforcement script reads the line threshold from
+`angular.json`; local and CI commands share the same scope and minimum. A failed
+test or coverage below 90% fails the job.
 
 The job summary shows the line counts and percentage. The `frontend-coverage`
 artifact keeps the LCOV and JSON summary for 14 days, including when the threshold

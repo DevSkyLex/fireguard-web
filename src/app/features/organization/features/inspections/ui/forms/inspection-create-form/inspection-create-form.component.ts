@@ -16,6 +16,7 @@ import {
 import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
 import { BrnCommandInput } from '@spartan-ng/brain/command';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { idleCallState, type CallState } from '@core/request-state';
 import type { ChecklistOutput } from '@features/organization/features/checklists/models';
 import type {
   CreateInspectionInput,
@@ -38,7 +39,12 @@ import { HlmSheetFooter } from '@shared/ui/sheet';
 import { InspectionStatusTag } from '../../components/inspection-status-tag';
 import type { InspectionCreateFormDraft } from './models';
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_VALUES: InspectionCreateFormDraft = {
   equipmentId: '',
   result: '',
@@ -48,21 +54,30 @@ const EMPTY_VALUES: InspectionCreateFormDraft = {
   checklistId: '',
 };
 
-/** Every result the `result` field's select offers. */
+/**
+ * Constant RESULT_VALUES
+ *
+ * @description
+ * Every result the `result` field's select offers.
+ */
 const RESULT_VALUES: ReadonlyArray<InspectionResult> = ['pass', 'partial', 'fail'];
 
-/** Every inspector type the `inspectorType` field's select offers. */
+/**
+ * Constant INSPECTOR_TYPE_VALUES
+ *
+ * @description
+ * Every inspector type the `inspectorType` field's select offers.
+ */
 const INSPECTOR_TYPE_VALUES: ReadonlyArray<InspectorType> = ['user', 'external'];
 
 /**
- * Component InspectionCreateForm
+ * Class InspectionCreateForm
  * @class InspectionCreateForm
  *
  * @description
  * The form that opens an inspection, composed from spartan's field
  * primitives: one `hlm-field-group`, one `hlm-field` per control, and
  * `hlm-field-error` for the messages.
- *
  * It owns its model, its rules and its own validity, and emits
  * {@link submitted} with the API-shaped payload — the page calls the store
  * (`ARCHITECTURE.md` §10.4). Only the properties `CreateInspectionInput`
@@ -72,7 +87,6 @@ const INSPECTOR_TYPE_VALUES: ReadonlyArray<InspectorType> = ['user', 'external']
  * afterward, in place, on the created record
  * (`FEATURE.md` "The record is the edit surface"). Facility is still
  * deliberately not offered — see the feature's `FEATURE.md` for why.
- *
  * Reports its own dirtiness through {@link dirtyChanged} so the hosting page
  * can implement `UnsavedChangesAware` (`DESIGN.md` § Action Surfaces)
  * without owning the field tree itself.
@@ -107,18 +121,26 @@ export class InspectionCreateForm {
   /**
    * Property equipmentPickerVisible
    * @readonly
-   * @description Keeps an open mobile picker mounted until it dismisses when interaction mode changes.
+   *
+   * @description
+   * Keeps an open mobile picker mounted until it dismisses when interaction mode changes.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly equipmentPickerVisible: WritableSignal<boolean> = signal(false);
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Central interaction mode; viewport width only controls geometry.
+   *
+   * @description
+   * Central interaction mode; viewport width only controls geometry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -127,11 +149,98 @@ export class InspectionCreateForm {
 
   //#region Inputs
   /**
+   * Property equipmentPage
+   * @readonly
+   *
+   * @description
+   * Current equipment server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly equipmentPage: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property equipmentPageCount
+   * @readonly
+   *
+   * @description
+   * Number of equipment server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly equipmentPageCount: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property checklistPage
+   * @readonly
+   *
+   * @description
+   * Current active checklist server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly checklistPage: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property checklistPageCount
+   * @readonly
+   *
+   * @description
+   * Number of active checklist server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly checklistPageCount: InputSignal<number> = input<number>(1);
+
+  /**
+   * Property equipmentQueryState
+   * @readonly
+   *
+   * @description
+   * Request state of equipment choices.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly equipmentQueryState: InputSignal<CallState> = input<CallState>(idleCallState());
+
+  /**
+   * Property checklistQueryState
+   * @readonly
+   *
+   * @description
+   * Request state of active checklist choices.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly checklistQueryState: InputSignal<CallState> = input<CallState>(idleCallState());
+  /**
    * Property pending
    * @readonly
-   * @description Whether a creation request is in flight, which locks the controls.
+   *
+   * @description
+   * Whether a creation request is in flight, which locks the controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -139,9 +248,13 @@ export class InspectionCreateForm {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the store's create call failed with.
+   *
+   * @description
+   * Whatever the store's create call failed with.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -149,9 +262,13 @@ export class InspectionCreateForm {
   /**
    * Property equipmentOptions
    * @readonly
-   * @description The organization's equipment, offered by the equipment combobox.
+   *
+   * @description
+   * The organization's equipment, offered by the equipment combobox.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly EquipmentSelectOption[]>}
    */
   public readonly equipmentOptions: InputSignal<readonly EquipmentSelectOption[]> = input<
@@ -161,9 +278,13 @@ export class InspectionCreateForm {
   /**
    * Property checklists
    * @readonly
-   * @description The organization's active checklist templates, offered by the optional checklist select.
+   *
+   * @description
+   * The organization's active checklist templates, offered by the optional checklist select.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {InputSignal<readonly ChecklistOutput[]>}
    */
   public readonly checklists: InputSignal<readonly ChecklistOutput[]> = input<
@@ -173,11 +294,70 @@ export class InspectionCreateForm {
 
   //#region Outputs
   /**
+   * Property equipmentSearchChanged
+   * @readonly
+   *
+   * @description
+   * Search entered in the equipment picker.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly equipmentSearchChanged: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property equipmentPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested equipment server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly equipmentPageChanged: OutputEmitterRef<number> = output<number>();
+
+  /**
+   * Property checklistSearchChanged
+   * @readonly
+   *
+   * @description
+   * Search entered in the checklist picker.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly checklistSearchChanged: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property checklistPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested active checklist server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly checklistPageChanged: OutputEmitterRef<number> = output<number>();
+  /**
    * Property submitted
    * @readonly
-   * @description Emits the API-shaped payload once the form is valid.
+   *
+   * @description
+   * Emits the API-shaped payload once the form is valid.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CreateInspectionInput>}
    */
   public readonly submitted: OutputEmitterRef<CreateInspectionInput> =
@@ -186,9 +366,13 @@ export class InspectionCreateForm {
   /**
    * Property cancelled
    * @readonly
-   * @description The operator backed out without opening anything.
+   *
+   * @description
+   * The operator backed out without opening anything.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
@@ -196,25 +380,86 @@ export class InspectionCreateForm {
   /**
    * Property dirtyChanged
    * @readonly
-   * @description Emits whenever the field tree's dirtiness changes.
+   *
+   * @description
+   * Emits whenever the field tree's dirtiness changes.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
+  /**
+   * Property selectedEquipment
+   * @readonly
+   *
+   * @description
+   * Retains the selected equipment label when server paging changes the visible options.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<EquipmentSelectOption | null>}
+   */
+  private readonly selectedEquipment: WritableSignal<EquipmentSelectOption | null> = signal(null);
+
+  /**
+   * Property selectedChecklist
+   * @readonly
+   *
+   * @description
+   * Retains the selected checklist label outside its current server page.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<ChecklistOutput | null>}
+   */
+  private readonly selectedChecklist: WritableSignal<ChecklistOutput | null> = signal(null);
+
+  /**
+   * Property showRemoteOption
+   * @readonly
+   *
+   * @description
+   * Leaves filtering to the server rather than hiding server matches by their display label.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {() => boolean}
+   */
+  protected readonly showRemoteOption: () => boolean = () => true;
+
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * The edited draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InspectionCreateFormDraft>}
+   */
   protected readonly model: WritableSignal<InspectionCreateFormDraft> =
     signal<InspectionCreateFormDraft>(EMPTY_VALUES);
 
   /**
    * Property createForm
    * @readonly
-   * @description The field tree and its rules.
+   *
+   * @description
+   * The field tree and its rules.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<InspectionCreateFormDraft>}
    */
   protected readonly createForm: FieldTree<InspectionCreateFormDraft> = form(this.model, (path) => {
@@ -232,10 +477,32 @@ export class InspectionCreateForm {
     });
   });
 
-  /** The results offered. */
+  /**
+   * Property resultValues
+   * @readonly
+   *
+   * @description
+   * The results offered.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<InspectionResult>}
+   */
   protected readonly resultValues: ReadonlyArray<InspectionResult> = RESULT_VALUES;
 
-  /** The inspector types offered. */
+  /**
+   * Property inspectorTypeValues
+   * @readonly
+   *
+   * @description
+   * The inspector types offered.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<InspectorType>}
+   */
   protected readonly inspectorTypeValues: ReadonlyArray<InspectorType> = INSPECTOR_TYPE_VALUES;
 
   /**
@@ -248,6 +515,7 @@ export class InspectionCreateForm {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
@@ -258,12 +526,36 @@ export class InspectionCreateForm {
     ),
   );
 
-  /** Names a picked equipment on the closed combobox trigger. */
+  /**
+   * Property equipmentLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a picked equipment on the closed combobox trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly equipmentLabelOf: (value: string) => string = (value: string): string =>
     this.equipmentOptions().find((option: EquipmentSelectOption): boolean => option.value === value)
-      ?.label ?? '';
+      ?.label ??
+    (this.selectedEquipment()?.value === value ? this.selectedEquipment()?.label : null) ??
+    '';
 
-  /** Names an inspector type on the closed select trigger. */
+  /**
+   * Property inspectorTypeLabelOf
+   * @readonly
+   *
+   * @description
+   * Names an inspector type on the closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: InspectorType) => string}
+   */
   protected readonly inspectorTypeLabelOf: (value: InspectorType) => string = (
     value: InspectorType,
   ): string =>
@@ -271,9 +563,21 @@ export class InspectionCreateForm {
       ? $localize`:@@inspection.form.inspectorTypeUser:Team member`
       : $localize`:@@inspection.form.inspectorTypeExternal:External inspector`;
 
-  /** Names a picked checklist on the closed combobox trigger. */
+  /**
+   * Property checklistLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a picked checklist on the closed combobox trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly checklistLabelOf: (value: string) => string = (value: string): string =>
     this.checklists().find((checklist: ChecklistOutput): boolean => checklist.id === value)?.name ??
+    (this.selectedChecklist()?.id === value ? this.selectedChecklist()?.name : null) ??
     '';
   //#endregion
 
@@ -281,11 +585,26 @@ export class InspectionCreateForm {
   /**
    * Constructor
    * @constructor
-   * @description Relays the field tree's dirtiness through {@link dirtyChanged}.
+   *
+   * @description
+   * Relays the field tree's dirtiness through {@link dirtyChanged}.
+   *
    * @access public
    * @since 1.1.0
    */
   public constructor() {
+    effect((): void => {
+      const equipmentId = this.createForm.equipmentId().value();
+      const equipment = this.equipmentOptions().find((item) => item.value === equipmentId);
+      const checklistId = this.createForm.checklistId().value();
+      const checklist = this.checklists().find((item) => item.id === checklistId);
+      untracked((): void => {
+        if (!equipmentId) this.selectedEquipment.set(null);
+        else if (equipment) this.selectedEquipment.set(equipment);
+        if (!checklistId) this.selectedChecklist.set(null);
+        else if (checklist) this.selectedChecklist.set(checklist);
+      });
+    });
     effect((): void => {
       const dirty: boolean = this.createForm().dirty();
 
@@ -298,10 +617,15 @@ export class InspectionCreateForm {
   /**
    * Method selectEquipment
    * @method selectEquipment
-   * @description Writes the touch selection to the existing Signal Forms field and marks the draft dirty.
+   *
+   * @description
+   * Writes the touch selection to the existing Signal Forms field and marks the draft dirty.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} value - Selected equipment identifier.
+   *
    * @returns {boolean} Whether the equipment field was updated.
    */
   protected selectEquipment(value: string): boolean {

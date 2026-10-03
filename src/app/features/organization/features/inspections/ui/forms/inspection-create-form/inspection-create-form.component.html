@@ -49,7 +49,11 @@
                 </p>
               </div>
             </hlm-drawer-header>
-            <hlm-command class="min-h-0">
+            <hlm-command
+              class="min-h-0"
+              [filter]="showRemoteOption"
+              (searchChange)="equipmentSearchChanged.emit($event)"
+            >
               <label
                 class="sr-only"
                 for="inspection-equipment-search"
@@ -96,7 +100,12 @@
           </hlm-drawer-content>
         </hlm-drawer>
       } @else {
-        <hlm-combobox [formField]="createForm.equipmentId" [itemToString]="equipmentLabelOf">
+        <hlm-combobox
+          [formField]="createForm.equipmentId"
+          [itemToString]="equipmentLabelOf"
+          [filter]="showRemoteOption"
+          (searchChange)="equipmentSearchChanged.emit($event)"
+        >
           <hlm-combobox-input
             inputId="inspection-create-equipment"
             placeholder="Search equipment"
@@ -129,6 +138,48 @@
             </div>
           </hlm-combobox-content>
         </hlm-combobox>
+      }
+      <div class="flex items-center justify-between gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          [disabled]="equipmentPage() <= 1 || equipmentQueryState().status === 'pending'"
+          (click)="equipmentPageChanged.emit(equipmentPage() - 1)"
+          i18n="@@common.previous"
+        >
+          Previous
+        </button>
+        <span class="text-xs text-muted-foreground" aria-live="polite"
+          >{{ equipmentPage() }} / {{ equipmentPageCount() }}</span
+        >
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          [disabled]="
+            equipmentPage() >= equipmentPageCount() || equipmentQueryState().status === 'pending'
+          "
+          (click)="equipmentPageChanged.emit(equipmentPage() + 1)"
+          i18n="@@common.next"
+        >
+          Next
+        </button>
+      </div>
+      @if (equipmentQueryState().error; as error) {
+        <p class="text-sm text-destructive" role="alert">{{ error.message }}</p>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          (click)="equipmentPageChanged.emit(equipmentPage())"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
       }
       @if (createForm.equipmentId().touched() && createForm.equipmentId().invalid()) {
         <hlm-field-error>{{ createForm.equipmentId().errors()[0].message }}</hlm-field-error>
@@ -238,28 +289,71 @@
       <label hlmFieldLabel for="inspection-create-checklist" i18n="@@inspection.form.checklistLabel"
         >Checklist</label
       >
-      <hlm-select [itemToString]="checklistLabelOf" [formField]="createForm.checklistId">
-        <hlm-select-trigger
-          buttonId="inspection-create-checklist"
-          class="w-full mobile-ui:min-h-11"
+      <hlm-combobox
+        [itemToString]="checklistLabelOf"
+        [formField]="createForm.checklistId"
+        [filter]="showRemoteOption"
+        (searchChange)="checklistSearchChanged.emit($event)"
+      >
+        <hlm-combobox-input
+          inputId="inspection-create-checklist"
           data-testid="inspection-create-checklist"
-        >
-          <hlm-select-value
-            placeholder="No checklist"
-            i18n-placeholder="@@inspection.form.checklistSelectPlaceholder"
-          />
-        </hlm-select-trigger>
-        <hlm-select-content *hlmSelectPortal>
-          <hlm-select-group>
-            <hlm-select-item value="">
+          placeholder="Search checklists"
+          i18n-placeholder="@@inspection.form.checklistSearch"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <div hlmComboboxList>
+            <hlm-combobox-item value="">
               <span i18n="@@inspection.form.checklistNone">No checklist</span>
-            </hlm-select-item>
+            </hlm-combobox-item>
             @for (checklist of checklists(); track checklist.id) {
-              <hlm-select-item [value]="checklist.id">{{ checklist.name }}</hlm-select-item>
+              <hlm-combobox-item [value]="checklist.id">{{ checklist.name }}</hlm-combobox-item>
             }
-          </hlm-select-group>
-        </hlm-select-content>
-      </hlm-select>
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+      <div class="flex items-center justify-between gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          [disabled]="checklistPage() <= 1 || checklistQueryState().status === 'pending'"
+          (click)="checklistPageChanged.emit(checklistPage() - 1)"
+          i18n="@@common.previous"
+        >
+          Previous
+        </button>
+        <span class="text-xs text-muted-foreground" aria-live="polite"
+          >{{ checklistPage() }} / {{ checklistPageCount() }}</span
+        >
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          [disabled]="
+            checklistPage() >= checklistPageCount() || checklistQueryState().status === 'pending'
+          "
+          (click)="checklistPageChanged.emit(checklistPage() + 1)"
+          i18n="@@common.next"
+        >
+          Next
+        </button>
+      </div>
+      @if (checklistQueryState().error; as error) {
+        <p class="text-sm text-destructive" role="alert">{{ error.message }}</p>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          (click)="checklistPageChanged.emit(checklistPage())"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      }
     </hlm-field>
   </hlm-field-group>
 

@@ -7,7 +7,7 @@ const SETUP: SetupTotpOutput = {
   '@id': '/api/otp/totp/setup',
   '@type': 'Totp',
   secret: 'JBSWY3DPEHPK3PXP',
-  qrCodeUri: 'otpauth://totp/FireGuard:ada@example.com?secret=JBSWY3DPEHPK3PXP&issuer=FireGuard',
+  qrCodeUri: 'otpauth://totp/Fireguard:ada@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Fireguard',
 };
 
 describe('AccountMfaPanel', () => {

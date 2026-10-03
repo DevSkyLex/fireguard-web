@@ -4,7 +4,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { BOOT_READINESS_PORT } from '@core/boot-readiness';
 import { USER_PROFILE_PORT } from '@features/account/ports';
 import { AUTH_LOGOUT_PORT, AUTH_SESSION_PORT } from '@features/auth/ports';
-import { AuthSessionNavigationService } from '@features/auth/services';
+import { AuthSessionNavigationService, LogoutProtectionService } from '@features/auth/services';
 import { AuthStore } from '@features/auth/state';
 import { provideAuthFeature } from '../auth.feature';
 
@@ -90,11 +90,24 @@ describe('provideAuthFeature', () => {
     expect(auth.renewSession).toHaveBeenCalledOnce();
   });
 
-  it('delegates logout through its owner while exposing pending state', () => {
+  it('delegates logout through its owner while exposing pending state', async () => {
     configureAuth('browser', null);
     const logout = TestBed.inject(AUTH_LOGOUT_PORT);
     logout.logout();
+    await vi.waitFor(() => expect(auth.logout).toHaveBeenCalledOnce());
     expect(auth.logout).toHaveBeenCalledOnce();
+    auth.isLoggingOut.set(true);
+    expect(logout.isLoggingOut()).toBe(true);
+  });
+
+  it('keeps the logout trigger available while unsynced work is reviewed', () => {
+    configureAuth('browser', null);
+    TestBed.overrideProvider(LogoutProtectionService, {
+      useValue: { checking: signal(true), requestLogout: vi.fn() },
+    });
+    const logout = TestBed.inject(AUTH_LOGOUT_PORT);
+
+    expect(logout.isLoggingOut()).toBe(false);
     auth.isLoggingOut.set(true);
     expect(logout.isLoggingOut()).toBe(true);
   });

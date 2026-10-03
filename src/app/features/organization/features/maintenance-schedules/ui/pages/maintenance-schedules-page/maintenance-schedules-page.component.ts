@@ -35,7 +35,9 @@ import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallSuccess } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
-import { FacilityService } from '@features/organization/features/facilities/data-access';
+import type { FacilityOption } from '@features/organization/features/facilities/models';
+import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
+import { FacilityOptionPicker } from '@features/organization/features/facilities/ui/components';
 import { MaintenanceScheduleService } from '@features/organization/features/maintenance-schedules/data-access';
 import type {
   GenerateMaintenanceCampaignInput,
@@ -105,14 +107,6 @@ const DUE_STATUS_VALUES: readonly MaintenanceDueStatus[] = [
   'due_soon',
   'overdue',
 ];
-
-/**
- * Constant FACILITY_OPTIONS_PAGE_SIZE
- *
- * @description
- * How many facilities the scoping select fetches — organizations rarely exceed this.
- */
-const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
 
 /**
  * Type MaintenanceScheduleFilterKey
@@ -229,6 +223,7 @@ interface MaintenanceScheduleFilters {
 @Component({
   selector: 'app-maintenance-schedules-page',
   imports: [
+    FacilityOptionPicker,
     NgIcon,
     RouterLink,
     ...HlmEmptyImports,
@@ -249,6 +244,7 @@ interface MaintenanceScheduleFilters {
     HlmSpinner,
   ],
   providers: [
+    FacilityOptionsStore,
     provideIcons({
       lucideCalendar,
       lucideCircleAlert,
@@ -362,18 +358,18 @@ export class MaintenanceSchedulesPage {
   );
 
   /**
-   * Property facilityService
+   * Property facilityOptionsStore
    * @readonly
    *
    * @description
    * Loads facilities used by schedule filters and forms.
    *
-   * @access private
+   * @access protected
    * @since unreleased
    *
-   * @type {FacilityService}
+   * @type {FacilityOptionsStore}
    */
-  private readonly facilityService: FacilityService = inject(FacilityService);
+  protected readonly facilityOptionsStore: FacilityOptionsStore = inject(FacilityOptionsStore);
 
   /**
    * Property router
@@ -597,13 +593,17 @@ export class MaintenanceSchedulesPage {
    * @access protected
    * @since unreleased
    *
-   * @type {WritableSignal<
-   *     ReadonlyArray<{ readonly label: string; readonly value: string }>
-   *   >}
+   * @type {Signal<readonly FacilityOption[]>}
    */
-  protected readonly facilityOptions: WritableSignal<
-    ReadonlyArray<{ readonly label: string; readonly value: string }>
-  > = signal([]);
+  protected readonly facilityOptions: Signal<readonly FacilityOption[]> = computed(() =>
+    this.facilityOptionsStore.options().map((option) => ({
+      value: `/api/facilities/${option.value}`,
+      label: option.label,
+      typeLabel: option.typeLabel,
+      pathLabel: option.pathLabel,
+      address: option.address,
+    })),
+  );
 
   /**
    * Property overrideTarget
@@ -1000,17 +1000,8 @@ export class MaintenanceSchedulesPage {
       });
 
     effect((): void => {
-      const organizationId: string = this.organizationId();
-
-      untracked((): void => {
-        this.facilityService
-          .list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE })
-          .subscribe((response) => {
-            this.facilityOptions.set(
-              response.member.map((facility) => ({ label: facility.name, value: facility['@id'] })),
-            );
-          });
-      });
+      this.organizationId();
+      untracked(() => this.facilityOptionsStore.clear());
     });
 
     effect((): void => {
@@ -1142,6 +1133,7 @@ export class MaintenanceSchedulesPage {
    * @returns {void}
    */
   protected onFieldPicked(key: string): void {
+    if (key === 'facility') this.facilityOptionsStore.ensureLoaded(this.organizationId());
     this.openFilterKey.set(key as MaintenanceScheduleFilterKey);
   }
 
@@ -1234,6 +1226,7 @@ export class MaintenanceSchedulesPage {
     state: BrnOverlayState,
   ): void {
     if (state === 'open') {
+      if (key === 'facility') this.facilityOptionsStore.ensureLoaded(this.organizationId());
       this.openFilterKey.set(key);
       return;
     }
@@ -1447,6 +1440,7 @@ export class MaintenanceSchedulesPage {
    */
   protected openCampaignDialog(): void {
     this.store.resetCampaignOperation();
+    this.facilityOptionsStore.ensureLoaded(this.organizationId());
     this.campaignDialogVisible.set(true);
   }
 

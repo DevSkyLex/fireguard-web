@@ -961,8 +961,11 @@
     [attr.aria-busy]="compliance.isLoadingSummary()"
   >
     <h2 id="assets-compliance-summary-title" hlmLarge>
-      <span i18n="@@org.assets.compliance.summaryTitle">Compliance summary</span>
+      <span i18n="@@org.assets.compliance.summaryTitle">Monitoring summary</span>
     </h2>
+    <p class="text-sm text-muted-foreground" i18n="@@org.assets.compliance.monitoringDescription">
+      Monitoring status according to the rules configured in this organization.
+    </p>
 
     @if (compliance.hasSummaryError()) {
       <div hlmEmpty role="alert" data-testid="assets-compliance-summary-error">
@@ -1190,7 +1193,7 @@
         @if (summary.totals.complianceRate !== null) {
           <hlm-progress
             [value]="summary.totals.complianceRate"
-            aria-label="Compliance rate"
+            aria-label="Equipment up-to-date rate"
             i18n-aria-label="@@org.assets.compliance.rateAriaLabel"
           >
             <hlm-progress-indicator />

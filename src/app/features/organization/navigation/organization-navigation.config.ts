@@ -483,6 +483,15 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_READ, ORGANIZATION_PERMISSION.FACILITIES_READ],
     match: 'any',
   },
+  {
+    id: 'more',
+    label: $localize`:@@route.organizationMore:More`,
+    icon: 'lucideEllipsis',
+    path: 'more',
+    group: 'operations',
+    permissions: [],
+    exact: true,
+  },
 ];
 
 /**

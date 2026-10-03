@@ -12,13 +12,15 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import { disabled, form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import { idleCallState, type CallState } from '@core/request-state';
 import type {
   CreateEquipmentInput,
   EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
+import { FacilityOptionPicker } from '@features/organization/features/facilities/ui/components';
 import { serverMessagesOf } from '@shared/form-feedback';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
@@ -28,7 +30,12 @@ import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheetFooter } from '@shared/ui/sheet';
 import type { EquipmentCreateFormDraft } from './models';
 
-/** A blank draft. */
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description
+ * A blank draft.
+ */
 const EMPTY_VALUES: EquipmentCreateFormDraft = {
   type: '',
   subType: '',
@@ -39,12 +46,30 @@ const EMPTY_VALUES: EquipmentCreateFormDraft = {
   facility: '',
 };
 
-/** Builds the flat facility IRI the API validates (`^/api/facilities/{uuid}$`). */
+/**
+ * Function facilityIri
+ *
+ * @description
+ * Builds the flat facility IRI the API validates (`^/api/facilities/{uuid}$`).
+ *
+ * @param {string} facilityId - Selected facility identity.
+ *
+ * @returns {string} Flat API facility reference.
+ */
 function facilityIri(facilityId: string): string {
   return `/api/facilities/${facilityId}`;
 }
 
-/** Trims a free-text field, sending `undefined` rather than an empty string. */
+/**
+ * Function trimmed
+ *
+ * @description
+ * Trims a free-text field, sending `undefined` rather than an empty string.
+ *
+ * @param {string} value - Edited optional text.
+ *
+ * @returns {string | undefined} Nonempty trimmed text, or no value.
+ */
 function trimmed(value: string): string | undefined {
   const trimmedValue: string = value.trim();
 
@@ -52,20 +77,18 @@ function trimmed(value: string): string | undefined {
 }
 
 /**
- * Component EquipmentCreateForm
+ * Class EquipmentCreateForm
  * @class EquipmentCreateForm
  *
  * @description
  * The form that registers an equipment, composed from spartan's field
  * primitives: one `hlm-field-group`, one `hlm-field` per control, and
  * `hlm-field-error` for the messages.
- *
  * It owns its model, its rules and its own validity, and emits
  * {@link submitted} with the API-shaped payload — the page calls the store
  * (`ARCHITECTURE.md` §10.4). `type` is the only required field: the record
  * is completed progressively afterward, in place, on the detail page
  * (`FEATURE.md` "The record is the edit surface").
- *
  * Reports its own dirtiness through {@link dirtyChanged} so the hosting page
  * can implement `UnsavedChangesAware` (`DESIGN.md` § Action Surfaces)
  * without owning the field tree itself.
@@ -77,6 +100,7 @@ function trimmed(value: string): string | undefined {
 @Component({
   selector: 'app-equipment-create-form',
   imports: [
+    FacilityOptionPicker,
     RequiredMarker,
     FormField,
     HlmButton,
@@ -92,11 +116,54 @@ function trimmed(value: string): string | undefined {
 export class EquipmentCreateForm {
   //#region Inputs
   /**
+   * Property facilityPage
+   * @readonly
+   *
+   * @description
+   * Current facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPage: InputSignal<number> = input<number>(1);
+  /**
+   * Property facilityPageCount
+   * @readonly
+   *
+   * @description
+   * Number of facility server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPageCount: InputSignal<number> = input<number>(1);
+  /**
+   * Property facilityCallState
+   * @readonly
+   *
+   * @description
+   * Request state for facility options.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly facilityCallState: InputSignal<CallState> = input<CallState>(idleCallState());
+  /**
    * Property pending
    * @readonly
-   * @description Whether a creation request is in flight, which locks the controls.
+   *
+   * @description
+   * Whether a creation request is in flight, which locks the controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -104,9 +171,13 @@ export class EquipmentCreateForm {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the store's create call failed with.
+   *
+   * @description
+   * Whatever the store's create call failed with.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -114,12 +185,15 @@ export class EquipmentCreateForm {
   /**
    * Property facilityOptions
    * @readonly
+   *
    * @description
    * The organization's facilities, offered as the owning site. Empty while the
    * page is still loading them, which simply leaves the field with only its
    * "unassigned" choice rather than blocking the form.
+   *
    * @access public
    * @since 2.0.0
+   *
    * @type {InputSignal<readonly FacilityOption[]>}
    */
   public readonly facilityOptions: InputSignal<readonly FacilityOption[]> = input<
@@ -129,12 +203,15 @@ export class EquipmentCreateForm {
   /**
    * Property initialFacilityId
    * @readonly
+   *
    * @description
    * The site the equipment starts in, seeded from the caller's `?facility=`.
    * This is what lets "New equipment" from a selected site produce an assigned
    * record instead of an orphan the operator must then assign by hand.
+   *
    * @access public
    * @since 2.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly initialFacilityId: InputSignal<string | null> = input<string | null>(null);
@@ -142,11 +219,41 @@ export class EquipmentCreateForm {
 
   //#region Outputs
   /**
+   * Property facilitySearchChanged
+   * @readonly
+   *
+   * @description
+   * Search entered in the server facility selector.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly facilitySearchChanged: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property facilityPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly facilityPageChanged: OutputEmitterRef<number> = output<number>();
+  /**
    * Property submitted
    * @readonly
-   * @description Emits the API-shaped payload once the form is valid.
+   *
+   * @description
+   * Emits the API-shaped payload once the form is valid.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CreateEquipmentInput>}
    */
   public readonly submitted: OutputEmitterRef<CreateEquipmentInput> =
@@ -155,9 +262,13 @@ export class EquipmentCreateForm {
   /**
    * Property cancelled
    * @readonly
-   * @description The operator backed out without registering anything.
+   *
+   * @description
+   * The operator backed out without registering anything.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
@@ -165,34 +276,65 @@ export class EquipmentCreateForm {
   /**
    * Property dirtyChanged
    * @readonly
-   * @description Emits whenever the field tree's dirtiness changes.
+   *
+   * @description
+   * Emits whenever the field tree's dirtiness changes.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly dirtyChanged: OutputEmitterRef<boolean> = output<boolean>();
   //#endregion
 
   //#region Properties
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * The edited draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<EquipmentCreateFormDraft>}
+   */
   protected readonly model: WritableSignal<EquipmentCreateFormDraft> =
     signal<EquipmentCreateFormDraft>(EMPTY_VALUES);
 
   /**
    * Property createForm
    * @readonly
-   * @description The field tree and its rules.
+   *
+   * @description
+   * The field tree and its rules.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<EquipmentCreateFormDraft>}
    */
   protected readonly createForm: FieldTree<EquipmentCreateFormDraft> = form(this.model, (path) => {
+    disabled(path, () => this.pending());
     required(path.type, {
       message: $localize`:@@equipment.form.typeRequired:Equipment type is required.`,
     });
   });
 
-  /** The equipment types offered. */
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * The equipment types offered.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   */
   protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
 
   /**
@@ -206,6 +348,7 @@ export class EquipmentCreateForm {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly serverMessages: Signal<readonly string[]> = computed<readonly string[]>(() =>
@@ -216,20 +359,30 @@ export class EquipmentCreateForm {
     ),
   );
 
-  /** Names a type on the closed select trigger. */
+  /**
+   * Property typeLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a type on the closed select trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: EquipmentType | '') => string}
+   */
   protected readonly typeLabelOf: (value: EquipmentType | '') => string = (value) =>
     this.typeOptions.find((option) => option.value === value)?.label ?? '';
-
-  /** Names the picked site on the closed select trigger. */
-  protected readonly facilityLabelOf: (value: string) => string = (value) =>
-    this.facilityOptions().find((option) => option.value === value)?.label ?? '';
   //#endregion
 
   //#region Constructor
   /**
    * Constructor
    * @constructor
-   * @description Relays the field tree's dirtiness through {@link dirtyChanged}.
+   *
+   * @description
+   * Relays the field tree's dirtiness through {@link dirtyChanged}.
+   *
    * @access public
    * @since 1.1.0
    */

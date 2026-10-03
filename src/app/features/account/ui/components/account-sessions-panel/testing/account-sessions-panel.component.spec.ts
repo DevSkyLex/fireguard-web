@@ -61,6 +61,59 @@ describe('AccountSessionsPanel', () => {
     expect(currentRow?.querySelector('[data-testid="account-sessions-revoke"]')).toBeNull();
   });
 
+  it('shows a city and localized country with approximation and attribution', async () => {
+    fixture.componentRef.setInput('sessions', [
+      { ...CURRENT_SESSION, country: 'FR', city: 'Paris' },
+    ]);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('Paris · France');
+    expect(fixture.nativeElement.textContent).toContain('Approximate location');
+    expect(
+      fixture.nativeElement.querySelector('a[href="https://db-ip.com/"]')?.textContent,
+    ).toContain('Geolocation by DB-IP');
+  });
+
+  it.each([
+    ['fr', 'France'],
+    ['es', 'Francia'],
+  ])('uses the supplied %s locale for country names', async (locale, countryName) => {
+    fixture.componentRef.setInput('locale', locale);
+    fixture.componentRef.setInput('sessions', [
+      { ...CURRENT_SESSION, country: 'FR', city: 'Paris' },
+    ]);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain(`Paris · ${countryName}`);
+  });
+
+  it('shows country only and escapes the city as text', async () => {
+    fixture.componentRef.setInput('sessions', [
+      { ...CURRENT_SESSION, country: 'ES', city: null },
+      { ...OTHER_SESSION, country: 'FR', city: '<img src=x onerror=alert(1)>' },
+    ]);
+    await fixture.whenStable();
+    const locations = fixture.nativeElement.querySelectorAll(
+      '[data-testid="account-sessions-location"]',
+    );
+    expect(locations[0].textContent).toContain('Spain');
+    expect(locations[1].textContent).toContain('<img src=x onerror=alert(1)>');
+    expect(locations[1].querySelector('img')).toBeNull();
+  });
+
+  it('shows unavailable for legacy and malformed locations without attribution', async () => {
+    fixture.componentRef.setInput('sessions', [
+      CURRENT_SESSION,
+      { ...OTHER_SESSION, country: 'invalid', city: 'Paris' },
+    ]);
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="account-sessions-location"]').length,
+    ).toBe(2);
+    expect(fixture.nativeElement.textContent).toContain('Location unavailable');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="account-sessions-attribution"]'),
+    ).toBeNull();
+  });
+
   it('should offer a revoke control on other sessions', () => {
     const rows = Array.from(
       fixture.nativeElement.querySelectorAll(

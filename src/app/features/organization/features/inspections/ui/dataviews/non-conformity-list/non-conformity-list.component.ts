@@ -514,7 +514,7 @@ export class NonConformityList {
    * @returns {boolean} True when the row needs the operator's attention past its deadline.
    */
   protected isOverdueOf(nonConformity: NonConformityOutput): boolean {
-    if (nonConformity.dueAt === null) return false;
+    if (nonConformity.dueAt == null) return false;
     if (!OPEN_STATUSES.has(nonConformity.status)) return false;
 
     return this.calendarDayOf(nonConformity.dueAt) < this.todayIso();
@@ -536,7 +536,7 @@ export class NonConformityList {
    * @returns {string | null} The relative phrase, or `null`.
    */
   protected dueRelativeOf(nonConformity: NonConformityOutput): string | null {
-    if (nonConformity.dueAt === null) return null;
+    if (nonConformity.dueAt == null) return null;
 
     return formatRelativeDays(
       this.calendarDayOf(nonConformity.dueAt),

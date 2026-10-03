@@ -3,7 +3,6 @@ import {
   Component,
   computed,
   input,
-  linkedSignal,
   output,
   type InputSignal,
   type OutputEmitterRef,
@@ -54,7 +53,7 @@ const ROW_TAG_ICON_CLASS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Component ImportJobDetailSheet
+ * Class ImportJobDetailSheet
  * @class ImportJobDetailSheet
  *
  * @description
@@ -179,43 +178,48 @@ export class ImportJobDetailSheet {
    * @readonly
    *
    * @description
-   * Current local report page, reset for another job.
-   *
-   * @access protected
-   * @since 1.0.0
-   *
-   * @type {WritableSignal<number>}
-   */
-  protected readonly page = linkedSignal({ source: () => this.job()?.id, computation: () => 1 });
-
-  /**
-   * Property pageCount
-   * @readonly
-   *
-   * @description
-   * Number of pages in the received report.
+   * Current server report page returned by the detail endpoint.
    *
    * @access protected
    * @since 1.0.0
    *
    * @type {Signal<number>}
    */
-  protected readonly pageCount = computed(() => Math.max(1, Math.ceil(this.rows().length / 50)));
-
+  protected readonly page: Signal<number> = computed(() => this.job()?.reportPage ?? 1);
+  /**
+   * Property pageCount
+   * @readonly
+   *
+   * @description
+   * Number of bounded server report pages.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly pageCount: Signal<number> = computed(() =>
+    Math.max(
+      1,
+      Math.ceil(
+        (this.job()?.reportTotal ?? this.rows().length) / (this.job()?.reportItemsPerPage ?? 100),
+      ),
+    ),
+  );
   /**
    * Property pageRows
    * @readonly
    *
    * @description
-   * Report rows on the current local page.
+   * Rows returned for the selected server page.
    *
    * @access protected
-   * @since 1.0.0
+   * @since unreleased
    *
    * @type {Signal<readonly ImportRowErrorOutput[]>}
    */
-  protected readonly pageRows = computed(() =>
-    this.rows().slice((this.page() - 1) * 50, this.page() * 50),
+  protected readonly pageRows: Signal<readonly ImportRowErrorOutput[]> = computed(() =>
+    this.rows(),
   );
 
   /**
@@ -321,6 +325,19 @@ export class ImportJobDetailSheet {
   //#endregion
 
   //#region Outputs
+  /**
+   * Property reportPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested server report page; the page owns the read.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly reportPageChanged: OutputEmitterRef<number> = output<number>();
   /**
    * Property visibleChange
    * @readonly

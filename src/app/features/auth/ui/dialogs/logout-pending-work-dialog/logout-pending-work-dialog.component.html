@@ -1,0 +1,53 @@
+<hlm-dialog-header>
+  <h2 hlmDialogTitle i18n="@@auth.logout.pending.title">Local changes are waiting</h2>
+  <p
+    id="logout-pending-work-description"
+    class="text-sm text-muted-foreground"
+    data-slot="dialog-description"
+    i18n="@@auth.logout.pending.description"
+  >
+    Signing out removes the changes saved on this device. Synchronize them first, cancel, or
+    explicitly discard them.
+  </p>
+</hlm-dialog-header>
+<p class="text-sm" aria-live="polite" i18n="@@auth.logout.pending.count">
+  Pending operations: {{ count() }}
+</p>
+@if (failed()) {
+  <p class="text-sm text-destructive" role="alert" i18n="@@auth.logout.pending.failed">
+    Some changes could not be synchronized. They are still saved on this device.
+  </p>
+}
+<hlm-dialog-footer class="flex-wrap">
+  <button
+    hlmBtn
+    class="mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:py-2 mobile-ui:whitespace-normal"
+    variant="outline"
+    [disabled]="busy()"
+    (click)="cancel()"
+    i18n="@@auth.logout.pending.cancel"
+  >
+    Cancel
+  </button>
+  <button
+    hlmBtn
+    class="text-foreground mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:py-2 mobile-ui:whitespace-normal"
+    variant="destructive"
+    [disabled]="busy()"
+    (click)="discard()"
+    i18n="@@auth.logout.pending.discard"
+  >
+    Discard local changes and sign out
+  </button>
+  <button
+    hlmBtn
+    class="mobile-ui:h-auto mobile-ui:min-h-11 mobile-ui:py-2 mobile-ui:whitespace-normal"
+    [disabled]="busy()"
+    (click)="synchronize()"
+  >
+    @if (busy()) {
+      <hlm-spinner />
+    }
+    <span i18n="@@auth.logout.pending.sync">Synchronize and sign out</span>
+  </button>
+</hlm-dialog-footer>

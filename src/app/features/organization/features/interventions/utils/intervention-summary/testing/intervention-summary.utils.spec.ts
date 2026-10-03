@@ -108,10 +108,16 @@ describe('formatInterventionScheduleLabel', () => {
     expect(formatInterventionScheduleLabel(intervention, 'en-US')).toBeNull();
   });
 
-  it('should format the planned window as a short date range', () => {
+  it('should format device-local civil dates as an exact short date range', () => {
+    /**
+     * Fixture intervention
+     *
+     * @description
+     * Local civil midnights match the formatter's device-timezone contract even west of UTC.
+     */
     const intervention = buildIntervention({
-      plannedStartAt: '2026-03-01T00:00:00.000Z',
-      dueAt: '2026-03-05T00:00:00.000Z',
+      plannedStartAt: new Date(2026, 2, 1).toISOString(),
+      dueAt: new Date(2026, 2, 5).toISOString(),
     });
 
     expect(formatInterventionScheduleLabel(intervention, 'en-US')).toBe('Mar 1 – Mar 5');

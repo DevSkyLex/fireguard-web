@@ -1,0 +1,68 @@
+<hlm-combobox
+  [value]="value()"
+  (valueChange)="pick($event)"
+  [itemToString]="labelOf"
+  [filter]="remoteFilter"
+  [disabled]="disabled()"
+  [attr.aria-busy]="callState().status === 'pending'"
+  (searchChange)="searchChanged.emit($event)"
+>
+  <hlm-combobox-input
+    [inputId]="inputId()"
+    [placeholder]="placeholder()"
+    [attr.aria-label]="placeholder()"
+  />
+  <hlm-combobox-content *hlmComboboxPortal>
+    <div hlmComboboxList>
+      <hlm-combobox-item value="" i18n="@@facility.picker.any">Any facility</hlm-combobox-item>
+      @for (option of options(); track option.value) {
+        <hlm-combobox-item [value]="option.value">
+          <span class="flex min-w-0 flex-col">
+            <span>{{ option.label }}</span>
+            @if (option.pathLabel) {
+              <span class="text-xs text-muted-foreground">{{ option.pathLabel }}</span>
+            }
+          </span>
+        </hlm-combobox-item>
+      }
+    </div>
+  </hlm-combobox-content>
+</hlm-combobox>
+<div class="flex items-center justify-between gap-2">
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="sm"
+    [disabled]="page() <= 1 || callState().status === 'pending'"
+    (click)="pageChanged.emit(page() - 1)"
+    i18n="@@common.previous"
+  >
+    Previous
+  </button>
+  <span class="text-xs text-muted-foreground" role="status">{{ page() }} / {{ pageCount() }}</span>
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="sm"
+    [disabled]="page() >= pageCount() || callState().status === 'pending'"
+    (click)="pageChanged.emit(page() + 1)"
+    i18n="@@common.next"
+  >
+    Next
+  </button>
+</div>
+@if (callState().error; as error) {
+  <p class="text-sm text-destructive" role="alert">{{ error.message }}</p>
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="sm"
+    (click)="pageChanged.emit(page())"
+    i18n="@@common.retry"
+  >
+    Retry
+  </button>
+}

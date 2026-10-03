@@ -1,9 +1,8 @@
-import { OrganizationMobileNavigation } from '@features/organization/ui/components';
+import { OrganizationMobileNavigation } from '@features/organization/ui/components/organization-mobile-navigation';
 import type { AdditiveSlotFeature } from '@shared/layout-slot';
 
 /**
  * Function withOrganizationMobileNavigation
- * @function withOrganizationMobileNavigation
  *
  * @description
  * Contributes the organization-owned mobile destinations to a shell slot. The
@@ -11,7 +10,10 @@ import type { AdditiveSlotFeature } from '@shared/layout-slot';
  *
  * @access public
  * @since 1.0.0
+ *
  * @returns {AdditiveSlotFeature} Contribution factory resolved by the shell injector.
+ *
+ * @function withOrganizationMobileNavigation
  */
 export function withOrganizationMobileNavigation(): AdditiveSlotFeature {
   return {

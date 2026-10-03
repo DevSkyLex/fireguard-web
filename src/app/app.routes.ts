@@ -1,30 +1,7 @@
 import type { Routes } from '@angular/router';
-import { withAccountMenu, withNotificationBell } from '@features/account';
 import { authGuard, withLogoutControl } from '@features/auth';
 import { notFoundRedirectGuard } from '@features/error';
 import { maintenanceGuard } from '@features/maintenance/http/guards';
-import { onboardingRequiredGuard } from '@features/onboarding/http/guards';
-import {
-  provideCollaborationAssistant,
-  withAssistantToggle,
-  withCollaborationNav,
-  withDirectMessagesSidebarExtension,
-  withChannelsSidebarExtension,
-  provideChannelsWorkspace,
-  withGlobalSearch,
-  withOrganizationNav,
-  withOrganizationMobileNavigation,
-  withOrganizationSwitcher,
-  withSyncIndicator,
-} from '@features/organization';
-import {
-  DashboardLayout,
-  DashboardPanelRegistry,
-  provideDashboardLayoutSlots,
-  withDashboardBreadcrumb,
-  withDashboardGlobalNav,
-  withDashboardPagePanel,
-} from '@layouts/dashboard-layout';
 import { FocusedLayout, provideFocusedLayoutSlots } from '@layouts/focused-layout';
 import {
   provideSplitLayoutSlots,
@@ -37,43 +14,30 @@ import { withThemeSwitcher } from '@shared/theme-switcher';
  * Constant APP_ROUTES
  *
  * @description
- * Application root routes configuration: each shell on the URL it will keep.
- *
- * Every shell is wired to real features — the authentication workflow and the
- * mandatory activation wizard share the split shell, the error pages the
- * focused one, and both the account and the organization tree the dashboard.
- * Both entry workflows share the presentation panel; onboarding renders its progress
- * above its own form.
- * `data.splitWidth` sizes
- * the main form: `md` for authentication and `xl` for onboarding offers.
- *
- * The dashboard is mounted **once**, for every signed-in destination. Its
- * sidebar is composed rather than swapped per section: the organization block
- * fills it while an organization is selected, and the global destinations sit
- * at the bottom whether or not one is. Two mounts would rebuild the shell — and
- * lose the sidebar's state with it — every time the reader stepped into their
- * account.
- *
- * The dashboard authenticates its parent before `onboardingRequiredGuard` runs
- * for a child, so anonymous deep links cannot start protected onboarding reads.
- * Authentication is checked again on reused-shell navigation. The child gate is the mandatory half of the
- * mutual gate it forms with `/onboarding`'s own `onboardingGuard`: any
- * non-completed record is redirected to the wizard before any dashboard child
- * route resolves, and `organizationGuard` still sends an organization-less
- * member to the same wizard as its own fallback once inside (`@features/onboarding`
- * `FEATURE.md` "Routing and SSR Notes").
- *
- * The trailing wildcard sends an unmatched address through
- * `notFoundRedirectGuard` rather than a bare `redirectTo`, so the not-found page
- * receives the URL that failed and can name it (section 9.5).
- *
- * `organizations/invitations/accept` is declared before the dashboard `''`
- * route and outside its `organizations` child subtree on purpose: that subtree
- * is reached through `organizationGuard`/`organizationAccessGuard`, both of
- * which assume an authenticated member picking a workspace, while an
- * invitation link must stay reachable signed out. It shares the focused shell
- * with `error` and `auth` — a single centered page, no sidebar — because
- * nothing here needs a workspace to render.
+ * Application root routes configuration: each shell on the URL it will keep. Every shell is wired
+ * to real features — the authentication workflow and the mandatory activation wizard share the
+ * split shell, the error pages the focused one, and both the account and the organization tree the
+ * dashboard. Both entry workflows share the presentation panel; onboarding renders its progress
+ * above its own form. `data.splitWidth` sizes the main form: `md` for authentication and `xl` for
+ * onboarding offers. The dashboard subtree loads on navigation and is mounted **once**, for every
+ * signed-in destination. Its sidebar is composed rather than swapped per section: the organization
+ * block fills it while an organization is selected, and the global destinations sit at the bottom
+ * whether or not one is. Two mounts would rebuild the shell — and lose the sidebar's state with it
+ * — every time the reader stepped into their account. The dashboard authenticates its parent before
+ * `onboardingRequiredGuard` runs for a child, so anonymous deep links cannot start protected
+ * onboarding reads. Authentication is checked again on reused-shell navigation. The child gate is
+ * the mandatory half of the mutual gate it forms with `/onboarding`'s own `onboardingGuard`: any
+ * non-completed record is redirected to the wizard before any dashboard child route resolves, and
+ * `organizationGuard` still sends an organization-less member to the same wizard as its own
+ * fallback once inside (`@features/onboarding` `FEATURE.md` "Routing and SSR Notes"). The trailing
+ * wildcard sends an unmatched address through `notFoundRedirectGuard` rather than a bare
+ * `redirectTo`, so the not-found page receives the URL that failed and can name it (section 9.5).
+ * `organizations/invitations/accept` is declared before the dashboard `''` route and outside its
+ * `organizations` child subtree on purpose: that subtree is reached through
+ * `organizationGuard`/`organizationAccessGuard`, both of which assume an authenticated member
+ * picking a workspace, while an invitation link must stay reachable signed out. It shares the
+ * focused shell with `error` and `auth` — a single centered page, no sidebar — because nothing here
+ * needs a workspace to render.
  *
  * @since 1.0.0
  */
@@ -128,46 +92,7 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: '',
-    component: DashboardLayout,
-    canActivate: [authGuard],
-    runGuardsAndResolvers: 'always',
-    providers: [
-      DashboardPanelRegistry,
-      provideCollaborationAssistant(),
-      provideChannelsWorkspace(),
-      provideDashboardLayoutSlots({
-        sidebarHeader: [withOrganizationSwitcher()],
-        sidebarNav: [withOrganizationNav()],
-        mobileNavigation: [withOrganizationMobileNavigation()],
-        sidebarExtension: [withDirectMessagesSidebarExtension(), withChannelsSidebarExtension()],
-        panel: [withDashboardPagePanel()],
-        sidebarFooter: [withCollaborationNav(), withDashboardGlobalNav(), withAccountMenu()],
-        mobileActions: [withAccountMenu()],
-        header: [withDashboardBreadcrumb()],
-        headerActions: [
-          withGlobalSearch(),
-          withNotificationBell(),
-          withAssistantToggle(),
-          withSyncIndicator(),
-          withThemeSwitcher(),
-        ],
-      }),
-    ],
-    children: [
-      {
-        path: 'account',
-        canActivate: [onboardingRequiredGuard],
-        loadChildren: () =>
-          import('@features/account/account.routes').then((m) => m.ACCOUNT_ROUTES),
-      },
-      {
-        path: 'organizations',
-        canActivate: [onboardingRequiredGuard],
-        loadChildren: () =>
-          import('@features/organization/organization.routes').then((m) => m.ORGANIZATION_ROUTES),
-      },
-      { path: '', pathMatch: 'full', redirectTo: 'organizations' },
-    ],
+    loadChildren: () => import('./app.dashboard.routes').then((m) => m.APP_DASHBOARD_ROUTES),
   },
   { path: '**', canActivate: [notFoundRedirectGuard], children: [] },
 ];

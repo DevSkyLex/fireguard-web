@@ -3,10 +3,8 @@
  * @interface OrganizationLegalFormValues
  *
  * @description
- * The shape the legal information form edits. Every field is a plain
- * string — an empty one is what clears the field on the settings `PATCH`
- * (`UpdateOrganizationInput`), unlike `OrganizationGeneralFormValues.description`
- * which clears on `null` (`ARCHITECTURE.md` §10.4).
+ * Legal-profile draft. Scalar fields clear on empty strings; the page maps an entirely empty
+ * registered address onto the API's empty-object clearing convention.
  *
  * @since 1.0.0
  */
@@ -75,4 +73,42 @@ export interface OrganizationLegalFormValues {
    * @type {string}
    */
   vatNumber: string;
+
+  /**
+   * Property registeredAddress
+   *
+   * @description
+   * Independently optional address components, kept as strings for field binding.
+   *
+   * @access public
+   *
+   * @type {{
+   *   line1: string;
+   *   line2: string;
+   *   postalCode: string;
+   *   city: string;
+   *   region: string;
+   *   countryCode: string;
+   * }}
+   */
+  registeredAddress: {
+    line1: string;
+    line2: string;
+    postalCode: string;
+    city: string;
+    region: string;
+    countryCode: string;
+  };
+
+  /**
+   * Property privacyContactEmail
+   *
+   * @description
+   * Optional contact for the organization's personal-data processing.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
+  privacyContactEmail: string;
 }

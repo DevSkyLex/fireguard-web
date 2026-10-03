@@ -7,7 +7,7 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const analysis = analyzeBoundaries(root);
 const structure = analyzeStructure(root, analysis.dependencies);
 
-describe('FireGuard architectural boundaries', () => {
+describe('Fireguard architectural boundaries', () => {
   it('inspects authored application dependencies', () => {
     expect(analysis.dependencies.length).toBeGreaterThan(0);
   });

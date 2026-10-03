@@ -46,6 +46,13 @@ describe('EquipmentService', () => {
     httpMock.verify();
   });
 
+  it('rejects an empty explicit label selection without issuing an inventory request', () => {
+    const failed = vi.fn();
+    service.exportLabels(orgId, { ids: [] }).subscribe({ error: failed });
+    expect(failed).toHaveBeenCalledOnce();
+    httpMock.expectNone((request) => request.url.includes('labels'));
+  });
+
   const mockEquipment: EquipmentOutput = {
     '@id': `/api/organizations/${orgId}/equipment/${equipmentId}`,
     '@type': 'Equipment',

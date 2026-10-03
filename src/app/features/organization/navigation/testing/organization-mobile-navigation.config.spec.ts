@@ -7,6 +7,19 @@ import { buildOrganizationNavigation } from '../organization-navigation.config';
 import { ORGANIZATION_SWITCHER_QUICK_LINKS } from '../organization-switcher-quick-link.config';
 
 describe('buildOrganizationMobileNavigation', () => {
+  it('keeps More reachable on mobile without settings permission and avoids a directory self-link', () => {
+    const navigation = buildOrganizationMobileNavigation('org-1', new Set<string>());
+    expect(navigation.primary).toContainEqual({
+      id: 'more',
+      label: 'More',
+      icon: 'lucideEllipsis',
+      route: '/organizations/org-1/more',
+      exact: true,
+    });
+    expect(
+      navigation.sections.flatMap((section) => section.links).some((link) => link.id === 'more'),
+    ).toBe(false);
+  });
   it('keeps five stable primary ids in their specified order for a full-access member', () => {
     const navigation = buildOrganizationMobileNavigation('org-1', new Set(['organization.*']));
     expect(navigation.primary.map((link) => link.id)).toEqual([
@@ -36,13 +49,14 @@ describe('buildOrganizationMobileNavigation', () => {
     for (const link of buildOrganizationNavigation('org-1', permissions).flatMap(
       (section) => section.links,
     )) {
-      expect(links.find((candidate) => candidate.id === link.id)).toMatchObject({
+      const mobileLink = links.find((candidate) => candidate.id === link.id);
+      expect(mobileLink).toMatchObject({
         id: link.id,
         icon: link.icon,
         route: link.route,
-        counterKey: link.counterKey,
         exact: link.exact,
       });
+      expect(mobileLink?.counterKey).toBe(link.counterKey);
     }
     for (const definition of ORGANIZATION_SWITCHER_QUICK_LINKS) {
       expect(links.find((link) => link.id === definition.id)).toMatchObject({

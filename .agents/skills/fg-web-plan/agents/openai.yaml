@@ -1,0 +1,6 @@
+interface:
+  display_name: 'FireGuard WEB Planning'
+  short_description: 'Prepare source-grounded implementation plans'
+  default_prompt: 'Use $fg-web-plan to prepare or revise a plan from verified repository contracts and proportionate validation.'
+policy:
+  allow_implicit_invocation: true

@@ -9,14 +9,16 @@ import {
   type Signal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { idleCallState, type CallState } from '@core/request-state';
 import type { StoreError } from '@core/request-state';
+import type { FacilityOption } from '@features/organization/features/facilities/models';
 import type { GenerateMaintenanceCampaignInput } from '@features/organization/features/maintenance-schedules/models';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmSheetImports } from '@shared/ui/sheet';
 import { MaintenanceCampaignForm } from '../../forms/maintenance-campaign-form';
 
 /**
- * Component MaintenanceCampaignDialog
+ * Class MaintenanceCampaignDialog
  * @class MaintenanceCampaignDialog
  *
  * @description
@@ -53,6 +55,45 @@ export class MaintenanceCampaignDialog {
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#region Inputs
+  /**
+   * Property facilityPage
+   * @readonly
+   *
+   * @description
+   * Current facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPage: InputSignal<number> = input<number>(1);
+  /**
+   * Property facilityPageCount
+   * @readonly
+   *
+   * @description
+   * Number of facility server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPageCount: InputSignal<number> = input<number>(1);
+  /**
+   * Property facilityCallState
+   * @readonly
+   *
+   * @description
+   * Request state for facility options.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly facilityCallState: InputSignal<CallState> = input<CallState>(idleCallState());
   /**
    * Property visible
    * @readonly
@@ -106,14 +147,40 @@ export class MaintenanceCampaignDialog {
    * @access public
    * @since 1.0.0
    *
-   * @type {InputSignal<ReadonlyArray<{ readonly label: string; readonly value: string }>>}
+   * @type {InputSignal<readonly FacilityOption[]>}
    */
-  public readonly facilityOptions: InputSignal<
-    ReadonlyArray<{ readonly label: string; readonly value: string }>
-  > = input<ReadonlyArray<{ readonly label: string; readonly value: string }>>([]);
+  public readonly facilityOptions: InputSignal<readonly FacilityOption[]> = input<
+    readonly FacilityOption[]
+  >([]);
   //#endregion
 
   //#region Outputs
+  /**
+   * Property facilitySearchChanged
+   * @readonly
+   *
+   * @description
+   * Search entered in the server facility selector.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly facilitySearchChanged: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property facilityPageChanged
+   * @readonly
+   *
+   * @description
+   * Requested facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly facilityPageChanged: OutputEmitterRef<number> = output<number>();
   /**
    * Property visibleChange
    * @readonly
@@ -138,7 +205,7 @@ export class MaintenanceCampaignDialog {
    * @access public
    * @since 1.0.0
    *
-   * @type {OutputEmitterRef<Omit<GenerateMaintenanceCampaignInput, 'organization'>>}
+   * @type {OutputEmitterRef< Omit<GenerateMaintenanceCampaignInput, 'organization'> >}
    */
   public readonly submitted: OutputEmitterRef<
     Omit<GenerateMaintenanceCampaignInput, 'organization'>

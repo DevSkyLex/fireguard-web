@@ -189,7 +189,7 @@
           </hlm-progress>
         }
 
-        @if (rows().length > 0) {
+        @if ((job.reportTotal ?? rows().length) > 0) {
           <div
             hlmItemGroup
             class="my-2 gap-0 rounded-md border"
@@ -225,11 +225,11 @@
               testIdPrefix="import-report"
               [page]="page()"
               [pageCount]="pageCount()"
-              [pageSize]="50"
-              [total]="rows().length"
+              [pageSize]="job.reportItemsPerPage ?? 100"
+              [total]="job.reportTotal ?? rows().length"
               [shown]="pageRows().length"
-              [pageSizes]="[50]"
-              (pageChanged)="page.set($event)"
+              [pageSizes]="[100]"
+              (pageChanged)="reportPageChanged.emit($event)"
             />
           }
         }

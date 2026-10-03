@@ -16,7 +16,6 @@ const ANDROID_TABLET_USER_AGENT =
 
 for (const mode of MOBILE_VISUAL_MODES) {
   test.describe(mode.name, () => {
-    test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
     test.use({
       viewport: { width: mode.width, height: mode.height },
       contextOptions: {

@@ -9,6 +9,7 @@ import type { HydraItem } from '@core/api/models';
  * Returned by GET /api/sessions endpoints.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @example
@@ -107,6 +108,32 @@ export interface SessionOutput extends HydraItem {
    * @type {string | null | undefined}
    */
   readonly browser?: string | null;
+
+  /**
+   * Property country
+   * @readonly
+   *
+   * @description
+   * ISO country code inferred at sign-in; absent on older sessions.
+   *
+   * @since 1.0.0
+   *
+   * @type {string | null | undefined}
+   */
+  readonly country?: string | null;
+
+  /**
+   * Property city
+   * @readonly
+   *
+   * @description
+   * Approximate city inferred at sign-in, when available.
+   *
+   * @since 1.0.0
+   *
+   * @type {string | null | undefined}
+   */
+  readonly city?: string | null;
 
   /**
    * Property createdAt

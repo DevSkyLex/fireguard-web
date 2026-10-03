@@ -1277,6 +1277,26 @@ describe('InterventionsPage', () => {
   });
 
   describe('tabs', () => {
+    it('preserves pagination when switching views and resets it for a criteria edit', async () => {
+      fixture = await createPage({ p: '3', status: 'planned' });
+      fixture.componentInstance['switchView']('board');
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { view: 'board' }, queryParamsHandling: 'merge' }),
+      );
+
+      navigate.mockClear();
+      fixture.componentInstance['applyPriorityFilter'](['high']);
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({ priority: 'high', p: null }),
+        }),
+      );
+    });
+
     it('should default to the List tab when no ?view= is present', async () => {
       fixture = await createPage();
 

@@ -20,7 +20,7 @@ const E2E_PORT = 4273;
 export default defineConfig({
   testDir: '.',
   outputDir: resolve(projectRoot, 'test-results'),
-  testIgnore: ['**/harness/**', '**/ssr/**', '**/localized/**'],
+  testIgnore: ['**/harness/**', '**/ssr/**', '**/localized/**', '**/live-api/**'],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -77,19 +77,37 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: [/.*\.mobile\.spec\.ts/, '**/harness/**', '**/ssr/**', '**/localized/**'],
+      testIgnore: [
+        /.*\.mobile\.spec\.ts/,
+        '**/harness/**',
+        '**/ssr/**',
+        '**/localized/**',
+        '**/live-api/**',
+      ],
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: [/.*\.mobile\.spec\.ts/, '**/harness/**', '**/ssr/**', '**/localized/**'],
+      testIgnore: [
+        /.*\.mobile\.spec\.ts/,
+        '**/harness/**',
+        '**/ssr/**',
+        '**/localized/**',
+        '**/live-api/**',
+      ],
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: [/.*\.mobile\.spec\.ts/, '**/harness/**', '**/ssr/**', '**/localized/**'],
+      testIgnore: [
+        /.*\.mobile\.spec\.ts/,
+        '**/harness/**',
+        '**/ssr/**',
+        '**/localized/**',
+        '**/live-api/**',
+      ],
     },
 
     {

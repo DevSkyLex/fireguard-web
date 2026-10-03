@@ -42,7 +42,7 @@ describe('TotpService', () => {
         '@type': 'Totp',
         secret: 'JBSWY3DPEHPK3PXP',
         qrCodeUri:
-          'otpauth://totp/FireGuard%20Auth:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=FireGuard%20Auth',
+          'otpauth://totp/Fireguard%20Auth:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Fireguard%20Auth',
       };
 
       service.setup().subscribe((output) => {

@@ -115,8 +115,6 @@ test.describe('MFA verification', () => {
 });
 
 test.describe('visual evidence', () => {
-  test.skip(({ browserName }) => browserName === 'firefox', 'Firefox is broken in this suite.');
-
   test('renders the MFA verify form à 375px en mode sombre', async ({
     page,
     context,

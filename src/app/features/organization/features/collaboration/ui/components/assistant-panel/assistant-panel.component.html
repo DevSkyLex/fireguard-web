@@ -1,5 +1,105 @@
 <p class="sr-only" role="status" data-testid="assistant-status">{{ status() }}</p>
 
+<div class="flex items-center gap-2 px-4 pb-3">
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    size="sm"
+    [attr.aria-expanded]="historyVisible()"
+    aria-controls="assistant-history"
+    (click)="toggleHistory()"
+    data-testid="assistant-history-toggle"
+    i18n="@@workspace.assistant.history"
+  >
+    Conversation history
+  </button>
+</div>
+@if (historyVisible()) {
+  <section
+    id="assistant-history"
+    aria-label="Conversation history"
+    i18n-aria-label="@@workspace.assistant.history"
+    class="flex max-h-64 flex-col gap-2 overflow-y-auto px-4 pb-4"
+    [attr.aria-busy]="store.isHistoryLoading()"
+  >
+    @if (store.historyError(); as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        (click)="store.loadHistory(store.historyPage())"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    } @else if (store.isHistoryLoading()) {
+      <p
+        class="text-sm text-muted-foreground"
+        role="status"
+        i18n="@@workspace.assistant.historyLoading"
+      >
+        Loading conversation history…
+      </p>
+    } @else if (store.historyTotal() === 0) {
+      <p class="text-sm text-muted-foreground" i18n="@@workspace.assistant.historyEmpty">
+        No previous conversations.
+      </p>
+    } @else {
+      @for (thread of store.threads(); track thread.id) {
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          class="h-auto justify-start text-start"
+          [disabled]="store.isAsking() || store.isControlling()"
+          [attr.aria-current]="store.threadId() === thread.id ? 'true' : null"
+          (click)="store.selectThread(thread.id); historyVisible.set(false)"
+          data-testid="assistant-history-thread"
+        >
+          <span class="flex min-w-0 flex-col">
+            <span class="truncate">{{ thread.title || (thread.createdAt | date: 'medium') }}</span>
+            <span class="text-xs text-muted-foreground">{{
+              thread.lastMessageAt || thread.updatedAt | date: 'medium'
+            }}</span>
+          </span>
+        </button>
+      }
+      <div class="flex items-center justify-between gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          [disabled]="store.historyPage() <= 1"
+          (click)="store.loadHistory(store.historyPage() - 1)"
+          i18n="@@common.previous"
+        >
+          Previous
+        </button>
+        <span class="text-xs text-muted-foreground" aria-live="polite"
+          >{{ store.historyPage() }} / {{ historyPageCount() }}</span
+        >
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          [disabled]="store.historyPage() * 30 >= store.historyTotal()"
+          (click)="store.loadHistory(store.historyPage() + 1)"
+          i18n="@@common.next"
+        >
+          Next
+        </button>
+      </div>
+    }
+  </section>
+}
+
 <div
   #transcript
   class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-2"
@@ -14,6 +114,24 @@
     <div hlmAlert variant="destructive" data-testid="assistant-load-error">
       <p hlmAlertDescription>{{ error.message }}</p>
     </div>
+  }
+
+  @if (store.hasEarlierMessages()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      [disabled]="store.isEarlierLoading()"
+      (click)="loadEarlier()"
+      data-testid="assistant-earlier-messages"
+      i18n="@@workspace.assistant.loadEarlier"
+    >
+      Load earlier messages
+    </button>
+    @if (store.earlierCallState().error; as error) {
+      <p class="text-sm text-destructive" role="alert">{{ error.message }}</p>
+    }
   }
 
   @if (isIntroVisible()) {

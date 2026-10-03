@@ -20,10 +20,10 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideCopy, lucideShieldCheck, lucideSmartphone } from '@ng-icons/lucide';
 import type { SetupTotpOutput } from '@features/account/models';
-import { AccountOtpCodeForm } from '@features/account/ui/forms';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardTitle } from '@shared/ui/card';
+import { AccountOtpCodeForm } from '../../forms/account-otp-code-form';
 
 /**
  * Constant QR_PIXEL_SIZE
@@ -71,6 +71,8 @@ const SECRET_GROUP_SIZE: number = 4;
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-account-mfa-panel
@@ -80,8 +82,6 @@ const SECRET_GROUP_SIZE: number = 4;
  *   (confirmed)="store.confirm($event)"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-account-mfa-panel',
@@ -381,6 +381,8 @@ export class AccountMfaPanel {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
   private readonly renderQr: EffectRef = effect((): void => {
     const result: SetupTotpOutput | null = this.setupResult();
@@ -405,6 +407,8 @@ export class AccountMfaPanel {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
   private readonly closeOnceEnabled: EffectRef = effect((): void => {
     if (this.totpEnabled()) return;

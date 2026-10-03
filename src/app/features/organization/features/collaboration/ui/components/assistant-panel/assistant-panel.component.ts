@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   afterRenderEffect,
   ChangeDetectionStrategy,
@@ -33,7 +34,7 @@ import { ASSISTANT_MAX_QUESTION_LENGTH, ASSISTANT_SUGGESTIONS } from './constant
 import type { AssistantQuestionValues } from './models';
 
 /**
- * Component AssistantPanel
+ * Class AssistantPanel
  * @class AssistantPanel
  *
  * @description
@@ -53,16 +54,17 @@ import type { AssistantQuestionValues } from './models';
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-assistant-panel />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-assistant-panel',
   imports: [
+    DatePipe,
     NgIcon,
     FormField,
     HlmAlert,
@@ -87,6 +89,49 @@ import type { AssistantQuestionValues } from './models';
 })
 export class AssistantPanel {
   //#region Properties
+  /**
+   * Property historyVisible
+   * @readonly
+   *
+   * @description
+   * Opens the private history selector without leaving the current workspace.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly historyVisible: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Property historyPageCount
+   * @readonly
+   *
+   * @description
+   * Number of server pages available to the private history selector.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly historyPageCount: Signal<number> = computed(() =>
+    Math.max(1, Math.ceil(this.store.historyTotal() / 30)),
+  );
+
+  /**
+   * Property earlierScrollAnchor
+   *
+   * @description
+   * Preserves the visible message position while older turns are prepended.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {{ top: number; height: number } | null}
+   */
+  private earlierScrollAnchor: { top: number; height: number } | null = null;
+
   /**
    * Property store
    * @readonly
@@ -282,12 +327,11 @@ export class AssistantPanel {
 
   //#region Lifecycle
   /**
-   * Method constructor
+   * Constructor
    * @constructor
    *
    * @description
    * Keeps the transcript on the newest turn and the composer sized to its text.
-   *
    * The scroll is unconditional, unlike the message thread's anchoring: an
    * assistant reply grows character by character under the reader's eyes, and a
    * transcript that stopped following it would be unreadable.
@@ -300,6 +344,13 @@ export class AssistantPanel {
       this.store.messages(); // Re-run on every frame, not only on a new turn.
 
       const element: HTMLElement = this.transcript().nativeElement;
+      if (this.earlierScrollAnchor) {
+        if (this.store.isEarlierLoading()) return;
+        element.scrollTop =
+          this.earlierScrollAnchor.top + element.scrollHeight - this.earlierScrollAnchor.height;
+        this.earlierScrollAnchor = null;
+        return;
+      }
       element.scrollTop = element.scrollHeight;
     });
 
@@ -316,6 +367,41 @@ export class AssistantPanel {
   //#endregion
 
   //#region Methods
+  /**
+   * Method toggleHistory
+   * @method toggleHistory
+   *
+   * @description
+   * Fetches private conversation history only when the member opens it.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
+  protected toggleHistory(): void {
+    this.historyVisible.update((visible) => !visible);
+    if (this.historyVisible()) this.store.loadHistory(1);
+  }
+
+  /**
+   * Method loadEarlier
+   * @method loadEarlier
+   *
+   * @description
+   * Records the transcript position before loading the preceding message page.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
+  protected loadEarlier(): void {
+    const element = this.transcript().nativeElement;
+    this.earlierScrollAnchor = { top: element.scrollTop, height: element.scrollHeight };
+    this.store.loadEarlier();
+  }
+
   /**
    * Method send
    * @method send

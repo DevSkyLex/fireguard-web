@@ -138,19 +138,38 @@ test.describe('Equipment detail', () => {
    */
   test('preselects the site the creation link scoped it to', async ({ page }) => {
     const api = new ApiMock(page);
+    const facility = facilityOutput();
+    const createdEquipment = equipmentOutput({
+      facilityId: facility.id,
+      facilityName: facility.name,
+    });
     await api.mockAuthenticatedSession();
-    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [facility]);
     await api.mockEquipmentList(E2E_ORGANIZATION_ID, []);
+    await api.mockEquipmentCreate(E2E_ORGANIZATION_ID, createdEquipment);
+    await api.mockEquipmentDetail(E2E_ORGANIZATION_ID, createdEquipment);
+    const equipments = new EquipmentsPage(page);
 
     // The retired `/create` page redirects onto the list with `?create=1`, keeping the scope.
     await page.goto(
       `/organizations/${E2E_ORGANIZATION_ID}/equipments/create?facility=${E2E_FACILITY_ID}`,
     );
-    await expect(page.getByTestId('equipment-create-sheet')).toBeVisible();
+    await expect(equipments.createRoot).toBeVisible();
+    await expect(equipments.createFacility).toHaveValue(facility.name);
 
-    await expect(page.getByTestId('equipment-create-facility')).toContainText(
-      facilityOutput().name,
+    await equipments.selectCreateType('Fire extinguisher');
+    const createRequest = page.waitForRequest(
+      (request) =>
+        request.method() === 'POST' &&
+        new URL(request.url()).pathname === `/api/organizations/${E2E_ORGANIZATION_ID}/equipment`,
     );
+    await equipments.createSubmit.click();
+
+    expect((await createRequest).postDataJSON()).toMatchObject({
+      type: 'fire_extinguisher',
+      facility: `/api/facilities/${facility.id}`,
+    });
+    await expect(equipments.detailRoot).toBeVisible();
   });
 
   /*

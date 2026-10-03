@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "useDefineForClassFields": false,
-    "types": ["node"]
+    "types": ["node", "@angular/localize"]
   },
   "include": ["./**/*.ts"]
 }

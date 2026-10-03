@@ -1,10 +1,15 @@
 import type { ComplianceBucket } from '../compliance/compliance-bucket.type';
 import type { ComplianceBucketTagDescriptor } from './compliance-bucket-tag-descriptor.interface';
 
-/** Descriptors for every `ComplianceBucket` value, in ascending severity. */
+/**
+ * Constant BUCKET
+ *
+ * @description
+ * Descriptors for every monitoring bucket value, in ascending severity.
+ */
 const BUCKET: Record<ComplianceBucket, ComplianceBucketTagDescriptor> = {
   ok: {
-    label: $localize`:@@complianceBucket.ok:Compliant`,
+    label: $localize`:@@complianceBucket.ok:Up to date`,
     severity: 'success',
     icon: 'lucideCircleCheck',
   },

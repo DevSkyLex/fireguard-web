@@ -1,5 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 import { expect } from '@playwright/test';
+import type { SessionOutput } from '../../../../src/app/features/auth/models/session/session-output.interface';
 import type {
   AutomationAttemptOutput,
   AutomationPolicyOutput,
@@ -10,6 +11,7 @@ import type { OrganizationAccessPolicyOutput } from '../../../../src/app/feature
 import type { OrganizationJoinOptionsOutput } from '../../../../src/app/features/organization/models/access/organization-join-options-output.interface';
 import type { OrganizationJoinRequestOutput } from '../../../../src/app/features/organization/models/access/organization-join-request-output.interface';
 import {
+  accessTokenForSubject,
   currentOrganizationMemberProfileOutput,
   E2E_ORGANIZATION_ID,
   hydraCollection,
@@ -931,7 +933,9 @@ export class ApiMock {
   }): Promise<void> {
     await this.installSafetyNet();
 
-    const refresh: LoginOutputFixture = loginOutput();
+    const refresh: LoginOutputFixture = loginOutput({
+      access_token: accessTokenForSubject(userProfileOutput(options?.profile).id),
+    });
     await this.page.route(`${API_BASE_URL}/api/auth/refresh`, async (route) => {
       await fulfillJson(route, 200, refresh);
     });
@@ -3552,6 +3556,31 @@ export class ApiMock {
         '@type': 'NotificationPreferences',
         preferences: [],
       });
+    });
+  }
+
+  /**
+   * Method mockAccountSessions
+   * @method mockAccountSessions
+   * @description Supplies sign-in snapshots and tracks individual revocation without a backend.
+   * @access public
+   * @since 1.0.0
+   * @param {ReadonlyArray<SessionOutput>} sessions - Initial active sessions.
+   * @returns {Promise<void>} Session routes installed.
+   */
+  public async mockAccountSessions(sessions: ReadonlyArray<SessionOutput>): Promise<void> {
+    await this.installSafetyNet();
+    let current = [...sessions];
+    await this.page.route(/\/api\/sessions(?:\/[^?]+)?(\?.*)?$/, async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (route.request().method() === 'GET' && path === '/api/sessions') {
+        await fulfillJson(route, 200, hydraCollection(current));
+      } else if (route.request().method() === 'DELETE') {
+        current = current.filter((session) => `/api/sessions/${session.id}` !== path);
+        await route.fulfill({ status: 204 });
+      } else {
+        await route.fallback();
+      }
     });
   }
 }

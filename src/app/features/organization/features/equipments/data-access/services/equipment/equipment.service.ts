@@ -1,5 +1,5 @@
 import { Service } from '@angular/core';
-import { catchError, EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
+import { catchError, EMPTY, expand, reduce, switchMap, throwError, type Observable } from 'rxjs';
 import { HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, HydraItem } from '@core/api/models';
 import type {
@@ -17,7 +17,7 @@ import type {
 } from '@features/organization/features/equipments/models';
 
 /**
- * Service EquipmentService
+ * Class EquipmentService
  * @class EquipmentService
  *
  * @description
@@ -289,6 +289,9 @@ export class EquipmentService extends HydraApiService {
     organizationId: string,
     options?: { readonly ids?: readonly string[]; readonly facilityId?: string },
   ): Observable<Blob> {
+    if (options?.ids !== undefined && options.ids.length === 0) {
+      return throwError(() => new Error('Select at least one equipment record to print.'));
+    }
     const params: NonNullable<RequestOptions['params']> = {};
 
     if (options?.ids?.length) params['ids'] = options.ids;

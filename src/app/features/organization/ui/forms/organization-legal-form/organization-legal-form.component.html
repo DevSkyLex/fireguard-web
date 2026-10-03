@@ -1,4 +1,4 @@
-<form novalidate (submit)="submit($event)">
+<form novalidate [formRoot]="legalForm" (submit)="submit($event)">
   <hlm-field-group>
     <div class="grid gap-4 @sm/settings:grid-cols-2">
       <hlm-field>
@@ -110,6 +110,231 @@
           <hlm-field-error>{{ legalForm.vatNumber().errors()[0].message }}</hlm-field-error>
         }
       </hlm-field>
+    </div>
+
+    @if (missingDocumentIdentity()) {
+      <p hlmFieldDescription i18n="@@org.settings.legal.missingDocumentIdentity">
+        Add a registered legal name and office address to identify the entity in documents. You can
+        continue with a partial profile.
+      </p>
+    }
+
+    <fieldset hlmFieldSet>
+      <legend hlmFieldLegend i18n="@@org.settings.legal.addressLegend">
+        Registered office (optional)
+      </legend>
+      <p hlmFieldDescription i18n="@@org.settings.legal.addressDescription">
+        The legal entity's address, which may differ from an operational site's address.
+      </p>
+      <div hlmFieldGroup class="grid gap-4 @sm/settings:grid-cols-2">
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            for="org-legal-address-line1"
+            i18n="@@org.settings.legal.address.line1Label"
+            >Address line 1</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11 mobile-ui:text-base"
+            id="org-legal-address-line1"
+            type="text"
+            autocomplete="address-line1"
+            data-testid="org-legal-address-line1"
+            [formField]="legalForm.registeredAddress.line1"
+            [attr.aria-invalid]="
+              legalForm.registeredAddress.line1().touched() &&
+              legalForm.registeredAddress.line1().invalid()
+            "
+          />
+          @if (
+            legalForm.registeredAddress.line1().touched() &&
+            legalForm.registeredAddress.line1().invalid()
+          ) {
+            <hlm-field-error>{{
+              legalForm.registeredAddress.line1().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </div>
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            for="org-legal-address-line2"
+            i18n="@@org.settings.legal.address.line2Label"
+            >Address line 2</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11 mobile-ui:text-base"
+            id="org-legal-address-line2"
+            type="text"
+            autocomplete="address-line2"
+            data-testid="org-legal-address-line2"
+            [formField]="legalForm.registeredAddress.line2"
+            [attr.aria-invalid]="
+              legalForm.registeredAddress.line2().touched() &&
+              legalForm.registeredAddress.line2().invalid()
+            "
+          />
+          @if (
+            legalForm.registeredAddress.line2().touched() &&
+            legalForm.registeredAddress.line2().invalid()
+          ) {
+            <hlm-field-error>{{
+              legalForm.registeredAddress.line2().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </div>
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            for="org-legal-postal-code"
+            i18n="@@org.settings.legal.address.postalCodeLabel"
+            >Postal code</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11 mobile-ui:text-base"
+            id="org-legal-postal-code"
+            type="text"
+            autocomplete="postal-code"
+            data-testid="org-legal-postal-code"
+            [formField]="legalForm.registeredAddress.postalCode"
+            [attr.aria-invalid]="
+              legalForm.registeredAddress.postalCode().touched() &&
+              legalForm.registeredAddress.postalCode().invalid()
+            "
+          />
+          @if (
+            legalForm.registeredAddress.postalCode().touched() &&
+            legalForm.registeredAddress.postalCode().invalid()
+          ) {
+            <hlm-field-error>{{
+              legalForm.registeredAddress.postalCode().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </div>
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            for="org-legal-address-city"
+            i18n="@@org.settings.legal.address.cityLabel"
+            >City</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11 mobile-ui:text-base"
+            id="org-legal-address-city"
+            type="text"
+            autocomplete="address-level2"
+            data-testid="org-legal-address-city"
+            [formField]="legalForm.registeredAddress.city"
+            [attr.aria-invalid]="
+              legalForm.registeredAddress.city().touched() &&
+              legalForm.registeredAddress.city().invalid()
+            "
+          />
+          @if (
+            legalForm.registeredAddress.city().touched() &&
+            legalForm.registeredAddress.city().invalid()
+          ) {
+            <hlm-field-error>{{
+              legalForm.registeredAddress.city().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </div>
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            for="org-legal-address-region"
+            i18n="@@org.settings.legal.address.regionLabel"
+            >Region</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11 mobile-ui:text-base"
+            id="org-legal-address-region"
+            type="text"
+            autocomplete="address-level1"
+            data-testid="org-legal-address-region"
+            [formField]="legalForm.registeredAddress.region"
+            [attr.aria-invalid]="
+              legalForm.registeredAddress.region().touched() &&
+              legalForm.registeredAddress.region().invalid()
+            "
+          />
+          @if (
+            legalForm.registeredAddress.region().touched() &&
+            legalForm.registeredAddress.region().invalid()
+          ) {
+            <hlm-field-error>{{
+              legalForm.registeredAddress.region().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </div>
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            for="org-legal-address-country"
+            i18n="@@org.settings.legal.address.countryLabel"
+            >Country code</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11 mobile-ui:text-base"
+            id="org-legal-address-country"
+            type="text"
+            autocomplete="country"
+            data-testid="org-legal-address-country"
+            [formField]="legalForm.registeredAddress.countryCode"
+            [attr.aria-invalid]="
+              legalForm.registeredAddress.countryCode().touched() &&
+              legalForm.registeredAddress.countryCode().invalid()
+            "
+          />
+          @if (
+            legalForm.registeredAddress.countryCode().touched() &&
+            legalForm.registeredAddress.countryCode().invalid()
+          ) {
+            <hlm-field-error>{{
+              legalForm.registeredAddress.countryCode().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </div>
+      </div>
+    </fieldset>
+
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="org-legal-privacy-email"
+        i18n="@@org.settings.legal.privacyEmailLabel"
+        >Data protection contact</label
+      >
+      <input
+        hlmInput
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
+        id="org-legal-privacy-email"
+        type="email"
+        autocomplete="email"
+        data-testid="org-legal-privacy-email"
+        aria-describedby="org-legal-privacy-email-description"
+        [formField]="legalForm.privacyContactEmail"
+        [attr.aria-invalid]="
+          legalForm.privacyContactEmail().touched() && legalForm.privacyContactEmail().invalid()
+        "
+      />
+      <p
+        hlmFieldDescription
+        id="org-legal-privacy-email-description"
+        i18n="@@org.settings.legal.privacyEmailDescription"
+      >
+        Optional email for requests about personal data processed by this organization. This contact
+        does not designate a data protection officer.
+      </p>
+      @if (legalForm.privacyContactEmail().touched() && legalForm.privacyContactEmail().invalid()) {
+        <hlm-field-error>{{ legalForm.privacyContactEmail().errors()[0].message }}</hlm-field-error>
+      }
     </div>
 
     <div class="flex flex-wrap items-center justify-end gap-2">

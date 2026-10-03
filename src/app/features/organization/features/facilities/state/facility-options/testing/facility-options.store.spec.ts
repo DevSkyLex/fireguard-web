@@ -72,7 +72,7 @@ describe('FacilityOptionsStore', () => {
     await vi.waitFor(() => expect(store.loading()).toBe(false));
 
     expect(facilities.list).toHaveBeenCalledTimes(1);
-    expect(facilities.list).toHaveBeenCalledWith('org-1', { itemsPerPage: 200 });
+    expect(facilities.list).toHaveBeenCalledWith('org-1', { page: 1, itemsPerPage: 200 });
     expect(store.options()).toEqual([
       { value: 'f-1', label: 'Head office', typeLabel: 'Site', pathLabel: null, address: null },
       {
@@ -155,5 +155,32 @@ describe('FacilityOptionsStore', () => {
     configure('server');
     store.load('org-1');
     expect(facilities.list).not.toHaveBeenCalled();
+  });
+
+  it('reaches the 201st facility and sends search to the server at page one', () => {
+    configure('browser');
+    facilities.list.mockReturnValue(
+      of({ member: [facility('f-201', 'Annex 201', 'site', [])], totalItems: 201 }),
+    );
+    store.load({ organizationId: 'org-1', page: 2 });
+    expect(store.pageCount()).toBe(2);
+    expect(store.options()[0].value).toBe('f-201');
+    expect(facilities.list).toHaveBeenCalledWith('org-1', { page: 2, itemsPerPage: 200 });
+    store.load({ organizationId: 'org-1', search: 'Annex' });
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 200,
+      search: 'Annex',
+    });
+  });
+
+  it('cancels a delayed server search when the owning scope is cleared', () => {
+    vi.useFakeTimers();
+    configure('browser');
+    store.searchOptions({ organizationId: 'org-1', search: 'old scope' });
+    store.clear();
+    vi.advanceTimersByTime(300);
+    expect(facilities.list).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });

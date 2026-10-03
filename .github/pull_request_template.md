@@ -101,7 +101,7 @@ Needs manual confirmation.
 <!-- GitHub Actions is the source of truth for automated validation on this PR. -->
 
 - [ ] I expect the standard PR checks (format, lint, unit tests, build, audit, e2e) to cover this change
-- [ ] This PR needs the e2e suite on more than chromium (`CI` → `Run workflow` → `e2e_browsers`)
+- [ ] This PR needs the full browser matrix, including desktop Firefox/Safari (`CI` → `Run workflow` → `full_browser_matrix`)
 - [ ] This PR needs an extra manual verification outside standard CI
 
 ### Additional Evidence

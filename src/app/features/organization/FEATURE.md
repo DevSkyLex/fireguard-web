@@ -460,6 +460,24 @@ The Assets compliance summary separates register generation (`generatedAt`) from
 oldest maintenance evaluation (`dataEvaluatedAt`) and shows the server count of active
 equipment still unevaluated. Live summaries and immutable register archives remain distinct.
 
+The Assets monitoring summary describes operational follow-up against configured organization
+rules, without claiming regulatory certification. Localized labels do not change backend status
+codes, rates or recorded non-conformities. Settings describe inspection intervals as configured defaults.
+
+The optional legal profile and registered office may remain partial; completeness is informational
+and never blocks organization use. General settings own editing through the existing settings-write
+permission. Intact legal forms follow refreshed server values; modified drafts survive unrelated
+organization updates. Only an organization change or an explicitly acknowledged successful legal
+save resets a modified draft; a rejected save preserves it. The PATCH address object replaces the
+whole address, `{}` clears it, and omission or null preserves it. An empty privacy-contact email
+clears the contact.
+
+More publishes the optional data-protection contact from resolved organization context to members,
+independently of settings-write. Its email link contains no prefilled request data; a missing contact
+directs members to the organization's usual channels. Organization processing is distinguished from
+Fireguard's own processing. Desktop and mobile navigation expose the existing membership-gated More
+route; the contact creates no public access, rights-request workflow or new data fetch.
+
 ## Automation execution history
 
 The `automations` nested feature owns `/organizations/:organizationId/automations`, guarded by
@@ -510,6 +528,7 @@ These narrow entry points are published to the named consumers. `app` denotes th
 
 | Entry point                               | Consumers                                                                                                                                                                                   |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `providers/bootstrap`                     | `app`                                                                                                                                                                                       |
 | `services/member-presence`                | `organization/features/collaboration`                                                                                                                                                       |
 | `ui/components/member-presence-indicator` | `account`, `organization/features/collaboration`                                                                                                                                            |
 | `services/browser-download`               | `organization/features/equipments`, `organization/features/facilities`, `organization/features/imports`, `organization/features/inspections`, `organization/features/maintenance-schedules` |

@@ -11,7 +11,7 @@ import {
 } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, pipe, Subject, switchMap, takeUntil } from 'rxjs';
+import { EMPTY, pipe, Subject, switchMap, takeUntil, tap, timer } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -49,6 +49,9 @@ import type { FacilityOptionsState } from './models';
  */
 const INITIAL_FACILITY_OPTIONS_STATE: FacilityOptionsState = {
   organizationId: null,
+  page: 1,
+  total: 0,
+  search: '',
   facilities: [],
   loadCallState: idleCallState(),
 };
@@ -58,9 +61,8 @@ const INITIAL_FACILITY_OPTIONS_STATE: FacilityOptionsState = {
  * Constant FACILITY_OPTIONS_PAGE_SIZE
  *
  * @description
- * How many facilities a picker may offer. Bounds the response while covering
- * typical organization sizes — the same cap the create and detail pages used
- * inline before this store existed.
+ * Facility records per bounded server page. Search and further pages remain
+ * available regardless of the organization's total number of facilities.
  *
  * @since 1.0.0
  *
@@ -89,6 +91,13 @@ const FACILITY_OPTIONS_PAGE_SIZE: number = 200;
 export const FacilityOptionsStore = signalStore(
   withState<FacilityOptionsState>(INITIAL_FACILITY_OPTIONS_STATE),
   withComputed((store) => ({
+    /**
+     * Property pageCount
+     *
+     * @description
+     * Number of facility pages for the current server search.
+     */
+    pageCount: computed(() => Math.max(1, Math.ceil(store.total() / 200))),
     /**
      * @description
      * The facilities as picker options, in API order.
@@ -164,22 +173,34 @@ export const FacilityOptionsStore = signalStore(
           clear();
         }
       };
-      const load = rxMethod<string>(
+      const load = rxMethod<string | { organizationId: string; page?: number; search?: string }>(
         pipe(
-          switchMap((organizationId: string) => {
+          switchMap((input) => {
+            const {
+              organizationId,
+              page = 1,
+              search = '',
+            } = typeof input === 'string' ? { organizationId: input } : input;
             synchronizeSession();
             if (!isPlatformBrowser(platformId) || !authSession.isAuthenticated()) return EMPTY;
+            if (store.organizationId() !== organizationId) cancellation.next();
             const revision = authSession.sessionRevision();
             const requestGeneration = ++generation;
             patchState(store, {
               organizationId,
+              page,
+              search,
               facilities: store.organizationId() === organizationId ? store.facilities() : [],
               loadCallState: pendingCallState(),
             });
             const isCurrent = (): boolean =>
               requestGeneration === generation && revision === authSession.sessionRevision();
             return facilityService
-              .list(organizationId, { itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE })
+              .list(organizationId, {
+                page,
+                itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE,
+                ...(search ? { search } : {}),
+              })
               .pipe(
                 takeUntil(cancellation),
                 tapResponse({
@@ -187,6 +208,7 @@ export const FacilityOptionsStore = signalStore(
                     if (!isCurrent()) return;
                     patchState(store, {
                       facilities: response.member,
+                      total: response.totalItems,
                       loadCallState: successCallState(null),
                     });
                   },
@@ -206,7 +228,18 @@ export const FacilityOptionsStore = signalStore(
         ),
       );
 
+      const searchOptions = rxMethod<{ organizationId: string; search: string }>(
+        pipe(
+          switchMap((query) =>
+            timer(300).pipe(
+              takeUntil(cancellation),
+              tap(() => load(query)),
+            ),
+          ),
+        ),
+      );
       return {
+        searchOptions,
         clear,
         synchronizeSession,
 

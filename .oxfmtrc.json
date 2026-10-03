@@ -11,6 +11,7 @@
     ".angular/**",
     "coverage/**",
     "tmp/**",
+    ".tmp/**",
     ".build-check-*/**",
     ".impeccable/**",
     ".claude/worktrees/**",
@@ -18,7 +19,8 @@
     ".agents/skills/design-taste-frontend/**",
     ".agents/skills/spartan/**",
     "src/app/shared/ui/**",
-    "tests/e2e/test-results-*/**"
+    "tests/e2e/test-results-*/**",
+    "tests/contracts/fixtures/openapi.json"
   ],
   "sortImports": {
     "internalPattern": [

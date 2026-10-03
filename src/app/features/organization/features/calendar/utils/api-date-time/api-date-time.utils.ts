@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 /**
  * Function toApiDateTime
  *
@@ -8,12 +10,15 @@
  * datetime constraint with a 422 — this helper renders the same UTC instant
  * without them.
  *
- * @param {Date} value - The instant to serialize.
+ * @since 1.0.0
+ *
+ * @param {Date | DateTime} value - The instant to serialize, with its zone already resolved.
  *
  * @returns {string} The ATOM-formatted UTC datetime.
- *
- * @since 1.0.0
  */
-export function toApiDateTime(value: Date): string {
-  return value.toISOString().replace(/\.\d{3}Z$/, '+00:00');
+export function toApiDateTime(value: Date | DateTime): string {
+  return (value instanceof Date ? value.toISOString() : (value.toUTC().toISO() ?? '')).replace(
+    /\.\d{3}Z$/,
+    '+00:00',
+  );
 }

@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Events } from '@ngrx/signals/events';
 import { EMPTY, Subject } from 'rxjs';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
 import { InterventionDatabaseService } from '../intervention-database.service';
 import { InterventionOutboxRepository } from '../intervention-outbox.repository';
@@ -37,10 +38,15 @@ function inMemoryDatabase(store: Map<string, InterventionOutboxOperation>): {
 
 function build(
   database: ReturnType<typeof inMemoryDatabase> | Record<string, unknown>,
+  revision = signal(1),
 ): InterventionOutboxRepository {
   TestBed.configureTestingModule({
     providers: [
       InterventionOutboxRepository,
+      {
+        provide: AUTH_SESSION_PORT,
+        useValue: { sessionRevision: revision, isAuthenticated: signal(true) },
+      },
       { provide: InterventionDatabaseService, useValue: database },
       { provide: Events, useValue: { on: vi.fn().mockReturnValue(EMPTY) } },
       { provide: USER_IDENTITY_PORT, useValue: { profile: signal(null) } },
@@ -51,6 +57,65 @@ function build(
 }
 
 describe('InterventionOutboxRepository', () => {
+  it.each(['replacement', 'same-account return'])(
+    'does not queue old work when binding resolves after %s',
+    async (change) => {
+      const entries = new Map<string, InterventionOutboxOperation>();
+      const database = inMemoryDatabase(entries);
+      const revision = signal(1);
+      let resolveBinding!: () => void;
+      database.ensureOwnerBound.mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          resolveBinding = resolve;
+        }),
+      );
+      const repository = build(database, revision);
+      const queued = repository.queue('intervention', 'intervention.update', {
+        status: 'in_progress',
+        revision: 1,
+      });
+      const rejected = expect(queued).rejects.toMatchObject({ name: 'AbortError' });
+      revision.set(2);
+      database.currentOwnerId.mockReturnValue('account-b');
+      if (change === 'same-account return') {
+        revision.set(3);
+        database.currentOwnerId.mockReturnValue('account');
+      }
+      resolveBinding();
+      await rejected;
+      expect(database.put).not.toHaveBeenCalled();
+      expect(entries.size).toBe(0);
+      expect(repository.pendingCount()).toBe(0);
+    },
+  );
+
+  it('does not mark an old read into the replacement owner queue', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const database = inMemoryDatabase(entries);
+    const revision = signal(1);
+    const repository = build(database, revision);
+    await repository.queue('intervention', 'intervention.update', {
+      status: 'in_progress',
+      revision: 1,
+    });
+    const [operation] = [...entries.values()];
+    let resolveRead!: (operation: InterventionOutboxOperation) => void;
+    database.get.mockReturnValueOnce(
+      new Promise<InterventionOutboxOperation>((resolve) => {
+        resolveRead = resolve;
+      }),
+    );
+    const marked = repository.markOutboxFailed(operation.id, 'Old response.');
+    const rejected = expect(marked).rejects.toMatchObject({ name: 'AbortError' });
+    await vi.waitFor(() => expect(database.get).toHaveBeenCalled());
+    revision.set(2);
+    database.currentOwnerId.mockReturnValue('account-b');
+    database.put.mockClear();
+    resolveRead(operation);
+    await rejected;
+    expect(database.put).not.toHaveBeenCalled();
+    expect(entries.get(operation.id)?.status).toBe('pending');
+  });
   it('requires explicit consent to the exact overload assessment and retains the original revision', async () => {
     const entries = new Map<string, InterventionOutboxOperation>();
     const repository = build(inMemoryDatabase(entries));
@@ -148,6 +213,7 @@ describe('InterventionOutboxRepository', () => {
   it('persists a grouped field intention in one IndexedDB transaction', async () => {
     const database = {
       browser: false,
+      currentOwnerId: vi.fn().mockReturnValue('account'),
       ensureOwnerBound: vi.fn().mockResolvedValue(undefined),
       putTransaction: vi.fn().mockResolvedValue(undefined),
     };
@@ -171,22 +237,25 @@ describe('InterventionOutboxRepository', () => {
 
     expect(operationIds).toHaveLength(2);
     expect(database.putTransaction).toHaveBeenCalledOnce();
-    expect(database.putTransaction).toHaveBeenCalledWith({
-      outbox: [
-        expect.objectContaining({
-          value: expect.objectContaining({
-            type: 'equipment.create',
-            payload: expect.objectContaining({ clientId: 'equipment-1' }),
+    expect(database.putTransaction).toHaveBeenCalledWith(
+      {
+        outbox: [
+          expect.objectContaining({
+            value: expect.objectContaining({
+              type: 'equipment.create',
+              payload: expect.objectContaining({ clientId: 'equipment-1' }),
+            }),
           }),
-        }),
-        expect.objectContaining({
-          value: expect.objectContaining({
-            type: 'work-item.create',
-            payload: expect.objectContaining({ clientId: 'work-item-1' }),
+          expect.objectContaining({
+            value: expect.objectContaining({
+              type: 'work-item.create',
+              payload: expect.objectContaining({ clientId: 'work-item-1' }),
+            }),
           }),
-        }),
-      ],
-    });
+        ],
+      },
+      expect.any(Function),
+    );
   });
 
   it('keeps a failed operation unsynced but no longer pending', async () => {
@@ -473,6 +542,10 @@ describe('InterventionOutboxRepository', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionOutboxRepository,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision: signal(1), isAuthenticated: signal(true) },
+        },
         { provide: InterventionDatabaseService, useValue: inMemoryDatabase(store) },
         { provide: Events, useValue: events },
         { provide: USER_IDENTITY_PORT, useValue: { profile: signal(null) } },
@@ -510,6 +583,10 @@ describe('InterventionOutboxRepository', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionOutboxRepository,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision: signal(1), isAuthenticated: signal(true) },
+        },
         { provide: InterventionDatabaseService, useValue: database },
         { provide: Events, useValue: { on: vi.fn().mockReturnValue(EMPTY) } },
         { provide: USER_IDENTITY_PORT, useValue: { profile } },

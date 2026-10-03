@@ -13,6 +13,7 @@ Having a specialist available does not make delegation mandatory.
 
 | Need                                   | Skill or reference                                                 | Agent                                                                              | Validation                                                     |
 | -------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Prepare or revise a plan               | `fg-web-plan`                                                      | Principal agent; no automatic delegation                                           | Verified sources, contracts and proposed checks                |
 | Page/component                         | `spartan` + `fg-web-spartan`                                       | `fg-web-component-builder`                                                         | Targeted tests, build for template changes, useful screenshots |
 | Native composition                     | `spartan` + `fg-web-spartan`                                       | `fg-web-spartan-ui`                                                                | Desktop/mobile screenshots and affected themes                 |
 | Form / overlay / collection            | Targeted `fg-web-spartan` reference                                | `fg-web-form-builder` / `fg-web-overlay-builder` / `fg-web-collection-builder`     | Inputs/outputs, focus, and affected flows                      |
@@ -34,7 +35,7 @@ Having a specialist available does not make delegation mandatory.
 Commands, prerequisites, and limits for each check are in the
 [validation matrix](references/validation.md).
 
-The catalog contains **14 FireGuard skills**, **2 official skills** (`spartan` and
+The catalog contains **15 FireGuard skills**, **2 official skills** (`spartan` and
 `design-taste-frontend`), and **25 FireGuard agents**. Agent names and boundaries are
 described in the [catalog](references/agents.md). Taste operates within its declared
 scope, under the [third-party skill constraints](third-party-skills.md).

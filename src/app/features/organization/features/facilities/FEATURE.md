@@ -23,8 +23,20 @@ model, not the field, so the form does not start dirty.
 ## Entry Points
 
 - Routes: `facilities.routes.ts`
-- Public API: none. The feature root barrel was removed — it `export *`-ed
-  `state`, `models` and `data-access` and had no external consumer.
+- Public API: the concern barrels `models`, `state`, `data-access` and
+  `ui/components`. `ui/components` exports only `FacilityOptionPicker` for
+  equipment and maintenance forms; consumers own its `FacilityOptionsStore`.
+
+## Public entry points
+
+| Entry point     | Consumers                                                                         |
+| --------------- | --------------------------------------------------------------------------------- |
+| `ui/components` | `organization/features/equipments`, `organization/features/maintenance-schedules` |
+
+The shared facility selector reads server pages of 200 records, searches on the
+server, and retains the selected record's label outside the current page.
+`FacilityOptionsStore` loads on demand in the browser, exposes loading/error/retry
+states, and cancels reads and delayed searches on organization or session changes.
 
 ## Routes
 

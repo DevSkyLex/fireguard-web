@@ -1,6 +1,6 @@
 # Web system overview
 
-This runtime view places the frontend in the FireGuard system. It describes request flow, not TypeScript import permissions.
+This runtime view places the frontend in the Fireguard system. It describes request flow, not TypeScript import permissions.
 
 **Authoritative references:** [Architecture](../../ARCHITECTURE.md) · [Organization](../../src/app/features/organization/FEATURE.md).
 
@@ -11,7 +11,7 @@ Arrows show runtime requests, storage ownership and realtime delivery. Database/
 ```mermaid
 flowchart LR
   Browser["Browser and local IndexedDB"] --> SSR["Angular SSR host"]
-  Browser -->|"authorized HTTP"| API["FireGuard API"]
+  Browser -->|"authorized HTTP"| API["Fireguard API"]
   SSR -->|"request-scoped HTTP when required"| API
   API --> Auth["Auth PostgreSQL"]
   API --> Main["Main PostgreSQL"]

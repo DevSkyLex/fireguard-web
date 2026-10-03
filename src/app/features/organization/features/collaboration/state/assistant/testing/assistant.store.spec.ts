@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { CookieService } from '@core/cookie';
 import { MercureService } from '@core/mercure';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { AssistantService } from '@features/organization/features/collaboration/data-access';
 import type {
@@ -61,6 +62,7 @@ describe('AssistantStore', () => {
     ask: ReturnType<typeof vi.fn>;
     controlAttempt: ReturnType<typeof vi.fn>;
     getSubscription: ReturnType<typeof vi.fn>;
+    listThreads: ReturnType<typeof vi.fn>;
   };
   let cookies: {
     getCookie: ReturnType<typeof vi.fn>;
@@ -70,11 +72,17 @@ describe('AssistantStore', () => {
   let frames: Subject<AssistantFrame>;
   let organization: WritableSignal<string | null>;
   let granted: boolean;
+  const sessionRevision = signal(0);
+  const authenticated = signal(true);
 
   function createStore(): AssistantStoreType {
     TestBed.configureTestingModule({
       providers: [
         AssistantStore,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision, isAuthenticated: authenticated },
+        },
         { provide: AssistantService, useValue: service },
         { provide: CookieService, useValue: cookies },
         { provide: MercureService, useValue: { subscribe: () => frames.asObservable() } },
@@ -101,8 +109,11 @@ describe('AssistantStore', () => {
     vi.useFakeTimers();
     frames = new Subject<AssistantFrame>();
     granted = true;
+    sessionRevision.set(0);
+    authenticated.set(true);
     organization = signal<string | null>('org-1');
     service = {
+      listThreads: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
       controlAttempt: vi.fn(),
       startThread: vi.fn().mockReturnValue(of({ id: 'thread-1' })),
       getThread: vi.fn().mockReturnValue(of(detail([], 1, 0))),
@@ -132,6 +143,55 @@ describe('AssistantStore', () => {
     const store: AssistantStoreType = createStore();
 
     expect(service.startThread).not.toHaveBeenCalled();
+    expect(store.threadId()).toBeNull();
+  });
+
+  it('loads paginated private history and opens a chosen existing thread', () => {
+    service.listThreads.mockReturnValue(
+      of({ member: [{ id: 'thread-1', title: 'Earlier visit' }], totalItems: 31 }),
+    );
+    const store = createStore();
+    store.loadHistory(2);
+    expect(service.listThreads).toHaveBeenCalledWith('org-1', 2);
+    expect(store.historyPage()).toBe(2);
+    expect(store.historyTotal()).toBe(31);
+    expect(store.threads()[0].id).toBe('thread-1');
+    store.selectThread('thread-1');
+    expect(service.startThread).not.toHaveBeenCalled();
+    expect(service.getThread).toHaveBeenCalledWith('org-1', 'thread-1');
+    expect(store.threadId()).toBe('thread-1');
+    expect(cookies.setCookie).toHaveBeenCalledWith(expect.objectContaining({ value: 'thread-1' }));
+  });
+
+  it('prepends an earlier message page without duplicate turns or losing recent messages', () => {
+    cookies.getCookie.mockReturnValue('thread-1');
+    service.getThread.mockImplementation((_org: string, _thread: string, page?: number) =>
+      of(
+        page === 2
+          ? detail([message('recent', 'user')], 2, 51)
+          : detail([message('old', 'user'), message('recent', 'user')], 1, 51),
+      ),
+    );
+    const store = createStore();
+    expect(store.messagesPage()).toBe(2);
+    store.loadEarlier();
+    expect(service.getThread).toHaveBeenLastCalledWith('org-1', 'thread-1', 1);
+    expect(store.messages().map((item) => item.id)).toEqual(['old', 'recent']);
+    expect(store.messagesPage()).toBe(1);
+    expect(store.earlierCallState().status).toBe('success');
+  });
+
+  it('cancels history on a session transition and clears the member transcript', () => {
+    const response = new Subject<never>();
+    service.listThreads.mockReturnValue(response);
+    const store = createStore();
+    store.ask('private question');
+    store.loadHistory(1);
+    sessionRevision.set(1);
+    TestBed.tick();
+    expect(response.observed).toBe(false);
+    expect(store.messages()).toEqual([]);
+    expect(store.threads()).toEqual([]);
     expect(store.threadId()).toBeNull();
   });
 

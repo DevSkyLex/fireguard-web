@@ -14,7 +14,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { StoreError } from '@core/request-state';
+import type { CallState, StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
@@ -79,6 +79,78 @@ export class CalendarEventDialog {
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
 
   //#region Inputs
+  /**
+   * Property timezone
+   * @readonly
+   *
+   * @description
+   * Organization zone forwarded to the event form.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly timezone: InputSignal<string> = input('UTC');
+
+  /**
+   * Property facilityCallState
+   * @readonly
+   *
+   * @description
+   * Facility server-page state forwarded to the picker.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState<unknown> | null>}
+   */
+  public readonly facilityCallState: InputSignal<CallState<unknown> | null> =
+    input<CallState<unknown> | null>(null);
+
+  /**
+   * Property facilityPage
+   * @readonly
+   *
+   * @description
+   * Current one-based facility server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPage: InputSignal<number> = input(1);
+
+  /**
+   * Property facilityHasNextPage
+   * @readonly
+   *
+   * @description
+   * Whether another server page can be requested.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly facilityHasNextPage: InputSignal<boolean> = input(false);
+
+  /**
+   * Property facilitySelectedError
+   * @readonly
+   *
+   * @description
+   * Failure resolving an association outside the current page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<StoreError | null>}
+   */
+  public readonly facilitySelectedError: InputSignal<StoreError | null> = input<StoreError | null>(
+    null,
+  );
   /**
    * Property visible
    * @readonly
@@ -169,6 +241,61 @@ export class CalendarEventDialog {
   //#endregion
 
   //#region Outputs
+  /**
+   * Property facilitySearched
+   * @readonly
+   *
+   * @description
+   * Forwards picker search intent to the page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly facilitySearched: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property facilityPageRequested
+   * @readonly
+   *
+   * @description
+   * Forwards paging and retry intent to the page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly facilityPageRequested: OutputEmitterRef<number> = output<number>();
+
+  /**
+   * Property facilitySelectedRetried
+   * @readonly
+   *
+   * @description
+   * Forwards selected-association retry intent to the page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly facilitySelectedRetried: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property facilitySelected
+   * @readonly
+   *
+   * @description
+   * Forwards association changes so paging preserves the selected label.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string | null>}
+   */
+  public readonly facilitySelected: OutputEmitterRef<string | null> = output<string | null>();
   /**
    * Property visibleChange
    * @readonly
@@ -332,6 +459,7 @@ export class CalendarEventDialog {
    * @returns {void}
    */
   protected requestClose(): void {
+    if (this.pending()) return;
     if (this.dirty()) {
       this.unsavedChangesDialogState.set('open');
 

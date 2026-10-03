@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   ImportJobOutput,
@@ -43,6 +44,7 @@ describe('ImportJobDetailSheet', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideRouter([]),
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: { interactionMode: signal('mobile'), isMobileInteractionMode: signal(true) },
@@ -64,6 +66,29 @@ describe('ImportJobDetailSheet', () => {
     expect(
       document.body.querySelector('[data-testid="import-job-detail-sheet"]')?.textContent,
     ).toContain('Queued');
+  });
+
+  it('renders the received bounded page and requests the next page from the server', async () => {
+    fixture.componentRef.setInput(
+      'job',
+      job({
+        reportPage: 2,
+        reportItemsPerPage: 100,
+        reportTotal: 201,
+        reportHasNextPage: true,
+        errorReport: [row({ rowNumber: 101, message: 'Page two row.' })],
+      }),
+    );
+    const changed = vi.fn();
+    fixture.componentInstance.reportPageChanged.subscribe(changed);
+    await fixture.whenStable();
+    expect(byTestId('import-job-detail-rows')?.textContent).toContain('Page two row.');
+    const next = document.querySelector<HTMLButtonElement>(
+      '[data-testid="import-report-page-next"]',
+    );
+    next?.click();
+    expect(changed).toHaveBeenCalledWith(3);
+    expect(byTestId('import-job-detail-rows')?.textContent).toContain('Page two row.');
   });
 
   it('should state the partial-application summary naming the quota reason', async () => {

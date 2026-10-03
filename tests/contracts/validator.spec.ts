@@ -6,6 +6,10 @@ const document: OpenApiDocument = {
   paths: {
     '/api/items/{id}': {
       get: {
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', minLength: 1 } },
+          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } },
+        ],
         responses: {
           '200': {
             content: { 'application/ld+json': { schema: { $ref: '#/components/schemas/Item' } } },
@@ -32,6 +36,40 @@ const document: OpenApiDocument = {
     '/api/items/status': {
       get: {
         responses: { '200': { content: { 'application/json': { schema: { const: 'ready' } } } } },
+      },
+    },
+    '/api/search': {
+      get: {
+        parameters: [
+          {
+            name: 'from',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', format: 'date-time' },
+          },
+          {
+            name: 'organization',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+          },
+          { name: 'enabled', in: 'query', schema: { type: 'boolean' } },
+          {
+            name: 'ids[]',
+            in: 'query',
+            style: 'form',
+            explode: true,
+            schema: { type: 'array', items: { type: 'string', format: 'uuid' } },
+          },
+          {
+            name: 'status[]',
+            in: 'query',
+            style: 'form',
+            explode: true,
+            schema: { type: 'array', items: { enum: ['active', 'closed'], type: 'string' } },
+          },
+        ],
+        responses: { '204': {} },
       },
     },
   },
@@ -145,5 +183,90 @@ describe('OpenAPI fixture validator', () => {
     ).toThrow();
     validator.response('PATCH', '/api/items/1', 204, '', null);
     expect(() => validator.response('PATCH', '/api/items/1', 204, '', {})).toThrow(/no body/);
+  });
+
+  it('validates required query values, formats and exploded arrays from their wire serialization', () => {
+    const query =
+      '?from=2026-10-02T12%3A00%3A00Z&organization=550e8400-e29b-41d4-a716-446655440000';
+    const validator = createContractValidator(document);
+    validator.request(
+      'GET',
+      '/api/search' +
+        query +
+        '&enabled=false&ids[]=550e8400-e29b-41d4-a716-446655440001&ids[]=550e8400-e29b-41d4-a716-446655440002&status[]=active&status[]=closed',
+      '',
+      undefined,
+    );
+    for (const invalid of [
+      '/api/search',
+      '/api/search?from=yesterday&organization=550e8400-e29b-41d4-a716-446655440000',
+      '/api/search' + query + '&enabled=1',
+      '/api/search' + query + '&ids[]=not-a-uuid',
+      '/api/search' + query + '&status[]=missing',
+      '/api/search' + query + '&enabled=true&enabled=false',
+      '/api/items/one?page=2.5',
+      '/api/items/one?page=0',
+      '/api/items/one?page=02',
+    ])
+      expect(() => validator.request('GET', invalid, '', undefined), invalid).toThrow(/parameter/);
+  });
+
+  it('validates the decoded path value instead of accepting any template match', () => {
+    const pathDocument: OpenApiDocument = {
+      ...document,
+      paths: {
+        '/api/id/{id}': {
+          get: {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string', format: 'uuid' },
+              },
+            ],
+            responses: { '204': {} },
+          },
+        },
+      },
+    };
+    const validator = createContractValidator(pathDocument);
+    validator.request('GET', '/api/id/550e8400-e29b-41d4-a716-446655440000', '', undefined);
+    expect(() => validator.request('GET', '/api/id/not-a-uuid', '', undefined)).toThrow(
+      /path parameter id/,
+    );
+    expect(() => validator.request('GET', '/api/id/%20', '', undefined)).toThrow(
+      /path parameter id/,
+    );
+  });
+
+  it('inherits path-item parameters and applies operation parameter overrides', () => {
+    const validator = createContractValidator({
+      ...document,
+      paths: {
+        '/api/inherited': {
+          parameters: [
+            { name: 'page', in: 'query', required: true, schema: { type: 'integer', minimum: 10 } },
+          ],
+          get: {
+            parameters: [
+              {
+                name: 'page',
+                in: 'query',
+                required: true,
+                schema: { type: 'integer', minimum: 1 },
+              },
+            ],
+            responses: { '204': {} },
+          },
+          delete: { responses: { '204': {} } },
+        },
+      },
+    });
+    validator.request('GET', '/api/inherited?page=1', '', undefined);
+    expect(() => validator.request('GET', '/api/inherited', '', undefined)).toThrow(/required/);
+    expect(() => validator.request('DELETE', '/api/inherited?page=1', '', undefined)).toThrow(
+      /parameter page/,
+    );
   });
 });

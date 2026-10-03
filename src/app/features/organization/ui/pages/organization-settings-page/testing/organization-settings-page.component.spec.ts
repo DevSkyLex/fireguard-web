@@ -19,6 +19,8 @@ import {
   idleCallState,
   pendingCallState,
   successCallState,
+  successFeedback,
+  toStoreFailureEventPayload,
   toStoreError,
   type CallState,
   type StoreError,
@@ -46,7 +48,10 @@ import {
   organizationBillingStoreEvents,
 } from '@features/organization/state/organization-billing';
 import { OrganizationPlanStore } from '@features/organization/state/organization-plan';
-import { OrganizationSettingsStore } from '@features/organization/state/organization-settings';
+import {
+  OrganizationSettingsStore,
+  organizationSettingsStoreEvents,
+} from '@features/organization/state/organization-settings';
 import {
   DEFAULT_REGIONAL_FORMAT_SETTINGS,
   type RegionalFormatSettings,
@@ -767,6 +772,15 @@ describe('OrganizationSettingsPage', () => {
       legalName: 'Fireguard Paris SARL',
       registrationNumber: 'RCS PARIS 812345678',
       vatNumber: 'FR12345678901',
+      registeredAddress: {
+        city: 'Paris',
+        line1: '',
+        line2: '',
+        postalCode: '',
+        region: '',
+        countryCode: '',
+      },
+      privacyContactEmail: 'privacy@example.com',
     });
 
     expect(save).toHaveBeenCalledWith({
@@ -777,8 +791,48 @@ describe('OrganizationSettingsPage', () => {
         legalName: 'Fireguard Paris SARL',
         registrationNumber: 'RCS PARIS 812345678',
         vatNumber: 'FR12345678901',
+        registeredAddress: {
+          city: 'Paris',
+          line1: '',
+          line2: '',
+          postalCode: '',
+          region: '',
+          countryCode: '',
+        },
+        privacyContactEmail: 'privacy@example.com',
       },
     });
+  });
+
+  it('maps a cleared registered office onto an empty object and an email onto an empty string', async () => {
+    await createPage();
+    const values = fixture.componentInstance['legalFormValues']();
+    fixture.componentInstance['saveLegal'](values);
+    expect(save).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      input: { ...values, registeredAddress: {} },
+    });
+  });
+
+  it('acknowledges only its legal save and preserves draft reset revision after failures', async () => {
+    await createPage();
+    const page = fixture.componentInstance;
+    const dispatcher = TestBed.inject(Dispatcher);
+    dispatcher.dispatch(organizationSettingsStoreEvents.saveSucceeded(successFeedback('Saved')));
+    expect(page['legalResetRevision']()).toBe(0);
+    page['saveLegal'](page['legalFormValues']());
+    dispatcher.dispatch(organizationSettingsStoreEvents.saveSucceeded(successFeedback('Saved')));
+    expect(page['legalResetRevision']()).toBe(1);
+    page['saveLegal'](page['legalFormValues']());
+    dispatcher.dispatch(
+      organizationSettingsStoreEvents.saveFailed(
+        toStoreFailureEventPayload(toStoreError(new Error('Failed')), 'Failed'),
+      ),
+    );
+    dispatcher.dispatch(
+      organizationSettingsStoreEvents.saveSucceeded(successFeedback('Saved other settings')),
+    );
+    expect(page['legalResetRevision']()).toBe(1);
   });
 
   it('should load the legal type catalog once the general tab opens', async () => {
@@ -1055,6 +1109,15 @@ describe('OrganizationSettingsPage', () => {
       legalName: 'Stale',
       registrationNumber: '',
       vatNumber: '',
+      registeredAddress: {
+        line1: '',
+        line2: '',
+        postalCode: '',
+        city: '',
+        region: '',
+        countryCode: '',
+      },
+      privacyContactEmail: '',
     });
     page['saveNotifications'](page['notificationsSeed']());
     page['saveRegional'](page['regionalSeed']());

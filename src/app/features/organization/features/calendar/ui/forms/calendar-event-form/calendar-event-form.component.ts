@@ -21,15 +21,16 @@ import {
   type FieldTree,
   type ValidationError,
 } from '@angular/forms/signals';
-import type { StoreError } from '@core/request-state';
+import { DateTime } from 'luxon';
+import type { CallState, StoreError } from '@core/request-state';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { toApiDateTime } from '@features/organization/features/calendar/utils';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
+import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDatePicker, HlmDatePickerTrigger } from '@shared/ui/date-picker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
-import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheetFooter } from '@shared/ui/sheet';
 import { HlmSwitch } from '@shared/ui/switch';
 import { HlmTextareaImports } from '@shared/ui/textarea';
@@ -39,7 +40,7 @@ import type { CalendarEventDraft, CalendarEventFormValues } from './models';
  * Constant NO_FACILITY_VALUE
  *
  * @description
- * The select's value for "no facility" — no narrowing.
+ * The picker's value for an event without a facility association.
  */
 const NO_FACILITY_VALUE: string = '';
 
@@ -137,7 +138,7 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
     HlmSwitch,
     HlmInput,
     ...HlmFieldImports,
-    ...HlmSelectImports,
+    ...HlmComboboxImports,
     ...HlmTextareaImports,
     HlmSheetFooter,
   ],
@@ -147,6 +148,78 @@ const DESCRIPTION_MAX_LENGTH: number = 5000;
 })
 export class CalendarEventForm {
   //#region Inputs
+  /**
+   * Property timezone
+   * @readonly
+   *
+   * @description
+   * Organization zone used to interpret every picked civil date and time.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly timezone: InputSignal<string> = input('UTC');
+
+  /**
+   * Property facilityCallState
+   * @readonly
+   *
+   * @description
+   * Current page request state for the searchable facility picker.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState<unknown> | null>}
+   */
+  public readonly facilityCallState: InputSignal<CallState<unknown> | null> =
+    input<CallState<unknown> | null>(null);
+
+  /**
+   * Property facilityPage
+   * @readonly
+   *
+   * @description
+   * Current server page of facility results.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly facilityPage: InputSignal<number> = input(1);
+
+  /**
+   * Property facilityHasNextPage
+   * @readonly
+   *
+   * @description
+   * Whether more matching facilities are available from the server.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly facilityHasNextPage: InputSignal<boolean> = input(false);
+
+  /**
+   * Property facilitySelectedError
+   * @readonly
+   *
+   * @description
+   * Recoverable failure resolving the original facility association.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<StoreError | null>}
+   */
+  public readonly facilitySelectedError: InputSignal<StoreError | null> = input<StoreError | null>(
+    null,
+  );
   /**
    * Property visible
    * @readonly
@@ -238,6 +311,61 @@ export class CalendarEventForm {
 
   //#region Outputs
   /**
+   * Property facilitySearched
+   * @readonly
+   *
+   * @description
+   * Requests the first server page for a new facility search.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly facilitySearched: OutputEmitterRef<string> = output<string>();
+
+  /**
+   * Property facilityPageRequested
+   * @readonly
+   *
+   * @description
+   * Requests paging or retry without changing the selected facility.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly facilityPageRequested: OutputEmitterRef<number> = output<number>();
+
+  /**
+   * Property facilitySelectedRetried
+   * @readonly
+   *
+   * @description
+   * Requests another attempt to resolve the existing facility.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly facilitySelectedRetried: OutputEmitterRef<void> = output<void>();
+
+  /**
+   * Property facilitySelected
+   * @readonly
+   *
+   * @description
+   * Retains the chosen association outside subsequent server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string | null>}
+   */
+  public readonly facilitySelected: OutputEmitterRef<string | null> = output<string | null>();
+  /**
    * Property submitted
    * @readonly
    *
@@ -282,6 +410,19 @@ export class CalendarEventForm {
   //#endregion
 
   //#region Properties
+  /**
+   * Property facilityFilter
+   * @readonly
+   *
+   * @description
+   * Keeps the server search results visible without filtering the page again in the browser.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {() => boolean}
+   */
+  protected readonly facilityFilter: () => boolean = () => true;
   /**
    * Property noFacilityValue
    * @readonly
@@ -339,14 +480,42 @@ export class CalendarEventForm {
     });
     required(path.startsAtTime, {
       message: $localize`:@@calendar.eventDialog.startsAtTimeRequired:A start time is required.`,
+      when: ({ valueOf }) => !valueOf(path.allDay),
     });
+    required(path.endsAtTime, {
+      message: $localize`:@@calendar.eventDialog.endsAtTimeRequired:An end time is required.`,
+      when: ({ valueOf }) => !!valueOf(path.endsAtDate) && !valueOf(path.allDay),
+    });
+    for (const timePath of [path.startsAtTime, path.endsAtTime]) {
+      validate(timePath, ({ valueOf }): ValidationError | null => {
+        if (valueOf(path.allDay)) return null;
+        const date = valueOf(timePath === path.startsAtTime ? path.startsAtDate : path.endsAtDate);
+        const time = valueOf(timePath);
+        if (!date || !time) return null;
+        const instant = combineDateAndTime(date, time, this.timezone());
+        if (instant.isValid && instant.toFormat('HH:mm') === time) return null;
+        return {
+          kind: 'calendarEventInvalidTime',
+          message: $localize`:@@calendar.eventDialog.invalidTime:This time does not exist in the organization timezone.`,
+        };
+      });
+    }
     validate(path.endsAtDate, ({ value, valueOf }): ValidationError | null => {
       const endsAtDate: Date | null = value();
       const startsAtDate: Date | null = valueOf(path.startsAtDate);
       if (!endsAtDate || !startsAtDate) return null;
 
-      const start: Date = combineDateAndTime(startsAtDate, valueOf(path.startsAtTime));
-      const end: Date = combineDateAndTime(endsAtDate, valueOf(path.endsAtTime) || '00:00');
+      const allDay = valueOf(path.allDay);
+      const start: DateTime = combineDateAndTime(
+        startsAtDate,
+        allDay ? '00:00' : valueOf(path.startsAtTime),
+        this.timezone(),
+      );
+      const end: DateTime = combineDateAndTime(
+        endsAtDate,
+        allDay ? '00:00' : valueOf(path.endsAtTime),
+        this.timezone(),
+      );
       if (end >= start) return null;
 
       return {
@@ -404,7 +573,12 @@ export class CalendarEventForm {
         return;
       }
 
-      this.model.set(editing ? toDraft(editing) : draftFromInitialStartsAt(this.initialStartsAt()));
+      this.model.set(
+        editing
+          ? toDraft(editing, this.timezone())
+          : draftFromInitialStartsAt(this.initialStartsAt()),
+      );
+      this.eventForm().reset();
     });
 
     effect((): void => {
@@ -418,9 +592,10 @@ export class CalendarEventForm {
   //#region Methods
   /**
    * Property facilityLabelOf
+   * @readonly
    *
    * @description
-   * Names a facility value on the closed select trigger, including the sentinel "no facility"
+   * Names a facility value in the searchable picker, including the sentinel "no facility"
    * entry.
    *
    * @access protected
@@ -428,11 +603,11 @@ export class CalendarEventForm {
    *
    * @type {(value: string) => string}
    *
-   * @param {string} value - The select's current value.
+   * @param {string} value - The picker's current value.
    *
    * @returns {string} The localized label.
    */
-  protected facilityLabelOf = (value: string): string => {
+  protected readonly facilityLabelOf: (value: string) => string = (value: string): string => {
     if (value === NO_FACILITY_VALUE) {
       return $localize`:@@calendar.eventDialog.noFacility:No facility`;
     }
@@ -463,6 +638,7 @@ export class CalendarEventForm {
    */
   protected submit(event: Event): void {
     event.preventDefault();
+    if (this.pending() || !this.visible()) return;
 
     this.eventForm().markAsTouched();
 
@@ -474,9 +650,31 @@ export class CalendarEventForm {
     this.submitted.emit({
       title: draft.title.trim(),
       description: draft.description.trim() === '' ? null : draft.description.trim(),
-      startsAt: toApiDateTime(combineDateAndTime(draft.startsAtDate, draft.startsAtTime)),
+      startsAt: draft.allDay
+        ? (combineDateAndTime(draft.startsAtDate, '00:00', this.timezone()).toISO({
+            suppressMilliseconds: true,
+          }) ?? '')
+        : toApiDateTime(
+            combineDateAndTime(
+              draft.startsAtDate,
+              draft.startsAtTime,
+              this.timezone(),
+              this.editing()?.startsAt,
+            ),
+          ),
       endsAt: draft.endsAtDate
-        ? toApiDateTime(combineDateAndTime(draft.endsAtDate, draft.endsAtTime || '00:00'))
+        ? draft.allDay
+          ? combineDateAndTime(draft.endsAtDate, '00:00', this.timezone()).toISO({
+              suppressMilliseconds: true,
+            })
+          : toApiDateTime(
+              combineDateAndTime(
+                draft.endsAtDate,
+                draft.endsAtTime,
+                this.timezone(),
+                this.editing()?.endsAt ?? undefined,
+              ),
+            )
         : null,
       allDay: draft.allDay,
       facilityId: draft.facilityId === NO_FACILITY_VALUE ? null : draft.facilityId,
@@ -495,12 +693,15 @@ export class CalendarEventForm {
  * @since 1.0.0
  *
  * @param {CalendarFeedItemOutput} item - The `event`-source entry being edited.
+ * @param {string} timezone - Organization timezone used for the civil date and hour.
  *
  * @returns {CalendarEventDraft} The form's draft shape, seeded from the record.
  */
-function toDraft(item: CalendarFeedItemOutput): CalendarEventDraft {
-  const starts: Date = new Date(item.startsAt);
-  const ends: Date | null = item.endsAt ? new Date(item.endsAt) : null;
+function toDraft(item: CalendarFeedItemOutput, timezone: string): CalendarEventDraft {
+  const starts: DateTime = DateTime.fromISO(item.startsAt, { zone: timezone });
+  const ends: DateTime | null = item.endsAt
+    ? DateTime.fromISO(item.endsAt, { zone: timezone })
+    : null;
 
   return {
     title: item.title,
@@ -546,18 +747,18 @@ function draftFromInitialStartsAt(value: string | null): CalendarEventDraft {
  * Function toDateOnly
  *
  * @description
- * Removes the time portion while retaining the date in the local timezone.
+ * Adapts the organization civil day to the native date picker's date-only value.
  *
  * @access private
  * @since 2.0.0
  *
- * @param {Date} date - Any instant.
+ * @param {DateTime} date - An instant already resolved in the organization timezone.
  *
  * @returns {Date} Local midnight on `date`'s calendar day — the value shape `hlm-date-picker`
  *   expects.
  */
-function toDateOnly(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+function toDateOnly(date: DateTime): Date {
+  return new Date(date.year, date.month - 1, date.day);
 }
 
 /**
@@ -569,53 +770,51 @@ function toDateOnly(date: Date): Date {
  * @access private
  * @since 2.0.0
  *
- * @param {Date} date - Any instant.
+ * @param {DateTime} date - An instant already resolved in the organization timezone.
  *
  * @returns {string} The local wall-clock time as `HH:mm`, matching a native `type="time"` input.
  */
-function toTimeString(date: Date): string {
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+function toTimeString(date: DateTime): string {
+  return date.toFormat('HH:mm');
 }
 
 /**
  * Function combineDateAndTime
  *
  * @description
- * Combines a local calendar day and wall-clock time into a local Date value.
+ * Interprets a civil date and hour in the organization timezone. Repeated autumn hours
+ * keep an unchanged original instant; new values choose the earlier occurrence.
  *
  * @access private
  * @since 2.0.0
  *
  * @param {Date} date - A calendar day, as {@link toDateOnly} produces.
- * @param {string} time - An `HH:mm` wall-clock time; an unparsable value falls back to midnight.
+ * @param {string} time - An `HH:mm` organization wall-clock time.
+ * @param {string} timezone - Organization IANA timezone.
+ * @param {string | undefined} original - Original edited instant, when available.
  *
- * @returns {Date} The local instant combining both.
+ * @returns {DateTime} The zoned instant combining both values.
  */
-function combineDateAndTime(date: Date, time: string): Date {
+function combineDateAndTime(
+  date: Date,
+  time: string,
+  timezone: string,
+  original?: string,
+): DateTime {
   const [hours, minutes]: readonly number[] = time.split(':').map(Number);
 
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    Number.isFinite(hours) ? hours : 0,
-    Number.isFinite(minutes) ? minutes : 0,
+  const instant = DateTime.fromObject(
+    {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      hour: hours,
+      minute: minutes,
+    },
+    { zone: timezone },
   );
-}
-
-/**
- * Function pad
- *
- * @description
- * Pads a numeric date or time component to two characters.
- *
- * @access private
- * @since 1.0.0
- *
- * @param {number} value - A date/time component.
- *
- * @returns {string} The value, zero-padded to two digits.
- */
-function pad(value: number): string {
-  return value.toString().padStart(2, '0');
+  const previous = original ? DateTime.fromISO(original, { zone: timezone }) : null;
+  if (previous?.toFormat('yyyy-MM-dd HH:mm') === instant.toFormat('yyyy-MM-dd HH:mm'))
+    return previous;
+  return instant.getPossibleOffsets().toSorted((a, b) => a.toMillis() - b.toMillis())[0] ?? instant;
 }

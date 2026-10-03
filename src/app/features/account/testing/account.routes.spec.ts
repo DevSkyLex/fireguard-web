@@ -35,7 +35,11 @@ const expectPage = async (route: Route, componentType: unknown): Promise<void> =
 
 describe('ACCOUNT_ROUTES', () => {
   it('mounts the account workspace beneath the authenticated dashboard shell', async () => {
-    const dashboard = APP_ROUTES.find((route) => route.path === '');
+    const { APP_DASHBOARD_ROUTES: dashboardRoutes } = await import('@app/app.dashboard.routes');
+    expect(await APP_ROUTES.find((route) => route.path === '')?.loadChildren?.()).toBe(
+      dashboardRoutes,
+    );
+    const dashboard = dashboardRoutes.find((route) => route.path === '');
     const entry = dashboard?.children?.find((route) => route.path === 'account');
 
     expect(dashboard?.component).toBe(DashboardLayout);

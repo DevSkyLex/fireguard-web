@@ -317,7 +317,7 @@ export class EquipmentCreateForm {
    * @type {FieldTree<EquipmentCreateFormDraft>}
    */
   protected readonly createForm: FieldTree<EquipmentCreateFormDraft> = form(this.model, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     required(path.type, {
       message: $localize`:@@equipment.form.typeRequired:Equipment type is required.`,
     });

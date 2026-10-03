@@ -203,22 +203,45 @@ describe('InterventionTimeStore', () => {
   });
 
   it('removes the browser listener on explicit discard and destruction', async () => {
+    const added = vi.spyOn(window, 'addEventListener');
+    const removed = vi.spyOn(window, 'removeEventListener');
     repository.saveDraft.mockRejectedValueOnce(new Error('Quota exhausted'));
     store.load(scope);
     store.saveDraft({ scope, draft });
     await vi.waitFor(() => expect(store.hasUnpersistedFailedDraft()).toBe(true));
     TestBed.tick();
     expect(unload().defaultPrevented).toBe(true);
+    const firstListener = added.mock.calls.find(([type]) => type === 'beforeunload')?.[1];
+    expect(firstListener).toBeTypeOf('function');
     store.saveDraft({ scope, draft: null });
     TestBed.tick();
     expect(unload().defaultPrevented).toBe(false);
+    expect(removed).toHaveBeenCalledWith('beforeunload', firstListener);
 
     repository.saveDraft.mockRejectedValueOnce(new Error('Quota exhausted'));
     store.saveDraft({ scope, draft });
     await vi.waitFor(() => expect(store.hasUnpersistedFailedDraft()).toBe(true));
     TestBed.tick();
     expect(unload().defaultPrevented).toBe(true);
+    const lastListener = added.mock.calls.findLast(([type]) => type === 'beforeunload')?.[1];
+    expect(lastListener).toBeTypeOf('function');
     TestBed.resetTestingModule();
+    expect(unload().defaultPrevented).toBe(false);
+    expect(removed).toHaveBeenCalledWith('beforeunload', lastListener);
+  });
+
+  it('disarms the departure warning when the failed draft leaves its owning scope', async () => {
+    repository.saveDraft.mockRejectedValueOnce(new Error('Quota exhausted'));
+    store.load(scope);
+    store.saveDraft({ scope, draft });
+    await vi.waitFor(() => expect(store.hasUnpersistedFailedDraft()).toBe(true));
+    TestBed.tick();
+    expect(unload().defaultPrevented).toBe(true);
+
+    store.load({ ...scope, workItemId: 'next' });
+    TestBed.tick();
+    expect(store.scope()?.workItemId).toBe('next');
+    expect(store.hasUnpersistedFailedDraft()).toBe(false);
     expect(unload().defaultPrevented).toBe(false);
   });
 

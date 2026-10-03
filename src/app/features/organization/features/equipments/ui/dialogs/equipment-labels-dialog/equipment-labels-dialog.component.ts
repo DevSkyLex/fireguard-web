@@ -310,7 +310,7 @@ export class EquipmentLabelsDialog {
    * @type {FieldTree<EquipmentLabelsDraft>}
    */
   protected readonly labelForm: FieldTree<EquipmentLabelsDraft> = form(this.model, (path) =>
-    disabled(path, () => this.printCallState().status === 'pending'),
+    disabled(path, { when: () => this.printCallState().status === 'pending' }),
   );
 
   /**
@@ -327,11 +327,9 @@ export class EquipmentLabelsDialog {
    */
   protected readonly scope: Signal<EquipmentLabelScope> = computed<EquipmentLabelScope>(() => {
     const draft = this.model();
-    return draft.mode === 'inventory'
-      ? { kind: 'inventory' }
-      : draft.mode === 'facility'
-        ? { kind: 'facility', facilityId: draft.facilityId }
-        : { kind: 'selection', ids: draft.ids };
+    if (draft.mode === 'inventory') return { kind: 'inventory' };
+    if (draft.mode === 'facility') return { kind: 'facility', facilityId: draft.facilityId };
+    return { kind: 'selection', ids: draft.ids };
   });
   //#endregion
 

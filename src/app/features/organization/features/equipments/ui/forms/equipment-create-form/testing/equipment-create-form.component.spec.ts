@@ -121,7 +121,13 @@ describe('EquipmentCreateForm', () => {
     );
   });
 
-  it('should lock the submit control while a request is in flight', async () => {
+  it('should lock the draft during creation and preserve it when editing resumes', async () => {
+    await fill('equipment-create-subtype', 'CO2');
+    const subType = element.querySelector<HTMLInputElement>(
+      '[data-testid="equipment-create-subtype"]',
+    ) as HTMLInputElement;
+    expect(subType.disabled).toBe(false);
+
     fixture.componentRef.setInput('pending', true);
     await fixture.whenStable();
 
@@ -131,6 +137,13 @@ describe('EquipmentCreateForm', () => {
 
     expect(button?.disabled).toBe(true);
     expect(button?.textContent).toContain('Creating…');
+    expect(subType.disabled).toBe(true);
+
+    fixture.componentRef.setInput('pending', false);
+    await fixture.whenStable();
+
+    expect(subType.disabled).toBe(false);
+    expect(subType.value).toBe('CO2');
   });
 
   it('should report dirtiness through dirtyChanged as the field tree is touched', async () => {

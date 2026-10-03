@@ -40,7 +40,9 @@
   >
     Previous
   </button>
-  <span class="text-xs text-muted-foreground" role="status">{{ page() }} / {{ pageCount() }}</span>
+  <output class="text-xs text-muted-foreground" aria-live="polite"
+    >{{ page() }} / {{ pageCount() }}</output
+  >
   <button
     hlmBtn
     type="button"

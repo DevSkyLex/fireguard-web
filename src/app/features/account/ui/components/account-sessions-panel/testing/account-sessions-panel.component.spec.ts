@@ -106,8 +106,8 @@ describe('AccountSessionsPanel', () => {
     ]);
     await fixture.whenStable();
     expect(
-      fixture.nativeElement.querySelectorAll('[data-testid="account-sessions-location"]').length,
-    ).toBe(2);
+      fixture.nativeElement.querySelectorAll('[data-testid="account-sessions-location"]'),
+    ).toHaveLength(2);
     expect(fixture.nativeElement.textContent).toContain('Location unavailable');
     expect(
       fixture.nativeElement.querySelector('[data-testid="account-sessions-attribution"]'),

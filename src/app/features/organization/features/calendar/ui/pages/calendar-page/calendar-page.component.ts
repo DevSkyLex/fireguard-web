@@ -1762,15 +1762,13 @@ export class CalendarPage {
     if (moved.toMillis() === start.toMillis()) return;
 
     const deltaDays = target.startOf('day').diff(start.startOf('day'), 'days').days;
-    const endsAt: string | undefined = item.endsAt
-      ? toApiDateTime(
-          DateTime.fromISO(item.endsAt, { zone }).plus(
-            item.allDay
-              ? { days: deltaDays }
-              : { milliseconds: moved.toMillis() - start.toMillis() },
-          ),
-        )
-      : undefined;
+    let endsAt: string | undefined;
+    if (item.endsAt) {
+      const duration = item.allDay
+        ? { days: deltaDays }
+        : { milliseconds: moved.toMillis() - start.toMillis() };
+      endsAt = toApiDateTime(DateTime.fromISO(item.endsAt, { zone }).plus(duration));
+    }
 
     this.store.moveEvent({
       organizationId: this.organizationId(),

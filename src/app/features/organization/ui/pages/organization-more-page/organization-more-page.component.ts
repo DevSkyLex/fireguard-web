@@ -161,7 +161,7 @@ export class OrganizationMorePage {
    */
   protected readonly privacyContactHref: Signal<string | null> = computed(() => {
     const email = this.privacyContactEmail();
-    return email === null ? null : `mailto:${encodeURIComponent(email).replace(/%40/gu, '@')}`;
+    return email === null ? null : `mailto:${encodeURIComponent(email).replaceAll('%40', '@')}`;
   });
 
   /**

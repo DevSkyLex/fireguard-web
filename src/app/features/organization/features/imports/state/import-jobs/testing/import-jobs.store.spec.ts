@@ -49,6 +49,29 @@ describe('ImportJobsStore', () => {
     member: [job],
   };
 
+  beforeEach(() => {
+    dispatcher = { dispatch: vi.fn() };
+    mockService = {
+      list: vi.fn().mockReturnValue(of(collection)),
+      get: vi.fn().mockReturnValue(of(job)),
+      create: vi.fn().mockReturnValue(of(job)),
+      confirm: vi.fn(),
+      template: vi.fn(),
+      resume: vi.fn().mockReturnValue(of(job)),
+      pollJob: vi.fn().mockReturnValue(of(job)),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        ImportJobsStore,
+        { provide: ImportJobService, useValue: mockService },
+        { provide: Dispatcher, useValue: dispatcher },
+      ],
+    });
+
+    store = TestBed.inject(ImportJobsStore);
+  });
+
   it('reads report page two and preserves it across summary refreshes and status polling', () => {
     const stream = new Subject<ImportJobOutput>();
     mockService.pollJob.mockReturnValue(stream);
@@ -80,29 +103,6 @@ describe('ImportJobsStore', () => {
       reportTotal: 250,
       errorReport: pageTwo.errorReport,
     });
-  });
-
-  beforeEach(() => {
-    dispatcher = { dispatch: vi.fn() };
-    mockService = {
-      list: vi.fn().mockReturnValue(of(collection)),
-      get: vi.fn().mockReturnValue(of(job)),
-      create: vi.fn().mockReturnValue(of(job)),
-      confirm: vi.fn(),
-      template: vi.fn(),
-      resume: vi.fn().mockReturnValue(of(job)),
-      pollJob: vi.fn().mockReturnValue(of(job)),
-    };
-
-    TestBed.configureTestingModule({
-      providers: [
-        ImportJobsStore,
-        { provide: ImportJobService, useValue: mockService },
-        { provide: Dispatcher, useValue: dispatcher },
-      ],
-    });
-
-    store = TestBed.inject(ImportJobsStore);
   });
 
   it('retries confirmation of the same simulation after a lost reply', () => {

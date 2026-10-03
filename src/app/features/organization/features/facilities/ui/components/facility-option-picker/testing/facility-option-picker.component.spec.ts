@@ -23,6 +23,10 @@ describe('FacilityOptionPicker', () => {
     fixture.componentRef.setInput('pageCount', 2);
     fixture.componentRef.setInput('value', 'chosen');
     await fixture.whenStable();
+    const counter = (fixture.nativeElement as HTMLElement).querySelector('output');
+    expect(counter?.getAttribute('aria-live')).toBe('polite');
+    expect(counter?.textContent?.trim()).toBe('1 / 2');
+    expect(counter?.tabIndex).toBe(-1);
     const requested = vi.fn();
     fixture.componentInstance.pageChanged.subscribe(requested);
     const next = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(
@@ -31,5 +35,8 @@ describe('FacilityOptionPicker', () => {
     next?.click();
     expect(requested).toHaveBeenCalledWith(2);
     expect(fixture.componentInstance.value()).toBe('chosen');
+    fixture.componentRef.setInput('page', 2);
+    await fixture.whenStable();
+    expect(counter?.textContent?.trim()).toBe('2 / 2');
   });
 });

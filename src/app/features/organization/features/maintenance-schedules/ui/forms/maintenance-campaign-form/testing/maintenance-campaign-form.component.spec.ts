@@ -76,13 +76,36 @@ describe('MaintenanceCampaignForm', () => {
     expect(emitted).toHaveLength(1);
   });
 
-  it('should disable the footer controls while pending', async () => {
+  it('disables the fields and footer while pending and restores the draft when pending clears', async () => {
+    setValue('maintenance-campaign-name', 'Monthly sweep');
+    setValue('maintenance-campaign-due-before', '2026-10-31');
+    await fixture.whenStable();
+    const fields = fixture.componentInstance['campaignForm'];
+    expect(fields.name().disabled()).toBe(false);
+    expect(fields.dueBefore().disabled()).toBe(false);
     fixture.componentRef.setInput('pending', true);
     await fixture.whenStable();
 
+    for (const field of [fields.name, fields.dueBefore]) {
+      expect(field().disabled()).toBe(true);
+      expect(field().disabledReasons()).toEqual([{ fieldTree: fields }]);
+    }
     expect(
       document.querySelector<HTMLButtonElement>('[data-testid="maintenance-campaign-submit"]')
         ?.disabled,
     ).toBe(true);
+
+    fixture.componentRef.setInput('pending', false);
+    await fixture.whenStable();
+    for (const field of [fields.name, fields.dueBefore]) {
+      expect(field().disabled()).toBe(false);
+      expect(field().disabledReasons()).toEqual([]);
+    }
+    expect(fields.name().value()).toBe('Monthly sweep');
+    expect(fields.dueBefore().value()).toBe('2026-10-31');
+    expect(
+      document.querySelector<HTMLButtonElement>('[data-testid="maintenance-campaign-submit"]')
+        ?.disabled,
+    ).toBe(false);
   });
 });

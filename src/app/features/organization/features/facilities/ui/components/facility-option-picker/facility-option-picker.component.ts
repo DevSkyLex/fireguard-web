@@ -216,12 +216,17 @@ export class FacilityOptionPicker implements FormValueControl<string> {
    *
    * @type {(value: string) => string}
    */
-  protected readonly labelOf: (value: string) => string = (value) =>
-    value === ''
-      ? $localize`:@@facility.picker.any:Any facility`
-      : (this.options().find((option) => option.value === value)?.label ??
-        (this.selectedOption()?.value === value ? this.selectedOption()?.label : null) ??
-        $localize`:@@common.unknownFacility:Unknown facility`);
+  protected readonly labelOf: (value: string) => string = (value) => {
+    if (value === '') return $localize`:@@facility.picker.any:Any facility`;
+    const current: FacilityOption | undefined = this.options().find(
+      (option) => option.value === value,
+    );
+    if (current) return current.label;
+    const selected: FacilityOption | null = this.selectedOption();
+    return selected?.value === value
+      ? selected.label
+      : $localize`:@@common.unknownFacility:Unknown facility`;
+  };
   //#endregion
 
   //#region Constructor

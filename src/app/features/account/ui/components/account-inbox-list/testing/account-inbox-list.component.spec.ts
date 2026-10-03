@@ -26,6 +26,9 @@ describe('AccountInboxList', () => {
   let fixture: ComponentFixture<AccountInboxList>;
 
   beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 3, 12));
+
     TestBed.configureTestingModule({
       // Pinned locale: relative timestamps are asserted in a known language.
       providers: [
@@ -47,6 +50,10 @@ describe('AccountInboxList', () => {
     fixture.componentRef.setInput('items', []);
     fixture.componentRef.setInput('complete', true);
     await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('should show an empty state when nothing has arrived', () => {

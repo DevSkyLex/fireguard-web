@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { DateTime } from 'luxon';
 import { of } from 'rxjs';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService } from '@core/page-actions';
@@ -106,6 +105,14 @@ const byPageActionsTestId = (id: string): HTMLElement | null =>
   renderPageActions().querySelector(`[data-testid="${id}"]`);
 
 describe('CalendarPage', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    // Paris is already in October while the UTC organization remains in September.
+    vi.setSystemTime(new Date('2026-09-30T23:30:00Z'));
+  });
+
+  afterEach(() => vi.useRealTimers());
+
   let mobile: WritableSignal<boolean>;
   let fixture: ComponentFixture<CalendarPage>;
   let items: WritableSignal<readonly CalendarFeedItemOutput[]>;
@@ -129,7 +136,7 @@ describe('CalendarPage', () => {
 
   async function render(
     canWrite: boolean = false,
-    timezone: string = DEFAULT_REGIONAL_FORMAT_SETTINGS.timezone,
+    timezone: string = 'UTC',
     initialUrl: string | null = null,
   ): Promise<void> {
     regionalFormatting = signal({ ...DEFAULT_REGIONAL_FORMAT_SETTINGS, timezone });
@@ -311,12 +318,11 @@ describe('CalendarPage', () => {
     await render();
 
     expect(load).toHaveBeenCalledTimes(1);
-    const command = load.mock.calls[0]?.[0] as { organizationId: string; from: string; to: string };
-    expect(command.organizationId).toBe('org-1');
-
-    const now: Date = new Date();
-    const expectedFrom: Date = new Date(now.getFullYear(), now.getMonth(), 1 - 7);
-    expect(new Date(command.from).toDateString()).toBe(expectedFrom.toDateString());
+    expect(load).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      from: '2026-08-25T00:00:00+00:00',
+      to: '2026-10-07T23:59:59+00:00',
+    });
   });
 
   it('steps the window back and forward a month through the toolbar, reloading each time', async () => {
@@ -336,7 +342,8 @@ describe('CalendarPage', () => {
     expect(load).toHaveBeenCalledTimes(1);
     const backCommand = load.mock.calls[0]?.[0] as { from: string };
 
-    expect(new Date(backCommand.from).getMonth()).not.toBe(new Date(nextCommand.from).getMonth());
+    expect(nextCommand.from).toBe('2026-09-24T00:00:00+00:00');
+    expect(backCommand.from).toBe('2026-08-25T00:00:00+00:00');
   });
 
   it('returns to the current month and reloads when Today is pressed', async () => {
@@ -351,9 +358,7 @@ describe('CalendarPage', () => {
 
     expect(load).toHaveBeenCalledTimes(1);
     const command = load.mock.calls[0]?.[0] as { from: string };
-    const now: Date = new Date();
-    const expectedFrom: Date = new Date(now.getFullYear(), now.getMonth(), 1 - 7);
-    expect(new Date(command.from).toDateString()).toBe(expectedFrom.toDateString());
+    expect(command.from).toBe('2026-08-25T00:00:00+00:00');
   });
 
   it('shows the current period label in the toolbar', async () => {
@@ -362,13 +367,7 @@ describe('CalendarPage', () => {
     const period: HTMLElement | null = root().querySelector(
       '[data-testid="calendar-toolbar-period"]',
     );
-    const now: Date = new Date();
-    const expectedLabel: string = new Intl.DateTimeFormat('en-US', {
-      month: 'long',
-      year: 'numeric',
-    }).format(now);
-
-    expect(period?.textContent?.trim().toLowerCase()).toBe(expectedLabel.toLowerCase());
+    expect(period?.textContent?.trim()).toBe('September 2026');
   });
 
   it('renders the error state and retries through the store on a failed load', async () => {
@@ -746,10 +745,9 @@ describe('CalendarPage', () => {
     });
 
     it('falls back to an organization-local today and month for invalid URL state', async () => {
+      vi.setSystemTime(new Date('2026-10-01T02:30:00Z'));
       await render(false, 'America/New_York', '/?date=2026-02-30&view=invalid');
-      expect(fixture.componentInstance['dayViewIso']()).toBe(
-        DateTime.now().setZone('America/New_York').toFormat('yyyy-MM-dd'),
-      );
+      expect(fixture.componentInstance['dayViewIso']()).toBe('2026-09-30');
       expect(fixture.componentInstance['granularity']()).toBe('month');
       expect(load).toHaveBeenCalledTimes(1);
     });
@@ -767,9 +765,8 @@ describe('CalendarPage', () => {
       expect(load).toHaveBeenCalledTimes(1);
 
       const command = load.mock.calls[0]?.[0] as { from: string; to: string };
-      const spanMs: number = new Date(command.to).getTime() - new Date(command.from).getTime();
-      expect(Math.round(spanMs / 3_600_000)).toBe(7 * 24);
-      expect(new Date(command.from).getDay()).toBe(1);
+      expect(command.from).toBe('2026-09-28T00:00:00+00:00');
+      expect(command.to).toBe('2026-10-04T23:59:59+00:00');
     });
 
     it('renders all seven day sections in the week view, empty days included', async () => {
@@ -789,6 +786,7 @@ describe('CalendarPage', () => {
       await fixture.whenStable();
 
       expect(root().querySelector('[data-testid="calendar-day-view"]')).not.toBeNull();
+      expect(fixture.componentInstance['dayViewIso']()).toBe('2026-09-30');
       load.mockClear();
 
       root().querySelector<HTMLButtonElement>('[data-testid="calendar-toolbar-next"]')?.click();
@@ -796,14 +794,8 @@ describe('CalendarPage', () => {
 
       expect(load).toHaveBeenCalledTimes(1);
       const command = load.mock.calls[0]?.[0] as { from: string; to: string };
-      const tomorrow: Date = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      expect(new Date(command.from).toDateString()).toBe(tomorrow.toDateString());
-      expect(
-        DateTime.fromISO(command.to, { zone: DEFAULT_REGIONAL_FORMAT_SETTINGS.timezone }).toFormat(
-          'yyyy-MM-dd',
-        ),
-      ).toBe(DateTime.fromJSDate(tomorrow).toFormat('yyyy-MM-dd'));
+      expect(command.from).toBe('2026-10-01T00:00:00+00:00');
+      expect(command.to).toBe('2026-10-01T23:59:59+00:00');
     });
   });
 

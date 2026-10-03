@@ -46,6 +46,7 @@ for (const choice of [
     ]);
     await api.mockFacilityDescendants(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, [
       facilityChildOutput(),
+      facilityZoneCandidateOutput(),
     ]);
     const facilities = new FacilitiesPage(page);
     await facilities.gotoDetail(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);

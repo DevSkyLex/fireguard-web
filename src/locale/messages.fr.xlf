@@ -7377,8 +7377,8 @@
         <target>Retour au lieu</target>
       </trans-unit>
       <trans-unit id="facility.building3d.selectionAnnouncement" datatype="html">
-        <source>Selected <x id="room" equiv-text="room.name"/> on <x id="floor" equiv-text="floor.name"/></source>
-        <target>Sélection : <x id="room" equiv-text="room.name"/>, étage <x id="floor" equiv-text="floor.name"/></target>
+        <source>Selected <x id="room" equiv-text="importedFacility.name"/> on <x id="floor" equiv-text="floor.name"/></source>
+        <target>Sélection : <x id="room" equiv-text="importedFacility.name"/>, étage <x id="floor" equiv-text="floor.name"/></target>
       </trans-unit>
       <trans-unit id="facility.building3d.floorSelectionAnnouncement" datatype="html">
         <source>Selected floor <x id="floor" equiv-text="floor.name"/></source>

@@ -58,6 +58,7 @@ test('exposes full equipment and facility update timestamps without giving them 
   await api.mockAuthenticatedSession();
   await api.mockEquipmentDetail(E2E_ORGANIZATION_ID, equipmentOutput());
   await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
+  await api.mockFacilityOverview(E2E_ORGANIZATION_ID, E2E_FACILITY_ID);
   await new EquipmentsPage(page).gotoDetail(E2E_ORGANIZATION_ID, E2E_EQUIPMENT_ID);
   await expectAccessibleTooltip(
     page,

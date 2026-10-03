@@ -1,11 +1,39 @@
 @if (isBrowser) {
-  <div #container class="relative h-full min-h-64 w-full" data-testid="facility-3d-scene">
+  <div #container class="relative h-full min-h-0 w-full" data-testid="facility-3d-scene">
     <canvas
       #canvas
       role="img"
       [attr.aria-label]="ariaLabel()"
       class="block h-full w-full touch-none"
     ></canvas>
+    @for (marker of equipmentMarkers(); track marker.equipmentId) {
+      <div
+        class="pointer-events-none absolute"
+        [style.left.px]="marker.x"
+        [style.top.px]="marker.y"
+      >
+        <div class="absolute bottom-0 h-5 w-px bg-foreground"></div>
+        <button
+          hlmBtn
+          type="button"
+          size="xs"
+          [variant]="selectedEquipmentId() === marker.equipmentId ? 'default' : 'outline'"
+          [attr.aria-label]="marker.label + ' · ' + marker.status"
+          [attr.aria-pressed]="selectedEquipmentId() === marker.equipmentId"
+          [attr.data-equipment-id]="marker.equipmentId"
+          data-testid="facility-3d-equipment-marker"
+          class="pointer-events-auto absolute bottom-5 left-0 h-auto max-w-44 -translate-x-1/2 mobile-ui:min-h-11"
+          (pointerdown)="$event.stopPropagation()"
+          (click)="equipmentActivated.emit(marker.equipmentId)"
+        >
+          <ng-icon [name]="marker.icon" aria-hidden="true" />
+          <span class="flex min-w-0 flex-col items-start">
+            <span class="truncate">{{ marker.label }}</span>
+            <span class="text-xs">{{ marker.status }}</span>
+          </span>
+        </button>
+      </div>
+    }
     @if (!ready()) {
       <hlm-skeleton
         class="pointer-events-none absolute inset-0 block"

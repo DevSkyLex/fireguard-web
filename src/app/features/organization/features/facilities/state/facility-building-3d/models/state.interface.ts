@@ -33,15 +33,49 @@ export interface FacilityBuilding3dState {
    * The currently selected room's facility id, or `null` when none is
    * selected.
    *
+   * @since unreleased
+   *
    * @type {string | null}
    */
   readonly selectedRoomId: string | null;
+
+  /**
+   * Property selectedEquipmentId
+   *
+   * @description
+   * Selected equipment resource, or null when selecting a room or floor.
+   *
+   * @since unreleased
+   */
+  readonly selectedEquipmentId: string | null;
+
+  /**
+   * Property metric
+   *
+   * @description
+   * Whether calibrated physical dimensions or schematic stacking is displayed.
+   *
+   * @since unreleased
+   */
+  readonly metric: boolean;
+
+  /**
+   * Property scopeKey
+   *
+   * @description
+   * Scope identity fences selection across route reuse.
+   *
+   * @since unreleased
+   */
+  readonly scopeKey: string | null;
 
   /**
    * Property isolatedFloorId
    *
    * @description
    * The floor isolated for display, or `null` when every floor is visible.
+   *
+   * @since unreleased
    *
    * @type {string | null}
    */
@@ -53,6 +87,8 @@ export interface FacilityBuilding3dState {
    * @description
    * Whether the building's floors are rendered vertically separated.
    *
+   * @since unreleased
+   *
    * @type {boolean}
    */
   readonly exploded: boolean;
@@ -63,6 +99,8 @@ export interface FacilityBuilding3dState {
    * @description
    * Incremented on every camera-reset request. The 3D scene watches this
    * value, not its magnitude, to know a recentre was asked for.
+   *
+   * @since unreleased
    *
    * @type {number}
    */

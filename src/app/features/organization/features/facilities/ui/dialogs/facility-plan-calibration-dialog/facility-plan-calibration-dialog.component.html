@@ -1,0 +1,110 @@
+<hlm-dialog
+  [state]="visible() ? 'open' : 'closed'"
+  [disableClose]="pending()"
+  (stateChanged)="stateChanged($event)"
+>
+  <hlm-dialog-content
+    *hlmDialogPortal
+    class="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-xl"
+    data-testid="facility-plan-calibration-dialog"
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@facility.calibration.title">Calibrate the floor plan</h3>
+      <p hlmDialogDescription i18n="@@facility.calibration.description">
+        Enter the image width, or calculate it from two points and a known distance. Coordinates
+        remain unchanged.
+      </p>
+    </hlm-dialog-header>
+    @if (errorMessage(); as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ error }}</p>
+      </div>
+    }
+    <form (submit)="submit($event)" class="flex flex-col gap-5">
+      <fieldset hlmFieldSet>
+        <legend hlmFieldLegend i18n="@@facility.calibration.measurement">
+          Measure a known distance
+        </legend>
+        <div class="grid grid-cols-2 gap-3">
+          @for (field of pointFields; track field.key) {
+            <div hlmField>
+              <label hlmFieldLabel [for]="'calibration-' + field.key">{{ field.label }}</label>
+              <input
+                hlmInput
+                type="text"
+                inputmode="decimal"
+                [id]="'calibration-' + field.key"
+                [formField]="calibrationForm[field.key]"
+                class="mobile-ui:min-h-11"
+              />
+            </div>
+          }
+        </div>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          [disabled]="measuredWidth() === null || pending()"
+          (click)="applyMeasurement()"
+          data-testid="facility-calibration-measure"
+          i18n="@@facility.calibration.applyMeasurement"
+        >
+          Calculate image width
+        </button>
+      </fieldset>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        @for (field of metricFields; track field.key) {
+          <div hlmField>
+            <label hlmFieldLabel [for]="'calibration-' + field.key">{{ field.label }}</label>
+            <input
+              hlmInput
+              type="text"
+              inputmode="decimal"
+              [id]="'calibration-' + field.key"
+              [formField]="calibrationForm[field.key]"
+              class="mobile-ui:min-h-11"
+            />
+            @if (calibrationForm[field.key]().touched()) {
+              @for (error of calibrationForm[field.key]().errors(); track error.kind) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+        }
+      </div>
+      <hlm-dialog-footer>
+        @if (calibration()) {
+          <button
+            hlmBtn
+            variant="destructive"
+            type="button"
+            [disabled]="pending()"
+            (click)="submitted.emit(null)"
+            i18n="@@facility.calibration.clear"
+          >
+            Clear calibration
+          </button>
+        }
+        <button
+          hlmBtn
+          variant="outline"
+          type="button"
+          [disabled]="pending()"
+          (click)="visibleChange.emit(false)"
+          i18n="@@common.cancel"
+        >
+          Cancel
+        </button>
+        <button
+          hlmBtn
+          type="submit"
+          [disabled]="pending()"
+          data-testid="facility-calibration-save"
+          i18n="@@common.save"
+        >
+          Save
+        </button>
+      </hlm-dialog-footer>
+    </form>
+  </hlm-dialog-content>
+</hlm-dialog>

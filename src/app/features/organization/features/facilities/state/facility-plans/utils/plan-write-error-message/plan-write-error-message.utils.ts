@@ -4,11 +4,15 @@ import type { StoreError } from '@core/request-state';
 /**
  * Function planWriteErrorMessage
  *
- * @description Maps stable plan mutation codes to recovery guidance without guessing from HTTP status.
+ * @description
+ * Maps stable plan mutation codes to recovery guidance without guessing from HTTP status.
+ *
  * @access public
  * @since 1.0.0
+ *
  * @param {StoreError} error - The normalized mutation failure.
  * @param {string} fallback - The operation-specific fallback.
+ *
  * @returns {string} A localized recovery message.
  */
 export function planWriteErrorMessage(error: StoreError, fallback: string): string {

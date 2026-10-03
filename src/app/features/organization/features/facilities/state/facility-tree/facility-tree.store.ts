@@ -3,7 +3,17 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, mergeMap, pipe, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  exhaustMap,
+  filter,
+  mergeMap,
+  pipe,
+  Subject,
+  switchMap,
+  takeUntil,
+  tap,
+} from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -141,11 +151,27 @@ function withFacilityInserted(
  * Constant BRANCH_PAGE_SIZE
  *
  * @description
- * How many sites one branch may hold before the rest is left unfetched. Deep
- * hierarchies are normal; a single node with hundreds of direct children is
- * not, and paging a tree branch would be a worse answer than not offering it.
+ * Server page size for roots and individually expanded branches.
  */
 const BRANCH_PAGE_SIZE = 100;
+
+/**
+ * Function appendFacilities
+ *
+ * @description
+ * Appends a server page once per record identity, retaining the server's latest fields.
+ *
+ * @param {readonly FacilityOutput[]} previous - previous.
+ * @param {readonly FacilityOutput[]} next - next.
+ *
+ * @returns {readonly FacilityOutput[]} Return value.
+ */
+function appendFacilities(
+  previous: readonly FacilityOutput[],
+  next: readonly FacilityOutput[],
+): readonly FacilityOutput[] {
+  return [...new Map([...previous, ...next].map((facility) => [facility.id, facility])).values()];
+}
 
 /**
  * Constant INITIAL_STATE
@@ -156,11 +182,17 @@ const BRANCH_PAGE_SIZE = 100;
  * @since 1.0.0
  */
 const INITIAL_STATE: FacilityTreeState = {
+  organizationId: null,
+  rootsPage: 0,
+  rootsTotal: 0,
+  childPagesByParent: {},
+  childTotalsByParent: {},
   rootsCallState: idleCallState(),
   childrenByParent: {},
   expandingParentIds: [],
   failedParentIds: [],
   moveCallState: idleCallState(),
+  moveRevisionCallState: idleCallState(),
   duplicateCallState: idleCallState(),
 };
 
@@ -205,6 +237,11 @@ export const FacilityTreeStore = signalStore(
      * The top of the hierarchy, empty until it resolves.
      */
     roots: computed<readonly FacilityOutput[]>(() => store.rootsCallState().data ?? []),
+    /**
+     * @description
+     * Whether another root page exists.
+     */
+    canLoadMoreRoots: computed(() => store.rootsPage() * BRANCH_PAGE_SIZE < store.rootsTotal()),
 
     /**
      * @description
@@ -223,7 +260,9 @@ export const FacilityTreeStore = signalStore(
      * True while a drag-drop re-parent is in flight — locks the primitive against a second
      * concurrent move.
      */
-    isMoving: computed<boolean>(() => isCallPending(store.moveCallState())),
+    isMoving: computed<boolean>(
+      () => isCallPending(store.moveCallState()) || isCallPending(store.moveRevisionCallState()),
+    ),
 
     /**
      * @description
@@ -254,96 +293,164 @@ export const FacilityTreeStore = signalStore(
         }
       >();
 
+      const refreshMoveRevision = rxMethod<{ organizationId: string; facilityId: string }>(
+        pipe(
+          switchMap(({ organizationId, facilityId }) => {
+            patchState(store, { moveRevisionCallState: pendingCallState() });
+            return facilityService.get(organizationId, facilityId).pipe(
+              tapResponse({
+                next: (facility: FacilityOutput) => {
+                  const update = (items: readonly FacilityOutput[]) =>
+                    items.map((item) => (item.id === facilityId ? facility : item));
+                  patchState(store, {
+                    rootsCallState: successCallState(update(store.roots())),
+                    childrenByParent: Object.fromEntries(
+                      Object.entries(store.childrenByParent()).map(([id, items]) => [
+                        id,
+                        update(items),
+                      ]),
+                    ),
+                    moveRevisionCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown) =>
+                  patchState(store, { moveRevisionCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
+        ),
+      );
+      const scopeChanged = new Subject<void>();
+      const branchInvalidated = new Subject<string>();
+      const loadRootPage = rxMethod<{ organizationId: string; page: number }>(
+        pipe(
+          switchMap(({ organizationId, page }) => {
+            if (!organizationId) return EMPTY;
+            if (store.organizationId() !== organizationId) {
+              scopeChanged.next();
+              patchState(store, { ...INITIAL_STATE, organizationId });
+            }
+            const previous = page === 1 ? [] : store.roots();
+            patchState(store, { rootsCallState: pendingCallState(store.roots()) });
+            return facilityService
+              .list(organizationId, {
+                rootsOnly: true,
+                page,
+                itemsPerPage: BRANCH_PAGE_SIZE,
+                includePath: true,
+              })
+              .pipe(
+                tapResponse({
+                  next: (collection: HydraCollection<FacilityOutput>) =>
+                    patchState(store, {
+                      rootsPage: page,
+                      rootsTotal: collection.totalItems,
+                      rootsCallState: successCallState(
+                        appendFacilities(previous, collection.member),
+                      ),
+                    }),
+                  error: (error: unknown) =>
+                    patchState(store, {
+                      rootsCallState: errorCallState(toStoreError(error), store.roots()),
+                    }),
+                }),
+              );
+          }),
+        ),
+      );
+      const loadChildPage = rxMethod<{ organizationId: string; facilityId: string; page: number }>(
+        pipe(
+          mergeMap(({ organizationId, facilityId, page }) => {
+            if (store.expandingParentIds().includes(facilityId)) return EMPTY;
+            patchState(store, {
+              expandingParentIds: [...store.expandingParentIds(), facilityId],
+              failedParentIds: store.failedParentIds().filter((id) => id !== facilityId),
+            });
+            const previous = page === 1 ? [] : (store.childrenByParent()[facilityId] ?? []);
+            return facilityService
+              .listChildren(organizationId, facilityId, {
+                page,
+                itemsPerPage: BRANCH_PAGE_SIZE,
+                includePath: true,
+              })
+              .pipe(
+                takeUntil(scopeChanged),
+                takeUntil(branchInvalidated.pipe(filter((parentId) => parentId === facilityId))),
+                tapResponse({
+                  next: (collection: HydraCollection<FacilityOutput>) =>
+                    patchState(store, {
+                      childrenByParent: {
+                        ...store.childrenByParent(),
+                        [facilityId]: appendFacilities(previous, collection.member),
+                      },
+                      childPagesByParent: { ...store.childPagesByParent(), [facilityId]: page },
+                      childTotalsByParent: {
+                        ...store.childTotalsByParent(),
+                        [facilityId]: collection.totalItems,
+                      },
+                      expandingParentIds: store
+                        .expandingParentIds()
+                        .filter((id) => id !== facilityId),
+                    }),
+                  error: () =>
+                    patchState(store, {
+                      expandingParentIds: store
+                        .expandingParentIds()
+                        .filter((id) => id !== facilityId),
+                      failedParentIds: [...store.failedParentIds(), facilityId],
+                    }),
+                }),
+              );
+          }),
+        ),
+      );
       return {
         /**
-         * Method loadRoots
-         *
          * @description
-         * Loads the sites with no parent. A missing organization is a no-op.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @type {rxMethod<string | undefined>}
+         * Loads the first root page, retaining previous nodes on failure.
          */
-        loadRoots: rxMethod<string | undefined>(
-          pipe(
-            switchMap((organizationId: string | undefined) => {
-              if (!organizationId) return EMPTY;
-
-              patchState(store, { rootsCallState: pendingCallState(store.rootsCallState().data) });
-
-              return facilityService
-                .list(organizationId, { rootsOnly: true, itemsPerPage: BRANCH_PAGE_SIZE })
-                .pipe(
-                  tapResponse({
-                    next: (collection: HydraCollection<FacilityOutput>): void => {
-                      patchState(store, { rootsCallState: successCallState(collection.member) });
-                    },
-                    error: (error: unknown): void => {
-                      patchState(store, {
-                        rootsCallState: errorCallState(
-                          toStoreError(error),
-                          store.rootsCallState().data,
-                        ),
-                      });
-                    },
-                  }),
-                );
-            }),
-          ),
-        ),
-
+        loadRoots(organizationId: string | undefined): void {
+          if (organizationId) loadRootPage({ organizationId, page: 1 });
+        },
         /**
-         * Method loadChildren
-         *
          * @description
-         * Loads one node's direct children, once. A branch already fetched — or
-         * already in flight — is left alone.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @type {rxMethod<{ organizationId: string; facilityId: string }>}
+         * Loads the next root page or retries that page after failure.
          */
-        loadChildren: rxMethod<{ readonly organizationId: string; readonly facilityId: string }>(
-          pipe(
-            tap(({ facilityId }) => {
-              patchState(store, {
-                expandingParentIds: [...store.expandingParentIds(), facilityId],
-                failedParentIds: store.failedParentIds().filter((id) => id !== facilityId),
-              });
-            }),
-            mergeMap(({ organizationId, facilityId }) =>
-              facilityService
-                .listChildren(organizationId, facilityId, { itemsPerPage: BRANCH_PAGE_SIZE })
-                .pipe(
-                  tapResponse({
-                    next: (collection: HydraCollection<FacilityOutput>): void => {
-                      patchState(store, {
-                        childrenByParent: {
-                          ...store.childrenByParent(),
-                          [facilityId]: collection.member,
-                        },
-                        expandingParentIds: store
-                          .expandingParentIds()
-                          .filter((id) => id !== facilityId),
-                      });
-                    },
-                    error: (): void => {
-                      patchState(store, {
-                        expandingParentIds: store
-                          .expandingParentIds()
-                          .filter((id) => id !== facilityId),
-                        failedParentIds: [...store.failedParentIds(), facilityId],
-                      });
-                    },
-                  }),
-                ),
-            ),
-          ),
-        ),
-
+        loadMoreRoots(organizationId: string): void {
+          if (store.canLoadMoreRoots() && !store.isLoadingRoots())
+            loadRootPage({ organizationId, page: store.rootsPage() + 1 });
+        },
+        /**
+         * @description
+         * Loads a branch's first page without cancelling other expanded branches.
+         * A branch invalidated by a move retains its rows until this refresh succeeds.
+         */
+        loadChildren(input: { organizationId: string; facilityId: string }): void {
+          if (!(store.childPagesByParent()[input.facilityId] > 0))
+            loadChildPage({ ...input, page: 1 });
+        },
+        /**
+         * @description
+         * Loads the next child page, including retry after a failed append.
+         */
+        loadMoreChildren(input: { organizationId: string; facilityId: string }): void {
+          if (
+            store.childPagesByParent()[input.facilityId] * BRANCH_PAGE_SIZE <
+            store.childTotalsByParent()[input.facilityId]
+          ) {
+            loadChildPage({ ...input, page: store.childPagesByParent()[input.facilityId] + 1 });
+          }
+        },
+        /**
+         * @description
+         * Reports branches that have a further server page.
+         */
+        canLoadMoreChildren(facilityId: string): boolean {
+          return (
+            (store.childPagesByParent()[facilityId] ?? 0) * BRANCH_PAGE_SIZE <
+            (store.childTotalsByParent()[facilityId] ?? 0)
+          );
+        },
         /**
          * Method hasLoadedChildren
          *
@@ -359,7 +466,9 @@ export const FacilityTreeStore = signalStore(
          * @returns {boolean} Whether its children are known.
          */
         hasLoadedChildren(facilityId: string): boolean {
-          return facilityId in store.childrenByParent();
+          return (
+            facilityId in store.childrenByParent() && store.childPagesByParent()[facilityId] > 0
+          );
         },
 
         /**
@@ -370,6 +479,8 @@ export const FacilityTreeStore = signalStore(
          * pointer drag-drop and the keyboard/AT "Move to…" dialog action.
          * Applies the re-parent optimistically over the loaded roots and
          * branches so the row jumps immediately, then confirms with the API.
+         * Success restarts affected branch pages because re-parenting shifts server offsets;
+         * failed refreshes retain the confirmed hierarchy and retry from the first page.
          * On failure the pre-move snapshot is restored and
          * `facilityTreeStoreEvents.moveFailed` is dispatched for the app-wide
          * feedback listener to toast — the gesture has no confirm step, so this
@@ -390,9 +501,11 @@ export const FacilityTreeStore = signalStore(
           readonly organizationId: string;
           readonly facilityId: string;
           readonly parentFacilityId: string | null;
+          readonly revision?: number;
         }>(
           pipe(
-            tap(({ facilityId, parentFacilityId }) => {
+            exhaustMap(({ organizationId, facilityId, parentFacilityId, revision }) => {
+              if (store.isMoving()) return EMPTY;
               const snapshot = {
                 roots: store.rootsCallState().data ?? [],
                 childrenByParent: store.childrenByParent(),
@@ -410,43 +523,134 @@ export const FacilityTreeStore = signalStore(
                 childrenByParent: reparented.childrenByParent,
                 moveCallState: pendingCallState(),
               });
+              return facilityService
+                .move(
+                  organizationId,
+                  facilityId,
+                  { parentFacilityId },
+                  revision ??
+                    moveSnapshots.get(facilityId)?.roots.find((item) => item.id === facilityId)
+                      ?.revision ??
+                    Object.values(moveSnapshots.get(facilityId)?.childrenByParent ?? {})
+                      .flat()
+                      .find((item) => item.id === facilityId)?.revision ??
+                    0,
+                )
+                .pipe(
+                  tapResponse({
+                    next: (facility: FacilityOutput): void => {
+                      moveSnapshots.delete(facilityId);
+                      const previous = [
+                        ...snapshot.roots,
+                        ...Object.values(snapshot.childrenByParent).flat(),
+                      ].find((item) => item.id === facilityId);
+                      const sourceParentId = previous?.parentFacilityId ?? null;
+                      const destinationParentId = facility.parentFacilityId;
+                      const parentChanged = sourceParentId !== destinationParentId;
+                      const affectedParents = parentChanged
+                        ? [...new Set([sourceParentId, destinationParentId])]
+                        : [];
+                      const childPagesByParent = { ...store.childPagesByParent() };
+                      const childTotalsByParent = { ...store.childTotalsByParent() };
+                      const branchesToReload: string[] = [];
+                      for (const parentId of affectedParents) {
+                        if (parentId === null) continue;
+                        if (parentId in childTotalsByParent) {
+                          childTotalsByParent[parentId] = Math.max(
+                            0,
+                            childTotalsByParent[parentId] +
+                              (parentId === destinationParentId ? 1 : -1),
+                          );
+                        }
+                        if (
+                          parentId in store.childrenByParent() ||
+                          store.expandingParentIds().includes(parentId)
+                        ) {
+                          branchInvalidated.next(parentId);
+                          childPagesByParent[parentId] = 0;
+                          branchesToReload.push(parentId);
+                        }
+                      }
+                      const update = (items: readonly FacilityOutput[]) =>
+                        items.map((item) => {
+                          if (item.id === facilityId) return facility;
+                          if (!parentChanged) return item;
+                          if (item.id === destinationParentId)
+                            return { ...item, hasChildren: true };
+                          if (item.id === sourceParentId && item.id in childTotalsByParent)
+                            return { ...item, hasChildren: childTotalsByParent[item.id] > 0 };
+                          return item;
+                        });
+                      patchState(store, {
+                        moveCallState: successCallState(facility),
+                        rootsCallState: successCallState(update(store.roots())),
+                        childPagesByParent,
+                        childTotalsByParent,
+                        expandingParentIds: store
+                          .expandingParentIds()
+                          .filter((parentId) => !branchesToReload.includes(parentId)),
+                        childrenByParent: Object.fromEntries(
+                          Object.entries(store.childrenByParent()).map(([id, items]) => [
+                            id,
+                            update(items),
+                          ]),
+                        ),
+                      });
+                      dispatcher.dispatch(
+                        facilityTreeStoreEvents.moveSucceeded(
+                          successFeedback($localize`:@@facility.toast.moved:Facility moved`),
+                        ),
+                      );
+                      if (affectedParents.includes(null)) {
+                        patchState(store, {
+                          rootsPage: 0,
+                          rootsTotal: Math.max(
+                            0,
+                            store.rootsTotal() + (destinationParentId === null ? 1 : -1),
+                          ),
+                        });
+                        loadRootPage({ organizationId, page: 1 });
+                      }
+                      for (const parentId of branchesToReload)
+                        loadChildPage({ organizationId, facilityId: parentId, page: 1 });
+                    },
+                    error: (error: unknown): void => {
+                      const rollbackSnapshot = moveSnapshots.get(facilityId);
+                      moveSnapshots.delete(facilityId);
+                      const storeError = toStoreError(error);
+                      patchState(store, {
+                        ...(rollbackSnapshot
+                          ? {
+                              rootsCallState: successCallState(rollbackSnapshot.roots),
+                              childrenByParent: rollbackSnapshot.childrenByParent,
+                            }
+                          : {}),
+                        moveCallState: errorCallState(storeError),
+                      });
+                      if (storeError.code === 412 || storeError.code === 428) {
+                        refreshMoveRevision({ organizationId, facilityId });
+                      }
+                      dispatcher.dispatch(
+                        facilityTreeStoreEvents.moveFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to move facility'),
+                        ),
+                      );
+                    },
+                  }),
+                );
             }),
-            exhaustMap(({ organizationId, facilityId, parentFacilityId }) =>
-              facilityService.move(organizationId, facilityId, { parentFacilityId }).pipe(
-                tapResponse({
-                  next: (facility: FacilityOutput): void => {
-                    moveSnapshots.delete(facilityId);
-                    patchState(store, { moveCallState: successCallState(facility) });
-                    dispatcher.dispatch(
-                      facilityTreeStoreEvents.moveSucceeded(
-                        successFeedback($localize`:@@facility.toast.moved:Facility moved`),
-                      ),
-                    );
-                  },
-                  error: (error: unknown): void => {
-                    const snapshot = moveSnapshots.get(facilityId);
-                    moveSnapshots.delete(facilityId);
-                    const storeError = toStoreError(error);
-                    patchState(store, {
-                      ...(snapshot
-                        ? {
-                            rootsCallState: successCallState(snapshot.roots),
-                            childrenByParent: snapshot.childrenByParent,
-                          }
-                        : {}),
-                      moveCallState: errorCallState(storeError),
-                    });
-                    dispatcher.dispatch(
-                      facilityTreeStoreEvents.moveFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to move facility'),
-                      ),
-                    );
-                  },
-                }),
-              ),
-            ),
           ),
         ),
+        /**
+         * @description
+         * Clears the previous move result when opening the next dialog.
+         */
+        resetMoveOperation(): void {
+          patchState(store, {
+            moveCallState: idleCallState(),
+            moveRevisionCallState: idleCallState(),
+          });
+        },
 
         /**
          * Method duplicate

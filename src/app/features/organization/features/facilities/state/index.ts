@@ -25,3 +25,8 @@ export type { FacilityBuilding3dState } from './facility-building-3d';
 export { facilityBuilding3dStoreEvents } from './facility-building-3d';
 export { FacilityBuilding3dStore } from './facility-building-3d';
 export type { FacilityBuilding3dStoreType } from './facility-building-3d';
+export {
+  FacilityModelsStore,
+  type FacilityModelsStoreType,
+  facilityModelsStoreEvents,
+} from './facility-models';

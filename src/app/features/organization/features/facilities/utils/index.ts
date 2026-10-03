@@ -11,3 +11,7 @@ export {
 } from './equipment-plan-label/equipment-plan-label.utils';
 export { toFacilityOption } from './facility-option/facility-option.utils';
 export { facilityTypeLabel } from './facility-type-label/facility-type-label.utils';
+export { readFacilityGlb } from './facility-glb/facility-glb.utils';
+export { isMetricFacilityFloor } from './facility-metric-floor/facility-metric-floor.utils';
+export { resolveFacilityModelBinding } from './facility-model-binding/facility-model-binding.utils';
+export { applyFacilityModelSettings } from './facility-model-binding/apply-facility-model-settings.utils';

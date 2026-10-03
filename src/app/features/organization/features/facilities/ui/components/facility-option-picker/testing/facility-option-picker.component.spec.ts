@@ -4,8 +4,17 @@ import { FacilityOptionPicker } from '../facility-option-picker.component';
 describe('FacilityOptionPicker', () => {
   it('retains the chosen label outside the current page and clears it when selection changes', async () => {
     const fixture = TestBed.createComponent(FacilityOptionPicker);
+    const selectionChanged = vi.fn();
+    fixture.componentInstance.selectedOptionChanged.subscribe(selectionChanged);
     fixture.componentRef.setInput('options', [
-      { value: 'facility-201', label: 'Annex', typeLabel: 'Site', pathLabel: null, address: null },
+      {
+        value: 'facility-201',
+        label: 'Annex',
+        type: 'site',
+        typeLabel: 'Site',
+        pathLabel: null,
+        address: null,
+      },
     ]);
     fixture.componentRef.setInput('value', 'facility-201');
     await fixture.whenStable();
@@ -13,9 +22,13 @@ describe('FacilityOptionPicker', () => {
     await fixture.whenStable();
     expect(fixture.componentInstance['labelOf']('facility-201')).toBe('Annex');
     expect(fixture.componentInstance.value()).toBe('facility-201');
+    expect(selectionChanged).toHaveBeenLastCalledWith(
+      expect.objectContaining({ value: 'facility-201', type: 'site' }),
+    );
     fixture.componentRef.setInput('value', 'other');
     await fixture.whenStable();
     expect(fixture.componentInstance['labelOf']('other')).toBe('Unknown facility');
+    expect(selectionChanged).toHaveBeenLastCalledWith(null);
   });
 
   it('requests the next server page without replacing the selected identity', async () => {

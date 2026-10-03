@@ -55,8 +55,10 @@ account TOTP panel and the facility QR dialog — see `features/account/FEATURE.
 `features/organization/features/facilities/FEATURE.md`), and **`maplibre-gl`**, imported
 dynamically and browser-only by the single `shared/map` map primitive (see
 `features/organization/features/facilities/FEATURE.md`), and **`three`** (+ `@types/three`),
-imported dynamically and browser-only by the single `FacilityBuilding3dScene` component that
-renders the building view (see `features/organization/features/facilities/FEATURE.md`).
+imported dynamically and browser-only by `FacilityBuilding3dScene` and the route-scoped
+`FacilityModelAssetService`. The scene owns the single renderer; the asset service loads
+`GLTFLoader` only to parse authenticated GLB blobs and dispose their resources (see
+`features/organization/features/facilities/FEATURE.md`).
 Adding another is a documented decision, recorded in the owning `FEATURE.md` and here in the
 same change (section 14.3).
 

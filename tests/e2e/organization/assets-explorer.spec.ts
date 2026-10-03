@@ -7,9 +7,9 @@ import {
 import { equipmentOutput } from '../support/fixtures/equipment-fixtures';
 import {
   E2E_FACILITY_ID,
+  coherenceSite,
   facilityChildOutput,
   facilityOutput,
-  facilitySiblingOutput,
 } from '../support/fixtures/facility-fixtures';
 import { inspectionOutput } from '../support/fixtures/inspection-fixtures';
 import {
@@ -108,11 +108,13 @@ test.describe('Assets explorer', () => {
     await expect(explorer.treeItems).toHaveCount(2);
   });
 
-  test('drags a site onto another to re-parent it', async ({ page }) => {
+  test('drags a building onto a site to re-parent it with its current revision', async ({
+    page,
+  }) => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     const siteA = facilityOutput();
-    const siteB = facilitySiblingOutput();
+    const siteB = coherenceSite(2);
     await api.mockFacilityList(E2E_ORGANIZATION_ID, [siteA, siteB]);
     await api.mockFacilityMove(E2E_ORGANIZATION_ID, siteA.id, {
       ...siteA,
@@ -128,7 +130,8 @@ test.describe('Assets explorer', () => {
         request.url().includes(`/facilities/${siteA.id}/move`) && request.method() === 'POST',
     );
     await explorer.dragNodeOnto(siteA.id, siteB.id);
-    await moveRequest;
+    expect((await moveRequest).headers()['if-match']).toBe('"revision-1"');
+    expect((await moveRequest).postDataJSON()).toEqual({ parentFacilityId: siteB.id });
 
     await expect(explorer.treeItems).toHaveCount(1);
     await expect(explorer.treeItems).toContainText(siteB.name);

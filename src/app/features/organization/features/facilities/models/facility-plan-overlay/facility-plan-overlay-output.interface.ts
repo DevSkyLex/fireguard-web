@@ -2,6 +2,10 @@ import type {
   EquipmentStatus,
   EquipmentType,
 } from '@features/organization/features/equipments/models';
+import type {
+  FacilityGeometryIssue,
+  FacilityEquipmentPlacementIssue,
+} from '../facility-spatial-issue-tag/facility-spatial-issue.type';
 import type { FacilityStatus, FacilityType } from '../facility/facility-output.interface';
 
 /**
@@ -16,19 +20,59 @@ import type { FacilityStatus, FacilityType } from '../facility/facility-output.i
  * @since 1.0.0
  */
 export interface FacilityPlanOverlayZone {
-  /** The zone's own facility id — activating it navigates to this record. */
+  /**
+   * Property facilityId
+   * @readonly
+   *
+   * @description
+   * The zone's own facility id — activating it navigates to this record.
+   *
+   * @type {string}
+   */
   readonly facilityId: string;
 
-  /** The zone's display name. */
+  /**
+   * Property name
+   * @readonly
+   *
+   * @description
+   * The zone's display name.
+   *
+   * @type {string}
+   */
   readonly name: string;
 
-  /** The zone's facility type. */
+  /**
+   * Property type
+   * @readonly
+   *
+   * @description
+   * The zone's facility type.
+   *
+   * @type {FacilityType}
+   */
   readonly type: FacilityType;
 
-  /** The zone's facility lifecycle status. */
+  /**
+   * Property status
+   * @readonly
+   *
+   * @description
+   * The zone's facility lifecycle status.
+   *
+   * @type {FacilityStatus}
+   */
   readonly status: FacilityStatus;
 
-  /** The polygon's vertices, in order, each a normalized `[x, y]` pair. */
+  /**
+   * Property points
+   * @readonly
+   *
+   * @description
+   * The polygon's vertices, in order, each a normalized `[x, y]` pair.
+   *
+   * @type {ReadonlyArray<readonly [number, number]>}
+   */
   readonly points: ReadonlyArray<readonly [number, number]>;
 }
 
@@ -43,33 +87,86 @@ export interface FacilityPlanOverlayZone {
  * @since 1.0.0
  */
 export interface FacilityPlanOverlayEquipment {
-  /** The pinned equipment's id — activating it navigates to this record. */
+  /**
+   * Property equipmentId
+   * @readonly
+   *
+   * @description
+   * The pinned equipment's id — activating it navigates to this record.
+   *
+   * @type {string}
+   */
   readonly equipmentId: string;
 
   /**
-   * The equipment's type, as the backend's raw enum value.
+   * Property type
+   * @readonly
    *
+   * @description
+   * The equipment's type, as the backend's raw enum value.
    * Equipment has no name field, so this endpoint once sent a label the
    * server had composed — `"gas_detector (SEED-GAS-003)"`, an untranslated
    * enum a client could only print verbatim. The identity now travels in
    * parts and the label is built here, against the translated
    * `EQUIPMENT_TYPE_OPTIONS` catalogue.
+   *
+   * @type {EquipmentType}
    */
   readonly type: EquipmentType;
 
-  /** The equipment's serial number, when it carries one. */
+  /**
+   * Property serialNumber
+   * @readonly
+   *
+   * @description
+   * The equipment's serial number, when it carries one.
+   *
+   * @type {string | null}
+   */
   readonly serialNumber: string | null;
 
-  /** Where the item sits, in the operator's own words — the most human of the three. */
+  /**
+   * Property locationLabel
+   * @readonly
+   *
+   * @description
+   * Where the item sits, in the operator's own words — the most human of the three.
+   *
+   * @type {string | null}
+   */
   readonly locationLabel: string | null;
 
-  /** The equipment's lifecycle status. */
+  /**
+   * Property status
+   * @readonly
+   *
+   * @description
+   * The equipment's lifecycle status.
+   *
+   * @type {EquipmentStatus}
+   */
   readonly status: EquipmentStatus;
 
-  /** Normalized horizontal position, in `[0, 1]`. */
+  /**
+   * Property x
+   * @readonly
+   *
+   * @description
+   * Normalized horizontal position, in `[0, 1]`.
+   *
+   * @type {number}
+   */
   readonly x: number;
 
-  /** Normalized vertical position, in `[0, 1]`. */
+  /**
+   * Property y
+   * @readonly
+   *
+   * @description
+   * Normalized vertical position, in `[0, 1]`.
+   *
+   * @type {number}
+   */
   readonly y: number;
 }
 
@@ -88,18 +185,92 @@ export interface FacilityPlanOverlayEquipment {
  * @since 1.0.0
  */
 export interface FacilityPlanOverlayOutput {
-  /** The floor plan attachment this overlay was computed for. */
+  /**
+   * Property attachmentId
+   * @readonly
+   *
+   * @description
+   * The floor plan attachment this overlay was computed for.
+   *
+   * @type {string}
+   */
   readonly attachmentId: string;
 
-  /** The plan image's natural pixel width — normalized coordinates are relative to this. */
+  /**
+   * Property imageWidth
+   * @readonly
+   *
+   * @description
+   * The plan image's natural pixel width — normalized coordinates are relative to this.
+   *
+   * @type {number}
+   */
   readonly imageWidth: number;
 
-  /** The plan image's natural pixel height — normalized coordinates are relative to this. */
+  /**
+   * Property imageHeight
+   * @readonly
+   *
+   * @description
+   * The plan image's natural pixel height — normalized coordinates are relative to this.
+   *
+   * @type {number}
+   */
   readonly imageHeight: number;
 
-  /** The plan's zone polygons. */
+  /**
+   * Property zones
+   * @readonly
+   *
+   * @description
+   * The plan's zone polygons.
+   *
+   * @type {ReadonlyArray<FacilityPlanOverlayZone>}
+   */
   readonly zones: ReadonlyArray<FacilityPlanOverlayZone>;
 
-  /** The plan's equipment pins. */
+  /**
+   * Property equipment
+   * @readonly
+   *
+   * @description
+   * The plan's equipment pins.
+   *
+   * @type {ReadonlyArray<FacilityPlanOverlayEquipment>}
+   */
   readonly equipment: ReadonlyArray<FacilityPlanOverlayEquipment>;
+
+  /**
+   * Property geometryIssues
+   * @readonly
+   *
+   * @description
+   * Saved contour references which cannot be rendered faithfully on this plan.
+   *
+   * @type {readonly {
+   *   readonly facilityId: string;
+   *   readonly code: FacilityGeometryIssue;
+   * }[]}
+   */
+  readonly geometryIssues: readonly {
+    readonly facilityId: string;
+    readonly code: FacilityGeometryIssue;
+  }[];
+
+  /**
+   * Property equipmentIssues
+   * @readonly
+   *
+   * @description
+   * Saved equipment placements which cannot be rendered faithfully on this plan.
+   *
+   * @type {readonly {
+   *   readonly equipmentId: string;
+   *   readonly code: FacilityEquipmentPlacementIssue;
+   * }[]}
+   */
+  readonly equipmentIssues: readonly {
+    readonly equipmentId: string;
+    readonly code: FacilityEquipmentPlacementIssue;
+  }[];
 }

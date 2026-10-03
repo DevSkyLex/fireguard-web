@@ -80,6 +80,16 @@
               />
             }
           </a>
+          @if (item.path.length) {
+            <p class="text-xs text-muted-foreground" data-testid="facility-result-path">
+              @for (segment of item.path; track segment.id; let last = $last) {
+                {{ segment.name }}
+                @if (!last) {
+                  ›
+                }
+              }
+            </p>
+          }
           <p hlmCardDescription class="line-clamp-1">
             {{ typeLabelOf(item.type) }}
             @if (item.address; as address) {

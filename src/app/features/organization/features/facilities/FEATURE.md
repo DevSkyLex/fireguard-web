@@ -6,6 +6,39 @@
 
 Owns organization-scoped facility workflows.
 
+### Place consistency (2026-10-03)
+
+French generic copy uses **Lieu / Lieux** without changing routes or type enums.
+A room/local may be represented by a zone. SITE alone permits no parent;
+BUILDING requires SITE, FLOOR requires BUILDING, and ZONE/AREA permit any place
+type. `FacilityOptionsStore` asks the server for `parentForType` or
+`parentForFacilityId` candidates, with search, pagination, `includePath=true` and
+a separately hydrated selected item. Historical invalid places retain
+descriptive editing and show typed hierarchy issues.
+
+The parent picker publishes its retained selected record to the creation form;
+changing type clears an incompatible parent even after its candidate page changes.
+
+The list is roots-only while unsearched and global with paths during search.
+`FacilityTreeStore` paginates roots and branches independently, retaining rows
+after append errors and deduplicating retry results. MOVE sends the current
+revision in `If-Match`, retains its selected parent on failure and closes only
+after success. A 412 refreshes the revision for an explicit retry.
+Confirmed moves restart affected cached branch/root pages to account for changed
+server offsets. A failed refresh keeps the confirmed rows and retries page one.
+
+Equipment scope defaults to `subtree` and may be `direct`, persisted as
+`equipmentScope` in detail/Assets links. `FacilityOverviewStore` consumes the
+Equipment-owned exact summary across every page. Assets equipment pagination
+forwards the same `includeDescendants` value.
+
+Typed geometry/calibration/placement and GLB binding diagnostics are shared
+across detail, overlays and 3D. Moving a subtree preserves data and excludes
+incompatible references from rendering. Metric mode excludes provenance issues;
+recalibration restores the current frame. Invalid GLB nodes remain neutral model
+objects without inherited association, selection or floor filtering.
+Transform-only updates omit bindings; invalid removals are explicit indices.
+
 This subfeature is responsible for:
 
 - listing facilities for the active organization as a paginated list,
@@ -65,6 +98,21 @@ Render on demand, bound animations and honor reduced motion. Selection has an ou
 and an accessible floor/room-list alternative to canvas picking. Unit geometry/stub
 tests do not prove real GPU rendering or lifecycle counters in a browser.
 
+The building header exposes the 3D route even without a plan on the building itself.
+The schematic view preserves server floor order and normalized image coordinates;
+the metric view includes only floors with a calibrated plan and explicit elevation
+and height. Unready floors and unplaced equipment remain listed, never assigned
+invented dimensions or coordinates. Isolation, camera framing and selection operate
+on the visible floor set; changing scope reconciles room and equipment selections.
+Equipment projections retain their true assignment, including descendant rooms,
+and use the published equipment type/status catalog and accessible selection lists.
+
+An imported model is an authenticated immutable GLB resource with node-index bindings
+to existing facilities. The model workflow owns upload, preview, alignment, association
+and activation; replacing a file starts distinct bindings. Generated and imported
+views share the browser-only scene and common metric frame. Loader failures are
+distinct from WebGL availability. No IFC conversion or automatic asset creation occurs.
+
 See the [building scene reference](../../../../../../docs/guides/facilities-and-spatial-views.md#building-scene-reference) for details and rationale.
 
 <a id="ui-this-pass"></a>
@@ -81,9 +129,8 @@ See the [building scene reference](../../../../../../docs/guides/facilities-and-
   URL-synced), too light a mechanism for an interactive map, so selecting it
   navigates to the dedicated `facilities/map` route instead.
 - `ui/sheets/facility-create-sheet` (`FacilityCreateSheet`), opened by `FacilitiesPage` —
-  `ui/forms/facility-create-form`, requiring only `type` and `name`; parent,
-  code, address and coordinates are optional here and remain editable on the
-  record afterward.
+  `ui/forms/facility-create-form`, requiring `type`, `name` and a valid parent
+  unless the type is SITE. Code, address and coordinates remain optional.
 - `ui/pages/facility-detail-page` (`FacilityDetailPage`) — three tabs.
   **Overview** (default) renders `ui/components/facility-hierarchy-chart`,
   built on the shared `shared/tree` `Tree` primitive (only when
@@ -96,6 +143,7 @@ See the [building scene reference](../../../../../../docs/guides/facilities-and-
   (upload, primary badge, per-row View/Set as primary/Delete menu) beside
   `@shared/plan-viewer`'s `app-plan-viewer` over `FacilityPlansStore`, with
   Spartan `Empty` primitives when the facility has no floor plan yet. A header
+  **Move** action opens the eligible server parent chooser. The header
   **Delete** action is danger, confirm-gated (`hlm-alert-dialog`), and
   `FACILITIES_WRITE`-gated.
 - `ui/components/facility-status-tag` — the `FacilityOutput.status` registry
@@ -166,6 +214,14 @@ context and coordinate-dialog drafts. Coordinate dialogs use Signal Forms, resee
 only on opening, retain failed input and close only after confirmed success.
 Keyboard coordinate dialogs provide the non-pointer path; percentages convert to
 normalized coordinates at the boundary. Presentational editors emit events only.
+
+The editor also draws the owning floor's outline. Optional attachment calibration
+measures a known two-point distance and edits orientation and metric offsets, with
+a numeric keyboard alternative. Calibration writes use the attachment revision,
+retain rejected drafts and refresh projections after confirmed success. Floor
+elevation/height are optional information fields, separate from floor order.
+Candidate equipment and zones search server pages across the floor subtree instead
+of hiding records beyond the first page; placement never changes assignment.
 
 See the [facility geometry editing reference](../../../../../../docs/guides/facilities-and-spatial-views.md#facility-geometry-editing-reference) for details and rationale.
 

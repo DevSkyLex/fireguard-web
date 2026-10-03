@@ -27,6 +27,30 @@ export type { FacilityEditTarget } from './facility-edit/facility-edit-target.ty
 export type { ComplianceTreeNodeOutput } from './compliance-tree/compliance-tree-node-output.interface';
 export type { FacilityAttachmentKind } from './facility-attachment/facility-attachment-kind.type';
 export type { FacilityAttachmentOutput } from './facility-attachment/facility-attachment-output.interface';
+export type { FacilityPlanCalibration } from './facility-attachment/facility-plan-calibration.interface';
+export type {
+  FacilityGeometryIssue,
+  FacilityCalibrationIssue,
+  FacilityModelBindingIssueCode,
+  FacilityHierarchyIssue,
+  FacilityEquipmentPlacementIssue,
+} from './facility-spatial-issue-tag/facility-spatial-issue.type';
+export {
+  resolveFacilitySpatialIssueLabel,
+  resolveFacilityEquipmentPlacementIssueLabel,
+  resolveFacilityHierarchyIssueLabel,
+} from './facility-spatial-issue-tag/facility-spatial-issue-tag.util';
+export type {
+  FacilityModelOutput,
+  FacilityModelTransform,
+  FacilityModelBinding,
+  FacilityModelBindingIssue,
+  FacilityModelNode,
+  FacilityModelInput,
+  FacilityModelUploadInput,
+  FacilityModelAsset,
+  FacilityGlbDocument,
+} from './facility-model';
 export type { FacilityMoveRequest } from './facility-move/facility-move-request.interface';
 export type { FacilityMoveSubmittedEvent } from './facility-move/facility-move-submitted-event.interface';
 export type { FacilityPlanGeometry } from './facility/facility-plan-geometry.interface';
@@ -39,6 +63,7 @@ export type {
 export type {
   FacilityBuildingModelOutput,
   FacilityBuildingModelFloor,
+  FacilityBuildingModelEquipment,
   FacilityBuildingModelPlan,
   FacilityBuildingModelOutline,
   FacilityBuildingModelOutlineSource,

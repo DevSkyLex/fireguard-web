@@ -14,7 +14,7 @@ import {
 } from '@core/request-state';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type {
-  EquipmentOutput,
+  EquipmentFacilitySummaryOutput,
   EquipmentStatus,
 } from '@features/organization/features/equipments/models';
 import { resolveEquipmentStatusTag } from '@features/organization/features/facilities/models';
@@ -28,8 +28,8 @@ import type { FacilityEquipmentStatusRow, FacilityOverviewState } from './models
  * Constant PREVIEW_ITEMS_PER_PAGE
  *
  * @description
- * Page size used for the compact overview previews. Large enough to
- * compute meaningful aggregates without paginating the overview UI.
+ * Page size used for the compact inspection preview. Its partial-data
+ * caption identifies metrics based on a sample; equipment uses exact counts.
  */
 const PREVIEW_ITEMS_PER_PAGE: number = 200;
 
@@ -83,10 +83,9 @@ const EQUIPMENT_STATUS_ROW_ORDER: ReadonlyArray<EquipmentStatus> = [
  */
 const INITIAL_STATE: FacilityOverviewState = {
   inspections: [],
-  equipment: [],
+  equipmentIncludeDescendants: true,
   interventions: [],
   inspectionsTotal: 0,
-  equipmentTotal: 0,
   inspectionsCallState: idleCallState(),
   equipmentCallState: idleCallState(),
   interventionsCallState: idleCallState(),
@@ -98,8 +97,8 @@ const INITIAL_STATE: FacilityOverviewState = {
  *
  * @description
  * Component-scoped NgRx Signals store powering the facility detail overview
- * tab. Loads compact inspection, equipment and intervention previews for the
- * active facility and exposes derived KPI metrics (compliance, overdue, next
+ * tab. Loads compact inspection/intervention previews and exact equipment counts
+ * for the active facility and exposes KPI metrics (compliance, overdue, next
  * inspection, equipment counts) plus summary view models consumed by the
  * overview sub-components.
  * The intervention preview reads `InterventionService.list` straight from
@@ -129,7 +128,7 @@ export const FacilityOverviewStore = signalStore(
 
     /**
      * @description
-     * Whether the equipment preview request is in flight.
+     * Whether the equipment summary request is in flight.
      */
     isLoadingEquipment: computed<boolean>(() => store.equipmentCallState().status === 'pending'),
 
@@ -208,23 +207,22 @@ export const FacilityOverviewStore = signalStore(
 
     /**
      * @description
-     * Total number of equipment items assigned to the facility, read from the
-     * collection `totalItems` rather than the length of the preview page.
+     * Exact total across the selected direct or descendant scope.
      */
-    equipmentCount: computed<number>(() => store.equipmentTotal()),
+    equipmentCount: computed<number>(() => store.equipmentCallState().data?.totalItems ?? 0),
+
+    /**
+     * @description
+     * Exact total retained as the overview's public count contract.
+     */
+    equipmentTotal: computed<number>(() => store.equipmentCallState().data?.totalItems ?? 0),
 
     /**
      * @description
      * Equipment items that require attention (maintenance or decommissioned).
      */
     equipmentNeedingAttentionCount: computed<number>(
-      () =>
-        store
-          .equipment()
-          .filter(
-            (equipment) =>
-              equipment.status === 'under_maintenance' || equipment.status === 'decommissioned',
-          ).length,
+      () => store.equipmentCallState().data?.needingAttentionCount ?? 0,
     ),
 
     /**
@@ -240,19 +238,14 @@ export const FacilityOverviewStore = signalStore(
      * fill rather than a glyph colour.
      */
     equipmentStatusRows: computed<ReadonlyArray<FacilityEquipmentStatusRow>>(() => {
-      const equipment: ReadonlyArray<EquipmentOutput> = store.equipment();
-      const total: number = equipment.length;
-
-      const byStatus: Record<EquipmentStatus, number> = {
+      const summary: EquipmentFacilitySummaryOutput | null = store.equipmentCallState().data;
+      const total: number = summary?.totalItems ?? 0;
+      const byStatus: Readonly<Record<EquipmentStatus, number>> = summary?.byStatus ?? {
         in_stock: 0,
         operational: 0,
         decommissioned: 0,
         under_maintenance: 0,
       };
-
-      for (const item of equipment) {
-        byStatus[item.status] += 1;
-      }
 
       const colorClassOf: Record<EquipmentStatus, string> = {
         operational: 'bg-success',
@@ -295,18 +288,6 @@ export const FacilityOverviewStore = signalStore(
      */
     isInspectionsPreviewPartial: computed<boolean>(
       () => store.inspectionsTotal() > store.inspections().length,
-    ),
-
-    /**
-     * @description
-     * Whether the loaded equipment preview (capped at
-     * {@link PREVIEW_ITEMS_PER_PAGE}) is a partial sample of the facility's
-     * equipment — the equipment count, "to monitor" subtitle and status
-     * breakdown are all computed from this same preview, so a partial
-     * sample makes them approximate rather than exact.
-     */
-    isEquipmentPreviewPartial: computed<boolean>(
-      () => store.equipmentTotal() > store.equipment().length,
     ),
 
     /**
@@ -375,30 +356,33 @@ export const FacilityOverviewStore = signalStore(
       ),
     );
 
-    const loadEquipment = rxMethod<{ organizationId: string; facilityId: string }>(
+    const loadEquipment = rxMethod<{
+      organizationId: string;
+      facilityId: string;
+      includeDescendants?: boolean;
+    }>(
       pipe(
-        tap(() => patchState(store, { equipmentCallState: pendingCallState() })),
-        switchMap(({ organizationId, facilityId }) =>
-          equipmentService
-            .list(organizationId, { itemsPerPage: PREVIEW_ITEMS_PER_PAGE, params: { facilityId } })
-            .pipe(
-              tapResponse({
-                next: (response: HydraCollection<EquipmentOutput>) =>
-                  patchState(store, {
-                    equipment: [...response.member],
-                    equipmentTotal: response.totalItems,
-                    equipmentCallState: successCallState(null),
-                  }),
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, {
-                    equipment: [],
-                    equipmentTotal: 0,
-                    equipmentCallState: errorCallState(storeError),
-                  });
-                },
-              }),
-            ),
+        tap(({ includeDescendants = true }) =>
+          patchState(store, {
+            equipmentIncludeDescendants: includeDescendants,
+            equipmentCallState: pendingCallState(),
+          }),
+        ),
+        switchMap(({ organizationId, facilityId, includeDescendants = true }) =>
+          equipmentService.summaryByFacility(organizationId, facilityId, includeDescendants).pipe(
+            tapResponse({
+              next: (response: EquipmentFacilitySummaryOutput) =>
+                patchState(store, {
+                  equipmentCallState: successCallState(response),
+                }),
+              error: (error: unknown) => {
+                const storeError: StoreError = toStoreError(error);
+                patchState(store, {
+                  equipmentCallState: errorCallState(storeError),
+                });
+              },
+            }),
+          ),
         ),
       ),
     );
@@ -440,14 +424,18 @@ export const FacilityOverviewStore = signalStore(
 
       /**
        * @description
-       * Loads the inspection, equipment and intervention previews for a facility.
+       * Loads inspection/intervention previews and the equipment summary for a facility.
        *
-       * @param {{ organizationId: string; facilityId: string }} params - Organization and facility
-       *   identities shared by the three preview requests.
+       * @param {{ organizationId: string; facilityId: string; includeDescendants?: boolean }} params -
+       *   Organization, facility and equipment scope.
        *
        * @returns {void}
        */
-      load(params: { organizationId: string; facilityId: string }): void {
+      load(params: {
+        organizationId: string;
+        facilityId: string;
+        includeDescendants?: boolean;
+      }): void {
         loadInspections(params);
         loadEquipment(params);
         loadInterventions(params);

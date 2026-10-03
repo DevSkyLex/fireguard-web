@@ -27,7 +27,7 @@ describe('FacilityOptionsStore', () => {
   const sessionRevision = signal(0);
   const isAuthenticated = signal(true);
   let store: InstanceType<typeof FacilityOptionsStore>;
-  let facilities: { list: ReturnType<typeof vi.fn> };
+  let facilities: { get: ReturnType<typeof vi.fn>; list: ReturnType<typeof vi.fn> };
   let dispatch: ReturnType<typeof vi.fn>;
 
   const configure = (platformId: string): void => {
@@ -48,6 +48,7 @@ describe('FacilityOptionsStore', () => {
     isAuthenticated.set(true);
     dispatch = vi.fn();
     facilities = {
+      get: vi.fn(),
       list: vi.fn().mockReturnValue(
         of({
           member: [
@@ -72,11 +73,23 @@ describe('FacilityOptionsStore', () => {
     await vi.waitFor(() => expect(store.loading()).toBe(false));
 
     expect(facilities.list).toHaveBeenCalledTimes(1);
-    expect(facilities.list).toHaveBeenCalledWith('org-1', { page: 1, itemsPerPage: 200 });
+    expect(facilities.list).toHaveBeenCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 200,
+      includePath: true,
+    });
     expect(store.options()).toEqual([
-      { value: 'f-1', label: 'Head office', typeLabel: 'Site', pathLabel: null, address: null },
+      {
+        value: 'f-1',
+        type: 'site',
+        label: 'Head office',
+        typeLabel: 'Site',
+        pathLabel: null,
+        address: null,
+      },
       {
         value: 'f-2',
+        type: 'building',
         label: 'Annex',
         typeLabel: 'Building',
         pathLabel: 'Head office',
@@ -165,11 +178,16 @@ describe('FacilityOptionsStore', () => {
     store.load({ organizationId: 'org-1', page: 2 });
     expect(store.pageCount()).toBe(2);
     expect(store.options()[0].value).toBe('f-201');
-    expect(facilities.list).toHaveBeenCalledWith('org-1', { page: 2, itemsPerPage: 200 });
+    expect(facilities.list).toHaveBeenCalledWith('org-1', {
+      page: 2,
+      itemsPerPage: 200,
+      includePath: true,
+    });
     store.load({ organizationId: 'org-1', search: 'Annex' });
     expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
       page: 1,
       itemsPerPage: 200,
+      includePath: true,
       search: 'Annex',
     });
   });
@@ -182,5 +200,53 @@ describe('FacilityOptionsStore', () => {
     vi.advanceTimersByTime(300);
     expect(facilities.list).not.toHaveBeenCalled();
     vi.useRealTimers();
+  });
+  it('keeps parent context across search/pages and hydrates an off-page selection', () => {
+    configure('browser');
+    facilities.get.mockReturnValue(of(facility('outside-page', 'Existing parent', 'site', [])));
+    store.load({ organizationId: 'org-1', parentForFacilityId: 'moving-floor' });
+    store.ensureSelected({ organizationId: 'org-1', facilityId: 'outside-page' });
+    store.load({ organizationId: 'org-1', page: 2, search: 'remote' });
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 2,
+      itemsPerPage: 200,
+      includePath: true,
+      parentForFacilityId: 'moving-floor',
+      search: 'remote',
+    });
+    expect(store.selectedOption()?.label).toBe('Existing parent');
+    store.ensureLoaded({ organizationId: 'org-1', parentForType: 'building' });
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 200,
+      includePath: true,
+      parentForType: 'building',
+    });
+  });
+
+  it('retains the intervention creation scope across pages and clears it for published creation', () => {
+    configure('browser');
+    store.ensureLoaded({
+      organizationId: 'org-1',
+      interventionId: 'intervention-1',
+      parentForType: 'floor',
+    });
+    store.load({ organizationId: 'org-1', page: 2, search: 'North' });
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 2,
+      itemsPerPage: 200,
+      includePath: true,
+      interventionId: 'intervention-1',
+      parentForType: 'floor',
+      search: 'North',
+    });
+    store.ensureLoaded({ organizationId: 'org-1', parentForType: 'floor' });
+    expect(facilities.list).toHaveBeenLastCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 200,
+      includePath: true,
+      parentForType: 'floor',
+    });
+    expect(store.interventionId()).toBeNull();
   });
 });

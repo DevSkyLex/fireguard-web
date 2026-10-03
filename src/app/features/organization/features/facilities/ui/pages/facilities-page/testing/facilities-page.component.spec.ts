@@ -67,6 +67,7 @@ const facility = (overrides: Partial<FacilityOutput> = {}): FacilityOutput =>
     organizationId: 'org-1',
     parentFacilityId: null,
     hasChildren: false,
+    path: [],
     type: 'building',
     name: 'Headquarters',
     code: 'HQ-01',
@@ -182,6 +183,14 @@ describe('FacilitiesPage', () => {
           {
             provide: FacilityOptionsStore,
             useValue: {
+              loadCallState: signal(idleCallState()),
+              page: signal(1),
+              pageCount: signal(1),
+              selectedOption: signal(null),
+              search: signal(''),
+              load: vi.fn(),
+              ensureSelected: vi.fn(),
+              searchOptions: vi.fn(),
               options: signal([]),
               mapCenter: signal(undefined),
               ensureLoaded: ensureOptionsLoaded,

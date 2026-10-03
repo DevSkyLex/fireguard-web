@@ -697,6 +697,14 @@ export class OnboardingFacilitiesForm {
     required(path.type, {
       message: $localize`:@@onboarding.facilitiesForm.typeRequired:Facility type is required.`,
     });
+    validate(path.type, ({ value }) =>
+      value() && value() !== 'site'
+        ? {
+            kind: 'rootType',
+            message: $localize`:@@onboarding.facilitiesForm.rootTypeRequired:Create a root site during setup. Add buildings, floors, zones and areas under it later in Places.`,
+          }
+        : null,
+    );
     required(path.name, {
       message: $localize`:@@onboarding.facilitiesForm.nameRequired:Name is required.`,
     });
@@ -869,6 +877,22 @@ export class OnboardingFacilitiesForm {
 
   //#region Methods
   /**
+   * Property hasInvalidRootDrafts
+   * @readonly
+   *
+   * @description
+   * Flags retained unsaved legacy rows that require an explicit type correction.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasInvalidRootDrafts: Signal<boolean> = computed(() =>
+    this.staged().some((row) => !this.isCompleted(row) && row.type !== 'site'),
+  );
+
+  /**
    * Method addFacility
    * @method addFacility
    *
@@ -978,6 +1002,7 @@ export class OnboardingFacilitiesForm {
       return;
     }
 
+    if (this.staged().some((row) => !this.isCompleted(row) && row.type !== 'site')) return;
     this.submitted.emit(this.staged());
   }
 

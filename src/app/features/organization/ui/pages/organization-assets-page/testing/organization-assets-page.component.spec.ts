@@ -16,7 +16,10 @@ import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
-import { FacilityTreeStore } from '@features/organization/features/facilities/state';
+import {
+  FacilityOptionsStore,
+  FacilityTreeStore,
+} from '@features/organization/features/facilities/state';
 import type {
   ComplianceFacilityTreeNodeOutput,
   ComplianceSummaryOutput,
@@ -119,6 +122,7 @@ describe('OrganizationAssetsPage', () => {
   let hasPermission: ReturnType<typeof vi.fn>;
   let loadRoots: ReturnType<typeof vi.fn>;
   let ensureChildrenLoaded: ReturnType<typeof vi.fn>;
+  let moveCallStateSignal: WritableSignal<CallState>;
   let move: ReturnType<typeof vi.fn>;
   let duplicate: ReturnType<typeof vi.fn>;
   let loadEquipment: ReturnType<typeof vi.fn>;
@@ -153,6 +157,7 @@ describe('OrganizationAssetsPage', () => {
     loadRoots = vi.fn();
     ensureChildrenLoaded = vi.fn();
     move = vi.fn();
+    moveCallStateSignal = signal<CallState>(idleCallState());
     duplicate = vi.fn();
     loadEquipment = vi.fn();
     loadInspections = vi.fn();
@@ -180,6 +185,27 @@ describe('OrganizationAssetsPage', () => {
     isArchivingSignal = signal<boolean>(false);
     downloadingSnapshotIdSignal = signal<string | null>(null);
 
+    TestBed.overrideComponent(OrganizationAssetsPage, {
+      remove: { providers: [FacilityOptionsStore] },
+      add: {
+        providers: [
+          {
+            provide: FacilityOptionsStore,
+            useValue: {
+              options: signal([]),
+              selectedOption: signal(null),
+              loadCallState: signal(idleCallState()),
+              page: signal(1),
+              pageCount: signal(1),
+              search: signal(''),
+              load: vi.fn(),
+              ensureSelected: vi.fn(),
+              searchOptions: vi.fn(),
+            },
+          },
+        ],
+      },
+    });
     TestBed.configureTestingModule({
       providers: [
         {
@@ -207,6 +233,12 @@ describe('OrganizationAssetsPage', () => {
           provide: FacilityTreeStore,
           useValue: {
             roots: rootsSignal,
+            moveCallState: moveCallStateSignal,
+            resetMoveOperation: vi.fn(),
+            canLoadMoreRoots: signal(false),
+            canLoadMoreChildren: () => false,
+            loadMoreRoots: vi.fn(),
+            loadMoreChildren: vi.fn(),
             childrenByParent: signal({}),
             expandingParentIds: signal([]),
             failedParentIds: signal([]),
@@ -526,6 +558,7 @@ describe('OrganizationAssetsPage', () => {
     await fixture.whenStable();
 
     expect(loadEquipment).toHaveBeenCalledWith({
+      includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
     });
@@ -541,7 +574,10 @@ describe('OrganizationAssetsPage', () => {
     fixture.componentInstance['onAxisActivated']('everything');
     await fixture.whenStable();
 
-    expect(loadEquipment).toHaveBeenCalledWith({ organizationId: 'org-1' });
+    expect(loadEquipment).toHaveBeenCalledWith({
+      includeDescendants: true,
+      organizationId: 'org-1',
+    });
     expect(loadInspections).toHaveBeenCalledWith({ organizationId: 'org-1' });
   });
 
@@ -559,6 +595,7 @@ describe('OrganizationAssetsPage', () => {
 
     fixture.componentInstance['changePanePage']('equipment', 3);
     expect(loadEquipment).toHaveBeenCalledExactlyOnceWith({
+      includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
       page: 3,
@@ -575,6 +612,7 @@ describe('OrganizationAssetsPage', () => {
     loadInspections.mockClear();
     fixture.componentInstance['retryPane']();
     expect(loadEquipment).toHaveBeenCalledWith({
+      includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
     });
@@ -671,6 +709,8 @@ describe('OrganizationAssetsPage', () => {
     expect(fixture.componentInstance['moveTarget']()).toEqual({
       facilityId: 'facility-2',
       facilityName: 'Wing',
+      facilityType: 'building',
+      currentParentFacilityId: null,
     });
 
     fixture.componentInstance['onMoveSubmitted']({
@@ -684,6 +724,9 @@ describe('OrganizationAssetsPage', () => {
       facilityId: 'facility-2',
       parentFacilityId: 'facility-1',
     });
+    expect(fixture.componentInstance['moveTarget']()).not.toBeNull();
+    moveCallStateSignal.set(successCallState(null));
+    await fixture.whenStable();
     expect(fixture.componentInstance['moveTarget']()).toBeNull();
   });
 
@@ -1157,5 +1200,37 @@ describe('OrganizationAssetsPage', () => {
 
     expect(host.querySelector('#assets-equipment-title')?.textContent).not.toContain('12');
     expect(host.querySelector('#assets-inspections-title')?.textContent).not.toContain('7');
+  });
+  it('restores direct equipment scope and retains it for retries and paging', async () => {
+    fixture = await createPage({
+      organizationId: 'org-1',
+      facility: 'facility-1',
+      equipmentScope: 'direct',
+    });
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: false,
+    });
+    fixture.componentInstance['changePanePage']('equipment', 2);
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: false,
+      page: 2,
+    });
+    fixture.componentInstance['retryPane']();
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: false,
+    });
+    fixture.componentInstance['changeEquipmentScope'](true);
+    await fixture.whenStable();
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: true,
+    });
   });
 });

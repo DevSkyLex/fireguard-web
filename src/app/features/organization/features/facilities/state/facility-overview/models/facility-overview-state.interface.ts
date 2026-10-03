@@ -1,5 +1,5 @@
 import type { CallState } from '@core/request-state';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import type { EquipmentFacilitySummaryOutput } from '@features/organization/features/equipments/models';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 
@@ -9,8 +9,8 @@ import type { InterventionOutput } from '@features/organization/features/interve
  *
  * @description
  * Component-scoped state backing the facility detail overview tab. Holds
- * the compact inspection, equipment and intervention previews used to
- * derive the page's KPI metrics and summary cards, together with their
+ * compact inspection/intervention previews and exact equipment summary used
+ * by the page's KPI metrics and summary cards, together with their
  * independent async call states.
  *
  * @version 1.1.0
@@ -30,14 +30,14 @@ export interface FacilityOverviewState {
   readonly inspections: ReadonlyArray<InspectionOutput>;
 
   /**
-   * Property equipment
+   * Property equipmentIncludeDescendants
    *
    * @description
-   * Equipment previews loaded for the active facility.
+   * Whether the exact equipment summary includes the facility subtree.
    *
-   * @type {ReadonlyArray<EquipmentOutput>}
+   * @type {boolean}
    */
-  readonly equipment: ReadonlyArray<EquipmentOutput>;
+  readonly equipmentIncludeDescendants: boolean;
 
   /**
    * Property interventions
@@ -62,17 +62,6 @@ export interface FacilityOverviewState {
   readonly inspectionsTotal: number;
 
   /**
-   * Property equipmentTotal
-   *
-   * @description
-   * Server-side `totalItems` of the facility's equipment collection, which
-   * may exceed the single preview page held in `equipment`.
-   *
-   * @type {number}
-   */
-  readonly equipmentTotal: number;
-
-  /**
    * Property inspectionsCallState
    *
    * @description
@@ -86,11 +75,11 @@ export interface FacilityOverviewState {
    * Property equipmentCallState
    *
    * @description
-   * Async lifecycle of the equipment preview request.
+   * Async lifecycle and exact counts of the selected equipment scope.
    *
-   * @type {CallState}
+   * @type {CallState<EquipmentFacilitySummaryOutput>}
    */
-  readonly equipmentCallState: CallState;
+  readonly equipmentCallState: CallState<EquipmentFacilitySummaryOutput>;
 
   /**
    * Property interventionsCallState

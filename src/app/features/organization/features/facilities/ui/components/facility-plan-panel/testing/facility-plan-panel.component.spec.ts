@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import type {
@@ -56,6 +57,7 @@ describe('FacilityPlanPanel', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideRouter([]),
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: { isMobileInteractionMode: signal(false) },
@@ -81,6 +83,28 @@ describe('FacilityPlanPanel', () => {
     expect(byTestId('facility-plan-panel')).not.toBeNull();
     expect(byTestId('facility-zone-list')).not.toBeNull();
     expect(byTestId('facility-plan-detail')).toBeNull();
+  });
+
+  it('keeps unusable saved references accessible when no shapes or markers can be rendered', async () => {
+    fixture.componentRef.setInput('organizationId', 'org-1');
+    fixture.componentRef.setInput('zones', []);
+    fixture.componentRef.setInput('equipment', []);
+    fixture.componentRef.setInput('hasNoContent', true);
+    fixture.componentRef.setInput('geometryIssues', [
+      { facilityId: 'moved-room', code: 'outside_ancestry' },
+    ]);
+    fixture.componentRef.setInput('equipmentIssues', [
+      { equipmentId: 'moved-equipment', code: 'outside_ancestry' },
+    ]);
+    await fixture.whenStable();
+    const issues = byTestId('facility-plan-spatial-issues');
+    expect(issues?.textContent).toContain('current hierarchy');
+    expect(issues?.textContent).toContain("equipment's current facility hierarchy");
+    const links = issues?.querySelectorAll<HTMLAnchorElement>('a');
+    expect(links?.[0].getAttribute('href')).toBe('/organizations/org-1/facilities/moved-room');
+    expect(links?.[1].getAttribute('href')).toBe('/organizations/org-1/equipments/moved-equipment');
+    expect(byTestId('facility-plan-no-content')).not.toBeNull();
+    expect(byTestId('facility-zone-list')).toBeNull();
   });
 
   it('shows the no-content empty state instead of the zone list when the plan has nothing drawn', async () => {

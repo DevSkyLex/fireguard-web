@@ -14,14 +14,19 @@
   />
   <hlm-combobox-content *hlmComboboxPortal>
     <div hlmComboboxList>
-      <hlm-combobox-item value="" i18n="@@facility.picker.any">Any facility</hlm-combobox-item>
+      @if (allowEmpty()) {
+        <hlm-combobox-item value="">{{ emptyLabel() }}</hlm-combobox-item>
+      }
       @for (option of options(); track option.value) {
         <hlm-combobox-item [value]="option.value">
           <span class="flex min-w-0 flex-col">
             <span>{{ option.label }}</span>
-            @if (option.pathLabel) {
-              <span class="text-xs text-muted-foreground">{{ option.pathLabel }}</span>
-            }
+            <span class="text-xs text-muted-foreground"
+              >{{ option.typeLabel }}
+              @if (option.pathLabel) {
+                · {{ option.pathLabel }}
+              }
+            </span>
           </span>
         </hlm-combobox-item>
       }

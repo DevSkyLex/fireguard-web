@@ -807,7 +807,10 @@ async function mockEditorReads(api: ApiMock): Promise<void> {
     facilityChildOutput(),
     facilityZoneCandidateOutput(),
   ]);
-  await api.mockFacilityDescendants(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, [facilityChildOutput()]);
+  await api.mockFacilityDescendants(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, [
+    facilityChildOutput(),
+    facilityZoneCandidateOutput(),
+  ]);
 }
 
 test.describe('Facility Plan Editor', () => {

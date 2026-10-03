@@ -1,5 +1,7 @@
 import type { HydraItem } from '@core/api/models';
+import type { FacilityCalibrationIssue } from '../facility-spatial-issue-tag/facility-spatial-issue.type';
 import type { FacilityAttachmentKind } from './facility-attachment-kind.type';
+import type { FacilityPlanCalibration } from './facility-plan-calibration.interface';
 
 /**
  * Interface FacilityAttachmentOutput
@@ -22,37 +24,118 @@ import type { FacilityAttachmentKind } from './facility-attachment-kind.type';
  */
 export interface FacilityAttachmentOutput extends HydraItem {
   //#region Properties
-  /** Attachment identifier. */
+  /**
+   * Property id
+   *
+   * @description
+   * Attachment identifier.
+   */
   readonly id: string;
 
-  /** Owning facility id. */
+  /**
+   * Property facilityId
+   *
+   * @description
+   * Owning facility id.
+   */
   readonly facilityId: string;
 
-  /** Stored file name. */
+  /**
+   * Property fileName
+   *
+   * @description
+   * Stored file name.
+   */
   readonly fileName: string;
 
-  /** Declared MIME type. */
+  /**
+   * Property mimeType
+   *
+   * @description
+   * Declared MIME type.
+   */
   readonly mimeType: string;
 
-  /** Size in bytes. */
+  /**
+   * Property size
+   *
+   * @description
+   * Size in bytes.
+   */
   readonly size: number;
 
-  /** `document` (default) or `floor_plan`. */
+  /**
+   * Property kind
+   *
+   * @description
+   * `document` (default) or `floor_plan`.
+   */
   readonly kind: FacilityAttachmentKind;
 
-  /** Whether this is the facility's primary floor plan; always `false` for a `document`. */
+  /**
+   * Property isPrimaryPlan
+   *
+   * @description
+   * Whether this is the facility's primary floor plan; always `false` for a `document`.
+   */
   readonly isPrimaryPlan: boolean;
 
-  /** The image's pixel width, probed server-side for a `floor_plan`; null when unknown or not applicable. */
+  /**
+   * Property imageWidth
+   *
+   * @description
+   * The image's pixel width, probed server-side for a `floor_plan`; null when unknown or not
+   * applicable.
+   */
   readonly imageWidth: number | null;
 
-  /** The image's pixel height, probed server-side for a `floor_plan`; null when unknown or not applicable. */
+  /**
+   * Property imageHeight
+   *
+   * @description
+   * The image's pixel height, probed server-side for a `floor_plan`; null when unknown or not
+   * applicable.
+   */
   readonly imageHeight: number | null;
 
-  /** Optimistic-concurrency revision (`If-Match: "revision-N"`). */
+  /**
+   * Property revision
+   *
+   * @description
+   * Optimistic-concurrency revision (`If-Match: "revision-N"`).
+   */
   readonly revision: number;
 
-  /** ISO upload instant. */
+  /**
+   * Property calibration
+   *
+   * @description
+   * Optional metric calibration of this immutable image.
+   */
+  readonly calibration?: FacilityPlanCalibration | null;
+
+  /**
+   * Property calibrationBuildingId
+   *
+   * @description
+   * Building reference confirmed when the calibration was saved.
+   */
+  readonly calibrationBuildingId?: string | null;
+
+  /**
+   * Property calibrationIssue
+   *
+   * @description
+   * Reason why the retained calibration cannot currently be used in this building.
+   */
+  readonly calibrationIssue?: FacilityCalibrationIssue | null;
+
+  /**
+   * Property uploadedAt
+   *
+   * @description
+   * ISO upload instant.
+   */
   readonly uploadedAt: string;
   //#endregion
 }

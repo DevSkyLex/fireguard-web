@@ -28,3 +28,4 @@ export { resolveEquipmentStatusTag } from './equipment-status-tag/equipment-stat
 export type { EquipmentEditState } from './equipment-edit/equipment-edit-state.interface';
 export type { EquipmentEditTarget } from './equipment-edit/equipment-edit-target.type';
 export type { EquipmentKpiOutput } from './equipment-kpi/equipment-kpi-output.interface';
+export type { EquipmentFacilitySummaryOutput } from './equipment-summary/equipment-facility-summary-output.interface';

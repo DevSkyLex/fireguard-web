@@ -1,4 +1,16 @@
+import type {
+  EquipmentPlanPosition,
+  EquipmentStatus,
+  EquipmentType,
+} from '@features/organization/features/equipments/models';
+import type { FacilityPlanCalibration } from '../facility-attachment/facility-plan-calibration.interface';
 import type { FacilityPlanOverlayZone } from '../facility-plan-overlay/facility-plan-overlay-output.interface';
+import type {
+  FacilityCalibrationIssue,
+  FacilityGeometryIssue,
+  FacilityEquipmentPlacementIssue,
+  FacilityHierarchyIssue,
+} from '../facility-spatial-issue-tag/facility-spatial-issue.type';
 import type { FacilityStatus } from '../facility/facility-output.interface';
 
 /**
@@ -6,44 +18,138 @@ import type { FacilityStatus } from '../facility/facility-output.interface';
  * @interface FacilityBuildingModelPlan
  *
  * @description
- * The floor plan attachment a {@link FacilityBuildingModelFloor} is drawn
- * against, with the pixel dimensions its normalized coordinates are
- * relative to. `null` on the owning floor when it has no plan attached yet
- * — never an error condition.
- *
- * @since 1.0.0
+ * The primary floor plan and its optional physical calibration.
  */
 export interface FacilityBuildingModelPlan {
-  /** The floor plan attachment's id. */
+  /**
+   * Property attachmentId
+   *
+   * @description
+   * Immutable plan attachment identifier.
+   */
   readonly attachmentId: string;
 
   /**
-   * The plan image's natural pixel width — normalized coordinates are relative
-   * to this. `null` when the backend could not probe the image: an SVG whose
-   * `width`/`height`/`viewBox` is absent or expressed in percentages or CSS
-   * units is accepted and stored undimensioned rather than rejected. A caller
-   * deriving an aspect ratio must handle that, not divide blindly.
+   * Property imageWidth
+   *
+   * @description
+   * Natural image width in pixels; null when unavailable.
    */
   readonly imageWidth: number | null;
 
   /**
-   * The plan image's natural pixel height. `null` under the same conditions as
-   * {@link FacilityBuildingModelPlan.imageWidth} — the two are always null
-   * together.
+   * Property imageHeight
+   *
+   * @description
+   * Natural image height in pixels; null when unavailable.
    */
   readonly imageHeight: number | null;
+
+  /**
+   * Property calibration
+   *
+   * @description
+   * Optional uniform physical scale and building-frame alignment.
+   */
+  readonly calibration: FacilityPlanCalibration | null;
+
+  /**
+   * Property calibrationBuildingId
+   *
+   * @description
+   * Original building reference confirmed for the stored calibration.
+   */
+  readonly calibrationBuildingId?: string | null;
+
+  /**
+   * Property calibrationIssue
+   *
+   * @description
+   * Current usability of the retained calibration in this building.
+   */
+  readonly calibrationIssue?: FacilityCalibrationIssue | null;
+}
+
+/**
+ * Interface FacilityBuildingModelEquipment
+ * @interface FacilityBuildingModelEquipment
+ *
+ * @description
+ * Equipment assigned to this floor or a descendant, retaining source placement.
+ */
+export interface FacilityBuildingModelEquipment {
+  /**
+   * Property equipmentId
+   *
+   * @description
+   * Equipment resource identifier.
+   */
+  readonly equipmentId: string;
+
+  /**
+   * Property facilityId
+   *
+   * @description
+   * Facility to which this equipment is actually assigned.
+   */
+  readonly facilityId: string;
+
+  /**
+   * Property type
+   *
+   * @description
+   * Equipment catalog type.
+   */
+  readonly type: EquipmentType;
+
+  /**
+   * Property serialNumber
+   *
+   * @description
+   * Optional identifying serial number.
+   */
+  readonly serialNumber: string | null;
+
+  /**
+   * Property locationLabel
+   *
+   * @description
+   * Optional textual location.
+   */
+  readonly locationLabel: string | null;
+
+  /**
+   * Property status
+   *
+   * @description
+   * Equipment business lifecycle status.
+   */
+  readonly status: EquipmentStatus;
+
+  /**
+   * Property position
+   *
+   * @description
+   * Usable original normalized position, never synthesized.
+   */
+  readonly position: EquipmentPlanPosition | null;
+
+  /**
+   * Property placementIssue
+   *
+   * @description
+   * Reason why no faithful marker can be rendered.
+   */
+  readonly placementIssue: FacilityEquipmentPlacementIssue | null;
 }
 
 /**
  * Type FacilityBuildingModelOutlineSource
- * @type {FacilityBuildingModelOutlineSource}
  *
  * @description
- * How a floor's {@link FacilityBuildingModelOutline} was derived server-side:
- * from the floor's own drawn `planGeometry`, from the bounding box of its
- * rooms, or from the plan image's full rectangle as a last-resort fallback.
+ * Distinguishes a drawn footprint from estimated bounds.
  *
- * @since 1.0.0
+ * @type {FacilityBuildingModelOutlineSource}
  */
 export type FacilityBuildingModelOutlineSource = 'plan_geometry' | 'rooms_bbox' | 'image_rect';
 
@@ -52,18 +158,23 @@ export type FacilityBuildingModelOutlineSource = 'plan_geometry' | 'rooms_bbox' 
  * @interface FacilityBuildingModelOutline
  *
  * @description
- * The polygon a floor is rendered as in the 3D building view, in normalized
- * `[0, 1]` image coordinates. `null` on the owning floor when none of the
- * three derivations in {@link FacilityBuildingModelOutlineSource} could
- * produce one.
- *
- * @since 1.0.0
+ * A sanitized floor contour in normalized image coordinates.
  */
 export interface FacilityBuildingModelOutline {
-  /** How this outline was derived. */
+  /**
+   * Property source
+   *
+   * @description
+   * Source of the contour.
+   */
   readonly source: FacilityBuildingModelOutlineSource;
 
-  /** The polygon's vertices, in order, each a normalized `[x, y]` pair. */
+  /**
+   * Property points
+   *
+   * @description
+   * Ordered normalized polygon vertices.
+   */
   readonly points: ReadonlyArray<readonly [number, number]>;
 }
 
@@ -72,42 +183,111 @@ export interface FacilityBuildingModelOutline {
  * @interface FacilityBuildingModelFloor
  *
  * @description
- * One floor (or other level-bearing facility) of a building, as one layer
- * of the 3D model. Reuses {@link FacilityPlanOverlayZone}'s exact shape for
- * `rooms` — the two endpoints deliberately share it — rather than
- * introducing a lookalike type.
- *
- * `plan` and `outline` arrive as an explicit JSON `null`, not an omitted
- * key: unlike a top-level DTO field, a nested property inside a `floors`
- * array element is always serialized. Type them `T | null`, never
- * `T | null | undefined`.
- *
- * @since 1.0.0
+ * One floor in server render order, with rooms, equipment and explicit physical dimensions.
  */
 export interface FacilityBuildingModelFloor {
-  /** This floor's own facility id. */
+  /**
+   * Property facilityId
+   *
+   * @description
+   * Floor facility identifier.
+   */
   readonly facilityId: string;
 
-  /** This floor's display name. */
+  /**
+   * Property name
+   *
+   * @description
+   * Floor display name.
+   */
   readonly name: string;
 
-  /** This floor's vertical rank within the building, lower first; `null` when unset. */
+  /**
+   * Property levelIndex
+   *
+   * @description
+   * Ordering rank, never a physical elevation.
+   */
   readonly levelIndex: number | null;
 
   /**
-   * This floor's business status — {@link FacilityStatus}, never the
-   * record lifecycle (`record_status`).
+   * Property elevationMeters
+   *
+   * @description
+   * Optional physical floor elevation.
+   */
+  readonly elevationMeters: number | null;
+
+  /**
+   * Property heightMeters
+   *
+   * @description
+   * Optional physical floor height.
+   */
+  readonly heightMeters: number | null;
+
+  /**
+   * Property status
+   *
+   * @description
+   * Facility business status.
    */
   readonly status: FacilityStatus;
 
-  /** This floor's plan attachment, or `null` when none is set. */
+  /**
+   * Property hierarchyIssues
+   *
+   * @description
+   * Retained structural diagnostics, including floors in an atypical legacy branch.
+   */
+  readonly hierarchyIssues: readonly FacilityHierarchyIssue[];
+
+  /**
+   * Property plan
+   *
+   * @description
+   * Primary floor plan, or null when missing.
+   */
   readonly plan: FacilityBuildingModelPlan | null;
 
-  /** This floor's rendered outline, or `null` when none could be derived. */
+  /**
+   * Property outline
+   *
+   * @description
+   * Sanitized drawn or estimated outline.
+   */
   readonly outline: FacilityBuildingModelOutline | null;
 
-  /** The rooms drawn on this floor's plan. */
+  /**
+   * Property rooms
+   *
+   * @description
+   * Sanitized room contours on this primary plan.
+   */
   readonly rooms: ReadonlyArray<FacilityPlanOverlayZone>;
+
+  /**
+   * Property equipment
+   *
+   * @description
+   * Equipment of this floor and all its descendants.
+   */
+  readonly equipment: ReadonlyArray<FacilityBuildingModelEquipment>;
+
+  /**
+   * Property diagnostics
+   *
+   * @description
+   * Counts of source geometry and equipment which cannot be faithfully rendered.
+   */
+  readonly diagnostics: {
+    readonly invalidGeometryCount: number;
+    readonly unpositionedEquipmentCount: number;
+    readonly geometryIssues: readonly {
+      readonly facilityId: string;
+      readonly code: FacilityGeometryIssue;
+    }[];
+  };
 }
 
 /**
@@ -115,26 +295,30 @@ export interface FacilityBuildingModelFloor {
  * @interface FacilityBuildingModelOutput
  *
  * @description
- * The read-only 3D model for one building facility — its floors, each with
- * its plan, outline and rooms. Returned by
- * `GET /api/organizations/{organizationId}/facilities/{facilityId}/building-model`;
- * not a Hydra item (`FacilityService.getBuildingModel` reads it directly
- * through `HttpClient`, like {@link FacilityPlanOverlayOutput}'s
- * `getPlanOverlay`).
- *
- * `floors` arrives **already ordered by the server**
- * (`level_index ASC NULLS LAST, created_at, id`) — that order is the
- * rendering contract. Never re-sort it on the frontend.
- *
- * @since 1.0.0
+ * Organization-scoped building projection; floors retain server ordering.
  */
 export interface FacilityBuildingModelOutput {
-  /** The building facility this model was computed for. */
+  /**
+   * Property buildingId
+   *
+   * @description
+   * Building facility identifier.
+   */
   readonly buildingId: string;
 
-  /** The building facility's display name. */
+  /**
+   * Property buildingName
+   *
+   * @description
+   * Building display name.
+   */
   readonly buildingName: string;
 
-  /** The building's floors, in server render order. Empty when the building has none yet. */
+  /**
+   * Property floors
+   *
+   * @description
+   * Floors in authoritative server render order.
+   */
   readonly floors: ReadonlyArray<FacilityBuildingModelFloor>;
 }

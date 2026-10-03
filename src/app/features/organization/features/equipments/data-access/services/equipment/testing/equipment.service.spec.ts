@@ -14,6 +14,7 @@ import type {
   EquipmentTagOutput,
   AddTagInput,
   EquipmentKpiOutput,
+  EquipmentFacilitySummaryOutput,
 } from '@features/organization/features/equipments/models';
 import { EquipmentService } from '../equipment.service';
 
@@ -106,6 +107,30 @@ describe('EquipmentService', () => {
   });
 
   // ── list ───────────────────────────────────────────────────────────────────
+
+  describe('summaryByFacility', () => {
+    for (const includeDescendants of [true, false]) {
+      it(`requests exact ${includeDescendants ? 'subtree' : 'direct'} totals`, () => {
+        const summary: EquipmentFacilitySummaryOutput = {
+          '@id': `${facilityEquipmentBaseUrl}-summary`,
+          '@type': 'FacilityEquipmentSummary',
+          scope: includeDescendants ? 'subtree' : 'direct',
+          totalItems: 251,
+          byStatus: { operational: 220, in_stock: 1, under_maintenance: 20, decommissioned: 10 },
+          needingAttentionCount: 30,
+        };
+        service
+          .summaryByFacility(orgId, facilityId, includeDescendants)
+          .subscribe((value) => expect(value).toEqual(summary));
+        const request = httpMock.expectOne(
+          (req) => req.url === `${facilityEquipmentBaseUrl}-summary`,
+        );
+        expect(request.request.method).toBe('GET');
+        expect(request.request.params.get('includeDescendants')).toBe(String(includeDescendants));
+        request.flush(summary);
+      });
+    }
+  });
 
   describe('list', () => {
     it('should send GET request and return equipment collection', () => {

@@ -84,7 +84,10 @@ import type {
   FacilityBuildingModelOutputFixture,
   FacilityOutputFixture,
   FacilityPlanOverlayOutputFixture,
+  FacilityCollectionResponseFixture,
+  FacilityEquipmentScopeFixture,
 } from '../fixtures/facility-fixtures';
+import type { FacilityModelOutputFixture } from '../fixtures/facility-spatial-fixtures';
 import type { ImportJobOutputFixture } from '../fixtures/import-fixtures';
 import type {
   InspectionOutputFixture,
@@ -1336,6 +1339,38 @@ export class ApiMock {
     );
   }
 
+  /** Serves bounded collection responses according to the exact server query sent by a picker or tree. */
+  public async mockFacilityListResponses(
+    organizationId: string,
+    responseOf: (query: URLSearchParams) => FacilityCollectionResponseFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/facilities(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        const response = responseOf(new URL(route.request().url()).searchParams);
+        if ((response.status ?? 200) >= 400) {
+          await fulfillJson(route, response.status ?? 500, {
+            '@type': 'Error',
+            status: response.status ?? 500,
+            type: 'about:blank',
+            title: 'Facility page unavailable',
+            detail: response.errorDetail ?? 'The facility page is temporarily unavailable.',
+          });
+          return;
+        }
+        await fulfillJson(
+          route,
+          200,
+          hydraCollection(response.facilities, {
+            totalItems: response.totalItems ?? response.facilities.length,
+          }),
+        );
+      },
+    );
+  }
+
   /**
    * Mocks a successful `POST /api/organizations/{organizationId}/facilities`
    * — the onboarding wizard's `create_first_facility` step and any other
@@ -1434,6 +1469,8 @@ export class ApiMock {
         await fulfillJson(route, 200, facility);
       },
     );
+    await this.mockFacilityModels(organizationId, facility.id, []);
+    await this.mockFacilityDescendants(organizationId, facility.id, []);
     await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
       const query = new URL(route.request().url()).searchParams;
       if (
@@ -1487,6 +1524,39 @@ export class ApiMock {
       async (route) => {
         if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(children));
+      },
+    );
+  }
+
+  /** Serves later branch pages and recoverable failures without allowing real API requests. */
+  public async mockFacilityChildrenResponses(
+    organizationId: string,
+    facilityId: string,
+    responseOf: (query: URLSearchParams) => FacilityCollectionResponseFixture,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/facilities/${facilityId}/children(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        const response = responseOf(new URL(route.request().url()).searchParams);
+        if ((response.status ?? 200) >= 400) {
+          await fulfillJson(route, response.status ?? 500, {
+            '@type': 'Error',
+            status: response.status ?? 500,
+            type: 'about:blank',
+            title: 'Facility branch unavailable',
+            detail: response.errorDetail ?? 'The facility branch is temporarily unavailable.',
+          });
+          return;
+        }
+        await fulfillJson(
+          route,
+          200,
+          hydraCollection(response.facilities, {
+            totalItems: response.totalItems ?? response.facilities.length,
+          }),
+        );
       },
     );
   }
@@ -1612,6 +1682,31 @@ export class ApiMock {
     await this.installSafetyNet();
     await this.page.route(
       new RegExp(
+        `/api/organizations/${organizationId}/facilities/${facilityId}/equipment-summary(\\?.*)?$`,
+      ),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        const equipment = options.equipment ?? [];
+        const byStatus = { in_stock: 0, operational: 0, under_maintenance: 0, decommissioned: 0 };
+        for (const item of equipment) {
+          const status = item.status as keyof typeof byStatus;
+          if (Object.hasOwn(byStatus, status)) byStatus[status]++;
+        }
+        await fulfillJson(route, 200, {
+          '@id': `/api/organizations/${organizationId}/facilities/${facilityId}/equipment-summary`,
+          '@type': 'FacilityEquipmentSummary',
+          scope:
+            new URL(route.request().url()).searchParams.get('includeDescendants') === 'false'
+              ? 'direct'
+              : 'subtree',
+          totalItems: equipment.length,
+          byStatus,
+          needingAttentionCount: byStatus.under_maintenance + byStatus.decommissioned,
+        });
+      },
+    );
+    await this.page.route(
+      new RegExp(
         `/api/organizations/${organizationId}/facilities/${facilityId}/equipment(\\?.*)?$`,
       ),
       async (route) => {
@@ -1627,6 +1722,50 @@ export class ApiMock {
         if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, hydraCollection(options.inspections ?? []));
       },
+    );
+  }
+
+  /** Keeps exact summary totals separate from the visible equipment page for both facility scopes. */
+  public async mockFacilityEquipmentScopes(
+    organizationId: string,
+    facilityId: string,
+    scopes: {
+      readonly direct: FacilityEquipmentScopeFixture;
+      readonly subtree: FacilityEquipmentScopeFixture;
+    },
+    onQuery?: (kind: 'summary' | 'equipment', query: URLSearchParams) => void,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await Promise.all(
+      (['summary', 'equipment'] as const).map(async (kind) => {
+        const endpoint = kind === 'summary' ? 'equipment-summary' : 'equipment';
+        await this.page.route(
+          new RegExp(
+            `/api/organizations/${organizationId}/facilities/${facilityId}/${endpoint}(\\?.*)?$`,
+          ),
+          async (route) => {
+            if (route.request().method() !== 'GET') return route.fallback();
+            const query = new URL(route.request().url()).searchParams;
+            onQuery?.(kind, query);
+            const scope = query.get('includeDescendants') === 'false' ? 'direct' : 'subtree';
+            const data = scopes[scope];
+            await fulfillJson(
+              route,
+              200,
+              kind === 'summary'
+                ? {
+                    '@id': `/api/organizations/${organizationId}/facilities/${facilityId}/equipment-summary`,
+                    '@type': 'FacilityEquipmentSummary',
+                    scope,
+                    totalItems: data.totalItems,
+                    byStatus: data.byStatus,
+                    needingAttentionCount: data.needingAttentionCount,
+                  }
+                : hydraCollection(data.equipment, { totalItems: data.totalItems }),
+            );
+          },
+        );
+      }),
     );
   }
 
@@ -1682,6 +1821,10 @@ export class ApiMock {
     facilityId: string,
     plans: ReadonlyArray<FacilityAttachmentOutputFixture>,
     uploaded?: FacilityAttachmentOutputFixture,
+    image: { contentType: string; body: Buffer | string } = {
+      contentType: 'image/png',
+      body: TINY_PNG_BUFFER,
+    },
   ): Promise<void> {
     await this.installSafetyNet();
     const uploadResponse =
@@ -1709,7 +1852,7 @@ export class ApiMock {
         !downloadPaths.has(new URL(route.request().url()).pathname)
       )
         return route.fallback();
-      await route.fulfill({ status: 200, contentType: 'image/png', body: TINY_PNG_BUFFER });
+      await route.fulfill({ status: 200, contentType: image.contentType, body: image.body });
     });
     await this.page.route(
       /\/api\/organizations\/[^/]+\/facilities\/[^/]+\/plan-overlay(\?.*)?$/,
@@ -1750,6 +1893,39 @@ export class ApiMock {
       async (route) => {
         if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, overlay);
+      },
+    );
+  }
+
+  /** Mocks revision-protected calibration saves, including a retained-draft conflict. */
+  public async mockFacilityPlanCalibration(
+    planId: string,
+    response: FacilityAttachmentOutputFixture,
+    options: {
+      status?: number;
+      onRequest?: (body: unknown, ifMatch: string | undefined) => void;
+    } = {},
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/facility-attachments/${planId}/calibration(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'PUT') return route.fallback();
+        options.onRequest?.(route.request().postDataJSON(), route.request().headers()['if-match']);
+        const status = options.status ?? 200;
+        await fulfillJson(
+          route,
+          status,
+          status === 200
+            ? response
+            : {
+                '@type': 'Error',
+                status,
+                type: 'about:blank',
+                title: 'The plan was changed.',
+                detail: 'Refresh the revision and try again.',
+              },
+        );
       },
     );
   }
@@ -1801,6 +1977,42 @@ export class ApiMock {
       async (route) => {
         if (route.request().method() !== 'GET') return route.fallback();
         await fulfillJson(route, 200, model);
+      },
+    );
+  }
+
+  /** Supplies authenticated immutable GLB metadata for the building model selector. */
+  public async mockFacilityModels(
+    organizationId: string,
+    buildingId: string,
+    models: ReadonlyArray<FacilityModelOutputFixture>,
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/facilities/${buildingId}/models`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection(models));
+      },
+    );
+    await Promise.all(
+      models.map((model) =>
+        this.page.route(`${API_BASE_URL}/api/facility-models/${model.id}`, async (route) => {
+          if (route.request().method() !== 'GET') return route.fallback();
+          await fulfillJson(route, 200, model);
+        }),
+      ),
+    );
+  }
+
+  /** Serves actual GLB bytes through the same authenticated download boundary as production. */
+  public async mockFacilityModelDownload(modelId: string, bytes: Buffer): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      `${API_BASE_URL}/api/facility-models/${modelId}/download`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await route.fulfill({ status: 200, contentType: 'model/gltf-binary', body: bytes });
       },
     );
   }

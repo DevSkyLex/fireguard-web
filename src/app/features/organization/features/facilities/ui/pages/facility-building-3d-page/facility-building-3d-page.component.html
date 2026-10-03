@@ -5,12 +5,64 @@
   tabindex="-1"
   role="group"
   [attr.aria-label]="pageRootLabel"
-  class="flex min-h-0 w-full flex-1 flex-col gap-4 focus-visible:ring-2 focus-visible:ring-ring"
+  class="@container/scene-page flex min-h-0 w-full flex-1 flex-col gap-4 overflow-y-auto focus-visible:ring-2 focus-visible:ring-ring"
   (keydown.escape)="onEscapePressed()"
 >
   <div class="sr-only" aria-live="polite" data-testid="facility-3d-selection-announcement">
     {{ selectionAnnouncement() }}
   </div>
+
+  @if (store.isQueryLoaded()) {
+    <details class="shrink-0" data-testid="facility-3d-model-management">
+      <summary class="cursor-pointer text-sm font-medium" i18n="@@facility.building3d.manageModel">
+        Import and manage a building model
+      </summary>
+      <app-facility-model-manager
+        class="mt-4 block"
+        [models]="modelsStore.modelEntities()"
+        [selectedModel]="modelsStore.selectedModel()"
+        [selectedNodeIndex]="modelsStore.selectedNodeIndex()"
+        [facilityOptions]="modelFacilityOptions()"
+        [canWrite]="canWrite()"
+        [pending]="modelPending()"
+        [listPending]="modelsStore.isListPending()"
+        [previewPending]="modelsStore.isPreviewPending()"
+        [settingsPending]="modelsStore.isUpdatePending()"
+        [settingsSavedToken]="modelsStore.settingsSavedToken()"
+        [error]="modelError()"
+        [settingsError]="modelsStore.updateCallState().error"
+        (uploaded)="modelsStore.upload($event)"
+        (selected)="modelsStore.select($event)"
+        (settingsSubmitted)="modelsStore.update($event)"
+        (settingsPreviewed)="onModelSettingsPreviewed($event)"
+        (activated)="modelsStore.activate($event)"
+        (removed)="modelsStore.remove($event)"
+        (downloaded)="modelsStore.download($event)"
+        (nodeSelected)="onImportedNodeSelected($event)"
+        (retried)="modelsStore.refresh()"
+      />
+    </details>
+    @if (modelsStore.previewAsset()) {
+      <hlm-toggle-group
+        type="single"
+        [nullable]="false"
+        variant="outline"
+        size="sm"
+        [value]="sceneMode()"
+        aria-label="Building representation"
+        i18n-aria-label="@@facility.building3d.modelMode"
+        data-testid="facility-3d-model-mode"
+        (valueChange)="onModelModeChanged($event)"
+      >
+        <button hlmToggleGroupItem value="generated" i18n="@@facility.building3d.mode.generated">
+          Generated view
+        </button>
+        <button hlmToggleGroupItem value="imported" i18n="@@facility.building3d.mode.imported">
+          Imported model
+        </button>
+      </hlm-toggle-group>
+    }
+  }
 
   @if (!store.isQueryLoaded() && !store.queryHasError()) {
     <div class="flex min-h-0 flex-1 flex-col gap-4" data-testid="facility-3d-loading">
@@ -49,7 +101,7 @@
         </button>
       </div>
     </div>
-  } @else if (store.isEmpty()) {
+  } @else if (store.isEmpty() && sceneMode() === 'generated') {
     <div
       hlmEmpty
       class="flex flex-1 flex-col items-center justify-center"
@@ -82,7 +134,7 @@
         }
       </div>
     </div>
-  } @else if (store.hasNoGeometry()) {
+  } @else if (store.hasNoGeometry() && sceneMode() === 'generated') {
     <div
       hlmEmpty
       class="flex flex-1 flex-col items-center justify-center"
@@ -114,6 +166,35 @@
         }
       </div>
     </div>
+    @if (store.selectedFloorId(); as selectedFloorId) {
+      @if (isMobileInteractionMode()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          data-testid="facility-3d-open-room-panel"
+          (click)="roomPanelVisible.set(true)"
+          i18n="@@facility.building3d.openRoomPanel"
+        >
+          Floors and rooms
+        </button>
+      }
+      <app-facility-building-3d-room-panel
+        [facilityOptions]="modelFacilityOptions()"
+        [floors]="store.floors()"
+        [selectedFloorId]="selectedFloorId"
+        [room]="store.selectedRoom()"
+        [equipment]="store.selectedEquipment()"
+        [organizationId]="organizationId()"
+        [compactVisible]="roomPanelVisible()"
+        (compactDismissed)="roomPanelVisible.set(false)"
+        (floorActivated)="store.selectFloor($event)"
+        (roomActivated)="store.selectRoom($event)"
+        (equipmentActivated)="store.selectEquipment($event)"
+        (roomClosed)="store.selectRoom(null)"
+        (plan2dRequested)="onPlan2dRequested()"
+      />
+    }
   } @else if (!webglSupported()) {
     <div
       hlmEmpty
@@ -145,6 +226,55 @@
     </div>
   } @else {
     <div class="flex flex-wrap items-center gap-2">
+      @if (sceneMode() === 'generated') {
+        <hlm-toggle-group
+          type="single"
+          [nullable]="false"
+          variant="outline"
+          size="sm"
+          [value]="store.metric() ? 'metric' : 'schematic'"
+          aria-label="Coordinate space"
+          i18n-aria-label="@@facility.building3d.coordinateMode"
+          data-testid="facility-3d-coordinate-mode"
+          (valueChange)="onCoordinateModeChanged($event)"
+        >
+          <button
+            hlmToggleGroupItem
+            value="schematic"
+            i18n="@@facility.building3d.coordinate.schematic"
+          >
+            Schematic
+          </button>
+          <button hlmToggleGroupItem value="metric" i18n="@@facility.building3d.coordinate.metric">
+            Metric
+          </button>
+        </hlm-toggle-group>
+      }
+      @if (store.isolatedFloorId()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="facility-3d-show-all"
+          (click)="store.toggleIsolation(store.isolatedFloorId()!)"
+          i18n="@@facility.building3d.showAll"
+        >
+          Show all floors
+        </button>
+      } @else if (store.selectedFloorId()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="facility-3d-isolate-floor"
+          (click)="store.toggleIsolation(store.selectedFloorId()!)"
+          i18n="@@facility.building3d.isolateFloor"
+        >
+          Isolate this floor
+        </button>
+      }
       <button
         hlmBtn
         type="button"
@@ -158,20 +288,21 @@
         <span i18n="@@facility.building3d.resetCamera">Reset camera</span>
       </button>
 
-      <button
-        hlmToggle
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="facility-3d-explode-toggle"
-        [state]="store.exploded() ? 'on' : 'off'"
-        (stateChange)="store.toggleExploded()"
-        class="mobile-ui:min-h-11"
-      >
-        <ng-icon name="lucideLayers" aria-hidden="true" />
-        <span i18n="@@facility.building3d.explodeToggle">Exploded view</span>
-      </button>
-
+      @if (sceneMode() === 'generated') {
+        <button
+          hlmToggle
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="facility-3d-explode-toggle"
+          [state]="store.exploded() ? 'on' : 'off'"
+          (stateChange)="store.toggleExploded()"
+          class="mobile-ui:min-h-11"
+        >
+          <ng-icon name="lucideLayers" aria-hidden="true" />
+          <span i18n="@@facility.building3d.explodeToggle">Exploded view</span>
+        </button>
+      }
       @if (isMobileInteractionMode() && !roomPanelVisible()) {
         <button
           hlmBtn
@@ -189,20 +320,64 @@
       }
     </div>
 
-    <div class="@container flex min-h-0 flex-1 flex-col gap-4 @3xl:flex-row">
-      <div class="relative min-h-[20rem] flex-1 @3xl:min-h-0">
+    @if (sceneMode() === 'imported') {
+      @if (selectedImportedFacility(); as selectedFacility) {
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
+          <p class="min-w-0 truncate text-sm font-medium">{{ selectedFacility.name }}</p>
+          <a
+            hlmBtn
+            variant="outline"
+            size="sm"
+            data-testid="facility-3d-bound-facility-link"
+            [routerLink]="['/organizations', organizationId(), 'facilities', selectedFacility.id]"
+          >
+            <span i18n="@@facility.plans.panel.viewZoneRecord">View facility record</span>
+          </a>
+        </div>
+      }
+    }
+    <p class="text-xs text-muted-foreground" data-testid="facility-3d-coordinate-explanation">
+      @if (sceneMode() === 'imported') {
+        <span i18n="@@facility.building3d.imported.description"
+          >Imported model in meters. Equipment markers require complete calibration of their
+          floor.</span
+        >
+      } @else if (store.metric()) {
+        <span i18n="@@facility.building3d.metric.description"
+          >Only floors with complete calibration, elevation and height are rendered. Incomplete
+          floors remain available in the list.</span
+        >
+      } @else {
+        <span i18n="@@facility.building3d.schematic.description"
+          >Schematic view: floor sizes and spacing do not represent physical measurements.</span
+        >
+      }
+    </p>
+    <div
+      class="grid min-h-0 shrink-0 grid-cols-1 items-start gap-4 @3xl/scene-page:grid-cols-[minmax(0,1fr)_20rem]"
+    >
+      <div class="relative h-[min(65svh,40rem)] min-h-80 min-w-0 overflow-hidden">
         <app-facility-building-3d-scene
           class="min-h-0 flex-1"
           [model]="store.queryData()!"
           [selectedRoomId]="store.selectedRoomId()"
+          [metric]="store.metric()"
+          [importedModel]="sceneMode() === 'imported' ? renderedImportedModel() : null"
+          [importedModelAsset]="sceneMode() === 'imported' ? modelsStore.previewAsset() : null"
+          [selectedNodeIndex]="modelsStore.selectedNodeIndex()"
+          [facilityFloorIds]="modelsStore.bindingFloorIds()"
+          [selectedFacilityId]="selectedImportedFacility()?.id ?? null"
+          (importedNodeSelected)="onImportedNodeSelected($event)"
+          [selectedEquipmentId]="store.selectedEquipmentId()"
           [selectedFloorId]="store.selectedFloorId()"
           [isolatedFloorId]="store.isolatedFloorId()"
-          [exploded]="store.exploded()"
+          [exploded]="sceneMode() === 'generated' && store.exploded()"
           [cameraResetToken]="store.cameraResetToken()"
           (roomActivated)="store.selectRoom($event)"
+          (equipmentActivated)="store.selectEquipment($event)"
           (floorActivated)="store.selectFloor($event)"
           (roomHovered)="hoveredRoomId.set($event)"
-          (backgroundActivated)="store.selectRoom(null)"
+          (backgroundActivated)="onBackgroundActivated()"
           (renderingUnavailable)="onRenderingUnavailable()"
         />
 
@@ -219,14 +394,19 @@
 
       @if (store.selectedFloorId(); as selectedFloorId) {
         <app-facility-building-3d-room-panel
+          [facilityOptions]="modelFacilityOptions()"
           [floors]="store.floors()"
           [selectedFloorId]="selectedFloorId"
           [room]="store.selectedRoom()"
+          [equipment]="store.selectedEquipment()"
+          [organizationId]="organizationId()"
+          [metric]="store.metric() || sceneMode() === 'imported'"
           [compactVisible]="roomPanelVisible()"
           (compactDismissed)="roomPanelVisible.set(false)"
           (floorActivated)="store.selectFloor($event)"
           (roomActivated)="store.selectRoom($event)"
           (roomClosed)="store.selectRoom(null)"
+          (equipmentActivated)="store.selectEquipment($event)"
           (plan2dRequested)="onPlan2dRequested()"
         />
       }

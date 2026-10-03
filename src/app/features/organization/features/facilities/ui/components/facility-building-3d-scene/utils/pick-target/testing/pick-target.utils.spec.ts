@@ -19,17 +19,13 @@ describe('pickTarget', () => {
     });
   });
 
-  it('prefers a farther room over a nearer floor slab', () => {
+  it('selects a nearer visible floor instead of a room hidden behind it', () => {
     const candidates: ReadonlyArray<ScenePickCandidate> = [
       { userData: { kind: 'floor-slab', floorId: 'floor-1' }, distance: 1 },
       { userData: { kind: 'room', facilityId: 'room-1', floorId: 'floor-1' }, distance: 4 },
     ];
 
-    expect(pickTarget(candidates, null)).toEqual({
-      kind: 'room',
-      facilityId: 'room-1',
-      floorId: 'floor-1',
-    });
+    expect(pickTarget(candidates, null)).toEqual({ kind: 'floor-slab', floorId: 'floor-1' });
   });
 
   it('falls back to the nearest floor slab when no room was hit', () => {

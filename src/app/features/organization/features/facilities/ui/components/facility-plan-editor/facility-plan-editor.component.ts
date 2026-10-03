@@ -574,7 +574,7 @@ export class FacilityPlanEditor {
     if (!rect) return;
 
     const point = screenPointToNormalized({ x: event.clientX, y: event.clientY }, rect);
-    if (this.editMode() === 'draw-zone') {
+    if (this.editMode() === 'draw-zone' || this.editMode() === 'calibrate') {
       this.vertexAdded.emit(point);
     } else if (this.editMode() === 'place-pin') {
       this.pinPlaced.emit(point);

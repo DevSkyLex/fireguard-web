@@ -23,6 +23,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { sanitizePolygon } from '@features/organization/features/facilities/utils';
 import { HlmButton } from '@shared/ui/button';
 import {
   HlmDialog,
@@ -39,7 +40,12 @@ import { HlmSpinnerImports } from '@shared/ui/spinner';
 
 import type { ZoneGeometryDraftRow } from './models/zone-geometry-draft-row.interface';
 
-/** Minimum vertex count the backend accepts for a polygon. */
+/**
+ * Constant MIN_POLYGON_VERTICES
+ *
+ * @description
+ * Minimum vertex count the backend accepts for a polygon.
+ */
 const MIN_POLYGON_VERTICES = 3;
 
 /**
@@ -58,7 +64,6 @@ const MIN_POLYGON_VERTICES = 3;
  * message it is described by. Submits the normalized polygon via
  * {@link submitted}; {@link cleared} is the dialog's "Clear geometry"
  * action, wiping the outline entirely.
- *
  * Presentational: it owns only its own draft rows and their validity, not
  * the write — the page decides whether that means drawing/saving or
  * clearing, and owns `FacilityPlansStore` (`ARCHITECTURE.md` §10.5).
@@ -95,9 +100,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property visible
    * @readonly
-   * @description Whether the dialog is open.
+   *
+   * @description
+   * Whether the dialog is open.
+   *
    * @access public
    * @since 1.4.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -105,9 +114,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property zoneName
    * @readonly
-   * @description The zone's display name, for the dialog title.
+   *
+   * @description
+   * The zone's display name, for the dialog title.
+   *
    * @access public
    * @since 1.4.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly zoneName: InputSignal<string> = input<string>('');
@@ -115,9 +128,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property points
    * @readonly
-   * @description The zone's current outline, seeding the draft on every open.
+   *
+   * @description
+   * The zone's current outline, seeding the draft on every open.
+   *
    * @access public
    * @since 1.4.0
+   *
    * @type {InputSignal<ReadonlyArray<readonly [number, number]>>}
    */
   public readonly points: InputSignal<ReadonlyArray<readonly [number, number]>> = input<
@@ -127,9 +144,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property pending
    * @readonly
-   * @description Whether a save or clear this dialog triggered is still in flight.
+   *
+   * @description
+   * Whether a save or clear this dialog triggered is still in flight.
+   *
    * @access public
    * @since 1.4.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -139,9 +160,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property visibleChange
    * @readonly
-   * @description The dialog wants to open or close.
+   *
+   * @description
+   * The dialog wants to open or close.
+   *
    * @access public
    * @since 1.4.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -149,9 +174,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the validated outline, in normalized `[0, 1]` image coordinates.
+   *
+   * @description
+   * Emits the validated outline, in normalized `[0, 1]` image coordinates.
+   *
    * @access public
    * @since 1.4.0
+   *
    * @type {OutputEmitterRef<ReadonlyArray<readonly [number, number]>>}
    */
   public readonly submitted: OutputEmitterRef<ReadonlyArray<readonly [number, number]>> =
@@ -160,9 +189,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property cleared
    * @readonly
-   * @description The "Clear geometry" action.
+   *
+   * @description
+   * The "Clear geometry" action.
+   *
    * @access public
    * @since 1.4.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cleared: OutputEmitterRef<void> = output<void>();
@@ -172,9 +205,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property rows
    * @readonly
-   * @description The edited draft rows, as percent strings.
+   *
+   * @description
+   * The edited draft rows, as percent strings.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {WritableSignal<ReadonlyArray<ZoneGeometryDraftRow>>}
    */
   protected readonly rows: WritableSignal<ReadonlyArray<ZoneGeometryDraftRow>> = signal([]);
@@ -182,9 +219,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property coordinatesForm
    * @readonly
-   * @description Validates each percent coordinate and disables edits during persistence.
+   *
+   * @description
+   * Validates each percent coordinate and disables edits during persistence.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<readonly ZoneGeometryDraftRow[]>}
    */
   protected readonly coordinatesForm: FieldTree<readonly ZoneGeometryDraftRow[]> = form(
@@ -194,6 +235,19 @@ export class FacilityPlanZoneGeometryDialog {
       validate(path, ({ value }) =>
         value().length >= MIN_POLYGON_VERTICES ? null : { kind: 'minimumVertices' },
       );
+
+      validate(path, ({ value }) => {
+        const rows = value();
+        if (rows.some((row) => !isValidPercent(row.x) || !isValidPercent(row.y))) return null;
+        return sanitizePolygon(
+          rows.map((row) => [toNormalized(row.x), toNormalized(row.y)] as const),
+        ).status === 'accepted'
+          ? null
+          : {
+              kind: 'polygon',
+              message: $localize`:@@facility.plans.editor.invalidPolygon:Draw a polygon with non-zero area and no crossing edges.`,
+            };
+      });
       applyEach(path, (row): void => {
         validate(row.x, ({ value }) => (isValidPercent(value()) ? null : { kind: 'percent' }));
         validate(row.y, ({ value }) => (isValidPercent(value()) ? null : { kind: 'percent' }));
@@ -204,9 +258,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property canSubmit
    * @readonly
-   * @description Whether every row parses to a number in `[0, 100]` and at least three rows remain.
+   *
+   * @description
+   * Whether every row parses to a number in `[0, 100]` and at least three rows remain.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSubmit: Signal<boolean> = computed(() => this.coordinatesForm().valid());
@@ -214,9 +272,13 @@ export class FacilityPlanZoneGeometryDialog {
   /**
    * Property dialogState
    * @readonly
-   * @description The overlay's own open/closed state, derived from {@link visible}.
+   *
+   * @description
+   * The overlay's own open/closed state, derived from {@link visible}.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -226,9 +288,13 @@ export class FacilityPlanZoneGeometryDialog {
 
   //#region Lifecycle
   /**
-   * Method constructor
+   * Constructor
    * @constructor
-   * @description Reseeds the draft rows from {@link points} every time the dialog opens, or with three blank rows when the zone has no geometry yet.
+   *
+   * @description
+   * Reseeds the draft rows from {@link points} every time the dialog opens, or with three blank rows
+   * when the zone has no geometry yet.
+   *
    * @access public
    * @since 1.4.0
    */
@@ -249,10 +315,16 @@ export class FacilityPlanZoneGeometryDialog {
   //#region Methods
   /**
    * Method onStateChanged
-   * @description Reports a dismissal back to the page.
+   * @method onStateChanged
+   *
+   * @description
+   * Reports a dismissal back to the page.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {BrnDialogState} state - The overlay's new state.
+   *
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
@@ -266,10 +338,16 @@ export class FacilityPlanZoneGeometryDialog {
 
   /**
    * Method isInvalidValue
-   * @description Whether an entered draft value is out of range — blank means "not yet entered", not invalid.
+   * @method isInvalidValue
+   *
+   * @description
+   * Whether an entered draft value is out of range — blank means "not yet entered", not invalid.
+   *
    * @access protected
    * @since 1.4.1
+   *
    * @param {string} value - The raw draft string.
+   *
    * @returns {boolean} `true` when `value` is non-blank and not a percent in `[0, 100]`.
    */
   protected isInvalidValue(value: string): boolean {
@@ -278,10 +356,16 @@ export class FacilityPlanZoneGeometryDialog {
 
   /**
    * Method vertexXLabel
-   * @description Localizes a row's X input accessible name, carrying its 1-based vertex index.
+   * @method vertexXLabel
+   *
+   * @description
+   * Localizes a row's X input accessible name, carrying its 1-based vertex index.
+   *
    * @access protected
    * @since 1.4.1
+   *
    * @param {number} index - The 1-based vertex index.
+   *
    * @returns {string} "Vertex {index} X (%)".
    */
   protected vertexXLabel(index: number): string {
@@ -290,10 +374,16 @@ export class FacilityPlanZoneGeometryDialog {
 
   /**
    * Method vertexYLabel
-   * @description Localizes a row's Y input accessible name, carrying its 1-based vertex index.
+   * @method vertexYLabel
+   *
+   * @description
+   * Localizes a row's Y input accessible name, carrying its 1-based vertex index.
+   *
    * @access protected
    * @since 1.4.1
+   *
    * @param {number} index - The 1-based vertex index.
+   *
    * @returns {string} "Vertex {index} Y (%)".
    */
   protected vertexYLabel(index: number): string {
@@ -302,10 +392,16 @@ export class FacilityPlanZoneGeometryDialog {
 
   /**
    * Method removeVertexLabel
-   * @description Localizes a row's remove button accessible name, carrying its 1-based vertex index.
+   * @method removeVertexLabel
+   *
+   * @description
+   * Localizes a row's remove button accessible name, carrying its 1-based vertex index.
+   *
    * @access protected
    * @since 1.4.1
+   *
    * @param {number} index - The 1-based vertex index.
+   *
    * @returns {string} "Remove vertex {index}".
    */
   protected removeVertexLabel(index: number): string {
@@ -314,9 +410,14 @@ export class FacilityPlanZoneGeometryDialog {
 
   /**
    * Method addRow
-   * @description Appends a blank row.
+   * @method addRow
+   *
+   * @description
+   * Appends a blank row.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected addRow(): void {
@@ -325,10 +426,16 @@ export class FacilityPlanZoneGeometryDialog {
 
   /**
    * Method removeRow
-   * @description Removes one row.
+   * @method removeRow
+   *
+   * @description
+   * Removes one row.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {number} index - The row's position.
+   *
    * @returns {void}
    */
   protected removeRow(index: number): void {
@@ -337,9 +444,14 @@ export class FacilityPlanZoneGeometryDialog {
 
   /**
    * Method submit
-   * @description Emits the validated outline, converted from percent to normalized `[0, 1]` coordinates.
+   * @method submit
+   *
+   * @description
+   * Emits the validated outline, converted from percent to normalized `[0, 1]` coordinates.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected submit(): void {
@@ -352,9 +464,14 @@ export class FacilityPlanZoneGeometryDialog {
 
   /**
    * Method requestClear
-   * @description Emits {@link cleared}.
+   * @method requestClear
+   *
+   * @description
+   * Emits {@link cleared}.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @returns {void}
    */
   protected requestClear(): void {
@@ -367,10 +484,15 @@ export class FacilityPlanZoneGeometryDialog {
 
 /**
  * Function toPercentString
- * @description Formats a normalized coordinate for the percent input.
+ *
+ * @description
+ * Formats a normalized coordinate for the percent input.
+ *
  * @access private
  * @since 1.4.0
+ *
  * @param {number} normalized - A normalized `[0, 1]` coordinate.
+ *
  * @returns {string} The coordinate as a percent string, one decimal.
  */
 function toPercentString(normalized: number): string {
@@ -379,10 +501,15 @@ function toPercentString(normalized: number): string {
 
 /**
  * Function toNormalized
- * @description Converts a percent coordinate to the server representation.
+ *
+ * @description
+ * Converts a percent coordinate to the server representation.
+ *
  * @access private
  * @since 1.4.0
+ *
  * @param {string} percent - A percent string in `[0, 100]`.
+ *
  * @returns {number} The value converted to normalized `[0, 1]`.
  */
 function toNormalized(percent: string): number {
@@ -391,10 +518,15 @@ function toNormalized(percent: string): number {
 
 /**
  * Function isValidPercent
- * @description Validates a finite percent within the plan bounds.
+ *
+ * @description
+ * Validates a finite percent within the plan bounds.
+ *
  * @access private
  * @since 1.4.0
+ *
  * @param {string} value - The raw draft string.
+ *
  * @returns {boolean} `true` when `value` parses to a finite number in `[0, 100]`.
  */
 function isValidPercent(value: string): boolean {

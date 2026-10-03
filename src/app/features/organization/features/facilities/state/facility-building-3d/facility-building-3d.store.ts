@@ -6,6 +6,7 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import {
+  resetQuery,
   setErrorQuery,
   setPendingQuery,
   setSuccessQuery,
@@ -20,6 +21,8 @@ import type {
   FacilityBuildingModelOutput,
   FacilityPlanOverlayZone,
 } from '@features/organization/features/facilities/models';
+import type { FacilityBuildingModelEquipment } from '@features/organization/features/facilities/models';
+import { isMetricFacilityFloor } from '@features/organization/features/facilities/utils';
 import { facilityBuilding3dStoreEvents } from './events';
 import type { FacilityBuilding3dState } from './models';
 
@@ -38,6 +41,9 @@ import type { FacilityBuilding3dState } from './models';
 const INITIAL_STATE: FacilityBuilding3dState = {
   selectedFloorId: null,
   selectedRoomId: null,
+  selectedEquipmentId: null,
+  metric: false,
+  scopeKey: null,
   isolatedFloorId: null,
   exploded: false,
   cameraResetToken: 0,
@@ -105,7 +111,9 @@ export const FacilityBuilding3dStore = signalStore(
       const selectedRoomId: string | null = store.selectedRoomId();
       if (!selectedRoomId) return null;
 
-      for (const floor of store.floors()) {
+      for (const floor of store
+        .floors()
+        .filter((candidateFloor) => candidateFloor.facilityId === store.selectedFloorId())) {
         const room: FacilityPlanOverlayZone | undefined = floor.rooms.find(
           (candidate) => candidate.facilityId === selectedRoomId,
         );
@@ -114,6 +122,25 @@ export const FacilityBuilding3dStore = signalStore(
 
       return null;
     }),
+
+    /**
+     * @description
+     * Selected equipment on the current floor.
+     */
+    selectedEquipment: computed<FacilityBuildingModelEquipment | null>(
+      () =>
+        store
+          .floors()
+          .find((floor) => floor.facilityId === store.selectedFloorId())
+          ?.equipment?.find((equipment) => equipment.equipmentId === store.selectedEquipmentId()) ??
+        null,
+    ),
+
+    /**
+     * @description
+     * Floors with complete physical placement, in server order.
+     */
+    metricFloors: computed(() => store.floors().filter(isMetricFacilityFloor)),
 
     /**
      * @description
@@ -160,7 +187,11 @@ export const FacilityBuilding3dStore = signalStore(
        */
       const loadModelFn = rxMethod<{ organizationId: string; facilityId: string }>(
         pipe(
-          tap((): void => {
+          tap(({ organizationId, facilityId }): void => {
+            const scopeKey: string = `${organizationId}/${facilityId}`;
+            if (store.scopeKey() !== scopeKey) {
+              patchState(store, resetQuery(), INITIAL_STATE, { scopeKey });
+            }
             patchState(store, setPendingQuery());
           }),
           switchMap(({ organizationId, facilityId }) =>
@@ -169,9 +200,28 @@ export const FacilityBuilding3dStore = signalStore(
                 next: (model: FacilityBuildingModelOutput): void => {
                   patchState(store, setSuccessQuery(model));
 
-                  if (store.selectedFloorId() === null && model.floors.length > 0) {
-                    patchState(store, { selectedFloorId: model.floors[0].facilityId });
-                  }
+                  const floor =
+                    model.floors.find(
+                      (candidate) => candidate.facilityId === store.selectedFloorId(),
+                    ) ?? model.floors[0];
+                  patchState(store, {
+                    selectedFloorId: floor?.facilityId ?? null,
+                    selectedRoomId: floor?.rooms.some(
+                      (room) => room.facilityId === store.selectedRoomId(),
+                    )
+                      ? store.selectedRoomId()
+                      : null,
+                    selectedEquipmentId: floor?.equipment?.some(
+                      (equipment) => equipment.equipmentId === store.selectedEquipmentId(),
+                    )
+                      ? store.selectedEquipmentId()
+                      : null,
+                    isolatedFloorId: model.floors.some(
+                      (candidate) => candidate.facilityId === store.isolatedFloorId(),
+                    )
+                      ? store.isolatedFloorId()
+                      : null,
+                  });
                 },
                 error: (error: unknown): void => {
                   const storeError: StoreError = toStoreError(error);
@@ -214,7 +264,7 @@ export const FacilityBuilding3dStore = signalStore(
          * @method selectFloor
          *
          * @description
-         * Selects a floor, without touching the current room selection.
+         * Selects a loaded floor and clears detail selections from other floors.
          *
          * @since 1.0.0
          *
@@ -223,7 +273,19 @@ export const FacilityBuilding3dStore = signalStore(
          * @returns {void}
          */
         selectFloor(floorId: string | null): void {
-          patchState(store, { selectedFloorId: floorId });
+          const floor = store.floors().find((candidate) => candidate.facilityId === floorId);
+          patchState(store, {
+            selectedFloorId: floor?.facilityId ?? null,
+            selectedRoomId: floor?.rooms.some((room) => room.facilityId === store.selectedRoomId())
+              ? store.selectedRoomId()
+              : null,
+            selectedEquipmentId: floor?.equipment?.some(
+              (equipment) => equipment.equipmentId === store.selectedEquipmentId(),
+            )
+              ? store.selectedEquipmentId()
+              : null,
+            isolatedFloorId: store.isolatedFloorId() !== null ? (floor?.facilityId ?? null) : null,
+          });
         },
 
         /**
@@ -243,7 +305,7 @@ export const FacilityBuilding3dStore = signalStore(
          */
         selectRoom(roomId: string | null): void {
           if (roomId === null) {
-            patchState(store, { selectedRoomId: null });
+            patchState(store, { selectedRoomId: null, selectedEquipmentId: null });
             return;
           }
 
@@ -251,9 +313,12 @@ export const FacilityBuilding3dStore = signalStore(
             .floors()
             .find((floor) => floor.rooms.some((room) => room.facilityId === roomId));
 
+          if (!owningFloor) return;
           patchState(store, {
             selectedRoomId: roomId,
-            selectedFloorId: owningFloor?.facilityId ?? store.selectedFloorId(),
+            selectedEquipmentId: null,
+            selectedFloorId: owningFloor.facilityId,
+            isolatedFloorId: store.isolatedFloorId() !== null ? owningFloor.facilityId : null,
           });
         },
 
@@ -272,9 +337,40 @@ export const FacilityBuilding3dStore = signalStore(
          * @returns {void}
          */
         toggleIsolation(floorId: string): void {
+          if (!store.floors().some((floor) => floor.facilityId === floorId)) return;
           patchState(store, {
             isolatedFloorId: store.isolatedFloorId() === floorId ? null : floorId,
+            selectedFloorId: floorId,
+            selectedRoomId: null,
+            selectedEquipmentId: null,
           });
+        },
+
+        /**
+         * @description
+         * Selects an equipment and its floor without inventing a position.
+         */
+        selectEquipment(equipmentId: string): void {
+          const floor = store
+            .floors()
+            .find((candidate) =>
+              candidate.equipment?.some((equipment) => equipment.equipmentId === equipmentId),
+            );
+          if (!floor) return;
+          patchState(store, {
+            selectedFloorId: floor.facilityId,
+            selectedRoomId: null,
+            selectedEquipmentId: equipmentId,
+            isolatedFloorId: store.isolatedFloorId() !== null ? floor.facilityId : null,
+          });
+        },
+
+        /**
+         * @description
+         * Switches between schematic and physical rendering.
+         */
+        setMetric(metric: boolean): void {
+          patchState(store, { metric, selectedRoomId: null, selectedEquipmentId: null });
         },
 
         /**
@@ -320,7 +416,11 @@ export const FacilityBuilding3dStore = signalStore(
          * @returns {void}
          */
         clearSelection(): void {
-          patchState(store, { selectedFloorId: null, selectedRoomId: null });
+          patchState(store, {
+            selectedFloorId: null,
+            selectedRoomId: null,
+            selectedEquipmentId: null,
+          });
         },
       };
     },

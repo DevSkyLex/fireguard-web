@@ -61,11 +61,57 @@ export class FacilityOptionPicker implements FormValueControl<string> {
    */
   public readonly inputId: InputSignal<string> = input('facility-option-picker');
   /**
+   * Property hydratedOption
+   * @readonly
+   *
+   * @description
+   * Hydrated selected record, including when it is outside the current page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<FacilityOption | null>}
+   */
+  public readonly hydratedOption: InputSignal<FacilityOption | null> = input<FacilityOption | null>(
+    null,
+  );
+
+  /**
+   * Property allowEmpty
+   * @readonly
+   *
+   * @description
+   * Allows a null facility selection for general filters and root sites.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly allowEmpty: InputSignal<boolean> = input(true);
+
+  /**
+   * Property emptyLabel
+   * @readonly
+   *
+   * @description
+   * Label for the empty choice, adapted to the owning workflow.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly emptyLabel: InputSignal<string> = input(
+    $localize`:@@facility.picker.any:Any facility`,
+  );
+
+  /**
    * Property options
    * @readonly
    *
    * @description
-   * Facility choices in the current server page.
+   * Current server page of admissible choices.
    *
    * @access public
    * @since unreleased
@@ -177,6 +223,21 @@ export class FacilityOptionPicker implements FormValueControl<string> {
   public readonly pageChanged: OutputEmitterRef<number> = output<number>();
 
   /**
+   * Property selectedOptionChanged
+   * @readonly
+   *
+   * @description
+   * Publishes the retained selected record so owning forms can validate its type across pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<FacilityOption | null>}
+   */
+  public readonly selectedOptionChanged: OutputEmitterRef<FacilityOption | null> =
+    output<FacilityOption | null>();
+
+  /**
    * Property selectedOption
    * @readonly
    *
@@ -217,11 +278,13 @@ export class FacilityOptionPicker implements FormValueControl<string> {
    * @type {(value: string) => string}
    */
   protected readonly labelOf: (value: string) => string = (value) => {
-    if (value === '') return $localize`:@@facility.picker.any:Any facility`;
+    if (value === '') return this.emptyLabel();
     const current: FacilityOption | undefined = this.options().find(
       (option) => option.value === value,
     );
     if (current) return current.label;
+    const hydrated = this.hydratedOption();
+    if (hydrated?.value === value) return hydrated.label;
     const selected: FacilityOption | null = this.selectedOption();
     return selected?.value === value
       ? selected.label
@@ -243,10 +306,14 @@ export class FacilityOptionPicker implements FormValueControl<string> {
   public constructor() {
     effect(() => {
       const value = this.value();
-      const record = this.options().find((option) => option.value === value);
+      const record =
+        this.options().find((option) => option.value === value) ??
+        (this.hydratedOption()?.value === value ? this.hydratedOption() : null);
       untracked(() => {
         if (!value) this.selectedOption.set(null);
         else if (record) this.selectedOption.set(record);
+        const selected = this.selectedOption();
+        this.selectedOptionChanged.emit(selected?.value === value ? selected : null);
       });
     });
   }
@@ -269,8 +336,8 @@ export class FacilityOptionPicker implements FormValueControl<string> {
    */
   protected pick(value: unknown): void {
     if (this.disabled()) return;
-    if (typeof value === 'string') this.value.set(value);
-    else if (value === null || value === undefined) this.value.set('');
+    if (typeof value === 'string' && (value !== '' || this.allowEmpty())) this.value.set(value);
+    else if (this.allowEmpty() && (value === null || value === undefined)) this.value.set('');
   }
   //#endregion
 }

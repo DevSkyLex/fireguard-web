@@ -1,5 +1,8 @@
 import type { CallState } from '@core/request-state';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import type {
+  FacilityOutput,
+  FacilityType,
+} from '@features/organization/features/facilities/models';
 
 /**
  * Interface FacilityOptionsState
@@ -13,6 +16,43 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
  * @since 1.0.0
  */
 export interface FacilityOptionsState {
+  /**
+   * Property interventionId
+   *
+   * @description
+   * Property interventionId
+   * Current creation workspace; null for a published-place picker.
+   */
+  readonly interventionId: string | null;
+  /**
+   * Property parentForType
+   *
+   * @description
+   * Stores parentForType.
+   */
+  readonly parentForType: FacilityType | null;
+  /**
+   * Property parentForFacilityId
+   *
+   * @description
+   * Existing facility whose admissible parents are requested, excluding cycles.
+   */
+  readonly parentForFacilityId: string | null;
+  /**
+   * Property selectedFacility
+   *
+   * @description
+   * Independently hydrated selected record outside the current server page.
+   */
+  readonly selectedFacility: FacilityOutput | null;
+  /**
+   * Property selectedCallState
+   *
+   * @description
+   * Lifecycle of the selected record hydration.
+   */
+  readonly selectedCallState: CallState;
+
   /**
    * Property page
    * @readonly

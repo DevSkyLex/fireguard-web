@@ -3,7 +3,6 @@ import type { RoomUserData } from '../../models/scene-object-user-data.type';
 
 /**
  * Function buildRoomMesh
- * @function buildRoomMesh
  *
  * @description
  * Extrudes one already-sanitized room contour (see `sanitizePolygon`) into
@@ -17,16 +16,21 @@ import type { RoomUserData } from '../../models/scene-object-user-data.type';
  * @access public
  * @since 1.0.0
  *
- * @param {typeof import('three')} THREE - The three.js module, passed in rather than imported so this stays testable without WebGL.
- * @param {ReadonlyArray<readonly [number, number]>} points - The sanitized room contour, in normalized `[0, 1]` image coordinates.
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @param {typeof import('three')} THREE - The three.js module, passed in rather than imported so
+ *   this stays testable without WebGL.
+ * @param {ReadonlyArray<readonly [number, number]>} points - The sanitized room contour, in
+ *   normalized `[0, 1]` image coordinates.
  * @param {number} aspect - The owning plan's `imageWidth / imageHeight` ratio.
  * @param {number | string} color - The room mesh's fill colour.
  * @param {string} facilityId - The room's own facility id, carried in `userData`.
  * @param {string} floorId - The owning floor's facility id, carried in `userData`.
+ * @param {number} [height] - Physical or schematic extrusion height.
  *
  * @returns {InstanceType<(typeof import('three'))['Mesh']>} The extruded, ground-resting room mesh.
  *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @function buildRoomMesh
  */
 export function buildRoomMesh(
   THREE: typeof import('three'),
@@ -35,12 +39,13 @@ export function buildRoomMesh(
   color: number | string,
   facilityId: string,
   floorId: string,
+  height: number = ROOM_HEIGHT,
 ): InstanceType<(typeof import('three'))['Mesh']> {
   const geometry: InstanceType<(typeof import('three'))['ExtrudeGeometry']> = extrudeContour(
     THREE,
     points,
     aspect,
-    ROOM_HEIGHT,
+    height,
   );
 
   const material: InstanceType<(typeof import('three'))['MeshLambertMaterial']> =
@@ -55,7 +60,6 @@ export function buildRoomMesh(
 
 /**
  * Function extrudeContour
- * @function extrudeContour
  *
  * @description
  * Builds this lot's shared `THREE.Shape → ExtrudeGeometry → rotate → rest
@@ -71,6 +75,8 @@ export function buildRoomMesh(
  * @param {number} depth - The extrusion depth, becoming world-Y height after rotation.
  *
  * @returns {InstanceType<(typeof import('three'))['ExtrudeGeometry']>} The rotated geometry, resting on `y = 0`.
+ *
+ * @function extrudeContour
  */
 export function extrudeContour(
   THREE: typeof import('three'),

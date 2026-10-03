@@ -532,4 +532,41 @@ describe('FacilityInformationPanel', () => {
       expect(patches).toEqual([]);
     });
   });
+  it('accepts basement elevation, rejects zero height, and clears metrics individually', async () => {
+    fixture.componentRef.setInput('facility', {
+      ...FACILITY,
+      type: 'floor',
+      elevationMeters: 0,
+      heightMeters: 3,
+    });
+    await fixture.whenStable();
+    byTestId('facility-field-elevationMeters')?.querySelector('button')?.click();
+    fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'elevationMeters' });
+    await fixture.whenStable();
+    let metricInput = byTestId('facility-field-elevationMeters')?.querySelector(
+      'input',
+    ) as HTMLInputElement;
+    metricInput.value = '-3.25';
+    metricInput.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    saveButton()?.click();
+    expect(patches.at(-1)).toEqual({ elevationMeters: -3.25 });
+    fixture.componentRef.setInput('editState', IDLE_EDIT_STATE);
+    await fixture.whenStable();
+    byTestId('facility-field-heightMeters')?.querySelector('button')?.click();
+    fixture.componentRef.setInput('editState', { ...IDLE_EDIT_STATE, open: 'heightMeters' });
+    await fixture.whenStable();
+    metricInput = byTestId('facility-field-heightMeters')?.querySelector(
+      'input',
+    ) as HTMLInputElement;
+    metricInput.value = '0';
+    metricInput.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(saveButton()?.disabled).toBe(true);
+    metricInput.value = '';
+    metricInput.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    saveButton()?.click();
+    expect(patches.at(-1)).toEqual({ heightMeters: null });
+  });
 });

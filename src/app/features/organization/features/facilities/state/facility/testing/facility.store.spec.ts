@@ -24,6 +24,7 @@ const apiError = (status: number, detail: string): ApiError => ({
 describe('FacilityStore', () => {
   let store: FacilityStore;
   let mockFacilityService: {
+    get: ReturnType<typeof vi.fn>;
     list: ReturnType<typeof vi.fn>;
     listChildren: ReturnType<typeof vi.fn>;
     listDescendants: ReturnType<typeof vi.fn>;
@@ -51,6 +52,7 @@ describe('FacilityStore', () => {
   };
   beforeEach(() => {
     mockFacilityService = {
+      get: vi.fn(),
       list: vi.fn().mockReturnValue(of(collection)),
       listChildren: vi.fn().mockReturnValue(of(collection)),
       listDescendants: vi.fn().mockReturnValue(of(collection)),
@@ -95,7 +97,10 @@ describe('FacilityStore', () => {
     store.loadRootFacilities({ organizationId: 'org-1' });
     await flushEffects();
 
-    expect(mockFacilityService.list).toHaveBeenCalledWith('org-1', { rootsOnly: true });
+    expect(mockFacilityService.list).toHaveBeenCalledWith('org-1', {
+      rootsOnly: true,
+      includePath: true,
+    });
     expect(store.rootFacilities()).toEqual([facility]);
     expect(store.totalRootFacilities()).toBe(1);
     expect(store.isLoadingRootFacilities()).toBe(false);
@@ -541,9 +546,14 @@ describe('FacilityStore', () => {
       });
       await flushEffects();
 
-      expect(mockFacilityService.move).toHaveBeenCalledWith('org-1', 'facility-1', {
-        parentFacilityId: 'facility-parent',
-      });
+      expect(mockFacilityService.move).toHaveBeenCalledWith(
+        'org-1',
+        'facility-1',
+        {
+          parentFacilityId: 'facility-parent',
+        },
+        0,
+      );
       expect(store.moveCallState().status).toBe('success');
       expect(mockActiveFacilityStore.setFacility).toHaveBeenCalledWith(facility);
       expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
@@ -676,5 +686,48 @@ describe('FacilityStore', () => {
 
       expect(store.createError()?.code).toBe(500);
     });
+  });
+  it('switches from root browsing to global descendant search and requests ancestor paths', () => {
+    store.loadRootFacilities({ organizationId: 'org-1', options: { search: 'Room' } });
+    expect(mockFacilityService.list).toHaveBeenLastCalledWith('org-1', {
+      search: 'Room',
+      rootsOnly: false,
+      includePath: true,
+    });
+    store.loadRootFacilities({
+      organizationId: 'org-1',
+      options: { params: { search: 'Basement' } },
+    });
+    expect(mockFacilityService.list).toHaveBeenLastCalledWith('org-1', {
+      params: { search: 'Basement' },
+      rootsOnly: false,
+      includePath: true,
+    });
+  });
+
+  it('keeps the rejected move and refreshes its revision before allowing retry', () => {
+    selectedFacilitySignal.set({ ...facility, revision: 4 });
+    mockFacilityService.get.mockReturnValueOnce(of({ ...facility, revision: 5 }));
+    mockFacilityService.move.mockReturnValueOnce(throwError(() => apiError(412, 'conflict')));
+    store.move({
+      organizationId: 'org-1',
+      facilityId: facility.id,
+      input: { parentFacilityId: 'new-parent' },
+    });
+    expect(store.moveCallState().status).toBe('error');
+    expect(mockActiveFacilityStore.setFacility).toHaveBeenCalledWith(
+      expect.objectContaining({ revision: 5 }),
+    );
+    store.move({
+      organizationId: 'org-1',
+      facilityId: facility.id,
+      input: { parentFacilityId: 'new-parent' },
+    });
+    expect(mockFacilityService.move).toHaveBeenLastCalledWith(
+      'org-1',
+      facility.id,
+      { parentFacilityId: 'new-parent' },
+      5,
+    );
   });
 });

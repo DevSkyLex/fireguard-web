@@ -6,6 +6,14 @@
 
 Owns organization-scoped equipment workflows.
 
+`EquipmentService.summaryByFacility` reads the Equipment-owned exact summary:
+`scope`, `totalItems`, all four `byStatus` counts and `needingAttentionCount`.
+Detail and Assets share a default subtree scope and explicit direct option
+through `equipmentScope`; both pass matching `includeDescendants` values.
+Summary counts are independent of list page limits. Equipment read permission is
+distinct from Facilities read permission. Creation plus assignment/intervention
+association is atomic in the API, and conflict handling preserves input drafts.
+
 This subfeature is responsible for:
 
 - listing equipments for the active organization,
@@ -261,6 +269,12 @@ draft-equipment hard-delete flow inside an intervention). If a genuinely
 distinct "delete" outcome is ever needed here, revisit this decision.
 
 ## Invariants
+
+- Facility's spatial views may read the approved equipment projection and position
+  candidates across a facility subtree, with server search and pagination. Placement
+  retains the real assigned facility and the original attachment's coordinate space.
+- The 3D view reuses equipment type/status labels and opens equipment records through
+  page-owned navigation; unplaced equipment remains accessible through its list.
 
 - Mobile cards and touch targets follow the central interaction-capabilities contract, independent of width.
   Desktop keeps table density and native menus in narrow windows. Creation uses one sheet

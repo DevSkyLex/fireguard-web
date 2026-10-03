@@ -1,0 +1,251 @@
+<section
+  class="flex flex-col gap-4"
+  aria-labelledby="facility-model-manager-title"
+  data-testid="facility-model-manager"
+>
+  <div class="flex flex-col gap-1">
+    <h2 id="facility-model-manager-title" class="font-semibold" i18n="@@facility.model.title">
+      Imported building model
+    </h2>
+    <p class="text-sm text-muted-foreground" i18n="@@facility.model.intro">
+      Import an autonomous GLB, preview it, align it, associate its objects with existing
+      facilities, then activate it.
+    </p>
+  </div>
+  @if (error(); as failure) {
+    <div hlmAlert variant="destructive">
+      <h3 hlmAlertTitle i18n="@@facility.model.errorTitle">
+        The model action could not be completed
+      </h3>
+      <p hlmAlertDescription>{{ failure.message }}</p>
+      <button
+        hlmBtn
+        variant="outline"
+        size="sm"
+        type="button"
+        (click)="retried.emit()"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (fileError(); as message) {
+    <div hlmAlert variant="destructive">
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  @if (listPending() || previewPending()) {
+    <div class="flex items-center gap-2" role="status">
+      <hlm-spinner /><span i18n="@@facility.model.loading">Loading the model…</span>
+    </div>
+  }
+  @if (canWrite()) {
+    <hlm-field>
+      <label hlmFieldLabel for="facility-model-upload" i18n="@@facility.model.uploadLabel"
+        >Import a GLB model</label
+      >
+      <input
+        hlmInput
+        type="file"
+        id="facility-model-upload"
+        accept=".glb,model/gltf-binary"
+        [disabled]="pending() || dirty() || models().length >= 2"
+        (change)="uploadFile($event)"
+        data-testid="facility-model-upload"
+      />
+      <hlm-field-description i18n="@@facility.model.uploadHint"
+        >GLB 2.0 with embedded textures, up to 10 MiB. One active model and one independent
+        replacement draft.</hlm-field-description
+      >
+      @if (models().length >= 2) {
+        <hlm-field-description i18n="@@facility.model.capacity"
+          >Delete an unused model before importing another replacement.</hlm-field-description
+        >
+      }
+    </hlm-field>
+  }
+  <ul class="flex flex-col gap-2">
+    @for (model of models(); track model.id) {
+      <li class="flex flex-wrap items-center gap-2 rounded-md border border-border p-3">
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          class="min-w-0 flex-1 justify-start"
+          [disabled]="pending() || dirty()"
+          [attr.aria-pressed]="selectedModel()?.id === model.id"
+          (click)="selected.emit(model.id)"
+        >
+          {{ model.fileName }}
+        </button>
+        @if (model.active) {
+          <span hlmBadge i18n="@@facility.model.active">Active</span>
+        } @else {
+          <span hlmBadge variant="secondary" i18n="@@facility.model.draft">Draft</span>
+        }
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          (click)="downloaded.emit(model.id)"
+          i18n="@@facility.model.download"
+        >
+          Download
+        </button>
+        @if (canWrite()) {
+          @if (!model.active) {
+            <button
+              hlmBtn
+              type="button"
+              size="sm"
+              variant="outline"
+              [disabled]="pending() || dirty() || model.bindingIssues.length > 0"
+              (click)="activated.emit(model.id)"
+              i18n="@@facility.model.activate"
+            >
+              Activate
+            </button>
+          }
+          <hlm-alert-dialog>
+            <button
+              hlmAlertDialogTrigger
+              hlmBtn
+              type="button"
+              size="sm"
+              variant="destructive"
+              [disabled]="pending() || dirty()"
+              i18n="@@facility.model.delete"
+            >
+              Delete
+            </button>
+            <hlm-alert-dialog-content *hlmAlertDialogPortal>
+              <hlm-alert-dialog-header>
+                <h3 hlmAlertDialogTitle i18n="@@facility.model.deleteTitle">Delete this model?</h3>
+                <p hlmAlertDialogDescription i18n="@@facility.model.deleteDescription">
+                  The uploaded file and its object associations will be removed. Your facilities and
+                  floor plans remain available.
+                </p>
+              </hlm-alert-dialog-header>
+              <hlm-alert-dialog-footer>
+                <button
+                  hlmAlertDialogCancel
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  i18n="@@common.cancel"
+                >
+                  Cancel
+                </button>
+                <button
+                  hlmAlertDialogAction
+                  hlmBtn
+                  type="button"
+                  variant="destructive"
+                  (click)="removed.emit(model.id)"
+                  i18n="@@facility.model.delete"
+                >
+                  Delete
+                </button>
+              </hlm-alert-dialog-footer>
+            </hlm-alert-dialog-content>
+          </hlm-alert-dialog>
+        }
+      </li>
+    }
+  </ul>
+  @if (selectedModel(); as model) {
+    @if (model.bindingIssues.length > 0) {
+      <div hlmAlert data-testid="facility-model-binding-issues">
+        <h3 hlmAlertTitle i18n="@@facility.model.bindingIssuesTitle">
+          Some object associations need attention
+        </h3>
+        <p hlmAlertDescription i18n="@@facility.model.bindingIssuesHint">
+          Objects with unavailable associations remain visible. Correct their associations before
+          activating this model.
+        </p>
+        <ul class="mt-2 flex flex-col gap-2">
+          @for (issue of model.bindingIssues; track issue.nodeIndex) {
+            <li>
+              <button
+                hlmBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="h-auto w-full justify-start text-left whitespace-normal"
+                (click)="nodeSelected.emit(issue.nodeIndex)"
+              >
+                #{{ issue.nodeIndex }} · {{ bindingIssueLabel(issue.code) }}
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    @if (dirty()) {
+      <p class="text-sm text-muted-foreground" i18n="@@facility.model.saveBeforeSwitch">
+        Save or discard your settings before changing, importing or activating a model.
+      </p>
+    }
+    <hlm-field>
+      <label hlmFieldLabel for="facility-model-node-search" i18n="@@facility.model.nodeSearch"
+        >Find an object</label
+      >
+      <input
+        hlmInput
+        type="search"
+        id="facility-model-node-search"
+        [formField]="searchForm.search"
+      />
+      <hlm-field-description i18n="@@facility.model.nodeIdentity"
+        >Object names can repeat. The displayed index identifies an object in this
+        file.</hlm-field-description
+      >
+    </hlm-field>
+    <ul
+      class="flex max-h-64 flex-col gap-1 overflow-y-auto"
+      aria-label="Model objects"
+      i18n-aria-label="@@facility.model.objects"
+    >
+      @for (node of visibleNodes(); track node.index) {
+        <li>
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="w-full justify-start"
+            [attr.aria-pressed]="selectedNodeIndex() === node.index"
+            (click)="nodeSelected.emit(node.index)"
+          >
+            <span class="truncate"
+              >#{{ node.index }} · {{ nodeName(node.name) }}
+              @if (bindingLabel(node.index); as label) {
+                · {{ label }}
+              }
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+    @if (filteredNodes().length > 100) {
+      <p class="text-xs text-muted-foreground" i18n="@@facility.model.refineSearch">
+        The first 100 matches are shown. Refine your search to find any object in this model.
+      </p>
+    }
+    @if (canWrite()) {
+      <app-facility-model-settings-form
+        [model]="model"
+        [facilityOptions]="facilityOptions()"
+        [selectedNodeIndex]="selectedNodeIndex()"
+        [savedToken]="settingsSavedToken()"
+        [pending]="settingsPending()"
+        [serverError]="settingsError()"
+        (dirtyChanged)="dirty.set($event)"
+        (submitted)="settingsSubmitted.emit($event)"
+        (previewed)="settingsPreviewed.emit($event)"
+      />
+    }
+  }
+</section>

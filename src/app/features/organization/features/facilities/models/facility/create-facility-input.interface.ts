@@ -19,6 +19,8 @@ type FacilityWritableFields = Pick<
   | 'latitude'
   | 'longitude'
   | 'levelIndex'
+  | 'elevationMeters'
+  | 'heightMeters'
 >;
 
 /**

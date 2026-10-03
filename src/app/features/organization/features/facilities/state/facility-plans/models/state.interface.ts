@@ -14,8 +14,10 @@ import type {
  * placing an unplaced equipment item, or neither.
  *
  * @since 1.4.0
+ *
+ * @type
  */
-export type FacilityPlanEditMode = 'none' | 'draw-zone' | 'place-pin';
+export type FacilityPlanEditMode = 'none' | 'draw-zone' | 'place-pin' | 'calibrate';
 
 /**
  * Interface FacilityPlansState
@@ -33,34 +35,82 @@ export type FacilityPlanEditMode = 'none' | 'draw-zone' | 'place-pin';
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface FacilityPlansState {
-  /** Tracks the plan list request. */
+  /**
+   * Property listCallState
+   *
+   * @description
+   * Tracks the plan list request.
+   */
   readonly listCallState: CallState;
 
-  /** Tracks the upload request. */
+  /**
+   * Property uploadCallState
+   *
+   * @description
+   * Tracks the upload request.
+   */
   readonly uploadCallState: CallState<FacilityAttachmentOutput | null>;
 
-  /** Tracks the set-primary request. */
+  /**
+   * Property setPrimaryCallState
+   *
+   * @description
+   * Tracks the set-primary request.
+   */
   readonly setPrimaryCallState: CallState<FacilityAttachmentOutput | null>;
 
-  /** Tracks the delete request. */
+  /**
+   * Property deleteCallState
+   *
+   * @description
+   * Tracks the delete request.
+   */
   readonly deleteCallState: CallState;
 
-  /** Tracks the selected plan's image download. */
+  /**
+   * Property imageCallState
+   *
+   * @description
+   * Tracks the selected plan's image download.
+   */
   readonly imageCallState: CallState;
 
-  /** Id of the plan whose set-primary write is in flight, so only that row locks. */
+  /**
+   * Property settingPrimaryId
+   *
+   * @description
+   * Id of the plan whose set-primary write is in flight, so only that row locks.
+   */
   readonly settingPrimaryId: string | null;
 
-  /** Id of the plan whose delete write is in flight, so only that row locks. */
+  /**
+   * Property deletingId
+   *
+   * @description
+   * Id of the plan whose delete write is in flight, so only that row locks.
+   */
   readonly deletingId: string | null;
 
-  /** The plan the tab is showing; null defers to the primary-first default. */
+  /**
+   * Property selectedPlanId
+   *
+   * @description
+   * The plan the tab is showing; null defers to the primary-first default.
+   */
   readonly selectedPlanId: string | null;
 
-  /** @description Advances on explicit context/selection changes even when batched A-B-A returns to the same id. */
+  /**
+   * Property selectionRevision
+   *
+   * @description
+   * Advances on explicit context/selection changes even when batched A-B-A returns to the same id.
+   */
   readonly selectionRevision: number;
 
   /**
+   * Property imageUrl
+   *
+   * @description
    * The selected plan's decoded image bytes as a browser object URL, fed to
    * `app-plan-viewer`'s `src`; null while unloaded, loading, or the platform
    * is not the browser. Revoked whenever the selection changes and on
@@ -68,10 +118,18 @@ export interface FacilityPlansState {
    */
   readonly imageUrl: string | null;
 
-  /** @description Context key of the loaded image, including organization, facility and attachment. */
+  /**
+   * Property imageKey
+   *
+   * @description
+   * Context key of the loaded image, including organization, facility and attachment.
+   */
   readonly imageKey: string | null;
 
   /**
+   * Property organizationId
+   *
+   * @description
    * The organization owning the facility, set by `load`. Held here because
    * the overlay endpoint is organization-scoped and its fetch is triggered
    * from the same `withHooks` effect as `loadImage`, not from a page-level
@@ -79,51 +137,195 @@ export interface FacilityPlansState {
    */
   readonly organizationId: string | null;
 
-  /** The facility owning the Plans tab, set by `load`; the editor's write scope. */
+  /**
+   * Property facilityId
+   *
+   * @description
+   * The facility owning the Plans tab, set by `load`; the editor's write scope.
+   */
   readonly facilityId: string | null;
 
-  /** Tracks the selected plan's overlay (zones/equipment) request. */
+  /**
+   * Property overlayCallState
+   *
+   * @description
+   * Tracks the selected plan's overlay (zones/equipment) request.
+   */
   readonly overlayCallState: CallState;
 
-  /** The selected plan's zone/equipment overlay; null while unloaded or loading. */
+  /**
+   * Property planOverlay
+   *
+   * @description
+   * The selected plan's zone/equipment overlay; null while unloaded or loading.
+   */
   readonly planOverlay: FacilityPlanOverlayOutput | null;
 
-  /** @description Context key of the loaded annotations. */
+  /**
+   * Property overlayKey
+   *
+   * @description
+   * Context key of the loaded annotations.
+   */
   readonly overlayKey: string | null;
 
-  /** Whether the overlay's zone polygons are shown. */
+  /**
+   * Property showZones
+   *
+   * @description
+   * Whether the overlay's zone polygons are shown.
+   */
   readonly showZones: boolean;
 
-  /** Whether the overlay's equipment pins are shown. */
+  /**
+   * Property showEquipment
+   *
+   * @description
+   * Whether the overlay's equipment pins are shown.
+   */
   readonly showEquipment: boolean;
 
-  /** The editor's current pointer-editing mode. */
+  /**
+   * Property editMode
+   *
+   * @description
+   * The editor's current pointer-editing mode.
+   */
   readonly editMode: FacilityPlanEditMode;
 
-  /** The facility a `draw-zone` outline is being drawn for; null outside that mode. */
+  /**
+   * Property drawTargetFacilityId
+   *
+   * @description
+   * The facility a `draw-zone` outline is being drawn for; null outside that mode.
+   */
   readonly drawTargetFacilityId: string | null;
 
-  /** The in-progress `draw-zone` outline's vertices, in normalized `[0, 1]` image coordinates. */
+  /**
+   * Property draftPoints
+   *
+   * @description
+   * The in-progress `draw-zone` outline's vertices, in normalized `[0, 1]` image coordinates.
+   */
   readonly draftPoints: ReadonlyArray<readonly [number, number]>;
 
-  /** The equipment a `place-pin` placement is for; null outside that mode. */
+  /**
+   * Property placeEquipmentId
+   *
+   * @description
+   * The equipment a `place-pin` placement is for; null outside that mode.
+   */
   readonly placeEquipmentId: string | null;
 
-  /** Tracks a zone outline's save (draw finish or clear) request. */
+  /**
+   * Property saveZoneGeometryCallState
+   *
+   * @description
+   * Tracks a zone outline's save (draw finish or clear) request.
+   */
   readonly saveZoneGeometryCallState: CallState;
 
-  /** Tracks an equipment pin's save (place, drag-move, or remove) request. */
+  /**
+   * Property savePinPositionCallState
+   *
+   * @description
+   * Tracks an equipment pin's save (place, drag-move, or remove) request.
+   */
   readonly savePinPositionCallState: CallState;
 
-  /** This facility's direct children of type `zone`/`area`, candidates for `draw-zone`. */
+  /**
+   * Property saveCalibrationCallState
+   *
+   * @description
+   * Tracks the revision-protected calibration write.
+   */
+  readonly saveCalibrationCallState: CallState;
+
+  /**
+   * Property calibrationRevisionCallState
+   *
+   * @description
+   * Tracks a conflict refresh of the attachment revision before retrying calibration.
+   */
+  readonly calibrationRevisionCallState: CallState;
+
+  /**
+   * Property zoneCandidateSearch
+   *
+   * @description
+   * Current zone search and server page.
+   */
+  readonly zoneCandidateSearch: string;
+
+  /**
+   * Property zoneCandidatePage
+   *
+   * @description
+   * Current server page of candidate facilities.
+   */
+  readonly zoneCandidatePage: number;
+
+  /**
+   * Property zoneCandidateTotal
+   *
+   * @description
+   * Candidate facility count over all pages.
+   */
+  readonly zoneCandidateTotal: number;
+
+  /**
+   * Property equipmentCandidateSearch
+   *
+   * @description
+   * Current equipment search.
+   */
+  readonly equipmentCandidateSearch: string;
+
+  /**
+   * Property equipmentCandidatePage
+   *
+   * @description
+   * Current server page of candidate equipment.
+   */
+  readonly equipmentCandidatePage: number;
+
+  /**
+   * Property equipmentCandidateTotal
+   *
+   * @description
+   * Candidate equipment count over all pages.
+   */
+  readonly equipmentCandidateTotal: number;
+
+  /**
+   * Property zoneCandidates
+   *
+   * @description
+   * This facility's direct children of type `zone`/`area`, candidates for `draw-zone`.
+   */
   readonly zoneCandidates: ReadonlyArray<FacilityOutput>;
 
-  /** Tracks the `zoneCandidates` request. */
+  /**
+   * Property zoneCandidatesCallState
+   *
+   * @description
+   * Tracks the `zoneCandidates` request.
+   */
   readonly zoneCandidatesCallState: CallState;
 
-  /** This facility's assigned equipment, candidates for `place-pin`. */
+  /**
+   * Property facilityEquipment
+   *
+   * @description
+   * This facility's assigned equipment, candidates for `place-pin`.
+   */
   readonly facilityEquipment: ReadonlyArray<EquipmentOutput>;
 
-  /** Tracks the `facilityEquipment` request. */
+  /**
+   * Property facilityEquipmentCallState
+   *
+   * @description
+   * Tracks the `facilityEquipment` request.
+   */
   readonly facilityEquipmentCallState: CallState;
 }

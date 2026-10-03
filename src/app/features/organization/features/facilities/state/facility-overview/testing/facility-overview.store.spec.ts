@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import type { ApiError, HydraCollection } from '@core/api/models';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import type { EquipmentFacilitySummaryOutput } from '@features/organization/features/equipments/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type { InspectionOutput } from '@features/organization/features/inspections/models';
 import { InterventionService } from '@features/organization/features/interventions';
@@ -27,7 +27,7 @@ const apiError = (status: number, detail: string): ApiError => ({
 describe('FacilityOverviewStore', () => {
   let store: FacilityOverviewStore;
   let mockInspectionService: { list: ReturnType<typeof vi.fn> };
-  let mockEquipmentService: { list: ReturnType<typeof vi.fn> };
+  let mockEquipmentService: { summaryByFacility: ReturnType<typeof vi.fn> };
   let mockInterventionService: { list: ReturnType<typeof vi.fn> };
 
   const passedInspection = {
@@ -58,21 +58,13 @@ describe('FacilityOverviewStore', () => {
     member: [passedInspection, overdueInspection, upcomingInspection],
   };
 
-  const operationalEquipment = {
-    id: 'equipment-1',
-    status: 'operational',
-  } as unknown as EquipmentOutput;
-
-  const maintenanceEquipment = {
-    id: 'equipment-2',
-    status: 'under_maintenance',
-  } as unknown as EquipmentOutput;
-
-  const equipmentCollection: HydraCollection<EquipmentOutput> = {
-    '@id': '/api/organizations/org-1/equipment',
-    '@type': 'Collection',
+  const equipmentSummary: EquipmentFacilitySummaryOutput = {
+    '@id': '/api/organizations/org-1/facilities/facility-1/equipment-summary',
+    '@type': 'FacilityEquipmentSummary',
+    scope: 'subtree',
     totalItems: 2,
-    member: [operationalEquipment, maintenanceEquipment],
+    byStatus: { operational: 1, in_stock: 0, under_maintenance: 1, decommissioned: 0 },
+    needingAttentionCount: 1,
   };
 
   const siteIntervention = {
@@ -91,7 +83,7 @@ describe('FacilityOverviewStore', () => {
 
   beforeEach(() => {
     mockInspectionService = { list: vi.fn().mockReturnValue(of(inspectionsCollection)) };
-    mockEquipmentService = { list: vi.fn().mockReturnValue(of(equipmentCollection)) };
+    mockEquipmentService = { summaryByFacility: vi.fn().mockReturnValue(of(equipmentSummary)) };
     mockInterventionService = { list: vi.fn().mockReturnValue(of(interventionsCollection)) };
 
     TestBed.configureTestingModule({
@@ -108,7 +100,7 @@ describe('FacilityOverviewStore', () => {
 
   it('starts idle with empty previews', () => {
     expect(store.inspections()).toEqual([]);
-    expect(store.equipment()).toEqual([]);
+    expect(store.equipmentCallState().data).toBeNull();
     expect(store.interventions()).toEqual([]);
     expect(store.isLoadingInspections()).toBe(false);
     expect(store.isLoadingEquipment()).toBe(false);
@@ -208,11 +200,11 @@ describe('FacilityOverviewStore', () => {
       store.loadEquipment({ organizationId: 'org-1', facilityId: 'facility-1' });
       await flushEffects();
 
-      expect(mockEquipmentService.list).toHaveBeenCalledWith('org-1', {
-        itemsPerPage: 200,
-        params: { facilityId: 'facility-1' },
-      });
-      expect(store.equipment()).toHaveLength(2);
+      expect(mockEquipmentService.summaryByFacility).toHaveBeenCalledWith(
+        'org-1',
+        'facility-1',
+        true,
+      );
       expect(store.isLoadingEquipment()).toBe(false);
       expect(store.equipmentCount()).toBe(2);
       expect(store.equipmentNeedingAttentionCount()).toBe(1);
@@ -237,40 +229,62 @@ describe('FacilityOverviewStore', () => {
       expect(labels[3]).toContain('Decommissioned');
     });
 
-    it('counts equipment from the collection totalItems, not the first page', async () => {
-      mockEquipmentService.list.mockReturnValueOnce(
-        of({ ...equipmentCollection, totalItems: 250 }),
+    it('uses exact counts and status totals beyond 200 equipment', async () => {
+      mockEquipmentService.summaryByFacility.mockReturnValueOnce(
+        of({
+          ...equipmentSummary,
+          totalItems: 250,
+          byStatus: { operational: 200, in_stock: 0, under_maintenance: 30, decommissioned: 20 },
+          needingAttentionCount: 50,
+        }),
       );
 
       store.loadEquipment({ organizationId: 'org-1', facilityId: 'facility-1' });
       await flushEffects();
 
-      expect(store.equipment()).toHaveLength(2);
       expect(store.equipmentTotal()).toBe(250);
       expect(store.equipmentCount()).toBe(250);
+      expect(store.equipmentNeedingAttentionCount()).toBe(50);
+      expect(store.equipmentStatusRows()[0].ratio).toBe(0.8);
     });
 
-    it('flags the equipment preview as partial once the server total exceeds the loaded page', async () => {
-      mockEquipmentService.list.mockReturnValueOnce(
-        of({ ...equipmentCollection, totalItems: 250 }),
+    it('requests the direct scope explicitly and replaces subtree totals', async () => {
+      store.loadEquipment({ organizationId: 'org-1', facilityId: 'facility-1' });
+      mockEquipmentService.summaryByFacility.mockReturnValueOnce(
+        of({
+          ...equipmentSummary,
+          scope: 'direct',
+          totalItems: 0,
+          byStatus: { operational: 0, in_stock: 0, under_maintenance: 0, decommissioned: 0 },
+          needingAttentionCount: 0,
+        }),
       );
 
-      expect(store.isEquipmentPreviewPartial()).toBe(false);
-      store.loadEquipment({ organizationId: 'org-1', facilityId: 'facility-1' });
+      store.loadEquipment({
+        organizationId: 'org-1',
+        facilityId: 'facility-1',
+        includeDescendants: false,
+      });
       await flushEffects();
 
-      expect(store.isEquipmentPreviewPartial()).toBe(true);
+      expect(mockEquipmentService.summaryByFacility).toHaveBeenLastCalledWith(
+        'org-1',
+        'facility-1',
+        false,
+      );
+      expect(store.equipmentIncludeDescendants()).toBe(false);
+      expect(store.equipmentCount()).toBe(0);
     });
 
     it('clears equipment and resets counts on failure', async () => {
-      mockEquipmentService.list.mockReturnValueOnce(
+      mockEquipmentService.summaryByFacility.mockReturnValueOnce(
         throwError(() => apiError(500, 'Server error')),
       );
 
       store.loadEquipment({ organizationId: 'org-1', facilityId: 'facility-1' });
       await flushEffects();
 
-      expect(store.equipment()).toEqual([]);
+      expect(store.equipmentCallState().status).toBe('error');
       expect(store.equipmentTotal()).toBe(0);
       expect(store.isLoadingEquipment()).toBe(false);
       expect(store.equipmentCount()).toBe(0);
@@ -311,10 +325,10 @@ describe('FacilityOverviewStore', () => {
       await flushEffects();
 
       expect(mockInspectionService.list).toHaveBeenCalledTimes(1);
-      expect(mockEquipmentService.list).toHaveBeenCalledTimes(1);
+      expect(mockEquipmentService.summaryByFacility).toHaveBeenCalledTimes(1);
       expect(mockInterventionService.list).toHaveBeenCalledTimes(1);
       expect(store.inspections()).toHaveLength(3);
-      expect(store.equipment()).toHaveLength(2);
+      expect(store.equipmentCount()).toBe(2);
       expect(store.interventions()).toHaveLength(1);
     });
   });

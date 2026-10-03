@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import type {
   FacilityBuildingModelFloor,
@@ -25,9 +26,14 @@ const OTHER_ROOM: FacilityPlanOverlayZone = {
 };
 
 const FLOOR_1: FacilityBuildingModelFloor = {
+  hierarchyIssues: [],
   facilityId: 'floor-1',
   name: 'Ground floor',
   levelIndex: 0,
+  elevationMeters: null,
+  heightMeters: null,
+  equipment: [],
+  diagnostics: { invalidGeometryCount: 0, unpositionedEquipmentCount: 0, geometryIssues: [] },
   status: 'active',
   plan: null,
   outline: null,
@@ -35,9 +41,14 @@ const FLOOR_1: FacilityBuildingModelFloor = {
 };
 
 const FLOOR_2: FacilityBuildingModelFloor = {
+  hierarchyIssues: [],
   facilityId: 'floor-2',
   name: 'First floor',
   levelIndex: 1,
+  elevationMeters: null,
+  heightMeters: null,
+  equipment: [],
+  diagnostics: { invalidGeometryCount: 0, unpositionedEquipmentCount: 0, geometryIssues: [] },
   status: 'active',
   plan: null,
   outline: null,
@@ -75,6 +86,7 @@ describe('FacilityBuilding3dRoomPanel', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
+        provideRouter([]),
         { provide: INTERACTION_CAPABILITIES_PORT, useValue: { isMobileInteractionMode: mobile } },
       ],
     });
@@ -96,6 +108,93 @@ describe('FacilityBuilding3dRoomPanel', () => {
     expect(element.querySelector('[data-testid="facility-3d-floor-selector"]')).not.toBeNull();
     expect(element.querySelector('[data-testid="facility-zone-list"]')).not.toBeNull();
     expect(element.querySelector('[data-testid="facility-3d-room-panel-close"]')).toBeNull();
+  });
+
+  it('explains a retained stale calibration and links contours excluded after a move', async () => {
+    stubMatchMedia(false);
+    await render();
+    fixture.componentRef.setInput('organizationId', 'org-1');
+    fixture.componentRef.setInput('metric', true);
+    fixture.componentRef.setInput('floors', [
+      {
+        ...FLOOR_1,
+        elevationMeters: 0,
+        heightMeters: 3,
+        plan: {
+          attachmentId: 'plan-1',
+          imageWidth: 1000,
+          imageHeight: 500,
+          calibration: { widthMeters: 20, rotationDegrees: 0, offsetXMeters: 0, offsetZMeters: 0 },
+          calibrationBuildingId: 'former-building',
+          calibrationIssue: 'building_changed',
+        },
+        rooms: [],
+        diagnostics: {
+          invalidGeometryCount: 1,
+          unpositionedEquipmentCount: 0,
+          geometryIssues: [{ facilityId: 'moved-room', code: 'outside_ancestry' }],
+        },
+      },
+    ]);
+    fixture.componentRef.setInput('facilityOptions', [
+      {
+        value: 'moved-room',
+        label: 'Moved room',
+        typeLabel: 'Zone',
+        pathLabel: null,
+        address: null,
+      },
+    ]);
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(
+      element.querySelector('[data-testid="facility-3d-calibration-issue"]')?.textContent,
+    ).toContain('another building');
+    expect(
+      element.querySelector('[data-testid="facility-3d-floor-selector-option"]')?.textContent,
+    ).toContain('Incomplete');
+    const link = element.querySelector<HTMLAnchorElement>(
+      '[data-testid="facility-3d-geometry-issues"] a',
+    );
+    expect(link?.textContent).toBe('Moved room');
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/moved-room');
+  });
+
+  it('keeps a calibrated legacy floor selectable and explains its hierarchy without marking it incomplete', async () => {
+    stubMatchMedia(false);
+    await render();
+    fixture.componentRef.setInput('organizationId', 'org-1');
+    fixture.componentRef.setInput('metric', true);
+    fixture.componentRef.setInput('floors', [
+      {
+        ...FLOOR_1,
+        hierarchyIssues: ['invalid_parent_type', 'invalid_ancestor'],
+        elevationMeters: 0,
+        heightMeters: 3,
+        plan: {
+          attachmentId: 'plan-1',
+          imageWidth: 1000,
+          imageHeight: 500,
+          calibration: { widthMeters: 20, rotationDegrees: 0, offsetXMeters: 0, offsetZMeters: 0 },
+          calibrationIssue: null,
+        },
+      },
+      FLOOR_2,
+    ]);
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    const floorOption = element.querySelector('[data-testid="facility-3d-floor-selector-option"]');
+    expect(floorOption?.textContent).toContain('Hierarchy needs correction');
+    expect(floorOption?.textContent).not.toContain('Incomplete');
+    const issuePanel = element.querySelector('[data-testid="facility-3d-hierarchy-issues"]');
+    expect(issuePanel?.textContent).toContain('parent type is incompatible');
+    expect(issuePanel?.textContent).toContain('ancestor is invalid');
+    expect(issuePanel?.querySelector('a')?.getAttribute('href')).toBe(
+      '/organizations/org-1/facilities/floor-1',
+    );
+    fixture.componentRef.setInput('selectedFloorId', 'floor-2');
+    await fixture.whenStable();
+    expect(element.querySelector('[data-testid="facility-3d-hierarchy-issues"]')).toBeNull();
   });
 
   it('marks the active floor with aria-current, and every floor is reachable regardless of selection', async () => {
@@ -230,5 +329,39 @@ describe('FacilityBuilding3dRoomPanel', () => {
     await render(null);
 
     expect(() => fixture.componentInstance.focus()).not.toThrow();
+  });
+  it('keeps unplaced descendant equipment selectable and links the selected record', async () => {
+    stubMatchMedia(false);
+    await render();
+    const equipment = {
+      equipmentId: 'equipment-1',
+      facilityId: ROOM.facilityId,
+      type: 'fire_extinguisher',
+      status: 'operational',
+      serialNumber: 'EXT-1',
+      locationLabel: 'Lobby',
+      position: null,
+      placementIssue: 'unplaced',
+    };
+    fixture.componentRef.setInput('floors', [{ ...FLOOR_1, equipment: [equipment] }]);
+    fixture.componentRef.setInput('organizationId', 'org-1');
+    await fixture.whenStable();
+    const button = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-equipment-item"]',
+    ) as HTMLButtonElement;
+    expect(button.textContent).toContain('Fire extinguisher');
+    expect(button.textContent).toContain('Operational');
+    expect(button.textContent).toContain('Not placed');
+    const activated = vi.fn();
+    fixture.componentInstance.equipmentActivated.subscribe(activated);
+    button.click();
+    expect(activated).toHaveBeenCalledExactlyOnceWith('equipment-1');
+    fixture.componentRef.setInput('equipment', equipment);
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="facility-3d-equipment-detail"] a')
+        .getAttribute('href'),
+    ).toBe('/organizations/org-1/equipments/equipment-1');
   });
 });

@@ -4,7 +4,6 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
 
 /**
  * Constant facilityStoreEvents
- * @const facilityStoreEvents
  *
  * @description
  * Facility store events. Failure and success events both carry a
@@ -12,36 +11,78 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
  * rendered as a toast.
  *
  * @version 2.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const facilityStoreEvents
  */
 export const facilityStoreEvents = eventGroup({
   source: 'Facility Store',
   events: {
-    /** Dispatched when fetching the facility list fails. */
+    /**
+     * @description
+     * Dispatched when fetching the facility list fails.
+     */
     listFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when creating a facility fails (non-quota errors only). */
+    /**
+     * @description
+     * Dispatched when creating a facility fails (non-quota errors only).
+     */
     createFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a facility is created. */
+    /**
+     * @description
+     * Dispatched when a facility is created.
+     */
     createSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when updating a facility fails. */
+    /**
+     * @description
+     * Dispatched when updating a facility fails.
+     */
     updateFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a facility is updated. */
+    /**
+     * @description
+     * Dispatched when a facility is updated.
+     */
     updateSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when archiving a facility fails. */
+    /**
+     * @description
+     * Dispatched when archiving a facility fails.
+     */
     archiveFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a facility is archived. */
+    /**
+     * @description
+     * Dispatched when a facility is archived.
+     */
     archiveSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when restoring a facility fails. */
+    /**
+     * @description
+     * Dispatched when restoring a facility fails.
+     */
     restoreFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a facility is restored. */
+    /**
+     * @description
+     * Dispatched when a facility is restored.
+     */
     restoreSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when deleting a facility fails. */
+    /**
+     * @description
+     * Dispatched when deleting a facility fails.
+     */
     deleteFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a facility is deleted. */
+    /**
+     * @description
+     * Dispatched when a facility is deleted.
+     */
     deleteSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when moving a facility fails. */
+    /**
+     * @description
+     * Dispatched when moving a facility fails.
+     */
     moveFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a facility is moved. */
+    /**
+     * @description
+     * Dispatched when a facility is moved.
+     */
     moveSucceeded: type<FeedbackEventPayload>(),
   },
 });

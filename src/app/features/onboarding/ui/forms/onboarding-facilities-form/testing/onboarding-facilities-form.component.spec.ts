@@ -99,7 +99,7 @@ describe('OnboardingFacilitiesForm', () => {
     await setDraft({ type: 'site', name: 'HQ', address: '' });
     (element.querySelector('[data-testid="onboarding-facility-add"]') as HTMLButtonElement).click();
     await fixture.whenStable();
-    await setDraft({ type: 'building', name: 'Annex', address: '' });
+    await setDraft({ type: 'site', name: 'Annex', address: '' });
 
     expect(submitButton().textContent).toContain('Create facilities');
   });
@@ -374,7 +374,7 @@ describe('OnboardingFacilitiesForm', () => {
       longitude: 2.3,
     };
     const failed: SetupCreateFacilityInput = {
-      type: 'building',
+      type: 'site',
       name: 'Retry building',
       address: '2 Main Street',
       latitude: 48.9,
@@ -450,5 +450,35 @@ describe('OnboardingFacilitiesForm', () => {
         fixture.componentInstance as unknown as { model: WritableSignal<OnboardingFacilityDraft> }
       ).model().address,
     ).toBe('');
+  });
+  it('offers only root sites and refuses a legacy non-site draft without silently converting it', async () => {
+    const emitted: Array<readonly SetupCreateFacilityInput[]> = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    await setDraft({ type: 'building', name: 'Legacy annex', address: '' });
+    await submit();
+    expect(emitted).toEqual([]);
+    expect(element.textContent).toContain('Create a root site during setup');
+    expect(fixture.componentInstance['model']().type).toBe('building');
+    expect(fixture.componentInstance['typeOptions'].map((option) => option.value)).toEqual([
+      'site',
+    ]);
+    await setDraft({ type: 'site', name: 'Legacy annex', address: '' });
+    await submit();
+    expect(emitted[0][0].type).toBe('site');
+  });
+
+  it('requires explicit repair of restored unsaved non-sites while retaining completed receipts', async () => {
+    const legacy: SetupCreateFacilityInput = { type: 'building', name: 'Legacy building' };
+    fixture.componentRef.setInput('restored', [legacy]);
+    await fixture.whenStable();
+    const emitted: Array<readonly SetupCreateFacilityInput[]> = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    await submit();
+    expect(emitted).toEqual([]);
+    expect(element.textContent).toContain('explicitly choose Site');
+    fixture.componentRef.setInput('completed', [legacy]);
+    await fixture.whenStable();
+    await submit();
+    expect(emitted).toEqual([[legacy]]);
   });
 });

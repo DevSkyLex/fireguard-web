@@ -14,6 +14,7 @@ import type {
   AddTagInput,
   SetPlanPositionInput,
   EquipmentKpiOutput,
+  EquipmentFacilitySummaryOutput,
 } from '@features/organization/features/equipments/models';
 
 /**
@@ -231,6 +232,33 @@ export class EquipmentService extends HydraApiService {
     return this.getCollection<EquipmentOutput>(
       this.facilityEquipmentPath(organizationId, facilityId),
       options,
+    );
+  }
+
+  /**
+   * Method summaryByFacility
+   * @method summaryByFacility
+   *
+   * @description
+   * Reads exact counts using the same direct or subtree scope as the facility collection.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Owning organization.
+   * @param {string} facilityId - Selected facility.
+   * @param {boolean} includeDescendants - Include equipment assigned to descendant facilities.
+   *
+   * @returns {Observable<EquipmentFacilitySummaryOutput>} Authoritative counts across all pages.
+   */
+  public summaryByFacility(
+    organizationId: string,
+    facilityId: string,
+    includeDescendants: boolean = true,
+  ): Observable<EquipmentFacilitySummaryOutput> {
+    return this.getOne<EquipmentFacilitySummaryOutput>(
+      `${EquipmentService.BASE_PATH}/${organizationId}/facilities/${facilityId}/equipment-summary`,
+      { params: { includeDescendants } },
     );
   }
 

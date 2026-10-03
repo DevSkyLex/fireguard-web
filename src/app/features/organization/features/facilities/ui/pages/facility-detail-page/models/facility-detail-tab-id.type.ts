@@ -8,5 +8,7 @@
  * (the floor plans, `FacilityPlanList` + `PlanViewer`).
  *
  * @since 1.1.0
+ *
+ * @type
  */
 export type FacilityDetailTabId = 'overview' | 'information' | 'plans';

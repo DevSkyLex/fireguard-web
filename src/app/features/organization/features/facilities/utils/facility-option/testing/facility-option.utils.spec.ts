@@ -24,6 +24,7 @@ describe('toFacilityOption', () => {
   it('should name the facility, its localized type and its ancestors', () => {
     expect(toFacilityOption(facilityOf())).toEqual({
       value: 'facility-2',
+      type: 'building',
       label: 'Annex',
       typeLabel: 'Building',
       pathLabel: 'Head office',

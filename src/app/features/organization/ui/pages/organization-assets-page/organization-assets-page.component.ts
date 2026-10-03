@@ -67,6 +67,7 @@ import type {
   FacilityOutput,
 } from '@features/organization/features/facilities/models';
 import {
+  FacilityOptionsStore,
   FacilityTreeStore,
   type FacilityTreeStoreType,
 } from '@features/organization/features/facilities/state';
@@ -126,7 +127,14 @@ import { HlmTooltip } from '@shared/ui/tooltip';
 import { HlmLarge } from '@shared/ui/typography';
 import { resolveComplianceStatusTag } from './models/compliance-status-tag/compliance-status-tag.util';
 
-/** The explorer's first-level axes (`organization/FEATURE.md` "Assets"). */
+/**
+ * Type OrganizationAssetsAxis
+ *
+ * @description
+ * The explorer's first-level axes (`organization/FEATURE.md` "Assets").
+ *
+ * @type {OrganizationAssetsAxis}
+ */
 type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
 
 /**
@@ -141,19 +149,16 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
  * equipment and inspections on the right. The "Everything" tab drops the
  * tree and renders the same two lists unscoped, so an operator holding a
  * serial number and no site can still find it.
- *
  * The right pane is this page's own `OrganizationAssetsPaneStore` rather
  * than the equipments/inspections subfeatures' own stores: it is a
  * read-only preview, not the management surface those subfeatures own, and
  * it reuses their `EquipmentService`/`InspectionService` transport through
  * the public `data-access` barrels instead of duplicating it.
- *
  * Operators holding `FACILITIES_WRITE` can drag a site onto another to
  * re-parent it — an enhancement over the tree node menu's "Move" action,
  * never a replacement: both call `FacilityTreeStore.move`, and the menu
  * action is what keeps the operation reachable without a pointer
  * (`ARCHITECTURE.md` §10.3, `shared/tree`'s `Tree` a11y contract).
- *
  * A third "Compliance" axis renders the same `Tree` primitive over the
  * Compliance module's own enriched hierarchy (`ComplianceExplorerStore`,
  * eager — the whole tree arrives nested in one call, so `childrenByParent`
@@ -166,6 +171,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
  * the shell page title through `PageTabsService`.
  *
  * @version 1.3.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -201,6 +207,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
     ...HlmTabsImports,
   ],
   providers: [
+    FacilityOptionsStore,
     provideIcons({
       lucideCircleAlert,
       lucideCircleCheck,
@@ -232,9 +239,13 @@ export class OrganizationAssetsPage {
   /**
    * Property element
    * @readonly
-   * @description Limits browse/detail focus restoration to this explorer.
+   *
+   * @description
+   * Limits browse/detail focus restoration to this explorer.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ElementRef<HTMLElement>}
    */
   private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
@@ -242,9 +253,13 @@ export class OrganizationAssetsPage {
   /**
    * Property injector
    * @readonly
-   * @description Schedules focus after Angular updates mobile pane visibility.
+   *
+   * @description
+   * Schedules focus after Angular updates mobile pane visibility.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Injector}
    */
   private readonly injector: Injector = inject(Injector);
@@ -252,9 +267,13 @@ export class OrganizationAssetsPage {
   /**
    * Property isMobileInteractionMode
    * @readonly
-   * @description Chooses sequential estate browsing and cards independently of viewport width.
+   *
+   * @description
+   * Chooses sequential estate browsing and cards independently of viewport width.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
@@ -264,9 +283,13 @@ export class OrganizationAssetsPage {
   /**
    * Property facilityBrowserVisible
    * @readonly
-   * @description Keeps the hierarchy visible while the URL-backed selection is cleared.
+   *
+   * @description
+   * Keeps the hierarchy visible while the URL-backed selection is cleared.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly facilityBrowserVisible: WritableSignal<boolean> = signal(false);
@@ -274,9 +297,13 @@ export class OrganizationAssetsPage {
   /**
    * Property complianceBrowserVisible
    * @readonly
-   * @description Keeps the compliance hierarchy visible while its selection is cleared.
+   *
+   * @description
+   * Keeps the compliance hierarchy visible while its selection is cleared.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly complianceBrowserVisible: WritableSignal<boolean> = signal(false);
@@ -285,96 +312,320 @@ export class OrganizationAssetsPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace whose estate is explored, bound from the route.
+   *
+   * @description
+   * The workspace whose estate is explored, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
   //#endregion
 
   //#region Properties
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by `appOrgDate` bindings and forwarded to date-rendering children.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by `appOrgDate` bindings and
+   * forwarded to date-rendering children.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** App-wide toast feedback for the archive and snapshot-download flows. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * App-wide toast feedback for the archive and snapshot-download flows.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject<FeedbackService>(FeedbackService);
 
-  /** Transport used directly for the selected node's one-shot QR label sheet — a download, not pane state. */
+  /**
+   * Property equipmentService
+   * @readonly
+   *
+   * @description
+   * Transport used directly for the selected node's one-shot QR label sheet — a download, not pane
+   * state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {EquipmentService}
+   */
   private readonly equipmentService: EquipmentService = inject(EquipmentService);
 
-  /** Hands the label sheet blob to the browser as a file download. */
+  /**
+   * Property browserDownload
+   * @readonly
+   *
+   * @description
+   * Hands the label sheet blob to the browser as a file download.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
   private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
-  /** Unsubscribes an in-flight label sheet download when the page is destroyed. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Unsubscribes an in-flight label sheet download when the page is destroyed.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Whether a QR label sheet download is currently in flight. */
+  /**
+   * Property labelsBusy
+   * @readonly
+   *
+   * @description
+   * Whether a QR label sheet download is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly labelsBusy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The site hierarchy. */
+  /**
+   * Property tree
+   * @readonly
+   *
+   * @description
+   * The site hierarchy.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FacilityTreeStoreType}
+   */
   protected readonly tree: FacilityTreeStoreType = inject<FacilityTreeStoreType>(FacilityTreeStore);
 
-  /** The selected (or unscoped) facility's equipment and inspections. */
+  /**
+   * Property pane
+   * @readonly
+   *
+   * @description
+   * The selected (or unscoped) facility's equipment and inspections.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {OrganizationAssetsPaneStoreType}
+   */
   protected readonly pane: OrganizationAssetsPaneStoreType =
     inject<OrganizationAssetsPaneStoreType>(OrganizationAssetsPaneStore);
 
-  /** The compliance hierarchy, selected facility summary and safety-register export. */
+  /**
+   * Property compliance
+   * @readonly
+   *
+   * @description
+   * The compliance hierarchy, selected facility summary and safety-register export.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ComplianceExplorerStoreType}
+   */
   protected readonly compliance: ComplianceExplorerStoreType =
     inject<ComplianceExplorerStoreType>(ComplianceExplorerStore);
 
-  /** Resolves a compliance rate into its severity bucket. */
+  /**
+   * Property resolveComplianceBucket
+   * @readonly
+   *
+   * @description
+   * Resolves a compliance rate into its severity bucket.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof resolveComplianceBucket}
+   */
   protected readonly resolveComplianceBucket: typeof resolveComplianceBucket =
     resolveComplianceBucket;
 
-  /** Resolves a severity bucket into its badge label/severity/icon. */
+  /**
+   * Property resolveComplianceBucketTag
+   * @readonly
+   *
+   * @description
+   * Resolves a severity bucket into its badge label/severity/icon.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof resolveComplianceBucketTag}
+   */
   protected readonly resolveComplianceBucketTag: typeof resolveComplianceBucketTag =
     resolveComplianceBucketTag;
 
-  /** The colour each badge severity puts on the icon alone. */
+  /**
+   * Property complianceBucketIconClass
+   * @readonly
+   *
+   * @description
+   * The colour each badge severity puts on the icon alone.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof COMPLIANCE_BUCKET_TAG_ICON_CLASS}
+   */
   protected readonly complianceBucketIconClass: typeof COMPLIANCE_BUCKET_TAG_ICON_CLASS =
     COMPLIANCE_BUCKET_TAG_ICON_CLASS;
 
-  /** Resolves the backend's graded compliance verdict into a label/severity/icon descriptor. */
+  /**
+   * Property resolveComplianceStatusTag
+   * @readonly
+   *
+   * @description
+   * Resolves the backend's graded compliance verdict into a label/severity/icon descriptor.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof resolveComplianceStatusTag}
+   */
   protected readonly resolveComplianceStatusTag: typeof resolveComplianceStatusTag =
     resolveComplianceStatusTag;
 
-  /** Resolves a member or inspector name into its 1–2 letter avatar fallback. */
+  /**
+   * Property getInitials
+   * @readonly
+   *
+   * @description
+   * Resolves a member or inspector name into its 1–2 letter avatar fallback.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {typeof getOrganizationInitials}
+   */
   protected readonly getInitials: typeof getOrganizationInitials = getOrganizationInitials;
 
-  /** Fallback label for an inspection row carrying no inspector. */
+  /**
+   * Property notSpecifiedLabel
+   * @readonly
+   *
+   * @description
+   * Fallback label for an inspection row carrying no inspector.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly notSpecifiedLabel: string = $localize`:@@inspection.notSpecified:Not specified`;
 
-  /** Accessible label and tooltip text for a tree row's "…" menu trigger. */
+  /**
+   * Property openMenuLabel
+   * @readonly
+   *
+   * @description
+   * Accessible label and tooltip text for a tree row's "…" menu trigger.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly openMenuLabel: string = $localize`:@@org.assets.tree.nodeMenu:Open menu`;
 
-  /** Tooltip text for the "New facility" action, shown when its visible label collapses. */
+  /**
+   * Property newFacilityLabel
+   * @readonly
+   *
+   * @description
+   * Tooltip text for the "New facility" action, shown when its visible label collapses.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly newFacilityLabel: string = $localize`:@@facility.newButton:New facility`;
 
-  /** Tooltip text for the "New equipment" action, shown when its visible label collapses. */
+  /**
+   * Property newEquipmentLabel
+   * @readonly
+   *
+   * @description
+   * Tooltip text for the "New equipment" action, shown when its visible label collapses.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly newEquipmentLabel: string = $localize`:@@equipment.newButton:New equipment`;
 
-  /** Tooltip text for the mobile archived-register icon-only "Download" action. */
+  /**
+   * Property downloadSnapshotLabel
+   * @readonly
+   *
+   * @description
+   * Tooltip text for the mobile archived-register icon-only "Download" action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly downloadSnapshotLabel: string = $localize`:@@org.assets.compliance.snapshotDownloadAria:Download this archived register`;
 
   /**
    * Property complianceSummarySkeletonRows
    * @readonly
-   * @description Stable placeholder rows shown while a compliance summary loads, matching the loaded totals `<dl>`'s row count.
+   *
+   * @description
+   * Stable placeholder rows shown while a compliance summary loads, matching the loaded totals
+   * `<dl>`'s row count.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {readonly number[]}
    */
   protected readonly complianceSummarySkeletonRows: readonly number[] = [0, 1, 2, 3, 4, 5, 6];
@@ -382,9 +633,13 @@ export class OrganizationAssetsPage {
   /**
    * Property treeSkeletonRows
    * @readonly
-   * @description Stable placeholder rows shown while a hierarchy's roots load.
+   *
+   * @description
+   * Stable placeholder rows shown while a hierarchy's roots load.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {readonly number[]}
    */
   protected readonly treeSkeletonRows: readonly number[] = [0, 1, 2, 3, 4, 5];
@@ -392,9 +647,13 @@ export class OrganizationAssetsPage {
   /**
    * Property locale
    * @readonly
-   * @description Active application locale, used by the relative-age formatters.
+   *
+   * @description
+   * Active application locale, used by the relative-age formatters.
+   *
    * @access private
    * @since 1.3.0
+   *
    * @type {string}
    */
   private readonly locale: string = inject(LOCALE_ID);
@@ -411,6 +670,7 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isComplianceSummaryStale: Signal<boolean> = computed(() => {
@@ -431,6 +691,7 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<ComplianceFacilitySummary | null>}
    */
   protected readonly selectedComplianceFacilitySummary: Signal<ComplianceFacilitySummary | null> =
@@ -443,11 +704,31 @@ export class OrganizationAssetsPage {
     });
 
   /**
-   * * Registers {@link pageActions} on the shell header.
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * - Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
    */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The "New facility" and "New equipment" buttons, rendered in the shell header. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The "New facility" and "New equipment" buttons, rendered in the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
 
@@ -480,25 +761,62 @@ export class OrganizationAssetsPage {
   private readonly pageTabs: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageTabs');
 
-  /** Organization permission checks gating the creation actions and the equipment pane. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating the creation actions and the equipment pane.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
   //#region Routing
-  /** Writes the explorer's own state into the URL, so a view can be shared and restored. */
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Writes the explorer's own state into the URL, so a view can be shared and restored.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject(Router);
 
-  /** The activated route the query params are written relative to. */
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * The activated route the query params are written relative to.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
   //#endregion
 
   /**
    * Property axisParam
    * @readonly
-   * @description The `?axis=` the URL arrived with, restoring the active axis on reload.
+   *
+   * @description
+   * The `?axis=` the URL arrived with, restoring the active axis on reload.
+   *
    * @access public
    * @since 2.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly axisParam: InputSignal<string | undefined> = input<string | undefined>(
@@ -511,9 +829,13 @@ export class OrganizationAssetsPage {
   /**
    * Property facilityParam
    * @readonly
-   * @description The `?facility=` the URL arrived with, restoring the selected site on reload.
+   *
+   * @description
+   * The `?facility=` the URL arrived with, restoring the selected site on reload.
+   *
    * @access public
    * @since 2.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly facilityParam: InputSignal<string | undefined> = input<string | undefined>(
@@ -524,9 +846,13 @@ export class OrganizationAssetsPage {
   /**
    * Property complianceParam
    * @readonly
-   * @description The `?compliance=` selection restored when the compliance axis opens.
+   *
+   * @description
+   * The `?compliance=` selection restored when the compliance axis opens.
+   *
    * @access public
    * @since 2.1.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly complianceParam: InputSignal<string | undefined> = input<string | undefined>(
@@ -534,11 +860,33 @@ export class OrganizationAssetsPage {
     { alias: 'compliance' },
   );
 
-  /** Which first-level axis is active. */
+  /**
+   * Property axis
+   * @readonly
+   *
+   * @description
+   * Which first-level axis is active.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<OrganizationAssetsAxis>}
+   */
   protected readonly axis: WritableSignal<OrganizationAssetsAxis> =
     signal<OrganizationAssetsAxis>('site');
 
-  /** The facility currently scoping the right pane, on the "By site" axis. */
+  /**
+   * Property selectedFacilityId
+   * @readonly
+   *
+   * @description
+   * The facility currently scoping the right pane, on the "By site" axis.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly selectedFacilityId: WritableSignal<string | null> = signal<string | null>(
     null,
   );
@@ -546,9 +894,14 @@ export class OrganizationAssetsPage {
   /**
    * Property selectedFacilityContext
    * @readonly
-   * @description The loaded site's name and ancestor path keep mobile browsing context visible without another request.
+   *
+   * @description
+   * The loaded site's name and ancestor path keep mobile browsing context visible without another
+   * request.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {Signal<FacilityOption | null>}
    */
   protected readonly selectedFacilityContext: Signal<FacilityOption | null> = computed(() => {
@@ -559,20 +912,66 @@ export class OrganizationAssetsPage {
     return selected ? toFacilityOption(selected) : null;
   });
 
-  /** The facility currently scoping the compliance summary, on the "Compliance" axis. */
+  /**
+   * Property selectedComplianceFacilityId
+   * @readonly
+   *
+   * @description
+   * The facility currently scoping the compliance summary, on the "Compliance" axis.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
   protected readonly selectedComplianceFacilityId: WritableSignal<string | null> = signal<
     string | null
   >(null);
 
-  /** Whether the compliance tree has been requested at least once — first-activation gate. */
+  /**
+   * Property hasRequestedComplianceTree
+   * @readonly
+   *
+   * @description
+   * Whether the compliance tree has been requested at least once — first-activation gate.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   private readonly hasRequestedComplianceTree: WritableSignal<boolean> = signal(false);
 
-  /** The tree roots, mapped onto the shared `Tree` primitive's generic shape. */
+  /**
+   * Property treeNodes
+   * @readonly
+   *
+   * @description
+   * The tree roots, mapped onto the shared `Tree` primitive's generic shape.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly TreeNode<FacilityOutput>[]>}
+   */
   protected readonly treeNodes: Signal<readonly TreeNode<FacilityOutput>[]> = computed(() =>
     this.tree.roots().map(facilityToTreeNode),
   );
 
-  /** Already-loaded branches, mapped onto the shared `Tree` primitive's generic shape. */
+  /**
+   * Property childrenByParent
+   * @readonly
+   *
+   * @description
+   * Already-loaded branches, mapped onto the shared `Tree` primitive's generic shape.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<
+   *     Readonly<Record<string, readonly TreeNode<FacilityOutput>[]>>
+   *   >}
+   */
   protected readonly childrenByParent: Signal<
     Readonly<Record<string, readonly TreeNode<FacilityOutput>[]>>
   > = computed(() => {
@@ -586,22 +985,56 @@ export class OrganizationAssetsPage {
     return result;
   });
 
-  /** Branches currently being fetched. */
+  /**
+   * Property loadingIds
+   * @readonly
+   *
+   * @description
+   * Branches currently being fetched.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlySet<string>>}
+   */
   protected readonly loadingIds: Signal<ReadonlySet<string>> = computed(
     () => new Set(this.tree.expandingParentIds()),
   );
 
-  /** Branches whose last fetch failed. */
+  /**
+   * Property failedIds
+   * @readonly
+   *
+   * @description
+   * Branches whose last fetch failed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<ReadonlySet<string>>}
+   */
   protected readonly failedIds: Signal<ReadonlySet<string>> = computed(
     () => new Set(this.tree.failedParentIds()),
   );
 
-  /** The facility pending a move via the dialog, or `null` while it is closed. */
+  /**
+   * Property moveTarget
+   * @readonly
+   *
+   * @description
+   * The facility pending a move via the dialog, or `null` while it is closed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityMoveRequest | null>}
+   */
   protected readonly moveTarget: WritableSignal<FacilityMoveRequest | null> =
     signal<FacilityMoveRequest | null>(null);
 
   /**
-   * Property moveOptions
+   * Property moveParents
+   * @readonly
    *
    * @description
    * Candidate parents for {@link moveTarget}: every currently loaded
@@ -609,78 +1042,179 @@ export class OrganizationAssetsPage {
    * — the same client-side guard `Tree`'s drag-drop applies from
    * `childrenByParent`, so both paths reject the same invalid targets.
    *
-   * @readonly
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<readonly FacilityOption[]>}
    */
-  protected readonly moveOptions: Signal<readonly FacilityOption[]> = computed(() => {
-    const target: FacilityMoveRequest | null = this.moveTarget();
-    if (target === null) return [];
-
-    const byId: Map<string, FacilityOutput> = new Map(
-      [...this.tree.roots(), ...Object.values(this.tree.childrenByParent()).flat()].map(
-        (facility) => [facility.id, facility],
-      ),
-    );
-
-    return [...byId.values()]
-      .filter(
-        (facility) =>
-          facility.id !== target.facilityId &&
-          !this.isLoadedDescendant(target.facilityId, facility.id),
-      )
-      .map(toFacilityOption);
+  protected readonly moveParents: FacilityOptionsStore = inject(FacilityOptionsStore);
+  /**
+   * Property equipmentIncludeDescendants
+   * @readonly
+   *
+   * @description
+   * Selected equipment scope, preserved in the URL.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly equipmentIncludeDescendants: WritableSignal<boolean> = signal(true);
+  /**
+   * Property equipmentScopeParam
+   * @readonly
+   *
+   * @description
+   * Restores a shared equipment scope; descendants are included by default.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly equipmentScopeParam: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+    { alias: 'equipmentScope' },
+  );
+  /**
+   * Property moveErrorMessage
+   * @readonly
+   *
+   * @description
+   * Localized failed-move guidance while preserving the dialog choice.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly moveErrorMessage: Signal<string | null> = computed(() => {
+    const state = this.tree.moveCallState();
+    if (state.status !== 'error') return null;
+    return state.error?.code === 412 || state.error?.code === 428
+      ? $localize`:@@facility.moveDialog.conflict:This place changed. Your selected parent is preserved. Retry with its latest revision.`
+      : $localize`:@@facility.moveDialog.failed:Unable to move this place. Your selected parent is preserved. Retry or choose another parent.`;
   });
 
-  /** Whether the member may re-parent facilities — gates both drag-drop and the "Move to…" menu action. */
+  /**
+   * Property canMoveFacilities
+   * @readonly
+   *
+   * @description
+   * Whether the member may re-parent facilities — gates both drag-drop and the "Move to…" menu
+   * action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canMoveFacilities: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
 
   /**
+   * Property canCreateFacilities
+   * @readonly
+   *
+   * @description
    * Whether the member may create facilities. This explorer replaced the
    * facilities list in the sidebar, so it has to carry the entry point the
    * list used to hold — otherwise creating a site is reachable only by typing
    * the URL.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
    */
   protected readonly canCreateFacilities: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
 
   /**
-   * * Whether the member may create equipment. Same reason as {@link canCreateFacilities}.
+   * Property canCreateEquipment
+   * @readonly
+   *
+   * @description
+   * - Whether the member may create equipment. Same reason as {@link canCreateFacilities}.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
    */
   protected readonly canCreateEquipment: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_WRITE),
   );
 
-  /** Whether the member may read equipment, gating the equipment pane. */
+  /**
+   * Property canReadEquipment
+   * @readonly
+   *
+   * @description
+   * Whether the member may read equipment, gating the equipment pane.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canReadEquipment: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ),
   );
 
-  /** Whether the member may read inspections, gating the inspections pane. */
+  /**
+   * Property canReadInspections
+   * @readonly
+   *
+   * @description
+   * Whether the member may read inspections, gating the inspections pane.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly canReadInspections: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ),
   );
 
   /**
+   * Property canReadCompliance
+   * @readonly
+   *
+   * @description
    * Whether the member may read compliance data, gating the compliance axis —
    * the same `organization.compliance.read` the backend asserts on the tree
    * and summary endpoints (held by the system member role and by admins
    * through `organization.*`).
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
    */
   protected readonly canReadCompliance: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_READ),
   );
 
   /**
+   * Property canExportCompliance
+   * @readonly
+   *
+   * @description
    * Whether the member may export the safety register, gating the export
    * button — the same `organization.compliance.export` the backend asserts.
    * The backend additionally gates the export on the organization's plan
    * tier; that refusal is backend-owned and surfaces through the export
    * error state rather than being re-derived here.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
    */
   protected readonly canExportCompliance: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.COMPLIANCE_EXPORT),
@@ -747,6 +1281,14 @@ export class OrganizationAssetsPage {
       });
     });
 
+    effect(() => {
+      const scope = this.equipmentScopeParam();
+      untracked(() => this.equipmentIncludeDescendants.set(scope !== 'direct'));
+    });
+    effect(() => {
+      const state = this.tree.moveCallState();
+      if (state.status === 'success') untracked(() => this.moveTarget.set(null));
+    });
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
     registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
 
@@ -795,6 +1337,7 @@ export class OrganizationAssetsPage {
       const organizationId: string = this.organizationId();
       const axis: OrganizationAssetsAxis = this.axis();
       const facilityId: string | null = this.selectedFacilityId();
+      const includeDescendants = this.equipmentIncludeDescendants();
       const canReadEquipment: boolean = this.canReadEquipment();
       const canReadInspections: boolean = this.canReadInspections();
 
@@ -804,7 +1347,8 @@ export class OrganizationAssetsPage {
 
         const scope = axis === 'site' && facilityId !== null ? { facilityId } : {};
 
-        if (canReadEquipment) this.pane.loadEquipment({ organizationId, ...scope });
+        if (canReadEquipment)
+          this.pane.loadEquipment({ organizationId, ...scope, includeDescendants });
         if (canReadInspections) this.pane.loadInspections({ organizationId, ...scope });
       });
     });
@@ -822,14 +1366,21 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
-  /** Method changePanePage
-   * @description Changes one resource page without reloading the other list or losing the selected site.
+  /**
+   * Method changePanePage
+   *
+   * @description
+   * Changes one resource page without reloading the other list or losing the selected site.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {'equipment' | 'inspections'} kind - Resource list.
    * @param {number} page - Requested page.
+   *
    * @returns {void}
    */
   protected changePanePage(kind: 'equipment' | 'inspections', page: number): void {
@@ -839,16 +1390,24 @@ export class OrganizationAssetsPage {
       page,
       ...(this.axis() === 'site' && facilityId !== null ? { facilityId } : {}),
     };
-    if (kind === 'equipment' && this.canReadEquipment()) this.pane.loadEquipment(request);
+    if (kind === 'equipment' && this.canReadEquipment())
+      this.pane.loadEquipment({
+        ...request,
+        includeDescendants: this.equipmentIncludeDescendants(),
+      });
     if (kind === 'inspections' && this.canReadInspections()) this.pane.loadInspections(request);
   }
 
   /**
    * Method retryPane
    * @method retryPane
-   * @description Reloads the resource lists in the currently selected explorer scope.
+   *
+   * @description
+   * Reloads the resource lists in the currently selected explorer scope.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected retryPane(): void {
@@ -856,15 +1415,24 @@ export class OrganizationAssetsPage {
     const facilityId: string | null = this.selectedFacilityId();
     const scope = this.axis() === 'site' && facilityId !== null ? { facilityId } : {};
 
-    if (this.canReadEquipment()) this.pane.loadEquipment({ organizationId, ...scope });
+    if (this.canReadEquipment())
+      this.pane.loadEquipment({
+        organizationId,
+        ...scope,
+        includeDescendants: this.equipmentIncludeDescendants(),
+      });
     if (this.canReadInspections()) this.pane.loadInspections({ organizationId, ...scope });
   }
 
   /**
    * Method retryComplianceTree
-   * @description Re-requests the compliance hierarchy after a failed load.
+   *
+   * @description
+   * Re-requests the compliance hierarchy after a failed load.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected retryComplianceTree(): void {
@@ -873,9 +1441,14 @@ export class OrganizationAssetsPage {
 
   /**
    * Method retryComplianceSummary
-   * @description Re-requests the selected facility's compliance summary after a failed load. A no-op while no facility is selected, since the summary pane does not render then.
+   *
+   * @description
+   * Re-requests the selected facility's compliance summary after a failed load. A no-op while no
+   * facility is selected, since the summary pane does not render then.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected retryComplianceSummary(): void {
@@ -896,7 +1469,9 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} tab - The activated tab id.
+   *
    * @returns {void}
    */
   protected onAxisActivated(tab: string): void {
@@ -915,10 +1490,15 @@ export class OrganizationAssetsPage {
 
   /**
    * Method onComplianceNodeSelected
-   * @description Scopes the compliance summary to the selected facility.
+   *
+   * @description
+   * Scopes the compliance summary to the selected facility.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {TreeNode<ComplianceFacilityTreeNodeOutput>} node - The selected tree node.
+   *
    * @returns {void}
    */
   protected onComplianceNodeSelected(node: TreeNode<ComplianceFacilityTreeNodeOutput>): void {
@@ -944,6 +1524,7 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected onPrintLabels(): void {
@@ -985,6 +1566,7 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onExportSafetyRegister(): void {
@@ -1013,6 +1595,7 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected onArchiveRegister(): void {
@@ -1036,8 +1619,10 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} snapshotId - The snapshot row to download.
    * @param {string} generatedAt - The snapshot's ISO 8601 generation instant.
+   *
    * @returns {void}
    */
   protected onDownloadSnapshot(snapshotId: string, generatedAt: string): void {
@@ -1052,9 +1637,13 @@ export class OrganizationAssetsPage {
 
   /**
    * Method retrySnapshots
-   * @description Re-requests the archived-snapshot list after a failed load.
+   *
+   * @description
+   * Re-requests the archived-snapshot list after a failed load.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected retrySnapshots(): void {
@@ -1063,10 +1652,15 @@ export class OrganizationAssetsPage {
 
   /**
    * Method truncateHash
-   * @description The snapshot's SHA-256 content hash shortened to its first 12 characters for display.
+   *
+   * @description
+   * The snapshot's SHA-256 content hash shortened to its first 12 characters for display.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} hash - The full content hash.
+   *
    * @returns {string} The truncated hash.
    */
   protected truncateHash(hash: string): string {
@@ -1075,10 +1669,15 @@ export class OrganizationAssetsPage {
 
   /**
    * Method formatSnapshotSize
-   * @description The stored PDF's size rendered human-readable — KB below one megabyte, MB above.
+   *
+   * @description
+   * The stored PDF's size rendered human-readable — KB below one megabyte, MB above.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {number} sizeBytes - The stored PDF's size in bytes.
+   *
    * @returns {string} The formatted size.
    */
   protected formatSnapshotSize(sizeBytes: number): string {
@@ -1089,10 +1688,16 @@ export class OrganizationAssetsPage {
 
   /**
    * Method snapshotScopeLabel
-   * @description Resolves an archived register's raw `scope` into its localized label — a `facility` snapshot reads "Site", anything else "Organization".
+   *
+   * @description
+   * Resolves an archived register's raw `scope` into its localized label — a `facility` snapshot
+   * reads "Site", anything else "Organization".
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {string} scope - The snapshot's raw `scope` value.
+   *
    * @returns {string} The localized scope label.
    */
   protected snapshotScopeLabel(scope: string): string {
@@ -1114,7 +1719,9 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.4.0
+   *
    * @param {ComplianceFacilitySummary} facility - The selected facility's compliance summary row.
+   *
    * @returns {string | null} The ancestor path, or `null` for a root facility.
    */
   protected complianceAncestorPathLabel(facility: ComplianceFacilitySummary): string | null {
@@ -1127,10 +1734,16 @@ export class OrganizationAssetsPage {
 
   /**
    * Method typeLabelOf
-   * @description The equipment's type, humanized through the shared type catalog — mirrors `EquipmentTable`'s own resolution.
+   *
+   * @description
+   * The equipment's type, humanized through the shared type catalog — mirrors `EquipmentTable`'s
+   * own resolution.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {string} type - The raw type value.
+   *
    * @returns {string} The localized label, or the raw value humanized if unknown.
    */
   protected typeLabelOf(type: string): string {
@@ -1142,10 +1755,16 @@ export class OrganizationAssetsPage {
 
   /**
    * Method equipmentSecondaryLineOf
-   * @description The equipment row's muted second line: its serial number, or its brand and model, or `null` when none is set.
+   *
+   * @description
+   * The equipment row's muted second line: its serial number, or its brand and model, or `null`
+   * when none is set.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {EquipmentOutput} item - The equipment being rendered.
+   *
    * @returns {string | null} The secondary line, or `null`.
    */
   protected equipmentSecondaryLineOf(item: EquipmentOutput): string | null {
@@ -1159,10 +1778,15 @@ export class OrganizationAssetsPage {
 
   /**
    * Method inspectorAvatarFallback
-   * @description The inspector's avatar fallback, or `'?'` when the inspection carries no inspector.
+   *
+   * @description
+   * The inspector's avatar fallback, or `'?'` when the inspection carries no inspector.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {InspectorOutput | null} inspector - The inspection row's `inspector`.
+   *
    * @returns {string} The 1–2 letter fallback.
    */
   protected inspectorAvatarFallback(inspector: InspectorOutput | null): string {
@@ -1171,10 +1795,16 @@ export class OrganizationAssetsPage {
 
   /**
    * Method formatRelativeAge
-   * @description Renders an ISO 8601 timestamp as a localized relative label ("3 days ago"), for the compliance freshness lines.
+   *
+   * @description
+   * Renders an ISO 8601 timestamp as a localized relative label ("3 days ago"), for the compliance
+   * freshness lines.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {string} iso - ISO 8601 timestamp to compare against now.
+   *
    * @returns {string} The relative label.
    */
   protected formatRelativeAge(iso: string): string {
@@ -1183,10 +1813,15 @@ export class OrganizationAssetsPage {
 
   /**
    * Method onNodeSelected
-   * @description Scopes the right pane to the selected facility.
+   *
+   * @description
+   * Scopes the right pane to the selected facility.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {TreeNode<FacilityOutput>} node - The selected tree node.
+   *
    * @returns {void}
    */
   protected onNodeSelected(node: TreeNode<FacilityOutput>): void {
@@ -1218,9 +1853,13 @@ export class OrganizationAssetsPage {
   /**
    * Method clearComplianceSelection
    * @method clearComplianceSelection
-   * @description Returns to compliance browsing and clears the URL-backed summary selection.
+   *
+   * @description
+   * Returns to compliance browsing and clears the URL-backed summary selection.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected clearComplianceSelection(): void {
@@ -1235,10 +1874,15 @@ export class OrganizationAssetsPage {
   /**
    * Method focusExplorerTarget
    * @method focusExplorerTarget
-   * @description Moves focus into the newly visible pane after rendering, browser-only.
+   *
+   * @description
+   * Moves focus into the newly visible pane after rendering, browser-only.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string} selector - The local return button or selected hierarchy row.
+   *
    * @returns {void}
    */
   private focusExplorerTarget(selector: string): void {
@@ -1257,14 +1901,15 @@ export class OrganizationAssetsPage {
    * The query params a creation link carries: `create=1` opens the list's
    * creation sheet on arrival, and the selected site scopes it so the new
    * record lands where the operator is looking.
-   *
    * The two creation forms name the site differently — equipment owns a
    * `facility`, a site owns a `parent` — so the caller states which key it
    * needs rather than the explorer guessing from the button.
    *
    * @access protected
    * @since 2.0.0
+   *
    * @param {'facility' | 'parent'} key - The param name the target form reads.
+   *
    * @returns {Record<string, string>} The params, or an empty object.
    */
   protected createScopeParams(key: 'facility' | 'parent'): Record<string, string> {
@@ -1279,7 +1924,6 @@ export class OrganizationAssetsPage {
    *
    * @description
    * Mirrors the axis and the selected site into the query string.
-   *
    * The explorer replaced two routed list pages that both wrote their own
    * state to the URL, and inherited neither: a reload came back on "By site"
    * with nothing selected, the back button left the page instead of clearing
@@ -1290,6 +1934,7 @@ export class OrganizationAssetsPage {
    *
    * @access private
    * @since 2.0.0
+   *
    * @returns {void}
    */
   private writeUrlState(): void {
@@ -1300,6 +1945,8 @@ export class OrganizationAssetsPage {
       queryParams: {
         axis: axis === 'site' ? null : axis,
         facility: axis === 'site' ? this.selectedFacilityId() : null,
+        equipmentScope:
+          axis === 'site' ? (this.equipmentIncludeDescendants() ? 'subtree' : 'direct') : null,
         compliance: axis === 'compliance' ? this.selectedComplianceFacilityId() : null,
       },
       queryParamsHandling: 'merge',
@@ -1309,10 +1956,15 @@ export class OrganizationAssetsPage {
 
   /**
    * Method onExpandRequested
-   * @description Loads a node's branch, guarded against a duplicate request.
+   *
+   * @description
+   * Loads a node's branch, guarded against a duplicate request.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {TreeNode<FacilityOutput>} node - The node being expanded.
+   *
    * @returns {void}
    */
   protected onExpandRequested(node: TreeNode<FacilityOutput>): void {
@@ -1330,16 +1982,23 @@ export class OrganizationAssetsPage {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onComplianceExpandRequested(): void {}
 
   /**
    * Method onNodeDropped
-   * @description Re-parents a facility dragged onto another — the tree's pointer enhancement over the "Move to…" menu action.
+   *
+   * @description
+   * Re-parents a facility dragged onto another — the tree's pointer enhancement over the "Move to…"
+   * menu action.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {TreeDropEvent<FacilityOutput>} event - The completed drag-drop.
+   *
    * @returns {void}
    */
   protected onNodeDropped(event: TreeDropEvent<FacilityOutput>): void {
@@ -1352,50 +2011,82 @@ export class OrganizationAssetsPage {
 
   /**
    * Method onMoveRequested
-   * @description Opens the "Move to…" dialog for a node, from the tree row's menu.
+   *
+   * @description
+   * Opens the "Move to…" dialog for a node, from the tree row's menu.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {TreeNode<FacilityOutput>} node - The node to move.
+   *
    * @returns {void}
    */
   protected onMoveRequested(node: TreeNode<FacilityOutput>): void {
-    this.moveTarget.set({ facilityId: node.id, facilityName: node.label });
+    if (!this.canMoveFacilities()) return;
+    this.tree.resetMoveOperation();
+    this.moveParents.load({ organizationId: this.organizationId(), parentForFacilityId: node.id });
+    this.moveParents.ensureSelected({
+      organizationId: this.organizationId(),
+      facilityId: node.data.parentFacilityId,
+    });
+    this.moveTarget.set({
+      facilityId: node.id,
+      facilityName: node.label,
+      facilityType: node.data.type,
+      currentParentFacilityId: node.data.parentFacilityId,
+    });
   }
 
   /**
    * Method onMoveSubmitted
-   * @description Calls the same re-parent flow as pointer drag-drop, then closes the dialog.
+   *
+   * @description
+   * Calls the same re-parent flow as pointer drag-drop, then closes the dialog.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {FacilityMoveSubmittedEvent} event - The picked target.
+   *
    * @returns {void}
    */
   protected onMoveSubmitted(event: FacilityMoveSubmittedEvent): void {
+    if (!this.canMoveFacilities() || this.tree.isMoving()) return;
     this.tree.move({
       organizationId: this.organizationId(),
       facilityId: event.facilityId,
       parentFacilityId: event.parentFacilityId,
     });
-    this.moveTarget.set(null);
   }
 
   /**
    * Method onMoveDismissed
-   * @description Closes the "Move to…" dialog without moving anything.
+   *
+   * @description
+   * Closes the "Move to…" dialog without moving anything.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected onMoveDismissed(): void {
-    this.moveTarget.set(null);
+    if (!this.tree.isMoving()) this.moveTarget.set(null);
   }
 
   /**
    * Method onDuplicateRequested
-   * @description Duplicates a node's subtree — the tree row menu's "Duplicate" action. No confirmation dialog: the action is not destructive.
+   *
+   * @description
+   * Duplicates a node's subtree — the tree row menu's "Duplicate" action. No confirmation dialog:
+   * the action is not destructive.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @param {TreeNode<FacilityOutput>} node - The node to duplicate.
+   *
    * @returns {void}
    */
   protected onDuplicateRequested(node: TreeNode<FacilityOutput>): void {
@@ -1403,12 +2094,124 @@ export class OrganizationAssetsPage {
   }
   //#endregion
 
+  /**
+   * Method onMoveSearchChanged
+   *
+   * @description
+   * Searches all server-admissible parents, including unloaded branches.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} search - search.
+   *
+   * @returns {void} Return value.
+   */
+  protected onMoveSearchChanged(search: string): void {
+    this.moveParents.searchOptions({ organizationId: this.organizationId(), search, page: 1 });
+  }
+  /**
+   * Method onMovePageChanged
+   *
+   * @description
+   * Retrieves another parent candidate page without losing the draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {number} page - page.
+   *
+   * @returns {void} Return value.
+   */
+  protected onMovePageChanged(page: number): void {
+    this.moveParents.load({
+      organizationId: this.organizationId(),
+      search: this.moveParents.search(),
+      page,
+    });
+  }
+  /**
+   * Method loadMoreRoots
+   *
+   * @description
+   * Loads a further root page, retaining existing tree rows.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Return value.
+   */
+  protected loadMoreRoots(): void {
+    this.tree.loadMoreRoots(this.organizationId());
+  }
+  /**
+   * Method loadMoreChildren
+   *
+   * @description
+   * Loads a further page of the requested branch.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {Event} event - event.
+   * @param {string} facilityId - facilityId.
+   *
+   * @returns {void} Return value.
+   */
+  protected loadMoreChildren(event: Event, facilityId: string): void {
+    event.stopPropagation();
+    this.tree.loadMoreChildren({ organizationId: this.organizationId(), facilityId });
+  }
+  /**
+   * Method changeEquipmentScope
+   *
+   * @description
+   * Changes equipment scope and persists the shareable browse state.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} includeDescendants - includeDescendants.
+   *
+   * @returns {void} Return value.
+   */
+  protected changeEquipmentScope(includeDescendants: boolean): void {
+    this.equipmentIncludeDescendants.set(includeDescendants);
+    this.writeUrlState();
+  }
+  /**
+   * Method onBranchRetryRequested
+   *
+   * @description
+   * Retries the failed branch page, keeping existing children after append failures.
+   * Retries the failed branch page, keeping existing children after append failures.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {TreeNode<FacilityOutput>} node - node.
+   *
+   * @returns {void} Return value.
+   */
+  protected onBranchRetryRequested(node: TreeNode<FacilityOutput>): void {
+    if (this.tree.canLoadMoreChildren(node.id))
+      this.tree.loadMoreChildren({ organizationId: this.organizationId(), facilityId: node.id });
+    else
+      this.tree.ensureChildrenLoaded({
+        organizationId: this.organizationId(),
+        facilityId: node.id,
+      });
+  }
   //#region Private methods
   /**
    * Method ensureComplianceTreeLoaded
-   * @description Loads the compliance hierarchy and authorized archive list on first activation.
+   *
+   * @description
+   * Loads the compliance hierarchy and authorized archive list on first activation.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @returns {void}
    */
   private ensureComplianceTreeLoaded(): void {
@@ -1420,11 +2223,16 @@ export class OrganizationAssetsPage {
 
   /**
    * Method isLoadedDescendant
-   * @description Whether `id` sits under `ancestorId` in the currently loaded part of the tree.
+   *
+   * @description
+   * Whether `id` sits under `ancestorId` in the currently loaded part of the tree.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @param {string} ancestorId - The candidate ancestor's id.
    * @param {string} id - The id being searched for.
+   *
    * @returns {boolean} Whether `id` is a loaded descendant of `ancestorId`.
    */
   private isLoadedDescendant(ancestorId: string, id: string): boolean {

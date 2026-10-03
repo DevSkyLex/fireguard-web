@@ -1,71 +1,59 @@
 <hlm-dialog [state]="dialogState()" [disableClose]="busy()" (stateChanged)="onStateChanged($event)">
   <hlm-dialog-content
+    *hlmDialogPortal
     class="max-h-[calc(100svh-2rem)] overflow-y-auto overscroll-contain sm:max-w-md"
     data-testid="facility-move-dialog"
-    *hlmDialogPortal
   >
     <hlm-dialog-header>
       <h3 hlmDialogTitle i18n="@@facility.moveDialog.header">Move facility</h3>
       <p hlmDialogDescription>{{ description() }}</p>
     </hlm-dialog-header>
-
-    <hlm-field>
+    @if (errorMessage(); as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ error }}</p>
+      </div>
+    }
+    <div hlmField>
       <label hlmFieldLabel for="facility-move-parent" i18n="@@facility.moveDialog.parentLabel"
         >New parent</label
       >
-      <hlm-combobox
-        [value]="selectedParent()"
-        [itemToString]="parentLabelOf"
-        (valueChange)="selectedParent.set($any($event))"
-      >
-        <hlm-combobox-input
-          inputId="facility-move-parent"
-          placeholder="Search a facility, or leave empty for the root level"
-          i18n-placeholder="@@facility.moveDialog.parentPlaceholder"
-          data-testid="facility-move-parent-input"
-          class="mobile-ui:min-h-11"
-        />
-        <hlm-combobox-content *hlmComboboxPortal>
-          <hlm-combobox-empty i18n="@@facility.moveDialog.noMatch"
-            >No facility matches.</hlm-combobox-empty
-          >
-          <div hlmComboboxList>
-            <hlm-combobox-item value="" data-testid="facility-move-option-root">{{
-              rootOptionLabel
-            }}</hlm-combobox-item>
-            @for (option of options(); track option.value) {
-              <hlm-combobox-item
-                [value]="option.value"
-                [attr.data-testid]="'facility-move-option-' + option.value"
-              >
-                <div class="flex min-w-0 flex-col">
-                  <span class="truncate">{{ option.label }}</span>
-                  <span class="truncate text-xs text-muted-foreground"
-                    >{{ option.typeLabel }}
-                    @if (option.pathLabel; as path) {
-                      · {{ path }}
-                    }
-                  </span>
-                </div>
-              </hlm-combobox-item>
-            }
-          </div>
-        </hlm-combobox-content>
-      </hlm-combobox>
-    </hlm-field>
-
+      <app-facility-option-picker
+        inputId="facility-move-parent"
+        [formField]="moveForm.parentFacilityId"
+        [options]="options()"
+        [hydratedOption]="hydratedOption()"
+        [allowEmpty]="allowEmpty()"
+        [emptyLabel]="rootOptionLabel"
+        [callState]="optionsCallState()"
+        [page]="page()"
+        [pageCount]="pageCount()"
+        (searchChanged)="searchChanged.emit($event)"
+        (pageChanged)="pageChanged.emit($event)"
+      />
+      @if (moveForm.parentFacilityId().touched()) {
+        @for (error of moveForm.parentFacilityId().errors(); track error.kind) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </div>
     <hlm-dialog-footer>
-      <button hlmDialogClose hlmBtn type="button" variant="outline" class="mobile-ui:min-h-11">
-        <span i18n="@@common.cancel">Cancel</span>
+      <button
+        hlmDialogClose
+        hlmBtn
+        type="button"
+        variant="outline"
+        [disabled]="busy()"
+        i18n="@@common.cancel"
+      >
+        Cancel
       </button>
       <button
         hlmBtn
         type="button"
         data-testid="facility-move-submit"
-        [disabled]="busy()"
+        [disabled]="busy() || optionsCallState().status === 'pending'"
         [attr.aria-busy]="busy() ? 'true' : null"
         (click)="submit()"
-        class="mobile-ui:min-h-11"
       >
         @if (busy()) {
           <span i18n="@@facility.moveDialog.submitting">Moving…</span>
@@ -73,11 +61,6 @@
           <span i18n="@@facility.moveDialog.submit">Move</span>
         }
       </button>
-      <span class="sr-only" aria-live="polite">
-        @if (busy()) {
-          <span i18n="@@facility.moveDialog.submittingStatus">Moving, please wait…</span>
-        }
-      </span>
     </hlm-dialog-footer>
   </hlm-dialog-content>
 </hlm-dialog>

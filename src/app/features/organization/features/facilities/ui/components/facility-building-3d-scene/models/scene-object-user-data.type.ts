@@ -3,19 +3,31 @@
  * @interface RoomUserData
  *
  * @description
- * `userData` carried by a room mesh built by `buildRoomMesh` — the pickable
- * room's own facility id and its owning floor's facility id.
- *
- * @since 1.0.0
+ * Pickable generated room.
  */
 export interface RoomUserData {
-  /** Discriminates this object from every other {@link SceneObjectUserData} variant. */
+  /**
+   * Property kind
+   *
+   * @description
+   * Object discriminator.
+   */
   readonly kind: 'room';
 
-  /** The room's own facility id — what a pick or a selection resolves to. */
+  /**
+   * Property facilityId
+   *
+   * @description
+   * Room facility identifier.
+   */
   readonly facilityId: string;
 
-  /** The owning floor's facility id. */
+  /**
+   * Property floorId
+   *
+   * @description
+   * Owning floor identifier.
+   */
   readonly floorId: string;
 }
 
@@ -23,14 +35,24 @@ export interface RoomUserData {
  * Interface FloorSlabUserData
  * @interface FloorSlabUserData
  *
- * @description `userData` carried by a floor's slab mesh — pickable, but lower priority than a {@link RoomUserData}.
- * @since 1.0.0
+ * @description
+ * Pickable generated floor slab.
  */
 export interface FloorSlabUserData {
-  /** Discriminates this object from every other {@link SceneObjectUserData} variant. */
+  /**
+   * Property kind
+   *
+   * @description
+   * Object discriminator.
+   */
   readonly kind: 'floor-slab';
 
-  /** The owning floor's facility id. */
+  /**
+   * Property floorId
+   *
+   * @description
+   * Owning floor identifier.
+   */
   readonly floorId: string;
 }
 
@@ -38,14 +60,24 @@ export interface FloorSlabUserData {
  * Interface FloorEdgesUserData
  * @interface FloorEdgesUserData
  *
- * @description `userData` carried by a floor's `EdgesGeometry` outline — never pickable.
- * @since 1.0.0
+ * @description
+ * Non-pickable floor outline.
  */
 export interface FloorEdgesUserData {
-  /** Discriminates this object from every other {@link SceneObjectUserData} variant. */
+  /**
+   * Property kind
+   *
+   * @description
+   * Object discriminator.
+   */
   readonly kind: 'floor-edges';
 
-  /** The owning floor's facility id. */
+  /**
+   * Property floorId
+   *
+   * @description
+   * Owning floor identifier.
+   */
   readonly floorId: string;
 }
 
@@ -54,34 +86,120 @@ export interface FloorEdgesUserData {
  * @interface FloorPlaceholderUserData
  *
  * @description
- * `userData` carried by the neutral stand-in `buildFloorGroup` produces for
- * a floor with no derivable outline — never pickable, so the floor still
- * occupies its place in the stack without claiming a geometry it does not
- * have.
- *
- * @since 1.0.0
+ * Non-pickable missing-geometry placeholder.
  */
 export interface FloorPlaceholderUserData {
-  /** Discriminates this object from every other {@link SceneObjectUserData} variant. */
+  /**
+   * Property kind
+   *
+   * @description
+   * Object discriminator.
+   */
   readonly kind: 'floor-placeholder';
 
-  /** The owning floor's facility id. */
+  /**
+   * Property floorId
+   *
+   * @description
+   * Owning floor identifier.
+   */
   readonly floorId: string;
 }
 
 /**
- * Type SceneObjectUserData
- * @type {SceneObjectUserData}
+ * Interface EquipmentUserData
+ * @interface EquipmentUserData
  *
  * @description
- * Every kind of `userData` a `FacilityBuilding3dScene` object can carry.
- * `kind` stays an open, extensible discriminant — an `'equipment'` variant
- * is expected in a later lot and only needs a new member added here.
+ * Pickable equipment marker.
+ */
+export interface EquipmentUserData {
+  /**
+   * Property kind
+   *
+   * @description
+   * Object discriminator.
+   */
+  readonly kind: 'equipment';
+
+  /**
+   * Property equipmentId
+   *
+   * @description
+   * Equipment resource identifier.
+   */
+  readonly equipmentId: string;
+
+  /**
+   * Property floorId
+   *
+   * @description
+   * Owning floor identifier.
+   */
+  readonly floorId: string;
+}
+
+/**
+ * Interface ImportedNodeUserData
+ * @interface ImportedNodeUserData
  *
- * @since 1.0.0
+ * @description
+ * Imported mesh with immutable source node identity.
+ */
+export interface ImportedNodeUserData {
+  /**
+   * Property kind
+   *
+   * @description
+   * Object discriminator.
+   */
+  readonly kind: 'imported-node';
+
+  /**
+   * Property nodeIndex
+   *
+   * @description
+   * Stable immutable glTF node index.
+   */
+  readonly nodeIndex: number;
+
+  /**
+   * Property nodePath
+   *
+   * @description
+   * Source node indices from this mesh to the root, supporting grouped object association.
+   */
+  readonly nodePath: readonly number[];
+
+  /**
+   * Property bindingUnavailable
+   *
+   * @description
+   * Prevents inherited facility filtering and highlights beyond an unavailable association.
+   */
+  readonly bindingUnavailable: boolean;
+
+  /**
+   * Property facilityId
+   *
+   * @description
+   * Associated existing facility, or null when unbound.
+   */
+  readonly facilityId: string | null;
+}
+
+/**
+ * Type SceneObjectUserData
+ *
+ * @description
+ * Discriminates selectable scene objects from outlines and placeholders.
+ *
+ * @type {SceneObjectUserData}
  */
 export type SceneObjectUserData =
   | RoomUserData
   | FloorSlabUserData
   | FloorEdgesUserData
-  | FloorPlaceholderUserData;
+  | FloorPlaceholderUserData
+  | EquipmentUserData
+  | ImportedNodeUserData;

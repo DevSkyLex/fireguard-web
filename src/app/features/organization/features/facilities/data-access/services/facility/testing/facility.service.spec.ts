@@ -153,6 +153,28 @@ describe('FacilityService', () => {
       const req = httpMock.expectOne(facilityBaseUrl);
       req.flush({ status: 403, title: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
     });
+
+    it('forwards paginated intervention parent candidate context without narrowing read grants', () => {
+      service
+        .list(orgId, {
+          parentForType: 'floor',
+          interventionId: 'intervention-1',
+          includePath: true,
+          search: 'North',
+          page: 2,
+          itemsPerPage: 200,
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne((request) => request.url === facilityBaseUrl);
+      expect(req.request.params.get('parentForType')).toBe('floor');
+      expect(req.request.params.get('interventionId')).toBe('intervention-1');
+      expect(req.request.params.get('includePath')).toBe('true');
+      expect(req.request.params.get('search')).toBe('North');
+      expect(req.request.params.get('page')).toBe('2');
+      expect(req.request.params.get('itemsPerPage')).toBe('200');
+      req.flush(mockCollection([]));
+    });
   });
 
   // ── listChildren ─────────────────────────────────────────────────────────────
@@ -179,6 +201,20 @@ describe('FacilityService', () => {
   // ── listDescendants ───────────────────────────────────────────────────────
 
   describe('listDescendants', () => {
+    it('opts candidate requests into server pagination while retaining descendant search', () => {
+      service
+        .listDescendants(orgId, facilityId, { page: 3, itemsPerPage: 100, search: 'remote room' })
+        .subscribe();
+      const request = httpMock.expectOne(
+        (r) => r.url === `${facilityBaseUrl}/${facilityId}/descendants`,
+      );
+      expect(request.request.params.get('pagination')).toBe('true');
+      expect(request.request.params.get('page')).toBe('3');
+      expect(request.request.params.get('itemsPerPage')).toBe('100');
+      expect(request.request.params.get('search')).toBe('remote room');
+      request.flush(mockCollection([mockFacility]));
+    });
+
     it('should send GET request to the descendants endpoint with filters', () => {
       service
         .listDescendants(orgId, facilityId, { includeArchived: true, search: 'floor' })
@@ -615,12 +651,13 @@ describe('FacilityService', () => {
     it('should send POST request to move facility', () => {
       const moved: FacilityOutput = { ...mockFacility, parentFacilityId: 'facility-uuid-parent' };
 
-      service.move(orgId, facilityId, input).subscribe((facility) => {
+      service.move(orgId, facilityId, input, 7).subscribe((facility) => {
         expect(facility.parentFacilityId).toBe('facility-uuid-parent');
       });
 
       const req = httpMock.expectOne(`${facilityBaseUrl}/${facilityId}/move`);
       expect(req.request.method).toBe('POST');
+      expect(req.request.headers.get('If-Match')).toBe('"revision-7"');
       expect(req.request.body).toEqual(input);
       expect(req.request.withCredentials).toBe(true);
       req.flush(moved);

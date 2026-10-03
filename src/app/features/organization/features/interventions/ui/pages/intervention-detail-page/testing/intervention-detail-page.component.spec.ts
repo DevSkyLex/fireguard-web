@@ -28,6 +28,7 @@ import {
   idleCallState,
   pendingCallState,
   successCallState,
+  toStoreError,
   type CallState,
 } from '@core/request-state';
 import { THEME_PORT, type ThemePort } from '@core/theme';
@@ -38,7 +39,11 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
-import type { FacilityOutput } from '@features/organization/features/facilities/models';
+import type {
+  FacilityOption,
+  FacilityOutput,
+} from '@features/organization/features/facilities/models';
+import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { FacilityCreateForm } from '@features/organization/features/facilities/ui/forms/facility-create-form';
 import {
   InterventionLabelService,
@@ -306,6 +311,9 @@ describe('InterventionDetailPage', () => {
   let deleteWorkItems: ReturnType<typeof vi.fn>;
   let createWorkItem: ReturnType<typeof vi.fn>;
   let createFacility: ReturnType<typeof vi.fn>;
+  let loadFacilityParents: ReturnType<typeof vi.fn>;
+  let searchFacilityParents: ReturnType<typeof vi.fn>;
+  let ensureFacilityParents: ReturnType<typeof vi.fn>;
   let ensureFacilitiesLoaded: ReturnType<typeof vi.fn>;
   let reloadFacilities: ReturnType<typeof vi.fn>;
   let workspaceDelete: ReturnType<typeof vi.fn>;
@@ -397,6 +405,9 @@ describe('InterventionDetailPage', () => {
     deleteWorkItems = vi.fn();
     createWorkItem = vi.fn();
     createFacility = vi.fn();
+    loadFacilityParents = vi.fn();
+    searchFacilityParents = vi.fn();
+    ensureFacilityParents = vi.fn();
     ensureFacilitiesLoaded = vi.fn();
     reloadFacilities = vi.fn();
     workspaceDelete = vi.fn();
@@ -626,10 +637,25 @@ describe('InterventionDetailPage', () => {
           InterventionWorkspaceStore,
           InterventionPlanningOptionsStore,
           InterventionLinkedResourcesStore,
+          FacilityOptionsStore,
         ],
       },
       add: {
         providers: [
+          {
+            provide: FacilityOptionsStore,
+            useValue: {
+              options: signal([]),
+              loadCallState: signal(idleCallState()),
+              page: signal(1),
+              pageCount: signal(3),
+              selectedOption: signal(null),
+              search: signal('North'),
+              load: loadFacilityParents,
+              searchOptions: searchFacilityParents,
+              ensureLoaded: ensureFacilityParents,
+            },
+          },
           { provide: InterventionTimeStore, useValue: { load: vi.fn(), scope: signal(null) } },
           {
             provide: InterventionWorkspaceStore,
@@ -2195,6 +2221,143 @@ describe('InterventionDetailPage', () => {
   });
 
   describe('adding a facility', () => {
+    it('queries admissible parents with the intervention context and retains it for search and pages', async () => {
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+
+      page['onFacilityTypeChanged']('floor');
+      page['onFacilityParentSearchChanged']('North');
+      page['onFacilityParentPageChanged'](2);
+
+      expect(ensureFacilityParents).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        parentForType: 'floor',
+      });
+      expect(searchFacilityParents).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        search: 'North',
+        page: 1,
+      });
+      expect(loadFacilityParents).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        search: 'North',
+        page: 2,
+      });
+      expect(permitted.has('organization.facilities.read')).toBe(false);
+    });
+
+    it('does not query creation parents when the server denies work item mutation', async () => {
+      current.set(
+        intervention({ allowedActions: { ...actionsFor('draft'), canMutateWorkItems: false } }),
+      );
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+
+      page['onFacilityTypeChanged']('building');
+      page['onFacilityParentSearchChanged']('North');
+      page['onFacilityParentPageChanged'](2);
+
+      expect(ensureFacilityParents).not.toHaveBeenCalled();
+      expect(searchFacilityParents).not.toHaveBeenCalled();
+      expect(loadFacilityParents).not.toHaveBeenCalled();
+    });
+
+    it('creates a child under its selected parent and preserves the draft after a failed write', async () => {
+      fixture = await createPage();
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      byTestId('intervention-add-facility').click();
+      await fixture.whenStable();
+      const form = fixture.debugElement.query(By.directive(FacilityCreateForm))
+        .componentInstance as FacilityCreateForm;
+      form['model'].update((draft) => ({
+        ...draft,
+        type: 'building',
+        name: 'Warehouse',
+        parentFacilityId: 'draft-site',
+      }));
+      await fixture.whenStable();
+
+      createFacility.mockImplementation(() => {
+        createFacilityCallState.set(errorCallState(toStoreError(new Error('Parent was updated'))));
+      });
+      const submitForm = (): void => {
+        (
+          inBody('intervention-facility-sheet').querySelector('form') as HTMLFormElement
+        ).dispatchEvent(new Event('submit'));
+      };
+      submitForm();
+      await fixture.whenStable();
+
+      expect(createFacility).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        input: expect.objectContaining({
+          type: 'building',
+          name: 'Warehouse',
+          parentFacilityId: 'draft-site',
+        }),
+      });
+      expect(inBody('intervention-facility-sheet')).not.toBeNull();
+      expect(form['model']().parentFacilityId).toBe('draft-site');
+      expect(form['model']().name).toBe('Warehouse');
+      submitForm();
+      expect(createFacility).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears an incompatible off-page parent in the intervention facility sheet', async () => {
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const options = page['facilityParents'].options as WritableSignal<readonly FacilityOption[]>;
+      options.set([{ value: 'draft-site', label: 'Draft campus', type: 'site' } as FacilityOption]);
+      byTestId('intervention-tab-facilities').click();
+      await fixture.whenStable();
+      byTestId('intervention-add-facility').click();
+      await fixture.whenStable();
+      const form = fixture.debugElement.query(By.directive(FacilityCreateForm))
+        .componentInstance as FacilityCreateForm;
+      form['model'].update((draft) => ({
+        ...draft,
+        type: 'building',
+        name: 'New level',
+        parentFacilityId: 'draft-site',
+      }));
+      await fixture.whenStable();
+      page['onFacilityParentPageChanged'](2);
+      options.set([{ value: 'other-site', label: 'Other campus', type: 'site' } as FacilityOption]);
+      await fixture.whenStable();
+      expect(form['model']().parentFacilityId).toBe('draft-site');
+      expect(
+        inBody('intervention-facility-sheet').querySelector<HTMLInputElement>(
+          '#facility-create-parent',
+        )?.value,
+      ).toBe('Draft campus');
+
+      form['model'].update((draft) => ({ ...draft, type: 'floor' }));
+      await fixture.whenStable();
+      (
+        inBody('intervention-facility-sheet').querySelector('form') as HTMLFormElement
+      ).dispatchEvent(new Event('submit'));
+      await fixture.whenStable();
+      expect(createFacility).not.toHaveBeenCalled();
+      expect(form['model']().parentFacilityId).toBe('');
+      expect(form['model']().name).toBe('New level');
+      expect(ensureFacilityParents).toHaveBeenLastCalledWith({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        parentForType: 'floor',
+      });
+      expect(loadFacilityParents).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        interventionId: 'intervention-1',
+        search: 'North',
+        page: 2,
+      });
+    });
+
     it('should offer the affordance while the server advertises mutable work items', async () => {
       fixture = await createPage();
 
@@ -2241,7 +2404,7 @@ describe('InterventionDetailPage', () => {
       const facilityForm = fixture.debugElement.query(By.directive(FacilityCreateForm))
         .componentInstance as unknown as { model: WritableSignal<Record<string, string>> };
       facilityForm.model.set({
-        type: 'building',
+        type: 'site',
         name: 'Warehouse',
         parentFacilityId: '',
         code: '',
@@ -2258,7 +2421,7 @@ describe('InterventionDetailPage', () => {
       expect(createFacility).toHaveBeenCalledWith({
         organizationId: 'org-1',
         interventionId: 'intervention-1',
-        input: expect.objectContaining({ type: 'building', name: 'Warehouse' }),
+        input: expect.objectContaining({ type: 'site', name: 'Warehouse' }),
       });
     });
 
@@ -2308,7 +2471,7 @@ describe('InterventionDetailPage', () => {
       const facilityForm = fixture.debugElement.query(By.directive(FacilityCreateForm))
         .componentInstance as unknown as { model: WritableSignal<Record<string, string>> };
       facilityForm.model.set({
-        type: 'building',
+        type: 'site',
         name: 'Warehouse',
         parentFacilityId: '',
         code: '',

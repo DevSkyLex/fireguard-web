@@ -18,7 +18,12 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
+import { idleCallState, type CallState } from '@core/request-state';
+import type {
+  CreateFacilityInput,
+  FacilityOption,
+  FacilityType,
+} from '@features/organization/features/facilities/models';
 import { FacilityCreateForm } from '@features/organization/features/facilities/ui/forms/facility-create-form';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmButton } from '@shared/ui/button';
@@ -34,24 +39,17 @@ import { UnsavedChangesDialog } from '@shared/unsaved-changes';
  * page, so a `site_setup` intervention can attach the facility the backend's
  * "At least one facility is required" publication blocker asks for without
  * leaving the workspace.
- *
  * Purely presentational, mirroring `InterventionWorkItemSheet`: it owns the
  * panel, forwards `visible`/`visibleChange` and re-emits the form's
  * `submitted` untouched — the page enriches the payload with the
  * organization and intervention IRIs and calls the store
  * (`ARCHITECTURE.md` §10.5). Its open state is derived from `visible`
  * rather than held locally, so the page stays the single owner.
- *
- * Deliberately minimal: no parent-facility candidates, map center, or
- * address geocoding are wired in, since the intervention workspace has no
- * facility hierarchy or map context of its own to offer — the form still
- * renders its "Pick on map" and "Locate address" controls, but they compose
- * within a single session (coordinates typed by hand still work); wiring
- * `geocodeRequested` is left to whichever agent picks up richer editing here.
- *
+ * The page supplies server-filtered candidate parents, including admissible drafts of this
+ * intervention. The form retains the chosen label across candidate pages and keeps failed drafts.
+ * Map center and address geocoding remain optional.
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
  * instead of a right-hand panel, so its footer lands in the thumb zone.
- *
  * Closing goes exclusively through {@link requestClose}: `disableClose` is
  * hard-`true` (never reactive) so brn's own Escape/outside-click `dismiss()`
  * is permanently a no-op, the vendored close button is replaced with a plain
@@ -76,13 +74,133 @@ import { UnsavedChangesDialog } from '@shared/unsaved-changes';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionFacilitySheet {
+  /**
+   * Property parentOptions
+   * @readonly
+   *
+   * @description
+   * Current server page of admissible parents, owned by the intervention page.
+   * Current server page of admissible parents, owned by the intervention page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<readonly FacilityOption[]>}
+   */
+  public readonly parentOptions: InputSignal<readonly FacilityOption[]> = input<
+    readonly FacilityOption[]
+  >([]);
+  /**
+   * Property parentCallState
+   * @readonly
+   *
+   * @description
+   * Parent candidate lifecycle, allowing inline retries after failed reads.
+   * Parent candidate lifecycle, allowing inline retries after failed reads.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly parentCallState: InputSignal<CallState> = input<CallState>(idleCallState());
+  /**
+   * Property parentPage
+   * @readonly
+   *
+   * @description
+   * Current candidate page.
+   * Current candidate page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly parentPage: InputSignal<number> = input(1);
+  /**
+   * Property parentPageCount
+   * @readonly
+   *
+   * @description
+   * Number of candidate pages.
+   * Number of candidate pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly parentPageCount: InputSignal<number> = input(1);
+  /**
+   * Property hydratedParent
+   * @readonly
+   *
+   * @description
+   * Selected parent record hydrated independently of the candidate page.
+   * Selected parent record hydrated independently of the candidate page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<FacilityOption | null>}
+   */
+  public readonly hydratedParent: InputSignal<FacilityOption | null> = input<FacilityOption | null>(
+    null,
+  );
+  /**
+   * Property typeChanged
+   * @readonly
+   *
+   * @description
+   * Requests creation-type-specific parent candidates.
+   * Requests creation-type-specific parent candidates.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<FacilityType | ''>}
+   */
+  public readonly typeChanged: OutputEmitterRef<FacilityType | ''> = output<FacilityType | ''>();
+  /**
+   * Property parentSearchChanged
+   * @readonly
+   *
+   * @description
+   * Requests server-side parent search in this intervention's workspace.
+   * Requests server-side parent search in this intervention's workspace.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly parentSearchChanged: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property parentPageChanged
+   * @readonly
+   *
+   * @description
+   * Requests another candidate page or retries a failed page.
+   * Requests another candidate page or retries a failed page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly parentPageChanged: OutputEmitterRef<number> = output<number>();
   //#region Inputs
   /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -90,9 +208,13 @@ export class InterventionFacilitySheet {
   /**
    * Property pending
    * @readonly
-   * @description Whether the creation request is in flight.
+   *
+   * @description
+   * Whether the creation request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -100,9 +222,13 @@ export class InterventionFacilitySheet {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the creation failed with, forwarded to the form.
+   *
+   * @description
+   * Whatever the creation failed with, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -112,9 +238,13 @@ export class InterventionFacilitySheet {
   /**
    * Property visibleChange
    * @readonly
-   * @description The panel wants to open or close.
+   *
+   * @description
+   * The panel wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -122,9 +252,13 @@ export class InterventionFacilitySheet {
   /**
    * Property submitted
    * @readonly
-   * @description The form's validated payload, forwarded untouched.
+   *
+   * @description
+   * The form's validated payload, forwarded untouched.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CreateFacilityInput>}
    */
   public readonly submitted: OutputEmitterRef<CreateFacilityInput> = output<CreateFacilityInput>();
@@ -134,7 +268,11 @@ export class InterventionFacilitySheet {
   /**
    * Constructor
    * @constructor
-   * @description Clears {@link dirty} whenever the panel closes, so a draft abandoned once cannot make the next opening raise a confirmation over nothing.
+   *
+   * @description
+   * Clears {@link dirty} whenever the panel closes, so a draft abandoned once cannot make the next
+   * opening raise a confirmation over nothing.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -153,9 +291,13 @@ export class InterventionFacilitySheet {
   /**
    * Property sheetState
    * @readonly
-   * @description The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @description
+   * The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -165,9 +307,14 @@ export class InterventionFacilitySheet {
   /**
    * Property side
    * @readonly
-   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   *
+   * @description
+   * The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action
+   * Surfaces" rule 2).
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -175,9 +322,14 @@ export class InterventionFacilitySheet {
   /**
    * Property dirty
    * @readonly
-   * @description Whether closing right now would lose something — set from `FacilityCreateForm.dirtyChanged`. Gates {@link requestClose}.
+   *
+   * @description
+   * Whether closing right now would lose something — set from `FacilityCreateForm.dirtyChanged`.
+   * Gates {@link requestClose}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly dirty: WritableSignal<boolean> = signal<boolean>(false);
@@ -185,9 +337,14 @@ export class InterventionFacilitySheet {
   /**
    * Property unsavedChangesDialogState
    * @readonly
-   * @description Open state of the shared `UnsavedChangesDialog`, raised by {@link requestClose} when {@link dirty} is true.
+   *
+   * @description
+   * Open state of the shared `UnsavedChangesDialog`, raised by {@link requestClose} when
+   * {@link dirty} is true.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<BrnDialogState>}
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
@@ -196,9 +353,14 @@ export class InterventionFacilitySheet {
   /**
    * Property injector
    * @readonly
-   * @description Hands {@link requestClose} its `afterNextRender` context, since the method runs outside construction.
+   *
+   * @description
+   * Hands {@link requestClose} its `afterNextRender` context, since the method runs outside
+   * construction.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Injector}
    */
   private readonly injector: Injector = inject(Injector);
@@ -278,9 +440,13 @@ export class InterventionFacilitySheet {
   /**
    * Method onUnsavedChangesConfirmed
    * @method onUnsavedChangesConfirmed
-   * @description The operator chose to discard the draft — closes both the confirmation and the panel itself.
+   *
+   * @description
+   * The operator chose to discard the draft — closes both the confirmation and the panel itself.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesConfirmed(): void {
@@ -291,9 +457,13 @@ export class InterventionFacilitySheet {
   /**
    * Method onUnsavedChangesDismissed
    * @method onUnsavedChangesDismissed
-   * @description The operator chose to keep editing — closes the confirmation only, the panel stays open.
+   *
+   * @description
+   * The operator chose to keep editing — closes the confirmation only, the panel stays open.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesDismissed(): void {

@@ -171,6 +171,48 @@
             </div>
           </app-inplace-field>
         </div>
+
+        @for (metric of metricFields; track metric.target) {
+          <div [attr.data-testid]="'facility-field-' + metric.target">
+            <app-inplace-field
+              #metricField
+              [label]="metric.label"
+              commit="confirm"
+              [editable]="editable()"
+              [editing]="isEditing(metric.target)"
+              [pending]="isSaving(metric.target)"
+              [error]="errorFor(metric.target)"
+              [canSave]="metricForm().valid()"
+              (editingChange)="onMetricEditing(metric.target, $event)"
+              (saved)="saveMetric(metric.target)"
+            >
+              @if (facility()[metric.target] != null) {
+                <span fieldValue class="font-medium tabular-nums"
+                  >{{ facility()[metric.target] | number: '1.0-3' }} m</span
+                >
+              } @else {
+                <span fieldValue class="text-muted-foreground" i18n="@@facility.notSpecified"
+                  >Not specified</span
+                >
+              }
+              <div fieldEditor hlmField>
+                <input
+                  hlmInput
+                  type="text"
+                  inputmode="decimal"
+                  class="mobile-ui:min-h-11"
+                  [attr.aria-labelledby]="metricField.labelId"
+                  [formField]="metricForm"
+                />
+                @if (metricForm().touched()) {
+                  @for (error of metricForm().errors(); track error.kind) {
+                    <hlm-field-error>{{ error.message }}</hlm-field-error>
+                  }
+                }
+              </div>
+            </app-inplace-field>
+          </div>
+        }
       }
     </div>
   </div>

@@ -67,7 +67,7 @@
               </span>
             </div>
           }
-          @if (tree.isLoadingRoots() && tree.roots().length === 0) {
+          @if (tree.isLoadingRoots() && tree.roots().length === 0 && tree.roots().length === 0) {
             <div role="status" class="space-y-2" data-testid="assets-tree-loading">
               <span class="sr-only" i18n="@@org.assets.tree.loading"
                 >Loading the facility hierarchy…</span
@@ -76,7 +76,7 @@
                 <hlm-skeleton class="h-8 w-full" />
               }
             </div>
-          } @else if (tree.hasRootsError()) {
+          } @else if (tree.hasRootsError() && tree.roots().length === 0) {
             <div hlmEmpty role="alert" data-testid="assets-tree-error">
               <div hlmEmptyHeader>
                 <div hlmEmptyMedia variant="icon" class="text-destructive">
@@ -140,9 +140,31 @@
               [draggable]="canMoveFacilities() && !isMobileInteractionMode()"
               (expandRequested)="onExpandRequested($event)"
               (selected)="onNodeSelected($event)"
-              (retryRequested)="onExpandRequested($event)"
+              (retryRequested)="onBranchRetryRequested($event)"
               (nodeDropped)="onNodeDropped($event)"
             />
+            @if (tree.canLoadMoreRoots()) {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                class="mt-3 w-full mobile-ui:min-h-11"
+                data-testid="assets-load-more-roots"
+                [disabled]="tree.isLoadingRoots()"
+                (click)="loadMoreRoots()"
+              >
+                <span i18n="@@org.assets.tree.loadMore">Load more places</span>
+              </button>
+            }
+            @if (tree.hasRootsError()) {
+              <p
+                role="alert"
+                class="text-sm text-destructive"
+                i18n="@@org.assets.tree.appendFailed"
+              >
+                Could not load more places. The current hierarchy is preserved; try again.
+              </p>
+            }
           }
         </div>
 
@@ -193,6 +215,37 @@
               </div>
             }
 
+            @if (canReadEquipment()) {
+              <div
+                class="flex flex-wrap gap-2"
+                role="group"
+                aria-label="Equipment scope"
+                i18n-aria-label="@@facility.detail.equipmentScope"
+              >
+                <button
+                  hlmBtn
+                  type="button"
+                  [variant]="equipmentIncludeDescendants() ? 'default' : 'outline'"
+                  [attr.aria-pressed]="equipmentIncludeDescendants()"
+                  data-testid="assets-equipment-scope-subtree"
+                  (click)="changeEquipmentScope(true)"
+                  i18n="@@facility.detail.equipmentSubtree"
+                >
+                  This place and descendants
+                </button>
+                <button
+                  hlmBtn
+                  type="button"
+                  [variant]="equipmentIncludeDescendants() ? 'outline' : 'default'"
+                  [attr.aria-pressed]="!equipmentIncludeDescendants()"
+                  data-testid="assets-equipment-scope-direct"
+                  (click)="changeEquipmentScope(false)"
+                  i18n="@@facility.detail.equipmentDirect"
+                >
+                  Directly assigned
+                </button>
+              </div>
+            }
             <ng-container *ngTemplateOutlet="assetPanes" />
           }
         </div>
@@ -353,6 +406,20 @@
         }}</span>
       }
     </div>
+    @if (tree.canLoadMoreChildren(node.id)) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        size="sm"
+        class="shrink-0 mobile-ui:min-h-11"
+        [attr.data-testid]="'assets-load-more-children-' + node.id"
+        [disabled]="loadingIds().has(node.id)"
+        (click)="loadMoreChildren($event, node.id)"
+      >
+        <span i18n="@@org.assets.tree.loadMoreChildren">More children</span>
+      </button>
+    }
     <button
       type="button"
       hlmBtn
@@ -408,7 +475,14 @@
 
 <app-facility-move-dialog
   [request]="moveTarget()"
-  [options]="moveOptions()"
+  [options]="moveParents.options()"
+  [hydratedOption]="moveParents.selectedOption()"
+  [optionsCallState]="moveParents.loadCallState()"
+  [page]="moveParents.page()"
+  [pageCount]="moveParents.pageCount()"
+  [errorMessage]="moveErrorMessage()"
+  (searchChanged)="onMoveSearchChanged($event)"
+  (pageChanged)="onMovePageChanged($event)"
   [busy]="tree.isMoving()"
   (submitted)="onMoveSubmitted($event)"
   (dismissed)="onMoveDismissed()"

@@ -33,6 +33,13 @@ class MapPickerDialogStub {
 }
 
 describe('FacilityCreateForm', () => {
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+  });
   let fixture: ComponentFixture<FacilityCreateForm>;
   let element: HTMLElement;
 
@@ -58,12 +65,19 @@ describe('FacilityCreateForm', () => {
     model.set({
       type: '',
       name: '',
-      parentFacilityId: '',
+      parentFacilityId:
+        draft.type && draft.type !== 'site'
+          ? draft.type === 'floor'
+            ? 'building-parent'
+            : 'site-parent'
+          : '',
       code: '',
       address: '',
       latitude: '',
       longitude: '',
       levelIndex: '',
+      elevationMeters: '',
+      heightMeters: '',
       ...draft,
     });
     await fixture.whenStable();
@@ -83,6 +97,10 @@ describe('FacilityCreateForm', () => {
     });
 
     fixture = TestBed.createComponent(FacilityCreateForm);
+    fixture.componentRef.setInput('parentOptions', [
+      { value: 'site-parent', label: 'Campus', type: 'site' },
+      { value: 'building-parent', label: 'Building', type: 'building' },
+    ]);
     await fixture.whenStable();
 
     element = fixture.nativeElement as HTMLElement;
@@ -121,12 +139,14 @@ describe('FacilityCreateForm', () => {
       {
         type: 'building',
         name: 'Headquarters',
-        parentFacilityId: undefined,
+        parentFacilityId: 'site-parent',
         code: 'HQ-01',
         address: undefined,
         latitude: undefined,
         longitude: undefined,
         levelIndex: undefined,
+        elevationMeters: undefined,
+        heightMeters: undefined,
       },
     ]);
   });
@@ -494,5 +514,67 @@ describe('FacilityCreateForm', () => {
       expect(latitude?.disabled).toBe(false);
       expect(longitude?.disabled).toBe(false);
     });
+  });
+  it('requires a valid parent, clears incompatible choices after a type change and keeps sites at root', async () => {
+    const emitted: CreateFacilityInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    await setModel({ type: 'building', name: 'Annex', parentFacilityId: '' });
+    await submit();
+    expect(emitted).toEqual([]);
+    expect(element.textContent).toContain('Choose an admissible parent');
+    await setModel({ type: 'floor', name: 'Level', parentFacilityId: 'site-parent' });
+    await submit();
+    expect(emitted).toEqual([]);
+    await setModel({ type: 'floor', name: 'Level', parentFacilityId: 'building-parent' });
+    await submit();
+    expect(emitted[0]).toEqual(
+      expect.objectContaining({ type: 'floor', parentFacilityId: 'building-parent' }),
+    );
+    await setModel({ type: 'site', name: 'Campus', parentFacilityId: 'building-parent' });
+    await submit();
+    expect(emitted[1]).toEqual(
+      expect.objectContaining({ type: 'site', parentFacilityId: undefined }),
+    );
+  });
+
+  it('clears an incompatible retained parent after leaving its server page and changing type', async () => {
+    const emitted: CreateFacilityInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    await setModel({ type: 'building', name: 'New level', parentFacilityId: 'site-parent' });
+    fixture.componentRef.setInput('parentPage', 2);
+    fixture.componentRef.setInput('parentOptions', [
+      { value: 'other-site', label: 'Other campus', type: 'site' },
+    ]);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['model']().parentFacilityId).toBe('site-parent');
+    expect(element.querySelector<HTMLInputElement>('#facility-create-parent')?.value).toBe(
+      'Campus',
+    );
+
+    fixture.componentInstance['model'].update((draft) => ({ ...draft, type: 'floor' }));
+    await fixture.whenStable();
+    fixture.componentRef.setInput('parentOptions', [
+      { value: 'building-parent', label: 'Building', type: 'building' },
+    ]);
+    await fixture.whenStable();
+    await submit();
+    expect(emitted).toEqual([]);
+    expect(fixture.componentInstance['model']().parentFacilityId).toBe('');
+    expect(fixture.componentInstance['model']().name).toBe('New level');
+    expect(element.textContent).toContain('Choose an admissible parent');
+
+    fixture.componentInstance['model'].update((draft) => ({
+      ...draft,
+      parentFacilityId: 'building-parent',
+    }));
+    await fixture.whenStable();
+    await submit();
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: 'floor',
+        name: 'New level',
+        parentFacilityId: 'building-parent',
+      }),
+    ]);
   });
 });

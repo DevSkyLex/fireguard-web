@@ -115,4 +115,20 @@ export interface FacilityCreateFormDraft {
    * @type {string}
    */
   readonly levelIndex: string;
+
+  /**
+   * Property elevationMeters
+   *
+   * @description
+   * Optional floor elevation in metres.
+   */
+  readonly elevationMeters: string;
+
+  /**
+   * Property heightMeters
+   *
+   * @description
+   * Optional floor height in metres.
+   */
+  readonly heightMeters: string;
 }

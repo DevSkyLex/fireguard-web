@@ -329,7 +329,11 @@ describe('MaintenanceSchedulesPage', () => {
     expect(listFacilities).not.toHaveBeenCalled();
     fixture.componentInstance['openCampaignDialog']();
     await fixture.whenStable();
-    expect(listFacilities).toHaveBeenCalledWith('org-1', { page: 1, itemsPerPage: 200 });
+    expect(listFacilities).toHaveBeenCalledWith('org-1', {
+      page: 1,
+      itemsPerPage: 200,
+      includePath: true,
+    });
     expect(fixture.componentInstance['tableFacilityLabelOf']('site-2')).toBe('South site');
     expect(fixture.componentInstance['tableFacilityLabelOf']('unknown')).toBeNull();
   });

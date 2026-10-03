@@ -37,6 +37,7 @@ import type {
 } from '@features/organization/features/facilities/models';
 import {
   ActiveFacilityStore,
+  FacilityOptionsStore,
   FacilityOverviewStore,
   FacilityPlansStore,
   FacilityStore,
@@ -140,7 +141,9 @@ describe('FacilityDetailPage', () => {
   let update: ReturnType<typeof vi.fn>;
   let remove: ReturnType<typeof vi.fn>;
   let ensureFacilityDescendantsLoaded: ReturnType<typeof vi.fn>;
-  let overviewLoad: ReturnType<typeof vi.fn>;
+  let overviewLoadEquipment: ReturnType<typeof vi.fn>;
+  let overviewLoadInspections: ReturnType<typeof vi.fn>;
+  let overviewLoadInterventions: ReturnType<typeof vi.fn>;
   let overviewInterventions: WritableSignal<readonly InterventionOutput[]>;
   let overviewIsLoadingInterventions: WritableSignal<boolean>;
   let overviewEquipmentCallState: WritableSignal<CallState>;
@@ -219,7 +222,9 @@ describe('FacilityDetailPage', () => {
     update = vi.fn();
     remove = vi.fn();
     ensureFacilityDescendantsLoaded = vi.fn();
-    overviewLoad = vi.fn();
+    overviewLoadEquipment = vi.fn();
+    overviewLoadInspections = vi.fn();
+    overviewLoadInterventions = vi.fn();
     overviewInterventions = signal<readonly InterventionOutput[]>([]);
     overviewIsLoadingInterventions = signal<boolean>(false);
     overviewEquipmentCallState = signal<CallState>(idleCallState());
@@ -312,6 +317,10 @@ describe('FacilityDetailPage', () => {
             ensureFacilityDescendantsLoaded,
             updateCallState,
             deleteCallState,
+            moveCallState: signal(idleCallState()),
+            moveRevisionCallState: signal(idleCallState()),
+            resetMoveOperation: vi.fn(),
+            move: vi.fn(),
             childFacilitiesByParent: signal({}),
             loadingParentIds: signal<readonly string[]>([]),
           },
@@ -326,9 +335,23 @@ describe('FacilityDetailPage', () => {
     });
 
     TestBed.overrideComponent(FacilityDetailPage, {
-      remove: { providers: [FacilityOverviewStore, FacilityPlansStore] },
+      remove: { providers: [FacilityOverviewStore, FacilityPlansStore, FacilityOptionsStore] },
       add: {
         providers: [
+          {
+            provide: FacilityOptionsStore,
+            useValue: {
+              options: signal([]),
+              selectedOption: signal(null),
+              loadCallState: signal(idleCallState()),
+              page: signal(1),
+              pageCount: signal(1),
+              search: signal(''),
+              load: vi.fn(),
+              ensureSelected: vi.fn(),
+              searchOptions: vi.fn(),
+            },
+          },
           {
             provide: FacilityOverviewStore,
             useValue: {
@@ -355,10 +378,9 @@ describe('FacilityDetailPage', () => {
               equipmentCallState: overviewEquipmentCallState,
               inspectionsCallState: signal(idleCallState()),
               interventionsCallState: signal(idleCallState()),
-              load: overviewLoad,
-              loadEquipment: vi.fn(),
-              loadInspections: vi.fn(),
-              loadInterventions: vi.fn(),
+              loadEquipment: overviewLoadEquipment,
+              loadInspections: overviewLoadInspections,
+              loadInterventions: overviewLoadInterventions,
             },
           },
           {
@@ -406,6 +428,18 @@ describe('FacilityDetailPage', () => {
               clearZoneGeometry: planClearZoneGeometry,
               saveZoneGeometryCallState: planZoneWrite,
               savePinPositionCallState: planPinWrite,
+              saveCalibrationCallState: signal(idleCallState()),
+              calibrationRevisionCallState: signal(idleCallState()),
+              zoneCandidatePage: signal(1),
+              zoneCandidateTotal: signal(0),
+              equipmentCandidatePage: signal(1),
+              equipmentCandidateTotal: signal(0),
+              enterCalibrationMode: vi.fn(),
+              saveCalibration: vi.fn(),
+              searchZoneCandidates: vi.fn(),
+              searchEquipmentCandidates: vi.fn(),
+              changeZoneCandidatePage: vi.fn(),
+              changeEquipmentCandidatePage: vi.fn(),
               saveZoneGeometryFromDialog: planSaveZoneGeometryFromDialog,
               placePin: planPlacePin,
               movePin: planMovePin,
@@ -520,10 +554,37 @@ describe('FacilityDetailPage', () => {
   it('should load the overview summary once the facility resolves', async () => {
     await createPage();
 
-    expect(overviewLoad).toHaveBeenCalledWith({
+    expect(overviewLoadInspections).toHaveBeenCalledWith({
       organizationId: 'org-1',
       facilityId: 'facility-1',
     });
+    expect(overviewLoadInterventions).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+    });
+    expect(overviewLoadEquipment).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: true,
+    });
+  });
+
+  it('loads direct equipment from the route scope without reloading inspections or interventions', async () => {
+    await createPage();
+    overviewLoadInspections.mockClear();
+    overviewLoadInterventions.mockClear();
+    overviewLoadEquipment.mockClear();
+
+    fixture.componentRef.setInput('equipmentScope', 'direct');
+    await fixture.whenStable();
+
+    expect(overviewLoadEquipment).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: false,
+    });
+    expect(overviewLoadInspections).not.toHaveBeenCalled();
+    expect(overviewLoadInterventions).not.toHaveBeenCalled();
   });
 
   it('should load the descendant subtree only when the facility has children', async () => {
@@ -930,6 +991,31 @@ describe('FacilityDetailPage', () => {
     });
   });
 
+  it('exposes the building 3D entry in the header without a building plan', async () => {
+    selectedFacility.set(facility({ type: 'building' }));
+    await createPage();
+    const actions = renderPageActions();
+    const link = actions.querySelector<HTMLAnchorElement>(
+      '[data-testid="facility-detail-3d-link"]',
+    );
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/facility-1/3d');
+    expect(orderedPlans()).toEqual([]);
+  });
+
+  it('opens the containing building 3D entry from a floor with an ancestor building', async () => {
+    selectedFacility.set(
+      facility({
+        type: 'floor',
+        path: [{ id: 'building-1', name: 'Building 1', type: 'building' }],
+      }),
+    );
+    await createPage();
+    const link = renderPageActions().querySelector<HTMLAnchorElement>(
+      '[data-testid="facility-detail-3d-link"]',
+    );
+    expect(link?.getAttribute('href')).toBe('/organizations/org-1/facilities/building-1/3d');
+  });
+
   describe('the "3D view" link', () => {
     it('should show for a building facility', async () => {
       selectedFacility.set(facility({ type: 'building' }));
@@ -1046,6 +1132,8 @@ describe('FacilityDetailPage', () => {
         attachmentId: 'plan-1',
         imageWidth: 1200,
         imageHeight: 800,
+        geometryIssues: [],
+        equipmentIssues: [],
         zones: [
           {
             facilityId: 'facility-zone-1',
@@ -1096,6 +1184,8 @@ describe('FacilityDetailPage', () => {
         attachmentId: 'plan-1',
         imageWidth: 1200,
         imageHeight: 800,
+        geometryIssues: [],
+        equipmentIssues: [],
         zones: [
           {
             facilityId: 'facility-zone-1',
@@ -1127,6 +1217,8 @@ describe('FacilityDetailPage', () => {
         attachmentId: 'plan-1',
         imageWidth: 1200,
         imageHeight: 800,
+        geometryIssues: [],
+        equipmentIssues: [],
         zones: [],
         equipment: [
           {
@@ -1182,6 +1274,8 @@ describe('FacilityDetailPage', () => {
         attachmentId: 'plan-1',
         imageWidth: 1200,
         imageHeight: 800,
+        geometryIssues: [],
+        equipmentIssues: [],
         zones: [
           {
             facilityId: 'facility-zone-1',
@@ -1206,6 +1300,8 @@ describe('FacilityDetailPage', () => {
         attachmentId: 'plan-1',
         imageWidth: 1200,
         imageHeight: 800,
+        geometryIssues: [],
+        equipmentIssues: [],
         zones: [],
         equipment: [
           {
@@ -1232,6 +1328,8 @@ describe('FacilityDetailPage', () => {
         attachmentId: 'plan-1',
         imageWidth: 1200,
         imageHeight: 800,
+        geometryIssues: [],
+        equipmentIssues: [],
         zones: [],
         equipment: [
           {
@@ -1520,6 +1618,8 @@ describe('FacilityDetailPage', () => {
         attachmentId: 'plan-1',
         imageWidth: 1200,
         imageHeight: 800,
+        geometryIssues: [],
+        equipmentIssues: [],
         zones: [
           {
             facilityId: 'zone-1',
@@ -1644,7 +1744,19 @@ describe('FacilityDetailPage', () => {
 
       const link: HTMLElement | null = byTestId('facility-detail-equipment-status-link');
 
-      expect(link?.getAttribute('href')).toBe('/organizations/org-1/assets?facility=facility-1');
+      expect(link?.getAttribute('href')).toBe(
+        '/organizations/org-1/assets?facility=facility-1&equipmentScope=subtree',
+      );
+    });
+
+    it('keeps the direct equipment scope when opening the complete equipment list', async () => {
+      await createPage();
+      fixture.componentRef.setInput('equipmentScope', 'direct');
+      await fixture.whenStable();
+
+      expect(byTestId('facility-detail-equipment-status-link')?.getAttribute('href')).toBe(
+        '/organizations/org-1/assets?facility=facility-1&equipmentScope=direct',
+      );
     });
   });
 
@@ -1760,6 +1872,8 @@ describe('FacilityDetailPage', () => {
       attachmentId: 'plan-1',
       imageWidth: 1200,
       imageHeight: 800,
+      geometryIssues: [],
+      equipmentIssues: [],
       zones: [
         {
           facilityId: 'zone-1',
@@ -1913,6 +2027,8 @@ describe('FacilityDetailPage', () => {
       attachmentId: 'plan-1',
       imageWidth: 1200,
       imageHeight: 800,
+      geometryIssues: [],
+      equipmentIssues: [],
       zones: [],
       equipment: [
         {
@@ -1951,6 +2067,8 @@ describe('FacilityDetailPage', () => {
       attachmentId: 'plan-1',
       imageWidth: 1200,
       imageHeight: 800,
+      geometryIssues: [],
+      equipmentIssues: [],
       zones: [
         { facilityId: 'zone-1', name: 'North Wing', type: 'zone', status: 'active', points: [] },
       ],

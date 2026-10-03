@@ -1,3 +1,5 @@
+import type { FacilityType } from '../facility/facility-output.interface';
+
 /**
  * Interface FacilityOption
  * @interface FacilityOption
@@ -11,18 +13,51 @@
  * @since 1.0.0
  */
 export interface FacilityOption {
-  /** The facility id — what a form submits. */
+  /**
+   * Property type
+   *
+   * @description
+   * Raw type used to guide hierarchy choices independently of translated labels.
+   */
+  readonly type?: FacilityType;
+
+  /**
+   * Property value
+   *
+   * @description
+   * The facility id — what a form submits.
+   */
   readonly value: string;
 
-  /** The facility name — the option's first line. */
+  /**
+   * Property label
+   *
+   * @description
+   * The facility name — the option's first line.
+   */
   readonly label: string;
 
-  /** The localized facility type ("Site", "Building"…). */
+  /**
+   * Property typeLabel
+   *
+   * @description
+   * The localized facility type ("Site", "Building"…).
+   */
   readonly typeLabel: string;
 
-  /** The ancestor names joined with " › ", or `null` for a root facility. */
+  /**
+   * Property pathLabel
+   *
+   * @description
+   * The ancestor names joined with " › ", or `null` for a root facility.
+   */
   readonly pathLabel: string | null;
 
-  /** The postal address, or `null` when none is recorded. */
+  /**
+   * Property address
+   *
+   * @description
+   * The postal address, or `null` when none is recorded.
+   */
   readonly address: string | null;
 }

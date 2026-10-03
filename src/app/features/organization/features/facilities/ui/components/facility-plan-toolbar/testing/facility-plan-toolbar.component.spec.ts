@@ -168,6 +168,10 @@ describe('FacilityPlanToolbar', () => {
     }
     await fixture.whenStable();
 
+    fixture.componentRef.setInput('zoneCandidates', [
+      { id: 'zone-b', name: 'Boiler room' } as FacilityOutput,
+    ]);
+    await fixture.whenStable();
     expect(drawer?.textContent).not.toContain('Assembly hall');
     drawer?.querySelector<HTMLButtonElement>('[hlmitem]')?.click();
     await fixture.whenStable();

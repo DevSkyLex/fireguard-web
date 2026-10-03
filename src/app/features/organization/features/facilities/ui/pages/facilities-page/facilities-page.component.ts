@@ -45,6 +45,7 @@ import type {
   CreateFacilityInput,
   FacilityListSort,
   FacilityOutput,
+  FacilityType,
   FacilitySortField,
 } from '@features/organization/features/facilities/models';
 import { FacilityListPreferencesService } from '@features/organization/features/facilities/services';
@@ -82,13 +83,30 @@ import { FacilityGrid } from '../../dataviews/facility-grid';
 import { FacilityCreateSheet } from '../../sheets/facility-create-sheet';
 import { FacilityTable } from '../../tables/facility-table';
 
-/** How long typing settles before the search reaches the wire. */
+/**
+ * Constant SEARCH_DEBOUNCE_MS
+ *
+ * @description
+ * How long typing settles before the search reaches the wire.
+ */
 const SEARCH_DEBOUNCE_MS: number = 300;
 
-/** The page sizes offered under the list. */
+/**
+ * Constant PAGE_SIZES
+ *
+ * @description
+ * The page sizes offered under the list.
+ */
 const PAGE_SIZES: readonly [number, number, number] = [30, 60, 100];
 
-/** The two ways the roots-only collection can be rendered. */
+/**
+ * Type FacilityLayout
+ *
+ * @description
+ * The two ways the roots-only collection can be rendered.
+ *
+ * @type {FacilityLayout}
+ */
 type FacilityLayout = 'list' | 'grid';
 
 /**
@@ -104,7 +122,6 @@ type FacilityLayout = 'list' | 'grid';
  * is not a rendering mode of this page — it navigates to the dedicated
  * `facilities/map` route, since an interactive map is a heavier surface than
  * a per-visit view-state toggle should carry in-page.
- *
  * The list is **roots-only** — hierarchy navigation lives on the facility
  * detail page's Overview tab, not here — and the `?page=` query param is
  * synced so a reload or a shared link lands back on the same page. Row
@@ -112,10 +129,8 @@ type FacilityLayout = 'list' | 'grid';
  * edited on the record itself (`FEATURE.md` "The record is the edit
  * surface"), so this page has no row menu beyond those two and no bulk
  * actions.
- *
  * Its title lives in the shell breadcrumb; "New facility" registers on the
  * shell header through `PageActionsService`.
- *
  * Picking "archived" from the "+ Filter" menu moves real focus onto its own
  * checkbox once rendered ({@link focusArchivedCheckbox}) — the boolean
  * chip's equivalent of the `state`/`stateChanged` open-on-pick contract the
@@ -170,9 +185,13 @@ export class FacilitiesPage {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace whose root facilities are listed, bound from the route.
+   *
+   * @description
+   * The workspace whose root facilities are listed, bound from the route.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -180,9 +199,14 @@ export class FacilitiesPage {
   /**
    * Property create
    * @readonly
-   * @description `?create=1` asks the page to open the creation sheet on arrival — the deep link the `/create` redirect and the in-app links use. Consumed once, then stripped from the URL.
+   *
+   * @description
+   * `?create=1` asks the page to open the creation sheet on arrival — the deep link the `/create`
+   * redirect and the in-app links use. Consumed once, then stripped from the URL.
+   *
    * @access public
    * @since 1.6.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
@@ -190,9 +214,14 @@ export class FacilitiesPage {
   /**
    * Property parent
    * @readonly
-   * @description The parent facility the caller pre-picked, bound from `?parent=`, so a record created from a site lands in it. Consumed with `create`.
+   *
+   * @description
+   * The parent facility the caller pre-picked, bound from `?parent=`, so a record created from a
+   * site lands in it. Consumed with `create`.
+   *
    * @access public
    * @since 1.6.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly parent: InputSignal<string | undefined> = input<string | undefined>(undefined);
@@ -200,9 +229,13 @@ export class FacilitiesPage {
   /**
    * Property q
    * @readonly
-   * @description The search term the URL carries, so a filtered list survives a reload.
+   *
+   * @description
+   * The search term the URL carries, so a filtered list survives a reload.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly q: InputSignal<string | undefined> = input<string | undefined>(undefined);
@@ -210,13 +243,28 @@ export class FacilitiesPage {
   /**
    * Property page
    * @readonly
-   * @description The page number the URL carries (`FEATURE.md` "the `?page=` query param is synced for roots").
+   *
+   * @description
+   * The page number the URL carries (`FEATURE.md` "the `?page=` query param is synced for roots").
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | undefined>}
    */
   public readonly page: InputSignal<string | undefined> = input<string | undefined>(undefined);
-  /** Whether the last list read was refused for lack of permission, which a retry cannot fix. */
+  /**
+   * Property listForbidden
+   * @readonly
+   *
+   * @description
+   * Whether the last list read was refused for lack of permission, which a retry cannot fix.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly listForbidden: Signal<boolean> = computed<boolean>(
     () => this.store.rootListCallState().error?.code === 403,
   );
@@ -224,69 +272,193 @@ export class FacilitiesPage {
   //#endregion
 
   //#region Properties
-  /** The list dataset, provided by this route. */
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * The list dataset, provided by this route.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FacilityStoreType}
+   */
   protected readonly store: FacilityStoreType = inject<FacilityStoreType>(FacilityStore);
 
-  /** The active organization's regional formatting context port. */
+  /**
+   * Property regionalFormattingPort
+   * @readonly
+   *
+   * @description
+   * The active organization's regional formatting context port.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {RegionalFormattingPort}
+   */
   private readonly regionalFormattingPort: RegionalFormattingPort =
     inject<RegionalFormattingPort>(REGIONAL_FORMATTING_PORT);
 
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, forwarded to {@link FacilityTable}'s Updated column.
+   *
+   * @description
+   * The active organization's date pattern and timezone, forwarded to {@link FacilityTable}'s
+   * Updated column.
+   *
    * @access protected
    * @since 1.7.0
+   *
    * @type {Signal<RegionalFormatSettings>}
    */
   protected readonly regionalFormatting: Signal<RegionalFormatSettings> =
     this.regionalFormattingPort.regionalFormatting;
 
-  /** Organization permission checks gating the "New facility" action and the row actions. */
+  /**
+   * Property permissions
+   * @readonly
+   *
+   * @description
+   * Organization permission checks gating the "New facility" action and the row actions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationPermissionService}
+   */
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
 
-  /** Router used to round-trip `?q=` and `?page=`. */
+  /**
+   * Property router
+   * @readonly
+   *
+   * @description
+   * Router used to round-trip `?q=` and `?page=`.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Router}
+   */
   private readonly router: Router = inject(Router);
 
-  /** Current route, anchoring the relative query-param navigation. */
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Current route, anchoring the relative query-param navigation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
-  /** The cookie-backed memory of how this list was left ordered. */
+  /**
+   * Property preferences
+   * @readonly
+   *
+   * @description
+   * The cookie-backed memory of how this list was left ordered.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FacilityListPreferencesService}
+   */
   private readonly preferences: FacilityListPreferencesService =
     inject<FacilityListPreferencesService>(FacilityListPreferencesService);
 
-  /** Whether the roots render as a table or as cards. Not URL-synced — a per-visit preference. */
+  /**
+   * Property layout
+   * @readonly
+   *
+   * @description
+   * Whether the roots render as a table or as cards. Not URL-synced — a per-visit preference.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityLayout>}
+   */
   protected readonly layout: WritableSignal<FacilityLayout> = signal<FacilityLayout>('list');
 
   /**
    * Property sortOrder
    * @readonly
-   * @description The active ordering, restored from the preferences cookie. Applies to the shared dataset — the grid dataview reflects it, and sorting controls live only in the table's heads (`FEATURE.md`).
+   *
+   * @description
+   * The active ordering, restored from the preferences cookie. Applies to the shared dataset — the
+   * grid dataview reflects it, and sorting controls live only in the table's heads (`FEATURE.md`).
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {WritableSignal<FacilityListSort>}
    */
   protected readonly sortOrder: WritableSignal<FacilityListSort> = signal<FacilityListSort>(
     this.preferences.readSort(),
   );
 
-  /** Whether archived facilities are included in the current page. */
+  /**
+   * Property includeArchived
+   * @readonly
+   *
+   * @description
+   * Whether archived facilities are included in the current page.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly includeArchived: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** What the search box holds, before the debounce settles. */
+  /**
+   * Property draftSearch
+   * @readonly
+   *
+   * @description
+   * What the search box holds, before the debounce settles.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly draftSearch: WritableSignal<string> = signal<string>('');
 
-  /** How many rows a page holds. Not URL-synced, only the page number is. */
+  /**
+   * Property pageSize
+   * @readonly
+   *
+   * @description
+   * How many rows a page holds. Not URL-synced, only the page number is.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<number>}
+   */
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
   /**
    * Property searchTerm
    * @readonly
-   * @description The search as everything downstream reads it: trimmed, never `undefined`.
+   *
+   * @description
+   * The search as everything downstream reads it: trimmed, never `undefined`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<string>}
    */
   protected readonly searchTerm: Signal<string> = computed<string>(() => this.q()?.trim() ?? '');
@@ -294,9 +466,13 @@ export class FacilitiesPage {
   /**
    * Property currentPage
    * @readonly
-   * @description The URL's `?page=` as a bounded positive integer, defaulting to the first page.
+   *
+   * @description
+   * The URL's `?page=` as a bounded positive integer, defaulting to the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly currentPage: Signal<number> = computed<number>(() => {
@@ -308,31 +484,102 @@ export class FacilitiesPage {
   /**
    * Property hasSearchOrFilters
    * @readonly
-   * @description Whether the current view is narrowed at all, deciding what the empty state offers.
+   *
+   * @description
+   * Whether the current view is narrowed at all, deciding what the empty state offers.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly hasSearchOrFilters: Signal<boolean> = computed<boolean>(
     () => this.searchTerm() !== '' || this.includeArchived(),
   );
 
-  /** Transport used directly for the one-shot CSV export — a download, not list state. */
+  /**
+   * Property facilityService
+   * @readonly
+   *
+   * @description
+   * Transport used directly for the one-shot CSV export — a download, not list state.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FacilityService}
+   */
   private readonly facilityService: FacilityService = inject(FacilityService);
 
-  /** Hands the export blob to the browser as a file download. */
+  /**
+   * Property browserDownload
+   * @readonly
+   *
+   * @description
+   * Hands the export blob to the browser as a file download.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
   private readonly browserDownload: BrowserDownloadService = inject(BrowserDownloadService);
 
-  /** Global toast feedback for the export's error path. */
+  /**
+   * Property feedback
+   * @readonly
+   *
+   * @description
+   * Global toast feedback for the export's error path.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {FeedbackService}
+   */
   private readonly feedback: FeedbackService = inject(FeedbackService);
 
-  /** Unsubscribes an in-flight export when the page is destroyed. */
+  /**
+   * Property destroyRef
+   * @readonly
+   *
+   * @description
+   * Unsubscribes an in-flight export when the page is destroyed.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {DestroyRef}
+   */
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
-  /** Whether a CSV export is currently in flight. */
+  /**
+   * Property exportBusy
+   * @readonly
+   *
+   * @description
+   * Whether a CSV export is currently in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly exportBusy: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** Whether the export button should be inert: nothing loaded yet, nothing to export, or an export already in flight. */
+  /**
+   * Property exportDisabled
+   * @readonly
+   *
+   * @description
+   * Whether the export button should be inert: nothing loaded yet, nothing to export, or an export
+   * already in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
   protected readonly exportDisabled: Signal<boolean> = computed(
     (): boolean =>
       this.store.isLoadingRootFacilities() ||
@@ -340,7 +587,18 @@ export class FacilitiesPage {
       this.store.totalRootFacilities() === 0,
   );
 
-  /** The filter bar's field catalog — a single "show archived" toggle. */
+  /**
+   * Property filterFields
+   * @readonly
+   *
+   * @description
+   * The filter bar's field catalog — a single "show archived" toggle.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {readonly CollectionFilterField[]}
+   */
   protected readonly filterFields: readonly CollectionFilterField[] = [
     {
       key: 'archived',
@@ -353,16 +611,32 @@ export class FacilitiesPage {
   /**
    * Property activeFilterKeys
    * @readonly
-   * @description The `archived` field, when {@link includeArchived} is set — the bar's `activeKeys` input.
+   *
+   * @description
+   * The `archived` field, when {@link includeArchived} is set — the bar's `activeKeys` input.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<readonly string[]>}
    */
   protected readonly activeFilterKeys: Signal<readonly string[]> = computed<readonly string[]>(
     () => (this.includeArchived() ? ['archived'] : []),
   );
 
-  /** Which field the filter bar currently renders mid-pick, before its checkbox is checked — `null` when none is. */
+  /**
+   * Property openFilterKey
+   * @readonly
+   *
+   * @description
+   * Which field the filter bar currently renders mid-pick, before its checkbox is checked — `null`
+   * when none is.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<'archived' | null>}
+   */
   protected readonly openFilterKey: WritableSignal<'archived' | null> = signal<'archived' | null>(
     null,
   );
@@ -370,24 +644,46 @@ export class FacilitiesPage {
   /**
    * Property filtersVisible
    * @readonly
-   * @description Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only. Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely driven by `app-collection-filter-toggle`.
+   *
+   * @description
+   * Whether `app-collection-filter-bar` is currently mounted below the toolbar — presentation-only.
+   * Seeded by `initialCollectionFilterBarVisibility` (`@shared/collection-filters`), then purely
+   * driven by `app-collection-filter-toggle`.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly filtersVisible: WritableSignal<boolean> = initialCollectionFilterBarVisibility(
     computed<boolean>(() => this.activeFilterKeys().length > 0),
   );
 
-  /** The "Show archived facilities" chip's checkbox, projected into the filter bar. */
+  /**
+   * Property archivedChipTemplate
+   * @readonly
+   *
+   * @description
+   * The "Show archived facilities" chip's checkbox, projected into the filter bar.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {unknown}
+   */
   private readonly archivedChipTemplate = viewChild<TemplateRef<unknown>>('archivedChip');
 
   /**
    * Property archivedCheckboxHost
    * @readonly
-   * @description The "archived" chip's own `hlm-checkbox` host element, so {@link focusArchivedCheckbox} can reach its rendered `[role="checkbox"]` node. `undefined` until the chip mounts.
+   *
+   * @description
+   * The "archived" chip's own `hlm-checkbox` host element, so {@link focusArchivedCheckbox} can
+   * reach its rendered `[role="checkbox"]` node. `undefined` until the chip mounts.
+   *
    * @access private
    * @since 1.5.0
+   *
    * @type {Signal<ElementRef<HTMLElement> | undefined>}
    */
   private readonly archivedCheckboxHost: Signal<ElementRef<HTMLElement> | undefined> = viewChild(
@@ -398,9 +694,14 @@ export class FacilitiesPage {
   /**
    * Property injector
    * @readonly
-   * @description This page's own injector, passed to the `afterNextRender` call in {@link focusArchivedCheckbox} — required since that call happens from an event handler, outside a reactive/DI context.
+   *
+   * @description
+   * This page's own injector, passed to the `afterNextRender` call in {@link focusArchivedCheckbox}
+   * — required since that call happens from an event handler, outside a reactive/DI context.
+   *
    * @access private
    * @since 1.5.0
+   *
    * @type {Injector}
    */
   private readonly injector: Injector = inject(Injector);
@@ -408,16 +709,32 @@ export class FacilitiesPage {
   /**
    * Property chipTemplates
    * @readonly
-   * @description The `archived` field's value-control `TemplateRef`, for `app-collection-filter-bar`'s `templates` input.
+   *
+   * @description
+   * The `archived` field's value-control `TemplateRef`, for `app-collection-filter-bar`'s
+   * `templates` input.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
    */
   protected readonly chipTemplates: Signal<
     Readonly<Record<string, TemplateRef<unknown> | undefined>>
   > = computed(() => ({ archived: this.archivedChipTemplate() }));
 
-  /** The rows the current view currently renders. */
+  /**
+   * Property items
+   * @readonly
+   *
+   * @description
+   * The rows the current view currently renders.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly FacilityOutput[]>}
+   */
   protected readonly items: Signal<readonly FacilityOutput[]> = computed<readonly FacilityOutput[]>(
     () => this.store.rootFacilities(),
   );
@@ -425,9 +742,13 @@ export class FacilitiesPage {
   /**
    * Property pageCount
    * @readonly
-   * @description How many pages the current total spans, at least one.
+   *
+   * @description
+   * How many pages the current total spans, at least one.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<number>}
    */
   protected readonly pageCount: Signal<number> = computed<number>(() =>
@@ -437,9 +758,13 @@ export class FacilitiesPage {
   /**
    * Property canCreate
    * @readonly
-   * @description Whether the member may register a new facility.
+   *
+   * @description
+   * Whether the member may register a new facility.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canCreate: Signal<boolean> = computed<boolean>(() =>
@@ -449,26 +774,63 @@ export class FacilitiesPage {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the member may archive or restore a row.
+   *
+   * @description
+   * Whether the member may archive or restore a row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canWrite: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
 
-  /** Where a row's link, and the "New facility" button, point. */
+  /**
+   * Property listRouteBase
+   * @readonly
+   *
+   * @description
+   * Where a row's link, and the "New facility" button, point.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly string[]>}
+   */
   protected readonly listRouteBase: Signal<readonly string[]> = computed<readonly string[]>(() => [
     '/organizations',
     this.organizationId(),
     'facilities',
   ]);
 
-  /** Registers {@link pageActions} on the shell header. */
+  /**
+   * Property pageActionsService
+   * @readonly
+   *
+   * @description
+   * Registers {@link pageActions} on the shell header.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {PageActionsService}
+   */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
 
-  /** The "New facility" button, registered on the shell header instead of an in-page title band. */
+  /**
+   * Property pageActions
+   * @readonly
+   *
+   * @description
+   * The "New facility" button, registered on the shell header instead of an in-page title band.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<TemplateRef<unknown> | undefined>}
+   */
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
@@ -476,9 +838,13 @@ export class FacilitiesPage {
   /**
    * Property createSheetVisible
    * @readonly
-   * @description Whether the creation sheet is open. The page owns it; the sheet derives its state from it.
+   *
+   * @description
+   * Whether the creation sheet is open. The page owns it; the sheet derives its state from it.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly createSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
@@ -486,9 +852,13 @@ export class FacilitiesPage {
   /**
    * Property pendingScopeId
    * @readonly
-   * @description The parent facility a `?parent=` deep link pre-picked for the sheet, cleared when it closes.
+   *
+   * @description
+   * The parent facility a `?parent=` deep link pre-picked for the sheet, cleared when it closes.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {WritableSignal<string | null>}
    */
   protected readonly pendingScopeId: WritableSignal<string | null> = signal<string | null>(null);
@@ -496,9 +866,14 @@ export class FacilitiesPage {
   /**
    * Property platformId
    * @readonly
-   * @description Distinguishes browser from server: the sheet, its options and the `?create=1` handshake are browser-only.
+   *
+   * @description
+   * Distinguishes browser from server: the sheet, its options and the `?create=1` handshake are
+   * browser-only.
+   *
    * @access private
    * @since 1.6.0
+   *
    * @type {object}
    */
   private readonly platformId: object = inject(PLATFORM_ID);
@@ -506,22 +881,59 @@ export class FacilitiesPage {
   /**
    * Property facilityOptionsStore
    * @readonly
-   * @description The organization's facilities as parent candidates for the sheet, loaded on first open.
+   *
+   * @description
+   * The organization's facilities as parent candidates for the sheet, loaded on first open.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @type {FacilityOptionsStore}
    */
   protected readonly facilityOptionsStore: FacilityOptionsStore =
     inject<FacilityOptionsStore>(FacilityOptionsStore);
 
-  /** Whether the sheet's "Locate address" lookup is in flight. */
+  /**
+   * Property geocodePending
+   * @readonly
+   *
+   * @description
+   * Whether the sheet's "Locate address" lookup is in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly geocodePending: WritableSignal<boolean> = signal<boolean>(false);
 
-  /** The latest successful lookup, handed to the sheet. */
+  /**
+   * Property geocodeResult
+   * @readonly
+   *
+   * @description
+   * The latest successful lookup, handed to the sheet.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityGeocodeOutput | null>}
+   */
   protected readonly geocodeResult: WritableSignal<FacilityGeocodeOutput | null> =
     signal<FacilityGeocodeOutput | null>(null);
 
-  /** Whether the latest lookup answered `404` — the form's non-blocking inline message. */
+  /**
+   * Property geocodeNotFound
+   * @readonly
+   *
+   * @description
+   * Whether the latest lookup answered `404` — the form's non-blocking inline message.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly geocodeNotFound: WritableSignal<boolean> = signal<boolean>(false);
 
   //#region Constructor
@@ -635,10 +1047,15 @@ export class FacilitiesPage {
 
   /**
    * Method onSearchQueryChanged
-   * @description Records a keystroke into the draft term the debounce watches.
+   *
+   * @description
+   * Records a keystroke into the draft term the debounce watches.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {string} term - The search box's current value.
+   *
    * @returns {void}
    */
   protected onSearchQueryChanged(term: string): void {
@@ -647,9 +1064,13 @@ export class FacilitiesPage {
 
   /**
    * Method clearSearch
-   * @description Drops the search from the URL and returns to the first page.
+   *
+   * @description
+   * Drops the search from the URL and returns to the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected clearSearch(): void {
@@ -659,10 +1080,15 @@ export class FacilitiesPage {
 
   /**
    * Method toggleIncludeArchived
-   * @description Flips whether archived facilities are shown, returning to the first page.
+   *
+   * @description
+   * Flips whether archived facilities are shown, returning to the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {boolean} checked - The checkbox's new state.
+   *
    * @returns {void}
    */
   protected toggleIncludeArchived(checked: boolean): void {
@@ -673,10 +1099,16 @@ export class FacilitiesPage {
 
   /**
    * Method onFieldPicked
-   * @description Reacts to the filter bar's `fieldPicked` output by rendering the "archived" chip before its checkbox is checked, then moving focus onto that checkbox — see {@link focusArchivedCheckbox}.
+   *
+   * @description
+   * Reacts to the filter bar's `fieldPicked` output by rendering the "archived" chip before its
+   * checkbox is checked, then moving focus onto that checkbox — see {@link focusArchivedCheckbox}.
+   *
    * @access protected
    * @since 1.5.0
+   *
    * @param {string} key - The field key the bar's "+ Filter" menu just picked.
+   *
    * @returns {void}
    */
   protected onFieldPicked(key: string): void {
@@ -721,9 +1153,13 @@ export class FacilitiesPage {
 
   /**
    * Method onFieldRemoved
-   * @description Reacts to the filter bar's `fieldRemoved` output by turning "show archived" back off.
+   *
+   * @description
+   * Reacts to the filter bar's `fieldRemoved` output by turning "show archived" back off.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @returns {void}
    */
   protected onFieldRemoved(): void {
@@ -732,10 +1168,16 @@ export class FacilitiesPage {
 
   /**
    * Method toggleFiltersVisible
-   * @description Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to the value it reports.
+   *
+   * @description
+   * Reacts to `app-collection-filter-toggle`'s `visibleChange` by setting {@link filtersVisible} to
+   * the value it reports.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {boolean} visible - The toggle button's intended next state.
+   *
    * @returns {void}
    */
   protected toggleFiltersVisible(visible: boolean): void {
@@ -744,9 +1186,13 @@ export class FacilitiesPage {
 
   /**
    * Method clearFilters
-   * @description Drops every narrowing at once, including the search term.
+   *
+   * @description
+   * Drops every narrowing at once, including the search term.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected clearFilters(): void {
@@ -756,10 +1202,15 @@ export class FacilitiesPage {
 
   /**
    * Method setPageSize
-   * @description Changes the page size and returns to the first page.
+   *
+   * @description
+   * Changes the page size and returns to the first page.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} size - The chosen page size.
+   *
    * @returns {void}
    */
   protected setPageSize(size: number): void {
@@ -769,10 +1220,15 @@ export class FacilitiesPage {
 
   /**
    * Method goToPage
-   * @description Moves to a page within bounds, round-tripped through `?page=`.
+   *
+   * @description
+   * Moves to a page within bounds, round-tripped through `?page=`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {number} target - The requested page.
+   *
    * @returns {void}
    */
   protected goToPage(target: number): void {
@@ -783,10 +1239,15 @@ export class FacilitiesPage {
 
   /**
    * Method onArchiveRequested
-   * @description Archives a row's facility.
+   *
+   * @description
+   * Archives a row's facility.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FacilityOutput} facility - The facility to archive.
+   *
    * @returns {void}
    */
   protected onArchiveRequested(facility: FacilityOutput): void {
@@ -795,10 +1256,15 @@ export class FacilitiesPage {
 
   /**
    * Method onRestoreRequested
-   * @description Restores a row's archived facility.
+   *
+   * @description
+   * Restores a row's archived facility.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FacilityOutput} facility - The facility to restore.
+   *
    * @returns {void}
    */
   protected onRestoreRequested(facility: FacilityOutput): void {
@@ -817,6 +1283,7 @@ export class FacilitiesPage {
    *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected exportCsv(): void {
@@ -853,9 +1320,13 @@ export class FacilitiesPage {
 
   /**
    * Method reload
-   * @description Re-runs the current query, for the error state's retry.
+   *
+   * @description
+   * Re-runs the current query, for the error state's retry.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected reload(): void {
@@ -873,10 +1344,17 @@ export class FacilitiesPage {
 
   /**
    * Method applySortField
-   * @description Orders by a column head. Re-picking the active field reverses it, which is what a second click on a sorted column means everywhere else. Resets to the first page like every other narrowing change.
+   *
+   * @description
+   * Orders by a column head. Re-picking the active field reverses it, which is what a second click
+   * on a sorted column means everywhere else. Resets to the first page like every other narrowing
+   * change.
+   *
    * @access protected
    * @since 1.4.0
+   *
    * @param {FacilitySortField} field - The column's field.
+   *
    * @returns {void}
    */
   protected applySortField(field: FacilitySortField): void {
@@ -892,26 +1370,61 @@ export class FacilitiesPage {
   /**
    * Method openCreate
    * @method openCreate
-   * @description Opens the creation sheet, loading its options the first time — browser only, they are secondary UI data.
+   *
+   * @description
+   * Opens the creation sheet, loading its options the first time — browser only, they are secondary
+   * UI data.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @returns {void}
    */
   protected openCreate(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.facilityOptionsStore.ensureLoaded(this.organizationId());
+      this.facilityOptionsStore.ensureSelected({
+        organizationId: this.organizationId(),
+        facilityId: this.pendingScopeId(),
+      });
     }
     this.createSheetVisible.set(true);
   }
 
   /**
-   * Method onCreateSheetVisibleChange
+   * Method onCreateTypeChanged
    * @method onCreateSheetVisibleChange
-   * @description Relays the sheet's open/closed state and, on close, drops the pre-picked scope.
+   *
+   * @description
+   * Relays the sheet's open/closed state and, on close, drops the pre-picked scope.
+   *
    * @access protected
    * @since 1.6.0
-   * @param {boolean} visible - Whether the sheet is open.
+   *
+   * @param {FacilityType | ''} type - Chosen facility type used to scope admissible parents.
+   *
    * @returns {void}
+   */
+  protected onCreateTypeChanged(type: FacilityType | ''): void {
+    if (type)
+      this.facilityOptionsStore.ensureLoaded({
+        organizationId: this.organizationId(),
+        parentForType: type,
+      });
+  }
+
+  /**
+   * Method onCreateSheetVisibleChange
+   *
+   * @description
+   * Relays sheet visibility and clears the preselected parent after closing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} visible - Whether the creation sheet is open.
+   *
+   * @returns {void} Return value.
    */
   protected onCreateSheetVisibleChange(visible: boolean): void {
     this.createSheetVisible.set(visible);
@@ -922,10 +1435,16 @@ export class FacilitiesPage {
   /**
    * Method onCreateSubmitted
    * @method onCreateSubmitted
-   * @description Sends the sheet's payload to the store, ignoring re-entries while a create is in flight. The sheet closes and the page navigates once the store reports the new record.
+   *
+   * @description
+   * Sends the sheet's payload to the store, ignoring re-entries while a create is in flight. The
+   * sheet closes and the page navigates once the store reports the new record.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @param {CreateFacilityInput} payload - The validated payload.
+   *
    * @returns {void}
    */
   protected onCreateSubmitted(payload: CreateFacilityInput): void {
@@ -937,15 +1456,19 @@ export class FacilitiesPage {
   /**
    * Method onGeocodeRequested
    * @method onGeocodeRequested
+   *
    * @description
    * Resolves the sheet's address draft to coordinates (`FacilityService.geocode`)
    * and answers through the sheet's `geocodeResult` / `geocodeNotFound` inputs.
    * A `404` renders inline and never blocks the form; any other refusal — the
    * endpoint's `429` rate limit, a `400` — surfaces its RFC 7807 `detail` as an
    * error toast.
+   *
    * @access protected
    * @since 1.6.0
+   *
    * @param {string} address - The trimmed address the form asked to locate.
+   *
    * @returns {void}
    */
   protected onGeocodeRequested(address: string): void {
@@ -982,10 +1505,15 @@ export class FacilitiesPage {
 
   /**
    * Method navigateQuery
-   * @description Round-trips a patch of query params without disturbing the rest of the URL.
+   *
+   * @description
+   * Round-trips a patch of query params without disturbing the rest of the URL.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {Record<string, string | null>} patch - The params to set, `null` removing one.
+   *
    * @returns {void}
    */
   private navigateQuery(patch: Readonly<Record<string, string | null>>): void {

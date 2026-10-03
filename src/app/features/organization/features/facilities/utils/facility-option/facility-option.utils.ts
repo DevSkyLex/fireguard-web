@@ -6,7 +6,6 @@ import { facilityTypeLabel } from '../facility-type-label/facility-type-label.ut
 
 /**
  * Function toFacilityOption
- * @function toFacilityOption
  *
  * @description
  * Maps a facility to the shape every facility picker renders: name first,
@@ -20,6 +19,8 @@ import { facilityTypeLabel } from '../facility-type-label/facility-type-label.ut
  * @param {FacilityOutput} facility - The facility to offer.
  *
  * @returns {FacilityOption} The picker option.
+ *
+ * @function toFacilityOption
  */
 export function toFacilityOption(facility: FacilityOutput): FacilityOption {
   const typeLabel: string = facilityTypeLabel(facility.type);
@@ -29,6 +30,7 @@ export function toFacilityOption(facility: FacilityOutput): FacilityOption {
 
   return {
     value: facility.id,
+    type: facility.type,
     label: facility.name,
     typeLabel,
     pathLabel: ancestors.length > 0 ? ancestors.join(' › ') : null,

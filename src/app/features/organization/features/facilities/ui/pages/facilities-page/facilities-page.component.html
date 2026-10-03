@@ -278,6 +278,21 @@
   [pending]="store.isCreating()"
   [serverError]="store.createError()"
   [parentOptions]="facilityOptionsStore.options()"
+  [parentCallState]="facilityOptionsStore.loadCallState()"
+  [parentPage]="facilityOptionsStore.page()"
+  [parentPageCount]="facilityOptionsStore.pageCount()"
+  [hydratedParent]="facilityOptionsStore.selectedOption()"
+  (typeChanged)="onCreateTypeChanged($event)"
+  (parentSearchChanged)="
+    facilityOptionsStore.searchOptions({ organizationId: organizationId(), search: $event })
+  "
+  (parentPageChanged)="
+    facilityOptionsStore.load({
+      organizationId: organizationId(),
+      page: $event,
+      search: facilityOptionsStore.search(),
+    })
+  "
   [initialParentFacilityId]="pendingScopeId()"
   [mapCenter]="facilityOptionsStore.mapCenter()"
   [geocodePending]="geocodePending()"

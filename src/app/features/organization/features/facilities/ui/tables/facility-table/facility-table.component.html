@@ -106,6 +106,16 @@
               />
             }
           </a>
+          @if (item.path.length) {
+            <p class="text-xs text-muted-foreground" data-testid="facility-result-path">
+              @for (segment of item.path; track segment.id; let last = $last) {
+                {{ segment.name }}
+                @if (!last) {
+                  ›
+                }
+              }
+            </p>
+          }
           @if (item.address; as address) {
             <span class="block text-sm text-muted-foreground">{{ address }}</span>
           }
@@ -169,6 +179,16 @@
 
             <p hlmItemDescription class="truncate">
               {{ typeLabelOf(item.type) }}
+              @if (item.path.length) {
+                <p class="text-xs text-muted-foreground" data-testid="facility-result-path">
+                  @for (segment of item.path; track segment.id; let last = $last) {
+                    {{ segment.name }}
+                    @if (!last) {
+                      ›
+                    }
+                  }
+                </p>
+              }
               @if (item.address; as address) {
                 · {{ address }}
               }

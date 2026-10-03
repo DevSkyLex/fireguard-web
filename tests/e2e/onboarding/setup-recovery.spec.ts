@@ -120,7 +120,7 @@ test('restores a partial facility batch after reload and retries only the remain
   await api.mockAuthenticatedSession();
   await api.mockOnboarding(atStep('create_first_facility'));
   await api.mockFacilityAddressSuggestions(E2E_ORGANIZATION_ID);
-  await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput({ name: 'HQ' })]);
+  await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput({ type: 'site', name: 'HQ' })]);
   await api.mockOnboardingStepExecute('create_first_facility', atStep('create_first_equipment'));
   let annexUnavailable = true;
   const createdNames: string[] = [];
@@ -137,13 +137,13 @@ test('restores a partial facility batch after reload and retries only the remain
     api.recordSetupCreation(route, `facility-${input.name}`);
     await route.fulfill({
       status: 201,
-      json: facilityOutput({ id: `facility-${input.name}`, name: input.name }),
+      json: facilityOutput({ id: `facility-${input.name}`, type: 'site', name: input.name }),
     });
   });
   const wizard = new OnboardingPage(page);
   await wizard.goto();
   await wizard.addFacility({ type: 'Site', name: 'HQ' });
-  await wizard.addFacility({ type: 'Building', name: 'Annex' });
+  await wizard.addFacility({ type: 'Site', name: 'Annex' });
   await wizard.facilitiesSubmit.click();
   await expect(
     page.locator('[data-sonner-toast]').filter({ hasText: 'Annex unavailable.' }),

@@ -2,7 +2,6 @@ import type { ScenePalette } from '../../models/scene-palette.interface';
 
 /**
  * Function readScenePalette
- * @function readScenePalette
  *
  * @description
  * Reads this codebase's theme tokens off a host element and resolves each
@@ -13,30 +12,34 @@ import type { ScenePalette } from '../../models/scene-palette.interface';
  * @access public
  * @since 1.0.0
  *
- * @param {typeof import('three')} THREE - The three.js module, passed in rather than imported so this stays testable without WebGL.
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @param {typeof import('three')} THREE - The three.js module, passed in rather than imported so
+ *   this stays testable without WebGL.
  * @param {HTMLElement} hostElement - The element whose cascaded theme tokens are read.
  *
  * @returns {ScenePalette} The resolved palette.
  *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @function readScenePalette
  */
 export function readScenePalette(
   THREE: typeof import('three'),
   hostElement: HTMLElement,
 ): ScenePalette {
+  const surface = resolveThemeColor(THREE, hostElement, '--muted', '#e4e4e7');
+  const edges = resolveThemeColor(THREE, hostElement, '--muted-foreground', '#737373');
   return {
     background: resolveThemeColor(THREE, hostElement, '--background', '#f4f4f5'),
-    roomFill: resolveThemeColor(THREE, hostElement, '--card', '#ffffff'),
+    roomFill: surface.clone().lerp(edges, 0.25),
     roomSelected: resolveThemeColor(THREE, hostElement, '--primary', '#18181b'),
-    floorSlab: resolveThemeColor(THREE, hostElement, '--muted', '#e4e4e7'),
-    edges: resolveThemeColor(THREE, hostElement, '--border', '#d4d4d8'),
+    floorSlab: surface,
+    edges,
     selectionOutline: resolveThemeColor(THREE, hostElement, '--ring', '#3f3f46'),
   };
 }
 
 /**
  * Function resolveThemeColor
- * @function resolveThemeColor
  *
  * @description
  * Resolves one CSS custom property to a `THREE.Color`. This codebase's
@@ -61,6 +64,8 @@ export function readScenePalette(
  * @param {string} fallbackColor - The colour used when resolution fails.
  *
  * @returns {InstanceType<(typeof import('three'))['Color']>} The resolved (or fallback) colour.
+ *
+ * @function resolveThemeColor
  */
 function resolveThemeColor(
   THREE: typeof import('three'),
@@ -94,7 +99,6 @@ function resolveThemeColor(
  * sRGB whatever colour space the source is written in, which is the whole
  * point: this repository's theme tokens are authored in `oklch()`, and
  * `THREE.Color.setStyle` has no parser for it.
- *
  * Sniffing the string instead — matching `#`, `rgb(`, `hsl(` — was the first
  * attempt and it silently failed: current Chromium serializes a computed
  * `color` back as `oklch(...)` rather than converting it, so every token fell

@@ -27,16 +27,4 @@ export const ONBOARDING_FACILITY_TYPE_OPTIONS: ReadonlyArray<{
   readonly icon: string;
 }> = [
   { label: $localize`:@@onboarding.facilityType.site:Site`, value: 'site', icon: 'lucideMapPin' },
-  {
-    label: $localize`:@@onboarding.facilityType.building:Building`,
-    value: 'building',
-    icon: 'lucideBuilding2',
-  },
-  {
-    label: $localize`:@@onboarding.facilityType.floor:Floor`,
-    value: 'floor',
-    icon: 'lucideLayers',
-  },
-  { label: $localize`:@@onboarding.facilityType.zone:Zone`, value: 'zone', icon: 'lucideScan' },
-  { label: $localize`:@@onboarding.facilityType.area:Area`, value: 'area', icon: 'lucideSquare' },
 ];

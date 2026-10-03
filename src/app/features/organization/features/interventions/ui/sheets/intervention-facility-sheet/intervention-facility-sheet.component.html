@@ -26,15 +26,23 @@
 
     <hlm-sheet-header>
       <h3 hlmSheetTitle i18n="@@intervention.facilitySheet.header">Add facility</h3>
-      <p hlmSheetDescription i18n="@@intervention.facilitySheet.hint">
-        Attach a facility to this intervention. Only the type and name are required — the rest can
-        be filled in later from the facility's own record.
+      <p hlmSheetDescription i18n="@@intervention.facilitySheet.hierarchyHint">
+        Choose its type and name, then a compatible parent for buildings, floors, zones and areas.
+        Sites stay at the root. Other details can be completed later.
       </p>
     </hlm-sheet-header>
 
     <app-facility-create-form
       [pending]="pending()"
       [serverError]="serverError()"
+      [parentOptions]="parentOptions()"
+      [parentCallState]="parentCallState()"
+      [parentPage]="parentPage()"
+      [parentPageCount]="parentPageCount()"
+      [hydratedParent]="hydratedParent()"
+      (typeChanged)="typeChanged.emit($event)"
+      (parentSearchChanged)="parentSearchChanged.emit($event)"
+      (parentPageChanged)="parentPageChanged.emit($event)"
       (submitted)="submitted.emit($event)"
       (cancelled)="requestClose()"
       (dirtyChanged)="dirty.set($event)"

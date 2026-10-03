@@ -12,12 +12,13 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, mergeMap, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, exhaustMap, mergeMap, pipe, switchMap, tap } from 'rxjs';
 import type { RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
   idleCallState,
+  isCallPending,
   pendingCallState,
   successCallState,
   successFeedback,
@@ -109,6 +110,7 @@ const INITIAL_FACILITY_STATE: FacilityState = {
   restoreCallState: idleCallState(),
   deleteCallState: idleCallState(),
   moveCallState: idleCallState(),
+  moveRevisionCallState: idleCallState(),
   rootFacilityIds: [],
   totalRootFacilities: 0,
   rootListCallState: idleCallState(),
@@ -581,6 +583,26 @@ export const FacilityStore = signalStore(
         ),
       );
 
+      const refreshMoveRevision = rxMethod<{ organizationId: string; facilityId: string }>(
+        pipe(
+          switchMap(({ organizationId, facilityId }) => {
+            patchState(store, { moveRevisionCallState: pendingCallState() });
+            return facilityService.get(organizationId, facilityId).pipe(
+              tapResponse({
+                next: (facility: FacilityOutput) => {
+                  patchState(store, setEntity(facility, { collection: 'facility' }), {
+                    moveRevisionCallState: successCallState(null),
+                  });
+                  if (activeFacilityStore.selectedFacility()?.id === facilityId)
+                    activeFacilityStore.setFacility(facility);
+                },
+                error: (error: unknown) =>
+                  patchState(store, { moveRevisionCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
+        ),
+      );
       return {
         // ── Facility List ──────────────────────────────────────────────────────
 
@@ -639,30 +661,38 @@ export const FacilityStore = signalStore(
               });
             }),
             switchMap(({ organizationId, options }) =>
-              facilityService.list(organizationId, { ...options, rootsOnly: true }).pipe(
-                tapResponse({
-                  next: (response: HydraCollection<FacilityOutput>): void => {
-                    patchState(
-                      store,
-                      upsertEntities([...response.member], { collection: 'facility' }),
-                      {
-                        rootFacilityIds: response.member.map((facility) => facility.id),
-                        totalRootFacilities: response.totalItems,
-                        rootListCallState: successCallState(null),
-                      },
-                    );
-                  },
-                  error: (error: unknown): void => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { rootListCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      facilityStoreEvents.listFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to load facilities'),
-                      ),
-                    );
-                  },
-                }),
-              ),
+              facilityService
+                .list(organizationId, {
+                  ...options,
+                  rootsOnly: !(
+                    options?.search?.trim() || String(options?.params?.['search'] ?? '').trim()
+                  ),
+                  includePath: true,
+                })
+                .pipe(
+                  tapResponse({
+                    next: (response: HydraCollection<FacilityOutput>): void => {
+                      patchState(
+                        store,
+                        upsertEntities([...response.member], { collection: 'facility' }),
+                        {
+                          rootFacilityIds: response.member.map((facility) => facility.id),
+                          totalRootFacilities: response.totalItems,
+                          rootListCallState: successCallState(null),
+                        },
+                      );
+                    },
+                    error: (error: unknown): void => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { rootListCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        facilityStoreEvents.listFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to load facilities'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),
@@ -1009,13 +1039,24 @@ export const FacilityStore = signalStore(
          *   input: MoveFacilityInput;
          * }>}
          */
-        move: rxMethod<{ organizationId: string; facilityId: string; input: MoveFacilityInput }>(
+        move: rxMethod<{
+          organizationId: string;
+          facilityId: string;
+          input: MoveFacilityInput;
+          revision?: number;
+        }>(
           pipe(
-            tap((): void => {
+            exhaustMap(({ organizationId, facilityId, input, revision }) => {
+              if (isCallPending(store.moveRevisionCallState())) return EMPTY;
+              const expectedRevision =
+                revision ??
+                store.facilityEntityMap()[facilityId]?.revision ??
+                (activeFacilityStore.selectedFacility()?.id === facilityId
+                  ? activeFacilityStore.selectedFacility()?.revision
+                  : undefined) ??
+                0;
               patchState(store, { moveCallState: pendingCallState() });
-            }),
-            exhaustMap(({ organizationId, facilityId, input }) =>
-              facilityService.move(organizationId, facilityId, input).pipe(
+              return facilityService.move(organizationId, facilityId, input, expectedRevision).pipe(
                 tapResponse({
                   next: (facility: FacilityOutput): void => {
                     patchState(store, setEntity(facility, { collection: 'facility' }), {
@@ -1031,6 +1072,8 @@ export const FacilityStore = signalStore(
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { moveCallState: errorCallState(storeError) });
+                    if (storeError.code === 412 || storeError.code === 428)
+                      refreshMoveRevision({ organizationId, facilityId });
                     dispatcher.dispatch(
                       facilityStoreEvents.moveFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to move facility'),
@@ -1038,10 +1081,20 @@ export const FacilityStore = signalStore(
                     );
                   },
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
+        /**
+         * @description
+         * Clears the previous move result when opening a new move dialog.
+         */
+        resetMoveOperation(): void {
+          patchState(store, {
+            moveCallState: idleCallState(),
+            moveRevisionCallState: idleCallState(),
+          });
+        },
 
         // ── Sync Helpers ───────────────────────────────────────────────────────
 

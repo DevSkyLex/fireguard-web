@@ -26,6 +26,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBan,
+  lucideBoxes,
   lucideCircleAlert,
   lucideCircleCheck,
   lucideLayers,
@@ -51,18 +52,26 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
   FacilityAttachmentOutput,
+  FacilityPlanCalibration,
   FacilityEditState,
   FacilityEditTarget,
   FacilityGeocodeOutput,
   FacilityOutput,
+  FacilityMoveRequest,
+  FacilityMoveSubmittedEvent,
   FacilityPlanOverlayEquipment,
   FacilityPlanOverlayZone,
   FacilityType,
   UpdateFacilityInput,
 } from '@features/organization/features/facilities/models';
+import {
+  resolveFacilitySpatialIssueLabel,
+  resolveFacilityHierarchyIssueLabel,
+} from '@features/organization/features/facilities/models';
 import { FACILITY_TYPE_OPTIONS } from '@features/organization/features/facilities/options';
 import {
   ActiveFacilityStore,
+  FacilityOptionsStore,
   FacilityOverviewStore,
   FacilityPlansStore,
   FacilityStore,
@@ -107,6 +116,8 @@ import { FacilityPlanPanel } from '../../components/facility-plan-panel';
 import { FacilityPlanToolbar } from '../../components/facility-plan-toolbar';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
 import { FacilityDeleteDialog } from '../../dialogs/facility-delete-dialog';
+import { FacilityMoveDialog } from '../../dialogs/facility-move-dialog';
+import { FacilityPlanCalibrationDialog } from '../../dialogs/facility-plan-calibration-dialog';
 import { FacilityPlanDeleteDialog } from '../../dialogs/facility-plan-delete-dialog';
 import { FacilityPlanPinPositionDialog } from '../../dialogs/facility-plan-pin-position-dialog';
 import { FacilityPlanZoneGeometryDialog } from '../../dialogs/facility-plan-zone-geometry-dialog';
@@ -219,10 +230,12 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     ...HlmDropdownMenuImports,
     OrgDatePipe,
     RouterLink,
+    FacilityMoveDialog,
     FacilityDeleteDialog,
     FacilityHierarchyChart,
     FacilityInformationPanel,
     FacilityPlanDeleteDialog,
+    FacilityPlanCalibrationDialog,
     FacilityPlanEditor,
     FacilityPlanList,
     ...HlmDrawerImports,
@@ -251,10 +264,12 @@ const IDLE_EDIT_STATE: FacilityEditState = {
     HlmLarge,
   ],
   providers: [
+    FacilityOptionsStore,
     FacilityOverviewStore,
     FacilityPlansStore,
     provideIcons({
       lucideBan,
+      lucideBoxes,
       lucideCircleAlert,
       lucideCircleCheck,
       lucideLayers,
@@ -319,6 +334,40 @@ export class FacilityDetailPage {
    * @type {InputSignal<string | undefined>}
    */
   public readonly tab: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /**
+   * Property equipmentScope
+   * @readonly
+   *
+   * @description
+   * Route scope shared by the summary and the equipment browser.
+   * Route scope shared by the summary and the equipment browser.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly equipmentScope: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+  );
+
+  /**
+   * Property equipmentIncludeDescendants
+   * @readonly
+   *
+   * @description
+   * Equipment includes every descendant unless the direct scope is selected.
+   * Equipment includes every descendant unless the direct scope is selected.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly equipmentIncludeDescendants: Signal<boolean> = computed(
+    () => this.equipmentScope() !== 'direct',
+  );
   //#endregion
 
   //#region Properties
@@ -949,6 +998,73 @@ export class FacilityDetailPage {
   protected readonly zoneGeometryDialogFacilityId: WritableSignal<string | null> = signal(null);
 
   /**
+   * Property calibrationDialogVisible
+   * @readonly
+   *
+   * @description
+   * Calibration dialog visibility, independent of pointer measurement mode.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly calibrationDialogVisible: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Property building3dId
+   * @readonly
+   *
+   * @description
+   * Building containing the record, even when the building has no own plan.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly building3dId: Signal<string | null> = computed(() => {
+    const facility = this.activeFacilityStore.selectedFacility();
+    return facility?.type === 'building'
+      ? facility.id
+      : (facility?.path.find((segment) => segment.type === 'building')?.id ?? null);
+  });
+
+  /**
+   * Property calibrationErrorMessage
+   * @readonly
+   *
+   * @description
+   * Current save rejection shown without clearing the calibration draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly calibrationErrorMessage: Signal<string | null> = computed(() => {
+    const state = this.plans.saveCalibrationCallState();
+    return state.status === 'error' ? (state.error?.message ?? null) : null;
+  });
+
+  /**
+   * Property calibrationImageAspect
+   * @readonly
+   *
+   * @description
+   * Ratio used by distance measurement so non-square plans scale uniformly.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
+  protected readonly calibrationImageAspect: Signal<number> = computed(() => {
+    const plan = this.plans.selectedPlan();
+    return plan?.imageWidth && plan.imageHeight ? plan.imageHeight / plan.imageWidth : 1;
+  });
+
+  /**
    * Property pinPositionDialogEquipmentId
    * @readonly
    *
@@ -1023,6 +1139,8 @@ export class FacilityDetailPage {
 
     const facilityId: string | null = this.zoneGeometryDialogFacilityId();
     if (!facilityId) return '';
+    if (facilityId === this.facilityId())
+      return this.activeFacilityStore.selectedFacility()?.name ?? '';
 
     return (
       this.plans.availableZoneCandidates().find((candidate) => candidate.id === facilityId)?.name ??
@@ -1189,6 +1307,9 @@ export class FacilityDetailPage {
 
       return $localize`:@@facility.plans.editor.status.drawZone:Click the plan to add a vertex (${count}:count: placed)`;
     }
+    if (mode === 'calibrate') {
+      return $localize`:@@facility.calibration.clickPoints:Select two points whose distance you know.`;
+    }
     if (mode === 'place-pin') {
       return $localize`:@@facility.plans.editor.status.placePin:Click the plan to place the equipment`;
     }
@@ -1302,6 +1423,10 @@ export class FacilityDetailPage {
    * @since 1.0.0
    */
   public constructor() {
+    effect(() => {
+      const state = this.store.moveCallState();
+      if (state.status === 'success') untracked(() => this.moveRequest.set(null));
+    });
     registerPageActions(this.pageActions, this.pageActionsService, this.destroyRef);
     registerPageTabs(this.pageTabs, this.pageTabsService, this.destroyRef);
 
@@ -1329,6 +1454,7 @@ export class FacilityDetailPage {
         this.selectedEquipmentId.set(null);
         this.zoneGeometryDialogFacilityId.set(null);
         this.pinPositionDialogEquipmentId.set(null);
+        this.calibrationDialogVisible.set(false);
       });
     });
 
@@ -1338,6 +1464,14 @@ export class FacilityDetailPage {
         if (state.status === 'success') this.zoneGeometryDialogFacilityId.set(null);
       });
     });
+
+    effect((): void => {
+      const state = this.plans.saveCalibrationCallState();
+      untracked(() => {
+        if (state.status === 'success') this.calibrationDialogVisible.set(false);
+      });
+    });
+
     effect((): void => {
       const state: CallState<null> = this.plans.savePinPositionCallState();
       untracked((): void => {
@@ -1365,7 +1499,8 @@ export class FacilityDetailPage {
 
       untracked((): void => {
         this.titleService.setTitle(facility.name);
-        this.overview.load({ organizationId, facilityId: facility.id });
+        this.overview.loadInspections({ organizationId, facilityId: facility.id });
+        this.overview.loadInterventions({ organizationId, facilityId: facility.id });
 
         if (facility.hasChildren) {
           this.store.ensureFacilityDescendantsLoaded({
@@ -1374,6 +1509,20 @@ export class FacilityDetailPage {
           });
         }
       });
+    });
+
+    effect((): void => {
+      const facility = this.activeFacilityStore.selectedFacility();
+      const organizationId = this.organizationId();
+      const includeDescendants = this.equipmentIncludeDescendants();
+      if (facility)
+        untracked(() =>
+          this.overview.loadEquipment({
+            organizationId,
+            facilityId: facility.id,
+            includeDescendants,
+          }),
+        );
     });
 
     effect((): void => {
@@ -1396,7 +1545,239 @@ export class FacilityDetailPage {
   }
   //#endregion
 
+  /**
+   * Property moveOptions
+   * @readonly
+   *
+   * @description
+   * Candidate parents and selected-parent hydration for the move workflow.
+   * Candidate parents and selected-parent hydration for the move workflow.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FacilityOptionsStore}
+   */
+  protected readonly moveOptions: FacilityOptionsStore = inject(FacilityOptionsStore);
+  /**
+   * Property moveRequest
+   * @readonly
+   *
+   * @description
+   * Open move request, preserving its choice across failures and revision refreshes.
+   * Open move request, preserving its choice across failures and revision refreshes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityMoveRequest | null>}
+   */
+  protected readonly moveRequest: WritableSignal<FacilityMoveRequest | null> =
+    signal<FacilityMoveRequest | null>(null);
+  /**
+   * Property moveBusy
+   * @readonly
+   *
+   * @description
+   * Locks the form while writing or obtaining the latest revision.
+   * Locks the form while writing or obtaining the latest revision.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly moveBusy: Signal<boolean> = computed(
+    () =>
+      isCallPending(this.store.moveCallState()) ||
+      isCallPending(this.store.moveRevisionCallState()),
+  );
+  /**
+   * Property moveErrorMessage
+   * @readonly
+   *
+   * @description
+   * Localized retry guidance for failed moves.
+   * Localized retry guidance for failed moves.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly moveErrorMessage: Signal<string | null> = computed(() => {
+    const state = this.store.moveCallState();
+    if (state.status !== 'error') return null;
+    return state.error?.code === 412 || state.error?.code === 428
+      ? $localize`:@@facility.moveDialog.conflict:This place changed. Your selected parent is preserved. Retry with its latest revision.`
+      : $localize`:@@facility.moveDialog.failed:Unable to move this place. Your selected parent is preserved. Retry or choose another parent.`;
+  });
+
   //#region Methods
+  /**
+   * Method requestMove
+   *
+   * @description
+   * Opens a server-filtered parent chooser for the active record.
+   * Opens a server-filtered parent chooser for the active record.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Return value.
+   */
+  protected requestMove(): void {
+    const facility = this.activeFacilityStore.selectedFacility();
+    if (!facility || !this.canWrite()) return;
+    this.store.resetMoveOperation();
+    this.moveOptions.load({
+      organizationId: this.organizationId(),
+      parentForFacilityId: facility.id,
+    });
+    this.moveOptions.ensureSelected({
+      organizationId: this.organizationId(),
+      facilityId: facility.parentFacilityId,
+    });
+    this.moveRequest.set({
+      facilityId: facility.id,
+      facilityName: facility.name,
+      facilityType: facility.type,
+      currentParentFacilityId: facility.parentFacilityId,
+    });
+  }
+  /**
+   * Method onMoveSubmitted
+   *
+   * @description
+   * Sends the preserved parent choice using the current facility revision.
+   * Sends the preserved parent choice using the current facility revision.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {FacilityMoveSubmittedEvent} event - event.
+   *
+   * @returns {void} Return value.
+   */
+  protected onMoveSubmitted(event: FacilityMoveSubmittedEvent): void {
+    const facility = this.activeFacilityStore.selectedFacility();
+    if (!facility || !this.canWrite() || this.moveBusy()) return;
+    this.store.move({
+      organizationId: this.organizationId(),
+      facilityId: event.facilityId,
+      input: { parentFacilityId: event.parentFacilityId },
+      revision: facility.revision,
+    });
+  }
+  /**
+   * Method onMoveDismissed
+   *
+   * @description
+   * Cancels a move only while there is no accepted write in flight.
+   * Cancels a move only while there is no accepted write in flight.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Return value.
+   */
+  protected onMoveDismissed(): void {
+    if (!this.moveBusy()) this.moveRequest.set(null);
+  }
+  /**
+   * Method onMoveSearchChanged
+   *
+   * @description
+   * Searches admissible parents on the server.
+   * Searches admissible parents on the server.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} search - search.
+   *
+   * @returns {void} Return value.
+   */
+  protected onMoveSearchChanged(search: string): void {
+    this.moveOptions.searchOptions({ organizationId: this.organizationId(), search, page: 1 });
+  }
+  /**
+   * Method onMovePageChanged
+   *
+   * @description
+   * Reads the requested candidate page while keeping the selected parent hydrated.
+   * Reads the requested candidate page while keeping the selected parent hydrated.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {number} page - page.
+   *
+   * @returns {void} Return value.
+   */
+  protected onMovePageChanged(page: number): void {
+    this.moveOptions.load({
+      organizationId: this.organizationId(),
+      search: this.moveOptions.search(),
+      page,
+    });
+  }
+  /**
+   * Method hierarchyIssueLabel
+   *
+   * @description
+   * Describes a retained invalid hierarchy and its corrective action.
+   * Describes a retained invalid hierarchy and its corrective action.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} code - code.
+   *
+   * @returns {string} Return value.
+   */
+  protected hierarchyIssueLabel(code: string): string {
+    return resolveFacilityHierarchyIssueLabel(code);
+  }
+  /**
+   * Method spatialIssueLabel
+   *
+   * @description
+   * Explains retained geometry and calibration references in the Plans tab.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} code - Safe spatial issue code.
+   *
+   * @returns {string} Localized remediation.
+   */
+  protected spatialIssueLabel(code: string): string {
+    return resolveFacilitySpatialIssueLabel(code);
+  }
+
+  /**
+   * Method changeEquipmentScope
+   *
+   * @description
+   * Updates the scope while keeping it in the address for links to Assets.
+   * Updates the scope while keeping it in the address for links to Assets.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} includeDescendants - includeDescendants.
+   *
+   * @returns {void} Return value.
+   */
+  protected changeEquipmentScope(includeDescendants: boolean): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { equipmentScope: includeDescendants ? 'subtree' : 'direct' },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
   /**
    * Method onLinkedTabActivated
    * @method onLinkedTabActivated
@@ -1880,6 +2261,77 @@ export class FacilityDetailPage {
    */
   protected onVertexAdded(point: readonly [number, number]): void {
     this.plans.addDraftVertex(point);
+    if (this.plans.editMode() === 'calibrate' && this.plans.draftPoints().length === 2) {
+      this.calibrationDialogVisible.set(true);
+    }
+  }
+
+  /**
+   * Method onFloorOutlineRequested
+   * @method onFloorOutlineRequested
+   *
+   * @description
+   * Draws the floor's own outline using the existing plan geometry writer.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Completes the requested operation.
+   */
+  protected onFloorOutlineRequested(): void {
+    if (!this.canWrite() || this.activeFacilityStore.selectedFacility()?.type !== 'floor') return;
+    this.plans.enterDrawZoneMode(this.facilityId());
+  }
+
+  /**
+   * Method onCalibrationRequested
+   * @method onCalibrationRequested
+   *
+   * @description
+   * Starts pointer measurement, gated separately from equipment editing.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Completes the requested operation.
+   */
+  protected onCalibrationRequested(): void {
+    if (this.canWrite()) this.plans.enterCalibrationMode();
+  }
+
+  /**
+   * Method onCalibrationCoordinatesRequested
+   * @method onCalibrationCoordinatesRequested
+   *
+   * @description
+   * Opens a fully keyboard-accessible calibration path.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Completes the requested operation.
+   */
+  protected onCalibrationCoordinatesRequested(): void {
+    if (!this.canWrite() || !this.plans.selectedPlanReady()) return;
+    this.calibrationDialogVisible.set(true);
+  }
+
+  /**
+   * Method onCalibrationSubmitted
+   * @method onCalibrationSubmitted
+   *
+   * @description
+   * Submits a nullable metric calibration to the selected attachment.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {FacilityPlanCalibration | null} calibration - calibration.
+   *
+   * @returns {void} Completes the requested operation.
+   */
+  protected onCalibrationSubmitted(calibration: FacilityPlanCalibration | null): void {
+    if (this.canWrite()) this.plans.saveCalibration(calibration);
   }
 
   /**

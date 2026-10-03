@@ -1,4 +1,8 @@
 import type { HydraItem } from '@core/api/models';
+import type {
+  FacilityGeometryIssue,
+  FacilityHierarchyIssue,
+} from '../facility-spatial-issue-tag/facility-spatial-issue.type';
 import type { FacilityPlanGeometry } from './facility-plan-geometry.interface';
 
 /**
@@ -6,6 +10,8 @@ import type { FacilityPlanGeometry } from './facility-plan-geometry.interface';
  *
  * @description
  * Supported facility types exposed by the API.
+ *
+ * @type
  */
 export type FacilityType = 'site' | 'building' | 'floor' | 'zone' | 'area';
 
@@ -14,6 +20,8 @@ export type FacilityType = 'site' | 'building' | 'floor' | 'zone' | 'area';
  *
  * @description
  * Supported lifecycle statuses for a facility.
+ *
+ * @type
  */
 export type FacilityStatus = 'active' | 'archived';
 
@@ -27,11 +35,32 @@ export type FacilityStatus = 'active' | 'archived';
  */
 export interface FacilityPathSegment {
   //#region Properties
-  /** @type {string} */
+  /**
+   * Property id
+   *
+   * @description
+   * Defines id within its owning feature.
+   *
+   * @type {string}
+   */
   readonly id: string;
-  /** @type {string} */
+  /**
+   * Property name
+   *
+   * @description
+   * Defines name within its owning feature.
+   *
+   * @type {string}
+   */
   readonly name: string;
-  /** @type {FacilityType} */
+  /**
+   * Property type
+   *
+   * @description
+   * Defines type within its owning feature.
+   *
+   * @type {FacilityType}
+   */
   readonly type: FacilityType;
   //#endregion
 }
@@ -45,14 +74,23 @@ export interface FacilityPathSegment {
  */
 export interface FacilityOutput extends HydraItem {
   /**
+   * Property intervention
+   *
+   * @description
    * Optional intervention IRI when this facility is intervention-scoped.
    */
   readonly intervention?: string | null;
   /**
+   * Property recordStatus
+   *
+   * @description
    * Record lifecycle state supporting draft/publish intervention workflows.
    */
   readonly recordStatus?: 'draft' | 'published';
   /**
+   * Property revision
+   *
+   * @description
    * Monotonic revision returned by backend for publication consistency.
    */
   readonly revision?: number;
@@ -209,6 +247,22 @@ export interface FacilityOutput extends HydraItem {
   readonly levelIndex?: number | null;
 
   /**
+   * Property elevationMeters
+   *
+   * @description
+   * Floor elevation relative to the building origin, in metres.
+   */
+  readonly elevationMeters?: number | null;
+
+  /**
+   * Property heightMeters
+   *
+   * @description
+   * Physical floor height, in metres.
+   */
+  readonly heightMeters?: number | null;
+
+  /**
    * Property planGeometry
    * @readonly
    *
@@ -221,6 +275,28 @@ export interface FacilityOutput extends HydraItem {
    * @type {FacilityPlanGeometry | null | undefined}
    */
   readonly planGeometry?: FacilityPlanGeometry | null;
+
+  /**
+   * Property geometryIssue
+   * @readonly
+   *
+   * @description
+   * Current usability of the retained geometry reference, without clearing its saved coordinates.
+   *
+   * @type {FacilityGeometryIssue | null | undefined}
+   */
+  readonly geometryIssue?: FacilityGeometryIssue | null;
+
+  /**
+   * Property hierarchyIssues
+   * @readonly
+   *
+   * @description
+   * Safe structural diagnostics for legacy relationships which cannot currently be used.
+   *
+   * @type {readonly FacilityHierarchyIssue[] | undefined}
+   */
+  readonly hierarchyIssues?: readonly FacilityHierarchyIssue[];
 
   /**
    * Property path

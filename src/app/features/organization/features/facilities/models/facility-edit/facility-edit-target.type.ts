@@ -10,5 +10,14 @@
  * read-only elsewhere in the panel: `UpdateFacilityInput` accepts neither.
  *
  * @since 1.1.0
+ *
+ * @type
  */
-export type FacilityEditTarget = 'name' | 'code' | 'address' | 'coordinates' | 'levelIndex';
+export type FacilityEditTarget =
+  | 'name'
+  | 'code'
+  | 'address'
+  | 'coordinates'
+  | 'levelIndex'
+  | 'elevationMeters'
+  | 'heightMeters';

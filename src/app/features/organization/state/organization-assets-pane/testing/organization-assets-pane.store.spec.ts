@@ -87,6 +87,7 @@ describe('OrganizationAssetsPaneStore', () => {
     expect(mockEquipmentService.listByFacility).toHaveBeenCalledWith('org-1', 'facility-1', {
       page: 1,
       itemsPerPage: 50,
+      params: { includeDescendants: true },
     });
   });
 
@@ -99,6 +100,26 @@ describe('OrganizationAssetsPaneStore', () => {
       itemsPerPage: 50,
     });
     expect(store.inspections()).toEqual([inspection]);
+  });
+
+  it('keeps the direct equipment scope across pages and reports its full total', async () => {
+    mockEquipmentService.listByFacility.mockReturnValue(
+      of({ ...equipmentCollection, totalItems: 251 }),
+    );
+    store.loadEquipment({
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      includeDescendants: false,
+      page: 3,
+    });
+    await flushEffects();
+    expect(mockEquipmentService.listByFacility).toHaveBeenLastCalledWith('org-1', 'facility-1', {
+      page: 3,
+      itemsPerPage: 50,
+      params: { includeDescendants: false },
+    });
+    expect(store.equipmentTotal()).toBe(251);
+    expect(store.equipmentPage()).toBe(3);
   });
 
   it('surfaces an equipment load failure through the error computed', async () => {

@@ -42,9 +42,11 @@ import {
 } from '@features/organization/features/facilities/data-access';
 import type {
   FacilityAttachmentOutput,
+  FacilityPlanCalibration,
   FacilityOutput,
   FacilityPlanOverlayOutput,
 } from '@features/organization/features/facilities/models';
+import { sanitizePolygon } from '@features/organization/features/facilities/utils';
 import { facilityPlansStoreEvents } from './events';
 import type { FacilityPlansState } from './models';
 import { planWriteErrorMessage } from './utils/plan-write-error-message/plan-write-error-message.utils';
@@ -94,6 +96,14 @@ const INITIAL_STATE: FacilityPlansState = {
   placeEquipmentId: null,
   saveZoneGeometryCallState: idleCallState(),
   savePinPositionCallState: idleCallState(),
+  saveCalibrationCallState: idleCallState(),
+  calibrationRevisionCallState: idleCallState(),
+  zoneCandidateSearch: '',
+  zoneCandidatePage: 1,
+  zoneCandidateTotal: 0,
+  equipmentCandidateSearch: '',
+  equipmentCandidatePage: 1,
+  equipmentCandidateTotal: 0,
   zoneCandidates: [],
   zoneCandidatesCallState: idleCallState(),
   facilityEquipment: [],
@@ -364,6 +374,8 @@ export const FacilityPlansStore = signalStore(
           draftPoints: [],
           saveZoneGeometryCallState: idleCallState(),
           savePinPositionCallState: idleCallState(),
+          saveCalibrationCallState: idleCallState(),
+          calibrationRevisionCallState: idleCallState(),
         });
       }
 
@@ -454,7 +466,11 @@ export const FacilityPlansStore = signalStore(
             const generation = contextGeneration;
             patchState(store, { zoneCandidatesCallState: pendingCallState() });
             return facilityService
-              .listChildren(organizationId, facilityId, { itemsPerPage: 200 })
+              .listDescendants(organizationId, facilityId, {
+                page: store.zoneCandidatePage(),
+                itemsPerPage: 100,
+                search: store.zoneCandidateSearch(),
+              })
               .pipe(
                 takeUntil(contextChanged),
                 tapResponse({
@@ -464,6 +480,7 @@ export const FacilityPlansStore = signalStore(
                       zoneCandidates: response.member.filter((candidate) =>
                         ZONE_CANDIDATE_TYPES.has(candidate.type),
                       ),
+                      zoneCandidateTotal: response.totalItems,
                       zoneCandidatesCallState: successCallState(null),
                     });
                   },
@@ -507,7 +524,11 @@ export const FacilityPlansStore = signalStore(
             const generation = contextGeneration;
             patchState(store, { facilityEquipmentCallState: pendingCallState() });
             return equipmentService
-              .listByFacility(organizationId, facilityId, { itemsPerPage: 200 })
+              .listByFacility(organizationId, facilityId, {
+                page: store.equipmentCandidatePage(),
+                itemsPerPage: 100,
+                params: { includeDescendants: true, search: store.equipmentCandidateSearch() },
+              })
               .pipe(
                 takeUntil(contextChanged),
                 tapResponse({
@@ -515,6 +536,7 @@ export const FacilityPlansStore = signalStore(
                     if (generation !== contextGeneration) return;
                     patchState(store, {
                       facilityEquipment: [...response.member],
+                      equipmentCandidateTotal: response.totalItems,
                       facilityEquipmentCallState: successCallState(null),
                     });
                   },
@@ -573,6 +595,16 @@ export const FacilityPlansStore = signalStore(
               store.saveZoneGeometryCallState().status === 'pending'
             )
               return EMPTY;
+
+            if (points && sanitizePolygon(points).status === 'rejected') {
+              const message = $localize`:@@facility.plans.editor.invalidPolygon:Draw a polygon with non-zero area and no crossing edges.`;
+              const storeError = toStoreError({ message, status: 422 });
+              patchState(store, { saveZoneGeometryCallState: errorCallState(storeError) });
+              dispatcher.dispatch(
+                facilityPlansStoreEvents.zoneGeometrySaveFailed(errorFeedback(message)),
+              );
+              return EMPTY;
+            }
             const generation = selectionGeneration;
             const key = store.selectedPlanKey();
             patchState(store, { saveZoneGeometryCallState: pendingCallState() });
@@ -765,8 +797,156 @@ export const FacilityPlansStore = signalStore(
         ),
       );
 
+      /**
+       * Constant refreshCalibrationRevisionFn
+       *
+       * @description
+       * Refreshes only the attachment revision after conflict without replacing open form drafts.
+       */
+      const refreshCalibrationRevisionFn = rxMethod<{
+        readonly plan: FacilityAttachmentOutput;
+        readonly generation: number;
+        readonly key: string | null;
+      }>(
+        pipe(
+          switchMap(({ plan, generation, key }) => {
+            patchState(store, { calibrationRevisionCallState: pendingCallState() });
+            return service.list(plan.facilityId, 'floor_plan').pipe(
+              takeUntil(selectionChanged),
+              tapResponse({
+                next: (response: HydraCollection<FacilityAttachmentOutput>): void => {
+                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                  const refreshed = response.member.find((item) => item.id === plan.id);
+                  patchState(store, { calibrationRevisionCallState: successCallState(null) });
+                  if (refreshed) patchState(store, setEntity(refreshed, { collection: 'plan' }));
+                },
+                error: (error: unknown): void => {
+                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                  patchState(store, {
+                    calibrationRevisionCallState: errorCallState(toStoreError(error)),
+                  });
+                },
+              }),
+            );
+          }),
+        ),
+      );
+
       return {
-        // ── Plans ──────────────────────────────────────────────────────────────
+        /**
+         * @description
+         * Opens two-point calibration while retaining normalized image coordinates.
+         */
+        enterCalibrationMode(): void {
+          if (!store.selectedPlanReady()) return;
+          patchState(store, {
+            editMode: 'calibrate',
+            draftPoints: [],
+            drawTargetFacilityId: null,
+            placeEquipmentId: null,
+            saveCalibrationCallState: idleCallState(),
+            calibrationRevisionCallState: idleCallState(),
+          });
+        },
+
+        /**
+         * @description
+         * Server-searches descendant drawing targets, starting on the first page.
+         */
+        searchZoneCandidates(search: string): void {
+          patchState(store, { zoneCandidateSearch: search.trim(), zoneCandidatePage: 1 });
+          loadZoneCandidatesFn();
+        },
+
+        /**
+         * @description
+         * Selects a server page of descendant drawing candidates.
+         */
+        changeZoneCandidatePage(page: number): void {
+          if (page < 1 || page > Math.ceil(store.zoneCandidateTotal() / 100)) return;
+          patchState(store, { zoneCandidatePage: page });
+          loadZoneCandidatesFn();
+        },
+
+        /**
+         * @description
+         * Server-searches equipment across this facility and its descendants.
+         */
+        searchEquipmentCandidates(search: string): void {
+          patchState(store, { equipmentCandidateSearch: search.trim(), equipmentCandidatePage: 1 });
+          loadFacilityEquipmentFn();
+        },
+
+        /**
+         * @description
+         * Selects a server page of descendant equipment candidates.
+         */
+        changeEquipmentCandidatePage(page: number): void {
+          if (page < 1 || page > Math.ceil(store.equipmentCandidateTotal() / 100)) return;
+          patchState(store, { equipmentCandidatePage: page });
+          loadFacilityEquipmentFn();
+        },
+
+        /**
+         * @description
+         * Writes calibration with optimistic concurrency; a rejection leaves measurement and form
+         * drafts intact.
+         */
+        saveCalibration: rxMethod<FacilityPlanCalibration | null>(
+          pipe(
+            mergeMap((calibration) => {
+              const plan = store.selectedPlan();
+              if (
+                !plan ||
+                !store.selectedPlanReady() ||
+                store.saveCalibrationCallState().status === 'pending' ||
+                store.calibrationRevisionCallState().status === 'pending'
+              )
+                return EMPTY;
+              const generation = selectionGeneration;
+              const key = store.selectedPlanKey();
+              patchState(store, { saveCalibrationCallState: pendingCallState() });
+              return service.setCalibration(plan.id, calibration, plan.revision).pipe(
+                tapResponse({
+                  next: (saved: FacilityAttachmentOutput): void => {
+                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                      return;
+                    patchState(store, setEntity(saved, { collection: 'plan' }), {
+                      saveCalibrationCallState: successCallState(null),
+                      editMode: 'none',
+                      draftPoints: [],
+                    });
+                    dispatcher.dispatch(
+                      facilityPlansStoreEvents.calibrationSaved(
+                        successFeedback(
+                          $localize`:@@facility.calibration.saved:Floor plan calibration saved`,
+                        ),
+                      ),
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                      return;
+                    const storeError = toStoreError(error);
+                    // The dialog owns this error; a second toast can cover its retry action.
+                    patchState(store, {
+                      saveCalibrationCallState: errorCallState({
+                        ...storeError,
+                        message: planWriteErrorMessage(
+                          storeError,
+                          $localize`:@@facility.calibration.failed:Could not save the floor plan calibration`,
+                        ),
+                      }),
+                    });
+                    if (storeError.code === 409 || storeError.code === 412) {
+                      refreshCalibrationRevisionFn({ plan, generation, key });
+                    }
+                  },
+                }),
+              );
+            }),
+          ),
+        ),
 
         /**
          * Method load
@@ -1291,7 +1471,12 @@ export const FacilityPlansStore = signalStore(
          * @returns {void}
          */
         addDraftVertex(point: readonly [number, number]): void {
-          if (!store.selectedPlanReady() || store.editMode() !== 'draw-zone') return;
+          if (
+            !store.selectedPlanReady() ||
+            (store.editMode() !== 'draw-zone' && store.editMode() !== 'calibrate')
+          )
+            return;
+          if (store.editMode() === 'calibrate' && store.draftPoints().length >= 2) return;
 
           patchState(store, { draftPoints: [...store.draftPoints(), point] });
         },

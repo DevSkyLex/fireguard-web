@@ -52,13 +52,11 @@ for (const width of [390, 1440]) {
     await page.reload();
     await onboarding.facilityNameInput.fill('Headquarters');
     await onboarding.facilityTypeTrigger.click();
-    await Promise.all(
-      ['Site', 'Building', 'Floor', 'Zone', 'Area'].map((name) =>
-        expect(
-          page.getByRole('option', { name, exact: true }).locator('ng-icon svg').first(),
-        ).toBeVisible(),
-      ),
-    );
+    await expect(page.getByRole('option')).toHaveCount(1);
+    await expect(
+      page.getByRole('option', { name: 'Site', exact: true }).locator('ng-icon svg').first(),
+    ).toBeVisible();
+    await expect(page.getByRole('option', { name: /^(Building|Floor|Zone|Area)$/ })).toHaveCount(0);
     await page.screenshot({
       path: `tests/e2e/artifacts/onboarding-feedback/types-${width}.png`,
       animations: 'disabled',

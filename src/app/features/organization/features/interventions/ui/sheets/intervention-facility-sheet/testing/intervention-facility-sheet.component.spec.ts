@@ -2,7 +2,10 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideInteractionCapabilities } from '@core/interaction-capabilities';
-import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
+import type {
+  CreateFacilityInput,
+  FacilityOption,
+} from '@features/organization/features/facilities/models';
 import { FacilityCreateForm } from '@features/organization/features/facilities/ui/forms/facility-create-form';
 import { InterventionFacilitySheet } from '../intervention-facility-sheet.component';
 
@@ -99,6 +102,43 @@ describe('InterventionFacilitySheet', () => {
     expect((inSheet('[data-testid="facility-create-submit"]') as HTMLButtonElement).disabled).toBe(
       true,
     );
+  });
+
+  it('forwards the parent page and selection and relays server query requests', async () => {
+    const parent: FacilityOption = {
+      value: 'site-201',
+      label: 'North campus',
+      type: 'site',
+      typeLabel: 'Site',
+      pathLabel: null,
+      address: null,
+    };
+    const types = vi.fn();
+    const searches = vi.fn();
+    const pages = vi.fn();
+    fixture.componentInstance.typeChanged.subscribe(types);
+    fixture.componentInstance.parentSearchChanged.subscribe(searches);
+    fixture.componentInstance.parentPageChanged.subscribe(pages);
+    fixture.componentRef.setInput('visible', true);
+    fixture.componentRef.setInput('parentOptions', [parent]);
+    fixture.componentRef.setInput('hydratedParent', parent);
+    fixture.componentRef.setInput('parentPage', 2);
+    fixture.componentRef.setInput('parentPageCount', 3);
+    await fixture.whenStable();
+    const form = fixture.debugElement.query(By.directive(FacilityCreateForm))
+      .componentInstance as FacilityCreateForm;
+
+    expect(form.parentOptions()).toEqual([parent]);
+    expect(form.hydratedParent()).toEqual(parent);
+    expect(form.parentPage()).toBe(2);
+    expect(form.parentPageCount()).toBe(3);
+    form.typeChanged.emit('building');
+    form.parentSearchChanged.emit('North');
+    form.parentPageChanged.emit(3);
+    expect(types).toHaveBeenCalledWith('building');
+    expect(searches).toHaveBeenCalledWith('North');
+    expect(pages).toHaveBeenCalledWith(3);
+    expect(content().textContent).toContain('compatible parent');
   });
 
   it('should forward the server error down to the form', async () => {

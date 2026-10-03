@@ -7,15 +7,23 @@ import {
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { idleCallState, type CallState } from '@core/request-state';
 import type { StoreError } from '@core/request-state';
 import { THEME_PORT, type ThemeMode, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
+import type {
+  FacilityModelOutput,
+  FacilityModelAsset,
+  FacilityOutput,
+} from '@features/organization/features/facilities/models';
 import type {
   FacilityBuildingModelFloor,
   FacilityBuildingModelOutput,
   FacilityPlanOverlayZone,
 } from '@features/organization/features/facilities/models';
+import { FacilityModelsStore } from '@features/organization/features/facilities/state';
 import { FacilityBuilding3dStore } from '@features/organization/features/facilities/state';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { FacilityBuilding3dPage } from '../facility-building-3d-page.component';
 
 /**
@@ -26,89 +34,15 @@ import { FacilityBuilding3dPage } from '../facility-building-3d-page.component';
  * enough for a silent, no-op mount: the fixture's `queryData` stub carries
  * no floors, so none of the geometry-building utils are ever invoked.
  */
-vi.mock('three', () => {
-  class FakeColor {
-    public setStyle = vi.fn();
-    public clone = vi.fn(() => new FakeColor());
-    public copy = vi.fn();
-    public offsetHSL = vi.fn();
-  }
-  class FakeObject3D {
-    public position = { x: 0, y: 0, z: 0, set: vi.fn() };
-    public children: FakeObject3D[] = [];
-    public userData: Record<string, unknown> = {};
-    public add(...objects: FakeObject3D[]): void {
-      this.children.push(...objects);
-    }
-    public remove(...objects: FakeObject3D[]): void {
-      for (const object of objects) {
-        const index = this.children.indexOf(object);
-        if (index >= 0) this.children.splice(index, 1);
-      }
-    }
-    public traverse(callback: (object: FakeObject3D) => void): void {
-      callback(this);
-      for (const child of this.children) child.traverse(callback);
-    }
-    public clear(): void {
-      this.children = [];
-    }
-  }
-  class FakeGroup extends FakeObject3D {}
-  class FakeScene extends FakeObject3D {
-    public background: unknown;
-  }
-  class FakeCamera {
-    public aspect = 1;
-    public near = 0.1;
-    public far = 1000;
-    public position = { x: 0, y: 0, z: 0, set: vi.fn() };
-    public updateProjectionMatrix = vi.fn();
-  }
+vi.mock('three', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('three')>();
   class FakeRenderer {
     public setPixelRatio = vi.fn();
     public setSize = vi.fn();
     public render = vi.fn();
     public dispose = vi.fn();
   }
-  class FakeRaycaster {
-    public setFromCamera = vi.fn();
-    public intersectObjects = vi.fn(() => []);
-  }
-  class FakeVector2 {
-    public set = vi.fn();
-  }
-  class FakeVector3 {
-    public x = 0;
-    public y = 0;
-    public z = 0;
-  }
-  class FakeBox3 {
-    public setFromObject = vi.fn(function (this: FakeBox3): FakeBox3 {
-      return this;
-    });
-    public isEmpty = vi.fn(() => true);
-    public hasNoGeometry = vi.fn(() => false);
-    public getCenter = vi.fn((vector: FakeVector3) => vector);
-    public getSize = vi.fn((vector: FakeVector3) => vector);
-  }
-  class FakeLight {
-    public position = { set: vi.fn() };
-  }
-
-  return {
-    WebGLRenderer: FakeRenderer,
-    Scene: FakeScene,
-    Group: FakeGroup,
-    PerspectiveCamera: FakeCamera,
-    HemisphereLight: FakeLight,
-    DirectionalLight: FakeLight,
-    Raycaster: FakeRaycaster,
-    Vector2: FakeVector2,
-    Vector3: FakeVector3,
-    Box3: FakeBox3,
-    Color: FakeColor,
-  };
+  return { ...actual, WebGLRenderer: FakeRenderer };
 });
 
 /** jsdom carries no `ResizeObserver` — the scene's mount observes the container with one. */
@@ -142,6 +76,11 @@ const FLOOR: FacilityBuildingModelFloor = {
   facilityId: 'floor-1',
   name: 'Ground floor',
   levelIndex: 0,
+  elevationMeters: null,
+  heightMeters: null,
+  equipment: [],
+  hierarchyIssues: [],
+  diagnostics: { invalidGeometryCount: 0, unpositionedEquipmentCount: 0, geometryIssues: [] },
   status: 'active',
   plan: null,
   outline: null,
@@ -162,6 +101,49 @@ const MODEL: FacilityBuildingModelOutput = {
   floors: [],
 };
 
+const IMPORTED_MODEL: FacilityModelOutput = {
+  '@id': '/api/facility-models/model-1',
+  '@type': 'FacilityModel',
+  id: 'model-1',
+  organizationId: 'org-1',
+  buildingId: 'building-1',
+  fileName: 'building.glb',
+  mimeType: 'model/gltf-binary',
+  fileSize: 100,
+  nodeCount: 2,
+  nodes: [
+    { index: 0, name: 'Shell' },
+    { index: 1, name: 'Assembly' },
+  ],
+  revision: 1,
+  active: true,
+  transform: { scale: 1, rotationDegrees: 0, translation: { x: 0, y: 0, z: 0 } },
+  bindings: [{ nodeIndex: 1, facilityId: 'floor-1' }],
+  bindingIssues: [],
+  downloadUrl: '/api/facility-models/model-1/download',
+  createdAt: '',
+  updatedAt: '',
+};
+
+const BOUND_FACILITY: FacilityOutput = {
+  '@id': '/api/facilities/undrawn-zone',
+  '@type': 'Facility',
+  id: 'undrawn-zone',
+  organizationId: 'org-1',
+  parentFacilityId: 'floor-1',
+  hasChildren: true,
+  type: 'zone',
+  name: 'Undrawn assembly',
+  code: null,
+  status: 'active',
+  address: null,
+  metadata: {},
+  path: [],
+  equipmentCount: 0,
+  createdAt: '',
+  updatedAt: '',
+};
+
 const createStoreStub = (): {
   isQueryLoaded: WritableSignal<boolean>;
   queryHasError: WritableSignal<boolean>;
@@ -170,6 +152,12 @@ const createStoreStub = (): {
   isEmpty: WritableSignal<boolean>;
   hasNoGeometry: WritableSignal<boolean>;
   exploded: WritableSignal<boolean>;
+  metric: WritableSignal<boolean>;
+  selectedEquipmentId: WritableSignal<string | null>;
+  selectedEquipment: WritableSignal<null>;
+  setMetric: ReturnType<typeof vi.fn>;
+  selectEquipment: ReturnType<typeof vi.fn>;
+  toggleIsolation: ReturnType<typeof vi.fn>;
   selectedRoomId: WritableSignal<string | null>;
   selectedFloorId: WritableSignal<string | null>;
   isolatedFloorId: WritableSignal<string | null>;
@@ -191,6 +179,12 @@ const createStoreStub = (): {
   isEmpty: signal<boolean>(false),
   hasNoGeometry: signal<boolean>(false),
   exploded: signal<boolean>(false),
+  metric: signal<boolean>(false),
+  selectedEquipmentId: signal<string | null>(null),
+  selectedEquipment: signal<null>(null),
+  setMetric: vi.fn(),
+  selectEquipment: vi.fn(),
+  toggleIsolation: vi.fn(),
   selectedRoomId: signal<string | null>(null),
   selectedFloorId: signal<string | null>(null),
   isolatedFloorId: signal<string | null>(null),
@@ -204,6 +198,42 @@ const createStoreStub = (): {
   selectRoom: vi.fn(),
   selectFloor: vi.fn(),
   clearSelection: vi.fn(),
+});
+
+const createModelStoreStub = () => ({
+  modelEntities: signal<FacilityModelOutput[]>([]),
+  selectedModel: signal<FacilityModelOutput | null>(null),
+  selectedModelId: signal<string | null>(null),
+  selectedNodeIndex: signal<number | null>(null),
+  previewAsset: signal<FacilityModelAsset | null>(null),
+  settingsSavedToken: signal(0),
+  facilityOptions: signal([]),
+  bindingFacilities: signal<readonly FacilityOutput[]>([]),
+  bindingFloorIds: signal<Readonly<Record<string, string | null>>>({ 'floor-1': 'floor-1' }),
+  listCallState: signal(idleCallState()),
+  optionsCallState: signal(idleCallState()),
+  uploadCallState: signal(idleCallState()),
+  updateCallState: signal(idleCallState()),
+  previewCallState: signal(idleCallState()),
+  activateCallState: signal(idleCallState()),
+  removeCallState: signal(idleCallState()),
+  downloadCallState: signal<CallState<{ blob: Blob; fileName: string }>>(idleCallState()),
+  isListPending: signal(false),
+  isUploadPending: signal(false),
+  isUpdatePending: signal(false),
+  isPreviewPending: signal(false),
+  isActivatePending: signal(false),
+  isRemovePending: signal(false),
+  load: vi.fn(),
+  upload: vi.fn(),
+  update: vi.fn(),
+  activate: vi.fn(),
+  remove: vi.fn(),
+  download: vi.fn(),
+  select: vi.fn(),
+  selectNode: vi.fn(),
+  clearNodeSelection: vi.fn(),
+  refresh: vi.fn(),
 });
 
 const createPage = async (): Promise<ComponentFixture<FacilityBuilding3dPage>> => {
@@ -233,6 +263,7 @@ function stubMatchMedia(matches: boolean): void {
 describe('FacilityBuilding3dPage', () => {
   let fixture: ComponentFixture<FacilityBuilding3dPage>;
   let store: ReturnType<typeof createStoreStub>;
+  let modelsStore: ReturnType<typeof createModelStoreStub>;
   let hasPermission: ReturnType<typeof vi.fn>;
 
   afterEach(() => {
@@ -247,6 +278,7 @@ describe('FacilityBuilding3dPage', () => {
   beforeEach(() => {
     mobile.set(false);
     store = createStoreStub();
+    modelsStore = createModelStoreStub();
     hasPermission = vi.fn().mockReturnValue(true);
 
     TestBed.configureTestingModule({
@@ -255,6 +287,8 @@ describe('FacilityBuilding3dPage', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: FacilityBuilding3dStore, useValue: store },
+        { provide: FacilityModelsStore, useValue: modelsStore },
+        { provide: BrowserDownloadService, useValue: { trigger: vi.fn() } },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
         {
           provide: THEME_PORT,
@@ -505,6 +539,278 @@ describe('FacilityBuilding3dPage', () => {
     scene.componentInstance.backgroundActivated.emit();
 
     expect(store.selectRoom).toHaveBeenCalledWith(null);
+    expect(modelsStore.clearNodeSelection).toHaveBeenCalled();
+    expect(store.clearSelection).not.toHaveBeenCalled();
+  });
+
+  it('selects the inherited facility binding when a mesh belongs to an associated parent node', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    const { Group } = await import('three');
+    const assembly = new Group();
+    assembly.userData = { facilityModelNodeIndex: 1 };
+    const leaf = new Group();
+    leaf.userData = { facilityModelNodeIndex: 0 };
+    assembly.add(leaf);
+    fixture = await createPage();
+    modelsStore.selectedModel.set(IMPORTED_MODEL);
+    modelsStore.selectedModelId.set(IMPORTED_MODEL.id);
+    modelsStore.previewAsset.set({
+      scene: assembly,
+      nodes: [
+        { index: 0, name: 'Shell', objects: [leaf] },
+        { index: 1, name: 'Assembly', objects: [assembly] },
+      ],
+    });
+    store.isQueryLoaded.set(true);
+    await fixture.whenStable();
+    const scene = fixture.debugElement.query(
+      (debugElement) => debugElement.name === 'app-facility-building-3d-scene',
+    );
+    scene.componentInstance.importedNodeSelected.emit(0);
+
+    expect(modelsStore.selectNode).toHaveBeenCalledWith(0);
+    expect(store.selectRoom).toHaveBeenCalledWith(null);
+    expect(store.selectFloor).toHaveBeenCalledWith('floor-1');
+    store.selectFloor.mockClear();
+    store.selectRoom.mockClear();
+    modelsStore.selectedModel.set({
+      ...IMPORTED_MODEL,
+      bindingIssues: [{ nodeIndex: 0, code: 'target_unavailable' }],
+    });
+    await fixture.whenStable();
+    scene.componentInstance.importedNodeSelected.emit(0);
+    expect(modelsStore.selectNode).toHaveBeenCalledWith(0);
+    expect(store.selectRoom).toHaveBeenCalledExactlyOnceWith(null);
+    expect(store.selectFloor).not.toHaveBeenCalled();
+  });
+
+  it('lets a reader select an undrawn non-leaf GLB zone, navigate to its record and isolate its floor', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    hasPermission.mockReturnValue(false);
+    const { Group } = await import('three');
+    fixture = await createPage();
+    const model = {
+      ...IMPORTED_MODEL,
+      bindings: [{ nodeIndex: 0, facilityId: BOUND_FACILITY.id }],
+    };
+    modelsStore.selectedModel.set(model);
+    modelsStore.selectedModelId.set(model.id);
+    modelsStore.modelEntities.set([model]);
+    modelsStore.bindingFacilities.set([BOUND_FACILITY]);
+    modelsStore.bindingFloorIds.set({ [BOUND_FACILITY.id]: 'floor-1' });
+    modelsStore.previewAsset.set({ scene: new Group(), nodes: [] });
+    modelsStore.selectNode.mockImplementation((index: number) =>
+      modelsStore.selectedNodeIndex.set(index),
+    );
+    store.floors.set([{ ...FLOOR, rooms: [] }]);
+    store.selectFloor.mockImplementation((id: string | null) => {
+      store.selectedFloorId.set(id);
+      store.selectedFloor.set(id === 'floor-1' ? { ...FLOOR, rooms: [] } : null);
+    });
+    store.isQueryLoaded.set(true);
+    await fixture.whenStable();
+    const nodeButton = fixture.nativeElement.querySelector(
+      'app-facility-model-manager ul[aria-label="Model objects"] button',
+    ) as HTMLButtonElement;
+    expect(nodeButton).not.toBeNull();
+    nodeButton.click();
+    await fixture.whenStable();
+
+    expect(modelsStore.selectNode).toHaveBeenCalledWith(0);
+    expect(store.selectRoom).toHaveBeenCalledExactlyOnceWith(null);
+    expect(store.selectFloor).toHaveBeenCalledWith('floor-1');
+    expect(fixture.componentInstance['selectedImportedFacility']()).toEqual(BOUND_FACILITY);
+    const link = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-bound-facility-link"]',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/organizations/org-1/facilities/undrawn-zone');
+    expect(link.parentElement?.textContent).toContain(BOUND_FACILITY.name);
+    const announcement = fixture.nativeElement.querySelector(
+      '[data-testid="facility-3d-selection-announcement"]',
+    );
+    expect(announcement.textContent).toContain(BOUND_FACILITY.name);
+    (
+      fixture.nativeElement.querySelector(
+        '[data-testid="facility-3d-isolate-floor"]',
+      ) as HTMLButtonElement
+    ).click();
+    expect(store.toggleIsolation).toHaveBeenCalledWith('floor-1');
+
+    store.selectFloor.mockClear();
+    modelsStore.selectedModel.set({
+      ...model,
+      bindingIssues: [{ nodeIndex: 0, code: 'target_unavailable' }],
+    });
+    await fixture.whenStable();
+    nodeButton.click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['selectedImportedFacility']()).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="facility-3d-bound-facility-link"]'),
+    ).toBeNull();
+    expect(store.selectFloor).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { change: 'selected floor', bindingFloorId: 'floor-1', clears: true },
+    { change: 'isolated floor', bindingFloorId: 'floor-1', clears: true },
+    { change: 'selected floor', bindingFloorId: null, clears: false },
+  ])(
+    'reconciles an undrawn GLB selection when $change changes (binding floor: $bindingFloorId)',
+    async ({ change, bindingFloorId, clears }) => {
+      vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+      const { Group } = await import('three');
+      fixture = await createPage();
+      const model = {
+        ...IMPORTED_MODEL,
+        bindings: [{ nodeIndex: 0, facilityId: BOUND_FACILITY.id }],
+      };
+      const otherFloor = { ...FLOOR, facilityId: 'floor-2', name: 'Other floor', rooms: [] };
+      store.floors.set([{ ...FLOOR, rooms: [] }, otherFloor]);
+      store.selectedFloorId.set('floor-1');
+      store.selectedFloor.set({ ...FLOOR, rooms: [] });
+      modelsStore.selectedModel.set(model);
+      modelsStore.selectedModelId.set(model.id);
+      modelsStore.bindingFacilities.set([BOUND_FACILITY]);
+      modelsStore.bindingFloorIds.set({ [BOUND_FACILITY.id]: bindingFloorId });
+      modelsStore.selectedNodeIndex.set(0);
+      modelsStore.previewAsset.set({ scene: new Group(), nodes: [] });
+      modelsStore.clearNodeSelection.mockImplementation(() =>
+        modelsStore.selectedNodeIndex.set(null),
+      );
+      store.selectFloor.mockImplementation((id: string) => {
+        store.selectedFloorId.set(id);
+        store.selectedFloor.set(otherFloor);
+      });
+      store.isQueryLoaded.set(true);
+      await fixture.whenStable();
+      const scaleInput = fixture.nativeElement.querySelector('#model-scale') as HTMLInputElement;
+      scaleInput.value = '2';
+      scaleInput.dispatchEvent(new Event('input', { bubbles: true }));
+      await fixture.whenStable();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="facility-3d-bound-facility-link"]'),
+      ).not.toBeNull();
+      expect(modelsStore.clearNodeSelection).not.toHaveBeenCalled();
+      if (change === 'selected floor') {
+        const floorButtons = fixture.nativeElement.querySelectorAll(
+          '[data-testid="facility-3d-floor-selector-option"]',
+        );
+        (floorButtons[1] as HTMLButtonElement).click();
+        expect(store.selectFloor).toHaveBeenCalledWith('floor-2');
+      } else store.isolatedFloorId.set('floor-2');
+      await fixture.whenStable();
+      const scene = fixture.debugElement.query(
+        (element) => element.name === 'app-facility-building-3d-scene',
+      );
+      if (clears) {
+        expect(modelsStore.clearNodeSelection).toHaveBeenCalledOnce();
+        expect(modelsStore.selectedNodeIndex()).toBeNull();
+        expect(fixture.componentInstance['selectedImportedFacility']()).toBeNull();
+        expect(
+          fixture.nativeElement.querySelector('[data-testid="facility-3d-bound-facility-link"]'),
+        ).toBeNull();
+        expect(scene.componentInstance.selectedNodeIndex()).toBeNull();
+        expect(scene.componentInstance.selectedFacilityId()).toBeNull();
+      } else {
+        expect(modelsStore.clearNodeSelection).not.toHaveBeenCalled();
+        expect(modelsStore.selectedNodeIndex()).toBe(0);
+        expect(
+          fixture.nativeElement.querySelector('[data-testid="facility-3d-bound-facility-link"]'),
+        ).not.toBeNull();
+      }
+      expect(fixture.componentInstance['renderedImportedModel']()?.transform.scale).toBe(2);
+    },
+  );
+
+  it('does not select or link a GLB target owned by a nested building', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    const { Group } = await import('three');
+    fixture = await createPage();
+    modelsStore.selectedModel.set({
+      ...IMPORTED_MODEL,
+      bindings: [{ nodeIndex: 0, facilityId: BOUND_FACILITY.id }],
+    });
+    modelsStore.selectedModelId.set(IMPORTED_MODEL.id);
+    modelsStore.bindingFacilities.set([BOUND_FACILITY]);
+    modelsStore.bindingFloorIds.set({});
+    modelsStore.selectedNodeIndex.set(0);
+    modelsStore.previewAsset.set({ scene: new Group(), nodes: [] });
+    store.isQueryLoaded.set(true);
+    await fixture.whenStable();
+    const scene = fixture.debugElement.query(
+      (element) => element.name === 'app-facility-building-3d-scene',
+    );
+    scene.componentInstance.importedNodeSelected.emit(0);
+    expect(store.selectFloor).not.toHaveBeenCalled();
+    expect(store.selectRoom).toHaveBeenCalledExactlyOnceWith(null);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="facility-3d-bound-facility-link"]'),
+    ).toBeNull();
+  });
+
+  it('passes exploded layout only to the generated representation', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    const { Group } = await import('three');
+    fixture = await createPage();
+    store.exploded.set(true);
+    store.isQueryLoaded.set(true);
+    await fixture.whenStable();
+    let scene = fixture.debugElement.query(
+      (element) => element.name === 'app-facility-building-3d-scene',
+    );
+    expect(scene.componentInstance.exploded()).toBe(true);
+    modelsStore.selectedModel.set(IMPORTED_MODEL);
+    modelsStore.selectedModelId.set(IMPORTED_MODEL.id);
+    modelsStore.previewAsset.set({ scene: new Group(), nodes: [] });
+    await fixture.whenStable();
+    scene = fixture.debugElement.query(
+      (element) => element.name === 'app-facility-building-3d-scene',
+    );
+    expect(scene.componentInstance.exploded()).toBe(false);
+    expect(store.exploded()).toBe(true);
+    fixture.componentInstance['onModelModeChanged']('generated');
+    await fixture.whenStable();
+    expect(scene.componentInstance.exploded()).toBe(true);
+  });
+
+  it('returns to the generated empty state after the final imported model is removed', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as RenderingContext);
+    const { Group } = await import('three');
+    fixture = await createPage();
+    store.isQueryLoaded.set(true);
+    store.isEmpty.set(true);
+    modelsStore.selectedModel.set(IMPORTED_MODEL);
+    modelsStore.selectedModelId.set(IMPORTED_MODEL.id);
+    modelsStore.previewAsset.set({ scene: new Group(), nodes: [] });
+    await fixture.whenStable();
+    expect(fixture.componentInstance['sceneMode']()).toBe('imported');
+    expect(fixture.nativeElement.querySelector('[data-testid="facility-3d-empty"]')).toBeNull();
+
+    modelsStore.previewAsset.set(null);
+    modelsStore.isPreviewPending.set(true);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['sceneMode']()).toBe('imported');
+
+    modelsStore.isPreviewPending.set(false);
+    modelsStore.selectedModel.set(null);
+    modelsStore.selectedModelId.set(null);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['sceneMode']()).toBe('generated');
+    expect(fixture.nativeElement.querySelector('[data-testid="facility-3d-empty"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('canvas')).toBeNull();
+  });
+
+  it('clears an imported node selection with Escape while preserving the current floor', async () => {
+    fixture = await createPage();
+    modelsStore.selectedNodeIndex.set(0);
+    store.selectedFloorId.set('floor-1');
+    await fixture.whenStable();
+    const root = fixture.nativeElement.querySelector('[data-testid="facility-3d-page"]');
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(modelsStore.clearNodeSelection).toHaveBeenCalledOnce();
+    expect(store.selectRoom).toHaveBeenCalledWith(null);
     expect(store.clearSelection).not.toHaveBeenCalled();
   });
 
@@ -654,9 +960,11 @@ describe('FacilityBuilding3dPage', () => {
 describe('FacilityBuilding3dPage (server platform)', () => {
   let fixture: ComponentFixture<FacilityBuilding3dPage>;
   let store: ReturnType<typeof createStoreStub>;
+  let modelsStore: ReturnType<typeof createModelStoreStub>;
 
   beforeEach(() => {
     store = createStoreStub();
+    modelsStore = createModelStoreStub();
 
     TestBed.configureTestingModule({
       providers: [
@@ -668,6 +976,8 @@ describe('FacilityBuilding3dPage (server platform)', () => {
           useValue: { isMobileInteractionMode: signal(false) },
         },
         { provide: FacilityBuilding3dStore, useValue: store },
+        { provide: FacilityModelsStore, useValue: modelsStore },
+        { provide: BrowserDownloadService, useValue: { trigger: vi.fn() } },
         { provide: OrganizationPermissionService, useValue: { hasPermission: vi.fn() } },
       ],
     });

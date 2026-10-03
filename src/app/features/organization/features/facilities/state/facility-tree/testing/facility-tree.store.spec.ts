@@ -23,6 +23,7 @@ const apiError = (status: number, detail: string): ApiError => ({
 describe('FacilityTreeStore', () => {
   let store: FacilityTreeStoreType;
   let mockFacilityService: {
+    get: ReturnType<typeof vi.fn>;
     list: ReturnType<typeof vi.fn>;
     listChildren: ReturnType<typeof vi.fn>;
     move: ReturnType<typeof vi.fn>;
@@ -48,6 +49,7 @@ describe('FacilityTreeStore', () => {
 
   beforeEach(() => {
     mockFacilityService = {
+      get: vi.fn(),
       list: vi.fn().mockReturnValue(of(rootsCollection)),
       listChildren: vi.fn().mockReturnValue(of(childrenCollection)),
       move: vi.fn(),
@@ -85,6 +87,8 @@ describe('FacilityTreeStore', () => {
 
       expect(mockFacilityService.list).toHaveBeenCalledWith('org-1', {
         rootsOnly: true,
+        page: 1,
+        includePath: true,
         itemsPerPage: 100,
       });
       expect(store.rootsCallState().status).toBe('success');
@@ -127,6 +131,8 @@ describe('FacilityTreeStore', () => {
       await flushEffects();
 
       expect(mockFacilityService.listChildren).toHaveBeenCalledWith('org-1', 'facility-root', {
+        page: 1,
+        includePath: true,
         itemsPerPage: 100,
       });
       expect(store.childrenByParent()['facility-root']).toEqual([child]);
@@ -268,6 +274,12 @@ describe('FacilityTreeStore', () => {
     it('optimistically re-parents the facility and confirms it on success', async () => {
       const moved = { ...facilityA, parentFacilityId: 'facility-b' } as FacilityOutput;
       mockFacilityService.move.mockReturnValue(of(moved));
+      mockFacilityService.list.mockReturnValue(
+        of({ ...rootsCollection, totalItems: 1, member: [facilityB] }),
+      );
+      mockFacilityService.listChildren.mockReturnValue(
+        of({ ...childrenCollection, totalItems: 1, member: [moved] }),
+      );
 
       store.move({
         organizationId: 'org-1',
@@ -276,9 +288,14 @@ describe('FacilityTreeStore', () => {
       });
       await flushEffects();
 
-      expect(mockFacilityService.move).toHaveBeenCalledWith('org-1', 'facility-a', {
-        parentFacilityId: 'facility-b',
-      });
+      expect(mockFacilityService.move).toHaveBeenCalledWith(
+        'org-1',
+        'facility-a',
+        {
+          parentFacilityId: 'facility-b',
+        },
+        0,
+      );
       expect(store.roots().map((f) => f.id)).toEqual(['facility-b']);
       expect(store.childrenByParent()['facility-b']?.map((f) => f.id)).toEqual(['facility-a']);
       expect(dispatch).toHaveBeenCalledWith(
@@ -371,5 +388,213 @@ describe('FacilityTreeStore', () => {
         expect.objectContaining({ type: facilityTreeStoreEvents.duplicateFailed.type }),
       );
     });
+  });
+  it('loads all root and branch pages with deduplication and retry preserving loaded records', () => {
+    const first = Array.from({ length: 100 }, (_, i) => ({ ...root, id: 'root-' + i }));
+    const final = { ...root, id: 'root-100' };
+    mockFacilityService.list
+      .mockReturnValueOnce(of({ ...rootsCollection, member: first, totalItems: 101 }))
+      .mockReturnValueOnce(throwError(() => apiError(503, 'offline')))
+      .mockReturnValueOnce(of({ ...rootsCollection, member: [first[99], final], totalItems: 101 }));
+    store.loadRoots('org-1');
+    store.loadMoreRoots('org-1');
+    expect(store.roots()).toHaveLength(100);
+    expect(store.rootsPage()).toBe(1);
+    store.loadMoreRoots('org-1');
+    expect(store.roots()).toHaveLength(101);
+    expect(store.roots()[100].id).toBe('root-100');
+    expect(store.canLoadMoreRoots()).toBe(false);
+    expect(mockFacilityService.list).toHaveBeenLastCalledWith('org-1', {
+      rootsOnly: true,
+      page: 2,
+      itemsPerPage: 100,
+      includePath: true,
+    });
+    mockFacilityService.listChildren
+      .mockReturnValueOnce(of({ ...childrenCollection, member: first, totalItems: 101 }))
+      .mockReturnValueOnce(throwError(() => apiError(503, 'offline')))
+      .mockReturnValueOnce(
+        of({ ...childrenCollection, member: [first[99], final], totalItems: 101 }),
+      );
+    const input = { organizationId: 'org-1', facilityId: 'branch' };
+    store.loadChildren(input);
+    store.loadMoreChildren(input);
+    expect(store.childrenByParent()['branch']).toHaveLength(100);
+    expect(store.failedParentIds()).toContain('branch');
+    store.loadMoreChildren(input);
+    expect(store.childrenByParent()['branch']).toHaveLength(101);
+    expect(store.failedParentIds()).not.toContain('branch');
+    expect(store.canLoadMoreChildren('branch')).toBe(false);
+  });
+
+  it('refreshes the revision after a conflict and ignores concurrent moves without optimistic changes', () => {
+    const original = { ...root, revision: 3, parentFacilityId: null };
+    mockFacilityService.list.mockReturnValue(of({ ...rootsCollection, member: [original] }));
+    store.loadRoots('org-1');
+    const revisionRead = new Subject<FacilityOutput>();
+    mockFacilityService.get.mockReturnValueOnce(revisionRead);
+    mockFacilityService.move
+      .mockReturnValueOnce(throwError(() => apiError(412, 'conflict')))
+      .mockReturnValueOnce(of({ ...original, revision: 5, parentFacilityId: 'parent' }));
+    store.move({ organizationId: 'org-1', facilityId: root.id, parentFacilityId: 'parent' });
+    expect(store.moveCallState().status).toBe('error');
+    expect(store.isMoving()).toBe(true);
+    store.move({ organizationId: 'org-1', facilityId: root.id, parentFacilityId: 'ignored' });
+    expect(mockFacilityService.move).toHaveBeenCalledTimes(1);
+    expect(store.roots()[0].parentFacilityId).toBeNull();
+    revisionRead.next({ ...original, revision: 4 });
+    revisionRead.complete();
+    store.move({ organizationId: 'org-1', facilityId: root.id, parentFacilityId: 'parent' });
+    expect(mockFacilityService.move).toHaveBeenLastCalledWith(
+      'org-1',
+      root.id,
+      { parentFacilityId: 'parent' },
+      4,
+    );
+  });
+
+  it('reloads source and destination page boundaries after a move and retries a failed refresh without losing rows', () => {
+    const source = { ...root, id: 'source', parentFacilityId: null, hasChildren: true };
+    const destination = { ...root, id: 'destination', parentFacilityId: null, hasChildren: true };
+    const sourceChildren = Array.from({ length: 101 }, (_, index) => ({
+      ...child,
+      id: `source-child-${index}`,
+      parentFacilityId: source.id,
+      revision: 3,
+    }));
+    const destinationChildren = Array.from({ length: 101 }, (_, index) => ({
+      ...child,
+      id: `destination-child-${index}`,
+      parentFacilityId: destination.id,
+    }));
+    const moved = { ...sourceChildren[0], parentFacilityId: destination.id, revision: 4 };
+    const refreshSource = new Subject<HydraCollection<FacilityOutput>>();
+    let movedOnServer = false;
+    let failedSourceRefresh = false;
+    mockFacilityService.list.mockReturnValue(
+      of({ ...rootsCollection, member: [source, destination], totalItems: 2 }),
+    );
+    mockFacilityService.listChildren.mockImplementation(
+      (_organizationId: string, parentId: string, options: { page: number }) => {
+        if (movedOnServer && parentId === source.id && !failedSourceRefresh) {
+          failedSourceRefresh = true;
+          return refreshSource;
+        }
+        const children =
+          parentId === source.id
+            ? movedOnServer
+              ? sourceChildren.slice(1)
+              : sourceChildren
+            : movedOnServer
+              ? [moved, ...destinationChildren]
+              : destinationChildren;
+        return of({
+          ...childrenCollection,
+          member: children.slice((options.page - 1) * 100, options.page * 100),
+          totalItems: children.length,
+        });
+      },
+    );
+    mockFacilityService.move.mockImplementation(() => {
+      movedOnServer = true;
+      return of(moved);
+    });
+    store.loadRoots('org-1');
+    store.loadChildren({ organizationId: 'org-1', facilityId: source.id });
+    store.loadChildren({ organizationId: 'org-1', facilityId: destination.id });
+    store.move({ organizationId: 'org-1', facilityId: moved.id, parentFacilityId: destination.id });
+    expect(store.childrenByParent()[source.id]).toHaveLength(99);
+    expect(store.childPagesByParent()[source.id]).toBe(0);
+    expect(store.childTotalsByParent()[source.id]).toBe(100);
+    expect(store.childrenByParent()[destination.id]).toHaveLength(100);
+    expect(store.childPagesByParent()[destination.id]).toBe(1);
+    expect(store.childTotalsByParent()[destination.id]).toBe(102);
+
+    refreshSource.error(apiError(503, 'offline'));
+    expect(store.childrenByParent()[source.id]).toHaveLength(99);
+    expect(store.failedParentIds()).toContain(source.id);
+    store.loadMoreChildren({ organizationId: 'org-1', facilityId: source.id });
+    expect(mockFacilityService.listChildren).toHaveBeenLastCalledWith('org-1', source.id, {
+      page: 1,
+      itemsPerPage: 100,
+      includePath: true,
+    });
+    expect(store.childrenByParent()[source.id]).toEqual(sourceChildren.slice(1));
+    expect(store.failedParentIds()).not.toContain(source.id);
+    expect(store.canLoadMoreChildren(source.id)).toBe(false);
+    store.loadMoreChildren({ organizationId: 'org-1', facilityId: destination.id });
+    expect(store.childrenByParent()[destination.id]).toEqual([moved, ...destinationChildren]);
+    expect(new Set(store.childrenByParent()[destination.id].map((item) => item.id)).size).toBe(102);
+    expect(store.canLoadMoreChildren(destination.id)).toBe(false);
+  });
+
+  it('cancels an obsolete branch append when a successful move reloads its first page', () => {
+    const source = { ...root, id: 'source', parentFacilityId: null };
+    const destination = { ...root, id: 'destination', parentFacilityId: null };
+    const children = Array.from({ length: 101 }, (_, index) => ({
+      ...child,
+      id: `child-${index}`,
+      parentFacilityId: source.id,
+    }));
+    const obsoleteAppend = new Subject<HydraCollection<FacilityOutput>>();
+    mockFacilityService.list.mockReturnValue(
+      of({ ...rootsCollection, member: [source, destination], totalItems: 2 }),
+    );
+    mockFacilityService.listChildren
+      .mockReturnValueOnce(
+        of({ ...childrenCollection, member: children.slice(0, 100), totalItems: 101 }),
+      )
+      .mockReturnValueOnce(obsoleteAppend)
+      .mockReturnValueOnce(
+        of({ ...childrenCollection, member: children.slice(1), totalItems: 100 }),
+      );
+    mockFacilityService.move.mockReturnValue(
+      of({ ...children[0], parentFacilityId: destination.id }),
+    );
+    store.loadRoots('org-1');
+    const sourceRequest = { organizationId: 'org-1', facilityId: source.id };
+    store.loadChildren(sourceRequest);
+    store.loadMoreChildren(sourceRequest);
+    store.move({
+      organizationId: 'org-1',
+      facilityId: children[0].id,
+      parentFacilityId: destination.id,
+    });
+    obsoleteAppend.next({ ...childrenCollection, member: [children[100]], totalItems: 101 });
+    obsoleteAppend.complete();
+    expect(store.childrenByParent()[source.id]).toEqual(children.slice(1));
+    expect(store.childPagesByParent()[source.id]).toBe(1);
+    expect(store.childTotalsByParent()[source.id]).toBe(100);
+    expect(store.expandingParentIds()).not.toContain(source.id);
+  });
+
+  it('preserves changed roots after a failed move refresh and retries from page one', () => {
+    const nested = { ...child, parentFacilityId: root.id };
+    const moved = { ...nested, parentFacilityId: null };
+    mockFacilityService.list
+      .mockReturnValueOnce(of(rootsCollection))
+      .mockReturnValueOnce(throwError(() => apiError(503, 'offline')))
+      .mockReturnValueOnce(of({ ...rootsCollection, member: [root, moved, moved], totalItems: 2 }));
+    mockFacilityService.listChildren
+      .mockReturnValueOnce(of({ ...childrenCollection, member: [nested] }))
+      .mockReturnValueOnce(of({ ...childrenCollection, member: [], totalItems: 0 }));
+    mockFacilityService.move.mockReturnValue(of(moved));
+    store.loadRoots('org-1');
+    store.loadChildren({ organizationId: 'org-1', facilityId: root.id });
+    store.move({ organizationId: 'org-1', facilityId: nested.id, parentFacilityId: null });
+    expect(store.roots().map((item) => item.id)).toEqual([root.id, nested.id]);
+    expect(store.rootsPage()).toBe(0);
+    expect(store.rootsTotal()).toBe(2);
+    expect(store.hasRootsError()).toBe(true);
+    store.loadMoreRoots('org-1');
+    expect(mockFacilityService.list).toHaveBeenLastCalledWith('org-1', {
+      rootsOnly: true,
+      page: 1,
+      itemsPerPage: 100,
+      includePath: true,
+    });
+    expect(store.roots().map((item) => item.id)).toEqual([root.id, nested.id]);
+    expect(store.rootsPage()).toBe(1);
+    expect(store.hasRootsError()).toBe(false);
   });
 });

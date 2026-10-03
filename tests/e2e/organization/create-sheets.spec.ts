@@ -48,6 +48,7 @@ test.describe('Creation sheets', () => {
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
     await api.mockFacilityList(E2E_ORGANIZATION_ID, [facilityOutput()]);
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, facilityOutput());
 
     await page.goto(
       `/organizations/${E2E_ORGANIZATION_ID}/facilities/create?parent=${E2E_FACILITY_ID}`,

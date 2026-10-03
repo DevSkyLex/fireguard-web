@@ -10,6 +10,14 @@ import { InterventionDetailPage } from '../support/pages/intervention-detail.pag
 
 const interventionId = 'e2e-facility-tab-1';
 const createdFacilityId = 'e2e-facility-tab-created-1';
+const parentSite = facilityOutput({
+  id: 'e2e-facility-tab-parent-site',
+  '@id': '/api/facilities/e2e-facility-tab-parent-site',
+  type: 'site',
+  name: 'North Site',
+  parentFacilityId: null,
+  recordStatus: 'published',
+});
 
 const intervention = interventionOutput({
   id: interventionId,
@@ -31,6 +39,7 @@ const createdFacility = facilityOutput({
   '@id': `/api/facilities/${createdFacilityId}`,
   type: 'building',
   name: 'North Building',
+  parentFacilityId: parentSite.id,
   recordStatus: 'draft',
 });
 
@@ -75,6 +84,8 @@ test.describe('Intervention detail — Facilities tab', () => {
   }) => {
     const api = new ApiMock(page);
     await mockDetailPage(api);
+    await api.mockFacilityList(E2E_ORGANIZATION_ID, [parentSite]);
+    await api.mockFacilityDetail(E2E_ORGANIZATION_ID, parentSite);
     await api.mockInterventionFacilityCreate(createdFacility);
     const detail = new InterventionDetailPage(page);
 
@@ -85,17 +96,19 @@ test.describe('Intervention detail — Facilities tab', () => {
       (request) => request.url().endsWith('/api/facilities') && request.method() === 'POST',
     );
 
-    await detail.createFacility('Building', 'North Building');
+    await detail.createFacility('Building', 'North Building', parentSite.name);
 
     const request = await createRequest;
     const payload = request.postDataJSON() as {
       readonly type: string;
       readonly name: string;
+      readonly parentFacilityId: string;
       readonly organization: string;
       readonly intervention: string;
     };
     expect(payload.type).toBe('building');
     expect(payload.name).toBe('North Building');
+    expect(payload.parentFacilityId).toBe(parentSite.id);
     expect(payload.organization).toBe(`/api/organizations/${E2E_ORGANIZATION_ID}`);
     expect(payload.intervention).toBe(`/api/interventions/${interventionId}`);
 

@@ -3,6 +3,22 @@
   novalidate
   (submit)="submit($event)"
 >
+  <p
+    class="text-sm text-muted-foreground"
+    data-testid="onboarding-facilities-root-help"
+    i18n="@@onboarding.facilitiesForm.rootHelp"
+  >
+    Start with root sites. After setup, add their buildings, floors, zones and areas in Places.
+  </p>
+  @if (hasInvalidRootDrafts()) {
+    <p
+      role="alert"
+      class="text-sm text-destructive"
+      i18n="@@onboarding.facilitiesForm.repairRootDraft"
+    >
+      Edit each unsaved place with another type and explicitly choose Site before retrying.
+    </p>
+  }
   <div class="min-w-0">
     <hlm-field-group>
       @if (staged().length > 0) {

@@ -29,6 +29,7 @@ import { FacilityService } from '@features/organization/features/facilities/data
 import type {
   FacilityOption,
   FacilityOutput,
+  FacilityType,
 } from '@features/organization/features/facilities/models';
 import {
   resolveFacilityMapCenter,
@@ -40,14 +41,70 @@ import type { FacilityOptionsState } from './models';
 
 //#region Initial State
 /**
+ * Interface FacilityOptionsQuery
+ * @interface FacilityOptionsQuery
+ *
+ * @description
+ * Parent selector query, reused by pages, pagination and delayed server search.
+ */
+interface FacilityOptionsQuery {
+  /**
+   * Property interventionId
+   *
+   * @description
+   * Property interventionId
+   * Creation workspace context, retained during server search and pagination.
+   */
+  readonly interventionId?: string;
+  /**
+   * Property organizationId
+   *
+   * @description
+   * Organization whose active published places are queried.
+   */
+  readonly organizationId: string;
+  /**
+   * Property page
+   *
+   * @description
+   * One-based server page to retrieve.
+   */
+  readonly page?: number;
+  /**
+   * Property search
+   *
+   * @description
+   * Server search over names and ancestor paths.
+   */
+  readonly search?: string;
+  /**
+   * Property parentForType
+   *
+   * @description
+   * Creation context, excluding an existing-facility move context.
+   */
+  readonly parentForType?: FacilityType;
+  /**
+   * Property parentForFacilityId
+   *
+   * @description
+   * Move context, excluding a creation type context.
+   */
+  readonly parentForFacilityId?: string;
+}
+
+/**
  * Constant INITIAL_FACILITY_OPTIONS_STATE
  *
  * @description
- * No facilities loaded, load idle.
- *
- * @since 1.0.0
+ * Initial empty option scope and selected-record read state.
  */
 const INITIAL_FACILITY_OPTIONS_STATE: FacilityOptionsState = {
+  interventionId: null,
+  parentForType: null,
+  parentForFacilityId: null,
+  selectedFacility: null,
+  selectedCallState: idleCallState(),
   organizationId: null,
   page: 1,
   total: 0,
@@ -103,6 +160,14 @@ export const FacilityOptionsStore = signalStore(
      * The facilities as picker options, in API order.
      */
     options: computed<readonly FacilityOption[]>(() => store.facilities().map(toFacilityOption)),
+    /**
+     * @description
+     * Hydrated selection remains available independently from the current page.
+     */
+    selectedOption: computed(() => {
+      const selected = store.selectedFacility();
+      return selected ? toFacilityOption(selected) : null;
+    }),
 
     /**
      * @description
@@ -173,7 +238,7 @@ export const FacilityOptionsStore = signalStore(
           clear();
         }
       };
-      const load = rxMethod<string | { organizationId: string; page?: number; search?: string }>(
+      const load = rxMethod<string | FacilityOptionsQuery>(
         pipe(
           switchMap((input) => {
             const {
@@ -183,6 +248,28 @@ export const FacilityOptionsStore = signalStore(
             } = typeof input === 'string' ? { organizationId: input } : input;
             synchronizeSession();
             if (!isPlatformBrowser(platformId) || !authSession.isAuthenticated()) return EMPTY;
+            const parentForType =
+              typeof input === 'string'
+                ? null
+                : (input.parentForType ??
+                  (input.parentForFacilityId ? null : store.parentForType()));
+            const parentForFacilityId =
+              typeof input === 'string'
+                ? null
+                : (input.parentForFacilityId ??
+                  (input.parentForType ? null : store.parentForFacilityId()));
+            const interventionId =
+              typeof input === 'string'
+                ? null
+                : (input.interventionId ??
+                  (input.parentForType || input.parentForFacilityId
+                    ? null
+                    : store.interventionId()));
+            const sameScope =
+              store.organizationId() === organizationId &&
+              store.parentForType() === parentForType &&
+              store.parentForFacilityId() === parentForFacilityId &&
+              store.interventionId() === interventionId;
             if (store.organizationId() !== organizationId) cancellation.next();
             const revision = authSession.sessionRevision();
             const requestGeneration = ++generation;
@@ -190,7 +277,12 @@ export const FacilityOptionsStore = signalStore(
               organizationId,
               page,
               search,
-              facilities: store.organizationId() === organizationId ? store.facilities() : [],
+              interventionId,
+              parentForType,
+              parentForFacilityId,
+              facilities: sameScope ? store.facilities() : [],
+              selectedFacility:
+                store.organizationId() === organizationId ? store.selectedFacility() : null,
               loadCallState: pendingCallState(),
             });
             const isCurrent = (): boolean =>
@@ -199,6 +291,10 @@ export const FacilityOptionsStore = signalStore(
               .list(organizationId, {
                 page,
                 itemsPerPage: FACILITY_OPTIONS_PAGE_SIZE,
+                includePath: true,
+                ...(interventionId ? { interventionId } : {}),
+                ...(parentForType ? { parentForType } : {}),
+                ...(parentForFacilityId ? { parentForFacilityId } : {}),
                 ...(search ? { search } : {}),
               })
               .pipe(
@@ -228,7 +324,7 @@ export const FacilityOptionsStore = signalStore(
         ),
       );
 
-      const searchOptions = rxMethod<{ organizationId: string; search: string }>(
+      const searchOptions = rxMethod<FacilityOptionsQuery>(
         pipe(
           switchMap((query) =>
             timer(300).pipe(
@@ -238,7 +334,42 @@ export const FacilityOptionsStore = signalStore(
           ),
         ),
       );
+      const ensureSelected = rxMethod<{ organizationId: string; facilityId: string | null }>(
+        pipe(
+          switchMap(({ organizationId, facilityId }) => {
+            synchronizeSession();
+            if (!isPlatformBrowser(platformId) || !authSession.isAuthenticated()) return EMPTY;
+            if (!facilityId) {
+              patchState(store, { selectedFacility: null, selectedCallState: idleCallState() });
+              return EMPTY;
+            }
+            if (
+              store.organizationId() === organizationId &&
+              store.selectedFacility()?.id === facilityId &&
+              store.selectedCallState().status === 'success'
+            )
+              return EMPTY;
+            patchState(store, { selectedFacility: null, selectedCallState: pendingCallState() });
+            const revision = authSession.sessionRevision();
+            return facilityService.get(organizationId, facilityId).pipe(
+              takeUntil(cancellation),
+              tapResponse({
+                next: (selectedFacility: FacilityOutput) => {
+                  if (revision !== authSession.sessionRevision()) return;
+                  patchState(store, {
+                    selectedFacility,
+                    selectedCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown) =>
+                  patchState(store, { selectedCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
+        ),
+      );
       return {
+        ensureSelected,
         searchOptions,
         clear,
         synchronizeSession,
@@ -273,18 +404,26 @@ export const FacilityOptionsStore = signalStore(
          *
          * @returns {void}
          */
-        ensureLoaded(organizationId: string): void {
+        ensureLoaded(input: string | FacilityOptionsQuery): void {
+          const organizationId = typeof input === 'string' ? input : input.organizationId;
+          const interventionId = typeof input === 'string' ? null : (input.interventionId ?? null);
+          const parentForType = typeof input === 'string' ? null : (input.parentForType ?? null);
+          const parentForFacilityId =
+            typeof input === 'string' ? null : (input.parentForFacilityId ?? null);
           if (!isPlatformBrowser(platformId)) return;
 
           synchronizeSession();
           const status = store.loadCallState().status;
           if (
             store.organizationId() === organizationId &&
+            store.parentForType() === parentForType &&
+            store.parentForFacilityId() === parentForFacilityId &&
+            store.interventionId() === interventionId &&
             (status === 'pending' || status === 'success')
           )
             return;
 
-          load(organizationId);
+          load(input);
         },
       };
     },

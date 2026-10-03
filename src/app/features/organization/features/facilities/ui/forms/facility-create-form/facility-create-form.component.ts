@@ -13,6 +13,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import {
+  disabled,
   form,
   FormField,
   required,
@@ -22,6 +23,7 @@ import {
 } from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideMapPin } from '@ng-icons/lucide';
+import { idleCallState, type CallState } from '@core/request-state';
 import type {
   FacilityOption,
   CreateFacilityInput,
@@ -34,11 +36,11 @@ import type { MapCoordinates } from '@shared/map';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
-import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSheetFooter } from '@shared/ui/sheet';
+import { FacilityOptionPicker } from '../../components/facility-option-picker';
 import { FacilityMapPickerDialog } from '../../dialogs/facility-map-picker-dialog';
 import type { FacilityCreateFormDraft } from './models';
 
@@ -57,6 +59,8 @@ const EMPTY_VALUES: FacilityCreateFormDraft = {
   latitude: '',
   longitude: '',
   levelIndex: '',
+  elevationMeters: '',
+  heightMeters: '',
 };
 
 /**
@@ -201,7 +205,7 @@ function isLevelIndexInRange(value: string): boolean {
     HlmButton,
     HlmInput,
     ...HlmAlertImports,
-    ...HlmComboboxImports,
+    FacilityOptionPicker,
     ...HlmFieldImports,
     ...HlmSelectImports,
     HlmSheetFooter,
@@ -212,6 +216,144 @@ function isLevelIndexInRange(value: string): boolean {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityCreateForm {
+  /**
+   * Property parentCallState
+   * @readonly
+   *
+   * @description
+   * Server lifecycle for admissible parent candidates.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly parentCallState: InputSignal<CallState> = input(idleCallState());
+  /**
+   * Property parentPage
+   * @readonly
+   *
+   * @description
+   * Current candidate server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly parentPage: InputSignal<number> = input(1);
+  /**
+   * Property parentPageCount
+   * @readonly
+   *
+   * @description
+   * Number of candidate pages for the current server search.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly parentPageCount: InputSignal<number> = input(1);
+  /**
+   * Property hydratedParent
+   * @readonly
+   *
+   * @description
+   * Hydrated preselected parent even when it is outside the candidate page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<FacilityOption | null>}
+   */
+  public readonly hydratedParent: InputSignal<FacilityOption | null> = input<FacilityOption | null>(
+    null,
+  );
+  /**
+   * Property typeChanged
+   * @readonly
+   *
+   * @description
+   * Notifies the page to request parents admissible for this type.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<FacilityType | ''>}
+   */
+  public readonly typeChanged: OutputEmitterRef<FacilityType | ''> = output<FacilityType | ''>();
+  /**
+   * Property parentSearchChanged
+   * @readonly
+   *
+   * @description
+   * Requests a server search over admissible parents.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly parentSearchChanged: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property parentPageChanged
+   * @readonly
+   *
+   * @description
+   * Requests a server page of admissible parents.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly parentPageChanged: OutputEmitterRef<number> = output<number>();
+
+  /**
+   * Property parentTypes
+   * @readonly
+   *
+   * @description
+   * Parent types admissible under the backend hierarchy contract.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Readonly<Record<FacilityType, readonly FacilityType[]>>}
+   */
+  protected readonly parentTypes: Readonly<Record<FacilityType, readonly FacilityType[]>> = {
+    site: [],
+    building: ['site'],
+    floor: ['building'],
+    zone: ['site', 'building', 'floor', 'zone', 'area'],
+    area: ['site', 'building', 'floor', 'zone', 'area'],
+  };
+  /**
+   * Property parentHint
+   * @readonly
+   *
+   * @description
+   * Explains the parent rule for the currently selected type.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly parentHint: Signal<string> = computed(() => {
+    const type = this.model().type;
+    if (type === 'site')
+      return $localize`:@@facility.form.siteParentHint:Sites are created at the root of the hierarchy.`;
+    if (type === 'building')
+      return $localize`:@@facility.form.buildingParentHint:Choose the site containing this building.`;
+    if (type === 'floor')
+      return $localize`:@@facility.form.floorParentHint:Choose the building containing this floor.`;
+    if (type === '')
+      return $localize`:@@facility.form.chooseTypeFirst:Choose a type to see its admissible parents.`;
+    return $localize`:@@facility.form.zoneParentHint:Choose the site, building, floor, zone or area containing this place.`;
+  });
+
   //#region Inputs
   /**
    * Property pending
@@ -413,6 +555,43 @@ export class FacilityCreateForm {
     signal<FacilityCreateFormDraft>(EMPTY_VALUES);
 
   /**
+   * Property selectedParentOption
+   * @readonly
+   *
+   * @description
+   * Retains the chosen parent's type while candidate pages and server searches change.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<FacilityOption | null>}
+   */
+  protected readonly selectedParentOption: WritableSignal<FacilityOption | null> = signal(null);
+
+  /**
+   * Property selectedParent
+   * @readonly
+   *
+   * @description
+   * Resolves only records matching the draft's parent identity for hierarchy validation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<FacilityOption | null>}
+   */
+  private readonly selectedParent: Signal<FacilityOption | null> = computed(() => {
+    const parentId = this.model().parentFacilityId;
+    return (
+      this.parentOptions().find((option) => option.value === parentId) ??
+      [this.hydratedParent(), this.selectedParentOption()].find(
+        (option) => option?.value === parentId,
+      ) ??
+      null
+    );
+  });
+
+  /**
    * Property createForm
    * @readonly
    *
@@ -425,6 +604,53 @@ export class FacilityCreateForm {
    * @type {FieldTree<FacilityCreateFormDraft>}
    */
   protected readonly createForm: FieldTree<FacilityCreateFormDraft> = form(this.model, (path) => {
+    disabled(
+      path.parentFacilityId,
+      () => this.pending() || this.model().type === '' || this.model().type === 'site',
+    );
+    validate(path.parentFacilityId, ({ value, valueOf }): ValidationError | null => {
+      const type = valueOf(path.type);
+      if (type === '') return null;
+      if (type === 'site')
+        return value() === ''
+          ? null
+          : {
+              kind: 'siteParent',
+              message: $localize`:@@facility.form.siteParentError:A site must be at the root of the hierarchy.`,
+            };
+      if (!value())
+        return {
+          kind: 'parentRequired',
+          message: $localize`:@@facility.form.parentRequired:Choose an admissible parent for this place.`,
+        };
+      const selected = this.selectedParent();
+      return selected?.value === value() &&
+        selected.type &&
+        !this.parentTypes[type].includes(selected.type)
+        ? {
+            kind: 'parentType',
+            message: $localize`:@@facility.form.invalidParentType:This parent cannot contain the selected type.`,
+          }
+        : null;
+    });
+    validate(path.elevationMeters, ({ value, valueOf }): ValidationError | null =>
+      valueOf(path.type) !== 'floor' || isCoordinateInRange(value(), [-10000, 10000])
+        ? null
+        : {
+            kind: 'elevationRange',
+            message: $localize`:@@facility.form.elevationRange:Enter an elevation between -10000 and 10000 metres.`,
+          },
+    );
+    validate(path.heightMeters, ({ value, valueOf }): ValidationError | null =>
+      valueOf(path.type) !== 'floor' ||
+      value().trim() === '' ||
+      (Number.isFinite(Number(value())) && Number(value()) > 0 && Number(value()) <= 1000)
+        ? null
+        : {
+            kind: 'heightRange',
+            message: $localize`:@@facility.form.heightRange:Enter a height greater than 0 and no more than 1000 metres.`,
+          },
+    );
     required(path.type, {
       message: $localize`:@@facility.form.typeRequired:Facility type is required.`,
     });
@@ -633,6 +859,21 @@ export class FacilityCreateForm {
     });
 
     effect((): void => {
+      const type = this.model().type;
+      const parent = this.selectedParent();
+      untracked(() => {
+        if (
+          this.model().parentFacilityId &&
+          (type === 'site' ||
+            (type && parent?.type && !this.parentTypes[type].includes(parent.type)))
+        ) {
+          this.model.update((draft) => ({ ...draft, parentFacilityId: '' }));
+        }
+        this.typeChanged.emit(type);
+      });
+    });
+
+    effect((): void => {
       const dirty: boolean = this.createForm().dirty();
 
       untracked((): void => this.dirtyChanged.emit(dirty));
@@ -676,7 +917,12 @@ export class FacilityCreateForm {
 
     this.createForm().markAsTouched();
 
-    if (this.createForm().invalid()) return;
+    if (
+      this.pending() ||
+      this.parentCallState().status === 'pending' ||
+      this.createForm().invalid()
+    )
+      return;
 
     const draft: FacilityCreateFormDraft = this.model();
     if (draft.type === '') return;
@@ -690,6 +936,9 @@ export class FacilityCreateForm {
       latitude: parsedOptionalNumber(draft.latitude),
       longitude: parsedOptionalNumber(draft.longitude),
       levelIndex: draft.type === 'floor' ? parsedOptionalNumber(draft.levelIndex) : undefined,
+      elevationMeters:
+        draft.type === 'floor' ? parsedOptionalNumber(draft.elevationMeters) : undefined,
+      heightMeters: draft.type === 'floor' ? parsedOptionalNumber(draft.heightMeters) : undefined,
     });
   }
 

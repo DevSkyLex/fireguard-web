@@ -12,187 +12,369 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { disabled, form, FormField, validate, type FieldTree } from '@angular/forms/signals';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { idleCallState, type CallState } from '@core/request-state';
 import type {
   FacilityOption,
   FacilityMoveRequest,
   FacilityMoveSubmittedEvent,
 } from '@features/organization/features/facilities/models';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
-import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmDialogImports } from '@shared/ui/dialog';
 import { HlmFieldImports } from '@shared/ui/field';
-
-/** The value standing in for "no parent" in the combobox — a facility id is never an empty string. */
-const ROOT_OPTION_VALUE = '';
+import { FacilityOptionPicker } from '../../components/facility-option-picker';
 
 /**
- * Component FacilityMoveDialog
- * @class FacilityMoveDialog
+ * Class FacilityMoveDialog
  *
  * @description
- * The facility picker opened from the asset explorer tree's "Move to…"
- * action — the keyboard/AT path for the same re-parent the tree's pointer
- * drag-drop offers as an enhancement (`ARCHITECTURE.md` §10.3, `shared/tree`
- * `Tree`'s a11y contract). Mirrors `InterventionAssignDialog`'s
- * `hlm-combobox` pattern.
- *
- * Purely presentational: it owns no store and takes its open state from
- * {@link request} being non-null. The picked target is this dialog's own
- * draft, reset to the root option whenever {@link request} changes; the
- * caller keeps every write and decides what to dispatch from
- * {@link submitted}.
- *
- * @version 1.0.0
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * Admissible-parent move form. Pages own its server queries, write and confirmed dismissal.
  */
 @Component({
   selector: 'app-facility-move-dialog',
-  imports: [HlmButton, ...HlmComboboxImports, ...HlmDialogImports, ...HlmFieldImports],
+  imports: [
+    FormField,
+    FacilityOptionPicker,
+    HlmButton,
+    ...HlmDialogImports,
+    ...HlmFieldImports,
+    ...HlmAlertImports,
+  ],
   templateUrl: './facility-move-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityMoveDialog {
-  //#region Inputs
   /**
    * Property request
    * @readonly
-   * @description What is pending a move, or `null` to keep the dialog closed.
+   *
+   * @description
+   * Facility being moved, or null when closed.
+   *
    * @access public
-   * @since 1.0.0
+   * @since unreleased
+   *
    * @type {InputSignal<FacilityMoveRequest | null>}
    */
   public readonly request: InputSignal<FacilityMoveRequest | null> =
     input<FacilityMoveRequest | null>(null);
-
   /**
    * Property options
    * @readonly
-   * @description Candidate parents offered — every other currently loaded facility.
+   *
+   * @description
+   * Current server page of admissible parents.
+   *
    * @access public
-   * @since 1.0.0
+   * @since unreleased
+   *
    * @type {InputSignal<readonly FacilityOption[]>}
    */
   public readonly options: InputSignal<readonly FacilityOption[]> = input<
     readonly FacilityOption[]
   >([]);
-
+  /**
+   * Property hydratedOption
+   * @readonly
+   *
+   * @description
+   * Parent label hydrated separately from the current page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<FacilityOption | null>}
+   */
+  public readonly hydratedOption: InputSignal<FacilityOption | null> = input<FacilityOption | null>(
+    null,
+  );
   /**
    * Property busy
    * @readonly
-   * @description Whether the caller's move for this facility is in flight, which disables submitting again.
+   *
+   * @description
+   * Whether the accepted move is pending.
+   *
    * @access public
-   * @since 1.0.0
+   * @since unreleased
+   *
    * @type {InputSignal<boolean>}
    */
-  public readonly busy: InputSignal<boolean> = input<boolean>(false);
-  //#endregion
-
-  //#region Outputs
+  public readonly busy: InputSignal<boolean> = input(false);
+  /**
+   * Property errorMessage
+   * @readonly
+   *
+   * @description
+   * Error rendered inline, preserving the selected parent.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | null>}
+   */
+  public readonly errorMessage: InputSignal<string | null> = input<string | null>(null);
+  /**
+   * Property optionsCallState
+   * @readonly
+   *
+   * @description
+   * Lifecycle of admissible-parent queries.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly optionsCallState: InputSignal<CallState> = input<CallState>(idleCallState());
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * Current server page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly page: InputSignal<number> = input(1);
+  /**
+   * Property pageCount
+   * @readonly
+   *
+   * @description
+   * Total server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly pageCount: InputSignal<number> = input(1);
   /**
    * Property submitted
    * @readonly
-   * @description The picked target, for the pending request.
+   *
+   * @description
+   * Submitted choice; caller closes only after confirmed success.
+   *
    * @access public
-   * @since 1.0.0
+   * @since unreleased
+   *
    * @type {OutputEmitterRef<FacilityMoveSubmittedEvent>}
    */
   public readonly submitted: OutputEmitterRef<FacilityMoveSubmittedEvent> =
     output<FacilityMoveSubmittedEvent>();
-
   /**
    * Property dismissed
    * @readonly
-   * @description The dialog was closed without submitting — Escape, the backdrop, or Cancel.
+   *
+   * @description
+   * Dialog cancellation, locked while saving.
+   *
    * @access public
-   * @since 1.0.0
+   * @since unreleased
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly dismissed: OutputEmitterRef<void> = output<void>();
-  //#endregion
+  /**
+   * Property searchChanged
+   * @readonly
+   *
+   * @description
+   * Requests server search over admissible parents.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly searchChanged: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property pageChanged
+   * @readonly
+   *
+   * @description
+   * Requests a different server page, or retries the current page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly pageChanged: OutputEmitterRef<number> = output<number>();
+  /**
+   * Property draft
+   * @readonly
+   *
+   * @description
+   * Local draft remains independent of refreshed facility revisions.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<{ parentFacilityId: string }>}
+   */
+  protected readonly draft: WritableSignal<{ parentFacilityId: string }> = signal({
+    parentFacilityId: '',
+  });
+  /**
+   * Property moveForm
+   * @readonly
+   *
+   * @description
+   * Parent selection uses Signal Forms and requires a parent for every non-site type.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FieldTree<{ parentFacilityId: string }>}
+   */
+  protected readonly moveForm: FieldTree<{ parentFacilityId: string }> = form(
+    this.draft,
+    (path) => {
+      disabled(path.parentFacilityId, () => this.busy());
+      validate(path.parentFacilityId, ({ value }) =>
+        this.request()?.facilityType === 'site' || value()
+          ? null
+          : {
+              kind: 'parentRequired',
+              message: $localize`:@@facility.form.parentRequired:Choose an admissible parent for this place.`,
+            },
+      );
+    },
+  );
+  /**
+   * Property dialogState
+   * @readonly
+   *
+   * @description
+   * Dialog visibility follows its request.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<BrnDialogState>}
+   */
+  protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
+    this.request() ? 'open' : 'closed',
+  );
+  /**
+   * Property description
+   * @readonly
+   *
+   * @description
+   * Description identifies the record being moved.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly description: Signal<string> = computed(
+    () =>
+      $localize`:@@facility.moveDialog.message:Choose the new parent for ${this.request()?.facilityName ?? ''}:facilityName:.`,
+  );
+  /**
+   * Property allowEmpty
+   * @readonly
+   *
+   * @description
+   * Sites may have no parent; every other type requires an admissible candidate.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly allowEmpty: Signal<boolean> = computed(
+    () => this.request()?.facilityType === 'site',
+  );
+  /**
+   * Property rootOptionLabel
+   * @readonly
+   *
+   * @description
+   * Label for moving an incorrectly nested legacy site back to the root.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
+  protected readonly rootOptionLabel: string = $localize`:@@facility.moveDialog.rootOption:No parent (root level)`;
 
-  //#region Constructor
   /**
    * Constructor
    * @constructor
-   * @description Resets the picked target to the root option whenever a new request opens.
+   *
+   * @description
+   * Seeds a new opening, preserving a failed selection when the same record is refreshed.
+   *
    * @access public
-   * @since 1.0.0
+   * @since unreleased
    */
   public constructor() {
-    effect((): void => {
-      this.request();
-      untracked((): void => this.selectedParent.set(ROOT_OPTION_VALUE));
+    let openedId: string | null = null;
+    effect(() => {
+      const request = this.request();
+      if (!request) {
+        openedId = null;
+        return;
+      }
+      if (request.facilityId === openedId) return;
+      openedId = request.facilityId;
+      untracked(() =>
+        this.moveForm().reset({ parentFacilityId: request.currentParentFacilityId ?? '' }),
+      );
     });
   }
-  //#endregion
 
-  //#region Properties
-  /** The parent picked in this dialog. `ROOT_OPTION_VALUE` stands for "no parent". */
-  protected readonly selectedParent: WritableSignal<string> = signal<string>(ROOT_OPTION_VALUE);
-
-  /** The dialog state, derived from {@link request} so there is no second copy of the truth. */
-  protected readonly dialogState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
-    this.request() === null ? 'closed' : 'open',
-  );
-
-  /** The dialog's body, naming the facility being moved. */
-  protected readonly description: Signal<string> = computed<string>(() => {
-    const name: string = this.request()?.facilityName ?? '';
-
-    return $localize`:@@facility.moveDialog.message:Choose the new parent for ${name}:facilityName:.`;
-  });
-
-  /** Names a picked target on the closed combobox trigger, including the root option. */
-  protected readonly parentLabelOf: (value: string) => string = (value: string): string =>
-    value === ROOT_OPTION_VALUE
-      ? this.rootOptionLabel
-      : (this.options().find((option) => option.value === value)?.label ?? '');
-
-  /** The localized label standing for "no parent" in the combobox. */
-  protected readonly rootOptionLabel: string = $localize`:@@facility.moveDialog.rootOption:No parent (root level)`;
-  //#endregion
-
-  //#region Methods
   /**
    * Method onStateChanged
    *
    * @description
-   * Relays a dismissal — Escape or the backdrop — as {@link dismissed}. The
-   * `open` transition is only ever the caller setting {@link request}, so it
-   * is ignored here.
+   * Relays only cancellable closing transitions.
    *
    * @access protected
-   * @since 1.0.0
+   * @since unreleased
    *
-   * @param {BrnDialogState} state - The dialog's new state.
+   * @param {BrnDialogState} state - state.
    *
-   * @returns {void}
+   * @returns {void} Return value.
    */
   protected onStateChanged(state: BrnDialogState): void {
-    if (state === 'open') return;
-
-    this.dismissed.emit();
+    if (state === 'closed' && !this.busy()) this.dismissed.emit();
   }
-
   /**
    * Method submit
-   * @description Emits {@link submitted} for the pending request with the picked target.
+   *
+   * @description
+   * Emits a valid choice while retaining the draft until the caller confirms it.
+   *
    * @access protected
-   * @since 1.0.0
-   * @returns {void}
+   * @since unreleased
+   *
+   * @returns {void} Return value.
    */
   protected submit(): void {
-    const request: FacilityMoveRequest | null = this.request();
-    if (request === null) return;
-
-    const parent: string = this.selectedParent();
-
+    const request = this.request();
+    this.moveForm().markAsTouched();
+    if (
+      !request ||
+      this.busy() ||
+      this.moveForm().invalid() ||
+      this.optionsCallState().status === 'pending'
+    )
+      return;
     this.submitted.emit({
       facilityId: request.facilityId,
-      parentFacilityId: parent === ROOT_OPTION_VALUE ? null : parent,
+      parentFacilityId: this.draft().parentFacilityId || null,
     });
   }
-  //#endregion
 }

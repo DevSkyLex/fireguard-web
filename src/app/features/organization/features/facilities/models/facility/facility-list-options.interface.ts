@@ -1,5 +1,5 @@
 import type { PaginationOptions, RequestOptions, SortingOptions } from '@core/api/models';
-import type { FacilityStatus } from './facility-output.interface';
+import type { FacilityStatus, FacilityType } from './facility-output.interface';
 
 /**
  * Interface FacilityListFilter
@@ -9,12 +9,12 @@ import type { FacilityStatus } from './facility-output.interface';
  * Filtering options supported when listing **root** facilities for the
  * hierarchical TreeTable. Mirrors the backend contract:
  * `GET /api/organizations/{organizationId}/facilities?rootsOnly=true`.
- *
  * Child facilities are fetched through the dedicated `/children` endpoint
  * (see {@link FacilityChildrenOptions}) and are not scoped through this
  * filter.
  *
  * @version 2.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface FacilityListFilter {
@@ -30,6 +30,39 @@ export interface FacilityListFilter {
    * @type {boolean}
    */
   readonly rootsOnly?: boolean;
+
+  /**
+   * Property includePath
+   *
+   * @description
+   * Whether ancestor paths are included for each result.
+   */
+  readonly includePath?: boolean;
+
+  /**
+   * Property parentForType
+   *
+   * @description
+   * Returns admissible parents for a new facility of this type; excludes move context.
+   */
+  readonly parentForType?: FacilityType;
+
+  /**
+   * Property parentForFacilityId
+   *
+   * @description
+   * Returns admissible parents for this existing facility; excludes creation context.
+   */
+  readonly parentForFacilityId?: string;
+  /**
+   * Property interventionId
+   *
+   * @description
+   * Property interventionId
+   * Creation workspace permitting published parents and draft parents belonging to this
+   * intervention.
+   */
+  readonly interventionId?: string;
 
   /**
    * Property includeArchived
@@ -101,6 +134,8 @@ export interface FacilityListFilter {
  * combining root filters with pagination and the typed `sort` option
  * (`SortingOptions`, `@core/api`), serialized by `HydraApiService.buildParams`
  * as `order[<field>]=<direction>`.
+ *
+ * @type
  */
 export type FacilityListOptions = FacilityListFilter & PaginationOptions & SortingOptions;
 
@@ -111,11 +146,14 @@ export type FacilityListOptions = FacilityListFilter & PaginationOptions & Sorti
  * Query options supported by the direct-children endpoint
  * `GET /api/organizations/{organizationId}/facilities/{facilityId}/children`.
  * Pagination-only for the standard lazy-expansion flow.
+ *
+ * @type
  */
-export type FacilityChildrenOptions = PaginationOptions;
+export type FacilityChildrenOptions = PaginationOptions & { readonly includePath?: boolean };
 
 /**
  * Interface FacilityDescendantsOptions
+ * @interface
  *
  * @description
  * Query options supported by the descendants endpoint
@@ -123,11 +161,41 @@ export type FacilityChildrenOptions = PaginationOptions;
  */
 export interface FacilityDescendantsOptions {
   /**
+   * Property includePath
+   *
+   * @description
+   * Whether ancestor paths are included for descendant results.
+   */
+  readonly includePath?: boolean;
+
+  /**
+   * Property page
+   *
+   * @description
+   * Opts into server pagination without changing bulk descendant consumers.
+   */
+  readonly page?: number;
+
+  /**
+   * Property itemsPerPage
+   *
+   * @description
+   * Candidate records per page, no greater than 100.
+   */
+  readonly itemsPerPage?: number;
+
+  /**
+   * Property includeArchived
+   *
+   * @description
    * When `true`, archived descendants are included in the result.
    */
   readonly includeArchived?: boolean;
 
   /**
+   * Property search
+   *
+   * @description
    * Free-text search applied across descendant facilities.
    */
   readonly search?: string;

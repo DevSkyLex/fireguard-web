@@ -152,14 +152,16 @@ export const OrganizationAssetsPaneStore = signalStore(
         readonly organizationId: string;
         readonly facilityId?: string;
         readonly page?: number;
+        readonly includeDescendants?: boolean;
       }>(
         pipe(
-          switchMap(({ organizationId, facilityId, page = 1 }) => {
+          switchMap(({ organizationId, facilityId, page = 1, includeDescendants = true }) => {
             patchState(store, {
               equipmentPage: page,
-              equipmentScope: `${organizationId}:${facilityId ?? ''}`,
+              equipmentScope: `${organizationId}:${facilityId ?? ''}:${includeDescendants}`,
               equipmentListCallState: pendingCallState(
-                store.equipmentScope() === `${organizationId}:${facilityId ?? ''}`
+                store.equipmentScope() ===
+                  `${organizationId}:${facilityId ?? ''}:${includeDescendants}`
                   ? store.equipmentListCallState().data
                   : null,
               ),
@@ -169,6 +171,7 @@ export const OrganizationAssetsPaneStore = signalStore(
               ? equipmentService.listByFacility(organizationId, facilityId, {
                   page,
                   itemsPerPage: PANE_ITEMS_PER_PAGE,
+                  params: { includeDescendants },
                 })
               : equipmentService.list(organizationId, { page, itemsPerPage: PANE_ITEMS_PER_PAGE });
 

@@ -90,6 +90,10 @@ export class FacilityService extends HydraApiService {
     const params: NonNullable<RequestOptions['params']> = { ...options?.params };
 
     if (options?.rootsOnly) params['rootsOnly'] = true;
+    if (options?.interventionId) params['interventionId'] = options.interventionId;
+    if (options?.includePath) params['includePath'] = true;
+    if (options?.parentForType) params['parentForType'] = options.parentForType;
+    if (options?.parentForFacilityId) params['parentForFacilityId'] = options.parentForFacilityId;
     if (options?.includeArchived) params['includeArchived'] = true;
     if (options?.status) params['status'] = options.status;
     if (options?.hasCoordinates !== undefined) params['hasCoordinates'] = options.hasCoordinates;
@@ -322,6 +326,7 @@ export class FacilityService extends HydraApiService {
       {
         page: options?.page,
         itemsPerPage: options?.itemsPerPage,
+        params: options?.includePath ? { includePath: true } : undefined,
       },
     );
   }
@@ -354,6 +359,12 @@ export class FacilityService extends HydraApiService {
 
     if (options?.includeArchived) params['includeArchived'] = true;
     if (options?.search) params['search'] = options.search;
+    if (options?.includePath) params['includePath'] = true;
+    if (options?.page !== undefined || options?.itemsPerPage !== undefined) {
+      params['pagination'] = true;
+      params['page'] = options.page ?? 1;
+      params['itemsPerPage'] = options.itemsPerPage ?? 100;
+    }
 
     return this.getCollection<FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/descendants`,
@@ -689,6 +700,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} facilityId - The ID of the facility to move.
    * @param {MoveFacilityInput} input - Input containing the new parent facility ID.
+   * @param {number} revision - revision.
    *
    * @returns {Observable<FacilityOutput>} An observable emitting the moved facility details.
    */
@@ -696,10 +708,12 @@ export class FacilityService extends HydraApiService {
     organizationId: string,
     facilityId: string,
     input: MoveFacilityInput,
+    revision: number,
   ): Observable<FacilityOutput> {
     return this.post<MoveFacilityInput, FacilityOutput>(
       `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/move`,
       input,
+      { headers: { 'If-Match': `"revision-${revision}"` } },
     );
   }
 

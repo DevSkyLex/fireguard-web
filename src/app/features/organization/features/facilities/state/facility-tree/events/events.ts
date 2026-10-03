@@ -4,7 +4,6 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
 
 /**
  * Constant facilityTreeStoreEvents
- * @const facilityTreeStoreEvents
  *
  * @description
  * Asset explorer tree store events. Both carry a `FeedbackEventPayload`,
@@ -13,18 +12,34 @@ import type { FeedbackEventPayload, StoreFailureEventPayload } from '@core/reque
  * operator, since the gesture itself has no confirm step.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const facilityTreeStoreEvents
  */
 export const facilityTreeStoreEvents = eventGroup({
   source: 'Facility Tree Store',
   events: {
-    /** Dispatched when moving a facility fails; the optimistic re-parent has already been rolled back. */
+    /**
+     * @description
+     * Dispatched when moving a facility fails; the optimistic re-parent has already been rolled
+     * back.
+     */
     moveFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a facility is moved. */
+    /**
+     * @description
+     * Dispatched when a facility is moved.
+     */
     moveSucceeded: type<FeedbackEventPayload>(),
-    /** Dispatched when duplicating a facility fails. */
+    /**
+     * @description
+     * Dispatched when duplicating a facility fails.
+     */
     duplicateFailed: type<StoreFailureEventPayload>(),
-    /** Dispatched when a facility is duplicated. */
+    /**
+     * @description
+     * Dispatched when a facility is duplicated.
+     */
     duplicateSucceeded: type<FeedbackEventPayload>(),
   },
 });

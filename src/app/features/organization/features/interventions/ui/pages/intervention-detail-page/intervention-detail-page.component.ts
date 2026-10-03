@@ -71,8 +71,10 @@ import { OrganizationPermissionService } from '@features/organization/access';
 import { TeamService } from '@features/organization/data-access';
 import type {
   CreateFacilityInput,
+  FacilityType,
   FacilityOutput,
 } from '@features/organization/features/facilities/models';
+import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import {
   InterventionOfflineService,
   InterventionService,
@@ -357,6 +359,7 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     ...HlmTabsImports,
   ],
   providers: [
+    FacilityOptionsStore,
     InterventionOperationsStore,
     InterventionWorkspaceStore,
     InterventionTimeStore,
@@ -2300,6 +2303,19 @@ export class InterventionDetailPage {
   protected readonly workItemSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property facilityParents
+   * @readonly
+   *
+   * @description
+   * Supplies server-filtered candidate parents for creating places in the current intervention.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FacilityOptionsStore}
+   */
+  protected readonly facilityParents: FacilityOptionsStore = inject(FacilityOptionsStore);
+  /**
    * Property facilitySheetVisible
    * @readonly
    *
@@ -4064,6 +4080,74 @@ export class InterventionDetailPage {
     });
   }
 
+  /**
+   * Method onFacilityTypeChanged
+   *
+   * @description
+   * Queries admissible published and same-intervention draft parents for the chosen type.
+   * Queries admissible published and same-intervention draft parents for the chosen type.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {FacilityType | ''} type - type.
+   *
+   * @returns {void} Return value.
+   */
+  protected onFacilityTypeChanged(type: FacilityType | ''): void {
+    if (!type || !this.canAddFacility()) return;
+    this.facilityParents.ensureLoaded({
+      organizationId: this.organizationId(),
+      interventionId: this.interventionId(),
+      parentForType: type,
+    });
+  }
+  /**
+   * Method onFacilityParentSearchChanged
+   *
+   * @description
+   * Searches admissible parents on the server while retaining intervention context.
+   * Searches admissible parents on the server while retaining intervention context.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} search - search.
+   *
+   * @returns {void} Return value.
+   */
+  protected onFacilityParentSearchChanged(search: string): void {
+    if (!this.canAddFacility()) return;
+    this.facilityParents.searchOptions({
+      organizationId: this.organizationId(),
+      interventionId: this.interventionId(),
+      search,
+      page: 1,
+    });
+  }
+  /**
+   * Method onFacilityParentPageChanged
+   *
+   * @description
+   * Reads another candidate page without dropping the chosen parent from the form.
+   * Reads another candidate page without dropping the chosen parent from the form.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {number} page - page.
+   *
+   * @returns {void} Return value.
+   */
+  protected onFacilityParentPageChanged(page: number): void {
+    if (!this.canAddFacility()) return;
+    this.facilityParents.load({
+      organizationId: this.organizationId(),
+      interventionId: this.interventionId(),
+      search: this.facilityParents.search(),
+      page,
+    });
+  }
   /**
    * Method createFacility
    * @method createFacility

@@ -43,6 +43,48 @@
 }
 
 <ng-template #body>
+  @if (geometryIssues().length > 0 || equipmentIssues().length > 0) {
+    <section
+      class="flex flex-col gap-2"
+      data-testid="facility-plan-spatial-issues"
+      aria-label="Saved references needing attention"
+      i18n-aria-label="@@facility.spatial.issuesTitle"
+    >
+      <h4 class="text-sm font-medium" i18n="@@facility.spatial.issuesTitle">
+        Saved references needing attention
+      </h4>
+      <ul class="flex flex-col gap-3">
+        @for (issue of geometryIssues(); track issue.facilityId) {
+          <li class="flex flex-col gap-1">
+            <p class="text-xs text-muted-foreground">{{ geometryIssueLabel(issue.code) }}</p>
+            <a
+              hlmBtn
+              variant="link"
+              size="sm"
+              class="h-auto justify-start p-0"
+              [routerLink]="['/organizations', organizationId(), 'facilities', issue.facilityId]"
+              i18n="@@facility.spatial.reviewFacility"
+              >Review facility {{ issue.facilityId }}</a
+            >
+          </li>
+        }
+        @for (issue of equipmentIssues(); track issue.equipmentId) {
+          <li class="flex flex-col gap-1">
+            <p class="text-xs text-muted-foreground">{{ equipmentIssueLabel(issue.code) }}</p>
+            <a
+              hlmBtn
+              variant="link"
+              size="sm"
+              class="h-auto justify-start p-0"
+              [routerLink]="['/organizations', organizationId(), 'equipments', issue.equipmentId]"
+              i18n="@@facility.spatial.reviewEquipment"
+              >Review equipment {{ issue.equipmentId }}</a
+            >
+          </li>
+        }
+      </ul>
+    </section>
+  }
   @if (hasNoContent()) {
     <div hlmEmpty data-testid="facility-plan-no-content">
       <div hlmEmptyHeader>

@@ -2,8 +2,11 @@ import { inject } from '@angular/core';
 import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
+import { FacilityModelService } from './data-access';
 import { facilityResolver, facilityTitleResolver } from './http/resolvers';
-import { FacilityBuilding3dStore, FacilityStore } from './state';
+import { FacilityModelAssetService } from './services';
+import { FacilityBuilding3dStore, FacilityModelsStore, FacilityStore } from './state';
 
 /**
  * Function redirectToCreateSheet
@@ -33,7 +36,6 @@ const redirectToCreateSheet: RedirectFunction = (redirectData) => {
 
 /**
  * Constant FACILITY_ROUTES
- * @const FACILITY_ROUTES
  *
  * @description
  * Organization-scoped facility workflows: the roots-only index at
@@ -71,6 +73,8 @@ const redirectToCreateSheet: RedirectFunction = (redirectData) => {
  * @since 1.0.0
  *
  * @type {Routes}
+ *
+ * @const FACILITY_ROUTES
  */
 export const FACILITY_ROUTES: Routes = [
   {
@@ -116,7 +120,14 @@ export const FACILITY_ROUTES: Routes = [
       },
       {
         path: ':facilityId/3d',
-        providers: [FacilityStore, FacilityBuilding3dStore],
+        providers: [
+          FacilityStore,
+          FacilityBuilding3dStore,
+          FacilityModelsStore,
+          FacilityModelService,
+          FacilityModelAssetService,
+          BrowserDownloadService,
+        ],
         resolve: { facilitySeeded: facilityResolver },
         title: facilityTitleResolver,
         loadComponent: () =>

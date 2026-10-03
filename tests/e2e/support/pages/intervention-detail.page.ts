@@ -78,13 +78,17 @@ export class InterventionDetailPage {
     await this.facilitiesTabTrigger.click();
   }
 
-  /** Opens the "Add facility" sheet, fills the required type + name, and submits. */
-  public async createFacility(type: string, name: string): Promise<void> {
+  /** Opens the sheet, fills the type, name and admissible parent when required, and submits. */
+  public async createFacility(type: string, name: string, parent?: string): Promise<void> {
     await this.addFacilityButton.click();
     await this.facilitySheet.waitFor({ state: 'visible' });
     await this.facilityTypeSelect.click();
     await this.page.getByRole('option', { name: type }).click();
     await this.facilityNameInput.fill(name);
+    if (parent) {
+      await this.facilitySheet.locator('#facility-create-parent').fill(parent);
+      await this.page.getByRole('option').filter({ hasText: parent }).click();
+    }
     await this.facilitySubmitButton.click();
   }
 

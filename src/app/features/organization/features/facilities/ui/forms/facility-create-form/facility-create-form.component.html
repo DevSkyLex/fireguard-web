@@ -67,37 +67,25 @@
       <label hlmFieldLabel for="facility-create-parent" i18n="@@facility.form.parent"
         >Parent facility</label
       >
-      <hlm-combobox [formField]="createForm.parentFacilityId" [itemToString]="parentLabelOf">
-        <hlm-combobox-input
-          inputId="facility-create-parent"
-          placeholder="Search a facility, or leave empty for a root facility"
-          i18n-placeholder="@@facility.form.parentPlaceholder"
-          class="mobile-ui:min-h-11"
-        />
-        <hlm-combobox-content *hlmComboboxPortal>
-          <hlm-combobox-empty i18n="@@facility.form.parentNoMatch"
-            >No facility matches.</hlm-combobox-empty
-          >
-          <div hlmComboboxList>
-            @for (option of parentOptions(); track option.value) {
-              <hlm-combobox-item [value]="option.value">
-                <div class="flex min-w-0 flex-col">
-                  <span class="truncate">{{ option.label }}</span>
-                  <span class="truncate text-xs text-muted-foreground"
-                    >{{ option.typeLabel }}
-                    @if (option.pathLabel; as path) {
-                      · {{ path }}
-                    }
-                  </span>
-                </div>
-              </hlm-combobox-item>
-            }
-          </div>
-        </hlm-combobox-content>
-      </hlm-combobox>
-      <hlm-field-description i18n="@@facility.form.parentHint"
-        >Leave empty to create a root facility.</hlm-field-description
-      >
+      <app-facility-option-picker
+        inputId="facility-create-parent"
+        [formField]="createForm.parentFacilityId"
+        [options]="parentOptions()"
+        [hydratedOption]="hydratedParent()"
+        (selectedOptionChanged)="selectedParentOption.set($event)"
+        [callState]="parentCallState()"
+        [page]="parentPage()"
+        [pageCount]="parentPageCount()"
+        [allowEmpty]="model().type === 'site'"
+        (searchChanged)="parentSearchChanged.emit($event)"
+        (pageChanged)="parentPageChanged.emit($event)"
+      />
+      <p hlmFieldDescription>{{ parentHint() }}</p>
+      @if (createForm.parentFacilityId().touched()) {
+        @for (error of createForm.parentFacilityId().errors(); track error.kind) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
     </hlm-field>
 
     @if (model().type === 'floor') {
@@ -129,6 +117,44 @@
         >
         @if (createForm.levelIndex().touched() && createForm.levelIndex().invalid()) {
           <hlm-field-error>{{ createForm.levelIndex().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+      <hlm-field>
+        <label hlmFieldLabel for="facility-create-elevation" i18n="@@facility.form.elevationMeters"
+          >Elevation (m)</label
+        >
+        <input
+          hlmInput
+          id="facility-create-elevation"
+          type="text"
+          inputmode="decimal"
+          data-testid="facility-create-elevation"
+          [formField]="createForm.elevationMeters"
+          class="mobile-ui:min-h-11"
+        />
+        @if (createForm.elevationMeters().touched()) {
+          @for (error of createForm.elevationMeters().errors(); track error.kind) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </hlm-field>
+      <hlm-field>
+        <label hlmFieldLabel for="facility-create-height" i18n="@@facility.form.heightMeters"
+          >Height (m)</label
+        >
+        <input
+          hlmInput
+          id="facility-create-height"
+          type="text"
+          inputmode="decimal"
+          data-testid="facility-create-height"
+          [formField]="createForm.heightMeters"
+          class="mobile-ui:min-h-11"
+        />
+        @if (createForm.heightMeters().touched()) {
+          @for (error of createForm.heightMeters().errors(); track error.kind) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
         }
       </hlm-field>
     }

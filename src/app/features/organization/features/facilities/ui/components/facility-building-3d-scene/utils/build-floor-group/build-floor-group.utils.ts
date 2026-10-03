@@ -54,6 +54,7 @@ import { buildRoomMesh, extrudeContour } from '../build-room-mesh/build-room-mes
 export function buildFloorGroup(
   THREE: typeof import('three'),
   params: {
+    readonly roomHeight?: number;
     readonly floorId: string;
     readonly ordinal: number;
     readonly imageWidth: number | null;
@@ -104,9 +105,22 @@ export function buildFloorGroup(
   group.add(edges);
 
   for (const room of params.rooms) {
-    group.add(
-      buildRoomMesh(THREE, room.points, aspect, params.roomColor, room.facilityId, params.floorId),
+    const mesh = buildRoomMesh(
+      THREE,
+      room.points,
+      aspect,
+      params.roomColor,
+      room.facilityId,
+      params.floorId,
+      params.roomHeight,
     );
+    group.add(mesh);
+    const roomEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(mesh.geometry),
+      new THREE.LineBasicMaterial({ color: params.edgesColor }),
+    );
+    roomEdges.userData = { kind: 'floor-edges', floorId: params.floorId };
+    group.add(roomEdges);
   }
 
   return group;

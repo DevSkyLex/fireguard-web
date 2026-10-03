@@ -59,6 +59,49 @@
       </a>
     }
 
+    @if (canWrite() && canTraceFloor()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        data-testid="facility-plan-trace-floor"
+        [disabled]="editMode() !== 'none'"
+        (click)="floorOutlineRequested.emit()"
+        i18n="@@facility.plans.traceFloor"
+      >
+        Trace floor footprint
+      </button>
+    }
+    @if (canWrite() && canCalibrate()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        data-testid="facility-plan-calibrate"
+        [disabled]="editMode() !== 'none'"
+        (click)="calibrationRequested.emit()"
+        i18n="@@facility.calibration.measureOnPlan"
+      >
+        Measure on plan
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        data-testid="facility-plan-calibration-coordinates"
+        [disabled]="editMode() !== 'none'"
+        (click)="calibrationCoordinatesRequested.emit()"
+        i18n="@@facility.calibration.title"
+      >
+        Calibrate the floor plan
+      </button>
+    }
     @if (canWrite()) {
       @if (isMobileInteractionMode()) {
         <hlm-drawer
@@ -171,6 +214,35 @@
             </div>
 
             <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="zoneCandidatePage() <= 1 || zoneCandidatesLoading()"
+                  (click)="zonePageChanged.emit(zoneCandidatePage() - 1)"
+                  i18n="@@common.previous"
+                >
+                  Previous
+                </button>
+                <output class="text-xs text-muted-foreground"
+                  >{{ zoneCandidatePage() }} / {{ zoneCandidatePageCount() }}</output
+                >
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="
+                    zoneCandidatePage() * 100 >= zoneCandidateTotal() || zoneCandidatesLoading()
+                  "
+                  (click)="zonePageChanged.emit(zoneCandidatePage() + 1)"
+                  i18n="@@common.next"
+                >
+                  Next
+                </button>
+              </div>
               <button
                 hlmDrawerClose
                 hlmBtn
@@ -224,6 +296,51 @@
             }
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal class="w-56">
+            <div class="flex flex-col gap-2 p-2">
+              <label
+                class="sr-only"
+                for="facility-plan-zone-desktop-search"
+                i18n="@@facility.plans.editor.searchZones"
+                >Search zones</label
+              >
+              <input
+                hlmInput
+                #zoneDesktopSearch
+                type="search"
+                id="facility-plan-zone-desktop-search"
+                [value]="zoneSearch()"
+                (input)="onZoneSearchChanged(zoneDesktopSearch.value)"
+              />
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="zoneCandidatePage() <= 1 || zoneCandidatesLoading()"
+                  (click)="zonePageChanged.emit(zoneCandidatePage() - 1)"
+                  i18n="@@common.previous"
+                >
+                  Previous
+                </button>
+                <output class="text-xs text-muted-foreground"
+                  >{{ zoneCandidatePage() }} / {{ zoneCandidatePageCount() }}</output
+                >
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="
+                    zoneCandidatePage() * 100 >= zoneCandidateTotal() || zoneCandidatesLoading()
+                  "
+                  (click)="zonePageChanged.emit(zoneCandidatePage() + 1)"
+                  i18n="@@common.next"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
             <hlm-select-group>
               @for (candidate of zoneCandidates(); track candidate.id) {
                 <hlm-select-item [value]="candidate.id" class="mobile-ui:min-h-11">{{
@@ -350,6 +467,36 @@
             </div>
 
             <hlm-drawer-footer class="pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="equipmentCandidatePage() <= 1 || equipmentCandidatesLoading()"
+                  (click)="equipmentPageChanged.emit(equipmentCandidatePage() - 1)"
+                  i18n="@@common.previous"
+                >
+                  Previous
+                </button>
+                <output class="text-xs text-muted-foreground"
+                  >{{ equipmentCandidatePage() }} / {{ equipmentCandidatePageCount() }}</output
+                >
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="
+                    equipmentCandidatePage() * 100 >= equipmentCandidateTotal() ||
+                    equipmentCandidatesLoading()
+                  "
+                  (click)="equipmentPageChanged.emit(equipmentCandidatePage() + 1)"
+                  i18n="@@common.next"
+                >
+                  Next
+                </button>
+              </div>
               <button
                 hlmDrawerClose
                 hlmBtn
@@ -403,6 +550,52 @@
             }
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal class="w-56">
+            <div class="flex flex-col gap-2 p-2">
+              <label
+                class="sr-only"
+                for="facility-plan-equipment-desktop-search"
+                i18n="@@facility.plans.editor.searchEquipment"
+                >Search equipment</label
+              >
+              <input
+                hlmInput
+                #equipmentDesktopSearch
+                type="search"
+                id="facility-plan-equipment-desktop-search"
+                [value]="equipmentSearch()"
+                (input)="onEquipmentSearchChanged(equipmentDesktopSearch.value)"
+              />
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="equipmentCandidatePage() <= 1 || equipmentCandidatesLoading()"
+                  (click)="equipmentPageChanged.emit(equipmentCandidatePage() - 1)"
+                  i18n="@@common.previous"
+                >
+                  Previous
+                </button>
+                <output class="text-xs text-muted-foreground"
+                  >{{ equipmentCandidatePage() }} / {{ equipmentCandidatePageCount() }}</output
+                >
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  [disabled]="
+                    equipmentCandidatePage() * 100 >= equipmentCandidateTotal() ||
+                    equipmentCandidatesLoading()
+                  "
+                  (click)="equipmentPageChanged.emit(equipmentCandidatePage() + 1)"
+                  i18n="@@common.next"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
             <hlm-select-group>
               @for (candidate of equipmentCandidates(); track candidate.id) {
                 <hlm-select-item [value]="candidate.id" class="mobile-ui:min-h-11">{{
@@ -459,6 +652,19 @@
             class="mobile-ui:min-h-11"
           >
             Enter coordinates
+          </button>
+        }
+        @if (editMode() === 'calibrate') {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="mobile-ui:min-h-11"
+            (click)="calibrationCoordinatesRequested.emit()"
+            i18n="@@facility.calibration.enterCoordinates"
+          >
+            Enter points and distance
           </button>
         }
         @if (editMode() === 'place-pin') {

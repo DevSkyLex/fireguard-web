@@ -31,6 +31,11 @@ const buildingModel: FacilityBuildingModelOutput = {
       facilityId: 'floor-1',
       name: 'Ground floor',
       levelIndex: 0,
+      elevationMeters: null,
+      heightMeters: null,
+      equipment: [],
+      hierarchyIssues: [],
+      diagnostics: { invalidGeometryCount: 0, unpositionedEquipmentCount: 0, geometryIssues: [] },
       status: 'active',
       plan: null,
       outline: null,
@@ -52,6 +57,11 @@ const buildingModel: FacilityBuildingModelOutput = {
       facilityId: 'floor-2',
       name: 'First floor',
       levelIndex: 1,
+      elevationMeters: null,
+      heightMeters: null,
+      equipment: [],
+      hierarchyIssues: [],
+      diagnostics: { invalidGeometryCount: 0, unpositionedEquipmentCount: 0, geometryIssues: [] },
       status: 'active',
       plan: null,
       outline: null,
@@ -184,6 +194,7 @@ describe('FacilityBuilding3dStore', () => {
   });
 
   it('should toggle floor isolation on and off', () => {
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
     store.toggleIsolation('floor-1');
     expect(store.isolatedFloorId()).toBe('floor-1');
 
@@ -228,5 +239,50 @@ describe('FacilityBuilding3dStore', () => {
     expect(store.selectedRoomId()).toBeNull();
     expect(store.isolatedFloorId()).toBe('floor-1');
     expect(store.exploded()).toBe(true);
+  });
+  it('clears a room when switching to another floor', () => {
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
+    store.selectRoom('room-1');
+    store.selectFloor('floor-2');
+    expect(store.selectedRoomId()).toBeNull();
+    expect(store.selectedRoom()).toBeNull();
+    expect(store.selectedFloorId()).toBe('floor-2');
+  });
+
+  it('discards selection and view-local state on route scope changes', () => {
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
+    store.selectRoom('room-1');
+    store.toggleIsolation('floor-1');
+    store.toggleExploded();
+    const response = new Subject<FacilityBuildingModelOutput>();
+    mockFacilityService.getBuildingModel.mockReturnValue(response);
+    store.loadModel({ organizationId: 'org-2', facilityId: 'building-2' });
+    expect(store.queryData()).toBeNull();
+    expect(store.selectedRoomId()).toBeNull();
+    expect(store.isolatedFloorId()).toBeNull();
+    expect(store.exploded()).toBe(false);
+    response.next({ buildingId: 'building-2', buildingName: 'Other', floors: [] });
+    expect(store.selectedFloorId()).toBeNull();
+  });
+
+  it('reconciles a removed floor and its room on a same-scope reload', () => {
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
+    store.selectRoom('room-1');
+    store.toggleIsolation('floor-1');
+    mockFacilityService.getBuildingModel.mockReturnValue(
+      of({ ...buildingModel, floors: [buildingModel.floors[1]] }),
+    );
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
+    expect(store.selectedFloorId()).toBe('floor-2');
+    expect(store.selectedRoomId()).toBeNull();
+    expect(store.isolatedFloorId()).toBeNull();
+  });
+
+  it('ignores unknown selection identities', () => {
+    store.loadModel({ organizationId: 'org-1', facilityId: 'building-1' });
+    store.selectRoom('missing-room');
+    store.toggleIsolation('missing-floor');
+    expect(store.selectedRoomId()).toBeNull();
+    expect(store.isolatedFloorId()).toBeNull();
   });
 });

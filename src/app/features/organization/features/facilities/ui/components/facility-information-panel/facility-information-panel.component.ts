@@ -16,6 +16,7 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
+import { form, FormField, validate, disabled, type FieldTree } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLocateFixed, lucideMapPin } from '@ng-icons/lucide';
@@ -29,6 +30,7 @@ import type {
 import { InplaceField } from '@shared/inplace-field';
 import type { MapCoordinates } from '@shared/map';
 import { HlmButton } from '@shared/ui/button';
+import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSeparatorImports } from '@shared/ui/separator';
 import { facilityTypeLabel } from '../../../utils';
@@ -45,6 +47,7 @@ import { FacilityMapPickerDialog } from '../../dialogs/facility-map-picker-dialo
  * @since 1.0.0
  *
  * @param {string} value - The editable numeric draft.
+ *
  * @returns {number | null} Its numeric value, or `null` when blank.
  */
 function parseOptionalNumber(value: string): number | null {
@@ -53,7 +56,12 @@ function parseOptionalNumber(value: string): number | null {
   return trimmed === '' ? null : Number(trimmed);
 }
 
-/** The stacking order's own bounds, mirroring the backend's `FacilityLevelIndex` value object. */
+/**
+ * Constant LEVEL_INDEX_BOUNDS
+ *
+ * @description
+ * The stacking order's own bounds, mirroring the backend's `FacilityLevelIndex` value object.
+ */
 const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
 
 /**
@@ -66,16 +74,13 @@ const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
  * `FEATURE.md` "The record is the edit surface"). Type and the parent render
  * as plain read-only rows: `UpdateFacilityInput` accepts neither, so an
  * `InplaceField` trigger would only promise a write the API refuses.
- *
  * The four free-text/number fields keep an explicit Save (`confirm`) since
  * neither has a single "done" gesture. Only one field is ever open at a
  * time (`editState`), so `name`/`code`/`address` share one draft signal and
  * the coordinate pair shares its own two, mirroring
  * `EquipmentInformationPanel`.
- *
  * Coordinates commit together and only together: a value in one without the
  * other is refused client-side rather than sent half-filled.
- *
  * `levelIndex` only renders when the facility's `type` is `floor` — it means
  * nothing on any other type — and shares the same confirm-mode shape as the
  * text fields: blank clears it, an integer outside `[-100, 200]` is refused
@@ -93,6 +98,8 @@ const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
     FacilityMapPickerDialog,
     HlmButton,
     HlmInput,
+    FormField,
+    ...HlmFieldImports,
     NgIcon,
     DecimalPipe,
     ...HlmSeparatorImports,
@@ -106,9 +113,13 @@ export class FacilityInformationPanel {
   /**
    * Property facility
    * @readonly
-   * @description The loaded facility whose properties this panel edits.
+   *
+   * @description
+   * The loaded facility whose properties this panel edits.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<FacilityOutput>}
    */
   public readonly facility: InputSignal<FacilityOutput> = input.required<FacilityOutput>();
@@ -116,9 +127,13 @@ export class FacilityInformationPanel {
   /**
    * Property editable
    * @readonly
-   * @description Whether the member may write to this facility at all.
+   *
+   * @description
+   * Whether the member may write to this facility at all.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignalWithTransform<boolean, BooleanInput>}
    */
   public readonly editable: InputSignalWithTransform<boolean, BooleanInput> = input<
@@ -129,9 +144,13 @@ export class FacilityInformationPanel {
   /**
    * Property editState
    * @readonly
-   * @description Which field the page has open, writing, or showing a rejection.
+   *
+   * @description
+   * Which field the page has open, writing, or showing a rejection.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<FacilityEditState>}
    */
   public readonly editState: InputSignal<FacilityEditState> = input.required<FacilityEditState>();
@@ -139,9 +158,13 @@ export class FacilityInformationPanel {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning the facility, so the parent row can link into it.
+   *
+   * @description
+   * The workspace owning the facility, so the parent row can link into it.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -149,9 +172,14 @@ export class FacilityInformationPanel {
   /**
    * Property geocodePending
    * @readonly
-   * @description Whether the page's "Locate address" lookup is in flight, which makes the button inert (`aria-disabled`, still focusable).
+   *
+   * @description
+   * Whether the page's "Locate address" lookup is in flight, which makes the button inert
+   * (`aria-disabled`, still focusable).
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly geocodePending: InputSignal<boolean> = input<boolean>(false);
@@ -159,9 +187,14 @@ export class FacilityInformationPanel {
   /**
    * Property geocodeResult
    * @readonly
-   * @description The latest successful lookup. Fills the coordinate drafts — both stay editable — and its `displayName` renders as help in the coordinates editor.
+   *
+   * @description
+   * The latest successful lookup. Fills the coordinate drafts — both stay editable — and its
+   * `displayName` renders as help in the coordinates editor.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<FacilityGeocodeOutput | null>}
    */
   public readonly geocodeResult: InputSignal<FacilityGeocodeOutput | null> =
@@ -170,9 +203,14 @@ export class FacilityInformationPanel {
   /**
    * Property geocodeNotFound
    * @readonly
-   * @description Whether the latest lookup answered `404` — shown as a non-blocking inline message, never a field error.
+   *
+   * @description
+   * Whether the latest lookup answered `404` — shown as a non-blocking inline message, never a
+   * field error.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly geocodeNotFound: InputSignal<boolean> = input<boolean>(false);
@@ -182,9 +220,13 @@ export class FacilityInformationPanel {
   /**
    * Property detailsChanged
    * @readonly
-   * @description A patch the page should send. Never emitted for an unchanged value.
+   *
+   * @description
+   * A patch the page should send. Never emitted for an unchanged value.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<UpdateFacilityInput>}
    */
   public readonly detailsChanged: OutputEmitterRef<UpdateFacilityInput> =
@@ -193,9 +235,13 @@ export class FacilityInformationPanel {
   /**
    * Property editTargetChanged
    * @readonly
-   * @description Asks the page to open or close an editor.
+   *
+   * @description
+   * Asks the page to open or close an editor.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<FacilityEditTarget | null>}
    */
   public readonly editTargetChanged: OutputEmitterRef<FacilityEditTarget | null> =
@@ -204,9 +250,14 @@ export class FacilityInformationPanel {
   /**
    * Property geocodeRequested
    * @readonly
-   * @description Asks the page to resolve the record's stored address to coordinates — the page owns the transport call and answers through {@link geocodeResult} / {@link geocodeNotFound}.
+   *
+   * @description
+   * Asks the page to resolve the record's stored address to coordinates — the page owns the
+   * transport call and answers through {@link geocodeResult} / {@link geocodeNotFound}.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly geocodeRequested: OutputEmitterRef<string> = output<string>();
@@ -225,25 +276,132 @@ export class FacilityInformationPanel {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<string>}
    */
   protected readonly textDraft: WritableSignal<string> = signal<string>('');
 
-  /** The in-flight level-index draft, seeded when `levelIndex` opens. */
+  /**
+   * Property levelIndexDraft
+   * @readonly
+   *
+   * @description
+   * The in-flight level-index draft, seeded when `levelIndex` opens.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly levelIndexDraft: WritableSignal<string> = signal<string>('');
 
-  /** The in-flight latitude draft, seeded when `coordinates` opens. */
+  /**
+   * Property metricDraft
+   * @readonly
+   *
+   * @description
+   * Draft for the currently open metric floor property.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly metricDraft: WritableSignal<string> = signal('');
+
+  /**
+   * Property metricFields
+   * @readonly
+   *
+   * @description
+   * Available floor metric properties and their displayed units.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<{
+   *   readonly target: 'elevationMeters' | 'heightMeters';
+   *   readonly label: string;
+   * }>}
+   */
+  protected readonly metricFields: ReadonlyArray<{
+    readonly target: 'elevationMeters' | 'heightMeters';
+    readonly label: string;
+  }> = [
+    { target: 'elevationMeters', label: $localize`:@@facility.info.elevationMeters:Elevation (m)` },
+    { target: 'heightMeters', label: $localize`:@@facility.info.heightMeters:Height (m)` },
+  ];
+
+  /**
+   * Property metricForm
+   * @readonly
+   *
+   * @description
+   * Validates optional finite metres and preserves unsuccessful edits.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FieldTree<string>}
+   */
+  protected readonly metricForm: FieldTree<string> = form(this.metricDraft, (path) => {
+    disabled(path, { when: () => this.editState().saving !== null });
+    validate(path, ({ value }) => {
+      if (value().trim() === '') return null;
+      const parsed = Number(value());
+      const valid =
+        Number.isFinite(parsed) &&
+        (this.editState().open === 'heightMeters'
+          ? parsed > 0 && parsed <= 1000
+          : parsed >= -10000 && parsed <= 10000);
+      return valid
+        ? null
+        : {
+            kind: 'metricRange',
+            message: $localize`:@@facility.info.metricRange:Enter a valid value in metres: elevation from -10000 to 10000, height greater than 0 and no more than 1000.`,
+          };
+    });
+  });
+
+  /**
+   * Property latitudeDraft
+   * @readonly
+   *
+   * @description
+   * The in-flight latitude draft, seeded when `coordinates` opens.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly latitudeDraft: WritableSignal<string> = signal<string>('');
 
-  /** The in-flight longitude draft, seeded when `coordinates` opens. */
+  /**
+   * Property longitudeDraft
+   * @readonly
+   *
+   * @description
+   * The in-flight longitude draft, seeded when `coordinates` opens.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
   protected readonly longitudeDraft: WritableSignal<string> = signal<string>('');
 
   /**
    * Property canSaveText
    * @readonly
-   * @description Whether the open text field's draft differs from its stored value and, for `name`, is not blank.
+   *
+   * @description
+   * Whether the open text field's draft differs from its stored value and, for `name`, is not
+   * blank.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSaveText: Signal<boolean> = computed<boolean>(() => {
@@ -267,6 +425,7 @@ export class FacilityInformationPanel {
    *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSaveCoordinates: Signal<boolean> = computed<boolean>(() => {
@@ -295,6 +454,7 @@ export class FacilityInformationPanel {
    *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly canSaveLevelIndex: Signal<boolean> = computed<boolean>(() => {
@@ -314,7 +474,6 @@ export class FacilityInformationPanel {
    *
    * @description
    * Why a coordinate draft cannot be saved, or `null` when it is acceptable.
-   *
    * The pair rule was enforced silently before: `canSaveCoordinates` returned
    * `false` and the Save button simply greyed out, leaving the user to guess
    * that a latitude without a longitude is not half a location. The create
@@ -322,6 +481,7 @@ export class FacilityInformationPanel {
    *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly coordinatesError: Signal<string | null> = computed<string | null>(() => {
@@ -365,6 +525,7 @@ export class FacilityInformationPanel {
    *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<string | null>}
    */
   protected readonly levelIndexError: Signal<string | null> = computed<string | null>(() => {
@@ -384,15 +545,33 @@ export class FacilityInformationPanel {
     return null;
   });
 
-  /** Names a facility type for the read-only type row. */
+  /**
+   * Property typeLabelOf
+   * @readonly
+   *
+   * @description
+   * Names a facility type for the read-only type row.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {(value: string) => string}
+   */
   protected readonly typeLabelOf: (value: string) => string = (value) => facilityTypeLabel(value);
 
   /**
    * Property parentName
    * @readonly
-   * @description The direct parent's own name — {@link facility}'s `path` last segment — for the Parent row's link text, so it names the record rather than a generic "View parent facility". Falls back to that generic label only if `path` (detail-read only) is unexpectedly empty while a `parentFacilityId` is set.
+   *
+   * @description
+   * The direct parent's own name — {@link facility}'s `path` last segment — for the Parent row's
+   * link text, so it names the record rather than a generic "View parent facility". Falls back to
+   * that generic label only if `path` (detail-read only) is unexpectedly empty while a
+   * `parentFacilityId` is set.
+   *
    * @access protected
    * @since 1.3.0
+   *
    * @type {Signal<string>}
    */
   protected readonly parentName: Signal<string> = computed<string>(
@@ -401,15 +580,31 @@ export class FacilityInformationPanel {
       $localize`:@@facility.info.viewParent:View parent facility`,
   );
 
-  /** Whether the "Pick on map" dialog is open. */
+  /**
+   * Property mapPickerVisible
+   * @readonly
+   *
+   * @description
+   * Whether the "Pick on map" dialog is open.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
   protected readonly mapPickerVisible: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property pickerCenter
    * @readonly
-   * @description Where the picker opens: the coordinate draft once both fields are filled, else the record's own stored coordinates, else the primitive's neutral default.
+   *
+   * @description
+   * Where the picker opens: the coordinate draft once both fields are filled, else the record's own
+   * stored coordinates, else the primitive's neutral default.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<MapCoordinates | undefined>}
    */
   protected readonly pickerCenter: Signal<MapCoordinates | undefined> = computed<
@@ -438,7 +633,11 @@ export class FacilityInformationPanel {
   /**
    * Constructor
    * @constructor
-   * @description Fills the coordinate drafts from each new "Locate address" match while the coordinates editor is open.
+   *
+   * @description
+   * Fills the coordinate drafts from each new "Locate address" match while the coordinates editor
+   * is open.
+   *
    * @access public
    * @since 1.1.0
    */
@@ -460,10 +659,16 @@ export class FacilityInformationPanel {
   //#region Methods
   /**
    * Method isEditing
-   * @description Whether the page has this field open.
+   * @method isEditing
+   *
+   * @description
+   * Whether the page has this field open.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FacilityEditTarget} target - The field in question.
+   *
    * @returns {boolean} True when it is the open one.
    */
   protected isEditing(target: FacilityEditTarget): boolean {
@@ -472,10 +677,16 @@ export class FacilityInformationPanel {
 
   /**
    * Method isSaving
-   * @description Whether this field's own write is in flight.
+   * @method isSaving
+   *
+   * @description
+   * Whether this field's own write is in flight.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FacilityEditTarget} target - The field in question.
+   *
    * @returns {boolean} True while its patch is pending.
    */
   protected isSaving(target: FacilityEditTarget): boolean {
@@ -484,10 +695,16 @@ export class FacilityInformationPanel {
 
   /**
    * Method errorFor
-   * @description The rejection message attributed to this field, if any.
+   * @method errorFor
+   *
+   * @description
+   * The rejection message attributed to this field, if any.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FacilityEditTarget} target - The field in question.
+   *
    * @returns {string | null} Its failure message, or null.
    */
   protected errorFor(target: FacilityEditTarget): string | null {
@@ -498,6 +715,7 @@ export class FacilityInformationPanel {
 
   /**
    * Method onTextEditing
+   * @method onTextEditing
    *
    * @description
    * Seeds the shared draft on open and forwards the open/close request to the
@@ -519,10 +737,16 @@ export class FacilityInformationPanel {
 
   /**
    * Method onCoordinatesEditing
-   * @description Seeds both coordinate drafts on open and forwards the open/close request.
+   * @method onCoordinatesEditing
+   *
+   * @description
+   * Seeds both coordinate drafts on open and forwards the open/close request.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {boolean} open - Whether the field is being opened.
+   *
    * @returns {void}
    */
   protected onCoordinatesEditing(open: boolean): void {
@@ -537,10 +761,16 @@ export class FacilityInformationPanel {
 
   /**
    * Method onLevelIndexEditing
-   * @description Seeds the level-index draft on open and forwards the open/close request.
+   * @method onLevelIndexEditing
+   *
+   * @description
+   * Seeds the level-index draft on open and forwards the open/close request.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {boolean} open - Whether the field is being opened.
+   *
    * @returns {void}
    */
   protected onLevelIndexEditing(open: boolean): void {
@@ -554,9 +784,15 @@ export class FacilityInformationPanel {
 
   /**
    * Method saveText
-   * @description Emits the drafted value for the currently open text field, trimmed and nulled if blank (never for `name`).
+   * @method saveText
+   *
+   * @description
+   * Emits the drafted value for the currently open text field, trimmed and nulled if blank (never
+   * for `name`).
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected saveText(): void {
@@ -570,9 +806,14 @@ export class FacilityInformationPanel {
 
   /**
    * Method saveCoordinates
-   * @description Emits both coordinates together — a matching pair of numbers, or both cleared to `null`.
+   * @method saveCoordinates
+   *
+   * @description
+   * Emits both coordinates together — a matching pair of numbers, or both cleared to `null`.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected saveCoordinates(): void {
@@ -584,9 +825,14 @@ export class FacilityInformationPanel {
 
   /**
    * Method saveLevelIndex
-   * @description Emits the drafted level index, cleared to `null` when blank.
+   * @method saveLevelIndex
+   *
+   * @description
+   * Emits the drafted level index, cleared to `null` when blank.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @returns {void}
    */
   protected saveLevelIndex(): void {
@@ -594,7 +840,48 @@ export class FacilityInformationPanel {
   }
 
   /**
+   * Method onMetricEditing
+   * @method onMetricEditing
+   *
+   * @description
+   * Seeds only on open so a conflict refresh keeps the typed metric value.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {'elevationMeters' | 'heightMeters'} target - target.
+   * @param {boolean} open - open.
+   *
+   * @returns {void} Completes the requested operation.
+   */
+  protected onMetricEditing(target: 'elevationMeters' | 'heightMeters', open: boolean): void {
+    if (open) this.metricForm().reset(String(this.facility()[target] ?? ''));
+    this.editTargetChanged.emit(open ? target : null);
+  }
+
+  /**
+   * Method saveMetric
+   * @method saveMetric
+   *
+   * @description
+   * Emits a nullable metric floor update through the canonical facility write.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {'elevationMeters' | 'heightMeters'} target - target.
+   *
+   * @returns {void} Completes the requested operation.
+   */
+  protected saveMetric(target: 'elevationMeters' | 'heightMeters'): void {
+    this.metricForm().markAsTouched();
+    if (this.metricForm().invalid()) return;
+    this.detailsChanged.emit({ [target]: parseOptionalNumber(this.metricDraft()) });
+  }
+
+  /**
    * Method locateAddress
+   * @method locateAddress
    *
    * @description
    * Emits {@link geocodeRequested} with the record's stored address. A
@@ -618,10 +905,17 @@ export class FacilityInformationPanel {
 
   /**
    * Method onMapPicked
-   * @description Fills both coordinate drafts from the picker's click; Save still commits them, so a mis-click is never sent unreviewed.
+   * @method onMapPicked
+   *
+   * @description
+   * Fills both coordinate drafts from the picker's click; Save still commits them, so a mis-click
+   * is never sent unreviewed.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {MapCoordinates} coordinates - The picked position.
+   *
    * @returns {void}
    */
   protected onMapPicked(coordinates: MapCoordinates): void {
@@ -631,14 +925,27 @@ export class FacilityInformationPanel {
 
   /**
    * Method storedTextValueOf
-   * @description The currently stored value for a text edit target, or null for `coordinates`/unset.
+   * @method storedTextValueOf
+   *
+   * @description
+   * The currently stored value for a text edit target, or null for `coordinates`/unset.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {FacilityEditTarget | null} target - The field in question.
+   *
    * @returns {string | null} The stored value.
    */
   private storedTextValueOf(target: FacilityEditTarget | null): string | null {
-    if (target === null || target === 'coordinates' || target === 'levelIndex') return null;
+    if (
+      target === null ||
+      target === 'coordinates' ||
+      target === 'levelIndex' ||
+      target === 'elevationMeters' ||
+      target === 'heightMeters'
+    )
+      return null;
 
     return this.facility()[target];
   }

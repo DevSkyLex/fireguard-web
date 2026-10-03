@@ -58,6 +58,8 @@ const overlay = (
   attachmentId: 'plan-1',
   imageWidth: 1200,
   imageHeight: 800,
+  geometryIssues: [],
+  equipmentIssues: [],
   zones: [],
   equipment: [],
   ...overrides,
@@ -112,13 +114,14 @@ describe('FacilityPlansStore', () => {
     list: ReturnType<typeof vi.fn>;
     upload: ReturnType<typeof vi.fn>;
     setPrimary: ReturnType<typeof vi.fn>;
+    setCalibration: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
     download: ReturnType<typeof vi.fn>;
   };
   let mockFacilityService: {
     getPlanOverlay: ReturnType<typeof vi.fn>;
     setPlanGeometry: ReturnType<typeof vi.fn>;
-    listChildren: ReturnType<typeof vi.fn>;
+    listDescendants: ReturnType<typeof vi.fn>;
   };
   let mockEquipmentService: {
     setPlanPosition: ReturnType<typeof vi.fn>;
@@ -142,13 +145,14 @@ describe('FacilityPlansStore', () => {
       list: vi.fn().mockReturnValue(of(emptyCollection)),
       upload: vi.fn(),
       setPrimary: vi.fn(),
+      setCalibration: vi.fn(),
       remove: vi.fn(),
       download: vi.fn().mockReturnValue(of(new Blob(['plan'], { type: 'image/png' }))),
     };
     mockFacilityService = {
       getPlanOverlay: vi.fn().mockReturnValue(of(overlay())),
       setPlanGeometry: vi.fn().mockReturnValue(of(undefined)),
-      listChildren: vi.fn().mockReturnValue(of(emptyCollection)),
+      listDescendants: vi.fn().mockReturnValue(of(emptyCollection)),
     };
     mockEquipmentService = {
       setPlanPosition: vi.fn().mockReturnValue(of(undefined)),
@@ -903,7 +907,7 @@ describe('FacilityPlansStore', () => {
 
   describe('candidate lists', () => {
     it('loads and filters zone candidates to zone/area descendants', () => {
-      mockFacilityService.listChildren.mockReturnValue(
+      mockFacilityService.listDescendants.mockReturnValue(
         of({
           '@id': '',
           '@type': 'Collection',
@@ -919,14 +923,16 @@ describe('FacilityPlansStore', () => {
 
       store.ensureZoneCandidatesLoaded();
 
-      expect(mockFacilityService.listChildren).toHaveBeenCalledWith('org-1', 'facility-1', {
-        itemsPerPage: 200,
+      expect(mockFacilityService.listDescendants).toHaveBeenCalledWith('org-1', 'facility-1', {
+        page: 1,
+        itemsPerPage: 100,
+        search: '',
       });
       expect(store.zoneCandidates().map((candidate) => candidate.id)).toEqual(['zone-1', 'area-1']);
     });
 
     it('does not re-fetch once already loading or loaded', () => {
-      mockFacilityService.listChildren.mockReturnValue(
+      mockFacilityService.listDescendants.mockReturnValue(
         of({ '@id': '', '@type': 'Collection', member: [], totalItems: 0 }),
       );
       store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
@@ -934,11 +940,11 @@ describe('FacilityPlansStore', () => {
       store.ensureZoneCandidatesLoaded();
       store.ensureZoneCandidatesLoaded();
 
-      expect(mockFacilityService.listChildren).toHaveBeenCalledTimes(1);
+      expect(mockFacilityService.listDescendants).toHaveBeenCalledTimes(1);
     });
 
     it('excludes zone candidates already drawn on the selected plan overlay', async () => {
-      mockFacilityService.listChildren.mockReturnValue(
+      mockFacilityService.listDescendants.mockReturnValue(
         of({
           '@id': '',
           '@type': 'Collection',
@@ -995,7 +1001,9 @@ describe('FacilityPlansStore', () => {
       store.ensureFacilityEquipmentLoaded();
 
       expect(mockEquipmentService.listByFacility).toHaveBeenCalledWith('org-1', 'facility-1', {
-        itemsPerPage: 200,
+        page: 1,
+        itemsPerPage: 100,
+        params: { includeDescendants: true, search: '' },
       });
       expect(store.facilityEquipment().map((item) => item.id)).toEqual(['equipment-1']);
     });
@@ -1143,7 +1151,7 @@ describe('FacilityPlansStore', () => {
       store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
       const zones = new Subject<HydraCollection<FacilityOutput>>();
       const equipment = new Subject<HydraCollection<EquipmentOutput>>();
-      mockFacilityService.listChildren.mockReturnValueOnce(zones);
+      mockFacilityService.listDescendants.mockReturnValueOnce(zones);
       mockEquipmentService.listByFacility.mockReturnValueOnce(equipment);
       store.ensureZoneCandidatesLoaded();
       store.ensureFacilityEquipmentLoaded();
@@ -1162,17 +1170,21 @@ describe('FacilityPlansStore', () => {
       expect(store.facilityEquipment()).toEqual([]);
       store.ensureZoneCandidatesLoaded();
       store.ensureFacilityEquipmentLoaded();
-      expect(mockFacilityService.listChildren).toHaveBeenLastCalledWith('org-2', 'facility-2', {
-        itemsPerPage: 200,
+      expect(mockFacilityService.listDescendants).toHaveBeenLastCalledWith('org-2', 'facility-2', {
+        page: 1,
+        itemsPerPage: 100,
+        search: '',
       });
       expect(mockEquipmentService.listByFacility).toHaveBeenLastCalledWith('org-2', 'facility-2', {
-        itemsPerPage: 200,
+        page: 1,
+        itemsPerPage: 100,
+        params: { includeDescendants: true, search: '' },
       });
     });
 
     it('keeps candidate loaders reusable after errors', () => {
       store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
-      mockFacilityService.listChildren.mockReturnValueOnce(
+      mockFacilityService.listDescendants.mockReturnValueOnce(
         throwError(() => apiError(500, 'offline')),
       );
       mockEquipmentService.listByFacility.mockReturnValueOnce(
@@ -1289,13 +1301,13 @@ describe('FacilityPlansStore', () => {
   it('does not query editor candidates until a facility context exists', () => {
     store.ensureZoneCandidatesLoaded();
     store.ensureFacilityEquipmentLoaded();
-    expect(mockFacilityService.listChildren).not.toHaveBeenCalled();
+    expect(mockFacilityService.listDescendants).not.toHaveBeenCalled();
     expect(mockEquipmentService.listByFacility).not.toHaveBeenCalled();
 
     store.load({ organizationId: 'org-1', facilityId: 'facility-1' });
     store.ensureZoneCandidatesLoaded();
     store.ensureFacilityEquipmentLoaded();
-    expect(mockFacilityService.listChildren).toHaveBeenCalledOnce();
+    expect(mockFacilityService.listDescendants).toHaveBeenCalledOnce();
     expect(mockEquipmentService.listByFacility).toHaveBeenCalledOnce();
   });
 
@@ -1388,7 +1400,7 @@ describe('FacilityPlansStore', () => {
   });
 
   it('offers all facility candidates before a plan has an overlay', () => {
-    mockFacilityService.listChildren.mockReturnValueOnce(
+    mockFacilityService.listDescendants.mockReturnValueOnce(
       of({ '@id': '', '@type': 'Collection', member: [zoneFacility()], totalItems: 1 }),
     );
     mockEquipmentService.listByFacility.mockReturnValueOnce(
@@ -1506,7 +1518,120 @@ describe('FacilityPlansStore', () => {
     expect(store.selectedPlanReady()).toBe(false);
     expect(mockService.download).not.toHaveBeenCalled();
     expect(mockFacilityService.getPlanOverlay).not.toHaveBeenCalled();
-    expect(mockFacilityService.listChildren).not.toHaveBeenCalled();
+    expect(mockFacilityService.listDescendants).not.toHaveBeenCalled();
     expect(mockEquipmentService.listByFacility).not.toHaveBeenCalled();
+  });
+  it('pages descendant candidates beyond 200 and keeps server search in the query', () => {
+    loadReadyPlan();
+    mockFacilityService.listDescendants.mockReturnValue(
+      of({ '@id': '', '@type': 'Collection', member: [zoneFacility()], totalItems: 250 }),
+    );
+    store.ensureZoneCandidatesLoaded();
+    store.changeZoneCandidatePage(3);
+    expect(mockFacilityService.listDescendants).toHaveBeenLastCalledWith('org-1', 'facility-1', {
+      page: 3,
+      itemsPerPage: 100,
+      search: '',
+    });
+    store.searchZoneCandidates('Remote room');
+    expect(mockFacilityService.listDescendants).toHaveBeenLastCalledWith('org-1', 'facility-1', {
+      page: 1,
+      itemsPerPage: 100,
+      search: 'Remote room',
+    });
+    expect(store.zoneCandidatePage()).toBe(1);
+  });
+
+  it('pages equipment assigned to descendants with server-side search', () => {
+    loadReadyPlan();
+    mockEquipmentService.listByFacility.mockReturnValue(
+      of({
+        '@id': '',
+        '@type': 'Collection',
+        member: [facilityEquipment({ facilityId: 'room-1' })],
+        totalItems: 250,
+      }),
+    );
+    store.ensureFacilityEquipmentLoaded();
+    store.changeEquipmentCandidatePage(3);
+    expect(mockEquipmentService.listByFacility).toHaveBeenLastCalledWith('org-1', 'facility-1', {
+      page: 3,
+      itemsPerPage: 100,
+      params: { includeDescendants: true, search: '' },
+    });
+    store.searchEquipmentCandidates('A-201');
+    expect(mockEquipmentService.listByFacility).toHaveBeenLastCalledWith('org-1', 'facility-1', {
+      page: 1,
+      itemsPerPage: 100,
+      params: { includeDescendants: true, search: 'A-201' },
+    });
+  });
+
+  it('writes the floor footprint to the owning facility without relocating normalized vertices', () => {
+    loadReadyPlan();
+    store.enterDrawZoneMode('facility-1');
+    store.addDraftVertex([0.1, 0.2]);
+    store.addDraftVertex([0.8, 0.2]);
+    store.addDraftVertex([0.8, 0.9]);
+    store.finishDrawZone();
+    expect(mockFacilityService.setPlanGeometry).toHaveBeenLastCalledWith('org-1', 'facility-1', {
+      attachmentId: 'plan-1',
+      points: [
+        [0.1, 0.2],
+        [0.8, 0.2],
+        [0.8, 0.9],
+      ],
+    });
+  });
+
+  it('preserves measured points on a calibration conflict and retries with the refreshed revision', () => {
+    loadReadyPlan();
+    const calibration = {
+      widthMeters: 40,
+      rotationDegrees: 90,
+      offsetXMeters: -10,
+      offsetZMeters: 2,
+    };
+    store.enterCalibrationMode();
+    store.addDraftVertex([0, 0]);
+    store.addDraftVertex([0, 1]);
+    mockService.setCalibration
+      .mockReturnValueOnce(throwError(() => apiError(412, 'Revision changed')))
+      .mockReturnValueOnce(of(plan({ revision: 4, calibration })));
+    mockService.list.mockReturnValue(
+      of({ '@id': '', '@type': 'Collection', member: [plan({ revision: 3 })], totalItems: 1 }),
+    );
+    mockDispatcher.dispatch.mockClear();
+    store.saveCalibration(calibration);
+    expect(store.saveCalibrationCallState().status).toBe('error');
+    expect(store.saveCalibrationCallState().error?.message).toContain(
+      'Your coordinates have been kept',
+    );
+    expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+    expect(store.draftPoints()).toEqual([
+      [0, 0],
+      [0, 1],
+    ]);
+    expect(store.editMode()).toBe('calibrate');
+    store.saveCalibration(calibration);
+    expect(mockService.setCalibration).toHaveBeenLastCalledWith('plan-1', calibration, 3);
+    expect(store.selectedPlan()?.calibration).toEqual(calibration);
+    expect(store.draftPoints()).toEqual([]);
+  });
+
+  it('rejects a degenerate or crossed floor outline before transport and preserves the draft', () => {
+    loadReadyPlan();
+    store.enterDrawZoneMode('facility-1');
+    for (const point of [
+      [0, 0],
+      [1, 1],
+      [0, 1],
+      [1, 0],
+    ] as const)
+      store.addDraftVertex(point);
+    store.finishDrawZone();
+    expect(mockFacilityService.setPlanGeometry).not.toHaveBeenCalled();
+    expect(store.saveZoneGeometryCallState().status).toBe('error');
+    expect(store.draftPoints()).toHaveLength(4);
   });
 });

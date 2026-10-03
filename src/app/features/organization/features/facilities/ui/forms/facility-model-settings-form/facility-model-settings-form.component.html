@@ -1,0 +1,144 @@
+<form
+  novalidate
+  (submit)="submit($event)"
+  class="flex flex-col gap-4"
+  data-testid="facility-model-settings"
+>
+  @if (serverError(); as error) {
+    <div hlmAlert variant="destructive">
+      <h3 hlmAlertTitle i18n="@@facility.model.saveError">The model settings could not be saved</h3>
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
+  }
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@facility.model.alignment">Align in the building</legend>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <hlm-field>
+        <label hlmFieldLabel for="model-scale" i18n="@@facility.model.scale">Uniform scale</label>
+        <input
+          hlmInput
+          id="model-scale"
+          type="number"
+          step="any"
+          [formField]="settingsForm.scale"
+        />
+        @if (settingsForm.scale().touched() && settingsForm.scale().invalid()) {
+          <hlm-field-error>{{ settingsForm.scale().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+      <hlm-field>
+        <label hlmFieldLabel for="model-rotation" i18n="@@facility.model.rotation"
+          >Rotation (degrees)</label
+        >
+        <input
+          hlmInput
+          id="model-rotation"
+          type="number"
+          step="any"
+          [formField]="settingsForm.rotationDegrees"
+        />
+        @if (settingsForm.rotationDegrees().touched() && settingsForm.rotationDegrees().invalid()) {
+          <hlm-field-error>{{
+            settingsForm.rotationDegrees().errors()[0].message
+          }}</hlm-field-error>
+        }
+      </hlm-field>
+      <hlm-field>
+        <label hlmFieldLabel for="model-x" i18n="@@facility.model.x">X offset (m)</label>
+        <input hlmInput id="model-x" type="number" step="any" [formField]="settingsForm.x" />
+        @if (settingsForm.x().touched() && settingsForm.x().invalid()) {
+          <hlm-field-error>{{ settingsForm.x().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+      <hlm-field>
+        <label hlmFieldLabel for="model-y" i18n="@@facility.model.y">Elevation offset (m)</label>
+        <input hlmInput id="model-y" type="number" step="any" [formField]="settingsForm.y" />
+        @if (settingsForm.y().touched() && settingsForm.y().invalid()) {
+          <hlm-field-error>{{ settingsForm.y().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+      <hlm-field>
+        <label hlmFieldLabel for="model-z" i18n="@@facility.model.z">Z offset (m)</label>
+        <input hlmInput id="model-z" type="number" step="any" [formField]="settingsForm.z" />
+        @if (settingsForm.z().touched() && settingsForm.z().invalid()) {
+          <hlm-field-error>{{ settingsForm.z().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+  </fieldset>
+  @if (selectedNodeIndex() !== null) {
+    @if (selectedBindingIssue(); as issue) {
+      <p class="text-sm text-muted-foreground" data-testid="facility-model-binding-issue">
+        {{ issue }}
+      </p>
+    }
+    <hlm-field>
+      <label hlmFieldLabel for="model-node-facility" i18n="@@facility.model.bindFacility"
+        >Associate this object with a facility</label
+      >
+      <hlm-field-description
+        >{{ selectedNodeName() }} · #{{ selectedNodeIndex() }}</hlm-field-description
+      >
+      <hlm-combobox [formField]="settingsForm.facilityId" [itemToString]="facilityLabelOf">
+        <hlm-combobox-input
+          inputId="model-node-facility"
+          placeholder="Search a facility"
+          i18n-placeholder="@@facility.model.facilityPlaceholder"
+        />
+        <hlm-combobox-content *hlmComboboxPortal>
+          <hlm-combobox-empty i18n="@@facility.model.noFacility"
+            >No facility matches.</hlm-combobox-empty
+          >
+          <div hlmComboboxList>
+            @for (option of facilityOptions(); track option.value) {
+              <hlm-combobox-item [value]="option.value">
+                <div class="flex min-w-0 flex-col">
+                  <span class="truncate">{{ option.label }}</span>
+                  <span class="truncate text-xs text-muted-foreground"
+                    >{{ option.typeLabel }}
+                    @if (option.pathLabel) {
+                      · {{ option.pathLabel }}
+                    }
+                  </span>
+                </div>
+              </hlm-combobox-item>
+            }
+          </div>
+        </hlm-combobox-content>
+      </hlm-combobox>
+    </hlm-field>
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      size="sm"
+      (click)="clearBinding()"
+      i18n="@@facility.model.clearBinding"
+    >
+      Remove this association
+    </button>
+  } @else {
+    <p class="text-sm text-muted-foreground" i18n="@@facility.model.selectNodeHint">
+      Select an object in the scene or list to associate it with an existing facility.
+    </p>
+  }
+  <button
+    hlmBtn
+    type="submit"
+    [disabled]="pending()"
+    data-testid="facility-model-save"
+    i18n="@@facility.model.saveSettings"
+  >
+    Save alignment and associations
+  </button>
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    [disabled]="pending()"
+    (click)="discard()"
+    i18n="@@facility.model.discard"
+  >
+    Discard settings draft
+  </button>
+</form>

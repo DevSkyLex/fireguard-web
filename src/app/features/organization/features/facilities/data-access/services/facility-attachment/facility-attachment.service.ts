@@ -5,12 +5,12 @@ import type { HydraCollection } from '@core/api/models';
 import type {
   FacilityAttachmentKind,
   FacilityAttachmentOutput,
+  FacilityPlanCalibration,
 } from '@features/organization/features/facilities/models';
 
 /**
  * Service FacilityAttachmentService
  * @class FacilityAttachmentService
- * @extends {HydraApiService}
  *
  * @description
  * Owns the facility attachment resources (`/api/facilities/{id}/attachments`,
@@ -21,6 +21,8 @@ import type {
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class FacilityAttachmentService extends HydraApiService {
@@ -38,7 +40,7 @@ export class FacilityAttachmentService extends HydraApiService {
    * @param {string} facilityId - facility Id value.
    * @param {FacilityAttachmentKind} [kind] - Narrows the list to one attachment kind.
    *
-   * @return {Observable<HydraCollection<FacilityAttachmentOutput>>} The attachments.
+   * @returns {Observable<HydraCollection<FacilityAttachmentOutput>>} The attachments.
    */
   public list(
     facilityId: string,
@@ -68,7 +70,7 @@ export class FacilityAttachmentService extends HydraApiService {
    * @param {string} fileName - file Name value.
    * @param {FacilityAttachmentKind} [kind] - `'document'` (default) or `'floor_plan'`.
    *
-   * @return {Observable<FacilityAttachmentOutput>} The created attachment.
+   * @returns {Observable<FacilityAttachmentOutput>} The created attachment.
    */
   public upload(
     facilityId: string,
@@ -101,11 +103,42 @@ export class FacilityAttachmentService extends HydraApiService {
    *
    * @param {string} attachmentId - attachment Id value.
    *
-   * @return {Observable<FacilityAttachmentOutput>} The attachment, now primary.
+   * @returns {Observable<FacilityAttachmentOutput>} The attachment, now primary.
    */
   public setPrimary(attachmentId: string): Observable<FacilityAttachmentOutput> {
     return this.postAction<FacilityAttachmentOutput>(
       `/api/facility-attachments/${attachmentId}/primary`,
+    );
+  }
+
+  /**
+   * Method setCalibration
+   * @method setCalibration
+   *
+   * @description
+   * Writes or clears physical plan scale using the current attachment revision.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} attachmentId - attachmentId.
+   * @param {FacilityPlanCalibration | null} calibration - calibration.
+   * @param {number} revision - revision.
+   *
+   * @returns {Observable<FacilityAttachmentOutput>} The operation result.
+   */
+  public setCalibration(
+    attachmentId: string,
+    calibration: FacilityPlanCalibration | null,
+    revision: number,
+  ): Observable<FacilityAttachmentOutput> {
+    return this.put<
+      { readonly calibration: FacilityPlanCalibration | null },
+      FacilityAttachmentOutput
+    >(
+      `/api/facility-attachments/${attachmentId}/calibration`,
+      { calibration },
+      { headers: { 'If-Match': `"revision-${revision}"` } },
     );
   }
 
@@ -122,7 +155,7 @@ export class FacilityAttachmentService extends HydraApiService {
    * @param {string} attachmentId - attachment Id value.
    * @param {number} revision - revision value.
    *
-   * @return {Observable<void>} Completion of the delete.
+   * @returns {Observable<void>} Completion of the delete.
    */
   public remove(attachmentId: string, revision: number): Observable<void> {
     return this.delete(`/api/facility-attachments/${attachmentId}`, {
@@ -148,7 +181,7 @@ export class FacilityAttachmentService extends HydraApiService {
    *
    * @param {string} attachmentId - attachment Id value.
    *
-   * @return {Observable<Blob>} The attachment's binary content.
+   * @returns {Observable<Blob>} The attachment's binary content.
    */
   public download(attachmentId: string): Observable<Blob> {
     return this.http.get(this.buildUrl(`/api/facility-attachments/${attachmentId}/download`), {

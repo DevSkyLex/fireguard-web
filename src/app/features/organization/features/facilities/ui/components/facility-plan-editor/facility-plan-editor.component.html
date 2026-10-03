@@ -22,7 +22,9 @@
     (dblclick)="onStageDoubleClick()"
   ></div>
 
-  @if (editMode() === 'draw-zone' && draftPixelPoints().length > 0) {
+  @if (
+    (editMode() === 'draw-zone' || editMode() === 'calibrate') && draftPixelPoints().length > 0
+  ) {
     <svg
       class="pointer-events-none absolute top-0 left-0"
       [attr.width]="data.imageWidth"

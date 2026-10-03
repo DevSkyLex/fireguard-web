@@ -48,7 +48,6 @@ import { FacilityStatusTag } from '../../components/facility-status-tag';
  * actions this list still owns — Archive and Restore — since the record
  * itself is where every other property is edited (`FEATURE.md` "The record
  * is the edit surface").
- *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter and paginate; a menu
  * choice only asks for the write through an `output()`. The bordered,
@@ -103,9 +102,13 @@ export class FacilityTable {
   /**
    * Property items
    * @readonly
-   * @description The rows to render — already filtered, ordered and paged by the page.
+   *
+   * @description
+   * The rows to render — already filtered, ordered and paged by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly FacilityOutput[]>}
    */
   public readonly items: InputSignal<readonly FacilityOutput[]> =
@@ -114,9 +117,13 @@ export class FacilityTable {
   /**
    * Property loading
    * @readonly
-   * @description Whether to draw placeholder rows instead of the data.
+   *
+   * @description
+   * Whether to draw placeholder rows instead of the data.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
@@ -124,9 +131,14 @@ export class FacilityTable {
   /**
    * Property sortOrder
    * @readonly
-   * @description The active ordering, deciding what each sortable head announces and which direction glyph it shows.
+   *
+   * @description
+   * The active ordering, deciding what each sortable head announces and which direction glyph it
+   * shows.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {InputSignal<FacilityListSort>}
    */
   public readonly sortOrder: InputSignal<FacilityListSort> = input.required<FacilityListSort>();
@@ -134,9 +146,14 @@ export class FacilityTable {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether the row menu may offer Archive/Restore. False hides both rather than showing controls that would be refused.
+   *
+   * @description
+   * Whether the row menu may offer Archive/Restore. False hides both rather than showing controls
+   * that would be refused.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
@@ -144,9 +161,13 @@ export class FacilityTable {
   /**
    * Property detailRouteBase
    * @readonly
-   * @description Path segments the row link appends the facility id to.
+   *
+   * @description
+   * Path segments the row link appends the facility id to.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly string[]>}
    */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
@@ -155,9 +176,14 @@ export class FacilityTable {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, read by the Updated column's `appOrgDate` binding.
+   *
+   * @description
+   * The active organization's date pattern and timezone, read by the Updated column's `appOrgDate`
+   * binding.
+   *
    * @access public
    * @since 2.1.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -168,9 +194,14 @@ export class FacilityTable {
   /**
    * Property sortChanged
    * @readonly
-   * @description A sortable head was activated; carries the field. Re-emitting the active field means "reverse it" — the page owns the direction.
+   *
+   * @description
+   * A sortable head was activated; carries the field. Re-emitting the active field means "reverse
+   * it" — the page owns the direction.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {OutputEmitterRef<FacilitySortField>}
    */
   public readonly sortChanged: OutputEmitterRef<FacilitySortField> = output<FacilitySortField>();
@@ -178,9 +209,14 @@ export class FacilityTable {
   /**
    * Property archiveRequested
    * @readonly
-   * @description A row menu asked for the facility to be archived. The table never archives: the page confirms and calls the store.
+   *
+   * @description
+   * A row menu asked for the facility to be archived. The table never archives: the page confirms
+   * and calls the store.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<FacilityOutput>}
    */
   public readonly archiveRequested: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
@@ -188,9 +224,13 @@ export class FacilityTable {
   /**
    * Property restoreRequested
    * @readonly
-   * @description A row menu asked for the facility to be restored.
+   *
+   * @description
+   * A row menu asked for the facility to be restored.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<FacilityOutput>}
    */
   public readonly restoreRequested: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
@@ -200,9 +240,16 @@ export class FacilityTable {
   /**
    * Property skeletonColumnWidths
    * @readonly
-   * @description One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. Literal strings because Tailwind scans source text, and column-aware because a skeleton whose blocks do not line up with the header it replaces reads as a broken table rather than a loading one.
+   *
+   * @description
+   * One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows.
+   * Literal strings because Tailwind scans source text, and column-aware because a skeleton whose
+   * blocks do not line up with the header it replaces reads as a broken table rather than a loading
+   * one.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {readonly string[]}
    */
   protected readonly skeletonColumnWidths: readonly string[] = [
@@ -219,10 +266,15 @@ export class FacilityTable {
   //#region Methods
   /**
    * Method typeLabelOf
-   * @description The facility's type, humanized through the shared type catalog.
+   *
+   * @description
+   * The facility's type, humanized through the shared type catalog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} type - The raw type value.
+   *
    * @returns {string} The localized label, or a localized "Unknown type" fallback.
    */
   protected typeLabelOf(type: string): string {
@@ -231,9 +283,13 @@ export class FacilityTable {
 
   /**
    * Method columnCount
-   * @description How many cells a row has, so the empty-state message can span the full width.
+   *
+   * @description
+   * How many cells a row has, so the empty-state message can span the full width.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
@@ -242,10 +298,15 @@ export class FacilityTable {
 
   /**
    * Method ariaSort
-   * @description What a sortable head announces for the active ordering.
+   *
+   * @description
+   * What a sortable head announces for the active ordering.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {FacilitySortField} field - The head's field.
+   *
    * @returns {'ascending' | 'descending' | 'none'} The `aria-sort` value.
    */
   protected ariaSort(field: FacilitySortField): 'ascending' | 'descending' | 'none' {
@@ -258,10 +319,16 @@ export class FacilityTable {
 
   /**
    * Method sortIcon
-   * @description The glyph a sortable head shows: a direction when it is the active one, a neutral pair otherwise.
+   *
+   * @description
+   * The glyph a sortable head shows: a direction when it is the active one, a neutral pair
+   * otherwise.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {FacilitySortField} field - The head's field.
+   *
    * @returns {string} A registered lucide name.
    */
   protected sortIcon(field: FacilitySortField): string {

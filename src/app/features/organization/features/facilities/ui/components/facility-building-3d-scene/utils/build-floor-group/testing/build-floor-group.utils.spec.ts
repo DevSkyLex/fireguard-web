@@ -51,7 +51,7 @@ describe('buildFloorGroup', () => {
     });
 
     const kinds = group.children.map((child) => child.userData['kind']);
-    expect(kinds).toEqual(['floor-slab', 'floor-edges', 'room']);
+    expect(kinds).toEqual(['floor-slab', 'floor-edges', 'room', 'floor-edges']);
   });
 
   it('falls back to a square aspect ratio when either image dimension is null', () => {

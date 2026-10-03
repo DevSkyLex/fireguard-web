@@ -8,11 +8,11 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
  * @description
  * Component-level state interface for the facility store.
  * Manages facility list, CRUD, archiving, and moving.
- *
  * The currently selected / active facility is tracked in the root-level
  * {@link ActiveFacilityStore} instead.
  *
  * @version 2.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface FacilityState {
@@ -31,7 +31,7 @@ export interface FacilityState {
   readonly totalFacilities: number;
 
   /**
-   * Property isLoading
+   * Property listCallState
    * @readonly
    *
    * @description
@@ -82,10 +82,20 @@ export interface FacilityState {
    */
   readonly archiveCallState: CallState<FacilityOutput | null>;
 
-  /** Tracks the restore facility operation state. */
+  /**
+   * Property restoreCallState
+   *
+   * @description
+   * Tracks the restore facility operation state.
+   */
   readonly restoreCallState: CallState<FacilityOutput | null>;
 
-  /** Tracks the delete facility operation state. */
+  /**
+   * Property deleteCallState
+   *
+   * @description
+   * Tracks the delete facility operation state.
+   */
   readonly deleteCallState: CallState;
 
   /**
@@ -98,6 +108,20 @@ export interface FacilityState {
    * @since 1.0.0
    *
    * @type {CallState<FacilityOutput | null>}
+   */
+  /**
+   * Property moveRevisionCallState
+   *
+   * @description
+   * Revision refresh after a failed conditional move.
+   */
+  readonly moveRevisionCallState: CallState;
+
+  /**
+   * Property moveCallState
+   *
+   * @description
+   * Stores moveCallState.
    */
   readonly moveCallState: CallState<FacilityOutput | null>;
   //#endregion

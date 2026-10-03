@@ -5,7 +5,9 @@
  * spread.
  */
 
+import type { FacilityBuildingModelOutput } from '@features/organization/features/facilities/models';
 import { E2E_ORGANIZATION_ID } from './api-fixtures';
+import type { EquipmentOutputFixture } from './equipment-fixtures';
 
 /** Facility the list/detail e2e scenarios deep-link into. */
 export const E2E_FACILITY_ID = 'e2e-facility-1';
@@ -32,6 +34,18 @@ export interface FacilityOutputFixture {
   readonly latitude?: number | null;
   readonly longitude?: number | null;
   readonly recordStatus?: 'draft' | 'published';
+  readonly revision?: number;
+  readonly hierarchyIssues?: readonly string[];
+  readonly geometryIssue?:
+    | 'invalid_geometry'
+    | 'plan_unavailable'
+    | 'outside_ancestry'
+    | 'other_plan'
+    | null;
+  readonly equipmentCount?: number;
+  readonly elevationMeters?: number | null;
+  readonly heightMeters?: number | null;
+  readonly levelIndex?: number | null;
   readonly path: ReadonlyArray<{
     readonly id: string;
     readonly name: string;
@@ -61,6 +75,10 @@ export function facilityOutput(
     status: 'active',
     address: '12 Rue de la Paix, 75002 Paris',
     metadata: {},
+    revision: 1,
+    hierarchyIssues: [],
+    geometryIssue: null,
+    equipmentCount: 0,
     latitude: 48.8566,
     longitude: 2.3522,
     path: [],
@@ -157,6 +175,14 @@ export interface FacilityAttachmentOutputFixture {
   readonly isPrimaryPlan: boolean;
   readonly imageWidth: number | null;
   readonly imageHeight: number | null;
+  readonly calibration: {
+    widthMeters: number;
+    rotationDegrees: number;
+    offsetXMeters: number;
+    offsetZMeters: number;
+  } | null;
+  readonly calibrationBuildingId?: string | null;
+  readonly calibrationIssue?: 'building_changed' | 'unverified_frame' | null;
   readonly revision: number;
   readonly uploadedAt: string;
 }
@@ -179,6 +205,9 @@ export function facilityAttachmentOutput(
     isPrimaryPlan: true,
     imageWidth: 1200,
     imageHeight: 800,
+    calibration: null,
+    calibrationBuildingId: null,
+    calibrationIssue: null,
     revision: 1,
     uploadedAt: '2026-08-01T00:00:00+00:00',
     ...overrides,
@@ -213,6 +242,8 @@ export interface FacilityPlanOverlayOutputFixture {
   readonly attachmentId: string;
   readonly imageWidth: number;
   readonly imageHeight: number;
+  readonly geometryIssues?: readonly { facilityId: string; code: string }[];
+  readonly equipmentIssues?: readonly { equipmentId: string; code: string }[];
   readonly zones: ReadonlyArray<{
     readonly facilityId: string;
     readonly name: string;
@@ -234,32 +265,66 @@ export interface FacilityPlanOverlayOutputFixture {
   }>;
 }
 
-export interface FacilityBuildingModelOutputFixture {
-  readonly buildingId: string;
-  readonly buildingName: string;
-  readonly floors: ReadonlyArray<{
-    readonly facilityId: string;
-    readonly name: string;
-    readonly levelIndex: number | null;
-    readonly status: string;
-    readonly plan: {
-      readonly attachmentId: string;
-      readonly imageWidth: number | null;
-      readonly imageHeight: number | null;
-    } | null;
-    readonly outline: {
-      readonly source: 'plan_geometry' | 'rooms_bbox' | 'image_rect';
-      readonly points: ReadonlyArray<readonly [number, number]>;
-    } | null;
-    readonly rooms: ReadonlyArray<{
-      readonly facilityId: string;
-      readonly name: string;
-      readonly type: string;
-      readonly status: string;
-      readonly points: ReadonlyArray<readonly [number, number]>;
-    }>;
-  }>;
+/** Bounded facility collection response used to simulate server search and later pages. */
+export interface FacilityCollectionResponseFixture {
+  readonly facilities: readonly FacilityOutputFixture[];
+  readonly totalItems?: number;
+  readonly status?: number;
+  readonly errorDetail?: string;
 }
+
+/** Exact equipment summary alongside one bounded equipment page, scoped to a selected facility. */
+export interface FacilityEquipmentScopeFixture {
+  readonly equipment: readonly EquipmentOutputFixture[];
+  readonly totalItems: number;
+  readonly byStatus: {
+    readonly in_stock: number;
+    readonly operational: number;
+    readonly under_maintenance: number;
+    readonly decommissioned: number;
+  };
+  readonly needingAttentionCount: number;
+}
+
+/** A distinct root site whose identifier remains stable across pagination retries. */
+export function coherenceSite(
+  index: number,
+  overrides: Partial<FacilityOutputFixture> = {},
+): FacilityOutputFixture {
+  const id = `coherence-site-${index}`;
+  return facilityOutput({
+    id,
+    '@id': `/api/facilities/${id}`,
+    type: 'site',
+    parentFacilityId: null,
+    name: `Site ${String(index).padStart(3, '0')}`,
+    code: `SITE-${index}`,
+    hasChildren: index === 1,
+    ...overrides,
+  });
+}
+
+/** A published building outside the first candidate page, with a recognizable ancestor path. */
+export function coherenceBuilding(
+  index: number,
+  overrides: Partial<FacilityOutputFixture> = {},
+): FacilityOutputFixture {
+  const id = `coherence-building-${index}`;
+  return facilityOutput({
+    id,
+    '@id': `/api/facilities/${id}`,
+    type: 'building',
+    parentFacilityId: 'coherence-site-1',
+    name: `Building ${String(index).padStart(3, '0')}`,
+    code: `BUILDING-${index}`,
+    recordStatus: 'published',
+    path: [{ id: 'coherence-site-1', type: 'site', name: 'Site 001' }],
+    ...overrides,
+  });
+}
+
+/** Uses the transport contract so incomplete building projections fail fixture typechecking. */
+export type FacilityBuildingModelOutputFixture = FacilityBuildingModelOutput;
 
 /**
  * The 3D building view's model for {@link facilityOutput} — one floor with a
@@ -277,8 +342,18 @@ export function facilityBuildingModelOutput(
         facilityId: E2E_FACILITY_CHILD_ID,
         name: 'Ground Floor',
         levelIndex: 0,
+        elevationMeters: null,
+        heightMeters: null,
         status: 'active',
-        plan: { attachmentId: E2E_FACILITY_PLAN_ID, imageWidth: 1200, imageHeight: 800 },
+        hierarchyIssues: [],
+        plan: {
+          attachmentId: E2E_FACILITY_PLAN_ID,
+          imageWidth: 1200,
+          imageHeight: 800,
+          calibration: null,
+          calibrationBuildingId: null,
+          calibrationIssue: null,
+        },
         outline: {
           source: 'image_rect',
           points: [
@@ -302,6 +377,12 @@ export function facilityBuildingModelOutput(
             ],
           },
         ],
+        equipment: [],
+        diagnostics: {
+          invalidGeometryCount: 0,
+          unpositionedEquipmentCount: 0,
+          geometryIssues: [],
+        },
       },
     ],
     ...overrides,

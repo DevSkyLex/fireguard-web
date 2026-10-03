@@ -65,6 +65,19 @@
         </span>
       </div>
     </header>
+    @if (facility.hierarchyIssues?.length) {
+      <div hlmAlert data-testid="facility-hierarchy-issues">
+        <ng-icon hlmAlertIcon name="lucideTriangleAlert" aria-hidden="true" />
+        <h2 hlmAlertTitle i18n="@@facility.hierarchy.needsCorrection">
+          Hierarchy needs correction
+        </h2>
+        <ul hlmAlertDescription class="list-disc pl-4">
+          @for (issue of facility.hierarchyIssues; track issue) {
+            <li>{{ hierarchyIssueLabel(issue) }}</li>
+          }
+        </ul>
+      </div>
+    }
 
     <hlm-tabs [tab]="activeTab()" class="contents" (tabActivated)="onLinkedTabActivated($event)">
       <ng-template #pageTabs>
@@ -101,6 +114,35 @@
       </ng-template>
 
       <div hlmTabsContent="overview" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
+        <div
+          class="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Equipment scope"
+          i18n-aria-label="@@facility.equipmentScope.aria"
+        >
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [attr.aria-pressed]="equipmentIncludeDescendants()"
+            (click)="changeEquipmentScope(true)"
+            class="mobile-ui:min-h-11"
+            i18n="@@facility.equipmentScope.subtree"
+          >
+            This place and its descendants
+          </button>
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [attr.aria-pressed]="!equipmentIncludeDescendants()"
+            (click)="changeEquipmentScope(false)"
+            class="mobile-ui:min-h-11"
+            i18n="@@facility.equipmentScope.direct"
+          >
+            Assigned directly
+          </button>
+        </div>
         <section
           class="@container flex flex-col gap-2"
           aria-labelledby="facility-metrics-title"
@@ -195,16 +237,6 @@
                 {{ overview.inspectionsTotal() }} records
               </p>
             }
-            @if (overview.isEquipmentPreviewPartial()) {
-              <p
-                class="text-sm text-muted-foreground"
-                data-testid="facility-detail-equipment-metrics-partial"
-                i18n="@@facility.metric.equipmentPartialDataCaption"
-              >
-                Based on {{ overview.equipment().length }} of
-                {{ overview.equipmentTotal() }} records
-              </p>
-            }
           }
         </section>
 
@@ -226,6 +258,7 @@
                 overview.loadEquipment({
                   organizationId: organizationId(),
                   facilityId: facilityId(),
+                  includeDescendants: equipmentIncludeDescendants(),
                 })
               "
               class="mobile-ui:min-h-11"
@@ -251,7 +284,10 @@
                 class="inline-flex items-center text-sm text-foreground underline underline-offset-4 hover:decoration-2 mobile-ui:min-h-11"
                 data-testid="facility-detail-equipment-status-link"
                 [routerLink]="['/organizations', organizationId(), 'assets']"
-                [queryParams]="{ facility: facilityId() }"
+                [queryParams]="{
+                  facility: facilityId(),
+                  equipmentScope: equipmentIncludeDescendants() ? 'subtree' : 'direct',
+                }"
                 aria-label="See all equipment on this site"
                 i18n-aria-label="@@facility.equipmentBreakdown.seeAllAria"
                 i18n="@@facility.recentInterventions.seeAll"
@@ -613,6 +649,17 @@
           {{ planSelectionAnnouncement() }}
         </div>
 
+        @if (facility.geometryIssue; as issue) {
+          <p class="text-sm text-muted-foreground" data-testid="facility-plan-own-geometry-issue">
+            {{ spatialIssueLabel(issue) }}
+          </p>
+        }
+        @if (plans.selectedPlan()?.calibrationIssue; as issue) {
+          <p class="text-sm text-muted-foreground" data-testid="facility-plan-calibration-issue">
+            {{ spatialIssueLabel(issue) }}
+          </p>
+        }
+
         @if (plans.listCallState().status === 'pending' && plans.orderedPlans().length === 0) {
           <div class="flex flex-col gap-4" data-testid="facility-plans-loading">
             <output class="sr-only" i18n="@@facility.plans.loadingAria">Loading floor plans</output>
@@ -686,6 +733,21 @@
                 [overlayHasContent]="plans.overlayHasContent()"
                 [panelOpenerVisible]="isMobileInteractionMode() && !planPanelVisible()"
                 [canWrite]="canWrite() && plans.selectedPlanReady()"
+                [canTraceFloor]="facility.type === 'floor'"
+                [canCalibrate]="
+                  !!plans.selectedPlan()?.imageWidth && !!plans.selectedPlan()?.imageHeight
+                "
+                [zoneCandidatePage]="plans.zoneCandidatePage()"
+                [zoneCandidateTotal]="plans.zoneCandidateTotal()"
+                [equipmentCandidatePage]="plans.equipmentCandidatePage()"
+                [equipmentCandidateTotal]="plans.equipmentCandidateTotal()"
+                (floorOutlineRequested)="onFloorOutlineRequested()"
+                (calibrationRequested)="onCalibrationRequested()"
+                (calibrationCoordinatesRequested)="onCalibrationCoordinatesRequested()"
+                (zoneSearchChanged)="plans.searchZoneCandidates($event)"
+                (equipmentSearchChanged)="plans.searchEquipmentCandidates($event)"
+                (zonePageChanged)="plans.changeZoneCandidatePage($event)"
+                (equipmentPageChanged)="plans.changeEquipmentCandidatePage($event)"
                 [canEditEquipment]="canEditEquipment() && plans.selectedPlanReady()"
                 [editMode]="plans.editMode()"
                 [zoneCandidates]="plans.availableZoneCandidates()"
@@ -867,6 +929,9 @@
             </div>
 
             <app-facility-plan-panel
+              [organizationId]="organizationId()"
+              [geometryIssues]="plans.overlay()?.geometryIssues ?? []"
+              [equipmentIssues]="plans.overlay()?.equipmentIssues ?? []"
               [zones]="plans.overlay()?.zones ?? []"
               [equipment]="plans.overlay()?.equipment ?? []"
               [selectedZone]="selectedOverlayZone()"
@@ -947,6 +1012,20 @@
   (cleared)="onZoneGeometryCleared()"
 />
 
+<app-facility-plan-calibration-dialog
+  [visible]="calibrationDialogVisible()"
+  [calibration]="plans.selectedPlan()?.calibration ?? null"
+  [points]="plans.draftPoints()"
+  [imageAspect]="calibrationImageAspect()"
+  [pending]="
+    plans.saveCalibrationCallState().status === 'pending' ||
+    plans.calibrationRevisionCallState().status === 'pending'
+  "
+  [errorMessage]="calibrationErrorMessage()"
+  (visibleChange)="calibrationDialogVisible.set($event)"
+  (submitted)="onCalibrationSubmitted($event)"
+/>
+
 <app-facility-plan-pin-position-dialog
   [visible]="pinPositionDialogEquipmentId() !== null"
   [equipmentName]="pinPositionDialogName()"
@@ -956,6 +1035,21 @@
   (visibleChange)="onPinPositionDialogVisibleChanged($event)"
   (submitted)="onPinPositionSubmitted($event)"
   (removed)="onPinPositionRemoved(pinPositionDialogEquipmentId() ?? '')"
+/>
+
+<app-facility-move-dialog
+  [request]="moveRequest()"
+  [options]="moveOptions.options()"
+  [hydratedOption]="moveOptions.selectedOption()"
+  [optionsCallState]="moveOptions.loadCallState()"
+  [page]="moveOptions.page()"
+  [pageCount]="moveOptions.pageCount()"
+  [busy]="moveBusy()"
+  [errorMessage]="moveErrorMessage()"
+  (searchChanged)="onMoveSearchChanged($event)"
+  (pageChanged)="onMovePageChanged($event)"
+  (submitted)="onMoveSubmitted($event)"
+  (dismissed)="onMoveDismissed()"
 />
 
 <app-facility-delete-dialog
@@ -973,6 +1067,18 @@
 />
 
 <ng-template #pageActions>
+  @if (building3dId(); as buildingId) {
+    <a
+      hlmBtn
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      data-testid="facility-detail-3d-link"
+      [routerLink]="['/organizations', organizationId(), 'facilities', buildingId, '3d']"
+    >
+      <ng-icon name="lucideBoxes" aria-hidden="true" />
+      <span i18n="@@facility.detail.view3d">3D view</span>
+    </a>
+  }
   <button
     hlmBtn
     type="button"
@@ -1020,6 +1126,15 @@
 
     <ng-template #moreMenu>
       <hlm-dropdown-menu class="w-56">
+        <button
+          hlmDropdownMenuItem
+          data-testid="facility-detail-move"
+          (click)="requestMove()"
+          class="mobile-ui:min-h-11"
+        >
+          <ng-icon name="lucideLayers" aria-hidden="true" />
+          <span i18n="@@facility.moveDialog.title">Move to…</span>
+        </button>
         <button
           hlmDropdownMenuItem
           variant="destructive"

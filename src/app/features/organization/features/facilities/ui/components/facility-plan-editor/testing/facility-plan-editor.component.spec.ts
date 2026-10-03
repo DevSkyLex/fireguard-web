@@ -21,6 +21,8 @@ const overlay = (
   attachmentId: 'plan-1',
   imageWidth: 1200,
   imageHeight: 800,
+  geometryIssues: [],
+  equipmentIssues: [],
   zones: [],
   equipment: [
     {

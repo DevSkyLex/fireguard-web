@@ -31,24 +31,41 @@ import {
 } from '@ng-icons/lucide';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
+import { isCallError, isCallSuccess, type StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import type {
+  FacilityModelOutput,
+  FacilityModelInput,
+  FacilityOption,
+  FacilityOutput,
+} from '@features/organization/features/facilities/models';
 import type {
   FacilityBuildingModelFloor,
   FacilityPlanOverlayZone,
 } from '@features/organization/features/facilities/models';
 import {
+  FacilityModelsStore,
+  type FacilityModelsStoreType,
+} from '@features/organization/features/facilities/state';
+import {
   FacilityBuilding3dStore,
   type FacilityBuilding3dStoreType,
 } from '@features/organization/features/facilities/state';
+import {
+  applyFacilityModelSettings,
+  resolveFacilityModelBinding,
+} from '@features/organization/features/facilities/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmToggleImports } from '@shared/ui/toggle';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { FacilityBuilding3dRoomPanel } from '../../components/facility-building-3d-room-panel';
 import { FacilityBuilding3dScene } from '../../components/facility-building-3d-scene';
-
+import { FacilityModelManager } from '../../components/facility-model-manager';
 /**
  * Class FacilityBuilding3dPage
  * @class FacilityBuilding3dPage
@@ -106,10 +123,12 @@ import { FacilityBuilding3dScene } from '../../components/facility-building-3d-s
     RouterLink,
     ResourceIllustration,
     FacilityBuilding3dScene,
+    FacilityModelManager,
     FacilityBuilding3dRoomPanel,
     HlmButton,
     HlmSkeleton,
     ...HlmToggleImports,
+    ...HlmToggleGroupImports,
   ],
   providers: [
     provideIcons({
@@ -142,7 +161,6 @@ export class FacilityBuilding3dPage {
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
-
   /**
    * Property facilityId
    * @readonly
@@ -157,7 +175,6 @@ export class FacilityBuilding3dPage {
    */
   public readonly facilityId: InputSignal<string> = input.required<string>();
   //#endregion
-
   //#region Properties
   /**
    * Property store
@@ -173,7 +190,165 @@ export class FacilityBuilding3dPage {
    */
   protected readonly store: FacilityBuilding3dStoreType =
     inject<FacilityBuilding3dStoreType>(FacilityBuilding3dStore);
-
+  /**
+   * Property modelsStore
+   * @readonly
+   *
+   * @description
+   * Owns immutable GLB files, settings mutations and browser parsed assets for this route.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FacilityModelsStoreType}
+   */
+  protected readonly modelsStore: FacilityModelsStoreType = inject(FacilityModelsStore);
+  /**
+   * Property sceneMode
+   * @readonly
+   *
+   * @description
+   * Chooses the generated building or selected imported model.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<'generated' | 'imported'>}
+   */
+  protected readonly sceneMode: WritableSignal<'generated' | 'imported'> = signal('generated');
+  /**
+   * Property previewSettings
+   * @readonly
+   *
+   * @description
+   * Keeps local transform and association previews tied to their immutable model identity.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<{ modelId: string; input: FacilityModelInput } | null>}
+   */
+  private readonly previewSettings: WritableSignal<{
+    modelId: string;
+    input: FacilityModelInput;
+  } | null> = signal(null);
+  /**
+   * Property renderedImportedModel
+   * @readonly
+   *
+   * @description
+   * Applies unsaved valid settings to the selected file without changing server state.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<FacilityModelOutput | null>}
+   */
+  protected readonly renderedImportedModel: Signal<FacilityModelOutput | null> = computed(() => {
+    const model = this.modelsStore.selectedModel();
+    const preview = this.previewSettings();
+    return model && preview?.modelId === model.id
+      ? applyFacilityModelSettings(model, preview.input)
+      : model;
+  });
+  /**
+   * Property modelError
+   * @readonly
+   *
+   * @description
+   * Exposes a normalized refusal from the independent imported-model workflow.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<StoreError | null>}
+   */
+  protected readonly modelError: Signal<StoreError | null> = computed(() => {
+    const states = [
+      this.modelsStore.listCallState(),
+      this.modelsStore.optionsCallState(),
+      this.modelsStore.uploadCallState(),
+      this.modelsStore.previewCallState(),
+      this.modelsStore.activateCallState(),
+      this.modelsStore.removeCallState(),
+      this.modelsStore.downloadCallState(),
+    ];
+    return states.find(isCallError)?.error ?? null;
+  });
+  /**
+   * Property modelPending
+   * @readonly
+   *
+   * @description
+   * Keeps accepted file and settings mutations serialized in the manager.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly modelPending: Signal<boolean> = computed(
+    () =>
+      this.modelsStore.isUploadPending() ||
+      this.modelsStore.isUpdatePending() ||
+      this.modelsStore.isActivatePending() ||
+      this.modelsStore.isRemovePending(),
+  );
+  /**
+   * Property modelFacilityOptions
+   * @readonly
+   *
+   * @description
+   * Offers existing facilities of this building as binding targets.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly FacilityOption[]>}
+   */
+  protected readonly modelFacilityOptions: Signal<readonly FacilityOption[]> = computed(() =>
+    this.modelsStore.facilityOptions(),
+  );
+  /**
+   * Property selectedImportedFacility
+   * @readonly
+   *
+   * @description
+   * Resolves the selected GLB association through the complete authorized building hierarchy.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<FacilityOutput | null>}
+   */
+  protected readonly selectedImportedFacility: Signal<FacilityOutput | null> = computed(() => {
+    const model = this.renderedImportedModel();
+    const nodeIndex = this.modelsStore.selectedNodeIndex();
+    if (!model || nodeIndex === null) return null;
+    const binding = this.resolveImportedNodeBinding(model, nodeIndex);
+    if (
+      !binding.facilityId ||
+      !Object.hasOwn(this.modelsStore.bindingFloorIds(), binding.facilityId)
+    )
+      return null;
+    return (
+      this.modelsStore.bindingFacilities().find((facility) => facility.id === binding.facilityId) ??
+      null
+    );
+  });
+  /**
+   * Property downloads
+   * @readonly
+   *
+   * @description
+   * Saves authenticated model bytes through the existing native download service.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {BrowserDownloadService}
+   */
+  private readonly downloads: BrowserDownloadService = inject(BrowserDownloadService);
   /**
    * Property permissions
    * @readonly
@@ -189,7 +364,6 @@ export class FacilityBuilding3dPage {
   private readonly permissions: OrganizationPermissionService = inject(
     OrganizationPermissionService,
   );
-
   /**
    * Property canWrite
    * @readonly
@@ -205,7 +379,6 @@ export class FacilityBuilding3dPage {
   protected readonly canWrite: Signal<boolean> = computed<boolean>(() =>
     this.permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_WRITE),
   );
-
   /**
    * Property webglSupported
    * @readonly
@@ -221,7 +394,6 @@ export class FacilityBuilding3dPage {
    * @type {WritableSignal<boolean>}
    */
   protected readonly webglSupported: WritableSignal<boolean> = signal<boolean>(true);
-
   /**
    * Property plansTabRoute
    * @readonly
@@ -240,7 +412,6 @@ export class FacilityBuilding3dPage {
     'facilities',
     this.facilityId(),
   ]);
-
   /**
    * Property roomPanelVisible
    * @readonly
@@ -261,7 +432,6 @@ export class FacilityBuilding3dPage {
    * @type {WritableSignal<boolean>}
    */
   protected readonly roomPanelVisible: WritableSignal<boolean> = signal<boolean>(false);
-
   /**
    * Property isMobileInteractionMode
    * @readonly
@@ -278,7 +448,6 @@ export class FacilityBuilding3dPage {
   protected readonly isMobileInteractionMode: Signal<boolean> = inject(
     INTERACTION_CAPABILITIES_PORT,
   ).isMobileInteractionMode;
-
   /**
    * Property hoveredRoomId
    * @readonly
@@ -295,7 +464,6 @@ export class FacilityBuilding3dPage {
    * @type {WritableSignal<string | null>}
    */
   protected readonly hoveredRoomId: WritableSignal<string | null> = signal<string | null>(null);
-
   /**
    * Property hoveredRoomName
    * @readonly
@@ -312,17 +480,14 @@ export class FacilityBuilding3dPage {
   protected readonly hoveredRoomName: Signal<string | null> = computed<string | null>(() => {
     const hoveredRoomId: string | null = this.hoveredRoomId();
     if (hoveredRoomId === null) return null;
-
     for (const floor of this.store.floors()) {
       const room: FacilityPlanOverlayZone | undefined = floor.rooms.find(
         (candidate) => candidate.facilityId === hoveredRoomId,
       );
       if (room) return room.name;
     }
-
     return null;
   });
-
   /**
    * Property selectionAnnouncement
    * @readonly
@@ -342,17 +507,22 @@ export class FacilityBuilding3dPage {
   protected readonly selectionAnnouncement: Signal<string> = computed<string>(() => {
     const room: FacilityPlanOverlayZone | null = this.store.selectedRoom();
     const floor: FacilityBuildingModelFloor | null = this.store.selectedFloor();
-
+    const equipment = this.store.selectedEquipment();
+    const importedFacility =
+      this.sceneMode() === 'imported' ? this.selectedImportedFacility() : null;
+    if (importedFacility && floor)
+      return $localize`:@@facility.building3d.selectionAnnouncement:Selected ${importedFacility.name}:room: on ${floor.name}:floor:`;
+    if (importedFacility) return importedFacility.name;
+    if (equipment && floor)
+      return $localize`:@@facility.building3d.equipmentSelectionAnnouncement:Selected equipment on ${floor.name}:floor:`;
     if (room && floor) {
       return $localize`:@@facility.building3d.selectionAnnouncement:Selected ${room.name}:room: on ${floor.name}:floor:`;
     }
     if (floor) {
       return $localize`:@@facility.building3d.floorSelectionAnnouncement:Selected floor ${floor.name}:floor:`;
     }
-
     return '';
   });
-
   /**
    * Property injector
    * @readonly
@@ -366,7 +536,6 @@ export class FacilityBuilding3dPage {
    * @type {Injector}
    */
   private readonly injector: Injector = inject(Injector);
-
   /**
    * Property roomPanel
    * @readonly
@@ -382,7 +551,6 @@ export class FacilityBuilding3dPage {
   private readonly roomPanel: Signal<FacilityBuilding3dRoomPanel | undefined> = viewChild(
     FacilityBuilding3dRoomPanel,
   );
-
   /**
    * Property pageRoot
    * @readonly
@@ -397,7 +565,6 @@ export class FacilityBuilding3dPage {
    */
   private readonly pageRoot: Signal<ElementRef<HTMLElement> | undefined> =
     viewChild<ElementRef<HTMLElement>>('pageRoot');
-
   /**
    * Property pageRootLabel
    * @readonly
@@ -411,7 +578,6 @@ export class FacilityBuilding3dPage {
    * @type {string}
    */
   protected readonly pageRootLabel: string = $localize`:@@facility.building3d.pageRootLabel:3D building view`;
-
   /**
    * Property previouslyFocusedElement
    *
@@ -424,7 +590,6 @@ export class FacilityBuilding3dPage {
    * @type {HTMLElement | null}
    */
   private previouslyFocusedElement: HTMLElement | null = null;
-
   /**
    * Property wasSelected
    *
@@ -437,7 +602,6 @@ export class FacilityBuilding3dPage {
    * @type {unknown}
    */
   private wasSelected = false;
-
   /**
    * Property router
    * @readonly
@@ -451,7 +615,6 @@ export class FacilityBuilding3dPage {
    * @type {Router}
    */
   private readonly router: Router = inject(Router);
-
   /**
    * Property pageActionsService
    * @readonly
@@ -465,7 +628,6 @@ export class FacilityBuilding3dPage {
    * @type {PageActionsService}
    */
   private readonly pageActionsService: PageActionsService = inject(PageActionsService);
-
   /**
    * Property pageActions
    * @readonly
@@ -481,11 +643,12 @@ export class FacilityBuilding3dPage {
   private readonly pageActions: Signal<TemplateRef<unknown> | undefined> =
     viewChild<TemplateRef<unknown>>('pageActions');
   //#endregion
-
   //#region Constructor
   /**
    * Constructor
    * @constructor
+   *
+   *   Constructor
    *
    * @description
    * Loads the building model whenever the route params resolve — a no-op on
@@ -497,28 +660,57 @@ export class FacilityBuilding3dPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
-
     effect((): void => {
       const organizationId: string = this.organizationId();
       const facilityId: string = this.facilityId();
-
       untracked((): void => {
         this.store.loadModel({ organizationId, facilityId });
+        this.modelsStore.load({ organizationId, buildingId: facilityId });
+        this.sceneMode.set('generated');
+        this.previewSettings.set(null);
       });
     });
-
+    effect(() => {
+      const asset = this.modelsStore.previewAsset();
+      const selectedModelId = this.modelsStore.selectedModelId();
+      const previewPending = this.modelsStore.isPreviewPending();
+      if (asset) untracked(() => this.sceneMode.set('imported'));
+      else if (!selectedModelId && !previewPending)
+        untracked(() => this.sceneMode.set('generated'));
+    });
+    effect(() => {
+      const result = this.modelsStore.downloadCallState();
+      if (isCallSuccess(result))
+        untracked(() => this.downloads.trigger(result.data.blob, result.data.fileName));
+    });
+    effect(() => {
+      this.modelsStore.settingsSavedToken();
+      this.modelsStore.selectedModelId();
+      untracked(() => this.previewSettings.set(null));
+    });
+    effect(() => {
+      const facility = this.selectedImportedFacility();
+      const selectedFloorId = this.store.selectedFloorId();
+      const isolatedFloorId = this.store.isolatedFloorId();
+      if (!facility) return;
+      const bindingFloorId = this.modelsStore.bindingFloorIds()[facility.id];
+      if (
+        bindingFloorId != null &&
+        (bindingFloorId !== selectedFloorId ||
+          (isolatedFloorId !== null && bindingFloorId !== isolatedFloorId))
+      )
+        untracked(() => this.modelsStore.clearNodeSelection());
+    });
     afterNextRender((): void => {
       this.webglSupported.set(detectWebglSupport());
     });
-
     effect((): void => {
-      const isSelected: boolean = this.store.selectedRoomId() !== null;
-
+      const isSelected: boolean =
+        this.store.selectedRoomId() !== null || this.store.selectedEquipmentId() !== null;
       untracked((): void => this.syncSelectionFocus(isSelected));
     });
   }
   //#endregion
-
   //#region Methods
   /**
    * Method retryLoad
@@ -535,7 +727,140 @@ export class FacilityBuilding3dPage {
   protected retryLoad(): void {
     this.store.loadModel({ organizationId: this.organizationId(), facilityId: this.facilityId() });
   }
-
+  /**
+   * Method onCoordinateModeChanged
+   *
+   * @description
+   * Selects the physical or schematic coordinate space.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string | readonly string[] | null | undefined} value - Toggle group selection.
+   *
+   * @returns {void}
+   */
+  protected onCoordinateModeChanged(value: string | readonly string[] | null | undefined): void {
+    if (value === 'metric' || value === 'schematic') this.store.setMetric(value === 'metric');
+  }
+  /**
+   * Method onModelModeChanged
+   *
+   * @description
+   * Selects an imported or generated scene, preserving valid source selections.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string | readonly string[] | null | undefined} value - Toggle group selection.
+   *
+   * @returns {void}
+   */
+  protected onModelModeChanged(value: string | readonly string[] | null | undefined): void {
+    if (value === 'generated' || value === 'imported') this.sceneMode.set(value);
+  }
+  /**
+   * Method onModelSettingsPreviewed
+   *
+   * @description
+   * Applies a valid unsaved model transform and association draft to the current preview.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {FacilityModelInput} settings - Complete valid preview settings.
+   *
+   * @returns {void}
+   */
+  protected onModelSettingsPreviewed(settings: FacilityModelInput): void {
+    const id = this.modelsStore.selectedModelId();
+    if (id) this.previewSettings.set({ modelId: id, input: settings });
+  }
+  /**
+   * Method onImportedNodeSelected
+   *
+   * @description
+   * Opens the indexed object in the association manager and selects its existing facility binding.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {number} nodeIndex - Immutable source node index.
+   *
+   * @returns {void}
+   */
+  protected onImportedNodeSelected(nodeIndex: number): void {
+    this.modelsStore.selectNode(nodeIndex);
+    const model = this.renderedImportedModel();
+    this.store.selectRoom(null);
+    if (!model) return;
+    const binding = this.resolveImportedNodeBinding(model, nodeIndex);
+    if (
+      !binding.facilityId ||
+      !Object.hasOwn(this.modelsStore.bindingFloorIds(), binding.facilityId)
+    )
+      return;
+    this.store.selectFloor(this.modelsStore.bindingFloorIds()[binding.facilityId]);
+    if (
+      this.store
+        .floors()
+        .some((floor) => floor.rooms.some((room) => room.facilityId === binding.facilityId))
+    )
+      this.store.selectRoom(binding.facilityId);
+  }
+  /**
+   * Method resolveImportedNodeBinding
+   *
+   * @description
+   * Resolves the closest association while preventing inheritance through an unavailable child.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {FacilityModelOutput} model - Safe model settings rendered by the scene.
+   * @param {number} nodeIndex - Immutable selected source node index.
+   *
+   * @returns {ReturnType<typeof resolveFacilityModelBinding>} Closest binding or unavailable state.
+   */
+  private resolveImportedNodeBinding(
+    model: FacilityModelOutput,
+    nodeIndex: number,
+  ): ReturnType<typeof resolveFacilityModelBinding> {
+    let binding = resolveFacilityModelBinding(model, [nodeIndex]);
+    if (!binding.facilityId && !binding.unavailable) {
+      const objects =
+        this.modelsStore.previewAsset()?.nodes.find((node) => node.index === nodeIndex)?.objects ??
+        [];
+      for (const object of objects) {
+        const path = [nodeIndex];
+        let current: typeof object | null = object;
+        while (current) {
+          const ancestorIndex = current.userData['facilityModelNodeIndex'] as number | undefined;
+          if (ancestorIndex !== undefined && !path.includes(ancestorIndex))
+            path.push(ancestorIndex);
+          current = current.parent;
+        }
+        binding = resolveFacilityModelBinding(model, path);
+        if (binding.facilityId || binding.unavailable) break;
+      }
+    }
+    return binding;
+  }
+  /**
+   * Method onBackgroundActivated
+   *
+   * @description
+   * Clears details and imported node selection while retaining the current floor.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
+  protected onBackgroundActivated(): void {
+    this.store.selectRoom(null);
+    this.modelsStore.clearNodeSelection();
+  }
   /**
    * Method onRenderingUnavailable
    * @method onRenderingUnavailable
@@ -551,7 +876,6 @@ export class FacilityBuilding3dPage {
   protected onRenderingUnavailable(): void {
     this.webglSupported.set(false);
   }
-
   /**
    * Method onEscapePressed
    * @method onEscapePressed
@@ -568,11 +892,14 @@ export class FacilityBuilding3dPage {
    * @returns {void}
    */
   protected onEscapePressed(): void {
-    if (this.store.selectedRoomId() === null) return;
-
-    this.store.selectRoom(null);
+    if (
+      this.store.selectedRoomId() === null &&
+      this.store.selectedEquipmentId() === null &&
+      this.modelsStore.selectedNodeIndex() === null
+    )
+      return;
+    this.onBackgroundActivated();
   }
-
   /**
    * Method onPlan2dRequested
    * @method onPlan2dRequested
@@ -590,12 +917,10 @@ export class FacilityBuilding3dPage {
   protected onPlan2dRequested(): void {
     const floorId: string | null = this.store.selectedFloorId();
     if (!floorId) return;
-
     void this.router.navigate(['/organizations', this.organizationId(), 'facilities', floorId], {
       queryParams: { tab: 'plans' },
     });
   }
-
   /**
    * Method syncSelectionFocus
    * @method syncSelectionFocus
@@ -640,12 +965,10 @@ export class FacilityBuilding3dPage {
         { injector: this.injector },
       );
     }
-
     this.wasSelected = isSelected;
   }
   //#endregion
 }
-
 /**
  * Function detectWebglSupport
  *

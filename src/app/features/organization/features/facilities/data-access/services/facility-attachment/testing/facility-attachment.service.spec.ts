@@ -152,4 +152,26 @@ describe('FacilityAttachmentService', () => {
       request.flush(bytes);
     });
   });
+  it('calibrates an immutable plan with its revision and supports clearing', () => {
+    const calibration = {
+      widthMeters: 40,
+      rotationDegrees: 90,
+      offsetXMeters: -5,
+      offsetZMeters: 2,
+    };
+    service.setCalibration('attachment-1', calibration, 7).subscribe();
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/facility-attachments/attachment-1/calibration`,
+    );
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.headers.get('If-Match')).toBe('"revision-7"');
+    expect(request.request.body).toEqual({ calibration });
+    request.flush({ ...mockAttachment, calibration, revision: 8 });
+    service.setCalibration('attachment-1', null, 8).subscribe();
+    const clear = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/facility-attachments/attachment-1/calibration`,
+    );
+    expect(clear.request.body).toEqual({ calibration: null });
+    clear.flush({ ...mockAttachment, calibration: null, revision: 9 });
+  });
 });

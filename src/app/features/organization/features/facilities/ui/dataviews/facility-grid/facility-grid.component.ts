@@ -25,7 +25,12 @@ import { hlm } from '@shared/ui/utils';
 import { facilityTypeLabel } from '../../../utils';
 import { FacilityStatusTag } from '../../components/facility-status-tag';
 
-/** Placeholder cards drawn while the first page loads. */
+/**
+ * Constant SKELETON_CARDS
+ *
+ * @description
+ * Placeholder cards drawn while the first page loads.
+ */
 const SKELETON_CARDS: ReadonlyArray<number> = [1, 2, 3, 4, 5, 6];
 
 /**
@@ -39,7 +44,6 @@ const SKELETON_CARDS: ReadonlyArray<number> = [1, 2, 3, 4, 5, 6];
  * Carries the same row actions as the table — Archive and Restore — through
  * a card-corner `…` menu, since the record remains the edit surface for
  * everything else.
- *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service.
  *
@@ -76,9 +80,13 @@ export class FacilityGrid {
   /**
    * Property hlm
    * @readonly
-   * @description The Tailwind class-merge helper, exposed for the template's conditional card-title padding.
+   *
+   * @description
+   * The Tailwind class-merge helper, exposed for the template's conditional card-title padding.
+   *
    * @access protected
    * @since 2.2.0
+   *
    * @type {typeof hlm}
    */
   protected readonly hlm: typeof hlm = hlm;
@@ -87,9 +95,13 @@ export class FacilityGrid {
   /**
    * Property items
    * @readonly
-   * @description The cards to render — already filtered, ordered and paged by the page.
+   *
+   * @description
+   * The cards to render — already filtered, ordered and paged by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly FacilityOutput[]>}
    */
   public readonly items: InputSignal<readonly FacilityOutput[]> =
@@ -98,9 +110,13 @@ export class FacilityGrid {
   /**
    * Property loading
    * @readonly
-   * @description Whether to draw placeholder cards instead of the data.
+   *
+   * @description
+   * Whether to draw placeholder cards instead of the data.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
@@ -108,9 +124,13 @@ export class FacilityGrid {
   /**
    * Property canWrite
    * @readonly
-   * @description Whether a card's menu may offer Archive/Restore.
+   *
+   * @description
+   * Whether a card's menu may offer Archive/Restore.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly canWrite: InputSignal<boolean> = input<boolean>(false);
@@ -118,9 +138,13 @@ export class FacilityGrid {
   /**
    * Property detailRouteBase
    * @readonly
-   * @description Path segments a card's link appends the facility id to.
+   *
+   * @description
+   * Path segments a card's link appends the facility id to.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly string[]>}
    */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
@@ -131,9 +155,13 @@ export class FacilityGrid {
   /**
    * Property archiveRequested
    * @readonly
-   * @description A card's menu asked for the facility to be archived.
+   *
+   * @description
+   * A card's menu asked for the facility to be archived.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<FacilityOutput>}
    */
   public readonly archiveRequested: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
@@ -141,26 +169,46 @@ export class FacilityGrid {
   /**
    * Property restoreRequested
    * @readonly
-   * @description A card's menu asked for the facility to be restored.
+   *
+   * @description
+   * A card's menu asked for the facility to be restored.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<FacilityOutput>}
    */
   public readonly restoreRequested: OutputEmitterRef<FacilityOutput> = output<FacilityOutput>();
   //#endregion
 
   //#region Properties
-  /** Placeholder cards for the loading render. */
+  /**
+   * Property skeletonCards
+   * @readonly
+   *
+   * @description
+   * Placeholder cards for the loading render.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {ReadonlyArray<number>}
+   */
   protected readonly skeletonCards: ReadonlyArray<number> = SKELETON_CARDS;
   //#endregion
 
   //#region Methods
   /**
    * Method typeLabelOf
-   * @description The facility's type, humanized through the shared type catalog.
+   *
+   * @description
+   * The facility's type, humanized through the shared type catalog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} type - The raw type value.
+   *
    * @returns {string} The localized label, or a localized "Unknown type" fallback.
    */
   protected typeLabelOf(type: string): string {

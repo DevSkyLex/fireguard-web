@@ -14,10 +14,12 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
+import { idleCallState, type CallState } from '@core/request-state';
 import type {
   CreateFacilityInput,
   FacilityGeocodeOutput,
   FacilityOption,
+  FacilityType,
 } from '@features/organization/features/facilities/models';
 import type { MapCoordinates } from '@shared/map';
 import { sheetSide } from '@shared/sheet-side';
@@ -28,6 +30,7 @@ import { FacilityCreateForm } from '../../forms/facility-create-form';
 /**
  * Component FacilityCreateSheet
  * @class FacilityCreateSheet
+ *
  * @description
  * The spartan sheet hosting {@link FacilityCreateForm} on the facilities list: the
  * record is created without leaving the list, the same surface every other
@@ -39,7 +42,9 @@ import { FacilityCreateForm } from '../../forms/facility-create-form';
  * undone and turned into the shared unsaved-changes confirmation, exactly as
  * `intervention-work-item-sheet` does. Below `sm` the panel is a bottom
  * drawer (`@shared/sheet-side`).
+ *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -49,13 +54,111 @@ import { FacilityCreateForm } from '../../forms/facility-create-form';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityCreateSheet {
+  /**
+   * Property parentCallState
+   * @readonly
+   *
+   * @description
+   * Server candidate lifecycle forwarded to the creation form.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState>}
+   */
+  public readonly parentCallState: InputSignal<CallState> = input(idleCallState());
+  /**
+   * Property parentPage
+   * @readonly
+   *
+   * @description
+   * Current server candidate page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly parentPage: InputSignal<number> = input(1);
+  /**
+   * Property parentPageCount
+   * @readonly
+   *
+   * @description
+   * Number of candidate pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly parentPageCount: InputSignal<number> = input(1);
+  /**
+   * Property hydratedParent
+   * @readonly
+   *
+   * @description
+   * Preselected parent record outside the candidate page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<FacilityOption | null>}
+   */
+  public readonly hydratedParent: InputSignal<FacilityOption | null> = input<FacilityOption | null>(
+    null,
+  );
+  /**
+   * Property typeChanged
+   * @readonly
+   *
+   * @description
+   * Requests parent filtering for the form type.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<FacilityType | ''>}
+   */
+  public readonly typeChanged: OutputEmitterRef<FacilityType | ''> = output<FacilityType | ''>();
+  /**
+   * Property parentSearchChanged
+   * @readonly
+   *
+   * @description
+   * Requests remote parent search.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly parentSearchChanged: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property parentPageChanged
+   * @readonly
+   *
+   * @description
+   * Requests a remote candidate page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly parentPageChanged: OutputEmitterRef<number> = output<number>();
+
   //#region Inputs
   /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -63,9 +166,13 @@ export class FacilityCreateSheet {
   /**
    * Property pending
    * @readonly
-   * @description Whether the creation request is in flight.
+   *
+   * @description
+   * Whether the creation request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -73,9 +180,13 @@ export class FacilityCreateSheet {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the creation failed with, forwarded to the form.
+   *
+   * @description
+   * Whatever the creation failed with, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -83,9 +194,13 @@ export class FacilityCreateSheet {
   /**
    * Property parentOptions
    * @readonly
-   * @description The organization's facilities offered as candidate parents.
+   *
+   * @description
+   * The organization's facilities offered as candidate parents.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly FacilityOption[]>}
    */
   public readonly parentOptions: InputSignal<readonly FacilityOption[]> = input<
@@ -95,9 +210,13 @@ export class FacilityCreateSheet {
   /**
    * Property initialParentFacilityId
    * @readonly
-   * @description The parent the caller pre-picked (`?parent=`), or `null` for a root facility.
+   *
+   * @description
+   * The parent the caller pre-picked (`?parent=`), or `null` for a root facility.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly initialParentFacilityId: InputSignal<string | null> = input<string | null>(null);
@@ -105,9 +224,13 @@ export class FacilityCreateSheet {
   /**
    * Property mapCenter
    * @readonly
-   * @description Where the "Pick on map" picker opens by default.
+   *
+   * @description
+   * Where the "Pick on map" picker opens by default.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<MapCoordinates | undefined>}
    */
   public readonly mapCenter: InputSignal<MapCoordinates | undefined> = input<
@@ -117,9 +240,13 @@ export class FacilityCreateSheet {
   /**
    * Property geocodePending
    * @readonly
-   * @description Whether an address lookup is in flight, forwarded to the form.
+   *
+   * @description
+   * Whether an address lookup is in flight, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly geocodePending: InputSignal<boolean> = input<boolean>(false);
@@ -127,9 +254,13 @@ export class FacilityCreateSheet {
   /**
    * Property geocodeResult
    * @readonly
-   * @description The last successful address lookup, forwarded to the form.
+   *
+   * @description
+   * The last successful address lookup, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<FacilityGeocodeOutput | null>}
    */
   public readonly geocodeResult: InputSignal<FacilityGeocodeOutput | null> =
@@ -138,9 +269,13 @@ export class FacilityCreateSheet {
   /**
    * Property geocodeNotFound
    * @readonly
-   * @description Whether the last lookup found no match, forwarded to the form.
+   *
+   * @description
+   * Whether the last lookup found no match, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly geocodeNotFound: InputSignal<boolean> = input<boolean>(false);
@@ -150,9 +285,13 @@ export class FacilityCreateSheet {
   /**
    * Property visibleChange
    * @readonly
-   * @description The panel wants to open or close.
+   *
+   * @description
+   * The panel wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -160,9 +299,13 @@ export class FacilityCreateSheet {
   /**
    * Property submitted
    * @readonly
-   * @description The form's validated payload, forwarded untouched.
+   *
+   * @description
+   * The form's validated payload, forwarded untouched.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<CreateFacilityInput>}
    */
   public readonly submitted: OutputEmitterRef<CreateFacilityInput> = output<CreateFacilityInput>();
@@ -170,9 +313,13 @@ export class FacilityCreateSheet {
   /**
    * Property geocodeRequested
    * @readonly
-   * @description The form asked to locate an address, forwarded to the page.
+   *
+   * @description
+   * The form asked to locate an address, forwarded to the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<string>}
    */
   public readonly geocodeRequested: OutputEmitterRef<string> = output<string>();
@@ -182,7 +329,11 @@ export class FacilityCreateSheet {
   /**
    * Constructor
    * @constructor
-   * @description Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next opening confirm over nothing.
+   *
+   * @description
+   * Clears {@link dirty} whenever the panel closes, so an abandoned draft cannot make the next
+   * opening confirm over nothing.
+   *
    * @access public
    * @since 1.0.0
    */
@@ -201,9 +352,13 @@ export class FacilityCreateSheet {
   /**
    * Property sheetState
    * @readonly
-   * @description The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @description
+   * The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -213,9 +368,13 @@ export class FacilityCreateSheet {
   /**
    * Property side
    * @readonly
-   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it.
+   *
+   * @description
+   * The panel's side — `'bottom'` below `sm`, `'right'` at and above it.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -223,9 +382,14 @@ export class FacilityCreateSheet {
   /**
    * Property dirty
    * @readonly
-   * @description Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates {@link requestClose}.
+   *
+   * @description
+   * Whether closing right now would lose something — set from the form's `dirtyChanged`. Gates
+   * {@link requestClose}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
   protected readonly dirty: WritableSignal<boolean> = signal<boolean>(false);
@@ -233,9 +397,14 @@ export class FacilityCreateSheet {
   /**
    * Property unsavedChangesDialogState
    * @readonly
-   * @description Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when {@link dirty} is true.
+   *
+   * @description
+   * Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when
+   * {@link dirty} is true.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<BrnDialogState>}
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
@@ -244,9 +413,14 @@ export class FacilityCreateSheet {
   /**
    * Property sheetRef
    * @readonly
-   * @description The panel directive, queried so {@link onStateChanged} can reopen it to undo an Escape/outside-click made while {@link dirty}.
+   *
+   * @description
+   * The panel directive, queried so {@link onStateChanged} can reopen it to undo an
+   * Escape/outside-click made while {@link dirty}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<HlmSheet | undefined>}
    */
   protected readonly sheetRef: Signal<HlmSheet | undefined> = viewChild(HlmSheet);
@@ -256,10 +430,16 @@ export class FacilityCreateSheet {
   /**
    * Method onStateChanged
    * @method onStateChanged
-   * @description Relays a dismissal, ignoring the echo of a change the page already made; a dismissal reaching here while {@link dirty} is undone and redirected to the confirmation.
+   *
+   * @description
+   * Relays a dismissal, ignoring the echo of a change the page already made; a dismissal reaching
+   * here while {@link dirty} is undone and redirected to the confirmation.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - The panel's new state.
+   *
    * @returns {void}
    */
   protected onStateChanged(state: BrnDialogState): void {
@@ -280,9 +460,14 @@ export class FacilityCreateSheet {
   /**
    * Method requestClose
    * @method requestClose
-   * @description The panel's own close action, reached from the form's Cancel. Closes right away when nothing would be lost; otherwise asks first.
+   *
+   * @description
+   * The panel's own close action, reached from the form's Cancel. Closes right away when nothing
+   * would be lost; otherwise asks first.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected requestClose(): void {
@@ -298,9 +483,13 @@ export class FacilityCreateSheet {
   /**
    * Method onUnsavedChangesConfirmed
    * @method onUnsavedChangesConfirmed
-   * @description The operator chose to discard the draft — closes both the confirmation and the panel.
+   *
+   * @description
+   * The operator chose to discard the draft — closes both the confirmation and the panel.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesConfirmed(): void {
@@ -311,9 +500,13 @@ export class FacilityCreateSheet {
   /**
    * Method onUnsavedChangesDismissed
    * @method onUnsavedChangesDismissed
-   * @description The operator chose to keep editing — closes the confirmation only.
+   *
+   * @description
+   * The operator chose to keep editing — closes the confirmation only.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesDismissed(): void {

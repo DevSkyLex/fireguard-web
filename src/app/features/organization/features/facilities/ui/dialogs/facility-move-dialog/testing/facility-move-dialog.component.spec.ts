@@ -13,7 +13,11 @@ const options: ReadonlyArray<{ readonly value: string; readonly label: string }>
   { value: 'facility-c', label: 'Building C' },
 ];
 
-const request: FacilityMoveRequest = { facilityId: 'facility-a', facilityName: 'Building A' };
+const request: FacilityMoveRequest = {
+  facilityId: 'facility-a',
+  facilityName: 'Building A',
+  facilityType: 'zone',
+};
 
 const content = (): HTMLElement =>
   document.querySelector('[data-testid="facility-move-dialog"]') as HTMLElement;
@@ -75,8 +79,8 @@ describe('FacilityMoveDialog', () => {
     expect(content().textContent).toContain('Building A');
   });
 
-  it('should default to the root option and submit a null parent', async () => {
-    await setRequest(request);
+  it('should allow a site to submit a null root parent', async () => {
+    await setRequest({ ...request, facilityType: 'site' });
 
     submitButton().click();
 
@@ -105,7 +109,7 @@ describe('FacilityMoveDialog', () => {
     await pickParent('facility-b');
 
     await setRequest(null);
-    await setRequest(request);
+    await setRequest({ ...request, facilityType: 'site' });
 
     submitButton().click();
 
@@ -123,5 +127,16 @@ describe('FacilityMoveDialog', () => {
 
     expect(dismissed).toBe(1);
     expect(submitted).toEqual([]);
+  });
+  it('requires a parent for non-sites and preserves a failed choice across refreshed requests', async () => {
+    await setRequest(request);
+    submitButton().click();
+    expect(submitted).toEqual([]);
+    await pickParent('facility-c');
+    fixture.componentRef.setInput('errorMessage', 'Revision changed');
+    await setRequest({ ...request, currentParentFacilityId: 'facility-b' });
+    expect(content().textContent).toContain('Revision changed');
+    submitButton().click();
+    expect(submitted).toEqual([{ facilityId: 'facility-a', parentFacilityId: 'facility-c' }]);
   });
 });

@@ -6,6 +6,78 @@ Facility owns estate hierarchy and spatial workflows. Generic map primitives do 
 
 ## Estate ownership
 
+### Coherent places and explicit repairs (2026-10-03)
+
+The French interface calls generic facilities **Lieu / Lieux**. A room or local
+can be represented by a zone. SITE is the only root, BUILDING belongs to SITE,
+FLOOR belongs to BUILDING, and ZONE/AREA can belong to any place type, including
+outdoor areas under a site. Existing invalid structures remain accessible and
+their descriptive fields can still be edited. No site or parent is generated.
+
+To repair a historical structure, open the place and use **Move**. The parent
+chooser searches eligible places on the server, shows paths to distinguish equal
+names, and retains the selected parent outside the current page. Repair the
+ancestry from the site downward before adding children. On a revision conflict,
+the dialog keeps the draft selection and refreshes the revision before a
+deliberate retry. The API requires `If-Match: "revision-N"`; deploy API and Web
+together for this requirement.
+
+During intervention preparation, the same chooser also offers compatible drafts
+from that intervention. Published parents require Facilities read access;
+authorized planners or executing participants without that access can select
+their intervention's drafts. Type changes, search and pagination keep this
+context, and failed saves retain the selected parent and descriptive draft.
+
+The unsearched list browses roots; a search covers all places with their paths.
+The Assets explorer paginates roots and each branch with **Show more**, keeps
+loaded items after an error, and deduplicates resumed pages. Detail and Assets
+default to **This place and its descendants**, with **Assigned directly** as an
+option shared in the URL. Equipment totals, status counts and attention counts
+come from the Equipment summary endpoint across all pages.
+
+Moving a subtree keeps polygons, placements and GLB associations. Detail, 2D and
+3D show consistent diagnostics; incompatible data is excluded from the affected
+representation until explicitly repaired. A floor moved to another building
+needs recalibration before metric mode can use it; elevation and height remain.
+Moving a building between sites keeps its frame. An active GLB remains viewable
+when associations become unusable, but those objects provide no place link,
+selection or floor filter. Correct or explicitly remove the associations before
+a new activation.
+
+Historical floors below a zone or sector remain discoverable under their nearest
+building and show a hierarchy warning with a link to repair the place. A warning
+alone does not remove an otherwise complete metric floor. GLB associations use
+the same nearest-building frame, including for nested historical buildings.
+
+Apply API `main` migration `Version20261003120000` before enabling this version,
+in addition to the two spatial migrations below. Its calibration provenance
+backfill identifies current building ownership only; it cannot reconstruct old
+moves. Import simulations and duplication reject incompatible hierarchy without
+implicit reorganization. Intervention publication validates drafts and proposals
+together, and abandonment returns a dependency diagnostic before deleting any
+referenced draft.
+
+Publishing archival proposals keeps historical references, including completed
+work items. Active assignments still require an active place. A parent and its
+children can be archived together when their final state has no active
+dependents. Descriptive proposals can repeat an unchanged historical type or
+parent; an actual relationship change or restoration must satisfy the hierarchy.
+
+After a successful move, the Assets explorer reloads the affected branches from
+their first page before continuing pagination. This prevents a shifted page
+boundary from hiding a place. The parent chooser retains the selected place's
+type across searches and pages, and clears an incompatible selection when the
+type being created changes.
+
+Imported-model associations use the estate hierarchy independently of generated
+2D polygons. A zone without a polygon can therefore be selected and isolated by
+its floor. The imported view uses the building frame regardless of the generated
+view's exploded preference. Meshes, lines and points share association behavior;
+their scene copies own their resources so reopening the model keeps it usable.
+Changing or isolating a floor clears a selected imported place on another floor.
+Point and line picking follows the visible screen footprint through zoom, and
+late model inputs received during the first mount are reconciled before display.
+
 Facilities define the estate context used by equipment, inspections and interventions.
 Keep parent/child hierarchy, archival behavior and organization isolation at their
 owners. Shared UI receives explicit presentation inputs and emits actions.
@@ -23,7 +95,60 @@ Unit tests exercise owned geometry/data and replace the GPU boundary. Browser te
 are needed for actual GPU rendering, focus and pointer interaction. A jsdom result
 does not establish visual quality or device behavior. Keep captures dated and scoped.
 
+The 2026-10-03 coherence delivery passed 13,952 API tests (88,091 assertions),
+8,048 Web unit tests, 54 API/Web contract tests and 75 Web architecture tests.
+API style, PHPStan, both Deptrac configurations, container/YAML, OpenAPI freshness
+and the auth/main test schema gates passed. Web formatting, documentation, lint,
+structural review, strict production build and test TypeScript checks passed.
+Browser evidence covers 63 coherence/regression scenarios, three final hierarchy
+checks, four French desktop/touch cases in both themes and seven real SSR cases.
+Captures were inspected; GPU cleanup and unexpected-request checks passed, and
+the task's test servers were stopped. Migrations were validated on test databases;
+deployment still requires the `main` migrations and coordinated API/Web release.
+
+The follow-up review fixes passed 13,979 API tests (88,196 assertions), 8,071 Web
+unit tests, 54 contract tests and 75 architecture tests. API and Web quality gates,
+the strict production build and test TypeScript checks passed. Eight Chromium
+scenarios cover branch pagination, retained parent types, imported associations,
+calibrated markers, line/point picking and five GPU navigation cycles. Desktop and
+mobile captures in both themes were inspected; GPU resources returned to zero and
+the task's browser test servers were stopped. Evidence is under
+`tests/e2e/artifacts/facility-review-fixes-20261003`. These fixes add no HTTP
+contract change or migration.
+
 ## Building scene reference
+
+### Current delivery: three batches (2026-10-03)
+
+1. **Generated view.** Open **3D view** from a building header, select rooms or
+   equipment from the scene or accessible list, isolate a floor and return to all
+   floors. Camera framing follows the visible content and viewport. Drawn, estimated
+   and missing outlines are labelled; the schematic view has no physical scale.
+2. **Plans and equipment.** On a floor's Plans tab, draw its own outline. Calibrate
+   with two points and a known distance, or enter percentage coordinates with the
+   keyboard. Set plan rotation/offsets and the floor's elevation/height separately.
+   Metric mode renders complete floors; incomplete floors and equipment without a
+   usable placement remain in the list. Changing the primary plan preserves each
+   placement on its original file. Deletion explicitly clears references. Candidate
+   searches include descendants and use server pagination; write permissions and
+   revision conflicts are handled separately for facilities and equipment.
+3. **Imported model.** Expand **Import and manage a building model**, upload an
+   autonomous GLB 2.0 (maximum 10 MiB), preview, align, associate indexed objects
+   with existing facilities, and activate. Multiple objects may represent one
+   facility. Replacements start with independent associations, and one active
+   model plus one replacement may coexist. Generated/imported views use one scene;
+   calibrated equipment uses the same building frame. IFC and multifile glTF are
+   deferred. Model downloads require authentication.
+
+Apply API `main` migrations `Version20261003100000` and `Version20261003110000`
+before deploying the matching frontend. Rebuild the PHP container for 12M upload
+and 16M request limits, and permit at least that request size at the HTTP proxy.
+OpenAPI is exported by the API and synchronized into the frontend contract snapshot.
+
+Evidence includes populated contract checks, geometry/revision/permission tests,
+the socket HTTP 10 MiB upload smoke, browser GPU captures in light/dark desktop and
+mobile modes, and calibration drawing/keyboard/conflict scenarios. Durable captures
+are under `tests/e2e/artifacts/facility-spatial-20261003/`.
 
 The owner contract is [Building 3D View](../../src/app/features/organization/features/facilities/FEATURE.md). The reference below was
 reviewed against the 2026-09-28 source baseline. Numbered delivery phases,

@@ -22,7 +22,7 @@ export function applyFacilityModelSettings(
   const bindings = (settings.bindings ?? model.bindings).filter(
     (binding) => !removed.includes(binding.nodeIndex),
   );
-  const clearAll = settings.bindings != null && settings.bindings.length === 0;
+  const clearAll = settings.bindings?.length === 0;
   return {
     ...model,
     transform: settings.transform,

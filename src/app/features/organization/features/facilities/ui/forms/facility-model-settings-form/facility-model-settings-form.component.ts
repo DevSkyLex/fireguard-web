@@ -524,8 +524,8 @@ export class FacilityModelSettingsForm {
    */
   private removalsOf(draft: FacilityModelSettingsDraft, index: number): readonly number[] {
     if (draft.facilityId) return draft.removedBindingNodeIndices.filter((item) => item !== index);
-    const previous = draft.bindings.find((binding) => binding.nodeIndex === index);
-    return previous
+    const hasPrevious = draft.bindings.some((binding) => binding.nodeIndex === index);
+    return hasPrevious
       ? [...new Set([...draft.removedBindingNodeIndices, index])]
       : draft.removedBindingNodeIndices;
   }

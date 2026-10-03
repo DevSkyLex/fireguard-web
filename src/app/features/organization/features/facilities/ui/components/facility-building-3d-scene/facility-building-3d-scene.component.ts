@@ -48,10 +48,12 @@ import { THEME_PORT, type ThemePort } from '@core/theme';
 import { resolveEquipmentStatusTag } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import type {
+  FacilityBuildingModelEquipment,
+  FacilityBuildingModelFloor,
+  FacilityBuildingModelOutput,
   FacilityModelAsset,
   FacilityModelOutput,
 } from '@features/organization/features/facilities/models';
-import type { FacilityBuildingModelOutput } from '@features/organization/features/facilities/models';
 import {
   isMetricFacilityFloor,
   resolveFacilityModelBinding,
@@ -1471,36 +1473,59 @@ export class FacilityBuilding3dScene {
       if (!materials) return;
       const materialList = Array.isArray(materials) ? materials : [materials];
       for (const material of materialList) {
-        if (material && !disposedMaterials.has(material)) {
-          // Three allocates this shared lookup texture when rendering PBR materials, but its
-          // renderer disposal drops the properties cache without releasing the GPU allocation.
-          // Dispose while that cache is live; Three can upload the retained lookup data again.
-          const properties = this.renderer?.properties?.get(material) as
-            | { uniforms?: { dfgLUT?: { value?: Texture } } }
-            | undefined;
-          const lookup = properties?.uniforms?.dfgLUT?.value;
-          if (lookup?.isTexture && lookup.name === 'DFG_LUT' && !disposedTextures.has(lookup)) {
-            lookup.dispose();
-            disposedTextures.add(lookup);
-          }
-          for (const value of Object.values(material) as unknown[]) {
-            if (
-              typeof value === 'object' &&
-              value !== null &&
-              'isTexture' in value &&
-              value.isTexture === true &&
-              !disposedTextures.has(value as Texture)
-            ) {
-              (value as Texture).dispose();
-              disposedTextures.add(value as Texture);
-            }
-          }
-          material.dispose();
-          disposedMaterials.add(material);
-        }
+        this.disposeSceneMaterial(material, disposedMaterials, disposedTextures);
       }
     });
     group.clear();
+  }
+
+  /**
+   * Method disposeSceneMaterial
+   *
+   * @description
+   * Releases each owned material and its shared textures once while the renderer properties
+   * cache still exposes the PBR lookup texture.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {object | null | undefined} material - Material owned by the renderer's building group.
+   * @param {Set} disposedMaterials - Materials already released during this group teardown.
+   * @param {Set<Texture>} disposedTextures - Textures already released during this group teardown.
+   *
+   * @returns {void}
+   */
+  private disposeSceneMaterial(
+    material: { dispose(): void } | null | undefined,
+    disposedMaterials: Set<{ dispose(): void }>,
+    disposedTextures: Set<Texture>,
+  ): void {
+    if (!material || disposedMaterials.has(material)) return;
+    // Three allocates this shared lookup texture when rendering PBR materials, but its
+    // renderer disposal drops the properties cache without releasing the GPU allocation.
+    // Dispose while that cache is live; Three can upload the retained lookup data again.
+    const properties = this.renderer?.properties?.get(material) as
+      | { uniforms?: { dfgLUT?: { value?: Texture } } }
+      | undefined;
+    const lookup = properties?.uniforms?.dfgLUT?.value;
+    if (lookup?.isTexture && lookup.name === 'DFG_LUT' && !disposedTextures.has(lookup)) {
+      lookup.dispose();
+      disposedTextures.add(lookup);
+    }
+    for (const value of Object.values(material) as unknown[]) {
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        'isTexture' in value &&
+        value.isTexture === true &&
+        !disposedTextures.has(value as Texture)
+      ) {
+        (value as Texture).dispose();
+        disposedTextures.add(value as Texture);
+      }
+    }
+    material.dispose();
+    disposedMaterials.add(material);
   }
   /**
    * Method applySelection
@@ -1646,11 +1671,13 @@ export class FacilityBuilding3dScene {
         depthTest: false,
       });
       const line = object as Line;
-      outline = (line as InstanceType<ThreeModule['LineSegments']>).isLineSegments
-        ? new THREE.LineSegments(geometry, material)
-        : (line as InstanceType<ThreeModule['LineLoop']>).isLineLoop
-          ? new THREE.LineLoop(geometry, material)
-          : new THREE.Line(geometry, material);
+      if ((line as InstanceType<ThreeModule['LineSegments']>).isLineSegments) {
+        outline = new THREE.LineSegments(geometry, material);
+      } else if ((line as InstanceType<ThreeModule['LineLoop']>).isLineLoop) {
+        outline = new THREE.LineLoop(geometry, material);
+      } else {
+        outline = new THREE.Line(geometry, material);
+      }
     }
     outline.position.copy(object.position);
     outline.quaternion.copy(object.quaternion);
@@ -2307,72 +2334,15 @@ export class FacilityBuilding3dScene {
     for (const floor of this.model().floors) {
       const entry = this.floorGroups.get(floor.facilityId);
       if (!entry?.group.visible || !floor.plan) continue;
-      const aspect =
-        floor.plan.imageWidth && floor.plan.imageHeight
-          ? floor.plan.imageWidth / floor.plan.imageHeight
-          : 1;
       for (const equipment of floor.equipment ?? []) {
-        const position = equipment.position;
-        if (
-          !position ||
-          equipment.placementIssue != null ||
-          position.attachmentId !== floor.plan.attachmentId ||
-          !Number.isFinite(position.x) ||
-          !Number.isFinite(position.y) ||
-          position.x < 0 ||
-          position.x > 1 ||
-          position.y < 0 ||
-          position.y > 1
-        )
-          continue;
-        const anchor = entry.group.localToWorld(
-          new THREE.Vector3(
-            position.x * aspect,
-            (this.metric() || this.importedModelAsset() ? (floor.heightMeters ?? 0.8) : 0.8) + 0.08,
-            1 - position.y,
-          ),
+        const marker = this.projectEquipmentMarker(
+          floor,
+          equipment,
+          entry.group,
+          camera,
+          container,
         );
-        const screen = anchor.clone().project(camera);
-        if (screen.z < -1 || screen.z > 1 || Math.abs(screen.x) > 1 || Math.abs(screen.y) > 1)
-          continue;
-        const ray = new THREE.Raycaster();
-        ray.setFromCamera(new THREE.Vector2(screen.x, screen.y), camera);
-        const hit = ray
-          .intersectObjects(
-            this.buildingGroup.children.filter((object) => object.visible),
-            true,
-          )
-          .find(
-            (intersection) =>
-              (intersection.object as Mesh).isMesh &&
-              this.isVisibleSceneObject(intersection.object),
-          );
-        if (hit && hit.distance < camera.position.distanceTo(anchor) - 0.02) continue;
-        const label =
-          EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === equipment.type)?.label ??
-          $localize`:@@facility.building3d.equipment:Equipment`;
-        const icons: Readonly<Record<string, string>> = {
-          fire_extinguisher: 'lucideFireExtinguisher',
-          smoke_detector: 'lucideAlarmSmoke',
-          heat_detector: 'lucideThermometer',
-          sprinkler: 'lucideDroplets',
-          fire_alarm_panel: 'lucidePanelTop',
-          hydrant: 'lucideWaves',
-          fire_door: 'lucideDoorClosed',
-          emergency_lighting: 'lucideLightbulb',
-          access_control: 'lucideLockKeyhole',
-          camera: 'lucideCamera',
-          gas_detector: 'lucideWind',
-          other: 'lucidePackage',
-        };
-        markers.push({
-          equipmentId: equipment.equipmentId,
-          status: resolveEquipmentStatusTag('status', equipment.status).label,
-          label: equipment.serialNumber ? `${label} · ${equipment.serialNumber}` : label,
-          icon: icons[equipment.type] ?? 'lucidePackage',
-          x: ((screen.x + 1) / 2) * container.clientWidth,
-          y: ((1 - screen.y) / 2) * container.clientHeight,
-        });
+        if (marker) markers.push(marker);
       }
     }
     const current = this.equipmentMarkers();
@@ -2390,6 +2360,152 @@ export class FacilityBuilding3dScene {
       })
     )
       this.equipmentMarkers.set(markers);
+  }
+
+  /**
+   * Method projectEquipmentMarker
+   *
+   * @description
+   * Projects one valid placement from its retained floor frame into CSS pixels, excluding
+   * clipped or occluded anchors without inventing another equipment position.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {FacilityBuildingModelFloor} floor - Floor containing the source plan and physical
+   *   height.
+   * @param {FacilityBuildingModelEquipment} equipment - Equipment and its retained plan placement.
+   * @param {ThreeGroup} group - Current generated or calibrated floor transform.
+   * @param {ThreeCamera} camera - Active scene projection.
+   * @param {HTMLDivElement} container - Viewport dimensions used by accessible markers.
+   *
+   * @returns {ScreenEquipmentMarker | null} Visible marker, or null when its placement is unusable.
+   */
+  private projectEquipmentMarker(
+    floor: FacilityBuildingModelFloor,
+    equipment: FacilityBuildingModelEquipment,
+    group: ThreeGroup,
+    camera: ThreeCamera,
+    container: HTMLDivElement,
+  ): ScreenEquipmentMarker | null {
+    const THREE = this.threeModule;
+    const position = equipment.position;
+    const plan = floor.plan;
+    if (
+      !THREE ||
+      !position ||
+      !plan ||
+      !this.hasUsableEquipmentPlacement(equipment, plan.attachmentId)
+    )
+      return null;
+    const aspect = plan.imageWidth && plan.imageHeight ? plan.imageWidth / plan.imageHeight : 1;
+    const anchor = group.localToWorld(
+      new THREE.Vector3(
+        position.x * aspect,
+        (this.metric() || this.importedModelAsset() ? (floor.heightMeters ?? 0.8) : 0.8) + 0.08,
+        1 - position.y,
+      ),
+    );
+    const screen = anchor.clone().project(camera);
+    if (screen.z < -1 || screen.z > 1 || Math.abs(screen.x) > 1 || Math.abs(screen.y) > 1)
+      return null;
+    if (this.isEquipmentAnchorOccluded(anchor, screen, camera)) return null;
+    const label =
+      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === equipment.type)?.label ??
+      $localize`:@@facility.building3d.equipment:Equipment`;
+    const icons: Readonly<Record<string, string>> = {
+      fire_extinguisher: 'lucideFireExtinguisher',
+      smoke_detector: 'lucideAlarmSmoke',
+      heat_detector: 'lucideThermometer',
+      sprinkler: 'lucideDroplets',
+      fire_alarm_panel: 'lucidePanelTop',
+      hydrant: 'lucideWaves',
+      fire_door: 'lucideDoorClosed',
+      emergency_lighting: 'lucideLightbulb',
+      access_control: 'lucideLockKeyhole',
+      camera: 'lucideCamera',
+      gas_detector: 'lucideWind',
+      other: 'lucidePackage',
+    };
+    return {
+      equipmentId: equipment.equipmentId,
+      status: resolveEquipmentStatusTag('status', equipment.status).label,
+      label: equipment.serialNumber ? `${label} · ${equipment.serialNumber}` : label,
+      icon: icons[equipment.type] ?? 'lucidePackage',
+      x: ((screen.x + 1) / 2) * container.clientWidth,
+      y: ((1 - screen.y) / 2) * container.clientHeight,
+    };
+  }
+
+  /**
+   * Method hasUsableEquipmentPlacement
+   *
+   * @description
+   * Checks the original plan reference and normalized bounds before projecting an equipment.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {FacilityBuildingModelEquipment} equipment - Equipment carrying the source placement.
+   * @param {string} attachmentId - Primary plan used by the current floor representation.
+   *
+   * @returns {boolean} Whether the retained placement can be rendered on this primary plan.
+   */
+  private hasUsableEquipmentPlacement(
+    equipment: FacilityBuildingModelEquipment,
+    attachmentId: string,
+  ): boolean {
+    const position = equipment.position;
+    const unavailablePlacement =
+      !position ||
+      equipment.placementIssue != null ||
+      position.attachmentId !== attachmentId ||
+      !Number.isFinite(position.x) ||
+      !Number.isFinite(position.y) ||
+      position.x < 0 ||
+      position.x > 1 ||
+      position.y < 0 ||
+      position.y > 1;
+    return !unavailablePlacement;
+  }
+
+  /**
+   * Method isEquipmentAnchorOccluded
+   *
+   * @description
+   * Finds the first visible solid surface in front of an equipment anchor. Contour lines and
+   * hidden ancestors cannot mask accessible markers.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {Vector3} anchor - Original equipment anchor in world coordinates.
+   * @param {Vector3} screen - Anchor projected into normalized screen coordinates.
+   * @param {ThreeCamera} camera - Camera used to measure the equipment's ray distance.
+   *
+   * @returns {boolean} Whether a nearer visible mesh hides the equipment anchor.
+   */
+  private isEquipmentAnchorOccluded(
+    anchor: Vector3,
+    screen: Vector3,
+    camera: ThreeCamera,
+  ): boolean {
+    const THREE = this.threeModule;
+    const group = this.buildingGroup;
+    if (!THREE || !group) return false;
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2(screen.x, screen.y), camera);
+    const hit = ray
+      .intersectObjects(
+        group.children.filter((object) => object.visible),
+        true,
+      )
+      .find(
+        (intersection) =>
+          (intersection.object as Mesh).isMesh && this.isVisibleSceneObject(intersection.object),
+      );
+    if (!hit) return false;
+    return hit.distance < camera.position.distanceTo(anchor) - 0.02;
   }
   //#endregion
   //#endregion

@@ -61,8 +61,7 @@ export class FacilityModelAssetService {
           const gltf = await new GLTFLoader().parseAsync(bytes, '');
           const objectsByNode: Map<number, Object3D[]> = new Map();
           for (const [object, association] of gltf.parser.associations) {
-            if (!association || association.nodes === undefined || !('isObject3D' in object))
-              continue;
+            if (association?.nodes === undefined || !('isObject3D' in object)) continue;
             const objects = objectsByNode.get(association.nodes) ?? [];
             objects.push(object as Object3D);
             objectsByNode.set(association.nodes, objects);

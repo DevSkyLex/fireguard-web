@@ -279,10 +279,11 @@ export class FacilityPlanCalibrationDialog {
           };
     });
     for (const field of [path.rotationDegrees, path.offsetXMeters, path.offsetZMeters]) {
+      const maxMagnitude = field === path.rotationDegrees ? 360 : 100000;
       validate(field, ({ value }) =>
         value().trim() !== '' &&
         Number.isFinite(Number(value())) &&
-        Math.abs(Number(value())) <= (field === path.rotationDegrees ? 360 : 100000)
+        Math.abs(Number(value())) <= maxMagnitude
           ? null
           : {
               kind: 'transformRange',

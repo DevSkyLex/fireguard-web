@@ -17,11 +17,11 @@ import {
 } from '@core/request-state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type {
+  FacilityBuildingModelEquipment,
   FacilityBuildingModelFloor,
   FacilityBuildingModelOutput,
   FacilityPlanOverlayZone,
 } from '@features/organization/features/facilities/models';
-import type { FacilityBuildingModelEquipment } from '@features/organization/features/facilities/models';
 import { isMetricFacilityFloor } from '@features/organization/features/facilities/utils';
 import { facilityBuilding3dStoreEvents } from './events';
 import type { FacilityBuilding3dState } from './models';

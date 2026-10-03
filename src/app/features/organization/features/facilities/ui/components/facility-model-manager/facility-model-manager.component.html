@@ -36,9 +36,9 @@
     </div>
   }
   @if (listPending() || previewPending()) {
-    <div class="flex items-center gap-2" role="status">
+    <output class="flex items-center gap-2">
       <hlm-spinner /><span i18n="@@facility.model.loading">Loading the model…</span>
-    </div>
+    </output>
   }
   @if (canWrite()) {
     <hlm-field>

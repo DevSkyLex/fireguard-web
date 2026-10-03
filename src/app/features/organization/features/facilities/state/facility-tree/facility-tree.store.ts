@@ -426,8 +426,8 @@ export const FacilityTreeStore = signalStore(
          * A branch invalidated by a move retains its rows until this refresh succeeds.
          */
         loadChildren(input: { organizationId: string; facilityId: string }): void {
-          if (!(store.childPagesByParent()[input.facilityId] > 0))
-            loadChildPage({ ...input, page: 1 });
+          const page = store.childPagesByParent()[input.facilityId] ?? 0;
+          if (page <= 0 || Number.isNaN(page)) loadChildPage({ ...input, page: 1 });
         },
         /**
          * @description

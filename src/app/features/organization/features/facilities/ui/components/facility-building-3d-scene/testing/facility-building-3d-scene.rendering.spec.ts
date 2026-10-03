@@ -558,6 +558,36 @@ describe('FacilityBuilding3dScene', () => {
       graphics.dispose.mock.invocationCallOrder[0],
     );
   });
+
+  it('releases shared material arrays and textures once when a lookup is also a material map', async () => {
+    await mount();
+    const scene = fixture.componentInstance;
+    const lookup = new Texture();
+    lookup.name = 'DFG_LUT';
+    const texture = new Texture();
+    const first = new MeshBasicMaterial({ map: lookup, alphaMap: texture });
+    const second = new MeshBasicMaterial({ map: texture });
+    const geometry = new BoxGeometry(1, 1, 1);
+    scene['buildingGroup']?.add(new Mesh(geometry, [first, second]), new Mesh(geometry, first));
+    graphics.materialProperties.mockReturnValue({ uniforms: { dfgLUT: { value: lookup } } });
+    const lookupDisposed = vi.spyOn(lookup, 'dispose');
+    const textureDisposed = vi.spyOn(texture, 'dispose');
+    const geometryDisposed = vi.spyOn(geometry, 'dispose');
+    const firstDisposed = vi.spyOn(first, 'dispose');
+    const secondDisposed = vi.spyOn(second, 'dispose');
+    fixture.destroy();
+    expect(lookupDisposed).toHaveBeenCalledTimes(1);
+    expect(textureDisposed).toHaveBeenCalledTimes(1);
+    expect(geometryDisposed).toHaveBeenCalledTimes(1);
+    expect(firstDisposed).toHaveBeenCalledTimes(1);
+    expect(secondDisposed).toHaveBeenCalledTimes(1);
+    expect(lookupDisposed.mock.invocationCallOrder[0]).toBeLessThan(
+      firstDisposed.mock.invocationCallOrder[0],
+    );
+    expect(secondDisposed.mock.invocationCallOrder[0]).toBeLessThan(
+      graphics.dispose.mock.invocationCallOrder[0],
+    );
+  });
   it('frames the visible content using the narrower portrait field of view', async () => {
     await mount();
     const scene = fixture.componentInstance;
@@ -695,6 +725,53 @@ describe('FacilityBuilding3dScene', () => {
     frame();
     await fixture.whenStable();
     expect(scene['equipmentMarkers']()).toEqual([]);
+  });
+
+  it.each([
+    { placementIssue: 'outside_ancestry', position: { attachmentId: 'plan-0', x: 0.5, y: 0.5 } },
+    { placementIssue: null, position: null },
+    { placementIssue: null, position: { attachmentId: 'other-plan', x: 0.5, y: 0.5 } },
+    { placementIssue: null, position: { attachmentId: 'plan-0', x: Number.NaN, y: 0.5 } },
+    {
+      placementIssue: null,
+      position: { attachmentId: 'plan-0', x: 0.5, y: Number.POSITIVE_INFINITY },
+    },
+    { placementIssue: null, position: { attachmentId: 'plan-0', x: -0.1, y: 0.5 } },
+    { placementIssue: null, position: { attachmentId: 'plan-0', x: 0.5, y: 1.1 } },
+  ])('omits an unusable retained placement $position $placementIssue', async (invalid) => {
+    await mount();
+    const validPosition = { attachmentId: 'plan-0', x: 0.5, y: 0.5 };
+    const validEquipment = {
+      equipmentId: 'valid-equipment',
+      facilityId: 'room-0',
+      type: 'fire_extinguisher',
+      status: 'operational',
+      serialNumber: 'EXT-1',
+      locationLabel: null,
+      placementIssue: null,
+      position: validPosition,
+    };
+    fixture.componentRef.setInput('model', {
+      ...MODEL,
+      floors: [
+        {
+          ...MODEL.floors[0],
+          equipment: [
+            validEquipment,
+            { ...validEquipment, equipmentId: 'invalid-equipment', ...invalid },
+          ],
+        },
+      ],
+    });
+    await fixture.whenStable();
+    const scene = fixture.componentInstance;
+    sceneObject(scene['camera']).lookAt(sceneObject(scene['controls']).target);
+    frame();
+    await fixture.whenStable();
+    expect(scene['equipmentMarkers']().map((marker) => marker.equipmentId)).toEqual([
+      'valid-equipment',
+    ]);
+    expect(validPosition).toEqual({ attachmentId: 'plan-0', x: 0.5, y: 0.5 });
   });
 
   it('clones imported GPU resources, preserves indexed picking and never disposes store assets', async () => {

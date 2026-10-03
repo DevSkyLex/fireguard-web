@@ -216,35 +216,35 @@
             }
 
             @if (canReadEquipment()) {
-              <div
-                class="flex flex-wrap gap-2"
-                role="group"
-                aria-label="Equipment scope"
-                i18n-aria-label="@@facility.detail.equipmentScope"
-              >
-                <button
-                  hlmBtn
-                  type="button"
-                  [variant]="equipmentIncludeDescendants() ? 'default' : 'outline'"
-                  [attr.aria-pressed]="equipmentIncludeDescendants()"
-                  data-testid="assets-equipment-scope-subtree"
-                  (click)="changeEquipmentScope(true)"
-                  i18n="@@facility.detail.equipmentSubtree"
-                >
-                  This place and descendants
-                </button>
-                <button
-                  hlmBtn
-                  type="button"
-                  [variant]="equipmentIncludeDescendants() ? 'outline' : 'default'"
-                  [attr.aria-pressed]="!equipmentIncludeDescendants()"
-                  data-testid="assets-equipment-scope-direct"
-                  (click)="changeEquipmentScope(false)"
-                  i18n="@@facility.detail.equipmentDirect"
-                >
-                  Directly assigned
-                </button>
-              </div>
+              <fieldset hlmFieldSet class="gap-0">
+                <legend hlmFieldLegend class="sr-only" i18n="@@facility.detail.equipmentScope">
+                  Equipment scope
+                </legend>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    hlmBtn
+                    type="button"
+                    [variant]="equipmentIncludeDescendants() ? 'default' : 'outline'"
+                    [attr.aria-pressed]="equipmentIncludeDescendants()"
+                    data-testid="assets-equipment-scope-subtree"
+                    (click)="changeEquipmentScope(true)"
+                    i18n="@@facility.detail.equipmentSubtree"
+                  >
+                    This place and descendants
+                  </button>
+                  <button
+                    hlmBtn
+                    type="button"
+                    [variant]="equipmentIncludeDescendants() ? 'outline' : 'default'"
+                    [attr.aria-pressed]="!equipmentIncludeDescendants()"
+                    data-testid="assets-equipment-scope-direct"
+                    (click)="changeEquipmentScope(false)"
+                    i18n="@@facility.detail.equipmentDirect"
+                  >
+                    Directly assigned
+                  </button>
+                </div>
+              </fieldset>
             }
             <ng-container *ngTemplateOutlet="assetPanes" />
           }

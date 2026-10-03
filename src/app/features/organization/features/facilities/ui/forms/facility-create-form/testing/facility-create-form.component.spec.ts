@@ -269,6 +269,7 @@ describe('FacilityCreateForm', () => {
   });
 
   it('should lock the submit control while a request is in flight', async () => {
+    await setModel({ type: 'building', name: 'Annex', parentFacilityId: 'site-parent' });
     fixture.componentRef.setInput('pending', true);
     await fixture.whenStable();
 
@@ -278,6 +279,11 @@ describe('FacilityCreateForm', () => {
 
     expect(button?.disabled).toBe(true);
     expect(button?.textContent).toContain('Creating…');
+    expect(fixture.componentInstance['createForm'].parentFacilityId().disabled()).toBe(true);
+    fixture.componentRef.setInput('pending', false);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['createForm'].parentFacilityId().disabled()).toBe(false);
+    expect(fixture.componentInstance['model']().parentFacilityId).toBe('site-parent');
   });
 
   it('should emit cancelled without touching the store', async () => {

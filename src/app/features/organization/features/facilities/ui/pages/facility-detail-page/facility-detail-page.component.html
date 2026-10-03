@@ -114,12 +114,10 @@
       </ng-template>
 
       <div hlmTabsContent="overview" class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
-        <div
-          class="flex flex-wrap gap-2"
-          role="group"
-          aria-label="Equipment scope"
-          i18n-aria-label="@@facility.equipmentScope.aria"
-        >
+        <fieldset hlmFieldSet class="min-w-0 flex-row flex-wrap gap-2 border-0 p-0">
+          <legend hlmFieldLegend class="sr-only" i18n="@@facility.equipmentScope.aria">
+            Equipment scope
+          </legend>
           <button
             hlmBtn
             variant="outline"
@@ -142,7 +140,7 @@
           >
             Assigned directly
           </button>
-        </div>
+        </fieldset>
         <section
           class="@container flex flex-col gap-2"
           aria-labelledby="facility-metrics-title"

@@ -19,17 +19,15 @@ import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { resolveEquipmentStatusTag } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
-import type { FacilityBuildingModelEquipment } from '@features/organization/features/facilities/models';
 import {
   resolveFacilitySpatialIssueLabel,
   resolveFacilityEquipmentPlacementIssueLabel,
   resolveFacilityHierarchyIssueLabel,
-} from '@features/organization/features/facilities/models';
-import type {
-  FacilityBuildingModelFloor,
-  FacilityPlanOverlayZone,
-  FacilityType,
-  FacilityOption,
+  type FacilityBuildingModelEquipment,
+  type FacilityBuildingModelFloor,
+  type FacilityPlanOverlayZone,
+  type FacilityType,
+  type FacilityOption,
 } from '@features/organization/features/facilities/models';
 import { isMetricFacilityFloor } from '@features/organization/features/facilities/utils';
 import { HlmButton } from '@shared/ui/button';

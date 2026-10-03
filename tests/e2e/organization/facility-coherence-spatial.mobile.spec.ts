@@ -14,9 +14,10 @@ test('keeps legacy floor diagnostics and their correction link accessible in the
   page,
   context,
   baseURL,
+  browserName,
 }, testInfo) => {
   const errors = collectConsoleErrors(page);
-  await emulateMobilePlatform(context, 'android');
+  await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
   await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
   const api = new ApiMock(page);
   await api.mockAuthenticatedSession();
@@ -24,6 +25,7 @@ test('keeps legacy floor diagnostics and their correction link accessible in the
   const model = spatialLegacyBuildingModel();
   await api.mockFacilityBuildingModel(E2E_ORGANIZATION_ID, E2E_FACILITY_ID, model);
   await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/facilities/${E2E_FACILITY_ID}/3d`);
+  await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
   await expect(page.getByTestId('facility-3d-scene').locator('canvas')).toBeVisible();
   await page.getByRole('button', { name: 'Metric', exact: true }).tap();
   await page.getByTestId('facility-3d-open-room-panel').tap();

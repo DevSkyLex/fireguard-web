@@ -15,9 +15,10 @@ for (const theme of ['light', 'dark'] as const) {
     page,
     context,
     baseURL,
+    browserName,
   }) => {
     const errors = collectConsoleErrors(page);
-    await emulateMobilePlatform(context, 'android');
+    await emulateMobilePlatform(context, browserName === 'webkit' ? 'ios' : 'android');
     if (theme === 'dark') await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
     const api = new ApiMock(page);
     await api.mockAuthenticatedSession();
@@ -28,6 +29,7 @@ for (const theme of ['light', 'dark'] as const) {
       spatialBuildingModel(),
     );
     await page.goto(`/organizations/${E2E_ORGANIZATION_ID}/facilities/${E2E_FACILITY_ID}/3d`);
+    await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
     await expect(page.getByTestId('facility-3d-scene').locator('canvas')).toBeVisible();
     await page.getByTestId('facility-3d-open-room-panel').tap();
     const sheet = page.getByTestId('facility-3d-room-panel');

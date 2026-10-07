@@ -3,9 +3,26 @@ export type {
   EquipmentPlanPosition,
   EquipmentStatus,
   EquipmentType,
+  HistoricalEquipmentType,
+  EquipmentCriticality,
+  EquipmentTechnicalProperty,
 } from './equipment/equipment-output.interface';
 export type { CreateEquipmentInput } from './equipment/create-equipment-input.interface';
+export type {
+  ReplaceEquipmentInput,
+  ReplaceEquipmentOutput,
+  ReplacementEquipmentInput,
+} from './equipment/replace-equipment-input.interface';
+export type {
+  EquipmentTypeOutput,
+  EquipmentTypeOption,
+  EquipmentFamily,
+} from './equipment-type/equipment-type-output.interface';
 export type { UpdateEquipmentInput } from './equipment/update-equipment-input.interface';
+export type { EquipmentOpenWorkOutput } from './equipment/equipment-open-work-output.interface';
+export type { EquipmentInspectionSummaryOutput } from './equipment/equipment-inspection-summary-output.interface';
+export type { CreateEquipmentTypeInput } from './equipment-type/create-equipment-type-input.interface';
+export type { UpdateEquipmentTypeInput } from './equipment-type/update-equipment-type-input.interface';
 export type { AssignToFacilityInput } from './equipment/assign-to-facility-input.interface';
 export type { SetPlanPositionInput } from './equipment/set-plan-position-input.interface';
 export type { EquipmentMaintenanceDueStatus } from './equipment/equipment-maintenance-due-status.type';

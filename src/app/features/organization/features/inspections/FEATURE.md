@@ -297,3 +297,7 @@ These narrow entry points are published to the named consumers. `app` denotes th
 | Entry point                           | Consumers      |
 | ------------------------------------- | -------------- |
 | `ui/components/inspection-status-tag` | `organization` |
+| `ui/dataviews/non-conformity-list`    | `organization` |
+
+Organization's Parc reuses NonConformityList in read-only register mode with source-inspection
+links. The owning inspection detail retains all finding updates and approval workflows.

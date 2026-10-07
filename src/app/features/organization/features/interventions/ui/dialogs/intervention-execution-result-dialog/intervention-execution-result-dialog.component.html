@@ -1,0 +1,35 @@
+<hlm-dialog
+  state="open"
+  [disableClose]="pending()"
+  (stateChanged)="$event === 'closed' && requestClose()"
+>
+  <hlm-dialog-content
+    *hlmDialogPortal
+    class="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-lg"
+    data-testid="intervention-execution-dialog"
+  >
+    <hlm-dialog-header>
+      <h3 hlmDialogTitle i18n="@@intervention.execution.title">Record actual work</h3>
+      <p hlmDialogDescription>{{ item().targetSummary?.label ?? item().target }}</p>
+    </hlm-dialog-header>
+    <app-intervention-execution-result-form
+      [item]="item()"
+      [pending]="pending()"
+      [disabled]="disabled()"
+      [serverError]="serverError()"
+      [replacementSuccessor]="replacementSuccessor()"
+      [replacementLoading]="replacementLoading()"
+      [replacementReadFailed]="replacementReadFailed()"
+      [originalEquipmentLink]="originalEquipmentLink()"
+      (refreshReplacement)="refreshReplacement.emit()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-dialog-content>
+</hlm-dialog>
+<app-unsaved-changes-dialog
+  [state]="discardState()"
+  (confirmed)="discardState.set('closed'); dismissed.emit()"
+  (dismissed)="discardState.set('closed')"
+/>

@@ -12,7 +12,14 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { disabled, form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import {
+  disabled,
+  form,
+  FormField,
+  maxLength,
+  required,
+  type FieldTree,
+} from '@angular/forms/signals';
 import { idleCallState, type CallState } from '@core/request-state';
 import type {
   CreateEquipmentInput,
@@ -37,6 +44,8 @@ import type { EquipmentCreateFormDraft } from './models';
  * A blank draft.
  */
 const EMPTY_VALUES: EquipmentCreateFormDraft = {
+  name: '',
+  assetCode: '',
   type: '',
   subType: '',
   brand: '',
@@ -115,6 +124,47 @@ function trimmed(value: string): string | undefined {
 })
 export class EquipmentCreateForm {
   //#region Inputs
+  /**
+   * Property inheritPlacement
+   * @readonly
+   *
+   * @description
+   * Hides site selection when the server inherits placement during replacement.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly inheritPlacement: InputSignal<boolean> = input(false);
+
+  /**
+   * Property replacement
+   * @readonly
+   *
+   * @description
+   * Names the atomic replacement confirmation rather than ordinary creation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly replacement: InputSignal<boolean> = input(false);
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Active choices supplied by the owning page's server catalog.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<typeof EQUIPMENT_TYPE_OPTIONS>}
+   */
+  public readonly typeOptions: InputSignal<typeof EQUIPMENT_TYPE_OPTIONS> =
+    input<typeof EQUIPMENT_TYPE_OPTIONS>(EQUIPMENT_TYPE_OPTIONS);
   /**
    * Property facilityPage
    * @readonly
@@ -321,21 +371,9 @@ export class EquipmentCreateForm {
     required(path.type, {
       message: $localize`:@@equipment.form.typeRequired:Equipment type is required.`,
     });
+    maxLength(path.name, 255);
+    maxLength(path.assetCode, 100);
   });
-
-  /**
-   * Property typeOptions
-   * @readonly
-   *
-   * @description
-   * The equipment types offered.
-   *
-   * @access protected
-   * @since unreleased
-   *
-   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
-   */
-  protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
 
   /**
    * Property serverMessages
@@ -372,7 +410,7 @@ export class EquipmentCreateForm {
    * @type {(value: EquipmentType | '') => string}
    */
   protected readonly typeLabelOf: (value: EquipmentType | '') => string = (value) =>
-    this.typeOptions.find((option) => option.value === value)?.label ?? '';
+    this.typeOptions().find((option) => option.value === value)?.label ?? '';
   //#endregion
 
   //#region Constructor
@@ -415,6 +453,7 @@ export class EquipmentCreateForm {
   //#region Methods
   /**
    * Method submit
+   * @method submit
    *
    * @description
    * Marks the tree touched so every unmet rule shows at once, then emits
@@ -440,6 +479,8 @@ export class EquipmentCreateForm {
 
     this.submitted.emit({
       type: draft.type,
+      name: trimmed(draft.name),
+      assetCode: trimmed(draft.assetCode),
       subType: trimmed(draft.subType),
       brand: trimmed(draft.brand),
       model: trimmed(draft.model),

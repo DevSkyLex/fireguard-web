@@ -1,0 +1,201 @@
+<div
+  class="@container flex min-w-0 flex-col gap-4"
+  [attr.aria-busy]="pending()"
+  data-testid="maintenance-report-table"
+>
+  @if (pending()) {
+    <p class="flex items-center gap-2 text-sm text-muted-foreground" role="status">
+      <hlm-spinner /><span i18n="@@maintenanceCost.report.table.loading"
+        >Reading economic allocations</span
+      >
+    </p>
+  }
+  @if (rows().length) {
+    <ul
+      class="flex min-w-0 flex-col gap-3 @4xl:hidden"
+      [attr.aria-label]="caption()"
+      data-testid="maintenance-report-cards"
+    >
+      @for (row of rows(); track row.id ?? $index) {
+        <li hlmCard class="min-w-0">
+          <div hlmCardHeader>
+            <h3 hlmCardTitle class="wrap-anywhere">{{ rowLabel(row) }}</h3>
+            <p hlmCardDescription>{{ identityLabel(row.identityState) }}</p>
+            @if (!row.allocationComplete) {
+              <span
+                hlmBadge
+                variant="secondary"
+                class="self-start"
+                i18n="@@maintenanceCost.report.table.incompleteAllocation"
+                >Allocation incomplete</span
+              >
+            }
+          </div>
+          <div hlmCardContent>
+            <dl class="grid min-w-0 gap-4 @lg:grid-cols-2">
+              @for (metric of metrics; track metric.key) {
+                @let amount = row[metric.key];
+                <div class="flex min-w-0 flex-col gap-1">
+                  <dt class="text-sm text-muted-foreground">{{ metric.label }}</dt>
+                  <dd class="font-mono wrap-anywhere">{{ total(amount) }}</dd>
+                  @if (!amount.complete) {
+                    <dd class="flex min-w-0 flex-col gap-1 text-sm text-muted-foreground">
+                      <span i18n="@@maintenanceCost.report.table.known">Known subtotal</span
+                      ><span class="font-mono wrap-anywhere">{{ money(amount.knownTotal) }}</span
+                      ><span
+                        ><span i18n="@@maintenanceCost.report.table.unvalued"
+                          >Unvalued contributions</span
+                        >: {{ amount.unknownCount }}</span
+                      >
+                    </dd>
+                  }
+                </div>
+              }
+              <div class="flex min-w-0 flex-col gap-1">
+                <dt
+                  class="text-sm text-muted-foreground"
+                  i18n="@@maintenanceCost.report.table.variance"
+                >
+                  Realized minus forecast
+                </dt>
+                <dd class="font-mono wrap-anywhere">{{ money(row.variance) }}</dd>
+              </div>
+            </dl>
+          </div>
+          <div hlmCardFooter class="flex flex-wrap items-center gap-2">
+            <span class="text-sm text-muted-foreground"
+              ><span i18n="@@maintenanceCost.report.table.dossiers">Source dossiers</span>:
+              {{ row.interventionIds.length }}</span
+            >
+            <button
+              hlmBtn
+              variant="outline"
+              type="button"
+              class="mobile-ui:min-h-11"
+              [disabled]="pending() || !row.interventionIds.length"
+              (click)="dossiersRequested.emit(row)"
+              i18n="@@maintenanceCost.report.table.viewDossiers"
+            >
+              View source dossiers
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+    <div class="hidden min-w-0 @4xl:block" data-testid="maintenance-report-grid">
+      <table hlmTable>
+        <caption class="sr-only">
+          {{
+            caption()
+          }}
+        </caption>
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh i18n="@@maintenanceCost.report.table.identity">Allocation</th>
+            @for (metric of metrics; track metric.key) {
+              <th hlmTh class="whitespace-normal">{{ metric.label }}</th>
+            }
+            <th hlmTh class="whitespace-normal" i18n="@@maintenanceCost.report.table.variance">
+              Realized minus forecast
+            </th>
+            <th hlmTh i18n="@@maintenanceCost.report.table.dossiers">Source dossiers</th>
+          </tr>
+        </thead>
+        <tbody hlmTBody>
+          @for (row of rows(); track row.id ?? $index) {
+            <tr hlmTr>
+              <td hlmTd>
+                <div class="flex min-w-0 flex-col gap-1">
+                  <span class="wrap-anywhere whitespace-normal">{{ rowLabel(row) }}</span
+                  ><span class="text-xs whitespace-normal text-muted-foreground">{{
+                    identityLabel(row.identityState)
+                  }}</span>
+                  @if (!row.allocationComplete) {
+                    <span
+                      hlmBadge
+                      variant="secondary"
+                      class="self-start whitespace-normal"
+                      i18n="@@maintenanceCost.report.table.incompleteAllocation"
+                      >Allocation incomplete</span
+                    >
+                  }
+                </div>
+              </td>
+              @for (metric of metrics; track metric.key) {
+                @let amount = row[metric.key];
+                <td hlmTd>
+                  <div class="flex min-w-0 flex-col gap-1">
+                    <span class="font-mono wrap-anywhere whitespace-normal">{{
+                      total(amount)
+                    }}</span>
+                    @if (!amount.complete) {
+                      <span
+                        class="text-xs text-muted-foreground"
+                        i18n="@@maintenanceCost.report.table.known"
+                        >Known subtotal</span
+                      ><span class="font-mono text-xs wrap-anywhere whitespace-normal">{{
+                        money(amount.knownTotal)
+                      }}</span
+                      ><span class="text-xs whitespace-normal text-muted-foreground"
+                        ><span i18n="@@maintenanceCost.report.table.unvalued"
+                          >Unvalued contributions</span
+                        >: {{ amount.unknownCount }}</span
+                      >
+                    }
+                  </div>
+                </td>
+              }
+              <td hlmTd class="font-mono wrap-anywhere whitespace-normal">
+                {{ money(row.variance) }}
+              </td>
+              <td hlmTd>
+                <div class="flex min-w-0 flex-col gap-2">
+                  <span>{{ row.interventionIds.length }}</span
+                  ><button
+                    hlmBtn
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    class="h-auto whitespace-normal mobile-ui:min-h-11"
+                    [disabled]="pending() || !row.interventionIds.length"
+                    (click)="dossiersRequested.emit(row)"
+                    i18n="@@maintenanceCost.report.table.viewDossiers"
+                  >
+                    View source dossiers
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="text-sm text-muted-foreground" i18n="@@maintenanceCost.report.table.forecastHint">
+      Budget is shown separately from forecast cost. The variance compares current realized cost
+      with the forecast.
+    </p>
+  } @else if (!pending()) {
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        <h3 hlmEmptyTitle i18n="@@maintenanceCost.report.table.empty">
+          No costs allocated in this window
+        </h3>
+        <p hlmEmptyDescription i18n="@@maintenanceCost.report.table.emptyHint">
+          Choose another date window or review the explicitly unallocated contributions.
+        </p>
+      </div>
+    </div>
+  }
+  @if (showPagination()) {
+    <app-collection-pagination
+      [page]="page()"
+      [pageCount]="pageCount()"
+      [pageSize]="itemsPerPage()"
+      [total]="totalItems()"
+      [shown]="rows().length"
+      testIdPrefix="maintenance-report"
+      (pageChanged)="pageChanged.emit($event)"
+      (pageSizeChanged)="pageSizeChanged.emit($event)"
+    />
+  }
+</div>

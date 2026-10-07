@@ -92,6 +92,21 @@ describe('InterventionFieldExecutionService', () => {
     });
   });
 
+  it.each(['maintenance', 'repair', 'replacement'] as const)(
+    'never converts %s work into an inspection',
+    (action) => {
+      configureScanner(vi.fn());
+      expect(() =>
+        TestBed.inject(InterventionFieldExecutionService).prepareDiscoveryResource(
+          'org-1',
+          'intervention-1',
+          { action, target: '/api/equipment/equipment-1', result: 'pass' },
+          'client-1',
+        ),
+      ).toThrow('Maintenance results must be recorded on their equipment work item');
+    },
+  );
+
   it('prepares inspection evidence with a canonical equipment id and the observation time', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-22T10:00:00Z'));

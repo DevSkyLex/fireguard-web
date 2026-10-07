@@ -22,6 +22,7 @@ import type { InterventionDiscoveryResourcePlan, InterventionFieldDiscovery } fr
  * while delegating each business resource to its owning data-access service.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -118,7 +119,8 @@ export class InterventionFieldExecutionService {
    * @param {InterventionFieldDiscovery} discovery - Field discovery.
    * @param {string} clientId - Stable client-generated resource identifier.
    *
-   * @return {InterventionDiscoveryResourcePlan} Prepared resource operation and canonical references.
+   * @returns {InterventionDiscoveryResourcePlan} Prepared resource operation and canonical
+   *   references.
    */
   public prepareDiscoveryResource(
     organizationId: string,
@@ -158,6 +160,9 @@ export class InterventionFieldExecutionService {
       };
     }
 
+    if (discovery.action !== 'inspection') {
+      throw new Error('Maintenance results must be recorded on their equipment work item');
+    }
     const equipmentId = this.resourceId(discovery.target, 'equipment');
     const payload: CreateInspectionInput = {
       clientId,
@@ -189,7 +194,7 @@ export class InterventionFieldExecutionService {
    *
    * @param {File} file - Image containing the QR code.
    *
-   * @return {Promise<string | null>} Scanned value when detected.
+   * @returns {Promise<string | null>} Scanned value when detected.
    */
   public scan(file: File): Promise<string | null> {
     return this.scanner.scan(file);
@@ -209,7 +214,8 @@ export class InterventionFieldExecutionService {
    * @since 4.6.0
    *
    * @param {File} file - The captured QR image.
-   * @param {readonly InterventionWorkItemOutput[]} workItems - The intervention's current work items.
+   * @param {readonly InterventionWorkItemOutput[]} workItems - The intervention's current work
+   *   items.
    *
    * @returns {Promise<InterventionScanResult>} The decode-and-match outcome.
    */
@@ -243,7 +249,7 @@ export class InterventionFieldExecutionService {
    * @param {string} equipmentId - Equipment identifier.
    * @param {File} source - Source evidence photo.
    *
-   * @return {Promise<boolean>} Whether the photo was queued for synchronization.
+   * @returns {Promise<boolean>} Whether the photo was queued for synchronization.
    */
   public async attachPhoto(
     interventionId: string,
@@ -276,7 +282,7 @@ export class InterventionFieldExecutionService {
    * @access public
    * @since 1.0.0
    *
-   * @return {boolean} Whether QR scanning is supported.
+   * @returns {boolean} Whether QR scanning is supported.
    */
   public scanSupported(): boolean {
     return this.scanner.isSupported();

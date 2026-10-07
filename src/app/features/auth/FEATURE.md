@@ -153,6 +153,11 @@ It exposes the access token, initialization state, local session establishment, 
 account signing in again; ordinary bearer renewal preserves it. Protected requests capture that
 revision before dispatch. A superseded request cannot renew, replay, clear, or navigate another session.
 
+Inventory consumes the public `ports` barrel for `sessionRevision` and established-session checks
+when persisting or replaying a physical return or correction. It never reads or stores bearer tokens.
+User and organization identifiers remain supplied by the authorized member context; a renewed
+session for the same account cannot acknowledge an earlier session's pending continuation.
+
 `isAuthenticated` denotes an established, non-invalidated local session outside MFA. Bearer expiry
 alone does not end it: a 401 can renew it silently. `isTokenExpiringSoon()` evaluates time when called;
 it is not a reactive clock. Bootstrap, explicit refresh and interceptor renewal share one request per

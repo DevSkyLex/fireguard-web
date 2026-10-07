@@ -8,6 +8,7 @@ import type {
   InterventionStatisticsOutput,
   InterventionWorkItemOutput,
   PublicationOutput,
+  InterventionWorkItemExecutionResultInput,
 } from '@features/organization/features/interventions/models';
 import { InterventionService } from '../intervention.service';
 
@@ -94,6 +95,90 @@ describe('InterventionService', () => {
     expect(request.request.method).toBe('PATCH');
     expect(request.request.headers.get('If-Match')).toBe('"revision-7"');
     request.flush({});
+  });
+
+  it('patches an equipment execution fact with its captured revision and execution instant', () => {
+    const executionResult: InterventionWorkItemExecutionResultInput = {
+      equipmentId: 'd1d145d0-e1c5-4e9c-a36e-1b2f267068ce',
+      performedAt: '2026-10-05T16:35:00+02:00',
+      outcome: 'performed',
+      workPerformed: 'Cleaned and adjusted the valve.',
+    };
+    const output = {
+      id: 'work-item-1',
+      status: 'completed',
+      operationId: 'maintenance-operation',
+      occurrenceId: 'maintenance-occurrence',
+      operationKind: 'maintenance',
+      executionResult: {
+        ...executionResult,
+        authorId: 'recording-member',
+        operationId: 'maintenance-operation',
+        occurrenceId: 'maintenance-occurrence',
+        state: 'staged',
+        validatedAt: null,
+      },
+    } as InterventionWorkItemOutput;
+    service
+      .updateWorkItem('work-item-1', { status: 'completed', executionResult }, 7)
+      .subscribe((result) => expect(result).toEqual(output));
+
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-work-items/work-item-1`);
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.headers.get('If-Match')).toBe('"revision-7"');
+    expect(request.request.body).toEqual({ status: 'completed', executionResult });
+    request.flush(output);
+  });
+
+  it('forwards a null result declaration for server validation', () => {
+    service.updateWorkItem('work-item-1', { executionResult: null }, 8).subscribe();
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-work-items/work-item-1`);
+    expect(request.request.body).toEqual({ executionResult: null });
+    expect(request.request.headers.get('If-Match')).toBe('"revision-8"');
+    request.flush({});
+  });
+
+  it('forwards preventive identifiers during equipment work-item creation', () => {
+    const input = {
+      intervention: '/api/interventions/intervention-1',
+      action: 'maintenance' as const,
+      target: '/api/equipment/equipment-1',
+      source: 'planned' as const,
+      required: true,
+      operationId: 'maintenance-operation',
+      occurrenceId: 'maintenance-occurrence',
+      operationKind: 'maintenance' as const,
+    };
+    service.createWorkItem(input).subscribe();
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-work-items`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(input);
+    request.flush({});
+  });
+
+  it('propagates an execution revision conflict for explicit resolution', () => {
+    const problem = { type: '/problems/revision-conflict', detail: 'Another result was recorded.' };
+    const failure = vi.fn();
+    service
+      .updateWorkItem(
+        'work-item-1',
+        {
+          status: 'in_progress',
+          executionResult: {
+            equipmentId: 'equipment-1',
+            performedAt: '2026-10-05T16:35:00+02:00',
+            outcome: 'failed',
+            workPerformed: 'Repair attempt failed.',
+          },
+        },
+        7,
+      )
+      .subscribe({ error: failure });
+    const request = httpMock.expectOne(`${mockEnv.apiUrl}/api/intervention-work-items/work-item-1`);
+    request.flush(problem, { status: 412, statusText: 'Precondition Failed' });
+    expect(failure).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 412, detail: problem.detail }),
+    );
   });
 
   it('posts a team assignment with the current revision as If-Match', () => {

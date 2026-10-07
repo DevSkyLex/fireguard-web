@@ -1,0 +1,312 @@
+<div id="maintenance-plans" class="flex min-h-0 w-full flex-1 flex-col gap-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <a
+      hlmBtn
+      variant="outline"
+      [routerLink]="['/organizations', organizationId(), 'maintenance']"
+      i18n="@@maintenance.plans.historicalSchedules"
+      >Historical schedules</a
+    >
+    @if (canManage()) {
+      <button
+        hlmBtn
+        type="button"
+        class="mobile-ui:min-h-11"
+        [disabled]="store.commandPending()"
+        (click)="openForm(null)"
+        i18n="@@maintenance.plans.create"
+      >
+        Prepare an operation plan
+      </button>
+    }
+  </div>
+  <p class="text-sm text-muted-foreground" i18n="@@maintenance.plans.description">
+    Keep controls and maintenance independent. Preparing work never marks an operation as completed.
+  </p>
+  @if (store.engineCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h2 hlmAlertTitle i18n="@@maintenance.plans.engineError">Scheduling authority unavailable</h2>
+      <p hlmAlertDescription>{{ error.message }}</p>
+      <button
+        hlmBtn
+        variant="outline"
+        (click)="store.loadEngine(organizationId())"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (legacyMode()) {
+    <div hlmAlert>
+      <h2 hlmAlertTitle i18n="@@maintenance.plans.legacyTitle">
+        Historical scheduling remains active
+      </h2>
+      <p hlmAlertDescription i18n="@@maintenance.plans.legacyHelp">
+        Prepare the historical plans and review their dates before switching. Existing intervals and
+        recorded history are retained. Only one scheduling engine generates work.
+      </p>
+      @if (canManage()) {
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            [disabled]="store.commandPending()"
+            (click)="store.migrate({ organizationId: organizationId(), activate: false })"
+            data-testid="maintenance-prepare-legacy"
+            i18n="@@maintenance.plans.prepareLegacy"
+          >
+            Prepare historical plans
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            [disabled]="store.commandPending()"
+            (click)="migrationConfirmed.set(true)"
+            data-testid="maintenance-switch-engine"
+            i18n="@@maintenance.plans.switchEngine"
+          >
+            Review scheduling switch
+          </button>
+        </div>
+      }
+      @if (store.migrationCallState().error; as error) {
+        <p class="mt-3 text-sm text-destructive" role="alert">{{ error.message }}</p>
+      }
+    </div>
+  }
+  @if (formVisible()) {
+    <section class="flex flex-col gap-3 border-b border-border pb-4">
+      <h2 class="text-lg font-medium" i18n="@@maintenance.plans.configuration">
+        Operation configuration
+      </h2>
+      <app-maintenance-plan-form
+        [initialPlan]="editingPlan()"
+        [equipment]="store.equipmentCallState().data ?? []"
+        [equipmentState]="store.equipmentCallState()"
+        [equipmentPage]="equipmentPage()"
+        [equipmentPageCount]="equipmentPageCount()"
+        [pending]="store.commandPending()"
+        [serverError]="
+          editingPlan() ? store.updateCallState().error : store.createCallState().error
+        "
+        (equipmentSearched)="searchEquipment($event)"
+        (equipmentPageChanged)="loadEquipmentPage($event)"
+        (submitted)="submitPlan($event)"
+        (cancelled)="formVisible.set(false)"
+      />
+    </section>
+  }
+  @if (store.selectedPlan(); as plan) {
+    <section
+      class="flex flex-col gap-3 border-b border-border pb-4"
+      data-testid="maintenance-plan-preview"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-lg font-medium">{{ plan.name }}</h2>
+        <button
+          hlmBtn
+          variant="ghost"
+          (click)="store.preview(null)"
+          i18n="@@maintenance.plans.closePreview"
+        >
+          Close preview
+        </button>
+      </div>
+      <p class="text-sm text-muted-foreground" i18n="@@maintenance.plans.previewHelp">
+        The server calculates these next dates. Review them before activating this operation.
+      </p>
+      @if (store.previewCallState().status === 'pending') {
+        <hlm-skeleton class="h-8 w-full" />
+      }
+      @if (store.previewCallState().error; as error) {
+        <div hlmAlert variant="destructive" role="alert">
+          <p hlmAlertDescription>{{ error.message }}</p>
+          <button hlmBtn variant="outline" (click)="store.preview(plan)" i18n="@@common.retry">
+            Retry
+          </button>
+        </div>
+      }
+      @if (store.previewCallState().data; as preview) {
+        <ol
+          class="flex flex-wrap gap-4"
+          aria-label="Next three deadlines"
+          i18n-aria-label="@@maintenance.plans.nextThreeDates"
+        >
+          @for (date of preview.dates; track $index) {
+            <li>{{ dateValue(date, plan) | appOrgDate: dateMode(plan) : regionalFormatting() }}</li>
+          }
+        </ol>
+        @if (preview.dates.length === 0) {
+          <p class="text-sm" i18n="@@maintenance.plans.previewEmpty">
+            Configure the first deadline to preview this historical operation.
+          </p>
+        }
+        @if (canManage()) {
+          <div class="flex gap-2">
+            @if (!plan.active) {
+              <button
+                hlmBtn
+                type="button"
+                [disabled]="store.commandPending() || preview.dates.length === 0"
+                (click)="setActive(plan, true)"
+                data-testid="maintenance-plan-activate"
+                i18n="@@maintenance.plans.activatePlan"
+              >
+                Activate this operation
+              </button>
+            } @else {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                [disabled]="store.commandPending()"
+                (click)="setActive(plan, false)"
+                i18n="@@maintenance.plans.pausePlan"
+              >
+                Pause this operation
+              </button>
+            }
+          </div>
+        }
+      }
+      @if (store.updateCallState().error; as error) {
+        <p class="text-sm text-destructive" role="alert">{{ error.message }}</p>
+      }
+    </section>
+  }
+  @if (store.generationCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h2 hlmAlertTitle i18n="@@maintenance.plans.generateError">
+        Intervention could not be prepared
+      </h2>
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
+  }
+  @if (store.generationCallState().data; as work) {
+    <a
+      hlmBtn
+      variant="outline"
+      [routerLink]="['/organizations', organizationId(), 'interventions', work.interventionId]"
+      i18n="@@maintenance.plans.generatedWork"
+      >Open intervention #{{ work.number }}</a
+    >
+  }
+  <hlm-tabs [tab]="kind()" (tabActivated)="selectKind($event)">
+    <hlm-tabs-list
+      variant="line"
+      aria-label="Operation deadlines"
+      i18n-aria-label="@@maintenance.plans.deadlineTabs"
+    >
+      <button hlmTabsTrigger="control" i18n="@@maintenance.plans.controls">Controls</button>
+      <button hlmTabsTrigger="maintenance" i18n="@@maintenance.plans.maintenance">
+        Maintenance
+      </button>
+    </hlm-tabs-list>
+    <div [hlmTabsContent]="kind()">
+      <div class="flex flex-col gap-4 pt-3">
+        <app-collection-search-box
+          testIdPrefix="maintenance-plans"
+          [value]="search()"
+          placeholder="Search operation plans"
+          i18n-placeholder="@@maintenance.plans.search"
+          ariaLabel="Search operation plans"
+          i18n-ariaLabel="@@maintenance.plans.search"
+          (queryChanged)="search.set($event); page.set(1)"
+        />
+        @if (store.listCallState().error; as error) {
+          <div hlmEmpty role="alert">
+            <div hlmEmptyHeader>
+              <p hlmEmptyTitle i18n="@@maintenance.plans.loadError">
+                Operation plans could not be loaded
+              </p>
+              <p hlmEmptyDescription>{{ error.message }}</p>
+            </div>
+            <div hlmEmptyContent>
+              <button hlmBtn variant="outline" (click)="reload()" i18n="@@common.retry">
+                Retry
+              </button>
+            </div>
+          </div>
+        }
+        @if (store.listCallState().status === 'pending' && store.planEntities().length === 0) {
+          <hlm-skeleton class="h-36 w-full" />
+        }
+        @if (store.listCallState().status === 'success' && store.totalPlans() === 0) {
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <app-resource-illustration hlmEmptyMedia resource="maintenance" />
+              <p hlmEmptyTitle i18n="@@maintenance.plans.empty">
+                No operation plans match this view
+              </p>
+              <p hlmEmptyDescription i18n="@@maintenance.plans.emptyHelp">
+                Adjust your search or prepare an equipment operation.
+              </p>
+            </div>
+          </div>
+        }
+        <app-maintenance-plan-list
+          [plans]="store.planEntities()"
+          [organizationId]="organizationId()"
+          [regionalFormatting]="regionalFormatting()"
+          [canManage]="canManage()"
+          [canGenerate]="canGenerate()"
+          [pending]="store.commandPending()"
+          (previewRequested)="store.preview($event)"
+          (editRequested)="openForm($event)"
+          (generationRequested)="generate($event)"
+        />
+        <app-collection-pagination
+          testIdPrefix="maintenance-plans"
+          [page]="page()"
+          [pageCount]="pageCount()"
+          [pageSize]="pageSize()"
+          [total]="store.totalPlans()"
+          [shown]="store.planEntities().length"
+          (pageChanged)="page.set($event)"
+          (pageSizeChanged)="pageSize.set($event); page.set(1)"
+        />
+      </div>
+    </div>
+  </hlm-tabs>
+</div>
+<hlm-alert-dialog
+  [state]="migrationConfirmed() ? 'open' : 'closed'"
+  [disableClose]="store.migrationCallState().status === 'pending'"
+  (stateChanged)="closeMigration($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal>
+    <hlm-alert-dialog-header
+      ><h2 hlmAlertDialogTitle i18n="@@maintenance.plans.switchTitle">
+        Activate operation plans for this organization?
+      </h2>
+      <p hlmAlertDialogDescription i18n="@@maintenance.plans.switchHelp">
+        This switches work generation from historical schedules to the prepared operation plans. The
+        server checks existing campaigns and blocks ambiguous links. Historical intervals and
+        results remain available.
+      </p></hlm-alert-dialog-header
+    >
+    @if (store.migrationCallState().error; as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+    }
+    <hlm-alert-dialog-footer
+      ><button hlmAlertDialogCancel [disabled]="store.commandPending()" i18n="@@common.cancel">
+        Cancel</button
+      ><button
+        hlmAlertDialogAction
+        [disabled]="store.commandPending()"
+        (click)="store.migrate({ organizationId: organizationId(), activate: true })"
+        data-testid="maintenance-confirm-switch"
+      >
+        @if (store.migrationCallState().status === 'pending') {
+          <hlm-spinner aria-hidden="true" />
+        }
+        <span i18n="@@maintenance.plans.confirmSwitch">Activate operation plans</span>
+      </button></hlm-alert-dialog-footer
+    >
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

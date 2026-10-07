@@ -1,0 +1,187 @@
+<form class="flex flex-col gap-6" (submit)="submit($event)">
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@customer.form.identity">Customer information</legend>
+    <div hlmFieldGroup>
+      <div hlmField>
+        <label hlmFieldLabel for="customer-name" i18n="@@customer.form.name">Name</label>
+        <input
+          hlmInput
+          id="customer-name"
+          autocomplete="organization"
+          [formField]="customerForm.name"
+        />
+        @if (customerForm.name().touched()) {
+          @for (error of customerForm.name().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="customer-code" i18n="@@customer.form.code"
+          >Internal reference</label
+        >
+        <input hlmInput id="customer-code" [formField]="customerForm.code" />
+        @if (customerForm.code().touched()) {
+          @for (error of customerForm.code().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="customer-email" i18n="@@customer.form.email">Email</label>
+        <input
+          hlmInput
+          id="customer-email"
+          type="email"
+          autocomplete="email"
+          [formField]="customerForm.email"
+        />
+        @if (customerForm.email().touched()) {
+          @for (error of customerForm.email().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="customer-phone" i18n="@@customer.form.phone">Telephone</label>
+        <input
+          hlmInput
+          id="customer-phone"
+          type="tel"
+          autocomplete="tel"
+          [formField]="customerForm.phone"
+        />
+        @if (customerForm.phone().touched()) {
+          @for (error of customerForm.phone().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    </div>
+  </fieldset>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@customer.form.contacts">Contacts</legend>
+    <p hlmFieldDescription i18n="@@customer.form.contactsHint">
+      Contacts are internal records. They do not receive access to FireGuard.
+    </p>
+    @for (contact of draft().contacts; track $index; let index = $index) {
+      <fieldset hlmFieldSet class="rounded-md border p-4">
+        <legend hlmFieldLegend i18n="@@customer.form.contact">Contact</legend>
+        <div hlmFieldGroup>
+          <div hlmField>
+            <label hlmFieldLabel [for]="'contact-name-' + index" i18n="@@customer.form.name"
+              >Name</label
+            >
+            <input
+              hlmInput
+              [id]="'contact-name-' + index"
+              [formField]="customerForm.contacts[index].name"
+            />
+            @if (customerForm.contacts[index].name().touched()) {
+              @for (error of customerForm.contacts[index].name().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <div hlmField>
+            <label hlmFieldLabel [for]="'contact-role-' + index" i18n="@@customer.form.role"
+              >Role</label
+            >
+            <input
+              hlmInput
+              [id]="'contact-role-' + index"
+              [formField]="customerForm.contacts[index].role"
+            />
+            @if (customerForm.contacts[index].role().touched()) {
+              @for (error of customerForm.contacts[index].role().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <div hlmField>
+            <label hlmFieldLabel [for]="'contact-email-' + index" i18n="@@customer.form.email"
+              >Email</label
+            >
+            <input
+              hlmInput
+              type="email"
+              [id]="'contact-email-' + index"
+              [formField]="customerForm.contacts[index].email"
+            />
+            @if (customerForm.contacts[index].email().touched()) {
+              @for (error of customerForm.contacts[index].email().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <div hlmField>
+            <label hlmFieldLabel [for]="'contact-phone-' + index" i18n="@@customer.form.phone"
+              >Telephone</label
+            >
+            <input
+              hlmInput
+              type="tel"
+              [id]="'contact-phone-' + index"
+              [formField]="customerForm.contacts[index].phone"
+            />
+            @if (customerForm.contacts[index].phone().touched()) {
+              @for (error of customerForm.contacts[index].phone().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <button
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            type="button"
+            variant="ghost"
+            [disabled]="pending()"
+            (click)="removeContact(index)"
+            i18n="@@customer.form.removeContact"
+          >
+            Remove contact
+          </button>
+        </div>
+      </fieldset>
+    }
+    @for (error of customerForm.contacts().errors(); track error) {
+      <hlm-field-error>{{ error.message }}</hlm-field-error>
+    }
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="pending() || draft().contacts.length >= 50"
+      (click)="addContact()"
+      i18n="@@customer.form.addContact"
+    >
+      Add contact
+    </button>
+  </fieldset>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@customer.form.saveFailed">Customer could not be saved</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button hlmBtn class="mobile-ui:min-h-11" type="submit" [disabled]="pending()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      {{ submitLabel() }}
+    </button>
+  </div>
+</form>

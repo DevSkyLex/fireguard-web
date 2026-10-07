@@ -17,6 +17,20 @@ import type { FacilityOutput } from '@features/organization/features/facilities/
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface FacilityTreeState {
+  /**
+   * Property customerId
+   * @readonly
+   *
+   * @description
+   * Internal customer currently narrowing root sites; descendants follow those roots.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
+  readonly customerId: string | null;
+
   //#region Properties
   /**
    * Property organizationId

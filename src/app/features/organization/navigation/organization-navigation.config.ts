@@ -389,6 +389,15 @@ export interface OrganizationNavigationSection {
  */
 export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigationItem> = [
   {
+    id: 'assets',
+    label: $localize`:@@route.park:Equipment park`,
+    icon: 'lucideNetwork',
+    path: 'assets',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
+  },
+
+  {
     id: 'dashboard',
     label: $localize`:@@route.dashboard:Dashboard`,
     icon: 'lucideLayoutDashboard',
@@ -417,6 +426,50 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     path: 'automations',
     group: 'operations',
     permissions: [ORGANIZATION_PERMISSION.AUTOMATION_READ],
+  },
+  {
+    id: 'service-requests',
+    label: $localize`:@@route.serviceRequests:Repair requests`,
+    icon: 'lucideWrench',
+    path: 'service-requests',
+    group: 'operations',
+    permissions: [
+      ORGANIZATION_PERMISSION.SERVICE_REQUESTS_READ,
+      ORGANIZATION_PERMISSION.SERVICE_REQUESTS_CREATE,
+    ],
+    match: 'any',
+  },
+  {
+    id: 'inventory',
+    label: $localize`:@@route.inventory:Parts and stock`,
+    icon: 'lucideClipboardList',
+    path: 'inventory',
+    group: 'assets',
+    permissions: [ORGANIZATION_PERMISSION.INVENTORY_READ],
+  },
+  {
+    id: 'procurement',
+    label: $localize`:@@route.procurement:Purchasing and receipts`,
+    icon: 'lucideUpload',
+    path: 'procurement',
+    group: 'assets',
+    permissions: [ORGANIZATION_PERMISSION.PROCUREMENT_READ],
+  },
+  {
+    id: 'maintenance-costs',
+    label: $localize`:@@route.maintenanceReports:Economic pilotage`,
+    icon: 'lucideLayoutDashboard',
+    path: 'maintenance-costs/reports',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.MAINTENANCE_COST_READ],
+  },
+  {
+    id: 'maintenance-exports',
+    label: $localize`:@@route.maintenanceExports:Maintenance exports`,
+    icon: 'lucideUpload',
+    path: 'maintenance-exports',
+    group: 'operations',
+    permissions: [ORGANIZATION_PERMISSION.MAINTENANCE_EXPORTS_READ],
   },
   {
     id: 'calendar',
@@ -465,14 +518,6 @@ export const ORGANIZATION_NAVIGATION_ITEMS: ReadonlyArray<OrganizationNavigation
     path: 'approvals',
     group: 'operations',
     permissions: [ORGANIZATION_PERMISSION.APPROVALS_READ],
-  },
-  {
-    id: 'assets',
-    label: $localize`:@@route.assets:Assets`,
-    icon: 'lucideNetwork',
-    path: 'assets',
-    group: 'assets',
-    permissions: [ORGANIZATION_PERMISSION.FACILITIES_READ],
   },
   {
     id: 'imports',

@@ -918,6 +918,8 @@ export class ApiMock {
       organizations.flatMap((organization: OrganizationOutputFixture) => [
         this.mockOrganizationDetail(organization),
         this.mockOrganizationAccess(organization.id),
+        this.mockEquipmentTypeCatalog(organization.id),
+        this.mockParkReadDefaults(organization.id),
       ]),
     );
   }
@@ -1176,6 +1178,103 @@ export class ApiMock {
     );
   }
 
+  /** Mocks the complete authorized equipment catalogue, including historical archived types. */
+  public async mockEquipmentTypeCatalog(
+    organizationId: string,
+    entries: ReadonlyArray<{
+      readonly value: string;
+      readonly label: string;
+      readonly family: 'fire' | 'safety' | 'other';
+      readonly archived: boolean;
+      readonly revision: number;
+    }> = [
+      {
+        value: 'fire_extinguisher',
+        label: 'Fire extinguisher',
+        family: 'fire',
+        archived: false,
+        revision: 1,
+      },
+      {
+        value: 'hydrant',
+        label: 'Hydrant',
+        family: 'fire',
+        archived: false,
+        revision: 1,
+      },
+      {
+        value: 'smoke_detector',
+        label: 'Smoke detector',
+        family: 'fire',
+        archived: false,
+        revision: 1,
+      },
+      {
+        value: 'fire_alarm_panel',
+        label: 'Fire alarm panel',
+        family: 'fire',
+        archived: false,
+        revision: 1,
+      },
+      { value: 'fire_door', label: 'Fire door', family: 'fire', archived: false, revision: 1 },
+      {
+        value: 'heat_detector',
+        label: 'Heat detector',
+        family: 'fire',
+        archived: false,
+        revision: 1,
+      },
+      { value: 'sprinkler', label: 'Sprinkler', family: 'fire', archived: false, revision: 1 },
+      {
+        value: 'emergency_lighting',
+        label: 'Emergency lighting',
+        family: 'safety',
+        archived: false,
+        revision: 1,
+      },
+      {
+        value: 'camera',
+        label: 'Camera',
+        family: 'safety',
+        archived: false,
+        revision: 1,
+      },
+      {
+        value: 'access_control',
+        label: 'Access control',
+        family: 'safety',
+        archived: false,
+        revision: 1,
+      },
+      {
+        value: 'gas_detector',
+        label: 'Gas detector',
+        family: 'safety',
+        archived: false,
+        revision: 1,
+      },
+    ],
+  ): Promise<void> {
+    await this.installSafetyNet();
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment-types(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(
+          route,
+          200,
+          hydraCollection(
+            entries.map((entry) => ({
+              '@id': `/api/organizations/${organizationId}/equipment-types/${entry.value}`,
+              '@type': 'EquipmentType',
+              ...entry,
+            })),
+          ),
+        );
+      },
+    );
+  }
+
   /**
    * Mocks a successful `POST /api/organizations/{organizationId}/equipment`
    * — the onboarding wizard's `create_first_equipment` step and any other
@@ -1214,6 +1313,29 @@ export class ApiMock {
   ): Promise<void> {
     await this.installSafetyNet();
     await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/equipment/${equipment.id}/inspection-summary`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, {
+          '@id': `/api/organizations/${organizationId}/equipment/${equipment.id}/inspection-summary`,
+          '@type': 'EquipmentInspectionSummary',
+          equipmentId: equipment.id,
+          openAnomalies: 0,
+          bySeverity: { low: 0, medium: 0, high: 0, critical: 0 },
+          lastInspectionId: null,
+          lastInspectionPerformedAt: null,
+          lastInspectionResult: null,
+        });
+      },
+    );
+    await this.page.route(
+      `${API_BASE_URL}/api/organizations/${organizationId}/equipment/${equipment.id}/open-work`,
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, hydraCollection([]));
+      },
+    );
+    await this.page.route(
       `${API_BASE_URL}/api/organizations/${organizationId}/equipment/${equipment.id}`,
       async (route) => {
         if (options.holdUntil) await options.holdUntil;
@@ -1235,6 +1357,50 @@ export class ApiMock {
       new RegExp(`/api/organizations/${organizationId}/equipment/kpis(\\?.*)?$`),
       async (route) => {
         await fulfillJson(route, 200, equipmentKpiOutput(kpis));
+      },
+    );
+  }
+
+  /** Supplies empty park reads; explicit scenario mocks registered later take precedence. */
+  private async mockParkReadDefaults(organizationId: string): Promise<void> {
+    await this.installSafetyNet();
+    await Promise.all(
+      ['customers', 'park-anomalies', 'facilities'].map((endpoint) =>
+        this.page.route(
+          new RegExp(`/api/organizations/${organizationId}/${endpoint}(\\?.*)?$`),
+          async (route) => {
+            if (route.request().method() !== 'GET') return route.fallback();
+            await fulfillJson(route, 200, hydraCollection([]));
+          },
+        ),
+      ),
+    );
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/equipment-summary(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, {
+          '@id': `/api/organizations/${organizationId}/equipment-summary`,
+          '@type': 'EquipmentSummary',
+          scope: new URL(route.request().url()).searchParams.has('customerId')
+            ? 'customer'
+            : 'organization',
+          totalItems: 0,
+          byStatus: { in_stock: 0, operational: 0, under_maintenance: 0, decommissioned: 0 },
+          needingAttentionCount: 0,
+        });
+      },
+    );
+    await this.page.route(
+      new RegExp(`/api/organizations/${organizationId}/park-anomalies-summary(\\?.*)?$`),
+      async (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        await fulfillJson(route, 200, {
+          '@id': `/api/organizations/${organizationId}/park-anomalies-summary`,
+          '@type': 'ParkAnomaliesSummary',
+          openAnomalies: 0,
+          bySeverity: { low: 0, medium: 0, high: 0, critical: 0 },
+        });
       },
     );
   }

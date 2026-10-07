@@ -1,4 +1,5 @@
 export type { OrganizationOutput } from './organization-entity/organization-output.interface';
+export type { OrganizationOperatingProfile } from './organization-entity/organization-operating-profile.type';
 export type { OrganizationRegisteredAddress } from './organization-entity/organization-registered-address.interface';
 export type { OrganizationMembershipRoleOutput } from './organization-entity/organization-membership-role-output.interface';
 export type { OrganizationTransferOwnershipConfirmedEvent } from './organization-transfer-ownership/organization-transfer-ownership-confirmed-event.interface';
@@ -159,3 +160,5 @@ export type {
   PresenceStatus,
   PresenceSubscriptionOutput,
 } from './presence';
+
+export type { ParkAnomaliesSummaryOutput } from './park/park-anomalies-summary-output.interface';

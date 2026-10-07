@@ -90,7 +90,7 @@
             <hlm-select-item [value]="noScopeValue" i18n="@@maintenance.campaignDialog.everyType"
               >Every type</hlm-select-item
             >
-            @for (option of equipmentTypeOptions; track option.value) {
+            @for (option of equipmentTypeOptions(); track option.value) {
               <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
             }
           </hlm-select-group>

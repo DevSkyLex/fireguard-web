@@ -11,6 +11,8 @@ import {
   InterventionTimeRepository,
 } from '@features/organization/features/interventions/data-access';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { InterventionEquipmentCatalogService } from '../../intervention-equipment-catalog';
+import { InterventionInventoryService } from '../../intervention-inventory';
 import { InterventionPrefetchService } from '../intervention-prefetch.service';
 
 describe('InterventionPrefetchService', () => {
@@ -25,12 +27,16 @@ describe('InterventionPrefetchService', () => {
   const offline = { publicationOwner: () => 'account', saveWorkspace: vi.fn() };
   const time = { journal: vi.fn() };
   const timeRepository = { saveJournal: vi.fn() };
+  const catalog = { capture: vi.fn() };
+  const inventory = { capture: vi.fn() };
   let members: { getCurrentProfile: ReturnType<typeof vi.fn> };
 
   function build(): InterventionPrefetchService {
     TestBed.configureTestingModule({
       providers: [
         InterventionPrefetchService,
+        { provide: InterventionEquipmentCatalogService, useValue: catalog },
+        { provide: InterventionInventoryService, useValue: inventory },
         { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated } },
         { provide: ConnectivityService, useValue: connectivity },
         { provide: InterventionService, useValue: service },
@@ -52,6 +58,8 @@ describe('InterventionPrefetchService', () => {
   }
 
   beforeEach(() => {
+    catalog.capture.mockReturnValue(of(null));
+    inventory.capture.mockReturnValue(of(null));
     isAuthenticated.set(true);
     connectivity = { isOffline: vi.fn().mockReturnValue(true) };
     service = {
@@ -94,6 +102,10 @@ describe('InterventionPrefetchService', () => {
       'account',
     );
     expect(offline.saveWorkspace).toHaveBeenCalledOnce();
+    expect(catalog.capture).toHaveBeenCalledWith(
+      { id: 'intervention', status: 'planned' },
+      'account',
+    );
   });
 
   it('should create', () => {

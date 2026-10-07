@@ -1,14 +1,16 @@
 /**
  * Type InterventionOutboxType
- * @type InterventionOutboxType
  *
  * @description
  * Supported operation types queued in the intervention offline outbox.
  *
  * @version 1.0.0
+ *
+ * @type InterventionOutboxType
  */
 export type InterventionOutboxType =
   | 'facility.create'
+  | 'inventory-consumption.declare'
   | 'equipment.create'
   | 'inspection.create'
   | 'media.create'

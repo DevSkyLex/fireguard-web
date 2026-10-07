@@ -1,0 +1,179 @@
+<form
+  [formRoot]="resultForm"
+  novalidate
+  (submit)="submit($event)"
+  class="flex min-h-0 flex-col gap-4"
+>
+  <div hlmFieldGroup>
+    @if (item().action === 'replacement') {
+      <div class="space-y-2 rounded-lg border p-3" data-testid="execution-replacement-context">
+        <p class="text-sm font-medium" i18n="@@intervention.execution.replacementTitle">
+          Replacement equipment
+        </p>
+        @if (replacementLoading()) {
+          <p hlmFieldDescription i18n="@@intervention.execution.replacementLoading">
+            Checking the equipment replacement…
+          </p>
+        } @else if (replacementSuccessor(); as successor) {
+          <p class="text-sm wrap-anywhere" data-testid="execution-replacement-successor">
+            {{ successor.assetCode ?? successor.name ?? successor.id }}
+          </p>
+          <p hlmFieldDescription i18n="@@intervention.execution.replacementConfirmed">
+            This published equipment is linked to the retired original.
+          </p>
+        } @else if (replacementReadFailed()) {
+          <p hlmFieldDescription i18n="@@intervention.execution.replacementUnavailable">
+            The replacement could not be checked. Keep your draft and refresh when the equipment
+            dossier is available.
+          </p>
+        } @else {
+          <p hlmFieldDescription i18n="@@intervention.execution.replacementRequired">
+            Confirm the replacement in the equipment dossier, then refresh its successor.
+          </p>
+        }
+        <div class="flex flex-wrap gap-2">
+          @if (originalEquipmentLink(); as link) {
+            <a
+              hlmBtn
+              variant="outline"
+              size="sm"
+              [routerLink]="link"
+              target="_blank"
+              rel="noopener"
+              class="mobile-ui:min-h-11"
+              i18n="@@intervention.execution.openEquipment"
+              >Open equipment dossier</a
+            >
+          }
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            size="sm"
+            class="mobile-ui:min-h-11"
+            [disabled]="replacementLoading() || pending()"
+            (click)="refreshReplacement.emit()"
+            i18n="@@common.refresh"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+    }
+    @if (disabled()) {
+      <p hlmFieldDescription i18n="@@intervention.execution.noLongerAllowed">
+        This task can no longer be executed in the current workflow. Your draft remains available.
+      </p>
+    }
+    @if (serverMessages().length > 0) {
+      <div hlmAlert variant="destructive" role="alert" data-testid="intervention-execution-error">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <h4 hlmAlertTitle i18n="@@intervention.execution.saveFailed">
+          The execution result could not be saved.
+        </h4>
+        <div hlmAlertDescription>
+          @for (message of serverMessages(); track message) {
+            <p>{{ message }}</p>
+          }
+        </div>
+      </div>
+    }
+    <div hlmField>
+      <label hlmFieldLabel for="execution-performed-at" i18n="@@intervention.execution.performedAt"
+        >Performed at</label
+      >
+      <input
+        hlmInput
+        type="datetime-local"
+        id="execution-performed-at"
+        data-testid="execution-performed-at"
+        [formField]="resultForm.performedAt"
+        class="mobile-ui:min-h-11"
+      />
+      <p hlmFieldDescription i18n="@@intervention.execution.timezone">
+        Date and time in {{ timezone() }}.
+      </p>
+      @if (resultForm.performedAt().touched() && resultForm.performedAt().invalid()) {
+        <hlm-field-error>{{ resultForm.performedAt().errors()[0].message }}</hlm-field-error>
+      }
+    </div>
+    <div hlmField>
+      <label hlmFieldLabel for="execution-outcome" i18n="@@intervention.execution.outcome"
+        >Result</label
+      >
+      <hlm-select [formField]="resultForm.outcome" [itemToString]="outcomeLabelOf">
+        <hlm-select-trigger
+          buttonId="execution-outcome"
+          data-testid="execution-outcome"
+          class="w-full mobile-ui:min-h-11"
+        >
+          @if (resultForm.outcome().value(); as value) {
+            <span>{{ outcomeLabelOf(value) }}</span>
+          } @else {
+            <hlm-select-value />
+          }
+        </hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          <hlm-select-item value="successful" i18n="@@intervention.execution.successful"
+            >Successful</hlm-select-item
+          >
+          @if (item().action === 'maintenance') {
+            <hlm-select-item value="performed" i18n="@@intervention.execution.performed"
+              >Performed</hlm-select-item
+            >
+          }
+          <hlm-select-item value="failed" i18n="@@intervention.execution.failed"
+            >Unsuccessful — work still required</hlm-select-item
+          >
+        </hlm-select-content>
+      </hlm-select>
+      @if (resultForm.outcome().touched() && resultForm.outcome().invalid()) {
+        <hlm-field-error>{{ resultForm.outcome().errors()[0].message }}</hlm-field-error>
+      }
+    </div>
+    <div hlmField>
+      <label hlmFieldLabel for="execution-work" i18n="@@intervention.execution.workPerformed"
+        >Work performed</label
+      >
+      <textarea
+        hlmTextarea
+        id="execution-work"
+        data-testid="execution-work"
+        rows="5"
+        [formField]="resultForm.workPerformed"
+      ></textarea>
+      @if (resultForm.workPerformed().touched() && resultForm.workPerformed().invalid()) {
+        <hlm-field-error>{{ resultForm.workPerformed().errors()[0].message }}</hlm-field-error>
+      }
+    </div>
+    <p hlmFieldDescription i18n="@@intervention.execution.validationHint">
+      The result is recorded now and validated when the intervention is published. An unsuccessful
+      result keeps the task open.
+    </p>
+  </div>
+  <hlm-dialog-footer>
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      class="mobile-ui:min-h-11"
+      data-testid="execution-submit"
+      [disabled]="pending() || disabled()"
+    >
+      @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
+      }
+      <span i18n="@@intervention.execution.save">Record result</span>
+    </button>
+  </hlm-dialog-footer>
+</form>

@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { idleCallState, type CallState, type StoreError } from '@core/request-state';
+import type { EquipmentTypeOption } from '@features/organization/features/equipments';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import type { GenerateMaintenanceCampaignInput } from '@features/organization/features/maintenance-schedules/models';
 import { sheetSide } from '@shared/sheet-side';
@@ -54,6 +55,22 @@ export class MaintenanceCampaignDialog {
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
   //#region Inputs
+  /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * Authorized server catalog, including custom type codes, forwarded to the campaign form.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<readonly EquipmentTypeOption[]>}
+   */
+  public readonly equipmentTypeOptions: InputSignal<readonly EquipmentTypeOption[]> = input<
+    readonly EquipmentTypeOption[]
+  >([]);
+
   /**
    * Property facilityPage
    * @readonly

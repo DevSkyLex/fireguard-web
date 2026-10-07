@@ -1,0 +1,121 @@
+@if (items().length) {
+  <div class="@container min-w-0" data-testid="maintenance-cost-facts">
+    <div class="flex min-w-0 flex-col gap-3 @4xl:hidden" data-testid="maintenance-cost-cards">
+      @for (item of items(); track item.id) {
+        <article hlmCard class="min-w-0">
+          <div hlmCardContent class="flex min-w-0 flex-col gap-3">
+            <h3 class="font-medium wrap-anywhere">{{ item.description }}</h3>
+            <span class="text-sm text-muted-foreground">{{ kindLabel(item.kind) }}</span>
+            @if (item.correctionOf) {
+              <span
+                hlmBadge
+                variant="secondary"
+                class="self-start"
+                i18n="@@maintenanceCost.facts.adjustment"
+                >Traceable adjustment</span
+              >
+            }
+            <dl class="grid min-w-0 gap-2">
+              <div>
+                <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.facts.date">
+                  Occurred on
+                </dt>
+                <dd>{{ item.occurredAt | appOrgDate: 'datetime' }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.facts.amount">
+                  Exact amount
+                </dt>
+                <dd class="font-mono wrap-anywhere">
+                  {{ money(item.amount, item.currency, locale) }}
+                </dd>
+              </div>
+            </dl>
+            @if (canAdjust() && originalExpense(item)) {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                class="self-start mobile-ui:min-h-11"
+                [disabled]="pending()"
+                (click)="adjusted.emit(item)"
+                i18n="@@maintenanceCost.facts.adjust"
+              >
+                Adjust expense
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+    <div class="hidden min-w-0 @4xl:block">
+      <table hlmTable>
+        <caption class="sr-only" i18n="@@maintenanceCost.facts.caption">
+          Private maintenance cost contributions
+        </caption>
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh i18n="@@maintenanceCost.facts.description">Contribution</th>
+            <th hlmTh i18n="@@maintenanceCost.facts.date">Occurred on</th>
+            <th hlmTh i18n="@@maintenanceCost.facts.amount">Exact amount</th>
+            @if (canAdjust()) {
+              <th hlmTh i18n="@@maintenanceCost.facts.actions">Actions</th>
+            }
+          </tr>
+        </thead>
+        <tbody hlmTBody>
+          @for (item of items(); track item.id) {
+            <tr hlmTr>
+              <td hlmTd>
+                <div class="flex min-w-0 flex-col gap-1">
+                  <span class="whitespace-normal">{{ item.description }}</span>
+                  <span class="text-xs text-muted-foreground">{{ kindLabel(item.kind) }}</span>
+                  @if (item.correctionOf) {
+                    <span
+                      hlmBadge
+                      variant="secondary"
+                      class="self-start"
+                      i18n="@@maintenanceCost.facts.adjustment"
+                      >Traceable adjustment</span
+                    >
+                  }
+                </div>
+              </td>
+              <td hlmTd>{{ item.occurredAt | appOrgDate: 'datetime' }}</td>
+              <td hlmTd class="font-mono wrap-anywhere whitespace-normal">
+                {{ money(item.amount, item.currency, locale) }}
+              </td>
+              @if (canAdjust()) {
+                <td hlmTd>
+                  @if (originalExpense(item)) {
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      class="mobile-ui:min-h-11"
+                      [disabled]="pending()"
+                      (click)="adjusted.emit(item)"
+                      i18n="@@maintenanceCost.facts.adjust"
+                    >
+                      Adjust expense
+                    </button>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+} @else {
+  <div hlmEmpty>
+    <div hlmEmptyHeader>
+      <h3 hlmEmptyTitle i18n="@@maintenanceCost.facts.empty">No cost contributions recorded</h3>
+      <p hlmEmptyDescription i18n="@@maintenanceCost.facts.emptyHint">
+        Recorded work time, material use and external expenses will appear here.
+      </p>
+    </div>
+  </div>
+}

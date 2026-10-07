@@ -1,0 +1,114 @@
+<section class="flex min-w-0 flex-col gap-4">
+  <app-inventory-consumption-form
+    [hidden]="!canDeclare()"
+    [parts]="parts()"
+    [warehouses]="warehouses()"
+    [pending]="pending()"
+    [locked]="formLocked()"
+    [error]="error()"
+    [resetKey]="resetKey()"
+    [inputPrefix]="
+      'inventory-consumption-' +
+      interventionId() +
+      '-' +
+      (workItemId() ?? 'all') +
+      '-' +
+      (equipmentId() ?? 'all')
+    "
+    (submitted)="declare($event)"
+  />
+  @if (retainedCommand()) {
+    <p
+      class="text-sm text-muted-foreground"
+      role="status"
+      i18n="@@inventory.consumption.awaitingOwner"
+    >
+      The declaration is retained here until it is safely queued. Retry keeps the same recorded
+      facts.
+    </p>
+    @if (mayRetry()) {
+      <div>
+        <button
+          hlmBtn
+          class="mobile-ui:min-h-11"
+          type="button"
+          variant="outline"
+          (click)="retry()"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      </div>
+    }
+  }
+  <div class="flex flex-col gap-1">
+    <h3 class="text-sm font-semibold" i18n="@@inventory.consumption.history">
+      Consumption history
+    </h3>
+    <p class="text-sm text-muted-foreground" i18n="@@inventory.consumption.historyHint">
+      These states describe stock recording. They do not indicate completed work or a validated
+      dossier.
+    </p>
+  </div>
+  @if (localRows().length === 0 && declarationRows().length === 0) {
+    <p class="text-sm text-muted-foreground" i18n="@@inventory.consumption.empty">
+      No consumption has been declared for this work.
+    </p>
+  }
+  <div hlmItemGroup>
+    @for (row of localRows(); track row.intent.input.clientOperationId) {
+      <div hlmItem>
+        <div hlmItemContent>
+          <div hlmItemTitle>{{ row.title }}</div>
+          <p hlmItemDescription>
+            {{ row.intent.input.quantity }} · {{ row.warehouse }} ·
+            {{ row.intent.input.occurredAt | appOrgDate: 'datetime' : regionalFormatting() }}
+          </p>
+          <span hlmBadge variant="outline">{{ row.label }}</span>
+          @if (row.intent.error) {
+            <p hlmItemDescription role="alert">{{ row.intent.error }}</p>
+          }
+        </div>
+        @if (row.retryable && canDeclare()) {
+          <div hlmItemActions>
+            <button
+              hlmBtn
+              class="mobile-ui:min-h-11"
+              type="button"
+              variant="outline"
+              [disabled]="pending()"
+              (click)="retryIntent(row.intent)"
+              i18n="@@common.retry"
+            >
+              Retry
+            </button>
+          </div>
+        }
+      </div>
+      <hlm-item-separator />
+    }
+    @for (row of declarationRows(); track row.id) {
+      <div hlmItem>
+        <div hlmItemContent>
+          <div hlmItemTitle>{{ row.title }}</div>
+          <p hlmItemDescription>
+            {{ row.quantity }} · {{ row.warehouse }} ·
+            {{ row.occurredAt | appOrgDate: 'datetime' : regionalFormatting() }}
+          </p>
+          <span hlmBadge variant="secondary">{{ row.label }}</span>
+          @if (row.reason) {
+            <p hlmItemDescription>{{ row.reason }}</p>
+          }
+          @if (row.late) {
+            <p hlmItemDescription i18n="@@inventory.consumption.late">
+              Recorded after publication; the published dossier remains unchanged.
+            </p>
+          }
+        </div>
+      </div>
+      @if (!$last) {
+        <hlm-item-separator />
+      }
+    }
+  </div>
+</section>

@@ -1,3 +1,4 @@
+import type { InterventionWorkItemExecutionResultInput } from './intervention-work-item-execution-result-input.interface';
 import type { InterventionWorkItemStatus } from './intervention-work-item-status.type';
 
 /**
@@ -10,6 +11,19 @@ import type { InterventionWorkItemStatus } from './intervention-work-item-status
  * @version 1.0.0
  */
 export interface UpdateInterventionWorkItemInput {
+  /**
+   * Property executionResult
+   * @readonly
+   *
+   * @description
+   * Explicit result of maintenance, repair or replacement performed on the target equipment.
+   *
+   * @access public
+   *
+   * @type {InterventionWorkItemExecutionResultInput | null | undefined}
+   */
+  readonly executionResult?: InterventionWorkItemExecutionResultInput | null;
+
   /**
    * Property estimatedMinutes
    * @readonly

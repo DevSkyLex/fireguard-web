@@ -1,0 +1,108 @@
+<form
+  [formRoot]="expenseForm"
+  (submit)="submit($event)"
+  class="flex min-w-0 flex-col gap-4"
+  data-testid="maintenance-expense-form"
+>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend>
+      @if (originalExpense()) {
+        <span i18n="@@maintenanceCost.expense.adjust">Adjust the original expense</span>
+      } @else {
+        <span i18n="@@maintenanceCost.expense.title">Add an external expense</span>
+      }
+    </legend>
+    <p hlmFieldDescription i18n="@@maintenanceCost.expense.history">
+      Expenses and corrections are appended to the history. The closure snapshot remains unchanged.
+    </p>
+    @if (originalExpense(); as original) {
+      <p class="text-sm">{{ original.description }}</p>
+    }
+    <div hlmFieldGroup class="grid gap-4 @lg:grid-cols-2">
+      <div hlmField>
+        <label
+          hlmFieldLabel
+          for="maintenance-expense-amount"
+          i18n="@@maintenanceCost.expense.amount"
+          >Exact amount</label
+        >
+        <input
+          hlmInput
+          id="maintenance-expense-amount"
+          inputmode="decimal"
+          [formField]="expenseForm.amount"
+        />
+        @if (expenseForm.amount().touched()) {
+          @for (error of expenseForm.amount().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="maintenance-expense-date" i18n="@@maintenanceCost.expense.date"
+          >Actual date and time</label
+        >
+        <input
+          hlmInput
+          id="maintenance-expense-date"
+          type="datetime-local"
+          step="1"
+          [formField]="expenseForm.incurredAt"
+        />
+        <p hlmFieldDescription>{{ timezone() }}</p>
+        @if (expenseForm.incurredAt().touched()) {
+          @for (error of expenseForm.incurredAt().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    </div>
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="maintenance-expense-description"
+        i18n="@@maintenanceCost.expense.description"
+        >Description or correction reason</label
+      >
+      <textarea
+        hlmTextarea
+        id="maintenance-expense-description"
+        rows="3"
+        [formField]="expenseForm.description"
+      ></textarea>
+      @if (expenseForm.description().touched()) {
+        @for (error of expenseForm.description().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </div>
+  </fieldset>
+  @if (error()) {
+    <p class="text-sm text-muted-foreground" role="status">{{ error()?.message }}</p>
+  }
+  <div class="flex flex-wrap gap-2">
+    <button hlmBtn type="submit" class="mobile-ui:min-h-11" [disabled]="expenseForm().disabled()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      @if (originalExpense()) {
+        <span i18n="@@maintenanceCost.expense.saveAdjustment">Record adjustment</span>
+      } @else {
+        <span i18n="@@maintenanceCost.expense.save">Record expense</span>
+      }
+    </button>
+    @if (originalExpense()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        class="mobile-ui:min-h-11"
+        [disabled]="expenseForm().disabled()"
+        (click)="cancelled.emit()"
+        i18n="@@maintenanceCost.expense.cancel"
+      >
+        Cancel adjustment
+      </button>
+    }
+  </div>
+</form>

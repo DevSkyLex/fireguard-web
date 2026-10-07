@@ -19,6 +19,7 @@ import { idleCallState, successCallState, type CallState } from '@core/request-s
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { EquipmentTypeService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { MaintenanceScheduleService } from '@features/organization/features/maintenance-schedules/data-access';
 import type {
@@ -156,6 +157,33 @@ describe('MaintenanceSchedulesPage', () => {
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
         { provide: MaintenanceScheduleService, useValue: { exportCsv } },
+        {
+          provide: EquipmentTypeService,
+          useValue: {
+            listAll: vi.fn().mockReturnValue(
+              of([
+                {
+                  '@id': '/api/types/fire_extinguisher',
+                  '@type': 'EquipmentType',
+                  value: 'fire_extinguisher',
+                  label: 'Fire extinguisher',
+                  family: 'fire',
+                  archived: false,
+                  revision: 1,
+                },
+                {
+                  '@id': '/api/types/smoke_detector',
+                  '@type': 'EquipmentType',
+                  value: 'smoke_detector',
+                  label: 'Smoke detector',
+                  family: 'fire',
+                  archived: false,
+                  revision: 1,
+                },
+              ]),
+            ),
+          },
+        },
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         {
           provide: FacilityService,

@@ -20,6 +20,10 @@ import { form, FormField, validate, disabled, type FieldTree } from '@angular/fo
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideLocateFixed, lucideMapPin } from '@ng-icons/lucide';
+import {
+  CustomerPicker,
+  CustomerLabel,
+} from '@features/organization/features/customers/ui/components';
 import type {
   FacilityEditState,
   FacilityEditTarget,
@@ -43,12 +47,12 @@ import { FacilityMapPickerDialog } from '../../dialogs/facility-map-picker-dialo
  * Parses a numeric draft, returning `null` for a blank string and `NaN` for anything unparsable.
  * Coordinate and level-index bounds are validated by their respective fields.
  *
- * @access private
- * @since 1.0.0
+ * @access public
+ * @since unreleased
  *
- * @param {string} value - The editable numeric draft.
+ * @param {string} value - Value supplied by the owning customer workflow.
  *
- * @returns {number | null} Its numeric value, or `null` when blank.
+ * @returns {number | null} Result for the owning customer workflow.
  */
 function parseOptionalNumber(value: string): number | null {
   const trimmed: string = value.trim();
@@ -61,11 +65,13 @@ function parseOptionalNumber(value: string): number | null {
  *
  * @description
  * The stacking order's own bounds, mirroring the backend's `FacilityLevelIndex` value object.
+ *
+ * @since unreleased
  */
 const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
 
 /**
- * Component FacilityInformationPanel
+ * Class FacilityInformationPanel
  * @class FacilityInformationPanel
  *
  * @description
@@ -86,15 +92,15 @@ const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
  * text fields: blank clears it, an integer outside `[-100, 200]` is refused
  * client-side.
  *
- * @version 1.3.0
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @since unreleased
  */
 @Component({
   selector: 'app-facility-information-panel',
   imports: [
     RouterLink,
     InplaceField,
+    CustomerPicker,
+    CustomerLabel,
     FacilityMapPickerDialog,
     HlmButton,
     HlmInput,
@@ -109,6 +115,80 @@ const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityInformationPanel {
+  //#region Properties
+  /**
+   * Property customerDraft
+   * @readonly
+   *
+   * @description
+   * Signal Forms draft for the optional root-site customer.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<{ customerId: string }>}
+   */
+  protected readonly customerDraft: WritableSignal<{ customerId: string }> = signal({
+    customerId: '',
+  });
+  /**
+   * Property customerForm
+   * @readonly
+   *
+   * @description
+   * Native customer field owns its dirty state and pending disablement.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {FieldTree<{ customerId: string }>}
+   */
+  protected readonly customerForm: FieldTree<{ customerId: string }> = form(
+    this.customerDraft,
+    (path) => {
+      disabled(path, () => this.isSaving('customerId'));
+    },
+  );
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method saveCustomer
+   * @method
+   *
+   * @description
+   * Saves a customer assignment only after the inline editor's explicit confirmation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} No return value.
+   */
+  protected saveCustomer(): void {
+    if (this.isSaving('customerId')) return;
+    this.detailsChanged.emit({ customerId: this.customerDraft().customerId || null });
+  }
+  /**
+   * Method customerEditing
+   * @method
+   *
+   * @description
+   * Seeds the selected internal customer when its editor opens.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} open - Value supplied by the owning customer workflow.
+   *
+   * @returns {void} No return value.
+   */
+  protected customerEditing(open: boolean): void {
+    if (open) this.customerForm().reset({ customerId: this.facility().customerId ?? '' });
+    this.editTargetChanged.emit(open ? 'customerId' : null);
+  }
+
+  //#endregion
+
   //#region Inputs
   /**
    * Property facility
@@ -947,7 +1027,7 @@ export class FacilityInformationPanel {
     )
       return null;
 
-    return this.facility()[target];
+    return this.facility()[target] ?? null;
   }
   //#endregion
 }

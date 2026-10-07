@@ -6,6 +6,7 @@ import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
+  InterventionEquipmentCatalogSnapshot,
   InterventionQueuedAttachment,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
@@ -21,6 +22,20 @@ import type { InterventionPlanningConfirmation } from './intervention-planning-c
  * @since 1.0.0
  */
 export interface InterventionWorkspaceState {
+  /**
+   * Property equipmentCatalogSnapshot
+   * @readonly
+   *
+   * @description
+   * Complete catalog received with this workspace; visible restoration rechecks current access.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InterventionEquipmentCatalogSnapshot | null}
+   */
+  readonly equipmentCatalogSnapshot: InterventionEquipmentCatalogSnapshot | null;
+
   /**
    * Property planningConfirmation
    * @readonly

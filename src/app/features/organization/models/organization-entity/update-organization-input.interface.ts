@@ -39,6 +39,16 @@ export interface UpdateOrganizationInput {
   readonly name?: string;
 
   /**
+   * Property operatingProfile
+   *
+   * @description
+   * Changes operational defaults without granting permissions.
+   *
+   * @property operatingProfile
+   */
+  readonly operatingProfile?: 'operator' | 'service_provider' | null;
+
+  /**
    * Property slug
    *
    * @description

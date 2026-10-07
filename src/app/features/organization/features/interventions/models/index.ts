@@ -1,4 +1,5 @@
 /**
+ * @description
  * Interventions model public exports.
  */
 export type { InterventionExportOptions } from './intervention/intervention-export-options.interface';
@@ -28,6 +29,10 @@ export type { InterventionQueueKey } from './intervention-queue/intervention-que
 export type { InterventionUnsyncedEntry } from './intervention-queue/intervention-unsynced-entry.interface';
 export type { InterventionAllowedActionsOutput } from './intervention/intervention-allowed-actions-output.interface';
 export type { InterventionOutput } from './intervention/intervention-output.interface';
+export type { InterventionClosureSnapshotOutput } from './intervention-closure/intervention-closure-snapshot-output.interface';
+export type { InterventionEquipmentCatalogSnapshot } from './intervention-equipment-catalog/intervention-equipment-catalog-snapshot.interface';
+export type { InterventionReplacementContext } from './intervention-replacement-context/intervention-replacement-context.interface';
+export type { InterventionReplacementContextRequest } from './intervention-replacement-context/intervention-replacement-context-request.interface';
 export type { InterventionDuplicatePrefill } from './intervention-duplicate/intervention-duplicate-prefill.interface';
 export type { InterventionPriority } from './intervention/intervention-priority.type';
 export type { InterventionStatus } from './intervention/intervention-status.type';
@@ -54,8 +59,14 @@ export type { InterventionActivityOutput } from './intervention-activity/interve
 export type { InterventionStatusChangePayload } from './intervention-activity/intervention-status-change-payload.interface';
 export type { CreateInterventionWorkItemInput } from './intervention-work-item/create-intervention-work-item-input.interface';
 export type { InterventionWorkItemAction } from './intervention-work-item/intervention-work-item-action.type';
+export type { InterventionEquipmentContext } from './intervention-equipment-context/intervention-equipment-context.interface';
 export type { InterventionWorkItemAssignee } from './intervention-work-item/intervention-work-item-assignee.interface';
 export type { InterventionWorkItemOutput } from './intervention-work-item/intervention-work-item-output.interface';
+export type { InterventionWorkItemExecutionOutcome } from './intervention-work-item/intervention-work-item-execution-outcome.type';
+export type { InterventionWorkItemExecutionResultInput } from './intervention-work-item/intervention-work-item-execution-result-input.interface';
+export type { InterventionWorkItemExecutionResultOutput } from './intervention-work-item/intervention-work-item-execution-result-output.interface';
+export type { InterventionWorkItemExecutionResultState } from './intervention-work-item/intervention-work-item-execution-result-state.type';
+export type { InterventionWorkItemOperationKind } from './intervention-work-item/intervention-work-item-operation-kind.type';
 export type { InterventionWorkItemSource } from './intervention-work-item/intervention-work-item-source.type';
 export type { InterventionWorkItemTarget } from './intervention-work-item/intervention-work-item-target.interface';
 export type { InterventionWorkItemStatus } from './intervention-work-item/intervention-work-item-status.type';
@@ -113,6 +124,7 @@ export type { InterventionMentionSegment } from './intervention-mention/interven
 export type { InterventionMentionQuery } from './intervention-mention/intervention-mention-query.interface';
 
 /**
+ * @description
  * The enum presentation registry (`ARCHITECTURE.md` §10.10, exception 1): the
  * descriptor maps and their resolver are runtime code, and they stay in
  * `models/` because the descriptor type is meaningless without them.
@@ -143,3 +155,5 @@ export type { InterventionTimeScope } from './intervention-time/intervention-tim
 export type { InterventionTimeWrite } from './intervention-time/intervention-time-write.type';
 export type { InterventionTimeEntryView } from './intervention-time/intervention-time-entry-view.interface';
 export type { InterventionTimeJournalView } from './intervention-time/intervention-time-journal-view.interface';
+export type { InterventionInventorySnapshot } from './intervention-inventory/intervention-inventory-snapshot.interface';
+export type { InterventionInventoryScope } from './intervention-inventory/intervention-inventory-scope.interface';

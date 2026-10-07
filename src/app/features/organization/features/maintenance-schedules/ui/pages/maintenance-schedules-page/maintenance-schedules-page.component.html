@@ -1,4 +1,28 @@
 <div id="maintenance-schedules" class="flex min-h-0 w-full flex-1 flex-col gap-4">
+  <div class="flex justify-end">
+    <a
+      hlmBtn
+      variant="outline"
+      [routerLink]="['/organizations', organizationId(), 'maintenance', 'plans']"
+      i18n="@@maintenance.plans.library"
+      >Operation plans</a
+    >
+  </div>
+  @if (equipmentTypeCatalog.loadCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h2 hlmAlertTitle i18n="@@maintenance.catalog.error">Equipment types could not be loaded</h2>
+      <p hlmAlertDescription>{{ error.message }}</p>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        (click)="equipmentTypeCatalog.load(organizationId())"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
   <app-collection-toolbar>
     <app-collection-search-box
       toolbarStart
@@ -113,7 +137,7 @@
 
   <ng-template #equipmentTypeChip>
     <app-collection-filter-select
-      [options]="equipmentTypeOptions"
+      [options]="equipmentTypeOptions()"
       [value]="filters().equipmentType"
       placeholder="Any type"
       i18n-placeholder="@@maintenance.filter.anyType"
@@ -212,6 +236,7 @@
     </div>
   } @else {
     <app-maintenance-schedule-table
+      [equipmentTypeOptions]="equipmentTypeOptions()"
       [regionalFormatting]="regionalFormatting()"
       [items]="items()"
       [loading]="store.isLoading() && items().length === 0"
@@ -244,6 +269,7 @@
 />
 
 <app-maintenance-campaign-dialog
+  [equipmentTypeOptions]="equipmentTypeOptions()"
   [visible]="campaignDialogVisible()"
   [pending]="store.isGeneratingCampaign()"
   [serverError]="store.campaignError()"

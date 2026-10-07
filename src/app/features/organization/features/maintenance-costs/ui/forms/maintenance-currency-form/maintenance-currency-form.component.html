@@ -1,0 +1,58 @@
+@if (canManage() && !currency()?.locked) {
+  <form
+    class="flex min-w-0 flex-col gap-4"
+    data-testid="maintenance-currency-form"
+    novalidate
+    (submit)="submit($event)"
+  >
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="maintenance-cost-currency"
+        i18n="@@maintenanceCost.settings.currencyCode"
+        >Currency code</label
+      >
+      <input
+        hlmInput
+        id="maintenance-cost-currency"
+        class="mobile-ui:min-h-11 mobile-ui:text-base"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        [formField]="fields.currency"
+      />
+      <p hlmFieldDescription i18n="@@maintenanceCost.settings.currencyHint">
+        Use a three-letter uppercase code, for example EUR. Currency is locked after the first
+        financial record.
+      </p>
+      @if (fields.currency().touched()) {
+        @for (validation of fields.currency().errors(); track validation) {
+          <hlm-field-error>{{ validation.message }}</hlm-field-error>
+        }
+      }
+    </div>
+    @if (error(); as failure) {
+      <div hlmAlert variant="destructive" role="alert">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@maintenanceCost.settings.currencySaveFailed">
+          Currency could not be saved
+        </p>
+        <p hlmAlertDescription>{{ failure.message || currencyErrorFallback }}</p>
+      </div>
+    }
+    <div class="flex flex-wrap justify-end gap-2">
+      <button
+        hlmBtn
+        type="submit"
+        class="mobile-ui:min-h-11"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending()"
+      >
+        @if (pending()) {
+          <hlm-spinner />
+        }
+        <span i18n="@@maintenanceCost.settings.currencySave">Save currency</span>
+      </button>
+    </div>
+  </form>
+}

@@ -2,11 +2,6 @@
   @if (activeEquipmentStore.selectedEquipment(); as equipment) {
     <div class="flex flex-col gap-1.5">
       <div class="flex flex-wrap items-center gap-2">
-        <app-equipment-status-tag kind="status" [value]="equipment.status" />
-        <app-equipment-status-tag
-          kind="maintenanceDueStatus"
-          [value]="equipment.maintenanceDueStatus"
-        />
         <button
           hlmBtn
           type="button"
@@ -26,6 +21,118 @@
           <span i18n="@@equipment.report.exportButton">Export equipment sheet</span>
         </button>
       </div>
+
+      <dl class="grid grid-cols-1 gap-4 py-2 sm:grid-cols-3" data-testid="equipment-follow-up-axes">
+        <div class="flex flex-col items-start gap-2">
+          <dt class="text-xs text-muted-foreground" i18n="@@equipment.followUp.operational">
+            Declared operational status
+          </dt>
+          <dd><app-equipment-status-tag kind="status" [value]="equipment.status" /></dd>
+        </div>
+        <div class="flex flex-col items-start gap-2">
+          <dt class="text-xs text-muted-foreground" i18n="@@equipment.followUp.controls">
+            Control follow-up
+          </dt>
+          <dd>
+            <app-equipment-status-tag
+              kind="maintenanceDueStatus"
+              [value]="equipment.controlDueStatus ?? equipment.maintenanceDueStatus"
+            />
+          </dd>
+          @if (equipment.controlNextDueAt; as dueAt) {
+            <dd class="text-sm">
+              <span i18n="@@equipment.followUp.nextControl">Next control</span>:
+              {{ dueAt | appOrgDate: 'date' : regionalFormatting() }}
+            </dd>
+          }
+          @if (
+            canReadInspections() && inspectionSummaryStore.queryData()?.equipmentId === equipment.id
+          ) {
+            @if (inspectionSummaryStore.queryData()?.lastInspectionId; as inspectionId) {
+              <dd>
+                <a
+                  class="text-sm underline underline-offset-4"
+                  [routerLink]="['/organizations', organizationId(), 'inspections', inspectionId]"
+                  i18n="@@equipment.followUp.lastInspection"
+                  >Open the last control</a
+                >
+              </dd>
+            }
+          }
+        </div>
+        <div class="flex flex-col items-start gap-2" data-testid="equipment-open-anomalies">
+          <dt class="text-xs text-muted-foreground" i18n="@@equipment.followUp.anomalies">
+            Open anomalies
+          </dt>
+          @if (!canReadInspections()) {
+            <dd class="text-sm text-muted-foreground" i18n="@@equipment.followUp.restricted">
+              Inspection access required
+            </dd>
+          } @else if (inspectionSummaryStore.isQueryLoading()) {
+            <dd role="status"><hlm-spinner /></dd>
+          } @else if (inspectionSummaryStore.queryHasError()) {
+            <dd class="text-sm text-muted-foreground" i18n="@@equipment.followUp.unavailable">
+              Unavailable
+            </dd>
+            <dd>
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                (click)="
+                  inspectionSummaryStore.load({
+                    organizationId: organizationId(),
+                    equipmentId: equipment.id,
+                  })
+                "
+                i18n="@@common.retry"
+              >
+                Retry
+              </button>
+            </dd>
+          } @else if (inspectionSummaryStore.queryData(); as summary) {
+            @if (summary.equipmentId === equipment.id) {
+              <dd>
+                <span hlmBadge variant="outline" class="tabular-nums">{{
+                  summary.openAnomalies
+                }}</span>
+              </dd>
+            }
+          } @else {
+            <dd class="text-sm text-muted-foreground" i18n="@@equipment.followUp.unavailable">
+              Unavailable
+            </dd>
+          }
+          @if (canReportDefect()) {
+            <dd>
+              <a
+                hlmBtn
+                variant="outline"
+                size="sm"
+                [routerLink]="['/organizations', organizationId(), 'inspections', 'create']"
+                [queryParams]="{ equipment: equipment.id }"
+                i18n="@@equipment.followUp.reportDefect"
+                >Report a defect</a
+              >
+            </dd>
+          }
+          @if (canRequestRepair() && equipment.status !== 'decommissioned') {
+            <dd>
+              <a
+                hlmBtn
+                variant="outline"
+                size="sm"
+                data-testid="equipment-detail-request-repair"
+                [routerLink]="['/organizations', organizationId(), 'service-requests']"
+                [queryParams]="{ equipmentId: equipment.id }"
+                i18n="@@equipment.followUp.requestRepair"
+                >Request a repair</a
+              >
+            </dd>
+          }
+        </div>
+      </dl>
 
       <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
         <span class="inline-flex items-center gap-1">
@@ -170,6 +277,96 @@
 
       <div hlmTabsContent="overview" class="flex flex-col gap-4">
         <section
+          class="flex flex-col gap-3"
+          aria-labelledby="equipment-work-title"
+          data-testid="equipment-work"
+        >
+          <h2 id="equipment-work-title" class="text-sm font-medium" i18n="@@equipment.work.title">
+            Controls and maintenance
+          </h2>
+          @if (!canReadWork()) {
+            <p class="text-sm text-muted-foreground" i18n="@@equipment.work.restricted">
+              Intervention access required
+            </p>
+          } @else if (openWorkStore.isQueryLoading()) {
+            <hlm-spinner />
+          } @else if (openWorkStore.queryHasError()) {
+            <p class="text-sm text-muted-foreground" i18n="@@equipment.work.unavailable">
+              Open work is unavailable. Retry before preparing a new intervention.
+            </p>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              size="sm"
+              class="self-start"
+              (click)="
+                openWorkStore.load({ organizationId: organizationId(), equipmentId: equipment.id })
+              "
+              i18n="@@common.retry"
+            >
+              Retry
+            </button>
+          } @else if (openWorkStore.isQueryLoaded()) {
+            @for (work of openWorkStore.queryData() ?? []; track work.workItemId) {
+              <a
+                class="text-sm underline underline-offset-4"
+                [routerLink]="[
+                  '/organizations',
+                  organizationId(),
+                  'interventions',
+                  work.interventionId,
+                ]"
+                [queryParams]="{ targetEquipment: equipment.id, workAction: work.action }"
+                >{{ work.number ? 'FG-' + work.number : work.name || work.interventionId }}</a
+              >
+            }
+            @if (canCreateWork()) {
+              <div class="flex flex-wrap gap-2">
+                @for (action of workActions(); track action.action) {
+                  <a
+                    hlmBtn
+                    variant="outline"
+                    [routerLink]="action.route"
+                    [queryParams]="action.params"
+                    class="mobile-ui:min-h-11"
+                    >{{ action.label }}</a
+                  >
+                }
+              </div>
+            }
+          }
+          @if (canReadMaintenance()) {
+            <div
+              class="flex flex-wrap items-center gap-2"
+              data-testid="equipment-maintenance-follow-up"
+            >
+              <span class="text-xs text-muted-foreground" i18n="@@equipment.followUp.maintenance"
+                >Maintenance follow-up</span
+              >
+              <app-equipment-status-tag
+                kind="maintenanceDueStatus"
+                [value]="equipment.serviceDueStatus ?? 'unscheduled'"
+              />
+              @if (equipment.serviceNextDueAt; as dueAt) {
+                <span class="text-sm"
+                  ><span i18n="@@equipment.followUp.nextMaintenance">Next maintenance</span>:
+                  {{ dueAt | appOrgDate: 'date' : regionalFormatting() }}</span
+                >
+              }
+            </div>
+            <a
+              hlmBtn
+              variant="link"
+              class="self-start"
+              [routerLink]="['/organizations', organizationId(), 'maintenance', 'plans']"
+              [queryParams]="{ equipmentId: equipment.id, operationKind: 'maintenance' }"
+              i18n="@@equipment.work.maintenancePlans"
+              >View maintenance plans</a
+            >
+          }
+        </section>
+        <section
           class="flex max-w-4xl flex-col gap-1"
           aria-labelledby="equipment-detail-info-title"
           data-testid="equipment-detail-info"
@@ -178,6 +375,7 @@
             Equipment information
           </h2>
           <app-equipment-information-panel
+            [typeOptions]="typeCatalog.options()"
             [equipment]="equipment"
             [editable]="canWrite()"
             [editState]="editState()"
@@ -186,6 +384,94 @@
             (editTargetChanged)="onEditTargetChanged($event)"
           />
         </section>
+        <section
+          class="flex max-w-4xl flex-col gap-3"
+          aria-labelledby="equipment-characteristics-title"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <h2
+              id="equipment-characteristics-title"
+              class="text-sm font-medium"
+              i18n="@@equipment.characteristics.title"
+            >
+              Technical characteristics
+            </h2>
+            @if (canWrite() && editState().open !== 'technicalProperties') {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                (click)="onEditTargetChanged('technicalProperties')"
+                i18n="@@common.edit"
+              >
+                Edit
+              </button>
+            }
+          </div>
+          @if (editState().open === 'technicalProperties') {
+            <app-equipment-characteristics-form
+              [equipment]="equipment"
+              [pending]="editState().saving === 'technicalProperties'"
+              [error]="editState().failure"
+              (submitted)="onDetailsChanged($event)"
+              (cancelled)="onEditTargetChanged(null)"
+            />
+          } @else {
+            <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <dt class="text-xs text-muted-foreground" i18n="@@equipment.identity.criticality">
+                  Declared criticality
+                </dt>
+                <dd>{{ criticalityLabel() }}</dd>
+              </div>
+              @for (property of equipment.technicalProperties ?? []; track property.key) {
+                <div>
+                  <dt class="text-xs text-muted-foreground">{{ property.key }}</dt>
+                  <dd>{{ property.value }} {{ property.unit }}</dd>
+                </div>
+              }
+            </dl>
+            <p class="text-xs text-muted-foreground" i18n="@@equipment.characteristics.hint">
+              Declared information about this equipment; it does not determine control obligations.
+            </p>
+          }
+        </section>
+        @if (equipment.predecessorEquipmentId || equipment.successorEquipmentId) {
+          <section
+            class="flex flex-col gap-2"
+            aria-labelledby="equipment-replacement-history-title"
+            data-testid="equipment-replacement-history"
+          >
+            <h2
+              id="equipment-replacement-history-title"
+              class="text-sm font-medium"
+              i18n="@@equipment.replacement.history"
+            >
+              Replacement history
+            </h2>
+            @if (equipment.predecessorEquipmentId; as predecessorId) {
+              <a
+                hlmBtn
+                variant="link"
+                [routerLink]="['/organizations', organizationId(), 'equipments', predecessorId]"
+                class="self-start"
+                i18n="@@equipment.replacement.predecessor"
+                >Open the replaced equipment</a
+              >
+            }
+            @if (equipment.successorEquipmentId; as successorId) {
+              <a
+                hlmBtn
+                variant="link"
+                [routerLink]="['/organizations', organizationId(), 'equipments', successorId]"
+                class="self-start"
+                i18n="@@equipment.replacement.successor"
+                >Open the successor equipment</a
+              >
+            }
+          </section>
+        }
       </div>
 
       <div hlmTabsContent="attachments" class="flex flex-col gap-4">
@@ -308,6 +594,37 @@
   (confirmed)="confirmDecommission()"
 />
 
+@if (replacementVisible()) {
+  <app-equipment-replacement-sheet
+    [visible]="replacementVisible()"
+    [equipmentName]="title()"
+    [pending]="replacementStore.replaceCallState().status === 'pending'"
+    [uncertain]="
+      replacementStore.replaceCallState().status === 'error' &&
+      replacementStore.replaceCallState().error?.retryable === true
+    "
+    [error]="replacementStore.replaceCallState().error?.message ?? null"
+    [candidates]="replacementStore.candidateEntities()"
+    [candidateCallState]="replacementStore.candidatesCallState()"
+    [page]="replacementStore.page()"
+    [pageCount]="replacementStore.pageCount()"
+    [typeOptions]="typeCatalog.activeOptions()"
+    (visibleChange)="replacementVisible.set($event)"
+    (existingSelected)="replaceWithExisting($event)"
+    (newSubmitted)="replaceWithNew($event)"
+    (retried)="retryReplacement()"
+    (searchChanged)="loadReplacementCandidates(1, $event)"
+    (pageChanged)="loadReplacementCandidates($event)"
+  />
+}
+
+<app-equipment-replacement-confirm-dialog
+  [visible]="stagedReplacement() !== null"
+  [equipmentName]="title()"
+  (confirmed)="confirmReplacement()"
+  (cancelled)="stagedReplacement.set(null)"
+/>
+
 <ng-template #pageActions>
   @if (canWrite() && activeEquipmentStore.selectedEquipment()) {
     <div class="flex items-center gap-2" data-testid="equipment-lifecycle-band">
@@ -345,6 +662,16 @@
 
         <ng-template #moreMenu>
           <hlm-dropdown-menu class="w-56">
+            <button
+              hlmDropdownMenuItem
+              type="button"
+              class="mobile-ui:min-h-11"
+              data-testid="equipment-replace"
+              [disabled]="replacementStore.replaceCallState().status === 'pending'"
+              (click)="openReplacement()"
+            >
+              <span i18n="@@equipment.replacement.title">Replace equipment</span>
+            </button>
             <button
               hlmDropdownMenuItem
               variant="destructive"

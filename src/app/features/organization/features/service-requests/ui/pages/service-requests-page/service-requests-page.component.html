@@ -1,0 +1,238 @@
+<div id="service-requests" class="flex min-h-0 w-full flex-1 flex-col gap-4">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <p class="text-sm text-muted-foreground" i18n="@@serviceRequest.page.description">
+      Describe maintenance needs, qualify their target, then organize corrective work.
+    </p>
+    @if (canCreate()) {
+      <button
+        hlmBtn
+        type="button"
+        class="mobile-ui:min-h-11"
+        [disabled]="store.writeCallState().status === 'pending'"
+        (click)="open()"
+        data-testid="service-request-new"
+        i18n="@@serviceRequest.editor.create"
+      >
+        New maintenance request
+      </button>
+    }
+  </div>
+  @if (confirmedTitle()) {
+    <div hlmAlert role="status">
+      <p hlmAlertDescription i18n="@@serviceRequest.page.submitted">
+        Maintenance request submitted: {{ confirmedTitle() }}
+      </p>
+    </div>
+  }
+  @if (!online()) {
+    <div hlmAlert role="status">
+      <p hlmAlertDescription i18n="@@serviceRequest.page.offline">
+        You are offline. Your open draft is kept until you can submit it.
+      </p>
+    </div>
+  }
+  @if (canRead()) {
+    <div class="flex min-w-0 flex-wrap items-center gap-3 px-1">
+      <input
+        hlmInput
+        type="search"
+        class="min-w-0 flex-1 basis-60"
+        maxlength="160"
+        aria-label="Search maintenance requests"
+        i18n-aria-label="@@serviceRequest.page.search"
+        [value]="search()"
+        (input)="searchChanged($event)"
+      />
+      <hlm-toggle-group
+        type="single"
+        [nullable]="false"
+        [value]="status()"
+        (valueChange)="statusChanged($event)"
+        aria-label="Request status"
+        i18n-aria-label="@@serviceRequest.page.statusFilter"
+        class="max-w-full flex-wrap"
+      >
+        <button
+          hlmToggleGroupItem
+          type="button"
+          value=""
+          class="mobile-ui:min-h-11"
+          i18n="@@serviceRequest.page.allStatuses"
+        >
+          All statuses
+        </button>
+        @for (status of statuses; track status) {
+          <button hlmToggleGroupItem type="button" [value]="status" class="mobile-ui:min-h-11">
+            {{ statusLabel(status) }}
+          </button>
+        }
+      </hlm-toggle-group>
+    </div>
+    @if (store.listCallState().status === 'pending') {
+      <div role="status" class="flex flex-col gap-3" data-testid="service-requests-loading">
+        <hlm-skeleton class="h-16 w-full" /><hlm-skeleton class="h-16 w-full" />
+      </div>
+    } @else if (store.listCallState().error; as error) {
+      <div hlmEmpty role="alert">
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@serviceRequest.page.loadFailed">Requests could not be loaded</p>
+          <p hlmEmptyDescription>{{ error.message }}</p>
+        </div>
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            type="button"
+            class="mobile-ui:min-h-11"
+            (click)="retry()"
+            i18n="@@common.retry"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    } @else if (
+      store.listCallState().status === 'success' && store.requestEntities().length === 0
+    ) {
+      <div hlmEmpty>
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia>
+            <app-state-illustration
+              [state]="search() ? 'no-results' : status() ? 'no-matches' : 'empty-collection'"
+            />
+          </div>
+          <p hlmEmptyTitle i18n="@@serviceRequest.page.empty">No maintenance requests</p>
+          <p hlmEmptyDescription i18n="@@serviceRequest.page.emptyDescription">
+            The current target and filters have no requests to display.
+          </p>
+        </div>
+        <div hlmEmptyContent>
+          @if (search() || status()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              (click)="search.set(''); status.set(''); page.set(1)"
+              i18n="@@serviceRequest.page.clearFilters"
+            >
+              Clear filters
+            </button>
+          } @else if (canCreate()) {
+            <button hlmBtn type="button" (click)="open()" i18n="@@serviceRequest.editor.create">
+              New maintenance request
+            </button>
+          }
+        </div>
+      </div>
+    } @else if (store.requestEntities().length) {
+      @if (isMobile()) {
+        <div hlmItemGroup class="divide-y divide-border" data-testid="service-request-cards">
+          @for (request of store.requestEntities(); track request.id) {
+            <div hlmItem data-testid="service-request-card">
+              <div hlmItemContent class="min-w-0">
+                <a
+                  class="flex min-h-11 items-center text-base font-medium wrap-anywhere underline"
+                  [routerLink]="[
+                    '/organizations',
+                    organizationId(),
+                    'service-requests',
+                    request.id,
+                  ]"
+                  >{{ request.title }}</a
+                >
+                <p class="text-sm wrap-anywhere text-muted-foreground">
+                  {{
+                    request.targetSnapshot.equipment?.name ??
+                      request.targetSnapshot.equipment?.assetCode ??
+                      request.targetSnapshot.site?.name
+                  }}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                  {{ request.requestedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                </p>
+              </div>
+              <div hlmItemFooter class="flex-wrap gap-2">
+                <span hlmBadge variant="outline">{{ statusLabel(request.status) }}</span
+                ><span hlmBadge variant="secondary">{{ priorityLabel(request.priority) }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div hlmTableContainer class="min-w-0 rounded-md border border-border">
+          <table hlmTable data-testid="service-request-table">
+            <thead hlmTableHeader>
+              <tr hlmTableRow>
+                <th hlmTableHead scope="col" i18n="@@serviceRequest.form.title">Title</th>
+                <th hlmTableHead scope="col" i18n="@@serviceRequest.form.target">
+                  Maintenance target
+                </th>
+                <th hlmTableHead scope="col" i18n="@@serviceRequest.page.statusFilter">
+                  Request status
+                </th>
+                <th hlmTableHead scope="col" i18n="@@serviceRequest.form.priority">Priority</th>
+                <th hlmTableHead scope="col" i18n="@@serviceRequest.page.requestedAt">Requested</th>
+              </tr>
+            </thead>
+            <tbody hlmTableBody>
+              @for (request of store.requestEntities(); track request.id) {
+                <tr hlmTableRow data-testid="service-request-row">
+                  <td hlmTableCell class="whitespace-normal">
+                    <a
+                      class="wrap-anywhere text-foreground underline"
+                      [routerLink]="[
+                        '/organizations',
+                        organizationId(),
+                        'service-requests',
+                        request.id,
+                      ]"
+                      >{{ request.title }}</a
+                    >
+                  </td>
+                  <td hlmTableCell class="whitespace-normal">
+                    <span>{{
+                      request.targetSnapshot.equipment?.name ??
+                        request.targetSnapshot.equipment?.assetCode ??
+                        request.targetSnapshot.site?.name
+                    }}</span
+                    ><span class="block text-xs text-muted-foreground">{{
+                      request.targetSnapshot.customer?.name
+                    }}</span>
+                  </td>
+                  <td hlmTableCell>
+                    <span hlmBadge variant="outline">{{ statusLabel(request.status) }}</span>
+                  </td>
+                  <td hlmTableCell>{{ priorityLabel(request.priority) }}</td>
+                  <td hlmTableCell>
+                    {{ request.requestedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <app-collection-pagination
+        [page]="page()"
+        [pageCount]="store.pageCount()"
+        [pageSize]="30"
+        [pageSizes]="[30]"
+        [total]="store.total()"
+        [shown]="store.requestEntities().length"
+        testIdPrefix="service-requests"
+        (pageChanged)="page.set($event)"
+      />
+    }
+  }
+  <app-service-request-editor-sheet
+    [organizationId]="organizationId()"
+    [visible]="editorVisible()"
+    [initialEquipmentId]="equipmentId() ?? ''"
+    [initialSiteId]="siteId() ?? ''"
+    [originInspectionId]="originInspectionId() ?? ''"
+    [originNonConformityId]="originNonConformityId() ?? ''"
+    [pending]="store.writeCallState().status === 'pending'"
+    [error]="store.writeCallState().error"
+    (descriptionSubmitted)="create($event)"
+    (dismissed)="editorVisible.set(false)"
+  />
+</div>

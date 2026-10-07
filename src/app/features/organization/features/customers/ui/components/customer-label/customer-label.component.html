@@ -1,0 +1,28 @@
+@if (!customerId()) {
+  <span class="text-muted-foreground" i18n="@@customer.picker.none">No customer</span>
+} @else if (store.readCallState().data; as customer) {
+  <span>{{ customer.name }}</span>
+  @if (customer.archivedAt) {
+    <span class="text-muted-foreground" i18n="@@customer.label.archived"> (archived)</span>
+  }
+} @else if (store.readCallState().error; as error) {
+  <span role="alert">{{ error.message }}</span
+  ><button
+    hlmBtn
+    class="mobile-ui:min-h-11"
+    type="button"
+    variant="ghost"
+    size="sm"
+    (click)="retry()"
+    i18n="@@common.retry"
+  >
+    Retry
+  </button>
+} @else {
+  <span
+    hlmSkeleton
+    class="inline-block h-4 w-24"
+    aria-label="Loading customer"
+    i18n-aria-label="@@customer.label.loading"
+  ></span>
+}

@@ -17,6 +17,11 @@ The published setup facade accepts optional server session/item keys for one dur
 a time. Organization, invitations, facilities and equipment retain their owning transports; setup
 replays never bypass permissions or the server's transactional quotas.
 
+Setup also publishes the complete active equipment catalogue as `SetupEquipmentTypeOption`
+choices through `OrganizationSetupService.listEquipmentTypes`. Equipment retains transport,
+archive rules and label/icon normalization; onboarding consumes only the setup DTO and never
+Equipment private stores or a hardcoded selectable catalogue. Prepared creation payloads stay unchanged.
+
 Access policy mode/role drafts reset only after a successful policy save or organization change.
 Domain verification and refreshes never discard edits. Admission and invitation commands own typed
 feedback and membership invalidation in their stores, with one notification per result.
@@ -24,6 +29,20 @@ feedback and membership invalidation in their stores, with one notification per 
 ## Purpose
 
 Owns organization context and organization-scoped business workflows.
+
+FireGuard is specialized in fire-equipment park management. The Park explorer is
+the default permitted entry point; the historical Dashboard route remains available.
+The organization profile adapts the starting context, while API permissions alone
+grant access. Internal customers belong to one organization and are optional for operators.
+
+The Park and Dashboard share the explicit fire/all, customer and site scope. Their
+unavailable equipment, controls to prepare and unresolved anomalies queues use
+server counts and open the matching filtered Park list when site-read permission grants
+that route; otherwise authorized counts remain read-only. A site includes its descendants
+by default. The explorer's direct scope applies to equipment, controls and anomaly rows,
+including their totals, retries and subsequent pages.
+An unavailable count is never presented as zero. The compliance register retains
+its own scope and does not imply that the Park filters changed an archived register.
 
 This feature is responsible for:
 
@@ -367,6 +386,13 @@ See the [organization ui reference](../../../../docs/guides/organization-and-acc
   `InspectionStatusTag` components. Read-only — the parent previews, neither
   subfeature's own management surface or state is touched.
 
+  The Park also consumes Equipment's public `state` catalogue store, `options`
+  and `utils` for server-authorized type labels and equipment titles; its
+  `ui/components` barrel publishes `EquipmentStatusTag`. Inspection's published
+  `ui/dataviews/non-conformity-list` displays the server-filtered anomaly queue
+  with source-inspection and equipment links, without offering anomaly writes.
+  The Customers `ui/components` picker supplies optional internal-client context.
+
   The two components were added to this contract deliberately: the pane
   previously printed `item.status` and `item.result` raw, so the same equipment
   showed `in_progress` here and a localized, coloured tag everywhere else. The
@@ -526,9 +552,10 @@ semantics without injecting `OrganizationPermissionService` into the shell.
 
 These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
 
-| Entry point                               | Consumers                                                                                                                                                                                   |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `providers/bootstrap`                     | `app`                                                                                                                                                                                       |
-| `services/member-presence`                | `organization/features/collaboration`                                                                                                                                                       |
-| `ui/components/member-presence-indicator` | `account`, `organization/features/collaboration`                                                                                                                                            |
-| `services/browser-download`               | `organization/features/equipments`, `organization/features/facilities`, `organization/features/imports`, `organization/features/inspections`, `organization/features/maintenance-schedules` |
+| Entry point                               | Consumers                                                                                                                                                                                                                                |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services/organization-landing`           | `onboarding`                                                                                                                                                                                                                             |
+| `providers/bootstrap`                     | `app`                                                                                                                                                                                                                                    |
+| `services/member-presence`                | `organization/features/collaboration`                                                                                                                                                                                                    |
+| `ui/components/member-presence-indicator` | `account`, `organization/features/collaboration`                                                                                                                                                                                         |
+| `services/browser-download`               | `organization/features/equipments`, `organization/features/facilities`, `organization/features/imports`, `organization/features/inspections`, `organization/features/maintenance-schedules`, `organization/features/maintenance-exports` |

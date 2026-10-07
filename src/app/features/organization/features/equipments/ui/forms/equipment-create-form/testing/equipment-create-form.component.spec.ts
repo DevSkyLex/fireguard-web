@@ -58,6 +58,8 @@ describe('EquipmentCreateForm', () => {
         model: WritableSignal<EquipmentCreateFormDraft>;
       }
     ).model.set({
+      name: '',
+      assetCode: '',
       type: 'fire_extinguisher',
       subType: ' CO2 ',
       brand: 'Kidde',

@@ -53,6 +53,17 @@
         data-testid="non-conformity-row"
         [attr.data-non-conformity-id]="nc.id"
       >
+        @if (showSourceLinks()) {
+          <a
+            hlmBtn
+            variant="link"
+            class="self-start mobile-ui:min-h-11"
+            [routerLink]="['/organizations', organizationId(), 'inspections', nc.inspectionId]"
+            [attr.aria-label]="sourceInspectionLabelOf(nc)"
+            i18n="@@park.anomalies.openInspection"
+            >Open the source inspection</a
+          >
+        }
         <p
           class="text-sm font-medium wrap-anywhere text-foreground"
           data-testid="non-conformity-description"

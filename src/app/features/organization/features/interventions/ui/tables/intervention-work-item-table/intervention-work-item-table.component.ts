@@ -36,6 +36,7 @@ import {
   resolveInterventionTag,
   type InterventionWorkItemTableQuery,
   type InterventionWorkItemOutput,
+  type InterventionWorkItemExecutionResultOutput,
   type InterventionWorkItemStatus,
   type InterventionWorkItemStatusChange,
 } from '@features/organization/features/interventions/models';
@@ -62,6 +63,7 @@ import { StateIllustration } from '@shared/state-illustration';
 import { HlmAvatarImports } from '@shared/ui/avatar';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButtonImports } from '@shared/ui/button';
+import { HlmCollapsibleImports } from '@shared/ui/collapsible';
 import { HlmDropdownMenuImports } from '@shared/ui/dropdown-menu';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmItemImports } from '@shared/ui/item';
@@ -132,6 +134,7 @@ import { filterAndGroupInterventionWorkItems } from './utils/intervention-work-i
     InterventionWorkItemCheckbox,
     ...HlmAvatarImports,
     ...HlmButtonImports,
+    ...HlmCollapsibleImports,
     ...HlmDropdownMenuImports,
     ...HlmItemImports,
     ...HlmProgressImports,
@@ -1463,6 +1466,36 @@ export class InterventionWorkItemTable {
     return item.source === 'discovered'
       ? $localize`:@@intervention.wit.sourceDiscovered:Discovered`
       : $localize`:@@intervention.wit.sourcePlanned:Planned`;
+  }
+
+  /**
+   * Method executionOutcomeLabel
+   * @method executionOutcomeLabel
+   *
+   * @description
+   * Names actual work independently of its task lifecycle status.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {Pick<InterventionWorkItemExecutionResultOutput, 'outcome'>} result - Recorded work
+   *   result.
+   *
+   * @returns {string} Human-readable result.
+   */
+  protected executionOutcomeLabel(
+    result: Pick<InterventionWorkItemExecutionResultOutput, 'outcome'>,
+  ): string {
+    switch (result.outcome) {
+      case 'successful':
+        return $localize`:@@intervention.execution.successful:Successful`;
+      case 'failed':
+        return $localize`:@@intervention.execution.failed:Unsuccessful — work still required`;
+      case 'performed':
+        return $localize`:@@intervention.execution.performed:Performed`;
+      default:
+        return '';
+    }
   }
 
   /**

@@ -26,6 +26,23 @@ const KNOWN: EquipmentOutput = {
 };
 
 describe('mergeEquipment', () => {
+  it('preserves an explicitly accepted null patch when the response omits nullable identity fields', () => {
+    const incoming = { id: 'eq', type: 'fire_extinguisher' } as EquipmentOutput;
+    const existing = {
+      ...incoming,
+      name: 'Old name',
+      assetCode: 'EXT-1',
+      criticality: 'high' as const,
+    };
+    expect(
+      mergeEquipment(existing, incoming, { name: null, assetCode: null, criticality: null }),
+    ).toMatchObject({ name: null, assetCode: null, criticality: null });
+    expect(mergeEquipment(existing, incoming)).toMatchObject({
+      name: 'Old name',
+      assetCode: 'EXT-1',
+      criticality: 'high',
+    });
+  });
   it('returns the incoming payload when nothing is known yet', () => {
     expect(mergeEquipment(null, KNOWN)).toBe(KNOWN);
   });

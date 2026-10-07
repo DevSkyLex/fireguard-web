@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { equipmentResolver, equipmentTitleResolver } from './http/resolvers';
 import { EquipmentKpisStore, EquipmentStore } from './state';
 
@@ -33,7 +34,6 @@ const redirectToCreateSheet: RedirectFunction = (redirectData) => {
 
 /**
  * Constant EQUIPMENT_ROUTES
- * @const EQUIPMENT_ROUTES
  *
  * @description
  * Organization-scoped equipment workflows: the index at
@@ -65,6 +65,8 @@ const redirectToCreateSheet: RedirectFunction = (redirectData) => {
  * @since 1.0.0
  *
  * @type {Routes}
+ *
+ * @const EQUIPMENT_ROUTES
  */
 export const EQUIPMENT_ROUTES: Routes = [
   {
@@ -88,6 +90,19 @@ export const EQUIPMENT_ROUTES: Routes = [
       {
         path: 'create',
         redirectTo: redirectToCreateSheet,
+      },
+      {
+        path: 'types',
+        canActivate: [
+          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.EQUIPMENT_WRITE] }),
+        ],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./ui/pages/equipment-types-page/equipment-types-page.component').then(
+            (m) => m.EquipmentTypesPage,
+          ),
+        title: $localize`:@@equipment.catalog.title:Equipment types`,
+        data: { breadcrumb: $localize`:@@equipment.catalog.title:Equipment types` },
       },
       {
         path: ':equipmentId',

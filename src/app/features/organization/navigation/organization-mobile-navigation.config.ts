@@ -116,7 +116,7 @@ export function buildOrganizationMobileNavigation(
   const prefix = `/organizations/${organizationId}`;
   const organizationSections = buildOrganizationNavigation(organizationId, grantedPermissions);
   const organizationLinks = organizationSections.flatMap((section) => section.links);
-  const primaryIds = ['dashboard', 'interventions', 'assets'];
+  const primaryIds = ['assets', 'interventions', 'dashboard'];
   const canReadMessaging = Array.from(grantedPermissions).some((grant) =>
     matchesOrganizationPermission(grant, ORGANIZATION_PERMISSION.MESSAGING_READ),
   );

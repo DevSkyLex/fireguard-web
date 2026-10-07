@@ -1,0 +1,219 @@
+<header class="border-b bg-muted/25 p-4 mobile-ui:p-3">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p class="text-sm text-muted-foreground" i18n="@@equipment.catalog.description">
+        Manage the names and families available in your organization's inventory.
+      </p>
+    </div>
+    @if (canManage()) {
+      <button
+        hlmBtn
+        type="button"
+        [disabled]="!online() || store.writeCallState().status === 'pending'"
+        (click)="open(null)"
+        i18n="@@equipment.catalog.new"
+      >
+        New equipment type
+      </button>
+    }
+  </div>
+</header>
+<div class="flex flex-col gap-4 p-4 mobile-ui:p-3">
+  @if (!online()) {
+    <div hlmAlert>
+      <h3 hlmAlertTitle i18n="@@equipment.catalog.offlineTitle">
+        Equipment types are managed online
+      </h3>
+      <p hlmAlertDescription i18n="@@equipment.catalog.offlineHint">
+        Reconnect to save changes. Your draft is preserved.
+      </p>
+    </div>
+  }
+  <hlm-toggle-group
+    type="single"
+    variant="outline"
+    [nullable]="false"
+    [value]="archived() ? 'archived' : 'active'"
+    (valueChange)="archiveFilter($event)"
+    aria-label="Equipment type status"
+    i18n-aria-label="@@equipment.catalog.status"
+  >
+    <button hlmToggleGroupItem type="button" value="active" i18n="@@equipment.catalog.active">
+      Active
+    </button>
+    <button hlmToggleGroupItem type="button" value="archived" i18n="@@equipment.catalog.archived">
+      Archived
+    </button>
+  </hlm-toggle-group>
+  @if (store.listCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@equipment.catalog.loadFailed">
+        Equipment types could not be loaded
+      </h3>
+      <p hlmAlertDescription>{{ error.message }}</p>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        [disabled]="!online()"
+        (click)="reload()"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (!editorVisible() && store.writeCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@equipment.catalog.actionFailed">
+        Equipment type could not be updated
+      </h3>
+      <p hlmAlertDescription>{{ error.message }}</p>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        [disabled]="!online()"
+        (click)="reload()"
+        i18n="@@equipment.catalog.reload"
+      >
+        Reload catalogue
+      </button>
+    </div>
+  }
+  @if (store.listCallState().status === 'pending' && store.equipmentTypeEntities().length === 0) {
+    <div hlmSkeleton class="h-40 w-full"></div>
+  }
+  @if (rows().length > 0) {
+    <div class="overflow-x-auto">
+      <table hlmTable>
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh i18n="@@equipment.catalog.form.label">Name</th>
+            <th hlmTh i18n="@@equipment.catalog.form.code">Permanent code</th>
+            <th hlmTh i18n="@@equipment.catalog.form.family">Family</th>
+            <th hlmTh i18n="@@equipment.catalog.actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody hlmTBody>
+          @for (row of rows(); track row.entry.value) {
+            @let entry = row.entry;
+            <tr hlmTr>
+              <td hlmTd>
+                <span class="font-medium">{{ row.displayLabel }}</span>
+              </td>
+              <td hlmTd>
+                <span class="font-mono text-sm">{{ entry.value }}</span>
+              </td>
+              <td hlmTd>{{ row.familyLabel }}</td>
+              <td hlmTd>
+                @if (canManage()) {
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      [disabled]="!online() || store.writeCallState().status === 'pending'"
+                      (click)="open(entry)"
+                      i18n="@@common.edit"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [disabled]="!online() || store.writeCallState().status === 'pending'"
+                      (click)="archive(entry)"
+                    >
+                      @if (entry.archived) {
+                        <span i18n="@@equipment.catalog.restore">Restore</span>
+                      } @else {
+                        <span i18n="@@equipment.catalog.archive">Archive</span>
+                      }
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (store.listCallState().status === 'success') {
+    <hlm-empty
+      ><hlm-empty-header>
+        <h2 hlmEmptyTitle i18n="@@equipment.catalog.emptyTitle">No equipment types in this view</h2>
+        <p hlmEmptyDescription i18n="@@equipment.catalog.emptyHint">
+          Choose another view or create an equipment type. Archived types remain available in
+          equipment histories.
+        </p>
+      </hlm-empty-header></hlm-empty
+    >
+  }
+</div>
+@if (editorVisible()) {
+  <hlm-sheet
+    [side]="side()"
+    state="open"
+    [disableClose]="dirty() || store.writeCallState().status === 'pending'"
+    (stateChanged)="stateChanged($event)"
+  >
+    <hlm-sheet-content
+      *hlmSheetPortal
+      data-testid="equipment-type-editor-sheet"
+      class="w-full! max-w-none! overflow-y-auto pb-[env(safe-area-inset-bottom)] mobile-ui:max-h-[85svh] desktop-ui:w-[min(540px,100vw)]!"
+    >
+      <hlm-sheet-header>
+        <h3 hlmSheetTitle>{{ editorTitle() }}</h3>
+        <p hlmSheetDescription i18n="@@equipment.catalog.editorHint">
+          Keep stable codes for equipment records and choose the family used to filter your
+          inventory.
+        </p>
+      </hlm-sheet-header>
+      <div class="flex flex-col gap-4 px-4 pb-4">
+        @if (store.writeCallState().error?.code === 409 && editing()) {
+          <div hlmAlert>
+            <h3 hlmAlertTitle i18n="@@equipment.catalog.conflictTitle">This type has changed</h3>
+            <p hlmAlertDescription i18n="@@equipment.catalog.conflictHint">
+              Reload the latest revision, compare its name and family with your draft, then save
+              again. Your entered values are preserved.
+            </p>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="!online() || store.listCallState().status === 'pending'"
+              (click)="refreshRevision()"
+              i18n="@@equipment.catalog.refreshRevision"
+            >
+              Review latest revision
+            </button>
+          </div>
+        }
+        @if (editing(); as entry) {
+          <p class="text-sm text-muted-foreground">
+            <span i18n="@@equipment.catalog.serverValues">Reviewed server values:</span>
+            {{ entry.label }} · {{ familyLabel(entry.family) }}
+          </p>
+        }
+        <app-equipment-type-form
+          [entry]="editing()"
+          [pending]="store.writeCallState().status === 'pending'"
+          [available]="online() && canManage()"
+          [error]="store.writeCallState().error?.message ?? null"
+          (submitted)="submitted($event)"
+          (cancelled)="requestClose()"
+          (dirtyChanged)="dirty.set($event)"
+        />
+      </div>
+    </hlm-sheet-content>
+  </hlm-sheet>
+}
+<app-unsaved-changes-dialog
+  [state]="confirmation()"
+  (confirmed)="resolveConfirmation(true)"
+  (dismissed)="resolveConfirmation(false)"
+/>

@@ -13,6 +13,7 @@ import {
   successCallState,
   toStoreError,
 } from '@core/request-state';
+import { ParkService } from '@features/organization/data-access';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
@@ -36,6 +37,10 @@ const PANE_ITEMS_PER_PAGE = 50;
  * @since 1.0.0
  */
 const INITIAL_STATE: OrganizationAssetsPaneState = {
+  anomaliesPage: 1,
+  anomaliesTotal: 0,
+  anomaliesScope: '',
+  anomaliesCallState: idleCallState(),
   equipmentPage: 1,
   equipmentTotal: 0,
   equipmentScope: '',
@@ -80,6 +85,10 @@ export const OrganizationAssetsPaneStore = signalStore(
 
   //#region Computed
   withComputed((store) => ({
+    anomalies: computed(() => store.anomaliesCallState().data ?? []),
+    anomaliesPageCount: computed(() =>
+      Math.max(1, Math.ceil(store.anomaliesTotal() / PANE_ITEMS_PER_PAGE)),
+    ),
     equipmentPageCount: computed(() =>
       Math.max(1, Math.ceil(store.equipmentTotal() / PANE_ITEMS_PER_PAGE)),
     ),
@@ -133,9 +142,79 @@ export const OrganizationAssetsPaneStore = signalStore(
   withMethods(
     (
       store,
+      parkService = inject(ParkService),
       equipmentService = inject<EquipmentService>(EquipmentService),
       inspectionService = inject<InspectionService>(InspectionService),
     ) => ({
+      /**
+       * @description
+       * Reads the unresolved anomaly register with the same family/customer/site authority as
+       * counts.
+       */
+      loadAnomalies: rxMethod<{
+        readonly organizationId: string;
+        readonly facilityId?: string;
+        readonly family?: string;
+        readonly customerId?: string;
+        readonly includeDescendants?: boolean;
+        readonly page?: number;
+      }>(
+        pipe(
+          switchMap(
+            ({
+              organizationId,
+              facilityId,
+              family,
+              customerId,
+              includeDescendants = true,
+              page = 1,
+            }) => {
+              const scope = JSON.stringify([
+                organizationId,
+                facilityId ?? '',
+                family ?? '',
+                customerId ?? '',
+                facilityId ? includeDescendants : '',
+              ]);
+              patchState(store, {
+                anomaliesPage: page,
+                anomaliesScope: scope,
+                anomaliesTotal: store.anomaliesScope() === scope ? store.anomaliesTotal() : 0,
+                anomaliesCallState: pendingCallState(
+                  store.anomaliesScope() === scope ? store.anomaliesCallState().data : null,
+                ),
+              });
+              return parkService
+                .anomalies(organizationId, {
+                  page,
+                  itemsPerPage: PANE_ITEMS_PER_PAGE,
+                  params: {
+                    ...(facilityId ? { facilityId, includeDescendants } : {}),
+                    ...(family ? { family } : {}),
+                    ...(customerId ? { customerId } : {}),
+                  },
+                })
+                .pipe(
+                  tapResponse({
+                    next: (collection) =>
+                      patchState(store, {
+                        anomaliesTotal: collection.totalItems,
+                        anomaliesCallState: successCallState(collection.member),
+                      }),
+                    error: (error: unknown) =>
+                      patchState(store, {
+                        anomaliesCallState: errorCallState(
+                          toStoreError(error),
+                          store.anomaliesCallState().data,
+                        ),
+                      }),
+                  }),
+                );
+            },
+          ),
+        ),
+      ),
+
       /**
        * Method loadEquipment
        *
@@ -153,47 +232,79 @@ export const OrganizationAssetsPaneStore = signalStore(
         readonly facilityId?: string;
         readonly page?: number;
         readonly includeDescendants?: boolean;
+        readonly family?: string;
+        readonly customerId?: string;
+        readonly status?: string;
+        readonly maintenanceDueStatus?: string;
       }>(
         pipe(
-          switchMap(({ organizationId, facilityId, page = 1, includeDescendants = true }) => {
-            patchState(store, {
-              equipmentPage: page,
-              equipmentScope: `${organizationId}:${facilityId ?? ''}:${includeDescendants}`,
-              equipmentListCallState: pendingCallState(
-                store.equipmentScope() ===
-                  `${organizationId}:${facilityId ?? ''}:${includeDescendants}`
-                  ? store.equipmentListCallState().data
-                  : null,
-              ),
-            });
+          switchMap(
+            ({
+              organizationId,
+              facilityId,
+              page = 1,
+              includeDescendants = true,
+              family,
+              customerId,
+              status,
+              maintenanceDueStatus,
+            }) => {
+              const filters = {
+                ...(family ? { family } : {}),
+                ...(customerId ? { customerId } : {}),
+                ...(status ? { status } : {}),
+                ...(maintenanceDueStatus ? { maintenanceDueStatus } : {}),
+              };
+              const scope = JSON.stringify([
+                organizationId,
+                facilityId ?? '',
+                includeDescendants,
+                family ?? '',
+                customerId ?? '',
+                status ?? '',
+                maintenanceDueStatus ?? '',
+              ]);
+              patchState(store, {
+                equipmentPage: page,
+                equipmentScope: scope,
+                equipmentTotal: store.equipmentScope() === scope ? store.equipmentTotal() : 0,
+                equipmentListCallState: pendingCallState(
+                  store.equipmentScope() === scope ? store.equipmentListCallState().data : null,
+                ),
+              });
 
-            const request = facilityId
-              ? equipmentService.listByFacility(organizationId, facilityId, {
-                  page,
-                  itemsPerPage: PANE_ITEMS_PER_PAGE,
-                  params: { includeDescendants },
-                })
-              : equipmentService.list(organizationId, { page, itemsPerPage: PANE_ITEMS_PER_PAGE });
+              const request = facilityId
+                ? equipmentService.listByFacility(organizationId, facilityId, {
+                    page,
+                    itemsPerPage: PANE_ITEMS_PER_PAGE,
+                    params: { includeDescendants, ...filters },
+                  })
+                : equipmentService.list(organizationId, {
+                    page,
+                    itemsPerPage: PANE_ITEMS_PER_PAGE,
+                    ...(Object.keys(filters).length ? { params: filters } : {}),
+                  });
 
-            return request.pipe(
-              tapResponse({
-                next: (collection: HydraCollection<EquipmentOutput>): void => {
-                  patchState(store, {
-                    equipmentTotal: collection.totalItems,
-                    equipmentListCallState: successCallState(collection.member),
-                  });
-                },
-                error: (error: unknown): void => {
-                  patchState(store, {
-                    equipmentListCallState: errorCallState(
-                      toStoreError(error),
-                      store.equipmentListCallState().data,
-                    ),
-                  });
-                },
-              }),
-            );
-          }),
+              return request.pipe(
+                tapResponse({
+                  next: (collection: HydraCollection<EquipmentOutput>): void => {
+                    patchState(store, {
+                      equipmentTotal: collection.totalItems,
+                      equipmentListCallState: successCallState(collection.member),
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    patchState(store, {
+                      equipmentListCallState: errorCallState(
+                        toStoreError(error),
+                        store.equipmentListCallState().data,
+                      ),
+                    });
+                  },
+                }),
+              );
+            },
+          ),
         ),
       ),
 
@@ -213,45 +324,66 @@ export const OrganizationAssetsPaneStore = signalStore(
         readonly organizationId: string;
         readonly facilityId?: string;
         readonly page?: number;
+        readonly family?: string;
+        readonly customerId?: string;
+        readonly includeDescendants?: boolean;
       }>(
         pipe(
-          switchMap(({ organizationId, facilityId, page = 1 }) => {
-            patchState(store, {
-              inspectionPage: page,
-              inspectionScope: `${organizationId}:${facilityId ?? ''}`,
-              inspectionListCallState: pendingCallState(
-                store.inspectionScope() === `${organizationId}:${facilityId ?? ''}`
-                  ? store.inspectionListCallState().data
-                  : null,
-              ),
-            });
+          switchMap(
+            ({ organizationId, facilityId, page = 1, family, customerId, includeDescendants }) => {
+              const filters = {
+                ...(family ? { family } : {}),
+                ...(customerId ? { customerId } : {}),
+                ...(facilityId && includeDescendants !== undefined ? { includeDescendants } : {}),
+              };
+              const scope = JSON.stringify([
+                organizationId,
+                facilityId ?? '',
+                family ?? '',
+                customerId ?? '',
+                facilityId ? (includeDescendants ?? '') : '',
+              ]);
+              patchState(store, {
+                inspectionPage: page,
+                inspectionScope: scope,
+                inspectionTotal: store.inspectionScope() === scope ? store.inspectionTotal() : 0,
+                inspectionListCallState: pendingCallState(
+                  store.inspectionScope() === scope ? store.inspectionListCallState().data : null,
+                ),
+              });
 
-            const request = facilityId
-              ? inspectionService.listByFacility(organizationId, facilityId, {
-                  page,
-                  itemsPerPage: PANE_ITEMS_PER_PAGE,
-                })
-              : inspectionService.list(organizationId, { page, itemsPerPage: PANE_ITEMS_PER_PAGE });
+              const request = facilityId
+                ? inspectionService.listByFacility(organizationId, facilityId, {
+                    page,
+                    itemsPerPage: PANE_ITEMS_PER_PAGE,
+                    ...(Object.keys(filters).length ? { params: filters } : {}),
+                  })
+                : inspectionService.list(organizationId, {
+                    page,
+                    itemsPerPage: PANE_ITEMS_PER_PAGE,
+                    ...(Object.keys(filters).length ? { params: filters } : {}),
+                  });
 
-            return request.pipe(
-              tapResponse({
-                next: (collection: HydraCollection<InspectionOutput>): void => {
-                  patchState(store, {
-                    inspectionTotal: collection.totalItems,
-                    inspectionListCallState: successCallState(collection.member),
-                  });
-                },
-                error: (error: unknown): void => {
-                  patchState(store, {
-                    inspectionListCallState: errorCallState(
-                      toStoreError(error),
-                      store.inspectionListCallState().data,
-                    ),
-                  });
-                },
-              }),
-            );
-          }),
+              return request.pipe(
+                tapResponse({
+                  next: (collection: HydraCollection<InspectionOutput>): void => {
+                    patchState(store, {
+                      inspectionTotal: collection.totalItems,
+                      inspectionListCallState: successCallState(collection.member),
+                    });
+                  },
+                  error: (error: unknown): void => {
+                    patchState(store, {
+                      inspectionListCallState: errorCallState(
+                        toStoreError(error),
+                        store.inspectionListCallState().data,
+                      ),
+                    });
+                  },
+                }),
+              );
+            },
+          ),
         ),
       ),
     }),

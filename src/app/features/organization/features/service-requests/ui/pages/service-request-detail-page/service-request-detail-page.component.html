@@ -1,0 +1,257 @@
+<div id="service-request-detail" class="flex min-w-0 flex-col gap-6">
+  <a
+    hlmBtn
+    variant="link"
+    class="self-start mobile-ui:min-h-11"
+    [routerLink]="['/organizations', organizationId(), 'service-requests']"
+    i18n="@@serviceRequest.detail.back"
+    >Maintenance requests</a
+  >
+  @if (
+    (store.readCallState().status === 'pending' || store.readCallState().status === 'idle') &&
+    !current()
+  ) {
+    <div role="status" class="flex flex-col gap-3">
+      <hlm-skeleton class="h-8 w-64" /><hlm-skeleton class="h-28 w-full" />
+    </div>
+  } @else if (current(); as request) {
+    @if (store.readCallState().error; as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ error.message }}</p>
+        <button hlmBtn type="button" variant="outline" (click)="retry()" i18n="@@common.retry">
+          Retry
+        </button>
+      </div>
+    }
+    <section class="flex min-w-0 flex-col gap-3" aria-labelledby="service-request-title-heading">
+      <div class="flex flex-wrap items-center gap-2">
+        <span hlmBadge variant="outline">{{ statusLabel(request.status) }}</span
+        ><span hlmBadge variant="secondary">{{ priorityLabel(request.priority) }}</span>
+      </div>
+      <h2 hlmLarge id="service-request-title-heading" class="wrap-anywhere">{{ request.title }}</h2>
+      <p class="text-sm wrap-anywhere whitespace-pre-wrap">{{ request.description }}</p>
+      <p class="text-xs text-muted-foreground">
+        <span i18n="@@serviceRequest.page.requestedAt">Requested</span> ·
+        {{ request.requestedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+      </p>
+      <div class="flex flex-wrap gap-2">
+        @if (allowed('update', request)) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mobile-ui:min-h-11"
+            [disabled]="busy() || !online()"
+            (click)="open('update')"
+            i18n="@@common.edit"
+          >
+            Edit
+          </button>
+        }
+        @if (allowed('qualify', request)) {
+          <button
+            hlmBtn
+            type="button"
+            class="mobile-ui:min-h-11"
+            [disabled]="busy() || !online()"
+            (click)="open('qualify')"
+            data-testid="service-request-qualify"
+            i18n="@@serviceRequest.detail.qualify"
+          >
+            Qualify request
+          </button>
+        }
+        @if (allowed('convert', request)) {
+          <button
+            hlmBtn
+            type="button"
+            class="mobile-ui:min-h-11"
+            [disabled]="busy() || !online()"
+            (click)="open('convert')"
+            data-testid="service-request-convert"
+            i18n="@@serviceRequest.editor.convert"
+          >
+            Organize corrective work
+          </button>
+        }
+        @if (allowed('reject', request)) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mobile-ui:min-h-11"
+            [disabled]="busy() || !online()"
+            (click)="open('reject')"
+            i18n="@@serviceRequest.action.reject"
+          >
+            Reject request
+          </button>
+        }
+        @if (allowed('cancel', request)) {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            class="mobile-ui:min-h-11"
+            [disabled]="busy() || !online()"
+            (click)="open('cancel')"
+            i18n="@@serviceRequest.action.cancel"
+          >
+            Cancel request
+          </button>
+        }
+      </div>
+    </section>
+    <section
+      class="@container/request-target flex flex-col gap-3"
+      aria-labelledby="service-request-target-heading"
+    >
+      <h2 hlmLarge id="service-request-target-heading" i18n="@@serviceRequest.form.target">
+        Maintenance target
+      </h2>
+      <dl class="grid grid-cols-1 gap-3 @[36rem]/request-target:grid-cols-2">
+        @if (request.targetSnapshot.equipment; as equipment) {
+          <div>
+            <dt class="text-xs text-muted-foreground" i18n="@@serviceRequest.form.equipment">
+              Equipment
+            </dt>
+            <dd class="text-sm wrap-anywhere">
+              {{ equipment.name ?? equipment.assetCode ?? equipment.id }}
+            </dd>
+            @if (canReadEquipment() && request.equipmentId) {
+              <a
+                hlmBtn
+                variant="link"
+                [routerLink]="[
+                  '/organizations',
+                  organizationId(),
+                  'equipments',
+                  request.equipmentId,
+                ]"
+                i18n="@@serviceRequest.detail.equipment"
+                >Open equipment dossier</a
+              >
+            }
+          </div>
+        }
+        @if (request.targetSnapshot.site; as site) {
+          <div>
+            <dt class="text-xs text-muted-foreground" i18n="@@serviceRequest.form.site">Site</dt>
+            <dd class="text-sm wrap-anywhere">{{ site.name }}</dd>
+            @if (canReadSites()) {
+              <a
+                hlmBtn
+                variant="link"
+                [routerLink]="['/organizations', organizationId(), 'facilities', site.id]"
+                i18n="@@serviceRequest.detail.site"
+                >Open site dossier</a
+              >
+            }
+          </div>
+        }
+        @if (request.targetSnapshot.customer; as customer) {
+          <div>
+            <dt class="text-xs text-muted-foreground" i18n="@@facility.form.customer">Customer</dt>
+            <dd class="text-sm wrap-anywhere">{{ customer.name }}</dd>
+          </div>
+        }
+      </dl>
+      @if (request.originInspectionId && canReadInspections()) {
+        <a
+          hlmBtn
+          variant="link"
+          class="self-start"
+          [routerLink]="[
+            '/organizations',
+            organizationId(),
+            'inspections',
+            request.originInspectionId,
+          ]"
+          i18n="@@serviceRequest.detail.source"
+          >Open source inspection</a
+        >
+      }
+    </section>
+    @if (request.qualificationNote || request.qualifiedAt) {
+      <section class="flex flex-col gap-2">
+        <h2 hlmLarge i18n="@@serviceRequest.detail.qualification">Qualification</h2>
+        @if (request.qualifiedAt) {
+          <p class="text-xs text-muted-foreground">
+            {{ request.qualifiedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+          </p>
+        }
+        @if (request.qualificationNote) {
+          <p class="text-sm wrap-anywhere whitespace-pre-wrap">{{ request.qualificationNote }}</p>
+        }
+      </section>
+    }
+    @if (request.decisionReason) {
+      <section class="flex flex-col gap-2">
+        <h2 hlmLarge i18n="@@serviceRequest.action.reason">Decision reason</h2>
+        <p class="text-sm wrap-anywhere whitespace-pre-wrap">{{ request.decisionReason }}</p>
+      </section>
+    }
+    @if (request.interventionId) {
+      <section class="flex flex-col gap-3" data-testid="service-request-work-link">
+        <h2 hlmLarge i18n="@@serviceRequest.detail.work">Corrective work</h2>
+        @if (request.convertedAt) {
+          <p class="text-xs text-muted-foreground">
+            {{ request.convertedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+          </p>
+        }
+        @if (canReadInterventions()) {
+          <a
+            hlmBtn
+            variant="outline"
+            class="self-start mobile-ui:min-h-11"
+            [routerLink]="[
+              '/organizations',
+              organizationId(),
+              'interventions',
+              request.interventionId,
+            ]"
+            [queryParams]="{ targetEquipment: request.equipmentId, workAction: 'repair' }"
+            i18n="@@serviceRequest.detail.intervention"
+            >Open corrective intervention</a
+          >
+        }
+      </section>
+    }
+  } @else if (store.readCallState().error; as error) {
+    <div hlmEmpty role="alert">
+      <div hlmEmptyHeader>
+        <p hlmEmptyTitle i18n="@@serviceRequest.detail.loadFailed">
+          This request could not be opened
+        </p>
+        <p hlmEmptyDescription>{{ error.message }}</p>
+      </div>
+      <div hlmEmptyContent>
+        <button hlmBtn type="button" (click)="retry()" i18n="@@common.retry">Retry</button>
+      </div>
+    </div>
+  }
+  <app-service-request-editor-sheet
+    [organizationId]="organizationId()"
+    [visible]="editorVisible()"
+    [kind]="kind()"
+    [request]="editing()"
+    [pending]="store.writeCallState().status === 'pending'"
+    [uncertain]="store.conversionUncertain()"
+    [canRetryConversion]="online() && canManage()"
+    [error]="store.writeCallState().error"
+    [conflict]="conflict()"
+    [latestRequest]="latest()"
+    [canAcceptRevision]="canAcceptLatest()"
+    [openWork]="compatibleWork()"
+    [workPending]="targets.openWorkCallState().status === 'pending'"
+    [workError]="targets.openWorkCallState().error"
+    [workReadable]="canReadWork()"
+    (descriptionSubmitted)="update($event)"
+    (actionSubmitted)="act($event)"
+    (dismissed)="editorVisible.set(false)"
+    (refreshRequested)="review()"
+    (revisionAccepted)="acceptRevision()"
+    (retryConversionRequested)="retryConversion()"
+    (retryWorkRequested)="retryWork()"
+  />
+</div>

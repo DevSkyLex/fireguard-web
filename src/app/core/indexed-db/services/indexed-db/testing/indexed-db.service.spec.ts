@@ -164,6 +164,9 @@ describe('IndexedDbService', () => {
       await expect(
         service.putTransaction({ outbox: [{ key: 'k', value: {} }] }),
       ).resolves.toBeUndefined();
+      await expect(
+        service.updateTransaction({ outbox: ['k'] }, () => ({})),
+      ).resolves.toBeUndefined();
       await expect(service.remove('outbox', 'k')).resolves.toBeUndefined();
       await expect(service.removeWhere('outbox', () => true)).resolves.toBeUndefined();
       await expect(service.clearAll()).resolves.toBeUndefined();
@@ -366,6 +369,7 @@ describe('IndexedDbService', () => {
       transaction = Object.assign(new EventTarget(), {
         objectStore: vi.fn(() => store),
         error: null,
+        abort: vi.fn(),
       }) as unknown as IDBTransaction;
       database = Object.assign(new EventTarget(), {
         transaction: vi.fn(() => transaction),
@@ -598,6 +602,102 @@ describe('IndexedDbService', () => {
       expect(metadata.put).toHaveBeenCalledExactlyOnceWith(3, 'revision');
       transaction.dispatchEvent(new Event('complete'));
       await expect(result).resolves.toBeUndefined();
+    });
+
+    it('derives writes from every read in the same transaction and waits for commit', async () => {
+      const ownerRead = browserRequest<unknown>('account-1');
+      const previousRead = browserRequest<unknown>({ count: 1 });
+      const workspaceRead = browserRequest<unknown>({ organization: 'org-1' });
+      const metadata = {
+        ...store,
+        get: vi.fn((key: string) => (key === 'ownerUserId' ? ownerRead : previousRead)),
+        put: vi.fn(),
+      };
+      const outbox = { ...store, get: vi.fn(() => workspaceRead) };
+      vi.mocked(transaction.objectStore).mockImplementation(
+        (name: string) => (name === 'metadata' ? metadata : outbox) as unknown as IDBObjectStore,
+      );
+      const update = vi.fn(() => ({ metadata: [{ key: 'snapshot', value: { count: 2 } }] }));
+      const write = service.updateTransaction(
+        { metadata: ['ownerUserId', 'snapshot'], outbox: ['workspace'] },
+        update,
+      );
+      const settled = vi.fn();
+      void write.then(settled);
+      await opened();
+      expect(database.transaction).toHaveBeenCalledExactlyOnceWith(
+        ['metadata', 'outbox'],
+        'readwrite',
+      );
+      ownerRead.dispatchEvent(new Event('success'));
+      previousRead.dispatchEvent(new Event('success'));
+      expect(update).not.toHaveBeenCalled();
+      workspaceRead.dispatchEvent(new Event('success'));
+      expect(update).toHaveBeenCalledExactlyOnceWith({
+        metadata: { ownerUserId: 'account-1', snapshot: { count: 1 } },
+        outbox: { workspace: { organization: 'org-1' } },
+      });
+      expect(metadata.put).toHaveBeenCalledExactlyOnceWith({ count: 2 }, 'snapshot');
+      await Promise.resolve();
+      expect(settled).not.toHaveBeenCalled();
+      transaction.dispatchEvent(new Event('complete'));
+      await expect(write).resolves.toBeUndefined();
+    });
+
+    it('aborts derived writes when scope changes while transaction reads are pending', async () => {
+      let current = true;
+      const update = vi.fn(() => ({ metadata: [{ key: 'snapshot', value: {} }] }));
+      const write = service.updateTransaction({ metadata: ['snapshot'] }, update, () => current);
+      const rejected = expect(write).rejects.toMatchObject({ name: 'AbortError' });
+      await opened();
+      current = false;
+      valueRequest.dispatchEvent(new Event('success'));
+      await rejected;
+      expect(update).not.toHaveBeenCalled();
+      expect(store.put).not.toHaveBeenCalled();
+      expect(transaction.abort).toHaveBeenCalledOnce();
+    });
+
+    it('aborts the transaction and preserves the updater failure', async () => {
+      const failure = new Error('Invalid saved workspace');
+      const write = service.updateTransaction({ metadata: ['snapshot'] }, () => {
+        throw failure;
+      });
+      const rejected = expect(write).rejects.toBe(failure);
+      await opened();
+      valueRequest.dispatchEvent(new Event('success'));
+      await rejected;
+      expect(store.put).not.toHaveBeenCalled();
+      expect(transaction.abort).toHaveBeenCalledOnce();
+    });
+
+    it.each(['abort', 'error'])(
+      'does not acknowledge an atomic update when its transaction reports %s',
+      async (event) => {
+        const failure = new DOMException('Device storage full', 'QuotaExceededError');
+        const write = service.updateTransaction({ metadata: ['snapshot'] }, () => ({
+          metadata: [{ key: 'snapshot', value: {} }],
+        }));
+        const rejected = expect(write).rejects.toBe(failure);
+        await opened();
+        valueRequest.dispatchEvent(new Event('success'));
+        Object.assign(transaction, { error: failure });
+        transaction.dispatchEvent(new Event(event));
+        await rejected;
+      },
+    );
+
+    it('propagates an atomic update read failure before running its updater', async () => {
+      const failure = new DOMException('Storage unavailable', 'UnknownError');
+      const update = vi.fn(() => ({}));
+      const write = service.updateTransaction({ metadata: ['snapshot'] }, update);
+      const rejected = expect(write).rejects.toBe(failure);
+      await opened();
+      Object.assign(valueRequest, { error: failure });
+      valueRequest.dispatchEvent(new Event('error'));
+      await rejected;
+      expect(update).not.toHaveBeenCalled();
+      expect(store.put).not.toHaveBeenCalled();
     });
 
     it('removes only matching cursor entries and completes after the transaction', async () => {

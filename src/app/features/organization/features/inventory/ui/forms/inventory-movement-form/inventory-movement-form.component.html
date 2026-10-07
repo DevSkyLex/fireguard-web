@@ -1,0 +1,101 @@
+<form class="flex flex-col gap-6" (submit)="submit($event)">
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@inventory.movement.details">Movement details</legend>
+    <div hlmFieldGroup>
+      @if (mode() === 'correction') {
+        <div hlmField>
+          <label hlmFieldLabel for="inventory-correction-part" i18n="@@inventory.kind.part"
+            >Part</label
+          >
+          <app-inventory-part-picker
+            [organizationId]="organizationId()"
+            inputId="inventory-correction-part"
+            [formField]="fields.partId"
+          />
+          @if (fields.partId().touched()) {
+            @for (error of fields.partId().errors(); track error) {
+              <hlm-field-error>{{ error.message }}</hlm-field-error>
+            }
+          }
+        </div>
+        <div hlmField>
+          <label hlmFieldLabel for="inventory-correction-warehouse" i18n="@@inventory.warehouse"
+            >Warehouse</label
+          >
+          <app-inventory-warehouse-picker
+            [organizationId]="organizationId()"
+            inputId="inventory-correction-warehouse"
+            [formField]="fields.warehouseId"
+          />
+          @if (fields.warehouseId().touched()) {
+            @for (error of fields.warehouseId().errors(); track error) {
+              <hlm-field-error>{{ error.message }}</hlm-field-error>
+            }
+          }
+        </div>
+      }
+      <div hlmField>
+        <label hlmFieldLabel for="inventory-movement-quantity" i18n="@@inventory.quantity"
+          >Quantity</label
+        >
+        <input
+          hlmInput
+          id="inventory-movement-quantity"
+          type="text"
+          inputmode="decimal"
+          [formField]="fields.quantity"
+        />
+        @if (mode() === 'correction') {
+          <p hlmFieldDescription i18n="@@inventory.movement.signedHint">
+            Use a negative quantity to remove stock, or a positive quantity to add it.
+          </p>
+        } @else {
+          <p hlmFieldDescription i18n="@@inventory.movement.returnHint">
+            Enter the quantity physically returned from this consumption.
+          </p>
+        }
+        @if (fields.quantity().touched()) {
+          @for (error of fields.quantity().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="inventory-movement-reason" i18n="@@inventory.movement.reason"
+          >Reason</label
+        >
+        <textarea hlmTextarea id="inventory-movement-reason" [formField]="fields.reason"></textarea>
+        @if (fields.reason().touched()) {
+          @for (error of fields.reason().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    </div>
+  </fieldset>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@inventory.movement.failed">The movement could not be confirmed</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button hlmBtn class="mobile-ui:min-h-11" type="submit" [disabled]="pending() || !available()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      <span i18n="@@inventory.movement.record">Record movement</span>
+    </button>
+  </div>
+</form>

@@ -1,4 +1,7 @@
 <div id="organization-dashboard" class="@container/dashboard flex min-h-0 flex-col gap-6">
+  @if (organizationContext.selectedOrganizationId(); as organizationId) {
+    <app-organization-park-queues [organizationId]="organizationId" />
+  }
   @if (dashboardStore.queryHasError() && isForbidden(dashboardStore.queryError())) {
     <div hlmEmpty>
       <div hlmEmptyHeader>

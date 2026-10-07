@@ -19,6 +19,16 @@ export interface EquipmentOutputFixture {
   readonly facilityId: string | null;
   readonly facilityName: string | null;
   readonly type: string;
+  readonly name?: string | null;
+  readonly assetCode?: string | null;
+  readonly criticality?: 'low' | 'medium' | 'high' | 'critical' | null;
+  readonly technicalProperties?: ReadonlyArray<{
+    readonly key: string;
+    readonly value: string;
+    readonly unit: string | null;
+  }>;
+  readonly predecessorEquipmentId?: string | null;
+  readonly successorEquipmentId?: string | null;
   readonly subType: string | null;
   readonly brand: string | null;
   readonly model: string | null;
@@ -26,6 +36,10 @@ export interface EquipmentOutputFixture {
   readonly locationLabel: string | null;
   readonly status: string;
   readonly maintenanceDueStatus: string;
+  readonly controlDueStatus?: string;
+  readonly serviceDueStatus?: string;
+  readonly controlNextDueAt?: string | null;
+  readonly serviceNextDueAt?: string | null;
   readonly installedAt: string | null;
   readonly commissionedAt: string | null;
   readonly tags: ReadonlyArray<{ readonly id: string; readonly name: string }>;

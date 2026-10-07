@@ -1,0 +1,305 @@
+<div class="@container flex min-w-0 flex-col gap-6" data-testid="maintenance-costs-page">
+  <header class="flex flex-col gap-1">
+    <p class="text-muted-foreground" i18n="@@maintenanceCost.page.description">
+      Prepare budgets and follow internal operational costs. Commercial invoicing remains in your
+      ERP.
+    </p>
+    <span hlmBadge variant="secondary" class="self-start" i18n="@@maintenanceCost.page.private"
+      >Private financial information</span
+    >
+  </header>
+  @if (enabled()) {
+    <a
+      hlmBtn
+      variant="outline"
+      size="sm"
+      class="self-start mobile-ui:min-h-11"
+      [routerLink]="['/organizations', organizationId(), 'maintenance-costs', 'reports']"
+      i18n="@@maintenanceReport.openReports"
+      >Open economic pilotage</a
+    >
+    @if (store.uncertainWrite()) {
+      <div hlmAlert role="status">
+        <h2 hlmAlertTitle i18n="@@maintenanceCost.page.uncertain">Confirmation is still needed</h2>
+        <p hlmAlertDescription i18n="@@maintenanceCost.page.retryHint">
+          Your original declaration is retained. Retry it unchanged to confirm whether it was saved.
+        </p>
+        <button
+          hlmBtn
+          variant="outline"
+          class="mt-3 mobile-ui:min-h-11"
+          type="button"
+          [disabled]="!canManage() || store.writePending()"
+          (click)="retryWrite()"
+          i18n="@@maintenanceCost.page.retryOriginal"
+        >
+          Retry the original declaration
+        </button>
+      </div>
+    }
+    <hlm-tabs [tab]="tab()" (tabActivated)="changeTab($event)">
+      <hlm-tabs-list class="max-w-full flex-wrap group-data-horizontal/tabs:h-auto">
+        <button
+          hlmTabsTrigger="costs"
+          class="mobile-ui:min-h-11"
+          i18n="@@maintenanceCost.page.dossier"
+        >
+          Intervention costs
+        </button>
+        <button
+          hlmTabsTrigger="settings"
+          class="mobile-ui:min-h-11"
+          i18n="@@maintenanceCost.page.settings"
+        >
+          Currency and hourly rates
+        </button>
+      </hlm-tabs-list>
+      <section hlmTabsContent="costs" class="flex min-w-0 flex-col gap-6">
+        @if (store.costCallState().status === 'pending' && !cost()) {
+          <div class="grid gap-3" aria-busy="true">
+            <div hlmSkeleton class="h-16"></div>
+            <div hlmSkeleton class="h-40"></div>
+          </div>
+        }
+        @if (store.costCallState().error; as error) {
+          <div hlmAlert variant="destructive" role="alert">
+            <h2 hlmAlertTitle i18n="@@maintenanceCost.page.readFailed">
+              Could not load the financial dossier
+            </h2>
+            <p hlmAlertDescription>{{ error.message }}</p>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="mt-3 mobile-ui:min-h-11"
+              (click)="reloadCost()"
+              i18n="@@maintenanceCost.page.reload"
+            >
+              Reload
+            </button>
+          </div>
+        }
+        @if (cost(); as dossier) {
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 hlmLarge i18n="@@maintenanceCost.page.current">Current realized costs</h2>
+            @if (canReadInterventions()) {
+              <a
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="mobile-ui:min-h-11"
+                [routerLink]="[
+                  '/organizations',
+                  organizationId(),
+                  'interventions',
+                  dossier.interventionId,
+                ]"
+                i18n="@@maintenanceCost.page.openIntervention"
+                >Open intervention</a
+              >
+            }
+          </div>
+          <dl class="grid gap-4 @lg:grid-cols-3">
+            <div>
+              <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.planning.budget">
+                Planned budget
+              </dt>
+              <dd class="font-mono">
+                {{ money(dossier.plannedBudget, dossier.currency, locale) }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.page.known">
+                Known contributions
+              </dt>
+              <dd class="font-mono">
+                {{ money(dossier.current.knownTotal, dossier.currency, locale) }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.page.total">
+                Complete realized total
+              </dt>
+              <dd class="font-mono" data-testid="maintenance-current-total">
+                {{ money(dossier.current.total, dossier.currency, locale) }}
+              </dd>
+            </div>
+          </dl>
+          @if (!dossier.current.complete) {
+            <div hlmAlert>
+              <h3 hlmAlertTitle i18n="@@maintenanceCost.page.incomplete">
+                The valuation is incomplete
+              </h3>
+              <p hlmAlertDescription i18n="@@maintenanceCost.page.incompleteHint">
+                Some prices or hourly rates are unknown. Known contributions are shown separately
+                and missing values are not treated as zero.
+              </p>
+            </div>
+          }
+          <app-maintenance-cost-facts
+            [items]="dossier.current.items"
+            [canAdjust]="canManage()"
+            [pending]="!canWrite()"
+            (adjusted)="adjust($event)"
+          />
+          @if (canManage()) {
+            @if (dossier.planningEditable) {
+              <app-maintenance-planning-form
+                [cost]="dossier"
+                [pending]="store.writePending()"
+                [locked]="!canWrite()"
+                [error]="planningError()"
+                [resetToken]="planningReset()"
+                (submitted)="savePlanning($event)"
+              />
+            } @else {
+              <p
+                class="text-sm text-muted-foreground"
+                i18n="@@maintenanceCost.page.preparationClosed"
+              >
+                Financial preparation is closed. The recorded budget is retained.
+              </p>
+            }
+            @if (planningError()?.code === 412 || planningError()?.code === '412') {
+              <button
+                hlmBtn
+                variant="outline"
+                class="self-start mobile-ui:min-h-11"
+                type="button"
+                (click)="reloadCost()"
+                i18n="@@maintenanceCost.planning.reloadLatest"
+              >
+                Read the latest budget for comparison
+              </button>
+            }
+            <app-maintenance-expense-form
+              [scope]="dossier.organizationId + '/' + dossier.interventionId"
+              [timezone]="regionalFormatting().timezone"
+              [pending]="store.writePending()"
+              [locked]="!canWrite()"
+              [error]="expenseError()"
+              [originalExpense]="adjustment()"
+              [resetToken]="expenseReset()"
+              (submitted)="saveExpense($event)"
+              (cancelled)="adjustment.set(null)"
+            />
+          }
+          @if (dossier.frozen; as frozen) {
+            <section
+              class="flex min-w-0 flex-col gap-4 border-t pt-5"
+              data-testid="maintenance-frozen-costs"
+            >
+              <div class="flex flex-wrap items-center gap-3">
+                <h2 hlmLarge i18n="@@maintenanceCost.page.frozen">Costs recorded at closure</h2>
+                <span hlmBadge variant="secondary" i18n="@@maintenanceCost.page.immutable"
+                  >Immutable snapshot</span
+                >
+              </div>
+              <p class="text-sm text-muted-foreground" i18n="@@maintenanceCost.page.frozenHint">
+                Later expenses, returns and corrected time affect the current costs while this
+                original snapshot stays unchanged.
+              </p>
+              <dl class="grid gap-4 @lg:grid-cols-2 @3xl:grid-cols-4">
+                <div>
+                  <dt
+                    class="text-sm text-muted-foreground"
+                    i18n="@@maintenanceCost.planning.budget"
+                  >
+                    Planned budget
+                  </dt>
+                  <dd class="font-mono wrap-anywhere">
+                    {{ money(frozen.plannedBudget, frozen.currency, locale) }}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.page.captured">
+                    Captured on
+                  </dt>
+                  <dd>{{ frozen.capturedAt | appOrgDate: 'datetime' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.page.known">
+                    Known contributions
+                  </dt>
+                  <dd class="font-mono">{{ money(frozen.knownTotal, frozen.currency, locale) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.page.total">
+                    Complete realized total
+                  </dt>
+                  <dd class="font-mono" data-testid="maintenance-frozen-total">
+                    {{ money(frozen.total, frozen.currency, locale) }}
+                  </dd>
+                </div>
+              </dl>
+              @if (!frozen.complete) {
+                <p
+                  class="text-sm text-muted-foreground"
+                  i18n="@@maintenanceCost.page.frozenIncomplete"
+                >
+                  Some valuations were unknown at closure.
+                </p>
+              }
+              <app-maintenance-cost-facts [items]="frozen.items" />
+            </section>
+          }
+        } @else if (store.costCallState().status === 'idle') {
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <h2 hlmEmptyTitle i18n="@@maintenanceCost.page.choose">Choose an intervention</h2>
+              <p hlmEmptyDescription i18n="@@maintenanceCost.page.chooseHint">
+                Open an intervention's financial dossier to prepare its budget and follow its costs.
+              </p>
+            </div>
+            <div hlmEmptyContent>
+              @if (canReadInterventions()) {
+                <a
+                  hlmBtn
+                  [routerLink]="['/organizations', organizationId(), 'interventions']"
+                  i18n="@@maintenanceCost.page.browse"
+                  >Browse interventions</a
+                >
+              }
+            </div>
+          </div>
+        }
+      </section>
+      <section hlmTabsContent="settings">
+        <app-maintenance-cost-settings
+          [currency]="store.currencyCallState().data"
+          [currencyPending]="store.currencyCallState().status === 'pending'"
+          [currencyError]="store.currencyCallState().error"
+          [currencySaving]="store.writePending() || store.uncertainWrite()"
+          [currencyWriteError]="currencyError()"
+          [currencyResetToken]="currencyReset()"
+          [rates]="store.rateEntities()"
+          [ratesPending]="store.ratesCallState().status === 'pending'"
+          [ratesError]="store.ratesCallState().error"
+          [ratesSaving]="
+            store.writePending() || (store.uncertainWrite() && store.command()?.kind !== 'rate')
+          "
+          [ratesWriteError]="rateError()"
+          [rateResetToken]="rateReset()"
+          [uncertainRate]="store.uncertainWrite() && store.command()?.kind === 'rate'"
+          [canManage]="canManage()"
+          [members]="store.membersCallState().data ?? []"
+          [membersLoading]="store.membersCallState().status === 'pending'"
+          [membersAllowed]="membersAllowed()"
+          [ratePage]="store.ratePage()"
+          [rateTotal]="store.rateTotal()"
+          [ratePageSize]="30"
+          (currencySubmitted)="saveCurrency($event)"
+          (rateSubmitted)="saveRate($event)"
+          (reloadCurrency)="reloadCurrency()"
+          (reloadRates)="reloadRates()"
+          (ratePageChanged)="reloadRates($event)"
+          (retryRate)="retryWrite()"
+        />
+      </section>
+    </hlm-tabs>
+  } @else {
+    <p class="text-muted-foreground" i18n="@@maintenanceCost.page.protected">
+      Financial information is available only in an authorized browser session.
+    </p>
+  }
+</div>

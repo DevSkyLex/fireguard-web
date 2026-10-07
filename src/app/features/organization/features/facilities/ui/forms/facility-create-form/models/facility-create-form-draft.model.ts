@@ -9,9 +9,23 @@ import type { FacilityType } from '@features/organization/features/facilities/mo
  * empty string standing in for "not chosen yet") so Signal Forms has
  * something to bind, converted to `CreateFacilityInput` on submit.
  *
- * @since 1.0.0
+ * @since unreleased
  */
 export interface FacilityCreateFormDraft {
+  /**
+   * Property customerId
+   * @readonly
+   *
+   * @description
+   * Optional internal customer selection, independent of offline replay identifiers.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
+  readonly customerId: string;
+
   /**
    * Property type
    * @readonly

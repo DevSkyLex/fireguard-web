@@ -1,0 +1,44 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="state()"
+  [disableClose]="pending()"
+  (stateChanged)="stateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-w-none! overflow-y-auto pb-[env(safe-area-inset-bottom)] mobile-ui:max-h-[85svh] desktop-ui:w-[min(540px,100vw)]!"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle>{{ title() }}</h3>
+      <p hlmSheetDescription i18n="@@customer.editor.description">
+        Keep the customer's identity and contacts together for its sites.
+      </p>
+    </hlm-sheet-header>
+    @if (conflict()) {
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        variant="outline"
+        [disabled]="pending()"
+        (click)="refreshRequested.emit()"
+        i18n="@@customer.editor.refreshRevision"
+      >
+        Refresh the latest version and keep my draft
+      </button>
+    }
+    <app-customer-form
+      [customer]="customer()"
+      [pending]="pending()"
+      [error]="error()"
+      (submitted)="submitted.emit($event)"
+      (cancelled)="requestClose()"
+      (dirtyChanged)="dirty.set($event)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>
+<app-unsaved-changes-dialog
+  [state]="confirmation()"
+  (confirmed)="discard()"
+  (dismissed)="confirmation.set('closed')"
+/>

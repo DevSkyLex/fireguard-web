@@ -36,9 +36,9 @@ describe('OrganizationMobileNavigation', () => {
     const root = fixture.nativeElement as HTMLElement;
     const links = Array.from(root.querySelectorAll('a'));
     expect(links.map((link) => link.dataset['destination'])).toEqual([
-      'dashboard',
-      'interventions',
       'assets',
+      'interventions',
+      'dashboard',
       'messages',
       'more',
     ]);

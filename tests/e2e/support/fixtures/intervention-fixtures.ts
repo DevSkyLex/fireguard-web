@@ -46,6 +46,22 @@ export interface InterventionOutputFixture {
   readonly commentsCount: number;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly closureSnapshot?: {
+    readonly version: 1;
+    readonly capturedAt: string;
+    readonly interventionId: string;
+    readonly revision: number;
+    readonly site: { readonly id: string; readonly name: string } | null;
+    readonly customer: {
+      readonly id: string;
+      readonly name: string;
+    } | null;
+    readonly memberNames: Readonly<Record<string, string>>;
+    readonly workItems: readonly unknown[];
+    readonly attachments: readonly unknown[];
+    readonly timeEntries: readonly unknown[];
+    readonly report: Readonly<Record<string, unknown>>;
+  } | null;
 }
 
 /** A `planned` intervention — the Today page's default work-queue row. */
@@ -221,6 +237,27 @@ export function interventionRecurrenceOutput(
 }
 
 export interface InterventionWorkItemOutputFixture {
+  readonly operationId?: string | null;
+  readonly occurrenceId?: string | null;
+  readonly operationKind?: 'control' | 'maintenance' | null;
+  readonly executionResult?: {
+    readonly equipmentId: string;
+    readonly performedAt: string;
+    readonly outcome: 'successful' | 'failed' | 'performed';
+    readonly workPerformed: string;
+    readonly authorId?: string;
+    readonly operationId: string | null;
+    readonly occurrenceId: string | null;
+    readonly state: 'staged' | 'validated';
+    readonly validatedAt: string | null;
+    readonly history?: readonly Readonly<Record<string, unknown>>[];
+  } | null;
+  readonly targetSummary?: {
+    readonly resource: string;
+    readonly kind: 'equipment' | 'facility';
+    readonly label: string;
+  } | null;
+  readonly evidenceCount?: number;
   readonly estimatedMinutes?: number | null;
   readonly remainingMinutes?: number | null;
   readonly spentMinutes?: number;

@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -8,6 +9,7 @@ import {
   inject,
   input,
   LOCALE_ID,
+  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
@@ -42,10 +44,18 @@ import type {
   EquipmentOutput,
   EquipmentTagOutput,
   UpdateEquipmentInput,
+  ReplacementEquipmentInput,
+  ReplaceEquipmentInput,
 } from '@features/organization/features/equipments/models';
 import {
   ActiveEquipmentStore,
   EquipmentStore,
+  EquipmentTypeCatalogStore,
+  EquipmentReplacementStore,
+  type EquipmentReplacementStoreType,
+  type EquipmentTypeCatalogStoreType,
+  EquipmentInspectionSummaryStore,
+  EquipmentOpenWorkStore,
   type EquipmentStoreType,
 } from '@features/organization/features/equipments/state';
 import {
@@ -79,6 +89,9 @@ import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 import { EquipmentTags } from '../../components/equipment-tags';
 import { EquipmentAssignFacilityDialog } from '../../dialogs/equipment-assign-facility-dialog';
 import { EquipmentDecommissionDialog } from '../../dialogs/equipment-decommission-dialog';
+import { EquipmentReplacementConfirmDialog } from '../../dialogs/equipment-replacement-confirm-dialog';
+import { EquipmentCharacteristicsForm } from '../../forms/equipment-characteristics-form';
+import { EquipmentReplacementSheet } from '../../sheets/equipment-replacement-sheet';
 import type { EquipmentDetailTabId } from './models';
 
 /**
@@ -157,7 +170,10 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     EquipmentAssignFacilityDialog,
     EquipmentAttachments,
     EquipmentDecommissionDialog,
+    EquipmentReplacementConfirmDialog,
     EquipmentInformationPanel,
+    EquipmentCharacteristicsForm,
+    EquipmentReplacementSheet,
     EquipmentMaintenanceHistory,
     EquipmentStatusTag,
     EquipmentTags,
@@ -171,6 +187,10 @@ const IDLE_EDIT_STATE: EquipmentEditState = {
     ...HlmTooltipImports,
   ],
   providers: [
+    EquipmentTypeCatalogStore,
+    EquipmentReplacementStore,
+    EquipmentInspectionSummaryStore,
+    EquipmentOpenWorkStore,
     FacilityOptionsStore,
 
     provideIcons({
@@ -219,6 +239,298 @@ export class EquipmentDetailPage {
   //#endregion
 
   //#region Properties
+  /**
+   * Property canReadMaintenance
+   * @readonly
+   *
+   * @description
+   * Controls access to the independently owned maintenance plan library.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadMaintenance: Signal<boolean> = computed(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.MAINTENANCE_READ),
+  );
+  /**
+   * Property openWorkStore
+   * @readonly
+   *
+   * @description
+   * Authorized work lookup consumed before suggesting a new intervention.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InstanceType<typeof EquipmentOpenWorkStore>}
+   */
+  protected readonly openWorkStore: InstanceType<typeof EquipmentOpenWorkStore> =
+    inject(EquipmentOpenWorkStore);
+
+  /**
+   * Property canReadWork
+   * @readonly
+   *
+   * @description
+   * Work access is independent of equipment read access.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadWork: Signal<boolean> = computed(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_READ),
+  );
+
+  /**
+   * Property canCreateWork
+   * @readonly
+   *
+   * @description
+   * Allows work preparation only after the authorized lookup can be consulted.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canCreateWork: Signal<boolean> = computed(
+    () =>
+      this.canReadWork() &&
+      this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_WRITE) &&
+      this.activeEquipmentStore.selectedEquipment()?.status !== 'decommissioned',
+  );
+
+  /**
+   * Property workActions
+   * @readonly
+   *
+   * @description
+   * Equipment-targeted actions using the intervention feature's published deep-link contract.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<
+   *   readonly {
+   *     readonly action: string;
+   *     readonly label: string;
+   *     readonly route: readonly string[];
+   *     readonly params: Readonly<Record<string, string | null>>;
+   *   }[]
+   * >}
+   */
+  protected readonly workActions: Signal<
+    readonly {
+      readonly action: string;
+      readonly label: string;
+      readonly route: readonly string[];
+      readonly params: Readonly<Record<string, string | null>>;
+    }[]
+  > = computed(() => {
+    const definitions = [
+      {
+        action: 'inspection',
+        label: $localize`:@@equipment.work.prepareControl:Prepare a control`,
+      },
+      {
+        action: 'maintenance',
+        label: $localize`:@@equipment.work.prepareMaintenance:Prepare maintenance`,
+      },
+      { action: 'repair', label: $localize`:@@equipment.work.prepareRepair:Organize a repair` },
+    ];
+    const work = this.openWorkStore.queryData() ?? [];
+    return definitions.map((entry) => {
+      const existing = work.find((item) => item.action === entry.action);
+      return {
+        action: entry.action,
+        label: entry.label,
+        route: existing
+          ? ['/organizations', this.organizationId(), 'interventions', existing.interventionId]
+          : ['/organizations', this.organizationId(), 'interventions'],
+        params: {
+          create: existing ? null : '1',
+          targetEquipment: this.equipmentId(),
+          workAction: entry.action,
+        },
+      };
+    });
+  });
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Secondary inspection evidence is loaded only in the browser.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {object}
+   */
+  private readonly platformId: object = inject(PLATFORM_ID);
+
+  /**
+   * Property inspectionSummaryStore
+   * @readonly
+   *
+   * @description
+   * Authorized last-control evidence and exact anomaly counts.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InstanceType<typeof EquipmentInspectionSummaryStore>}
+   */
+  protected readonly inspectionSummaryStore: InstanceType<typeof EquipmentInspectionSummaryStore> =
+    inject(EquipmentInspectionSummaryStore);
+
+  /**
+   * Property canReadInspections
+   * @readonly
+   *
+   * @description
+   * Evidence access is independent of equipment access.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadInspections: Signal<boolean> = computed(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ),
+  );
+
+  /**
+   * Property canReportDefect
+   * @readonly
+   *
+   * @description
+   * Allows an observed defect to be recorded through the existing inspection evidence workflow.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReportDefect: Signal<boolean> = computed(
+    () =>
+      this.canReadInspections() &&
+      this.permissions.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_WRITE),
+  );
+
+  /**
+   * Property canRequestRepair
+   * @readonly
+   *
+   * @description
+   * Opens the equipment-scoped request queue with existing requests visible before creation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canRequestRepair: Signal<boolean> = computed(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.SERVICE_REQUESTS_CREATE),
+  );
+  /**
+   * Property replacementStore
+   * @readonly
+   *
+   * @description
+   * Independent candidate query and atomic replacement command state.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentReplacementStoreType}
+   */
+  protected readonly replacementStore: EquipmentReplacementStoreType =
+    inject(EquipmentReplacementStore);
+
+  /**
+   * Property replacementVisible
+   * @readonly
+   *
+   * @description
+   * Whether the terminal replacement confirmation is displayed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly replacementVisible: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Property stagedReplacement
+   * @readonly
+   *
+   * @description
+   * Draft command requiring terminal-action confirmation before submission.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<ReplaceEquipmentInput | null>}
+   */
+  protected readonly stagedReplacement: WritableSignal<ReplaceEquipmentInput | null> =
+    signal<ReplaceEquipmentInput | null>(null);
+
+  /**
+   * Property replacementOperationId
+   *
+   * @description
+   * Stable operation identifier retained across retries of an uncertain write.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
+  private replacementOperationId: string | null = null;
+  /**
+   * Property typeCatalog
+   * @readonly
+   *
+   * @description
+   * Server-owned types retained for historical record labels.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentTypeCatalogStoreType}
+   */
+  protected readonly typeCatalog: EquipmentTypeCatalogStoreType = inject(EquipmentTypeCatalogStore);
+
+  /**
+   * Property criticalityLabel
+   * @readonly
+   *
+   * @description
+   * Human-readable declared impact; unknown impact is never inferred.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly criticalityLabel: Signal<string> = computed(() => {
+    const criticality = this.activeEquipmentStore.selectedEquipment()?.criticality;
+    const labels = {
+      low: $localize`:@@equipment.criticality.low:Low`,
+      medium: $localize`:@@equipment.criticality.medium:Medium`,
+      high: $localize`:@@equipment.criticality.high:High`,
+      critical: $localize`:@@equipment.criticality.critical:Critical`,
+    };
+    return criticality
+      ? labels[criticality]
+      : $localize`:@@equipment.criticality.unknown:Not specified`;
+  });
   /**
    * Property activeEquipmentStore
    * @readonly
@@ -597,7 +909,12 @@ export class EquipmentDetailPage {
   protected readonly title: Signal<string> = computed<string>(() => {
     const equipment: EquipmentOutput | null = this.activeEquipmentStore.selectedEquipment();
 
-    return equipment ? buildEquipmentTitle(equipment) : '';
+    return equipment
+      ? buildEquipmentTitle(
+          equipment,
+          this.typeCatalog.options().find((entry) => entry.value === equipment.type)?.label,
+        )
+      : '';
   });
 
   /**
@@ -738,6 +1055,46 @@ export class EquipmentDetailPage {
     registerPageActions(this.pageActions, this.pageActionsService, destroyRef);
     registerPageTabs(this.pageTabs, this.pageTabsService, destroyRef);
 
+    effect(() => {
+      const equipment = this.activeEquipmentStore.selectedEquipment();
+      const allowed = this.canReadWork();
+      if (
+        !isPlatformBrowser(this.platformId) ||
+        !allowed ||
+        !equipment ||
+        equipment.id !== this.equipmentId()
+      )
+        return;
+      const organizationId = this.organizationId();
+      untracked(() => this.openWorkStore.load({ organizationId, equipmentId: equipment.id }));
+    });
+
+    effect(() => {
+      const equipment = this.activeEquipmentStore.selectedEquipment();
+      const permitted = this.canReadInspections();
+      if (
+        !isPlatformBrowser(this.platformId) ||
+        !permitted ||
+        !equipment ||
+        equipment.id !== this.equipmentId()
+      )
+        return;
+      const organizationId = this.organizationId();
+      untracked(() =>
+        this.inspectionSummaryStore.load({ organizationId, equipmentId: equipment.id }),
+      );
+    });
+
+    effect(() => {
+      const state = this.replacementStore.replaceCallState();
+      if (state.status !== 'success' || state.data?.predecessorEquipmentId !== this.equipmentId())
+        return;
+      untracked(() => {
+        this.replacementVisible.set(false);
+        this.replacementOperationId = null;
+      });
+    });
+
     effect((): void => {
       const callState: CallState<EquipmentOutput | null> = this.store.updateCallState();
 
@@ -755,6 +1112,9 @@ export class EquipmentDetailPage {
       const organizationId: string = this.organizationId();
 
       untracked((): void => this.facilityOptionsStore.ensureLoaded(organizationId));
+      untracked((): void => {
+        this.typeCatalog.load(organizationId);
+      });
     });
 
     effect((): void => {
@@ -786,6 +1146,169 @@ export class EquipmentDetailPage {
   //#endregion
 
   //#region Methods
+  /**
+   * Method openReplacement
+   * @method openReplacement
+   *
+   * @description
+   * Opens confirmation and loads reserve candidates without changing the equipment.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Result of the operation.
+   */
+  protected openReplacement(): void {
+    if (!this.canWrite() || this.store.isChangingLifecycle()) return;
+    this.replacementStore.reset();
+    this.replacementOperationId ??= crypto.randomUUID();
+    this.replacementVisible.set(true);
+    this.loadReplacementCandidates(1);
+  }
+
+  /**
+   * Method loadReplacementCandidates
+   * @method loadReplacementCandidates
+   *
+   * @description
+   * Reads a page of reserve equipment within the active organization.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {number} page - page.
+   * @param {string} search - search.
+   *
+   * @returns {void} Result of the operation.
+   */
+  protected loadReplacementCandidates(
+    page: number,
+    search: string = this.replacementStore.search(),
+  ): void {
+    this.replacementStore.loadCandidates({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+      page,
+      search,
+    });
+  }
+
+  /**
+   * Method replaceWithExisting
+   * @method replaceWithExisting
+   *
+   * @description
+   * Confirms replacement by an existing reserve identity.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} successorEquipmentId - successor equipment id.
+   *
+   * @returns {void} Result of the operation.
+   */
+  protected replaceWithExisting(successorEquipmentId: string): void {
+    this.stagedReplacement.set({
+      clientOperationId: this.replacementOperationId ?? crypto.randomUUID(),
+      successorEquipmentId,
+    });
+  }
+
+  /**
+   * Method replaceWithNew
+   * @method replaceWithNew
+   *
+   * @description
+   * Confirms atomic creation and replacement without a separate create call.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {ReplacementEquipmentInput} successor - successor.
+   *
+   * @returns {void} Result of the operation.
+   */
+  protected replaceWithNew(successor: ReplacementEquipmentInput): void {
+    this.stagedReplacement.set({
+      clientOperationId: this.replacementOperationId ?? crypto.randomUUID(),
+      successor,
+    });
+  }
+
+  /**
+   * Method retryReplacement
+   * @method retryReplacement
+   *
+   * @description
+   * Replays the exact immutable operation after an uncertain response.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Result of the operation.
+   */
+  protected retryReplacement(): void {
+    if (
+      this.replacementStore.commandEquipmentId() !== this.equipmentId() ||
+      this.replacementStore.commandOrganizationId() !== this.organizationId()
+    )
+      return;
+    const command = this.replacementStore.command();
+    if (command) this.submitReplacement(command);
+  }
+
+  /**
+   * Method confirmReplacement
+   * @method confirmReplacement
+   *
+   * @description
+   * Executes the explicitly confirmed command while retaining the original draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Result of the operation.
+   */
+  protected confirmReplacement(): void {
+    const command = this.stagedReplacement();
+    if (!command) return;
+    this.stagedReplacement.set(null);
+    this.submitReplacement(command);
+  }
+
+  /**
+   * Method submitReplacement
+   * @method submitReplacement
+   *
+   * @description
+   * Refuses concurrent writes and retains the operation identifier until acknowledgement.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {ReplaceEquipmentInput} payload - Confirmed immutable replacement command.
+   *
+   * @returns {void} Result of the operation.
+   */
+  private submitReplacement(payload: ReplaceEquipmentInput): void {
+    if (
+      !this.canWrite() ||
+      this.store.isChangingLifecycle() ||
+      this.replacementStore.replaceCallState().status === 'pending'
+    )
+      return;
+    if (
+      this.replacementStore.replaceCallState().status === 'error' &&
+      !this.replacementStore.replaceCallState().error?.retryable
+    )
+      this.replacementStore.reset();
+    this.replacementOperationId = payload.clientOperationId;
+    this.replacementStore.replace({
+      organizationId: this.organizationId(),
+      equipmentId: this.equipmentId(),
+      input: payload,
+    });
+  }
   /**
    * Method onEditTargetChanged
    * @method onEditTargetChanged

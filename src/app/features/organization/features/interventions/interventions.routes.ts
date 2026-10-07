@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY, type DashboardRouteData } from '@core/routing';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
+import { unsavedChangesGuard } from '@shared/unsaved-changes';
 import { interventionTitleResolver } from './http/resolvers';
 import { InterventionStore } from './state';
 import { InterventionPlanningOptionsStore } from './state/intervention-planning-options';
@@ -39,7 +40,6 @@ function redirectToInterventionView(view: 'board' | 'calendar' | 'recurrences'):
 
 /**
  * Constant INTERVENTION_ROUTES
- * @const INTERVENTION_ROUTES
  *
  * @description
  * Organization-scoped intervention workflows: the index at
@@ -102,6 +102,8 @@ function redirectToInterventionView(view: 'board' | 'calendar' | 'recurrences'):
  * @since 2.1.0
  *
  * @type {Routes}
+ *
+ * @const INTERVENTION_ROUTES
  */
 export const INTERVENTION_ROUTES: Routes = [
   {
@@ -141,6 +143,7 @@ export const INTERVENTION_ROUTES: Routes = [
       },
       {
         path: ':interventionId',
+        canDeactivate: [unsavedChangesGuard],
         loadComponent: () =>
           import('./ui/pages/intervention-detail-page/intervention-detail-page.component').then(
             (m) => m.InterventionDetailPage,

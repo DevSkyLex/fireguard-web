@@ -25,7 +25,7 @@
         </hlm-select-trigger>
         <hlm-select-content *hlmSelectPortal>
           <hlm-select-group>
-            @for (option of typeOptions; track option.value) {
+            @for (option of typeOptions(); track option.value) {
               <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">{{
                 option.label
               }}</hlm-select-item>
@@ -39,20 +39,59 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel for="equipment-create-facility" i18n="@@equipment.form.facility"
-        >Site</label
+      <label hlmFieldLabel for="equipment-create-name" i18n="@@equipment.identity.name"
+        >Equipment name</label
       >
-      <app-facility-option-picker
-        [formField]="createForm.facility"
-        [options]="facilityOptions()"
-        inputId="equipment-create-facility"
-        [page]="facilityPage()"
-        [pageCount]="facilityPageCount()"
-        [callState]="facilityCallState()"
-        (searchChanged)="facilitySearchChanged.emit($event)"
-        (pageChanged)="facilityPageChanged.emit($event)"
+      <input
+        hlmInput
+        id="equipment-create-name"
+        type="text"
+        [formField]="createForm.name"
+        data-testid="equipment-create-name"
+        class="mobile-ui:min-h-11"
       />
+      @if (createForm.name().touched() && createForm.name().invalid()) {
+        <hlm-field-error>{{ createForm.name().errors()[0].message }}</hlm-field-error>
+      }
     </hlm-field>
+
+    <hlm-field>
+      <label hlmFieldLabel for="equipment-create-asset-code" i18n="@@equipment.identity.assetCode"
+        >Asset reference</label
+      >
+      <input
+        hlmInput
+        id="equipment-create-asset-code"
+        type="text"
+        [formField]="createForm.assetCode"
+        data-testid="equipment-create-asset-code"
+        class="mobile-ui:min-h-11"
+      />
+      <p hlmFieldDescription i18n="@@equipment.identity.assetCodeHint">
+        Unique within your organization when supplied.
+      </p>
+      @if (createForm.assetCode().touched() && createForm.assetCode().invalid()) {
+        <hlm-field-error>{{ createForm.assetCode().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+
+    @if (!inheritPlacement()) {
+      <hlm-field>
+        <label hlmFieldLabel for="equipment-create-facility" i18n="@@equipment.form.facility"
+          >Site</label
+        >
+        <app-facility-option-picker
+          [formField]="createForm.facility"
+          [options]="facilityOptions()"
+          inputId="equipment-create-facility"
+          [page]="facilityPage()"
+          [pageCount]="facilityPageCount()"
+          [callState]="facilityCallState()"
+          (searchChanged)="facilitySearchChanged.emit($event)"
+          (pageChanged)="facilityPageChanged.emit($event)"
+        />
+      </hlm-field>
+    }
 
     <hlm-field>
       <label hlmFieldLabel for="equipment-create-subtype" i18n="@@equipment.form.subtype"
@@ -162,6 +201,8 @@
     >
       @if (pending()) {
         <span i18n="@@equipment.cf.submitting">Creating…</span>
+      } @else if (replacement()) {
+        <span i18n="@@equipment.replacement.confirm">Confirm replacement</span>
       } @else {
         <span i18n="@@equipment.form.submit">Create equipment</span>
       }

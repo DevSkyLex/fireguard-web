@@ -88,6 +88,22 @@
       }
     </hlm-field>
 
+    @if (model().type === 'site' && organizationId()) {
+      <hlm-field>
+        <label hlmFieldLabel for="facility-create-customer" i18n="@@facility.form.customer"
+          >Customer</label
+        >
+        <app-customer-picker
+          inputId="facility-create-customer"
+          [organizationId]="organizationId()"
+          [formField]="createForm.customerId"
+        />
+        <p hlmFieldDescription i18n="@@facility.form.customerHint">
+          Optional. Assign a customer to this root site, or manage it directly as an operator.
+        </p>
+      </hlm-field>
+    }
+
     @if (model().type === 'floor') {
       <hlm-field>
         <label

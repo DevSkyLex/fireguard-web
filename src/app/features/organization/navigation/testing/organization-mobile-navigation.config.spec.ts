@@ -23,20 +23,20 @@ describe('buildOrganizationMobileNavigation', () => {
   it('keeps five stable primary ids in their specified order for a full-access member', () => {
     const navigation = buildOrganizationMobileNavigation('org-1', new Set(['organization.*']));
     expect(navigation.primary.map((link) => link.id)).toEqual([
-      'dashboard',
-      'interventions',
       'assets',
+      'interventions',
+      'dashboard',
       'messages',
       'more',
     ]);
     expect(navigation.primary.map((link) => link.route)).toEqual([
-      '/organizations/org-1',
-      '/organizations/org-1/interventions',
       '/organizations/org-1/assets',
+      '/organizations/org-1/interventions',
+      '/organizations/org-1',
       '/organizations/org-1/messages',
       '/organizations/org-1/more',
     ]);
-    expect(navigation.primary[0]?.label).toBe('Home');
+    expect(navigation.primary[0]?.label).toBe('Equipment park');
   });
 
   it('preserves every allowed sidebar and switcher destination across primary and More', () => {
@@ -70,6 +70,9 @@ describe('buildOrganizationMobileNavigation', () => {
         ?.links.map((link) => link.id),
     ).toEqual([
       'automations',
+      'service-requests',
+      'maintenance-costs',
+      'maintenance-exports',
       'calendar',
       'inspections',
       'workload',

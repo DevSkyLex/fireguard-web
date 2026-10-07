@@ -1,0 +1,99 @@
+<form class="flex flex-col gap-6" (submit)="submit($event)">
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@inventory.form.reference">Stock reference</legend>
+    <div hlmFieldGroup>
+      <div hlmField>
+        <label hlmFieldLabel for="inventory-reference-code" i18n="@@inventory.form.code"
+          >Permanent code</label
+        >
+        <input hlmInput id="inventory-reference-code" [formField]="fields.code" />
+        <p hlmFieldDescription i18n="@@inventory.form.codeHint">
+          Codes and part categories cannot be changed after creation.
+        </p>
+        @if (fields.code().touched()) {
+          @for (error of fields.code().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="inventory-reference-name" i18n="@@inventory.form.name"
+          >Name</label
+        >
+        <input hlmInput id="inventory-reference-name" [formField]="fields.label" />
+        @if (fields.label().touched()) {
+          @for (error of fields.label().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      @if (kind() === 'part') {
+        <div hlmField>
+          <label hlmFieldLabel for="inventory-reference-unit" i18n="@@inventory.form.unit"
+            >Stock unit</label
+          >
+          <input hlmInput id="inventory-reference-unit" [formField]="fields.unit" />
+          <p hlmFieldDescription i18n="@@inventory.form.unitHint">
+            For example: piece, metre or litre. Quantities use this unit.
+          </p>
+          @if (fields.unit().touched()) {
+            @for (error of fields.unit().errors(); track error) {
+              <hlm-field-error>{{ error.message }}</hlm-field-error>
+            }
+          }
+        </div>
+        <fieldset hlmFieldSet>
+          <legend hlmFieldLegend id="inventory-reference-category" i18n="@@inventory.form.category">
+            Category
+          </legend>
+          <hlm-toggle-group
+            type="single"
+            variant="outline"
+            [nullable]="false"
+            [value]="draft().kind"
+            [disabled]="pending() || !available() || !!entry()"
+            (valueChange)="categoryChanged($event)"
+            aria-labelledby="inventory-reference-category"
+          >
+            <button hlmToggleGroupItem type="button" value="part" i18n="@@inventory.kind.part">
+              Part
+            </button>
+            <button
+              hlmToggleGroupItem
+              type="button"
+              value="consumable"
+              i18n="@@inventory.kind.consumable"
+            >
+              Consumable
+            </button>
+          </hlm-toggle-group>
+        </fieldset>
+      }
+    </div>
+  </fieldset>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@inventory.form.saveFailed">The reference could not be saved</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button hlmBtn class="mobile-ui:min-h-11" type="submit" [disabled]="pending() || !available()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      <span i18n="@@common.save">Save</span>
+    </button>
+  </div>
+</form>

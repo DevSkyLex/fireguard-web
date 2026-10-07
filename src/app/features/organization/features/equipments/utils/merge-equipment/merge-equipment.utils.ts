@@ -1,4 +1,7 @@
-import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import type {
+  EquipmentOutput,
+  UpdateEquipmentInput,
+} from '@features/organization/features/equipments/models';
 
 /**
  * Function mergeEquipment
@@ -18,20 +21,39 @@ import type { EquipmentOutput } from '@features/organization/features/equipments
  *
  * @param {EquipmentOutput | null} existing - The equipment as currently known, or `null`.
  * @param {EquipmentOutput} incoming - The payload a write operation answered with.
+ * @param {UpdateEquipmentInput} acceptedUpdate - Optional accepted detail patch whose explicit
+ *   clears must survive omitted null serialization.
  *
  * @returns {EquipmentOutput} The known equipment overlaid with the response's defined keys.
  */
 export function mergeEquipment(
   existing: EquipmentOutput | null,
   incoming: EquipmentOutput,
+  acceptedUpdate?: UpdateEquipmentInput,
 ): EquipmentOutput {
-  if (existing?.id !== incoming.id) return incoming;
+  const clearedKeys: ReadonlySet<string> = new Set([
+    'name',
+    'assetCode',
+    'criticality',
+    'subType',
+    'brand',
+    'model',
+    'serialNumber',
+    'locationLabel',
+  ]);
+  const clears: Partial<EquipmentOutput> = Object.fromEntries(
+    Object.entries(acceptedUpdate ?? {}).filter(
+      ([key, value]) => clearedKeys.has(key) && value === null,
+    ),
+  );
+  if (existing?.id !== incoming.id)
+    return Object.keys(clears).length === 0 ? incoming : { ...clears, ...incoming };
 
   const defined: Partial<EquipmentOutput> = Object.fromEntries(
     Object.entries(incoming).filter(([, value]) => value !== undefined),
   ) as Partial<EquipmentOutput>;
 
-  const merged: EquipmentOutput = { ...existing, ...defined };
+  const merged: EquipmentOutput = { ...existing, ...clears, ...defined };
 
   return merged.facilityId !== existing.facilityId && incoming.facilityName === undefined
     ? { ...merged, facilityName: null }

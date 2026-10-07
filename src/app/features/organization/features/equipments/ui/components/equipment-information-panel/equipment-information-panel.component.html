@@ -7,6 +7,57 @@
       Identification
     </legend>
 
+    <div data-testid="equipment-field-name">
+      <app-inplace-field
+        #nameField
+        label="Equipment name"
+        i18n-label="@@equipment.identity.name"
+        commit="confirm"
+        [editable]="editable()"
+        [editing]="isEditing('name')"
+        [pending]="isSaving('name')"
+        [error]="errorFor('name')"
+        [canSave]="canSaveText()"
+        (editingChange)="onTextEditing('name', $event)"
+        (saved)="saveText()"
+      >
+        <span fieldValue class="font-medium">{{ equipment().name || '—' }}</span>
+        <input
+          fieldEditor
+          hlmInput
+          type="text"
+          [formField]="textForm.value"
+          [attr.aria-labelledby]="nameField.labelId"
+          class="w-full mobile-ui:min-h-11"
+        />
+      </app-inplace-field>
+    </div>
+    <div data-testid="equipment-field-asset-code">
+      <app-inplace-field
+        #assetCodeField
+        label="Asset reference"
+        i18n-label="@@equipment.identity.assetCode"
+        commit="confirm"
+        [editable]="editable()"
+        [editing]="isEditing('assetCode')"
+        [pending]="isSaving('assetCode')"
+        [error]="errorFor('assetCode')"
+        [canSave]="canSaveText()"
+        (editingChange)="onTextEditing('assetCode', $event)"
+        (saved)="saveText()"
+      >
+        <span fieldValue class="font-medium">{{ equipment().assetCode || '—' }}</span>
+        <input
+          fieldEditor
+          hlmInput
+          type="text"
+          [formField]="textForm.value"
+          [attr.aria-labelledby]="assetCodeField.labelId"
+          class="w-full mobile-ui:min-h-11"
+        />
+      </app-inplace-field>
+    </div>
+
     <div data-testid="equipment-field-type">
       <app-inplace-field
         label="Type"
@@ -33,7 +84,7 @@
           </hlm-select-trigger>
           <hlm-select-content *hlmSelectPortal>
             <hlm-select-group>
-              @for (option of typeOptions; track option.value) {
+              @for (option of editableTypeOptions(); track option.value) {
                 <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">{{
                   option.label
                 }}</hlm-select-item>
@@ -72,8 +123,7 @@
           type="text"
           class="w-full mobile-ui:min-h-11"
           [attr.aria-labelledby]="subTypeField.labelId"
-          [value]="textDraft()"
-          (input)="textDraft.set($any($event.target).value)"
+          [formField]="textForm.value"
         />
       </app-inplace-field>
     </div>
@@ -106,8 +156,7 @@
           type="text"
           class="w-full mobile-ui:min-h-11"
           [attr.aria-labelledby]="brandField.labelId"
-          [value]="textDraft()"
-          (input)="textDraft.set($any($event.target).value)"
+          [formField]="textForm.value"
         />
       </app-inplace-field>
     </div>
@@ -140,8 +189,7 @@
           type="text"
           class="w-full mobile-ui:min-h-11"
           [attr.aria-labelledby]="modelField.labelId"
-          [value]="textDraft()"
-          (input)="textDraft.set($any($event.target).value)"
+          [formField]="textForm.value"
         />
       </app-inplace-field>
     </div>
@@ -174,8 +222,7 @@
           type="text"
           class="w-full mobile-ui:min-h-11"
           [attr.aria-labelledby]="serialField.labelId"
-          [value]="textDraft()"
-          (input)="textDraft.set($any($event.target).value)"
+          [formField]="textForm.value"
         />
       </app-inplace-field>
     </div>
@@ -217,8 +264,7 @@
           type="text"
           class="w-full mobile-ui:min-h-11"
           [attr.aria-labelledby]="locationField.labelId"
-          [value]="textDraft()"
-          (input)="textDraft.set($any($event.target).value)"
+          [formField]="textForm.value"
         />
       </app-inplace-field>
     </div>

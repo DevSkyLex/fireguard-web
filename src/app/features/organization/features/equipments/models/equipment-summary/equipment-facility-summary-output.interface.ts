@@ -18,9 +18,9 @@ export interface EquipmentFacilitySummaryOutput extends HydraItem {
    * @description
    * Whether the counts include descendant facilities.
    *
-   * @type {'subtree' | 'direct'}
+   * @type {'subtree' | 'direct' | 'organization' | 'customer'}
    */
-  readonly scope: 'subtree' | 'direct';
+  readonly scope: 'subtree' | 'direct' | 'organization' | 'customer';
 
   /**
    * Property totalItems

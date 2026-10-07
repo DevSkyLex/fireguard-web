@@ -5,6 +5,47 @@
 >
   <div class="min-w-0">
     <hlm-field-group>
+      <fieldset hlmFieldSet>
+        <legend
+          hlmFieldLegend
+          id="onboarding-org-profile-label"
+          i18n="@@onboarding.orgForm.profile"
+        >
+          Organization profile
+        </legend>
+        <hlm-toggle-group
+          type="single"
+          variant="outline"
+          [nullable]="false"
+          [value]="organizationForm.operatingProfile().value()"
+          [disabled]="pending()"
+          aria-labelledby="onboarding-org-profile-label"
+          (valueChange)="changeOperatingProfile($event)"
+        >
+          <button
+            hlmToggleGroupItem
+            type="button"
+            value="operator"
+            data-testid="onboarding-org-profile-operator"
+            i18n="@@onboarding.orgForm.operator"
+          >
+            Site operator
+          </button>
+          <button
+            hlmToggleGroupItem
+            type="button"
+            value="service_provider"
+            data-testid="onboarding-org-profile-provider"
+            i18n="@@onboarding.orgForm.provider"
+          >
+            Service provider
+          </button>
+        </hlm-toggle-group>
+        <hlm-field-description i18n="@@onboarding.orgForm.profileHint"
+          >Choose how you manage your fire-safety equipment. Access remains determined by your
+          organization's permissions.</hlm-field-description
+        >
+      </fieldset>
       <hlm-field>
         <label hlmFieldLabel for="onboarding-org-name"
           ><span i18n="@@onboarding.orgForm.name"> Organization name</span><app-required-marker

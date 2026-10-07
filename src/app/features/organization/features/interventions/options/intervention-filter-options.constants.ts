@@ -35,12 +35,18 @@ export const INTERVENTION_STATUS_FILTER_OPTIONS: SelectOption<InterventionStatus
  * Constant INTERVENTION_TYPE_FILTER_OPTIONS
  *
  * @description
- * The three workflow types, labelled from the same registry as the status set.
+ * Supported workflow objectives, labelled from the same registry as the status set.
  *
  * @since 1.0.0
  */
 export const INTERVENTION_TYPE_FILTER_OPTIONS: SelectOption<InterventionType>[] = (
-  ['site_setup', 'inventory', 'inspection_campaign'] satisfies readonly InterventionType[]
+  [
+    'site_setup',
+    'inventory',
+    'inspection_campaign',
+    'preventive_maintenance',
+    'corrective_maintenance',
+  ] satisfies readonly InterventionType[]
 ).map((type) => ({ value: type, label: resolveInterventionTag('type', type).label }));
 
 /**
@@ -102,7 +108,6 @@ export const INTERVENTION_SORT_OPTIONS: SelectOption<InterventionSortField>[] = 
  * once a field's own narrowing is cleared. Labels reuse the same `@@` ids the
  * select placeholders already carry, so nothing here duplicates translation
  * work.
- *
  * `status`, `type`, `priority`, `site`, `responsible` and `label` each
  * declare `['equals', 'isAnyOf']` now that the API accepts a repeated
  * `key[]=` value OR-combined via `IN()` — `equals` stays first so it is

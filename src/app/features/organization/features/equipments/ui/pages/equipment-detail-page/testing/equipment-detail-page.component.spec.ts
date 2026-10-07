@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { patchState } from '@ngrx/signals';
 import { of, throwError } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import { PageActionsService } from '@core/page-actions';
@@ -20,12 +21,18 @@ import {
   successCallState,
   type CallState,
   type StoreError,
+  setSuccessQuery,
+  setErrorQuery,
+  toStoreError,
 } from '@core/request-state';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { TitleService } from '@core/title';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { EquipmentService } from '@features/organization/features/equipments/data-access';
+import {
+  EquipmentService,
+  EquipmentTypeService,
+} from '@features/organization/features/equipments/data-access';
 import type {
   EquipmentAttachmentOutput,
   EquipmentOutput,
@@ -36,6 +43,7 @@ import {
   EquipmentStore,
 } from '@features/organization/features/equipments/state';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
+import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { BrowserDownloadService } from '@features/organization/services/browser-download';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
@@ -151,6 +159,7 @@ describe('EquipmentDetailPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: EquipmentTypeService, useValue: { listAll: () => of([]) } },
         provideZonelessChangeDetection(),
         provideRouter([]),
         {
@@ -219,7 +228,19 @@ describe('EquipmentDetailPage', () => {
         },
         {
           provide: EquipmentService,
-          useValue: { downloadAttachment: (): unknown => of(new Blob()), exportReport },
+          useValue: {
+            openWork: () => of({ member: [], totalItems: 0 }),
+            downloadAttachment: (): unknown => of(new Blob()),
+            exportReport,
+            inspectionSummary: () =>
+              of({
+                '@id': '/api/summary',
+                '@type': 'EquipmentInspectionSummary',
+                equipmentId: 'equipment-1',
+                openAnomalies: 0,
+                bySeverity: { low: 0, medium: 0, high: 0, critical: 0 },
+              }),
+          },
         },
         { provide: BrowserDownloadService, useValue: { trigger: downloadTrigger } },
         { provide: FeedbackService, useValue: { error: feedbackError } },
@@ -231,6 +252,168 @@ describe('EquipmentDetailPage', () => {
     await createPage();
 
     expect(fixture.componentInstance['title']()).toBe('Fire extinguisher — Kidde Pro 210');
+  });
+
+  it('keeps operational status, control due status and exact open anomalies independent', async () => {
+    selectedEquipment.set(equipment({ status: 'operational', maintenanceDueStatus: 'up_to_date' }));
+    await createPage();
+    patchState(
+      fixture.componentInstance['inspectionSummaryStore'],
+      setSuccessQuery({
+        '@id': '/api/summary',
+        '@type': 'EquipmentInspectionSummary',
+        equipmentId: 'equipment-1',
+        openAnomalies: 2,
+        bySeverity: { low: 0, medium: 1, high: 1, critical: 0 },
+      }),
+    );
+    await fixture.whenStable();
+    const axes: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="equipment-follow-up-axes"]',
+    );
+    expect(axes?.textContent).toContain('Declared operational status');
+    expect(axes?.textContent).toContain('Control follow-up');
+    expect(axes?.textContent).toContain('Open anomalies');
+    expect(axes?.querySelector('[data-testid="equipment-open-anomalies"]')?.textContent).toContain(
+      '2',
+    );
+  });
+
+  it('does not turn missing inspection access into a zero anomaly count', async () => {
+    vi.spyOn(TestBed.inject(OrganizationPermissionService), 'hasPermission').mockImplementation(
+      (permission) => permission !== ORGANIZATION_PERMISSION.INSPECTION_READ,
+    );
+    await createPage();
+    const anomalies: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="equipment-open-anomalies"]',
+    );
+    expect(anomalies?.textContent).toContain('Inspection access required');
+    expect(anomalies?.querySelector('[hlmBadge]')).toBeNull();
+  });
+
+  it('shows independent control and maintenance deadlines while preserving declared status and anomalies', async () => {
+    selectedEquipment.set(
+      equipment({
+        status: 'operational',
+        maintenanceDueStatus: 'up_to_date',
+        controlDueStatus: 'up_to_date',
+        controlNextDueAt: '2027-01-20T00:00:00+00:00',
+        serviceDueStatus: 'overdue',
+        serviceNextDueAt: '2026-01-10T00:00:00+00:00',
+      }),
+    );
+    await createPage();
+    patchState(
+      fixture.componentInstance['inspectionSummaryStore'],
+      setSuccessQuery({
+        '@id': '/api/summary',
+        '@type': 'EquipmentInspectionSummary',
+        equipmentId: 'equipment-1',
+        openAnomalies: 2,
+        bySeverity: { low: 0, medium: 1, high: 1, critical: 0 },
+      }),
+    );
+    await fixture.whenStable();
+    const control: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="equipment-follow-up-axes"]',
+    );
+    const maintenancePanel: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="equipment-maintenance-follow-up"]',
+    );
+    expect(control?.textContent).toContain('Next control');
+    expect(control?.textContent).not.toContain('Overdue');
+    expect(maintenancePanel?.textContent).toContain('Overdue');
+    expect(maintenancePanel?.textContent).toContain('Next maintenance');
+    expect(selectedEquipment()?.status).toBe('operational');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="equipment-open-anomalies"]')?.textContent,
+    ).toContain('2');
+  });
+
+  it('keeps legacy control status and an unscheduled maintenance state when new due fields are absent', async () => {
+    selectedEquipment.set(equipment({ maintenanceDueStatus: 'overdue' }));
+    await createPage();
+    const maintenancePanel: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="equipment-maintenance-follow-up"]',
+    );
+    expect(maintenancePanel?.textContent).toContain('Unscheduled');
+    expect(maintenancePanel?.textContent).not.toContain('Next maintenance');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="equipment-follow-up-axes"]')?.textContent,
+    ).toContain('Overdue');
+  });
+
+  it.each([
+    { timezone: 'Europe/Paris', expected: '28/02/2026' },
+    { timezone: 'America/New_York', expected: '27/02/2026' },
+  ])(
+    'renders both deadline instants in the organization timezone $timezone',
+    async ({ timezone, expected }) => {
+      TestBed.overrideProvider(REGIONAL_FORMATTING_PORT, {
+        useValue: {
+          regionalFormatting: signal({ dateFormat: 'dd/MM/yyyy', timezone }),
+        },
+      });
+      selectedEquipment.set(
+        equipment({
+          controlDueStatus: 'due_soon',
+          controlNextDueAt: '2026-02-27T23:00:00Z',
+          serviceDueStatus: 'due_soon',
+          serviceNextDueAt: '2026-02-27T23:00:00Z',
+        }),
+      );
+      await createPage();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="equipment-follow-up-axes"]')
+          ?.textContent,
+      ).toContain(expected);
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="equipment-maintenance-follow-up"]')
+          ?.textContent,
+      ).toContain(expected);
+    },
+  );
+
+  it('reuses authorized open work for the same action before offering a new intervention', async () => {
+    await createPage();
+    patchState(
+      fixture.componentInstance['openWorkStore'],
+      setSuccessQuery([
+        {
+          '@id': '/api/work/task',
+          '@type': 'EquipmentOpenWork',
+          interventionId: 'existing-work',
+          number: 41,
+          name: 'Repair entrance',
+          status: 'scheduled',
+          workItemId: 'task',
+          action: 'repair',
+          workItemStatus: 'planned',
+        },
+      ]),
+    );
+    await fixture.whenStable();
+    const repair = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('a')).find(
+      (link) => link.textContent?.includes('Organize a repair'),
+    );
+    expect(repair?.getAttribute('href')).toContain('/interventions/existing-work');
+    expect(repair?.getAttribute('href')).toContain('targetEquipment=equipment-1');
+    expect(repair?.getAttribute('href')).not.toContain('create=1');
+  });
+
+  it('blocks new work preparation when the authorized open-work lookup fails', async () => {
+    await createPage();
+    patchState(
+      fixture.componentInstance['openWorkStore'],
+      setErrorQuery(toStoreError(new HttpErrorResponse({ status: 503 }))),
+    );
+    await fixture.whenStable();
+    const work: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="equipment-work"]',
+    );
+    expect(work?.textContent).toContain('Open work is unavailable.');
+    expect(work?.textContent).not.toContain('Prepare a control');
   });
 
   it('should show the location label beside the facility in the identity summary', async () => {

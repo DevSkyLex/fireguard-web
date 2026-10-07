@@ -10,6 +10,7 @@ import type { FacilityOutput } from './facility-output.interface';
  */
 type FacilityWritableFields = Pick<
   FacilityOutput,
+  | 'customerId'
   | 'type'
   | 'name'
   | 'parentFacilityId'

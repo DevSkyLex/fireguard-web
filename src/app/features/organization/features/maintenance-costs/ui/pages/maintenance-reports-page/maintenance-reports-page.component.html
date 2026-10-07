@@ -1,0 +1,392 @@
+<div class="@container flex min-w-0 flex-col gap-6" data-testid="maintenance-reports-page">
+  <header class="flex flex-col gap-3">
+    <p class="max-w-3xl text-muted-foreground" i18n="@@maintenanceReport.description">
+      Compare internal maintenance spending with preparation, by equipment, site or customer. Each
+      contribution is allocated once and unknown valuations remain visible.
+    </p>
+    <div class="flex flex-wrap items-center gap-3">
+      <span hlmBadge variant="secondary" i18n="@@maintenanceCost.page.private"
+        >Private financial information</span
+      >
+      <a
+        hlmBtn
+        variant="outline"
+        size="sm"
+        class="mobile-ui:min-h-11"
+        [routerLink]="['/organizations', organizationId(), 'maintenance-costs']"
+        i18n="@@maintenanceReport.openCosts"
+        >Financial dossiers and settings</a
+      >
+    </div>
+  </header>
+  @if (enabled()) {
+    @if (query(); as filter) {
+      <app-maintenance-report-filter-form
+        [query]="filter"
+        [selectedScope]="selectedScope()"
+        [scope]="scopeKey()"
+        [resetToken]="resetToken()"
+        [pending]="store.reportCallState().status === 'pending'"
+        (submitted)="loadReport($event)"
+        (scopeCleared)="clearScope($event)"
+      />
+    }
+    <section
+      hlmCollapsible
+      [expanded]="directoryOpen()"
+      (expandedChange)="toggleDirectory($event)"
+      class="min-w-0"
+    >
+      <button
+        hlmBtn
+        hlmCollapsibleTrigger
+        type="button"
+        variant="outline"
+        class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
+        i18n="@@maintenanceReport.browseDirectory"
+      >
+        Browse financial dossiers and choose a scope
+      </button>
+      <div hlmCollapsibleContent class="mt-4 min-w-0">
+        <p class="mb-4 text-sm text-muted-foreground" i18n="@@maintenanceReport.directoryHint">
+          Search the paginated financial directory to select a named site, customer or equipment.
+          These minimal contexts are available with financial read permission alone.
+        </p>
+        <app-maintenance-financial-directory
+          [organizationId]="organizationId()"
+          [regionalFormatting]="regional()"
+          [items]="store.dossierEntities()"
+          [page]="store.directoryQuery()?.page ?? 1"
+          [itemsPerPage]="store.directoryQuery()?.itemsPerPage ?? 30"
+          [totalItems]="store.directoryTotal()"
+          [search]="store.directoryQuery()?.search ?? ''"
+          [pending]="store.directoryCallState().status === 'pending'"
+          [error]="store.directoryCallState().error"
+          [scope]="scopeKey()"
+          (searchSubmitted)="searchDirectory($event)"
+          (pageChanged)="pageDirectory($event)"
+          (pageSizeChanged)="resizeDirectory($event)"
+          (scopeSelected)="selectScope($event)"
+          (retryRequested)="loadDirectory(store.directoryQuery() ?? { page: 1, itemsPerPage: 30 })"
+        />
+      </div>
+    </section>
+    @if (store.reportCallState().error; as error) {
+      <div hlmAlert variant="destructive" role="alert" data-testid="maintenance-report-error">
+        <h2 hlmAlertTitle i18n="@@maintenanceReport.error.title">
+          Could not prepare the financial report
+        </h2>
+        <p hlmAlertDescription>{{ error.message }}</p>
+        <p class="mt-2 text-sm" i18n="@@maintenanceReport.error.narrow">
+          No partial total is displayed. Check the dates and use a shorter period if the report is
+          too large. Named target filters refine the selected dossiers; they do not increase the
+          period's source limit.
+        </p>
+        @if (query(); as filter) {
+          <button
+            hlmBtn
+            variant="outline"
+            type="button"
+            class="mt-3 mobile-ui:min-h-11"
+            (click)="loadReport(filter)"
+            i18n="@@maintenanceReport.retry"
+          >
+            Retry report
+          </button>
+        }
+      </div>
+    }
+    @if (store.reportCallState().status === 'pending') {
+      <div class="grid gap-4" aria-busy="true">
+        <span class="sr-only" i18n="@@maintenanceReport.loading"
+          >Preparing the financial report</span
+        >
+        <div hlmSkeleton class="h-20"></div>
+        <div hlmSkeleton class="h-52"></div>
+      </div>
+    }
+    @if (report(); as value) {
+      <section class="flex min-w-0 flex-col gap-4" data-testid="maintenance-report-totals">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="flex flex-col gap-1">
+            <h2 hlmLarge i18n="@@maintenanceReport.totals.title">Filtered maintenance totals</h2>
+            <p class="text-sm text-muted-foreground" data-testid="maintenance-report-period">
+              {{ value.from | appOrgDate: 'dateOnly' : regional() }} —
+              {{ value.to | appOrgDate: 'dateOnly' : regional() }}
+            </p>
+          </div>
+          <span hlmBadge variant="secondary" i18n="@@maintenanceReport.dossierCount">
+            Source dossiers: {{ value.interventionCount }}
+          </span>
+        </div>
+        <p class="text-sm text-muted-foreground" i18n="@@maintenanceReport.totals.scope">
+          These totals cover all filtered destinations and unallocated contributions, including
+          results on other pages. Budget and resource estimates remain separate.
+        </p>
+        <p class="text-sm text-muted-foreground" i18n="@@maintenanceReport.planningBasis">
+          Resource estimates provide the planned cost. When a dossier has no estimated resources,
+          its global budget serves as the forecast. The budget remains a separate metric and is
+          never added to resource estimates.
+        </p>
+        <p class="text-sm text-muted-foreground" i18n="@@maintenanceReport.dateBasis">
+          The inclusive UTC date window selects published dossiers by publication date and open work
+          by planned start, or creation date when no start is set. Costs show those dossiers' full
+          current history, including later corrections.
+        </p>
+        <dl class="grid min-w-0 gap-4 @lg:grid-cols-2 @4xl:grid-cols-4">
+          <div>
+            <dt class="text-sm text-muted-foreground" i18n="@@maintenanceReport.metric.current">
+              Current realized cost
+            </dt>
+            <dd class="font-mono wrap-anywhere" data-testid="maintenance-report-current">
+              {{ money(value.current.total, value.currency, locale) }}
+            </dd>
+            @if (!value.current.complete) {
+              <dd
+                class="mt-1 text-sm text-muted-foreground"
+                i18n="@@maintenanceReport.metric.known"
+              >
+                Known: {{ money(value.current.knownTotal, value.currency, locale) }}
+              </dd>
+            }
+          </div>
+          <div>
+            <dt class="text-sm text-muted-foreground" i18n="@@maintenanceReport.metric.frozen">
+              Recorded at closure
+            </dt>
+            <dd class="font-mono wrap-anywhere" data-testid="maintenance-report-frozen">
+              {{ money(value.frozen.total, value.currency, locale) }}
+            </dd>
+            @if (!value.frozen.complete) {
+              <dd
+                class="mt-1 text-sm text-muted-foreground"
+                i18n="@@maintenanceReport.metric.known"
+              >
+                Known: {{ money(value.frozen.knownTotal, value.currency, locale) }}
+              </dd>
+            }
+          </div>
+          <div>
+            <dt class="text-sm text-muted-foreground" i18n="@@maintenanceReport.metric.planned">
+              Planned cost
+            </dt>
+            <dd class="font-mono wrap-anywhere" data-testid="maintenance-report-planned">
+              {{ money(value.planned.total, value.currency, locale) }}
+            </dd>
+            @if (!value.planned.complete) {
+              <dd
+                class="mt-1 text-sm text-muted-foreground"
+                i18n="@@maintenanceReport.metric.known"
+              >
+                Known: {{ money(value.planned.knownTotal, value.currency, locale) }}
+              </dd>
+            }
+          </div>
+          <div>
+            <dt class="text-sm text-muted-foreground" i18n="@@maintenanceReport.metric.budget">
+              Global budgets
+            </dt>
+            <dd class="font-mono wrap-anywhere" data-testid="maintenance-report-budget">
+              {{ money(value.budget.total, value.currency, locale) }}
+            </dd>
+            @if (!value.budget.complete) {
+              <dd
+                class="mt-1 text-sm text-muted-foreground"
+                i18n="@@maintenanceReport.metric.known"
+              >
+                Known: {{ money(value.budget.knownTotal, value.currency, locale) }}
+              </dd>
+            }
+          </div>
+          <div class="@lg:col-span-2">
+            <dt class="text-sm text-muted-foreground" i18n="@@maintenanceReport.metric.variance">
+              Realized cost minus estimate
+            </dt>
+            <dd class="font-mono wrap-anywhere" data-testid="maintenance-report-variance">
+              {{ money(value.variance, value.currency, locale) }}
+            </dd>
+          </div>
+        </dl>
+        @if (!value.current.complete || !value.planned.complete || !value.frozen.complete) {
+          <div hlmAlert>
+            <h3 hlmAlertTitle i18n="@@maintenanceReport.incomplete.title">
+              Some valuations are unknown
+            </h3>
+            <p hlmAlertDescription i18n="@@maintenanceReport.incomplete.description">
+              Unknown prices, rates or estimates are not zero. Each incomplete metric shows its
+              known subtotal, and a variance is available only when both amounts are complete.
+            </p>
+          </div>
+        }
+        @if (value.missingSnapshotCount > 0) {
+          <div hlmAlert data-testid="maintenance-report-missing-snapshot">
+            <h3 hlmAlertTitle i18n="@@maintenanceReport.history.title">
+              Some historical closure snapshots are missing
+            </h3>
+            <p hlmAlertDescription i18n="@@maintenanceReport.history.description">
+              Published dossiers without an immutable closure snapshot:
+              {{ value.missingSnapshotCount }}. Their current facts remain visible, while the
+              missing closure values are explicit.
+            </p>
+          </div>
+        }
+      </section>
+      <section class="flex min-w-0 flex-col gap-4">
+        <h2 hlmLarge i18n="@@maintenanceReport.allocation.title">Allocated destinations</h2>
+        <app-maintenance-report-table
+          [rows]="value.rows"
+          [currency]="value.currency"
+          [page]="value.page"
+          [itemsPerPage]="value.itemsPerPage"
+          [totalItems]="value.totalItems"
+          [pending]="false"
+          (pageChanged)="changePage($event)"
+          (pageSizeChanged)="changePageSize($event)"
+          (dossiersRequested)="showSourceDossiers($event)"
+        />
+      </section>
+      <section class="flex min-w-0 flex-col gap-4" data-testid="maintenance-report-unallocated">
+        <h2 hlmLarge i18n="@@maintenanceReport.unallocated.title">Unallocated contributions</h2>
+        <p class="text-sm text-muted-foreground" i18n="@@maintenanceReport.unallocated.description">
+          Whole-dossier budgets, general expenses and unresolved identities remain here. They are
+          counted once in the filtered totals and are never copied onto every equipment.
+        </p>
+        <app-maintenance-report-table
+          [rows]="[value.unallocated]"
+          [currency]="value.currency"
+          [showPagination]="false"
+          (dossiersRequested)="showSourceDossiers($event)"
+        />
+      </section>
+      <section
+        class="flex min-w-0 flex-col gap-4 border-t pt-5"
+        data-testid="maintenance-report-reconciliation"
+      >
+        <h2 hlmLarge i18n="@@maintenanceReport.reconciliation.title">Allocation reconciliation</h2>
+        <p
+          class="text-sm text-muted-foreground"
+          i18n="@@maintenanceReport.reconciliation.description"
+        >
+          Original source dossiers equal the selected allocations plus other destinations excluded
+          by the equipment scope. General unallocated facts stay visible.
+        </p>
+        <dl class="grid gap-4 @lg:grid-cols-2">
+          <div>
+            <dt
+              class="text-sm text-muted-foreground"
+              i18n="@@maintenanceReport.reconciliation.source"
+            >
+              Source dossiers, current cost
+            </dt>
+            <dd class="font-mono wrap-anywhere">
+              {{ money(value.reconciliation.sourceCurrent.total, value.currency, locale) }}
+            </dd>
+          </div>
+          <div>
+            <dt
+              class="text-sm text-muted-foreground"
+              i18n="@@maintenanceReport.reconciliation.excluded"
+            >
+              Other excluded allocations, current cost
+            </dt>
+            <dd class="font-mono wrap-anywhere">
+              {{ money(value.reconciliation.excludedCurrent.total, value.currency, locale) }}
+            </dd>
+          </div>
+        </dl>
+      </section>
+      <section
+        class="flex min-w-0 flex-col gap-4 border-t pt-5"
+        data-testid="maintenance-report-procurement"
+      >
+        <h2 hlmLarge i18n="@@maintenanceReport.procurement.title">
+          Organization procurement overview
+        </h2>
+        <p class="text-sm text-muted-foreground" i18n="@@maintenanceReport.procurement.scope">
+          This organization-wide overview selects orders created in the date window, independently
+          of equipment, site or customer filters. Deliveries and supplier returns cover the selected
+          orders' entire histories. These purchase amounts are separate from consumed-piece costs.
+        </p>
+        <dl class="grid gap-4 @lg:grid-cols-2 @4xl:grid-cols-4">
+          @for (metric of procurementMetrics(); track metric.label) {
+            <div>
+              <dt class="text-sm text-muted-foreground">{{ metric.label }}</dt>
+              <dd class="font-mono wrap-anywhere">
+                {{ money(metric.amount.total, value.procurement.currency, locale) }}
+              </dd>
+              @if (!metric.amount.complete) {
+                <dd
+                  class="mt-1 text-sm text-muted-foreground"
+                  i18n="@@maintenanceReport.metric.known"
+                >
+                  Known: {{ money(metric.amount.knownTotal, value.procurement.currency, locale) }}
+                </dd>
+              }
+            </div>
+          }
+        </dl>
+        <p class="text-sm text-muted-foreground" i18n="@@maintenanceReport.procurement.counts">
+          Orders: {{ value.procurement.orderCount }} · Receipts:
+          {{ value.procurement.receiptCount }} · Receipts awaiting individual equipment:
+          {{ value.procurement.pendingIndividualizationCount }}
+        </p>
+      </section>
+      <hlm-sheet
+        [side]="sourceSide()"
+        [state]="sourceRow() ? 'open' : 'closed'"
+        (stateChanged)="sourceRow.set($event === 'closed' ? null : sourceRow())"
+      >
+        <hlm-sheet-content
+          *hlmSheetPortal
+          [showCloseButton]="false"
+          class="w-full! max-w-none! overflow-y-auto pb-[env(safe-area-inset-bottom)] mobile-ui:max-h-[85svh] desktop-ui:w-[min(540px,100vw)]!"
+        >
+          <hlm-sheet-header>
+            <button
+              hlmBtn
+              hlmSheetClose
+              variant="ghost"
+              type="button"
+              class="self-end mobile-ui:min-h-11"
+              i18n="@@common.close"
+            >
+              Close
+            </button>
+            <h3 hlmSheetTitle i18n="@@maintenanceReport.sources.title">
+              Source financial dossiers
+            </h3>
+            <p hlmSheetDescription i18n="@@maintenanceReport.sources.description">
+              These are the exact dossiers contributing to the selected allocation. Open their
+              private cost dossier to compare current facts with the immutable closure.
+            </p>
+          </hlm-sheet-header>
+          <div hlmItemGroup class="mt-4">
+            @for (dossier of sourceDossiers(); track dossier.id) {
+              <div hlmItem variant="outline">
+                <div hlmItemContent class="min-w-0">
+                  <p hlmItemTitle class="wrap-anywhere">
+                    {{ dossier.number }} · {{ dossier.name }}
+                  </p>
+                  <a
+                    hlmBtn
+                    variant="outline"
+                    size="sm"
+                    class="self-start mobile-ui:min-h-11"
+                    [routerLink]="['/organizations', organizationId(), 'maintenance-costs']"
+                    [queryParams]="{ interventionId: dossier.id }"
+                    i18n="@@maintenanceReport.sources.open"
+                    >Open financial dossier</a
+                  >
+                </div>
+              </div>
+            }
+          </div>
+        </hlm-sheet-content>
+      </hlm-sheet>
+    }
+  } @else {
+    <p class="text-muted-foreground" i18n="@@maintenanceCost.page.protected">
+      Financial information is available only in an authorized browser session.
+    </p>
+  }
+</div>

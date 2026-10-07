@@ -106,6 +106,7 @@ import {
 import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
 import {
   buildInterventionDuplicatePrefill,
+  resolveInterventionEquipmentContext,
   buildInterventionExportOptions,
   buildInterventionListOptions,
   isInterventionBoardMoveAllowed,
@@ -555,6 +556,48 @@ export class InterventionsPage {
    * @type {InputSignal<string | undefined>}
    */
   public readonly create: InputSignal<string | undefined> = input<string | undefined>(undefined);
+
+  /**
+   * Property targetEquipment
+   * @readonly
+   *
+   * @description
+   * Equipment UUID supplied by the dossier's preparation action.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly targetEquipment = input<string>();
+
+  /**
+   * Property workAction
+   * @readonly
+   *
+   * @description
+   * Requested equipment operation, validated before preparing any draft.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly workAction = input<string>();
+
+  /**
+   * Property siteContext
+   * @readonly
+   *
+   * @description
+   * Optional root-site UUID from the equipment dossier.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly siteContext = input<string>();
 
   /**
    * Property view
@@ -3581,6 +3624,11 @@ export class InterventionsPage {
 
     effect((): void => {
       const requested: boolean = this.create() === '1';
+      const equipmentContext = resolveInterventionEquipmentContext(
+        this.targetEquipment(),
+        this.workAction(),
+        this.siteContext(),
+      );
 
       untracked((): void => {
         if (!requested || !isPlatformBrowser(this.platformId)) return;
@@ -3589,6 +3637,19 @@ export class InterventionsPage {
           return;
         }
 
+        if (equipmentContext)
+          this.duplicatePrefill.set({
+            name: '',
+            type:
+              equipmentContext.action === 'inspection'
+                ? 'inspection_campaign'
+                : equipmentContext.action === 'maintenance'
+                  ? 'preventive_maintenance'
+                  : 'corrective_maintenance',
+            priority: 'normal',
+            site: equipmentContext.site,
+            responsible: '',
+          });
         this.createSheetVisible.set(true);
         this.navigateQuery({ create: null });
       });
@@ -3981,7 +4042,16 @@ export class InterventionsPage {
   protected onCreateSheetVisibleChange(visible: boolean): void {
     this.createSheetVisible.set(visible);
 
-    if (!visible) this.duplicatePrefill.set(null);
+    if (!visible) {
+      this.duplicatePrefill.set(null);
+      if (this.targetEquipment())
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+          queryParams: { targetEquipment: null, workAction: null, siteContext: null },
+        });
+    }
   }
 
   /**

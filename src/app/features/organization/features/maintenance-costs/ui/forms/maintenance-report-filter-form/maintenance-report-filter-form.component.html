@@ -1,0 +1,177 @@
+<form
+  [formRoot]="filtersForm"
+  (submit)="submit($event)"
+  class="flex min-w-0 flex-col gap-4"
+  data-testid="maintenance-report-filter-form"
+>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@maintenanceCost.report.filters.title">Report scope</legend>
+    <p hlmFieldDescription i18n="@@maintenanceCost.report.filters.hint">
+      Choose up to 366 calendar days. The first and last dates are included.
+    </p>
+    <div hlmFieldGroup class="grid gap-4 @lg/field-group:grid-cols-2">
+      <div hlmField>
+        <label
+          hlmFieldLabel
+          for="maintenance-report-from"
+          i18n="@@maintenanceCost.report.filters.from"
+          >From</label
+        >
+        <input hlmInput id="maintenance-report-from" type="date" [formField]="filtersForm.from" />
+        @if (filtersForm.from().touched()) {
+          @for (error of filtersForm.from().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="maintenance-report-to" i18n="@@maintenanceCost.report.filters.to"
+          >Through</label
+        >
+        <input hlmInput id="maintenance-report-to" type="date" [formField]="filtersForm.to" />
+        @if (filtersForm.to().touched()) {
+          @for (error of filtersForm.to().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    </div>
+    <div hlmField>
+      <span
+        hlmFieldLabel
+        id="maintenance-report-group-label"
+        i18n="@@maintenanceCost.report.filters.groupBy"
+        >Group costs by</span
+      >
+      <hlm-toggle-group
+        type="single"
+        variant="outline"
+        [nullable]="false"
+        [formField]="filtersForm.groupBy"
+        aria-labelledby="maintenance-report-group-label"
+        class="max-w-full flex-wrap"
+      >
+        <button
+          hlmToggleGroupItem
+          type="button"
+          value="equipment"
+          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
+          i18n="@@maintenanceCost.report.filters.equipment"
+        >
+          Equipment
+        </button>
+        <button
+          hlmToggleGroupItem
+          type="button"
+          value="site"
+          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
+          i18n="@@maintenanceCost.report.filters.site"
+        >
+          Site
+        </button>
+        <button
+          hlmToggleGroupItem
+          type="button"
+          value="customer"
+          class="mobile-ui:min-h-11 mobile-ui:min-w-11"
+          i18n="@@maintenanceCost.report.filters.customer"
+        >
+          Customer
+        </button>
+      </hlm-toggle-group>
+    </div>
+  </fieldset>
+  @if (hasScope()) {
+    <fieldset hlmFieldSet>
+      <legend hlmFieldLegend i18n="@@maintenanceCost.report.filters.selected">
+        Selected filters
+      </legend>
+      <div class="flex min-w-0 flex-col gap-2">
+        @if (selectedScope().site; as site) {
+          <div class="flex min-w-0 flex-wrap items-center gap-2">
+            <span class="text-sm wrap-anywhere"
+              ><span i18n="@@maintenanceCost.report.filters.site">Site</span>: {{ site.name }}</span
+            >
+            <button
+              hlmBtn
+              variant="ghost"
+              type="button"
+              class="mobile-ui:min-h-11"
+              [disabled]="pending()"
+              (click)="scopeCleared.emit('site')"
+              i18n="@@maintenanceCost.report.filters.clearSite"
+            >
+              Clear site filter
+            </button>
+          </div>
+        }
+        @if (selectedScope().customer; as customer) {
+          <div class="flex min-w-0 flex-wrap items-center gap-2">
+            <span class="text-sm wrap-anywhere"
+              ><span i18n="@@maintenanceCost.report.filters.customer">Customer</span>:
+              {{ customer.name }}</span
+            >
+            <button
+              hlmBtn
+              variant="ghost"
+              type="button"
+              class="mobile-ui:min-h-11"
+              [disabled]="pending()"
+              (click)="scopeCleared.emit('customer')"
+              i18n="@@maintenanceCost.report.filters.clearCustomer"
+            >
+              Clear customer filter
+            </button>
+          </div>
+        }
+        @if (selectedScope().equipment; as equipment) {
+          <div class="flex min-w-0 flex-wrap items-center gap-2">
+            <span class="text-sm wrap-anywhere"
+              ><span i18n="@@maintenanceCost.report.filters.equipment">Equipment</span>:
+              @if (equipment.name || equipment.assetReference) {
+                {{ equipment.assetReference || equipment.name }}
+              } @else {
+                <span i18n="@@maintenanceCost.report.filters.unnamedEquipment"
+                  >Unnamed equipment</span
+                >
+              }
+            </span>
+            <button
+              hlmBtn
+              variant="ghost"
+              type="button"
+              class="mobile-ui:min-h-11"
+              [disabled]="pending()"
+              (click)="scopeCleared.emit('equipment')"
+              i18n="@@maintenanceCost.report.filters.clearEquipment"
+            >
+              Clear equipment filter
+            </button>
+          </div>
+        }
+        <button
+          hlmBtn
+          variant="outline"
+          type="button"
+          class="self-start mobile-ui:min-h-11"
+          [disabled]="pending()"
+          (click)="scopeCleared.emit('all')"
+          i18n="@@maintenanceCost.report.filters.clearAll"
+        >
+          Clear all named filters
+        </button>
+      </div>
+    </fieldset>
+  }
+  <button
+    hlmBtn
+    type="submit"
+    class="self-start mobile-ui:min-h-11"
+    [disabled]="filtersForm().disabled()"
+  >
+    @if (pending()) {
+      <hlm-spinner />
+    }
+    <span i18n="@@maintenanceCost.report.filters.apply">Read economic report</span>
+  </button>
+</form>

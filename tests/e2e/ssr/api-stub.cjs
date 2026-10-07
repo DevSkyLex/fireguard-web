@@ -25,6 +25,7 @@ function createApiStub(appOrigin, onShutdown) {
   const requests = [];
   const unexpected = [];
   const registeredFixtures = new Map();
+  const caseFixtures = new Map();
   const handler = (request, response) => {
     const url = new URL(request.url, 'https://127.0.0.1');
     const origin = request.headers.origin;
@@ -52,6 +53,56 @@ function createApiStub(appOrigin, onShutdown) {
     }
     if (request.method === 'GET' && url.pathname === '/__harness/requests') {
       response.end(JSON.stringify({ requests, unexpected }));
+      return;
+    }
+    if (
+      request.method === 'POST' &&
+      url.pathname === '/__harness/fixtures' &&
+      !url.search &&
+      !origin
+    ) {
+      let body = '';
+      request.setEncoding('utf8');
+      request.on('data', (chunk) => {
+        body += chunk;
+      });
+      request.on('end', () => {
+        try {
+          if (body.length > 1_048_576) throw new Error('Fixture payload is too large.');
+          const input = JSON.parse(body);
+          if (!Array.isArray(input.fixtures) || input.fixtures.length > 20)
+            throw new Error('A bounded fixture list is required.');
+          const next = new Map();
+          for (const fixture of input.fixtures) {
+            if (
+              fixture.method !== 'GET' ||
+              typeof fixture.path !== 'string' ||
+              !/^\/api\/organizations\/e2e-org-1\/[a-zA-Z0-9_/-]+$/.test(fixture.path) ||
+              next.has(`GET ${fixture.path}`) ||
+              !Object.hasOwn(fixture, 'body') ||
+              (fixture.query !== undefined &&
+                (typeof fixture.query !== 'object' ||
+                  fixture.query === null ||
+                  Array.isArray(fixture.query) ||
+                  Object.values(fixture.query).some((value) => typeof value !== 'string')))
+            )
+              throw new Error(
+                'Fixtures require distinct exact organization GET paths and queries.',
+              );
+            next.set(`GET ${fixture.path}`, {
+              status: 200,
+              body: fixture.body,
+              query: fixture.query ?? {},
+            });
+          }
+          caseFixtures.clear();
+          for (const [key, fixture] of next) caseFixtures.set(key, fixture);
+          response.end(JSON.stringify({ registered: caseFixtures.size }));
+        } catch (error) {
+          response.writeHead(422);
+          response.end(JSON.stringify({ title: error.message }));
+        }
+      });
       return;
     }
     const routes = new Map([
@@ -119,6 +170,19 @@ function createApiStub(appOrigin, onShutdown) {
               'organization.read',
               'organization.webhooks.read',
               'organization.automation.read',
+              'organization.service_requests.read',
+              'organization.service_requests.create',
+              'organization.service_requests.manage',
+              'organization.inventory.read',
+              'organization.inventory.manage',
+              'organization.inventory.consume',
+              'organization.procurement.read',
+              'organization.procurement.manage',
+              'organization.maintenance_cost.read',
+              'organization.maintenance_cost.manage',
+              'organization.maintenance_exports.read',
+              'organization.maintenance_exports.manage',
+              'organization.maintenance_exports.confirm',
             ],
           }),
         ],
@@ -177,6 +241,7 @@ function createApiStub(appOrigin, onShutdown) {
         [`GET ${org}/automation/runs`, hydraCollection([], { '@id': `${org}/automation/runs` })],
       ];
       for (const [key, body] of fixtures) routes.set(key, { status: 200, body, allowQuery: true });
+      for (const [key, fixture] of caseFixtures) routes.set(key, fixture);
       routes.set('GET /.well-known/mercure', { status: 204, body: null, allowQuery: true });
     }
     if (
@@ -199,6 +264,13 @@ function createApiStub(appOrigin, onShutdown) {
       });
     }
     const fixture = routes.get(`${method} ${url.pathname}`);
+    const exactQuery =
+      !fixture?.query ||
+      (Object.keys(fixture.query).length === [...url.searchParams].length &&
+        Object.entries(fixture.query).every(
+          ([key, value]) =>
+            url.searchParams.getAll(key).length === 1 && url.searchParams.get(key) === value,
+        ));
     const entry = {
       method: request.method,
       path: url.pathname,
@@ -207,7 +279,12 @@ function createApiStub(appOrigin, onShutdown) {
       origin: origin ?? null,
       status: fixture?.status ?? 501,
     };
-    if (!fixture || (url.search && !fixture.allowQuery) || (origin && origin !== appOrigin)) {
+    if (
+      !fixture ||
+      !exactQuery ||
+      (url.search && !fixture.allowQuery && !fixture.query) ||
+      (origin && origin !== appOrigin)
+    ) {
       entry.status = 501;
       requests.push(entry);
       unexpected.push(entry);

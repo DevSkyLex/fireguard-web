@@ -1,0 +1,237 @@
+<form
+  [formRoot]="fields"
+  (submit)="submit($event)"
+  class="flex min-w-0 flex-col gap-4"
+  data-testid="maintenance-export-reference-form"
+>
+  <p hlmFieldDescription i18n="@@maintenanceExport.reference.help">
+    Mapping changes affect future exports. Retained archives keep their original external
+    references.
+  </p>
+  <div hlmField>
+    <label hlmFieldLabel for="maintenance-reference-system" i18n="@@maintenanceExport.form.system"
+      >External system code</label
+    ><input
+      hlmInput
+      id="maintenance-reference-system"
+      [formField]="fields.system"
+      autocomplete="off"
+    />
+    @if (fields.system().touched()) {
+      @for (error of fields.system().errors(); track error) {
+        <hlm-field-error>{{ error.message }}</hlm-field-error>
+      }
+    }
+  </div>
+  @if (allowedTypes().length === 0) {
+    <div hlmAlert>
+      <p hlmAlertDescription i18n="@@maintenanceExport.reference.permission">
+        A readable customer, site or equipment directory permission is required to choose a mapping
+        target.
+      </p>
+    </div>
+  } @else {
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="maintenance-reference-type"
+        i18n="@@maintenanceExport.reference.type"
+        >Resource type</label
+      >
+      <hlm-select [formField]="fields.resourceType" [itemToString]="typeLabelOf"
+        ><hlm-select-trigger buttonId="maintenance-reference-type"
+          ><hlm-select-value /></hlm-select-trigger
+        ><hlm-select-content *hlmSelectPortal>
+          @for (type of allowedTypes(); track type) {
+            <hlm-select-item [value]="type">{{ typeLabelOf(type) }}</hlm-select-item>
+          }
+        </hlm-select-content></hlm-select
+      >
+    </div>
+    @if (fields.resourceType().value() === 'customer') {
+      <fieldset hlmFieldSet>
+        <legend hlmFieldLegend i18n="@@maintenanceExport.reference.customerScope">
+          Customer status
+        </legend>
+        <hlm-toggle-group
+          type="single"
+          [nullable]="false"
+          [value]="archivedCustomers() ? 'archived' : 'active'"
+          (valueChange)="archiveFilter($event)"
+          [disabled]="pending() || locked()"
+          aria-label="Customer status"
+          i18n-aria-label="@@maintenanceExport.reference.customerScope"
+        >
+          <button
+            hlmToggleGroupItem
+            type="button"
+            value="active"
+            class="mobile-ui:min-h-11"
+            i18n="@@customer.page.active"
+          >
+            Active
+          </button>
+          <button
+            hlmToggleGroupItem
+            type="button"
+            value="archived"
+            class="mobile-ui:min-h-11"
+            i18n="@@customer.page.archived"
+          >
+            Archived
+          </button>
+        </hlm-toggle-group>
+        <p hlmFieldDescription i18n="@@maintenanceExport.reference.archivedHelp">
+          Archived customers can receive references for historical exports.
+        </p>
+      </fieldset>
+    }
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="maintenance-reference-search"
+        i18n="@@maintenanceExport.reference.search"
+        >Search the resource directory</label
+      >
+      <div class="flex flex-wrap gap-2">
+        <input
+          hlmInput
+          class="min-w-0 flex-1"
+          id="maintenance-reference-search"
+          [value]="search()"
+          (input)="searchInput($event)"
+          [disabled]="pending() || locked()"
+        /><button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="pending() || locked()"
+          (click)="searchTargets()"
+          i18n="@@common.search"
+        >
+          Search
+        </button>
+      </div>
+    </div>
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="maintenance-reference-target"
+        i18n="@@maintenanceExport.reference.target"
+        >Scoped resource</label
+      >
+      <hlm-select [formField]="fields.resourceId" [itemToString]="targetLabelOf"
+        ><hlm-select-trigger buttonId="maintenance-reference-target"
+          ><hlm-select-value /></hlm-select-trigger
+        ><hlm-select-content *hlmSelectPortal>
+          @for (target of targets().data?.member ?? []; track target.id) {
+            <hlm-select-item [value]="target.id">{{ target.label }}</hlm-select-item>
+          }
+        </hlm-select-content></hlm-select
+      >
+      @if (fields.resourceId().touched()) {
+        @for (error of fields.resourceId().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </div>
+    @if (targets().status === 'pending') {
+      <hlm-spinner
+        aria-label="Loading resources"
+        i18n-aria-label="@@maintenanceExport.reference.loading"
+      />
+    }
+    @if (targets().error; as error) {
+      <div hlmAlert variant="destructive">
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+    }
+    @if (targets().data; as collection) {
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="targetPage() <= 1 || pending() || locked()"
+          (click)="searchTargets(targetPage() - 1)"
+          i18n="@@common.previous"
+        >
+          Previous</button
+        ><span class="text-sm" i18n="@@maintenanceExport.reference.page"
+          >Page {{ targetPage() }}</span
+        ><button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="targetPage() * 30 >= collection.totalItems || pending() || locked()"
+          (click)="searchTargets(targetPage() + 1)"
+          i18n="@@common.next"
+        >
+          Next
+        </button>
+      </div>
+    }
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="maintenance-reference-value"
+        i18n="@@maintenanceExport.reference.value"
+        >External resource reference</label
+      ><input
+        hlmInput
+        id="maintenance-reference-value"
+        [formField]="fields.reference"
+        autocomplete="off"
+      />
+      @if (fields.reference().touched()) {
+        @for (error of fields.reference().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </div>
+    @if (mapping().status === 'pending') {
+      <hlm-spinner
+        aria-label="Reading current reference"
+        i18n-aria-label="@@maintenanceExport.reference.reading"
+      />
+    }
+    @if (mapping().error; as error) {
+      <div hlmAlert variant="destructive">
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+    }
+  }
+  @if (error(); as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap gap-2">
+    <button
+      hlmBtn
+      type="submit"
+      class="mobile-ui:min-h-11"
+      [disabled]="
+        fields().disabled() || mapping().status !== 'success' || allowedTypes().length === 0
+      "
+    >
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      <span i18n="@@maintenanceExport.reference.save">Save reviewed reference</span></button
+    ><button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending() || locked()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+  </div>
+</form>

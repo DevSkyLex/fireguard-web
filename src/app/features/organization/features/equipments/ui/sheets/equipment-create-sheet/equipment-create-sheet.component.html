@@ -18,6 +18,7 @@
     </hlm-sheet-header>
 
     <app-equipment-create-form
+      [typeOptions]="typeOptions()"
       [pending]="pending()"
       [serverError]="serverError()"
       [facilityOptions]="facilityOptions()"

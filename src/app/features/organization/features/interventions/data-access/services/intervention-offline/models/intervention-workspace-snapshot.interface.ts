@@ -3,6 +3,7 @@ import type {
   InterventionIssueOutput,
   InterventionOutput,
   InterventionWorkItemOutput,
+  InterventionEquipmentCatalogSnapshot,
 } from '@features/organization/features/interventions/models';
 
 /**
@@ -13,6 +14,20 @@ import type {
  * Offline view of an intervention and its loaded work items, changes, and readiness issues.
  */
 export interface InterventionWorkspaceSnapshot {
+  /**
+   * Property equipmentCatalog
+   * @readonly
+   *
+   * @description
+   * Complete equipment catalogue authorized for this workspace owner and organization.
+   * Historical snapshots without catalogue metadata remain readable.
+   *
+   * @access public
+   *
+   * @type {InterventionEquipmentCatalogSnapshot | undefined}
+   */
+  readonly equipmentCatalog?: InterventionEquipmentCatalogSnapshot;
+
   /**
    * Property intervention
    * @readonly

@@ -1,0 +1,106 @@
+<hlm-combobox
+  [value]="value()"
+  (valueChange)="pick($event)"
+  [itemToString]="labelOf"
+  [filter]="remoteFilter"
+  [disabled]="disabled()"
+  (searchChange)="search($event)"
+  [attr.aria-busy]="store.listCallState().status === 'pending'"
+>
+  <hlm-combobox-input
+    class="[&_[data-slot=input-group-addon]]:me-0"
+    [inputId]="inputId()"
+    [placeholder]="placeholder"
+    [attr.aria-label]="placeholder"
+  />
+  <hlm-combobox-content *hlmComboboxPortal>
+    <div hlmComboboxList>
+      @for (item of store.referenceEntities(); track item.id) {
+        <hlm-combobox-item [value]="item.id"
+          >{{ labelOf(item.id) }}
+          <span class="text-muted-foreground">{{ item.code }}</span></hlm-combobox-item
+        >
+      }
+      @if (store.listCallState().status === 'success' && store.referenceEntities().length === 0) {
+        <hlm-combobox-empty i18n="@@inventory.picker.noMatches"
+          >No matching references</hlm-combobox-empty
+        >
+      }
+    </div>
+    @if (store.listCallState().status === 'pending') {
+      <div class="flex items-center gap-2" role="status">
+        <hlm-spinner /><span i18n="@@inventory.picker.loading">Loading choices</span>
+      </div>
+    }
+    <div class="flex justify-between gap-2">
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        variant="ghost"
+        size="sm"
+        [disabled]="
+          disabled() ||
+          (store.query()?.page ?? 1) <= 1 ||
+          store.listCallState().status === 'pending'
+        "
+        (click)="page((store.query()?.page ?? 1) - 1)"
+        i18n="@@common.previous"
+      >
+        Previous
+      </button>
+      <output aria-live="polite">{{ store.query()?.page ?? 1 }} / {{ store.pageCount() }}</output>
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        variant="ghost"
+        size="sm"
+        [disabled]="
+          disabled() ||
+          (store.query()?.page ?? 1) >= store.pageCount() ||
+          store.listCallState().status === 'pending'
+        "
+        (click)="page((store.query()?.page ?? 1) + 1)"
+        i18n="@@common.next"
+      >
+        Next
+      </button>
+    </div>
+  </hlm-combobox-content>
+</hlm-combobox>
+@if (store.listCallState().error; as error) {
+  <div hlmAlert variant="destructive" role="alert">
+    <h3 hlmAlertTitle i18n="@@inventory.picker.listFailed">Choices could not be loaded</h3>
+    <p hlmAlertDescription>{{ error.message }}</p>
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="disabled()"
+      (click)="page(store.query()?.page ?? 1)"
+      i18n="@@common.retry"
+    >
+      Retry
+    </button>
+  </div>
+}
+@if (store.readCallState().error; as error) {
+  <div hlmAlert variant="destructive" role="alert">
+    <h3 hlmAlertTitle i18n="@@inventory.picker.readFailed">
+      Selected reference could not be loaded
+    </h3>
+    <p hlmAlertDescription>{{ error.message }}</p>
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      (click)="retrySelection()"
+      i18n="@@common.retry"
+    >
+      Retry
+    </button>
+  </div>
+}

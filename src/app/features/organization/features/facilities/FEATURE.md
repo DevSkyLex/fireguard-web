@@ -433,6 +433,23 @@ The organization setup facade may publish the suggestion transport for onboardin
 
 These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
 
-| Entry point                     | Consumers                             |
-| ------------------------------- | ------------------------------------- |
-| `ui/forms/facility-create-form` | `organization/features/interventions` |
+| Entry point                     | Consumers                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------- |
+| `ui/forms/facility-create-form` | `organization/features/interventions`                                                 |
+| `data-access`                   | `organization/features/service-requests`, `organization/features/maintenance-exports` |
+| `models`                        | `organization/features/service-requests`, `organization/features/maintenance-exports` |
+| `state`                         | `organization/features/service-requests`                                              |
+| `ui/components`                 | `organization/features/service-requests`                                              |
+
+## Internal customers
+
+A root SITE may have an optional customerId, independent of offline replay
+clientId. Descendants inherit their commercial context through the root site
+and cannot assign a customer independently. Operators may leave this field empty.
+
+Facilities consume the Customers feature's public models and ui/components
+barrels. CustomerPicker owns its browser-only, paginated/searchable directory;
+CustomerLabel reads one existing assignment without loading the directory.
+Creation and inline editing remain Facility workflows, with explicit confirmation.
+Existing archived customer links stay readable; new assignments accept active
+customers of the same organization only, as enforced by the API.

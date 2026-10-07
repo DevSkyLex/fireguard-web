@@ -1,4 +1,4 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +6,7 @@ import {
   ElementRef,
   Injector,
   OnInit,
+  PLATFORM_ID,
   afterNextRender,
   untracked,
   computed,
@@ -20,7 +21,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown } from '@ng-icons/lucide';
 import { Events } from '@ngrx/signals/events';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, Subject, switchMap } from 'rxjs';
 import { FeedbackService } from '@core/feedback';
 import {
   idleCallState,
@@ -57,12 +58,14 @@ import {
 } from '@features/onboarding/ui/forms';
 import { BillingService, PlanService } from '@features/organization/data-access';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
+import { OrganizationLandingService } from '@features/organization/services/organization-landing';
 import {
   OrganizationSetupService,
   type SetupCreateEquipmentInput,
   type SetupCreateFacilityInput,
   type SetupCreateOrganizationInput,
   type SetupFacilitySummary,
+  type SetupEquipmentTypeOption,
   type SetupInviteMemberInput,
   type SetupOrganizationRole,
 } from '@features/organization/setup';
@@ -152,6 +155,36 @@ export function redirectToStripe(documentRef: Document, url: string): void {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingWizardPage implements OnInit {
+  /**
+   * Property landing
+   * @readonly
+   *
+   * @description
+   * Chooses the initial fleet view from the newly activated organization's API grants.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationLandingService}
+   */
+  private readonly landing: OrganizationLandingService = inject(OrganizationLandingService);
+
+  /**
+   * Property completedDestinations
+   * @readonly
+   *
+   * @description
+   * Cancels obsolete destination reads while preserving a safe deep link to the completed
+   * organization.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Subject<{ organizationId: string; requested: string }>}
+   */
+  private readonly completedDestinations: Subject<{ organizationId: string; requested: string }> =
+    new Subject();
+
   /**
    * Property addressSearch
    * @readonly
@@ -310,6 +343,76 @@ export class OnboardingWizardPage implements OnInit {
   protected readonly facilitiesCallState: WritableSignal<CallState<void>> = signal(idleCallState());
 
   /**
+   * Property equipmentTypesCallState
+   * @readonly
+   *
+   * @description
+   * Equipment catalogue loading is distinct from persisted site recovery.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<CallState<void>>}
+   */
+  protected readonly equipmentTypesCallState: WritableSignal<CallState<void>> =
+    signal(idleCallState());
+
+  /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * Active choices published by setup include custom organization codes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<readonly SetupEquipmentTypeOption[]>}
+   */
+  protected readonly equipmentTypeOptions: WritableSignal<readonly SetupEquipmentTypeOption[]> =
+    signal<readonly SetupEquipmentTypeOption[]>([]);
+
+  /**
+   * Property equipmentTypesBrowserReady
+   * @readonly
+   *
+   * @description
+   * Equipment catalogue requests begin after browser rendering, never during SSR.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly equipmentTypesBrowserReady: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Property equipmentTypesOrganizationId
+   *
+   * @description
+   * Identifies the catalogue's owner independently of the current wizard target.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
+  private equipmentTypesOrganizationId: string | null = null;
+
+  /**
+   * Property equipmentTypesSubscription
+   *
+   * @description
+   * Cancels obsolete private catalogue reads when the step or organization changes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {import('rxjs').Subscription | null}
+   */
+  private equipmentTypesSubscription: import('rxjs').Subscription | null = null;
+
+  /**
    * Property catalogError
    * @readonly
    *
@@ -328,7 +431,7 @@ export class OnboardingWizardPage implements OnInit {
       case 'invite_members':
         return this.rolesCallState().error;
       case 'create_first_equipment':
-        return this.facilitiesCallState().error;
+        return this.equipmentTypesCallState().error ?? this.facilitiesCallState().error;
       default:
         return null;
     }
@@ -898,10 +1001,16 @@ export class OnboardingWizardPage implements OnInit {
    *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly catalogPending: Signal<boolean> = computed(() =>
-    [this.planCatalogCallState(), this.rolesCallState(), this.facilitiesCallState()].some(
-      (state) => state.status === 'pending',
-    ),
+  protected readonly catalogPending: Signal<boolean> = computed(
+    () =>
+      [
+        this.planCatalogCallState(),
+        this.rolesCallState(),
+        this.facilitiesCallState(),
+        this.equipmentTypesCallState(),
+      ].some((state) => state.status === 'pending') ||
+      (this.currentStep()?.key === 'create_first_equipment' &&
+        this.equipmentTypesCallState().status === 'idle'),
   );
 
   /**
@@ -952,7 +1061,41 @@ export class OnboardingWizardPage implements OnInit {
    * @access public
    * @since unreleased
    */
-  constructor() {
+  public constructor() {
+    if (isPlatformBrowser(inject(PLATFORM_ID))) {
+      afterNextRender(() => this.equipmentTypesBrowserReady.set(true));
+    }
+    effect(() => {
+      const organizationId = this.store.targetOrganizationId();
+      const active = this.currentStep()?.key === 'create_first_equipment';
+      const ready = this.equipmentTypesBrowserReady();
+      untracked(() => {
+        if (!active || !organizationId || !ready) {
+          this.equipmentTypesSubscription?.unsubscribe();
+          if (this.equipmentTypesCallState().status === 'pending')
+            this.equipmentTypesCallState.set(idleCallState());
+          return;
+        }
+        if (
+          organizationId !== this.equipmentTypesOrganizationId ||
+          this.equipmentTypesCallState().status === 'idle'
+        )
+          this.loadEquipmentTypes();
+      });
+    });
+    this.completedDestinations
+      .pipe(
+        switchMap(({ organizationId, requested }) => {
+          const root: string = `/organizations/${encodeURIComponent(organizationId)}`;
+          return requested === root ||
+            requested.startsWith(`${root}/`) ||
+            requested.startsWith(`${root}?`)
+            ? of(requested)
+            : this.landing.defaultDestination(organizationId);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((destination) => void this.router.navigateByUrl(destination));
     let wasPending = false;
     effect(() => {
       const pending = this.stepPending();
@@ -1035,10 +1178,14 @@ export class OnboardingWizardPage implements OnInit {
           $localize`:@@onboarding.wizard.completed:Your organization is ready.`,
         );
         const organizationId = this.store.targetOrganizationId();
-        const destination = organizationId
-          ? `/organizations/${organizationId}`
-          : resolveReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'), '/');
-        void this.router.navigateByUrl(destination);
+        const requested: string = resolveReturnUrl(
+          this.route.snapshot.queryParamMap.get('returnUrl'),
+          '',
+        );
+        untracked(() => {
+          if (organizationId) this.completedDestinations.next({ organizationId, requested });
+          else void this.router.navigateByUrl(requested || '/');
+        });
       }
     });
 
@@ -1386,6 +1533,51 @@ export class OnboardingWizardPage implements OnInit {
   }
 
   /**
+   * Method loadEquipmentTypes
+   * @method loadEquipmentTypes
+   *
+   * @description
+   * Loads active equipment choices with explicit retries and cancellation of obsolete reads.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
+  private loadEquipmentTypes(): void {
+    const organizationId = this.store.targetOrganizationId();
+    if (
+      !organizationId ||
+      !this.equipmentTypesBrowserReady() ||
+      this.currentStep()?.key !== 'create_first_equipment'
+    )
+      return;
+    this.equipmentTypesSubscription?.unsubscribe();
+    if (organizationId !== this.equipmentTypesOrganizationId) this.equipmentTypeOptions.set([]);
+    this.equipmentTypesOrganizationId = organizationId;
+    this.equipmentTypesCallState.set(pendingCallState());
+    this.equipmentTypesSubscription = this.organizationSetupService
+      .listEquipmentTypes(organizationId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (types) => {
+          this.equipmentTypeOptions.set(types);
+          this.equipmentTypesCallState.set(successCallState(undefined));
+        },
+        error: (error: unknown) => {
+          const failure = toStoreError(error);
+          this.equipmentTypesCallState.set(errorCallState(failure));
+          this.feedback.show(
+            toStoreFailureEventPayload(
+              failure,
+              $localize`:@@onboarding.wizard.catalogFailed:The available choices could not be loaded.`,
+            ),
+          );
+        },
+      });
+  }
+
+  /**
    * Method loadFacilities
    * @method loadFacilities
    *
@@ -1444,7 +1636,8 @@ export class OnboardingWizardPage implements OnInit {
         this.loadRoles();
         break;
       case 'create_first_equipment':
-        this.loadFacilities();
+        if (this.facilitiesCallState().status !== 'success') this.loadFacilities();
+        if (this.equipmentTypesCallState().status !== 'pending') this.loadEquipmentTypes();
         break;
     }
   }

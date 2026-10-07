@@ -10,7 +10,16 @@ import type { EquipmentOutput } from './equipment-output.interface';
  */
 type EquipmentEditableFields = Pick<
   EquipmentOutput,
-  'type' | 'subType' | 'brand' | 'model' | 'serialNumber' | 'locationLabel'
+  | 'type'
+  | 'subType'
+  | 'brand'
+  | 'model'
+  | 'serialNumber'
+  | 'locationLabel'
+  | 'name'
+  | 'assetCode'
+  | 'criticality'
+  | 'technicalProperties'
 >;
 
 /**
@@ -66,6 +75,8 @@ export type CreateEquipmentInput = Pick<EquipmentEditableFields, 'type'> &
     /**
      * Property facility
      * @readonly
+     *
+     * @description
      *
      * @access public
      *

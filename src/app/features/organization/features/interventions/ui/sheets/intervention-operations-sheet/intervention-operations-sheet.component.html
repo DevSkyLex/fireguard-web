@@ -46,9 +46,19 @@
               }}</time>
             </div>
             <p class="text-sm">{{ target(operation) }}</p>
-            <p class="text-sm break-words whitespace-pre-wrap text-muted-foreground">
-              {{ preview(operation) }}
-            </p>
+            @if (executionResultOf(operation); as result) {
+              <ng-container
+                [ngTemplateOutlet]="queuedExecution"
+                [ngTemplateOutletContext]="{
+                  $implicit: result,
+                  resource: replacementResourceOf(operation),
+                }"
+              />
+            } @else {
+              <p class="text-sm break-words whitespace-pre-wrap text-muted-foreground">
+                {{ preview(operation) }}
+              </p>
+            }
             @if (operation.status === 'conflict') {
               <p class="text-sm font-medium" i18n="@@intervention.operations.conflict">
                 The resource changed on the server. Review your local content before reapplying it.
@@ -137,7 +147,17 @@
       </p>
     </hlm-alert-dialog-header>
     @if (confirmedOperation(); as operation) {
-      <p class="text-sm break-words whitespace-pre-wrap">{{ preview(operation) }}</p>
+      @if (executionResultOf(operation); as result) {
+        <ng-container
+          [ngTemplateOutlet]="queuedExecution"
+          [ngTemplateOutletContext]="{
+            $implicit: result,
+            resource: replacementResourceOf(operation),
+          }"
+        />
+      } @else {
+        <p class="text-sm break-words whitespace-pre-wrap">{{ preview(operation) }}</p>
+      }
       @if (confirmation()?.action === 'discard') {
         <p class="text-sm" i18n="@@intervention.operations.loss">
           This saved operation will be removed from this device without being sent. This cannot be
@@ -172,6 +192,20 @@
     </hlm-alert-dialog-footer>
   </hlm-alert-dialog-content>
 </hlm-alert-dialog>
+<ng-template #queuedExecution let-result let-resource="resource">
+  <div class="flex flex-col gap-1 text-sm" data-testid="operation-execution-facts">
+    <p i18n="@@intervention.execution.performedOn">
+      Performed {{ result.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+    </p>
+    <p>{{ executionOutcomeLabel(result) }}</p>
+    <p class="wrap-anywhere whitespace-pre-wrap">{{ result.workPerformed }}</p>
+    @if (resource) {
+      <p class="wrap-anywhere" i18n="@@intervention.execution.replacementResource">
+        Replacement equipment: {{ resource }}
+      </p>
+    }
+  </div>
+</ng-template>
 @if (workloadReview(); as operation) {
   @if (operation.workloadAssessment; as assessment) {
     <app-workload-confirmation-dialog

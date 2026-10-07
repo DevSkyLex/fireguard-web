@@ -175,6 +175,22 @@ const renderPageTabs = (): HTMLElement => {
 };
 
 describe('InterventionsPage', () => {
+  it('prepares an equipment-scoped corrective intervention without creating any work implicitly', async () => {
+    const fixture = await createPage({
+      create: '1',
+      targetEquipment: '00000000-0000-4000-8000-000000000001',
+      workAction: 'repair',
+      siteContext: '00000000-0000-4000-8000-000000000002',
+    });
+    expect(fixture.componentInstance['duplicatePrefill']()).toEqual({
+      name: '',
+      type: 'corrective_maintenance',
+      priority: 'normal',
+      site: '/api/facilities/00000000-0000-4000-8000-000000000002',
+      responsible: '',
+    });
+    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+  });
   const mobile = signal(false);
   let fixture: ComponentFixture<InterventionsPage>;
   let mutationCallStates: WritableSignal<Record<string, CallState>>;

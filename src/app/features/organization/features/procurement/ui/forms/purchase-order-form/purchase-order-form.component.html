@@ -1,0 +1,309 @@
+<form
+  id="procurement-order-form"
+  class="flex min-w-0 flex-col gap-6 px-1"
+  novalidate
+  (submit)="submit($event)"
+>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@procurement.order.identity">Purchase draft</legend>
+    <div hlmFieldGroup>
+      <hlm-field
+        ><label hlmFieldLabel for="procurement-order-name" i18n="@@procurement.order.name"
+          >Order name</label
+        ><input
+          hlmInput
+          id="procurement-order-name"
+          [formField]="orderForm.name"
+          class="mobile-ui:min-h-11"
+        />
+        @if (orderForm.name().touched()) {
+          @for (error of orderForm.name().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </hlm-field>
+      <hlm-field
+        ><label hlmFieldLabel for="procurement-order-supplier" i18n="@@procurement.order.supplier"
+          >Internal supplier</label
+        >
+        <hlm-combobox
+          [formField]="orderForm.supplierId"
+          [itemToString]="supplierLabelOf"
+          [filter]="remoteFilter"
+          (searchChange)="supplierSearched.emit($event)"
+        >
+          <hlm-combobox-input inputId="procurement-order-supplier" class="mobile-ui:min-h-11" />
+          <hlm-combobox-content *hlmComboboxPortal
+            ><hlm-combobox-empty i18n="@@procurement.order.noSupplier"
+              >No active matching supplier loaded.</hlm-combobox-empty
+            >
+            <div hlmComboboxList>
+              @for (supplier of activeSuppliers(); track supplier.id) {
+                <hlm-combobox-item [value]="supplier.id" class="mobile-ui:min-h-11">{{
+                  supplierLabelOf(supplier.id)
+                }}</hlm-combobox-item>
+              }
+            </div></hlm-combobox-content
+          >
+        </hlm-combobox>
+        @if (orderForm.supplierId().touched()) {
+          @for (error of orderForm.supplierId().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+        @if (supplierState().status === 'pending') {
+          <p hlmFieldDescription i18n="@@procurement.order.loadingSuppliers">Loading suppliers…</p>
+        }
+        @if (supplierState().error; as error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error
+          ><button
+            hlmBtn
+            type="button"
+            variant="outline"
+            (click)="supplierPageChanged.emit(supplierPage())"
+            i18n="@@common.retry"
+          >
+            Retry
+          </button>
+        }
+        @if (supplierPageCount() > 1) {
+          <div class="flex flex-wrap gap-2">
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="supplierPage() <= 1 || pending()"
+              (click)="supplierPageChanged.emit(supplierPage() - 1)"
+              i18n="@@procurement.order.previousSuppliers"
+            >
+              Previous suppliers</button
+            ><button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="supplierPage() >= supplierPageCount() || pending()"
+              (click)="supplierPageChanged.emit(supplierPage() + 1)"
+              i18n="@@procurement.order.nextSuppliers"
+            >
+              Next suppliers
+            </button>
+          </div>
+        }
+      </hlm-field>
+    </div>
+  </fieldset>
+  @for (line of draft().lines; track line.id; let index = $index) {
+    <fieldset hlmFieldSet class="min-w-0 border-b border-border pb-5">
+      <legend hlmFieldLegend i18n="@@procurement.order.line">Order line {{ index + 1 }}</legend>
+      <div hlmFieldGroup>
+        <hlm-field
+          ><label
+            hlmFieldLabel
+            [for]="'procurement-line-kind-' + index"
+            i18n="@@procurement.order.kind"
+            >Item kind</label
+          >
+          <hlm-select [formField]="orderForm.lines[index].kind" [itemToString]="kindLabelOf"
+            ><hlm-select-trigger
+              [buttonId]="'procurement-line-kind-' + index"
+              class="w-full mobile-ui:min-h-11"
+              ><hlm-select-value /></hlm-select-trigger
+            ><hlm-select-content *hlmSelectPortal
+              ><hlm-select-group>
+                @for (kind of kinds; track kind.value) {
+                  <hlm-select-item [value]="kind.value">{{ kind.label }}</hlm-select-item>
+                }
+              </hlm-select-group></hlm-select-content
+            ></hlm-select
+          >
+        </hlm-field>
+        @if (line.kind === 'part') {
+          <hlm-field
+            ><label
+              hlmFieldLabel
+              [for]="'procurement-line-part-' + index"
+              i18n="@@procurement.order.article"
+              >Stock article</label
+            ><app-inventory-part-picker
+              [organizationId]="organizationId()"
+              [inputId]="'procurement-line-part-' + index"
+              [formField]="orderForm.lines[index].partId"
+            />
+            @if (orderForm.lines[index].partId().touched()) {
+              @for (error of orderForm.lines[index].partId().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </hlm-field>
+        } @else {
+          <hlm-field
+            ><label
+              hlmFieldLabel
+              [for]="'procurement-line-type-' + index"
+              i18n="@@procurement.order.type"
+              >Equipment type</label
+            ><hlm-select [formField]="orderForm.lines[index].typeCode" [itemToString]="typeLabelOf"
+              ><hlm-select-trigger
+                [buttonId]="'procurement-line-type-' + index"
+                class="w-full mobile-ui:min-h-11"
+                ><hlm-select-value
+                  placeholder="Choose a catalogue type"
+                  i18n-placeholder="@@procurement.order.chooseType" /></hlm-select-trigger
+              ><hlm-select-content *hlmSelectPortal
+                ><hlm-select-group>
+                  @for (type of selectableTypes(line.typeCode); track type.value) {
+                    <hlm-select-item [value]="type.value">{{ type.label }}</hlm-select-item>
+                  }
+                </hlm-select-group></hlm-select-content
+              ></hlm-select
+            >
+            @if (orderForm.lines[index].typeCode().touched()) {
+              @for (error of orderForm.lines[index].typeCode().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </hlm-field>
+          <hlm-field
+            ><label
+              hlmFieldLabel
+              [for]="'procurement-line-name-' + index"
+              i18n="@@procurement.order.equipmentName"
+              >Equipment name</label
+            ><input
+              hlmInput
+              [id]="'procurement-line-name-' + index"
+              [formField]="orderForm.lines[index].name"
+              class="mobile-ui:min-h-11"
+          /></hlm-field>
+          <div class="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+            <hlm-field class="min-w-0"
+              ><label
+                hlmFieldLabel
+                [for]="'procurement-line-brand-' + index"
+                i18n="@@procurement.order.brand"
+                >Brand</label
+              ><input
+                hlmInput
+                [id]="'procurement-line-brand-' + index"
+                [formField]="orderForm.lines[index].brand"
+                class="mobile-ui:min-h-11" /></hlm-field
+            ><hlm-field class="min-w-0"
+              ><label
+                hlmFieldLabel
+                [for]="'procurement-line-model-' + index"
+                i18n="@@procurement.order.model"
+                >Model</label
+              ><input
+                hlmInput
+                [id]="'procurement-line-model-' + index"
+                [formField]="orderForm.lines[index].model"
+                class="mobile-ui:min-h-11"
+            /></hlm-field>
+          </div>
+          <p hlmFieldDescription i18n="@@procurement.order.equipmentHint">
+            Received materials await explicit creation as reserve equipment. They are not
+            quantitative stock.
+          </p>
+        }
+        <hlm-field
+          ><label
+            hlmFieldLabel
+            [for]="'procurement-line-quantity-' + index"
+            i18n="@@procurement.quantity.label"
+            >Quantity</label
+          ><input
+            hlmInput
+            type="text"
+            inputmode="decimal"
+            [id]="'procurement-line-quantity-' + index"
+            [formField]="orderForm.lines[index].quantity"
+            class="mobile-ui:min-h-11"
+          />
+          @if (orderForm.lines[index].quantity().touched()) {
+            @for (error of orderForm.lines[index].quantity().errors(); track error) {
+              <hlm-field-error>{{ error.message }}</hlm-field-error>
+            }
+          }
+        </hlm-field>
+        @if (canEditCosts()) {
+          <hlm-field
+            ><label
+              hlmFieldLabel
+              [for]="'procurement-line-cost-' + index"
+              i18n="@@procurement.cost.label"
+              >Internal unit cost</label
+            ><input
+              hlmInput
+              type="text"
+              inputmode="decimal"
+              [id]="'procurement-line-cost-' + index"
+              [formField]="orderForm.lines[index].unitCost"
+              class="mobile-ui:min-h-11"
+            />
+            <p hlmFieldDescription i18n="@@procurement.cost.hint">
+              Organization currency. Leave empty when unknown. No commercial tax or billing is
+              calculated here.
+            </p>
+            @if (orderForm.lines[index].unitCost().touched()) {
+              @for (error of orderForm.lines[index].unitCost().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </hlm-field>
+        }
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          class="mobile-ui:min-h-11"
+          [disabled]="pending()"
+          (click)="removeLine(index)"
+          i18n="@@procurement.order.removeLine"
+        >
+          Remove line
+        </button>
+      </div>
+    </fieldset>
+  }
+  @for (error of orderForm.lines().errors(); track error) {
+    <hlm-field-error>{{ error.message }}</hlm-field-error>
+  }
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    class="mobile-ui:min-h-11"
+    [disabled]="pending() || draft().lines.length >= 100"
+    (click)="addLine()"
+    i18n="@@procurement.order.addLine"
+  >
+    Add a line
+  </button>
+  <p hlmFieldDescription i18n="@@procurement.quantity.hint">
+    Use a decimal point and at most six decimal places. Quantities and amounts remain exact.
+  </p>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@procurement.order.saveFailed">Purchase draft could not be saved</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel</button
+    ><button hlmBtn type="submit" class="mobile-ui:min-h-11" [disabled]="pending()">
+      @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
+      }
+      <span i18n="@@procurement.order.save">Save purchase draft</span>
+    </button>
+  </div>
+</form>

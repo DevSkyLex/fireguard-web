@@ -1,0 +1,72 @@
+<form
+  id="procurement-return-form"
+  class="flex min-w-0 flex-col gap-5 px-1"
+  novalidate
+  (submit)="submit($event)"
+>
+  <p hlmFieldDescription i18n="@@procurement.return.limit">
+    Received units not already returned: {{ limit() }}.
+  </p>
+  <div hlmFieldGroup>
+    <hlm-field
+      ><label hlmFieldLabel for="procurement-return-quantity" i18n="@@procurement.quantity.label"
+        >Quantity</label
+      ><input
+        hlmInput
+        id="procurement-return-quantity"
+        type="text"
+        inputmode="decimal"
+        class="mobile-ui:min-h-11"
+        [formField]="returnForm.quantity"
+      />
+      @if (returnForm.quantity().touched()) {
+        @for (error of returnForm.quantity().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </hlm-field>
+    <hlm-field
+      ><label hlmFieldLabel for="procurement-return-reason" i18n="@@procurement.return.reason"
+        >Physical return reason</label
+      ><textarea
+        hlmTextarea
+        id="procurement-return-reason"
+        rows="3"
+        [formField]="returnForm.reason"
+      ></textarea>
+      @if (returnForm.reason().touched()) {
+        @for (error of returnForm.reason().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </hlm-field>
+  </div>
+  <p hlmFieldDescription i18n="@@procurement.return.hint">
+    The return remains linked to its original receipt. If stock needs reconciliation, the physical
+    declaration is retained until the movement can be confirmed.
+  </p>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@procurement.return.failed">Return could not be confirmed</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel</button
+    ><button hlmBtn type="submit" class="mobile-ui:min-h-11" [disabled]="pending()">
+      @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
+      }
+      <span i18n="@@procurement.return.record">Record physical return</span>
+    </button>
+  </div>
+</form>

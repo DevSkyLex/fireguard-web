@@ -1,0 +1,175 @@
+<form
+  [formRoot]="fields"
+  (submit)="submit($event)"
+  class="flex min-w-0 flex-col gap-4"
+  data-testid="maintenance-export-create-form"
+>
+  <div hlmField>
+    <label hlmFieldLabel for="maintenance-export-system" i18n="@@maintenanceExport.form.system"
+      >External system code</label
+    >
+    <input hlmInput id="maintenance-export-system" [formField]="fields.system" autocomplete="off" />
+    <p hlmFieldDescription i18n="@@maintenanceExport.form.systemHelp">
+      Identifies your ERP or target system. References are frozen when the export is generated.
+    </p>
+    @if (fields.system().touched()) {
+      @for (error of fields.system().errors(); track error) {
+        <hlm-field-error>{{ error.message }}</hlm-field-error>
+      }
+    }
+  </div>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@maintenanceExport.form.dossiers">Published dossiers</legend>
+    <div hlmField>
+      <label hlmFieldLabel for="maintenance-export-search" i18n="@@maintenanceExport.form.search"
+        >Search published dossiers</label
+      >
+      <div class="flex flex-wrap gap-2">
+        <input
+          hlmInput
+          id="maintenance-export-search"
+          class="min-w-0 flex-1 flex-col items-start gap-1"
+          [value]="search()"
+          (input)="searchInput($event)"
+          [disabled]="pending() || locked()"
+        />
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="pending() || locked()"
+          (click)="searchChanged.emit(search())"
+          i18n="@@common.search"
+        >
+          Search
+        </button>
+      </div>
+    </div>
+    @if (sources().status === 'pending') {
+      <hlm-spinner
+        aria-label="Loading dossiers"
+        i18n-aria-label="@@maintenanceExport.form.loadingSources"
+      />
+    }
+    @if (sources().error; as error) {
+      <div hlmAlert variant="destructive">
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+    }
+    @if (sources().data; as collection) {
+      <div class="flex flex-col gap-2" data-testid="maintenance-export-sources">
+        @for (source of collection.member; track source.id) {
+          <div hlmField orientation="horizontal" class="rounded-md border p-3">
+            <hlm-checkbox
+              [inputId]="'export-source-' + source.id"
+              [checked]="selected(source.id)"
+              [disabled]="
+                !source.ready ||
+                pending() ||
+                locked() ||
+                (!selected(source.id) && selection().length >= 100)
+              "
+              (checkedChange)="toggle(source, $event)"
+            />
+            <label
+              hlmFieldLabel
+              [for]="'export-source-' + source.id"
+              class="min-w-0 flex-1 flex-col items-start gap-1"
+            >
+              <span class="block break-words">{{ source.number }} · {{ source.name }}</span>
+              <span class="block text-xs font-normal text-muted-foreground"
+                >{{ source.site?.name }}
+                @if (source.customer) {
+                  · {{ source.customer.name }}
+                }
+              </span>
+              @if (!source.ready) {
+                <span class="block text-xs text-warning">{{ blockedLabel(source) }}</span>
+              }
+            </label>
+          </div>
+        }
+        @if (collection.member.length === 0) {
+          <p class="text-sm text-muted-foreground" i18n="@@maintenanceExport.form.noSources">
+            No published dossier matches this search.
+          </p>
+        }
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="sourcePage() <= 1 || pending() || locked()"
+          (click)="pageChanged.emit(sourcePage() - 1)"
+          i18n="@@common.previous"
+        >
+          Previous
+        </button>
+        <span class="text-sm" i18n="@@maintenanceExport.form.sourcePage"
+          >Page {{ sourcePage() }}</span
+        >
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="sourcePage() * 30 >= collection.totalItems || pending() || locked()"
+          (click)="pageChanged.emit(sourcePage() + 1)"
+          i18n="@@common.next"
+        >
+          Next
+        </button>
+      </div>
+    }
+    <p hlmFieldDescription i18n="@@maintenanceExport.form.selected">
+      {{ selection().length }} dossier(s) selected. Selection is kept across pages.
+    </p>
+    @if (fields.interventionIds().touched()) {
+      @for (error of fields.interventionIds().errors(); track error) {
+        <hlm-field-error>{{ error.message }}</hlm-field-error>
+      }
+    }
+  </fieldset>
+  @if (canIncludeCosts()) {
+    <div hlmField orientation="horizontal">
+      <hlm-checkbox inputId="maintenance-export-costs" [formField]="fields.includeInternalCosts" />
+      <label
+        hlmFieldLabel
+        for="maintenance-export-costs"
+        i18n="@@maintenanceExport.form.includeCosts"
+        >Include internal costs in this private export</label
+      >
+    </div>
+    <p hlmFieldDescription i18n="@@maintenanceExport.form.costHelp">
+      Unknown costs remain explicitly incomplete. This archive will require financial read
+      permission.
+    </p>
+  }
+  @if (error(); as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap gap-2">
+    <button hlmBtn type="submit" class="mobile-ui:min-h-11" [disabled]="fields().disabled()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      <span i18n="@@maintenanceExport.form.generate">Generate retained export</span>
+    </button>
+    <button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending() || locked()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+  </div>
+</form>

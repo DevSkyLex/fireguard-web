@@ -119,6 +119,78 @@ describe('InterventionWorkItemTable', () => {
     expect(rows()[0]?.textContent).toContain('Extinguisher A-12');
   });
 
+  it('shows actual failed work separately from task status and update timestamps', async () => {
+    fixture.componentRef.setInput('items', [
+      item({
+        action: 'repair',
+        status: 'in_progress',
+        executionResult: {
+          equipmentId: 'eq-1',
+          performedAt: '2026-03-01T11:00:00+01:00',
+          outcome: 'failed',
+          workPerformed: 'Leak persists; follow-up needed.',
+          operationId: null,
+          occurrenceId: null,
+          state: 'staged',
+          validatedAt: null,
+        },
+      }),
+    ]);
+    await fixture.whenStable();
+    expect(root().textContent).toContain('Unsuccessful — work still required');
+    expect(root().textContent).toContain('Pending review');
+    expect(root().textContent).toContain('Leak persists; follow-up needed.');
+    expect(root().textContent).toContain('In progress');
+    expect(
+      root().querySelector('[data-testid="work-item-execution-summary"]')?.textContent,
+    ).not.toContain('Jan 5');
+  });
+
+  it('retains earlier failed attempts behind a native history disclosure after successful work', async () => {
+    fixture.componentRef.setInput('items', [
+      item({
+        status: 'completed',
+        action: 'repair',
+        executionResult: {
+          equipmentId: 'eq-1',
+          performedAt: '2026-03-02T11:00:00+01:00',
+          outcome: 'successful',
+          workPerformed: 'Pressure test passed.',
+          operationId: null,
+          occurrenceId: null,
+          state: 'validated',
+          validatedAt: '2026-03-03T11:00:00Z',
+          history: [
+            {
+              equipmentId: 'eq-1',
+              performedAt: '2026-03-01T11:00:00+01:00',
+              outcome: 'failed',
+              workPerformed: 'Leak persists; a new seal is required.',
+              operationId: null,
+              occurrenceId: null,
+              state: 'staged',
+              validatedAt: null,
+            },
+          ],
+        },
+      }),
+    ]);
+    await fixture.whenStable();
+    const trigger = root().querySelector<HTMLButtonElement>(
+      '[data-testid="execution-history-trigger"]',
+    );
+    expect(trigger?.textContent).toContain('Previous attempts');
+    trigger?.click();
+    await fixture.whenStable();
+    expect(root().querySelector('[data-testid="execution-history"]')?.textContent).toContain(
+      'Leak persists; a new seal is required.',
+    );
+    expect(root().querySelector('[data-testid="execution-history"]')?.textContent).toContain(
+      'Unsuccessful — work still required',
+    );
+    expect(root().textContent).toContain('Pressure test passed.');
+  });
+
   it('exposes locally saved work as native output in the table and cards', async () => {
     fixture.componentRef.setInput('queuedIds', new Set(['wi-1']));
     await fixture.whenStable();

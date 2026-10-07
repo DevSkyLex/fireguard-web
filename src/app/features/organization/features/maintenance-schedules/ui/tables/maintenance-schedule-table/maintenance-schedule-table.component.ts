@@ -14,7 +14,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucidePencil } from '@ng-icons/lucide';
-import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
+import type { EquipmentTypeOption } from '@features/organization/features/equipments';
 import type { MaintenanceScheduleOutput } from '@features/organization/features/maintenance-schedules/models';
 import { MAINTENANCE_OVERRIDE_DURATION_OPTIONS } from '@features/organization/features/maintenance-schedules/options';
 import { iriId } from '@features/organization/features/maintenance-schedules/utils';
@@ -42,19 +42,16 @@ import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status
  * "Never inspected" for a tracked-but-unreviewed schedule, per the backend
  * contract), the authoritative due-status badge, and the current interval
  * override with an Edit action.
- *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter and paginate, and
  * whether the operator may manage overrides ({@link canManage}); this
  * component only renders the page it is handed and emits
  * {@link overrideRequested} for the page to open the override dialog.
- *
  * The facility cell and the equipment link's accessible name both resolve
  * through {@link facilityLabelOf}, the page's own facility catalog, so two
  * rows tracking the same equipment type at different facilities read as
  * distinguishable rather than an identical "Fire extinguisher" /
  * "View facility" pair pointing at different records.
- *
  * Built on the shared `CollectionSurface`, which owns the bordered scroll
  * shell, the first-load skeleton and the table/card switch. Below the
  * surface's container breakpoint a schedule reads as a card: the equipment
@@ -91,11 +88,31 @@ import { MaintenanceDueStatusTag } from '../../components/maintenance-due-status
 export class MaintenanceScheduleTable {
   //#region Inputs
   /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * Authorized catalog labels for current and historical equipment type codes.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<readonly EquipmentTypeOption[]>}
+   */
+  public readonly equipmentTypeOptions: InputSignal<readonly EquipmentTypeOption[]> = input<
+    readonly EquipmentTypeOption[]
+  >([]);
+
+  /**
    * Property items
    * @readonly
-   * @description The rows to render — already filtered, ordered and paged by the page.
+   *
+   * @description
+   * The rows to render — already filtered, ordered and paged by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly MaintenanceScheduleOutput[]>}
    */
   public readonly items: InputSignal<readonly MaintenanceScheduleOutput[]> =
@@ -104,9 +121,13 @@ export class MaintenanceScheduleTable {
   /**
    * Property loading
    * @readonly
-   * @description Whether to draw placeholder rows instead of the data.
+   *
+   * @description
+   * Whether to draw placeholder rows instead of the data.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
@@ -114,9 +135,14 @@ export class MaintenanceScheduleTable {
   /**
    * Property canManage
    * @readonly
-   * @description Whether the active member may open the interval-override dialog (`organization.maintenance.manage`).
+   *
+   * @description
+   * Whether the active member may open the interval-override dialog
+   * (`organization.maintenance.manage`).
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly canManage: InputSignal<boolean> = input<boolean>(false);
@@ -124,9 +150,13 @@ export class MaintenanceScheduleTable {
   /**
    * Property equipmentRouteBase
    * @readonly
-   * @description Path segments the equipment link appends the equipment id to.
+   *
+   * @description
+   * Path segments the equipment link appends the equipment id to.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly string[]>}
    */
   public readonly equipmentRouteBase: InputSignal<readonly string[]> =
@@ -135,9 +165,13 @@ export class MaintenanceScheduleTable {
   /**
    * Property facilityRouteBase
    * @readonly
-   * @description Path segments the facility link appends the facility id to.
+   *
+   * @description
+   * Path segments the facility link appends the facility id to.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly string[]>}
    */
   public readonly facilityRouteBase: InputSignal<readonly string[]> =
@@ -157,6 +191,7 @@ export class MaintenanceScheduleTable {
    *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<(facilityId: string) => string | null>}
    */
   public readonly facilityLabelOf: InputSignal<(facilityId: string) => string | null> = input<
@@ -166,9 +201,14 @@ export class MaintenanceScheduleTable {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone, bound by the page. The default keeps the
+   * component renderable with no context wired.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -179,9 +219,13 @@ export class MaintenanceScheduleTable {
   /**
    * Property overrideRequested
    * @readonly
-   * @description A row's Edit action was activated; carries that row's schedule.
+   *
+   * @description
+   * A row's Edit action was activated; carries that row's schedule.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<MaintenanceScheduleOutput>}
    */
   public readonly overrideRequested: OutputEmitterRef<MaintenanceScheduleOutput> =
@@ -189,10 +233,33 @@ export class MaintenanceScheduleTable {
   //#endregion
 
   //#region Properties
-  /** The application's active locale, for the relative next-due label. */
+  /**
+   * Property locale
+   * @readonly
+   *
+   * @description
+   * The application's active locale, for the relative next-due label.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
   private readonly locale: string = inject(LOCALE_ID);
 
-  /** Pure, dependency-free date formatter for {@link evaluationTooltipOf} and the next-due cell — no DI needed for a single-instance internal use. */
+  /**
+   * Property orgDatePipe
+   * @readonly
+   *
+   * @description
+   * Pure, dependency-free date formatter for {@link evaluationTooltipOf} and the next-due cell — no
+   * DI needed for a single-instance internal use.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrgDatePipe}
+   */
   private readonly orgDatePipe: OrgDatePipe = new OrgDatePipe();
 
   /**
@@ -224,10 +291,15 @@ export class MaintenanceScheduleTable {
   //#region Methods
   /**
    * Method equipmentIdOf
-   * @description The bare id extracted from a schedule's equipment IRI, for the row link.
+   *
+   * @description
+   * The bare id extracted from a schedule's equipment IRI, for the row link.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {MaintenanceScheduleOutput} item - The rendered schedule.
+   *
    * @returns {string} The equipment id.
    */
   protected equipmentIdOf(item: MaintenanceScheduleOutput): string {
@@ -236,10 +308,15 @@ export class MaintenanceScheduleTable {
 
   /**
    * Method facilityIdOf
-   * @description The bare id extracted from a schedule's facility IRI, or `null` when unassigned.
+   *
+   * @description
+   * The bare id extracted from a schedule's facility IRI, or `null` when unassigned.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {MaintenanceScheduleOutput} item - The rendered schedule.
+   *
    * @returns {string | null} The facility id, or `null`.
    */
   protected facilityIdOf(item: MaintenanceScheduleOutput): string | null {
@@ -277,25 +354,36 @@ export class MaintenanceScheduleTable {
 
   /**
    * Method equipmentTypeLabelOf
-   * @description The schedule's equipment type, humanized through the shared type catalog.
+   *
+   * @description
+   * The schedule's equipment type, humanized through the shared type catalog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} equipmentType - The raw type value.
+   *
    * @returns {string} The localized label, or the raw value humanized if unknown.
    */
   protected equipmentTypeLabelOf(equipmentType: string): string {
     return (
-      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === equipmentType)?.label ??
+      this.equipmentTypeOptions().find((option) => option.value === equipmentType)?.label ??
       equipmentType.replaceAll('_', ' ')
     );
   }
 
   /**
    * Method overrideLabelOf
-   * @description The schedule's interval override, humanized through the duration catalog, or `null` when it follows the organization default.
+   *
+   * @description
+   * The schedule's interval override, humanized through the duration catalog, or `null` when it
+   * follows the organization default.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {MaintenanceScheduleOutput} item - The rendered schedule.
+   *
    * @returns {string | null} The localized duration label, or `null`.
    */
   protected overrideLabelOf(item: MaintenanceScheduleOutput): string | null {
@@ -309,10 +397,16 @@ export class MaintenanceScheduleTable {
 
   /**
    * Method isNeverInspected
-   * @description Whether a schedule is tracked but has never had an inspection recorded — `overdue` with no `nextDueAt` — the state the contract requires an explicit label for.
+   *
+   * @description
+   * Whether a schedule is tracked but has never had an inspection recorded — `overdue` with no
+   * `nextDueAt` — the state the contract requires an explicit label for.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {MaintenanceScheduleOutput} item - The rendered schedule.
+   *
    * @returns {boolean} `true` for the never-inspected state.
    */
   protected isNeverInspected(item: MaintenanceScheduleOutput): boolean {
@@ -321,9 +415,14 @@ export class MaintenanceScheduleTable {
 
   /**
    * Method columnCount
-   * @description How many cells a row has, so a full-width message can span them. The actions column only exists with {@link canManage}.
+   *
+   * @description
+   * How many cells a row has, so a full-width message can span them. The actions column only exists
+   * with {@link canManage}.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
@@ -409,11 +508,18 @@ export class MaintenanceScheduleTable {
 
   /**
    * Method calendarDateIn
-   * @description The `YYYY-MM-DD` calendar day an instant falls on within the given timezone, falling back to the instant's own written date when the timezone identifier is not one `Intl.DateTimeFormat` accepts (a fixed `+HHMM` offset).
+   *
+   * @description
+   * The `YYYY-MM-DD` calendar day an instant falls on within the given timezone, falling back to
+   * the instant's own written date when the timezone identifier is not one `Intl.DateTimeFormat`
+   * accepts (a fixed `+HHMM` offset).
+   *
    * @access private
    * @since 2.1.0
+   *
    * @param {string} instantIso - The ISO instant to resolve.
    * @param {string} timezone - An IANA timezone name, `'UTC'`, or a fixed offset.
+   *
    * @returns {string} The resolved `YYYY-MM-DD` calendar day.
    */
   private calendarDateIn(instantIso: string, timezone: string): string {

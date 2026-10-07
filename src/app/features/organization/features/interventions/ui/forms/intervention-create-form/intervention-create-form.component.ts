@@ -77,6 +77,8 @@ const TYPE_VALUES: ReadonlyArray<InterventionType> = [
   'site_setup',
   'inventory',
   'inspection_campaign',
+  'preventive_maintenance',
+  'corrective_maintenance',
 ];
 
 /**

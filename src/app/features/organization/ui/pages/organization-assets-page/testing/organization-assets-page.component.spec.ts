@@ -15,6 +15,8 @@ import {
 } from '@core/request-state';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { CustomerService } from '@features/organization/features/customers/data-access';
+import { EquipmentTypeCatalogStore } from '@features/organization/features/equipments';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
@@ -118,6 +120,13 @@ const snapshot = (
 });
 
 describe('OrganizationAssetsPage', () => {
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+  });
   let mobile: WritableSignal<boolean>;
   let fixture: ComponentFixture<OrganizationAssetsPage>;
   let hasPermission: ReturnType<typeof vi.fn>;
@@ -187,9 +196,17 @@ describe('OrganizationAssetsPage', () => {
     downloadingSnapshotIdSignal = signal<string | null>(null);
 
     TestBed.overrideComponent(OrganizationAssetsPage, {
-      remove: { providers: [FacilityOptionsStore] },
+      remove: { providers: [FacilityOptionsStore, EquipmentTypeCatalogStore] },
       add: {
         providers: [
+          {
+            provide: EquipmentTypeCatalogStore,
+            useValue: {
+              load: vi.fn(),
+              options: signal([]),
+              loadCallState: signal(idleCallState()),
+            },
+          },
           {
             provide: FacilityOptionsStore,
             useValue: {
@@ -256,6 +273,12 @@ describe('OrganizationAssetsPage', () => {
         {
           provide: OrganizationAssetsPaneStore,
           useValue: {
+            anomalies: signal([]),
+            anomaliesPage: signal(1),
+            anomaliesPageCount: signal(1),
+            anomaliesTotal: signal(0),
+            anomaliesCallState: signal(successCallState([])),
+            loadAnomalies: vi.fn(),
             equipment: signal([]),
             equipmentListCallState: signal(successCallState([])),
             equipmentTotal: equipmentTotalSignal,
@@ -304,6 +327,13 @@ describe('OrganizationAssetsPage', () => {
         },
         { provide: FeedbackService, useValue: { success: feedbackSuccess, error: feedbackError } },
         { provide: EquipmentService, useValue: { exportLabels } },
+        {
+          provide: CustomerService,
+          useValue: {
+            list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            get: vi.fn().mockReturnValue(of({ id: 'customer', name: 'Hospital', contacts: [] })),
+          },
+        },
         { provide: BrowserDownloadService, useValue: { trigger: triggerDownload } },
         {
           provide: OrganizationPermissionService,
@@ -406,7 +436,7 @@ describe('OrganizationAssetsPage', () => {
   it('loads the site roots on arrival', async () => {
     fixture = await createPage();
 
-    expect(loadRoots).toHaveBeenCalledWith('org-1');
+    expect(loadRoots).toHaveBeenCalledWith('org-1', null);
   });
 
   it('disables mobile dragging while keeping the site menu and desktop drag available', async () => {
@@ -559,11 +589,14 @@ describe('OrganizationAssetsPage', () => {
     await fixture.whenStable();
 
     expect(loadEquipment).toHaveBeenCalledWith({
+      family: 'fire',
       includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
     });
     expect(loadInspections).toHaveBeenCalledWith({
+      family: 'fire',
+      includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
     });
@@ -576,10 +609,28 @@ describe('OrganizationAssetsPage', () => {
     await fixture.whenStable();
 
     expect(loadEquipment).toHaveBeenCalledWith({
+      family: 'fire',
       includeDescendants: true,
       organizationId: 'org-1',
     });
-    expect(loadInspections).toHaveBeenCalledWith({ organizationId: 'org-1' });
+    expect(loadInspections).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      family: 'fire',
+    });
+
+    loadInspections.mockClear();
+    fixture.componentInstance['changePanePage']('inspections', 2);
+    expect(loadInspections).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      family: 'fire',
+      page: 2,
+    });
+    loadInspections.mockClear();
+    fixture.componentInstance['retryPane']();
+    expect(loadInspections).toHaveBeenCalledExactlyOnceWith({
+      organizationId: 'org-1',
+      family: 'fire',
+    });
   });
 
   it('pages the selected site resources independently and retries in the same scope', async () => {
@@ -596,6 +647,7 @@ describe('OrganizationAssetsPage', () => {
 
     fixture.componentInstance['changePanePage']('equipment', 3);
     expect(loadEquipment).toHaveBeenCalledExactlyOnceWith({
+      family: 'fire',
       includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
@@ -605,6 +657,8 @@ describe('OrganizationAssetsPage', () => {
 
     fixture.componentInstance['changePanePage']('inspections', 2);
     expect(loadInspections).toHaveBeenCalledExactlyOnceWith({
+      family: 'fire',
+      includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
       page: 2,
@@ -613,11 +667,14 @@ describe('OrganizationAssetsPage', () => {
     loadInspections.mockClear();
     fixture.componentInstance['retryPane']();
     expect(loadEquipment).toHaveBeenCalledWith({
+      family: 'fire',
       includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
     });
     expect(loadInspections).toHaveBeenCalledWith({
+      family: 'fire',
+      includeDescendants: true,
       organizationId: 'org-1',
       facilityId: 'facility-1',
     });
@@ -1209,12 +1266,14 @@ describe('OrganizationAssetsPage', () => {
       equipmentScope: 'direct',
     });
     expect(loadEquipment).toHaveBeenLastCalledWith({
+      family: 'fire',
       organizationId: 'org-1',
       facilityId: 'facility-1',
       includeDescendants: false,
     });
     fixture.componentInstance['changePanePage']('equipment', 2);
     expect(loadEquipment).toHaveBeenLastCalledWith({
+      family: 'fire',
       organizationId: 'org-1',
       facilityId: 'facility-1',
       includeDescendants: false,
@@ -1222,6 +1281,7 @@ describe('OrganizationAssetsPage', () => {
     });
     fixture.componentInstance['retryPane']();
     expect(loadEquipment).toHaveBeenLastCalledWith({
+      family: 'fire',
       organizationId: 'org-1',
       facilityId: 'facility-1',
       includeDescendants: false,
@@ -1229,6 +1289,7 @@ describe('OrganizationAssetsPage', () => {
     fixture.componentInstance['changeEquipmentScope'](true);
     await fixture.whenStable();
     expect(loadEquipment).toHaveBeenLastCalledWith({
+      family: 'fire',
       organizationId: 'org-1',
       facilityId: 'facility-1',
       includeDescendants: true,
@@ -1252,6 +1313,7 @@ describe('OrganizationAssetsPage', () => {
 
     expect(page.equipmentScope()).toBe('direct');
     expect(loadEquipment).toHaveBeenLastCalledWith({
+      family: 'fire',
       organizationId: 'org-1',
       facilityId: 'facility-1',
       includeDescendants: false,
@@ -1263,6 +1325,7 @@ describe('OrganizationAssetsPage', () => {
     );
     expect(page.equipmentScope()).toBe('subtree');
     expect(loadEquipment).toHaveBeenLastCalledWith({
+      family: 'fire',
       organizationId: 'org-1',
       facilityId: 'facility-1',
       includeDescendants: true,
@@ -1300,9 +1363,96 @@ describe('OrganizationAssetsPage', () => {
     expect(subtree?.getAttribute('aria-pressed')).toBe('false');
     expect(direct?.getAttribute('aria-pressed')).toBe('true');
     expect(loadEquipment).toHaveBeenLastCalledWith({
+      family: 'fire',
       organizationId: 'org-1',
       facilityId: 'facility-1',
       includeDescendants: false,
     });
+  });
+
+  it('restores a complete customer park link and applies the same context to site roots and resources', async () => {
+    fixture = await createPage({
+      organizationId: 'org-1',
+      axis: 'everything',
+      family: 'all',
+      customerId: 'customer',
+    });
+    expect(loadRoots).toHaveBeenLastCalledWith('org-1', 'customer');
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      includeDescendants: true,
+      customerId: 'customer',
+    });
+    expect(loadInspections).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      customerId: 'customer',
+    });
+  });
+  it('opens dashboard due and anomaly queues without reverting to unfiltered equipment', async () => {
+    fixture = await createPage({
+      organizationId: 'org-1',
+      axis: 'everything',
+      queue: 'controls',
+      customerId: 'customer',
+    });
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      includeDescendants: true,
+      family: 'fire',
+      customerId: 'customer',
+      maintenanceDueStatus: 'due',
+    });
+    fixture.componentRef.setInput('queue', 'anomalies');
+    await fixture.whenStable();
+    const pane = fixture.debugElement.injector.get(OrganizationAssetsPaneStore);
+    expect(pane.loadAnomalies).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      family: 'fire',
+      customerId: 'customer',
+    });
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="park-anomalies-pane"]'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="assets-equipment-pane"]')).toBeNull();
+  });
+
+  it('applies the direct scope to anomaly routes, paging, retry and the visible scope toggle', async () => {
+    fixture = await createPage({
+      organizationId: 'org-1',
+      facility: 'facility-1',
+      customerId: 'customer',
+      equipmentScope: 'direct',
+      queue: 'anomalies',
+    });
+    const pane = fixture.debugElement.injector.get(OrganizationAssetsPaneStore);
+    const directRequest = {
+      organizationId: 'org-1',
+      facilityId: 'facility-1',
+      family: 'fire',
+      customerId: 'customer',
+      includeDescendants: false,
+    };
+    expect(pane.loadAnomalies).toHaveBeenLastCalledWith(directRequest);
+    fixture.componentInstance['changePanePage']('anomalies', 2);
+    expect(pane.loadAnomalies).toHaveBeenLastCalledWith({ ...directRequest, page: 2 });
+    fixture.componentInstance['retryPane']();
+    expect(pane.loadAnomalies).toHaveBeenLastCalledWith(directRequest);
+    const subtree = fixture.nativeElement.querySelector(
+      '[data-testid="assets-equipment-scope-subtree"]',
+    ) as HTMLButtonElement | null;
+    expect(subtree).not.toBeNull();
+    subtree?.click();
+    await fixture.whenStable();
+    expect(pane.loadAnomalies).toHaveBeenLastCalledWith({
+      ...directRequest,
+      includeDescendants: true,
+    });
+    const direct = fixture.nativeElement.querySelector(
+      '[data-testid="assets-equipment-scope-direct"]',
+    ) as HTMLButtonElement | null;
+    expect(direct).not.toBeNull();
+    direct?.click();
+    await fixture.whenStable();
+    expect(pane.loadAnomalies).toHaveBeenLastCalledWith(directRequest);
   });
 });

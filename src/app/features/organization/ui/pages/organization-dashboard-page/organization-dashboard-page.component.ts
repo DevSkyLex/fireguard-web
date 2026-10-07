@@ -60,6 +60,7 @@ import {
 } from '@features/organization/state/organization-dashboard';
 
 import {
+  OrganizationParkQueues,
   OrganizationTrendChartNotice,
   StatTile,
   OrganizationDashboardRisk,
@@ -376,6 +377,7 @@ type OrganizationDashboardHealthRow = {
 @Component({
   selector: 'app-organization-dashboard-page',
   imports: [
+    OrganizationParkQueues,
     DecimalPipe,
     OrgDatePipe,
     OrganizationDashboardRisk,

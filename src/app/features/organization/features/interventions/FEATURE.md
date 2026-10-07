@@ -38,6 +38,54 @@ This subfeature is responsible for:
 - intervention publication and issue checks,
 - intervention offline persistence and outbox replay.
 
+Equipment maintenance, repair and replacement tasks record an explicit performed-at instant,
+outcome and work description through the existing revision-checked task command. Results stay
+staged until publication; unsuccessful maintenance remains open. Local projection never derives
+the execution date from synchronization or task status. Inspection controls keep their owning
+Inspection result resource. Published report downloads use the server's closure snapshot;
+unpublished downloads are explicitly labelled drafts with live data.
+
+Replacement completion also attaches the confirmed published successor returned by Equipment.
+The original remains the result's equipment target. The UI reads the reciprocal replacement link,
+checks organization, retired original and published successor, and sends its canonical resource
+with the result in the same revision-checked command. Missing proof blocks success; failed attempts
+remain recordable. Opening the existing equipment dossier and refreshing preserve the work draft.
+Account, organization, session and permission changes cancel the proof read and discard its data.
+
+## Parts used and stock declarations
+
+The Overview tab discloses Parts used locally. The mounted form survives collapse, refresh and
+interaction-mode changes. The task context links a declaration to its work item and equipment;
+responsible members and participants can also declare for the intervention as a whole. A task's
+named assignee can select their task. Inventory read, consumption and intervention execution
+permissions remain separate; the API rechecks membership and resource scope on every declaration.
+Published interventions accept authorized late physical facts while keeping their closure snapshot.
+The internal-cost link requires `organization.maintenance_cost.read` and opens the Cost feature;
+ordinary stock histories and device snapshots contain no financial amounts.
+
+Approved sibling dependency: Inventory publishes its `models`, `data-access` and
+`ui/components` concern barrels. Intervention composes `InventoryConsumptionPanel`, supplies
+authorized parts, warehouses and server declarations, and owns transport and durable outbox writes.
+Inventory owns stock confirmation, reconciliation and exact quantitative contracts. Preparation
+drains every authorized catalog and declaration page, with stable totals and a 10,000-row bound.
+Missing pages, changing totals, permission errors and obsolete sessions never create a partial
+snapshot labelled complete. A retained catalog describes references rather than available stock.
+
+Account/organization/intervention metadata stores versioned stock snapshots in the existing
+IndexedDB schema. An individual receipt cannot imply a complete catalog or declaration history.
+Snapshot and receipt mutations are serialized, retain every acknowledged declaration identity,
+and never regress confirmed stock to a stale pending response. Account, session, organization and
+loaded permission fences apply at every asynchronous boundary before exposure or persistence.
+
+Each consumption keeps one immutable `clientOperationId`, physical timestamp and exact quantity
+string through retries. The form is acknowledged only after the outbox transaction succeeds.
+Device storage failure retains submitted input, protects browser departure and route navigation,
+and blocks publication until the same declaration is saved. Every durable queued operation also
+participates in the existing publication preflight and service-worker update guard. Server receipt
+persistence completes before its queue row is removed; a failed local receipt save keeps the same
+operation pending for idempotent replay. `received_pending` means the physical fact was received
+but still needs stock reconciliation, separately from device persistence and synchronization.
+
 ## Effort, time and workload
 
 Intervention owns nullable task estimates, explicitly reassessed remaining effort,
@@ -88,6 +136,11 @@ the update waiting. No persistent-storage permission is requested automatically.
 The index is `/organizations/:organizationId/interventions`; List, Board, Calendar
 and Recurrences use the existing `?view=` values in one page. Legacy paths redirect.
 `?create=1` is consumed once in the browser and requires planning permission.
+Equipment dossiers may add `targetEquipment=<UUID>`, `workAction=inspection|maintenance|repair|replacement`
+and optional `siteContext=<root-site UUID>`. These validated hints seed intervention preparation;
+after creation the detail opens the existing task form with that equipment and action. The planner
+confirms the normal task command. Existing matching open work is revealed instead of duplicated.
+The detail consumes these hints only in the browser; they never authorize cross-organization access.
 Blank and Template creation preserve separate drafts and commands; duplication
 prefills a new draft rather than copying the source lifecycle.
 
@@ -123,6 +176,15 @@ an observation failure cannot become a failed launch or justify a second POST.
 Offline repositories, prefetch, replay and the device-global sync widget retain account,
 organization, intervention and authentication-session fencing. Stores expose named
 request states and typed consequence events; concurrent rows retain independent failures.
+
+Successful preparation also reads Equipment's complete authorized type catalog through its public
+`EquipmentTypeService.listAll`. `saveEquipmentCatalog` persists it only for the saved workspace's
+account, organization and intervention, using the existing metadata store. Ordinary workspace
+mutations retain that catalog; deleting an intervention removes only its own catalog metadata.
+Restoration seeds the page's public `EquipmentTypeCatalogStore` only under the same authenticated
+account and organization with currently loaded equipment-read permission. Revocation and scope
+changes clear visible descriptors. Archived entries remain readable for history; legacy snapshots
+without a catalog retain their existing behavior. Existing planning catalog search APIs stay compatible.
 
 See the [intervention state reference](../../../../../../docs/guides/interventions-and-offline.md#intervention-state-reference) for details and rationale.
 

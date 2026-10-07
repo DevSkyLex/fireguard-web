@@ -6,7 +6,10 @@ import {
   OrganizationRoleService,
   OrganizationService,
 } from '@features/organization/data-access';
-import { EquipmentService } from '@features/organization/features/equipments/data-access';
+import {
+  EquipmentService,
+  EquipmentTypeService,
+} from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import { OrganizationSetupService } from '../organization-setup.service';
@@ -41,6 +44,7 @@ describe('OrganizationSetupService', () => {
     list: vi.fn(),
     create: vi.fn(),
   };
+  const equipmentTypeService = { listAll: vi.fn() };
   const inspectionService = {
     create: vi.fn(),
   };
@@ -56,6 +60,7 @@ describe('OrganizationSetupService', () => {
         { provide: OrganizationRoleService, useValue: organizationRoleService },
         { provide: FacilityService, useValue: facilityService },
         { provide: EquipmentService, useValue: equipmentService },
+        { provide: EquipmentTypeService, useValue: equipmentTypeService },
         { provide: InspectionService, useValue: inspectionService },
       ],
     });
@@ -71,6 +76,52 @@ describe('OrganizationSetupService', () => {
     });
 
     expect(organizationService.create).toHaveBeenCalledWith({ name: 'Fireguard' });
+  });
+
+  it('publishes complete active custom types while keeping archived descriptors unselectable', () => {
+    equipmentTypeService.listAll.mockReturnValue(
+      of([
+        {
+          '@id': '/types/custom_fire',
+          '@type': 'EquipmentType',
+          value: 'custom_fire',
+          label: 'Custom fire system',
+          family: 'fire',
+          archived: false,
+          revision: 2,
+        },
+        {
+          '@id': '/types/old',
+          '@type': 'EquipmentType',
+          value: 'old',
+          label: 'Archived type',
+          family: 'other',
+          archived: true,
+          revision: 4,
+        },
+      ]),
+    );
+    const received: unknown[] = [];
+    service.listEquipmentTypes('org-1').subscribe((types) => received.push(types));
+    expect(equipmentTypeService.listAll).toHaveBeenCalledWith('org-1');
+    expect(received).toEqual([
+      [
+        {
+          value: 'custom_fire',
+          label: 'Custom fire system',
+          family: 'fire',
+          icon: 'lucideBox',
+        },
+      ],
+    ]);
+  });
+
+  it('propagates catalogue read errors for a visible explicit retry', () => {
+    const failure = new Error('Catalogue unavailable');
+    equipmentTypeService.listAll.mockReturnValue(throwError(() => failure));
+    const rejected = vi.fn();
+    service.listEquipmentTypes('org-1').subscribe({ error: rejected });
+    expect(rejected).toHaveBeenCalledWith(failure);
   });
 
   it('should map organization roles to the setup contract', () => {

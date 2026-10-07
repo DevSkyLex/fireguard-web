@@ -20,3 +20,5 @@ export { OrganizationDashboardRisk } from './organization-dashboard-risk/organiz
 export { OrganizationDashboardAlerts } from './organization-dashboard-alerts/organization-dashboard-alerts.component';
 export type { OrganizationDashboardAlertRow } from './organization-dashboard-alerts/models/organization-dashboard-alert-row.interface';
 export { OrganizationDashboardRecent } from './organization-dashboard-recent/organization-dashboard-recent.component';
+
+export { OrganizationParkQueues } from './organization-park-queues/organization-park-queues.component';

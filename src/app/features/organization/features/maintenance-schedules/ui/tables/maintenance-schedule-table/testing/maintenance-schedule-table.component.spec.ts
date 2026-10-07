@@ -33,6 +33,28 @@ describe('MaintenanceScheduleTable', () => {
     }> = {},
   ): Promise<void> => {
     fixture.componentRef.setInput('items', items);
+    fixture.componentRef.setInput('equipmentTypeOptions', [
+      {
+        '@id': '/api/types/fire_extinguisher',
+        '@type': 'EquipmentType',
+        value: 'fire_extinguisher',
+        label: 'Fire extinguisher',
+        family: 'fire',
+        archived: false,
+        revision: 1,
+        icon: 'lucideFlame',
+      },
+      {
+        '@id': '/api/types/smoke_detector',
+        '@type': 'EquipmentType',
+        value: 'smoke_detector',
+        label: 'Smoke detector',
+        family: 'fire',
+        archived: false,
+        revision: 1,
+        icon: 'lucideFlame',
+      },
+    ]);
     fixture.componentRef.setInput('loading', overrides.loading ?? false);
     fixture.componentRef.setInput('canManage', overrides.canManage ?? false);
     fixture.componentRef.setInput('equipmentRouteBase', ['/organizations', 'org-1', 'equipments']);
@@ -49,6 +71,24 @@ describe('MaintenanceScheduleTable', () => {
     });
 
     fixture = TestBed.createComponent(MaintenanceScheduleTable);
+  });
+  it('renders a server-defined custom equipment type with its catalog label', async () => {
+    await render([schedule({ equipmentType: 'custom_gas_detector' })]);
+    fixture.componentRef.setInput('equipmentTypeOptions', [
+      {
+        '@id': '/api/types/custom_gas_detector',
+        '@type': 'EquipmentType',
+        value: 'custom_gas_detector',
+        label: 'North building gas detector',
+        family: 'safety',
+        archived: false,
+        revision: 2,
+        icon: 'lucideBox',
+      },
+    ]);
+    await fixture.whenStable();
+    expect(root().textContent).toContain('North building gas detector');
+    expect(root().textContent).not.toContain('custom gas detector');
   });
 
   it('distinguishes an unevaluated row from a successfully evaluated schedule', async () => {

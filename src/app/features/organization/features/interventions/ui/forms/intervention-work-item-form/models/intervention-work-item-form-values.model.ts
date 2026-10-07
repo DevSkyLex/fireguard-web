@@ -5,8 +5,8 @@ import type { InterventionWorkItemAction } from '@features/organization/features
  * @interface InterventionWorkItemFormValues
  *
  * @description
- * Prepared-scope task draft. Only the action is required; target, assignee and
- * estimate may remain unknown until field execution.
+ * Prepared-scope task draft. Maintenance actions require an identified equipment;
+ * assignee and estimate may remain unknown until field execution.
  *
  * @version 1.0.0
  */

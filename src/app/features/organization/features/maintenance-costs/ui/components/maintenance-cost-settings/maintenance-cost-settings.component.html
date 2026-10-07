@@ -1,0 +1,214 @@
+<div class="@container flex min-w-0 flex-col gap-6" data-testid="maintenance-cost-settings">
+  <section hlmCard>
+    <div hlmCardHeader>
+      <h2 hlmCardTitle i18n="@@maintenanceCost.settings.currencyTitle">Organization currency</h2>
+      <p hlmCardDescription i18n="@@maintenanceCost.settings.currencyDescription">
+        Operational costs share one currency. It is locked after the first financial record.
+      </p>
+    </div>
+    <div hlmCardContent class="flex min-w-0 flex-col gap-4">
+      @if (currencyPending()) {
+        <div class="flex items-center gap-2" role="status">
+          <hlm-spinner /><span i18n="@@maintenanceCost.settings.currencyLoading"
+            >Loading currency…</span
+          >
+        </div>
+      }
+      @if (currencyError(); as failure) {
+        <div hlmAlert variant="destructive" role="alert">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@maintenanceCost.settings.currencyLoadFailed">
+            Currency could not be loaded
+          </p>
+          <div hlmAlertDescription class="flex flex-col gap-3">
+            <p>{{ failure.message || readErrorFallback }}</p>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="self-start mobile-ui:min-h-11"
+              [disabled]="currencyPending()"
+              (click)="reloadCurrency.emit()"
+              i18n="@@maintenanceCost.settings.currencyReload"
+            >
+              Reload currency
+            </button>
+          </div>
+        </div>
+      }
+      @if (currency(); as current) {
+        <dl class="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <dt
+            class="text-sm text-muted-foreground"
+            i18n="@@maintenanceCost.settings.currentCurrency"
+          >
+            Current currency
+          </dt>
+          <dd class="flex items-center gap-2">
+            <span class="font-medium">{{ current.currency }}</span>
+            @if (current.locked) {
+              <span hlmBadge variant="secondary" i18n="@@maintenanceCost.settings.currencyLocked"
+                >Locked</span
+              >
+            }
+          </dd>
+        </dl>
+        @if (current.locked) {
+          <p
+            class="text-sm text-muted-foreground"
+            i18n="@@maintenanceCost.settings.currencyLockedHint"
+          >
+            Financial records already use this currency. It can no longer be changed.
+          </p>
+        }
+      } @else if (!currencyPending() && !currencyError()) {
+        <p class="text-sm text-muted-foreground" i18n="@@maintenanceCost.settings.noCurrency">
+          No currency has been set.
+        </p>
+      }
+      @if (canManage()) {
+        <app-maintenance-currency-form
+          [currency]="currency()"
+          [canManage]="canManage() && !currencyError()"
+          [pending]="currencySaving() || currencyPending()"
+          [error]="currencyWriteError()"
+          [resetToken]="currencyResetToken()"
+          (submitted)="currencySubmitted.emit($event)"
+        />
+      }
+    </div>
+  </section>
+  <section hlmCard>
+    <div hlmCardHeader>
+      <h2 hlmCardTitle i18n="@@maintenanceCost.settings.ratesTitle">Hourly rate history</h2>
+      <p hlmCardDescription i18n="@@maintenanceCost.settings.ratesDescription">
+        Rates are dated and immutable. Add a new rate when an amount changes.
+      </p>
+    </div>
+    <div hlmCardContent class="flex min-w-0 flex-col gap-6">
+      @if (ratesPending()) {
+        <div class="flex items-center gap-2" role="status">
+          <hlm-spinner /><span i18n="@@maintenanceCost.settings.ratesLoading"
+            >Loading rate history…</span
+          >
+        </div>
+      }
+      @if (ratesError(); as failure) {
+        <div hlmAlert variant="destructive" role="alert">
+          <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          <p hlmAlertTitle i18n="@@maintenanceCost.settings.ratesLoadFailed">
+            Rate history could not be loaded
+          </p>
+          <div hlmAlertDescription class="flex flex-col gap-3">
+            <p>{{ failure.message || readErrorFallback }}</p>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="self-start mobile-ui:min-h-11"
+              [disabled]="ratesPending()"
+              (click)="reloadRates.emit()"
+              i18n="@@maintenanceCost.settings.ratesReload"
+            >
+              Reload rate history
+            </button>
+          </div>
+        </div>
+      }
+      @if (rates().length > 0) {
+        <div class="flex min-w-0 flex-col gap-3 @3xl:hidden" data-testid="maintenance-rate-cards">
+          @for (rate of rates(); track rate.id) {
+            <article hlmCard class="min-w-0">
+              <div hlmCardContent class="grid min-w-0 gap-3">
+                <h3 class="font-medium wrap-anywhere">{{ memberName(rate.memberId) }}</h3>
+                <dl class="grid min-w-0 gap-2">
+                  <div>
+                    <dt class="text-sm text-muted-foreground" i18n="@@maintenanceCost.rate.amount">
+                      Hourly amount
+                    </dt>
+                    <dd class="font-mono wrap-anywhere">{{ rateAmount(rate) }}</dd>
+                  </div>
+                  <div>
+                    <dt
+                      class="text-sm text-muted-foreground"
+                      i18n="@@maintenanceCost.rate.effectiveFrom"
+                    >
+                      Effective from
+                    </dt>
+                    <dd>{{ rate.effectiveFrom | appOrgDate: 'dateOnly' }}</dd>
+                  </div>
+                </dl>
+              </div>
+            </article>
+          }
+        </div>
+        <div hlmTableContainer class="hidden @3xl:block">
+          <table hlmTable data-testid="maintenance-rate-history">
+            <caption hlmCaption class="sr-only" i18n="@@maintenanceCost.settings.ratesCaption">
+              Immutable hourly rates by member and effective date
+            </caption>
+            <thead hlmTHead>
+              <tr hlmTr>
+                <th hlmTh scope="col" i18n="@@maintenanceCost.rate.member">Member</th>
+                <th hlmTh scope="col" i18n="@@maintenanceCost.rate.amount">Hourly amount</th>
+                <th hlmTh scope="col" i18n="@@maintenanceCost.rate.effectiveFrom">
+                  Effective from
+                </th>
+              </tr>
+            </thead>
+            <tbody hlmTBody>
+              @for (rate of rates(); track rate.id) {
+                <tr hlmTr>
+                  <td hlmTd class="max-w-72 wrap-anywhere whitespace-normal">
+                    {{ memberName(rate.memberId) }}
+                  </td>
+                  <td hlmTd class="tabular-nums">{{ rateAmount(rate) }}</td>
+                  <td hlmTd>{{ rate.effectiveFrom | appOrgDate: 'dateOnly' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (!ratesPending() && !ratesError()) {
+        <hlm-empty>
+          <hlm-empty-header>
+            <app-state-illustration state="no-history" size="sm" />
+            <h3 hlmEmptyTitle i18n="@@maintenanceCost.settings.ratesEmptyTitle">
+              No hourly rates yet
+            </h3>
+            <p hlmEmptyDescription i18n="@@maintenanceCost.settings.ratesEmptyHint">
+              No hourly rates have been recorded for this organization.
+            </p>
+          </hlm-empty-header>
+        </hlm-empty>
+      }
+      @if (rateTotal() > 0) {
+        <app-collection-pagination
+          [page]="ratePage()"
+          [pageCount]="ratePageCount()"
+          [pageSize]="ratePageSize()"
+          [pageSizes]="[ratePageSize()]"
+          [total]="rateTotal()"
+          [shown]="rates().length"
+          testIdPrefix="maintenance-rate"
+          (pageChanged)="changeRatePage($event)"
+        />
+      }
+      @if (canManage()) {
+        <app-maintenance-rate-form
+          [canManage]="canManage()"
+          [currency]="currencyError() ? null : (currency()?.currency ?? null)"
+          [members]="members()"
+          [membersLoading]="membersLoading()"
+          [membersAllowed]="membersAllowed()"
+          [pending]="ratesSaving() || ratesPending() || currencyPending()"
+          [uncertain]="uncertainRate()"
+          [error]="ratesWriteError()"
+          [resetToken]="rateResetToken()"
+          (submitted)="rateSubmitted.emit($event)"
+          (retry)="retryRate.emit()"
+        />
+      }
+    </div>
+  </section>
+</div>

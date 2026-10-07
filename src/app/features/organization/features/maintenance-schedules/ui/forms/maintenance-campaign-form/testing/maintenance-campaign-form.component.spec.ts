@@ -50,6 +50,33 @@ describe('MaintenanceCampaignForm', () => {
     expect(submitted[0].equipmentType).toBeUndefined();
     expect(new Date(submitted[0].dueBefore).getUTCFullYear()).toBe(2026);
   });
+  it('uses and submits a server-defined custom equipment type without a closed enum', async () => {
+    fixture.componentRef.setInput('equipmentTypeOptions', [
+      {
+        '@id': '/api/types/custom_fire_panel',
+        '@type': 'EquipmentType',
+        value: 'custom_fire_panel',
+        label: 'North hall fire panel',
+        family: 'fire',
+        archived: false,
+        revision: 1,
+        icon: 'lucideBox',
+      },
+    ]);
+    fixture.componentInstance['model'].update((draft) => ({
+      ...draft,
+      name: 'Custom panel control',
+      dueBefore: '2027-01-31',
+      equipmentType: 'custom_fire_panel',
+    }));
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('North hall fire panel');
+    const emitted = vi.spyOn(fixture.componentInstance.submitted, 'emit');
+    fixture.componentInstance['submit'](new Event('submit'));
+    expect(emitted).toHaveBeenCalledWith(
+      expect.objectContaining({ equipmentType: 'custom_fire_panel' }),
+    );
+  });
 
   it('should render the no-match 422 detail inline rather than a generic message', async () => {
     const error = {

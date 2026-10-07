@@ -1,0 +1,199 @@
+<form
+  id="procurement-supplier-form"
+  class="flex min-w-0 flex-col gap-6 px-1"
+  (submit)="submit($event)"
+>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@procurement.supplier.identity">Supplier information</legend>
+    <div hlmFieldGroup>
+      <div hlmField>
+        <label hlmFieldLabel for="supplier-name" i18n="@@procurement.supplier.name">Name</label>
+        <input
+          hlmInput
+          id="supplier-name"
+          autocomplete="organization"
+          [formField]="supplierForm.name"
+        />
+        @if (supplierForm.name().touched()) {
+          @for (error of supplierForm.name().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="supplier-code" i18n="@@procurement.supplier.code"
+          >Internal reference</label
+        >
+        <input hlmInput id="supplier-code" [formField]="supplierForm.code" />
+        @if (supplierForm.code().touched()) {
+          @for (error of supplierForm.code().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="supplier-email" i18n="@@procurement.supplier.email">Email</label>
+        <input
+          hlmInput
+          id="supplier-email"
+          type="email"
+          autocomplete="email"
+          [formField]="supplierForm.email"
+        />
+        @if (supplierForm.email().touched()) {
+          @for (error of supplierForm.email().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="supplier-phone" i18n="@@procurement.supplier.phone"
+          >Telephone</label
+        >
+        <input
+          hlmInput
+          id="supplier-phone"
+          type="tel"
+          autocomplete="tel"
+          [formField]="supplierForm.phone"
+        />
+        @if (supplierForm.phone().touched()) {
+          @for (error of supplierForm.phone().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    </div>
+  </fieldset>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@procurement.supplier.contacts">Contacts</legend>
+    <p hlmFieldDescription i18n="@@procurement.supplier.contactsHint">
+      Contacts are internal records. They do not receive access to FireGuard.
+    </p>
+    @for (contact of draft().contacts; track $index; let index = $index) {
+      <fieldset hlmFieldSet class="rounded-md border p-4">
+        <legend hlmFieldLegend i18n="@@procurement.supplier.contact">Contact</legend>
+        <div hlmFieldGroup>
+          <div hlmField>
+            <label hlmFieldLabel [for]="'contact-name-' + index" i18n="@@procurement.supplier.name"
+              >Name</label
+            >
+            <input
+              hlmInput
+              [id]="'contact-name-' + index"
+              [formField]="supplierForm.contacts[index].name"
+            />
+            @if (supplierForm.contacts[index].name().touched()) {
+              @for (error of supplierForm.contacts[index].name().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <div hlmField>
+            <label hlmFieldLabel [for]="'contact-role-' + index" i18n="@@procurement.supplier.role"
+              >Role</label
+            >
+            <input
+              hlmInput
+              [id]="'contact-role-' + index"
+              [formField]="supplierForm.contacts[index].role"
+            />
+            @if (supplierForm.contacts[index].role().touched()) {
+              @for (error of supplierForm.contacts[index].role().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <div hlmField>
+            <label
+              hlmFieldLabel
+              [for]="'contact-email-' + index"
+              i18n="@@procurement.supplier.email"
+              >Email</label
+            >
+            <input
+              hlmInput
+              type="email"
+              [id]="'contact-email-' + index"
+              [formField]="supplierForm.contacts[index].email"
+            />
+            @if (supplierForm.contacts[index].email().touched()) {
+              @for (error of supplierForm.contacts[index].email().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <div hlmField>
+            <label
+              hlmFieldLabel
+              [for]="'contact-phone-' + index"
+              i18n="@@procurement.supplier.phone"
+              >Telephone</label
+            >
+            <input
+              hlmInput
+              type="tel"
+              [id]="'contact-phone-' + index"
+              [formField]="supplierForm.contacts[index].phone"
+            />
+            @if (supplierForm.contacts[index].phone().touched()) {
+              @for (error of supplierForm.contacts[index].phone().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <button
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            type="button"
+            variant="ghost"
+            [disabled]="pending()"
+            (click)="removeContact(index)"
+            i18n="@@procurement.supplier.removeContact"
+          >
+            Remove contact
+          </button>
+        </div>
+      </fieldset>
+    }
+    @for (error of supplierForm.contacts().errors(); track error) {
+      <hlm-field-error>{{ error.message }}</hlm-field-error>
+    }
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="pending() || draft().contacts.length >= 50"
+      (click)="addContact()"
+      i18n="@@procurement.supplier.addContact"
+    >
+      Add contact
+    </button>
+  </fieldset>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@procurement.supplier.saveFailed">Supplier could not be saved</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button hlmBtn class="mobile-ui:min-h-11" type="submit" [disabled]="pending()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      {{ submitLabel() }}
+    </button>
+  </div>
+</form>

@@ -1,0 +1,382 @@
+<header class="border-b bg-muted/25 p-4 mobile-ui:p-3">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <p class="max-w-2xl text-sm text-muted-foreground" i18n="@@inventory.description">
+      Track parts and consumables separately from individual equipment. Confirmed movements update
+      stock; retained declarations stay visible until reconciled.
+    </p>
+    @if (canManage() && (section() === 'parts' || section() === 'warehouses')) {
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        [disabled]="!online() || store.writeCallState().status === 'pending'"
+        (click)="open(section() === 'parts' ? 'part' : 'warehouse')"
+      >
+        @if (section() === 'parts') {
+          <span i18n="@@inventory.newPart">New part or consumable</span>
+        } @else {
+          <span i18n="@@inventory.newWarehouse">New warehouse</span>
+        }
+      </button>
+    } @else if (canCorrect() && (section() === 'balances' || section() === 'movements')) {
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        variant="outline"
+        [disabled]="!online() || store.writeCallState().status === 'pending'"
+        (click)="open('correction')"
+        i18n="@@inventory.editor.correction"
+      >
+        Record stock correction
+      </button>
+    }
+  </div>
+  <nav
+    class="mt-4 flex flex-wrap gap-1"
+    aria-label="Inventory sections"
+    i18n-aria-label="@@inventory.sections"
+  >
+    @for (tab of tabs; track tab.value) {
+      <a
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        variant="ghost"
+        size="sm"
+        [routerLink]="['/organizations', organizationId(), 'inventory', tab.value]"
+        routerLinkActive="bg-muted"
+        ariaCurrentWhenActive="page"
+        >{{ tab.label }}</a
+      >
+    }
+  </nav>
+</header>
+<div class="flex flex-col gap-5 p-4 mobile-ui:p-3">
+  @if (!online()) {
+    <div hlmAlert>
+      <h3 hlmAlertTitle i18n="@@inventory.offlineTitle">
+        Stock confirmation requires a connection
+      </h3>
+      <p hlmAlertDescription i18n="@@inventory.offlineHint">
+        Reconnect to read current stock or confirm a movement. Unacknowledged movements remain saved
+        on this device.
+      </p>
+    </div>
+  }
+  @if (store.journalCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@inventory.journalFailed">Saved movements could not be read</h3>
+      <p hlmAlertDescription>{{ error.message }}</p>
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        variant="outline"
+        (click)="retryJournal()"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (store.pendingCommandEntities().length > 0) {
+    <section
+      class="flex flex-col gap-3 rounded-lg border p-4"
+      aria-labelledby="inventory-pending-title"
+    >
+      <h2
+        id="inventory-pending-title"
+        class="text-sm font-semibold"
+        i18n="@@inventory.pendingTitle"
+      >
+        Movements awaiting confirmation
+      </h2>
+      <p class="text-sm text-muted-foreground" i18n="@@inventory.pendingHint">
+        The response may have been lost. Retry the saved movement to obtain confirmation with the
+        same identity.
+      </p>
+      @for (command of store.pendingCommandEntities(); track command.input.clientOperationId) {
+        <div
+          class="flex flex-wrap items-start justify-between gap-3 rounded-md bg-muted/40 p-3"
+          [attr.data-inventory-operation]="command.input.clientOperationId"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-medium">
+              @if (command.kind === 'return') {
+                <span i18n="@@inventory.movement.return">Return</span>
+              } @else {
+                <span i18n="@@inventory.movement.correction">Correction</span>
+              }
+              : <span class="font-mono">{{ command.input.quantity }}</span>
+            </p>
+            <p class="text-sm break-words whitespace-pre-wrap text-muted-foreground">
+              {{ command.input.reason }}
+            </p>
+          </div>
+          <button
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="
+              !online() ||
+              store.writeCallState().status === 'pending' ||
+              (command.kind === 'return' ? !canReturn() : !canCorrect())
+            "
+            (click)="retryPhysical(command)"
+            i18n="@@inventory.retryMovement"
+          >
+            Retry saved movement
+          </button>
+        </div>
+      }
+    </section>
+  }
+  @if (canRead()) {
+    <form class="flex flex-wrap items-end gap-3" (submit)="applyFilters($event)">
+      @if (section() === 'parts' || section() === 'warehouses') {
+        <div hlmField class="min-w-0 flex-1 basis-56">
+          <label hlmFieldLabel for="inventory-search" i18n="@@inventory.search"
+            >Search by code or name</label
+          >
+          <input hlmInput id="inventory-search" [formField]="filterForm.search" />
+        </div>
+        <fieldset hlmFieldSet class="gap-2">
+          <legend hlmFieldLegend id="inventory-reference-status" i18n="@@inventory.referenceStatus">
+            Reference status
+          </legend>
+          <hlm-toggle-group
+            type="single"
+            variant="outline"
+            [nullable]="false"
+            [value]="filters().archived"
+            (valueChange)="filterChoice('archived', $event)"
+            aria-labelledby="inventory-reference-status"
+          >
+            <button hlmToggleGroupItem type="button" value="active" i18n="@@inventory.active">
+              Active
+            </button>
+            <button hlmToggleGroupItem type="button" value="archived" i18n="@@inventory.archived">
+              Archived
+            </button>
+          </hlm-toggle-group>
+        </fieldset>
+      } @else {
+        <div hlmField class="min-w-0 flex-1 basis-56">
+          <label hlmFieldLabel for="inventory-filter-part" i18n="@@inventory.kind.part">Part</label>
+          <app-inventory-part-picker
+            [organizationId]="organizationId()"
+            inputId="inventory-filter-part"
+            [formField]="filterForm.partId"
+          />
+        </div>
+        <div hlmField class="min-w-0 flex-1 basis-56">
+          <label hlmFieldLabel for="inventory-filter-warehouse" i18n="@@inventory.warehouse"
+            >Warehouse</label
+          >
+          <app-inventory-warehouse-picker
+            [organizationId]="organizationId()"
+            inputId="inventory-filter-warehouse"
+            [formField]="filterForm.warehouseId"
+          />
+        </div>
+        @if (section() === 'consumptions') {
+          <fieldset hlmFieldSet class="gap-2">
+            <legend
+              hlmFieldLegend
+              id="inventory-declaration-status"
+              i18n="@@inventory.declarationStatus"
+            >
+              Declaration status
+            </legend>
+            <hlm-toggle-group
+              type="single"
+              variant="outline"
+              [nullable]="false"
+              [value]="filters().status"
+              (valueChange)="filterChoice('status', $event)"
+              class="flex-wrap"
+              aria-labelledby="inventory-declaration-status"
+            >
+              <button hlmToggleGroupItem type="button" value="all" i18n="@@inventory.all">
+                All
+              </button>
+              <button
+                hlmToggleGroupItem
+                type="button"
+                value="received_pending"
+                i18n="@@inventory.status.pending"
+              >
+                Received — to reconcile
+              </button>
+              <button
+                hlmToggleGroupItem
+                type="button"
+                value="confirmed"
+                i18n="@@inventory.status.confirmed"
+              >
+                Confirmed
+              </button>
+            </hlm-toggle-group>
+          </fieldset>
+        }
+      }
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="submit"
+        variant="outline"
+        [disabled]="!online() || store.listCallState().status === 'pending'"
+        i18n="@@inventory.applyFilters"
+      >
+        Apply filters
+      </button>
+    </form>
+    @if (section() === 'consumptions') {
+      <div hlmAlert>
+        <h3 hlmAlertTitle i18n="@@inventory.declarationHintTitle">
+          A declaration is a retained physical fact
+        </h3>
+        <p hlmAlertDescription i18n="@@inventory.declarationHint">
+          A pending declaration does not debit part of the stock or complete the work.
+          Reconciliation confirms the entire quantity; dossier validation remains an intervention
+          decision.
+        </p>
+      </div>
+    }
+    @if (store.listCallState().error; as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <h3 hlmAlertTitle i18n="@@inventory.loadFailed">Stock records could not be loaded</h3>
+        <p hlmAlertDescription>{{ error.message }}</p>
+        <button
+          hlmBtn
+          class="mobile-ui:min-h-11"
+          type="button"
+          variant="outline"
+          [disabled]="!online()"
+          (click)="reload()"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      </div>
+    }
+    @if (!editor() && store.writeCallState().error; as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <h3 hlmAlertTitle i18n="@@inventory.actionFailed">The operation could not be confirmed</h3>
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+    }
+    <app-inventory-dataview
+      [regionalFormatting]="regionalFormatting()"
+      [organizationId]="organizationId()"
+      [rows]="rows()"
+      [loading]="store.listCallState().status === 'pending'"
+      [loaded]="store.listCallState().status === 'success'"
+      [disabled]="!online() || store.writeCallState().status === 'pending'"
+      [page]="store.query()?.page ?? 1"
+      [pageCount]="store.pageCount()"
+      (action)="rowAction($event)"
+      (pageChanged)="changePage($event)"
+    />
+  }
+</div>
+@if (editor(); as kind) {
+  <hlm-sheet
+    [side]="side()"
+    state="open"
+    [disableClose]="dirty() || store.writeCallState().status === 'pending'"
+    (stateChanged)="stateChanged($event)"
+  >
+    <hlm-sheet-content
+      *hlmSheetPortal
+      data-testid="inventory-editor-sheet"
+      class="w-full! max-w-none! overflow-y-auto pb-[env(safe-area-inset-bottom)] mobile-ui:max-h-[85svh] desktop-ui:w-[min(540px,100vw)]!"
+    >
+      <hlm-sheet-header
+        ><h3 hlmSheetTitle>{{ editorTitle() }}</h3>
+        <p hlmSheetDescription i18n="@@inventory.editorHint">
+          Preserve stable references and record motivated stock movements without changing history.
+        </p></hlm-sheet-header
+      >
+      <div class="flex flex-col gap-4 px-4 pb-4">
+        @if (retained(); as command) {
+          <div hlmAlert>
+            <h3 hlmAlertTitle i18n="@@inventory.retainedTitle">This movement keeps one identity</h3>
+            <p hlmAlertDescription class="whitespace-pre-wrap">
+              {{ command.input.quantity }} · {{ command.input.reason }}
+            </p>
+            <p hlmAlertDescription i18n="@@inventory.retainedHint">
+              Keep this identity when retrying. The stock is confirmed only by the server response.
+            </p>
+          </div>
+          @if (store.writeCallState().error; as error) {
+            <div hlmAlert variant="destructive" role="alert">
+              <h3 hlmAlertTitle i18n="@@inventory.actionFailed">
+                The operation could not be confirmed
+              </h3>
+              <p hlmAlertDescription>{{ error.message }}</p>
+            </div>
+          }
+          <div class="flex flex-wrap justify-end gap-2">
+            <button
+              hlmBtn
+              class="mobile-ui:min-h-11"
+              type="button"
+              variant="outline"
+              [disabled]="store.writeCallState().status === 'pending'"
+              (click)="requestClose()"
+              i18n="@@inventory.close"
+            >
+              Close
+            </button>
+            <button
+              hlmBtn
+              class="mobile-ui:min-h-11"
+              type="button"
+              [disabled]="!online() || store.writeCallState().status === 'pending'"
+              (click)="retryPhysical(command)"
+              i18n="@@inventory.retryMovement"
+            >
+              Retry saved movement
+            </button>
+          </div>
+        } @else if (kind === 'part' || kind === 'warehouse') {
+          <app-inventory-reference-form
+            [kind]="kind"
+            [entry]="editing()"
+            [available]="online() && canManage()"
+            [pending]="store.writeCallState().status === 'pending'"
+            [error]="store.writeCallState().error?.message ?? null"
+            (dirtyChanged)="dirty.set($event)"
+            (submitted)="referenceSubmitted($event)"
+            (cancelled)="requestClose()"
+          />
+        } @else {
+          @if (returning(); as consumption) {
+            <p class="text-sm">
+              {{ store.partLabels()[consumption.partId] ?? consumption.partId }} ·
+              {{ store.warehouseLabels()[consumption.warehouseId] ?? consumption.warehouseId }}
+            </p>
+          }
+          <app-inventory-movement-form
+            (dirtyChanged)="dirty.set($event)"
+            [organizationId]="organizationId()"
+            [mode]="kind"
+            [available]="online() && (kind === 'return' ? canReturn() : canCorrect())"
+            [pending]="store.writeCallState().status === 'pending'"
+            [error]="store.writeCallState().error?.message ?? null"
+            (submitted)="movementSubmitted($event)"
+            (cancelled)="requestClose()"
+          />
+        }
+      </div>
+    </hlm-sheet-content>
+  </hlm-sheet>
+}
+<app-unsaved-changes-dialog
+  [state]="confirmation()"
+  (confirmed)="resolveConfirmation(true)"
+  (dismissed)="resolveConfirmation(false)"
+/>

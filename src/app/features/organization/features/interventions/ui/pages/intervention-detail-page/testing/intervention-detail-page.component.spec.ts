@@ -39,6 +39,8 @@ import { ConversationService } from '@features/organization/features/collaborati
 import type { ConversationOutput } from '@features/organization/features/collaboration/models';
 import { MessageThreadStore } from '@features/organization/features/collaboration/state';
 import { SubjectDiscussion } from '@features/organization/features/collaboration/ui/components';
+import { EquipmentTypeCatalogStore } from '@features/organization/features/equipments';
+import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import type {
   FacilityOption,
   FacilityOutput,
@@ -57,6 +59,10 @@ import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
+  InterventionInventoryScope,
+  InterventionInventorySnapshot,
+  InterventionReplacementContext,
+  InterventionReplacementContextRequest,
   InterventionQueuedAttachment,
   InterventionScanResult,
   InterventionWorkItemOutput,
@@ -66,6 +72,7 @@ import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
+  InterventionInventoryService,
   InterventionSyncCoordinatorService,
 } from '@features/organization/features/interventions/services';
 import { InterventionPublicationService } from '@features/organization/features/interventions/services/intervention-publication';
@@ -73,8 +80,12 @@ import {
   InterventionStore,
   InterventionTimeStore,
 } from '@features/organization/features/interventions/state';
+import { InterventionInventoryStore } from '@features/organization/features/interventions/state/intervention-inventory';
+import { InterventionReplacementContextStore } from '@features/organization/features/interventions/state/intervention-replacement-context';
 import { InterventionTableQueryStore } from '@features/organization/features/interventions/state/intervention-table-query';
 import { allowedTransitions } from '@features/organization/features/interventions/utils';
+import type { DeclareInventoryConsumptionInput } from '@features/organization/features/inventory/models';
+import { InventoryConsumptionPanel } from '@features/organization/features/inventory/ui/components';
 import { MEMBER_PRESENCE_PORT, ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import {
   MEMBER_DIRECTORY_PORT,
@@ -275,6 +286,18 @@ const createPage = async (): Promise<ComponentFixture<InterventionDetailPage>> =
 describe('InterventionDetailPage', () => {
   const mobile = signal(false);
   let fixture: ComponentFixture<InterventionDetailPage>;
+  let replacementProof: WritableSignal<InterventionReplacementContext | null>;
+  let replacementScope: WritableSignal<InterventionReplacementContextRequest | null>;
+  let replacementAllowed: WritableSignal<boolean>;
+  let loadReplacement: ReturnType<typeof vi.fn>;
+  const inventoryAllowed = signal(false);
+  const inventoryVolatile = signal(false);
+  const inventoryScope = signal<InterventionInventoryScope | null>(null);
+  const inventorySnapshot = signal<InterventionInventorySnapshot | null>(null);
+  const inventoryRead = signal<CallState>(idleCallState());
+  const inventoryQueue = signal<CallState>(idleCallState());
+  let loadInventory: ReturnType<typeof vi.fn>;
+  let declareInventory: ReturnType<typeof vi.fn>;
 
   let current: WritableSignal<InterventionOutput | null>;
   let workItems: WritableSignal<readonly InterventionWorkItemOutput[]>;
@@ -362,6 +385,21 @@ describe('InterventionDetailPage', () => {
   });
 
   beforeEach(() => {
+    inventoryAllowed.set(false);
+    inventoryVolatile.set(false);
+    inventoryScope.set(null);
+    inventorySnapshot.set(null);
+    inventoryRead.set(idleCallState());
+    inventoryQueue.set(idleCallState());
+    loadInventory = vi.fn((scope: InterventionInventoryScope | null) => inventoryScope.set(scope));
+    declareInventory = vi.fn();
+    replacementProof = signal<InterventionReplacementContext | null>(null);
+    replacementScope = signal<InterventionReplacementContextRequest | null>(null);
+    replacementAllowed = signal(true);
+    loadReplacement = vi.fn((scope: InterventionReplacementContextRequest | null) => {
+      replacementScope.set(scope);
+      replacementProof.set(null);
+    });
     mobile.set(false);
     current = signal<InterventionOutput | null>(intervention());
     workItems = signal<readonly InterventionWorkItemOutput[]>([]);
@@ -432,6 +470,19 @@ describe('InterventionDetailPage', () => {
     TestBed.configureTestingModule({
       providers: [
         {
+          provide: InterventionInventoryService,
+          useValue: {
+            scope: (
+              organizationId: string,
+              interventionId: string,
+            ): InterventionInventoryScope | null =>
+              inventoryAllowed()
+                ? { organizationId, interventionId, accountId: 'account-1', sessionRevision: 1 }
+                : null,
+            isCurrent: () => inventoryAllowed(),
+          },
+        },
+        {
           provide: MEMBER_PRESENCE_PORT,
           useValue: {
             byId: signal({}),
@@ -476,7 +527,11 @@ describe('InterventionDetailPage', () => {
         },
         {
           provide: OrganizationPermissionService,
-          useValue: { hasPermission: (name: string): boolean => permitted.has(name) },
+          useValue: {
+            hasPermission: (name: string): boolean => permitted.has(name),
+            isLoadingPermissions: signal(false),
+            permissionError: signal(null),
+          },
         },
         {
           provide: OrganizationMemberAccessStore,
@@ -633,7 +688,10 @@ describe('InterventionDetailPage', () => {
     TestBed.overrideComponent(InterventionDetailPage, {
       remove: {
         providers: [
+          EquipmentTypeCatalogStore,
+          InterventionReplacementContextStore,
           InterventionTimeStore,
+          InterventionInventoryStore,
           InterventionWorkspaceStore,
           InterventionPlanningOptionsStore,
           InterventionLinkedResourcesStore,
@@ -642,6 +700,22 @@ describe('InterventionDetailPage', () => {
       },
       add: {
         providers: [
+          {
+            provide: InterventionReplacementContextStore,
+            useValue: {
+              load: loadReplacement,
+              scope: replacementScope,
+              authorized: replacementAllowed,
+              queryData: replacementProof,
+              isQueryLoading: signal(false),
+              isQueryLoaded: computed(() => replacementProof() !== null),
+              queryHasError: signal(false),
+            },
+          },
+          {
+            provide: EquipmentTypeCatalogStore,
+            useValue: { options: signal([]), seed: vi.fn(), clear: vi.fn() },
+          },
           {
             provide: FacilityOptionsStore,
             useValue: {
@@ -656,7 +730,32 @@ describe('InterventionDetailPage', () => {
               ensureLoaded: ensureFacilityParents,
             },
           },
-          { provide: InterventionTimeStore, useValue: { load: vi.fn(), scope: signal(null) } },
+          {
+            provide: InterventionTimeStore,
+            useValue: {
+              load: vi.fn(),
+              scope: signal(null),
+              hasUnpersistedFailedDraft: signal(false),
+            },
+          },
+          {
+            provide: InterventionInventoryStore,
+            useValue: {
+              load: loadInventory,
+              scope: inventoryScope,
+              snapshot: inventorySnapshot,
+              catalogReady: computed(() => inventorySnapshot()?.catalogComplete === true),
+              localIntents: signal([]),
+              acceptedOperationId: signal(null),
+              entities: signal([]),
+              queueCallState: inventoryQueue,
+              readCallState: inventoryRead,
+              fromDevice: signal(false),
+              hasUnpersistedDeclaration: inventoryVolatile,
+              refreshLocal: vi.fn(),
+              declare: declareInventory,
+            },
+          },
           {
             provide: InterventionWorkspaceStore,
             useValue: {
@@ -711,6 +810,7 @@ describe('InterventionDetailPage', () => {
               transition,
               updateDetails,
               setWorkItemStatus,
+              updateWorkItem: vi.fn(),
               deleteWorkItems,
               createWorkItem,
               rejectChange: vi.fn(),
@@ -783,6 +883,167 @@ describe('InterventionDetailPage', () => {
     });
 
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+  });
+
+  it('prepares stock lazily and keeps the same declaration presenter mounted while collapsed', async () => {
+    inventoryAllowed.set(true);
+    fixture = await createPage();
+    expect(loadInventory).not.toHaveBeenCalledWith(
+      expect.objectContaining({ interventionId: 'intervention-1' }),
+    );
+    byTestId('intervention-inventory-toggle').click();
+    await fixture.whenStable();
+    expect(loadInventory).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      interventionId: 'intervention-1',
+      accountId: 'account-1',
+      sessionRevision: 1,
+    });
+    const panel = fixture.debugElement.query(
+      By.directive(InventoryConsumptionPanel),
+    ).componentInstance;
+    loadInventory.mockClear();
+    byTestId('intervention-inventory-toggle').click();
+    await fixture.whenStable();
+    expect(
+      fixture.debugElement.query(By.directive(InventoryConsumptionPanel)).componentInstance,
+    ).toBe(panel);
+    expect(loadInventory).not.toHaveBeenCalled();
+    expect((root().querySelector('#intervention-inventory-content') as HTMLElement).hidden).toBe(
+      true,
+    );
+  });
+
+  it('removes cached stock exposure immediately after access is revoked', async () => {
+    inventoryAllowed.set(true);
+    fixture = await createPage();
+    byTestId('intervention-inventory-toggle').click();
+    await fixture.whenStable();
+    expect(fixture.debugElement.query(By.directive(InventoryConsumptionPanel))).not.toBeNull();
+    inventoryAllowed.set(false);
+    await fixture.whenStable();
+    expect(fixture.debugElement.query(By.directive(InventoryConsumptionPanel))).toBeNull();
+    expect(loadInventory).toHaveBeenLastCalledWith(null);
+  });
+
+  it('links an authorized late declaration to the selected task and its equipment without reopening publication', async () => {
+    const equipmentId = '019f4444-4444-7444-8444-444444444444';
+    inventoryAllowed.set(true);
+    current.set(intervention({ status: 'published' }));
+    workItems.set([workItem({ assignee: MEMBER_IRI, target: `/api/equipment/${equipmentId}` })]);
+    inventorySnapshot.set({
+      version: 1,
+      organizationId: 'org-1',
+      interventionId: 'intervention-1',
+      accountId: 'account-1',
+      capturedAt: '2026-10-06T12:00:00Z',
+      catalogComplete: true,
+      declarationsComplete: true,
+      parts: [],
+      warehouses: [],
+      declarations: [],
+    });
+    fixture = await createPage();
+    byTestId('intervention-inventory-toggle').click();
+    await fixture.whenStable();
+    fixture.componentInstance['selectInventoryContext']('wi-1');
+    await fixture.whenStable();
+    const panel = fixture.debugElement.query(By.directive(InventoryConsumptionPanel))
+      .componentInstance as InventoryConsumptionPanel;
+    expect(panel.workItemId()).toBe('wi-1');
+    expect(panel.equipmentId()).toBe(equipmentId);
+    expect(panel.canDeclare()).toBe(true);
+    const declaration: DeclareInventoryConsumptionInput = {
+      clientOperationId: '019f1111-1111-7111-8111-111111111111',
+      interventionId: 'intervention-1',
+      partId: 'part-1',
+      warehouseId: 'warehouse-1',
+      quantity: '0.250000',
+      workItemId: 'wi-1',
+      equipmentId,
+      occurredAt: '2026-10-06T12:00:00.000Z',
+    };
+    panel.declared.emit(declaration);
+    expect(declareInventory).toHaveBeenCalledWith({ scope: inventoryScope(), input: declaration });
+    expect(publish).not.toHaveBeenCalled();
+    expect(root().textContent).toContain('published dossier keeps its original data');
+  });
+
+  it('offers only assigned tasks and requires a task selection for a non-participant', async () => {
+    inventoryAllowed.set(true);
+    current.set(
+      intervention({ responsible: '/api/organizations/org-1/members/other', participants: [] }),
+    );
+    workItems.set([
+      workItem({ id: 'mine', assignee: MEMBER_IRI }),
+      workItem({ id: 'other', assignee: '/api/organizations/org-1/members/other' }),
+    ]);
+    inventorySnapshot.set({
+      version: 1,
+      organizationId: 'org-1',
+      interventionId: 'intervention-1',
+      accountId: 'account-1',
+      capturedAt: '2026-10-06T12:00:00Z',
+      catalogComplete: true,
+      declarationsComplete: true,
+      parts: [],
+      warehouses: [],
+      declarations: [],
+    });
+    fixture = await createPage();
+    byTestId('intervention-inventory-toggle').click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['inventoryWorkItems']().map((item) => item.id)).toEqual([
+      'mine',
+    ]);
+    expect(fixture.componentInstance['canDeclareInventory']()).toBe(false);
+    fixture.componentInstance['selectInventoryContext']('other');
+    expect(fixture.componentInstance['inventoryWorkItemId']()).toBeNull();
+    fixture.componentInstance['selectInventoryContext']('mine');
+    expect(fixture.componentInstance['canDeclareInventory']()).toBe(true);
+    inventoryVolatile.set(true);
+    fixture.componentInstance['selectInventoryContext'](null);
+    expect(fixture.componentInstance['inventoryWorkItemId']()).toBe('mine');
+  });
+
+  it('links internal costs only with the dedicated read permission', async () => {
+    permitted.add('organization.maintenance_cost.read');
+    fixture = await createPage();
+    expect(byTestId('intervention-maintenance-cost-link').getAttribute('href')).toBe(
+      '/organizations/org-1/maintenance-costs?interventionId=intervention-1',
+    );
+    expect(root().querySelector('app-inventory-consumption-panel')).toBeNull();
+  });
+
+  it('does not expose the internal cost link through ordinary intervention or manage permissions', async () => {
+    permitted.add('organization.maintenance_cost.manage');
+    fixture = await createPage();
+    expect(root().querySelector('[data-testid="intervention-maintenance-cost-link"]')).toBeNull();
+  });
+
+  it('warns before leaving a submitted declaration whose device persistence failed', async () => {
+    fixture = await createPage();
+    inventoryVolatile.set(true);
+    expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
+    const decision = fixture.componentInstance.confirmDeactivation();
+    await fixture.whenStable();
+    expect(fixture.componentInstance['inventoryLeaveState']()).toBe('open');
+    fixture.componentInstance['resolveInventoryLeave'](false);
+    expect(await decision).toBe(false);
+    expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
+    inventoryVolatile.set(false);
+    expect(await fixture.componentInstance.confirmDeactivation()).toBe(true);
+  });
+
+  it('blocks publication while a submitted physical fact has no durable device acknowledgment', async () => {
+    current.set(intervention({ status: 'submitted' }));
+    fixture = await createPage();
+    inventoryVolatile.set(true);
+    await fixture.componentInstance['confirmPublish']();
+    expect(publish).not.toHaveBeenCalled();
+    expect(fixture.componentInstance['offlineBlockReason']()).toContain(
+      'Save the submitted parts declaration',
+    );
   });
 
   it('coordinates real activity invalidation without inventing work-item events', async () => {
@@ -2980,6 +3241,161 @@ describe('InterventionDetailPage', () => {
         interventionId: 'intervention-1',
         status: 'changes_requested',
         reviewNote: 'Please attach the missing certificate.',
+      });
+    });
+
+    it('captures the task revision and records failed work without closing its task', async () => {
+      const item = workItem({ action: 'repair', status: 'in_progress', revision: 7 });
+      current.set(intervention({ status: 'in_progress' }));
+      workItems.set([item]);
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const store = fixture.debugElement.injector.get(InterventionWorkspaceStore);
+      page['onWorkItemStatusChanged']({ workItemId: item.id, status: 'completed' });
+      expect(setWorkItemStatus).not.toHaveBeenCalled();
+      expect(page['executionItem']()).toEqual(item);
+      const result = {
+        equipmentId: 'eq-1',
+        performedAt: '2026-03-01T11:00:00+01:00',
+        outcome: 'failed' as const,
+        workPerformed: 'Repair unsuccessful; follow-up needed.',
+      };
+      page['recordExecutionResult'](result);
+      expect(store.updateWorkItem).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        item,
+        input: { status: 'in_progress', executionResult: result },
+      });
+      expect(page['executionItem']()).toEqual(item);
+    });
+
+    it('hands equipment context to the existing preparation form and avoids duplicating open work', async () => {
+      const equipmentId = '00000000-0000-4000-8000-000000000001';
+      fixture = await createPage();
+      fixture.componentRef.setInput('targetEquipment', equipmentId);
+      fixture.componentRef.setInput('workAction', 'repair');
+      await fixture.whenStable();
+      const page = fixture.componentInstance;
+      expect(page['workItemPrefill']()).toEqual({
+        action: 'repair',
+        target: `/api/equipment/${equipmentId}`,
+      });
+      expect(page['workItemSheetVisible']()).toBe(true);
+      expect(createWorkItem).not.toHaveBeenCalled();
+      page['workItemSheetVisible'].set(false);
+      workItems.set([
+        workItem({ action: 'repair', target: `/api/equipment/${equipmentId}`, status: 'planned' }),
+      ]);
+      current.set(intervention({ revision: 4 }));
+      await fixture.whenStable();
+      expect(page['workItemSheetVisible']()).toBe(false);
+      expect(createWorkItem).not.toHaveBeenCalled();
+    });
+
+    it('records successful maintenance through the existing revision-checked task command', async () => {
+      current.set(intervention({ status: 'in_progress' }));
+      const item = workItem({ action: 'maintenance', revision: 4 });
+      workItems.set([item]);
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const store = fixture.debugElement.injector.get(InterventionWorkspaceStore);
+      page['onWorkItemStatusChanged']({ workItemId: item.id, status: 'completed' });
+      const result = {
+        equipmentId: 'eq-1',
+        performedAt: '2026-03-01T11:00:00+01:00',
+        outcome: 'performed' as const,
+        workPerformed: 'Cleaned and tested.',
+      };
+      page['recordExecutionResult'](result);
+      expect(store.updateWorkItem).toHaveBeenCalledWith({
+        interventionId: 'intervention-1',
+        item,
+        input: { status: 'completed', executionResult: result },
+      });
+      expect(setWorkItemStatus).not.toHaveBeenCalled();
+    });
+
+    it('completes a new replacement with its confirmed successor in the same revision-checked command', async () => {
+      const equipmentId = '00000000-0000-4000-8000-000000000001';
+      const successorId = '00000000-0000-4000-8000-000000000002';
+      const item = workItem({
+        action: 'replacement',
+        target: `/api/equipment/${equipmentId}`,
+        resultResource: null,
+        revision: 7,
+      });
+      current.set(intervention({ status: 'in_progress' }));
+      workItems.set([item]);
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const store = fixture.debugElement.injector.get(InterventionWorkspaceStore);
+      page['onWorkItemStatusChanged']({ workItemId: item.id, status: 'completed' });
+      await fixture.whenStable();
+      expect(loadReplacement).toHaveBeenLastCalledWith({
+        organizationId: 'org-1',
+        equipmentId,
+        workItemId: item.id,
+      });
+      const result = {
+        equipmentId,
+        performedAt: '2026-10-05T10:30:00+02:00',
+        outcome: 'successful' as const,
+        workPerformed: 'Installed the replacement extinguisher.',
+      };
+      page['recordExecutionResult'](result);
+      expect(store.updateWorkItem).not.toHaveBeenCalled();
+      replacementProof.set({
+        original: { id: equipmentId } as EquipmentOutput,
+        successor: { id: successorId, assetCode: 'EXT-NEW' } as EquipmentOutput,
+      });
+      page['recordExecutionResult'](result);
+      expect(store.updateWorkItem).toHaveBeenCalledExactlyOnceWith({
+        interventionId: 'intervention-1',
+        item,
+        input: {
+          status: 'completed',
+          resultResource: `/api/equipment/${successorId}`,
+          executionResult: result,
+        },
+      });
+      expect(setWorkItemStatus).not.toHaveBeenCalled();
+    });
+
+    it('refuses changed replacement scope or revoked proof and permits recording an unsuccessful attempt', async () => {
+      const equipmentId = '00000000-0000-4000-8000-000000000001';
+      const item = workItem({
+        action: 'replacement',
+        target: `/api/equipment/${equipmentId}`,
+        revision: 8,
+      });
+      current.set(intervention({ status: 'in_progress' }));
+      workItems.set([item]);
+      fixture = await createPage();
+      const page = fixture.componentInstance;
+      const store = fixture.debugElement.injector.get(InterventionWorkspaceStore);
+      page['onWorkItemStatusChanged']({ workItemId: item.id, status: 'completed' });
+      await fixture.whenStable();
+      replacementProof.set({
+        original: { id: equipmentId } as EquipmentOutput,
+        successor: { id: '00000000-0000-4000-8000-000000000002' } as EquipmentOutput,
+      });
+      const result = {
+        equipmentId,
+        performedAt: '2026-10-05T10:30:00+02:00',
+        outcome: 'successful' as const,
+        workPerformed: 'Installed replacement.',
+      };
+      replacementAllowed.set(false);
+      page['recordExecutionResult'](result);
+      replacementAllowed.set(true);
+      replacementScope.set({ organizationId: 'org-1', equipmentId, workItemId: 'other-task' });
+      page['recordExecutionResult'](result);
+      expect(store.updateWorkItem).not.toHaveBeenCalled();
+      page['recordExecutionResult']({ ...result, outcome: 'failed' });
+      expect(store.updateWorkItem).toHaveBeenCalledExactlyOnceWith({
+        interventionId: 'intervention-1',
+        item,
+        input: { status: 'in_progress', executionResult: { ...result, outcome: 'failed' } },
       });
     });
 

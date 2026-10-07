@@ -47,6 +47,45 @@ describe('EquipmentService', () => {
     httpMock.verify();
   });
 
+  it('posts one stable atomic replacement command without creating a separate equipment first', () => {
+    const input = {
+      clientOperationId: '94ed10c6-55de-4853-8027-d2d6f5da6cbb',
+      successor: { type: 'fire_extinguisher', name: 'Emergency entrance', assetCode: 'EXT-3' },
+    };
+    const next = vi.fn();
+    service.replace(orgId, equipmentId, input).subscribe(next);
+    const request = httpMock.expectOne(`${equipmentBaseUrl}/${equipmentId}/replace`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(input);
+    expect(request.request.withCredentials).toBe(true);
+    const receipt = {
+      clientOperationId: input.clientOperationId,
+      predecessorEquipmentId: equipmentId,
+      successorEquipmentId: 'next-equipment',
+      replayed: false,
+    };
+    request.flush(receipt);
+    expect(next).toHaveBeenCalledWith(receipt);
+    httpMock.expectNone(
+      (candidate) => candidate.url === equipmentBaseUrl && candidate.method === 'POST',
+    );
+  });
+
+  it('reads exact inspection evidence from the authorized equipment summary', () => {
+    const next = vi.fn();
+    service.inspectionSummary(orgId, equipmentId).subscribe(next);
+    const request = httpMock.expectOne(`${equipmentBaseUrl}/${equipmentId}/inspection-summary`);
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      '@id': request.request.url,
+      '@type': 'EquipmentInspectionSummary',
+      equipmentId,
+      openAnomalies: 2,
+      bySeverity: { low: 0, medium: 1, high: 1, critical: 0 },
+    });
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({ equipmentId, openAnomalies: 2 }));
+  });
+
   it('rejects an empty explicit label selection without issuing an inventory request', () => {
     const failed = vi.fn();
     service.exportLabels(orgId, { ids: [] }).subscribe({ error: failed });

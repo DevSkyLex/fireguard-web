@@ -1,6 +1,7 @@
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import type { CreateInspectionInput } from '@features/organization/features/inspections/models';
+import type { DeclareInventoryConsumptionInput } from '@features/organization/features/inventory/models';
 import type { InterventionAttachmentKind } from '../intervention-attachment/intervention-attachment-kind.type';
 import type { CreateInterventionChangeInput } from '../intervention-change/create-intervention-change-input.interface';
 import type { UpdateInterventionChangeInput } from '../intervention-change/update-intervention-change-input.interface';
@@ -20,6 +21,25 @@ import type { InterventionStatus } from '../intervention/intervention-status.typ
  * @version 1.0.0
  */
 export interface InterventionOutboxPayloadMap {
+  /**
+   * Property 'inventory-consumption.declare'
+   * @readonly
+   *
+   * @description
+   * Immutable physical stock declaration; actor and stable operation identity survive replay.
+   *
+   * @access public
+   *
+   * @type {DeclareInventoryConsumptionInput & {
+   *   readonly actorId: string;
+   *   readonly clientId?: string;
+   * }}
+   */
+  readonly 'inventory-consumption.declare': DeclareInventoryConsumptionInput & {
+    readonly actorId: string;
+    readonly clientId?: string;
+  };
+
   /**
    * Property 'time-entry.create'
    * @readonly

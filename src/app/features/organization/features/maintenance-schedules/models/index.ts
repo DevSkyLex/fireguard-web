@@ -11,3 +11,15 @@ export type { MaintenanceCampaignOutput } from './maintenance-campaign/maintenan
 export type { MaintenanceTagDescriptor } from './maintenance-tag/maintenance-tag-descriptor.interface';
 export type { MaintenanceTagSeverity } from './maintenance-tag/maintenance-tag-severity.type';
 export { resolveMaintenanceTag } from './maintenance-tag/maintenance-tag.util';
+export type { MaintenanceOperationKind } from './maintenance-plan/maintenance-operation-kind.type';
+export type {
+  MaintenancePlanOutput,
+  MaintenancePlanOccurrenceOutput,
+} from './maintenance-plan/maintenance-plan-output.interface';
+export type {
+  CreateMaintenancePlanInput,
+  UpdateMaintenancePlanInput,
+} from './maintenance-plan/create-maintenance-plan-input.interface';
+export type { MaintenancePlanPreviewOutput } from './maintenance-plan/maintenance-plan-preview-output.interface';
+export type { MaintenanceEngineOutput } from './maintenance-plan/maintenance-engine-output.interface';
+export type { MaintenancePlanGenerationOutput } from './maintenance-plan/maintenance-plan-generation-output.interface';

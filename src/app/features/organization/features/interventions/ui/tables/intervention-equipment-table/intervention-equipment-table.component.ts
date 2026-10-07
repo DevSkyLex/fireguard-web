@@ -57,16 +57,22 @@ import { InterventionTag } from '../../components/intervention-tag';
 
 /**
  * Type EquipmentFilterKey
- * @type EquipmentFilterKey
  *
  * @description
  * Filter keys owned by the linked-equipment table.
  *
  * @since 1.0.0
+ *
+ * @type EquipmentFilterKey
  */
 type EquipmentFilterKey = 'type' | 'status';
 
-/** Every equipment lifecycle state the linked table can display and filter. */
+/**
+ * Constant EQUIPMENT_STATUS_VALUES
+ *
+ * @description
+ * Every equipment lifecycle state the linked table can display and filter.
+ */
 const EQUIPMENT_STATUS_VALUES: readonly EquipmentStatus[] = [
   'in_stock',
   'operational',
@@ -74,7 +80,12 @@ const EQUIPMENT_STATUS_VALUES: readonly EquipmentStatus[] = [
   'decommissioned',
 ];
 
-/** Localized status options projected into the shared filter bar. */
+/**
+ * Constant EQUIPMENT_STATUS_OPTIONS
+ *
+ * @description
+ * Localized status options projected into the shared filter bar.
+ */
 const EQUIPMENT_STATUS_OPTIONS: readonly CollectionFilterOption[] = EQUIPMENT_STATUS_VALUES.map(
   (value: EquipmentStatus): CollectionFilterOption => ({
     value,
@@ -142,6 +153,20 @@ const EQUIPMENT_STATUS_OPTIONS: readonly CollectionFilterOption[] = EQUIPMENT_ST
 })
 export class InterventionEquipmentTable {
   /**
+   * Property equipmentTypeOptions
+   * @readonly
+   *
+   * @description
+   * Complete authorized catalog, including archived descriptors needed by historical rows.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<readonly CollectionFilterOption[]>}
+   */
+  public readonly equipmentTypeOptions = input<readonly CollectionFilterOption[]>([]);
+
+  /**
    * Property source
    * @readonly
    *
@@ -185,9 +210,13 @@ export class InterventionEquipmentTable {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace owning the intervention, so a row can link into its equipment's own record.
+   *
+   * @description
+   * The workspace owning the intervention, so a row can link into its equipment's own record.
+   *
    * @access public
    * @since 1.3.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -195,9 +224,13 @@ export class InterventionEquipmentTable {
   /**
    * Property items
    * @readonly
-   * @description The equipment linked to this intervention.
+   *
+   * @description
+   * The equipment linked to this intervention.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly EquipmentOutput[]>}
    */
   public readonly items: InputSignal<readonly EquipmentOutput[]> =
@@ -206,9 +239,13 @@ export class InterventionEquipmentTable {
   /**
    * Property loading
    * @readonly
-   * @description Whether the tab's own fetch is in flight.
+   *
+   * @description
+   * Whether the tab's own fetch is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
@@ -216,9 +253,13 @@ export class InterventionEquipmentTable {
   /**
    * Property error
    * @readonly
-   * @description The tab's own fetch error, or `null`.
+   *
+   * @description
+   * The tab's own fetch error, or `null`.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
@@ -226,9 +267,13 @@ export class InterventionEquipmentTable {
   /**
    * Property totalItems
    * @readonly
-   * @description Total linked equipment the server reports, across all pages.
+   *
+   * @description
+   * Total linked equipment the server reports, across all pages.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {InputSignal<number>}
    */
   public readonly totalItems: InputSignal<number> = input<number>(0);
@@ -236,9 +281,13 @@ export class InterventionEquipmentTable {
   /**
    * Property loadingMore
    * @readonly
-   * @description Whether the next page of linked equipment is being fetched.
+   *
+   * @description
+   * Whether the next page of linked equipment is being fetched.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loadingMore: InputSignal<boolean> = input<boolean>(false);
@@ -261,9 +310,13 @@ export class InterventionEquipmentTable {
   /**
    * Property loadMoreRequested
    * @readonly
-   * @description Emits when the user asks for the next page of linked equipment.
+   *
+   * @description
+   * Emits when the user asks for the next page of linked equipment.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly loadMoreRequested: OutputEmitterRef<void> = output<void>();
@@ -285,9 +338,13 @@ export class InterventionEquipmentTable {
   /**
    * Property query
    * @readonly
-   * @description Controlled search and filter criteria retained by the owning page store.
+   *
+   * @description
+   * Controlled search and filter criteria retained by the owning page store.
+   *
    * @access public
    * @since 6.2.0
+   *
    * @type {InputSignal<InterventionEquipmentTableQuery>}
    */
   public readonly query: InputSignal<InterventionEquipmentTableQuery> =
@@ -394,7 +451,9 @@ export class InterventionEquipmentTable {
    *
    * @type {readonly CollectionFilterOption[]}
    */
-  protected readonly typeOptions: readonly CollectionFilterOption[] = EQUIPMENT_TYPE_OPTIONS;
+  protected readonly typeOptions: Signal<readonly CollectionFilterOption[]> = computed(() =>
+    this.equipmentTypeOptions().length ? this.equipmentTypeOptions() : EQUIPMENT_TYPE_OPTIONS,
+  );
 
   /**
    * Property statusOptions
@@ -485,7 +544,7 @@ export class InterventionEquipmentTable {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal< Readonly<Record<string, TemplateRef<unknown> | undefined>> >}
+   * @type {Signal<Readonly<Record<string, TemplateRef<unknown> | undefined>>>}
    */
   protected readonly filterTemplates: Signal<
     Readonly<Record<string, TemplateRef<unknown> | undefined>>
@@ -541,9 +600,13 @@ export class InterventionEquipmentTable {
   /**
    * Property skeletonColumnWidths
    * @readonly
-   * @description One literal width or alignment class per rendered column, handed to the shared skeleton rows.
+   *
+   * @description
+   * One literal width or alignment class per rendered column, handed to the shared skeleton rows.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {readonly string[]}
    */
   protected readonly skeletonColumnWidths: readonly string[] = [
@@ -571,15 +634,23 @@ export class InterventionEquipmentTable {
    * @returns {string} The humanized type.
    */
   protected typeLabelOf(item: EquipmentOutput): string {
-    return item.type.replaceAll('_', ' ');
+    return (
+      this.equipmentTypeOptions().find((option) => option.value === item.type)?.label ??
+      item.type.replaceAll('_', ' ')
+    );
   }
 
   /**
    * Method searchableTextOf
-   * @description Builds the visible equipment fields an operator can search.
+   *
+   * @description
+   * Builds the visible equipment fields an operator can search.
+   *
    * @access protected
    * @since 6.2.0
+   *
    * @param {EquipmentOutput} item - The equipment being indexed.
+   *
    * @returns {string} Normalized searchable row text.
    */
   protected searchableTextOf(item: EquipmentOutput): string {
@@ -602,10 +673,15 @@ export class InterventionEquipmentTable {
 
   /**
    * Method onSearchQueryChanged
-   * @description Keeps the table-local search in sync with the shared search box.
+   *
+   * @description
+   * Keeps the table-local search in sync with the shared search box.
+   *
    * @access protected
    * @since 6.2.0
+   *
    * @param {string} query - The text entered by the operator.
+   *
    * @returns {void}
    */
   protected onSearchQueryChanged(query: string): void {
@@ -614,10 +690,15 @@ export class InterventionEquipmentTable {
 
   /**
    * Method toggleFiltersVisible
-   * @description Reacts to the shared filter toggle's requested visibility.
+   *
+   * @description
+   * Reacts to the shared filter toggle's requested visibility.
+   *
    * @access protected
    * @since 6.2.0
+   *
    * @param {boolean} visible - Whether the filter bar should be mounted.
+   *
    * @returns {void}
    */
   protected toggleFiltersVisible(visible: boolean): void {
@@ -635,6 +716,7 @@ export class InterventionEquipmentTable {
    * @since 1.0.0
    *
    * @param {string} key - The filter field key.
+   *
    * @returns {void} No value is returned.
    */
   protected onFieldPicked(key: string): void {
@@ -652,6 +734,7 @@ export class InterventionEquipmentTable {
    * @since 1.0.0
    *
    * @param {string} key - The filter field key.
+   *
    * @returns {void} No value is returned.
    */
   protected onFieldRemoved(key: string): void {
@@ -688,11 +771,12 @@ export class InterventionEquipmentTable {
    * @since 1.0.0
    *
    * @param {string | null} value - The selected filter value, or `null` when cleared.
+   *
    * @returns {void} No value is returned.
    */
   protected onTypeFilterChanged(value: string | null): void {
     const selected: EquipmentType | null =
-      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === value)?.value ?? null;
+      this.typeOptions().find((option) => option.value === value)?.value ?? null;
     this.openFilterKey.set(null);
     this.emitQuery({ type: selected });
   }
@@ -708,6 +792,7 @@ export class InterventionEquipmentTable {
    * @since 1.0.0
    *
    * @param {string | null} value - The selected filter value, or `null` when cleared.
+   *
    * @returns {void} No value is returned.
    */
   protected onStatusFilterChanged(value: string | null): void {
@@ -728,7 +813,9 @@ export class InterventionEquipmentTable {
    * @access private
    * @since 1.0.0
    *
-   * @param {Partial<InterventionEquipmentTableQuery>} overrides - Criteria to merge into the current table query.
+   * @param {Partial<InterventionEquipmentTableQuery>} overrides - Criteria to merge into the
+   *   current table query.
+   *
    * @returns {void} No value is returned.
    */
   private emitQuery(overrides: Partial<InterventionEquipmentTableQuery> = {}): void {
@@ -746,6 +833,7 @@ export class InterventionEquipmentTable {
    * @since 1.0.0
    *
    * @param {EquipmentFilterKey} key - The filter field key.
+   *
    * @returns {BrnOverlayState} The current overlay state for the filter.
    */
   protected fieldPopoverState(key: EquipmentFilterKey): BrnOverlayState {
@@ -764,6 +852,7 @@ export class InterventionEquipmentTable {
    *
    * @param {EquipmentFilterKey} key - The filter field key.
    * @param {BrnOverlayState} state - The filter popover's next state.
+   *
    * @returns {void} No value is returned.
    */
   protected onFilterPopoverStateChanged(key: EquipmentFilterKey, state: BrnOverlayState): void {
@@ -777,10 +866,15 @@ export class InterventionEquipmentTable {
 
   /**
    * Method brandModelOf
-   * @description The brand and model, joined for one cell, or `null` when neither is set.
+   *
+   * @description
+   * The brand and model, joined for one cell, or `null` when neither is set.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {EquipmentOutput} item - The equipment being rendered.
+   *
    * @returns {string | null} The joined label, or `null`.
    */
   protected brandModelOf(item: EquipmentOutput): string | null {

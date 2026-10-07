@@ -1,6 +1,7 @@
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
+  afterNextRender,
   Component,
   DestroyRef,
   computed,
@@ -34,7 +35,11 @@ import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallSuccess } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
+import {
+  EquipmentTypeCatalogStore,
+  type EquipmentTypeCatalogStoreType,
+  type EquipmentTypeOption,
+} from '@features/organization/features/equipments';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { FacilityOptionPicker } from '@features/organization/features/facilities/ui/components';
@@ -71,6 +76,7 @@ import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolb
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
 import { StateIllustration } from '@shared/state-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
@@ -212,8 +218,8 @@ interface MaintenanceScheduleFilters {
  * chrome other converted collection pages already carry (no width clamp, no
  * hover surface, no double-padding fix). "Facility" and "Equipment type"
  * offer a popover search — the former's catalog is organization-sized and
- * unbounded, the latter's twelve-entry `EQUIPMENT_TYPE_OPTIONS` is the same
- * catalog the equipments feature's own type filter already searches; "Due
+ * unbounded, and equipment types come from the same authorized server
+ * catalog as the equipments feature's type filter; "Due
  * status" stays unsearched at four fixed entries.
  *
  * @version 1.3.0
@@ -223,6 +229,7 @@ interface MaintenanceScheduleFilters {
 @Component({
   selector: 'app-maintenance-schedules-page',
   imports: [
+    ...HlmAlertImports,
     FacilityOptionPicker,
     NgIcon,
     RouterLink,
@@ -245,6 +252,7 @@ interface MaintenanceScheduleFilters {
   ],
   providers: [
     FacilityOptionsStore,
+    EquipmentTypeCatalogStore,
     provideIcons({
       lucideCalendar,
       lucideCircleAlert,
@@ -579,9 +587,40 @@ export class MaintenanceSchedulesPage {
    * @access protected
    * @since unreleased
    *
-   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   * @type {Signal<readonly EquipmentTypeOption[]>}
    */
-  protected readonly equipmentTypeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
+  protected readonly equipmentTypeOptions: Signal<readonly EquipmentTypeOption[]> = computed(() =>
+    this.equipmentTypeCatalog.options(),
+  );
+
+  /**
+   * Property equipmentTypeCatalog
+   * @readonly
+   *
+   * @description
+   * Page-scoped authorized catalog, retaining historical and custom equipment labels.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentTypeCatalogStoreType}
+   */
+  protected readonly equipmentTypeCatalog: EquipmentTypeCatalogStoreType =
+    inject(EquipmentTypeCatalogStore);
+
+  /**
+   * Property catalogReady
+   * @readonly
+   *
+   * @description
+   * Delays secondary equipment catalog reads until browser hydration.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly catalogReady: WritableSignal<boolean> = signal(false);
 
   /**
    * Property facilityOptions
@@ -988,6 +1027,14 @@ export class MaintenanceSchedulesPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    afterNextRender(() => this.catalogReady.set(true));
+    effect(() => {
+      const organizationId: string = this.organizationId();
+      const ready: boolean = this.catalogReady();
+      untracked(() =>
+        ready ? this.equipmentTypeCatalog.load(organizationId) : this.equipmentTypeCatalog.clear(),
+      );
+    });
 
     toObservable(this.draftSearch)
       .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())

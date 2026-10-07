@@ -7,9 +7,26 @@
  */
 export interface CreateOrganizationInput {
   //#region Properties
-  /** @type {string} */
+  /**
+   * Property name
+   *
+   * @type {string}
+   */
   readonly name: string;
-  /** @type {string | null} */
+  /**
+   * Property operatingProfile
+   *
+   * @description
+   * Operational defaults; omission preserves the legacy operator profile.
+   *
+   * @property operatingProfile
+   */
+  readonly operatingProfile?: 'operator' | 'service_provider';
+  /**
+   * Property slug
+   *
+   * @type {string | null}
+   */
   readonly slug?: string | null;
   //#endregion
 }

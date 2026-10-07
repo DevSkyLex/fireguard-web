@@ -591,8 +591,10 @@ export const EquipmentStore = signalStore(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
                     const merged: EquipmentOutput = mergeEquipment(
-                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      store.equipmentEntityMap()[equipment.id] ??
+                        activeEquipmentStore.selectedEquipment(),
                       equipment,
+                      input,
                     );
 
                     patchState(store, setEntity(merged, { collection: 'equipment' }), {

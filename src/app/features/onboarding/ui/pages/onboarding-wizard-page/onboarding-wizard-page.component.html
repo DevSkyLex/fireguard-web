@@ -185,6 +185,44 @@
           </div>
         </div>
       </div>
+    } @else if (step.key === 'create_first_equipment' && equipmentTypeOptions().length === 0) {
+      <div hlmEmpty data-testid="onboarding-equipment-catalog-empty">
+        <div hlmEmptyHeader>
+          <p hlmEmptyTitle i18n="@@onboarding.wizard.noEquipmentTypesTitle">
+            No active equipment types
+          </p>
+          <p hlmEmptyDescription i18n="@@onboarding.wizard.noEquipmentTypes">
+            An active type is needed to register equipment. Refresh the available choices after the
+            organization's types have been updated.
+          </p>
+        </div>
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mobile-ui:min-h-11"
+            (click)="retryCatalog()"
+            i18n="@@onboarding.wizard.refreshCatalog"
+          >
+            Refresh choices
+          </button>
+          @if (canSkip()) {
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              class="mobile-ui:min-h-11"
+              data-testid="onboarding-wizard-skip"
+              [disabled]="stepPending()"
+              (click)="skipCurrentStep()"
+              i18n="@@onboarding.wizard.skip"
+            >
+              Skip for now
+            </button>
+          }
+        </div>
+      </div>
     } @else {
       @switch (step.key) {
         @case ('create_organization') {
@@ -241,6 +279,7 @@
           <app-onboarding-equipment-form
             [restored]="restoredEquipment()"
             [facilities]="createdFacilities()"
+            [typeOptions]="equipmentTypeOptions()"
             [pending]="stepPending()"
             [skippable]="canSkip()"
             (submitted)="submitEquipment($event)"

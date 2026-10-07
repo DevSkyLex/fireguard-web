@@ -5,6 +5,38 @@
 >
   <div class="min-w-0">
     <hlm-field-group>
+      <hlm-toggle-group
+        type="single"
+        variant="outline"
+        [nullable]="false"
+        [value]="typeScope()"
+        [disabled]="pending()"
+        (valueChange)="scopeChanged($event)"
+        aria-label="Equipment families"
+        i18n-aria-label="@@onboarding.equipmentForm.families"
+      >
+        <button
+          hlmToggleGroupItem
+          type="button"
+          value="fire"
+          i18n="@@onboarding.equipmentForm.fireEquipment"
+        >
+          Fire equipment
+        </button>
+        <button
+          hlmToggleGroupItem
+          type="button"
+          value="all"
+          i18n="@@onboarding.equipmentForm.allEquipment"
+        >
+          All equipment
+        </button>
+      </hlm-toggle-group>
+      @if (visibleTypeOptions().length === 0 && typeScope() === 'fire') {
+        <p hlmFieldDescription i18n="@@onboarding.equipmentForm.noFireTypes">
+          No active fire equipment types. Choose All equipment to view the other available types.
+        </p>
+      }
       <hlm-field
         [forceInvalid]="
           isMobileInteractionMode() &&
@@ -81,7 +113,7 @@
                   No matching type.
                 </div>
                 <div hlmCommandList class="max-h-[50dvh] overscroll-contain">
-                  @for (option of typeOptions; track option.value) {
+                  @for (option of visibleTypeOptions(); track option.value) {
                     <button
                       hlmCommandItem
                       type="button"
@@ -124,7 +156,7 @@
 
             <hlm-select-content *hlmSelectPortal>
               <hlm-select-group>
-                @for (option of typeOptions; track option.value) {
+                @for (option of visibleTypeOptions(); track option.value) {
                   <hlm-select-item class="mobile-ui:min-h-11" [value]="option.value">{{
                     option.label
                   }}</hlm-select-item>

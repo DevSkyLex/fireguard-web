@@ -14,8 +14,8 @@ existing business behavior.
 
 ## Purpose
 
-Owns the organization's read surface over the backend Maintenance module and
-the two actions it exposes to an operator:
+Owns the organization's historical schedules and independent equipment operation
+plans over the backend Maintenance module:
 
 - listing maintenance schedules — one row per published equipment — with server-side search, filtering and pagination,
 - overriding a single schedule's inspection interval, or clearing the
@@ -23,6 +23,48 @@ the two actions it exposes to an operator:
 - generating an inspection campaign (an intervention) from every schedule
   currently due or overdue, optionally narrowed to one facility or
   equipment type.
+
+## Independent equipment operations
+
+`/organizations/:organizationId/maintenance/plans` owns the operation library,
+guarded by the existing maintenance-read permission and provided with its own
+page-scoped `MaintenancePlansStore`. Controls and maintenance use separate
+server-filtered queries and exact server totals; neither the browser nor the
+list derives deadline, completion, availability or anomaly status.
+The equipment dossier may link with `equipmentId` and `operationKind` query
+parameters; both are forwarded to the same authorized server collection.
+
+`MaintenancePlanService` transports the organization-scoped `/maintenance/plans`
+resources and `/maintenance/engine` state. A new operation is prepared inactive,
+then its next three dates are reviewed from the server before explicit activation.
+Day, week, month and year units require an explicit organization choice; the form
+does not supply equipment-specific or regulatory frequencies. Historical cadence
+and missing first deadlines remain visible. Calendar calculations belong to the API.
+Date inputs send `anchorOn`/`nextDueOn` calendar strings for the server to interpret
+in its preserved `calendarTimezone`. Fixed calendar dates render without timezone
+conversion; historical deadline instants retain the organization date formatter.
+Editing sends only changed calendar fields. An open occurrence locks its cadence,
+anchor and deadline while leaving the operation name editable, including when the
+historical calendar is incomplete. Renaming never reschedules its existing work.
+
+The page orchestrates its presentational form and flat operation list. Equipment
+choices use the public `EquipmentService` and `buildEquipmentTitle` from equipments,
+in server pages of 30 with search; reads begin only when opening a new-plan form.
+Selected labels survive a different option page. Authenticated plan and engine reads
+begin after hydration, with no response serialized into TransferState.
+
+Configuration, legacy preparation and the consequential authority switch require
+maintenance-manage. Generation additionally requires interventions-plan and confirmed
+plan-engine authority. Switching uses a native alert dialog, stays open and busy-locked
+until confirmation, and renders migration conflicts inline for correction and retry.
+Preparation does not switch authority. The server remains the sole arbiter of active
+engine and historical campaign linkage.
+
+Generation is bounded to one equipment operation. Ordinary submission recovers already
+created work; a new attempt is a separate action exposed only by `retryAllowed` from the
+API. Original due dates and attempt numbers remain visible. Creating work never counts
+as completion. Accepted writes survive navigation without replacing another
+organization's current page; stale queries and previews are cancelled or ignored.
 
 Named `maintenance-schedules`, not the unqualified `maintenance` — an
 app-level feature already owns that name for the unrelated app-maintenance-mode
@@ -48,11 +90,13 @@ event-driven recalculation with an hourly recovery sweep and is rendered as-is.
 ## Routes
 
 - `/organizations/:organizationId/maintenance` — `MaintenanceSchedulesPage`:
-  the only route this subfeature owns. Guarded on
+  historical schedules, guarded on
   `organization.maintenance.read` on the pathless parent, the same shape
   `EQUIPMENT_ROUTES`/`INSPECTION_ROUTES` use. There is no create or detail
   route — a schedule is derived server-side the moment an equipment of a
   tracked type exists; it is never authored directly.
+- `/organizations/:organizationId/maintenance/plans` — `MaintenancePlansPage`:
+  the operation library and explicit preparation/configuration workflows.
 
 ## State and Data Access
 
@@ -95,10 +139,11 @@ toast.
 ## Cross-Feature Dependencies
 
 - Depends on organization route context from the parent feature.
-- Consumes `EQUIPMENT_TYPE_OPTIONS` from the `equipments` subfeature's
-  published public API (`@features/organization/features/equipments`) for
-  the equipment-type filter, the table's type label and the campaign
-  dialog's scoping select — the same catalog `onboarding` already imports.
+- Consumes `EquipmentTypeCatalogStore` and `EquipmentTypeOption` through the
+  equipments public API for filters, table labels and campaign scope. Server
+  labels support custom codes and historical archived types. The page loads
+  this secondary catalog after hydration, forwards options to presentation
+  components, clears old organization data on scope changes and offers explicit retry.
 - Consumes `FacilityOptionsStore` through `facilities/state`, `FacilityOption`
   through `facilities/models`, and the published `FacilityOptionPicker` through
   `facilities/ui/components` for filter and campaign scope controls. Options

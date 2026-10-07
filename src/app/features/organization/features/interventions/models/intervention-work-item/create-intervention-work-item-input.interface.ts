@@ -1,4 +1,5 @@
 import type { InterventionWorkItemAction } from './intervention-work-item-action.type';
+import type { InterventionWorkItemOperationKind } from './intervention-work-item-operation-kind.type';
 import type { InterventionWorkItemSource } from './intervention-work-item-source.type';
 
 /**
@@ -11,6 +12,45 @@ import type { InterventionWorkItemSource } from './intervention-work-item-source
  * @version 1.0.0
  */
 export interface CreateInterventionWorkItemInput {
+  /**
+   * Property operationId
+   * @readonly
+   *
+   * @description
+   * Independent preventive operation identifier, when the task fulfills one.
+   *
+   * @access public
+   *
+   * @type {string | null | undefined}
+   */
+  readonly operationId?: string | null;
+
+  /**
+   * Property occurrenceId
+   * @readonly
+   *
+   * @description
+   * Preventive occurrence identifier associated with this task.
+   *
+   * @access public
+   *
+   * @type {string | null | undefined}
+   */
+  readonly occurrenceId?: string | null;
+
+  /**
+   * Property operationKind
+   * @readonly
+   *
+   * @description
+   * Preventive operation category, independent of the work-item action.
+   *
+   * @access public
+   *
+   * @type {InterventionWorkItemOperationKind | null | undefined}
+   */
+  readonly operationKind?: InterventionWorkItemOperationKind | null;
+
   /**
    * Property estimatedMinutes
    * @readonly

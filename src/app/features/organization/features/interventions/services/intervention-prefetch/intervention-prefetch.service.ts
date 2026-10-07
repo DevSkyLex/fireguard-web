@@ -1,5 +1,15 @@
 import { effect, inject, Service, signal, type WritableSignal } from '@angular/core';
-import { catchError, EMPTY, forkJoin, from, map, mergeMap, type Observable, switchMap } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  forkJoin,
+  from,
+  map,
+  mergeMap,
+  of,
+  type Observable,
+  switchMap,
+} from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { OrganizationMemberService } from '@features/organization/data-access';
@@ -11,6 +21,8 @@ import {
 } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { InterventionEquipmentCatalogService } from '../intervention-equipment-catalog';
+import { InterventionInventoryService } from '../intervention-inventory';
 
 /**
  * Service InterventionPrefetchService
@@ -31,9 +43,13 @@ export class InterventionPrefetchService {
   /**
    * Property authSession
    * @readonly
-   * @description Prevents background requests before sign-in and cancels prefetch when the session ends.
+   *
+   * @description
+   * Prevents background requests before sign-in and cancels prefetch when the session ends.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {AuthSessionPort}
    */
   private readonly authSession = inject<AuthSessionPort>(AUTH_SESSION_PORT);
@@ -126,6 +142,34 @@ export class InterventionPrefetchService {
   private readonly offline: InterventionOfflineService = inject<InterventionOfflineService>(
     InterventionOfflineService,
   );
+
+  /**
+   * Property equipmentCatalog
+   * @readonly
+   *
+   * @description
+   * Captures the complete authorized catalog alongside each durable workspace.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionEquipmentCatalogService}
+   */
+  private readonly equipmentCatalog = inject(InterventionEquipmentCatalogService);
+
+  /**
+   * Property inventory
+   * @readonly
+   *
+   * @description
+   * Prepares authorized parts and warehouses after the workspace is durable.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionInventoryService}
+   */
+  private readonly inventory: InterventionInventoryService = inject(InterventionInventoryService);
 
   /**
    * Property members
@@ -248,10 +292,18 @@ export class InterventionPrefetchService {
       issues: this.service.listIssues(intervention.id),
     }).pipe(
       switchMap(({ workItems, changes, issues }) => {
-        if (this.organization.selectedOrganizationId() !== organizationId) return EMPTY;
+        if (
+          this.organization.selectedOrganizationId() !== organizationId ||
+          owner !== this.offline.publicationOwner()
+        )
+          return EMPTY;
         return from(
           this.offline.saveWorkspace(intervention, workItems, changes, issues.member),
         ).pipe(
+          switchMap(() => this.equipmentCatalog.capture(intervention, owner)),
+          switchMap(() =>
+            this.inventory.capture(intervention, owner).pipe(catchError(() => of(null))),
+          ),
           switchMap(() =>
             from(
               workItems.filter(

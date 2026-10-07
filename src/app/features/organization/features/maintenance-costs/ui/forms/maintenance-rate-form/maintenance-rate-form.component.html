@@ -1,0 +1,182 @@
+@if (canManage()) {
+  <form
+    class="@container flex min-w-0 flex-col gap-4"
+    data-testid="maintenance-rate-form"
+    novalidate
+    (submit)="submit($event)"
+  >
+    @if (uncertain()) {
+      <div hlmAlert role="status">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@maintenanceCost.rate.uncertainTitle">
+          The rate submission is awaiting confirmation
+        </p>
+        <div hlmAlertDescription class="flex flex-col gap-3">
+          <p i18n="@@maintenanceCost.rate.uncertainHint">
+            Keep this draft unchanged. Retry the original submission to confirm whether the rate was
+            recorded.
+          </p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="self-start mobile-ui:min-h-11"
+            data-testid="maintenance-rate-retry"
+            [disabled]="pending()"
+            (click)="retryOriginal()"
+            i18n="@@maintenanceCost.rate.retry"
+          >
+            Retry original submission
+          </button>
+        </div>
+      </div>
+    }
+    @if (error(); as failure) {
+      <div hlmAlert variant="destructive" role="alert">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <p hlmAlertTitle i18n="@@maintenanceCost.rate.saveFailed">
+          The rate could not be confirmed
+        </p>
+        <p hlmAlertDescription>{{ failure.message || errorFallback }}</p>
+      </div>
+    }
+    <fieldset hlmFieldSet>
+      <legend hlmFieldLegend i18n="@@maintenanceCost.rate.addTitle">Add an hourly rate</legend>
+      <p hlmFieldDescription i18n="@@maintenanceCost.rate.historyHint">
+        A new rate takes effect from its date. Earlier rates and recorded costs stay unchanged.
+      </p>
+      <div hlmFieldGroup>
+        <div hlmField>
+          <label hlmFieldLabel for="maintenance-rate-member" i18n="@@maintenanceCost.rate.member"
+            >Member</label
+          >
+          @if (membersAllowed()) {
+            <hlm-select [itemToString]="memberLabel" [formField]="fields.memberId">
+              <hlm-select-trigger
+                buttonId="maintenance-rate-member"
+                class="w-full mobile-ui:min-h-11"
+                [forceInvalid]="fields.memberId().touched() && fields.memberId().invalid()"
+              >
+                <hlm-select-value
+                  placeholder="Choose a member"
+                  i18n-placeholder="@@maintenanceCost.rate.memberPlaceholder"
+                />
+              </hlm-select-trigger>
+              <hlm-select-content *hlmSelectPortal>
+                <hlm-select-group>
+                  @for (member of members(); track member.value) {
+                    <hlm-select-item class="mobile-ui:min-h-11" [value]="member.value">
+                      <span class="flex min-w-0 flex-col gap-1">
+                        <span class="wrap-anywhere">{{ member.displayName }}</span>
+                        @if (member.roleLabel) {
+                          <span class="text-xs text-muted-foreground">{{ member.roleLabel }}</span>
+                        }
+                      </span>
+                    </hlm-select-item>
+                  }
+                </hlm-select-group>
+              </hlm-select-content>
+            </hlm-select>
+            @if (membersLoading()) {
+              <p hlmFieldDescription class="flex items-center gap-2" role="status">
+                <hlm-spinner /><span i18n="@@maintenanceCost.rate.membersLoading"
+                  >Loading members…</span
+                >
+              </p>
+            } @else if (members().length === 0) {
+              <p hlmFieldDescription i18n="@@maintenanceCost.rate.membersEmpty">
+                No available members. Refresh the member directory before adding a rate.
+              </p>
+            }
+          } @else {
+            <p hlmFieldDescription i18n="@@maintenanceCost.rate.membersDenied">
+              Member directory access is required to choose a member and add a rate.
+            </p>
+          }
+          @if (fields.memberId().touched()) {
+            @for (validation of fields.memberId().errors(); track validation) {
+              <hlm-field-error>{{ validation.message }}</hlm-field-error>
+            }
+          }
+        </div>
+        <div class="grid min-w-0 gap-4 @md:grid-cols-2">
+          <div hlmField>
+            <label hlmFieldLabel for="maintenance-rate-amount" i18n="@@maintenanceCost.rate.amount"
+              >Hourly amount</label
+            >
+            <input
+              hlmInput
+              id="maintenance-rate-amount"
+              class="mobile-ui:min-h-11 mobile-ui:text-base"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              [formField]="fields.hourlyAmount"
+            />
+            <p hlmFieldDescription>
+              <span>{{ currency() || '—' }}</span>
+              <span i18n="@@maintenanceCost.rate.amountHint"
+                >per hour. Use a decimal point and up to six decimal places.</span
+              >
+            </p>
+            @if (fields.hourlyAmount().touched()) {
+              @for (validation of fields.hourlyAmount().errors(); track validation) {
+                <hlm-field-error>{{ validation.message }}</hlm-field-error>
+              }
+            }
+          </div>
+          <div hlmField>
+            <label
+              hlmFieldLabel
+              for="maintenance-rate-effective-from"
+              i18n="@@maintenanceCost.rate.effectiveFrom"
+              >Effective from</label
+            >
+            <input
+              hlmInput
+              id="maintenance-rate-effective-from"
+              class="mobile-ui:min-h-11 mobile-ui:text-base"
+              type="date"
+              [formField]="fields.effectiveFrom"
+            />
+            <p hlmFieldDescription i18n="@@maintenanceCost.rate.dateHint">
+              This rate applies from the selected calendar day.
+            </p>
+            @if (fields.effectiveFrom().touched()) {
+              @for (validation of fields.effectiveFrom().errors(); track validation) {
+                <hlm-field-error>{{ validation.message }}</hlm-field-error>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    </fieldset>
+    @if (!currency()) {
+      <p hlmFieldDescription i18n="@@maintenanceCost.rate.currencyRequired">
+        Set the organization currency before adding a rate.
+      </p>
+    }
+    <div class="flex flex-wrap justify-end gap-2">
+      <button
+        hlmBtn
+        type="submit"
+        class="mobile-ui:min-h-11"
+        data-testid="maintenance-rate-submit"
+        [disabled]="
+          pending() ||
+          uncertain() ||
+          !membersAllowed() ||
+          membersLoading() ||
+          !currency() ||
+          members().length === 0
+        "
+        [attr.aria-busy]="pending()"
+      >
+        @if (pending()) {
+          <hlm-spinner />
+        }
+        <span i18n="@@maintenanceCost.rate.save">Add rate</span>
+      </button>
+    </div>
+  </form>
+}

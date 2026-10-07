@@ -1,0 +1,43 @@
+<hlm-alert-dialog
+  [state]="visible() ? 'open' : 'closed'"
+  (stateChanged)="$event === 'closed' && cancelled.emit()"
+>
+  <hlm-alert-dialog-content
+    *hlmAlertDialogPortal
+    data-testid="equipment-replacement-confirm-dialog"
+  >
+    <hlm-alert-dialog-header>
+      <h3 hlmAlertDialogTitle i18n="@@equipment.replacement.confirmTitle">
+        Confirm the replacement
+      </h3>
+      <p hlmAlertDialogDescription i18n="@@equipment.replacement.confirmDescription">
+        {{ equipmentName() }} will be retired permanently. Its dossier and history remain accessible
+        through the successor.
+      </p>
+    </hlm-alert-dialog-header>
+    <hlm-alert-dialog-footer>
+      <button
+        hlmBtn
+        variant="outline"
+        type="button"
+        hlmAlertDialogCancel
+        class="mobile-ui:min-h-11"
+        (click)="cancelled.emit()"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmBtn
+        type="button"
+        hlmAlertDialogAction
+        class="mobile-ui:min-h-11"
+        (click)="confirmed.emit()"
+        data-testid="equipment-replacement-final-confirm"
+        i18n="@@equipment.replacement.confirm"
+      >
+        Confirm replacement
+      </button>
+    </hlm-alert-dialog-footer>
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>

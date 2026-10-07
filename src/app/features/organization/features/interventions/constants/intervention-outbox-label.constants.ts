@@ -7,7 +7,6 @@ import type { InterventionOutboxType } from '@features/organization/features/int
  * What each queued operation is called when the sync popover lists it. A field
  * agent who has checked twelve items and written three comments offline needs
  * to read what is waiting, not a count of seventeen.
- *
  * Verb-object in sentence case, the same grammar as the action that queued it,
  * so a line in the queue reads as the thing the agent did.
  *
@@ -16,6 +15,7 @@ import type { InterventionOutboxType } from '@features/organization/features/int
  * @type {Readonly<Record<InterventionOutboxType, string>>}
  */
 export const INTERVENTION_OUTBOX_LABEL: Readonly<Record<InterventionOutboxType, string>> = {
+  'inventory-consumption.declare': $localize`:@@intervention.sync.op.inventoryConsumption:Parts used`,
   'time-entry.create': $localize`:@@intervention.sync.op.timeCreate:Time recorded`,
   'time-entry.correct': $localize`:@@intervention.sync.op.timeCorrect:Time correction`,
   'time-entry.cancel': $localize`:@@intervention.sync.op.timeCancel:Time cancellation`,

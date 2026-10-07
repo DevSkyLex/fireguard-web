@@ -1,0 +1,161 @@
+@if (loading() && rows().length === 0) {
+  <div class="flex flex-col gap-3" aria-busy="true">
+    @for (item of [1, 2, 3]; track item) {
+      <div hlmSkeleton class="h-28 w-full"></div>
+    }
+  </div>
+}
+<hlm-item-group class="gap-3">
+  @for (row of rows(); track row.record.id) {
+    <div
+      hlmItem
+      variant="outline"
+      class="flex-wrap items-start"
+      [attr.data-inventory-id]="row.record.id"
+    >
+      <div hlmItemContent class="min-w-0">
+        <div hlmItemTitle class="flex-wrap">
+          <span class="break-words">{{ row.title }}</span>
+          @if (row.status) {
+            <span hlmBadge [variant]="row.pending ? 'outline' : 'secondary'">{{ row.status }}</span>
+          }
+          @if (row.late) {
+            <span hlmBadge variant="outline" i18n="@@inventory.late"
+              >Received after publication</span
+            >
+          }
+        </div>
+        <p hlmItemDescription class="break-words">{{ row.detail }}</p>
+        @if (row.quantity) {
+          <p class="font-mono text-sm tabular-nums">
+            <span i18n="@@inventory.quantity">Quantity</span>: {{ row.quantity }} {{ row.unit }}
+          </p>
+        }
+        @if (row.date) {
+          <p class="text-sm text-muted-foreground">
+            {{ row.date | appOrgDate: 'datetime' : regionalFormatting() }}
+          </p>
+        }
+        @if (row.reason) {
+          <p class="text-sm break-words whitespace-pre-wrap">{{ row.reason }}</p>
+        }
+        @if (row.interventionId) {
+          <a
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            variant="link"
+            size="sm"
+            class="justify-start px-0"
+            [routerLink]="['/organizations', organizationId(), 'interventions', row.interventionId]"
+            i18n="@@inventory.openWork"
+            >Open intervention</a
+          >
+        }
+      </div>
+      <div hlmItemActions class="flex-wrap">
+        @if (row.canEdit) {
+          <button
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="disabled()"
+            (click)="action.emit({ kind: 'edit', record: row.record })"
+            i18n="@@common.edit"
+          >
+            Edit
+          </button>
+        }
+        @if (row.canArchive) {
+          <button
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            type="button"
+            variant="ghost"
+            size="sm"
+            [disabled]="disabled()"
+            (click)="action.emit({ kind: 'archive', record: row.record })"
+          >
+            @if (row.archived) {
+              <span i18n="@@inventory.restore">Restore</span>
+            } @else {
+              <span i18n="@@inventory.archive">Archive</span>
+            }
+          </button>
+        }
+        @if (row.canReconcile) {
+          <button
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="disabled()"
+            (click)="action.emit({ kind: 'reconcile', record: row.record })"
+            i18n="@@inventory.reconcile"
+          >
+            Reconcile stock
+          </button>
+        }
+        @if (row.canReturn) {
+          <button
+            hlmBtn
+            class="mobile-ui:min-h-11"
+            type="button"
+            variant="outline"
+            size="sm"
+            [disabled]="disabled()"
+            (click)="action.emit({ kind: 'return', record: row.record })"
+            i18n="@@inventory.return"
+          >
+            Record return
+          </button>
+        }
+      </div>
+    </div>
+  }
+</hlm-item-group>
+@if (loaded() && rows().length === 0) {
+  <hlm-empty
+    ><hlm-empty-header
+      ><h2 hlmEmptyTitle i18n="@@inventory.emptyTitle">No stock records in this view</h2>
+      <p hlmEmptyDescription i18n="@@inventory.emptyHint">
+        Change your filters or add a reference. Archived references remain readable in the history.
+      </p></hlm-empty-header
+    ></hlm-empty
+  >
+}
+@if (loaded() && pageCount() > 1) {
+  <nav
+    class="flex flex-wrap items-center justify-between gap-3"
+    aria-label="Stock pages"
+    i18n-aria-label="@@inventory.pagination"
+  >
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="loading() || page() <= 1"
+      (click)="pageChanged.emit(page() - 1)"
+      i18n="@@inventory.previous"
+    >
+      Previous
+    </button>
+    <span class="text-sm text-muted-foreground" i18n="@@inventory.page"
+      >Page {{ page() }} of {{ pageCount() }}</span
+    >
+    <button
+      hlmBtn
+      class="mobile-ui:min-h-11"
+      type="button"
+      variant="outline"
+      [disabled]="loading() || page() >= pageCount()"
+      (click)="pageChanged.emit(page() + 1)"
+      i18n="@@inventory.next"
+    >
+      Next
+    </button>
+  </nav>
+}

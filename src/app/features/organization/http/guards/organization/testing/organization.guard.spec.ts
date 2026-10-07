@@ -6,6 +6,7 @@ import { CookieService } from '@core/cookie';
 import { LAST_ORGANIZATION_COOKIE_NAME } from '@features/organization/constants';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
+import { OrganizationLandingService } from '@features/organization/services/organization-landing';
 import { organizationGuard } from '../organization.guard';
 
 function createCollection(
@@ -51,6 +52,7 @@ describe('organizationGuard', () => {
 
   let mockRouter: {
     createUrlTree: ReturnType<typeof vi.fn>;
+    parseUrl: ReturnType<typeof vi.fn>;
   };
   let mockOrganizationService: {
     get: ReturnType<typeof vi.fn>;
@@ -64,6 +66,7 @@ describe('organizationGuard', () => {
   beforeEach(() => {
     mockRouter = {
       createUrlTree: vi.fn().mockReturnValue(redirectUrlTree),
+      parseUrl: vi.fn().mockReturnValue(redirectUrlTree),
     };
 
     mockOrganizationService = {
@@ -81,6 +84,14 @@ describe('organizationGuard', () => {
         { provide: Router, useValue: mockRouter },
         { provide: OrganizationService, useValue: mockOrganizationService },
         { provide: CookieService, useValue: mockCookieService },
+        {
+          provide: OrganizationLandingService,
+          useValue: {
+            defaultDestination: vi.fn((organizationId: string) =>
+              of(`/organizations/${organizationId}/assets`),
+            ),
+          },
+        },
       ],
     });
   });
@@ -93,7 +104,7 @@ describe('organizationGuard', () => {
     expect(result).toBe(redirectUrlTree);
     expect(mockOrganizationService.get).not.toHaveBeenCalled();
     expect(mockOrganizationService.list).toHaveBeenCalledWith({ page: 1, itemsPerPage: 2 });
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/organizations', 'org-1']);
+    expect(mockRouter.parseUrl).toHaveBeenCalledWith('/organizations/org-1/assets');
   });
 
   it('should redirect to onboarding when the user has no organization', async () => {
@@ -119,7 +130,7 @@ describe('organizationGuard', () => {
     expect(mockCookieService.getCookie).toHaveBeenCalledWith(LAST_ORGANIZATION_COOKIE_NAME);
     expect(mockOrganizationService.get).toHaveBeenCalledWith('org-2');
     expect(mockOrganizationService.list).not.toHaveBeenCalled();
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/organizations', 'org-2']);
+    expect(mockRouter.parseUrl).toHaveBeenCalledWith('/organizations/org-2/assets');
   });
 
   it('should forget a stale cookie and fall back to the first accessible organization', async () => {
@@ -134,7 +145,7 @@ describe('organizationGuard', () => {
     expect(mockOrganizationService.get).toHaveBeenCalledWith('org-gone');
     expect(mockCookieService.deleteCookie).toHaveBeenCalledWith(LAST_ORGANIZATION_COOKIE_NAME);
     expect(mockOrganizationService.list).toHaveBeenCalledWith({ page: 1, itemsPerPage: 2 });
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/organizations', 'org-1']);
+    expect(mockRouter.parseUrl).toHaveBeenCalledWith('/organizations/org-1/assets');
   });
 
   it('should skip the excluded saved organization and pick the next accessible one', async () => {
@@ -147,7 +158,7 @@ describe('organizationGuard', () => {
     expect(result).toBe(redirectUrlTree);
     expect(mockOrganizationService.get).not.toHaveBeenCalled();
     expect(mockOrganizationService.list).toHaveBeenCalledWith({ page: 1, itemsPerPage: 2 });
-    expect(mockRouter.createUrlTree).toHaveBeenCalledWith(['/organizations', 'org-2']);
+    expect(mockRouter.parseUrl).toHaveBeenCalledWith('/organizations/org-2/assets');
   });
 
   it('should redirect to the forbidden page when every organization is excluded', async () => {

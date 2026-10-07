@@ -1,0 +1,43 @@
+<div hlmField>
+  <label
+    hlmFieldLabel
+    for="intervention-inventory-work-context"
+    i18n="@@intervention.inventory.workContext"
+    >Used for</label
+  >
+  <hlm-select
+    [value]="workItemId() ?? (canSelectIntervention() ? 'general' : null)"
+    [disabled]="disabled()"
+    [itemToString]="labelOf"
+    (valueChange)="select($event)"
+  >
+    <hlm-select-trigger
+      buttonId="intervention-inventory-work-context"
+      class="w-full mobile-ui:min-h-11"
+    >
+      <hlm-select-value
+        placeholder="Choose a task"
+        i18n-placeholder="@@intervention.inventory.chooseTask"
+      />
+    </hlm-select-trigger>
+    <hlm-select-content *hlmSelectPortal>
+      @if (canSelectIntervention()) {
+        <hlm-select-item
+          value="general"
+          class="mobile-ui:min-h-11"
+          i18n="@@intervention.inventory.generalContext"
+          >Whole intervention</hlm-select-item
+        >
+      }
+      @for (item of items(); track item.id) {
+        <hlm-select-item [value]="item.id" class="mobile-ui:min-h-11">
+          <app-intervention-tag kind="workItemAction" [value]="item.action" asOption />
+          <span>{{ labelOf(item.id) }}</span>
+        </hlm-select-item>
+      }
+    </hlm-select-content>
+  </hlm-select>
+  <p hlmFieldDescription i18n="@@intervention.inventory.workContextHint">
+    Selecting a task links the parts used to that work and its equipment.
+  </p>
+</div>

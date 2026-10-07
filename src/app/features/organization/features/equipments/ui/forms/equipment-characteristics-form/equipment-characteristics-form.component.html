@@ -1,0 +1,140 @@
+<form
+  (submit)="submit($event)"
+  class="flex flex-col gap-4"
+  data-testid="equipment-characteristics-form"
+>
+  @if (error()) {
+    <hlm-field-error role="alert">{{ error() }}</hlm-field-error>
+  }
+  <hlm-field>
+    <label hlmFieldLabel for="equipment-criticality" i18n="@@equipment.identity.criticality"
+      >Declared criticality</label
+    >
+    <hlm-select [formField]="characteristicsForm.criticality">
+      <hlm-select-trigger buttonId="equipment-criticality" class="w-full mobile-ui:min-h-11"
+        ><hlm-select-value
+      /></hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
+        @for (option of criticalityOptions; track option.value) {
+          <hlm-select-item [value]="option.value" class="mobile-ui:min-h-11">{{
+            option.label
+          }}</hlm-select-item>
+        }
+      </hlm-select-content>
+    </hlm-select>
+  </hlm-field>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@equipment.characteristics.title">
+      Technical characteristics
+    </legend>
+    <p hlmFieldDescription i18n="@@equipment.characteristics.hint">
+      Declared information about this equipment; it does not determine control obligations.
+    </p>
+    @for (row of draft().properties; track $index) {
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_6rem_auto]">
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            [for]="'equipment-property-key-' + $index"
+            i18n="@@equipment.characteristics.key"
+            >Characteristic</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11"
+            [id]="'equipment-property-key-' + $index"
+            [formField]="characteristicsForm.properties[$index].key"
+          />
+          @if (
+            characteristicsForm.properties[$index].key().touched() &&
+            characteristicsForm.properties[$index].key().invalid()
+          ) {
+            <hlm-field-error>{{
+              characteristicsForm.properties[$index].key().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </hlm-field>
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            [for]="'equipment-property-value-' + $index"
+            i18n="@@equipment.characteristics.value"
+            >Value</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11"
+            [id]="'equipment-property-value-' + $index"
+            [formField]="characteristicsForm.properties[$index].value"
+          />
+          @if (
+            characteristicsForm.properties[$index].value().touched() &&
+            characteristicsForm.properties[$index].value().invalid()
+          ) {
+            <hlm-field-error>{{
+              characteristicsForm.properties[$index].value().errors()[0].message
+            }}</hlm-field-error>
+          }
+        </hlm-field>
+        <hlm-field>
+          <label
+            hlmFieldLabel
+            [for]="'equipment-property-unit-' + $index"
+            i18n="@@equipment.characteristics.unit"
+            >Unit</label
+          >
+          <input
+            hlmInput
+            class="mobile-ui:min-h-11"
+            [id]="'equipment-property-unit-' + $index"
+            [formField]="characteristicsForm.properties[$index].unit"
+          />
+        </hlm-field>
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          class="self-end mobile-ui:min-h-11"
+          [disabled]="pending()"
+          (click)="remove($index)"
+          i18n="@@common.remove"
+        >
+          Remove
+        </button>
+      </div>
+    }
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      [disabled]="!canAdd()"
+      (click)="add()"
+      class="self-start mobile-ui:min-h-11"
+      i18n="@@equipment.characteristics.add"
+    >
+      Add a characteristic
+    </button>
+  </fieldset>
+  <div class="flex justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      class="mobile-ui:min-h-11"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      i18n="@@common.save"
+    >
+      Save
+    </button>
+  </div>
+</form>

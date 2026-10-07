@@ -41,9 +41,9 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     await expect(shell.navigation.getByRole('link')).toHaveText([
-      'Home',
+      'Equipment park',
       'Interventions',
-      'Assets',
+      'Home',
       'Messages',
       'More',
     ]);
@@ -217,7 +217,7 @@ test('keeps every permitted secondary route in More and switches organizations t
   await secondOption.click();
   await expect(page).toHaveURL(new RegExp(`/organizations/${second.id}(?:/interventions)?$`));
   await expect(switcher).toHaveCount(0);
-  await expect(shell.navigation.getByRole('link')).toHaveText(['Home', 'Interventions', 'More']);
+  await expect(shell.navigation.getByRole('link')).toHaveText(['Interventions', 'Home', 'More']);
   await shell.navigation.getByRole('link', { name: 'More', exact: true }).click();
   await expect(page.locator('#organization-more-switcher-trigger')).toContainText(second.name);
   await expect(shell.more.locator('#organization-more-administration')).toHaveCount(0);

@@ -5,6 +5,23 @@
 >
   <div class="min-w-0">
     <hlm-field-group>
+      <hlm-field>
+        <label hlmFieldLabel for="onboarding-org-name"
+          ><span i18n="@@onboarding.orgForm.name"> Organization name</span><app-required-marker
+        /></label>
+        <input
+          class="max-sm:min-h-11 mobile-ui:min-h-11"
+          hlmInput
+          id="onboarding-org-name"
+          type="text"
+          data-testid="onboarding-org-name"
+          placeholder="Acme Fire Safety"
+          i18n-placeholder="@@onboarding.orgForm.namePlaceholder"
+          [formField]="organizationForm.name"
+          [attr.aria-required]="true"
+        />
+        <hlm-field-error>{{ organizationForm.name().errors()[0]?.message }}</hlm-field-error>
+      </hlm-field>
       <fieldset hlmFieldSet>
         <legend
           hlmFieldLegend
@@ -46,23 +63,6 @@
           organization's permissions.</hlm-field-description
         >
       </fieldset>
-      <hlm-field>
-        <label hlmFieldLabel for="onboarding-org-name"
-          ><span i18n="@@onboarding.orgForm.name"> Organization name</span><app-required-marker
-        /></label>
-        <input
-          class="max-sm:min-h-11 mobile-ui:min-h-11"
-          hlmInput
-          id="onboarding-org-name"
-          type="text"
-          data-testid="onboarding-org-name"
-          placeholder="Acme Fire Safety"
-          i18n-placeholder="@@onboarding.orgForm.namePlaceholder"
-          [formField]="organizationForm.name"
-          [attr.aria-required]="true"
-        />
-        <hlm-field-error>{{ organizationForm.name().errors()[0]?.message }}</hlm-field-error>
-      </hlm-field>
     </hlm-field-group>
   </div>
 

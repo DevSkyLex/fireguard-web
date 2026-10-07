@@ -223,8 +223,10 @@ test.describe('Equipment detail', () => {
     await expect(equipments.decommissionAction).toBeVisible();
     await page.keyboard.press('Escape');
 
-    // Both status badges carry an icon alongside the label — never colour alone.
-    const statusTags = page.locator('app-equipment-status-tag');
+    // Operational and control statuses carry an icon alongside their own labels.
+    const statusTags = page
+      .getByTestId('equipment-follow-up-axes')
+      .locator('app-equipment-status-tag');
     await expect(statusTags).toHaveCount(2);
     await Promise.all(
       (await statusTags.all()).map(async (tag) => {

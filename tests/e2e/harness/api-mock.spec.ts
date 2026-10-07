@@ -15,6 +15,7 @@ import {
   facilityOutput,
   facilityPlanOverlayOutput,
 } from '../support/fixtures/facility-fixtures';
+import { interventionOutput } from '../support/fixtures/intervention-fixtures';
 import { API_BASE_URL, ApiMock } from '../support/mocks/api-mock';
 
 const families = [
@@ -101,6 +102,127 @@ for (const family of families) {
     });
   }
 }
+
+const inventoryResources = ['inventory-parts', 'inventory-warehouses', 'inventory-consumptions'];
+const inventoryIntervention = interventionOutput();
+
+for (const registration of ['list', 'detail', 'queues', 'create'] as const) {
+  test(`prepares an empty optional inventory snapshot for the ${registration} intervention fixture`, async ({
+    page,
+  }) => {
+    const api = new ApiMock(page);
+    if (registration === 'list')
+      await api.mockInterventionList(E2E_ORGANIZATION_ID, [inventoryIntervention]);
+    else if (registration === 'detail') await api.mockInterventionDetail(inventoryIntervention);
+    else if (registration === 'queues')
+      await api.mockInterventionQueues({ upcoming: [inventoryIntervention] });
+    else await api.mockInterventionCreate(inventoryIntervention);
+    const responses = await page.evaluate(
+      async ({ base, organization, intervention, resources }) =>
+        Promise.all(
+          resources.map(async (resource) => {
+            const scope =
+              resource === 'inventory-consumptions'
+                ? `interventionId=${intervention}`
+                : 'archived=false';
+            const response = await fetch(
+              `${base}/api/organizations/${organization}/${resource}?page=1&itemsPerPage=100&${scope}`,
+            );
+            return { status: response.status, body: await response.json() };
+          }),
+        ),
+      {
+        base: API_BASE_URL,
+        organization: E2E_ORGANIZATION_ID,
+        intervention: inventoryIntervention.id,
+        resources: inventoryResources,
+      },
+    );
+    for (const response of responses) {
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ member: [], totalItems: 0 });
+    }
+  });
+}
+
+for (const resource of inventoryResources) {
+  test(`keeps ${resource} defaults bounded to the fixture read contract`, async ({
+    page,
+  }, info) => {
+    await new ApiMock(page).mockInterventionDetail(inventoryIntervention);
+    const statuses = await page.evaluate(
+      async ({ base, organization, intervention, resource: targetResource }) => {
+        const scope =
+          targetResource === 'inventory-consumptions'
+            ? `interventionId=${intervention}`
+            : 'archived=false';
+        const target = `${base}/api/organizations/${organization}/${targetResource}?page=1&itemsPerPage=100&${scope}`;
+        const requests = [
+          fetch(target),
+          fetch(target, { method: 'POST' }),
+          fetch(target.replace(organization, 'wrong-org')),
+          fetch(target.replace('page=1', 'page=2')),
+          fetch(target.replace('itemsPerPage=100', 'itemsPerPage=30')),
+          fetch(
+            target.replace(
+              scope,
+              targetResource === 'inventory-consumptions'
+                ? 'interventionId=unknown'
+                : 'archived=true',
+            ),
+          ),
+          fetch(target.replace(`&${scope}`, '')),
+          fetch(`${target}&search=unregistered`),
+        ];
+        return Promise.all(requests.map(async (request) => (await request).status));
+      },
+      {
+        base: API_BASE_URL,
+        organization: E2E_ORGANIZATION_ID,
+        intervention: inventoryIntervention.id,
+        resource,
+      },
+    );
+    expect(statuses).toEqual([200, 404, 404, 404, 404, 404, 404, 404]);
+    await expect
+      .poll(
+        () => info.errors.filter((error) => error.message?.includes('Hermetic safety net')).length,
+      )
+      .toBe(7);
+    test.fail(
+      true,
+      'Verified every out-of-scope inventory request reached the hermetic safety net.',
+    );
+  });
+}
+
+test('retains explicit inventory fixtures after detail refresh and registers additional intervention identities', async ({
+  page,
+}) => {
+  const api = new ApiMock(page);
+  await api.mockInterventionDetail(inventoryIntervention);
+  const path = `${API_BASE_URL}/api/organizations/${E2E_ORGANIZATION_ID}/inventory-parts`;
+  await page.route(`${path}?*`, (route) =>
+    route.fulfill({
+      contentType: 'application/ld+json',
+      body: JSON.stringify({ member: [{ id: 'scenario-part' }], totalItems: 1 }),
+    }),
+  );
+  await api.mockInterventionDetail({ ...inventoryIntervention, revision: 2 });
+  await api.mockInterventionDetail({ ...inventoryIntervention, id: 'second-intervention' });
+  const responses = await page.evaluate(
+    async ({ path: partsPath, base, organization }) => {
+      const parts = await fetch(`${partsPath}?page=1&itemsPerPage=100&archived=false`);
+      const declarations = await fetch(
+        `${base}/api/organizations/${organization}/inventory-consumptions?page=1&itemsPerPage=100&interventionId=second-intervention`,
+      );
+      return { parts: await parts.json(), declarations: declarations.status };
+    },
+    { path, base: API_BASE_URL, organization: E2E_ORGANIZATION_ID },
+  );
+  expect(responses.parts).toMatchObject({ member: [{ id: 'scenario-part' }], totalItems: 1 });
+  expect(responses.declarations).toBe(200);
+});
 
 test('fails even when an unexpected API request is handled by the page', async ({ page }, info) => {
   await new ApiMock(page).mockSavedMessages();

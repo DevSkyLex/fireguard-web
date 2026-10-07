@@ -87,7 +87,7 @@ test.describe('Onboarding guard chain', () => {
     await expect(page).toHaveURL(/\/onboarding\/create\?returnUrl=%2Forganizations$/);
   });
 
-  test('redirects /onboarding to the dashboard when the record is already completed', async ({
+  test('redirects /onboarding to the equipment park when the record is already completed', async ({
     page,
   }) => {
     const api = new ApiMock(page);
@@ -96,7 +96,7 @@ test.describe('Onboarding guard chain', () => {
 
     await page.goto('/onboarding');
 
-    await expect(page).toHaveURL(new RegExp(`/organizations/${E2E_ORGANIZATION_ID}$`), {
+    await expect(page).toHaveURL(new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/assets$`), {
       timeout: 10_000,
     });
   });

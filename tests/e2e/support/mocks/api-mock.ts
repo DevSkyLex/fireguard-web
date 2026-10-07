@@ -324,6 +324,8 @@ export class ApiMock {
 
   /** Confirmed writes projected into subsequent collection reads, matching server behavior. */
   private readonly interventionUpdates = new Map<string, InterventionOutputFixture>();
+  /** Intervention identities whose optional inventory preparation belongs to each fixture organization. */
+  private readonly interventionInventoryDefaults = new Map<string, Set<string>>();
   private readonly page: Page;
   private safetyNetInstalled = false;
   private onboardingRecord: OnboardingOutputFixture | null = null;
@@ -3035,6 +3037,12 @@ export class ApiMock {
       queues.changesRequested ?? [];
     const awaitingReview: ReadonlyArray<InterventionOutputFixture> = queues.awaitingReview ?? [];
     const upcoming: ReadonlyArray<InterventionOutputFixture> = queues.upcoming ?? [];
+    await this.mockInterventionInventoryDefaults([
+      ...overdue,
+      ...changesRequested,
+      ...awaitingReview,
+      ...upcoming,
+    ]);
 
     await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
       const url = new URL(route.request().url());
@@ -3100,6 +3108,11 @@ export class ApiMock {
     interventions: ReadonlyArray<InterventionOutputFixture> = [],
   ): Promise<void> {
     await this.installSafetyNet();
+    await this.mockInterventionInventoryDefaults(
+      interventions.filter(
+        (intervention) => intervention.organization === `/api/organizations/${organizationId}`,
+      ),
+    );
     await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
       const url = new URL(route.request().url());
       if (
@@ -3149,6 +3162,7 @@ export class ApiMock {
    */
   public async mockInterventionCreate(created: InterventionOutputFixture): Promise<void> {
     await this.installSafetyNet();
+    await this.mockInterventionInventoryDefaults([created]);
     await this.page.route(new RegExp('/api/interventions(\\?.*)?$'), async (route) => {
       if (route.request().method() !== 'POST') {
         await route.fallback();
@@ -3389,6 +3403,7 @@ export class ApiMock {
    */
   public async mockInterventionDetail(intervention: InterventionOutputFixture): Promise<void> {
     await this.installSafetyNet();
+    await this.mockInterventionInventoryDefaults([intervention]);
     await this.page.route(`${API_BASE_URL}/api/interventions/${intervention.id}`, async (route) => {
       if (route.request().method() !== 'GET') {
         await route.fallback();
@@ -3396,6 +3411,65 @@ export class ApiMock {
       }
       await fulfillJson(route, 200, intervention);
     });
+  }
+
+  /**
+   * Supplies empty optional inventory snapshots only for registered intervention fixtures.
+   * One registration per organization preserves later scenario-specific inventory overrides,
+   * including when a detail fixture is refreshed after those overrides were installed.
+   */
+  private async mockInterventionInventoryDefaults(
+    interventions: ReadonlyArray<InterventionOutputFixture>,
+  ): Promise<void> {
+    const registrations: ReturnType<Page['route']>[] = [];
+    for (const intervention of interventions) {
+      const organizationId = /^\/api\/organizations\/([^/?#]+)$/.exec(
+        intervention.organization,
+      )?.[1];
+      if (!organizationId) continue;
+      const registered = this.interventionInventoryDefaults.get(organizationId);
+      if (registered) {
+        registered.add(intervention.id);
+        continue;
+      }
+      const interventionIds = new Set([intervention.id]);
+      this.interventionInventoryDefaults.set(organizationId, interventionIds);
+      for (const resource of [
+        'inventory-parts',
+        'inventory-warehouses',
+        'inventory-consumptions',
+      ]) {
+        const path = `/api/organizations/${organizationId}/${resource}`;
+        registrations.push(
+          this.page.route(
+            (url) => url.origin === API_BASE_URL && url.pathname === path,
+            async (route) => {
+              const query = new URL(route.request().url()).searchParams;
+              const scoped =
+                resource === 'inventory-consumptions'
+                  ? interventionIds.has(query.get('interventionId') ?? '')
+                  : query.get('archived') === 'false';
+              const keys = [
+                'page',
+                'itemsPerPage',
+                resource === 'inventory-consumptions' ? 'interventionId' : 'archived',
+              ];
+              if (
+                route.request().method() !== 'GET' ||
+                query.get('page') !== '1' ||
+                query.get('itemsPerPage') !== '100' ||
+                !scoped ||
+                query.size !== keys.length ||
+                [...query.keys()].some((key) => !keys.includes(key))
+              )
+                return route.fallback();
+              await fulfillJson(route, 200, hydraCollection([]));
+            },
+          ),
+        );
+      }
+    }
+    await Promise.all(registrations);
   }
 
   /**

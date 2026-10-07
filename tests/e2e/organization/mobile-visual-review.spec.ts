@@ -75,7 +75,7 @@ for (const mode of MOBILE_VISUAL_MODES) {
           },
           { name: 'theme-preference', value: mode.theme, url: baseURL ?? 'http://localhost:4273' },
         ]);
-        await mockMobileVisualWorkspace(page);
+        await mockMobileVisualWorkspace(page, route.id);
         const review = new MobileVisualReviewPage(page);
         await review.inspect(route, mode, info);
       });

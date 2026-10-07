@@ -558,6 +558,26 @@ test('picks and isolates GLB Line and Points primitives and releases their real 
     'href',
     `/organizations/${E2E_ORGANIZATION_ID}/facilities/e2e-upper-floor`,
   );
+  await expect
+    .poll(
+      () =>
+        host.evaluate((element) => {
+          const scene = (window as unknown as ReviewWindow).ng.getComponent(
+            element.closest('app-facility-building-3d-scene') ?? element,
+          );
+          const info = scene?.renderer?.info;
+          return {
+            geometriesAllocated: (info?.memory.geometries ?? 0) >= 2,
+            selectedPointDrawn: (info?.render.points ?? 0) >= 2,
+            frameSettled: scene?.renderRaf === null,
+          };
+        }),
+      {
+        message:
+          'Reselected Points and their replacement highlight must reach the GPU before teardown.',
+      },
+    )
+    .toEqual({ geometriesAllocated: true, selectedPointDrawn: true, frameSettled: true });
   const documentId = await host.evaluate((element) => {
     const browser = window as unknown as ReviewWindow;
     const scene = browser.ng.getComponent(

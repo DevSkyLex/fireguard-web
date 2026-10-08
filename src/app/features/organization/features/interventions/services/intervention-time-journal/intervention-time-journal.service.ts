@@ -124,7 +124,7 @@ export class InterventionTimeJournalService {
             historyUnavailable: snapshot === null,
           })),
         );
-      const remote = this.api.journal(scope.workItemId, page).pipe(
+      const remote = this.api.journal(scope.workItemId, page, 30, scope.manageOthers !== true).pipe(
         switchMap((journal) =>
           from(
             this.repository.saveJournal(
@@ -132,7 +132,7 @@ export class InterventionTimeJournalService {
                 interventionId: scope.interventionId,
                 workItemId: scope.workItemId,
                 entries: journal.entries,
-                audience: scope.manageOthers ? 'all' : `member:${scope.actorId}`,
+                audience: scope.manageOthers === true ? 'all' : `member:${scope.actorId}`,
                 pagination: {
                   page: journal.page,
                   itemsPerPage: journal.itemsPerPage,

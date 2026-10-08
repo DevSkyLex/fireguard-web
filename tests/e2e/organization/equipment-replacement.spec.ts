@@ -84,7 +84,9 @@ test.describe('Equipment replacement', () => {
     });
     await openReplacement(page);
     const sheet = page.getByTestId('equipment-replacement-sheet');
-    await sheet.getByLabel('Successor equipment', { exact: true }).fill('Reserve');
+    const successorInput = sheet.getByLabel('Successor equipment', { exact: true });
+    await successorInput.click();
+    await successorInput.fill('Reserve');
     await page.getByRole('option', { name: /Reserve extinguisher/ }).click();
     await sheet.getByTestId('equipment-replacement-confirm').click();
     const confirmation = page.getByTestId('equipment-replacement-confirm-dialog');

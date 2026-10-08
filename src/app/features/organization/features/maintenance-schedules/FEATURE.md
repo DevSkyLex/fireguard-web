@@ -180,6 +180,10 @@ toast.
 - A late override or campaign response cannot change another organization's state or a later visit
   to its original organization. Dialog completion requires the current scope and matching override
   target; campaign navigation uses the confirmed result's original organization.
+- Accepted overrides and campaigns continue across organization changes. Each operation admits one
+  write per organization at a time, so another organization can submit immediately. Returning to an
+  organization with an unfinished write keeps that action pending until it settles; clearing dialog
+  feedback cannot enable a duplicate, and the earlier visit's result remains ignored.
 - Status is never colour-only: `MaintenanceDueStatusTag` always pairs its
   severity tint with an icon and a label (`models/maintenance-tag/`).
 

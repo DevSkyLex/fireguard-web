@@ -320,7 +320,7 @@ export class InterventionPrefetchService {
           ),
           mergeMap(
             (item) =>
-              this.time.journal(item.id).pipe(
+              this.time.journal(item.id, 1, 30, item.allowedActions?.canManageTime !== true).pipe(
                 switchMap((journal) =>
                   from(
                     this.timeRepository.saveJournal(
@@ -328,7 +328,8 @@ export class InterventionPrefetchService {
                         interventionId: intervention.id,
                         workItemId: item.id,
                         entries: journal.entries,
-                        audience: item.allowedActions?.canManageTime ? 'all' : `member:${actorId}`,
+                        audience:
+                          item.allowedActions?.canManageTime === true ? 'all' : `member:${actorId}`,
                         pagination: {
                           page: journal.page,
                           itemsPerPage: journal.itemsPerPage,

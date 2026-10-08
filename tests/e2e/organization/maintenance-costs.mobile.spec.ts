@@ -58,6 +58,7 @@ for (const dark of [false, true])
     await captureMaintenanceCosts(page, info, `mobile-expense-recovery-${dark ? 'dark' : 'light'}`);
     await retry.tap();
     await expect(retry).toBeHidden();
+    await expect(expense.getByLabel('Exact amount', { exact: true })).toHaveValue('');
     expect(state.expenses).toHaveLength(2);
     expect(state.expenses[1]).toEqual(state.expenses[0]);
     expect(state.committedExpenses).toBe(1);

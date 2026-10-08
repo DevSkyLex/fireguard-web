@@ -32,7 +32,7 @@ Auth publishes `AUTH_SESSION_PORT` for local session-generation fences. No authe
 - Revision conflicts preserve drafts and require an explicit review before adopting the current revision.
 - A conversion retains its original UUID, revision and payload across navigation and reload until confirmed or definitively rejected. A duplicate click never cancels an accepted write.
 - An uncertain conversion locks its draft and offers exact retry; progress indicators represent active requests only.
-- Route and browser-history dismissal use the sheet's real dirty state. Pending mutations block dismissal; an unresolved durable conversion remains recoverable when its routed page is destroyed.
+- Route and browser-history dismissal use the sheet's real dirty state. While the local session is established, pending mutations block dismissal; an unresolved durable conversion remains recoverable when its routed page is destroyed. Journal restoration alone never blocks readers from leaving, and session termination always permits authentication redirects.
 - New conversion requires request management and intervention planning. Exact receipt replay keeps request management as its grant; the server rechecks planning if new work is still required.
 - Known open repair tasks can be explicitly linked through their existing intervention/task identities. No task or intervention identity is fabricated.
 - Customer contacts, commercial prices, invoicing, external portals and organization sharing are outside this feature.

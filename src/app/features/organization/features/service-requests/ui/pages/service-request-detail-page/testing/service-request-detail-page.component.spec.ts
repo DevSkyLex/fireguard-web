@@ -158,7 +158,7 @@ describe('ServiceRequestDetailPage', () => {
     expect(page.sheet.visible()).toBe(false);
   });
 
-  it('keeps actions and navigation blocked after journal hydration fails until explicit retry succeeds', async () => {
+  it('keeps actions blocked after journal hydration fails while permitting readers to leave', async () => {
     const page = await render(serviceRequestFixture(), {
       journalError: new Error('Storage unavailable'),
     });
@@ -166,7 +166,7 @@ describe('ServiceRequestDetailPage', () => {
       page.element.querySelector('[data-testid="service-request-command-restore-error"]'),
     ).not.toBeNull();
     expect(page.button('Edit')?.disabled).toBe(true);
-    expect(page.fixture.componentInstance.canLeaveDraft()).toBe(false);
+    expect(page.fixture.componentInstance.canLeaveDraft()).toBe(true);
     expect(page.api.update).not.toHaveBeenCalled();
     expect(page.api.convert).not.toHaveBeenCalled();
     page.context.journal.readPending.mockResolvedValue([]);

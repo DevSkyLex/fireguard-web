@@ -71,6 +71,8 @@ export class InterventionTimeRepository {
    *
    * @description
    * Saves server history without applying or consuming queued corrections.
+   * Restricted pages must contain only their beneficiary's entries; partial filtering would
+   * invalidate server counts and continuation.
    *
    * @access public
    * @since 1.0.0
@@ -85,8 +87,14 @@ export class InterventionTimeRepository {
     await this.database.ensureOwnerBound();
     if (this.database.currentOwnerId() !== owner) return;
     if (record.pagination && !record.audience) return;
+    if (
+      record.pagination &&
+      record.audience?.startsWith('member:') &&
+      record.entries.some((entry) => `member:${entry.memberId}` !== record.audience)
+    )
+      throw new Error('The journal page contains entries outside its authorized audience.');
     const key = record.pagination
-      ? `page:${record.workItemId}:${record.audience}:${record.pagination.itemsPerPage}:${record.pagination.page}`
+      ? `page:v2:${record.workItemId}:${record.audience}:${record.pagination.itemsPerPage}:${record.pagination.page}`
       : record.workItemId;
     await this.database.put(
       'timeJournals',
@@ -103,6 +111,7 @@ export class InterventionTimeRepository {
    * @description
    * Reads one audience-bound page without overwriting or claiming a complete device snapshot.
    * Legacy complete journals remain readable only as the current beneficiary's filtered history.
+   * Earlier page keys cannot prove that the request was beneficiary-restricted and are ignored.
    *
    * @access public
    * @since unreleased
@@ -122,17 +131,22 @@ export class InterventionTimeRepository {
     if (!owner) return null;
     await this.database.ensureOwnerBound();
     if (this.database.currentOwnerId() !== owner) return null;
-    const audience = scope.manageOthers ? 'all' : `member:${scope.actorId}`;
-    const key = `page:${scope.workItemId}:${audience}:${itemsPerPage}:${page}`;
+    const audience = scope.manageOthers === true ? 'all' : `member:${scope.actorId}`;
+    const key = `page:v2:${scope.workItemId}:${audience}:${itemsPerPage}:${page}`;
     const record = await this.database.get<InterventionTimeRecord>('timeJournals', key);
     if (this.database.currentOwnerId() !== owner) return null;
     if (
       record?.interventionId === scope.interventionId &&
+      record.workItemId === scope.workItemId &&
       record.audience === audience &&
-      record.pagination
+      record.pagination?.page === page &&
+      record.pagination.itemsPerPage === itemsPerPage
     )
-      return { ...record.pagination, entries: record.entries };
-    if (scope.manageOthers) return null;
+      return scope.manageOthers !== true &&
+        record.entries.some((entry) => entry.memberId !== scope.actorId)
+        ? null
+        : { ...record.pagination, entries: record.entries };
+    if (scope.manageOthers === true) return null;
     const legacy = await this.database.get<InterventionTimeRecord>(
       'timeJournals',
       scope.workItemId,

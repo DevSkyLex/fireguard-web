@@ -94,6 +94,8 @@ describe('InterventionPrefetchService', () => {
     TestBed.inject(ApplicationRef).tick();
     await vi.waitFor(() => expect(timeRepository.saveJournal).toHaveBeenCalledOnce());
     expect(time.journal).toHaveBeenCalledTimes(2);
+    expect(time.journal).toHaveBeenCalledWith('authorized', 1, 30, true);
+    expect(time.journal).toHaveBeenCalledWith('failed', 1, 30, false);
     expect(time.journal).not.toHaveBeenCalledWith('forbidden');
     expect(timeRepository.saveJournal).toHaveBeenCalledWith(
       {
@@ -111,6 +113,28 @@ describe('InterventionPrefetchService', () => {
       'account',
     );
   });
+  it.each([undefined, false, true])(
+    'uses explicit beneficiary restriction when captured management is %s',
+    async (canManageTime) => {
+      connectivity.isOffline.mockReturnValue(false);
+      members.getCurrentProfile.mockReturnValue(of({ id: 'member' }));
+      service.listAll.mockReturnValue(of([{ id: 'intervention', status: 'planned' }]));
+      service.listAllWorkItems.mockReturnValue(
+        of([{ id: 'task', allowedActions: { canLogTime: true, canManageTime } }]),
+      );
+      time.journal.mockReturnValue(
+        of({ entries: [], page: 1, itemsPerPage: 30, totalItems: 0, nextPage: null }),
+      );
+      build().start();
+      TestBed.inject(ApplicationRef).tick();
+      await vi.waitFor(() => expect(timeRepository.saveJournal).toHaveBeenCalledOnce());
+      expect(time.journal).toHaveBeenCalledExactlyOnceWith('task', 1, 30, canManageTime !== true);
+      expect(timeRepository.saveJournal).toHaveBeenCalledWith(
+        expect.objectContaining({ audience: canManageTime === true ? 'all' : 'member:member' }),
+        'account',
+      );
+    },
+  );
 
   it('should create', () => {
     expect(build()).toBeTruthy();

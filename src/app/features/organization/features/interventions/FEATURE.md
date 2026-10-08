@@ -112,6 +112,12 @@ only the current version. Correction history loads only on expansion and follows
 cursors with independent request states and retry. Preparation caches only the first authorized
 entry page. Cached pages preserve their page metadata and beneficiary audience, never replace a
 legacy complete snapshot, and never imply that uncached pages or full revision history are available.
+Beneficiary-only reads explicitly request `ownOnly=true`, including background preparation,
+so a later server permission grant cannot broaden a page cached under captured restricted access.
+Versioned page keys exclude older pages whose audience was inferred from stale capabilities.
+Restricted pages containing another beneficiary are rejected as a whole; complete legacy snapshots
+are filtered before pagination. Cache compatibility never discards drafts, queued intentions or
+their physical stored revisions.
 Missing offline pages remain explicitly unknown; earlier revisions require reconnection.
 Stable entry IDs and independent revisions
 make replay idempotent. Drafts survive failed writes; failed device persistence retains

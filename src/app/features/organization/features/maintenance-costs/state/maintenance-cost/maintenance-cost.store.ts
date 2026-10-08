@@ -21,6 +21,7 @@ import {
   map,
   pipe,
   switchMap,
+  tap,
   throwError,
   type Observable,
 } from 'rxjs';
@@ -362,6 +363,21 @@ export const MaintenanceCostStore = signalStore(
               : structuredClone(incoming);
             const userId = store.scopeUserId();
             let transmitted = false;
+            let acknowledged = false;
+            const acknowledge = () =>
+              defer(() => journal.acknowledge(command, scope.sessionRevision, userId)).pipe(
+                tap(() => {
+                  acknowledged = true;
+                }),
+                catchError(() =>
+                  throwError(() => ({
+                    type: 'about:blank',
+                    status: 0,
+                    title: 'Unconfirmed local acknowledgement',
+                    detail: $localize`:@@maintenanceCost.recovery.uncertain:The previous declaration has no confirmed result. Retry it unchanged before creating another.`,
+                  })),
+                ),
+              );
             patchState(store, { command, writeCallState: pendingCallState() });
             return defer(() => journal.retain(command)).pipe(
               switchMap(() => {
@@ -372,25 +388,20 @@ export const MaintenanceCostStore = signalStore(
                 transmitted = true;
                 return request(command);
               }),
-              switchMap((result) =>
-                defer(() => journal.acknowledge(command, scope.sessionRevision, userId)).pipe(
-                  map(() => result),
-                  catchError(() =>
-                    throwError(() => ({
-                      type: 'about:blank',
-                      status: 0,
-                      title: 'Unconfirmed local acknowledgement',
-                      detail: $localize`:@@maintenanceCost.recovery.uncertain:The previous declaration has no confirmed result. Retry it unchanged before creating another.`,
-                    })),
-                  ),
-                ),
-              ),
+              switchMap((result) => acknowledge().pipe(map(() => result))),
+              catchError((error: unknown) => {
+                const failure = toStoreError(error);
+                return transmitted && !failure.retryable && failure.code !== 0
+                  ? acknowledge().pipe(switchMap(() => throwError(() => error)))
+                  : throwError(() => error);
+              }),
               tapResponse({
                 next: (result) => {
                   if (!current(scope, generation)) {
                     if (!store.command()) patchState(store, { writeCallState: idleCallState() });
                     return;
                   }
+                  if (command.kind === 'expense' || command.kind === 'rate') hydrate(scope);
                   if (
                     (command.kind === 'planning' || command.kind === 'expense') &&
                     'interventionId' in result
@@ -441,10 +452,8 @@ export const MaintenanceCostStore = signalStore(
                           message: $localize`:@@maintenanceCost.recovery.uncertain:The previous declaration has no confirmed result. Retry it unchanged before creating another.`,
                         }
                       : toStoreError(error);
-                  if (transmitted && !failure.retryable && failure.code !== 0)
-                    void journal
-                      .acknowledge(command, scope.sessionRevision, userId)
-                      .catch(() => undefined);
+                  if (acknowledged && (command.kind === 'expense' || command.kind === 'rate'))
+                    hydrate(scope);
                   patchState(store, { writeCallState: errorCallState(failure) });
                   dispatcher.dispatch(
                     maintenanceCostStoreEvents.feedback(

@@ -133,6 +133,20 @@ export class ServiceRequestDetailPage {
   private readonly sessionRevision: Signal<number> = inject(AUTH_SESSION_PORT).sessionRevision;
 
   /**
+   * Property isAuthenticated
+   * @readonly
+   *
+   * @description
+   * Established local session whose termination must permit authentication redirects.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  private readonly isAuthenticated: Signal<boolean> = inject(AUTH_SESSION_PORT).isAuthenticated;
+
+  /**
    * Property memberAccess
    * @readonly
    *
@@ -659,8 +673,8 @@ export class ServiceRequestDetailPage {
    * Method canLeaveDraft
    *
    * @description
-   * Protects accepted writes and ordinary drafts while a durable uncertain conversion remains
-   * recoverable after returning to this dossier.
+   * Protects accepted writes and ordinary drafts while the session remains established. Journal
+   * restoration does not trap a reader, and durable uncertain conversions remain recoverable.
    *
    * @access public
    * @since unreleased
@@ -668,8 +682,8 @@ export class ServiceRequestDetailPage {
    * @returns {boolean | Promise<boolean>} Whether leaving can preserve the current workflow.
    */
   public canLeaveDraft(): boolean | Promise<boolean> {
-    if (!this.store.commandsReady() || this.store.writeCallState().status === 'pending')
-      return false;
+    if (!this.isAuthenticated()) return true;
+    if (this.store.writeCallState().status === 'pending') return false;
     if (!this.editorVisible()) return true;
     if (this.retainedConversion() && this.store.conversionUncertain()) return true;
     return this.editorSheet()?.canClose() ?? true;

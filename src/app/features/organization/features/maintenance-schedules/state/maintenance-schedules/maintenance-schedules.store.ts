@@ -4,7 +4,7 @@ import { patchState, signalStore, type, withComputed, withMethods, withState } f
 import { removeAllEntities, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, map, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, finalize, map, mergeMap, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -150,10 +150,31 @@ export const MaintenanceSchedulesStore = signalStore(
       dispatcher: Dispatcher = inject(Dispatcher),
     ) => {
       /**
+       * Constant overrideWrites
+       *
+       * @description
+       * Tracks accepted override subscriptions by organization across scope changes.
+       *
+       * @type {Set<string>}
+       */
+      const overrideWrites = new Set<string>();
+
+      /**
+       * Constant campaignWrites
+       *
+       * @description
+       * Tracks accepted campaign subscriptions by organization across scope changes.
+       *
+       * @type {Set<string>}
+       */
+      const campaignWrites = new Set<string>();
+
+      /**
        * Function setOrganization
        *
        * @description
        * Clears the previous organization's rows and action results before a new query starts.
+       * Returning to an organization with an accepted write preserves its pending indicator.
        *
        * @param {string} organization - Canonical organization IRI.
        *
@@ -165,6 +186,12 @@ export const MaintenanceSchedulesStore = signalStore(
           ...INITIAL_STATE,
           organization,
           scopeGeneration: store.scopeGeneration() + 1,
+          overrideCallState: overrideWrites.has(organization)
+            ? pendingCallState()
+            : idleCallState(),
+          campaignCallState: campaignWrites.has(organization)
+            ? pendingCallState()
+            : idleCallState(),
         });
       };
       return {
@@ -234,9 +261,9 @@ export const MaintenanceSchedulesStore = signalStore(
          * @method setIntervalOverride
          *
          * @description
-         * Sets or clears one schedule's interval override. `exhaustMap`
-         * prevents a concurrent submission. On success the response — the full
-         * recomputed schedule — replaces the entity directly; no refetch.
+         * Sets or clears one schedule's interval override. Each organization admits one
+         * override at a time; accepted writes continue across scope changes. On success the
+         * full recomputed schedule replaces the entity directly, without a refetch.
          *
          * @since 1.0.0
          *
@@ -252,12 +279,14 @@ export const MaintenanceSchedulesStore = signalStore(
           intervalOverride: string | null;
         }>(
           pipe(
-            exhaustMap(({ organization, scheduleId, intervalOverride }) => {
+            mergeMap(({ organization, scheduleId, intervalOverride }) => {
               if (store.organization() === null) setOrganization(organization);
-              if (store.organization() !== organization) return EMPTY;
+              if (store.organization() !== organization || overrideWrites.has(organization))
+                return EMPTY;
               const scopeGeneration = store.scopeGeneration();
               const cached = store.scheduleEntityMap()[scheduleId];
               if (cached && cached.organization !== organization) return EMPTY;
+              overrideWrites.add(organization);
               patchState(store, { overrideCallState: pendingCallState() });
               return maintenanceScheduleService
                 .setIntervalOverride(scheduleId, intervalOverride)
@@ -292,6 +321,15 @@ export const MaintenanceSchedulesStore = signalStore(
                       );
                     },
                   }),
+                  finalize(() => {
+                    overrideWrites.delete(organization);
+                    if (
+                      store.organization() === organization &&
+                      (store.scopeGeneration() !== scopeGeneration ||
+                        store.overrideCallState().status === 'pending')
+                    )
+                      patchState(store, { overrideCallState: idleCallState() });
+                  }),
                 );
             }),
           ),
@@ -302,11 +340,10 @@ export const MaintenanceSchedulesStore = signalStore(
          * @method generateCampaign
          *
          * @description
-         * Generates an inspection campaign from the schedules matching the
-         * given scope. `exhaustMap` prevents a concurrent submission. Every
-         * failure — including the documented 422 no-match outcome — stays in
-         * `campaignError` for the dialog to render inline; nothing is
-         * dispatched as a toast (`events.ts`).
+         * Generates an inspection campaign from the schedules matching the given scope. Each
+         * organization admits one campaign at a time while accepted writes continue across scope
+         * changes. Every failure — including the 422 no-match outcome — stays in `campaignError`
+         * for the dialog to render inline; nothing is dispatched as a toast (`events.ts`).
          *
          * @since 1.0.0
          *
@@ -314,10 +351,15 @@ export const MaintenanceSchedulesStore = signalStore(
          */
         generateCampaign: rxMethod<GenerateMaintenanceCampaignInput>(
           pipe(
-            exhaustMap((input) => {
+            mergeMap((input) => {
               if (store.organization() === null) setOrganization(input.organization);
-              if (store.organization() !== input.organization) return EMPTY;
+              if (
+                store.organization() !== input.organization ||
+                campaignWrites.has(input.organization)
+              )
+                return EMPTY;
               const scopeGeneration = store.scopeGeneration();
+              campaignWrites.add(input.organization);
               patchState(store, {
                 campaignCallState: pendingCallState(),
                 campaignResultOrganization: null,
@@ -351,6 +393,15 @@ export const MaintenanceSchedulesStore = signalStore(
                     patchState(store, { campaignCallState: errorCallState(toStoreError(error)) });
                   },
                 }),
+                finalize(() => {
+                  campaignWrites.delete(input.organization);
+                  if (
+                    store.organization() === input.organization &&
+                    (store.scopeGeneration() !== scopeGeneration ||
+                      store.campaignCallState().status === 'pending')
+                  )
+                    patchState(store, { campaignCallState: idleCallState() });
+                }),
               );
             }),
           ),
@@ -360,7 +411,8 @@ export const MaintenanceSchedulesStore = signalStore(
          * Method resetOverrideOperation
          *
          * @description
-         * Resets the override operation back to idle, for the dialog's close/reopen.
+         * Clears override feedback for the dialog's close/reopen, preserving accepted work as
+         * pending.
          *
          * @access public
          * @since 1.0.0
@@ -368,14 +420,21 @@ export const MaintenanceSchedulesStore = signalStore(
          * @returns {void}
          */
         resetOverrideOperation(): void {
-          patchState(store, { overrideCallState: idleCallState() });
+          const organization = store.organization();
+          patchState(store, {
+            overrideCallState:
+              organization !== null && overrideWrites.has(organization)
+                ? pendingCallState()
+                : idleCallState(),
+          });
         },
 
         /**
          * Method resetCampaignOperation
          *
          * @description
-         * Resets the campaign operation back to idle, for the dialog's close/reopen.
+         * Clears campaign feedback for the dialog's close/reopen, preserving accepted work as
+         * pending.
          *
          * @access public
          * @since 1.0.0
@@ -383,8 +442,12 @@ export const MaintenanceSchedulesStore = signalStore(
          * @returns {void}
          */
         resetCampaignOperation(): void {
+          const organization = store.organization();
           patchState(store, {
-            campaignCallState: idleCallState(),
+            campaignCallState:
+              organization !== null && campaignWrites.has(organization)
+                ? pendingCallState()
+                : idleCallState(),
             campaignResultOrganization: null,
           });
         },

@@ -1,5 +1,6 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import type { InterventionTimeEntry } from '../../../../src/app/features/organization/features/interventions/models/intervention-time/intervention-time-entry.interface';
+import type { InterventionTimeJournalOutput } from '../../../../src/app/features/organization/features/interventions/models/intervention-time/intervention-time-journal-output.interface';
 import type { WriteInterventionTimeEntryInput as InterventionTimeWriteInput } from '../../../../src/app/features/organization/features/interventions/models/intervention-time/write-intervention-time-entry-input.interface';
 import type {
   CapacityWeekInput,
@@ -122,18 +123,34 @@ export class WorkloadApiMock {
 
   public async timeJournal(taskId: string): Promise<void> {
     await this.page.route(
-      '**/api/intervention-work-items/' + taskId + '/time-entries',
+      new RegExp('/api/intervention-work-items/' + taskId + '/time-entries(?:\\?.*)?$'),
       async (route) => {
         if (route.request().method() === 'GET') {
-          return route.fulfill({
-            json: {
-              '@id': route.request().url(),
-              '@type': 'InterventionTimeJournal',
-              workItemId: taskId,
-              entries: this.entries,
-            },
-          });
+          const query = new URL(route.request().url()).searchParams;
+          const pageNumber = Number(query.get('page') ?? 1);
+          const itemsPerPage = Number(query.get('itemsPerPage') ?? 30);
+          expect(Number.isInteger(pageNumber)).toBe(true);
+          expect(pageNumber).toBeGreaterThan(0);
+          expect(Number.isInteger(itemsPerPage)).toBe(true);
+          expect(itemsPerPage).toBeGreaterThan(0);
+          expect(['false', 'true']).toContain(query.get('ownOnly') ?? 'false');
+          const entries =
+            query.get('ownOnly') === 'true'
+              ? this.entries.filter((entry) => entry.memberId === E2E_MEMBER_ID)
+              : this.entries;
+          const journal: InterventionTimeJournalOutput = {
+            '@id': route.request().url(),
+            '@type': 'InterventionTimeJournal',
+            workItemId: taskId,
+            entries: entries.slice((pageNumber - 1) * itemsPerPage, pageNumber * itemsPerPage),
+            page: pageNumber,
+            itemsPerPage,
+            totalItems: entries.length,
+            nextPage: pageNumber * itemsPerPage < entries.length ? pageNumber + 1 : null,
+          };
+          return route.fulfill({ json: journal });
         }
+        if (route.request().method() !== 'POST') return route.fallback();
         const input = route.request().postDataJSON() as InterventionTimeWriteInput;
         this.timeWrites.push(input);
         const existing = this.entries.find((entry) => entry.id === input.id);
@@ -146,6 +163,8 @@ export class WorkloadApiMock {
           updatedBy: E2E_MEMBER_ID,
           createdAt: '2026-09-16T10:00:00Z',
           updatedAt: '2026-09-16T10:00:00Z',
+          totalVersions: 1,
+          nextBeforeRevision: null,
           versions: [
             {
               revision: 1,

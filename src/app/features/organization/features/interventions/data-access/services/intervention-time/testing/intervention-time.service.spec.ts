@@ -34,6 +34,7 @@ describe('InterventionTimeService', () => {
     expect(request.request.method).toBe('GET');
     expect(request.request.params.get('page')).toBe('2');
     expect(request.request.params.get('itemsPerPage')).toBe('10');
+    expect(request.request.params.get('ownOnly')).toBe('false');
     const page = {
       workItemId: 'task',
       entries: [],
@@ -45,6 +46,14 @@ describe('InterventionTimeService', () => {
     request.flush(page);
     expect(received).toHaveBeenCalledWith(page);
     http.expectNone((candidate) => candidate.url.includes('/versions'));
+  });
+  it('requests beneficiary-only pagination explicitly even when the server may grant management', () => {
+    service.journal('task', 2, 10, true).subscribe();
+    const request = http.expectOne((candidate) => candidate.url === url);
+    expect(request.request.params.get('ownOnly')).toBe('true');
+    expect(request.request.params.get('page')).toBe('2');
+    expect(request.request.params.get('itemsPerPage')).toBe('10');
+    request.flush({ entries: [], page: 2, itemsPerPage: 10, totalItems: 10, nextPage: null });
   });
   it('requests revision pages with an exclusive cursor and never sends an absent cursor', () => {
     service.versions('task', 'entry').subscribe();

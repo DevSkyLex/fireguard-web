@@ -419,6 +419,85 @@ describe('MaintenanceCostStore', () => {
     expect(api.createExpense.mock.calls[1]?.[2]).toEqual(command.input);
   });
 
+  it('waits for a definite refusal acknowledgement and preserves exact retry when deletion fails', async () => {
+    await setup();
+    api.createExpense.mockReturnValueOnce(
+      throwError(() => ({
+        type: 'about:blank',
+        status: 422,
+        title: 'Invalid expense',
+        detail: 'Refused',
+      })),
+    );
+    let rejectAcknowledgement!: (error: Error) => void;
+    journal.acknowledge.mockReturnValueOnce(
+      new Promise<void>((_resolve, reject) => {
+        rejectAcknowledgement = reject;
+      }),
+    );
+    const command = {
+      kind: 'expense' as const,
+      organizationId: 'org',
+      interventionId: cost.interventionId,
+      input: {
+        clientId: 'refused-acknowledgement-bound',
+        amount: '9007199254740993.123456',
+        description: 'Original refused fact',
+        incurredAt: '2025-01-01T00:00:00Z',
+      },
+    };
+    store.write(command);
+    await vi.waitFor(() => expect(journal.acknowledge).toHaveBeenCalledTimes(1));
+    expect(store.writePending()).toBe(true);
+    expect(journal.readPending).toHaveBeenCalledTimes(1);
+    store.write({ kind: 'currency', organizationId: 'org', currency: 'USD' });
+    expect(api.writeCurrency).not.toHaveBeenCalled();
+    rejectAcknowledgement(new Error('Journal deletion failed'));
+    await vi.waitFor(() => expect(store.uncertainWrite()).toBe(true));
+    expect(store.writeCallState().error?.code).toBe(0);
+    expect(store.command()).toEqual(command);
+    expect(journal.readPending).toHaveBeenCalledTimes(1);
+    store.retryWrite();
+    await vi.waitFor(() => expect(store.command()).toBeNull());
+    expect(api.createExpense.mock.calls[1]?.[2]).toEqual(command.input);
+  });
+
+  it.each(['confirmed', 'refused'])(
+    'keeps new declarations locked when recovery after an acknowledged %s expense fails',
+    async (outcome) => {
+      await setup();
+      if (outcome === 'refused')
+        api.createExpense.mockReturnValueOnce(
+          throwError(() => ({
+            type: 'about:blank',
+            status: 422,
+            title: 'Invalid expense',
+            detail: 'Refused',
+          })),
+        );
+      journal.readPending.mockRejectedValueOnce(new Error('Next intention unavailable'));
+      store.write({
+        kind: 'expense',
+        organizationId: 'org',
+        interventionId: cost.interventionId,
+        input: {
+          clientId: 'recover-before-unlock',
+          amount: '12.123456',
+          description: 'Original',
+          incurredAt: '2025-01-01T00:00:00Z',
+        },
+      });
+      await vi.waitFor(() => expect(store.journalCallState().status).toBe('error'));
+      expect(journal.acknowledge).toHaveBeenCalledTimes(1);
+      expect(store.journalReady()).toBe(false);
+      store.write({ kind: 'currency', organizationId: 'org', currency: 'USD' });
+      expect(api.writeCurrency).not.toHaveBeenCalled();
+      if (outcome === 'confirmed') expect(store.costCallState().data).toEqual(cost);
+      store.hydrate(scope);
+      await vi.waitFor(() => expect(store.journalReady()).toBe(true));
+    },
+  );
+
   it('refuses an old exact retry synchronously after actor replacement without waiting for effects', async () => {
     const actor = signal('user-a');
     journal.captureOwner.mockImplementation(() => actor());

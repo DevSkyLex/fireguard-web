@@ -32,6 +32,7 @@ export class InterventionTimeService extends HydraApiService {
    * @param {string} taskId - Task identifier.
    * @param {number} page - Requested positive journal page.
    * @param {number} itemsPerPage - Bounded server page size.
+   * @param {boolean} ownOnly - Restricts the journal to the caller even if management is granted.
    *
    * @returns {Observable<InterventionTimeJournalOutput>} One authorized page with current versions.
    */
@@ -39,10 +40,11 @@ export class InterventionTimeService extends HydraApiService {
     taskId: string,
     page = 1,
     itemsPerPage = 30,
+    ownOnly = false,
   ): Observable<InterventionTimeJournalOutput> {
     return this.getOne<InterventionTimeJournalOutput>(
       `/api/intervention-work-items/${taskId}/time-entries`,
-      { params: { page, itemsPerPage } },
+      { params: { page, itemsPerPage, ownOnly } },
     );
   }
 

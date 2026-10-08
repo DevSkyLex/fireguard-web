@@ -190,6 +190,20 @@ export class ServiceRequestsPage {
   private readonly sessionRevision: Signal<number> = inject(AUTH_SESSION_PORT).sessionRevision;
 
   /**
+   * Property isAuthenticated
+   * @readonly
+   *
+   * @description
+   * Established local session whose termination must permit authentication redirects.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  private readonly isAuthenticated: Signal<boolean> = inject(AUTH_SESSION_PORT).isAuthenticated;
+
+  /**
    * Property memberAccess
    * @readonly
    *
@@ -561,8 +575,8 @@ export class ServiceRequestsPage {
    * Method canLeaveDraft
    *
    * @description
-   * Keeps accepted writes and entered creation drafts alive during router or browser Back
-   * navigation.
+   * Protects accepted writes and entered creation drafts while the session remains established.
+   * Journal restoration does not trap a reader or prevent authentication redirects.
    *
    * @access public
    * @since unreleased
@@ -570,8 +584,8 @@ export class ServiceRequestsPage {
    * @returns {boolean | Promise<boolean>} Whether the route may leave its current editor.
    */
   public canLeaveDraft(): boolean | Promise<boolean> {
-    if (!this.store.commandsReady() || this.store.writeCallState().status === 'pending')
-      return false;
+    if (!this.isAuthenticated()) return true;
+    if (this.store.writeCallState().status === 'pending') return false;
     if (!this.editorVisible()) return true;
     return this.editorSheet()?.canClose() ?? true;
   }

@@ -333,7 +333,13 @@ export class MobileVisualReviewPage {
           .toEqual(['24px', '24px', '24px']);
         const queueLinks = queues.getByRole('link');
         await expect(queueLinks).toHaveCount(3);
-        for (const href of await queueLinks.evaluateAll((links) => links.map((link) => link.href)))
+        for (const href of await queueLinks.evaluateAll((links) =>
+          links.map((link) => {
+            if (!(link instanceof HTMLAnchorElement))
+              throw new Error('A park action must render an HTML link.');
+            return link.href;
+          }),
+        ))
           expect(new URL(href).pathname).toBe(
             MOBILE_VISUAL_ROUTES.find((entry) => entry.id === 'assets')?.path,
           );

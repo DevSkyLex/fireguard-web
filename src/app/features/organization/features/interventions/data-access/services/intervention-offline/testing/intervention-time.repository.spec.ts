@@ -81,7 +81,7 @@ describe('InterventionTimeRepository', () => {
     await repository.saveJournal(pageRecord, 'account-1');
     expect(database.put).toHaveBeenCalledExactlyOnceWith(
       'timeJournals',
-      'page:task-1:member:member-1:30:2',
+      'page:v2:task-1:member:member-1:30:2',
       pageRecord,
       expect.any(Function),
     );
@@ -101,7 +101,7 @@ describe('InterventionTimeRepository', () => {
     });
     expect(database.get).toHaveBeenCalledExactlyOnceWith(
       'timeJournals',
-      'page:task-1:member:member-1:30:2',
+      'page:v2:task-1:member:member-1:30:2',
     );
   });
   it('does not expose a formerly broad manager page under beneficiary-only authority', async () => {
@@ -111,8 +111,56 @@ describe('InterventionTimeRepository', () => {
     await expect(repository.readJournalPage(scope, 2)).resolves.toBeNull();
     expect(database.get.mock.calls[0]).toEqual([
       'timeJournals',
-      'page:task-1:member:member-1:30:2',
+      'page:v2:task-1:member:member-1:30:2',
     ]);
+  });
+  it('ignores polluted older page labels without changing stored histories or pending work', async () => {
+    const oldPage = { ...pageRecord, entries: [row, { ...row, id: 'foreign', memberId: 'other' }] };
+    const records = new Map([['page:task-1:member:member-1:30:2', oldPage]]);
+    database.get.mockImplementation(
+      async (_store: string, key: string) => records.get(key) ?? null,
+    );
+    await expect(repository.readJournalPage(scope, 2)).resolves.toBeNull();
+    expect(database.get.mock.calls).toEqual([
+      ['timeJournals', 'page:v2:task-1:member:member-1:30:2'],
+      ['timeJournals', 'task-1'],
+    ]);
+    expect(records.get('page:task-1:member:member-1:30:2')).toBe(oldPage);
+    expect(oldPage.entries).toHaveLength(2);
+    expect(database.put).not.toHaveBeenCalled();
+    expect(database.remove).not.toHaveBeenCalled();
+  });
+  it('rejects a whole restricted page containing foreign entries rather than filtering its totals', async () => {
+    const polluted = {
+      ...pageRecord,
+      entries: [row, { ...row, id: 'foreign', memberId: 'other' }],
+    };
+    await expect(repository.saveJournal(polluted, 'account-1')).rejects.toThrow(
+      'authorized audience',
+    );
+    expect(database.put).not.toHaveBeenCalled();
+    database.get.mockResolvedValueOnce(polluted);
+    await expect(repository.readJournalPage(scope, 2)).resolves.toBeNull();
+    expect(database.get).toHaveBeenCalledOnce();
+    expect(polluted.entries).toHaveLength(2);
+    expect(polluted.pagination?.totalItems).toBe(75);
+  });
+  it('filters complete legacy history before repaging and keeps stored revisions intact', async () => {
+    const own = Array.from({ length: 31 }, (_, index) => ({ ...row, id: `own-${index}` }));
+    const foreign = Array.from({ length: 35 }, (_, index) => ({
+      ...row,
+      id: `foreign-${index}`,
+      memberId: 'other',
+    }));
+    const complete = { ...journal, entries: [...foreign, ...own] };
+    database.get.mockResolvedValueOnce(null).mockResolvedValueOnce(complete);
+    const second = await repository.readJournalPage(scope, 2);
+    expect(second).toMatchObject({ page: 2, totalItems: 31, nextPage: null });
+    expect(second?.entries).toHaveLength(1);
+    expect(second?.entries.every((entry) => entry.memberId === scope.actorId)).toBe(true);
+    expect(complete.entries).toHaveLength(66);
+    expect(database.put).not.toHaveBeenCalled();
+    expect(database.remove).not.toHaveBeenCalled();
   });
   it('filters and slices compatible legacy snapshots while refusing unproven broad completeness', async () => {
     const legacy = { ...journal, entries: [row, { ...row, id: 'entry-other', memberId: 'other' }] };

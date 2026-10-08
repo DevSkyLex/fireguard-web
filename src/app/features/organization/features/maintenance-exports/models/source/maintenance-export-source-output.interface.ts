@@ -54,9 +54,9 @@ export interface MaintenanceExportSourceOutput extends HydraItem {
    * @description
    * Actual publication instant.
    *
-   * @type {string}
+   * @type {string | null}
    */
-  readonly publishedAt: string;
+  readonly publishedAt: string | null;
 
   /**
    * Property publicationId

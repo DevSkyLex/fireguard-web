@@ -39,11 +39,11 @@
     </div>
   }
   @if (confirmedTitle()) {
-    <output hlmAlert role="status">
-      <span hlmAlertDescription i18n="@@serviceRequest.page.submitted">
+    <div hlmAlert role="presentation">
+      <output hlmAlertDescription i18n="@@serviceRequest.page.submitted">
         Maintenance request submitted: {{ confirmedTitle() }}
-      </span>
-    </output>
+      </output>
+    </div>
   }
   @if (!online()) {
     <div hlmAlert role="status">

@@ -243,9 +243,9 @@ describe('ServiceRequestsPage', () => {
     await page.fixture.whenStable();
     expect(page.api.create).toHaveBeenCalledWith('org', input);
     expect(page.sheet.visible()).toBe(false);
-    expect(page.element.querySelector('output[role="status"]')?.textContent).toContain(
-      'Maintenance request submitted: Repair damaged gauge',
-    );
+    const result = page.element.querySelector('output');
+    expect(result?.textContent).toContain('Maintenance request submitted: Repair damaged gauge');
+    expect(result?.getAttribute('role')).toBeNull();
     expect(page.navigate).not.toHaveBeenCalled();
   });
 

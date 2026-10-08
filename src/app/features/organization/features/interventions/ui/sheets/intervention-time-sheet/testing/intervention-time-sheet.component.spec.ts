@@ -79,6 +79,8 @@ const entry = (overrides: Partial<InterventionTimeEntryView> = {}): Intervention
   createdAt: '2026-09-21T09:00:00Z',
   updatedAt: '2026-09-21T09:00:00Z',
   versions: [],
+  totalVersions: 4,
+  nextBeforeRevision: 4,
   ...overrides,
 });
 
@@ -141,6 +143,90 @@ describe('InterventionTimeSheet', () => {
   afterEach(() => {
     fixture.destroy();
     vi.unstubAllGlobals();
+  });
+  it('emits explicit page navigation and labels the saved total independently from visible rows', async () => {
+    const changed = vi.fn();
+    fixture.componentInstance.pageChanged.subscribe(changed);
+    fixture.componentRef.setInput('entries', [entry()]);
+    fixture.componentRef.setInput('totalItems', 65);
+    fixture.componentRef.setInput('nextPage', 2);
+    await fixture.whenStable();
+    const next = document.querySelector<HTMLButtonElement>('[data-testid="time-page-next"]');
+    const previous = document.querySelector<HTMLButtonElement>(
+      '[data-testid="time-page-previous"]',
+    );
+    expect(previous?.disabled).toBe(true);
+    expect(document.body.textContent).toContain('Saved entries: 65');
+    next?.click();
+    expect(changed).toHaveBeenLastCalledWith(2);
+    fixture.componentRef.setInput('page', 2);
+    fixture.componentRef.setInput('nextPage', null);
+    await fixture.whenStable();
+    expect(next?.disabled).toBe(true);
+    previous?.click();
+    expect(changed).toHaveBeenLastCalledWith(1);
+  });
+  it('requests history only on expansion and exposes explicit earlier-page continuation and retry', async () => {
+    const expanded = vi.fn();
+    const older = vi.fn();
+    fixture.componentInstance.historyExpanded.subscribe(expanded);
+    fixture.componentInstance.olderVersionsRequested.subscribe(older);
+    fixture.componentRef.setInput('entries', [entry()]);
+    await fixture.whenStable();
+    expect(expanded).not.toHaveBeenCalled();
+    document.querySelector<HTMLButtonElement>('[data-testid="time-history-entry-1"]')?.click();
+    await fixture.whenStable();
+    expect(expanded).toHaveBeenCalledExactlyOnceWith('entry-1');
+    const data = {
+      '@id': '/time-entries/entry-1/versions',
+      '@type': 'InterventionTimeEntryVersions',
+      id: 'entry-1',
+      versions: [],
+      totalItems: 4,
+      itemsPerPage: 2,
+      nextBeforeRevision: 3,
+    };
+    fixture.componentRef.setInput('historyStates', { 'entry-1': successCallState(data) });
+    await fixture.whenStable();
+    document.querySelector<HTMLButtonElement>('[data-testid="time-history-more-entry-1"]')?.click();
+    expect(older).toHaveBeenLastCalledWith('entry-1');
+    fixture.componentRef.setInput('historyStates', {
+      'entry-1': errorCallState(toStoreError(new Error('History unavailable')), data),
+    });
+    await fixture.whenStable();
+    const retry = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+      (button) => button.textContent?.trim() === 'Try again',
+    );
+    retry?.click();
+    expect(older).toHaveBeenCalledTimes(2);
+    expect(document.body.textContent).toContain('History unavailable');
+  });
+  it('never requests correction history offline and identifies an uncached journal page', async () => {
+    const expanded = vi.fn();
+    fixture.componentInstance.historyExpanded.subscribe(expanded);
+    fixture.componentRef.setInput('entries', [entry()]);
+    fixture.componentRef.setInput('offline', true);
+    fixture.componentRef.setInput('historyUnavailable', true);
+    fixture.componentRef.setInput('page', 2);
+    await fixture.whenStable();
+    document.querySelector<HTMLButtonElement>('[data-testid="time-history-entry-1"]')?.click();
+    await fixture.whenStable();
+    expect(expanded).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain(
+      'This journal page has not been saved on this device.',
+    );
+    expect(document.body.textContent).toContain('Correction history is unavailable offline.');
+  });
+  it('reviews the saved correction revision even when its target is outside the displayed page', async () => {
+    const current = entry({ revision: 7, totalVersions: 7, nextBeforeRevision: 7 });
+    fixture.componentRef.setInput('entries', []);
+    fixture.componentRef.setInput('draft', draft);
+    fixture.componentRef.setInput('draftEntryState', successCallState(current));
+    await fixture.whenStable();
+    expect(fixture.componentInstance['draftServerEntry']()).toEqual(current);
+    expect(document.body.textContent).toContain('This entry changed since your correction began.');
+    fixture.componentInstance['reviewCorrection']();
+    expect(drafts.at(-1)).toEqual({ ...draft, baseRevision: 7 });
   });
 
   it('starts a fresh journal draft for the actor without borrowing the work item revision', async () => {

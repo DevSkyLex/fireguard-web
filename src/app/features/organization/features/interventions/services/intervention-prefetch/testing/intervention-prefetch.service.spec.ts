@@ -86,7 +86,9 @@ describe('InterventionPrefetchService', () => {
       ]),
     );
     time.journal.mockImplementation((id: string) =>
-      id === 'failed' ? throwError(() => new Error('Connection lost')) : of({ entries: [] }),
+      id === 'failed'
+        ? throwError(() => new Error('Connection lost'))
+        : of({ entries: [], page: 1, itemsPerPage: 30, totalItems: 60, nextPage: 2 }),
     );
     build().start();
     TestBed.inject(ApplicationRef).tick();
@@ -98,6 +100,8 @@ describe('InterventionPrefetchService', () => {
         interventionId: 'intervention',
         workItemId: 'authorized',
         entries: [],
+        audience: 'member:member',
+        pagination: { page: 1, itemsPerPage: 30, totalItems: 60, nextPage: 2 },
       },
       'account',
     );

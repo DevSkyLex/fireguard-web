@@ -4,8 +4,10 @@ import { HydraApiService } from '@core/api';
 import type { HydraCollection, RequestOptions } from '@core/api/models';
 import type {
   ChangeSupplierInput,
+  CreateSupplierInput,
   SupplierOutput,
   ChangePurchaseOrderInput,
+  CreatePurchaseOrderInput,
   PurchaseOrderOutput,
   ProcurementReceiptOutput,
   ReceivePurchaseOrderInput,
@@ -86,7 +88,7 @@ export class ProcurementService extends HydraApiService {
    * @since unreleased
    *
    * @param {string} organizationId - Owning organization, used for tenant authorization.
-   * @param {ChangeSupplierInput} input - Exact transport payload preserved unchanged for an
+   * @param {CreateSupplierInput} input - Exact transport payload preserved unchanged for an
    *   identical retry.
    *
    * @returns {Observable<SupplierOutput>} Authorized server projection; failures propagate to the
@@ -94,9 +96,9 @@ export class ProcurementService extends HydraApiService {
    */
   public createSupplier(
     organizationId: string,
-    input: ChangeSupplierInput,
+    input: CreateSupplierInput,
   ): Observable<SupplierOutput> {
-    return this.post<ChangeSupplierInput, SupplierOutput>(
+    return this.post<CreateSupplierInput, SupplierOutput>(
       `/api/organizations/${organizationId}/procurement/suppliers`,
       input,
     );
@@ -218,7 +220,7 @@ export class ProcurementService extends HydraApiService {
    * @since unreleased
    *
    * @param {string} organizationId - Owning organization, used for tenant authorization.
-   * @param {ChangePurchaseOrderInput} input - Exact transport payload preserved unchanged for an
+   * @param {CreatePurchaseOrderInput} input - Exact transport payload preserved unchanged for an
    *   identical retry.
    *
    * @returns {Observable<PurchaseOrderOutput>} Authorized server projection; failures propagate to
@@ -226,9 +228,9 @@ export class ProcurementService extends HydraApiService {
    */
   public createOrder(
     organizationId: string,
-    input: ChangePurchaseOrderInput,
+    input: CreatePurchaseOrderInput,
   ): Observable<PurchaseOrderOutput> {
-    return this.post<ChangePurchaseOrderInput, PurchaseOrderOutput>(
+    return this.post<CreatePurchaseOrderInput, PurchaseOrderOutput>(
       `/api/organizations/${organizationId}/procurement/orders`,
       input,
     );

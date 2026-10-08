@@ -224,11 +224,13 @@ export class InterventionPrefetchService {
         .getCurrentProfile(organizationId)
         .pipe(
           switchMap((profile) =>
-            this.service.listAll(organizationId, {
-              responsible: `/api/organizations/${organizationId}/members/${profile.id}`,
-            }),
+            this.service
+              .listAll(organizationId, {
+                responsible: `/api/organizations/${organizationId}/members/${profile.id}`,
+              })
+              .pipe(map((interventions) => ({ interventions, actorId: profile.id }))),
           ),
-          switchMap((interventions) =>
+          switchMap(({ interventions, actorId }) =>
             // Prefetch each workspace independently: a single failure must not
             // wipe out every other cached workspace (the old forkJoin was
             // all-or-nothing), so an offline-bound agent keeps the ones that
@@ -239,7 +241,7 @@ export class InterventionPrefetchService {
               ),
             ).pipe(
               mergeMap((intervention) =>
-                this.prefetch(organizationId, intervention).pipe(catchError(() => EMPTY)),
+                this.prefetch(organizationId, intervention, actorId).pipe(catchError(() => EMPTY)),
               ),
             ),
           ),
@@ -281,10 +283,15 @@ export class InterventionPrefetchService {
    *
    * @param {string} organizationId - Organization owning the intervention.
    * @param {InterventionOutput} intervention - Intervention to prefetch.
+   * @param {string} actorId - Current beneficiary of actor-only journal pages.
    *
    * @returns {Observable<void>} Completes once the workspace is persisted.
    */
-  private prefetch(organizationId: string, intervention: InterventionOutput): Observable<void> {
+  private prefetch(
+    organizationId: string,
+    intervention: InterventionOutput,
+    actorId: string,
+  ): Observable<void> {
     const owner = this.offline.publicationOwner();
     return forkJoin({
       workItems: this.service.listAllWorkItems(intervention.id),
@@ -321,6 +328,13 @@ export class InterventionPrefetchService {
                         interventionId: intervention.id,
                         workItemId: item.id,
                         entries: journal.entries,
+                        audience: item.allowedActions?.canManageTime ? 'all' : `member:${actorId}`,
+                        pagination: {
+                          page: journal.page,
+                          itemsPerPage: journal.itemsPerPage,
+                          totalItems: journal.totalItems,
+                          nextPage: journal.nextPage,
+                        },
                       },
                       owner,
                     ),

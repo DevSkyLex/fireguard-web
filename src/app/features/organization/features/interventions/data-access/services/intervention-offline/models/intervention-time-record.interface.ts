@@ -1,6 +1,7 @@
 import type {
   InterventionTimeDraft,
   InterventionTimeEntry,
+  InterventionTimeJournalPage,
 } from '@features/organization/features/interventions/models';
 
 /**
@@ -54,6 +55,32 @@ export interface InterventionTimeRecord {
    * @type {readonly InterventionTimeEntry[]}
    */
   readonly entries: readonly InterventionTimeEntry[];
+
+  /**
+   * Property pagination
+   * @readonly
+   *
+   * @description
+   * Identifies a bounded cached page; absent only on legacy complete journal snapshots.
+   *
+   * @access public
+   *
+   * @type {Omit<InterventionTimeJournalPage, 'entries'>}
+   */
+  readonly pagination?: Omit<InterventionTimeJournalPage, 'entries'>;
+
+  /**
+   * Property audience
+   * @readonly
+   *
+   * @description
+   * Identifies broad manager pages or the beneficiary whose restricted page was authorized.
+   *
+   * @access public
+   *
+   * @type {string}
+   */
+  readonly audience?: string;
 }
 
 /**

@@ -15221,6 +15221,46 @@
         <source>Log time</source>
         <target>Registrar tiempo</target>
       </trans-unit>
+      <trans-unit id="intervention.time.historyOffline" datatype="html">
+        <source>Correction history is unavailable offline. Reconnect to load earlier versions.</source>
+        <target>El historial de correcciones no está disponible sin conexión. Conéctese para cargar las versiones anteriores.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.reviewOffline" datatype="html">
+        <source>Reconnect to review the current version of this saved correction.</source>
+        <target>Conéctese para revisar la versión actual de esta corrección guardada.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.reviewLoading" datatype="html">
+        <source>Checking saved correction</source>
+        <target>Comprobando la corrección guardada</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.pageUnavailable" datatype="html">
+        <source> This journal page has not been saved on this device. Reconnect to load it. </source>
+        <target>Esta página del registro no está guardada en este dispositivo. Conéctese para cargarla.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.historyPending" datatype="html">
+        <source> Synchronize or review this pending change before loading correction history. </source>
+        <target>Sincronice o revise este cambio pendiente antes de cargar el historial de correcciones.</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.historyLoading" datatype="html">
+        <source>Loading correction history</source>
+        <target>Cargando el historial de correcciones</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.olderVersions" datatype="html">
+        <source> Load earlier versions </source>
+        <target>Cargar versiones anteriores</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.pages" datatype="html">
+        <source>Time journal pages</source>
+        <target>Páginas del registro de tiempo</target>
+      </trans-unit>
+      <trans-unit id="intervention.time.page" datatype="html">
+        <source> Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> </source>
+        <target>Página <x id="INTERPOLATION" equiv-text="{{ page() }}"/></target>
+      </trans-unit>
+      <trans-unit id="intervention.time.savedTotal" datatype="html">
+        <source> Saved entries: <x id="INTERPOLATION" equiv-text="{{ totalItems() }}"/> </source>
+        <target>Entradas guardadas: <x id="INTERPOLATION" equiv-text="{{ totalItems() }}"/></target>
+      </trans-unit>
       <trans-unit id="intervention.time.historyUnavailable" datatype="html">
         <source> No journal has been saved on this device. Reconnect to load its history. </source>
         <target>No hay ningún registro guardado en este dispositivo. Conéctese para cargar el historial.</target>
@@ -19131,6 +19171,14 @@
         <source> Use reviewed version and keep my draft </source>
         <target>Usar la versión revisada y conservar mi borrador</target>
       </trans-unit>
+      <trans-unit id="serviceRequest.command.restoreFailed" datatype="html">
+        <source> Saved maintenance operations could not be restored. Retry before starting another action. </source>
+        <target>No se han podido restaurar las operaciones de mantenimiento guardadas. Vuelva a intentarlo antes de iniciar otra acción.</target>
+      </trans-unit>
+      <trans-unit id="serviceRequest.command.persistFailed" datatype="html">
+        <source>This conversion could not be saved on this device. Your draft has been kept. Retry to send it.</source>
+        <target>No se ha podido guardar esta conversión en este dispositivo. Su borrador se ha conservado. Vuelva a intentarlo para enviarlo.</target>
+      </trans-unit>
       <trans-unit id="serviceRequest.editor.uncertain" datatype="html">
         <source> The work link has not been confirmed. Retry this conversion before choosing another action. </source>
         <target>El vínculo con el trabajo no está confirmado. Reintente esta conversión antes de elegir otra acción.</target>
@@ -19938,6 +19986,22 @@
       <trans-unit id="maintenanceCost.amount.unknown" datatype="html">
         <source>Unknown</source>
         <target>Desconocido</target>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.chooseOffset" datatype="html">
+        <source>Choose the actual UTC offset</source>
+        <target>Elija el desfase UTC real</target>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.offset" datatype="html">
+        <source>UTC offset for this repeated hour</source>
+        <target>Desfase UTC de esta hora repetida</target>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.offsetHint" datatype="html">
+        <source> The same local time occurred twice because the clocks changed. Select the UTC offset when the expense actually occurred. </source>
+        <target>Esta hora local se produjo dos veces por el cambio de hora. Elija el desfase UTC del momento en que se produjo realmente el gasto.</target>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.offsetRequired" datatype="html">
+        <source>This local hour occurs twice. Choose the UTC offset of the actual expense.</source>
+        <target>Esta hora local se produce dos veces. Elija el desfase UTC del gasto real.</target>
       </trans-unit>
       <trans-unit id="maintenanceCost.expense.actualDate" datatype="html">
         <source>Enter a valid actual date that is not in the future.</source>
@@ -21923,6 +21987,11 @@
         <source> Archived customers can receive references for historical exports. </source>
         <target>Los clientes archivados pueden recibir referencias para las exportaciones históricas.</target>
       </trans-unit>
+      <trans-unit id="maintenanceCost.recovery.uncertain" datatype="html"><source>The previous declaration has no confirmed result. Retry it unchanged before creating another.</source><target>La declaración anterior no tiene un resultado confirmado. Reinténtela sin cambios antes de crear otra.</target></trans-unit>
+      <trans-unit id="maintenanceCost.recovery.failed" datatype="html"><source>Could not recover previous declarations</source><target>No se pudieron recuperar las declaraciones anteriores</target></trans-unit>
+      <trans-unit id="maintenanceCost.recovery.failedHint" datatype="html"><source>New declarations stay unavailable until recovery succeeds.</source><target>Las nuevas declaraciones seguirán sin estar disponibles hasta que se complete la recuperación.</target></trans-unit>
+      <trans-unit id="maintenanceCost.recovery.retry" datatype="html"><source>Retry recovery</source><target>Reintentar la recuperación</target></trans-unit>
+      <trans-unit id="maintenanceCost.page.waitBeforeLeaving" datatype="html"><source>Wait for the current declaration to finish before leaving this page.</source><target>Espere a que termine la declaración en curso antes de salir de esta página.</target></trans-unit>
     </body>
   </file>
 </xliff>

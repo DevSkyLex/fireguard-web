@@ -1219,8 +1219,10 @@ export class InterventionSyncService {
   } | null> {
     try {
       if (operation.type === 'time-entry.correct' || operation.type === 'time-entry.cancel') {
-        const journal = await this.awaitReplay(this.time.journal(operation.payload.workItemId));
-        const entry = journal.entries.find((row) => row.id === operation.payload.id);
+        const current = await this.awaitReplay(
+          this.time.getEntry(operation.payload.workItemId, operation.payload.id),
+        );
+        const entry = current.entry;
         return entry
           ? {
               revision: entry.revision,

@@ -38,4 +38,56 @@ export interface InterventionTimeJournalOutput extends HydraItem {
    * @type {readonly InterventionTimeEntry[]}
    */
   readonly entries: readonly InterventionTimeEntry[];
+
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * Current server journal page.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly page: number;
+
+  /**
+   * Property itemsPerPage
+   * @readonly
+   *
+   * @description
+   * Maximum saved entries returned on this page.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly itemsPerPage: number;
+
+  /**
+   * Property totalItems
+   * @readonly
+   *
+   * @description
+   * Exact authorized saved entry count across every page.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly totalItems: number;
+
+  /**
+   * Property nextPage
+   * @readonly
+   *
+   * @description
+   * Next journal page, or null when this is the final page.
+   *
+   * @access public
+   *
+   * @type {number | null}
+   */
+  readonly nextPage: number | null;
 }

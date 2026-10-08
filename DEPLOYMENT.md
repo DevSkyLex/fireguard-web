@@ -47,7 +47,17 @@ Required secrets:
 - `VPS_HOST`
 - `VPS_USER`
 - `VPS_SSH_KEY`
+- `VPS_SSH_KNOWN_HOSTS`: complete approved OpenSSH known_hosts entries, verified
+  through an authenticated operator/provider channel for this environment
 - `GHCR_TOKEN` if the workflow token is insufficient
+
+SSH deployment fails before Ansible if the reviewed host-key secret is missing,
+invalid or does not match the host and port. Port 22 uses the bare host; custom
+ports use `[host]:port`, including IPv6. Hashed entries and multiple approved keys
+are supported. Strict checking uses only that file, without a network-scan trust
+fallback. Independently verify host-key rotations and update the environment
+secret before redeploying or rolling back an image.
+
 - `BASIC_AUTH_USERS` in `development`, in the htpasswd format accepted by Traefik
 - `BASIC_AUTH_CREDENTIALS` in `development`, as `username:password`, only for the public health check
 

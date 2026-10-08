@@ -191,4 +191,30 @@ export interface InterventionTimeEntry {
    * @type {readonly InterventionTimeEntryVersion[]}
    */
   readonly versions: readonly InterventionTimeEntryVersion[];
+
+  /**
+   * Property totalVersions
+   * @readonly
+   *
+   * @description
+   * Complete durable revision count, independent from the bounded embedded version.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly totalVersions: number;
+
+  /**
+   * Property nextBeforeRevision
+   * @readonly
+   *
+   * @description
+   * Exclusive cursor for earlier revisions, or null when no earlier revision exists.
+   *
+   * @access public
+   *
+   * @type {number | null}
+   */
+  readonly nextBeforeRevision: number | null;
 }

@@ -1,9 +1,12 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { BrnSelect } from '@spartan-ng/brain/select';
 import { toStoreError } from '@core/request-state';
 import type {
   CreateMaintenanceExpenseInput,
   MaintenanceCostItem,
 } from '@features/organization/features/maintenance-costs/models';
+import { HlmSelect } from '@shared/ui/select';
 import { MaintenanceExpenseForm } from '../maintenance-expense-form.component';
 
 describe('MaintenanceExpenseForm', () => {
@@ -33,6 +36,13 @@ describe('MaintenanceExpenseForm', () => {
       ?.dispatchEvent(new Event('submit', { cancelable: true }));
     await fixture.whenStable();
   };
+  const chooseOffset = async (value: string): Promise<void> => {
+    const select: BrnSelect<string> = fixture.debugElement
+      .query(By.directive(HlmSelect))
+      .injector.get(BrnSelect);
+    select.select(value);
+    await fixture.whenStable();
+  };
   const draft = async (
     amount = '9007199254740993.123456',
     date = '2025-01-15T14:30:05',
@@ -41,6 +51,13 @@ describe('MaintenanceExpenseForm', () => {
     await setValue('maintenance-expense-description', '  Repair fee  ');
     await setValue('maintenance-expense-date', date);
   };
+  beforeAll(() => {
+    globalThis.ResizeObserver ??= class {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    } as unknown as typeof ResizeObserver;
+  });
   beforeEach(async () => {
     fixture = TestBed.createComponent(MaintenanceExpenseForm);
     submissions = [];
@@ -92,8 +109,56 @@ describe('MaintenanceExpenseForm', () => {
       await submit();
       expect(submissions).toEqual([]);
       expect(root().textContent).toContain('valid actual date');
+      expect(root().querySelector('hlm-select')).toBeNull();
+      expect(root().querySelector<HTMLInputElement>('#maintenance-expense-date')?.value).toBe(
+        value.slice(0, 16),
+      );
     },
   );
+  it('requires an explicit UTC offset for a repeated organization-local hour', async () => {
+    await draft('12', '2025-10-26T02:30:00');
+    await submit();
+    expect(submissions).toEqual([]);
+    expect(root().textContent).toContain('Choose the UTC offset of the actual expense.');
+    expect(root().querySelector<HTMLInputElement>('#maintenance-expense-date')?.value).toBe(
+      '2025-10-26T02:30',
+    );
+  });
+  it.each([
+    { offset: '+02:00', incurredAt: '2025-10-26T00:30:00Z' },
+    { offset: '+01:00', incurredAt: '2025-10-26T01:30:00Z' },
+  ])('emits the explicitly selected $offset expense instant', async ({ offset, incurredAt }) => {
+    await draft('12', '2025-10-26T02:30:00');
+    await chooseOffset(offset);
+    await submit();
+    expect(submissions).toEqual([
+      { amount: '12', description: 'Repair fee', incurredAt, adjustmentOf: null, workItemId: null },
+    ]);
+  });
+  it('requires a new offset decision after the repeated local timestamp changes', async () => {
+    await draft('12', '2025-10-26T02:30:00');
+    await chooseOffset('+02:00');
+    await setValue('maintenance-expense-date', '2025-10-26T02:45:05');
+    await submit();
+    expect(submissions).toEqual([]);
+    expect(root().querySelector('#maintenance-expense-offset')?.textContent).toContain(
+      'Choose the actual UTC offset',
+    );
+    await chooseOffset('+01:00');
+    await submit();
+    expect(submissions[0]?.incurredAt).toBe('2025-10-26T01:45:05Z');
+  });
+  it('requires a new offset decision after the organization timezone changes', async () => {
+    await draft('12', '2025-10-26T02:30:00');
+    await chooseOffset('+02:00');
+    fixture.componentRef.setInput('timezone', 'Europe/Berlin');
+    await fixture.whenStable();
+    await submit();
+    expect(submissions).toEqual([]);
+    expect(root().querySelector('#maintenance-expense-offset')?.textContent).toContain(
+      'Choose the actual UTC offset',
+    );
+  });
   it('preserves failed drafts, but resets private fields on a scope replacement or confirmed success', async () => {
     await draft('42.123456');
     fixture.componentRef.setInput('error', toStoreError(new Error('Rejected')));

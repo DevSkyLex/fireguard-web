@@ -1,7 +1,7 @@
 import { type } from '@ngrx/signals';
 import { eventGroup } from '@ngrx/signals/events';
 import type { FeedbackEventPayload } from '@core/request-state';
-import type { MaintenanceCostCommand } from '../models/maintenance-cost-command.type';
+import type { MaintenanceCostCommand } from '@features/organization/features/maintenance-costs/models';
 
 /**
  * Constant maintenanceCostStoreEvents

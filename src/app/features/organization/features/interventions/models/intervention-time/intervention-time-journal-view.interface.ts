@@ -66,4 +66,56 @@ export interface InterventionTimeJournalView {
    * @type {boolean}
    */
   readonly historyUnavailable: boolean;
+
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * Requested journal page, including an unavailable offline page.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly page: number;
+
+  /**
+   * Property itemsPerPage
+   * @readonly
+   *
+   * @description
+   * Bounded journal page size.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly itemsPerPage: number;
+
+  /**
+   * Property totalItems
+   * @readonly
+   *
+   * @description
+   * Saved entry count across pages; null when no authorized page metadata is available.
+   *
+   * @access public
+   *
+   * @type {number | null}
+   */
+  readonly totalItems: number | null;
+
+  /**
+   * Property nextPage
+   * @readonly
+   *
+   * @description
+   * Known next journal page, or null when unavailable or complete.
+   *
+   * @access public
+   *
+   * @type {number | null}
+   */
+  readonly nextPage: number | null;
 }

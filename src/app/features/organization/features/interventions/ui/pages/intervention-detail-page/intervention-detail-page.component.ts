@@ -2143,7 +2143,14 @@ export class InterventionDetailPage implements UnsavedChangesAware {
       this.connectivity.online();
       untracked(() =>
         this.timeStore.load(
-          item && actorId ? { workItemId: item.id, interventionId, actorId } : null,
+          item && actorId
+            ? {
+                workItemId: item.id,
+                interventionId,
+                actorId,
+                manageOthers: item.allowedActions?.canManageTime === true,
+              }
+            : null,
         ),
       );
     });

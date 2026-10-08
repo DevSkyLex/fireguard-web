@@ -110,6 +110,12 @@ the store also dispatches the success toast itself
 (`campaignSucceeded`), since the message needs the result's interpolated
 values.
 
+Historical schedule rows, totals and action states belong to one canonical organization IRI.
+Changing organization clears them before the next read; refreshes within the same organization
+retain their current rows. Override commands include the originating organization, and campaign
+results retain it for intervention navigation. Accepted writes finish without cancellation, but
+responses from an earlier organization visit cannot update the current scope or its action feedback.
+
 Primary service: `MaintenanceScheduleService` — extends `HydraApiService`
 but calls the **canonical** `/api/maintenance/schedules` and
 `/api/maintenance/campaigns` resources, not an organization-scoped path; the
@@ -169,6 +175,11 @@ toast.
   server-side but the UI does not offer the action into it.
 - A successful override replaces the row from the PATCH response; nothing in
   this feature refetches the list for it.
+- Changing organization clears list filters, search, pagination and open action dialogs. Only
+  rows owned by the current organization are displayed or offered an override action.
+- A late override or campaign response cannot change another organization's state or a later visit
+  to its original organization. Dialog completion requires the current scope and matching override
+  target; campaign navigation uses the confirmed result's original organization.
 - Status is never colour-only: `MaintenanceDueStatusTag` always pairs its
   severity tint with an icon and a label (`models/maintenance-tag/`).
 

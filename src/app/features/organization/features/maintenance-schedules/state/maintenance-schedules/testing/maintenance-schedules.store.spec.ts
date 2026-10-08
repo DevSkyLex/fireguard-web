@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MaintenanceScheduleService } from '@features/organization/features/maintenance-schedules/data-access';
 import type {
@@ -24,6 +24,7 @@ describe('MaintenanceSchedulesStore', () => {
   let mockDispatcher: { dispatch: ReturnType<typeof vi.fn> };
 
   const orgIri = '/api/organizations/org-1';
+  const otherOrgIri = '/api/organizations/org-2';
 
   const schedule: MaintenanceScheduleOutput = {
     '@id': '/api/maintenance/schedules/schedule-1',
@@ -42,6 +43,18 @@ describe('MaintenanceSchedulesStore', () => {
     '@type': 'Collection',
     totalItems: 1,
     member: [schedule],
+  };
+
+  const otherSchedule: MaintenanceScheduleOutput = {
+    ...schedule,
+    '@id': '/api/maintenance/schedules/schedule-2',
+    id: 'schedule-2',
+    organization: otherOrgIri,
+  };
+
+  const otherCollection: HydraCollection<MaintenanceScheduleOutput> = {
+    ...collection,
+    member: [otherSchedule],
   };
 
   const campaignResult: MaintenanceCampaignOutput = {
@@ -93,6 +106,42 @@ describe('MaintenanceSchedulesStore', () => {
         expect.objectContaining({ type: '[Maintenance Schedules Store] listFailed' }),
       );
     });
+
+    it('clears the previous organization rows before the next list response', () => {
+      store.load({ organization: orgIri });
+      const response = new Subject<HydraCollection<MaintenanceScheduleOutput>>();
+      mockService.list.mockReturnValue(response);
+
+      store.load({ organization: otherOrgIri });
+
+      expect(store.organization()).toBe(otherOrgIri);
+      expect(store.isLoading()).toBe(true);
+      expect(store.schedules()).toEqual([]);
+      expect(store.totalSchedules()).toBe(0);
+
+      response.next(otherCollection);
+      response.complete();
+
+      expect(store.schedules()).toEqual([otherSchedule]);
+      expect(store.isLoading()).toBe(false);
+    });
+
+    it('retains current organization rows during a same-organization refresh', () => {
+      store.load({ organization: orgIri });
+      const response = new Subject<HydraCollection<MaintenanceScheduleOutput>>();
+      mockService.list.mockReturnValue(response);
+
+      store.load({ organization: orgIri });
+
+      expect(store.isLoading()).toBe(true);
+      expect(store.schedules()).toEqual([schedule]);
+      expect(store.totalSchedules()).toBe(1);
+
+      response.next({ ...collection, member: [{ ...schedule, dueStatus: 'overdue' }] });
+      response.complete();
+
+      expect(store.schedules()).toEqual([{ ...schedule, dueStatus: 'overdue' }]);
+    });
   });
 
   describe('setIntervalOverride', () => {
@@ -100,7 +149,11 @@ describe('MaintenanceSchedulesStore', () => {
       store.load({ organization: orgIri });
       await flushEffects();
 
-      store.setIntervalOverride({ scheduleId: 'schedule-1', intervalOverride: 'P6M' });
+      store.setIntervalOverride({
+        organization: orgIri,
+        scheduleId: 'schedule-1',
+        intervalOverride: 'P6M',
+      });
       await flushEffects();
 
       expect(mockService.setIntervalOverride).toHaveBeenCalledWith('schedule-1', 'P6M');
@@ -110,7 +163,11 @@ describe('MaintenanceSchedulesStore', () => {
     });
 
     it('should send an explicit null to clear the override', async () => {
-      store.setIntervalOverride({ scheduleId: 'schedule-1', intervalOverride: null });
+      store.setIntervalOverride({
+        organization: orgIri,
+        scheduleId: 'schedule-1',
+        intervalOverride: null,
+      });
       await flushEffects();
 
       expect(mockService.setIntervalOverride).toHaveBeenCalledWith('schedule-1', null);
@@ -121,12 +178,78 @@ describe('MaintenanceSchedulesStore', () => {
         throwError(() => ({ status: 422, title: 'Unprocessable Entity' })),
       );
 
-      store.setIntervalOverride({ scheduleId: 'schedule-1', intervalOverride: 'P1D' });
+      store.setIntervalOverride({
+        organization: orgIri,
+        scheduleId: 'schedule-1',
+        intervalOverride: 'P1D',
+      });
       await flushEffects();
 
       expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
         expect.objectContaining({ type: '[Maintenance Schedules Store] overrideFailed' }),
       );
+    });
+
+    it.each([false, true])(
+      'ignores a late override after switching organization, including a return visit (%s)',
+      (returnToOriginal) => {
+        const response = new Subject<MaintenanceScheduleOutput>();
+        mockService.setIntervalOverride.mockReturnValue(response);
+        store.load({ organization: orgIri });
+        store.setIntervalOverride({
+          organization: orgIri,
+          scheduleId: schedule.id,
+          intervalOverride: 'P6M',
+        });
+        mockService.list.mockReturnValue(of(otherCollection));
+        store.load({ organization: otherOrgIri });
+
+        if (returnToOriginal) {
+          mockService.list.mockReturnValue(of(collection));
+          store.load({ organization: orgIri });
+        }
+
+        expect(response.observed).toBe(true);
+        response.next({ ...schedule, intervalOverride: 'P6M' });
+        response.complete();
+
+        expect(store.schedules()).toEqual(returnToOriginal ? [schedule] : [otherSchedule]);
+        expect(store.overrideCallState().status).toBe('idle');
+        expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+      },
+    );
+
+    it('ignores a late override failure after switching organization', () => {
+      const response = new Subject<MaintenanceScheduleOutput>();
+      mockService.setIntervalOverride.mockReturnValue(response);
+      store.load({ organization: orgIri });
+      store.setIntervalOverride({
+        organization: orgIri,
+        scheduleId: schedule.id,
+        intervalOverride: 'P6M',
+      });
+      mockService.list.mockReturnValue(of(otherCollection));
+      store.load({ organization: otherOrgIri });
+
+      response.error({ status: 422, title: 'Unprocessable Entity' });
+
+      expect(store.schedules()).toEqual([otherSchedule]);
+      expect(store.overrideCallState().status).toBe('idle');
+      expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('rejects an override command for the previous organization', () => {
+      store.setOrganization(otherOrgIri);
+
+      store.setIntervalOverride({
+        organization: orgIri,
+        scheduleId: schedule.id,
+        intervalOverride: 'P6M',
+      });
+
+      expect(mockService.setIntervalOverride).not.toHaveBeenCalled();
+      expect(store.overrideCallState().status).toBe('idle');
+      expect(store.schedules()).toEqual([]);
     });
   });
 
@@ -142,6 +265,7 @@ describe('MaintenanceSchedulesStore', () => {
       await flushEffects();
 
       expect(store.campaignResult()).toEqual(campaignResult);
+      expect(store.campaignResultOrganization()).toBe(orgIri);
       expect(store.campaignError()).toBeNull();
       expect(mockDispatcher.dispatch).toHaveBeenCalledWith(
         expect.objectContaining({ type: '[Maintenance Schedules Store] campaignSucceeded' }),
@@ -169,6 +293,56 @@ describe('MaintenanceSchedulesStore', () => {
       );
       expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
     });
+
+    it.each([false, true])(
+      'ignores a late campaign after switching organization, including a return visit (%s)',
+      (returnToOriginal) => {
+        const response = new Subject<MaintenanceCampaignOutput>();
+        mockService.generateCampaign.mockReturnValue(response);
+        store.load({ organization: orgIri });
+        store.generateCampaign(input);
+        mockService.list.mockReturnValue(of(otherCollection));
+        store.load({ organization: otherOrgIri });
+
+        if (returnToOriginal) {
+          mockService.list.mockReturnValue(of(collection));
+          store.load({ organization: orgIri });
+        }
+
+        expect(response.observed).toBe(true);
+        response.next(campaignResult);
+        response.complete();
+
+        expect(store.schedules()).toEqual(returnToOriginal ? [schedule] : [otherSchedule]);
+        expect(store.campaignResult()).toBeNull();
+        expect(store.campaignResultOrganization()).toBeNull();
+        expect(store.campaignCallState().status).toBe('idle');
+        expect(mockDispatcher.dispatch).not.toHaveBeenCalled();
+      },
+    );
+
+    it('ignores a late campaign failure after switching organization', () => {
+      const response = new Subject<MaintenanceCampaignOutput>();
+      mockService.generateCampaign.mockReturnValue(response);
+      store.generateCampaign(input);
+      store.setOrganization(otherOrgIri);
+
+      response.error({ status: 422, title: 'Unprocessable Entity' });
+
+      expect(store.campaignCallState().status).toBe('idle');
+      expect(store.campaignError()).toBeNull();
+      expect(store.campaignResultOrganization()).toBeNull();
+    });
+
+    it('rejects a campaign command for the previous organization', () => {
+      store.setOrganization(otherOrgIri);
+
+      store.generateCampaign(input);
+
+      expect(mockService.generateCampaign).not.toHaveBeenCalled();
+      expect(store.campaignCallState().status).toBe('idle');
+      expect(store.campaignResultOrganization()).toBeNull();
+    });
   });
 
   describe('resetOverrideOperation / resetCampaignOperation', () => {
@@ -184,8 +358,34 @@ describe('MaintenanceSchedulesStore', () => {
       store.resetOverrideOperation();
 
       expect(store.campaignResult()).toBeNull();
+      expect(store.campaignResultOrganization()).toBeNull();
       expect(store.isGeneratingCampaign()).toBe(false);
       expect(store.isOverriding()).toBe(false);
     });
+  });
+
+  it('clears rows and all operation results on an organization change', () => {
+    store.load({ organization: orgIri });
+    store.setIntervalOverride({
+      organization: orgIri,
+      scheduleId: schedule.id,
+      intervalOverride: 'P6M',
+    });
+    store.generateCampaign({
+      organization: orgIri,
+      name: 'Q1 round',
+      dueBefore: '2026-06-30T00:00:00+00:00',
+    });
+
+    store.setOrganization(otherOrgIri);
+
+    expect(store.organization()).toBe(otherOrgIri);
+    expect(store.schedules()).toEqual([]);
+    expect(store.totalSchedules()).toBe(0);
+    expect(store.listCallState().status).toBe('idle');
+    expect(store.overrideCallState().status).toBe('idle');
+    expect(store.campaignCallState().status).toBe('idle');
+    expect(store.campaignResult()).toBeNull();
+    expect(store.campaignResultOrganization()).toBeNull();
   });
 });

@@ -6,8 +6,9 @@ Organization-owned private operational finance. The feature publishes its `model
 
 `organization.maintenance_cost.read` gates browser reads and page visibility. Management additionally
 requires `.manage`; no financial request or payload enters SSR or TransferState. Route-scoped state
-uses Auth's public `AUTH_SESSION_PORT` revision to cancel superseded reads, clear private data and
-ignore late replies after scope/session changes. Accepted writes remain serialized and their replies
+uses Auth's public `AUTH_SESSION_PORT` revision and Organization's published member actor to cancel
+superseded reads, clear private data/drafts and ignore late replies after scope/session/account
+changes. Accepted writes remain serialized and their replies
 cannot populate another session. Currency and rates load only when the settings surface opens.
 
 Amounts remain exact decimal strings, including unknown/null values; display groups integer digits
@@ -15,7 +16,14 @@ without conversion to floating point. Current realized facts and the immutable p
 snapshot remain separate. Financial planning uses its own revision, beginning at zero, and honors
 the server's `planningEditable` capability. A stale draft is retained until the user explicitly
 accepts the newly read planning revision. Expenses and rate retries keep the original identity and
-payload after an uncertain response; adjustments reference the original expense.
+payload after an uncertain response; adjustments reference the original expense. Expense and rate
+intentions are account-bound in a feature-owned IndexedDB journal before transmission. Page
+destruction, navigation and same-account reload retain exact retry; recovery must complete before
+a new declaration. Only the original organization/dossier can recover its facts, and session
+replacement purges the private journal without persisting credentials. A failed recovery keeps
+new writes unavailable. Definite refusal or confirmation acknowledges the original intention.
+The financial page's deactivation guard keeps an active write alive until its response settles;
+an uncertain durable expense/rate may leave and recover when the original dossier is reopened.
 
 Forms are native Spartan Signal Forms and emit intent, while the page owns orchestration. The
 feature consumes Organization's public permission service, member transport/helper and regional

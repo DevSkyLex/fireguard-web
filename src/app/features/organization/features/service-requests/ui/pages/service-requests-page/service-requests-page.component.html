@@ -8,7 +8,7 @@
         hlmBtn
         type="button"
         class="mobile-ui:min-h-11"
-        [disabled]="store.writeCallState().status === 'pending'"
+        [disabled]="!store.commandsReady() || store.writeCallState().status === 'pending'"
         (click)="open()"
         data-testid="service-request-new"
         i18n="@@serviceRequest.editor.create"
@@ -17,6 +17,27 @@
       </button>
     }
   </div>
+  @if (store.commandCallState().error) {
+    <div
+      hlmAlert
+      variant="destructive"
+      role="alert"
+      data-testid="service-request-command-restore-error"
+    >
+      <p hlmAlertDescription i18n="@@serviceRequest.command.restoreFailed">
+        Saved maintenance operations could not be restored. Retry before starting another action.
+      </p>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        (click)="store.restoreCommands()"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
   @if (confirmedTitle()) {
     <div hlmAlert role="status">
       <p hlmAlertDescription i18n="@@serviceRequest.page.submitted">
@@ -117,7 +138,13 @@
               Clear filters
             </button>
           } @else if (canCreate()) {
-            <button hlmBtn type="button" (click)="open()" i18n="@@serviceRequest.editor.create">
+            <button
+              hlmBtn
+              type="button"
+              [disabled]="!store.commandsReady() || store.writeCallState().status === 'pending'"
+              (click)="open()"
+              i18n="@@serviceRequest.editor.create"
+            >
               New maintenance request
             </button>
           }
@@ -223,16 +250,18 @@
       />
     }
   }
-  <app-service-request-editor-sheet
-    [organizationId]="organizationId()"
-    [visible]="editorVisible()"
-    [initialEquipmentId]="equipmentId() ?? ''"
-    [initialSiteId]="siteId() ?? ''"
-    [originInspectionId]="originInspectionId() ?? ''"
-    [originNonConformityId]="originNonConformityId() ?? ''"
-    [pending]="store.writeCallState().status === 'pending'"
-    [error]="store.writeCallState().error"
-    (descriptionSubmitted)="create($event)"
-    (dismissed)="editorVisible.set(false)"
-  />
+  @for (owner of [editorOwnerKey()]; track owner) {
+    <app-service-request-editor-sheet
+      [organizationId]="organizationId()"
+      [visible]="editorVisible()"
+      [initialEquipmentId]="equipmentId() ?? ''"
+      [initialSiteId]="siteId() ?? ''"
+      [originInspectionId]="originInspectionId() ?? ''"
+      [originNonConformityId]="originNonConformityId() ?? ''"
+      [pending]="!store.commandsReady() || store.writeCallState().status === 'pending'"
+      [error]="store.writeCallState().error"
+      (descriptionSubmitted)="create($event)"
+      (dismissed)="editorVisible.set(false)"
+    />
+  }
 </div>

@@ -9,11 +9,14 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
+  type Signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { ConnectivityService } from '@core/connectivity';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   ServiceRequestOutput,
@@ -23,13 +26,18 @@ import {
   ServiceRequestStore,
   ServiceRequestTargetStore,
   serviceRequestStoreEvents,
+  type ServiceRequestStoreType,
 } from '@features/organization/features/service-requests/state';
 import {
   serviceRequestStatusLabel,
   serviceRequestPriorityLabel,
 } from '@features/organization/features/service-requests/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import {
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+  REGIONAL_FORMATTING_PORT,
+  type OrganizationMemberAccessPort,
+} from '@features/organization/ports';
 import { OrgDatePipe } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
@@ -110,6 +118,57 @@ export class ServiceRequestDetailPage {
    * @type {ServiceRequestStoreType}
    */
   protected readonly store = inject(ServiceRequestStore);
+  /**
+   * Property sessionRevision
+   * @readonly
+   *
+   * @description
+   * Session replacement invalidates the route's actor-private editor without reading credentials.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
+  private readonly sessionRevision: Signal<number> = inject(AUTH_SESSION_PORT).sessionRevision;
+
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Published member identity distinguishes actors whose organization permissions are identical.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessPort}
+   */
+  private readonly memberAccess: OrganizationMemberAccessPort = inject(
+    ORGANIZATION_MEMBER_ACCESS_PORT,
+  );
+
+  /**
+   * Property editorOwnerKey
+   * @readonly
+   *
+   * @description
+   * Stable dossier, actor and session identity destroys the previous native editor when its owner
+   * changes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly editorOwnerKey: Signal<string> = computed(() =>
+    JSON.stringify([
+      this.organizationId(),
+      this.requestId(),
+      this.sessionRevision(),
+      this.memberAccess.profile()?.userId ?? null,
+    ]),
+  );
   /**
    * Property targets
    * @readonly
@@ -361,6 +420,42 @@ export class ServiceRequestDetailPage {
    */
   protected readonly editorVisible = signal(false);
   /**
+   * Property editorSheet
+   * @readonly
+   *
+   * @description
+   * Active native editor owns the entered draft and its discard confirmation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ServiceRequestEditorSheet | undefined>}
+   */
+  private readonly editorSheet: Signal<ServiceRequestEditorSheet | undefined> =
+    viewChild(ServiceRequestEditorSheet);
+
+  /**
+   * Property retainedConversion
+   * @readonly
+   *
+   * @description
+   * Durable conversion belongs to this dossier and prevents preparing a competing operation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<ReturnType<ServiceRequestStoreType['conversionCommand']>>}
+   */
+  protected readonly retainedConversion: Signal<
+    ReturnType<ServiceRequestStoreType['conversionCommand']>
+  > = computed(() => {
+    const command = this.store.conversionCommand();
+    return command?.organizationId === this.organizationId() &&
+      command.request.id === this.requestId()
+      ? command
+      : null;
+  });
+  /**
    * Property reviewing
    * @readonly
    *
@@ -398,8 +493,12 @@ export class ServiceRequestDetailPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly busy = computed(
-    () => this.store.writeCallState().status === 'pending' || this.editorVisible(),
+  protected readonly busy: Signal<boolean> = computed(
+    () =>
+      !this.store.commandsReady() ||
+      this.store.writeCallState().status === 'pending' ||
+      !!this.retainedConversion() ||
+      this.editorVisible(),
   );
   /**
    * Property statusLabel
@@ -497,6 +596,7 @@ export class ServiceRequestDetailPage {
    */
   public constructor() {
     effect(() => {
+      this.editorOwnerKey();
       const organizationId = this.organizationId(),
         requestId = this.requestId(),
         allowed = this.canRead();
@@ -505,6 +605,7 @@ export class ServiceRequestDetailPage {
         this.editorVisible.set(false);
         this.editing.set(null);
         this.latest.set(null);
+        this.reviewing.set(false);
         this.targets.loadOpenWork(null);
         this.store.read(enabled ? { organizationId, requestId } : null);
       });
@@ -554,6 +655,26 @@ export class ServiceRequestDetailPage {
   //#endregion
 
   //#region Methods
+  /**
+   * Method canLeaveDraft
+   *
+   * @description
+   * Protects accepted writes and ordinary drafts while a durable uncertain conversion remains
+   * recoverable after returning to this dossier.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @returns {boolean | Promise<boolean>} Whether leaving can preserve the current workflow.
+   */
+  public canLeaveDraft(): boolean | Promise<boolean> {
+    if (!this.store.commandsReady() || this.store.writeCallState().status === 'pending')
+      return false;
+    if (!this.editorVisible()) return true;
+    if (this.retainedConversion() && this.store.conversionUncertain()) return true;
+    return this.editorSheet()?.canClose() ?? true;
+  }
+
   /**
    * Method allowed
    *
@@ -621,7 +742,15 @@ export class ServiceRequestDetailPage {
    */
   protected update(data: CreateServiceRequestInput): void {
     const request = this.editing();
-    if (!request || !this.online() || !this.allowed('update', request)) return;
+    if (
+      !request ||
+      !this.online() ||
+      !this.store.commandsReady() ||
+      !!this.retainedConversion() ||
+      this.store.writeCallState().status === 'pending' ||
+      !this.allowed('update', request)
+    )
+      return;
     this.store.write({
       kind: 'update',
       organizationId: this.organizationId(),
@@ -644,7 +773,15 @@ export class ServiceRequestDetailPage {
    */
   protected act(intent: ServiceRequestActionIntent): void {
     const request = this.editing();
-    if (!request || !this.online() || !this.allowed(intent.kind, request)) return;
+    if (
+      !request ||
+      !this.online() ||
+      !this.store.commandsReady() ||
+      !!this.retainedConversion() ||
+      this.store.writeCallState().status === 'pending' ||
+      !this.allowed(intent.kind, request)
+    )
+      return;
     if (intent.kind === 'convert') {
       this.store.write({
         kind: 'convert',
@@ -692,6 +829,8 @@ export class ServiceRequestDetailPage {
       command &&
       command.organizationId === this.organizationId() &&
       command.request.id === this.requestId() &&
+      this.store.commandsReady() &&
+      this.store.writeCallState().status !== 'pending' &&
       this.online() &&
       this.canManage()
     )

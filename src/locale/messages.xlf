@@ -25121,6 +25121,36 @@
           <context context-type="linenumber">114,116</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.time.historyOffline" datatype="html">
+        <source>Correction history is unavailable offline. Reconnect to load earlier versions.</source>
+      </trans-unit>
+      <trans-unit id="intervention.time.reviewOffline" datatype="html">
+        <source>Reconnect to review the current version of this saved correction.</source>
+      </trans-unit>
+      <trans-unit id="intervention.time.reviewLoading" datatype="html">
+        <source>Checking saved correction</source>
+      </trans-unit>
+      <trans-unit id="intervention.time.pageUnavailable" datatype="html">
+        <source> This journal page has not been saved on this device. Reconnect to load it. </source>
+      </trans-unit>
+      <trans-unit id="intervention.time.historyPending" datatype="html">
+        <source> Synchronize or review this pending change before loading correction history. </source>
+      </trans-unit>
+      <trans-unit id="intervention.time.historyLoading" datatype="html">
+        <source>Loading correction history</source>
+      </trans-unit>
+      <trans-unit id="intervention.time.olderVersions" datatype="html">
+        <source> Load earlier versions </source>
+      </trans-unit>
+      <trans-unit id="intervention.time.pages" datatype="html">
+        <source>Time journal pages</source>
+      </trans-unit>
+      <trans-unit id="intervention.time.page" datatype="html">
+        <source> Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> </source>
+      </trans-unit>
+      <trans-unit id="intervention.time.savedTotal" datatype="html">
+        <source> Saved entries: <x id="INTERPOLATION" equiv-text="{{ totalItems() }}"/> </source>
+      </trans-unit>
       <trans-unit id="intervention.time.historyUnavailable" datatype="html">
         <source> No journal has been saved on this device. Reconnect to load its history. </source>
         <context-group purpose="location">
@@ -28311,6 +28341,30 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
           <context context-type="linenumber">261</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.offset" datatype="html">
+        <source>UTC offset for this repeated hour</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.chooseOffset" datatype="html">
+        <source>Choose the actual UTC offset</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.offsetHint" datatype="html">
+        <source> The same local time occurred twice because the clocks changed. Select the UTC offset when the expense actually occurred. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.offsetRequired" datatype="html">
+        <source>This local hour occurs twice. Choose the UTC offset of the actual expense.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.expense.actualDate" datatype="html">
@@ -33181,6 +33235,21 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.html</context>
           <context context-type="linenumber">54,57</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="serviceRequest.command.restoreFailed" datatype="html">
+        <source> Saved maintenance operations could not be restored. Retry before starting another action. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="serviceRequest.command.persistFailed" datatype="html">
+        <source>This conversion could not be saved on this device. Your draft has been kept. Retry to send it.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/services/service-request-conversion/service-request-conversion.service.ts</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.editor.uncertain" datatype="html">
@@ -42693,6 +42762,11 @@
           <context context-type="linenumber">276</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="maintenanceCost.recovery.uncertain" datatype="html"><source>The previous declaration has no confirmed result. Retry it unchanged before creating another.</source></trans-unit>
+      <trans-unit id="maintenanceCost.recovery.failed" datatype="html"><source>Could not recover previous declarations</source></trans-unit>
+      <trans-unit id="maintenanceCost.recovery.failedHint" datatype="html"><source>New declarations stay unavailable until recovery succeeds.</source></trans-unit>
+      <trans-unit id="maintenanceCost.recovery.retry" datatype="html"><source>Retry recovery</source></trans-unit>
+      <trans-unit id="maintenanceCost.page.waitBeforeLeaving" datatype="html"><source>Wait for the current declaration to finish before leaving this page.</source></trans-unit>
     </body>
   </file>
 </xliff>

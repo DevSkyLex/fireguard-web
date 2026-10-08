@@ -49,4 +49,17 @@ export interface InterventionTimeScope {
    * @type {string}
    */
   readonly actorId: string;
+
+  /**
+   * Property manageOthers
+   * @readonly
+   *
+   * @description
+   * Current server capability; partitions broad journal snapshots from beneficiary-only pages.
+   *
+   * @access public
+   *
+   * @type {boolean}
+   */
+  readonly manageOthers?: boolean;
 }

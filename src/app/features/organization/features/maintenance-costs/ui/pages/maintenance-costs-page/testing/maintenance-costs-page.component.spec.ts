@@ -1,4 +1,4 @@
-import { PLATFORM_ID, signal } from '@angular/core';
+import { computed, PLATFORM_ID, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -8,11 +8,17 @@ import { THEME_PORT } from '@core/theme';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { MaintenanceCostService } from '@features/organization/features/maintenance-costs/data-access';
+import {
+  MaintenanceCostService,
+  MaintenanceCostCommandRepository,
+} from '@features/organization/features/maintenance-costs/data-access';
 import type { MaintenanceCostOutput } from '@features/organization/features/maintenance-costs/models';
 import { maintenanceCostFixture } from '@features/organization/features/maintenance-costs/models/maintenance-cost/testing/maintenance-cost.fixture';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import {
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+  REGIONAL_FORMATTING_PORT,
+} from '@features/organization/ports';
 import { MaintenanceExpenseForm } from '../../../forms/maintenance-expense-form';
 import { MaintenancePlanningForm } from '../../../forms/maintenance-planning-form';
 import { MaintenanceCostsPage } from '../maintenance-costs-page.component';
@@ -30,6 +36,7 @@ describe('MaintenanceCostsPage', () => {
   };
   let members: { listAll: ReturnType<typeof vi.fn> };
   const authenticated = signal(true),
+    actor = signal('user-a'),
     sessionRevision = signal(1),
     online = signal(true),
     grants = signal<readonly string[]>([]);
@@ -41,6 +48,21 @@ describe('MaintenanceCostsPage', () => {
       providers: [
         provideRouter([]),
         { provide: PLATFORM_ID, useValue: platform },
+        {
+          provide: ORGANIZATION_MEMBER_ACCESS_PORT,
+          useValue: {
+            profile: computed(() => ({ userId: actor(), organizationId: 'org', isActive: true })),
+          },
+        },
+        {
+          provide: MaintenanceCostCommandRepository,
+          useValue: {
+            captureOwner: vi.fn().mockImplementation(() => actor()),
+            readPending: vi.fn().mockResolvedValue(null),
+            retain: vi.fn().mockResolvedValue(undefined),
+            acknowledge: vi.fn().mockResolvedValue(undefined),
+          },
+        },
         { provide: MaintenanceCostService, useValue: service },
         { provide: OrganizationMemberService, useValue: members },
         {
@@ -72,6 +94,7 @@ describe('MaintenanceCostsPage', () => {
     } as unknown as typeof ResizeObserver;
   });
   beforeEach(() => {
+    actor.set('user-a');
     authenticated.set(true);
     sessionRevision.set(1);
     online.set(true);
@@ -160,6 +183,7 @@ describe('MaintenanceCostsPage', () => {
       resources: [],
     };
     form.submitted.emit({ revision: 0, input });
+    await fixture.whenStable();
     expect(service.writePlanning).toHaveBeenCalledExactlyOnceWith(
       'org',
       cost.interventionId,
@@ -241,6 +265,39 @@ describe('MaintenanceCostsPage', () => {
     await fixture.whenStable();
     expect(old.observed).toBe(false);
     expect(service.readCost).toHaveBeenLastCalledWith('org', other);
+  });
+
+  it('clears private draft text on a same-organization actor replacement with unchanged grants', async () => {
+    await setup();
+    const budget = root().querySelector<HTMLInputElement>('#maintenance-budget');
+    if (!budget) throw new Error('Budget missing');
+    budget.value = '123.000001';
+    budget.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    actor.set('user-b');
+    await fixture.whenStable();
+    expect(root().querySelector<HTMLInputElement>('#maintenance-budget')?.value).toBe('');
+    expect(service.readCost).toHaveBeenCalledTimes(2);
+  });
+
+  it('allows session-loss navigation while an old accepted expense is still pending', async () => {
+    const accepted = new Subject<MaintenanceCostOutput>();
+    service.createExpense.mockReturnValueOnce(accepted);
+    await setup();
+    const form = fixture.debugElement.query(By.directive(MaintenanceExpenseForm))
+      .componentInstance as MaintenanceExpenseForm;
+    form.submitted.emit({
+      amount: '1',
+      description: 'Original',
+      incurredAt: '2025-01-01T00:00:00Z',
+      adjustmentOf: null,
+      workItemId: null,
+    });
+    await vi.waitFor(() => expect(service.createExpense).toHaveBeenCalledTimes(1));
+    expect(fixture.componentInstance.hasUnsavedChanges()).toBe(true);
+    authenticated.set(false);
+    expect(fixture.componentInstance.hasUnsavedChanges()).toBe(false);
+    expect(await fixture.componentInstance.confirmDeactivation()).toBe(true);
   });
   it('prevents offline financial writes while retaining the browser-visible dossier', async () => {
     online.set(false);

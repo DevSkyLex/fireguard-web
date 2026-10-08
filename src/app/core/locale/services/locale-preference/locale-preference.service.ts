@@ -18,12 +18,12 @@ import { isSupportedLocale, stripLocaleFromPathname } from '../../utils';
  * preference. Because localization is build-time (`@angular/localize` serves one
  * compiled bundle per locale under `/en`, `/fr`, `/es`), switching language is a
  * hard navigation to the target locale sub-path, not a runtime string swap.
- *
  * The explicit choice is persisted in the {@link LANG_COOKIE_NAME} cookie so the
  * SSR server serves the right bundle on the next request; clearing it falls back
  * to the browser `Accept-Language` header.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -140,6 +140,7 @@ export class LocalePreferenceService {
    * @since 1.0.0
    *
    * @param {AppLocaleSubPath} subPath - Locale sub-path to switch to.
+   *
    * @returns {void}
    */
   public setLocale(subPath: AppLocaleSubPath): void {
@@ -158,7 +159,7 @@ export class LocalePreferenceService {
     if (subPath === this.current()) return;
 
     const location = this.document.location;
-    this.document.location.assign(
+    this.navigate(
       `/${subPath}${stripLocaleFromPathname(location.pathname)}${location.search}${location.hash}`,
     );
   }
@@ -183,7 +184,7 @@ export class LocalePreferenceService {
     this.cookieService.deleteCookie(LANG_COOKIE_NAME);
 
     const location = this.document.location;
-    this.document.location.assign(
+    this.navigate(
       `${stripLocaleFromPathname(location.pathname)}${location.search}${location.hash}`,
     );
   }
@@ -203,6 +204,7 @@ export class LocalePreferenceService {
    * @since 1.1.0
    *
    * @param {AppLocaleSubPath | 'system'} preference - Persisted display-language preference.
+   *
    * @returns {void}
    */
   public applyPreference(preference: AppLocaleSubPath | 'system'): void {
@@ -219,6 +221,29 @@ export class LocalePreferenceService {
   }
 
   /**
+   * Method navigate
+   * @method navigate
+   *
+   * @description
+   * Resolves a locale-switching destination with the browser URL parser and
+   * navigates only when the resolved URL retains the current origin.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {string} path - Destination path including its query and fragment.
+   *
+   * @returns {void}
+   */
+  private navigate(path: string): void {
+    const location = this.document.location;
+    const destination = new URL(path, location.href);
+    if (destination.origin !== location.origin) return;
+
+    location.assign(destination.href);
+  }
+
+  /**
    * Method fromLocaleId
    * @method fromLocaleId
    *
@@ -230,6 +255,7 @@ export class LocalePreferenceService {
    * @since 1.0.0
    *
    * @param {string} localeId - Framework locale identifier.
+   *
    * @returns {AppLocaleSubPath} The matching locale sub-path.
    */
   private fromLocaleId(localeId: string): AppLocaleSubPath {

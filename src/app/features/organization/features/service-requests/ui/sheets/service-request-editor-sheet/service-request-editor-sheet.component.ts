@@ -1,8 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   input,
+  inject,
   output,
   signal,
   viewChild,
@@ -61,6 +63,32 @@ export type ServiceRequestEditorKind = 'create' | 'update' | ServiceRequestActio
 })
 export class ServiceRequestEditorSheet {
   //#region Properties
+  /**
+   * Property deactivationDecision
+   *
+   * @description
+   * Reuses one explicit discard decision while several route navigations are attempted.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Promise<boolean> | null}
+   */
+  private deactivationDecision: Promise<boolean> | null = null;
+
+  /**
+   * Property deactivationResolver
+   *
+   * @description
+   * Completes the pending router decision when the native confirmation is answered.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {((allowed: boolean) => void) | null}
+   */
+  private deactivationResolver: ((allowed: boolean) => void) | null = null;
+
   /**
    * Property organizationId
    * @readonly
@@ -524,7 +552,80 @@ export class ServiceRequestEditorSheet {
   });
   //#endregion
 
+  //#region Constructor
+  /**
+   * Constructor
+   * @constructor
+   *
+   * @description
+   * Releases a pending discard decision when the sheet owner is destroyed.
+   *
+   * @access public
+   * @since unreleased
+   */
+  public constructor() {
+    inject(DestroyRef).onDestroy(() => this.resolveConfirmation(false));
+  }
+  //#endregion
+
   //#region Methods
+  /**
+   * Method hasDirty
+   *
+   * @description
+   * Exposes the active Signal Forms draft to its route-owning page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @returns {boolean} Whether leaving the visible editor would discard entered changes.
+   */
+  public hasDirty(): boolean {
+    return this.visible() && this.dirty();
+  }
+
+  /**
+   * Method canClose
+   *
+   * @description
+   * Uses the same native discard confirmation for sheet dismissal and guarded navigation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @returns {boolean | Promise<boolean>} Explicit discard decision or the immediate close policy.
+   */
+  public canClose(): boolean | Promise<boolean> {
+    if (this.pending() || this.uncertain()) return false;
+    if (!this.hasDirty()) return true;
+    if (this.deactivationDecision) return this.deactivationDecision;
+    this.confirmation.set('open');
+    this.deactivationDecision = new Promise((resolve) => {
+      this.deactivationResolver = resolve;
+    });
+    return this.deactivationDecision;
+  }
+
+  /**
+   * Method resolveConfirmation
+   *
+   * @description
+   * Completes one navigation decision without changing the typed draft on cancellation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} allowed - Whether the reader explicitly chose to discard entered changes.
+   *
+   * @returns {void} Resolves and releases the current confirmation.
+   */
+  protected resolveConfirmation(allowed: boolean): void {
+    this.confirmation.set('closed');
+    this.deactivationResolver?.(allowed);
+    this.deactivationResolver = null;
+    this.deactivationDecision = null;
+  }
+
   /**
    * Method requestClose
    *
@@ -571,9 +672,13 @@ export class ServiceRequestEditorSheet {
    * @returns {void} Result owned by the request workflow.
    */
   protected discard(): void {
-    this.confirmation.set('closed');
+    if (this.pending() || this.uncertain()) {
+      this.resolveConfirmation(false);
+      return;
+    }
     this.dirty.set(false);
     this.dismissed.emit();
+    this.resolveConfirmation(true);
   }
   //#endregion
 }

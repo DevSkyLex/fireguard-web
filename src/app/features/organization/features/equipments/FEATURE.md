@@ -86,6 +86,10 @@ uses `create=1`. Observed defects reuse the equipment-scoped inspection creation
 No unsupported equipment filter is invented on the intervention list.
 
 Write responses merge with known records rather than erase fields omitted by serialization.
+Accepted equipment writes keep their initiating organization, equipment and selection generation.
+Their confirmed result may update that equipment's local cache, but only the same dossier visit
+can synchronize the active record. The dossier renders and offers actions only for a record
+matching both route identities; changing the route clears transient edits and dialog targets.
 An accepted explicit-null detail patch clears the requested field even when the response
 omits nulls; unrelated omitted fields remain unchanged. Unassignment always clears the
 facility relation. Lifecycle actions respect the terminal retired state.

@@ -149,6 +149,8 @@ export type { InterventionTimeEntryVersion } from './intervention-time/intervent
 export type { InterventionTimeEntry } from './intervention-time/intervention-time-entry.interface';
 export type { WriteInterventionTimeEntryInput } from './intervention-time/write-intervention-time-entry-input.interface';
 export type { InterventionTimeJournalOutput } from './intervention-time/intervention-time-journal-output.interface';
+export type { InterventionTimeJournalPage } from './intervention-time/intervention-time-journal-page.type';
+export type { InterventionTimeEntryVersionsOutput } from './intervention-time/intervention-time-entry-versions-output.interface';
 export type { InterventionTimeEntryOutput } from './intervention-time/intervention-time-entry-output.interface';
 export type { InterventionTimeDraft } from './intervention-time/intervention-time-draft.interface';
 export type { InterventionTimeScope } from './intervention-time/intervention-time-scope.interface';

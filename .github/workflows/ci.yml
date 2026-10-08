@@ -76,6 +76,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: Test deployment validation
         run: node --test .github/scripts/*.test.mjs
+      - name: Test reviewed SSH host trust
+        run: python3 -B .github/scripts/test_ssh_host_trust.py
       - name: Require immutable action pins
         run: python3 -B .github/scripts/check-action-pins.py
       - name: Test immutable API reference validation

@@ -111,6 +111,8 @@ jobs:
       VPS_HOST: ${{ secrets.VPS_HOST }}
       VPS_USER: ${{ secrets.VPS_USER }}
       VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+      ANSIBLE_HOST_KEY_CHECKING: 'true'
       VPS_PORT: ${{ vars.VPS_PORT || '22' }}
 
     steps:
@@ -124,7 +126,7 @@ jobs:
             *) echo "Unsupported deployment branch: $GITHUB_REF_NAME"; exit 1 ;;
           esac
 
-          for value in APP_DIR APP_HOST APP_API_URL APP_MERCURE_HUB_URL COMPOSE_PROJECT_NAME CONTAINER_NAME TRAEFIK_ROUTER_NAME VPS_HOST VPS_USER VPS_SSH_KEY; do
+          for value in APP_DIR APP_HOST APP_API_URL APP_MERCURE_HUB_URL COMPOSE_PROJECT_NAME CONTAINER_NAME TRAEFIK_ROUTER_NAME VPS_HOST VPS_USER VPS_SSH_KEY VPS_SSH_KNOWN_HOSTS; do
             test -n "${!value}" || { echo "$value is required."; exit 1; }
           done
 
@@ -154,6 +156,34 @@ jobs:
         run: |
           python -m pip install -r deployment/ansible/requirements.txt
           ansible-galaxy collection install -r deployment/ansible/requirements.yml
+
+      - name: Configure reviewed SSH host trust
+        shell: bash
+        run: |
+          set -eu
+          known_hosts="$RUNNER_TEMP/fireguard-web-known_hosts"
+          matching_keys="$known_hosts.match"
+          trap 'rm -f "$matching_keys"' EXIT
+          case "$VPS_PORT" in
+            ''|*[!0-9]*) echo "VPS_PORT must be a valid port."; exit 1 ;;
+          esac
+          if [ "${#VPS_PORT}" -gt 5 ]; then
+            echo "VPS_PORT must be a valid port."; exit 1
+          fi
+          port=$((10#$VPS_PORT))
+          if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+            echo "VPS_PORT must be a valid port."; exit 1
+          fi
+          test -n "$VPS_SSH_KNOWN_HOSTS" || { echo "VPS_SSH_KNOWN_HOSTS is required."; exit 1; }
+          printf '%s\n' "$VPS_SSH_KNOWN_HOSTS" > "$known_hosts"
+          chmod 600 "$known_hosts"
+          host_lookup="$VPS_HOST"
+          if [ "$port" -ne 22 ]; then host_lookup="[$VPS_HOST]:$port"; fi
+          ssh-keygen -F "$host_lookup" -f "$known_hosts" > "$matching_keys" ||
+            { echo "No approved SSH host key matches the deployment target."; exit 1; }
+          ssh-keygen -l -f "$matching_keys" > /dev/null 2>&1 ||
+            { echo "The approved SSH host key material is invalid."; exit 1; }
+          printf 'VPS_PORT=%s\n' "$port" >> "$GITHUB_ENV"
 
       - name: Prepare SSH and Ansible inventory
         shell: bash
@@ -185,11 +215,10 @@ jobs:
               "ansible_port": int(port),
               "ansible_python_interpreter": "/usr/bin/python3",
               "ansible_ssh_private_key_file": str(directory / "private-key"),
-              "ansible_ssh_common_args": f"-o UserKnownHostsFile={directory / 'known_hosts'} -o StrictHostKeyChecking=yes",
+              "ansible_ssh_common_args": f"-o UserKnownHostsFile={os.environ['RUNNER_TEMP']}/fireguard-web-known_hosts -o GlobalKnownHostsFile=/dev/null -o StrictHostKeyChecking=yes",
           }}}}}}
           (directory / "inventory.json").write_text(json.dumps(inventory))
           PY
-          ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" > "$directory/known_hosts"
 
       - name: Deploy the verified image with Ansible
         env:

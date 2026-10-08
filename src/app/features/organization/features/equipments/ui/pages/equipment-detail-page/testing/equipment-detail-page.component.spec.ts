@@ -248,6 +248,29 @@ describe('EquipmentDetailPage', () => {
     });
   });
 
+  it('hides a mismatched route record and rejects its next edit and lifecycle action', async () => {
+    await createPage();
+    fixture.componentRef.setInput('equipmentId', 'equipment-2');
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[data-testid="equipment-detail-info"]')).toBeNull();
+    fixture.componentInstance['onEditTargetChanged']('name');
+    fixture.componentInstance['onDetailsChanged']({ name: 'Wrong dossier' });
+    fixture.componentInstance['confirmDecommission']();
+    expect(update).not.toHaveBeenCalled();
+    expect(decommission).not.toHaveBeenCalled();
+
+    selectedEquipment.set(equipment({ id: 'equipment-2', name: 'Pump B' }));
+    await fixture.whenStable();
+    fixture.componentInstance['onEditTargetChanged']('name');
+    fixture.componentInstance['onDetailsChanged']({ name: 'Updated B' });
+    expect(update).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      equipmentId: 'equipment-2',
+      input: { name: 'Updated B' },
+    });
+    expect(setTitle).toHaveBeenLastCalledWith('Pump B');
+  });
+
   it('should resolve the equipment title once the record lands', async () => {
     await createPage();
 

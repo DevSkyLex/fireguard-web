@@ -156,6 +156,7 @@ describe('InterventionSyncService', () => {
           provide: InterventionTimeService,
           useValue: {
             journal: vi.fn().mockReturnValue(of({ entries: [] })),
+            getEntry: vi.fn(),
             createEntry: vi.fn().mockReturnValue(of({})),
             correctEntry: vi.fn().mockReturnValue(of({})),
             cancelEntry: vi.fn().mockReturnValue(of(undefined)),
@@ -531,28 +532,28 @@ describe('InterventionSyncService', () => {
         detail: 'Time entry changed.',
       })),
     );
-    vi.mocked(time.journal).mockReturnValue(
+    vi.mocked(time.getEntry).mockReturnValue(
       of({
         '@id': '/api/intervention-work-items/task/time-entries',
         '@type': 'InterventionTimeJournal',
-        workItemId: 'task',
-        entries: [
-          {
-            id: 'entry',
-            workItemId: 'task',
-            memberId: 'member',
-            workedOn: '2026-09-16',
-            minutes: 90,
-            note: 'Server note',
-            revision: 3,
-            cancelled: false,
-            createdBy: 'member',
-            updatedBy: 'manager',
-            createdAt: '2026-09-16T09:00:00Z',
-            updatedAt: '2026-09-16T10:00:00Z',
-            versions: [],
-          },
-        ],
+        id: 'entry',
+        entry: {
+          id: 'entry',
+          workItemId: 'task',
+          memberId: 'member',
+          workedOn: '2026-09-16',
+          minutes: 90,
+          note: 'Server note',
+          revision: 3,
+          cancelled: false,
+          createdBy: 'member',
+          updatedBy: 'manager',
+          createdAt: '2026-09-16T09:00:00Z',
+          updatedAt: '2026-09-16T10:00:00Z',
+          versions: [],
+          totalVersions: 3,
+          nextBeforeRevision: 3,
+        },
       }),
     );
     const input = {

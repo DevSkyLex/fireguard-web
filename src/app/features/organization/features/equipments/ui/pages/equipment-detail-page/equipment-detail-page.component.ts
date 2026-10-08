@@ -224,6 +224,26 @@ export class EquipmentDetailPage {
   public readonly organizationId: InputSignal<string> = input.required<string>();
 
   /**
+   * Property selectedEquipment
+   * @readonly
+   *
+   * @description
+   * Only exposes the active record when it belongs to this route's organization and equipment.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<EquipmentOutput | null>}
+   */
+  protected readonly selectedEquipment: Signal<EquipmentOutput | null> = computed(() => {
+    const equipment = this.activeEquipmentStore.selectedEquipment();
+    return equipment?.id === this.equipmentId() &&
+      equipment.organizationId === this.organizationId()
+      ? equipment
+      : null;
+  });
+
+  /**
    * Property equipmentId
    * @readonly
    *
@@ -301,7 +321,7 @@ export class EquipmentDetailPage {
     () =>
       this.canReadWork() &&
       this.permissions.hasPermission(ORGANIZATION_PERMISSION.INTERVENTIONS_WRITE) &&
-      this.activeEquipmentStore.selectedEquipment()?.status !== 'decommissioned',
+      this.selectedEquipment()?.status !== 'decommissioned',
   );
 
   /**
@@ -520,7 +540,7 @@ export class EquipmentDetailPage {
    * @type {Signal<string>}
    */
   protected readonly criticalityLabel: Signal<string> = computed(() => {
-    const criticality = this.activeEquipmentStore.selectedEquipment()?.criticality;
+    const criticality = this.selectedEquipment()?.criticality;
     const labels = {
       low: $localize`:@@equipment.criticality.low:Low`,
       medium: $localize`:@@equipment.criticality.medium:Medium`,
@@ -907,7 +927,7 @@ export class EquipmentDetailPage {
    * @type {Signal<string>}
    */
   protected readonly title: Signal<string> = computed<string>(() => {
-    const equipment: EquipmentOutput | null = this.activeEquipmentStore.selectedEquipment();
+    const equipment: EquipmentOutput | null = this.selectedEquipment();
 
     return equipment
       ? buildEquipmentTitle(
@@ -935,7 +955,7 @@ export class EquipmentDetailPage {
     readonly label: string;
     readonly run: () => void;
   } | null> = computed(() => {
-    const equipment: EquipmentOutput | null = this.activeEquipmentStore.selectedEquipment();
+    const equipment: EquipmentOutput | null = this.selectedEquipment();
     if (!equipment) return null;
 
     switch (equipment.status) {
@@ -972,7 +992,7 @@ export class EquipmentDetailPage {
    * @type {Signal<boolean>}
    */
   protected readonly canDecommission: Signal<boolean> = computed<boolean>(
-    () => this.activeEquipmentStore.selectedEquipment()?.status !== 'decommissioned',
+    () => this.selectedEquipment()?.status !== 'decommissioned',
   );
 
   /**
@@ -1056,7 +1076,20 @@ export class EquipmentDetailPage {
     registerPageTabs(this.pageTabs, this.pageTabsService, destroyRef);
 
     effect(() => {
-      const equipment = this.activeEquipmentStore.selectedEquipment();
+      this.organizationId();
+      this.equipmentId();
+      untracked(() => {
+        this.editState.set(IDLE_EDIT_STATE);
+        this.assignFacilityDialogVisible.set(false);
+        this.decommissionDialogVisible.set(false);
+        this.stagedReplacement.set(null);
+        this.replacementVisible.set(false);
+        this.tabsLoaded.clear();
+      });
+    });
+
+    effect(() => {
+      const equipment = this.selectedEquipment();
       const allowed = this.canReadWork();
       if (
         !isPlatformBrowser(this.platformId) ||
@@ -1070,7 +1103,7 @@ export class EquipmentDetailPage {
     });
 
     effect(() => {
-      const equipment = this.activeEquipmentStore.selectedEquipment();
+      const equipment = this.selectedEquipment();
       const permitted = this.canReadInspections();
       if (
         !isPlatformBrowser(this.platformId) ||
@@ -1381,7 +1414,8 @@ export class EquipmentDetailPage {
    */
   protected onDetailsChanged(patch: UpdateEquipmentInput): void {
     const target: EquipmentEditTarget | null = this.editState().open;
-    if (target === null) return;
+    if (target === null || !this.selectedEquipment() || isCallPending(this.store.updateCallState()))
+      return;
 
     this.editState.set({ open: target, saving: target, failed: null, failure: null });
     this.store.update({
@@ -1460,7 +1494,7 @@ export class EquipmentDetailPage {
    * @returns {void}
    */
   private runLifecycle(run: () => void): void {
-    if (this.store.isChangingLifecycle()) return;
+    if (this.store.isChangingLifecycle() || !this.selectedEquipment()) return;
 
     run();
   }

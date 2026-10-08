@@ -3,9 +3,9 @@ import type {
   MaintenanceCostOutput,
   MaintenanceCurrencyOutput,
   MaintenanceRateOutput,
+  MaintenanceCostCommand,
 } from '@features/organization/features/maintenance-costs/models';
 import type { MemberSelectOption } from '@features/organization/models';
-import type { MaintenanceCostCommand } from './maintenance-cost-command.type';
 
 /**
  * Interface MaintenanceCostScope
@@ -68,6 +68,26 @@ export type MaintenanceCostMutation =
  * Route-owned private projections and explicit independently tracked asynchronous operations.
  */
 export interface MaintenanceCostState {
+  /**
+   * Property scopeUserId
+   * @readonly
+   *
+   * @description
+   * Non-secret actor captured when the private display scope is established.
+   *
+   * @type {string | null}
+   */
+  readonly scopeUserId: string | null;
+  /**
+   * Property journalCallState
+   * @readonly
+   *
+   * @description
+   * Recovery must finish before a new physical declaration is available.
+   *
+   * @type {CallState}
+   */
+  readonly journalCallState: CallState;
   /**
    * Property scope
    * @readonly

@@ -107,8 +107,13 @@ The server rechecks every planning mutation transactionally. A confirmation retr
 the captured command and revision with the exact presented token, not edited form state.
 
 Time journals and drafts are account-scoped IndexedDB records separate from operational
-workspace snapshots. Authorized journals are prefetched with saved workspaces; missing
-offline history remains explicitly unknown. Stable entry IDs and independent revisions
+workspace snapshots. Journal entries use explicit bounded server pages; embedded revisions contain
+only the current version. Correction history loads only on expansion and follows exclusive revision
+cursors with independent request states and retry. Preparation caches only the first authorized
+entry page. Cached pages preserve their page metadata and beneficiary audience, never replace a
+legacy complete snapshot, and never imply that uncached pages or full revision history are available.
+Missing offline pages remain explicitly unknown; earlier revisions require reconnection.
+Stable entry IDs and independent revisions
 make replay idempotent. Drafts survive failed writes; failed device persistence retains
 the latest input in memory and guards dismissal. A native browser departure warning is requested
 only after local persistence fails and the latest draft differs from its confirmed device snapshot;

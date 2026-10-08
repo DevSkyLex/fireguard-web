@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   input,
   output,
@@ -8,6 +9,7 @@ import {
   untracked,
   type InputSignal,
   type OutputEmitterRef,
+  type Signal,
   type WritableSignal,
 } from '@angular/core';
 import {
@@ -30,6 +32,7 @@ import { isMaintenanceAmount } from '@features/organization/features/maintenance
 import { HlmButton } from '@shared/ui/button';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmSelectImports } from '@shared/ui/select';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmTextarea } from '@shared/ui/textarea';
 
@@ -68,10 +71,21 @@ interface ExpenseDraft {
    * @type {string}
    */
   incurredAt: string;
+
+  /**
+   * Property offsetChoice
+   *
+   * @description
+   * Explicit UTC offset distinguishing the two possible instants of a repeated local hour.
+   *
+   * @type {string}
+   */
+  offsetChoice: string;
 }
 
 /**
  * Class MaintenanceExpenseForm
+ * @class MaintenanceExpenseForm
  *
  * @description
  * Emits a motivated append-only expense or signed correction, leaving replay identity to the owning
@@ -81,9 +95,19 @@ interface ExpenseDraft {
   selector: 'app-maintenance-expense-form',
   templateUrl: './maintenance-expense-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormField, FormRoot, HlmButton, HlmInput, HlmSpinner, HlmTextarea, ...HlmFieldImports],
+  imports: [
+    FormField,
+    FormRoot,
+    HlmButton,
+    HlmInput,
+    HlmSpinner,
+    HlmTextarea,
+    ...HlmFieldImports,
+    ...HlmSelectImports,
+  ],
 })
 export class MaintenanceExpenseForm {
+  //#region Properties
   /**
    * Property scope
    * @readonly
@@ -219,6 +243,49 @@ export class MaintenanceExpenseForm {
     amount: '',
     description: '',
     incurredAt: '',
+    offsetChoice: '',
+  });
+
+  /**
+   * Property possibleTimes
+   * @readonly
+   *
+   * @description
+   * Keeps every possible instant in the organization timezone while rejecting normalized local
+   * hours that never occurred.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly DateTime[]>}
+   */
+  protected readonly possibleTimes: Signal<readonly DateTime[]> = computed(() => {
+    const local: string = this.draft().incurredAt.replace(/\.0{1,3}$/, '');
+    const date: DateTime = DateTime.fromISO(local, { zone: this.timezone() });
+    return date.isValid &&
+      /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}(?::\d{2})?$/.test(local) &&
+      date.toFormat(local.length === 16 ? "yyyy-MM-dd'T'HH:mm" : "yyyy-MM-dd'T'HH:mm:ss") === local
+      ? date.getPossibleOffsets()
+      : [];
+  });
+
+  /**
+   * Property resolvedTime
+   * @readonly
+   *
+   * @description
+   * Repeated local hours stay unresolved until their actual UTC offset is explicitly selected.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<DateTime | null>}
+   */
+  protected readonly resolvedTime: Signal<DateTime | null> = computed(() => {
+    const times: readonly DateTime[] = this.possibleTimes();
+    return times.length === 1
+      ? (times[0] ?? null)
+      : (times.find((date) => date.toFormat('ZZ') === this.draft().offsetChoice) ?? null);
   });
   /**
    * Property expenseForm
@@ -260,20 +327,26 @@ export class MaintenanceExpenseForm {
     required(path.incurredAt, {
       message: $localize`:@@maintenanceCost.expense.dateRequired:Enter the actual expense date and time.`,
     });
-    validate(path.incurredAt, ({ value }) => {
-      const local = value().replace(/\.0{1,3}$/, '');
-      const date = DateTime.fromISO(local, { zone: this.timezone() });
-      return date.isValid &&
-        /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}(?::\d{2})?$/.test(local) &&
-        date.toFormat(local.length === 16 ? "yyyy-MM-dd'T'HH:mm" : "yyyy-MM-dd'T'HH:mm:ss") ===
-          local &&
-        date.toMillis() <= DateTime.now().toMillis()
+    validate(path.incurredAt, () => {
+      const date: DateTime | null =
+        this.resolvedTime() ??
+        this.possibleTimes().find((candidate) => candidate <= DateTime.now()) ??
+        null;
+      return date !== null && date <= DateTime.now()
         ? null
         : {
             kind: 'date',
             message: $localize`:@@maintenanceCost.expense.actualDate:Enter a valid actual date that is not in the future.`,
           };
     });
+    validate(path.offsetChoice, () =>
+      this.possibleTimes().length <= 1 || this.resolvedTime() !== null
+        ? null
+        : {
+            kind: 'offset',
+            message: $localize`:@@maintenanceCost.expense.offsetRequired:This local hour occurs twice. Choose the UTC offset of the actual expense.`,
+          },
+    );
   });
   /**
    * Property seededScope
@@ -287,6 +360,22 @@ export class MaintenanceExpenseForm {
    * @type {string}
    */
   private seededScope: string = '';
+
+  /**
+   * Property offsetTime
+   *
+   * @description
+   * Local timestamp and timezone already considered; changing either clears the offset decision.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {string}
+   */
+  private offsetTime: string = '';
+  //#endregion
+
+  //#region Constructor
   /**
    * Constructor
    * @constructor
@@ -311,12 +400,23 @@ export class MaintenanceExpenseForm {
           amount: '',
           description: '',
           incurredAt: DateTime.now().setZone(timezone).toFormat("yyyy-MM-dd'T'HH:mm:ss"),
+          offsetChoice: '',
         }),
       );
     });
+    effect(() => {
+      const identity: string = `${this.timezone()}/${this.draft().incurredAt}`;
+      if (identity === this.offsetTime) return;
+      this.offsetTime = identity;
+      untracked(() => this.draft.update((draft) => ({ ...draft, offsetChoice: '' })));
+    });
   }
+  //#endregion
+
+  //#region Methods
   /**
    * Method submit
+   * @method submit
    *
    * @description
    * Validates the native form and emits exact strings with only the applicable resource tuple.
@@ -334,9 +434,8 @@ export class MaintenanceExpenseForm {
     if (this.expenseForm().invalid() || this.expenseForm().disabled()) return;
     const value = this.draft(),
       original = this.originalExpense();
-    const incurredAt = DateTime.fromISO(value.incurredAt, { zone: this.timezone() })
-      .toUTC()
-      .toISO({ suppressMilliseconds: true });
+    const incurredAt: string | null =
+      this.resolvedTime()?.toUTC().toISO({ suppressMilliseconds: true }) ?? null;
     if (!incurredAt) return;
     this.submitted.emit({
       amount: value.amount.trim(),
@@ -346,4 +445,5 @@ export class MaintenanceExpenseForm {
       workItemId: original?.workItemId ?? null,
     });
   }
+  //#endregion
 }

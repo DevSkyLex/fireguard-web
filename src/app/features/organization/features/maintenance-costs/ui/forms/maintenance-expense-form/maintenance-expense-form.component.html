@@ -56,6 +56,43 @@
           }
         }
       </div>
+      @if (possibleTimes().length > 1) {
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            for="maintenance-expense-offset"
+            i18n="@@maintenanceCost.expense.offset"
+            >UTC offset for this repeated hour</label
+          >
+          <hlm-select [formField]="expenseForm.offsetChoice">
+            <hlm-select-trigger
+              buttonId="maintenance-expense-offset"
+              class="w-full mobile-ui:min-h-11"
+              ><hlm-select-value
+                placeholder="Choose the actual UTC offset"
+                i18n-placeholder="@@maintenanceCost.expense.chooseOffset"
+            /></hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-group>
+                @for (date of possibleTimes(); track date.toMillis()) {
+                  <hlm-select-item [value]="date.toFormat('ZZ')"
+                    >UTC {{ date.toFormat('ZZ') }}</hlm-select-item
+                  >
+                }
+              </hlm-select-group>
+            </hlm-select-content>
+          </hlm-select>
+          <p hlmFieldDescription i18n="@@maintenanceCost.expense.offsetHint">
+            The same local time occurred twice because the clocks changed. Select the UTC offset
+            when the expense actually occurred.
+          </p>
+          @if (expenseForm.offsetChoice().touched()) {
+            @for (error of expenseForm.offsetChoice().errors(); track error) {
+              <hlm-field-error>{{ error.message }}</hlm-field-error>
+            }
+          }
+        </div>
+      }
     </div>
     <div hlmField>
       <label

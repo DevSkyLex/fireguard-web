@@ -7,6 +7,49 @@
     i18n="@@serviceRequest.detail.back"
     >Maintenance requests</a
   >
+  @if (store.commandCallState().error) {
+    <div
+      hlmAlert
+      variant="destructive"
+      role="alert"
+      data-testid="service-request-command-restore-error"
+    >
+      <p hlmAlertDescription i18n="@@serviceRequest.command.restoreFailed">
+        Saved maintenance operations could not be restored. Retry before starting another action.
+      </p>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        (click)="store.restoreCommands()"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (retainedConversion() && store.conversionUncertain() && !editorVisible()) {
+    <div hlmAlert role="status" data-testid="service-request-conversion-recovery">
+      <p hlmAlertDescription i18n="@@serviceRequest.editor.uncertain">
+        The work link has not been confirmed. Retry this conversion before choosing another action.
+      </p>
+      <button
+        hlmBtn
+        type="button"
+        class="mobile-ui:min-h-11"
+        [disabled]="
+          !store.commandsReady() ||
+          store.writeCallState().status === 'pending' ||
+          !online() ||
+          !canManage()
+        "
+        (click)="retryConversion()"
+        i18n="@@serviceRequest.editor.retryConversion"
+      >
+        Retry the same conversion
+      </button>
+    </div>
+  }
   @if (
     (store.readCallState().status === 'pending' || store.readCallState().status === 'idle') &&
     !current()
@@ -230,28 +273,30 @@
       </div>
     </div>
   }
-  <app-service-request-editor-sheet
-    [organizationId]="organizationId()"
-    [visible]="editorVisible()"
-    [kind]="kind()"
-    [request]="editing()"
-    [pending]="store.writeCallState().status === 'pending'"
-    [uncertain]="store.conversionUncertain()"
-    [canRetryConversion]="online() && canManage()"
-    [error]="store.writeCallState().error"
-    [conflict]="conflict()"
-    [latestRequest]="latest()"
-    [canAcceptRevision]="canAcceptLatest()"
-    [openWork]="compatibleWork()"
-    [workPending]="targets.openWorkCallState().status === 'pending'"
-    [workError]="targets.openWorkCallState().error"
-    [workReadable]="canReadWork()"
-    (descriptionSubmitted)="update($event)"
-    (actionSubmitted)="act($event)"
-    (dismissed)="editorVisible.set(false)"
-    (refreshRequested)="review()"
-    (revisionAccepted)="acceptRevision()"
-    (retryConversionRequested)="retryConversion()"
-    (retryWorkRequested)="retryWork()"
-  />
+  @for (owner of [editorOwnerKey()]; track owner) {
+    <app-service-request-editor-sheet
+      [organizationId]="organizationId()"
+      [visible]="editorVisible()"
+      [kind]="kind()"
+      [request]="editing()"
+      [pending]="!store.commandsReady() || store.writeCallState().status === 'pending'"
+      [uncertain]="store.conversionUncertain()"
+      [canRetryConversion]="online() && canManage()"
+      [error]="store.writeCallState().error"
+      [conflict]="conflict()"
+      [latestRequest]="latest()"
+      [canAcceptRevision]="canAcceptLatest()"
+      [openWork]="compatibleWork()"
+      [workPending]="targets.openWorkCallState().status === 'pending'"
+      [workError]="targets.openWorkCallState().error"
+      [workReadable]="canReadWork()"
+      (descriptionSubmitted)="update($event)"
+      (actionSubmitted)="act($event)"
+      (dismissed)="editorVisible.set(false)"
+      (refreshRequested)="review()"
+      (revisionAccepted)="acceptRevision()"
+      (retryConversionRequested)="retryConversion()"
+      (retryWorkRequested)="retryWork()"
+    />
+  }
 </div>

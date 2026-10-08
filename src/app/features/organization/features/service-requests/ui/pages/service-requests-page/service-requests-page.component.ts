@@ -9,12 +9,15 @@ import {
   input,
   signal,
   untracked,
+  viewChild,
+  type Signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { ConnectivityService } from '@core/connectivity';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import type {
   ServiceRequestStatus,
@@ -29,7 +32,11 @@ import {
   serviceRequestPriorityLabel,
 } from '@features/organization/features/service-requests/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import {
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+  REGIONAL_FORMATTING_PORT,
+  type OrganizationMemberAccessPort,
+} from '@features/organization/ports';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { OrgDatePipe } from '@shared/regional-format';
 import { StateIllustration } from '@shared/state-illustration';
@@ -168,6 +175,56 @@ export class ServiceRequestsPage {
    * @type {ServiceRequestStoreType}
    */
   protected readonly store = inject(ServiceRequestStore);
+  /**
+   * Property sessionRevision
+   * @readonly
+   *
+   * @description
+   * Session replacement invalidates the route's actor-private editor without reading credentials.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<number>}
+   */
+  private readonly sessionRevision: Signal<number> = inject(AUTH_SESSION_PORT).sessionRevision;
+
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Published member identity distinguishes actors whose organization permissions are identical.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessPort}
+   */
+  private readonly memberAccess: OrganizationMemberAccessPort = inject(
+    ORGANIZATION_MEMBER_ACCESS_PORT,
+  );
+
+  /**
+   * Property editorOwnerKey
+   * @readonly
+   *
+   * @description
+   * Stable route, actor and session identity destroys the previous native editor when its owner
+   * changes.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly editorOwnerKey: Signal<string> = computed(() =>
+    JSON.stringify([
+      this.organizationId(),
+      this.sessionRevision(),
+      this.memberAccess.profile()?.userId ?? null,
+    ]),
+  );
   /**
    * Property permissions
    * @readonly
@@ -342,6 +399,20 @@ export class ServiceRequestsPage {
    */
   protected readonly editorVisible = signal(false);
   /**
+   * Property editorSheet
+   * @readonly
+   *
+   * @description
+   * Active native editor owns the entered draft and its discard confirmation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Signal<ServiceRequestEditorSheet | undefined>}
+   */
+  private readonly editorSheet: Signal<ServiceRequestEditorSheet | undefined> =
+    viewChild(ServiceRequestEditorSheet);
+  /**
    * Property confirmedTitle
    * @readonly
    *
@@ -415,6 +486,7 @@ export class ServiceRequestsPage {
   public constructor() {
     effect(() => {
       const organizationId = this.organizationId();
+      this.editorOwnerKey();
       untracked(() => {
         this.page.set(1);
         this.search.set('');
@@ -426,6 +498,7 @@ export class ServiceRequestsPage {
       if (!organizationId) return;
     });
     effect(() => {
+      this.editorOwnerKey();
       const organizationId = this.organizationId(),
         equipmentId = this.equipmentId(),
         siteId = this.siteId(),
@@ -433,7 +506,9 @@ export class ServiceRequestsPage {
         search = this.search(),
         status = this.status();
       const enabled = this.canRead() && this.online() && isPlatformBrowser(this.platformId);
-      untracked(() =>
+      const commandsEnabled =
+        (this.canRead() || this.canCreate()) && isPlatformBrowser(this.platformId);
+      untracked(() => {
         this.store.load(
           enabled
             ? {
@@ -445,14 +520,21 @@ export class ServiceRequestsPage {
                 ...(siteId ? { siteId } : {}),
               }
             : null,
-        ),
-      );
+        );
+        if (commandsEnabled && organizationId) this.store.activateCommands(organizationId);
+      });
     });
     effect(() => {
       const create = this.createParam(),
         allowed = this.canCreate(),
         organizationId = this.organizationId();
-      if (create !== '1' || !allowed || !organizationId || !isPlatformBrowser(this.platformId))
+      if (
+        create !== '1' ||
+        !allowed ||
+        !organizationId ||
+        !this.store.commandsReady() ||
+        !isPlatformBrowser(this.platformId)
+      )
         return;
       untracked(() => this.editorVisible.set(true));
     });
@@ -475,6 +557,25 @@ export class ServiceRequestsPage {
   //#endregion
 
   //#region Methods
+  /**
+   * Method canLeaveDraft
+   *
+   * @description
+   * Keeps accepted writes and entered creation drafts alive during router or browser Back
+   * navigation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @returns {boolean | Promise<boolean>} Whether the route may leave its current editor.
+   */
+  public canLeaveDraft(): boolean | Promise<boolean> {
+    if (!this.store.commandsReady() || this.store.writeCallState().status === 'pending')
+      return false;
+    if (!this.editorVisible()) return true;
+    return this.editorSheet()?.canClose() ?? true;
+  }
+
   /**
    * Method searchChanged
    *
@@ -532,7 +633,12 @@ export class ServiceRequestsPage {
    * @returns {void} Result owned by the request workflow.
    */
   protected open(): void {
-    if (!this.canCreate() || this.store.writeCallState().status === 'pending') return;
+    if (
+      !this.canCreate() ||
+      !this.store.commandsReady() ||
+      this.store.writeCallState().status === 'pending'
+    )
+      return;
     this.store.clearWrite();
     this.editorVisible.set(true);
   }
@@ -550,7 +656,13 @@ export class ServiceRequestsPage {
    * @returns {void} Result owned by the request workflow.
    */
   protected create(data: CreateServiceRequestInput): void {
-    if (!this.canCreate() || !this.online()) return;
+    if (
+      !this.canCreate() ||
+      !this.online() ||
+      !this.store.commandsReady() ||
+      this.store.writeCallState().status === 'pending'
+    )
+      return;
     this.store.write({ kind: 'create', organizationId: this.organizationId(), input: data });
   }
   /**

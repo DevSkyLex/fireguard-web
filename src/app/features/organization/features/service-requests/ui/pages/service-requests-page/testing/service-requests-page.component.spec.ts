@@ -1,12 +1,29 @@
-import { PLATFORM_ID, getDebugNode, signal, type DebugElement } from '@angular/core';
+import { Location } from '@angular/common';
+import { provideLocationMocks } from '@angular/common/testing';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  PLATFORM_ID,
+  computed,
+  getDebugNode,
+  signal,
+  type DebugElement,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  provideRouter,
+  Router,
+  withComponentInputBinding,
+} from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, type Observable } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { ConnectivityService } from '@core/connectivity';
+import { FeedbackService } from '@core/feedback';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { idleCallState } from '@core/request-state';
 import { THEME_PORT } from '@core/theme';
@@ -21,18 +38,24 @@ import { FacilityOptionPicker } from '@features/organization/features/facilities
 import { ServiceRequestService } from '@features/organization/features/service-requests/data-access';
 import type { ServiceRequestOutput } from '@features/organization/features/service-requests/models';
 import { serviceRequestFixture } from '@features/organization/features/service-requests/models/service-request/testing/service-request.fixture';
+import { SERVICE_REQUEST_ROUTES } from '@features/organization/features/service-requests/service-requests.routes';
 import {
   ServiceRequestStore,
   serviceRequestStoreEvents,
 } from '@features/organization/features/service-requests/state';
+import { serviceRequestContext } from '@features/organization/features/service-requests/state/service-request/testing/service-request-context.fixture';
 import { ServiceRequestEquipmentPicker } from '@features/organization/features/service-requests/ui/components';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import { OrganizationMemberAccessStore } from '@features/organization/state';
 import { CollectionPagination } from '@shared/collection-pagination';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
 import { ServiceRequestForm } from '../../../forms/service-request-form/service-request-form.component';
 import { ServiceRequestEditorSheet } from '../../../sheets/service-request-editor-sheet/service-request-editor-sheet.component';
 import { ServiceRequestsPage } from '../service-requests-page.component';
+
+@Component({ template: 'Previous page', changeDetection: ChangeDetectionStrategy.OnPush })
+class PreviousPage {}
 
 describe('ServiceRequestsPage', () => {
   const read = ORGANIZATION_PERMISSION.SERVICE_REQUESTS_READ;
@@ -60,9 +83,13 @@ describe('ServiceRequestsPage', () => {
       readonly equipmentId?: string;
       readonly siteId?: string;
       readonly mobile?: boolean;
+      readonly routed?: boolean;
+      readonly realEditor?: boolean;
     } = {},
   ) {
     const permissions = signal<ReadonlySet<string>>(new Set(options.permissions ?? [read, create]));
+    const context = serviceRequestContext(computed(() => [...permissions()]));
+    if (options.platform === 'server') context.journal.browser = false;
     const mobile = signal(options.mobile ?? false);
     const request = serviceRequestFixture();
     const api = {
@@ -75,22 +102,51 @@ describe('ServiceRequestsPage', () => {
       cancel: vi.fn(),
       convert: vi.fn(),
     };
-    const equipment = { list: vi.fn(), listByFacility: vi.fn(), get: vi.fn(), openWork: vi.fn() };
-    const facilities = { list: vi.fn(), get: vi.fn() };
-    const types = { list: vi.fn(), listAll: vi.fn() };
+    const equipment = {
+      list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+      listByFacility: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+      get: vi.fn(),
+      openWork: vi.fn(),
+    };
+    const facilities = {
+      list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+      get: vi.fn(),
+    };
+    const types = { list: vi.fn(), listAll: vi.fn().mockReturnValue(of([])) };
     TestBed.configureTestingModule({
       imports: [ServiceRequestsPage],
       providers: [
-        provideRouter([]),
+        provideRouter(
+          options.routed
+            ? [
+                { path: 'before', component: PreviousPage },
+                {
+                  path: 'organizations/:organizationId/service-requests',
+                  children: SERVICE_REQUEST_ROUTES,
+                },
+              ]
+            : [],
+          withComponentInputBinding(),
+        ),
+        provideLocationMocks(),
+        ...context.providers,
         { provide: PLATFORM_ID, useValue: options.platform ?? 'browser' },
         { provide: ServiceRequestService, useValue: api },
         { provide: EquipmentService, useValue: equipment },
         { provide: EquipmentTypeService, useValue: types },
         { provide: FacilityService, useValue: facilities },
         { provide: THEME_PORT, useValue: { resolvedTheme: signal('light') } },
+        { provide: FeedbackService, useValue: { warn: vi.fn() } },
+        {
+          provide: OrganizationMemberAccessStore,
+          useValue: { ensureAccessResolved: () => of(undefined) },
+        },
         {
           provide: OrganizationPermissionService,
-          useValue: { hasPermission: (permission: string) => permissions().has(permission) },
+          useValue: {
+            hasPermission: (permission: string) => permissions().has(permission),
+            canAccessOrganization: () => true,
+          },
         },
         { provide: ConnectivityService, useValue: { isOnline: signal(true) } },
         {
@@ -107,20 +163,34 @@ describe('ServiceRequestsPage', () => {
         },
       ],
     });
-    TestBed.overrideComponent(ServiceRequestEditorSheet, { set: { template: '', imports: [] } });
-    const fixture = TestBed.createComponent(ServiceRequestsPage);
-    fixture.componentRef.setInput('organizationId', 'org');
-    fixture.componentRef.setInput('equipmentId', options.equipmentId ?? '');
-    fixture.componentRef.setInput('siteId', options.siteId ?? '');
-    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    if (!options.realEditor)
+      TestBed.overrideComponent(ServiceRequestEditorSheet, { set: { template: '', imports: [] } });
+    const harness = options.routed ? await RouterTestingHarness.create('/before') : null;
+    if (harness) TestBed.inject(Router).setUpLocationChangeListener();
+    const routedPage = harness
+      ? await harness.navigateByUrl(
+          '/organizations/org/service-requests?create=1',
+          ServiceRequestsPage,
+        )
+      : null;
+    const fixture = harness?.fixture ?? TestBed.createComponent(ServiceRequestsPage);
+    if (!harness) {
+      fixture.componentRef.setInput('organizationId', 'org');
+      fixture.componentRef.setInput('equipmentId', options.equipmentId ?? '');
+      fixture.componentRef.setInput('siteId', options.siteId ?? '');
+    }
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+    if (!options.routed) navigate.mockResolvedValue(true);
     await fixture.whenStable();
-    const element = fixture.nativeElement as HTMLElement;
-    const sheet = fixture.debugElement.query(By.directive(ServiceRequestEditorSheet))
-      .componentInstance as ServiceRequestEditorSheet;
+    const element = (harness?.routeNativeElement ?? fixture.nativeElement) as HTMLElement;
     return {
       fixture,
       element,
-      sheet,
+      get sheet(): ServiceRequestEditorSheet {
+        return (harness?.routeDebugElement ?? fixture.debugElement).query(
+          By.directive(ServiceRequestEditorSheet),
+        ).componentInstance as ServiceRequestEditorSheet;
+      },
       api,
       equipment,
       facilities,
@@ -128,6 +198,9 @@ describe('ServiceRequestsPage', () => {
       permissions,
       mobile,
       navigate,
+      context,
+      harness,
+      page: routedPage,
     };
   }
 
@@ -241,6 +314,9 @@ describe('ServiceRequestsPage', () => {
       title: 'Current organization request',
     });
     page.api.list.mockReturnValue(of({ member: [current], totalItems: 1 }));
+    const profile = page.context.profile();
+    if (!profile) throw new Error('The current member fixture is missing.');
+    page.context.profile.set({ ...profile, organizationId: 'other' });
     page.fixture.componentRef.setInput('organizationId', 'other');
     page.fixture.componentRef.setInput('equipmentId', 'other-equipment');
     await page.fixture.whenStable();
@@ -273,6 +349,143 @@ describe('ServiceRequestsPage', () => {
     expect(page.api.list).toHaveBeenCalledTimes(calls);
   });
 
+  it.each(['actor', 'session'] as const)(
+    'destroys the old typed editor when the same organization replaces its %s with equal permissions',
+    async (replacement) => {
+      const rendered = await render({ routed: true, realEditor: true });
+      const oldSheet = rendered.sheet;
+      const oldForm = document.querySelector<HTMLElement>('app-service-request-form');
+      const oldTitle = oldForm?.querySelector<HTMLInputElement>('#service-request-title');
+      if (!oldForm || !oldTitle) throw new Error('The prior actor form is missing.');
+      oldTitle.value = 'Private draft from the previous session';
+      oldTitle.dispatchEvent(new Event('input', { bubbles: true }));
+      await rendered.fixture.whenStable();
+      expect(oldSheet.hasDirty()).toBe(true);
+      const grants = [...rendered.permissions()];
+      if (replacement === 'actor') {
+        const profile = rendered.context.profile();
+        if (!profile) throw new Error('The member identity fixture is missing.');
+        rendered.context.profile.set({ ...profile, userId: 'new-actor' });
+      } else rendered.context.revision.update((revision) => revision + 1);
+      await rendered.fixture.whenStable();
+      expect([...rendered.permissions()]).toEqual(grants);
+      expect(rendered.harness?.routeDebugElement?.componentInstance).toBe(rendered.page);
+      expect(document.contains(oldForm)).toBe(false);
+      expect(rendered.sheet).not.toBe(oldSheet);
+      expect(document.querySelector<HTMLInputElement>('#service-request-title')?.value).toBe('');
+      expect(rendered.sheet.hasDirty()).toBe(false);
+      expect(rendered.api.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps a typed draft on browser Back until discard, then destroys the page and returns with a clean editor', async () => {
+    const rendered = await render({ routed: true, realEditor: true });
+    const harness = rendered.harness;
+    const page = rendered.page;
+    if (!harness || !page) throw new Error('The routed request page is missing.');
+    const editor = document.querySelector<HTMLElement>('app-service-request-form');
+    const title = editor?.querySelector<HTMLInputElement>('#service-request-title');
+    if (!title) throw new Error('The routed request title is missing.');
+    title.value = 'Keep this maintenance draft';
+    title.dispatchEvent(new Event('input', { bubbles: true }));
+    await harness.fixture.whenStable();
+    expect(rendered.sheet.hasDirty()).toBe(true);
+    const router = TestBed.inject(Router);
+    const terminal: Promise<NavigationEnd | NavigationCancel> = new Promise((resolve) => {
+      const subscription = router.events.subscribe((event) => {
+        if (event instanceof NavigationEnd || event instanceof NavigationCancel) {
+          subscription.unsubscribe();
+          resolve(event);
+        }
+      });
+    });
+    TestBed.inject(Location).back();
+    await vi.waitFor(() => {
+      harness.detectChanges();
+      expect(rendered.sheet['confirmation']()).toBe('open');
+      expect(document.querySelector('[data-testid="unsaved-changes-dialog"]')).not.toBeNull();
+    });
+    expect(harness.routeDebugElement?.componentInstance).toBe(page);
+    const cancel = [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="unsaved-changes-dialog"] button',
+      ),
+    ].find((button) => button.textContent?.trim() === 'Cancel');
+    if (!cancel) throw new Error('The draft confirmation cancel action is missing.');
+    cancel.click();
+    expect(await terminal).toBeInstanceOf(NavigationCancel);
+    await harness.fixture.whenStable();
+    expect(router.url).toBe('/organizations/org/service-requests?create=1');
+    expect(harness.routeDebugElement?.componentInstance).toBe(page);
+    expect(title.value).toBe('Keep this maintenance draft');
+    const leaving = harness.navigateByUrl('/before', PreviousPage);
+    await vi.waitFor(() =>
+      expect(document.querySelector('[data-testid="unsaved-changes-discard"]')).not.toBeNull(),
+    );
+    (
+      document.querySelector('[data-testid="unsaved-changes-discard"]') as HTMLButtonElement
+    ).click();
+    await leaving;
+    expect(harness.routeDebugElement?.componentInstance).toBeInstanceOf(PreviousPage);
+    expect(document.querySelector('app-service-request-form')).toBeNull();
+    const returned = await harness.navigateByUrl(
+      '/organizations/org/service-requests?create=1',
+      ServiceRequestsPage,
+    );
+    await harness.fixture.whenStable();
+    expect(returned).not.toBe(page);
+    const restoredTitle = document.querySelector<HTMLInputElement>('#service-request-title');
+    expect(restoredTitle?.value).toBe('');
+    expect(rendered.api.create).not.toHaveBeenCalled();
+  });
+
+  it('allows confirmed creation navigation before the closed sheet input has rendered', async () => {
+    const rendered = await render();
+    const page = rendered.fixture.componentInstance as ServiceRequestsPage;
+    (
+      rendered.element.querySelector('[data-testid="service-request-new"]') as HTMLButtonElement
+    ).click();
+    await rendered.fixture.whenStable();
+    rendered.sheet['dirty'].set(true);
+    rendered.navigate.mockImplementationOnce(() => {
+      expect(rendered.sheet.visible()).toBe(true);
+      expect(rendered.sheet.hasDirty()).toBe(true);
+      expect(page.canLeaveDraft()).toBe(true);
+      return Promise.resolve(true);
+    });
+    rendered.sheet.descriptionSubmitted.emit({
+      title: 'Repair',
+      description: 'Damaged gauge',
+      equipmentId: 'equipment',
+    });
+    await rendered.fixture.whenStable();
+    expect(rendered.navigate).toHaveBeenCalledExactlyOnceWith([
+      '/organizations',
+      'org',
+      'service-requests',
+      'request',
+    ]);
+    expect(rendered.sheet['confirmation']()).toBe('closed');
+  });
+
+  it('blocks route leave while an accepted creation remains pending', async () => {
+    const rendered = await render();
+    const pending = new Subject<ServiceRequestOutput>();
+    rendered.api.create.mockReturnValue(pending);
+    (
+      rendered.element.querySelector('[data-testid="service-request-new"]') as HTMLButtonElement
+    ).click();
+    await rendered.fixture.whenStable();
+    rendered.sheet.descriptionSubmitted.emit({
+      title: 'Repair',
+      description: 'Damaged gauge',
+      equipmentId: 'equipment',
+    });
+    await rendered.fixture.whenStable();
+    expect((rendered.fixture.componentInstance as ServiceRequestsPage).canLeaveDraft()).toBe(false);
+    expect(pending.observed).toBe(true);
+  });
+
   it('normalizes missing router-bound target inputs before opening the real editor and submitting a site-only request', async () => {
     const site: FacilityOutput = {
       '@id': '/api/organizations/org/facilities/site',
@@ -303,6 +516,10 @@ describe('ServiceRequestsPage', () => {
       load: vi.fn(),
       write: vi.fn(),
       clearWrite: vi.fn(),
+      commandsReady: signal(true),
+      commandCallState: signal(idleCallState()),
+      restoreCommands: vi.fn(),
+      activateCommands: vi.fn(),
     };
     TestBed.configureTestingModule({
       imports: [ServiceRequestsPage],
@@ -316,6 +533,7 @@ describe('ServiceRequestsPage', () => {
           ],
           withComponentInputBinding(),
         ),
+        ...serviceRequestContext().providers,
         { provide: PLATFORM_ID, useValue: 'browser' },
         {
           provide: EquipmentService,

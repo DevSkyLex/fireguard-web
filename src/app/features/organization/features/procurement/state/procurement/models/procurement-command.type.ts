@@ -1,7 +1,9 @@
 import type {
   ChangeSupplierInput,
+  CreateSupplierInput,
   SupplierOutput,
   ChangePurchaseOrderInput,
+  CreatePurchaseOrderInput,
   PurchaseOrderOutput,
   ProcurementReceiptOutput,
   ReceivePurchaseOrderInput,
@@ -23,7 +25,7 @@ export type ProcurementCommand =
   | {
       readonly kind: 'create_supplier';
       readonly organizationId: string;
-      readonly input: ChangeSupplierInput;
+      readonly input: CreateSupplierInput;
     }
   | {
       readonly kind: 'update_supplier';
@@ -39,7 +41,7 @@ export type ProcurementCommand =
   | {
       readonly kind: 'create_order';
       readonly organizationId: string;
-      readonly input: ChangePurchaseOrderInput;
+      readonly input: CreatePurchaseOrderInput;
     }
   | {
       readonly kind: 'update_order';

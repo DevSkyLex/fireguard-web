@@ -13,7 +13,17 @@ import {
 import { removeAllEntities, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, pipe, switchMap, type Observable } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  defer,
+  exhaustMap,
+  map,
+  pipe,
+  switchMap,
+  throwError,
+  type Observable,
+} from 'rxjs';
 import {
   idleCallState,
   pendingCallState,
@@ -26,12 +36,17 @@ import {
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService } from '@features/organization/data-access';
-import { MaintenanceCostService } from '@features/organization/features/maintenance-costs/data-access';
-import type { MaintenanceRateOutput } from '@features/organization/features/maintenance-costs/models';
+import {
+  MaintenanceCostCommandRepository,
+  MaintenanceCostService,
+} from '@features/organization/features/maintenance-costs/data-access';
+import type {
+  MaintenanceCostCommand,
+  MaintenanceRateOutput,
+} from '@features/organization/features/maintenance-costs/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { toMemberSelectOption } from '@features/organization/utils';
 import { maintenanceCostStoreEvents } from './events/events';
-import type { MaintenanceCostCommand } from './models/maintenance-cost-command.type';
 import type {
   MaintenanceCostMutation,
   MaintenanceCostScope,
@@ -46,6 +61,8 @@ import type {
  */
 const INITIAL_STATE: MaintenanceCostState = {
   scope: null,
+  scopeUserId: null,
+  journalCallState: idleCallState(),
   scopeVersion: 0,
   costCallState: idleCallState(),
   currencyCallState: idleCallState(),
@@ -67,16 +84,35 @@ const INITIAL_STATE: MaintenanceCostState = {
 export const MaintenanceCostStore = signalStore(
   withEntities({ entity: type<MaintenanceRateOutput>(), collection: 'rate' }),
   withState<MaintenanceCostState>(INITIAL_STATE),
-  withComputed((store) => ({
-    writePending: computed(() => store.writeCallState().status === 'pending'),
-    uncertainWrite: computed(
-      () =>
-        store.writeCallState().status === 'error' &&
-        !!store.command() &&
-        (store.writeCallState().error?.retryable === true ||
-          store.writeCallState().error?.code === 0),
-    ),
-  })),
+  withComputed(
+    (
+      store,
+      journal = inject(MaintenanceCostCommandRepository),
+      session = inject(AUTH_SESSION_PORT),
+      permissions = inject(OrganizationPermissionService),
+    ) => ({
+      journalReady: computed(() => {
+        const scope = store.scope();
+        return (
+          store.journalCallState().status === 'success' &&
+          !!scope &&
+          session.isAuthenticated() &&
+          scope.sessionRevision === session.sessionRevision() &&
+          permissions.hasPermission(ORGANIZATION_PERMISSION.MAINTENANCE_COST_READ) &&
+          store.scopeUserId() !== null &&
+          store.scopeUserId() === journal.captureOwner(scope.organizationId, scope.sessionRevision)
+        );
+      }),
+      writePending: computed(() => store.writeCallState().status === 'pending'),
+      uncertainWrite: computed(
+        () =>
+          store.writeCallState().status === 'error' &&
+          !!store.command() &&
+          (store.writeCallState().error?.retryable === true ||
+            store.writeCallState().error?.code === 0),
+      ),
+    }),
+  ),
   withMethods(
     (
       store,
@@ -86,6 +122,7 @@ export const MaintenanceCostStore = signalStore(
       session = inject(AUTH_SESSION_PORT),
       platform = inject(PLATFORM_ID),
       dispatcher = inject(Dispatcher),
+      journal = inject(MaintenanceCostCommandRepository),
     ) => {
       const readable = (): boolean =>
         isPlatformBrowser(platform) &&
@@ -95,6 +132,8 @@ export const MaintenanceCostStore = signalStore(
         readable() &&
         generation === store.scopeVersion() &&
         session.sessionRevision() === scope.sessionRevision &&
+        store.scopeUserId() !== null &&
+        store.scopeUserId() === journal.captureOwner(scope.organizationId, scope.sessionRevision) &&
         store.scope()?.organizationId === scope.organizationId &&
         store.scope()?.interventionId === scope.interventionId;
       const readCost = rxMethod<MaintenanceCostScope | null>(
@@ -263,12 +302,52 @@ export const MaintenanceCostStore = signalStore(
             return api.createRate(command.organizationId, command.input);
         }
       };
+      const hydrate = rxMethod<MaintenanceCostScope | null>(
+        pipe(
+          switchMap((scope) => {
+            if (!scope || !readable()) return EMPTY;
+            const generation = store.scopeVersion();
+            patchState(store, { journalCallState: pendingCallState() });
+            return defer(() =>
+              journal.readPending(scope.organizationId, scope.interventionId),
+            ).pipe(
+              tapResponse({
+                next: (command) => {
+                  if (!current(scope, generation)) return;
+                  patchState(store, {
+                    journalCallState: successCallState(null),
+                    ...(command
+                      ? {
+                          command,
+                          writeCallState: errorCallState(
+                            toStoreError({
+                              type: 'about:blank',
+                              status: 0,
+                              title: 'Unconfirmed financial declaration',
+                              detail: $localize`:@@maintenanceCost.recovery.uncertain:The previous declaration has no confirmed result. Retry it unchanged before creating another.`,
+                            }),
+                          ),
+                        }
+                      : {}),
+                  });
+                },
+                error: (error: unknown) => {
+                  if (current(scope, generation))
+                    patchState(store, { journalCallState: errorCallState(toStoreError(error)) });
+                },
+              }),
+            );
+          }),
+        ),
+      );
       const write = rxMethod<MaintenanceCostCommand>(
         pipe(
           exhaustMap((incoming) => {
             const scope = store.scope();
             if (
               !scope ||
+              !store.journalReady() ||
+              !current(scope, store.scopeVersion()) ||
               !readable() ||
               scope.sessionRevision !== session.sessionRevision() ||
               !permissions.hasPermission(ORGANIZATION_PERMISSION.MAINTENANCE_COST_MANAGE) ||
@@ -277,15 +356,39 @@ export const MaintenanceCostStore = signalStore(
             )
               return EMPTY;
             const generation = store.scopeVersion();
-            const command = store.uncertainWrite()
+            const wasUncertain = store.uncertainWrite();
+            const command = wasUncertain
               ? (store.command() ?? incoming)
               : structuredClone(incoming);
+            const userId = store.scopeUserId();
+            let transmitted = false;
             patchState(store, { command, writeCallState: pendingCallState() });
-            return request(command).pipe(
+            return defer(() => journal.retain(command)).pipe(
+              switchMap(() => {
+                if (!current(scope, generation)) {
+                  if (!store.command()) patchState(store, { writeCallState: idleCallState() });
+                  return EMPTY;
+                }
+                transmitted = true;
+                return request(command);
+              }),
+              switchMap((result) =>
+                defer(() => journal.acknowledge(command, scope.sessionRevision, userId)).pipe(
+                  map(() => result),
+                  catchError(() =>
+                    throwError(() => ({
+                      type: 'about:blank',
+                      status: 0,
+                      title: 'Unconfirmed local acknowledgement',
+                      detail: $localize`:@@maintenanceCost.recovery.uncertain:The previous declaration has no confirmed result. Retry it unchanged before creating another.`,
+                    })),
+                  ),
+                ),
+              ),
               tapResponse({
                 next: (result) => {
                   if (!current(scope, generation)) {
-                    patchState(store, { writeCallState: idleCallState(), command: null });
+                    if (!store.command()) patchState(store, { writeCallState: idleCallState() });
                     return;
                   }
                   if (
@@ -326,10 +429,22 @@ export const MaintenanceCostStore = signalStore(
                 },
                 error: (error: unknown) => {
                   if (!current(scope, generation)) {
-                    patchState(store, { writeCallState: idleCallState(), command: null });
+                    if (!store.command()) patchState(store, { writeCallState: idleCallState() });
                     return;
                   }
-                  const failure = toStoreError(error);
+                  const failure =
+                    !transmitted && wasUncertain
+                      ? {
+                          ...toStoreError(error),
+                          code: 0,
+                          retryable: true,
+                          message: $localize`:@@maintenanceCost.recovery.uncertain:The previous declaration has no confirmed result. Retry it unchanged before creating another.`,
+                        }
+                      : toStoreError(error);
+                  if (transmitted && !failure.retryable && failure.code !== 0)
+                    void journal
+                      .acknowledge(command, scope.sessionRevision, userId)
+                      .catch(() => undefined);
                   patchState(store, { writeCallState: errorCallState(failure) });
                   dispatcher.dispatch(
                     maintenanceCostStoreEvents.feedback(
@@ -354,22 +469,33 @@ export const MaintenanceCostStore = signalStore(
          * changes.
          */
         setScope(scope: MaintenanceCostScope | null): void {
-          if (JSON.stringify(scope) === JSON.stringify(store.scope())) return;
+          const userId = scope
+            ? journal.captureOwner(scope.organizationId, scope.sessionRevision)
+            : null;
+          if (
+            JSON.stringify(scope) === JSON.stringify(store.scope()) &&
+            store.scopeUserId() === userId
+          )
+            return;
           const pending = store.writePending();
           readCost(null);
           readCurrency(null);
           readRates(null);
           readMembers(null);
+          hydrate(null);
           patchState(store, INITIAL_STATE, removeAllEntities({ collection: 'rate' }), {
             scope,
+            scopeUserId: userId,
             scopeVersion: store.scopeVersion() + 1,
             writeCallState: pending ? pendingCallState() : idleCallState(),
           });
+          hydrate(scope);
         },
         readCost,
         readCurrency,
         readRates,
         readMembers,
+        hydrate,
         write,
         /**
          * Method retryWrite
@@ -389,6 +515,7 @@ export const MaintenanceCostStore = signalStore(
       store,
       session = inject(AUTH_SESSION_PORT),
       permissions = inject(OrganizationPermissionService),
+      journal = inject(MaintenanceCostCommandRepository),
     ) => ({
       onInit(): void {
         effect(() => {
@@ -396,6 +523,8 @@ export const MaintenanceCostStore = signalStore(
           if (
             scope &&
             (scope.sessionRevision !== session.sessionRevision() ||
+              store.scopeUserId() !==
+                journal.captureOwner(scope.organizationId, scope.sessionRevision) ||
               !session.isAuthenticated() ||
               !permissions.hasPermission(ORGANIZATION_PERMISSION.MAINTENANCE_COST_READ))
           )

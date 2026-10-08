@@ -1,5 +1,6 @@
 import type { Routes } from '@angular/router';
 import { DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY, type DashboardRouteData } from '@core/routing';
+import { serviceRequestDraftLeaveGuard } from '@features/organization/features/service-requests/http/guards';
 import { organizationPermissionGuard } from '@features/organization/http/guards';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 /**
@@ -13,6 +14,7 @@ import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 export const SERVICE_REQUEST_ROUTES: Routes = [
   {
     path: '',
+    canDeactivate: [serviceRequestDraftLeaveGuard],
     canActivate: [
       organizationPermissionGuard({
         permissions: [
@@ -34,6 +36,7 @@ export const SERVICE_REQUEST_ROUTES: Routes = [
   },
   {
     path: ':requestId',
+    canDeactivate: [serviceRequestDraftLeaveGuard],
     canActivate: [
       organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.SERVICE_REQUESTS_READ] }),
     ],

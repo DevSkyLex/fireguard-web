@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { PLATFORM_ID, signal } from '@angular/core';
+import { PLATFORM_ID, computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -17,6 +17,7 @@ import { FacilityService } from '@features/organization/features/facilities/data
 import { ServiceRequestService } from '@features/organization/features/service-requests/data-access';
 import type { ServiceRequestOutput } from '@features/organization/features/service-requests/models';
 import { serviceRequestFixture } from '@features/organization/features/service-requests/models/service-request/testing/service-request.fixture';
+import { serviceRequestContext } from '@features/organization/features/service-requests/state/service-request/testing/service-request-context.fixture';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
 import { DEFAULT_REGIONAL_FORMAT_SETTINGS } from '@shared/regional-format';
@@ -41,11 +42,15 @@ describe('ServiceRequestDetailPage', () => {
       readonly permissions?: readonly string[];
       readonly response?: Observable<ServiceRequestOutput>;
       readonly openWork?: readonly EquipmentOpenWorkOutput[];
+      readonly journalError?: Error;
     } = {},
   ) {
     const permissions = signal<ReadonlySet<string>>(
       new Set(options.permissions ?? [read, manage, plan]),
     );
+    const context = serviceRequestContext(computed(() => [...permissions()]));
+    if (options.platform === 'server') context.journal.browser = false;
+    if (options.journalError) context.journal.readPending.mockRejectedValue(options.journalError);
     const online = signal(true);
     const api = {
       list: vi.fn(),
@@ -79,6 +84,7 @@ describe('ServiceRequestDetailPage', () => {
       imports: [ServiceRequestDetailPage],
       providers: [
         provideRouter([]),
+        ...context.providers,
         { provide: PLATFORM_ID, useValue: options.platform ?? 'browser' },
         { provide: ServiceRequestService, useValue: api },
         { provide: EquipmentService, useValue: equipment },
@@ -110,8 +116,6 @@ describe('ServiceRequestDetailPage', () => {
     fixture.componentRef.setInput('requestId', request.id);
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
-    const sheet = fixture.debugElement.query(By.directive(ServiceRequestEditorSheet))
-      .componentInstance as ServiceRequestEditorSheet;
     const button = (label: string) =>
       [...element.querySelectorAll<HTMLButtonElement>('button')].find(
         (candidate) => candidate.textContent?.trim() === label,
@@ -119,7 +123,10 @@ describe('ServiceRequestDetailPage', () => {
     return {
       fixture,
       element,
-      sheet,
+      get sheet(): ServiceRequestEditorSheet {
+        return fixture.debugElement.query(By.directive(ServiceRequestEditorSheet))
+          .componentInstance as ServiceRequestEditorSheet;
+      },
       api,
       equipment,
       facilities,
@@ -127,6 +134,7 @@ describe('ServiceRequestDetailPage', () => {
       permissions,
       online,
       button,
+      context,
     };
   }
 
@@ -148,6 +156,31 @@ describe('ServiceRequestDetailPage', () => {
     expect(page.facilities.list).not.toHaveBeenCalled();
     expect(page.types.listAll).not.toHaveBeenCalled();
     expect(page.sheet.visible()).toBe(false);
+  });
+
+  it('keeps actions and navigation blocked after journal hydration fails until explicit retry succeeds', async () => {
+    const page = await render(serviceRequestFixture(), {
+      journalError: new Error('Storage unavailable'),
+    });
+    expect(
+      page.element.querySelector('[data-testid="service-request-command-restore-error"]'),
+    ).not.toBeNull();
+    expect(page.button('Edit')?.disabled).toBe(true);
+    expect(page.fixture.componentInstance.canLeaveDraft()).toBe(false);
+    expect(page.api.update).not.toHaveBeenCalled();
+    expect(page.api.convert).not.toHaveBeenCalled();
+    page.context.journal.readPending.mockResolvedValue([]);
+    const retry = page.element.querySelector<HTMLButtonElement>(
+      '[data-testid="service-request-command-restore-error"] button',
+    );
+    if (!retry) throw new Error('The journal recovery action is missing.');
+    retry.click();
+    await page.fixture.whenStable();
+    expect(
+      page.element.querySelector('[data-testid="service-request-command-restore-error"]'),
+    ).toBeNull();
+    expect(page.button('Edit')?.disabled).toBe(false);
+    expect(page.fixture.componentInstance.canLeaveDraft()).toBe(true);
   });
 
   it('does not turn create permission into detail management permission', async () => {
@@ -375,6 +408,7 @@ describe('ServiceRequestDetailPage', () => {
     await page.fixture.whenStable();
     expect(page.sheet.uncertain()).toBe(true);
     expect(page.api.convert).toHaveBeenCalledTimes(1);
+    expect(page.fixture.componentInstance.canLeaveDraft()).toBe(true);
     const originalCommand = page.api.convert.mock.calls[0];
     page.permissions.set(new Set([read, manage]));
     await page.fixture.whenStable();
@@ -387,7 +421,7 @@ describe('ServiceRequestDetailPage', () => {
     page.sheet.retryConversionRequested.emit();
     await page.fixture.whenStable();
     expect(page.api.convert).toHaveBeenCalledTimes(2);
-    expect(page.sheet.uncertain()).toBe(true);
+    expect(page.sheet.uncertain()).toBe(false);
   });
 
   it('lets an accepted old write finish without restoring its editor in a new route scope', async () => {
@@ -401,6 +435,7 @@ describe('ServiceRequestDetailPage', () => {
     page.sheet.actionSubmitted.emit({ kind: 'qualify', input: { note: 'Inspect first.' } });
     await page.fixture.whenStable();
     expect(accepted.observed).toBe(true);
+    expect(page.fixture.componentInstance.canLeaveDraft()).toBe(false);
     page.api.get.mockReturnValue(
       of(serviceRequestFixture({ id: 'other', title: 'Current request' })),
     );

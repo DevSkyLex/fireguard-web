@@ -10,7 +10,10 @@ import type {
   ProcurementReceiptOutput,
   ProcurementReturnOutput,
   ReceivePurchaseOrderInput,
+  CreateSupplierInput,
+  CreatePurchaseOrderInput,
 } from '@features/organization/features/procurement/models';
+import type { ProcurementCommand } from '../models/procurement-command.type';
 import { ProcurementStore } from '../procurement.store';
 const supplier: SupplierOutput = {
   '@id': '/suppliers/supplier',
@@ -96,6 +99,7 @@ describe('ProcurementStore', () => {
     listReturns: ReturnType<typeof vi.fn>;
     reconcileReturn: ReturnType<typeof vi.fn>;
     createSupplier: ReturnType<typeof vi.fn>;
+    createOrder: ReturnType<typeof vi.fn>;
   };
   let dispatch: ReturnType<typeof vi.fn>;
   const input: ReceivePurchaseOrderInput = {
@@ -119,6 +123,7 @@ describe('ProcurementStore', () => {
       listReturns: vi.fn().mockReturnValue(of({ member: [returned], totalItems: 1 })),
       reconcileReturn: vi.fn().mockReturnValue(of(returned)),
       createSupplier: vi.fn().mockReturnValue(of(supplier)),
+      createOrder: vi.fn().mockReturnValue(of(order)),
     };
     dispatch = vi.fn();
     TestBed.configureTestingModule({
@@ -130,6 +135,235 @@ describe('ProcurementStore', () => {
     });
     store = TestBed.inject(ProcurementStore);
     store.setScope('org');
+  });
+  const creationCases = [
+    {
+      name: 'supplier',
+      method: 'createSupplier',
+      makeCommand: (name: string): ProcurementCommand => ({
+        kind: 'create_supplier',
+        organizationId: 'org',
+        input: { name, contacts: [{ name: 'Mary', role: 'Parts' }] },
+      }),
+      result: supplier,
+    },
+    {
+      name: 'purchase draft',
+      method: 'createOrder',
+      makeCommand: (name: string): ProcurementCommand => ({
+        kind: 'create_order',
+        organizationId: 'org',
+        input: {
+          name,
+          supplierId: 'supplier',
+          lines: [{ kind: 'part', partId: 'part', quantity: '0.250000' }],
+        },
+      }),
+      result: order,
+    },
+  ] as const;
+
+  it.each(creationCases)(
+    'replays the original $name creation UUID and payload after a lost response',
+    ({ method, makeCommand }) => {
+      service[method].mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+      store.execute(makeCommand('Original draft'));
+      const firstInput = service[method].mock.calls[0][1] as
+        | CreateSupplierInput
+        | CreatePurchaseOrderInput;
+      expect(firstInput.clientOperationId).toMatch(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/);
+      expect(store.uncertainCommand()).toBe(true);
+      store.clearCommand();
+      store.execute(makeCommand('Edited draft'));
+      expect(service[method]).toHaveBeenLastCalledWith('org', firstInput);
+      expect(store.command()).toBeNull();
+      expect(store.commandCallState().status).toBe('success');
+      expect(dispatch).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(creationCases)(
+    'retains the $name creation UUID after an unchanged rejected draft and replaces it on an edit',
+    ({ method, makeCommand }) => {
+      service[method]
+        .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400 })))
+        .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400 })));
+      store.execute(makeCommand('Original draft'));
+      const firstInput = service[method].mock.calls[0][1] as
+        | CreateSupplierInput
+        | CreatePurchaseOrderInput;
+      store.execute(makeCommand('Original draft'));
+      expect(service[method]).toHaveBeenLastCalledWith('org', firstInput);
+      store.execute(makeCommand('Edited draft'));
+      const changedInput = service[method].mock.calls[2][1] as
+        | CreateSupplierInput
+        | CreatePurchaseOrderInput;
+      expect(changedInput.name).toBe('Edited draft');
+      expect(changedInput.clientOperationId).not.toBe(firstInput.clientOperationId);
+    },
+  );
+
+  it.each(creationCases)(
+    'starts an identical new $name creation with a fresh UUID after success',
+    ({ method, makeCommand }) => {
+      store.execute(makeCommand('Original draft'));
+      const firstInput = service[method].mock.calls[0][1] as
+        | CreateSupplierInput
+        | CreatePurchaseOrderInput;
+      expect(store.command()).toBeNull();
+      store.execute(makeCommand('Original draft'));
+      const nextInput = service[method].mock.calls[1][1] as
+        | CreateSupplierInput
+        | CreatePurchaseOrderInput;
+      expect(nextInput.clientOperationId).not.toBe(firstInput.clientOperationId);
+      expect(dispatch).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it.each(creationCases)(
+    'clears a definitively rejected $name creation before starting a new attempt',
+    ({ method, makeCommand }) => {
+      service[method].mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400 })));
+      store.execute(makeCommand('Original draft'));
+      const firstInput = service[method].mock.calls[0][1] as
+        | CreateSupplierInput
+        | CreatePurchaseOrderInput;
+      store.clearCommand();
+      expect(store.command()).toBeNull();
+      expect(store.commandCallState().status).toBe('idle');
+      store.execute(makeCommand('Original draft'));
+      const nextInput = service[method].mock.calls[1][1] as
+        | CreateSupplierInput
+        | CreatePurchaseOrderInput;
+      expect(nextInput.clientOperationId).not.toBe(firstInput.clientOperationId);
+    },
+  );
+
+  it.each(creationCases)(
+    'keeps only one accepted $name creation running and excludes its late result from another scope',
+    ({ method, makeCommand, result }) => {
+      const accepted = new Subject<SupplierOutput | PurchaseOrderOutput>();
+      service[method].mockReturnValue(accepted);
+      store.execute(makeCommand('Original draft'));
+      store.execute(makeCommand('Edited draft'));
+      expect(service[method]).toHaveBeenCalledOnce();
+      expect(store.commandPending()).toBe(true);
+      store.setScope('another');
+      accepted.next(result);
+      expect(dispatch).not.toHaveBeenCalled();
+      expect(store.command()).toBeNull();
+      expect(store.commandCallState().status).toBe('idle');
+      expect(store.commandCallState().data).toBeNull();
+    },
+  );
+
+  it('snapshots supplier contacts before a lost response', () => {
+    const contacts = [{ name: 'Mary', role: 'Parts' }];
+    service.createSupplier.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 0 })),
+    );
+    store.execute({
+      kind: 'create_supplier',
+      organizationId: 'org',
+      input: { name: 'Fire supplies', contacts },
+    });
+    contacts[0].name = 'Changed after submission';
+    store.execute({
+      kind: 'create_supplier',
+      organizationId: 'org',
+      input: { contacts, name: 'Fire supplies' },
+    });
+    expect(service.createSupplier).toHaveBeenLastCalledWith('org', {
+      name: 'Fire supplies',
+      contacts: [{ name: 'Mary', role: 'Parts' }],
+      clientOperationId: expect.any(String),
+    });
+  });
+
+  it('snapshots purchase lines and nested equipment identity before a lost response', () => {
+    const identityTemplate = { manufacturer: { name: 'Original' } };
+    const lines = [
+      { kind: 'equipment_to_individualize' as const, quantity: '2.000000', identityTemplate },
+    ];
+    service.createOrder.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    store.execute({
+      kind: 'create_order',
+      organizationId: 'org',
+      input: { name: 'Reserve equipment', supplierId: 'supplier', lines },
+    });
+    lines[0].quantity = '3.000000';
+    identityTemplate.manufacturer.name = 'Changed after submission';
+    store.execute({
+      kind: 'create_order',
+      organizationId: 'org',
+      input: { name: 'Reserve equipment', supplierId: 'supplier', lines },
+    });
+    expect(service.createOrder).toHaveBeenLastCalledWith('org', {
+      name: 'Reserve equipment',
+      supplierId: 'supplier',
+      lines: [
+        {
+          kind: 'equipment_to_individualize',
+          quantity: '2.000000',
+          identityTemplate: { manufacturer: { name: 'Original' } },
+        },
+      ],
+      clientOperationId: expect.any(String),
+    });
+  });
+
+  it('compares creation payloads independently from property order and a proposed operation UUID', () => {
+    service.createSupplier.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 400 })),
+    );
+    store.execute({
+      kind: 'create_supplier',
+      organizationId: 'org',
+      input: { name: 'Fire supplies', contacts: [{ name: 'Mary', role: 'Parts' }] },
+    });
+    const firstInput = service.createSupplier.mock.calls[0][1] as CreateSupplierInput;
+    store.execute({
+      kind: 'create_supplier',
+      organizationId: 'org',
+      input: {
+        contacts: [{ role: 'Parts', name: 'Mary' }],
+        name: 'Fire supplies',
+        clientOperationId: '5e8c271b-79e0-4a66-9396-b3e9324d79ec',
+      },
+    });
+    expect(service.createSupplier).toHaveBeenLastCalledWith('org', firstInput);
+  });
+
+  it('starts a fresh purchase creation operation when a rejected nested identity field changes', () => {
+    service.createOrder.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 400 })),
+    );
+    const draft: CreatePurchaseOrderInput = {
+      name: 'Reserve equipment',
+      supplierId: 'supplier',
+      lines: [
+        {
+          kind: 'equipment_to_individualize',
+          quantity: '2.000000',
+          identityTemplate: { manufacturer: { name: 'Original' } },
+        },
+      ],
+    };
+    store.execute({ kind: 'create_order', organizationId: 'org', input: draft });
+    const firstInput = service.createOrder.mock.calls[0][1] as CreatePurchaseOrderInput;
+    store.execute({
+      kind: 'create_order',
+      organizationId: 'org',
+      input: {
+        ...draft,
+        lines: draft.lines.map((line) =>
+          Object.assign({}, line, { identityTemplate: { manufacturer: { name: 'Changed' } } }),
+        ),
+      },
+    });
+    const nextInput = service.createOrder.mock.calls[1][1] as CreatePurchaseOrderInput;
+    expect(nextInput.clientOperationId).not.toBe(firstInput.clientOperationId);
+    expect(nextInput.lines[0].identityTemplate).toEqual({ manufacturer: { name: 'Changed' } });
   });
   it('retains server pagination counts and cancels superseded supplier searches', () => {
     const stale = new Subject<HydraCollection<SupplierOutput>>();

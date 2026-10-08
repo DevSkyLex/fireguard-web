@@ -26,6 +26,7 @@ import type {
   ProcurementMutationOutput,
 } from './models/procurement-command.type';
 import type { ProcurementState } from './models/procurement-state.interface';
+import { creationPayloadKey } from './utils/creation-payload-key/creation-payload-key.utils';
 
 /**
  * Constant ProcurementStore
@@ -118,6 +119,27 @@ export const ProcurementStore = signalStore(
         case 'reconcile':
           return service.reconcileReturn(org, command.returned, command.input);
       }
+    };
+    /**
+     * Constant prepareCreation
+     *
+     * @description
+     * Snapshots each new creation under a fresh operation UUID and retains failed identical drafts.
+     */
+    const prepareCreation = (proposed: ProcurementCommand): ProcurementCommand => {
+      if (proposed.kind !== 'create_supplier' && proposed.kind !== 'create_order') return proposed;
+      const retained = store.command();
+      if (
+        store.commandCallState().status === 'error' &&
+        retained?.kind === proposed.kind &&
+        retained.organizationId === proposed.organizationId &&
+        creationPayloadKey(retained.input) === creationPayloadKey(proposed.input)
+      )
+        return retained;
+      const clientOperationId = globalThis.crypto.randomUUID();
+      return proposed.kind === 'create_supplier'
+        ? { ...proposed, input: { ...structuredClone(proposed.input), clientOperationId } }
+        : { ...proposed, input: { ...structuredClone(proposed.input), clientOperationId } };
     };
     return {
       /**
@@ -425,7 +447,7 @@ export const ProcurementStore = signalStore(
               state.status === 'error' &&
               (state.error?.retryable || state.error?.code === 0)
                 ? retained
-                : proposed;
+                : prepareCreation(proposed);
             const scopeVersion = store.scopeVersion();
             patchState(store, { command, commandCallState: pendingCallState() });
             return request(command).pipe(

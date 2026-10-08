@@ -9,6 +9,8 @@ import type {
   ProcurementReturnOutput,
   ReceivePurchaseOrderInput,
   ReturnProcurementReceiptInput,
+  CreateSupplierInput,
+  CreatePurchaseOrderInput,
 } from '@features/organization/features/procurement/models';
 import { ProcurementService } from '../procurement.service';
 
@@ -159,6 +161,33 @@ describe('ProcurementService', () => {
     expect(request.request.body.currency).toBeUndefined();
     request.flush(order);
   });
+  it('forwards creation operation UUIDs unchanged for supplier and purchase draft replay', () => {
+    const supplierInput: CreateSupplierInput = {
+      name: 'Fire supplies',
+      contacts: [{ name: 'Mary', role: 'Parts' }],
+      clientOperationId: '7d6359c7-3d49-42b0-8ac6-a5f8e16c6ba9',
+    };
+    service.createSupplier('org', supplierInput).subscribe();
+    const supplierRequest = http.expectOne(url + '/suppliers');
+    expect(supplierRequest.request.method).toBe('POST');
+    expect(supplierRequest.request.body).toEqual(supplierInput);
+    expect(supplierRequest.request.headers.has('If-Match')).toBe(false);
+    supplierRequest.flush(supplier);
+
+    const orderInput: CreatePurchaseOrderInput = {
+      name: 'Parts order',
+      supplierId: 'supplier',
+      lines: [{ kind: 'part', partId: 'part', quantity: '0.250000' }],
+      clientOperationId: '65077527-2e31-420b-82d9-3ad02c5d8988',
+    };
+    service.createOrder('org', orderInput).subscribe();
+    const orderRequest = http.expectOne(url + '/orders');
+    expect(orderRequest.request.method).toBe('POST');
+    expect(orderRequest.request.body).toEqual(orderInput);
+    expect(orderRequest.request.headers.has('If-Match')).toBe(false);
+    orderRequest.flush(order);
+  });
+
   it('guards supplier and purchase lifecycle changes with their displayed quoted revision', () => {
     service
       .updateSupplier('org', supplier, { name: 'Changed', email: null, contacts: [] })

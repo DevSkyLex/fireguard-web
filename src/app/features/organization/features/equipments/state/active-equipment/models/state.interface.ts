@@ -12,10 +12,44 @@ import type { EquipmentOutput } from '@features/organization/features/equipments
  * attachments and tags live in the component-scoped {@link EquipmentStore}.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface ActiveEquipmentState {
   //#region Properties
+  /**
+   * Property selectedOrganizationId
+   * @readonly
+   *
+   * @description
+   * Organization owning the current selection, including an in-flight route read.
+   *
+   * @type {string | null}
+   */
+  readonly selectedOrganizationId: string | null;
+
+  /**
+   * Property selectedEquipmentId
+   * @readonly
+   *
+   * @description
+   * Equipment identity selected by the current route.
+   *
+   * @type {string | null}
+   */
+  readonly selectedEquipmentId: string | null;
+
+  /**
+   * Property selectionGeneration
+   * @readonly
+   *
+   * @description
+   * Monotonic selection fence that rejects writes from an earlier dossier visit.
+   *
+   * @type {number}
+   */
+  readonly selectionGeneration: number;
+
   /**
    * Property selectedEquipment
    * @readonly
@@ -36,7 +70,6 @@ export interface ActiveEquipmentState {
    *
    * @description
    * Call state for fetching the selected equipment.
-   *
    * This call state is managed by the resolver and DashboardLayout, not by
    * the store itself, but it's included here for convenience since it's
    * tightly coupled to the selected equipment.

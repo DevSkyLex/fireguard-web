@@ -126,5 +126,5 @@
 <app-unsaved-changes-dialog
   [state]="confirmation()"
   (confirmed)="discard()"
-  (dismissed)="confirmation.set('closed')"
+  (dismissed)="resolveConfirmation(false)"
 />

@@ -1,11 +1,13 @@
 export type { SupplierContact } from './supplier/supplier-contact.interface';
 export type { ChangeSupplierInput } from './supplier/change-supplier-input.interface';
+export type { CreateSupplierInput } from './supplier/create-supplier-input.interface';
 export type { SupplierOutput } from './supplier/supplier-output.interface';
 export type { ProcurementLineKind } from './purchase-order/procurement-line-kind.type';
 export type { PurchaseOrderStatus } from './purchase-order/purchase-order-status.type';
 export type { PurchaseOrderLineInput } from './purchase-order/purchase-order-line-input.interface';
 export type { PurchaseOrderLineOutput } from './purchase-order/purchase-order-line-output.interface';
 export type { ChangePurchaseOrderInput } from './purchase-order/change-purchase-order-input.interface';
+export type { CreatePurchaseOrderInput } from './purchase-order/create-purchase-order-input.interface';
 export type { PurchaseOrderOutput } from './purchase-order/purchase-order-output.interface';
 export type { ProcurementReceiptStatus } from './receipt/procurement-receipt-status.type';
 export type { ProcurementReceiptOutput } from './receipt/procurement-receipt-output.interface';

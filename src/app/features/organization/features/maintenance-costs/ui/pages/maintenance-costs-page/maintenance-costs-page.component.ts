@@ -34,7 +34,11 @@ import {
 } from '@features/organization/features/maintenance-costs/state';
 import { formatMaintenanceAmount } from '@features/organization/features/maintenance-costs/utils';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
-import { REGIONAL_FORMATTING_PORT } from '@features/organization/ports';
+import {
+  ORGANIZATION_MEMBER_ACCESS_PORT,
+  REGIONAL_FORMATTING_PORT,
+} from '@features/organization/ports';
+import type { OrganizationMemberAccessPort } from '@features/organization/ports/organization-member-access';
 import { OrgDatePipe, type RegionalFormatSettings } from '@shared/regional-format';
 import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmBadge } from '@shared/ui/badge';
@@ -43,6 +47,7 @@ import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTabsImports } from '@shared/ui/tabs';
 import { HlmLarge } from '@shared/ui/typography';
+import type { UnsavedChangesAware } from '@shared/unsaved-changes';
 import { MaintenanceCostFacts } from '../../components/maintenance-cost-facts';
 import { MaintenanceCostSettings } from '../../components/maintenance-cost-settings';
 import { MaintenanceExpenseForm } from '../../forms/maintenance-expense-form';
@@ -79,7 +84,7 @@ import {
     ...HlmAlertImports,
   ],
 })
-export class MaintenanceCostsPage {
+export class MaintenanceCostsPage implements UnsavedChangesAware {
   /**
    * Property renderedScope
    *
@@ -159,6 +164,22 @@ export class MaintenanceCostsPage {
    * @type {AuthSessionPort}
    */
   private readonly session: AuthSessionPort = inject(AUTH_SESSION_PORT);
+
+  /**
+   * Property memberAccess
+   * @readonly
+   *
+   * @description
+   * Published actor identity clears local drafts even before session cleanup effects flush.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationMemberAccessPort}
+   */
+  private readonly memberAccess: OrganizationMemberAccessPort = inject(
+    ORGANIZATION_MEMBER_ACCESS_PORT,
+  );
   /**
    * Property platform
    * @readonly
@@ -397,6 +418,7 @@ export class MaintenanceCostsPage {
     () =>
       this.canManage() &&
       this.connectivity.isOnline() &&
+      this.store.journalReady() &&
       !this.store.writePending() &&
       !this.store.uncertainWrite(),
   );
@@ -490,6 +512,7 @@ export class MaintenanceCostsPage {
       const organizationId = this.organizationId(),
         interventionId = this.interventionId() ?? null,
         revision = this.session.sessionRevision(),
+        userId = this.memberAccess.profile()?.userId ?? '',
         enabled = this.enabled();
       const valid =
         !interventionId ||
@@ -497,7 +520,7 @@ export class MaintenanceCostsPage {
           interventionId,
         );
       untracked(() => {
-        const identity = `${organizationId}/${interventionId ?? ''}/${revision}/${enabled}`;
+        const identity = `${organizationId}/${interventionId ?? ''}/${revision}/${userId}/${enabled}`;
         if (identity !== this.renderedScope) {
           this.renderedScope = identity;
           this.planningReset.update((value) => value + 1);
@@ -728,5 +751,53 @@ export class MaintenanceCostsPage {
    */
   protected retryWrite(): void {
     if (this.canManage() && this.connectivity.isOnline()) this.store.retryWrite();
+  }
+
+  /**
+   * Method recoverCommands
+   * @method recoverCommands
+   *
+   * @description
+   * Retries durable journal recovery before permitting a new financial declaration.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} No return value.
+   */
+  protected recoverCommands(): void {
+    if (this.enabled()) this.store.hydrate(this.store.scope());
+  }
+
+  /**
+   * Method hasUnsavedChanges
+   * @method hasUnsavedChanges
+   *
+   * @description
+   * Accepted writes retain their live request owner until transmission settles.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @returns {boolean} Whether navigation would destroy an active write.
+   */
+  public hasUnsavedChanges(): boolean {
+    return this.enabled() && !!this.store.command() && this.store.writePending();
+  }
+
+  /**
+   * Method confirmDeactivation
+   * @method confirmDeactivation
+   *
+   * @description
+   * Active writes finish before navigation; durable uncertain intentions remain safe to leave.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @returns {Promise<boolean>} Navigation waits for the current request.
+   */
+  public confirmDeactivation(): Promise<boolean> {
+    return Promise.resolve(!this.hasUnsavedChanges());
   }
 }

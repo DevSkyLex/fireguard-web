@@ -17,6 +17,9 @@ All existing-record writes send the displayed `If-Match: "revision-N"`. Receipt,
 individualization commands retain their operation UUID and payload across failures and retry the
 same physical declaration. Accepted writes are not canceled by navigation; late results cannot
 populate another organization. Conflicts preserve the user's draft and require explicit review.
+Supplier and purchase draft creations always send an operation UUID. Failed identical creations
+retain it; success or a changed draft after a confirmed rejection starts a fresh operation.
+A lost response retains the original creation payload until its result is recovered.
 A received quantity remains retained while individualization is blocked, and reserve equipment is
 created only after explicit confirmation.
 

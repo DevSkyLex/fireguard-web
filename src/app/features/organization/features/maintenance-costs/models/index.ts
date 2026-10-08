@@ -4,6 +4,7 @@ export type { MaintenanceCostAllocation } from './maintenance-cost/maintenance-c
 export type { MaintenanceCostProjection } from './maintenance-cost/maintenance-cost-projection.interface';
 export type { MaintenanceCostFrozen } from './maintenance-cost/maintenance-cost-frozen.interface';
 export type { MaintenanceCostOutput } from './maintenance-cost/maintenance-cost-output.interface';
+export type { MaintenanceCostCommand } from './maintenance-cost/maintenance-cost-command.type';
 export type { WriteMaintenanceCostPlanningInput } from './maintenance-cost/write-maintenance-cost-planning-input.interface';
 export type { CreateMaintenanceExpenseInput } from './expense/create-maintenance-expense-input.interface';
 export type { MaintenanceCurrencyOutput } from './currency/maintenance-currency-output.interface';

@@ -700,7 +700,11 @@ export class MaintenanceSchedulesPage {
    * @type {Signal<readonly MaintenanceScheduleOutput[]>}
    */
   protected readonly items: Signal<readonly MaintenanceScheduleOutput[]> = computed(() =>
-    this.store.schedules(),
+    this.store
+      .schedules()
+      .filter(
+        (schedule) => schedule.organization === `/api/organizations/${this.organizationId()}`,
+      ),
   );
 
   /**
@@ -1047,8 +1051,16 @@ export class MaintenanceSchedulesPage {
       });
 
     effect((): void => {
-      this.organizationId();
-      untracked(() => this.facilityOptionsStore.clear());
+      const organizationId = this.organizationId();
+      untracked(() => {
+        this.store.setOrganization(`/api/organizations/${organizationId}`);
+        this.facilityOptionsStore.clear();
+        this.overrideTarget.set(null);
+        this.overrideDialogVisible.set(false);
+        this.campaignDialogVisible.set(false);
+        this.openFilterKey.set(null);
+        this.clearFilters();
+      });
     });
 
     effect((): void => {
@@ -1076,7 +1088,12 @@ export class MaintenanceSchedulesPage {
       const state = this.store.overrideCallState();
 
       untracked((): void => {
-        if (isCallSuccess(state) && this.overrideDialogVisible()) {
+        if (
+          isCallSuccess(state) &&
+          state.data.organization === `/api/organizations/${this.organizationId()}` &&
+          state.data.id === this.overrideTarget()?.id &&
+          this.overrideDialogVisible()
+        ) {
           this.overrideDialogVisible.set(false);
           this.overrideTarget.set(null);
           this.store.resetOverrideOperation();
@@ -1086,14 +1103,15 @@ export class MaintenanceSchedulesPage {
 
     effect((): void => {
       const result = this.store.campaignResult();
+      const resultOrganization = this.store.campaignResultOrganization();
 
       untracked((): void => {
-        if (result) {
+        if (result && resultOrganization === `/api/organizations/${this.organizationId()}`) {
           this.campaignDialogVisible.set(false);
           this.store.resetCampaignOperation();
           void this.router.navigate([
             '/organizations',
-            this.organizationId(),
+            iriId(resultOrganization),
             'interventions',
             result.interventionId,
           ]);
@@ -1429,6 +1447,11 @@ export class MaintenanceSchedulesPage {
    * @returns {void}
    */
   protected openOverrideDialog(schedule: MaintenanceScheduleOutput): void {
+    if (
+      !this.canManage() ||
+      schedule.organization !== `/api/organizations/${this.organizationId()}`
+    )
+      return;
     this.overrideTarget.set(schedule);
     this.overrideDialogVisible.set(true);
   }
@@ -1468,9 +1491,18 @@ export class MaintenanceSchedulesPage {
   protected submitOverride(value: string | null): void {
     const target: MaintenanceScheduleOutput | null = this.overrideTarget();
 
-    if (!target) return;
+    if (
+      !target ||
+      !this.canManage() ||
+      target.organization !== `/api/organizations/${this.organizationId()}`
+    )
+      return;
 
-    this.store.setIntervalOverride({ scheduleId: target.id, intervalOverride: value });
+    this.store.setIntervalOverride({
+      organization: target.organization,
+      scheduleId: target.id,
+      intervalOverride: value,
+    });
   }
 
   /**
@@ -1524,6 +1556,7 @@ export class MaintenanceSchedulesPage {
    * @returns {void}
    */
   protected submitCampaign(scope: Omit<GenerateMaintenanceCampaignInput, 'organization'>): void {
+    if (!this.campaignDialogVisible() || !this.canPlanCampaign()) return;
     this.store.generateCampaign({
       organization: `/api/organizations/${this.organizationId()}`,
       ...scope,

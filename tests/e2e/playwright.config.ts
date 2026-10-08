@@ -140,7 +140,9 @@ export default defineConfig({
    */
   webServer: {
     cwd: projectRoot,
-    command: `npx ng serve --configuration=e2e --port=${E2E_PORT}`,
+    // A document reload can cancel Angular's background component-HMR imports.
+    // Test the fixed application build while retaining normal lazy route imports.
+    command: `npx ng serve --configuration=e2e --hmr=false --port=${E2E_PORT}`,
     // Angular accepts document requests before its first compilation has
     // produced executable chunks. The entry bundle is the readiness signal.
     url: `http://localhost:${E2E_PORT}/main.js`,

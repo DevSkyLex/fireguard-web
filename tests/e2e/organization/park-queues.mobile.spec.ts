@@ -88,6 +88,7 @@ test('opens the three customer and site queues through native touch navigation',
   ).toBe(true);
   await park.openSourceInspection('Missing tamper seal');
   await expect(page).toHaveURL(new RegExp(`/inspections/${E2E_INSPECTION_ID}$`, 'u'));
+  await expect(page.getByTestId('inspection-detail-summary')).toBeVisible();
 
   await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
   await park.gotoDashboard(E2E_ORGANIZATION_ID);

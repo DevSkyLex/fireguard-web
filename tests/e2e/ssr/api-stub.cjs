@@ -242,13 +242,13 @@ function createApiStub(appOrigin, onShutdown) {
       ];
       for (const [key, body] of fixtures) routes.set(key, { status: 200, body, allowQuery: true });
       for (const [key, fixture] of caseFixtures) routes.set(key, fixture);
-      routes.set('GET /.well-known/mercure', { status: 204, body: null, allowQuery: true });
+      routes.set('GET /.well-known/mercure', { status: 200, body: null, allowQuery: true });
     }
     if (
       url.pathname === '/.well-known/mercure' &&
       url.searchParams.get('authorization') === 'e2e-mercure-token'
     ) {
-      routes.set('GET /.well-known/mercure', { status: 204, body: null, allowQuery: true });
+      routes.set('GET /.well-known/mercure', { status: 200, body: null, allowQuery: true });
     }
     const method =
       request.method === 'OPTIONS'
@@ -306,6 +306,13 @@ function createApiStub(appOrigin, onShutdown) {
       return;
     }
     requests.push(entry);
+    if (url.pathname === '/.well-known/mercure') {
+      response.setHeader('Content-Type', 'text/event-stream');
+      response.writeHead(fixture.status);
+      response.flushHeaders();
+      response.write(': connected\n\n');
+      return;
+    }
     response.setHeader(
       'Content-Type',
       fixture.status >= 400 ? 'application/problem+json' : 'application/ld+json',

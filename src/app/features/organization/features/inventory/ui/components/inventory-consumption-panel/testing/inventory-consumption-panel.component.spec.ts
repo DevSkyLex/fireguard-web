@@ -63,7 +63,7 @@ describe('InventoryConsumptionPanel', () => {
     expect(panel.retainedCommand()).toBe(command);
     fixture.componentRef.setInput('acceptedOperationId', command?.clientOperationId ?? 'missing');
     await fixture.whenStable();
-    expect(panel.retainedCommand()).toBe(null);
+    expect(panel.retainedCommand()).toBeNull();
     expect(panel.resetKey()).toBe(1);
     fixture.componentRef.setInput('acceptedOperationId', null);
     await fixture.whenStable();
@@ -82,7 +82,7 @@ describe('InventoryConsumptionPanel', () => {
     expect(emitted).toHaveBeenCalledTimes(1);
     fixture.componentRef.setInput('localIntents', [{ input: command, status: 'queued' }]);
     await fixture.whenStable();
-    expect(panel.retainedCommand()).toBe(null);
+    expect(panel.retainedCommand()).toBeNull();
     expect(panel.resetKey()).toBe(1);
   });
 

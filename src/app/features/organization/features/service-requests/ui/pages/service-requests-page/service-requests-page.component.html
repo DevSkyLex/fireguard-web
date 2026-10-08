@@ -39,11 +39,11 @@
     </div>
   }
   @if (confirmedTitle()) {
-    <div hlmAlert role="status">
-      <p hlmAlertDescription i18n="@@serviceRequest.page.submitted">
+    <output hlmAlert role="status">
+      <span hlmAlertDescription i18n="@@serviceRequest.page.submitted">
         Maintenance request submitted: {{ confirmedTitle() }}
-      </p>
-    </div>
+      </span>
+    </output>
   }
   @if (!online()) {
     <div hlmAlert role="status">
@@ -91,6 +91,7 @@
     </div>
     @if (store.listCallState().status === 'pending') {
       <div role="status" class="flex flex-col gap-3" data-testid="service-requests-loading">
+        <span class="sr-only" i18n="@@common.loading">Loading…</span>
         <hlm-skeleton class="h-16 w-full" /><hlm-skeleton class="h-16 w-full" />
       </div>
     } @else if (store.listCallState().error; as error) {
@@ -260,7 +261,7 @@
       [originNonConformityId]="originNonConformityId() ?? ''"
       [pending]="!store.commandsReady() || store.writeCallState().status === 'pending'"
       [error]="store.writeCallState().error"
-      (descriptionSubmitted)="create($event)"
+      (descriptionSubmitted)="createRequest($event)"
       (dismissed)="editorVisible.set(false)"
     />
   }

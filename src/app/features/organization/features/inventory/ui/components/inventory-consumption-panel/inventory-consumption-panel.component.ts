@@ -420,14 +420,7 @@ export class InventoryConsumptionPanel {
           item.status === 'confirmed'
             ? $localize`:@@inventory.consumption.confirmed:Stock debit confirmed`
             : $localize`:@@inventory.consumption.receivedPending:Received — reconciliation needed`,
-        reason:
-          item.reason === 'missing_balance'
-            ? $localize`:@@inventory.consumption.missingBalance:No stock balance is recorded for this source.`
-            : item.reason === 'archived_reference'
-              ? $localize`:@@inventory.consumption.archivedReference:The part or warehouse is archived.`
-              : item.reason === 'insufficient_stock'
-                ? $localize`:@@inventory.consumption.insufficientStock:Recorded stock is insufficient for the full quantity.`
-                : null,
+        reason: this.consumptionReasonLabel(item.reason),
         late: item.late,
       })),
   );
@@ -467,12 +460,7 @@ export class InventoryConsumptionPanel {
         intent,
         title: this.partTitle(intent.input.partId),
         warehouse: this.warehouseTitle(intent.input.warehouseId),
-        label:
-          intent.status === 'sending'
-            ? $localize`:@@inventory.consumption.sending:Sending — stock not confirmed`
-            : intent.status === 'failed'
-              ? $localize`:@@inventory.consumption.localFailed:Queued locally — retry needed`
-              : $localize`:@@inventory.consumption.queued:Queued locally — awaiting synchronization`,
+        label: this.localStatusLabel(intent.status),
         retryable:
           intent.status === 'failed' &&
           this.retryingOperationId() !== intent.input.clientOperationId,
@@ -533,6 +521,58 @@ export class InventoryConsumptionPanel {
   //#endregion
 
   //#region Methods
+  /**
+   * Method consumptionReasonLabel
+   * @method consumptionReasonLabel
+   *
+   * @description
+   * Describes a known reconciliation cause without inferring completion or a partial debit.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InventoryConsumptionOutput['reason']} reason - Optional retained server cause.
+   *
+   * @returns {string | null} Localized cause, or null when no known cause is supplied.
+   */
+  private consumptionReasonLabel(reason: InventoryConsumptionOutput['reason']): string | null {
+    switch (reason) {
+      case 'missing_balance':
+        return $localize`:@@inventory.consumption.missingBalance:No stock balance is recorded for this source.`;
+      case 'archived_reference':
+        return $localize`:@@inventory.consumption.archivedReference:The part or warehouse is archived.`;
+      case 'insufficient_stock':
+        return $localize`:@@inventory.consumption.insufficientStock:Recorded stock is insufficient for the full quantity.`;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Method localStatusLabel
+   * @method localStatusLabel
+   *
+   * @description
+   * Keeps locally retained synchronization states separate from server stock confirmation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InventoryConsumptionIntent['status']} status - Parent-owned durable queue status.
+   *
+   * @returns {string} Localized transmission status without implying a stock debit.
+   */
+  private localStatusLabel(status: InventoryConsumptionIntent['status']): string {
+    switch (status) {
+      case 'sending':
+        return $localize`:@@inventory.consumption.sending:Sending — stock not confirmed`;
+      case 'failed':
+        return $localize`:@@inventory.consumption.localFailed:Queued locally — retry needed`;
+      default:
+        return $localize`:@@inventory.consumption.queued:Queued locally — awaiting synchronization`;
+    }
+  }
+
   /**
    * Method declare
    * @method declare

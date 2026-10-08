@@ -3637,19 +3637,18 @@ export class InterventionsPage {
           return;
         }
 
-        if (equipmentContext)
+        if (equipmentContext) {
+          let type: InterventionType = 'corrective_maintenance';
+          if (equipmentContext.action === 'inspection') type = 'inspection_campaign';
+          else if (equipmentContext.action === 'maintenance') type = 'preventive_maintenance';
           this.duplicatePrefill.set({
             name: '',
-            type:
-              equipmentContext.action === 'inspection'
-                ? 'inspection_campaign'
-                : equipmentContext.action === 'maintenance'
-                  ? 'preventive_maintenance'
-                  : 'corrective_maintenance',
+            type,
             priority: 'normal',
             site: equipmentContext.site,
             responsible: '',
           });
+        }
         this.createSheetVisible.set(true);
         this.navigateQuery({ create: null });
       });

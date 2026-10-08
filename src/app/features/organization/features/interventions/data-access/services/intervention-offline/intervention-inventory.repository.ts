@@ -233,8 +233,7 @@ export class InterventionInventoryRepository {
   ): InterventionInventorySnapshot | null {
     const snapshot = value as InterventionInventorySnapshot | null | undefined;
     if (
-      !snapshot ||
-      snapshot.version !== 1 ||
+      snapshot?.version !== 1 ||
       snapshot.accountId !== owner ||
       snapshot.organizationId !== organizationId ||
       snapshot.interventionId !== interventionId ||

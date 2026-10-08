@@ -1091,12 +1091,7 @@ export class EquipmentDetailPage {
     effect(() => {
       const equipment = this.selectedEquipment();
       const allowed = this.canReadWork();
-      if (
-        !isPlatformBrowser(this.platformId) ||
-        !allowed ||
-        !equipment ||
-        equipment.id !== this.equipmentId()
-      )
+      if (!isPlatformBrowser(this.platformId) || !allowed || equipment?.id !== this.equipmentId())
         return;
       const organizationId = this.organizationId();
       untracked(() => this.openWorkStore.load({ organizationId, equipmentId: equipment.id }));
@@ -1105,12 +1100,7 @@ export class EquipmentDetailPage {
     effect(() => {
       const equipment = this.selectedEquipment();
       const permitted = this.canReadInspections();
-      if (
-        !isPlatformBrowser(this.platformId) ||
-        !permitted ||
-        !equipment ||
-        equipment.id !== this.equipmentId()
-      )
+      if (!isPlatformBrowser(this.platformId) || !permitted || equipment?.id !== this.equipmentId())
         return;
       const organizationId = this.organizationId();
       untracked(() =>

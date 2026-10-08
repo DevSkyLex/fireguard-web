@@ -21,10 +21,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import { idleCallState, type CallState } from '@core/request-state';
-import type {
-  CreateEquipmentInput,
-  EquipmentType,
-} from '@features/organization/features/equipments/models';
+import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { FacilityOptionPicker } from '@features/organization/features/facilities/ui/components';
@@ -407,9 +404,9 @@ export class EquipmentCreateForm {
    * @access protected
    * @since unreleased
    *
-   * @type {(value: EquipmentType | '') => string}
+   * @type {(value: string) => string}
    */
-  protected readonly typeLabelOf: (value: EquipmentType | '') => string = (value) =>
+  protected readonly typeLabelOf: (value: string) => string = (value) =>
     this.typeOptions().find((option) => option.value === value)?.label ?? '';
   //#endregion
 

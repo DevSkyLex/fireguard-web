@@ -234,7 +234,7 @@ describe('InventoryPage', () => {
     fixture.componentRef.setInput('organizationId', 'new-org');
     member.set({ ...profile, organizationId: 'new-org' });
     await fixture.whenStable();
-    expect(page['editor']()).toBe(null);
+    expect(page['editor']()).toBeNull();
     expect(page['filters']().search).toBe('');
     expect(service.listParts).toHaveBeenLastCalledWith(
       'new-org',
@@ -268,7 +268,7 @@ describe('InventoryPage', () => {
     expect(page['canReconcile']()).toBe(false);
     expect(page['canReturn']()).toBe(false);
     page['open']('correction');
-    expect(page['editor']()).toBe(null);
+    expect(page['editor']()).toBeNull();
     const pending = { ...consumption, status: 'received_pending' as const };
     page['rowAction']({ kind: 'reconcile', record: pending });
     expect(service.reconcileConsumption).not.toHaveBeenCalled();
@@ -290,7 +290,7 @@ describe('InventoryPage', () => {
       grants: [ORGANIZATION_PERMISSION.INVENTORY_READ, ORGANIZATION_PERMISSION.INVENTORY_CONSUME],
     });
     page['rowAction']({ kind: 'return', record: consumption });
-    expect(page['editor']()).toBe(null);
+    expect(page['editor']()).toBeNull();
     grants.set([
       ORGANIZATION_PERMISSION.INVENTORY_READ,
       ORGANIZATION_PERMISSION.INVENTORY_CONSUME,
@@ -298,7 +298,7 @@ describe('InventoryPage', () => {
     ]);
     await fixture.whenStable();
     page['rowAction']({ kind: 'return', record: { ...consumption, status: 'received_pending' } });
-    expect(page['editor']()).toBe(null);
+    expect(page['editor']()).toBeNull();
     page['rowAction']({ kind: 'return', record: consumption });
     page['movementSubmitted']({ ...draft, quantity: '0.000001' });
     await fixture.whenStable();
@@ -353,7 +353,7 @@ describe('InventoryPage', () => {
     expect(command.input.clientOperationId).toMatch(/^[0-9a-f-]{36}$/);
     page['requestClose']();
     await fixture.whenStable();
-    expect(page['editor']()).toBe(null);
+    expect(page['editor']()).toBeNull();
     expect(entries.get(command.input.clientOperationId)).toEqual(command);
     page['retryPhysical'](command);
     await fixture.whenStable();
@@ -382,7 +382,7 @@ describe('InventoryPage', () => {
     page['requestClose']();
     expect(page['confirmation']()).toBe('open');
     page['resolveConfirmation'](false);
-    expect(page['retained']()).not.toBe(null);
+    expect(page['retained']()).not.toBeNull();
   });
 
   it('prevents dismissal during an accepted command and suppresses its UI effects after session replacement', async () => {
@@ -404,7 +404,7 @@ describe('InventoryPage', () => {
     expect(await page.confirmDeactivation()).toBe(false);
     revision.set(3);
     await fixture.whenStable();
-    expect(page['editor']()).toBe(null);
+    expect(page['editor']()).toBeNull();
     response.next(movement);
     await fixture.whenStable();
     expect(dispatcher.dispatch).not.toHaveBeenCalled();

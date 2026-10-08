@@ -201,7 +201,9 @@ describe('InterventionTimeRepository', () => {
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ ...journal, entries: [historical] });
     const page = await repository.readJournalPage(scope);
+    expect(page?.entries[0]).not.toBe(historical);
     expect(page?.entries[0].versions).toEqual([versions[2]]);
+    expect(page?.entries[0].versions).not.toBe(versions);
     expect(page?.entries[0].totalVersions).toBe(3);
     expect(page?.entries[0].nextBeforeRevision).toBe(3);
     expect(historical.versions).toHaveLength(3);

@@ -329,7 +329,7 @@ export class SupplierForm {
    * @type {FieldTree<SupplierDraft>}
    */
   protected readonly supplierForm: FieldTree<SupplierDraft> = form(this.draft, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     validate(path.contacts, ({ value }) =>
       value().length <= 50
         ? null

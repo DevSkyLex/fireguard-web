@@ -299,6 +299,15 @@ describe('MaintenanceFinancialDirectory', () => {
     },
   );
 
+  it('renders native dossier list items and a named equipment action group', () => {
+    const list = root().querySelector('ul[data-testid="maintenance-financial-items"]');
+    expect(list?.querySelectorAll(':scope > li')).toHaveLength(1);
+    const group = list?.querySelector('fieldset');
+    expect(group?.getAttribute('aria-label')).toBe('Equipment report filters');
+    expect(group?.querySelectorAll('button')).toHaveLength(dossier().equipment.length);
+    expect(list?.querySelector('[role="listitem"]')).toBeNull();
+  });
+
   it('opens the private financial route with the owning organization and exact work query', () => {
     const entry = dossier();
     const link = root().querySelector<HTMLAnchorElement>('article a');

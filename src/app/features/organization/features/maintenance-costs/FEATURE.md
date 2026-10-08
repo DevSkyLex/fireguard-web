@@ -25,6 +25,10 @@ new writes unavailable. Definite refusal or confirmation acknowledges the origin
 The financial page's deactivation guard keeps an active write alive until its response settles;
 an uncertain durable expense/rate may leave and recover when the original dossier is reopened.
 
+Private financial access is a thin read-only projection of browser execution, authentication,
+session generation and the existing dedicated grants. Account ownership and durable-command
+fences remain in the route store and journal.
+
 Forms are native Spartan Signal Forms and emit intent, while the page owns orchestration. The
 feature consumes Organization's public permission service, member transport/helper and regional
 formatting port. Member names/pickers load only with `organization.members.read`; missing names

@@ -10,6 +10,7 @@ import {
   signal,
   untracked,
   viewChild,
+  type InputSignal,
   type Signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -150,7 +151,7 @@ export class ServiceRequestsPage {
    */
   public readonly originNonConformityId = input<string | undefined>();
   /**
-   * Property createParam
+   * Property create
    * @readonly
    *
    * @description
@@ -161,7 +162,7 @@ export class ServiceRequestsPage {
    *
    * @type {InputSignal<string | undefined>}
    */
-  public readonly createParam = input<string | undefined>(undefined, { alias: 'create' });
+  public readonly create: InputSignal<string | undefined> = input<string | undefined>();
   /**
    * Property store
    * @readonly
@@ -539,7 +540,7 @@ export class ServiceRequestsPage {
       });
     });
     effect(() => {
-      const create = this.createParam(),
+      const create = this.create(),
         allowed = this.canCreate(),
         organizationId = this.organizationId();
       if (
@@ -657,7 +658,7 @@ export class ServiceRequestsPage {
     this.editorVisible.set(true);
   }
   /**
-   * Method create
+   * Method createRequest
    *
    * @description
    * Submits a described target without implicitly qualifying or converting it.
@@ -669,7 +670,7 @@ export class ServiceRequestsPage {
    *
    * @returns {void} Result owned by the request workflow.
    */
-  protected create(data: CreateServiceRequestInput): void {
+  protected createRequest(data: CreateServiceRequestInput): void {
     if (
       !this.canCreate() ||
       !this.online() ||

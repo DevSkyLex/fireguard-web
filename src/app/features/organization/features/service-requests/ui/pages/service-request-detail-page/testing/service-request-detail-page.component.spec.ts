@@ -158,6 +158,15 @@ describe('ServiceRequestDetailPage', () => {
     expect(page.sheet.visible()).toBe(false);
   });
 
+  it('announces dossier loading until the requested record arrives', async () => {
+    const response = new Subject<ServiceRequestOutput>();
+    const page = await render(serviceRequestFixture(), { response });
+    expect(page.element.querySelector('[role="status"] .sr-only')?.textContent).toBe('Loading…');
+    response.next(serviceRequestFixture());
+    await page.fixture.whenStable();
+    expect(page.element.querySelector('[role="status"] .sr-only')).toBeNull();
+  });
+
   it('keeps actions blocked after journal hydration fails while permitting readers to leave', async () => {
     const page = await render(serviceRequestFixture(), {
       journalError: new Error('Storage unavailable'),

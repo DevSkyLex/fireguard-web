@@ -26,7 +26,6 @@ import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import type {
   EquipmentOutput,
   EquipmentStatus,
-  EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import {
@@ -376,9 +375,9 @@ export class InterventionEquipmentTable {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<EquipmentType | null>}
+   * @type {Signal<string | null>}
    */
-  protected readonly typeFilter: Signal<EquipmentType | null> = computed(() => this.query().type);
+  protected readonly typeFilter: Signal<string | null> = computed(() => this.query().type);
 
   /**
    * Property statusFilter
@@ -585,7 +584,7 @@ export class InterventionEquipmentTable {
   >(() => {
     if (this.serverFiltering()) return this.items();
     const query: string = this.searchTerm().trim().toLowerCase();
-    const type: EquipmentType | null = this.typeFilter();
+    const type: string | null = this.typeFilter();
     const status: EquipmentStatus | null = this.statusFilter();
 
     return this.items().filter((item: EquipmentOutput): boolean => {
@@ -775,7 +774,7 @@ export class InterventionEquipmentTable {
    * @returns {void} No value is returned.
    */
   protected onTypeFilterChanged(value: string | null): void {
-    const selected: EquipmentType | null =
+    const selected: string | null =
       this.typeOptions().find((option) => option.value === value)?.value ?? null;
     this.openFilterKey.set(null);
     this.emitQuery({ type: selected });

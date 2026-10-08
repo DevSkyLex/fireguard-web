@@ -2,7 +2,6 @@ export type {
   EquipmentOutput,
   EquipmentPlanPosition,
   EquipmentStatus,
-  EquipmentType,
   HistoricalEquipmentType,
   EquipmentCriticality,
   EquipmentTechnicalProperty,

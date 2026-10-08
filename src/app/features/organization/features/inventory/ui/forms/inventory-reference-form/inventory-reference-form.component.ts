@@ -8,7 +8,14 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { disabled, form, FormField, maxLength, validate } from '@angular/forms/signals';
+import {
+  disabled,
+  form,
+  FormField,
+  maxLength,
+  validate,
+  type FieldTree,
+} from '@angular/forms/signals';
 import type {
   InventoryPartOutput,
   InventoryWarehouseOutput,
@@ -211,10 +218,15 @@ export class InventoryReferenceForm {
    *   'writable'
    * >}
    */
-  protected readonly fields = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || !this.available());
-    disabled(path.code, () => !!this.entry());
-    disabled(path.kind, () => !!this.entry() || this.kind() === 'warehouse');
+  protected readonly fields: FieldTree<{
+    code: string;
+    label: string;
+    unit: string;
+    kind: 'part' | 'consumable';
+  }> = form(this.draft, (path) => {
+    disabled(path, { when: () => this.pending() || !this.available() });
+    disabled(path.code, { when: () => !!this.entry() });
+    disabled(path.kind, { when: () => !!this.entry() || this.kind() === 'warehouse' });
     validate(path.code, ({ value }) =>
       value().trim()
         ? null
@@ -255,9 +267,11 @@ export class InventoryReferenceForm {
       this.identity();
       untracked(() => {
         const entry = this.entry();
+        let label = '';
+        if (entry) label = 'label' in entry ? entry.label : entry.name;
         this.fields().reset({
           code: entry?.code ?? '',
-          label: entry ? ('label' in entry ? entry.label : entry.name) : '',
+          label,
           unit: entry && 'unit' in entry ? entry.unit : 'piece',
           kind: entry && 'kind' in entry ? entry.kind : 'part',
         });

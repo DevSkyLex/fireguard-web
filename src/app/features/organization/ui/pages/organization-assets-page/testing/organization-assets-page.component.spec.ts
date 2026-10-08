@@ -1388,6 +1388,48 @@ describe('OrganizationAssetsPage', () => {
       customerId: 'customer',
     });
   });
+
+  it('binds historical park query keys and updates their scope during route reuse', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(
+          [{ path: 'organizations/:organizationId/assets', component: OrganizationAssetsPage }],
+          withComponentInputBinding(),
+        ),
+      ],
+    });
+    const harness = await RouterTestingHarness.create();
+    const page = await harness.navigateByUrl(
+      '/organizations/org-1/assets?axis=everything&family=all&customerId=customer&queue=controls',
+      OrganizationAssetsPage,
+    );
+
+    expect(page.family()).toBe('all');
+    expect(page.customerId()).toBe('customer');
+    expect(page.queue()).toBe('controls');
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      includeDescendants: true,
+      customerId: 'customer',
+      maintenanceDueStatus: 'due',
+    });
+
+    const reused = await harness.navigateByUrl(
+      '/organizations/org-1/assets?axis=everything&family=fire&customerId=next&queue=unavailable',
+      OrganizationAssetsPage,
+    );
+
+    expect(reused).toBe(page);
+    expect(loadRoots).toHaveBeenLastCalledWith('org-1', 'next');
+    expect(loadEquipment).toHaveBeenLastCalledWith({
+      organizationId: 'org-1',
+      includeDescendants: true,
+      family: 'fire',
+      customerId: 'next',
+      status: 'under_maintenance',
+    });
+  });
+
   it('opens dashboard due and anomaly queues without reverting to unfiltered equipment', async () => {
     fixture = await createPage({
       organizationId: 'org-1',

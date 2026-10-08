@@ -1,17 +1,4 @@
 /**
- * Type OnboardingEquipmentTypeOption
- *
- * @description
- * Permanent equipment code received through the organization setup catalogue,
- * including organization-defined types and previously prepared historical codes.
- *
- * @since 1.0.0
- *
- * @type {OnboardingEquipmentTypeOption}
- */
-export type OnboardingEquipmentTypeOption = string;
-
-/**
  * Interface OnboardingEquipmentFormDraft
  * @interface OnboardingEquipmentFormDraft
  *
@@ -30,9 +17,9 @@ export interface OnboardingEquipmentFormDraft {
    * @description
    * Server-owned equipment code, or an empty string until one is picked.
    *
-   * @type {OnboardingEquipmentTypeOption | ''}
+   * @type {string}
    */
-  readonly type: OnboardingEquipmentTypeOption | '';
+  readonly type: string;
 
   /**
    * Property brand

@@ -174,7 +174,8 @@ export class InventoryPartPicker implements FormValueControl<string> {
     if (typeof value !== 'string' || !value) return this.placeholder;
     if (value === this.value()) return this.selectedLabel();
     const item = this.store.referenceEntities().find((candidate) => candidate.id === value);
-    return item ? ('label' in item ? item.label : item.name) : value;
+    if (!item) return value;
+    return 'label' in item ? item.label : item.name;
   };
 
   /**

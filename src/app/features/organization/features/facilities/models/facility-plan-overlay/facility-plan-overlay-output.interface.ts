@@ -1,7 +1,4 @@
-import type {
-  EquipmentStatus,
-  EquipmentType,
-} from '@features/organization/features/equipments/models';
+import type { EquipmentStatus } from '@features/organization/features/equipments/models';
 import type {
   FacilityGeometryIssue,
   FacilityEquipmentPlacementIssue,
@@ -110,9 +107,9 @@ export interface FacilityPlanOverlayEquipment {
    * parts and the label is built here, against the translated
    * `EQUIPMENT_TYPE_OPTIONS` catalogue.
    *
-   * @type {EquipmentType}
+   * @type {string}
    */
-  readonly type: EquipmentType;
+  readonly type: string;
 
   /**
    * Property serialNumber

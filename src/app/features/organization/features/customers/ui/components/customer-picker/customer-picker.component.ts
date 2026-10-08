@@ -144,10 +144,11 @@ export class CustomerPicker implements FormValueControlType<string> {
    */
   protected readonly selectedLabel: Signal<string> = computed(() => {
     const selected = this.store.readCallState().data;
-    return selected?.id === this.value()
-      ? selected.name +
-          (selected.archivedAt ? $localize`:@@customer.picker.archived: (archived)` : '')
-      : this.value();
+    if (selected?.id !== this.value()) return this.value();
+    const archivedSuffix = selected.archivedAt
+      ? $localize`:@@customer.picker.archived: (archived)`
+      : '';
+    return selected.name + archivedSuffix;
   });
   /**
    * Property labelOf
@@ -161,12 +162,11 @@ export class CustomerPicker implements FormValueControlType<string> {
    *
    * @type {(value: unknown) => string}
    */
-  protected readonly labelOf: (value: unknown) => string = (value) =>
-    typeof value !== 'string' || !value
-      ? $localize`:@@customer.picker.none:No customer`
-      : value === this.value()
-        ? this.selectedLabel()
-        : (this.store.customerEntities().find((customer) => customer.id === value)?.name ?? value);
+  protected readonly labelOf: (value: unknown) => string = (value) => {
+    if (typeof value !== 'string' || !value) return $localize`:@@customer.picker.none:No customer`;
+    if (value === this.value()) return this.selectedLabel();
+    return this.store.customerEntities().find((customer) => customer.id === value)?.name ?? value;
+  };
   /**
    * Property remoteFilter
    * @readonly

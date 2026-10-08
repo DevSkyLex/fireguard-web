@@ -1859,13 +1859,8 @@ export class InterventionDetailPage implements UnsavedChangesAware {
       const allowed = this.canAddWorkItem();
       const intervention = this.store.intervention();
       untracked(() => {
-        if (
-          !context ||
-          !allowed ||
-          !intervention ||
-          intervention.id !== this.interventionId() ||
-          !isPlatformBrowser(this.platformId)
-        )
+        if (!context || !allowed || !intervention) return;
+        if (intervention.id !== this.interventionId() || !isPlatformBrowser(this.platformId))
           return;
         const existing = this.store
           .workItems()

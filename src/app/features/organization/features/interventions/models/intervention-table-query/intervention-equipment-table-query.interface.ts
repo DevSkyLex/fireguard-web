@@ -1,7 +1,4 @@
-import type {
-  EquipmentStatus,
-  EquipmentType,
-} from '@features/organization/features/equipments/models';
+import type { EquipmentStatus } from '@features/organization/features/equipments/models';
 
 /**
  * Interface InterventionEquipmentTableQuery
@@ -35,9 +32,9 @@ export interface InterventionEquipmentTableQuery {
    *
    * @access public
    *
-   * @type {EquipmentType | null}
+   * @type {string | null}
    */
-  readonly type: EquipmentType | null;
+  readonly type: string | null;
 
   /**
    * Property status

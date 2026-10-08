@@ -155,4 +155,31 @@ describe('OrganizationParkStore', () => {
     });
     expect(store.sitePageCount()).toBe(3);
   });
+
+  it('retains each confirmed quantity during a same-scope retry and clears it on reset', () => {
+    const query = { organizationId: 'org', equipmentEnabled: true, anomaliesEnabled: true };
+    store.load(query);
+    const pendingEquipment = new Subject();
+    const pendingControls = new Subject();
+    const pendingAnomalies = new Subject();
+    equipment.summary.mockReturnValue(pendingEquipment);
+    equipment.list.mockReturnValue(pendingControls);
+    park.anomaliesSummary.mockReturnValue(pendingAnomalies);
+
+    store.load(query);
+
+    expect(store.unavailableCallState()).toMatchObject({ status: 'pending', data: 3 });
+    expect(store.controlsCallState()).toMatchObject({ status: 'pending', data: 27 });
+    expect(store.anomaliesCallState()).toMatchObject({ status: 'pending', data: 8 });
+    pendingAnomalies.error({ status: 503 });
+    expect(store.anomaliesCallState()).toMatchObject({ status: 'error', data: 8 });
+
+    store.load(null);
+
+    expect(pendingEquipment.observed).toBe(false);
+    expect(pendingControls.observed).toBe(false);
+    expect(store.unavailableCallState()).toMatchObject({ status: 'idle', data: null });
+    expect(store.controlsCallState()).toMatchObject({ status: 'idle', data: null });
+    expect(store.anomaliesCallState()).toMatchObject({ status: 'idle', data: null });
+  });
 });

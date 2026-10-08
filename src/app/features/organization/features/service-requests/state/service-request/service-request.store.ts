@@ -527,11 +527,9 @@ export const ServiceRequestStore = signalStore(
                   total: sameScope ? store.total() : 0,
                   listCallState: pendingCallState(),
                   writeCallState:
-                    store.writeCallState().status === 'pending'
+                    store.writeCallState().status === 'pending' || sameOrganization
                       ? store.writeCallState()
-                      : sameOrganization
-                        ? store.writeCallState()
-                        : idleCallState(),
+                      : idleCallState(),
                 },
               );
               if (!sameOrganization) restoreCommands();
@@ -598,11 +596,9 @@ export const ServiceRequestStore = signalStore(
                 selectedId: target.requestId,
                 readCallState: pendingCallState(sameTarget ? store.readCallState().data : null),
                 writeCallState:
-                  store.writeCallState().status === 'pending'
+                  store.writeCallState().status === 'pending' || sameTarget
                     ? store.writeCallState()
-                    : sameTarget
-                      ? store.writeCallState()
-                      : idleCallState(),
+                    : idleCallState(),
               });
               if (!sameTarget) restoreCommands();
               const identity = actor(

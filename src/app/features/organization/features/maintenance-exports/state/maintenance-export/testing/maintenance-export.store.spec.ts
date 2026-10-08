@@ -3,27 +3,26 @@ import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { CustomerService } from '@features/organization/features/customers/data-access';
-import { EquipmentService } from '@features/organization/features/equipments/data-access';
-import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { MaintenanceExportService } from '@features/organization/features/maintenance-exports/data-access';
-import type { MaintenanceExportOutput } from '@features/organization/features/maintenance-exports/models';
+import type {
+  MaintenanceExportOutput,
+  MaintenanceExportReferencePage,
+} from '@features/organization/features/maintenance-exports/models';
 import { maintenanceExportFixture } from '@features/organization/features/maintenance-exports/models/export/testing/maintenance-export.fixture';
+import { MaintenanceExportReferenceDirectoryService } from '@features/organization/features/maintenance-exports/services/maintenance-export-reference-directory';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import {
   MaintenanceExportStore,
   type MaintenanceExportStoreType,
 } from '../maintenance-export.store';
 
-describe('MaintenanceExportStore boundaries', () => {
+describe('MaintenanceExportStore', () => {
   let store: MaintenanceExportStoreType;
   const authenticated = signal(true),
     revision = signal(1),
     grants = signal<readonly string[]>([]);
   let api: Record<string, ReturnType<typeof vi.fn>>;
-  let customers: { list: ReturnType<typeof vi.fn> },
-    facilities: { list: ReturnType<typeof vi.fn> },
-    equipments: { list: ReturnType<typeof vi.fn> };
+  let directory: { list: ReturnType<typeof vi.fn> };
   const archive = maintenanceExportFixture(),
     scope = { organizationId: 'org', sessionRevision: 1 };
   const input = {
@@ -37,9 +36,7 @@ describe('MaintenanceExportStore boundaries', () => {
       providers: [
         MaintenanceExportStore,
         { provide: MaintenanceExportService, useValue: api },
-        { provide: CustomerService, useValue: customers },
-        { provide: FacilityService, useValue: facilities },
-        { provide: EquipmentService, useValue: equipments },
+        { provide: MaintenanceExportReferenceDirectoryService, useValue: directory },
         {
           provide: OrganizationPermissionService,
           useValue: { hasPermission: (permission: string) => grants().includes(permission) },
@@ -82,16 +79,7 @@ describe('MaintenanceExportStore boundaries', () => {
       writeReference: vi.fn().mockReturnValue(of({ id: 'mapping', revision: 1 })),
       download: vi.fn().mockReturnValue(of(new Blob(['retained']))),
     };
-    customers = {
-      list: vi.fn().mockReturnValue(
-        of({
-          member: [{ id: 'customer', name: 'Client', contacts: ['private'] }],
-          totalItems: 1,
-        }),
-      ),
-    };
-    facilities = { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) };
-    equipments = { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) };
+    directory = { list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })) };
   });
   it.each(['server', 'anonymous', 'no-read'])('fetches no private data for %s', (mode) => {
     if (mode === 'anonymous') authenticated.set(false);
@@ -105,6 +93,8 @@ describe('MaintenanceExportStore boundaries', () => {
     expect(api['read']).not.toHaveBeenCalled();
     expect(api['listSources']).not.toHaveBeenCalled();
     expect(api['listReferences']).not.toHaveBeenCalled();
+    store.loadTargets({ resourceType: 'customer', page: 1 });
+    expect(directory.list).not.toHaveBeenCalled();
   });
   it('cancels a read when the organization changes and rejects old data', () => {
     setup();
@@ -238,50 +228,56 @@ describe('MaintenanceExportStore boundaries', () => {
       expect(store.detailCallState().data).toBeNull();
     },
   );
-  it('requests a mapping directory only with its own read permission and keeps contacts out of the projection', () => {
+  it('keeps a denied directory idle and passes the exact authorized owner query', () => {
     setup();
+    directory.list.mockReturnValueOnce(null);
     store.loadTargets({ resourceType: 'customer', page: 1 });
-    expect(customers.list).not.toHaveBeenCalled();
-    grants.set([...grants(), ORGANIZATION_PERMISSION.CUSTOMERS_READ]);
-    store.loadTargets({ resourceType: 'customer', page: 2, search: 'Client' });
-    expect(customers.list).toHaveBeenCalledWith('org', {
-      page: 2,
-      itemsPerPage: 30,
-      search: 'Client',
-      params: { archived: false },
-    });
-    expect(store.targetsCallState().data?.member).toEqual([{ id: 'customer', label: 'Client' }]);
-  });
-  it('reads archived customers on server pages under the same independent directory permission', () => {
-    grants.set([...grants(), ORGANIZATION_PERMISSION.CUSTOMERS_READ]);
-    setup();
-    customers.list.mockReturnValue(
-      of({
-        member: [
-          {
-            id: 'archived-customer',
-            name: 'Archived operator',
-            archivedAt: '2026-10-07T12:00:00Z',
-            contacts: ['private'],
-          },
-        ],
-        totalItems: 61,
-      }),
+    expect(store.targetsCallState().status).toBe('idle');
+    directory.list.mockReturnValue(
+      of({ member: [{ id: 'customer', label: 'Client' }], totalItems: 61 }),
     );
     store.loadTargets({ resourceType: 'customer', page: 3, search: 'operator', archived: true });
-    expect(customers.list).toHaveBeenCalledWith('org', {
+    expect(directory.list).toHaveBeenLastCalledWith('org', {
+      resourceType: 'customer',
       page: 3,
-      itemsPerPage: 30,
       search: 'operator',
-      params: { archived: true },
+      archived: true,
     });
     expect(store.targetsCallState().data).toEqual({
-      member: [{ id: 'archived-customer', label: 'Archived operator' }],
+      member: [{ id: 'customer', label: 'Client' }],
       totalItems: 61,
     });
-    grants.set(grants().filter((grant) => grant !== ORGANIZATION_PERMISSION.CUSTOMERS_READ));
+  });
+  it('cancels an obsolete directory read and rejects its late private choices', () => {
+    setup();
+    const pending = new Subject<MaintenanceExportReferencePage>();
+    directory.list.mockReturnValueOnce(pending);
     store.loadTargets({ resourceType: 'customer', page: 1, archived: true });
-    expect(customers.list).toHaveBeenCalledOnce();
+    expect(store.targetsCallState().status).toBe('pending');
+    expect(pending.observed).toBe(true);
+    store.setScope({ ...scope, organizationId: 'other' });
+    expect(pending.observed).toBe(false);
+    pending.next({ member: [{ id: 'old', label: 'Old organization' }], totalItems: 1 });
+    expect(store.targetsCallState().data).toBeNull();
+    directory.list.mockReturnValueOnce(
+      of({ member: [{ id: 'new', label: 'New organization' }], totalItems: 1 }),
+    );
+    store.loadTargets({ resourceType: 'site', page: 1 });
+    expect(directory.list).toHaveBeenLastCalledWith('other', { resourceType: 'site', page: 1 });
+    expect(store.targetsCallState().data).toEqual({
+      member: [{ id: 'new', label: 'New organization' }],
+      totalItems: 1,
+    });
+  });
+  it('clears previous directory choices when its independent read permission is denied', () => {
+    setup();
+    directory.list.mockReturnValueOnce(
+      of({ member: [{ id: 'archived-customer', label: 'Archived operator' }], totalItems: 61 }),
+    );
+    store.loadTargets({ resourceType: 'customer', page: 3, archived: true });
+    directory.list.mockReturnValueOnce(null);
+    store.loadTargets({ resourceType: 'customer', page: 1, archived: true });
+    expect(store.targetsCallState().status).toBe('idle');
     expect(store.targetsCallState().data).toBeNull();
   });
   it('distinguishes a successfully absent mapping from a failed read before revision zero can be used', () => {

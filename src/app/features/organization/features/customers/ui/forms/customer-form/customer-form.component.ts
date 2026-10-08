@@ -315,7 +315,7 @@ export class CustomerForm {
    * @type {FieldTree<CustomerDraft>}
    */
   protected readonly customerForm: FieldTree<CustomerDraft> = form(this.draft, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     validate(path.contacts, ({ value }) =>
       value().length <= 50
         ? null

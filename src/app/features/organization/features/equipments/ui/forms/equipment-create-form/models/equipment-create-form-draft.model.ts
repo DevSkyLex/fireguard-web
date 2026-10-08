@@ -1,5 +1,3 @@
-import type { EquipmentType } from '@features/organization/features/equipments/models';
-
 /**
  * Interface EquipmentCreateFormDraft
  * @interface EquipmentCreateFormDraft
@@ -33,7 +31,7 @@ export interface EquipmentCreateFormDraft {
    * @description
    * Stable catalog code, empty until a type is selected.
    */
-  readonly type: EquipmentType | '';
+  readonly type: string;
 
   /**
    * Property subType

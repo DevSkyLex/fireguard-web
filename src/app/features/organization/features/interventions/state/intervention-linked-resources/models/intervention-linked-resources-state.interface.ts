@@ -2,7 +2,6 @@ import type { CallState } from '@core/request-state';
 import type {
   EquipmentOutput,
   EquipmentStatus,
-  EquipmentType,
 } from '@features/organization/features/equipments/models';
 import type {
   FacilityOutput,
@@ -405,9 +404,9 @@ export interface InterventionLinkedResourcesState {
    *
    * @access public
    *
-   * @type {EquipmentType | null}
+   * @type {string | null}
    */
-  readonly equipmentType: EquipmentType | null;
+  readonly equipmentType: string | null;
 
   /**
    * Property equipmentStatus

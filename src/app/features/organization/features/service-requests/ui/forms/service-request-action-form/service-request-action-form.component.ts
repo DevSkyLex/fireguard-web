@@ -8,7 +8,14 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { disabled, form, FormField, maxLength, validate } from '@angular/forms/signals';
+import {
+  disabled,
+  form,
+  FormField,
+  maxLength,
+  validate,
+  type FieldTree,
+} from '@angular/forms/signals';
 import type { StoreError } from '@core/request-state';
 import type { EquipmentOpenWorkOutput } from '@features/organization/features/equipments/models';
 import type {
@@ -332,8 +339,8 @@ export class ServiceRequestActionForm {
    *
    * @type {FieldTree<ServiceRequestActionDraft>}
    */
-  protected readonly actionForm = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || this.locked());
+  protected readonly actionForm: FieldTree<ServiceRequestActionDraft> = form(this.draft, (path) => {
+    disabled(path, { when: () => this.pending() || this.locked() });
     maxLength(path.note, 10000, {
       message: $localize`:@@serviceRequest.form.max10000:Use at most 10000 characters.`,
     });

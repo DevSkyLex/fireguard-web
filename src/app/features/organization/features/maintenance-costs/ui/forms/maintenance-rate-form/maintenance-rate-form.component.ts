@@ -272,16 +272,15 @@ export class MaintenanceRateForm {
   protected readonly fields: FieldTree<Omit<CreateMaintenanceRateInput, 'clientId'>> = form(
     this.draft,
     (path) => {
-      disabled(
-        path,
-        () =>
+      disabled(path, {
+        when: () =>
           this.pending() ||
           this.uncertain() ||
           !this.canManage() ||
           !this.membersAllowed() ||
           this.membersLoading() ||
           !this.currency(),
-      );
+      });
       validate(path.memberId, ({ value }) =>
         this.membersAllowed() &&
         this.members().some((member: MemberSelectOption) => member.value === value())

@@ -60,7 +60,7 @@ import { HlmInput } from '@shared/ui/input';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
 import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
-import type { OnboardingEquipmentFormDraft, OnboardingEquipmentTypeOption } from './models';
+import type { OnboardingEquipmentFormDraft } from './models';
 
 /**
  * Function trimmed
@@ -301,7 +301,7 @@ export class OnboardingEquipmentForm {
   protected readonly equipmentForm: FieldTree<OnboardingEquipmentFormDraft> = form(
     this.model,
     (path) => {
-      disabled(path, () => this.pending());
+      disabled(path, { when: () => this.pending() });
       required(path.facilityId, {
         when: () => this.facilities().length > 0,
         message: $localize`:@@onboarding.equipmentForm.facilityRequired:Select the facility for this equipment.`,
@@ -377,9 +377,9 @@ export class OnboardingEquipmentForm {
    * @access protected
    * @since unreleased
    *
-   * @type {(value: OnboardingEquipmentTypeOption | '') => string}
+   * @type {(value: string) => string}
    */
-  protected readonly typeLabelOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
+  protected readonly typeLabelOf: (value: string) => string = (value) =>
     this.typeOptions().find((option) => option.value === value)?.label ?? value;
 
   /**
@@ -392,9 +392,9 @@ export class OnboardingEquipmentForm {
    * @access protected
    * @since 1.0.0
    *
-   * @type {(value: OnboardingEquipmentTypeOption | '') => string}
+   * @type {(value: string) => string}
    */
-  protected readonly typeIconOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
+  protected readonly typeIconOf: (value: string) => string = (value) =>
     this.typeOptions().find((option) => option.value === value)?.icon ?? 'lucidePackage';
 
   /**

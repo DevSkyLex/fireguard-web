@@ -18,8 +18,8 @@
 export function normalizeInventoryQuantity(value: string, signed = false): string | null {
   const raw = value.trim();
   const pattern = signed
-    ? /^-?(?:0|[1-9][0-9]{0,17})(?:\.[0-9]{1,6})?$/
-    : /^(?:0|[1-9][0-9]{0,17})(?:\.[0-9]{1,6})?$/;
+    ? /^-?(?:0|[1-9]\d{0,17})(?:\.\d{1,6})?$/
+    : /^(?:0|[1-9]\d{0,17})(?:\.\d{1,6})?$/;
   if (!pattern.test(raw) || /^-?0(?:\.0+)?$/.test(raw)) return null;
   const [whole, fraction = ''] = raw.split('.');
   return `${whole}.${fraction.padEnd(6, '0')}`;

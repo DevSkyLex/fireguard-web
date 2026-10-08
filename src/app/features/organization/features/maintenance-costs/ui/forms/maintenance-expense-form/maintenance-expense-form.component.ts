@@ -262,9 +262,10 @@ export class MaintenanceExpenseForm {
   protected readonly possibleTimes: Signal<readonly DateTime[]> = computed(() => {
     const local: string = this.draft().incurredAt.replace(/\.0{1,3}$/, '');
     const date: DateTime = DateTime.fromISO(local, { zone: this.timezone() });
+    const format: string = local.length === 16 ? "yyyy-MM-dd'T'HH:mm" : "yyyy-MM-dd'T'HH:mm:ss";
     return date.isValid &&
       /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}(?::\d{2})?$/.test(local) &&
-      date.toFormat(local.length === 16 ? "yyyy-MM-dd'T'HH:mm" : "yyyy-MM-dd'T'HH:mm:ss") === local
+      date.toFormat(format) === local
       ? date.getPossibleOffsets()
       : [];
   });
@@ -300,7 +301,7 @@ export class MaintenanceExpenseForm {
    * @type {FieldTree<ExpenseDraft>}
    */
   protected readonly expenseForm: FieldTree<ExpenseDraft> = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || this.locked());
+    disabled(path, { when: () => this.pending() || this.locked() });
     required(path.amount, {
       message: $localize`:@@maintenanceCost.expense.amountRequired:Enter the exact expense amount.`,
     });

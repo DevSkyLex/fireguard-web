@@ -43,7 +43,6 @@ import type {
   EquipmentOutput,
   EquipmentSortField,
   EquipmentStatus,
-  EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { resolveEquipmentStatusTag } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
@@ -488,12 +487,12 @@ export class EquipmentsPage {
    * @since unreleased
    *
    * @type {WritableSignal<{
-   *   readonly type: EquipmentType | null;
+   *   readonly type: string | null;
    *   readonly status: EquipmentStatus | null;
    * }>} >}
    */
   protected readonly filters: WritableSignal<{
-    readonly type: EquipmentType | null;
+    readonly type: string | null;
     readonly status: EquipmentStatus | null;
   }> = signal({ type: null, status: null });
 
@@ -1090,14 +1089,14 @@ export class EquipmentsPage {
    * @access protected
    * @since 1.0.0
    *
-   * @param {Partial<{ type: EquipmentType | null; status: EquipmentStatus | null }>} patch - The
+   * @param {Partial<{ type: string | null; status: EquipmentStatus | null }>} patch - The
    *   field to change.
    *
    * @returns {void}
    */
   protected applyFilter(
     patch: Partial<{
-      readonly type: EquipmentType | null;
+      readonly type: string | null;
       readonly status: EquipmentStatus | null;
     }>,
   ): void {

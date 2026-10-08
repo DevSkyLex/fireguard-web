@@ -236,5 +236,39 @@ describe('PurchaseOrderForm', () => {
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
       'Review the latest purchase revision.',
     );
+    expect(source.lines[0].identityTemplate).toEqual({
+      name: 'Extinguisher',
+      serialNumber: 'S-101',
+      properties: { capacity: '6' },
+    });
+  });
+
+  it('disables the native fields during a write and re-enables the unchanged draft after rejection', async () => {
+    const { fixture, form, emitted } = await setup();
+    const draft: PurchaseOrderDraft = {
+      name: 'Parts',
+      supplierId: 'supplier',
+      lines: [draftLine],
+    };
+    form.draft.set(draft);
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    expect(form.orderForm().disabled()).toBe(true);
+    expect(form.orderForm.name().disabled()).toBe(true);
+    form.submit(new Event('submit'));
+    expect(emitted).not.toHaveBeenCalled();
+    expect(form.draft()).toEqual(draft);
+    fixture.componentRef.setInput('pending', false);
+    fixture.componentRef.setInput('error', 'Review the latest purchase revision.');
+    await fixture.whenStable();
+    expect(form.orderForm().disabled()).toBe(false);
+    expect(form.orderForm.name().disabled()).toBe(false);
+    expect(form.draft()).toEqual(draft);
+    form.submit(new Event('submit'));
+    expect(emitted).toHaveBeenCalledExactlyOnceWith({
+      name: 'Parts',
+      supplierId: 'supplier',
+      lines: [{ id: 'line', kind: 'part', partId: 'part', quantity: '0.250000' }],
+    });
   });
 });

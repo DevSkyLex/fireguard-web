@@ -3,7 +3,7 @@
     <div class="flex flex-wrap items-end gap-3" data-testid="park-context">
       <hlm-toggle-group
         type="single"
-        [value]="family()"
+        [value]="selectedFamily()"
         (valueChange)="familyChanged($event)"
         aria-label="Equipment coverage"
         i18n-aria-label="@@park.context.coverage"
@@ -28,12 +28,12 @@
           <app-customer-picker
             inputId="park-customer"
             [organizationId]="organizationId()"
-            [value]="customerId()"
+            [value]="selectedCustomerId()"
             (valueChange)="customerChanged($event)"
           />
         </div>
       }
-      @if (queue()) {
+      @if (selectedQueue()) {
         <button
           hlmBtn
           type="button"
@@ -139,7 +139,7 @@
                   hlmBtn
                   variant="outline"
                   class="mobile-ui:min-h-11"
-                  (click)="tree.loadRoots(organizationId(), customerId() || null)"
+                  (click)="tree.loadRoots(organizationId(), selectedCustomerId() || null)"
                 >
                   <span i18n="@@common.tryAgain">Try again</span>
                 </button>
@@ -538,7 +538,7 @@
 
 <ng-template #assetPanes>
   <div class="flex min-h-0 flex-col gap-6 overflow-y-auto">
-    @if (queue() === 'anomalies') {
+    @if (selectedQueue() === 'anomalies') {
       @if (canReadEquipment() && canReadInspections()) {
         <section class="flex flex-col gap-4" data-testid="park-anomalies-pane">
           <h3 hlmLarge i18n="@@park.queues.anomalies">Anomalies to address</h3>

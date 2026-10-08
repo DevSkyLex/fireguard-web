@@ -241,7 +241,7 @@ export class InterventionInventoryService {
         intervention.organization ?? '',
       )?.[1];
       const scope = organizationId ? this.scope(organizationId, intervention.id) : null;
-      if (!scope || expectedOwner !== scope.accountId) return null;
+      if (scope?.accountId !== expectedOwner) return null;
       return this.refresh(scope);
     });
   }

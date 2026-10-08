@@ -25,7 +25,7 @@ describe('normalizeInventoryQuantity', () => {
     'Infinity',
     'NaN',
   ])('rejects malformed or non-positive usage %s', (value) => {
-    expect(normalizeInventoryQuantity(value)).toBe(null);
+    expect(normalizeInventoryQuantity(value)).toBeNull();
   });
 
   it('permits signed adjustments while still rejecting zero and precision overflow', () => {
@@ -33,8 +33,8 @@ describe('normalizeInventoryQuantity', () => {
       '-999999999999999999.000001',
     );
     expect(normalizeInventoryQuantity('-0.000001', true)).toBe('-0.000001');
-    expect(normalizeInventoryQuantity('-0', true)).toBe(null);
-    expect(normalizeInventoryQuantity('-1000000000000000000', true)).toBe(null);
-    expect(normalizeInventoryQuantity('-1.0000001', true)).toBe(null);
+    expect(normalizeInventoryQuantity('-0', true)).toBeNull();
+    expect(normalizeInventoryQuantity('-1000000000000000000', true)).toBeNull();
+    expect(normalizeInventoryQuantity('-1.0000001', true)).toBeNull();
   });
 });

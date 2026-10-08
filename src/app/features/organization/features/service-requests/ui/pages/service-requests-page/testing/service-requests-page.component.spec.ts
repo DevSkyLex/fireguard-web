@@ -213,6 +213,17 @@ describe('ServiceRequestsPage', () => {
     expect(page.sheet.visible()).toBe(false);
   });
 
+  it('announces directory loading until the requested page arrives', async () => {
+    const response = new Subject<HydraCollection<ServiceRequestOutput>>();
+    const page = await render({ response });
+    expect(
+      page.element.querySelector('[data-testid="service-requests-loading"] .sr-only')?.textContent,
+    ).toBe('Loading…');
+    response.next({ '@id': 'requests', '@type': 'Collection', member: [], totalItems: 0 });
+    await page.fixture.whenStable();
+    expect(page.element.querySelector('[data-testid="service-requests-loading"]')).toBeNull();
+  });
+
   it('lets a creator submit without reading the collection or navigating to an unauthorized detail', async () => {
     const page = await render({ permissions: [create] });
     expect(page.api.list).not.toHaveBeenCalled();
@@ -232,7 +243,7 @@ describe('ServiceRequestsPage', () => {
     await page.fixture.whenStable();
     expect(page.api.create).toHaveBeenCalledWith('org', input);
     expect(page.sheet.visible()).toBe(false);
-    expect(page.element.textContent).toContain(
+    expect(page.element.querySelector('output[role="status"]')?.textContent).toContain(
       'Maintenance request submitted: Repair damaged gauge',
     );
     expect(page.navigate).not.toHaveBeenCalled();

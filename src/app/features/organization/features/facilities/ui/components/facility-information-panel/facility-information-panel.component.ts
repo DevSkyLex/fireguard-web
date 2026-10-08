@@ -146,7 +146,7 @@ export class FacilityInformationPanel {
   protected readonly customerForm: FieldTree<{ customerId: string }> = form(
     this.customerDraft,
     (path) => {
-      disabled(path, () => this.isSaving('customerId'));
+      disabled(path, { when: () => this.isSaving('customerId') });
     },
   );
   //#endregion

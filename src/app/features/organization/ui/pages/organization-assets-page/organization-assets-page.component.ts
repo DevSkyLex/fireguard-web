@@ -1188,7 +1188,7 @@ export class OrganizationAssetsPage {
   protected readonly canReadInspections: Signal<boolean> = computed<boolean>(
     () =>
       this.permissions.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ) &&
-      ((this.family() === 'all' && !this.customerId()) ||
+      ((this.selectedFamily() === 'all' && !this.selectedCustomerId()) ||
         this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ)),
   );
 
@@ -1234,7 +1234,7 @@ export class OrganizationAssetsPage {
 
   //#region Properties
   /**
-   * Property familyParam
+   * Property family
    * @readonly
    *
    * @description
@@ -1245,12 +1245,9 @@ export class OrganizationAssetsPage {
    *
    * @type {InputSignal<string | undefined>}
    */
-  public readonly familyParam: InputSignal<string | undefined> = input<string | undefined>(
-    undefined,
-    { alias: 'family' },
-  );
+  public readonly family: InputSignal<string | undefined> = input<string | undefined>(undefined);
   /**
-   * Property customerParam
+   * Property customerId
    * @readonly
    *
    * @description
@@ -1261,12 +1258,11 @@ export class OrganizationAssetsPage {
    *
    * @type {InputSignal<string | undefined>}
    */
-  public readonly customerParam: InputSignal<string | undefined> = input<string | undefined>(
+  public readonly customerId: InputSignal<string | undefined> = input<string | undefined>(
     undefined,
-    { alias: 'customerId' },
   );
   /**
-   * Property queueParam
+   * Property queue
    * @readonly
    *
    * @description
@@ -1277,12 +1273,9 @@ export class OrganizationAssetsPage {
    *
    * @type {InputSignal<string | undefined>}
    */
-  public readonly queueParam: InputSignal<string | undefined> = input<string | undefined>(
-    undefined,
-    { alias: 'queue' },
-  );
+  public readonly queue: InputSignal<string | undefined> = input<string | undefined>(undefined);
   /**
-   * Property family
+   * Property selectedFamily
    * @readonly
    *
    * @description
@@ -1293,9 +1286,9 @@ export class OrganizationAssetsPage {
    *
    * @type {WritableSignal<'fire' | 'all'>}
    */
-  protected readonly family: WritableSignal<'fire' | 'all'> = signal('fire');
+  protected readonly selectedFamily: WritableSignal<'fire' | 'all'> = signal('fire');
   /**
-   * Property customerId
+   * Property selectedCustomerId
    * @readonly
    *
    * @description
@@ -1306,9 +1299,9 @@ export class OrganizationAssetsPage {
    *
    * @type {WritableSignal<string>}
    */
-  protected readonly customerId: WritableSignal<string> = signal('');
+  protected readonly selectedCustomerId: WritableSignal<string> = signal('');
   /**
-   * Property queue
+   * Property selectedQueue
    * @readonly
    *
    * @description
@@ -1319,7 +1312,7 @@ export class OrganizationAssetsPage {
    *
    * @type {WritableSignal<string>}
    */
-  protected readonly queue: WritableSignal<string> = signal('');
+  protected readonly selectedQueue: WritableSignal<string> = signal('');
   /**
    * Property catalog
    * @readonly
@@ -1364,8 +1357,8 @@ export class OrganizationAssetsPage {
     readonly family?: string;
     readonly customerId?: string;
   }> = computed(() => ({
-    ...(this.family() === 'fire' ? { family: 'fire' } : {}),
-    ...(this.customerId() ? { customerId: this.customerId() } : {}),
+    ...(this.selectedFamily() === 'fire' ? { family: 'fire' } : {}),
+    ...(this.selectedCustomerId() ? { customerId: this.selectedCustomerId() } : {}),
   }));
   /**
    * Property queueFilters
@@ -1382,13 +1375,11 @@ export class OrganizationAssetsPage {
   protected readonly queueFilters: Signal<{
     readonly status?: string;
     readonly maintenanceDueStatus?: string;
-  }> = computed(() =>
-    this.queue() === 'unavailable'
-      ? { status: 'under_maintenance' }
-      : this.queue() === 'controls'
-        ? { maintenanceDueStatus: 'due' }
-        : {},
-  );
+  }> = computed(() => {
+    if (this.selectedQueue() === 'unavailable') return { status: 'under_maintenance' };
+    if (this.selectedQueue() === 'controls') return { maintenanceDueStatus: 'due' };
+    return {};
+  });
 
   //#endregion
 
@@ -1416,16 +1407,16 @@ export class OrganizationAssetsPage {
      */
     effect((): void => {
       const axis: string | undefined = this.axisParam();
-      const family = this.familyParam();
-      const customer = this.customerParam();
-      const queue = this.queueParam();
+      const family = this.family();
+      const customer = this.customerId();
+      const queue = this.queue();
       const facilityId: string | undefined = this.facilityParam();
       const complianceFacilityId: string | undefined = this.complianceParam();
 
       untracked((): void => {
-        this.family.set(family === 'all' ? 'all' : 'fire');
-        this.customerId.set(customer ?? '');
-        this.queue.set(
+        this.selectedFamily.set(family === 'all' ? 'all' : 'fire');
+        this.selectedCustomerId.set(customer ?? '');
+        this.selectedQueue.set(
           queue === 'unavailable' || queue === 'controls' || queue === 'anomalies' ? queue : '',
         );
         const restored: OrganizationAssetsAxis =
@@ -1473,7 +1464,7 @@ export class OrganizationAssetsPage {
 
     effect((): void => {
       const organizationId: string = this.organizationId();
-      const customerId = this.customerId();
+      const customerId = this.selectedCustomerId();
       untracked((): void => {
         this.tree.loadRoots(organizationId, customerId || null);
         this.catalog.load(organizationId);
@@ -1521,7 +1512,7 @@ export class OrganizationAssetsPage {
       const includeDescendants = this.equipmentIncludeDescendants();
       const filters = this.parkFilters();
       const queueFilters = this.queueFilters();
-      const queue = this.queue();
+      const queue = this.selectedQueue();
       const canReadEquipment: boolean = this.canReadEquipment();
       const canReadInspections: boolean = this.canReadInspections();
 
@@ -1529,7 +1520,7 @@ export class OrganizationAssetsPage {
         if (axis === 'compliance') return;
         if (axis === 'site' && facilityId === null) return;
 
-        const scope = axis === 'site' && facilityId !== null ? { facilityId } : {};
+        const scope = axis === 'site' ? { facilityId: facilityId ?? undefined } : {};
 
         if (queue === 'anomalies') {
           if (canReadEquipment && canReadInspections)
@@ -1553,7 +1544,7 @@ export class OrganizationAssetsPage {
           this.pane.loadInspections({
             organizationId,
             ...scope,
-            ...(axis === 'site' && facilityId !== null ? { includeDescendants } : {}),
+            ...(axis === 'site' ? { includeDescendants } : {}),
             ...filters,
           });
       });
@@ -1578,7 +1569,7 @@ export class OrganizationAssetsPage {
    */
   protected familyChanged(value: unknown): void {
     if (value !== 'fire' && value !== 'all') return;
-    this.family.set(value);
+    this.selectedFamily.set(value);
     this.writeUrlState();
   }
   /**
@@ -1596,8 +1587,8 @@ export class OrganizationAssetsPage {
    * @returns {void} No return value.
    */
   protected customerChanged(value: string): void {
-    if (value === this.customerId()) return;
-    this.customerId.set(value);
+    if (value === this.selectedCustomerId()) return;
+    this.selectedCustomerId.set(value);
     this.selectedFacilityId.set(null);
     this.writeUrlState();
   }
@@ -1614,7 +1605,7 @@ export class OrganizationAssetsPage {
    * @returns {void} No return value.
    */
   protected clearQueue(): void {
-    this.queue.set('');
+    this.selectedQueue.set('');
     this.writeUrlState();
   }
 
@@ -1688,7 +1679,7 @@ export class OrganizationAssetsPage {
     const facilityId: string | null = this.selectedFacilityId();
     const scope = this.axis() === 'site' && facilityId !== null ? { facilityId } : {};
 
-    if (this.queue() === 'anomalies') {
+    if (this.selectedQueue() === 'anomalies') {
       if (this.canReadEquipment() && this.canReadInspections())
         this.pane.loadAnomalies({
           organizationId,
@@ -2263,9 +2254,9 @@ export class OrganizationAssetsPage {
       relativeTo: this.route,
       queryParams: {
         axis: axis === 'site' ? null : axis,
-        family: this.family() === 'all' ? 'all' : null,
-        customerId: this.customerId() || null,
-        queue: this.queue() || null,
+        family: this.selectedFamily() === 'all' ? 'all' : null,
+        customerId: this.selectedCustomerId() || null,
+        queue: this.selectedQueue() || null,
         facility: axis === 'site' ? this.selectedFacilityId() : null,
         equipmentScope: axis === 'site' ? equipmentScope : null,
         compliance: axis === 'compliance' ? this.selectedComplianceFacilityId() : null,

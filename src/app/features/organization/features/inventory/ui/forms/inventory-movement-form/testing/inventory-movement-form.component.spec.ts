@@ -91,9 +91,9 @@ describe('InventoryMovementForm', () => {
     await fixture.whenStable();
     await submit({ ...draft, partId: '', warehouseId: '', quantity: '0.5' });
     expect(writes).toEqual([{ ...draft, partId: '', warehouseId: '', quantity: '0.500000' }]);
-    expect((fixture.nativeElement as HTMLElement).querySelector('app-inventory-part-picker')).toBe(
-      null,
-    );
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('app-inventory-part-picker'),
+    ).toBeNull();
   });
 
   it('rejects negative return quantity and requires a nonblank bounded motivation', async () => {

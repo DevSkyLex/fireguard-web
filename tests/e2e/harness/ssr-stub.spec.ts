@@ -115,28 +115,28 @@ test('keeps the authenticated Mercure stream open with exact origin CORS', async
     hub.searchParams.set('authorization', 'e2e-mercure-token');
     const state = await page.evaluateHandle((url) => {
       const source = new EventSource(url);
-      const state = { source, errors: 0 };
-      source.addEventListener('error', () => state.errors++);
-      return state;
+      const streamState = { source, errors: 0 };
+      source.addEventListener('error', () => streamState.errors++);
+      return streamState;
     }, hub.toString());
     try {
       const connection = await state.evaluate(
-        (state) =>
-          new Promise<{ open: boolean; credentials: boolean; errors: number }>((resolve) => {
-            const { source } = state;
+        (connectionState) =>
+          new Promise<{ open: boolean; credentials: boolean; errors: number }>((complete) => {
+            const { source } = connectionState;
             const snapshot = () => ({
               open: source.readyState === EventSource.OPEN,
               credentials: source.withCredentials,
-              errors: state.errors,
+              errors: connectionState.errors,
             });
-            if (source.readyState !== EventSource.CONNECTING) return resolve(snapshot());
+            if (source.readyState !== EventSource.CONNECTING) return complete(snapshot());
             const onOpen = () => {
               source.removeEventListener('error', onError);
-              resolve(snapshot());
+              complete(snapshot());
             };
             const onError = () => {
               source.removeEventListener('open', onOpen);
-              resolve(snapshot());
+              complete(snapshot());
             };
             source.addEventListener('open', onOpen, { once: true });
             source.addEventListener('error', onError, { once: true });

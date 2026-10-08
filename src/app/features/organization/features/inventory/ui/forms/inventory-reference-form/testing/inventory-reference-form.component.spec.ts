@@ -63,9 +63,9 @@ describe('InventoryReferenceForm', () => {
     await fill('name', '  Technician van  ');
     await submit();
     expect(writes).toEqual([{ code: 'VAN', name: 'Technician van' }]);
-    expect((fixture.nativeElement as HTMLElement).querySelector('#inventory-reference-unit')).toBe(
-      null,
-    );
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('#inventory-reference-unit'),
+    ).toBeNull();
   });
 
   it.each(['code', 'name', 'unit'])(

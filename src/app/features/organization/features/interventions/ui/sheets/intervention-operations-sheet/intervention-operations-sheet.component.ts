@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import type { InputSignal, OutputEmitterRef, WritableSignal } from '@angular/core';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import type { CallState } from '@core/request-state';
@@ -7,9 +7,15 @@ import {
   resolveInterventionTag,
   type InterventionOutboxOperation,
   type InterventionWorkItemOutput,
+  type InterventionWorkItemExecutionResultInput,
 } from '@features/organization/features/interventions/models';
 import { WorkloadConfirmationDialog } from '@features/organization/features/workload/ui/dialogs/workload-confirmation-dialog';
 import { formatDurationMinutes } from '@shared/duration-format';
+import {
+  DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  OrgDatePipe,
+  type RegionalFormatSettings,
+} from '@shared/regional-format';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
 import { HlmButton } from '@shared/ui/button';
@@ -28,6 +34,8 @@ import { HlmSheetImports } from '@shared/ui/sheet';
 @Component({
   selector: 'app-intervention-operations-sheet',
   imports: [
+    NgTemplateOutlet,
+    OrgDatePipe,
     WorkloadConfirmationDialog,
     DatePipe,
     HlmButton,
@@ -38,6 +46,21 @@ import { HlmSheetImports } from '@shared/ui/sheet';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionOperationsSheet {
+  /**
+   * Property regionalFormatting
+   * @readonly
+   *
+   * @description
+   * Organization timezone used when comparing actual execution dates.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<RegionalFormatSettings>}
+   */
+  public readonly regionalFormatting = input<RegionalFormatSettings>(
+    DEFAULT_REGIONAL_FORMAT_SETTINGS,
+  );
   /**
    * Property visible
    * @readonly
@@ -350,6 +373,73 @@ export class InterventionOperationsSheet {
       return this.statusPreviewLabel(operation, payload.status);
     if ('description' in payload && payload.description) return payload.description;
     return this.labels[operation.type];
+  }
+
+  /**
+   * Method executionResultOf
+   * @method executionResultOf
+   *
+   * @description
+   * Exposes the local result facts that the operator must compare before reapplying a conflict.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionOutboxOperation} operation - Queued operation.
+   *
+   * @returns {InterventionWorkItemExecutionResultInput | null} Recorded physical work, if present.
+   */
+  protected executionResultOf(
+    operation: InterventionOutboxOperation,
+  ): InterventionWorkItemExecutionResultInput | null {
+    return operation.type === 'work-item.update'
+      ? (operation.payload.executionResult ?? null)
+      : null;
+  }
+
+  /**
+   * Method replacementResourceOf
+   * @method replacementResourceOf
+   *
+   * @description
+   * Identifies the persisted successor during human review of a replacement conflict.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionOutboxOperation} operation - Queued operation.
+   *
+   * @returns {string | null} Canonical result resource, when attached to the queued work.
+   */
+  protected replacementResourceOf(operation: InterventionOutboxOperation): string | null {
+    return operation.type === 'work-item.update'
+      ? (operation.payload.resultResource ?? null)
+      : null;
+  }
+
+  /**
+   * Method executionOutcomeLabel
+   * @method executionOutcomeLabel
+   *
+   * @description
+   * Names the actual local outcome independently of task completion status.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionWorkItemExecutionResultInput} result - Queued physical result.
+   *
+   * @returns {string} Localized outcome.
+   */
+  protected executionOutcomeLabel(result: InterventionWorkItemExecutionResultInput): string {
+    switch (result.outcome) {
+      case 'successful':
+        return $localize`:@@intervention.execution.successful:Successful`;
+      case 'failed':
+        return $localize`:@@intervention.execution.failed:Unsuccessful — work still required`;
+      case 'performed':
+        return $localize`:@@intervention.execution.performed:Performed`;
+    }
   }
 
   /**

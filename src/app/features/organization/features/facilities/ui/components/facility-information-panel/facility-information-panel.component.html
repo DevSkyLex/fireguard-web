@@ -41,6 +41,41 @@
         </span>
       </div>
 
+      @if (facility().type === 'site' && !facility().parentFacilityId) {
+        <app-inplace-field
+          #customerField
+          label="Customer"
+          i18n-label="@@facility.form.customer"
+          commit="confirm"
+          [editable]="editable()"
+          [editing]="isEditing('customerId')"
+          [pending]="isSaving('customerId')"
+          [error]="errorFor('customerId')"
+          [canSave]="customerDraft().customerId !== (facility().customerId ?? '')"
+          (editingChange)="customerEditing($event)"
+          (saved)="saveCustomer()"
+        >
+          <span fieldValue>
+            @if (facility().customerId) {
+              <app-customer-label
+                [organizationId]="organizationId()"
+                [customerId]="facility().customerId ?? null"
+              />
+            } @else {
+              <span class="text-muted-foreground" i18n="@@customer.picker.none">No customer</span>
+            }
+          </span>
+          <span fieldEditor>
+            @if (isEditing('customerId')) {
+              <app-customer-picker
+                inputId="facility-edit-customer"
+                [organizationId]="organizationId()"
+                [formField]="customerForm.customerId"
+              />
+            }
+          </span>
+        </app-inplace-field>
+      }
       <div data-testid="facility-field-name">
         <app-inplace-field
           #nameField

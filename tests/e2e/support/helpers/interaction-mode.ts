@@ -48,9 +48,9 @@ export async function mockInteractionModeInterventions(page: Page): Promise<ApiM
 
 /**
  * Function emulateMobilePlatform
- * @description Completes Playwright device emulation on Windows, where navigator.platform can
- * retain the host platform despite a mobile UA. Supplies coherent device evidence, never the
- * application's classification, and leaves touch/media capabilities to the browser context.
+ * @description Completes mobile device evidence when the host platform leaks through or Linux
+ * WebKit reports no touch points for an emulated iPhone. Leaves actual touch input and media
+ * capabilities to the browser context, without overriding the application's classification.
  * @access public
  * @since 1.0.0
  * @param {BrowserContext} context - Mobile device context before its first navigation.
@@ -74,8 +74,12 @@ export async function emulateMobilePlatform(
           ? { platform: 'Android', mobile: device === 'android' }
           : undefined,
     });
-    if (device === 'ipad') {
-      Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, get: () => 5 });
+    if (device === 'ios' || device === 'ipad') {
+      const nativeTouchPoints = navigator.maxTouchPoints;
+      Object.defineProperty(navigator, 'maxTouchPoints', {
+        configurable: true,
+        get: () => (matchMedia('(pointer: coarse)').matches ? 5 : nativeTouchPoints),
+      });
     }
   }, platform);
 }

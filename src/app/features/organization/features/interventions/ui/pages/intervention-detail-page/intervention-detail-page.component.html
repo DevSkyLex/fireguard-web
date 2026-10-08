@@ -423,6 +423,162 @@
                 </div>
               }
 
+              @if (canReadInventory()) {
+                <section
+                  class="min-w-0 space-y-4"
+                  aria-labelledby="intervention-inventory-title"
+                  data-testid="intervention-inventory-section"
+                >
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2
+                      id="intervention-inventory-title"
+                      class="text-base font-semibold"
+                      i18n="@@intervention.inventory.title"
+                    >
+                      Parts used
+                    </h2>
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      class="mobile-ui:min-h-11"
+                      [attr.aria-expanded]="inventoryOpened()"
+                      aria-controls="intervention-inventory-content"
+                      (click)="toggleInventory()"
+                      data-testid="intervention-inventory-toggle"
+                    >
+                      @if (inventoryOpened()) {
+                        <span i18n="@@intervention.inventory.hide">Hide declarations</span>
+                      } @else {
+                        <span i18n="@@intervention.inventory.open">View and declare parts</span>
+                      }
+                    </button>
+                  </div>
+                  @if (inventoryPrepared()) {
+                    <div
+                      id="intervention-inventory-content"
+                      [hidden]="!inventoryOpened()"
+                      class="space-y-4"
+                    >
+                      @if (inventoryStore.hasUnpersistedDeclaration()) {
+                        <div hlmAlert role="alert" data-testid="intervention-inventory-not-saved">
+                          <p hlmAlertTitle i18n="@@intervention.inventory.notSavedTitle">
+                            Declaration not yet saved on this device
+                          </p>
+                          <p
+                            hlmAlertDescription
+                            i18n="@@intervention.inventory.notSavedDescription"
+                          >
+                            Keep this page open. Retry the same declaration before leaving or
+                            publishing.
+                          </p>
+                        </div>
+                      }
+                      @if (inventoryStore.readCallState().error; as error) {
+                        <div hlmAlert role="alert">
+                          <p hlmAlertTitle i18n="@@intervention.inventory.preparationFailed">
+                            Stock preparation could not finish
+                          </p>
+                          <p hlmAlertDescription>{{ error.message }}</p>
+                          <button
+                            hlmBtn
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            class="mobile-ui:min-h-11"
+                            (click)="refreshInventory()"
+                            i18n="@@intervention.inventory.retryPreparation"
+                          >
+                            Retry preparation
+                          </button>
+                        </div>
+                      }
+                      @if (
+                        !inventoryStore.catalogReady() &&
+                        inventoryStore.readCallState().status !== 'pending'
+                      ) {
+                        <p
+                          class="text-sm text-muted-foreground"
+                          i18n="@@intervention.inventory.catalogRequired"
+                        >
+                          Connect and prepare this intervention’s parts and warehouses before
+                          declaring them offline.
+                        </p>
+                      }
+                      @if (inventoryStore.fromDevice()) {
+                        <p
+                          class="text-sm text-muted-foreground"
+                          i18n="@@intervention.inventory.cachedCatalog"
+                        >
+                          References saved on this device. Stock availability is confirmed when
+                          declarations reach the server.
+                        </p>
+                      }
+                      @if (inventoryStore.readCallState().status === 'pending') {
+                        <p
+                          class="text-sm text-muted-foreground"
+                          role="status"
+                          i18n="@@intervention.inventory.preparing"
+                        >
+                          Preparing stock references and declarations…
+                        </p>
+                      }
+                      @if (inventoryWorkItems().length > 0) {
+                        <app-intervention-inventory-context
+                          [items]="inventoryWorkItems()"
+                          [workItemId]="inventoryWorkItemId()"
+                          [canSelectIntervention]="canConsumeForIntervention()"
+                          [disabled]="
+                            inventoryStore.hasUnpersistedDeclaration() ||
+                            inventoryStore.queueCallState().status === 'pending'
+                          "
+                          (contextChanged)="selectInventoryContext($event)"
+                        />
+                      }
+                      @if (intervention.status === 'published') {
+                        <p
+                          class="text-sm text-muted-foreground"
+                          i18n="@@intervention.inventory.lateHint"
+                        >
+                          A declaration added after publication updates current stock records. The
+                          published dossier keeps its original data.
+                        </p>
+                      }
+                      <app-inventory-consumption-panel
+                        [workItemId]="inventoryWorkItemId()"
+                        [equipmentId]="inventoryEquipmentId()"
+                        [organizationId]="organizationId()"
+                        [interventionId]="interventionId()"
+                        [parts]="inventoryStore.snapshot()?.parts ?? []"
+                        [warehouses]="inventoryStore.snapshot()?.warehouses ?? []"
+                        [declarations]="inventoryStore.entities()"
+                        [localIntents]="inventoryStore.localIntents()"
+                        [acceptedOperationId]="inventoryStore.acceptedOperationId()"
+                        [pending]="inventoryStore.queueCallState().status === 'pending'"
+                        [error]="inventoryStore.queueCallState().error?.message ?? null"
+                        [canDeclare]="canDeclareInventory()"
+                        [regionalFormatting]="regionalFormatting()"
+                        (declared)="declareInventory($event)"
+                      />
+                    </div>
+                  }
+                </section>
+              }
+              @if (canReadMaintenanceCosts()) {
+                <a
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="self-start mobile-ui:min-h-11"
+                  [routerLink]="['/organizations', organizationId(), 'maintenance-costs']"
+                  [queryParams]="{ interventionId: interventionId() }"
+                  data-testid="intervention-maintenance-cost-link"
+                  i18n="@@intervention.inventory.costLink"
+                  >View internal maintenance costs</a
+                >
+              }
+
               <div id="intervention-activity-content" #activityContent class="min-w-0">
                 <app-intervention-activity-thread
                   [activities]="store.activities()"
@@ -547,6 +703,7 @@
           <div hlmTabsContent="equipment" class="min-w-0">
             <ng-template hlmTabsContentLazy>
               <app-intervention-equipment-table
+                [equipmentTypeOptions]="equipmentTypeCatalog.options()"
                 [source]="linkedResources.equipmentSource()"
                 [hasLoaded]="linkedResources.equipmentCallState().data !== null"
                 (retryRequested)="linkedResources.retryEquipment(interventionId())"
@@ -776,6 +933,15 @@
       [draftState]="timeStore.draftCallState()"
       [offline]="!online()"
       [historyUnavailable]="timeStore.historyUnavailable()"
+      [page]="timeStore.page()"
+      [totalItems]="timeStore.totalItems()"
+      [nextPage]="timeStore.nextPage()"
+      [historyStates]="timeStore.historyCallStates()"
+      [draftEntryState]="timeStore.draftEntryCallState()"
+      (draftReviewRequested)="timeStore.reviewDraft()"
+      (pageChanged)="timeStore.loadPage($event)"
+      (historyExpanded)="timeStore.loadHistory({ entryId: $event })"
+      (olderVersionsRequested)="timeStore.loadHistory({ entryId: $event, more: true })"
       (retried)="timeStore.load(scope)"
       (closed)="timeItem.set(null)"
       (draftChanged)="timeStore.saveDraft({ scope, draft: $event })"
@@ -809,6 +975,7 @@
   />
 }
 <app-intervention-work-item-sheet
+  [prefill]="workItemPrefill()"
   [workloadOrganizationId]="organizationId()"
   [workloadStartsOn]="store.intervention()?.plannedStartAt ?? null"
   [workloadEndsOn]="store.intervention()?.dueAt ?? null"
@@ -953,6 +1120,12 @@
     <ng-container [ngTemplateOutlet]="workflowActions" />
   }
 </ng-template>
+
+<app-unsaved-changes-dialog
+  [state]="inventoryLeaveState()"
+  (confirmed)="resolveInventoryLeave(true)"
+  (dismissed)="resolveInventoryLeave(false)"
+/>
 
 <ng-template #workflowActions>
   @if (store.intervention(); as intervention) {
@@ -1178,9 +1351,13 @@
                     ><ng-icon name="lucideFileDown" aria-hidden="true"
                   /></span>
                   <span hlmItemContent>
-                    <span hlmItemTitle i18n="@@intervention.detail.exportReport"
-                      >Export report</span
-                    >
+                    <span hlmItemTitle>
+                      @if (intervention.status === 'published') {
+                        <span i18n="@@intervention.report.published">Export validated report</span>
+                      } @else {
+                        <span i18n="@@intervention.report.draft">Export draft report</span>
+                      }
+                    </span>
                   </span>
                 </button>
                 @if (canAbandon()) {
@@ -1333,7 +1510,11 @@
             (click)="exportReport(intervention)"
           >
             <ng-icon name="lucideFileDown" aria-hidden="true" />
-            <span i18n="@@intervention.detail.exportReport">Export report</span>
+            @if (intervention.status === 'published') {
+              <span i18n="@@intervention.report.published">Export validated report</span>
+            } @else {
+              <span i18n="@@intervention.report.draft">Export draft report</span>
+            }
           </button>
           @if (canAbandon()) {
             <button
@@ -1363,6 +1544,7 @@
 </ng-template>
 
 <app-intervention-operations-sheet
+  [regionalFormatting]="regionalFormatting()"
   [memberNames]="workloadMemberNames()"
   [visible]="operationsVisible()"
   [interventionName]="store.intervention()?.name ?? ''"
@@ -1376,6 +1558,22 @@
   (reloadRequested)="refreshOperations()"
   (resolved)="operationsStore.resolve($event)"
 />
+
+@if (executionItem(); as item) {
+  <app-intervention-execution-result-dialog
+    [item]="item"
+    [disabled]="!canRecordExecutionResult(item)"
+    [pending]="store.pendingWorkItemIds().has(item.id)"
+    [serverError]="store.workItemErrors()[item.id]"
+    [replacementSuccessor]="replacementContext.queryData()?.successor ?? null"
+    [replacementLoading]="replacementContext.isQueryLoading()"
+    [replacementReadFailed]="replacementContext.queryHasError()"
+    [originalEquipmentLink]="originalEquipmentLink()"
+    (refreshReplacement)="refreshReplacement()"
+    (submitted)="recordExecutionResult($event)"
+    (dismissed)="executionItem.set(null)"
+  />
+}
 
 <hlm-sheet
   [side]="proofSheetSide()"

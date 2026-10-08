@@ -11,6 +11,8 @@ const input = {
   note: 'Field work',
 };
 const entry: InterventionTimeEntry = {
+  totalVersions: 1,
+  nextBeforeRevision: null,
   ...input,
   workItemId: 'task',
   revision: 1,

@@ -15,8 +15,10 @@ import type { InterventionTagDescriptor } from './intervention-tag-descriptor.in
 import type { InterventionTagKind } from './intervention-tag-kind.type';
 
 /**
- * Priority descriptors (low → urgent).
+ * Constant PRIORITY
  *
+ * @description
+ * Priority descriptors (low → urgent).
  * One glyph family — a chevron trending from down to up, a flat minus for
  * "normal" (no direction, the baseline), and a double chevron for the one
  * level past "high" — so all four share the same stroke weight and
@@ -46,8 +48,10 @@ const PRIORITY: Record<InterventionPriority, InterventionTagDescriptor> = {
 };
 
 /**
- * Workflow status descriptors (draft → published).
+ * Constant STATUS
  *
+ * @description
+ * Workflow status descriptors (draft → published).
  * Severity code: only the two end states carry colour — `success` for the
  * positive outcome (published), `danger` for the destructive one
  * (abandoned). Every in-between workflow step is `neutral`, so colour reads
@@ -92,9 +96,11 @@ const STATUS: Record<InterventionStatus, InterventionTagDescriptor> = {
 };
 
 /**
- * Intervention objective descriptors.
+ * Constant TYPE
  *
- * A category, not a state: all three stay neutral and the glyph alone tells
+ * @description
+ * Intervention objective descriptors.
+ * A category, not a state: every objective stays neutral and the glyph alone tells
  * them apart, so chroma keeps meaning "something needs attention".
  */
 const TYPE: Record<InterventionType, InterventionTagDescriptor> = {
@@ -113,11 +119,23 @@ const TYPE: Record<InterventionType, InterventionTagDescriptor> = {
     severity: 'neutral',
     icon: 'lucideClipboardCheck',
   },
+  preventive_maintenance: {
+    label: $localize`:@@intervention.type.preventiveMaintenance:Preventive maintenance`,
+    severity: 'neutral',
+    icon: 'lucideCalendar',
+  },
+  corrective_maintenance: {
+    label: $localize`:@@intervention.type.correctiveMaintenance:Corrective maintenance`,
+    severity: 'neutral',
+    icon: 'lucideWrench',
+  },
 };
 
 /**
- * Work item action descriptors.
+ * Constant WORK_ITEM_ACTION
  *
+ * @description
+ * Work item action descriptors.
  * A category like the objective above — neutral, told apart by its glyph.
  */
 const WORK_ITEM_ACTION: Record<InterventionWorkItemAction, InterventionTagDescriptor> = {
@@ -136,11 +154,28 @@ const WORK_ITEM_ACTION: Record<InterventionWorkItemAction, InterventionTagDescri
     severity: 'neutral',
     icon: 'lucideBadgeCheck',
   },
+  maintenance: {
+    label: $localize`:@@intervention.action.maintenance:Maintenance`,
+    severity: 'neutral',
+    icon: 'lucideWrench',
+  },
+  repair: {
+    label: $localize`:@@intervention.action.repair:Repair`,
+    severity: 'neutral',
+    icon: 'lucideWrench',
+  },
+  replacement: {
+    label: $localize`:@@intervention.action.replacement:Replacement`,
+    severity: 'neutral',
+    icon: 'lucideRotateCcw',
+  },
 };
 
 /**
- * Work item status descriptors.
+ * Constant WORK_ITEM_STATUS
  *
+ * @description
+ * Work item status descriptors.
  * Only the completed end carries colour; `skipped` is terminal but not an
  * outcome, and the two in-between steps stay neutral.
  */
@@ -167,7 +202,12 @@ const WORK_ITEM_STATUS: Record<InterventionWorkItemStatus, InterventionTagDescri
   },
 };
 
-/** Issue severity descriptors. */
+/**
+ * Constant ISSUE_SEVERITY
+ *
+ * @description
+ * Issue severity descriptors.
+ */
 const ISSUE_SEVERITY: Record<InterventionIssueSeverity, InterventionTagDescriptor> = {
   blocker: {
     label: $localize`:@@issueSeverity.blocker:Blocker`,
@@ -187,8 +227,10 @@ const ISSUE_SEVERITY: Record<InterventionIssueSeverity, InterventionTagDescripto
 };
 
 /**
- * Proposed change status descriptors.
+ * Constant CHANGE_STATUS
  *
+ * @description
+ * Proposed change status descriptors.
  * Only the two terminal states carry colour; a proposal awaiting review is
  * neutral.
  */
@@ -210,7 +252,12 @@ const CHANGE_STATUS: Record<InterventionChangeStatus, InterventionTagDescriptor>
   },
 };
 
-/** Inspection result descriptors. */
+/**
+ * Constant INSPECTION_RESULT
+ *
+ * @description
+ * Inspection result descriptors.
+ */
 const INSPECTION_RESULT: Record<InspectionResult, InterventionTagDescriptor> = {
   pass: {
     label: $localize`:@@inspectionResult.pass:Pass`,
@@ -229,7 +276,12 @@ const INSPECTION_RESULT: Record<InspectionResult, InterventionTagDescriptor> = {
   },
 };
 
-/** Inspection status descriptors. */
+/**
+ * Constant INSPECTION_STATUS
+ *
+ * @description
+ * Inspection status descriptors.
+ */
 const INSPECTION_STATUS: Record<InspectionStatus, InterventionTagDescriptor> = {
   draft: {
     label: $localize`:@@inspectionStatus.draft:Draft`,
@@ -253,7 +305,12 @@ const INSPECTION_STATUS: Record<InspectionStatus, InterventionTagDescriptor> = {
   },
 };
 
-/** Facility lifecycle status descriptors. */
+/**
+ * Constant FACILITY_STATUS
+ *
+ * @description
+ * Facility lifecycle status descriptors.
+ */
 const FACILITY_STATUS: Record<FacilityStatus, InterventionTagDescriptor> = {
   active: {
     label: $localize`:@@facilityStatus.active:Active`,
@@ -267,7 +324,12 @@ const FACILITY_STATUS: Record<FacilityStatus, InterventionTagDescriptor> = {
   },
 };
 
-/** Equipment lifecycle status descriptors. */
+/**
+ * Constant EQUIPMENT_STATUS
+ *
+ * @description
+ * Equipment lifecycle status descriptors.
+ */
 const EQUIPMENT_STATUS: Record<EquipmentStatus, InterventionTagDescriptor> = {
   in_stock: {
     label: $localize`:@@equipmentStatus.inStock:In stock`,
@@ -291,7 +353,12 @@ const EQUIPMENT_STATUS: Record<EquipmentStatus, InterventionTagDescriptor> = {
   },
 };
 
-/** Registry indexed by tag kind. */
+/**
+ * Constant REGISTRY
+ *
+ * @description
+ * Registry indexed by tag kind.
+ */
 const REGISTRY: Record<InterventionTagKind, Record<string, InterventionTagDescriptor>> = {
   priority: PRIORITY,
   status: STATUS,
@@ -311,7 +378,6 @@ const REGISTRY: Record<InterventionTagKind, Record<string, InterventionTagDescri
  *
  * @description
  * Resolves the presentation descriptor for an intervention enum value.
- *
  * Falls back to a neutral, humanised descriptor for unknown values so the UI
  * degrades to a readable label instead of rendering nothing.
  *

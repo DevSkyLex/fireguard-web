@@ -313,6 +313,93 @@ export abstract class IndexedDbService {
   }
 
   /**
+   * Method updateTransaction
+   * @method updateTransaction
+   *
+   * @description
+   * Reads and derives writes in one readwrite transaction, serialized by IndexedDB across
+   * connections and tabs. The synchronous updater must return writes only for the declared stores;
+   * it cannot await work while the native transaction is active.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {Readonly<Record<string, readonly string[]>>} reads - Stores and record keys to read and
+   *   lock together, including any ownership or workspace records required by the mutation.
+   * @param {(
+   *   values: Readonly<Record<string, Readonly<Record<string, unknown>>>>,
+   * ) => Readonly<Record<string, readonly IndexedEntry<unknown>[]>>} update
+   *   - Synchronous mutation over committed values; missing records are null. Throwing aborts every
+   *     write.
+   * @param {(() => boolean) | undefined} isCurrent - Optional owner/session guard checked before
+   *   opening the transaction, before deriving writes and after commit.
+   *
+   * @returns {Promise<void>} Resolves after all derived writes commit.
+   */
+  public async updateTransaction(
+    reads: Readonly<Record<string, readonly string[]>>,
+    update: (
+      values: Readonly<Record<string, Readonly<Record<string, unknown>>>>,
+    ) => Readonly<Record<string, readonly IndexedEntry<unknown>[]>>,
+    isCurrent?: () => boolean,
+  ): Promise<void> {
+    if (!this.browser) return;
+    const storeNames = Object.keys(reads);
+    if (storeNames.length === 0) return;
+    const database = await this.open();
+    if (isCurrent && !isCurrent())
+      throw new DOMException('Offline operation ownership changed.', 'AbortError');
+
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(storeNames, 'readwrite');
+      const values = Object.create(null) as Record<string, Record<string, unknown>>;
+      let remaining = Object.values(reads).reduce((total, keys) => total + keys.length, 0);
+      const mutate = (): void => {
+        try {
+          if (isCurrent && !isCurrent())
+            throw new DOMException('Offline operation ownership changed.', 'AbortError');
+          const writes = update(values);
+          for (const [storeName, entries] of Object.entries(writes)) {
+            const store = transaction.objectStore(storeName);
+            for (const entry of entries) store.put(entry.value, entry.key);
+          }
+        } catch (error: unknown) {
+          reject(error);
+          transaction.abort();
+        }
+      };
+      transaction.addEventListener('complete', () => {
+        if (isCurrent && !isCurrent())
+          reject(new DOMException('Offline operation ownership changed.', 'AbortError'));
+        else resolve();
+      });
+      transaction.addEventListener('abort', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction aborted')),
+      );
+      transaction.addEventListener('error', () =>
+        reject(transaction.error ?? new Error('IndexedDB transaction failed')),
+      );
+      for (const storeName of storeNames) {
+        const records = Object.create(null) as Record<string, unknown>;
+        values[storeName] = records;
+        const store = transaction.objectStore(storeName);
+        for (const key of reads[storeName] ?? []) {
+          const request = store.get(key);
+          request.addEventListener('success', () => {
+            records[key] = request.result ?? null;
+            remaining -= 1;
+            if (remaining === 0) mutate();
+          });
+          request.addEventListener('error', () =>
+            reject(request.error ?? new Error('IndexedDB request failed')),
+          );
+        }
+      }
+      if (remaining === 0) mutate();
+    });
+  }
+
+  /**
    * Method get
    * @method get
    *

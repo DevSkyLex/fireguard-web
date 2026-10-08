@@ -1,4 +1,5 @@
 import { inject, Service, type Signal } from '@angular/core';
+import type { EquipmentTypeOutput } from '@features/organization/features/equipments/models';
 import type {
   PublicationTracking,
   InterventionChangeOutput,
@@ -10,6 +11,7 @@ import type {
   InterventionOutput,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
+import type { DeclareInventoryConsumptionInput } from '@features/organization/features/inventory/models';
 import { InterventionDatabaseService } from './intervention-database.service';
 import { InterventionOutboxRepository } from './intervention-outbox.repository';
 import { InterventionWorkspaceRepository } from './intervention-workspace.repository';
@@ -210,6 +212,37 @@ export class InterventionOfflineService {
 
   //#region Workspace
   /**
+   * Method saveEquipmentCatalog
+   * @method saveEquipmentCatalog
+   *
+   * @description
+   * Persists the complete authorized catalogue independently of workspace mutation merges.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} interventionId - Persisted field workspace identifier.
+   * @param {string} organizationId - Owning organization identifier.
+   * @param {readonly EquipmentTypeOutput[]} entries - Complete authorized catalogue.
+   * @param {string | null} expectedOwner - Account captured before the request began.
+   *
+   * @returns {Promise<void>} Catalogue persistence completion.
+   */
+  public saveEquipmentCatalog(
+    interventionId: string,
+    organizationId: string,
+    entries: readonly EquipmentTypeOutput[],
+    expectedOwner: string | null,
+  ): Promise<void> {
+    return this.workspace.saveEquipmentCatalog(
+      interventionId,
+      organizationId,
+      entries,
+      expectedOwner,
+    );
+  }
+
+  /**
    * Method saveWorkspace
    * @method saveWorkspace
    *
@@ -264,13 +297,7 @@ export class InterventionOfflineService {
    *
    * @param {string} interventionId - intervention Id value.
    *
-   * @returns {Promise<{
-   *   intervention: InterventionOutput;
-   *   workItems: readonly InterventionWorkItemOutput[];
-   *   changes: readonly InterventionChangeOutput[];
-   *   issues: readonly InterventionIssueOutput[];
-   * } | null>}
-   *   Result of the get workspace operation.
+   * @returns {Promise<InterventionWorkspaceSnapshot | null>} Account-scoped saved workspace.
    */
   public getWorkspace(interventionId: string): Promise<InterventionWorkspaceSnapshot | null> {
     return this.workspace.getWorkspace(interventionId);
@@ -359,6 +386,32 @@ export class InterventionOfflineService {
     entries: readonly InterventionOutboxQueueEntry[],
   ): Promise<readonly string[]> {
     return this.outbox.queueMany(interventionId, entries);
+  }
+
+  /**
+   * Method queueInventoryConsumption
+   * @method queueInventoryConsumption
+   *
+   * @description
+   * Persists an immutable physical declaration before the UI acknowledges and clears it.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Owning organization.
+   * @param {DeclareInventoryConsumptionInput} input - Captured exact intention.
+   * @param {string} actorId - Captured account owner.
+   * @param {() => boolean} isCurrent - Organization, session and permission guard.
+   *
+   * @returns {Promise<void>} Durable outbox acceptance.
+   */
+  public queueInventoryConsumption(
+    organizationId: string,
+    input: DeclareInventoryConsumptionInput,
+    actorId: string,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    return this.outbox.queueInventoryConsumption(organizationId, input, actorId, isCurrent);
   }
 
   /**
@@ -602,6 +655,13 @@ export class InterventionOfflineService {
     const interventionIri = `/api/interventions/${interventionId}`;
     await Promise.all([
       this.database.remove('interventions', interventionId),
+      this.database.removeWhere<unknown>(
+        'metadata',
+        (_record, key) =>
+          typeof key === 'string' &&
+          (key.startsWith('equipmentCatalog:') || key.startsWith('inventorySnapshot:')) &&
+          key.endsWith(`:${interventionId}`),
+      ),
       this.database.removeWhere<InterventionScopedRecord>(
         'timeJournals',
         (record) => record.interventionId === interventionId,

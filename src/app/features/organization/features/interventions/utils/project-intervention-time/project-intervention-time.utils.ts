@@ -6,7 +6,6 @@ import type {
 
 /**
  * Function projectInterventionTime
- * @function projectInterventionTime
  *
  * @description
  * Overlays queued time intentions by stable identifier. Does not mutate server history,
@@ -18,7 +17,10 @@ import type {
  * @param {readonly InterventionTimeEntry[]} entries - Last authorized server snapshot.
  * @param {readonly InterventionOutboxOperation[]} operations - Ordered local operations.
  * @param {string} workItemId - Selected journal task.
+ *
  * @returns {readonly InterventionTimeEntryView[]} Projected journal rows.
+ *
+ * @function projectInterventionTime
  */
 export function projectInterventionTime(
   entries: readonly InterventionTimeEntry[],
@@ -67,6 +69,8 @@ export function projectInterventionTime(
       createdAt: existing?.createdAt ?? operation.createdAt,
       updatedAt: operation.createdAt,
       versions: existing?.versions ?? [],
+      totalVersions: existing?.totalVersions ?? existing?.revision ?? 0,
+      nextBeforeRevision: existing?.nextBeforeRevision ?? null,
       syncStatus,
     });
   }

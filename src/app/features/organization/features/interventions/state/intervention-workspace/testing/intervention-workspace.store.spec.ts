@@ -15,7 +15,10 @@ import type {
   InterventionIssueOutput,
   InterventionOutput,
   InterventionWorkItemOutput,
+  InterventionWorkItemExecutionResultInput,
 } from '@features/organization/features/interventions/models';
+import { InterventionEquipmentCatalogService } from '@features/organization/features/interventions/services/intervention-equipment-catalog';
+import { InterventionInventoryService } from '@features/organization/features/interventions/services/intervention-inventory';
 import { InterventionWorkspaceStore } from '../intervention-workspace.store';
 
 const intervention = {
@@ -61,6 +64,12 @@ const proposedChange = {
   createdAt: '2026-06-12T08:00:00.000Z',
   updatedAt: '2026-06-12T08:00:00.000Z',
 } as InterventionChangeOutput;
+
+beforeEach(() =>
+  TestBed.configureTestingModule({
+    providers: [{ provide: InterventionInventoryService, useValue: { capture: () => of(null) } }],
+  }),
+);
 
 describe('InterventionWorkspaceStore offline field work', () => {
   let store: InstanceType<typeof InterventionWorkspaceStore>;
@@ -112,6 +121,14 @@ describe('InterventionWorkspaceStore offline field work', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionWorkspaceStore,
+        {
+          provide: InterventionEquipmentCatalogService,
+          useValue: {
+            accountId: () => 'account',
+            capture: vi.fn().mockReturnValue(of(null)),
+            restore: vi.fn(),
+          },
+        },
         { provide: InterventionService, useValue: mockService },
         { provide: InterventionOfflineService, useValue: mockOffline },
         { provide: FacilityService, useValue: { createForIntervention: vi.fn() } },
@@ -484,6 +501,14 @@ describe('InterventionWorkspaceStore activity timeline', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionWorkspaceStore,
+        {
+          provide: InterventionEquipmentCatalogService,
+          useValue: {
+            accountId: () => 'account',
+            capture: vi.fn().mockReturnValue(of(null)),
+            restore: vi.fn(),
+          },
+        },
         { provide: InterventionService, useValue: mockService },
         { provide: InterventionOfflineService, useValue: mockOffline },
         { provide: Dispatcher, useValue: { dispatch } },
@@ -857,6 +882,14 @@ describe('InterventionWorkspaceStore call state', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionWorkspaceStore,
+        {
+          provide: InterventionEquipmentCatalogService,
+          useValue: {
+            accountId: () => 'account',
+            capture: vi.fn().mockReturnValue(of(null)),
+            restore: vi.fn(),
+          },
+        },
         { provide: InterventionService, useValue: mockService },
         { provide: FacilityService, useValue: mockFacilityService },
         {
@@ -1460,6 +1493,14 @@ describe('InterventionWorkspaceStore evidence upload', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionWorkspaceStore,
+        {
+          provide: InterventionEquipmentCatalogService,
+          useValue: {
+            accountId: () => 'account',
+            capture: vi.fn().mockReturnValue(of(null)),
+            restore: vi.fn(),
+          },
+        },
         { provide: InterventionService, useValue: mockService },
         {
           provide: InterventionOfflineService,
@@ -1659,6 +1700,14 @@ describe('InterventionWorkspaceStore offline attachment queue', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionWorkspaceStore,
+        {
+          provide: InterventionEquipmentCatalogService,
+          useValue: {
+            accountId: () => 'account',
+            capture: vi.fn().mockReturnValue(of(null)),
+            restore: vi.fn(),
+          },
+        },
         { provide: InterventionService, useValue: mockService },
         { provide: InterventionOfflineService, useValue: mockOffline },
         { provide: FacilityService, useValue: { createForIntervention: vi.fn() } },
@@ -1877,6 +1926,14 @@ describe('InterventionWorkspaceStore', () => {
     TestBed.configureTestingModule({
       providers: [
         InterventionWorkspaceStore,
+        {
+          provide: InterventionEquipmentCatalogService,
+          useValue: {
+            accountId: () => 'account',
+            capture: vi.fn().mockReturnValue(of(null)),
+            restore: vi.fn(),
+          },
+        },
         { provide: InterventionService, useValue: service },
         { provide: FacilityService, useValue: { createForIntervention: vi.fn() } },
         { provide: InterventionOfflineService, useValue: offline },
@@ -1984,6 +2041,88 @@ describe('InterventionWorkspaceStore', () => {
     pending.complete();
     expect(store.intervention()?.completedWorkItemsCount).toBe(1);
     expect(store.pendingWorkItemIds().size).toBe(0);
+  });
+
+  it.each(['offline', 'network-failure'] as const)(
+    'durably stages the execution fact after %s with the operator instant and captured revision',
+    async (mode) => {
+      const item: InterventionWorkItemOutput = {
+        ...workItem,
+        action: 'maintenance',
+        operationId: 'maintenance-operation',
+        occurrenceId: 'maintenance-occurrence',
+        operationKind: 'maintenance',
+      };
+      const executionResult: InterventionWorkItemExecutionResultInput = {
+        equipmentId: 'equipment-1',
+        performedAt: '2026-10-05T16:35:00+02:00',
+        outcome: 'performed',
+        workPerformed: 'Cleaned and adjusted the valve.',
+      };
+      if (mode === 'offline') connectivity.isOffline.mockReturnValue(true);
+      else
+        service.updateWorkItem.mockReturnValueOnce(
+          throwError(() => new HttpErrorResponse({ status: 0 })),
+        );
+      store.updateWorkItem({
+        interventionId: intervention.id,
+        item,
+        input: { status: 'completed', executionResult },
+      });
+      await vi.waitFor(() => expect(store.workItemWriteCallState().status).toBe('success'));
+
+      expect(offline.queue).toHaveBeenCalledExactlyOnceWith(intervention.id, 'work-item.update', {
+        workItemId: item.id,
+        revision: 1,
+        status: 'completed',
+        executionResult,
+      });
+      const result = store.workItems()[0]?.executionResult;
+      expect(result).toEqual({
+        ...executionResult,
+        operationId: 'maintenance-operation',
+        occurrenceId: 'maintenance-occurrence',
+        state: 'staged',
+        validatedAt: null,
+        history: [],
+      });
+      expect(result).not.toHaveProperty('authorId');
+      expect(store.workItems()[0]?.revision).toBe(2);
+      expect(store.intervention()?.completedWorkItemsCount).toBe(1);
+      expect(store.pendingWorkItemIds().size).toBe(0);
+      expect(offline.saveWorkspace).toHaveBeenCalledWith(
+        expect.anything(),
+        [expect.objectContaining({ executionResult: result })],
+        [],
+        [],
+        [],
+        { replace: false },
+      );
+    },
+  );
+
+  it('keeps the previous fact and progress when execution cannot be persisted on the device', async () => {
+    connectivity.isOffline.mockReturnValue(true);
+    offline.queue.mockRejectedValueOnce(new Error('Device storage full'));
+    store.updateWorkItem({
+      interventionId: intervention.id,
+      item: workItem,
+      input: {
+        status: 'completed',
+        executionResult: {
+          equipmentId: 'equipment-1',
+          performedAt: '2026-10-05T16:35:00+02:00',
+          outcome: 'successful',
+          workPerformed: 'Replaced the valve.',
+        },
+      },
+    });
+    await vi.waitFor(() => expect(store.workItemWriteCallState().status).toBe('error'));
+    expect(store.workItemErrors()[workItem.id]).toBe('Device storage full');
+    expect(store.workItems()).toEqual([workItem]);
+    expect(store.intervention()?.completedWorkItemsCount).toBe(0);
+    expect(store.pendingWorkItemIds().size).toBe(0);
+    expect(offline.saveWorkspace).not.toHaveBeenCalled();
   });
 
   it.each(['organization', 'account'] as const)(

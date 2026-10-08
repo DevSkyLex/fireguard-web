@@ -1,17 +1,15 @@
-import type { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
-
 /**
  * Type OnboardingEquipmentTypeOption
  *
  * @description
- * The equipment type values the onboarding step may pick, inferred from
- * {@link EQUIPMENT_TYPE_OPTIONS} rather than the equipments subfeature's own
- * `EquipmentType` model type — that type lives on a private path onboarding
- * may not import (`FEATURE.md` "Cross-Feature Dependencies").
+ * Permanent equipment code received through the organization setup catalogue,
+ * including organization-defined types and previously prepared historical codes.
  *
  * @since 1.0.0
+ *
+ * @type {OnboardingEquipmentTypeOption}
  */
-export type OnboardingEquipmentTypeOption = (typeof EQUIPMENT_TYPE_OPTIONS)[number]['value'];
+export type OnboardingEquipmentTypeOption = string;
 
 /**
  * Interface OnboardingEquipmentFormDraft
@@ -25,18 +23,58 @@ export type OnboardingEquipmentTypeOption = (typeof EQUIPMENT_TYPE_OPTIONS)[numb
  * @since 1.0.0
  */
 export interface OnboardingEquipmentFormDraft {
-  /** The equipment type, or an empty string until one is picked. */
+  /**
+   * Property type
+   * @readonly
+   *
+   * @description
+   * Server-owned equipment code, or an empty string until one is picked.
+   *
+   * @type {OnboardingEquipmentTypeOption | ''}
+   */
   readonly type: OnboardingEquipmentTypeOption | '';
 
-  /** Manufacturer brand. */
+  /**
+   * Property brand
+   * @readonly
+   *
+   * @description
+   * Manufacturer brand retained in the editable draft.
+   *
+   * @type {string}
+   */
   readonly brand: string;
 
-  /** Model reference. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * Manufacturer model reference retained in the editable draft.
+   *
+   * @type {string}
+   */
   readonly model: string;
 
-  /** Manufacturer serial number. */
+  /**
+   * Property serialNumber
+   * @readonly
+   *
+   * @description
+   * Manufacturer serial number retained in the editable draft.
+   *
+   * @type {string}
+   */
   readonly serialNumber: string;
 
-  /** The target facility's id, or an empty string when none is attached. */
+  /**
+   * Property facilityId
+   * @readonly
+   *
+   * @description
+   * Target site's identity, or an empty string when none is attached.
+   *
+   * @type {string}
+   */
   readonly facilityId: string;
 }

@@ -258,6 +258,10 @@
                     >{{ item.skipReason }}</span
                   >
                 }
+                <ng-container
+                  [ngTemplateOutlet]="executionSummary"
+                  [ngTemplateOutletContext]="{ $implicit: item }"
+                />
               </td>
 
               <td hlmTableCell class="min-w-0 font-medium text-foreground">
@@ -526,6 +530,10 @@
                   [ngTemplateOutlet]="effortSummary"
                   [ngTemplateOutletContext]="{ $implicit: item }"
                 />
+                <ng-container
+                  [ngTemplateOutlet]="executionSummary"
+                  [ngTemplateOutletContext]="{ $implicit: item }"
+                />
 
                 @if (item.assigneeProfile; as assignee) {
                   <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -744,6 +752,58 @@
     }
   </div>
 </section>
+
+<ng-template #executionSummary let-item>
+  @if (item.executionResult; as result) {
+    <div
+      class="flex flex-col gap-1 text-xs font-normal text-muted-foreground"
+      data-testid="work-item-execution-summary"
+    >
+      <span class="flex flex-wrap gap-x-2 gap-y-1">
+        <span i18n="@@intervention.execution.performedOn"
+          >Performed {{ result.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}</span
+        >
+        <span>{{ executionOutcomeLabel(result) }}</span>
+        @if (result.state === 'validated') {
+          <span i18n="@@intervention.execution.validated">Validated</span>
+        } @else {
+          <span i18n="@@intervention.execution.staged">Pending review</span>
+        }
+      </span>
+      <p class="wrap-anywhere whitespace-pre-wrap">{{ result.workPerformed }}</p>
+      @if (result.history?.length) {
+        <hlm-collapsible>
+          <button
+            hlmCollapsibleTrigger
+            hlmBtn
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="mobile-ui:min-h-11"
+            data-testid="execution-history-trigger"
+            i18n="@@intervention.execution.previousAttempts"
+          >
+            Previous attempts
+          </button>
+          <div hlmCollapsibleContent class="flex flex-col gap-3" data-testid="execution-history">
+            @for (attempt of result.history; track $index) {
+              <div class="flex flex-col gap-1">
+                <span class="flex flex-wrap gap-x-2 gap-y-1">
+                  <span i18n="@@intervention.execution.performedOn"
+                    >Performed
+                    {{ attempt.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}</span
+                  >
+                  <span>{{ executionOutcomeLabel(attempt) }}</span>
+                </span>
+                <p class="wrap-anywhere whitespace-pre-wrap">{{ attempt.workPerformed }}</p>
+              </div>
+            }
+          </div>
+        </hlm-collapsible>
+      }
+    </div>
+  }
+</ng-template>
 
 <ng-template #effortSummary let-item let-compact="compact">
   <div

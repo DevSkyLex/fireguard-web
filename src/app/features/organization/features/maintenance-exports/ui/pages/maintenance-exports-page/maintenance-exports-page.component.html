@@ -1,0 +1,483 @@
+<div class="flex min-w-0 flex-col gap-6 pb-4" data-testid="maintenance-exports-page">
+  <header class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h1 hlmLarge i18n="@@maintenanceExport.page.title">Prestation exports</h1>
+      <p class="mt-1 text-sm text-muted-foreground" i18n="@@maintenanceExport.page.description">
+        Retain versioned CSV/JSON files and record actual ERP imports. Commercial invoicing remains
+        in your ERP.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @if (canManage()) {
+        <button
+          hlmBtn
+          type="button"
+          class="mobile-ui:min-h-11"
+          [disabled]="locked()"
+          (click)="open('create')"
+          data-testid="maintenance-export-create"
+          i18n="@@maintenanceExport.page.generate"
+        >
+          Generate export</button
+        ><button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="locked()"
+          (click)="open('reference')"
+          i18n="@@maintenanceExport.page.map"
+        >
+          Map a reference
+        </button>
+      }
+    </div>
+  </header>
+  @if (store.detailCallState().status === 'pending') {
+    <div hlmSkeleton class="h-36 w-full"></div>
+  }
+  @if (store.detailCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertDescription>{{ error.message }}</p>
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        (click)="store.read(store.selectedId())"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (store.detailCallState().data; as archive) {
+    <section hlmCard data-testid="maintenance-export-detail">
+      <div hlmCardHeader>
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 hlmCardTitle>{{ archive.system }} · {{ kindLabel(archive.kind) }}</h2>
+          <span hlmBadge variant="outline">{{ stateLabel(archive.state) }}</span>
+        </div>
+        <p hlmCardDescription>
+          {{ archive.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}
+        </p>
+      </div>
+      <div hlmCardContent class="flex min-w-0 flex-col gap-4">
+        <dl class="grid min-w-0 gap-3 sm:grid-cols-3">
+          <div>
+            <dt class="text-xs text-muted-foreground" i18n="@@maintenanceExport.detail.version">
+              Schema version
+            </dt>
+            <dd>{{ archive.schemaVersion }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground" i18n="@@maintenanceExport.detail.rows">
+              Retained prestation rows
+            </dt>
+            <dd>{{ archive.rowCount }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground" i18n="@@maintenanceExport.detail.dossiers">
+              Published dossiers
+            </dt>
+            <dd>{{ archive.sourceInterventionIds.length }}</dd>
+          </div>
+        </dl>
+        @if (archive.adjustmentOf) {
+          <div class="flex flex-wrap gap-2">
+            <a
+              hlmBtn
+              variant="outline"
+              [routerLink]="[]"
+              [queryParams]="{ exportId: archive.adjustmentOf }"
+              class="mobile-ui:min-h-11"
+              i18n="@@maintenanceExport.detail.predecessor"
+              >Open corrected export</a
+            >
+            @if (archive.originalExportId) {
+              <a
+                hlmBtn
+                variant="ghost"
+                [routerLink]="[]"
+                [queryParams]="{ exportId: archive.originalExportId }"
+                class="mobile-ui:min-h-11"
+                i18n="@@maintenanceExport.detail.original"
+                >Open original export</a
+              >
+            }
+          </div>
+        }
+        @if (archive.reason) {
+          <div class="min-w-0">
+            <h3 class="text-xs text-muted-foreground" i18n="@@maintenanceExport.detail.reason">
+              Retained adjustment reason
+            </h3>
+            <p class="text-sm break-words">{{ archive.reason }}</p>
+          </div>
+        }
+        @if (archive.confirmation; as confirmation) {
+          <div hlmAlert>
+            <h3 hlmAlertTitle i18n="@@maintenanceExport.detail.importConfirmed">
+              External import confirmed
+            </h3>
+            <p hlmAlertDescription class="break-words">
+              {{ confirmation.externalImportReference }} ·
+              {{ confirmation.confirmedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+            </p>
+          </div>
+        } @else {
+          <div hlmAlert>
+            <p hlmAlertDescription i18n="@@maintenanceExport.detail.generatedOnly">
+              The file has been generated. No external import has been confirmed.
+            </p>
+          </div>
+        }
+        @if (archive.includeInternalCosts) {
+          <p class="text-sm text-muted-foreground" i18n="@@maintenanceExport.detail.privateCosts">
+            Private archive including internal costs.
+          </p>
+          @if (archive.costsComplete === false) {
+            <div hlmAlert>
+              <p hlmAlertDescription i18n="@@maintenanceExport.detail.costsIncomplete">
+                Internal costs are incomplete. Unknown amounts are retained explicitly.
+              </p>
+            </div>
+          }
+        }
+        <div class="grid min-w-0 gap-2 sm:grid-cols-2">
+          <div class="min-w-0 rounded-md border p-3">
+            <h3 class="text-sm font-medium">JSON</h3>
+            <p class="text-xs text-muted-foreground">{{ archive.files.json.size }} bytes</p>
+            <p class="mt-1 font-mono text-xs break-all">{{ archive.files.json.sha256 }}</p>
+          </div>
+          <div class="min-w-0 rounded-md border p-3">
+            <h3 class="text-sm font-medium">CSV</h3>
+            <p class="text-xs text-muted-foreground">{{ archive.files.csv.size }} bytes</p>
+            <p class="mt-1 font-mono text-xs break-all">{{ archive.files.csv.sha256 }}</p>
+          </div>
+        </div>
+        @if (store.downloadCallState().error; as error) {
+          <div hlmAlert variant="destructive" role="alert">
+            <p hlmAlertDescription>{{ error.message }}</p>
+          </div>
+        }
+      </div>
+      <div hlmCardFooter class="flex flex-wrap gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="!readableArchive(archive) || store.downloadCallState().status === 'pending'"
+          (click)="download(archive, 'json')"
+          i18n="@@maintenanceExport.detail.downloadJson"
+        >
+          Download retained JSON</button
+        ><button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="!readableArchive(archive) || store.downloadCallState().status === 'pending'"
+          (click)="download(archive, 'csv')"
+          i18n="@@maintenanceExport.detail.downloadCsv"
+        >
+          Download retained CSV
+        </button>
+        @if (canManage()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mobile-ui:min-h-11"
+            [disabled]="locked() || !readableArchive(archive)"
+            (click)="open('adjust')"
+            i18n="@@maintenanceExport.detail.adjust"
+          >
+            Append adjustment
+          </button>
+        }
+        @if (canConfirm() && !archive.confirmation) {
+          <button
+            hlmBtn
+            type="button"
+            class="mobile-ui:min-h-11"
+            [disabled]="locked() || !readableArchive(archive)"
+            (click)="open('confirm')"
+            i18n="@@maintenanceExport.detail.confirm"
+          >
+            Confirm external import
+          </button>
+        }
+      </div>
+    </section>
+  }
+  <section class="flex min-w-0 flex-col gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 class="font-semibold" i18n="@@maintenanceExport.archive.title">Retained archives</h2>
+      <button
+        hlmBtn
+        type="button"
+        variant="ghost"
+        class="mobile-ui:min-h-11"
+        (click)="store.load({ page: store.page() })"
+        i18n="@@common.refresh"
+      >
+        Refresh
+      </button>
+    </div>
+    @if (store.listCallState().status === 'pending') {
+      <div hlmSkeleton class="h-24 w-full"></div>
+    }
+    @if (store.listCallState().error; as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+    }
+    @if (store.listCallState().status === 'success') {
+      @if (store.exportEntities().length === 0) {
+        <hlm-empty
+          ><div hlmEmptyHeader>
+            <h3 hlmEmptyTitle i18n="@@maintenanceExport.archive.empty">No retained export yet</h3>
+            <p hlmEmptyDescription i18n="@@maintenanceExport.archive.emptyHelp">
+              Generate an export from ready published maintenance dossiers.
+            </p>
+          </div></hlm-empty
+        >
+      } @else {
+        <div class="min-w-0 overflow-x-auto">
+          <table hlmTable data-testid="maintenance-export-archives">
+            <thead hlmTableHeader>
+              <tr hlmTableRow>
+                <th hlmTableHead i18n="@@maintenanceExport.archive.system">System and version</th>
+                <th hlmTableHead i18n="@@maintenanceExport.archive.state">External import state</th>
+                <th hlmTableHead i18n="@@maintenanceExport.archive.created">Created</th>
+                <th hlmTableHead i18n="@@maintenanceExport.archive.rows">Rows</th>
+              </tr>
+            </thead>
+            <tbody hlmTableBody>
+              @for (archive of store.exportEntities(); track archive.id) {
+                <tr hlmTableRow>
+                  <td hlmTableCell>
+                    <a
+                      class="inline-flex items-center font-medium underline underline-offset-4 mobile-ui:min-h-11"
+                      [routerLink]="[]"
+                      [queryParams]="{ exportId: archive.id }"
+                      >{{ archive.system }} · {{ kindLabel(archive.kind) }} · v{{
+                        archive.schemaVersion
+                      }}</a
+                    >
+                    @if (archive.includeInternalCosts) {
+                      <span
+                        class="block text-xs text-muted-foreground"
+                        i18n="@@maintenanceExport.archive.private"
+                        >Private costs</span
+                      >
+                    }
+                  </td>
+                  <td hlmTableCell>
+                    <span hlmBadge variant="outline">{{ stateLabel(archive.state) }}</span>
+                  </td>
+                  <td hlmTableCell>
+                    {{ archive.createdAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                  </td>
+                  <td hlmTableCell>{{ archive.rowCount }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="store.page() <= 1"
+          (click)="store.load({ page: store.page() - 1 })"
+          i18n="@@common.previous"
+        >
+          Previous</button
+        ><span class="text-sm" i18n="@@maintenanceExport.archive.page"
+          >Page {{ store.page() }} of {{ store.pageCount() }}</span
+        ><button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="store.page() >= store.pageCount()"
+          (click)="store.load({ page: store.page() + 1 })"
+          i18n="@@common.next"
+        >
+          Next
+        </button>
+      </div>
+    }
+  </section>
+  <section class="flex min-w-0 flex-col gap-3">
+    <h2 class="font-semibold" i18n="@@maintenanceExport.reference.directory">
+      Current external references
+    </h2>
+    @if (store.referencesCallState().error; as error) {
+      <div hlmAlert variant="destructive">
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+    }
+    @if (store.referencesCallState().data; as references) {
+      <div class="grid min-w-0 gap-2 sm:grid-cols-2">
+        @for (reference of references.member; track reference.id) {
+          <div class="min-w-0 rounded-md border p-3">
+            <p class="text-sm font-medium break-words">
+              {{ reference.system }} · {{ reference.reference }}
+            </p>
+            <p class="text-xs text-muted-foreground">
+              {{ typeLabel(reference.resourceType) }} · {{ reference.revision }}
+            </p>
+          </div>
+        }
+      </div>
+      @if (references.totalItems > 30) {
+        <p class="text-sm text-muted-foreground" i18n="@@maintenanceExport.reference.more">
+          Additional mappings are available through the scoped resource selector.
+        </p>
+      }
+    }
+  </section>
+</div>
+<hlm-sheet
+  side="right"
+  [state]="editor() ? 'open' : 'closed'"
+  [disableClose]="pending() || store.uncertainWrite()"
+  (stateChanged)="stateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-w-none! sm:max-w-xl!"
+    data-testid="maintenance-export-editor"
+    ><hlm-sheet-header
+      ><h2 hlmSheetTitle>{{ editorTitle() }}</h2>
+      <p hlmSheetDescription i18n="@@maintenanceExport.editor.description">
+        Operations retain their identity across retries. Review a confirmed conflict before
+        submitting a new command.
+      </p></hlm-sheet-header
+    >
+    <div class="min-h-0 min-w-0 overflow-y-auto px-4 pb-4">
+      @if (store.uncertainWrite()) {
+        <div hlmAlert class="mb-4">
+          <p hlmAlertDescription i18n="@@maintenanceExport.editor.uncertain">
+            The response is uncertain. Recover this same operation before changing the draft.
+          </p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mt-2 mobile-ui:min-h-11"
+            [disabled]="pending()"
+            (click)="retry()"
+            i18n="@@maintenanceExport.editor.retry"
+          >
+            Recover the same operation
+          </button>
+        </div>
+      }
+      @if (conflict() && !store.uncertainWrite()) {
+        <div hlmAlert class="mb-4">
+          <p hlmAlertDescription i18n="@@maintenanceExport.editor.conflict">
+            The source changed or conflicts with this command. Your draft is retained.
+          </p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="mobile-ui:min-h-11"
+              [disabled]="locked()"
+              (click)="loadReview()"
+              i18n="@@maintenanceExport.editor.review"
+            >
+              Load latest source</button
+            ><button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="mobile-ui:min-h-11"
+              [disabled]="!reviewReady()"
+              (click)="adoptReview()"
+              i18n="@@maintenanceExport.editor.adopt"
+            >
+              Use reviewed revision and keep my draft
+            </button>
+          </div>
+        </div>
+      }
+      @if (creating()) {
+        <app-maintenance-export-create-form
+          [sources]="store.sourcesCallState()"
+          [sourcePage]="sourcePage()"
+          [canIncludeCosts]="canReadCosts()"
+          [pending]="pending()"
+          [locked]="locked() || conflict()"
+          [error]="writeError()"
+          (submitted)="create($event)"
+          (cancelled)="close()"
+          (dirtyChanged)="dirty.set($event)"
+          (searchChanged)="sourcesChanged({ page: 1, search: $event })"
+          (pageChanged)="sourcesChanged({ page: $event })"
+        />
+      } @else if (referencing()) {
+        <app-maintenance-export-reference-form
+          [targets]="store.targetsCallState()"
+          [mapping]="store.mappingCallState()"
+          [targetPage]="targetPage()"
+          [allowedTypes]="allowedReferenceTypes()"
+          [pending]="pending()"
+          [locked]="locked() || conflict()"
+          [error]="writeError()"
+          (submitted)="saveReference($event)"
+          (cancelled)="close()"
+          (dirtyChanged)="dirty.set($event)"
+          (targetQueryChanged)="targetsChanged($event)"
+          (mappingQueryChanged)="mappingChanged($event)"
+        />
+      } @else if (editor()) {
+        <app-maintenance-export-action-form
+          [confirmation]="confirming()"
+          [pending]="pending()"
+          [locked]="locked() || conflict()"
+          [error]="writeError()"
+          (submitted)="act($event)"
+          (cancelled)="close()"
+          (dirtyChanged)="dirty.set($event)"
+        />
+      }
+      @if (discardRequested()) {
+        <div hlmAlert class="mt-4">
+          <p hlmAlertDescription i18n="@@maintenanceExport.editor.discardHelp">
+            Discard the local draft and close this sheet?
+          </p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="mobile-ui:min-h-11"
+              (click)="keepEditing()"
+              i18n="@@maintenanceExport.editor.keep"
+            >
+              Keep editing</button
+            ><button
+              hlmBtn
+              type="button"
+              variant="destructive"
+              class="mobile-ui:min-h-11"
+              (click)="discard()"
+              i18n="@@maintenanceExport.editor.discard"
+            >
+              Discard draft
+            </button>
+          </div>
+        </div>
+      }
+    </div></hlm-sheet-content
+  ></hlm-sheet
+>

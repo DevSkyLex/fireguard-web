@@ -1,0 +1,240 @@
+<form
+  id="maintenance-plan-form"
+  novalidate
+  (submit)="submit($event)"
+  class="max-w-2xl min-w-0 px-1"
+>
+  <hlm-field-group>
+    @if (serverMessage(); as message) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ message }}</p>
+      </div>
+    }
+    @if (!initialPlan()) {
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="maintenance-plan-equipment"
+          i18n="@@maintenance.plans.form.equipment"
+          >Equipment</label
+        >
+        <hlm-combobox
+          [formField]="planForm.equipmentId"
+          [itemToString]="equipmentLabelOf"
+          (searchChange)="equipmentSearched.emit($event)"
+        >
+          <hlm-combobox-input
+            inputId="maintenance-plan-equipment"
+            class="mobile-ui:min-h-11"
+            data-testid="maintenance-plan-equipment"
+          />
+          <hlm-combobox-content *hlmComboboxPortal>
+            <hlm-combobox-empty i18n="@@maintenance.plans.form.noEquipment"
+              >No matching equipment loaded.</hlm-combobox-empty
+            >
+            <div hlmComboboxList>
+              @for (item of equipment(); track item.id) {
+                <hlm-combobox-item [value]="item.id" class="mobile-ui:min-h-11">{{
+                  equipmentLabelOf(item.id)
+                }}</hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+        @if (equipmentState().status === 'pending') {
+          <p hlmFieldDescription i18n="@@maintenance.plans.form.loadingEquipment">
+            Loading equipment…
+          </p>
+        }
+        @if (equipmentState().error; as error) {
+          <p hlmFieldError>{{ error.message }}</p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            (click)="equipmentPageChanged.emit(equipmentPage())"
+            i18n="@@common.retry"
+          >
+            Retry
+          </button>
+        }
+        @if (equipmentPageCount() > 1) {
+          <div class="flex gap-2">
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="equipmentPage() <= 1 || pending()"
+              (click)="equipmentPageChanged.emit(equipmentPage() - 1)"
+              i18n="@@maintenance.plans.form.previousEquipment"
+            >
+              Previous equipment
+            </button>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="equipmentPage() >= equipmentPageCount() || pending()"
+              (click)="equipmentPageChanged.emit(equipmentPage() + 1)"
+              i18n="@@maintenance.plans.form.nextEquipment"
+            >
+              Next equipment
+            </button>
+          </div>
+        }
+        @if (planForm.equipmentId().touched() && planForm.equipmentId().invalid()) {
+          <hlm-field-error>{{ planForm.equipmentId().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    }
+    <hlm-field>
+      <label hlmFieldLabel for="maintenance-plan-name" i18n="@@maintenance.plans.form.name"
+        >Operation name</label
+      >
+      <input
+        hlmInput
+        id="maintenance-plan-name"
+        data-testid="maintenance-plan-name"
+        class="mobile-ui:min-h-11"
+        [formField]="planForm.name"
+      />
+      @if (planForm.name().touched() && planForm.name().invalid()) {
+        <hlm-field-error>{{ planForm.name().errors()[0].message }}</hlm-field-error>
+      }
+    </hlm-field>
+    @if (!initialPlan()) {
+      <hlm-field>
+        <label hlmFieldLabel for="maintenance-plan-kind" i18n="@@maintenance.plans.form.kind"
+          >Operation</label
+        >
+        <hlm-select [formField]="planForm.operationKind" [itemToString]="kindLabelOf">
+          <hlm-select-trigger buttonId="maintenance-plan-kind" class="w-full mobile-ui:min-h-11"
+            ><hlm-select-value
+          /></hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal
+            ><hlm-select-group>
+              @for (kind of kinds; track kind.value) {
+                <hlm-select-item [value]="kind.value">{{ kind.label }}</hlm-select-item>
+              }
+            </hlm-select-group></hlm-select-content
+          >
+        </hlm-select>
+      </hlm-field>
+    }
+    @if (calendarLocked()) {
+      <p
+        hlmFieldDescription
+        data-testid="maintenance-plan-calendar-locked"
+        i18n="@@maintenance.plans.form.calendarLocked"
+      >
+        The calendar is locked while an occurrence is open. You can still change the operation name.
+      </p>
+    }
+    <div class="grid grid-cols-2 gap-4">
+      <hlm-field class="min-w-0">
+        <label hlmFieldLabel for="maintenance-plan-every" i18n="@@maintenance.plans.form.every"
+          >Every</label
+        >
+        <input
+          hlmInput
+          id="maintenance-plan-every"
+          type="number"
+          step="1"
+          class="mobile-ui:min-h-11"
+          [formField]="planForm.every"
+        />
+        @if (planForm.every().touched() && planForm.every().invalid()) {
+          <hlm-field-error>{{ planForm.every().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+      <hlm-field class="min-w-0">
+        <label hlmFieldLabel for="maintenance-plan-unit" i18n="@@maintenance.plans.form.unit"
+          >Calendar unit</label
+        >
+        <hlm-select [formField]="planForm.unit" [itemToString]="unitLabelOf">
+          <hlm-select-trigger buttonId="maintenance-plan-unit" class="w-full mobile-ui:min-h-11"
+            ><hlm-select-value
+              placeholder="Choose a unit"
+              i18n-placeholder="@@maintenance.plans.form.chooseUnit"
+          /></hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal
+            ><hlm-select-group>
+              @for (unit of units; track unit.value) {
+                <hlm-select-item [value]="unit.value">{{ unit.label }}</hlm-select-item>
+              }
+            </hlm-select-group></hlm-select-content
+          >
+        </hlm-select>
+        @if (planForm.unit().touched() && planForm.unit().invalid()) {
+          <hlm-field-error>{{ planForm.unit().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+    </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <hlm-field>
+        <label hlmFieldLabel for="maintenance-plan-anchor" i18n="@@maintenance.plans.form.anchor"
+          >Anchor date</label
+        >
+        <input
+          hlmInput
+          id="maintenance-plan-anchor"
+          type="date"
+          class="mobile-ui:min-h-11"
+          [formField]="planForm.anchorDate"
+        />
+        @if (planForm.anchorDate().touched() && planForm.anchorDate().invalid()) {
+          <hlm-field-error>{{ planForm.anchorDate().errors()[0].message }}</hlm-field-error>
+        }
+      </hlm-field>
+      <hlm-field>
+        <label
+          hlmFieldLabel
+          for="maintenance-plan-first-due"
+          i18n="@@maintenance.plans.form.firstDue"
+          >First due date</label
+        >
+        <input
+          hlmInput
+          id="maintenance-plan-first-due"
+          type="date"
+          class="mobile-ui:min-h-11"
+          [formField]="planForm.firstDueDate"
+        />
+        <p hlmFieldDescription i18n="@@maintenance.plans.form.firstDueHelp">
+          Optional for a new plan; defaults to the anchor date. Historical equipment without a
+          recorded control needs an explicit first deadline.
+        </p>
+      </hlm-field>
+    </div>
+    <p hlmFieldDescription i18n="@@maintenance.plans.form.frequencyHelp">
+      Choose your organization's frequency. A monthly date uses the last day of shorter months and
+      retains its original anchor. This configuration does not certify regulatory compliance.
+    </p>
+    <div class="flex flex-wrap justify-end gap-2">
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="mobile-ui:min-h-11"
+        [disabled]="pending()"
+        (click)="cancelled.emit()"
+        i18n="@@common.cancel"
+      >
+        Cancel
+      </button>
+      <button
+        hlmBtn
+        type="submit"
+        class="mobile-ui:min-h-11"
+        [disabled]="pending()"
+        [attr.aria-busy]="pending() ? 'true' : null"
+        data-testid="maintenance-plan-save"
+      >
+        @if (pending()) {
+          <hlm-spinner aria-hidden="true" />
+        }
+        <span i18n="@@maintenance.plans.form.prepare">Save and preview dates</span>
+      </button>
+    </div>
+  </hlm-field-group>
+</form>

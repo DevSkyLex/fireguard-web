@@ -176,6 +176,7 @@
                   "!@features/organization/models",
                   "!@features/organization/data-access",
                   "!@features/organization/utils",
+                  "!@features/organization/services/organization-landing",
                   "!@features/organization/features/equipments"
                 ],
                 "message": "ARCHITECTURE.md 4 / 14.2 - onboarding may consume the documented organization surfaces, and they are the ones its FEATURE.md records: setup, models, data-access, utils, and the equipments public API. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
@@ -261,7 +262,10 @@
                   "!@features/organization/features/equipments/data-access/**",
                   "!@features/organization/features/equipments/models",
                   "!@features/organization/features/equipments/models/**",
-                  "!@features/organization/features/equipments/ui/components/equipment-status-tag"
+                  "!@features/organization/features/equipments/ui/components",
+                  "!@features/organization/features/equipments/state",
+                  "!@features/organization/features/equipments/options",
+                  "!@features/organization/features/equipments/utils"
                 ],
                 "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the equipments subfeature only through its data-access and models barrels (EquipmentService, EquipmentOutput) and the equipment-status-tag component, the surfaces organization/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
               },
@@ -272,7 +276,8 @@
                   "!@features/organization/features/inspections/data-access/**",
                   "!@features/organization/features/inspections/models",
                   "!@features/organization/features/inspections/models/**",
-                  "!@features/organization/features/inspections/ui/components/inspection-status-tag"
+                  "!@features/organization/features/inspections/ui/components/inspection-status-tag",
+                  "!@features/organization/features/inspections/ui/dataviews/non-conformity-list"
                 ],
                 "message": "ARCHITECTURE.md 4 / 14.2 - the assets explorer may consume the inspections subfeature only through its data-access and models barrels (InspectionService, InspectionOutput) and the inspection-status-tag component, the surfaces organization/FEATURE.md records for this dependency. Anything deeper is a private path. This rule mirrors the documented contract - widen the FEATURE.md first, then this list."
               }

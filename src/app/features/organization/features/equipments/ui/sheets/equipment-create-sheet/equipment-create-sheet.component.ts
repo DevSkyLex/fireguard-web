@@ -16,6 +16,7 @@ import {
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
 import { idleCallState, type CallState } from '@core/request-state';
 import type { CreateEquipmentInput } from '@features/organization/features/equipments/models';
+import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { sheetSide } from '@shared/sheet-side';
 import { HlmSheet, HlmSheetImports } from '@shared/ui/sheet';
@@ -50,6 +51,20 @@ import { EquipmentCreateForm } from '../../forms/equipment-create-form';
 })
 export class EquipmentCreateSheet {
   //#region Inputs
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Server-owned active catalog passed to the creation form.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<typeof EQUIPMENT_TYPE_OPTIONS>}
+   */
+  public readonly typeOptions: InputSignal<typeof EQUIPMENT_TYPE_OPTIONS> =
+    input<typeof EQUIPMENT_TYPE_OPTIONS>(EQUIPMENT_TYPE_OPTIONS);
   /**
    * Property facilityPage
    * @readonly

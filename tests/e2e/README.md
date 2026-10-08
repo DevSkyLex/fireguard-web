@@ -16,6 +16,9 @@ would hang waiting on a backend that isn't running.
 `angular.json` therefore defines an `e2e` build/serve configuration
 (`ssr: false`, `outputMode: "static"`) — a client-only SPA build.
 `tests/e2e/playwright.config.ts`'s `webServer` runs it automatically for `npm run e2e:*`.
+It disables component HMR: document reloads can cancel development-only replacement
+imports and report module errors after a route has rendered. Normal lazy route imports
+and strict browser-console assertions remain enabled.
 
 ## Run coordination
 

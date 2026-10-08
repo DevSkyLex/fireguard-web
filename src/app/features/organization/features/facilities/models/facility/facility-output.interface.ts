@@ -11,6 +11,8 @@ import type { FacilityPlanGeometry } from './facility-plan-geometry.interface';
  * @description
  * Supported facility types exposed by the API.
  *
+ * @since unreleased
+ *
  * @type
  */
 export type FacilityType = 'site' | 'building' | 'floor' | 'zone' | 'area';
@@ -21,17 +23,21 @@ export type FacilityType = 'site' | 'building' | 'floor' | 'zone' | 'area';
  * @description
  * Supported lifecycle statuses for a facility.
  *
+ * @since unreleased
+ *
  * @type
  */
 export type FacilityStatus = 'active' | 'archived';
 
 /**
  * Interface FacilityPathSegment
- * @interface FacilityPathSegment
+ * @interface
  *
  * @description
  * One ancestor entry of a facility's breadcrumb, as served by the detail
  * providers.
+ *
+ * @since unreleased
  */
 export interface FacilityPathSegment {
   //#region Properties
@@ -67,12 +73,28 @@ export interface FacilityPathSegment {
 
 /**
  * Interface FacilityOutput
- * @interface FacilityOutput
+ * @interface
  *
  * @description
  * Facility resource returned by the API.
+ *
+ * @since unreleased
  */
 export interface FacilityOutput extends HydraItem {
+  /**
+   * Property customerId
+   * @readonly
+   *
+   * @description
+   * Optional internal customer assigned only to a root site.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string | null}
+   */
+  readonly customerId?: string | null;
+
   /**
    * Property intervention
    *

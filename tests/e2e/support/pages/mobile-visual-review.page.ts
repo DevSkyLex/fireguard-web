@@ -90,7 +90,9 @@ export class MobileVisualReviewPage {
         await this.page.getByTestId('interventions-new').click();
       }
       await expect(this.page.locator(route.root).first()).toBeVisible();
-      await expect(this.page).toHaveURL(new URL(route.path, this.page.url()).href);
+      await expect(this.page).toHaveURL(
+        new URL(route.finalPath ?? route.path, this.page.url()).href,
+      );
       if (route.endpoint)
         await expect
           .poll(() =>
@@ -303,7 +305,8 @@ export class MobileVisualReviewPage {
         }
       } else await expect.soft(this.navigation).toHaveCount(0);
       if (route.id === 'home') {
-        const values = this.page.locator('app-stat-tile [data-slot="card-title"] > span');
+        const kpis = this.page.getByTestId('org-dashboard-kpis');
+        const values = kpis.locator('app-stat-tile [data-slot="card-title"] > span');
         await expect(values).toHaveCount(4);
         const sizes = await values.evaluateAll((elements) =>
           elements.map((element) => getComputedStyle(element).fontSize),
@@ -312,6 +315,42 @@ export class MobileVisualReviewPage {
           .soft(sizes, 'Rendered KPI child values retain their 24px hierarchy.')
           .toEqual(['24px', '24px', '24px', '24px']);
         scenarios.push('Computed KPI value font size: 24px on each card title child span');
+        const queues = this.page.getByTestId('park-action-queues');
+        const queueCards = queues.locator('app-stat-tile');
+        await expect(queueCards).toHaveCount(3);
+        await expect(queueCards.nth(0)).toContainText('Unavailable equipment');
+        await expect(queueCards.nth(1)).toContainText('Controls to prepare');
+        await expect(queueCards.nth(2)).toContainText('Anomalies to address');
+        const queueValues = queues.locator('app-stat-tile [data-slot="card-title"] > span');
+        await expect(queueValues).toHaveCount(3);
+        expect
+          .soft(
+            await queueValues.evaluateAll((elements) =>
+              elements.map((element) => getComputedStyle(element).fontSize),
+            ),
+            'Park action counts retain the same 24px value hierarchy.',
+          )
+          .toEqual(['24px', '24px', '24px']);
+        const queueLinks = queues.getByRole('link');
+        await expect(queueLinks).toHaveCount(3);
+        for (const href of await queueLinks.evaluateAll((links) =>
+          links.map((link) => {
+            if (!(link instanceof HTMLAnchorElement))
+              throw new Error('A park action must render an HTML link.');
+            return link.href;
+          }),
+        ))
+          expect(new URL(href).pathname).toBe(
+            MOBILE_VISUAL_ROUTES.find((entry) => entry.id === 'assets')?.path,
+          );
+        const queueBounds = await queues.boundingBox();
+        const kpiBounds = await kpis.boundingBox();
+        expect
+          .soft(queueBounds?.y, 'Park action queues precede the four summary KPIs.')
+          .toBeLessThan(kpiBounds?.y ?? 0);
+        scenarios.push(
+          'Three linked park action queues precede four separately verified summary KPIs',
+        );
       }
       if (route.id === 'more') {
         const covered = new Set(MOBILE_VISUAL_ROUTES.map((entry) => entry.path));

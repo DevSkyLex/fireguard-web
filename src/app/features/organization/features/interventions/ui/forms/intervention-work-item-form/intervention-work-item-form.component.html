@@ -39,9 +39,12 @@
     </hlm-field>
 
     <hlm-field>
-      <label hlmFieldLabel for="intervention-work-item-target" i18n="@@intervention.wif.target"
-        >Target resource</label
-      >
+      <label hlmFieldLabel for="intervention-work-item-target">
+        <span i18n="@@intervention.wif.target">Target resource</span>
+        @if (requiresEquipment()) {
+          <app-required-marker />
+        }
+      </label>
       <hlm-combobox
         [formField]="workItemForm.target"
         [itemToString]="targetLabelOf"
@@ -53,15 +56,14 @@
         <hlm-combobox-input
           class="mobile-ui:min-h-11"
           inputId="intervention-work-item-target"
-          placeholder="Optional site, facility or equipment target"
-          i18n-placeholder="@@intervention.wif.targetPlaceholder"
+          [placeholder]="targetPlaceholder()"
         />
         <hlm-combobox-content *hlmComboboxPortal>
           <hlm-combobox-empty i18n="@@intervention.wif.targetEmpty"
             >No target matches.</hlm-combobox-empty
           >
           <div hlmComboboxList>
-            @for (option of targetOptions(); track option.value) {
+            @for (option of availableTargets(); track option.value) {
               <hlm-combobox-item class="mobile-ui:min-h-11" [value]="option.value">{{
                 option.label
               }}</hlm-combobox-item>
@@ -79,9 +81,18 @@
         [state]="catalogues().equipment"
         (requested)="catalogueRequested.emit($event)"
       />
-      <hlm-field-description i18n="@@intervention.wif.targetHint">
-        Leave empty for site-level work.
-      </hlm-field-description>
+      @if (requiresEquipment()) {
+        <hlm-field-description i18n="@@intervention.wif.equipmentHint">
+          Select the equipment to keep its maintenance history traceable.
+        </hlm-field-description>
+      } @else {
+        <hlm-field-description i18n="@@intervention.wif.targetHint">
+          Leave empty for site-level work.
+        </hlm-field-description>
+      }
+      @if (workItemForm.target().touched() && workItemForm.target().invalid()) {
+        <hlm-field-error>{{ workItemForm.target().errors()[0].message }}</hlm-field-error>
+      }
     </hlm-field>
 
     <hlm-field>

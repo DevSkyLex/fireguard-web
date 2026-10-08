@@ -37,6 +37,16 @@ export interface OrganizationOutput extends HydraItem {
   readonly name: string;
 
   /**
+   * Property operatingProfile
+   *
+   * @description
+   * Operational defaults; absent responses from an older API use operator.
+   *
+   * @property operatingProfile
+   */
+  readonly operatingProfile?: 'operator' | 'service_provider';
+
+  /**
    * Property slug
    *
    * @description

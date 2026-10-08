@@ -65,7 +65,12 @@ interface ReviewScene {
   importedSelectionOutlines: ReviewObject[];
   buildingGroup: ReviewObject | null;
   floorGroups: Map<string, { group: ReviewObject; baseY: number }>;
-  renderer: { info: { memory: { geometries: number; textures: number } } } | null;
+  renderer: {
+    info: {
+      memory: { geometries: number; textures: number };
+      render: { lines: number; points: number };
+    };
+  } | null;
   controls: unknown;
   resizeObserver: unknown;
   renderRaf: number | null;
@@ -496,6 +501,23 @@ test('picks and isolates GLB Line and Points primitives and releases their real 
   await page.getByTestId('facility-3d-model-management').locator('summary').click();
   const host = page.getByTestId('facility-3d-scene');
   const canvas = host.locator('canvas');
+  await expect
+    .poll(
+      () =>
+        host.evaluate((element) => {
+          const scene = (window as unknown as ReviewWindow).ng.getComponent(
+            element.closest('app-facility-building-3d-scene') ?? element,
+          );
+          const info = scene?.renderer?.info;
+          return {
+            geometriesAllocated: (info?.memory.geometries ?? 0) >= 2,
+            linesDrawn: (info?.render.lines ?? 0) > 0,
+            pointsDrawn: (info?.render.points ?? 0) > 0,
+          };
+        }),
+      { timeout: 5_000, message: 'Both fixture primitives must reach the GPU before selection.' },
+    )
+    .toEqual({ geometriesAllocated: true, linesDrawn: true, pointsDrawn: true });
   await canvas.click({ position: await primitiveCanvasPoint(page, 0) });
   const link = page.getByTestId('facility-3d-bound-facility-link');
   await expect(link).toHaveAttribute(
@@ -536,6 +558,26 @@ test('picks and isolates GLB Line and Points primitives and releases their real 
     'href',
     `/organizations/${E2E_ORGANIZATION_ID}/facilities/e2e-upper-floor`,
   );
+  await expect
+    .poll(
+      () =>
+        host.evaluate((element) => {
+          const scene = (window as unknown as ReviewWindow).ng.getComponent(
+            element.closest('app-facility-building-3d-scene') ?? element,
+          );
+          const info = scene?.renderer?.info;
+          return {
+            geometriesAllocated: (info?.memory.geometries ?? 0) >= 2,
+            selectedPointDrawn: (info?.render.points ?? 0) >= 2,
+            frameSettled: scene?.renderRaf === null,
+          };
+        }),
+      {
+        message:
+          'Reselected Points and their replacement highlight must reach the GPU before teardown.',
+      },
+    )
+    .toEqual({ geometriesAllocated: true, selectedPointDrawn: true, frameSettled: true });
   const documentId = await host.evaluate((element) => {
     const browser = window as unknown as ReviewWindow;
     const scene = browser.ng.getComponent(

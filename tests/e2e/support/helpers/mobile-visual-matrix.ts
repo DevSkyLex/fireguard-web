@@ -54,6 +54,7 @@ export const MOBILE_VISUAL_MODES = [
 export interface MobileVisualRoute {
   readonly id: string;
   readonly path: string;
+  readonly finalPath?: string;
   readonly root: string;
   readonly endpoint?: string;
   readonly text?: string;
@@ -184,6 +185,42 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
     path: `${org}/maintenance`,
     root: '#maintenance-schedules',
     endpoint: '/api/maintenance/schedules',
+  },
+  {
+    id: 'service-requests',
+    path: `${org}/service-requests`,
+    root: '#service-requests',
+    endpoint: `${api}/service-requests`,
+    text: 'Repair the main entrance extinguisher gauge',
+  },
+  {
+    id: 'maintenance-reports',
+    path: `${org}/maintenance-costs/reports`,
+    root: '[data-testid="maintenance-reports-page"]',
+    endpoint: `${api}/maintenance-cost/reports`,
+    text: 'Entrance extinguisher',
+  },
+  {
+    id: 'maintenance-exports',
+    path: `${org}/maintenance-exports`,
+    root: '[data-testid="maintenance-exports-page"]',
+    endpoint: `${api}/maintenance-exports`,
+    text: 'demo_erp',
+  },
+  {
+    id: 'inventory',
+    path: `${org}/inventory`,
+    finalPath: `${org}/inventory/balances`,
+    root: 'app-inventory-page',
+    endpoint: `${api}/inventory-balances`,
+    text: 'Valve seal',
+  },
+  {
+    id: 'procurement',
+    path: `${org}/procurement`,
+    root: '#procurement-workspace',
+    endpoint: `${api}/procurement/orders`,
+    text: 'Extinguisher maintenance seals',
   },
   {
     id: 'calendar',
@@ -348,6 +385,11 @@ export const MOBILE_VISUAL_ROUTES: readonly MobileVisualRoute[] = [
 export const REPRESENTATIVE_VISUAL_ROUTES = new Set([
   'home',
   'more',
+  'service-requests',
+  'maintenance-reports',
+  'maintenance-exports',
+  'inventory',
+  'procurement',
   'automations',
   'webhooks',
   'interventions',

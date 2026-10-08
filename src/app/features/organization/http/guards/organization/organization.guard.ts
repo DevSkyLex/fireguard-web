@@ -7,54 +7,60 @@ import {
   Router,
   type UrlTree,
 } from '@angular/router';
-import { map, catchError, of, type Observable } from 'rxjs';
+import { map, switchMap, catchError, of, type Observable } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { CookieService } from '@core/cookie';
 import { LAST_ORGANIZATION_COOKIE_NAME } from '@features/organization/constants';
 import { OrganizationService } from '@features/organization/data-access';
 import type { OrganizationOutput } from '@features/organization/models';
+import { OrganizationLandingService } from '@features/organization/services/organization-landing';
 
 /**
- * Guard organizationGuard
+ * Function organizationGuard
  *
  * @description
  * Always redirects to the user's default organization workspace. The last
  * organization persisted in the `last-organization` cookie wins when it is
  * still accessible; otherwise the first accessible organization is used.
  * Users without any organization are sent directly to `/onboarding/workspace`.
- *
+ * The selected organization's confirmed facilities-read grant opens its fleet;
+ * otherwise the historical dashboard remains its default destination.
  * An `excluded` query parameter names an organization that must not be picked
  * again (set by guards that just failed to resolve it), breaking redirect
  * loops between this guard and the organization access/landing guards.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @returns {MaybeAsync<GuardResult>} A UrlTree redirecting to the appropriate route
- * based on the user's organizations.
+ *   based on the user's organizations.
  */
 export const organizationGuard: CanActivateFn = (
   route: ActivatedRouteSnapshot,
 ): MaybeAsync<GuardResult> => {
   /**
    * Constant organizationService
-   * @const organizationService
    *
    * @description
    * Service for fetching organization data from the API to determine
    * the appropriate redirection path based on the user's organizations.
    *
+   * @const organizationService
+   *
    * @var {OrganizationService}
    */
   const organizationService: OrganizationService = inject<OrganizationService>(OrganizationService);
+  const landing: OrganizationLandingService = inject(OrganizationLandingService);
 
   /**
    * Constant cookieService
-   * @const cookieService
    *
    * @description
    * Cookie service used to read (and invalidate) the persisted
    * last-organization preference.
+   *
+   * @const cookieService
    *
    * @var {CookieService}
    */
@@ -62,11 +68,12 @@ export const organizationGuard: CanActivateFn = (
 
   /**
    * Constant router
-   * @const router
    *
    * @description
    * Router for creating redirection URL trees based on the presence
    * of user organizations.
+   *
+   * @const router
    *
    * @var {Router}
    */
@@ -91,22 +98,24 @@ export const organizationGuard: CanActivateFn = (
    */
   const fallbackToFirstAccessible = (): Observable<UrlTree> =>
     organizationService.list({ page: 1, itemsPerPage: 2 }).pipe(
-      map((response: HydraCollection<OrganizationOutput>): UrlTree => {
+      switchMap((response: HydraCollection<OrganizationOutput>): Observable<UrlTree> => {
         const organization: OrganizationOutput | undefined = response.member.find(
           (candidate: OrganizationOutput): boolean => candidate.id !== excludedId,
         );
 
         if (organization) {
-          return router.createUrlTree(['/organizations', organization.id]);
+          return landing
+            .defaultDestination(organization.id)
+            .pipe(map((destination) => router.parseUrl(destination)));
         }
 
         // Organizations exist but none is usable (all excluded): avoid looping
         if (response.totalItems > 0) {
-          return router.createUrlTree(['/error/403']);
+          return of(router.createUrlTree(['/error/403']));
         }
 
         // A stale onboarding access cache must not send this account back here.
-        return router.createUrlTree(['/onboarding/workspace']);
+        return of(router.createUrlTree(['/onboarding/workspace']));
       }),
       catchError(() => of(router.createUrlTree(['/error/500']))),
     );
@@ -118,8 +127,10 @@ export const organizationGuard: CanActivateFn = (
 
   // Validate the saved organization is still accessible before redirecting to it
   return organizationService.get(savedId).pipe(
-    map((organization: OrganizationOutput): UrlTree =>
-      router.createUrlTree(['/organizations', organization.id]),
+    switchMap((organization: OrganizationOutput) =>
+      landing
+        .defaultDestination(organization.id)
+        .pipe(map((destination) => router.parseUrl(destination))),
     ),
     catchError(() => {
       // Stale preference (organization deleted or membership revoked): forget it

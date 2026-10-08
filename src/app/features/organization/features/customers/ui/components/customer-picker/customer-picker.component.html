@@ -1,0 +1,79 @@
+<hlm-combobox
+  [value]="value()"
+  (valueChange)="pick($event)"
+  [itemToString]="labelOf"
+  [filter]="remoteFilter"
+  [disabled]="disabled()"
+  (searchChange)="search($event)"
+  [attr.aria-busy]="store.listCallState().status === 'pending'"
+>
+  <hlm-combobox-input
+    [inputId]="inputId()"
+    [placeholder]="placeholder"
+    [attr.aria-label]="placeholder"
+  />
+  <hlm-combobox-content *hlmComboboxPortal>
+    <div hlmComboboxList>
+      <hlm-combobox-item value="" i18n="@@customer.picker.none">No customer</hlm-combobox-item>
+      @for (customer of store.customerEntities(); track customer.id) {
+        <hlm-combobox-item [value]="customer.id"
+          >{{ customer.name }}
+          @if (customer.code) {
+            <span class="text-muted-foreground">{{ customer.code }}</span>
+          }
+        </hlm-combobox-item>
+      }
+      @if (store.listCallState().status === 'success' && store.customerEntities().length === 0) {
+        <hlm-combobox-empty i18n="@@customer.picker.noMatches"
+          >No matching customers</hlm-combobox-empty
+        >
+      }
+    </div>
+    <div class="flex justify-between gap-2">
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        variant="ghost"
+        size="sm"
+        [disabled]="(store.query()?.page ?? 1) <= 1 || store.listCallState().status === 'pending'"
+        (click)="page((store.query()?.page ?? 1) - 1)"
+        i18n="@@common.previous"
+      >
+        Previous
+      </button>
+      <output aria-live="polite">{{ store.query()?.page ?? 1 }} / {{ store.pageCount() }}</output>
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        variant="ghost"
+        size="sm"
+        [disabled]="
+          (store.query()?.page ?? 1) >= store.pageCount() ||
+          store.listCallState().status === 'pending'
+        "
+        (click)="page((store.query()?.page ?? 1) + 1)"
+        i18n="@@common.next"
+      >
+        Next
+      </button>
+    </div>
+  </hlm-combobox-content>
+</hlm-combobox>
+@if (store.listCallState().error; as error) {
+  <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+  <button
+    hlmBtn
+    class="mobile-ui:min-h-11"
+    type="button"
+    variant="outline"
+    (click)="page(store.query()?.page ?? 1)"
+    i18n="@@common.retry"
+  >
+    Retry
+  </button>
+}
+@if (store.readCallState().error; as error) {
+  <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+}

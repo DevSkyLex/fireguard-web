@@ -16,7 +16,11 @@ describe('ActiveEquipmentStore', () => {
     get: ReturnType<typeof vi.fn>;
   };
 
-  const equipment = { id: 'equipment-1', name: 'Generator' } as unknown as EquipmentOutput;
+  const equipment = {
+    id: 'equipment-1',
+    organizationId: 'org-1',
+    name: 'Generator',
+  } as unknown as EquipmentOutput;
 
   beforeEach(() => {
     dispatch = vi.fn();
@@ -103,6 +107,19 @@ describe('ActiveEquipmentStore', () => {
     store.setEquipment(other);
 
     expect(store.selectedEquipment()).toEqual(other);
+  });
+
+  it('invalidates pending synchronization when selection is cleared', () => {
+    store.setEquipment(equipment);
+    const context = {
+      organizationId: 'org-1',
+      equipmentId: equipment.id,
+      selectionGeneration: store.selectionGeneration(),
+    };
+    store.clear();
+    store.setEquipment({ ...equipment, name: 'Late write' }, context);
+    expect(store.selectedEquipment()).toBeNull();
+    expect(store.getCallState().status).toBe('idle');
   });
 
   it('should clear the selected equipment', () => {

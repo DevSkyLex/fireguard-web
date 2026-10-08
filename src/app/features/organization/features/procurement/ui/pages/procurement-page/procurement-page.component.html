@@ -1,0 +1,1064 @@
+<div id="procurement-workspace" class="flex min-w-0 flex-col gap-4 px-1">
+  <hlm-tabs [tab]="view()" (tabActivated)="selectSection($event)">
+    <hlm-tabs-list
+      variant="line"
+      aria-label="Purchasing workspace"
+      i18n-aria-label="@@procurement.tabs.label"
+    >
+      <button hlmTabsTrigger="suppliers" [disabled]="locked()" i18n="@@procurement.tabs.suppliers">
+        Suppliers
+      </button>
+      <button hlmTabsTrigger="orders" [disabled]="locked()" i18n="@@procurement.tabs.orders">
+        Orders
+      </button>
+      <button hlmTabsTrigger="receipts" [disabled]="locked()" i18n="@@procurement.tabs.receipts">
+        Receipts
+      </button>
+    </hlm-tabs-list>
+    <div [hlmTabsContent]="view()" class="min-w-0 pt-4">
+      <p class="mb-4 text-sm text-muted-foreground" i18n="@@procurement.description">
+        Prepare purchases, record physical deliveries and follow reserve equipment or stock without
+        losing the source history.
+      </p>
+      @if (store.uncertainCommand() && !editor() && !confirmation()) {
+        <div hlmAlert role="alert">
+          <h2 hlmAlertTitle i18n="@@procurement.uncertain.title">
+            Recover the original operation result
+          </h2>
+          <p hlmAlertDescription i18n="@@procurement.uncertain.hint">
+            The response was lost. Retry the same declaration to recover its result before entering
+            another physical operation.
+          </p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mt-3 mobile-ui:min-h-11"
+            [disabled]="store.commandPending()"
+            (click)="retryCommand()"
+            i18n="@@common.retry"
+          >
+            Retry
+          </button>
+        </div>
+      }
+      @if (commandError() && !editor() && !confirmation()) {
+        <div hlmAlert variant="destructive" role="alert">
+          <h2 hlmAlertTitle i18n="@@procurement.commandFailed">Operation could not be confirmed</h2>
+          <p hlmAlertDescription>{{ commandError() }}</p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mt-3 mobile-ui:min-h-11"
+            [disabled]="locked()"
+            (click)="reload()"
+            i18n="@@common.retry"
+          >
+            Retry
+          </button>
+        </div>
+      }
+      @if (view() === 'suppliers') {
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <app-collection-search-box
+            testIdPrefix="procurement-suppliers"
+            [value]="supplierSearch()"
+            placeholder="Search suppliers"
+            i18n-placeholder="@@procurement.suppliers.search"
+            ariaLabel="Search suppliers"
+            i18n-ariaLabel="@@procurement.suppliers.search"
+            (queryChanged)="supplierSearch.set($event); supplierPage.set(1)"
+          />
+          <label
+            for="procurement-supplier-filter"
+            class="sr-only"
+            i18n="@@procurement.suppliers.filter"
+            >Supplier archive filter</label
+          >
+          <hlm-select
+            [value]="supplierFilter()"
+            [itemToString]="supplierFilterLabelOf"
+            (valueChange)="supplierFilter.set($event ?? 'active'); supplierPage.set(1)"
+            ><hlm-select-trigger buttonId="procurement-supplier-filter" class="mobile-ui:min-h-11"
+              ><hlm-select-value /></hlm-select-trigger
+            ><hlm-select-content *hlmSelectPortal
+              ><hlm-select-group>
+                @for (option of supplierFilters; track option.value) {
+                  <hlm-select-item [value]="option.value">{{ option.label }}</hlm-select-item>
+                }
+              </hlm-select-group></hlm-select-content
+            ></hlm-select
+          >
+          @if (canManage()) {
+            <button
+              hlmBtn
+              type="button"
+              class="mobile-ui:min-h-11"
+              [disabled]="locked()"
+              (click)="openSupplier(null)"
+              data-testid="procurement-new-supplier"
+              i18n="@@procurement.suppliers.create"
+            >
+              New internal supplier
+            </button>
+          }
+        </div>
+        @if (store.suppliersCallState().error; as error) {
+          <div hlmEmpty role="alert">
+            <div hlmEmptyHeader>
+              <p hlmEmptyTitle i18n="@@procurement.suppliers.loadFailed">
+                Suppliers could not be loaded
+              </p>
+              <p hlmEmptyDescription>{{ error.message }}</p>
+            </div>
+            <div hlmEmptyContent>
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                (click)="reload()"
+                i18n="@@common.retry"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        }
+        @if (
+          store.suppliersCallState().status === 'pending' && store.supplierEntities().length === 0
+        ) {
+          <hlm-skeleton class="h-36 w-full" />
+        }
+        @if (store.suppliersCallState().status === 'success' && store.totalSuppliers() === 0) {
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <app-state-illustration hlmEmptyMedia state="no-results" />
+              <p hlmEmptyTitle i18n="@@procurement.suppliers.empty">No suppliers match this view</p>
+              <p hlmEmptyDescription i18n="@@procurement.suppliers.emptyHint">
+                Adjust your search or create an internal supplier.
+              </p>
+            </div>
+          </div>
+        }
+        <div hlmItemGroup>
+          @for (supplier of store.supplierEntities(); track supplier.id; let last = $last) {
+            <div
+              hlmItem
+              class="flex-wrap mobile-ui:flex-col mobile-ui:items-stretch"
+              [attr.data-testid]="'procurement-supplier-' + supplier.id"
+            >
+              <div hlmItemContent class="min-w-0">
+                <div hlmItemTitle class="flex-wrap">
+                  {{ supplier.name }}
+                  @if (supplier.archivedAt) {
+                    <span hlmBadge variant="outline" i18n="@@procurement.suppliers.archivedBadge"
+                      >Archived</span
+                    >
+                  }
+                </div>
+                <div hlmItemDescription class="flex flex-col gap-1">
+                  @if (supplier.code) {
+                    <span>{{ supplier.code }}</span>
+                  }
+                  @if (supplier.email) {
+                    <span class="break-all">{{ supplier.email }}</span>
+                  }
+                  @if (supplier.phone) {
+                    <span>{{ supplier.phone }}</span>
+                  }
+                </div>
+              </div>
+              @if (canManage()) {
+                <div hlmItemActions class="flex-wrap">
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="mobile-ui:min-h-11"
+                    [disabled]="locked()"
+                    (click)="openSupplier(supplier)"
+                    i18n="@@procurement.suppliers.edit"
+                  >
+                    Edit supplier
+                  </button>
+                  @if (!supplier.archivedAt) {
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="ghost"
+                      class="mobile-ui:min-h-11"
+                      [disabled]="locked()"
+                      (click)="
+                        requestConfirmation({
+                          kind: 'archive_supplier',
+                          organizationId: organizationId(),
+                          supplier: supplier,
+                        })
+                      "
+                      i18n="@@procurement.suppliers.archive"
+                    >
+                      Archive supplier
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            @if (!last) {
+              <div hlmItemSeparator></div>
+            }
+          }
+        </div>
+        <app-collection-pagination
+          testIdPrefix="procurement-suppliers"
+          [page]="supplierPage()"
+          [pageCount]="supplierPageCount()"
+          [pageSize]="30"
+          [pageSizes]="[30]"
+          [total]="store.totalSuppliers()"
+          [shown]="store.supplierEntities().length"
+          (pageChanged)="supplierPage.set($event)"
+        />
+      } @else {
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <hlm-select
+            [value]="orderStatus()"
+            [itemToString]="orderStatusLabelOf"
+            (valueChange)="orderStatus.set($event ?? 'all'); orderPage.set(1)"
+            ><hlm-select-trigger
+              buttonId="procurement-order-status"
+              class="mobile-ui:min-h-11"
+              aria-label="Order status filter"
+              i18n-aria-label="@@procurement.orders.filter"
+              ><hlm-select-value /></hlm-select-trigger
+            ><hlm-select-content *hlmSelectPortal
+              ><hlm-select-group>
+                @for (status of orderStatuses; track status.value) {
+                  <hlm-select-item [value]="status.value">{{ status.label }}</hlm-select-item>
+                }
+              </hlm-select-group></hlm-select-content
+            ></hlm-select
+          >
+          @if (canManage()) {
+            <button
+              hlmBtn
+              type="button"
+              class="mobile-ui:min-h-11"
+              [disabled]="locked()"
+              (click)="openOrder(null)"
+              data-testid="procurement-new-order"
+              i18n="@@procurement.orders.create"
+            >
+              New purchase draft
+            </button>
+          }
+        </div>
+        @if (store.ordersCallState().error; as error) {
+          <div hlmEmpty role="alert">
+            <div hlmEmptyHeader>
+              <p hlmEmptyTitle i18n="@@procurement.orders.loadFailed">
+                Purchase orders could not be loaded
+              </p>
+              <p hlmEmptyDescription>{{ error.message }}</p>
+            </div>
+            <div hlmEmptyContent>
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                (click)="reload()"
+                i18n="@@common.retry"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        }
+        @if (store.ordersCallState().status === 'pending' && store.orderEntities().length === 0) {
+          <hlm-skeleton class="h-36 w-full" />
+        }
+        @if (store.ordersCallState().status === 'success' && store.totalOrders() === 0) {
+          <div hlmEmpty>
+            <div hlmEmptyHeader>
+              <app-state-illustration hlmEmptyMedia state="no-results" />
+              <p hlmEmptyTitle i18n="@@procurement.orders.empty">
+                No purchase orders match this view
+              </p>
+              <p hlmEmptyDescription i18n="@@procurement.orders.emptyHint">
+                Choose another status or prepare an internal purchase.
+              </p>
+            </div>
+          </div>
+        }
+        <div hlmItemGroup>
+          @for (order of store.orderEntities(); track order.id; let last = $last) {
+            <div
+              hlmItem
+              class="flex-wrap mobile-ui:flex-col mobile-ui:items-stretch"
+              [attr.data-testid]="'procurement-order-' + order.id"
+            >
+              <div hlmItemContent class="min-w-0">
+                <div hlmItemTitle class="flex-wrap">
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="link"
+                    class="h-auto text-left whitespace-normal"
+                    [disabled]="locked()"
+                    (click)="selectOrder(order)"
+                  >
+                    {{ order.name }}</button
+                  ><span hlmBadge variant="secondary">{{
+                    statusLabel('order', order.status)
+                  }}</span>
+                </div>
+                <div hlmItemDescription>
+                  <span i18n="@@procurement.orders.created"
+                    >Created:
+                    {{ order.createdAt | appOrgDate: 'date' : regionalFormatting() }}</span
+                  >
+                </div>
+              </div>
+              <div hlmItemActions class="flex-wrap">
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  class="mobile-ui:min-h-11"
+                  [disabled]="locked()"
+                  (click)="selectOrder(order, true)"
+                  i18n="@@procurement.orders.receipts"
+                >
+                  View receipts
+                </button>
+              </div>
+            </div>
+            @if (!last) {
+              <div hlmItemSeparator></div>
+            }
+          }
+        </div>
+        <app-collection-pagination
+          testIdPrefix="procurement-orders"
+          [page]="orderPage()"
+          [pageCount]="orderPageCount()"
+          [pageSize]="30"
+          [pageSizes]="[30]"
+          [total]="store.totalOrders()"
+          [shown]="store.orderEntities().length"
+          (pageChanged)="orderPage.set($event)"
+        />
+        @if (store.orderCallState().error; as error) {
+          <div hlmAlert variant="destructive" role="alert">
+            <h2 hlmAlertTitle i18n="@@procurement.orders.detailFailed">
+              Source order could not be loaded
+            </h2>
+            <p hlmAlertDescription>{{ error.message }}</p>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="mt-3"
+              (click)="reload()"
+              i18n="@@common.retry"
+            >
+              Retry
+            </button>
+          </div>
+        }
+        @if (store.orderCallState().status === 'pending') {
+          <hlm-skeleton class="mt-4 h-36 w-full" />
+        }
+        @if (store.selectedOrder(); as order) {
+          @if (order.id === orderId()) {
+            <section
+              class="mt-5 flex min-w-0 flex-col gap-4 border-t border-border pt-5"
+              data-testid="procurement-order-detail"
+            >
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="flex min-w-0 flex-col gap-2">
+                  <h2 class="text-lg font-medium break-words">{{ order.name }}</h2>
+                  <div class="flex flex-wrap gap-2">
+                    <span hlmBadge variant="secondary">{{
+                      statusLabel('order', order.status)
+                    }}</span
+                    ><span class="text-sm">{{ store.supplierCallState().data?.name }}</span>
+                    @if (store.supplierCallState().data?.archivedAt) {
+                      <span hlmBadge variant="outline" i18n="@@procurement.suppliers.archivedBadge"
+                        >Archived</span
+                      >
+                    }
+                  </div>
+                </div>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="ghost"
+                  [disabled]="locked()"
+                  (click)="clearSelection()"
+                  i18n="@@procurement.orders.close"
+                >
+                  Close order
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                @if (canEditOrder(order)) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="mobile-ui:min-h-11"
+                    [disabled]="locked()"
+                    (click)="openOrder(order)"
+                    i18n="@@procurement.orders.edit"
+                  >
+                    Edit purchase draft</button
+                  ><button
+                    hlmBtn
+                    type="button"
+                    class="mobile-ui:min-h-11"
+                    [disabled]="locked()"
+                    (click)="
+                      requestConfirmation({
+                        kind: 'place_order',
+                        organizationId: organizationId(),
+                        order: order,
+                      })
+                    "
+                    i18n="@@procurement.orders.place"
+                  >
+                    Place purchase order
+                  </button>
+                }
+                @if (canCancelOrder(order)) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="mobile-ui:min-h-11"
+                    [disabled]="locked()"
+                    (click)="
+                      requestConfirmation({
+                        kind: 'cancel_remaining',
+                        organizationId: organizationId(),
+                        order: order,
+                      })
+                    "
+                    i18n="@@procurement.orders.cancelRemaining"
+                  >
+                    Cancel undelivered quantities
+                  </button>
+                }
+              </div>
+              @if (catalog.loadCallState().error; as error) {
+                <div hlmAlert variant="destructive" role="alert">
+                  <h3 hlmAlertTitle i18n="@@procurement.catalog.failed">
+                    Equipment types could not be loaded
+                  </h3>
+                  <p hlmAlertDescription>{{ error.message }}</p>
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="mt-3"
+                    (click)="catalog.load(organizationId())"
+                    i18n="@@common.retry"
+                  >
+                    Retry
+                  </button>
+                </div>
+              }
+              <div hlmItemGroup>
+                @for (line of order.lines; track line.id; let last = $last) {
+                  <div
+                    hlmItem
+                    class="flex-wrap mobile-ui:flex-col mobile-ui:items-stretch"
+                    [attr.data-testid]="'procurement-line-' + line.id"
+                  >
+                    <div hlmItemContent class="min-w-0">
+                      <div hlmItemTitle class="break-words">{{ lineTitle(line) }}</div>
+                      <div hlmItemDescription class="flex flex-col gap-1">
+                        <span i18n="@@procurement.line.ordered"
+                          >Ordered: {{ line.quantity }} {{ lineUnit(line) }}</span
+                        ><span i18n="@@procurement.line.received"
+                          >Physically received: {{ line.receivedQuantity }}
+                          {{ lineUnit(line) }}</span
+                        ><span i18n="@@procurement.line.remaining"
+                          >Awaiting delivery: {{ line.remainingQuantity }}
+                          {{ lineUnit(line) }}</span
+                        ><span i18n="@@procurement.line.returned"
+                          >Physically returned: {{ line.returnedQuantity }}
+                          {{ lineUnit(line) }}</span
+                        >
+                        @if (canReadCosts() && order.financialVisible) {
+                          @if (line.unitCost != null) {
+                            <span i18n="@@procurement.cost.value"
+                              >Internal unit cost: {{ line.unitCost }} {{ order.currency }}</span
+                            >
+                          } @else {
+                            <span i18n="@@procurement.cost.unknown"
+                              >Internal cost incomplete — unit cost unknown.</span
+                            >
+                          }
+                        }
+                      </div>
+                    </div>
+                    @if (canReceive(order, line)) {
+                      <div hlmItemActions>
+                        <button
+                          hlmBtn
+                          type="button"
+                          class="mobile-ui:min-h-11"
+                          [disabled]="locked()"
+                          (click)="openReceipt(order, line)"
+                          i18n="@@procurement.line.receive"
+                        >
+                          Record a delivery
+                        </button>
+                      </div>
+                    }
+                  </div>
+                  @if (!last) {
+                    <div hlmItemSeparator></div>
+                  }
+                }
+              </div>
+              @if (view() === 'orders') {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  class="self-start mobile-ui:min-h-11"
+                  [disabled]="locked()"
+                  (click)="selectOrder(order, true)"
+                  i18n="@@procurement.orders.receipts"
+                >
+                  View receipts
+                </button>
+              }
+            </section>
+            @if (view() === 'receipts') {
+              <section
+                class="mt-5 flex min-w-0 flex-col gap-4 border-t border-border pt-5"
+                data-testid="procurement-receipts"
+              >
+                <h2 class="text-lg font-medium" i18n="@@procurement.receipts.title">
+                  Physical receipt history
+                </h2>
+                @if (store.receiptsCallState().error; as error) {
+                  <div hlmEmpty role="alert">
+                    <div hlmEmptyHeader>
+                      <p hlmEmptyTitle i18n="@@procurement.receipts.loadFailed">
+                        Receipts could not be loaded
+                      </p>
+                      <p hlmEmptyDescription>{{ error.message }}</p>
+                    </div>
+                    <div hlmEmptyContent>
+                      <button
+                        hlmBtn
+                        type="button"
+                        variant="outline"
+                        (click)="reload()"
+                        i18n="@@common.retry"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  </div>
+                }
+                @if (
+                  store.receiptsCallState().status === 'pending' &&
+                  store.receiptEntities().length === 0
+                ) {
+                  <hlm-skeleton class="h-36 w-full" />
+                }
+                @if (
+                  store.receiptsCallState().status === 'success' && store.totalReceipts() === 0
+                ) {
+                  <div hlmEmpty>
+                    <div hlmEmptyHeader>
+                      <app-state-illustration hlmEmptyMedia state="no-history" />
+                      <p hlmEmptyTitle i18n="@@procurement.receipts.empty">
+                        No physical receipts recorded
+                      </p>
+                      <p hlmEmptyDescription i18n="@@procurement.receipts.emptyHint">
+                        Record the actual delivery from its source line above. Placing an order does
+                        not receive its goods.
+                      </p>
+                    </div>
+                  </div>
+                }
+                <div hlmItemGroup>
+                  @for (receipt of store.receiptEntities(); track receipt.id; let last = $last) {
+                    <div
+                      hlmItem
+                      class="flex-wrap mobile-ui:flex-col mobile-ui:items-stretch"
+                      [attr.data-testid]="'procurement-receipt-' + receipt.id"
+                    >
+                      <div hlmItemContent class="min-w-0">
+                        <div hlmItemTitle class="flex-wrap">
+                          <span i18n="@@procurement.receipts.quantity"
+                            >Received: {{ receipt.quantity }} {{ receiptUnit(receipt) }}</span
+                          ><span hlmBadge variant="secondary">{{
+                            statusLabel('receipt', receipt.status)
+                          }}</span>
+                        </div>
+                        <div hlmItemDescription class="flex flex-col gap-1">
+                          <span>{{
+                            receipt.receivedAt | appOrgDate: 'datetime' : regionalFormatting()
+                          }}</span
+                          ><span i18n="@@procurement.receipts.returned"
+                            >Physically returned: {{ receipt.returnedQuantity }}
+                            {{ receiptUnit(receipt) }}</span
+                          >
+                          @if (receipt.pendingReturnQuantity !== '0.000000') {
+                            <span i18n="@@procurement.receipts.pendingReturn"
+                              >Return movement awaiting reconciliation:
+                              {{ receipt.pendingReturnQuantity }} {{ receiptUnit(receipt) }}</span
+                            >
+                          }
+                          @if (receipt.blockedReason) {
+                            <span>{{ blockedLabel(receipt.blockedReason) }}</span>
+                          }
+                          @if (canReadCosts() && receipt.financialVisible) {
+                            @if (receipt.unitCost != null) {
+                              <span i18n="@@procurement.cost.value"
+                                >Internal unit cost: {{ receipt.unitCost }}
+                                {{ receipt.currency }}</span
+                              >
+                            } @else {
+                              <span i18n="@@procurement.cost.unknown"
+                                >Internal cost incomplete — unit cost unknown.</span
+                              >
+                            }
+                          }
+                          @for (equipmentId of receipt.equipmentIds; track equipmentId) {
+                            <a
+                              [routerLink]="[
+                                '/organizations',
+                                organizationId(),
+                                'equipments',
+                                equipmentId,
+                              ]"
+                              class="underline"
+                              i18n="@@procurement.receipts.reserveEquipment"
+                              >Open reserve equipment dossier</a
+                            >
+                          }
+                        </div>
+                      </div>
+                      <div hlmItemActions class="flex-wrap">
+                        @if (canIndividualize(receipt)) {
+                          <button
+                            hlmBtn
+                            type="button"
+                            class="mobile-ui:min-h-11"
+                            [disabled]="locked()"
+                            (click)="requestIndividualization(receipt)"
+                            i18n="@@procurement.receipts.individualize"
+                          >
+                            Create reserve equipment
+                          </button>
+                        }
+                        @if (canReturn(receipt)) {
+                          <button
+                            hlmBtn
+                            type="button"
+                            variant="outline"
+                            class="mobile-ui:min-h-11"
+                            [disabled]="locked()"
+                            (click)="openReturn(receipt)"
+                            i18n="@@procurement.receipts.return"
+                          >
+                            Record a physical return
+                          </button>
+                        }
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="ghost"
+                          class="mobile-ui:min-h-11"
+                          [disabled]="locked()"
+                          (click)="showReturns(receipt)"
+                          i18n="@@procurement.receipts.returns"
+                        >
+                          View return history
+                        </button>
+                      </div>
+                    </div>
+                    @if (!last) {
+                      <div hlmItemSeparator></div>
+                    }
+                  }
+                </div>
+                <app-collection-pagination
+                  testIdPrefix="procurement-receipts"
+                  [page]="receiptPage()"
+                  [pageCount]="receiptPageCount()"
+                  [pageSize]="30"
+                  [pageSizes]="[30]"
+                  [total]="store.totalReceipts()"
+                  [shown]="store.receiptEntities().length"
+                  (pageChanged)="receiptPage.set($event)"
+                />
+              </section>
+              @if (returnsReceiptId()) {
+                <section
+                  class="mt-5 flex min-w-0 flex-col gap-4 border-t border-border pt-5"
+                  data-testid="procurement-returns"
+                >
+                  <h2 class="text-lg font-medium" i18n="@@procurement.returns.title">
+                    Physical returns and inventory reconciliation
+                  </h2>
+                  <p class="text-sm text-muted-foreground" i18n="@@procurement.returns.hint">
+                    Each quantity and reason remains linked to its original receipt. Reconciliation
+                    confirms a stock movement and never rewrites the physical declaration.
+                  </p>
+                  @if (store.returnsCallState().error; as error) {
+                    <div hlmEmpty role="alert">
+                      <div hlmEmptyHeader>
+                        <p hlmEmptyTitle i18n="@@procurement.returns.loadFailed">
+                          Return history could not be loaded
+                        </p>
+                        <p hlmEmptyDescription>{{ error.message }}</p>
+                      </div>
+                      <div hlmEmptyContent>
+                        <button
+                          hlmBtn
+                          type="button"
+                          variant="outline"
+                          (click)="reload()"
+                          i18n="@@common.retry"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    </div>
+                  }
+                  @if (
+                    store.returnsCallState().status === 'pending' &&
+                    store.supplyReturnEntities().length === 0
+                  ) {
+                    <hlm-skeleton class="h-36 w-full" />
+                  }
+                  @if (
+                    store.returnsCallState().status === 'success' && store.totalReturns() === 0
+                  ) {
+                    <div hlmEmpty>
+                      <div hlmEmptyHeader>
+                        <app-state-illustration hlmEmptyMedia state="no-history" />
+                        <p hlmEmptyTitle i18n="@@procurement.returns.empty">
+                          No physical returns recorded
+                        </p>
+                      </div>
+                    </div>
+                  }
+                  <div hlmItemGroup>
+                    @for (
+                      returned of store.supplyReturnEntities();
+                      track returned.id;
+                      let last = $last
+                    ) {
+                      <div
+                        hlmItem
+                        class="flex-wrap mobile-ui:flex-col mobile-ui:items-stretch"
+                        [attr.data-testid]="'procurement-return-' + returned.id"
+                      >
+                        <div hlmItemContent class="min-w-0">
+                          <div hlmItemTitle class="flex-wrap">
+                            <span i18n="@@procurement.returns.quantity"
+                              >Returned: {{ returned.quantity }}</span
+                            ><span hlmBadge variant="secondary">{{
+                              statusLabel('return', returned.status)
+                            }}</span>
+                          </div>
+                          <div hlmItemDescription class="flex flex-col gap-1">
+                            <span class="break-words">{{ returned.reason }}</span
+                            ><span>{{
+                              returned.createdAt | appOrgDate: 'datetime' : regionalFormatting()
+                            }}</span>
+                            @if (returned.blockedReason) {
+                              <span>{{ blockedLabel(returned.blockedReason) }}</span>
+                            }
+                          </div>
+                        </div>
+                        @if (canReconcile(returned)) {
+                          <div hlmItemActions>
+                            <button
+                              hlmBtn
+                              type="button"
+                              variant="outline"
+                              class="mobile-ui:min-h-11"
+                              [disabled]="locked()"
+                              (click)="requestReconciliation(returned)"
+                              i18n="@@procurement.returns.reconcile"
+                            >
+                              Reconcile inventory movement
+                            </button>
+                          </div>
+                        }
+                      </div>
+                      @if (!last) {
+                        <div hlmItemSeparator></div>
+                      }
+                    }
+                  </div>
+                  <app-collection-pagination
+                    testIdPrefix="procurement-returns"
+                    [page]="returnPage()"
+                    [pageCount]="returnPageCount()"
+                    [pageSize]="30"
+                    [pageSizes]="[30]"
+                    [total]="store.totalReturns()"
+                    [shown]="store.supplyReturnEntities().length"
+                    (pageChanged)="returnPage.set($event)"
+                  />
+                </section>
+              }
+            }
+          }
+        } @else {
+          @if (view() === 'receipts') {
+            <div hlmEmpty>
+              <div hlmEmptyHeader>
+                <app-state-illustration hlmEmptyMedia state="no-selection" />
+                <p hlmEmptyTitle i18n="@@procurement.receipts.selectOrder">
+                  Select the source purchase order
+                </p>
+                <p hlmEmptyDescription i18n="@@procurement.receipts.selectOrderHint">
+                  Open an order's receipts to keep its physical deliveries and returns together.
+                </p>
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  </hlm-tabs>
+</div>
+<hlm-sheet
+  side="right"
+  [state]="editor() ? 'open' : 'closed'"
+  [disableClose]="locked()"
+  (stateChanged)="sheetStateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-w-none! overflow-y-auto pb-[env(safe-area-inset-bottom)] mobile-ui:max-h-[90svh] mobile-ui:data-open:animate-none desktop-ui:w-[min(600px,100vw)]!"
+    [showCloseButton]="!locked()"
+    data-testid="procurement-editor"
+  >
+    <hlm-sheet-header
+      ><h2 hlmSheetTitle>{{ editorTitle() }}</h2>
+      <p hlmSheetDescription i18n="@@procurement.editor.description">
+        Keep the source record and the actual physical quantities together.
+      </p></hlm-sheet-header
+    >
+    <div class="min-w-0 px-4 pb-5">
+      @if (store.uncertainCommand()) {
+        <div hlmAlert role="alert">
+          <h3 hlmAlertTitle i18n="@@procurement.uncertain.title">
+            Recover the original operation result
+          </h3>
+          <p hlmAlertDescription i18n="@@procurement.uncertain.hint">
+            The response was lost. Retry the same declaration to recover its result before entering
+            another physical operation.
+          </p>
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mt-3 mobile-ui:min-h-11"
+            [disabled]="store.commandPending()"
+            (click)="retryCommand()"
+            data-testid="procurement-retry-operation"
+            i18n="@@common.retry"
+          >
+            Retry
+          </button>
+        </div>
+      }
+      @if (revisionConflict() && !store.uncertainCommand()) {
+        <div hlmAlert class="mb-4">
+          <h3 hlmAlertTitle i18n="@@procurement.revision.title">
+            Review the latest source revision
+          </h3>
+          <p hlmAlertDescription i18n="@@procurement.revision.hint">
+            Your typed draft is retained. Load the latest source before choosing to use its
+            revision.
+          </p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="locked()"
+              (click)="reviewLatest()"
+              i18n="@@procurement.revision.load"
+            >
+              Load latest source</button
+            ><button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="!reviewReady()"
+              (click)="adoptLatestRevision()"
+              i18n="@@procurement.revision.use"
+            >
+              Use reviewed revision and keep my draft
+            </button>
+          </div>
+        </div>
+      }
+      <div [class.hidden]="store.uncertainCommand()">
+        @switch (editor()) {
+          @case ('supplier') {
+            <app-supplier-form
+              [supplier]="editingSupplier()"
+              [pending]="locked()"
+              [error]="commandError()"
+              (submitted)="saveSupplier($event)"
+              (cancelled)="requestClose()"
+              (dirtyChanged)="dirty.set($event)"
+            />
+          }
+          @case ('order') {
+            @if (catalog.loadCallState().error; as error) {
+              <div hlmAlert variant="destructive" role="alert" class="mb-4">
+                <h3 hlmAlertTitle i18n="@@procurement.catalog.failed">
+                  Equipment types could not be loaded
+                </h3>
+                <p hlmAlertDescription>{{ error.message }}</p>
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  (click)="catalog.load(organizationId())"
+                  i18n="@@common.retry"
+                >
+                  Retry
+                </button>
+              </div>
+            }
+            <app-purchase-order-form
+              [organizationId]="organizationId()"
+              [order]="editingOrder()"
+              [suppliers]="store.supplierEntities()"
+              [selectedSupplier]="store.supplierCallState().data"
+              [supplierState]="store.suppliersCallState()"
+              [supplierPage]="pickerPage()"
+              [supplierPageCount]="supplierPageCount()"
+              [typeOptions]="catalog.options()"
+              [canEditCosts]="canEditCosts()"
+              [pending]="locked()"
+              [error]="commandError()"
+              (submitted)="saveOrder($event)"
+              (cancelled)="requestClose()"
+              (dirtyChanged)="dirty.set($event)"
+              (supplierSearched)="pickerSearch.set($event); pickerPage.set(1)"
+              (supplierPageChanged)="pickerPage.set($event)"
+              (equipmentTypesRequested)="ensureEquipmentTypes()"
+            />
+          }
+          @case ('receipt') {
+            @if (receivingLine(); as line) {
+              <app-procurement-receipt-form
+                [organizationId]="organizationId()"
+                [line]="line"
+                [pending]="locked()"
+                [error]="commandError()"
+                (submitted)="recordReceipt($event)"
+                (cancelled)="requestClose()"
+                (dirtyChanged)="dirty.set($event)"
+              />
+            }
+          }
+          @case ('return') {
+            @if (returningReceipt(); as receipt) {
+              <app-procurement-return-form
+                [receipt]="receipt"
+                [pending]="locked()"
+                [error]="commandError()"
+                (submitted)="recordReturn($event)"
+                (cancelled)="requestClose()"
+                (dirtyChanged)="dirty.set($event)"
+              />
+            }
+          }
+        }
+      </div>
+    </div>
+  </hlm-sheet-content>
+</hlm-sheet>
+<hlm-alert-dialog
+  [state]="confirmation() ? 'open' : 'closed'"
+  [disableClose]="locked()"
+  (stateChanged)="confirmationStateChanged($event)"
+>
+  <hlm-alert-dialog-content *hlmAlertDialogPortal data-testid="procurement-confirmation"
+    ><hlm-alert-dialog-header
+      ><h2 hlmAlertDialogTitle>{{ confirmationTitle() }}</h2>
+      <p hlmAlertDialogDescription>{{ confirmationDescription() }}</p></hlm-alert-dialog-header
+    >
+    @if (commandError()) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ commandError() }}</p>
+      </div>
+    }
+    @if (store.uncertainCommand()) {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        [disabled]="store.commandPending()"
+        (click)="retryCommand()"
+        data-testid="procurement-retry-operation"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    }
+    @if (revisionConflict() && !store.uncertainCommand()) {
+      <div class="flex flex-wrap gap-2">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          [disabled]="locked()"
+          (click)="reviewLatest()"
+          i18n="@@procurement.revision.load"
+        >
+          Load latest source</button
+        ><button
+          hlmBtn
+          type="button"
+          variant="outline"
+          [disabled]="!reviewReady()"
+          (click)="adoptLatestRevision()"
+          i18n="@@procurement.revision.use"
+        >
+          Use reviewed revision and keep my draft
+        </button>
+      </div>
+    }
+    <hlm-alert-dialog-footer
+      ><button hlmAlertDialogCancel [disabled]="locked()" i18n="@@common.cancel">Cancel</button
+      ><button
+        hlmAlertDialogAction
+        [disabled]="locked()"
+        (click)="confirmOperation()"
+        data-testid="procurement-confirm-operation"
+      >
+        @if (store.commandPending()) {
+          <hlm-spinner aria-hidden="true" />
+        }
+        <span i18n="@@procurement.confirm.action">Confirm operation</span>
+      </button></hlm-alert-dialog-footer
+    >
+  </hlm-alert-dialog-content>
+</hlm-alert-dialog>
+<app-unsaved-changes-dialog
+  [state]="discardState()"
+  (confirmed)="resolveDiscard(true)"
+  (dismissed)="resolveDiscard(false)"
+/>

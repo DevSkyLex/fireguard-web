@@ -1,6 +1,7 @@
 import type { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
+  afterNextRender,
   Component,
   DestroyRef,
   computed,
@@ -34,7 +35,11 @@ import { FeedbackService } from '@core/feedback';
 import { PageActionsService, registerPageActions } from '@core/page-actions';
 import { isCallSuccess } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
+import {
+  EquipmentTypeCatalogStore,
+  type EquipmentTypeCatalogStoreType,
+  type EquipmentTypeOption,
+} from '@features/organization/features/equipments';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { FacilityOptionsStore } from '@features/organization/features/facilities/state';
 import { FacilityOptionPicker } from '@features/organization/features/facilities/ui/components';
@@ -71,6 +76,7 @@ import { CollectionSearchBox, CollectionToolbar } from '@shared/collection-toolb
 import type { RegionalFormatSettings } from '@shared/regional-format';
 import { ResourceIllustration } from '@shared/resource-illustration';
 import { StateIllustration } from '@shared/state-illustration';
+import { HlmAlertImports } from '@shared/ui/alert';
 import { HlmButton } from '@shared/ui/button';
 import { HlmEmptyImports } from '@shared/ui/empty';
 import { HlmSpinner } from '@shared/ui/spinner';
@@ -212,8 +218,8 @@ interface MaintenanceScheduleFilters {
  * chrome other converted collection pages already carry (no width clamp, no
  * hover surface, no double-padding fix). "Facility" and "Equipment type"
  * offer a popover search — the former's catalog is organization-sized and
- * unbounded, the latter's twelve-entry `EQUIPMENT_TYPE_OPTIONS` is the same
- * catalog the equipments feature's own type filter already searches; "Due
+ * unbounded, and equipment types come from the same authorized server
+ * catalog as the equipments feature's type filter; "Due
  * status" stays unsearched at four fixed entries.
  *
  * @version 1.3.0
@@ -223,6 +229,7 @@ interface MaintenanceScheduleFilters {
 @Component({
   selector: 'app-maintenance-schedules-page',
   imports: [
+    ...HlmAlertImports,
     FacilityOptionPicker,
     NgIcon,
     RouterLink,
@@ -245,6 +252,7 @@ interface MaintenanceScheduleFilters {
   ],
   providers: [
     FacilityOptionsStore,
+    EquipmentTypeCatalogStore,
     provideIcons({
       lucideCalendar,
       lucideCircleAlert,
@@ -579,9 +587,40 @@ export class MaintenanceSchedulesPage {
    * @access protected
    * @since unreleased
    *
-   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   * @type {Signal<readonly EquipmentTypeOption[]>}
    */
-  protected readonly equipmentTypeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
+  protected readonly equipmentTypeOptions: Signal<readonly EquipmentTypeOption[]> = computed(() =>
+    this.equipmentTypeCatalog.options(),
+  );
+
+  /**
+   * Property equipmentTypeCatalog
+   * @readonly
+   *
+   * @description
+   * Page-scoped authorized catalog, retaining historical and custom equipment labels.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentTypeCatalogStoreType}
+   */
+  protected readonly equipmentTypeCatalog: EquipmentTypeCatalogStoreType =
+    inject(EquipmentTypeCatalogStore);
+
+  /**
+   * Property catalogReady
+   * @readonly
+   *
+   * @description
+   * Delays secondary equipment catalog reads until browser hydration.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  private readonly catalogReady: WritableSignal<boolean> = signal(false);
 
   /**
    * Property facilityOptions
@@ -661,7 +700,11 @@ export class MaintenanceSchedulesPage {
    * @type {Signal<readonly MaintenanceScheduleOutput[]>}
    */
   protected readonly items: Signal<readonly MaintenanceScheduleOutput[]> = computed(() =>
-    this.store.schedules(),
+    this.store
+      .schedules()
+      .filter(
+        (schedule) => schedule.organization === `/api/organizations/${this.organizationId()}`,
+      ),
   );
 
   /**
@@ -988,6 +1031,14 @@ export class MaintenanceSchedulesPage {
    */
   public constructor() {
     registerPageActions(this.pageActions, this.pageActionsService, inject(DestroyRef));
+    afterNextRender(() => this.catalogReady.set(true));
+    effect(() => {
+      const organizationId: string = this.organizationId();
+      const ready: boolean = this.catalogReady();
+      untracked(() =>
+        ready ? this.equipmentTypeCatalog.load(organizationId) : this.equipmentTypeCatalog.clear(),
+      );
+    });
 
     toObservable(this.draftSearch)
       .pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed())
@@ -1000,8 +1051,16 @@ export class MaintenanceSchedulesPage {
       });
 
     effect((): void => {
-      this.organizationId();
-      untracked(() => this.facilityOptionsStore.clear());
+      const organizationId = this.organizationId();
+      untracked(() => {
+        this.store.setOrganization(`/api/organizations/${organizationId}`);
+        this.facilityOptionsStore.clear();
+        this.overrideTarget.set(null);
+        this.overrideDialogVisible.set(false);
+        this.campaignDialogVisible.set(false);
+        this.openFilterKey.set(null);
+        this.clearFilters();
+      });
     });
 
     effect((): void => {
@@ -1029,7 +1088,12 @@ export class MaintenanceSchedulesPage {
       const state = this.store.overrideCallState();
 
       untracked((): void => {
-        if (isCallSuccess(state) && this.overrideDialogVisible()) {
+        if (
+          isCallSuccess(state) &&
+          state.data.organization === `/api/organizations/${this.organizationId()}` &&
+          state.data.id === this.overrideTarget()?.id &&
+          this.overrideDialogVisible()
+        ) {
           this.overrideDialogVisible.set(false);
           this.overrideTarget.set(null);
           this.store.resetOverrideOperation();
@@ -1039,14 +1103,15 @@ export class MaintenanceSchedulesPage {
 
     effect((): void => {
       const result = this.store.campaignResult();
+      const resultOrganization = this.store.campaignResultOrganization();
 
       untracked((): void => {
-        if (result) {
+        if (result && resultOrganization === `/api/organizations/${this.organizationId()}`) {
           this.campaignDialogVisible.set(false);
           this.store.resetCampaignOperation();
           void this.router.navigate([
             '/organizations',
-            this.organizationId(),
+            iriId(resultOrganization),
             'interventions',
             result.interventionId,
           ]);
@@ -1382,6 +1447,11 @@ export class MaintenanceSchedulesPage {
    * @returns {void}
    */
   protected openOverrideDialog(schedule: MaintenanceScheduleOutput): void {
+    if (
+      !this.canManage() ||
+      schedule.organization !== `/api/organizations/${this.organizationId()}`
+    )
+      return;
     this.overrideTarget.set(schedule);
     this.overrideDialogVisible.set(true);
   }
@@ -1421,9 +1491,18 @@ export class MaintenanceSchedulesPage {
   protected submitOverride(value: string | null): void {
     const target: MaintenanceScheduleOutput | null = this.overrideTarget();
 
-    if (!target) return;
+    if (
+      !target ||
+      !this.canManage() ||
+      target.organization !== `/api/organizations/${this.organizationId()}`
+    )
+      return;
 
-    this.store.setIntervalOverride({ scheduleId: target.id, intervalOverride: value });
+    this.store.setIntervalOverride({
+      organization: target.organization,
+      scheduleId: target.id,
+      intervalOverride: value,
+    });
   }
 
   /**
@@ -1477,6 +1556,7 @@ export class MaintenanceSchedulesPage {
    * @returns {void}
    */
   protected submitCampaign(scope: Omit<GenerateMaintenanceCampaignInput, 'organization'>): void {
+    if (!this.campaignDialogVisible() || !this.canPlanCampaign()) return;
     this.store.generateCampaign({
       organization: `/api/organizations/${this.organizationId()}`,
       ...scope,

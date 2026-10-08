@@ -11,7 +11,7 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { exhaustMap, map, pipe, switchMap, tap } from 'rxjs';
 import type { RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import {
@@ -586,31 +586,47 @@ export const EquipmentStore = signalStore(
             tap((): void => {
               patchState(store, { updateCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, equipmentId, input }) =>
-              equipmentService.update(organizationId, equipmentId, input).pipe(
-                tapResponse({
-                  next: (equipment: EquipmentOutput): void => {
-                    const merged: EquipmentOutput = mergeEquipment(
-                      store.equipmentEntityMap()[equipment.id] ?? null,
-                      equipment,
-                    );
+            map((params) => ({
+              ...params,
+              selectionGeneration: activeEquipmentStore.selectionGeneration(),
+              knownEquipment:
+                store.equipmentEntityMap()[params.equipmentId] ??
+                (activeEquipmentStore.selectedEquipment()?.id === params.equipmentId &&
+                activeEquipmentStore.selectedOrganizationId() === params.organizationId
+                  ? activeEquipmentStore.selectedEquipment()
+                  : null),
+            })),
+            exhaustMap(
+              ({ organizationId, equipmentId, input, selectionGeneration, knownEquipment }) =>
+                equipmentService.update(organizationId, equipmentId, input).pipe(
+                  tapResponse({
+                    next: (equipment: EquipmentOutput): void => {
+                      const merged: EquipmentOutput = mergeEquipment(
+                        store.equipmentEntityMap()[equipment.id] ?? knownEquipment,
+                        equipment,
+                        input,
+                      );
 
-                    patchState(store, setEntity(merged, { collection: 'equipment' }), {
-                      updateCallState: successCallState(merged),
-                    });
-                    activeEquipmentStore.setEquipment(merged);
-                  },
-                  error: (error: unknown): void => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { updateCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      equipmentStoreEvents.updateFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to update equipment'),
-                      ),
-                    );
-                  },
-                }),
-              ),
+                      patchState(store, setEntity(merged, { collection: 'equipment' }), {
+                        updateCallState: successCallState(merged),
+                      });
+                      activeEquipmentStore.setEquipment(merged, {
+                        organizationId,
+                        equipmentId,
+                        selectionGeneration,
+                      });
+                    },
+                    error: (error: unknown): void => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { updateCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        equipmentStoreEvents.updateFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to update equipment'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),
@@ -643,34 +659,49 @@ export const EquipmentStore = signalStore(
             tap((): void => {
               patchState(store, { assignToFacilityCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, equipmentId, input }) =>
-              equipmentService.assignToFacility(organizationId, equipmentId, input).pipe(
-                tapResponse({
-                  next: (equipment: EquipmentOutput): void => {
-                    const merged: EquipmentOutput = mergeEquipment(
-                      store.equipmentEntityMap()[equipment.id] ?? null,
-                      equipment,
-                    );
+            map((params) => ({
+              ...params,
+              selectionGeneration: activeEquipmentStore.selectionGeneration(),
+              knownEquipment:
+                store.equipmentEntityMap()[params.equipmentId] ??
+                (activeEquipmentStore.selectedEquipment()?.id === params.equipmentId &&
+                activeEquipmentStore.selectedOrganizationId() === params.organizationId
+                  ? activeEquipmentStore.selectedEquipment()
+                  : null),
+            })),
+            exhaustMap(
+              ({ organizationId, equipmentId, input, selectionGeneration, knownEquipment }) =>
+                equipmentService.assignToFacility(organizationId, equipmentId, input).pipe(
+                  tapResponse({
+                    next: (equipment: EquipmentOutput): void => {
+                      const merged: EquipmentOutput = mergeEquipment(
+                        store.equipmentEntityMap()[equipment.id] ?? knownEquipment,
+                        equipment,
+                      );
 
-                    patchState(store, setEntity(merged, { collection: 'equipment' }), {
-                      assignToFacilityCallState: successCallState(merged),
-                    });
-                    activeEquipmentStore.setEquipment(merged);
-                  },
-                  error: (error: unknown): void => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { assignToFacilityCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      equipmentStoreEvents.assignToFacilityFailed(
-                        toStoreFailureEventPayload(
-                          storeError,
-                          'Failed to assign equipment to facility',
+                      patchState(store, setEntity(merged, { collection: 'equipment' }), {
+                        assignToFacilityCallState: successCallState(merged),
+                      });
+                      activeEquipmentStore.setEquipment(merged, {
+                        organizationId,
+                        equipmentId,
+                        selectionGeneration,
+                      });
+                    },
+                    error: (error: unknown): void => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { assignToFacilityCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        equipmentStoreEvents.assignToFacilityFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            'Failed to assign equipment to facility',
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                }),
-              ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),
@@ -696,13 +727,23 @@ export const EquipmentStore = signalStore(
             tap((): void => {
               patchState(store, { unassignFromFacilityCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, equipmentId }) =>
+            map((params) => ({
+              ...params,
+              selectionGeneration: activeEquipmentStore.selectionGeneration(),
+              knownEquipment:
+                store.equipmentEntityMap()[params.equipmentId] ??
+                (activeEquipmentStore.selectedEquipment()?.id === params.equipmentId &&
+                activeEquipmentStore.selectedOrganizationId() === params.organizationId
+                  ? activeEquipmentStore.selectedEquipment()
+                  : null),
+            })),
+            exhaustMap(({ organizationId, equipmentId, selectionGeneration, knownEquipment }) =>
               equipmentService.unassignFromFacility(organizationId, equipmentId).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
                     const merged: EquipmentOutput = {
                       ...mergeEquipment(
-                        store.equipmentEntityMap()[equipment.id] ?? null,
+                        store.equipmentEntityMap()[equipment.id] ?? knownEquipment,
                         equipment,
                       ),
                       facilityId: equipment.facilityId ?? null,
@@ -712,7 +753,11 @@ export const EquipmentStore = signalStore(
                     patchState(store, setEntity(merged, { collection: 'equipment' }), {
                       unassignFromFacilityCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(merged);
+                    activeEquipmentStore.setEquipment(merged, {
+                      organizationId,
+                      equipmentId,
+                      selectionGeneration,
+                    });
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -752,19 +797,33 @@ export const EquipmentStore = signalStore(
             tap((): void => {
               patchState(store, { commissionCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, equipmentId }) =>
+            map((params) => ({
+              ...params,
+              selectionGeneration: activeEquipmentStore.selectionGeneration(),
+              knownEquipment:
+                store.equipmentEntityMap()[params.equipmentId] ??
+                (activeEquipmentStore.selectedEquipment()?.id === params.equipmentId &&
+                activeEquipmentStore.selectedOrganizationId() === params.organizationId
+                  ? activeEquipmentStore.selectedEquipment()
+                  : null),
+            })),
+            exhaustMap(({ organizationId, equipmentId, selectionGeneration, knownEquipment }) =>
               equipmentService.commission(organizationId, equipmentId).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
                     const merged: EquipmentOutput = mergeEquipment(
-                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      store.equipmentEntityMap()[equipment.id] ?? knownEquipment,
                       equipment,
                     );
 
                     patchState(store, setEntity(merged, { collection: 'equipment' }), {
                       commissionCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(merged);
+                    activeEquipmentStore.setEquipment(merged, {
+                      organizationId,
+                      equipmentId,
+                      selectionGeneration,
+                    });
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -799,19 +858,33 @@ export const EquipmentStore = signalStore(
             tap((): void => {
               patchState(store, { decommissionCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, equipmentId }) =>
+            map((params) => ({
+              ...params,
+              selectionGeneration: activeEquipmentStore.selectionGeneration(),
+              knownEquipment:
+                store.equipmentEntityMap()[params.equipmentId] ??
+                (activeEquipmentStore.selectedEquipment()?.id === params.equipmentId &&
+                activeEquipmentStore.selectedOrganizationId() === params.organizationId
+                  ? activeEquipmentStore.selectedEquipment()
+                  : null),
+            })),
+            exhaustMap(({ organizationId, equipmentId, selectionGeneration, knownEquipment }) =>
               equipmentService.decommission(organizationId, equipmentId).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
                     const merged: EquipmentOutput = mergeEquipment(
-                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      store.equipmentEntityMap()[equipment.id] ?? knownEquipment,
                       equipment,
                     );
 
                     patchState(store, setEntity(merged, { collection: 'equipment' }), {
                       decommissionCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(merged);
+                    activeEquipmentStore.setEquipment(merged, {
+                      organizationId,
+                      equipmentId,
+                      selectionGeneration,
+                    });
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -902,19 +975,33 @@ export const EquipmentStore = signalStore(
             tap((): void => {
               patchState(store, { maintenanceCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, equipmentId }) =>
+            map((params) => ({
+              ...params,
+              selectionGeneration: activeEquipmentStore.selectionGeneration(),
+              knownEquipment:
+                store.equipmentEntityMap()[params.equipmentId] ??
+                (activeEquipmentStore.selectedEquipment()?.id === params.equipmentId &&
+                activeEquipmentStore.selectedOrganizationId() === params.organizationId
+                  ? activeEquipmentStore.selectedEquipment()
+                  : null),
+            })),
+            exhaustMap(({ organizationId, equipmentId, selectionGeneration, knownEquipment }) =>
               equipmentService.maintenance(organizationId, equipmentId).pipe(
                 tapResponse({
                   next: (equipment: EquipmentOutput): void => {
                     const merged: EquipmentOutput = mergeEquipment(
-                      store.equipmentEntityMap()[equipment.id] ?? null,
+                      store.equipmentEntityMap()[equipment.id] ?? knownEquipment,
                       equipment,
                     );
 
                     patchState(store, setEntity(merged, { collection: 'equipment' }), {
                       maintenanceCallState: successCallState(merged),
                     });
-                    activeEquipmentStore.setEquipment(merged);
+                    activeEquipmentStore.setEquipment(merged, {
+                      organizationId,
+                      equipmentId,
+                      selectionGeneration,
+                    });
                   },
                   error: (error: unknown): void => {
                     const storeError: StoreError = toStoreError(error);
@@ -1147,7 +1234,11 @@ export const EquipmentStore = signalStore(
             tap((): void => {
               patchState(store, { addTagCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, equipmentId, input }) =>
+            map((params) => ({
+              ...params,
+              selectionGeneration: activeEquipmentStore.selectionGeneration(),
+            })),
+            exhaustMap(({ organizationId, equipmentId, input, selectionGeneration }) =>
               equipmentService.addTag(organizationId, equipmentId, input).pipe(
                 tapResponse({
                   next: (tag: EquipmentTagOutput): void => {
@@ -1160,10 +1251,13 @@ export const EquipmentStore = signalStore(
                       activeEquipment?.id === equipmentId &&
                       !activeEquipment.tags.some((activeTag) => activeTag.id === tag.id)
                     ) {
-                      activeEquipmentStore.setEquipment({
-                        ...activeEquipment,
-                        tags: [...activeEquipment.tags, tag],
-                      });
+                      activeEquipmentStore.setEquipment(
+                        {
+                          ...activeEquipment,
+                          tags: [...activeEquipment.tags, tag],
+                        },
+                        { organizationId, equipmentId, selectionGeneration },
+                      );
                     }
                   },
                   error: (error: unknown): void => {
@@ -1198,7 +1292,11 @@ export const EquipmentStore = signalStore(
             tap((): void => {
               patchState(store, { removeTagCallState: pendingCallState() });
             }),
-            exhaustMap(({ organizationId, equipmentId, tagId }) =>
+            map((params) => ({
+              ...params,
+              selectionGeneration: activeEquipmentStore.selectionGeneration(),
+            })),
+            exhaustMap(({ organizationId, equipmentId, tagId, selectionGeneration }) =>
               equipmentService.removeTag(organizationId, equipmentId, tagId).pipe(
                 tapResponse({
                   next: (): void => {
@@ -1208,10 +1306,13 @@ export const EquipmentStore = signalStore(
                     });
                     const activeEquipment = activeEquipmentStore.selectedEquipment();
                     if (activeEquipment?.id === equipmentId) {
-                      activeEquipmentStore.setEquipment({
-                        ...activeEquipment,
-                        tags: activeEquipment.tags.filter((tag) => tag.id !== tagId),
-                      });
+                      activeEquipmentStore.setEquipment(
+                        {
+                          ...activeEquipment,
+                          tags: activeEquipment.tags.filter((tag) => tag.id !== tagId),
+                        },
+                        { organizationId, equipmentId, selectionGeneration },
+                      );
                     }
                   },
                   error: (error: unknown): void => {

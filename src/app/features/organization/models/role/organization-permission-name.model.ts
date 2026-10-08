@@ -3,7 +3,6 @@
  *
  * @description
  * Canonical organization-scoped permission names exposed by the frontend.
- *
  * A const object is preferred over a TypeScript enum here so consumers get
  * autocomplete and strict typing without introducing extra runtime enum code.
  *
@@ -24,58 +23,140 @@ export const ORGANIZATION_PERMISSION = {
   ROLES_MANAGE: 'organization.roles.manage',
   FACILITIES_READ: 'organization.facilities.read',
   FACILITIES_WRITE: 'organization.facilities.write',
+  CUSTOMERS_READ: 'organization.customers.read',
+  CUSTOMERS_MANAGE: 'organization.customers.manage',
+  SERVICE_REQUESTS_READ: 'organization.service_requests.read',
+  SERVICE_REQUESTS_CREATE: 'organization.service_requests.create',
+  SERVICE_REQUESTS_MANAGE: 'organization.service_requests.manage',
+  INVENTORY_READ: 'organization.inventory.read',
+  INVENTORY_MANAGE: 'organization.inventory.manage',
+  INVENTORY_CONSUME: 'organization.inventory.consume',
+  PROCUREMENT_READ: 'organization.procurement.read',
+  PROCUREMENT_MANAGE: 'organization.procurement.manage',
+  MAINTENANCE_COST_READ: 'organization.maintenance_cost.read',
+  MAINTENANCE_COST_MANAGE: 'organization.maintenance_cost.manage',
+  MAINTENANCE_EXPORTS_READ: 'organization.maintenance_exports.read',
+  MAINTENANCE_EXPORTS_MANAGE: 'organization.maintenance_exports.manage',
+  MAINTENANCE_EXPORTS_CONFIRM: 'organization.maintenance_exports.confirm',
   EQUIPMENT_READ: 'organization.equipment.read',
   EQUIPMENT_WRITE: 'organization.equipment.write',
   INSPECTION_READ: 'organization.inspection.read',
   INSPECTION_WRITE: 'organization.inspection.write',
-  /** Read access to intervention pages and intervention-linked resources. */
+  /**
+   * @description
+   * Read access to intervention pages and intervention-linked resources.
+   */
   INTERVENTIONS_READ: 'organization.interventions.read',
-  /** Write access to intervention entities during preparation phase. */
+  /**
+   * @description
+   * Write access to intervention entities during preparation phase.
+   */
   INTERVENTIONS_WRITE: 'organization.interventions.write',
   INTERVENTIONS_PLAN: 'organization.interventions.plan',
   INTERVENTIONS_EXECUTE: 'organization.interventions.execute',
   INTERVENTIONS_REVIEW: 'organization.interventions.review',
-  /** Permission required to trigger intervention publication. */
+  /**
+   * @description
+   * Permission required to trigger intervention publication.
+   */
   INTERVENTIONS_PUBLISH: 'organization.interventions.publish',
-  /** Read access to conversations, channels, direct messages and their contents. */
+  /**
+   * @description
+   * Read access to conversations, channels, direct messages and their contents.
+   */
   MESSAGING_READ: 'organization.messaging.read',
-  /** Permission required to post, edit and delete own messages, replies and attachments. */
+  /**
+   * @description
+   * Permission required to post, edit and delete own messages, replies and attachments.
+   */
   MESSAGING_WRITE: 'organization.messaging.write',
-  /** Permission required to create/archive channels, manage participants and moderate messages. */
+  /**
+   * @description
+   * Permission required to create/archive channels, manage participants and moderate messages.
+   */
   MESSAGING_MANAGE: 'organization.messaging.manage',
-  /** Permission required to open an assistant thread and ask questions. */
+  /**
+   * @description
+   * Permission required to open an assistant thread and ask questions.
+   */
   ASSISTANT_USE: 'organization.assistant.use',
-  /** Permission required to manage organization settings (general, notifications, regional). */
+  /**
+   * @description
+   * Permission required to manage organization settings (general, notifications, regional).
+   */
   AUTOMATION_READ: 'organization.automation.read',
   AUTOMATION_MANAGE: 'organization.automation.manage',
   SETTINGS_WRITE: 'organization.settings.write',
-  /** Read access to the compliance rollup, facility tree and per-facility summaries. */
+  /**
+   * @description
+   * Read access to the compliance rollup, facility tree and per-facility summaries.
+   */
   COMPLIANCE_READ: 'organization.compliance.read',
-  /** Permission required to export the safety-register PDF (the backend additionally gates it on plan tier). */
+  /**
+   * @description
+   * Permission required to export the safety-register PDF (the backend additionally gates it on
+   * plan tier).
+   */
   COMPLIANCE_EXPORT: 'organization.compliance.export',
-  /** Read access to the maintenance schedules. */
+  /**
+   * @description
+   * Read access to the maintenance schedules.
+   */
   MAINTENANCE_READ: 'organization.maintenance.read',
-  /** Permission required to override maintenance intervals and generate campaigns. */
+  /**
+   * @description
+   * Permission required to override maintenance intervals and generate campaigns.
+   */
   MAINTENANCE_MANAGE: 'organization.maintenance.manage',
-  /** Read access to teams and their membership. */
+  /**
+   * @description
+   * Read access to teams and their membership.
+   */
   TEAMS_READ: 'organization.teams.read',
-  /** Permission required to create and edit teams. */
+  /**
+   * @description
+   * Permission required to create and edit teams.
+   */
   TEAMS_WRITE: 'organization.teams.write',
-  /** Permission required to manage team membership and deletion. */
+  /**
+   * @description
+   * Permission required to manage team membership and deletion.
+   */
   TEAMS_MANAGE: 'organization.teams.manage',
-  /** Read access to the organization activity feed (audit events scoped to the organization). */
+  /**
+   * @description
+   * Read access to the organization activity feed (audit events scoped to the organization).
+   */
   AUDIT_READ: 'organization.audit.read',
-  /** Read access to four-eyes approval requests. */
+  /**
+   * @description
+   * Read access to four-eyes approval requests.
+   */
   APPROVALS_READ: 'organization.approvals.read',
-  /** Permission required to submit an action for four-eyes approval. */
+  /**
+   * @description
+   * Permission required to submit an action for four-eyes approval.
+   */
   APPROVALS_REQUEST: 'organization.approvals.request',
-  /** Permission required to approve or reject a pending approval request. */
+  /**
+   * @description
+   * Permission required to approve or reject a pending approval request.
+   */
   APPROVALS_DECIDE: 'organization.approvals.decide',
-  /** Read access to webhook subscriptions and their deliveries. */
+  /**
+   * @description
+   * Read access to webhook subscriptions and their deliveries.
+   */
   WEBHOOKS_READ: 'organization.webhooks.read',
-  /** Permission required to manage webhook subscriptions. */
+  /**
+   * @description
+   * Permission required to manage webhook subscriptions.
+   */
   WEBHOOKS_MANAGE: 'organization.webhooks.manage',
-  /** Permission required to permanently delete the organization. */
+  /**
+   * @description
+   * Permission required to permanently delete the organization.
+   */
   DELETE: 'organization.delete',
   ALL: 'organization.*',
 } as const;
@@ -85,6 +166,8 @@ export const ORGANIZATION_PERMISSION = {
  *
  * @description
  * Union of all known organization-scoped permission names.
+ *
+ * @type {(typeof ORGANIZATION_PERMISSION)[keyof typeof ORGANIZATION_PERMISSION]}
  */
 export type OrganizationPermissionName =
   (typeof ORGANIZATION_PERMISSION)[keyof typeof ORGANIZATION_PERMISSION];

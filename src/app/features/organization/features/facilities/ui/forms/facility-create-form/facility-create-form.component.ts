@@ -24,6 +24,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideMapPin } from '@ng-icons/lucide';
 import { idleCallState, type CallState } from '@core/request-state';
+import { CustomerPicker } from '@features/organization/features/customers/ui/components';
 import type {
   FacilityOption,
   CreateFacilityInput,
@@ -49,8 +50,11 @@ import type { FacilityCreateFormDraft } from './models';
  *
  * @description
  * A blank draft.
+ *
+ * @since unreleased
  */
 const EMPTY_VALUES: FacilityCreateFormDraft = {
+  customerId: '',
   type: '',
   name: '',
   parentFacilityId: '',
@@ -69,9 +73,12 @@ const EMPTY_VALUES: FacilityCreateFormDraft = {
  * @description
  * Trims a form value and treats blank text as absent.
  *
- * @param {string | undefined} value - Optional value to trim.
+ * @access public
+ * @since unreleased
  *
- * @returns {string | undefined} Trimmed text, or undefined when blank.
+ * @param {string} value - Value supplied by the owning customer workflow.
+ *
+ * @returns {string | undefined} Result for the owning customer workflow.
  */
 function trimmed(value: string): string | undefined {
   const trimmedValue: string = value.trim();
@@ -86,12 +93,12 @@ function trimmed(value: string): string | undefined {
  * Parses an optional numeric draft; coordinate and level-index validity are checked by their
  * fields.
  *
- * @access private
- * @since 1.0.0
+ * @access public
+ * @since unreleased
  *
- * @param {string} value - The editable numeric draft.
+ * @param {string} value - Value supplied by the owning customer workflow.
  *
- * @returns {number | undefined} Its numeric value, or `undefined` when blank.
+ * @returns {number | undefined} Result for the owning customer workflow.
  */
 function parsedOptionalNumber(value: string): number | undefined {
   const trimmedValue: string = value.trim();
@@ -104,6 +111,8 @@ function parsedOptionalNumber(value: string): number | undefined {
  *
  * @description
  * Geographic bounds a latitude/longitude draft must fall within, once filled.
+ *
+ * @since unreleased
  */
 const LATITUDE_BOUNDS: readonly [number, number] = [-90, 90];
 
@@ -113,9 +122,7 @@ const LATITUDE_BOUNDS: readonly [number, number] = [-90, 90];
  * @description
  * Defines the accepted longitude range from 180 degrees west to 180 degrees east.
  *
- * @access public
- *
- * @type {readonly [number, number]}
+ * @since unreleased
  */
 const LONGITUDE_BOUNDS: readonly [number, number] = [-180, 180];
 
@@ -125,10 +132,13 @@ const LONGITUDE_BOUNDS: readonly [number, number] = [-180, 180];
  * @description
  * Checks whether a finite coordinate falls within its inclusive bounds.
  *
- * @param {number} value - Coordinate value to validate.
- * @param {readonly [number, number]} bounds - Inclusive minimum and maximum.
+ * @access public
+ * @since unreleased
  *
- * @returns {boolean} Whether the value is finite and within the supplied bounds.
+ * @param {string} value - Value supplied by the owning customer workflow.
+ * @param {readonly [number, number]} bounds - Value supplied by the owning customer workflow.
+ *
+ * @returns {boolean} Result for the owning customer workflow.
  */
 function isCoordinateInRange(value: string, bounds: readonly [number, number]): boolean {
   const trimmedValue: string = value.trim();
@@ -144,6 +154,8 @@ function isCoordinateInRange(value: string, bounds: readonly [number, number]): 
  *
  * @description
  * The stacking order's own bounds, mirroring the backend's `FacilityLevelIndex` value object.
+ *
+ * @since unreleased
  */
 const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
 
@@ -153,9 +165,12 @@ const LEVEL_INDEX_BOUNDS: readonly [number, number] = [-100, 200];
  * @description
  * Checks whether a level index is an integer within its supported range.
  *
- * @param {number} value - Level index to validate.
+ * @access public
+ * @since unreleased
  *
- * @returns {boolean} Whether the value is an integer within the supported bounds.
+ * @param {string} value - Value supplied by the owning customer workflow.
+ *
+ * @returns {boolean} Result for the owning customer workflow.
  */
 function isLevelIndexInRange(value: string): boolean {
   const trimmedValue: string = value.trim();
@@ -198,6 +213,7 @@ function isLevelIndexInRange(value: string): boolean {
 @Component({
   selector: 'app-facility-create-form',
   imports: [
+    CustomerPicker,
     RequiredMarker,
     FormField,
     FacilityMapPickerDialog,
@@ -216,6 +232,20 @@ function isLevelIndexInRange(value: string): boolean {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityCreateForm {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Organization used by the root-site customer directory.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input('');
+
   /**
    * Property parentCallState
    * @readonly
@@ -868,6 +898,8 @@ export class FacilityCreateForm {
         ) {
           this.model.update((draft) => ({ ...draft, parentFacilityId: '' }));
         }
+        if (type !== 'site' && this.model().customerId)
+          this.model.update((draft) => ({ ...draft, customerId: '' }));
         this.typeChanged.emit(type);
       });
     });
@@ -929,6 +961,7 @@ export class FacilityCreateForm {
     this.submitted.emit({
       type: draft.type,
       name: draft.name.trim(),
+      ...(draft.type === 'site' && draft.customerId ? { customerId: draft.customerId } : {}),
       parentFacilityId: draft.parentFacilityId === '' ? undefined : draft.parentFacilityId,
       code: trimmed(draft.code),
       address: trimmed(draft.address),

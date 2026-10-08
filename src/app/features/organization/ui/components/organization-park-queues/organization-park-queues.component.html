@@ -1,0 +1,124 @@
+@if (canReadEquipment()) {
+  <section class="flex min-w-0 flex-col gap-4" data-testid="park-action-queues">
+    <h2 hlmLarge i18n="@@park.queues.title">Park actions</h2>
+    <div class="flex min-w-0 flex-wrap items-end gap-3 px-1">
+      <hlm-toggle-group
+        type="single"
+        [value]="family()"
+        (valueChange)="familyChanged($event)"
+        aria-label="Equipment coverage"
+        i18n-aria-label="@@park.context.coverage"
+      >
+        <button
+          hlmToggleGroupItem
+          class="mobile-ui:min-h-11"
+          value="fire"
+          i18n="@@park.context.fire"
+        >
+          Fire equipment</button
+        ><button
+          hlmToggleGroupItem
+          class="mobile-ui:min-h-11"
+          value="all"
+          i18n="@@park.context.all"
+        >
+          All equipment
+        </button>
+      </hlm-toggle-group>
+      @if (canReadCustomers()) {
+        <div hlmField class="min-w-0 flex-1 basis-60">
+          <label hlmFieldLabel for="dashboard-park-customer" i18n="@@facility.form.customer"
+            >Customer</label
+          ><app-customer-picker
+            inputId="dashboard-park-customer"
+            [organizationId]="organizationId()"
+            [value]="customerId()"
+            (valueChange)="customerChanged($event)"
+          />
+        </div>
+      }
+      @if (canReadSites()) {
+        <div hlmField class="min-w-0 flex-1 basis-60">
+          <label hlmFieldLabel for="dashboard-park-site" i18n="@@park.context.site">Site</label
+          ><app-facility-option-picker
+            inputId="dashboard-park-site"
+            [value]="facilityId()"
+            (valueChange)="facilityId.set($event)"
+            [options]="store.siteOptions()"
+            [hydratedOption]="store.selectedSite()"
+            [callState]="sitePickerCallState()"
+            [page]="store.siteQuery()?.page ?? 1"
+            [pageCount]="store.sitePageCount()"
+            [emptyLabel]="allSites"
+            (searchChanged)="searchSites($event)"
+            (pageChanged)="sitePage($event)"
+          />
+        </div>
+      }
+    </div>
+    <div
+      class="grid min-w-0 grid-cols-1 gap-4 @[360px]/dashboard:grid-cols-2 @[960px]/dashboard:grid-cols-3"
+    >
+      @if (canReadEquipment()) {
+        <app-stat-tile
+          label="Unavailable equipment"
+          i18n-label="@@park.queues.unavailable"
+          [value]="unavailable()"
+          icon="lucideWrench"
+          tone="warning"
+          [loading]="store.unavailableCallState().status === 'pending'"
+          [link]="parkRoute()"
+          [queryParams]="unavailableParams()"
+        />
+        <app-stat-tile
+          label="Controls to prepare"
+          i18n-label="@@park.queues.controls"
+          [value]="controls()"
+          icon="lucideClipboardCheck"
+          tone="warning"
+          [loading]="store.controlsCallState().status === 'pending'"
+          [link]="parkRoute()"
+          [queryParams]="controlsParams()"
+        />
+      }
+      @if (canReadAnomalies()) {
+        <app-stat-tile
+          label="Anomalies to address"
+          i18n-label="@@park.queues.anomalies"
+          [value]="anomalies()"
+          icon="lucideTriangleAlert"
+          tone="warning"
+          [loading]="store.anomaliesCallState().status === 'pending'"
+          [link]="parkRoute()"
+          [queryParams]="anomaliesParams()"
+        />
+      }
+    </div>
+    @if (
+      store.unavailableCallState().error ||
+      store.controlsCallState().error ||
+      store.anomaliesCallState().error
+    ) {
+      <div hlmAlert variant="destructive" role="alert">
+        <h3 hlmAlertTitle i18n="@@park.queues.failed">Some park counts could not be loaded</h3>
+        <p hlmAlertDescription>
+          {{
+            store.unavailableCallState().error?.message ??
+              store.controlsCallState().error?.message ??
+              store.anomaliesCallState().error?.message
+          }}
+        </p>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          (click)="retry()"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      </div>
+    }
+  </section>
+}

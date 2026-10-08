@@ -5,6 +5,7 @@ import { EMPTY, Subject } from 'rxjs';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
+import type { DeclareInventoryConsumptionInput } from '@features/organization/features/inventory/models';
 import { InterventionDatabaseService } from '../intervention-database.service';
 import { InterventionOutboxRepository } from '../intervention-outbox.repository';
 
@@ -12,7 +13,10 @@ import { InterventionOutboxRepository } from '../intervention-outbox.repository'
  * Minimal in-memory IndexedDB stand-in backing the outbox object store, so the
  * pending/unsynced signal semantics can be exercised without a real database.
  */
-function inMemoryDatabase(store: Map<string, InterventionOutboxOperation>): {
+function inMemoryDatabase(
+  store: Map<string, InterventionOutboxOperation>,
+  workspaceOrganization: string | null = null,
+): {
   browser: boolean;
   currentOwnerId: ReturnType<typeof vi.fn>;
   ensureOwnerBound: ReturnType<typeof vi.fn>;
@@ -28,7 +32,13 @@ function inMemoryDatabase(store: Map<string, InterventionOutboxOperation>): {
     put: vi.fn(async (_collection: string, key: string, value: InterventionOutboxOperation) => {
       store.set(key, value);
     }),
-    get: vi.fn(async (_collection: string, key: string) => store.get(key) ?? null),
+    get: vi.fn(async (collection: string, key: string) =>
+      collection === 'interventions'
+        ? workspaceOrganization
+          ? { organization: workspaceOrganization }
+          : null
+        : (store.get(key) ?? null),
+    ),
     getAll: vi.fn(async () => [...store.values()]),
     remove: vi.fn(async (_collection: string, key: string) => {
       store.delete(key);
@@ -57,6 +67,191 @@ function build(
 }
 
 describe('InterventionOutboxRepository', () => {
+  const consumption: DeclareInventoryConsumptionInput = {
+    clientOperationId: '11111111-1111-4111-8111-111111111111',
+    partId: 'part-1',
+    warehouseId: 'warehouse-1',
+    quantity: '2.000000',
+    interventionId: 'intervention-1',
+    workItemId: 'work-item-1',
+    equipmentId: 'equipment-1',
+    occurredAt: '2026-10-06T10:00:00.123Z',
+  };
+
+  it('durably queues concurrent identical consumption retries as one stable operation', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const database = inMemoryDatabase(entries, '/api/organizations/org-1');
+    const repository = build(database);
+    await Promise.all([
+      repository.queueInventoryConsumption('org-1', consumption, 'account', () => true),
+      repository.queueInventoryConsumption('org-1', { ...consumption }, 'account', () => true),
+    ]);
+
+    expect(entries.size).toBe(1);
+    expect([...entries.keys()]).toEqual([`inventory:${consumption.clientOperationId}`]);
+    expect(entries.get(`inventory:${consumption.clientOperationId}`)).toMatchObject({
+      id: `inventory:${consumption.clientOperationId}`,
+      type: 'inventory-consumption.declare',
+      interventionId: consumption.interventionId,
+      payload: { ...consumption, actorId: 'account', clientId: consumption.clientOperationId },
+      status: 'pending',
+      error: null,
+    });
+    expect(database.put).toHaveBeenCalledOnce();
+    expect(repository.pendingCount()).toBe(1);
+    expect(repository.hasUnsyncedChanges()).toBe(true);
+  });
+
+  it('does not acknowledge or count a consumption when durable storage exceeds quota', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const database = inMemoryDatabase(entries, '/api/organizations/org-1');
+    const storageFailure = new DOMException('Device storage is full.', 'QuotaExceededError');
+    database.put.mockRejectedValueOnce(storageFailure);
+    const repository = build(database);
+
+    await expect(
+      repository.queueInventoryConsumption('org-1', consumption, 'account', () => true),
+    ).rejects.toBe(storageFailure);
+    expect(entries.size).toBe(0);
+    expect(repository.pendingCount()).toBe(0);
+    expect(repository.hasUnsyncedChanges()).toBe(false);
+    expect(repository.hasPendingChanges()).toBe(false);
+
+    await repository.queueInventoryConsumption('org-1', consumption, 'account', () => true);
+    expect(entries.size).toBe(1);
+    expect(repository.pendingCount()).toBe(1);
+    expect(entries.get(`inventory:${consumption.clientOperationId}`)?.payload).toMatchObject(
+      consumption,
+    );
+  });
+
+  it.each([null, '/api/organizations/org-2'])(
+    'refuses a consumption for a missing or differently scoped saved workspace (%s)',
+    async (savedOrganization) => {
+      const entries = new Map<string, InterventionOutboxOperation>();
+      const database = inMemoryDatabase(entries, savedOrganization);
+      const repository = build(database);
+      await expect(
+        repository.queueInventoryConsumption('org-1', consumption, 'account', () => true),
+      ).rejects.toThrow('must be saved on this device');
+      expect(database.put).not.toHaveBeenCalled();
+      expect(repository.pendingCount()).toBe(0);
+    },
+  );
+
+  it('fences a consumption write when the same account returns in a new session', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const database = inMemoryDatabase(entries, '/api/organizations/org-1');
+    const revision = signal(1);
+    let release: (() => void) | undefined;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    database.put.mockImplementationOnce(
+      async (
+        _collection: string,
+        key: string,
+        value: InterventionOutboxOperation,
+        current: () => boolean,
+      ) => {
+        await pending;
+        if (!current()) throw new DOMException('Session changed.', 'AbortError');
+        entries.set(key, value);
+      },
+    );
+    const repository = build(database, revision);
+    const queued = repository.queueInventoryConsumption(
+      'org-1',
+      consumption,
+      'account',
+      () => true,
+    );
+    const rejected = expect(queued).rejects.toMatchObject({ name: 'AbortError' });
+    await vi.waitFor(() => expect(database.put).toHaveBeenCalledOnce());
+    revision.set(2);
+    release?.();
+    await rejected;
+    expect(entries.size).toBe(0);
+    expect(repository.pendingCount()).toBe(0);
+    expect(repository.hasUnsyncedChanges()).toBe(false);
+  });
+
+  it('retries a failed consumption with its original physical fact and operation identity', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const database = inMemoryDatabase(entries, '/api/organizations/org-1');
+    const repository = build(database);
+    await repository.queueInventoryConsumption('org-1', consumption, 'account', () => true);
+    const operationId = `inventory:${consumption.clientOperationId}`;
+    await repository.markOutboxFailed(operationId, 'Reference needs review.');
+    expect(repository.pendingCount()).toBe(0);
+    const initial = entries.get(operationId);
+
+    await repository.queueInventoryConsumption('org-1', { ...consumption }, 'account', () => true);
+
+    expect(entries.size).toBe(1);
+    expect(entries.get(operationId)).toMatchObject({
+      id: initial?.id,
+      createdAt: initial?.createdAt,
+      payload: initial?.payload,
+      status: 'pending',
+      error: null,
+    });
+    expect(repository.pendingCount()).toBe(1);
+  });
+
+  it.each([
+    { quantity: '3.000000' },
+    { occurredAt: '2026-10-06T10:01:00.123Z' },
+    { interventionId: 'intervention-2' },
+  ])('rejects reuse of a consumption identity for changed physical fields %j', async (changed) => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const database = inMemoryDatabase(entries, '/api/organizations/org-1');
+    const repository = build(database);
+    await repository.queueInventoryConsumption('org-1', consumption, 'account', () => true);
+    const original = entries.get(`inventory:${consumption.clientOperationId}`);
+    database.put.mockClear();
+
+    await expect(
+      repository.queueInventoryConsumption(
+        'org-1',
+        { ...consumption, ...changed },
+        'account',
+        () => true,
+      ),
+    ).rejects.toThrow('another physical fact');
+
+    expect(entries.get(`inventory:${consumption.clientOperationId}`)).toEqual(original);
+    expect(database.put).not.toHaveBeenCalled();
+    expect(repository.pendingCount()).toBe(1);
+  });
+
+  it('does not automatically retry a declaration awaiting conflict review', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const repository = build(inMemoryDatabase(entries, '/api/organizations/org-1'));
+    await repository.queueInventoryConsumption('org-1', consumption, 'account', () => true);
+    const id = `inventory:${consumption.clientOperationId}`;
+    await repository.markOutboxConflict(id, 'Review the original declaration.');
+    await expect(
+      repository.queueInventoryConsumption('org-1', consumption, 'account', () => true),
+    ).rejects.toThrow('conflicted declaration');
+    expect(entries.get(id)?.status).toBe('conflict');
+    expect(repository.pendingCount()).toBe(0);
+  });
+
+  it('refuses a declaration for another actor or revoked caller scope before writing', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const database = inMemoryDatabase(entries, '/api/organizations/org-1');
+    const repository = build(database);
+    await expect(
+      repository.queueInventoryConsumption('org-1', consumption, 'other-account', () => true),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    await expect(
+      repository.queueInventoryConsumption('org-1', consumption, 'account', () => false),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(database.put).not.toHaveBeenCalled();
+    expect(repository.pendingCount()).toBe(0);
+  });
+
   it.each(['replacement', 'same-account return'])(
     'does not queue old work when binding resolves after %s',
     async (change) => {

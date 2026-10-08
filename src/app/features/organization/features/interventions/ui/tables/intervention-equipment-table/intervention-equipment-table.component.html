@@ -46,7 +46,7 @@
 
   <ng-template #typeFilterControl>
     <app-collection-filter-select
-      [options]="typeOptions"
+      [options]="typeOptions()"
       [value]="typeFilter()"
       placeholder="Type"
       i18n-placeholder="@@intervention.linked.equipment.filterType"

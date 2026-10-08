@@ -1,9 +1,11 @@
 import { inject, Service } from '@angular/core';
+import type { EquipmentTypeOutput } from '@features/organization/features/equipments/models';
 import type {
   InterventionChangeOutput,
   InterventionIssueOutput,
   InterventionOutput,
   InterventionWorkItemOutput,
+  InterventionEquipmentCatalogSnapshot,
 } from '@features/organization/features/interventions/models';
 import { InterventionDatabaseService } from './intervention-database.service';
 import type {
@@ -45,6 +47,56 @@ export class InterventionWorkspaceRepository {
   //#endregion
 
   //#region Methods
+  /**
+   * Method saveEquipmentCatalog
+   * @method saveEquipmentCatalog
+   *
+   * @description
+   * Caches a complete authorized catalogue only while its requesting account owns the workspace.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} interventionId - Persisted field workspace identifier.
+   * @param {string} organizationId - Owning organization identifier.
+   * @param {readonly EquipmentTypeOutput[]} entries - Complete authorized catalogue.
+   * @param {string | null} expectedOwner - Account captured before the catalogue request.
+   *
+   * @returns {Promise<void>} Settles after persistence or abandonment of a stale response.
+   */
+  public async saveEquipmentCatalog(
+    interventionId: string,
+    organizationId: string,
+    entries: readonly EquipmentTypeOutput[],
+    expectedOwner: string | null,
+  ): Promise<void> {
+    const isCurrent = (): boolean =>
+      expectedOwner !== null && expectedOwner === this.database.currentOwnerId();
+    if (!isCurrent() || !expectedOwner) return;
+    await this.database.ensureOwnerBound();
+    if (!isCurrent()) return;
+    const intervention = await this.database.get<InterventionOutput>(
+      'interventions',
+      interventionId,
+    );
+    if (!isCurrent() || intervention?.organization !== `/api/organizations/${organizationId}`)
+      return;
+    const snapshot: InterventionEquipmentCatalogSnapshot = {
+      version: 1,
+      accountId: expectedOwner,
+      organizationId,
+      capturedAt: new Date().toISOString(),
+      entries,
+    };
+    await this.database.put(
+      'metadata',
+      `equipmentCatalog:${expectedOwner}:${organizationId}:${interventionId}`,
+      snapshot,
+      isCurrent,
+    );
+    if (!isCurrent()) return;
+  }
+
   /**
    * Method saveWorkspace
    * @method saveWorkspace
@@ -136,30 +188,43 @@ export class InterventionWorkspaceRepository {
    *
    * @param {string} interventionId - intervention Id value.
    *
-   * @returns {Promise<{
-   *   intervention: InterventionOutput;
-   *   workItems: readonly InterventionWorkItemOutput[];
-   *   changes: readonly InterventionChangeOutput[];
-   *   issues: readonly InterventionIssueOutput[];
-   * } | null>}
-   *   Result of the get workspace operation.
+   * @returns {Promise<InterventionWorkspaceSnapshot | null>} Account-scoped saved workspace.
    */
   public async getWorkspace(interventionId: string): Promise<InterventionWorkspaceSnapshot | null> {
+    const owner = this.database.currentOwnerId();
+    if (!owner) return null;
     await this.database.ensureOwnerBound();
+    if (owner !== this.database.currentOwnerId()) return null;
     const intervention = await this.database.get<InterventionOutput>(
       'interventions',
       interventionId,
     );
-    if (!intervention) return null;
+    if (!intervention || owner !== this.database.currentOwnerId()) return null;
     const interventionIri = `/api/interventions/${interventionId}`;
-    const [workItems, changes, resources] = await Promise.all([
+    const organizationId = intervention.organization.match(
+      /^\/api\/organizations\/([^/?#]+)$/,
+    )?.[1];
+    const [workItems, changes, resources, catalog] = await Promise.all([
       this.database.getAll<InterventionWorkItemOutput>('workItems'),
       this.database.getAll<InterventionChangeOutput>('changes'),
       this.database.getAll<InterventionResourceRecord>('resources'),
+      organizationId
+        ? this.database.get<InterventionEquipmentCatalogSnapshot>(
+            'metadata',
+            `equipmentCatalog:${owner}:${organizationId}:${interventionId}`,
+          )
+        : Promise.resolve(null),
     ]);
+    if (owner !== this.database.currentOwnerId()) return null;
 
     return {
       intervention,
+      ...(catalog?.version === 1 &&
+      catalog.accountId === owner &&
+      catalog.organizationId === organizationId &&
+      Array.isArray(catalog.entries)
+        ? { equipmentCatalog: catalog }
+        : {}),
       workItems: workItems.filter((item) => item.intervention === interventionIri),
       changes: changes.filter((change) => change.intervention === interventionIri),
       issues: resources

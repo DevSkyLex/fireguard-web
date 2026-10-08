@@ -1,0 +1,108 @@
+<form class="flex flex-col gap-4" (submit)="submit($event)">
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@inventory.consumption.formTitle">Declare parts used</legend>
+    <p hlmFieldDescription i18n="@@inventory.consumption.hint">
+      Record the physical quantity used. Stock is confirmed after synchronization.
+    </p>
+    <div hlmFieldGroup>
+      <div hlmField>
+        <label hlmFieldLabel [for]="inputPrefix() + '-part'" i18n="@@inventory.consumption.part"
+          >Part</label
+        >
+        <hlm-combobox [formField]="consumptionForm.partId" [itemToString]="partLabelOf">
+          <hlm-combobox-input
+            class="[&_[data-slot=input-group-addon]]:me-0"
+            [inputId]="inputPrefix() + '-part'"
+            placeholder="Choose a part"
+            i18n-placeholder="@@inventory.picker.part.placeholder"
+          />
+          <hlm-combobox-content *hlmComboboxPortal>
+            <div hlmComboboxList>
+              @for (part of activeParts(); track part.id) {
+                <hlm-combobox-item [value]="part.id"
+                  >{{ part.label }} · {{ part.code }} · {{ part.unit }}</hlm-combobox-item
+                >
+              }
+              <hlm-combobox-empty i18n="@@inventory.picker.noMatches"
+                >No matching references</hlm-combobox-empty
+              >
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+        @if (consumptionForm.partId().touched()) {
+          @for (error of consumptionForm.partId().errors(); track error) {
+            <hlm-field-error [forceShow]="true">{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label
+          hlmFieldLabel
+          [for]="inputPrefix() + '-warehouse'"
+          i18n="@@inventory.consumption.warehouse"
+          >Warehouse</label
+        >
+        <hlm-combobox [formField]="consumptionForm.warehouseId" [itemToString]="warehouseLabelOf">
+          <hlm-combobox-input
+            class="[&_[data-slot=input-group-addon]]:me-0"
+            [inputId]="inputPrefix() + '-warehouse'"
+            placeholder="Choose a warehouse"
+            i18n-placeholder="@@inventory.picker.warehouse.placeholder"
+          />
+          <hlm-combobox-content *hlmComboboxPortal>
+            <div hlmComboboxList>
+              @for (warehouse of activeWarehouses(); track warehouse.id) {
+                <hlm-combobox-item [value]="warehouse.id"
+                  >{{ warehouse.name }} · {{ warehouse.code }}</hlm-combobox-item
+                >
+              }
+              <hlm-combobox-empty i18n="@@inventory.picker.noMatches"
+                >No matching references</hlm-combobox-empty
+              >
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+        @if (consumptionForm.warehouseId().touched()) {
+          @for (error of consumptionForm.warehouseId().errors(); track error) {
+            <hlm-field-error [forceShow]="true">{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label
+          hlmFieldLabel
+          [for]="inputPrefix() + '-quantity'"
+          i18n="@@inventory.consumption.quantity"
+          >Quantity used</label
+        >
+        <input
+          hlmInput
+          [id]="inputPrefix() + '-quantity'"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          [formField]="consumptionForm.quantity"
+        />
+        @if (consumptionForm.quantity().touched()) {
+          @for (error of consumptionForm.quantity().errors(); track error) {
+            <hlm-field-error [forceShow]="true">{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    </div>
+  </fieldset>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@inventory.consumption.failed">Declaration could not be queued</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex justify-end">
+    <button hlmBtn class="mobile-ui:min-h-11" type="submit" [disabled]="pending() || locked()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      <span i18n="@@inventory.consumption.submit">Declare consumption</span>
+    </button>
+  </div>
+</form>

@@ -1,0 +1,85 @@
+<hlm-combobox
+  [value]="value()"
+  (valueChange)="pick($event)"
+  [itemToString]="labelOf"
+  [filter]="remoteFilter"
+  [disabled]="disabled() || !canRead()"
+  (searchChange)="search($event)"
+  [attr.aria-busy]="store.equipmentCallState().status === 'pending'"
+>
+  <hlm-combobox-input [inputId]="inputId()" [placeholder]="placeholder" />
+  <hlm-combobox-content *hlmComboboxPortal>
+    <div hlmComboboxList>
+      <hlm-combobox-item value="" i18n="@@serviceRequest.target.noEquipment"
+        >No equipment selected</hlm-combobox-item
+      >
+      @for (equipment of store.equipmentEntities(); track equipment.id) {
+        <hlm-combobox-item [value]="equipment.id" [disabled]="!selectable(equipment)">
+          <span class="flex min-w-0 flex-col">
+            <span>{{ title(equipment) }}</span>
+            @if (equipment.facilityName) {
+              <span class="text-xs text-muted-foreground">{{ equipment.facilityName }}</span>
+            }
+            @if (!selectable(equipment)) {
+              <span class="text-xs text-muted-foreground" i18n="@@serviceRequest.target.unavailable"
+                >Unavailable for a new request</span
+              >
+            }
+          </span>
+        </hlm-combobox-item>
+      }
+    </div>
+  </hlm-combobox-content>
+</hlm-combobox>
+<div class="flex items-center justify-between gap-2">
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="sm"
+    class="mobile-ui:min-h-11"
+    [disabled]="page() <= 1 || store.equipmentCallState().status === 'pending'"
+    (click)="page.set(page() - 1)"
+    i18n="@@common.previous"
+  >
+    Previous
+  </button>
+  <output class="text-xs text-muted-foreground" aria-live="polite"
+    >{{ page() }} / {{ store.equipmentPageCount() }}</output
+  >
+  <button
+    hlmBtn
+    type="button"
+    variant="ghost"
+    size="sm"
+    class="mobile-ui:min-h-11"
+    [disabled]="
+      page() >= store.equipmentPageCount() || store.equipmentCallState().status === 'pending'
+    "
+    (click)="page.set(page() + 1)"
+    i18n="@@common.next"
+  >
+    Next
+  </button>
+</div>
+@if (!canRead()) {
+  <p class="text-sm text-muted-foreground" i18n="@@serviceRequest.target.equipmentDenied">
+    Equipment selection requires permission to read the park.
+  </p>
+}
+@if (store.equipmentCallState().error; as error) {
+  <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+  <button
+    hlmBtn
+    type="button"
+    variant="outline"
+    class="mobile-ui:min-h-11"
+    (click)="store.loadEquipment(store.equipmentQuery())"
+    i18n="@@common.retry"
+  >
+    Retry
+  </button>
+}
+@if (store.selectedEquipmentCallState().error; as error) {
+  <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+}

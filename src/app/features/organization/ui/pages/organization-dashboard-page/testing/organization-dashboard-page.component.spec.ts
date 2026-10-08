@@ -1,9 +1,14 @@
 import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { toStoreError, type StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { ParkService } from '@features/organization/data-access';
+import { CustomerService } from '@features/organization/features/customers/data-access';
+import { EquipmentService } from '@features/organization/features/equipments/data-access';
+import { FacilityService } from '@features/organization/features/facilities/data-access';
 import {
   ORGANIZATION_PERMISSION,
   type OrganizationDashboardRecentIntervention,
@@ -106,6 +111,36 @@ describe('OrganizationDashboardPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        {
+          provide: EquipmentService,
+          useValue: {
+            summary: vi.fn().mockReturnValue(of({ byStatus: { under_maintenance: 0 } })),
+            summaryByFacility: vi.fn().mockReturnValue(of({ byStatus: { under_maintenance: 0 } })),
+            list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            listByFacility: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+          },
+        },
+        {
+          provide: ParkService,
+          useValue: {
+            anomaliesSummary: vi.fn().mockReturnValue(of({ openAnomalies: 0, bySeverity: {} })),
+          },
+        },
+        {
+          provide: FacilityService,
+          useValue: {
+            list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            get: vi.fn(),
+          },
+        },
+        {
+          provide: CustomerService,
+          useValue: {
+            list: vi.fn().mockReturnValue(of({ member: [], totalItems: 0 })),
+            get: vi.fn(),
+          },
+        },
+
         {
           provide: INTERACTION_CAPABILITIES_PORT,
           useValue: {

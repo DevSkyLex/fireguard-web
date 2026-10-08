@@ -43,6 +43,14 @@ describe('OnboardingEquipmentForm', () => {
       },
     });
     fixture = TestBed.createComponent(OnboardingEquipmentForm);
+    fixture.componentRef.setInput('typeOptions', [
+      {
+        value: 'fire_extinguisher',
+        label: 'Fire extinguisher',
+        family: 'fire',
+        icon: 'lucideFireExtinguisher',
+      },
+    ]);
     await fixture.whenStable();
 
     element = fixture.nativeElement as HTMLElement;
@@ -146,6 +154,77 @@ describe('OnboardingEquipmentForm', () => {
     fixture.componentInstance['equipmentForm'].facilityId().value.set('facility-2');
     await submit();
     expect(emitted).toEqual([{ type: 'fire_extinguisher', facilityId: 'facility-2' }]);
+  });
+
+  it('accepts a server-defined fire code without narrowing it to the historical enum', async () => {
+    fixture.componentRef.setInput('typeOptions', [
+      {
+        value: 'custom_fire_system',
+        label: 'Custom fire system',
+        family: 'fire',
+        icon: 'lucideBox',
+      },
+    ]);
+    fixture.componentRef.setInput('restored', { type: 'custom_fire_system', brand: '  Acme  ' });
+    await fixture.whenStable();
+    const writes: SetupCreateEquipmentInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => writes.push(value));
+    await submit();
+    expect(writes).toEqual([{ type: 'custom_fire_system', brand: 'Acme' }]);
+    expect(fixture.componentInstance['typeLabelOf']('custom_fire_system')).toBe(
+      'Custom fire system',
+    );
+  });
+
+  it('preserves an unavailable prepared code and requires choosing an active type before new creation', async () => {
+    fixture.componentRef.setInput('restored', {
+      type: 'archived_fire_system',
+      serialNumber: 'PREPARED-42',
+    });
+    await fixture.whenStable();
+    const writes: SetupCreateEquipmentInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => writes.push(value));
+    await submit();
+    expect(writes).toEqual([]);
+    expect(fixture.componentInstance['equipmentForm'].type().value()).toBe('archived_fire_system');
+    expect(fixture.componentInstance['equipmentForm'].serialNumber().value()).toBe('PREPARED-42');
+    expect(element.textContent).toContain('This type is no longer available');
+    fixture.componentInstance['equipmentForm'].type().value.set('fire_extinguisher');
+    await submit();
+    expect(writes).toEqual([{ type: 'fire_extinguisher', serialNumber: 'PREPARED-42' }]);
+  });
+
+  it('opens all families for a restored safety code while new drafts start with fire types', async () => {
+    const choices = [
+      { value: 'fire_extinguisher', label: 'Extinguisher', family: 'fire', icon: 'lucideBox' },
+      { value: 'custom_camera', label: 'Camera', family: 'safety', icon: 'lucideBox' },
+    ];
+    fixture.componentRef.setInput('typeOptions', choices);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['visibleTypeOptions']().map((option) => option.value)).toEqual(
+      ['fire_extinguisher'],
+    );
+    fixture.componentRef.setInput('restored', { type: 'custom_camera' });
+    await fixture.whenStable();
+    expect(fixture.componentInstance['visibleTypeOptions']().map((option) => option.value)).toEqual(
+      ['fire_extinguisher', 'custom_camera'],
+    );
+    const writes: SetupCreateEquipmentInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => writes.push(value));
+    await submit();
+    expect(writes).toEqual([{ type: 'custom_camera' }]);
+  });
+
+  it('invalidates a type archived after selection without dropping the other draft fields', async () => {
+    fixture.componentInstance['equipmentForm'].type().value.set('fire_extinguisher');
+    fixture.componentInstance['equipmentForm'].brand().value.set('Draft brand');
+    fixture.componentRef.setInput('typeOptions', []);
+    await fixture.whenStable();
+    const writes: SetupCreateEquipmentInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => writes.push(value));
+    await submit();
+    expect(writes).toEqual([]);
+    expect(fixture.componentInstance['equipmentForm'].brand().value()).toBe('Draft brand');
   });
 
   it('should lock the submit control while a request is in flight', async () => {

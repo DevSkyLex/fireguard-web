@@ -3,7 +3,7 @@ import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import { map, pipe, switchMap, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -34,6 +34,9 @@ import type { ActiveEquipmentState } from './models';
  * @constant INITIAL_ACTIVE_EQUIPMENT_STATE
  */
 const INITIAL_ACTIVE_EQUIPMENT_STATE: ActiveEquipmentState = {
+  selectedOrganizationId: null,
+  selectedEquipmentId: null,
+  selectionGeneration: 0,
   selectedEquipment: null,
   getCallState: idleCallState(),
 } as const;
@@ -150,13 +153,42 @@ export const ActiveEquipmentStore = signalStore(
        * @since 1.0.0
        *
        * @param {EquipmentOutput} equipment - Equipment to mark as active.
+       * @param {object | undefined} context - Captured selection provenance required for write
+       *   synchronization.
        *
        * @returns {void} No return value.
        */
-      setEquipment(equipment: EquipmentOutput): void {
-        const merged: EquipmentOutput = mergeEquipment(store.selectedEquipment(), equipment);
+      setEquipment(
+        equipment: EquipmentOutput,
+        context?: {
+          readonly organizationId: string;
+          readonly equipmentId: string;
+          readonly selectionGeneration: number;
+        },
+      ): void {
+        if (
+          context &&
+          (store.selectedOrganizationId() !== context.organizationId ||
+            store.selectedEquipmentId() !== context.equipmentId ||
+            store.selectionGeneration() !== context.selectionGeneration ||
+            equipment.id !== context.equipmentId ||
+            (equipment.organizationId !== undefined &&
+              equipment.organizationId !== context.organizationId))
+        )
+          return;
+        const organizationId = equipment.organizationId ?? store.selectedOrganizationId();
+        const selectionChanged =
+          store.selectedOrganizationId() !== organizationId ||
+          store.selectedEquipmentId() !== equipment.id;
+        const merged: EquipmentOutput = mergeEquipment(
+          selectionChanged ? null : store.selectedEquipment(),
+          equipment,
+        );
 
         patchState(store, {
+          selectedOrganizationId: organizationId,
+          selectedEquipmentId: equipment.id,
+          selectionGeneration: store.selectionGeneration() + (selectionChanged ? 1 : 0),
           selectedEquipment: merged,
           getCallState: successCallState(merged),
         });
@@ -184,24 +216,33 @@ export const ActiveEquipmentStore = signalStore(
        */
       resolveEquipment: rxMethod<{ readonly organizationId: string; readonly equipmentId: string }>(
         pipe(
-          tap(({ equipmentId }): void => {
+          tap(({ organizationId, equipmentId }): void => {
             const current: EquipmentOutput | null = store.selectedEquipment();
+            const selectionChanged =
+              store.selectedOrganizationId() !== organizationId ||
+              store.selectedEquipmentId() !== equipmentId;
 
             patchState(store, {
-              selectedEquipment: current?.id === equipmentId ? current : null,
+              selectedOrganizationId: organizationId,
+              selectedEquipmentId: equipmentId,
+              selectionGeneration: store.selectionGeneration() + (selectionChanged ? 1 : 0),
+              selectedEquipment: selectionChanged ? null : current,
               getCallState: pendingCallState(),
             });
           }),
-          switchMap(({ organizationId, equipmentId }) =>
+          map((params) => ({ ...params, selectionGeneration: store.selectionGeneration() })),
+          switchMap(({ organizationId, equipmentId, selectionGeneration }) =>
             equipmentService.get(organizationId, equipmentId).pipe(
               tapResponse({
                 next: (equipment: EquipmentOutput): void => {
+                  if (store.selectionGeneration() !== selectionGeneration) return;
                   patchState(store, {
                     selectedEquipment: equipment,
                     getCallState: successCallState(equipment),
                   });
                 },
                 error: (error: unknown): void => {
+                  if (store.selectionGeneration() !== selectionGeneration) return;
                   const storeError: StoreError = toStoreError(error);
                   patchState(store, { getCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
@@ -228,7 +269,12 @@ export const ActiveEquipmentStore = signalStore(
        * @returns {void} No return value.
        */
       clearSelectedEquipment(): void {
-        patchState(store, { selectedEquipment: null });
+        patchState(store, {
+          selectedEquipment: null,
+          selectedOrganizationId: null,
+          selectedEquipmentId: null,
+          selectionGeneration: store.selectionGeneration() + 1,
+        });
       },
 
       /**
@@ -244,7 +290,10 @@ export const ActiveEquipmentStore = signalStore(
        * @returns {void} No return value.
        */
       clear(): void {
-        patchState(store, INITIAL_ACTIVE_EQUIPMENT_STATE);
+        patchState(store, {
+          ...INITIAL_ACTIVE_EQUIPMENT_STATE,
+          selectionGeneration: store.selectionGeneration() + 1,
+        });
       },
     }),
   ),

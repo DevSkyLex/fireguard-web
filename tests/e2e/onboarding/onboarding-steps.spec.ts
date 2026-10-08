@@ -124,7 +124,7 @@ test.describe('Onboarding wizard — steps 2 through 5', () => {
     await onboarding.equipmentSerialInput.fill('SN-E2E-001');
     await onboarding.equipmentSubmit.click();
 
-    await expect(page).toHaveURL(new RegExp(`/organizations/${E2E_ORGANIZATION_ID}$`), {
+    await expect(page).toHaveURL(new RegExp(`/organizations/${E2E_ORGANIZATION_ID}/assets$`), {
       timeout: 10_000,
     });
     await expect(onboarding.completedToast).toBeVisible();

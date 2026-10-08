@@ -1,0 +1,134 @@
+<form
+  id="procurement-receipt-form"
+  class="flex min-w-0 flex-col gap-5 px-1"
+  novalidate
+  (submit)="submit($event)"
+>
+  <p hlmFieldDescription i18n="@@procurement.receipt.remaining">
+    Still awaiting delivery: {{ line().remainingQuantity }}. This receipt can contain up to
+    {{ limit() }}.
+  </p>
+  <div hlmFieldGroup>
+    <hlm-field
+      ><label hlmFieldLabel for="procurement-receipt-quantity" i18n="@@procurement.quantity.label"
+        >Quantity</label
+      ><input
+        hlmInput
+        id="procurement-receipt-quantity"
+        type="text"
+        inputmode="decimal"
+        class="mobile-ui:min-h-11"
+        [formField]="receiptForm.quantity"
+      />
+      @if (receiptForm.quantity().touched()) {
+        @for (error of receiptForm.quantity().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </hlm-field>
+    @if (line().kind === 'part') {
+      <hlm-field
+        ><label
+          hlmFieldLabel
+          for="procurement-receipt-warehouse"
+          i18n="@@procurement.receipt.warehouse"
+          >Receiving warehouse</label
+        ><app-inventory-warehouse-picker
+          [organizationId]="organizationId()"
+          inputId="procurement-receipt-warehouse"
+          [formField]="receiptForm.warehouseId"
+        />
+        @if (receiptForm.warehouseId().touched()) {
+          @for (error of receiptForm.warehouseId().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </hlm-field>
+    } @else {
+      <p hlmFieldDescription i18n="@@procurement.receipt.equipmentHint">
+        Materials remain in this receipt until you explicitly create their reserve equipment
+        identities. No quantitative stock is added.
+      </p>
+    }
+    <hlm-field
+      ><label hlmFieldLabel for="procurement-receipt-time" i18n="@@procurement.receipt.time"
+        >Physical receipt date and time</label
+      ><input
+        hlmInput
+        id="procurement-receipt-time"
+        type="datetime-local"
+        class="mobile-ui:min-h-11"
+        [formField]="receiptForm.localTime"
+      />
+      <p hlmFieldDescription i18n="@@procurement.receipt.deviceTimezone">
+        Use the local date and time of your device. The recorded instant retains its timezone.
+      </p>
+      @if (receiptForm.localTime().touched()) {
+        @for (error of receiptForm.localTime().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </hlm-field>
+    @if (possibleTimes().length > 1) {
+      <hlm-field>
+        <label hlmFieldLabel for="procurement-receipt-offset" i18n="@@procurement.receipt.offset"
+          >UTC offset for this repeated hour</label
+        >
+        <hlm-select [formField]="receiptForm.offsetChoice">
+          <hlm-select-trigger
+            buttonId="procurement-receipt-offset"
+            class="w-full mobile-ui:min-h-11"
+            ><hlm-select-value
+              placeholder="Choose the actual UTC offset"
+              i18n-placeholder="@@procurement.receipt.chooseOffset"
+          /></hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal
+            ><hlm-select-group>
+              @for (date of possibleTimes(); track date.toMillis()) {
+                <hlm-select-item [value]="date.toFormat('ZZ')"
+                  >UTC {{ date.toFormat('ZZ') }}</hlm-select-item
+                >
+              }
+            </hlm-select-group></hlm-select-content
+          >
+        </hlm-select>
+        <p hlmFieldDescription i18n="@@procurement.receipt.offsetHint">
+          The same local time occurred twice because the clocks changed. Select the offset shown on
+          the physical receipt record.
+        </p>
+        @if (receiptForm.offsetChoice().touched()) {
+          @for (error of receiptForm.offsetChoice().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </hlm-field>
+    }
+  </div>
+  <p hlmFieldDescription i18n="@@procurement.quantity.hint">
+    Use a decimal point and at most six decimal places. Quantities and amounts remain exact.
+  </p>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@procurement.receipt.failed">Receipt could not be confirmed</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel</button
+    ><button hlmBtn type="submit" class="mobile-ui:min-h-11" [disabled]="pending()">
+      @if (pending()) {
+        <hlm-spinner aria-hidden="true" />
+      }
+      <span i18n="@@procurement.receipt.record">Record physical receipt</span>
+    </button>
+  </div>
+</form>

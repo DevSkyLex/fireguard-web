@@ -385,6 +385,19 @@ describe('InterventionEquipmentTable', () => {
     expect(requested).toHaveBeenCalledTimes(1);
   });
 
+  it('retains archived custom catalog labels and permits their historical type filter', async () => {
+    fixture.componentRef.setInput('equipmentTypeOptions', [
+      { value: 'custom_foam', label: 'Retired foam cabinet' },
+    ]);
+    fixture.componentRef.setInput('items', [equipment({ type: 'custom_foam' })]);
+    await fixture.whenStable();
+    expect(root().textContent).toContain('Retired foam cabinet');
+    const queryChanged = vi.fn();
+    fixture.componentInstance.queryChanged.subscribe(queryChanged);
+    fixture.componentInstance['onTypeFilterChanged']('custom_foam');
+    expect(queryChanged).toHaveBeenCalledWith(expect.objectContaining({ type: 'custom_foam' }));
+  });
+
   it('should disable the "Show more" button and show the spinner label while loading more', async () => {
     fixture.componentRef.setInput('items', [equipment()]);
     fixture.componentRef.setInput('totalItems', 2);

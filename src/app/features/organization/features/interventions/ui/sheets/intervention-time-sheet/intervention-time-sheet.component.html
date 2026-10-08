@@ -45,6 +45,29 @@
           <p hlmAlertDescription>{{ writeState().error?.message }}</p>
         </div>
       }
+      @if (draftEntryState().status === 'pending') {
+        <div
+          hlmSkeleton
+          class="h-8 w-full"
+          role="status"
+          aria-label="Checking saved correction"
+          i18n-aria-label="@@intervention.time.reviewLoading"
+        ></div>
+      } @else if (draftEntryState().status === 'error') {
+        <div hlmAlert variant="destructive" role="alert">
+          <p hlmAlertDescription>{{ draftEntryState().error?.message }}</p>
+          <button
+            hlmBtn
+            variant="outline"
+            size="sm"
+            class="mt-2 mobile-ui:min-h-11"
+            (click)="draftReviewRequested.emit()"
+            i18n="@@common.tryAgain"
+          >
+            Try again
+          </button>
+        </div>
+      }
       @if (editing(); as value) {
         <app-intervention-time-form
           [initial]="value"
@@ -117,12 +140,19 @@
           }
           @if (historyUnavailable()) {
             <div hlmAlert>
-              <p hlmAlertDescription i18n="@@intervention.time.historyUnavailable">
-                No journal has been saved on this device. Reconnect to load its history.
-              </p>
+              @if (page() === 1) {
+                <p hlmAlertDescription i18n="@@intervention.time.historyUnavailable">
+                  No journal has been saved on this device. Reconnect to load its history.
+                </p>
+              } @else {
+                <p hlmAlertDescription i18n="@@intervention.time.pageUnavailable">
+                  This journal page has not been saved on this device. Reconnect to load it.
+                </p>
+              }
             </div>
           }
           @for (entry of entries(); track entry.id) {
+            @let history = historyStates()[entry.id];
             <article class="flex flex-col gap-2 rounded-lg border p-3" data-testid="time-entry">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <span class="font-medium">{{
@@ -152,19 +182,44 @@
                   </p>
                 </div>
               }
-              <div hlmCollapsible>
+              <div
+                hlmCollapsible
+                (expandedChange)="
+                  $event && !offline() && !entry.syncStatus && historyExpanded.emit(entry.id)
+                "
+              >
                 <button
                   hlmBtn
                   variant="link"
                   size="sm"
                   hlmCollapsibleTrigger
+                  class="mobile-ui:min-h-11"
+                  [attr.data-testid]="'time-history-' + entry.id"
                   i18n="@@intervention.time.versions"
                 >
                   Correction history
                 </button>
                 <div hlmCollapsibleContent>
+                  @if (offline()) {
+                    <p
+                      class="pt-2 text-sm text-muted-foreground"
+                      i18n="@@intervention.time.historyOffline"
+                    >
+                      Correction history is unavailable offline. Reconnect to load earlier versions.
+                    </p>
+                  } @else if (entry.syncStatus) {
+                    <p
+                      class="pt-2 text-sm text-muted-foreground"
+                      i18n="@@intervention.time.historyPending"
+                    >
+                      Synchronize or review this pending change before loading correction history.
+                    </p>
+                  }
                   <ol class="flex flex-col gap-2 pt-2 text-xs text-muted-foreground">
-                    @for (version of entry.versions; track version.revision) {
+                    @for (
+                      version of history?.data?.versions ?? entry.versions;
+                      track version.revision
+                    ) {
                       <li>
                         <span
                           >v{{ version.revision }} ·
@@ -180,6 +235,43 @@
                       </li>
                     }
                   </ol>
+                  @if (history?.status === 'pending') {
+                    <div
+                      hlmSkeleton
+                      class="mt-2 h-8 w-full"
+                      role="status"
+                      aria-label="Loading correction history"
+                      i18n-aria-label="@@intervention.time.historyLoading"
+                    ></div>
+                  }
+                  @if (history?.status === 'error' && !offline()) {
+                    <div hlmAlert variant="destructive" class="mt-2" role="alert">
+                      <p hlmAlertDescription>{{ history?.error?.message }}</p>
+                      <button
+                        hlmBtn
+                        variant="outline"
+                        size="sm"
+                        class="mt-2 mobile-ui:min-h-11"
+                        (click)="olderVersionsRequested.emit(entry.id)"
+                        i18n="@@common.tryAgain"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  } @else if (history?.data?.nextBeforeRevision && !offline()) {
+                    <button
+                      hlmBtn
+                      variant="outline"
+                      size="sm"
+                      class="mt-2 mobile-ui:min-h-11"
+                      [disabled]="history?.status === 'pending'"
+                      [attr.data-testid]="'time-history-more-' + entry.id"
+                      (click)="olderVersionsRequested.emit(entry.id)"
+                      i18n="@@intervention.time.olderVersions"
+                    >
+                      Load earlier versions
+                    </button>
+                  }
                 </div>
               </div>
               @if (canCorrect(entry)) {
@@ -219,6 +311,48 @@
                 </div>
               </div>
             }
+          }
+          @if (page() > 1 || nextPage() !== null || totalItems() !== null) {
+            <nav
+              class="flex flex-wrap items-center justify-between gap-2"
+              aria-label="Time journal pages"
+              i18n-aria-label="@@intervention.time.pages"
+            >
+              <p class="text-sm text-muted-foreground" i18n="@@intervention.time.page">
+                Page {{ page() }}
+              </p>
+              @if (totalItems() !== null) {
+                <p class="text-sm text-muted-foreground" i18n="@@intervention.time.savedTotal">
+                  Saved entries: {{ totalItems() }}
+                </p>
+              }
+              <div class="flex gap-2">
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="mobile-ui:min-h-11"
+                  [disabled]="page() <= 1 || pending() || readState().status === 'pending'"
+                  (click)="pageChanged.emit(page() - 1)"
+                  data-testid="time-page-previous"
+                  i18n="@@common.previous"
+                >
+                  Previous
+                </button>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  size="sm"
+                  class="mobile-ui:min-h-11"
+                  [disabled]="nextPage() === null || pending() || readState().status === 'pending'"
+                  (click)="changePage(nextPage())"
+                  data-testid="time-page-next"
+                  i18n="@@common.next"
+                >
+                  Next
+                </button>
+              </div>
+            </nav>
           }
         }
       }

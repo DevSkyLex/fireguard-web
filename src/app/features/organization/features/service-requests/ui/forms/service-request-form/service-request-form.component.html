@@ -1,0 +1,143 @@
+<form
+  class="flex min-w-0 flex-col gap-5 px-1"
+  (submit)="submit($event)"
+  data-testid="service-request-form"
+>
+  @if (!request()) {
+    <fieldset hlmFieldSet>
+      <legend hlmFieldLegend i18n="@@serviceRequest.form.target">Maintenance target</legend>
+      <div hlmFieldGroup>
+        <div hlmField>
+          <label hlmFieldLabel for="service-request-site" i18n="@@serviceRequest.form.site"
+            >Site</label
+          >
+          <app-service-request-site-picker
+            [organizationId]="organizationId()"
+            [formField]="requestForm.siteId"
+            (valueChange)="siteChanged($event)"
+          />
+          <p hlmFieldDescription i18n="@@serviceRequest.form.siteOptional">
+            A site-only request can be qualified once its equipment is identified.
+          </p>
+        </div>
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            for="service-request-equipment"
+            i18n="@@serviceRequest.form.equipment"
+            >Equipment</label
+          >
+          <app-service-request-equipment-picker
+            [organizationId]="organizationId()"
+            [siteId]="requestForm.siteId().value()"
+            [formField]="requestForm.equipmentId"
+          />
+          @if (requestForm().touched()) {
+            @for (error of requestForm.equipmentId().errors(); track error) {
+              <hlm-field-error>{{ error.message }}</hlm-field-error>
+            }
+          }
+        </div>
+      </div>
+    </fieldset>
+  }
+  <div hlmField>
+    <label hlmFieldLabel for="service-request-title" i18n="@@serviceRequest.form.title"
+      >Title</label
+    >
+    <input hlmInput id="service-request-title" [formField]="requestForm.title" />
+    @if (requestForm.title().touched()) {
+      @for (error of requestForm.title().errors(); track error) {
+        <hlm-field-error>{{ error.message }}</hlm-field-error>
+      }
+    }
+  </div>
+  <div hlmField>
+    <label hlmFieldLabel for="service-request-description" i18n="@@serviceRequest.form.description"
+      >Maintenance need</label
+    >
+    <textarea
+      hlmTextarea
+      id="service-request-description"
+      rows="5"
+      [formField]="requestForm.description"
+    ></textarea>
+    @if (requestForm.description().touched()) {
+      @for (error of requestForm.description().errors(); track error) {
+        <hlm-field-error>{{ error.message }}</hlm-field-error>
+      }
+    }
+  </div>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@serviceRequest.form.priority">Priority</legend>
+    <hlm-toggle-group
+      type="single"
+      [nullable]="false"
+      [value]="requestForm.priority().value()"
+      (valueChange)="priorityChanged($event)"
+      [disabled]="pending()"
+      class="max-w-full flex-wrap"
+    >
+      <button
+        hlmToggleGroupItem
+        type="button"
+        value="low"
+        class="mobile-ui:min-h-11"
+        i18n="@@serviceRequest.priority.low"
+      >
+        Low
+      </button>
+      <button
+        hlmToggleGroupItem
+        type="button"
+        value="normal"
+        class="mobile-ui:min-h-11"
+        i18n="@@serviceRequest.priority.normal"
+      >
+        Normal
+      </button>
+      <button
+        hlmToggleGroupItem
+        type="button"
+        value="high"
+        class="mobile-ui:min-h-11"
+        i18n="@@serviceRequest.priority.high"
+      >
+        High
+      </button>
+      <button
+        hlmToggleGroupItem
+        type="button"
+        value="urgent"
+        class="mobile-ui:min-h-11"
+        i18n="@@serviceRequest.priority.urgent"
+      >
+        Urgent
+      </button>
+    </hlm-toggle-group>
+  </fieldset>
+  @if (error(); as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button hlmBtn type="submit" class="mobile-ui:min-h-11" [disabled]="pending()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      {{ submitLabel() }}
+    </button>
+  </div>
+</form>

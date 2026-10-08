@@ -161,6 +161,43 @@ function truncateDescription(description: string): string {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NonConformityList {
+  //#region Properties
+  /**
+   * Property showSourceLinks
+   * @readonly
+   *
+   * @description
+   * Links an organization-register row to the inspection that owns its workflow.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<boolean>}
+   */
+  public readonly showSourceLinks: InputSignal<boolean> = input(false);
+  //#endregion
+
+  //#region Methods
+  /**
+   * Method sourceInspectionLabelOf
+   * @method
+   *
+   * @description
+   * Names a source inspection using the finding description, without ambiguous repeated links.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {NonConformityOutput} nc - Value supplied by the owning park workflow.
+   *
+   * @returns {string} Result consumed by the owning park workflow.
+   */
+  protected sourceInspectionLabelOf(nc: NonConformityOutput): string {
+    return $localize`:@@park.anomalies.openInspectionLabel:Open source inspection for ${truncateDescription(nc.description)}:description:`;
+  }
+
+  //#endregion
+
   //#region Inputs
   /**
    * Property nonConformities

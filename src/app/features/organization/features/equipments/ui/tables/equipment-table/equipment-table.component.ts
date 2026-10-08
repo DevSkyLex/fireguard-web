@@ -22,7 +22,12 @@ import { HlmButton } from '@shared/ui/button';
 import { HlmTableImports } from '@shared/ui/table';
 import { EquipmentStatusTag } from '../../components/equipment-status-tag';
 
-/** How many tags a row shows outright before folding the rest into a "+N" badge. */
+/**
+ * Constant VISIBLE_TAG_COUNT
+ *
+ * @description
+ * How many tags a row shows outright before folding the rest into a "+N" badge.
+ */
 const VISIBLE_TAG_COUNT: number = 2;
 
 /**
@@ -35,7 +40,6 @@ const VISIBLE_TAG_COUNT: number = 2;
  * record, not the list (`FEATURE.md` "Deletion (data-access only, no
  * duplicate UI)"), so the only interactive element per row is the type cell's
  * link to that record.
- *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service. The page decides what to load, filter and paginate; this
  * component only renders the page it is handed. The bordered, scrollable
@@ -72,11 +76,29 @@ const VISIBLE_TAG_COUNT: number = 2;
 export class EquipmentTable {
   //#region Inputs
   /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Server catalog naming custom and archived equipment types.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<typeof EQUIPMENT_TYPE_OPTIONS>}
+   */
+  public readonly typeOptions: InputSignal<typeof EQUIPMENT_TYPE_OPTIONS> =
+    input<typeof EQUIPMENT_TYPE_OPTIONS>(EQUIPMENT_TYPE_OPTIONS);
+  /**
    * Property items
    * @readonly
-   * @description The rows to render — already filtered, ordered and paged by the page.
+   *
+   * @description
+   * The rows to render — already filtered, ordered and paged by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly EquipmentOutput[]>}
    */
   public readonly items: InputSignal<readonly EquipmentOutput[]> =
@@ -85,9 +107,13 @@ export class EquipmentTable {
   /**
    * Property loading
    * @readonly
-   * @description Whether to draw placeholder rows instead of the data.
+   *
+   * @description
+   * Whether to draw placeholder rows instead of the data.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
@@ -95,9 +121,14 @@ export class EquipmentTable {
   /**
    * Property sortOrder
    * @readonly
-   * @description The active ordering, deciding what each sortable head announces and which direction glyph it shows.
+   *
+   * @description
+   * The active ordering, deciding what each sortable head announces and which direction glyph it
+   * shows.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {InputSignal<EquipmentListSort>}
    */
   public readonly sortOrder: InputSignal<EquipmentListSort> = input.required<EquipmentListSort>();
@@ -105,9 +136,13 @@ export class EquipmentTable {
   /**
    * Property detailRouteBase
    * @readonly
-   * @description Path segments the row link appends the equipment id to.
+   *
+   * @description
+   * Path segments the row link appends the equipment id to.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly string[]>}
    */
   public readonly detailRouteBase: InputSignal<readonly string[]> =
@@ -116,9 +151,13 @@ export class EquipmentTable {
   /**
    * Property organizationId
    * @readonly
-   * @description The workspace a row's facility link is scoped to.
+   *
+   * @description
+   * The workspace a row's facility link is scoped to.
+   *
    * @access public
    * @since 2.1.0
+   *
    * @type {InputSignal<string>}
    */
   public readonly organizationId: InputSignal<string> = input.required<string>();
@@ -128,9 +167,14 @@ export class EquipmentTable {
   /**
    * Property sortChanged
    * @readonly
-   * @description A sortable head was activated; carries the field. Re-emitting the active field means "reverse it" — the page owns the direction.
+   *
+   * @description
+   * A sortable head was activated; carries the field. Re-emitting the active field means "reverse
+   * it" — the page owns the direction.
+   *
    * @access public
    * @since 1.2.0
+   *
    * @type {OutputEmitterRef<EquipmentSortField>}
    */
   public readonly sortChanged: OutputEmitterRef<EquipmentSortField> = output<EquipmentSortField>();
@@ -140,9 +184,16 @@ export class EquipmentTable {
   /**
    * Property skeletonColumnWidths
    * @readonly
-   * @description One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows. Literal strings because Tailwind scans source text, and column-aware because a skeleton whose blocks do not line up with the header it replaces reads as a broken table rather than a loading one.
+   *
+   * @description
+   * One literal Tailwind width per rendered column, handed to the shared surface's skeleton rows.
+   * Literal strings because Tailwind scans source text, and column-aware because a skeleton whose
+   * blocks do not line up with the header it replaces reads as a broken table rather than a loading
+   * one.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @type {readonly string[]}
    */
   protected readonly skeletonColumnWidths: readonly string[] = [
@@ -157,25 +208,37 @@ export class EquipmentTable {
   //#region Methods
   /**
    * Method typeLabelOf
-   * @description The equipment's type, humanized through the shared type catalog.
+   * @method typeLabelOf
+   *
+   * @description
+   * The equipment's type, humanized through the shared type catalog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} type - The raw type value.
+   *
    * @returns {string} The localized label, or the raw value humanized if unknown.
    */
   protected typeLabelOf(type: string): string {
     return (
-      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === (type as EquipmentType))?.label ??
+      this.typeOptions().find((option) => option.value === (type as EquipmentType))?.label ??
       type.replaceAll('_', ' ')
     );
   }
 
   /**
    * Method brandModelOf
-   * @description The brand and model, joined for one cell, or `null` when neither is set.
+   * @method brandModelOf
+   *
+   * @description
+   * The brand and model, joined for one cell, or `null` when neither is set.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {EquipmentOutput} item - The equipment being rendered.
+   *
    * @returns {string | null} The joined label, or `null`.
    */
   protected brandModelOf(item: EquipmentOutput): string | null {
@@ -188,10 +251,16 @@ export class EquipmentTable {
 
   /**
    * Method facilityRoute
-   * @description The route to the row's assigned facility record, or `null` when unassigned.
+   * @method facilityRoute
+   *
+   * @description
+   * The route to the row's assigned facility record, or `null` when unassigned.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {EquipmentOutput} item - The equipment being rendered.
+   *
    * @returns {readonly string[] | null} The facility detail route.
    */
   protected facilityRoute(item: EquipmentOutput): readonly string[] | null {
@@ -202,10 +271,16 @@ export class EquipmentTable {
 
   /**
    * Method visibleTags
-   * @description The first {@link VISIBLE_TAG_COUNT} tag names shown outright.
+   * @method visibleTags
+   *
+   * @description
+   * The first {@link VISIBLE_TAG_COUNT} tag names shown outright.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {EquipmentOutput} item - The equipment being rendered.
+   *
    * @returns {readonly string[]} The tag names to render as badges.
    */
   protected visibleTags(item: EquipmentOutput): readonly string[] {
@@ -214,10 +289,16 @@ export class EquipmentTable {
 
   /**
    * Method hiddenTagCount
-   * @description How many tags are folded behind the "+N" badge.
+   * @method hiddenTagCount
+   *
+   * @description
+   * How many tags are folded behind the "+N" badge.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {EquipmentOutput} item - The equipment being rendered.
+   *
    * @returns {number} The count of tags beyond {@link VISIBLE_TAG_COUNT}.
    */
   protected hiddenTagCount(item: EquipmentOutput): number {
@@ -226,10 +307,17 @@ export class EquipmentTable {
 
   /**
    * Method hiddenTagsAriaLabel
-   * @description The accessible name for the "+N" overflow badge, since its visible text alone does not say it means tags.
+   * @method hiddenTagsAriaLabel
+   *
+   * @description
+   * The accessible name for the "+N" overflow badge, since its visible text alone does not say it
+   * means tags.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {number} hidden - How many tags are folded behind the badge.
+   *
    * @returns {string} The localized, pluralized accessible name.
    */
   protected hiddenTagsAriaLabel(hidden: number): string {
@@ -240,9 +328,14 @@ export class EquipmentTable {
 
   /**
    * Method columnCount
-   * @description How many cells a row has, so the empty-state message can span the full width.
+   * @method columnCount
+   *
+   * @description
+   * How many cells a row has, so the empty-state message can span the full width.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
@@ -251,10 +344,16 @@ export class EquipmentTable {
 
   /**
    * Method ariaSort
-   * @description What a sortable head announces for the active ordering.
+   * @method ariaSort
+   *
+   * @description
+   * What a sortable head announces for the active ordering.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {EquipmentSortField} field - The head's field.
+   *
    * @returns {'ascending' | 'descending' | 'none'} The `aria-sort` value.
    */
   protected ariaSort(field: EquipmentSortField): 'ascending' | 'descending' | 'none' {
@@ -267,10 +366,17 @@ export class EquipmentTable {
 
   /**
    * Method sortIcon
-   * @description The glyph a sortable head shows: a direction when it is the active one, a neutral pair otherwise.
+   * @method sortIcon
+   *
+   * @description
+   * The glyph a sortable head shows: a direction when it is the active one, a neutral pair
+   * otherwise.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {EquipmentSortField} field - The head's field.
+   *
    * @returns {string} A registered lucide name.
    */
   protected sortIcon(field: EquipmentSortField): string {

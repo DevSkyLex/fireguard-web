@@ -1,4 +1,5 @@
 /**
+ * @description
  * Interventions data-access public exports.
  */
 export { InterventionService } from './services/intervention/intervention.service';
@@ -13,3 +14,4 @@ export {
 } from './services/intervention-offline/constants';
 export { InterventionTimeService } from './services/intervention-time/intervention-time.service';
 export { InterventionTimeRepository } from './services/intervention-offline/intervention-time.repository';
+export { InterventionInventoryRepository } from './services/intervention-offline/intervention-inventory.repository';

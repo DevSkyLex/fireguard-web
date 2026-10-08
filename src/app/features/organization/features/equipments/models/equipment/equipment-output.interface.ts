@@ -8,18 +8,20 @@ import type { EquipmentMaintenanceDueStatus } from './equipment-maintenance-due-
  * @description
  * Supported lifecycle statuses for an equipment
  * resource.
+ *
+ * @type {EquipmentStatus}
  */
 export type EquipmentStatus = 'in_stock' | 'operational' | 'decommissioned' | 'under_maintenance';
 
 /**
- * Type EquipmentType
+ * Type HistoricalEquipmentType
  *
  * @description
- * Supported equipment types (mirrors the backend `EquipmentType` value
- * object). Used to constrain the type select in the create/edit form and
- * the type column filter, replacing free-text entry that produced a 400.
+ * Historical equipment codes retained for compatibility and localized labels.
+ *
+ * @type {HistoricalEquipmentType}
  */
-export type EquipmentType =
+export type HistoricalEquipmentType =
   | 'fire_extinguisher'
   | 'smoke_detector'
   | 'heat_detector'
@@ -34,6 +36,59 @@ export type EquipmentType =
   | 'other';
 
 /**
+ * Type EquipmentType
+ *
+ * @description
+ * Stable catalog code, including organization-owned types.
+ *
+ * @type {EquipmentType}
+ */
+export type EquipmentType = string;
+
+/**
+ * Type EquipmentCriticality
+ *
+ * @description
+ * Declared business impact when equipment is unavailable.
+ *
+ * @type {EquipmentCriticality}
+ */
+export type EquipmentCriticality = 'low' | 'medium' | 'high' | 'critical';
+
+/**
+ * Interface EquipmentTechnicalProperty
+ * @interface EquipmentTechnicalProperty
+ *
+ * @description
+ * Declarative characteristic; it never infers a regulatory obligation.
+ */
+export interface EquipmentTechnicalProperty {
+  /**
+   * Property key
+   *
+   * @description
+   * Characteristic name, unique within the equipment.
+   */
+  readonly key: string;
+
+  /**
+   * Property value
+   *
+   * @description
+   * Human-readable declared value.
+   */
+  readonly value: string;
+
+  /**
+   * Property unit
+   *
+   * @description
+   * Optional unit associated with the declared value.
+   */
+  readonly unit?: string | null;
+}
+
+/**
  * Interface EquipmentPlanPosition
  * @interface EquipmentPlanPosition
  *
@@ -43,11 +98,32 @@ export type EquipmentType =
  */
 export interface EquipmentPlanPosition {
   //#region Properties
-  /** @type {string} */
+  /**
+   * Property attachmentId
+   *
+   * @description
+   * Floor-plan attachment owning the normalized coordinate space.
+   *
+   * @type {string}
+   */
   readonly attachmentId: string;
-  /** @type {number} */
+  /**
+   * Property x
+   *
+   * @description
+   * Horizontal coordinate normalized between zero and one.
+   *
+   * @type {number}
+   */
   readonly x: number;
-  /** @type {number} */
+  /**
+   * Property y
+   *
+   * @description
+   * Vertical coordinate normalized between zero and one.
+   *
+   * @type {number}
+   */
   readonly y: number;
   //#endregion
 }
@@ -61,15 +137,102 @@ export interface EquipmentPlanPosition {
  */
 export interface EquipmentOutput extends HydraItem {
   /**
-   * Optional intervention IRI when equipment belongs to a intervention-scoped workflow.
+   * Property controlDueStatus
+   *
+   * @description
+   * Independent control operation due state; the historical maintenance status remains its alias.
+   */
+  readonly controlDueStatus?: EquipmentMaintenanceDueStatus;
+
+  /**
+   * Property serviceDueStatus
+   *
+   * @description
+   * Independent maintenance operation due state, without affecting the control calendar.
+   */
+  readonly serviceDueStatus?: EquipmentMaintenanceDueStatus;
+
+  /**
+   * Property controlNextDueAt
+   *
+   * @description
+   * Earliest server-computed next control deadline, absent when no control plan applies.
+   */
+  readonly controlNextDueAt?: string | null;
+
+  /**
+   * Property serviceNextDueAt
+   *
+   * @description
+   * Earliest server-computed maintenance deadline, independent from control deadlines.
+   */
+  readonly serviceNextDueAt?: string | null;
+  /**
+   * Property name
+   *
+   * @description
+   * Optional human-readable equipment name.
+   */
+  readonly name?: string | null;
+
+  /**
+   * Property assetCode
+   *
+   * @description
+   * Organization-unique asset reference when supplied.
+   */
+  readonly assetCode?: string | null;
+
+  /**
+   * Property criticality
+   *
+   * @description
+   * Declared operational impact of equipment unavailability.
+   */
+  readonly criticality?: EquipmentCriticality | null;
+
+  /**
+   * Property technicalProperties
+   *
+   * @description
+   * Declarative characteristics with optional units.
+   */
+  readonly technicalProperties?: readonly EquipmentTechnicalProperty[];
+
+  /**
+   * Property predecessorEquipmentId
+   *
+   * @description
+   * Historical equipment replaced by this equipment.
+   */
+  readonly predecessorEquipmentId?: string | null;
+
+  /**
+   * Property successorEquipmentId
+   *
+   * @description
+   * Equipment that succeeded this retired equipment.
+   */
+  readonly successorEquipmentId?: string | null;
+  /**
+   * Property intervention
+   *
+   * @description
+   * Optional intervention IRI for a draft equipment created within a work order.
    */
   readonly intervention?: string | null;
   /**
-   * Record lifecycle state used by draft/publish intervention workflows.
+   * Property recordStatus
+   *
+   * @description
+   * Draft or published record state used during intervention publication.
    */
   readonly recordStatus?: 'draft' | 'published';
   /**
-   * Monotonic revision returned by backend for optimistic publication checks.
+   * Property revision
+   *
+   * @description
+   * Monotonic revision used for optimistic publication checks.
    */
   readonly revision?: number;
   //#region Properties

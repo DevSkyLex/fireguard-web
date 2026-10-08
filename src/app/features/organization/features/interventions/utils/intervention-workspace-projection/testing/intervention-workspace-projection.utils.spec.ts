@@ -4,6 +4,7 @@ import type {
 } from '@features/organization/features/interventions/models';
 import {
   projectInterventionWorkspace,
+  projectInterventionWorkItemExecutionResult,
   searchSavedChanges,
   searchSavedWorkItems,
 } from '../intervention-workspace-projection.utils';
@@ -127,6 +128,208 @@ describe('saved intervention table projection', () => {
     expect(projected.workItems[0]?.status).toBe('completed');
   });
 
+  it('preserves the actual execution instant while staging an offline result across refreshes', () => {
+    const item = snapshot.workItems[0];
+    if (!item) throw new Error('Expected the saved work-item fixture');
+    const fresh: InterventionWorkspaceData = {
+      ...snapshot,
+      workItems: [
+        {
+          ...item,
+          action: 'maintenance',
+          revision: 9,
+          updatedAt: '2026-10-07T09:00:00Z',
+          operationId: 'maintenance-operation',
+          occurrenceId: 'maintenance-occurrence',
+          operationKind: 'maintenance',
+        },
+      ],
+    };
+    const pending: InterventionOutboxOperation = {
+      id: 'execution-update',
+      interventionId: 'A',
+      type: 'work-item.update',
+      payload: {
+        workItemId: 'work',
+        revision: 3,
+        status: 'completed',
+        executionResult: {
+          equipmentId: 'pump',
+          performedAt: '2026-10-05T16:35:00+02:00',
+          outcome: 'performed',
+          workPerformed: 'Cleaned and adjusted the pump.',
+        },
+      },
+      createdAt: '2026-10-06T09:00:00Z',
+      status: 'conflict',
+    };
+
+    const projected = projectInterventionWorkspace(fresh, [pending], snapshot);
+    const result = projected.workItems[0]?.executionResult;
+    expect(result).toEqual({
+      ...pending.payload.executionResult,
+      operationId: 'maintenance-operation',
+      occurrenceId: 'maintenance-occurrence',
+      state: 'staged',
+      validatedAt: null,
+      history: [],
+    });
+    expect(result).not.toHaveProperty('authorId');
+    expect(projected.workItems[0]?.revision).toBe(9);
+    expect(projected.workItems[0]?.updatedAt).toBe('2026-10-07T09:00:00Z');
+    expect(projectInterventionWorkspace(projected, [pending]).workItems).toEqual(
+      projected.workItems,
+    );
+    expect(fresh.workItems[0]?.executionResult).toBeUndefined();
+  });
+
+  it('retains recorded execution facts when reopening work or attempting to erase a result', () => {
+    const item = snapshot.workItems[0];
+    if (!item) throw new Error('Expected the saved work-item fixture');
+    const base: InterventionWorkspaceData = {
+      ...snapshot,
+      workItems: [
+        {
+          ...item,
+          action: 'repair',
+          status: 'completed',
+          executionResult: {
+            equipmentId: 'pump',
+            performedAt: '2026-10-05T16:35:00+02:00',
+            outcome: 'successful',
+            workPerformed: 'Replaced the worn valve.',
+            authorId: 'recording-member',
+            operationId: null,
+            occurrenceId: null,
+            state: 'staged',
+            validatedAt: null,
+          },
+        },
+      ],
+    };
+    const reopen: InterventionOutboxOperation = {
+      id: 'reopen-repair',
+      interventionId: 'A',
+      type: 'work-item.update',
+      payload: { workItemId: 'work', status: 'in_progress' },
+      createdAt: '2026-10-06T09:00:00Z',
+    };
+
+    expect(projectInterventionWorkspace(base, [reopen]).workItems[0]?.executionResult).toEqual(
+      base.workItems[0]?.executionResult,
+    );
+    expect(
+      projectInterventionWorkspace(base, [
+        { ...reopen, payload: { ...reopen.payload, executionResult: null } },
+      ]).workItems[0]?.executionResult,
+    ).toEqual(base.workItems[0]?.executionResult);
+  });
+
+  it('retains a failed attempt when a later offline repair succeeds and projects both only once', () => {
+    const item = snapshot.workItems[0];
+    if (!item) throw new Error('Expected the saved work-item fixture');
+    const failed: InterventionOutboxOperation = {
+      id: 'failed-attempt',
+      interventionId: 'A',
+      type: 'work-item.update',
+      payload: {
+        workItemId: 'work',
+        status: 'in_progress',
+        executionResult: {
+          equipmentId: 'pump',
+          performedAt: '2026-10-05T16:35:00+02:00',
+          outcome: 'failed',
+          workPerformed: 'Valve is seized; a new part is required.',
+        },
+      },
+      createdAt: '2026-10-05T17:00:00Z',
+    };
+    const repaired: InterventionOutboxOperation = {
+      ...failed,
+      id: 'successful-attempt',
+      payload: {
+        workItemId: 'work',
+        status: 'completed',
+        executionResult: {
+          equipmentId: 'pump',
+          performedAt: '2026-10-06T09:35:00+02:00',
+          outcome: 'successful',
+          workPerformed: 'Replaced the seized valve.',
+        },
+      },
+      createdAt: '2026-10-06T10:00:00Z',
+    };
+    const base: InterventionWorkspaceData = {
+      ...snapshot,
+      workItems: [{ ...item, action: 'repair' }],
+    };
+    const attempts = [failed, repaired];
+    const projected = projectInterventionWorkspace(base, attempts);
+    expect(projected.workItems[0]?.executionResult).toMatchObject({
+      outcome: 'successful',
+      performedAt: '2026-10-06T09:35:00+02:00',
+      history: [{ outcome: 'failed', performedAt: '2026-10-05T16:35:00+02:00' }],
+    });
+    expect(projected.workItems[0]?.executionResult?.history?.[0]).not.toHaveProperty('history');
+    expect(projectInterventionWorkspace(projected, attempts).workItems).toEqual(
+      projected.workItems,
+    );
+  });
+
+  it('keeps confirmed provenance on an identical fact normalized by the API', () => {
+    const item = snapshot.workItems[0];
+    if (!item) throw new Error('Expected the saved work-item fixture');
+    const result = {
+      equipmentId: 'pump',
+      performedAt: '2026-10-05T14:35:00+00:00',
+      outcome: 'successful' as const,
+      workPerformed: 'Replaced the valve.',
+      authorId: 'recording-member',
+      operationId: null,
+      occurrenceId: null,
+      state: 'staged' as const,
+      validatedAt: null,
+      history: [],
+    };
+    const projected = projectInterventionWorkItemExecutionResult(
+      { ...item, executionResult: result },
+      {
+        equipmentId: 'pump',
+        performedAt: '2026-10-05T14:35:00.000Z',
+        outcome: 'successful',
+        workPerformed: '  Replaced the valve.  ',
+      },
+    );
+    expect(projected).toBe(result);
+    expect(projected?.authorId).toBe('recording-member');
+    expect(projected?.history).toEqual([]);
+  });
+
+  it('keeps an unsuccessful attempt in progress without claiming preventive validation', () => {
+    const failed: InterventionOutboxOperation = {
+      id: 'failed-repair',
+      interventionId: 'A',
+      type: 'work-item.update',
+      payload: {
+        workItemId: 'work',
+        status: 'in_progress',
+        executionResult: {
+          equipmentId: 'pump',
+          performedAt: '2026-10-05T16:35:00+02:00',
+          outcome: 'failed',
+          workPerformed: 'Attempted repair; a replacement valve is required.',
+        },
+      },
+      createdAt: '2026-10-06T09:00:00Z',
+    };
+    const projected = projectInterventionWorkspace(snapshot, [failed]);
+    expect(projected.workItems[0]).toMatchObject({
+      status: 'in_progress',
+      executionResult: { outcome: 'failed', state: 'staged', validatedAt: null },
+    });
+    expect(projected.intervention.completedWorkItemsCount).toBe(0);
+  });
+
   it('ignores a different intervention and does not duplicate an already cached create', () => {
     const operation = operations[0];
     if (!operation) throw new Error('Expected the pending-operation fixture');
@@ -168,6 +371,9 @@ describe('saved intervention table projection', () => {
         estimatedMinutes: 45,
         workStartsOn: '2026-09-24',
         workEndsOn: '2026-09-25',
+        operationId: 'pump-operation',
+        occurrenceId: 'pump-occurrence',
+        operationKind: 'maintenance',
       },
       createdAt: '2026-09-23T10:00:00Z',
     };
@@ -208,6 +414,10 @@ describe('saved intervention table projection', () => {
       assignee: '/api/members/marie',
       target: '/api/equipment/pump',
       resultResource: '/api/equipment/replacement',
+      operationId: 'pump-operation',
+      occurrenceId: 'pump-occurrence',
+      operationKind: 'maintenance',
+      executionResult: null,
     });
     expect(projected.workItems[2]).toMatchObject({
       target: null,

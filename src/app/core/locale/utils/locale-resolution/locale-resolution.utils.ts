@@ -12,6 +12,7 @@ import type { AppLocaleSubPath } from '../../models/app-locale.type';
  * Type guard narrowing an arbitrary string to a supported locale sub-path.
  *
  * @param {string | null | undefined} value - Candidate sub-path.
+ *
  * @returns {boolean} `true` when the value is a supported locale sub-path.
  */
 export function isSupportedLocale(value: string | null | undefined): value is AppLocaleSubPath {
@@ -26,6 +27,7 @@ export function isSupportedLocale(value: string | null | undefined): value is Ap
  * run both in the Express SSR server and in the browser.
  *
  * @param {string | null | undefined} header - Raw cookie header.
+ *
  * @returns {Record<string, string>} Decoded cookie name/value pairs.
  */
 export function parseCookieHeader(header: string | null | undefined): Record<string, string> {
@@ -53,6 +55,7 @@ export function parseCookieHeader(header: string | null | undefined): Record<str
  * quality (`q`) weighting and matching on the primary language sub-tag.
  *
  * @param {string | null | undefined} header - Raw `Accept-Language` header.
+ *
  * @returns {AppLocaleSubPath | null} The best supported match, or `null`.
  */
 export function matchAcceptLanguage(header: string | null | undefined): AppLocaleSubPath | null {
@@ -87,6 +90,7 @@ export function matchAcceptLanguage(header: string | null | undefined): AppLocal
  *
  * @param {string | null | undefined} cookieHeader - Raw `Cookie` header.
  * @param {string | null | undefined} acceptLanguageHeader - Raw `Accept-Language` header.
+ *
  * @returns {AppLocaleSubPath} The resolved locale sub-path.
  */
 export function resolveLocaleFromRequest(
@@ -104,15 +108,15 @@ export function resolveLocaleFromRequest(
  *
  * @description
  * Removes a leading supported locale sub-path from a pathname, always returning
- * an absolute path (`/es/account` -> `/account`, `/es` -> `/`).
+ * a root-relative path (`/es/account` -> `/account`, `/es` -> `/`). Leading
+ * separators are collapsed so removing a locale cannot create a protocol-relative URL.
  *
  * @param {string} pathname - URL pathname, possibly locale-prefixed.
- * @returns {string} The pathname without its locale prefix.
+ *
+ * @returns {string} The pathname without its locale prefix and with one leading slash.
  */
 export function stripLocaleFromPathname(pathname: string): string {
   const segment = pathname.split('/')[1];
-  if (!isSupportedLocale(segment)) return pathname;
-
-  const rest = pathname.slice(segment.length + 1);
-  return rest.length > 0 ? rest : '/';
+  const rest = isSupportedLocale(segment) ? pathname.slice(segment.length + 1) : pathname;
+  return `/${rest.replace(/^[/\\]+/, '')}`;
 }

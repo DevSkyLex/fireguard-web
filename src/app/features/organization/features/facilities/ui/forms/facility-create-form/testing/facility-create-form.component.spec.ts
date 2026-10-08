@@ -63,6 +63,7 @@ describe('FacilityCreateForm', () => {
       }
     ).model;
     model.set({
+      customerId: '',
       type: '',
       name: '',
       parentFacilityId:
@@ -582,5 +583,17 @@ describe('FacilityCreateForm', () => {
         parentFacilityId: 'building-parent',
       }),
     ]);
+  });
+
+  it('sends an optional customer only for root sites and clears it after a type change', async () => {
+    const emitted: CreateFacilityInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value) => emitted.push(value));
+    await setModel({ type: 'site', name: 'Campus', customerId: 'customer-1' });
+    await submit();
+    expect(emitted[0]).toEqual(expect.objectContaining({ type: 'site', customerId: 'customer-1' }));
+    await setModel({ type: 'building', name: 'Annex', customerId: 'customer-1' });
+    await submit();
+    expect(emitted[1].customerId).toBeUndefined();
+    expect(fixture.componentInstance['model']().customerId).toBe('');
   });
 });

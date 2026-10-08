@@ -11,12 +11,14 @@ import {
   InterventionOfflineService,
   InterventionService,
   InterventionTimeService,
+  InterventionInventoryRepository,
 } from '@features/organization/features/interventions/data-access';
 import type {
   InterventionCollectionsChange,
   InterventionOutboxOperation,
   InterventionOutboxOperationFor,
 } from '@features/organization/features/interventions/models';
+import { InventoryService } from '@features/organization/features/inventory/data-access';
 import { workloadAssessmentFromError } from '@features/organization/features/workload/utils';
 import {
   ORGANIZATION_CONTEXT_PORT,
@@ -31,6 +33,7 @@ import {
 } from './constants';
 import { interventionSyncEvents } from './events';
 import type { SyncProblemResponse } from './models';
+import { AcceptedInventoryPersistenceError } from './models/accepted-inventory-persistence-error';
 
 /**
  * Constant DEPENDENCY_UNAVAILABLE_DETAIL
@@ -267,6 +270,36 @@ export class InterventionSyncService {
    * @type {Map<string, Promise<number>>}
    */
   private readonly activeReplays: Map<string, Promise<number>> = new Map();
+
+  /**
+   * Property inventory
+   * @readonly
+   *
+   * @description
+   * Owner-published quantitative declaration transport; valuation stays in the private cost API.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InventoryService}
+   */
+  private readonly inventory: InventoryService = inject(InventoryService);
+
+  /**
+   * Property inventorySnapshots
+   * @readonly
+   *
+   * @description
+   * Keeps accepted server receipts durable before their idempotent queue rows are removed.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionInventoryRepository}
+   */
+  private readonly inventorySnapshots: InterventionInventoryRepository = inject(
+    InterventionInventoryRepository,
+  );
   //#endregion
 
   //#region Methods
@@ -325,6 +358,9 @@ export class InterventionSyncService {
     const collections = new Set<InterventionCollectionsChange['collections'][number]>();
     const applied = (operation: InterventionOutboxOperation): void => {
       switch (operation.type) {
+        case 'inventory-consumption.declare':
+          collections.add('consumptions');
+          break;
         case 'time-entry.create':
         case 'time-entry.correct':
         case 'time-entry.cancel':
@@ -442,8 +478,10 @@ export class InterventionSyncService {
     if (await this.skipBlockedOperation(operation, blocked)) return advance(replayed);
     if (!isCurrent()) return replayed;
 
+    let appliedToServer = false;
     try {
       await this.replay(organizationId, operation);
+      appliedToServer = true;
       if (!isCurrent()) return replayed;
       await this.offline.removeOutbox(operation.id);
       if (!isCurrent()) return replayed;
@@ -451,6 +489,8 @@ export class InterventionSyncService {
       return advance(replayed + 1);
     } catch (error: unknown) {
       if (!isCurrent()) return replayed;
+      if (appliedToServer && operation.type === 'inventory-consumption.declare')
+        throw new AcceptedInventoryPersistenceError(error);
       const outcome = await this.handleReplayFailure(operation, error, blocked, isCurrent);
       if (!isCurrent()) return replayed;
       if (outcome === 'applied') {
@@ -520,6 +560,7 @@ export class InterventionSyncService {
     blocked: BlockedResources,
     isCurrent: () => boolean,
   ): Promise<'applied' | 'blocked'> {
+    if (error instanceof AcceptedInventoryPersistenceError) throw error;
     const response = error as SyncProblemResponse;
     const detail =
       response.detail ??
@@ -619,7 +660,8 @@ export class InterventionSyncService {
           'responsible' in operation.payload ||
           'participants' in operation.payload)) ||
       (operation.type === 'work-item.update' &&
-        ('assignee' in operation.payload ||
+        ('executionResult' in operation.payload ||
+          'assignee' in operation.payload ||
           'remainingMinutes' in operation.payload ||
           'estimatedMinutes' in operation.payload ||
           'workStartsOn' in operation.payload ||
@@ -647,6 +689,37 @@ export class InterventionSyncService {
     operation: InterventionOutboxOperation,
   ): Promise<void> {
     switch (operation.type) {
+      case 'inventory-consumption.declare': {
+        const isCurrent = this.captureReplayContext();
+        const accountId = this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null;
+        if (!accountId || accountId !== operation.payload.actorId)
+          throw new DOMException(
+            'The physical declaration belongs to another account.',
+            'AbortError',
+          );
+        const input = operation.payload;
+        const receipt = await this.awaitReplay(
+          this.inventory.declareConsumption(organizationId, {
+            clientOperationId: input.clientOperationId,
+            partId: input.partId,
+            warehouseId: input.warehouseId,
+            quantity: input.quantity,
+            interventionId: input.interventionId,
+            workItemId: input.workItemId,
+            equipmentId: input.equipmentId,
+            occurredAt: input.occurredAt,
+          }),
+        );
+        if (!isCurrent()) return;
+        if (receipt.interventionId !== operation.interventionId)
+          throw new Error('The server declaration does not belong to this workspace.');
+        try {
+          await this.inventorySnapshots.saveReceipt(organizationId, accountId, receipt, isCurrent);
+        } catch (error: unknown) {
+          throw new AcceptedInventoryPersistenceError(error);
+        }
+        break;
+      }
       case 'time-entry.create':
         await this.awaitReplay(
           this.time.createEntry(operation.payload.workItemId, {
@@ -1146,8 +1219,10 @@ export class InterventionSyncService {
   } | null> {
     try {
       if (operation.type === 'time-entry.correct' || operation.type === 'time-entry.cancel') {
-        const journal = await this.awaitReplay(this.time.journal(operation.payload.workItemId));
-        const entry = journal.entries.find((row) => row.id === operation.payload.id);
+        const current = await this.awaitReplay(
+          this.time.getEntry(operation.payload.workItemId, operation.payload.id),
+        );
+        const entry = current.entry;
         return entry
           ? {
               revision: entry.revision,
@@ -1176,6 +1251,20 @@ export class InterventionSyncService {
                 remainingMinutes: item.remainingMinutes ?? null,
                 workStartsOn: item.workStartsOn ?? null,
                 workEndsOn: item.workEndsOn ?? null,
+                ...('resultResource' in operation.payload
+                  ? { resultResource: item.resultResource ?? null }
+                  : {}),
+                ...('executionResult' in operation.payload
+                  ? {
+                      equipmentId: item.executionResult?.equipmentId ?? null,
+                      performedAt: item.executionResult?.performedAt ?? null,
+                      outcome: item.executionResult?.outcome ?? null,
+                      workPerformed: item.executionResult?.workPerformed ?? null,
+                      authorId: item.executionResult?.authorId ?? null,
+                      resultState: item.executionResult?.state ?? null,
+                      validatedAt: item.executionResult?.validatedAt ?? null,
+                    }
+                  : {}),
               },
             }
           : null;

@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { of, Subject } from 'rxjs';
 import { idleCallState, successCallState, type CallState } from '@core/request-state';
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { NOTIFICATION_CENTER_PORT } from '@features/account';
@@ -13,6 +14,7 @@ import type {
   OrganizationJoinOptionsOutput,
   OrganizationJoinRequestOutput,
 } from '@features/organization/models';
+import { OrganizationLandingService } from '@features/organization/services/organization-landing';
 import { OnboardingWorkspacePage } from '../onboarding-workspace-page.component';
 
 describe('OnboardingWorkspacePage', () => {
@@ -56,9 +58,19 @@ describe('OnboardingWorkspacePage', () => {
   };
   const onboarding = { clear: vi.fn(), targetOrganizationId: signal<string | null>(null) };
   const notifications = { revision: signal(0), connectMercure: vi.fn() };
+  const landing = {
+    defaultDestination: vi.fn((organizationId: string) =>
+      of(`/organizations/${organizationId}/assets`),
+    ),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    landing.defaultDestination
+      .mockReset()
+      .mockImplementation((organizationId: string) =>
+        of(`/organizations/${organizationId}/assets`),
+      );
     workspace.options.set(null);
     workspace.optionsCallState.set(idleCallState());
     workspace.loading.set(false);
@@ -90,6 +102,7 @@ describe('OnboardingWorkspacePage', () => {
       providers: [
         provideRouter([]),
         { provide: OnboardingStore, useValue: onboarding },
+        { provide: OrganizationLandingService, useValue: landing },
         { provide: NOTIFICATION_CENTER_PORT, useValue: notifications },
         {
           provide: THEME_PORT,
@@ -158,8 +171,9 @@ describe('OnboardingWorkspacePage', () => {
       '/organizations/org-1/equipments?filter=overdue',
     ],
     ['/organizations/org-1?tab=overview', '/organizations/org-1?tab=overview'],
-    ['/organizations/org-10/equipments', '/organizations/org-1'],
-    ['https://external.example/redirect', '/organizations/org-1'],
+    ['/organizations/org-10/equipments', '/organizations/org-1/assets'],
+    ['https://external.example/redirect', '/organizations/org-1/assets'],
+    ['', '/organizations/org-1/assets'],
   ])(
     'navigates only within the admitted organization for destination %s',
     async (destination, expected) => {
@@ -200,6 +214,18 @@ describe('OnboardingWorkspacePage', () => {
     expect(onboarding.clear).toHaveBeenCalledOnce();
     expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith('/organizations/org-1');
     expect(workspace.admit).not.toHaveBeenCalled();
+  });
+  it('ignores a late destination from a superseded workspace selection', async () => {
+    const fixture = await renderPage();
+    const obsolete = new Subject<string>();
+    landing.defaultDestination.mockReturnValueOnce(obsolete);
+    fixture.componentInstance['open']('org-1');
+    fixture.componentInstance['open']('org-2');
+    obsolete.next('/organizations/org-1/assets');
+    expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledTimes(1);
+    expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith(
+      '/organizations/org-2/assets',
+    );
   });
 
   it('renders request lifecycle labels and delegates cancellation without granting access', async () => {

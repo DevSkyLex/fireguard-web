@@ -7,12 +7,21 @@ import {
   input,
   linkedSignal,
   output,
+  signal,
+  untracked,
   type InputSignal,
   type OutputEmitterRef,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import {
+  disabled,
+  form,
+  FormField,
+  required,
+  validate,
+  type FieldTree,
+} from '@angular/forms/signals';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideAlarmSmoke,
@@ -36,8 +45,11 @@ import { BrnCommandInput } from '@spartan-ng/brain/command';
 import { INTERACTION_CAPABILITIES_PORT } from '@core/interaction-capabilities';
 import { ONBOARDING_FACILITY_TYPE_OPTIONS } from '@features/onboarding/options';
 import { OnboardingStepFooter } from '@features/onboarding/ui/components';
-import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
-import type { SetupCreateEquipmentInput, SetupFacilitySummary } from '@features/organization/setup';
+import type {
+  SetupCreateEquipmentInput,
+  SetupEquipmentTypeOption,
+  SetupFacilitySummary,
+} from '@features/organization/setup';
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmButton } from '@shared/ui/button';
 import { HlmComboboxImports } from '@shared/ui/combobox';
@@ -47,6 +59,7 @@ import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmInputGroupImports } from '@shared/ui/input-group';
 import { HlmSelectImports } from '@shared/ui/select';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import type { OnboardingEquipmentFormDraft, OnboardingEquipmentTypeOption } from './models';
 
 /**
@@ -75,9 +88,8 @@ function trimmed(value: string): string | undefined {
  * @description
  * The `create_first_equipment` wizard step: one piece of fire-safety gear,
  * enough to prove the workflow before the operator leaves the wizard. The
- * type catalog is the equipments subfeature's own canonical
- * `EQUIPMENT_TYPE_OPTIONS`, not a local copy (`FEATURE.md` "Cross-Feature
- * Dependencies"). The equipment is attached to a facility created earlier in
+ * type catalog contains the organization's active server choices, published
+ * through its setup facade. The equipment is attached to a facility created earlier in
  * the wizard through a facility select that is rendered whenever at least one
  * exists and pre-selected on the first — a single facility is shown rather
  * than attached silently, so the operator sees where the equipment lands.
@@ -113,6 +125,7 @@ function trimmed(value: string): string | undefined {
     OnboardingStepFooter,
     ...HlmFieldImports,
     ...HlmSelectImports,
+    ...HlmToggleGroupImports,
   ],
   templateUrl: './onboarding-equipment-form.component.html',
   providers: [
@@ -265,7 +278,7 @@ export class OnboardingEquipmentForm {
   protected readonly model: WritableSignal<OnboardingEquipmentFormDraft> = linkedSignal(() => {
     const restored = this.restored();
     return {
-      type: (restored?.type ?? '') as OnboardingEquipmentTypeOption | '',
+      type: restored?.type ?? '',
       brand: restored?.brand ?? '',
       model: restored?.model ?? '',
       serialNumber: restored?.serialNumber ?? '',
@@ -288,6 +301,7 @@ export class OnboardingEquipmentForm {
   protected readonly equipmentForm: FieldTree<OnboardingEquipmentFormDraft> = form(
     this.model,
     (path) => {
+      disabled(path, () => this.pending());
       required(path.facilityId, {
         when: () => this.facilities().length > 0,
         message: $localize`:@@onboarding.equipmentForm.facilityRequired:Select the facility for this equipment.`,
@@ -295,6 +309,14 @@ export class OnboardingEquipmentForm {
       required(path.type, {
         message: $localize`:@@onboarding.equipmentForm.typeRequired:Equipment type is required.`,
       });
+      validate(path.type, ({ value }) =>
+        value() === '' || this.typeOptions().some((option) => option.value === value())
+          ? null
+          : {
+              kind: 'catalogue',
+              message: $localize`:@@onboarding.equipmentForm.typeUnavailable:This type is no longer available for new equipment. Choose an active type.`,
+            },
+      );
     },
   );
 
@@ -303,14 +325,47 @@ export class OnboardingEquipmentForm {
    * @readonly
    *
    * @description
-   * Uses the equipment subfeature's canonical set of selectable types.
+   * Active server catalogue received exclusively through the public setup boundary.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<readonly SetupEquipmentTypeOption[]>}
+   */
+  public readonly typeOptions: InputSignal<readonly SetupEquipmentTypeOption[]> = input<
+    readonly SetupEquipmentTypeOption[]
+  >([]);
+
+  /**
+   * Property typeScope
+   * @readonly
+   *
+   * @description
+   * Fire inventory is the initial focus; all active families remain explicitly accessible.
    *
    * @access protected
    * @since unreleased
    *
-   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   * @type {WritableSignal<'fire' | 'all'>}
    */
-  protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
+  protected readonly typeScope: WritableSignal<'fire' | 'all'> = signal('fire');
+
+  /**
+   * Property visibleTypeOptions
+   * @readonly
+   *
+   * @description
+   * Filters selectable choices without changing a restored or edited permanent code.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly SetupEquipmentTypeOption[]>}
+   */
+  protected readonly visibleTypeOptions: Signal<readonly SetupEquipmentTypeOption[]> = computed(
+    () =>
+      this.typeOptions().filter((option) => this.typeScope() === 'all' || option.family === 'fire'),
+  );
 
   /**
    * Property typeLabelOf
@@ -325,7 +380,7 @@ export class OnboardingEquipmentForm {
    * @type {(value: OnboardingEquipmentTypeOption | '') => string}
    */
   protected readonly typeLabelOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
-    this.typeOptions.find((option) => option.value === value)?.label ?? '';
+    this.typeOptions().find((option) => option.value === value)?.label ?? value;
 
   /**
    * Property typeIconOf
@@ -340,7 +395,7 @@ export class OnboardingEquipmentForm {
    * @type {(value: OnboardingEquipmentTypeOption | '') => string}
    */
   protected readonly typeIconOf: (value: OnboardingEquipmentTypeOption | '') => string = (value) =>
-    this.typeOptions.find((option) => option.value === value)?.icon ?? 'lucidePackage';
+    this.typeOptions().find((option) => option.value === value)?.icon ?? 'lucidePackage';
 
   /**
    * Property facilityRows
@@ -427,6 +482,14 @@ export class OnboardingEquipmentForm {
    */
   constructor() {
     effect(() => {
+      const restored = this.restored();
+      const options = this.typeOptions();
+      untracked(() => {
+        const selected = options.find((option) => option.value === restored?.type);
+        if (selected && selected.family !== 'fire') this.typeScope.set('all');
+      });
+    });
+    effect(() => {
       const facilities: readonly SetupFacilitySummary[] = this.facilities();
       if (facilities.length === 0) return;
 
@@ -441,6 +504,24 @@ export class OnboardingEquipmentForm {
   //#endregion
 
   //#region Methods
+  /**
+   * Method scopeChanged
+   * @method scopeChanged
+   *
+   * @description
+   * Changes the visible catalogue family without overwriting selected equipment identity.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {unknown} value - Native toggle selection.
+   *
+   * @returns {void}
+   */
+  protected scopeChanged(value: unknown): void {
+    if (!this.pending() && (value === 'fire' || value === 'all')) this.typeScope.set(value);
+  }
+
   /**
    * Method submit
    * @method submit

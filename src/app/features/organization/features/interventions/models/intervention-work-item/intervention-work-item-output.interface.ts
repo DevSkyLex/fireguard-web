@@ -1,6 +1,8 @@
 import type { HydraItem } from '@core/api/models';
 import type { InterventionWorkItemAction } from './intervention-work-item-action.type';
 import type { InterventionWorkItemAssignee } from './intervention-work-item-assignee.interface';
+import type { InterventionWorkItemExecutionResultOutput } from './intervention-work-item-execution-result-output.interface';
+import type { InterventionWorkItemOperationKind } from './intervention-work-item-operation-kind.type';
 import type { InterventionWorkItemSource } from './intervention-work-item-source.type';
 import type { InterventionWorkItemStatus } from './intervention-work-item-status.type';
 import type { InterventionWorkItemTarget } from './intervention-work-item-target.interface';
@@ -13,6 +15,58 @@ import type { InterventionWorkItemTarget } from './intervention-work-item-target
  * Defines the intervention work item output contract.
  */
 export interface InterventionWorkItemOutput extends HydraItem {
+  /**
+   * Property executionResult
+   * @readonly
+   *
+   * @description
+   * Recorded execution and validation provenance, absent on historical snapshots.
+   *
+   * @access public
+   *
+   * @type {InterventionWorkItemExecutionResultOutput | null | undefined}
+   */
+  readonly executionResult?: InterventionWorkItemExecutionResultOutput | null;
+
+  /**
+   * Property operationId
+   * @readonly
+   *
+   * @description
+   * Independent preventive operation identifier, absent on legacy work items.
+   *
+   * @access public
+   *
+   * @type {string | null | undefined}
+   */
+  readonly operationId?: string | null;
+
+  /**
+   * Property occurrenceId
+   * @readonly
+   *
+   * @description
+   * Preventive occurrence identifier associated with this work item.
+   *
+   * @access public
+   *
+   * @type {string | null | undefined}
+   */
+  readonly occurrenceId?: string | null;
+
+  /**
+   * Property operationKind
+   * @readonly
+   *
+   * @description
+   * Preventive operation category, independent of the work-item action.
+   *
+   * @access public
+   *
+   * @type {InterventionWorkItemOperationKind | null | undefined}
+   */
+  readonly operationKind?: InterventionWorkItemOperationKind | null;
+
   /**
    * Property estimatedMinutes
    * @readonly

@@ -14,6 +14,7 @@
  * @type
  */
 export type FacilityEditTarget =
+  | 'customerId'
   | 'name'
   | 'code'
   | 'address'

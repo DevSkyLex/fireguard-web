@@ -1,4 +1,5 @@
 import type { HydraItem } from '@core/api/models';
+import type { InterventionClosureSnapshotOutput } from '../intervention-closure/intervention-closure-snapshot-output.interface';
 import type { InterventionLabelSummary } from '../intervention-label/intervention-label-summary.interface';
 import type { InterventionAllowedActionsOutput } from './intervention-allowed-actions-output.interface';
 import type { InterventionPriority } from './intervention-priority.type';
@@ -14,6 +15,19 @@ import type { InterventionType } from './intervention-type.type';
  */
 export interface InterventionOutput extends HydraItem {
   //#region Properties
+  /**
+   * Property closureSnapshot
+   * @readonly
+   *
+   * @description
+   * Immutable published dossier, absent on drafts and historical publications without a snapshot.
+   *
+   * @access public
+   *
+   * @type {InterventionClosureSnapshotOutput | null | undefined}
+   */
+  readonly closureSnapshot?: InterventionClosureSnapshotOutput | null;
+
   /**
    * Property id
    * @readonly

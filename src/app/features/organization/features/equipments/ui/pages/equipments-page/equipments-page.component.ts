@@ -18,7 +18,7 @@ import {
   PLATFORM_ID,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCircleAlert,
@@ -50,6 +50,8 @@ import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipmen
 import { EquipmentListPreferencesService } from '@features/organization/features/equipments/services';
 import {
   EquipmentKpisStore,
+  EquipmentTypeCatalogStore,
+  type EquipmentTypeCatalogStoreType,
   EquipmentStore,
   type EquipmentKpisStoreType,
   type EquipmentStoreType,
@@ -140,6 +142,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
 @Component({
   selector: 'app-equipments-page',
   imports: [
+    RouterLink,
     EquipmentLabelsDialog,
     NgIcon,
     ...HlmEmptyImports,
@@ -159,6 +162,7 @@ const STATUS_VALUES: readonly EquipmentStatus[] = [
     HlmSpinner,
   ],
   providers: [
+    EquipmentTypeCatalogStore,
     EquipmentLabelsStore,
     FacilityOptionsStore,
     provideIcons({
@@ -536,7 +540,7 @@ export class EquipmentsPage {
   protected readonly pageSize: WritableSignal<number> = signal<number>(PAGE_SIZES[0]);
 
   /**
-   * Property typeOptions
+   * Property typeCatalog
    * @readonly
    *
    * @description
@@ -547,7 +551,21 @@ export class EquipmentsPage {
    *
    * @type {typeof EQUIPMENT_TYPE_OPTIONS}
    */
-  protected readonly typeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
+  protected readonly typeCatalog: EquipmentTypeCatalogStoreType = inject(EquipmentTypeCatalogStore);
+
+  /**
+   * Property typeOptions
+   * @readonly
+   *
+   * @description
+   * Complete server catalog, including historical archived choices for filters.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<typeof EQUIPMENT_TYPE_OPTIONS>}
+   */
+  protected readonly typeOptions: Signal<typeof EQUIPMENT_TYPE_OPTIONS> = this.typeCatalog.options;
 
   /**
    * Property statusOptions
@@ -1019,6 +1037,7 @@ export class EquipmentsPage {
       const organizationId: string = this.organizationId();
       untracked((): void => {
         this.kpisStore.load(organizationId);
+        this.typeCatalog.load(organizationId);
       });
     });
   }

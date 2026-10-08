@@ -12,7 +12,7 @@ import {
 import { withEntities, setAllEntities, removeAllEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { concatMap, EMPTY, from, map, pipe, switchMap } from 'rxjs';
+import { concatMap, EMPTY, from, map, mergeMap, pipe, switchMap } from 'rxjs';
 import {
   idleCallState,
   pendingCallState,
@@ -55,6 +55,13 @@ const initialState: InterventionTimeState = {
   draftPersistenceFailed: false,
   offline: false,
   historyUnavailable: false,
+  page: 1,
+  itemsPerPage: 30,
+  totalItems: null,
+  nextPage: null,
+  readVersion: 0,
+  historyCallStates: {},
+  draftEntryCallState: idleCallState(),
 };
 
 /**
@@ -124,34 +131,98 @@ export const InterventionTimeStore = signalStore(
   })),
   withMethods((store, journal = inject(InterventionTimeJournalService)) => ({
     /**
-     * Method load
-     * @method load
+     * Method reviewDraft
+     * @method reviewDraft
+     *
+     * @description
+     * Resolves a saved correction target independently from the displayed entry page.
+     * Failed or hidden reads preserve the draft and require explicit retry.
+     *
+     * @access public
+     *
+     * @returns {void} Updates the independent current-entry review request state.
+     */
+    reviewDraft: rxMethod<void>(
+      pipe(
+        switchMap(() => {
+          const scope = store.scope();
+          const draft = store.draft();
+          if (!scope || !draft || draft.baseRevision === null || store.offline()) return EMPTY;
+          const readVersion = store.readVersion();
+          patchState(store, {
+            draftEntryCallState: pendingCallState(store.draftEntryCallState().data),
+          });
+          return journal.readEntry(scope, draft.id).pipe(
+            tapResponse({
+              next: (value) => {
+                if (
+                  store.readVersion() === readVersion &&
+                  store.scope() === scope &&
+                  store.draft()?.id === draft.id
+                )
+                  patchState(store, { draftEntryCallState: successCallState(value.entry) });
+              },
+              error: (error: unknown) => {
+                if (
+                  store.readVersion() === readVersion &&
+                  store.scope() === scope &&
+                  store.draft()?.id === draft.id
+                )
+                  patchState(store, {
+                    draftEntryCallState: errorCallState(
+                      toStoreError(error),
+                      store.draftEntryCallState().data,
+                    ),
+                  });
+              },
+            }),
+          );
+        }),
+      ),
+    ),
+  })),
+  withMethods((store, journal = inject(InterventionTimeJournalService)) => ({
+    /**
+     * Method _read
+     * @method _read
      *
      * @description
      * Opens or refreshes one authorized journal; cancels obsolete reads.
      *
-     * @access public
+     * @access private
      * @since 1.0.0
      *
-     * @param {InterventionTimeScope | null} scope - Selected task or dismissed sheet.
+     * @param {{ scope: InterventionTimeScope; page: number } | null} request - Selected journal
+     *   page or dismissed sheet.
      *
      * @returns {void}
      */
-    load: rxMethod<InterventionTimeScope | null>(
+    _read: rxMethod<{ scope: InterventionTimeScope; page: number } | null>(
       pipe(
-        switchMap((scope) => {
-          if (!scope) {
-            patchState(store, initialState, removeAllEntities());
+        switchMap((request) => {
+          const readVersion = store.readVersion() + 1;
+          if (!request) {
+            patchState(store, initialState, removeAllEntities(), { readVersion });
             return EMPTY;
           }
+          const { scope, page } = request;
           const sameTask =
             store.scope()?.workItemId === scope.workItemId &&
-            store.scope()?.actorId === scope.actorId;
+            store.scope()?.actorId === scope.actorId &&
+            store.scope()?.interventionId === scope.interventionId &&
+            (store.scope()?.manageOthers === true) === (scope.manageOthers === true);
           if (!sameTask) patchState(store, initialState, removeAllEntities());
-          patchState(store, { scope, readCallState: pendingCallState() });
-          return journal.read(scope).pipe(
+          patchState(store, {
+            scope,
+            page,
+            readVersion,
+            historyCallStates: {},
+            draftEntryCallState: idleCallState(),
+            readCallState: pendingCallState(),
+          });
+          return journal.read(scope, page).pipe(
             tapResponse({
-              next: (value) =>
+              next: (value) => {
                 patchState(store, setAllEntities([...value.entries]), {
                   readCallState: successCallState(null),
                   persistedDraft: value.draft,
@@ -160,7 +231,15 @@ export const InterventionTimeStore = signalStore(
                     : { draft: value.draft }),
                   offline: value.offline,
                   historyUnavailable: value.historyUnavailable,
-                }),
+                  page: value.page,
+                  itemsPerPage: value.itemsPerPage,
+                  totalItems: value.totalItems,
+                  nextPage: value.nextPage,
+                });
+                const draft = store.draft();
+                if (draft && draft.baseRevision !== null && !store.entityMap()[draft.id])
+                  store.reviewDraft();
+              },
               error: (error: unknown) =>
                 patchState(store, { readCallState: errorCallState(toStoreError(error)) }),
             }),
@@ -168,6 +247,131 @@ export const InterventionTimeStore = signalStore(
         }),
       ),
     ),
+    /**
+     * Method loadHistory
+     * @method loadHistory
+     *
+     * @description
+     * Reads revisions only after explicit expansion or continuation and retains prior pages on
+     * failure.
+     *
+     * @access public
+     *
+     * @param {{ entryId: string; more?: boolean }} request - Expanded entry or earlier-page
+     *   continuation.
+     *
+     * @returns {void} Updates only the selected entry's independent history request state.
+     */
+    loadHistory: rxMethod<{ entryId: string; more?: boolean }>(
+      pipe(
+        mergeMap(({ entryId, more }) => {
+          const scope = store.scope();
+          const entry = store.entityMap()[entryId];
+          const previous = store.historyCallStates()[entryId];
+          if (
+            !scope ||
+            !entry ||
+            entry.syncStatus ||
+            store.offline() ||
+            previous?.status === 'pending'
+          )
+            return EMPTY;
+          if (!more && previous?.status === 'success') return EMPTY;
+          const beforeRevision = previous?.data?.nextBeforeRevision ?? undefined;
+          if (more && previous?.data && beforeRevision === undefined) return EMPTY;
+          const readVersion = store.readVersion();
+          patchState(store, {
+            historyCallStates: {
+              ...store.historyCallStates(),
+              [entryId]: pendingCallState(previous?.data),
+            },
+          });
+          return journal.readVersions(scope, entryId, beforeRevision).pipe(
+            tapResponse({
+              next: (value) => {
+                if (store.readVersion() !== readVersion || store.scope() !== scope) return;
+                const versions = new Map(
+                  [...(previous?.data?.versions ?? []), ...value.versions].map((version) => [
+                    version.revision,
+                    version,
+                  ]),
+                );
+                patchState(store, {
+                  historyCallStates: {
+                    ...store.historyCallStates(),
+                    [entryId]: successCallState({
+                      ...value,
+                      versions: [...versions.values()].toSorted(
+                        (left, right) => right.revision - left.revision,
+                      ),
+                    }),
+                  },
+                });
+              },
+              error: (error: unknown) => {
+                if (store.readVersion() === readVersion && store.scope() === scope)
+                  patchState(store, {
+                    historyCallStates: {
+                      ...store.historyCallStates(),
+                      [entryId]: errorCallState(toStoreError(error), previous?.data),
+                    },
+                  });
+              },
+            }),
+          );
+        }),
+      ),
+    ),
+  })),
+  withMethods((store) => ({
+    /**
+     * Method load
+     * @method load
+     *
+     * @description
+     * Refreshes the displayed journal page while a newly selected authority starts at page one.
+     *
+     * @access public
+     *
+     * @param {InterventionTimeScope | null} scope - Selected task or dismissed sheet.
+     *
+     * @returns {void} Starts a bounded cancellable journal read.
+     */
+    load(scope: InterventionTimeScope | null): void {
+      const previous = store.scope();
+      const page =
+        previous?.workItemId === scope?.workItemId &&
+        previous?.actorId === scope?.actorId &&
+        previous?.interventionId === scope?.interventionId &&
+        (previous?.manageOthers === true) === (scope?.manageOthers === true)
+          ? store.page()
+          : 1;
+      store['_read'](scope ? { scope, page } : null);
+    },
+    /**
+     * Method loadPage
+     * @method loadPage
+     *
+     * @description
+     * Navigates explicitly between bounded journal pages without consuming the user's draft.
+     *
+     * @access public
+     *
+     * @param {number} page - Positive target journal page.
+     *
+     * @returns {void} Starts a bounded cancellable page read.
+     */
+    loadPage(page: number): void {
+      const scope = store.scope();
+      if (
+        !scope ||
+        !Number.isSafeInteger(page) ||
+        page < 1 ||
+        store.writeCallState().status === 'pending'
+      )
+        return;
+      store['_read']({ scope, page });
+    },
   })),
   withMethods(
     (
@@ -200,6 +404,8 @@ export const InterventionTimeStore = signalStore(
             const current = (): boolean =>
               store.scope()?.workItemId === scope.workItemId &&
               store.scope()?.actorId === scope.actorId &&
+              store.scope()?.interventionId === scope.interventionId &&
+              (store.scope()?.manageOthers === true) === (scope.manageOthers === true) &&
               owner === offline.publicationOwner();
             if (request.kind === 'draft') {
               return from(

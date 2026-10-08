@@ -8,3 +8,13 @@ export { activeEquipmentStoreEvents } from './active-equipment';
 export { equipmentStoreEvents } from './equipment';
 export { EquipmentKpisStore } from './equipment-kpis';
 export type { EquipmentKpisStoreType } from './equipment-kpis';
+export {
+  EquipmentTypeCatalogStore,
+  type EquipmentTypeCatalogStoreType,
+} from './equipment-type-catalog';
+export {
+  EquipmentReplacementStore,
+  type EquipmentReplacementStoreType,
+} from './equipment-replacement';
+export { EquipmentInspectionSummaryStore } from './equipment-inspection-summary';
+export { EquipmentOpenWorkStore } from './equipment-open-work';

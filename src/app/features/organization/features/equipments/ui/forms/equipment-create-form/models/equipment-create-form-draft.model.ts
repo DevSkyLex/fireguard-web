@@ -12,24 +12,74 @@ import type { EquipmentType } from '@features/organization/features/equipments/m
  * @since 1.0.0
  */
 export interface EquipmentCreateFormDraft {
-  /** The equipment type, or an empty string until one is picked. */
+  /**
+   * Property name
+   *
+   * @description
+   * Optional human-readable equipment identity.
+   */
+  readonly name: string;
+
+  /**
+   * Property assetCode
+   *
+   * @description
+   * Optional organization-unique inventory reference.
+   */
+  readonly assetCode: string;
+  /**
+   * Property type
+   *
+   * @description
+   * Stable catalog code, empty until a type is selected.
+   */
   readonly type: EquipmentType | '';
 
-  /** Free-text subtype refining the main type. */
+  /**
+   * Property subType
+   *
+   * @description
+   * Declared subtype refining the equipment type.
+   */
   readonly subType: string;
 
-  /** Manufacturer brand. */
+  /**
+   * Property brand
+   *
+   * @description
+   * Manufacturer brand.
+   */
   readonly brand: string;
 
-  /** Model reference. */
+  /**
+   * Property model
+   *
+   * @description
+   * Manufacturer model reference.
+   */
   readonly model: string;
 
-  /** Manufacturer serial number. */
+  /**
+   * Property serialNumber
+   *
+   * @description
+   * Manufacturer serial number identifying the equipment.
+   */
   readonly serialNumber: string;
 
-  /** Human-readable location inside the facility. */
+  /**
+   * Property locationLabel
+   *
+   * @description
+   * Human-readable location within the assigned site.
+   */
   readonly locationLabel: string;
 
-  /** The owning facility's id, or `''` when the equipment starts unassigned. */
+  /**
+   * Property facility
+   *
+   * @description
+   * Assigned site identity, empty when unassigned.
+   */
   readonly facility: string;
 }

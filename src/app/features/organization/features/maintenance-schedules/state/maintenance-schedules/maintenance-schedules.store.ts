@@ -1,10 +1,10 @@
 import { computed, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
-import { setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
+import { removeAllEntities, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, finalize, map, mergeMap, pipe, switchMap, tap } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -39,6 +39,9 @@ import type { MaintenanceSchedulesState } from './models';
  * @constant INITIAL_STATE
  */
 const INITIAL_STATE: MaintenanceSchedulesState = {
+  organization: null,
+  scopeGeneration: 0,
+  campaignResultOrganization: null,
   listCallState: idleCallState(),
   totalSchedules: 0,
   overrideCallState: idleCallState(),
@@ -145,171 +148,311 @@ export const MaintenanceSchedulesStore = signalStore(
       store,
       maintenanceScheduleService: MaintenanceScheduleService = inject(MaintenanceScheduleService),
       dispatcher: Dispatcher = inject(Dispatcher),
-    ) => ({
+    ) => {
       /**
-       * Method load
-       * @method load
+       * Constant overrideWrites
        *
        * @description
-       * Fetches one page of schedules. `switchMap` cancels any in-flight
-       * request, so a fast filter change never races an older response.
+       * Tracks accepted override subscriptions by organization across scope changes.
        *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<MaintenanceScheduleListOptions>}
+       * @type {Set<string>}
        */
-      load: rxMethod<MaintenanceScheduleListOptions>(
-        pipe(
-          tap((): void => {
-            patchState(store, { listCallState: pendingCallState() });
-          }),
-          switchMap((options) =>
-            maintenanceScheduleService.list(options).pipe(
-              tapResponse({
-                next: (response: HydraCollection<MaintenanceScheduleOutput>): void => {
-                  patchState(
-                    store,
-                    setAllEntities([...response.member], { collection: 'schedule' }),
-                    {
-                      totalSchedules: response.totalItems,
-                      listCallState: successCallState(null),
+      const overrideWrites = new Set<string>();
+
+      /**
+       * Constant campaignWrites
+       *
+       * @description
+       * Tracks accepted campaign subscriptions by organization across scope changes.
+       *
+       * @type {Set<string>}
+       */
+      const campaignWrites = new Set<string>();
+
+      /**
+       * Function setOrganization
+       *
+       * @description
+       * Clears the previous organization's rows and action results before a new query starts.
+       * Returning to an organization with an accepted write preserves its pending indicator.
+       *
+       * @param {string} organization - Canonical organization IRI.
+       *
+       * @returns {void}
+       */
+      const setOrganization = (organization: string): void => {
+        if (store.organization() === organization) return;
+        patchState(store, removeAllEntities({ collection: 'schedule' }), {
+          ...INITIAL_STATE,
+          organization,
+          scopeGeneration: store.scopeGeneration() + 1,
+          overrideCallState: overrideWrites.has(organization)
+            ? pendingCallState()
+            : idleCallState(),
+          campaignCallState: campaignWrites.has(organization)
+            ? pendingCallState()
+            : idleCallState(),
+        });
+      };
+      return {
+        setOrganization,
+        /**
+         * Method load
+         * @method load
+         *
+         * @description
+         * Fetches one page of schedules. `switchMap` cancels any in-flight
+         * request, so a fast filter change never races an older response.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<MaintenanceScheduleListOptions>}
+         */
+        load: rxMethod<MaintenanceScheduleListOptions>(
+          pipe(
+            tap((options): void => {
+              setOrganization(options.organization);
+              patchState(store, { listCallState: pendingCallState() });
+            }),
+            map((options) => ({ options, scopeGeneration: store.scopeGeneration() })),
+            switchMap(({ options, scopeGeneration }) =>
+              maintenanceScheduleService.list(options).pipe(
+                tapResponse({
+                  next: (response: HydraCollection<MaintenanceScheduleOutput>): void => {
+                    if (
+                      store.organization() !== options.organization ||
+                      store.scopeGeneration() !== scopeGeneration
+                    )
+                      return;
+                    patchState(
+                      store,
+                      setAllEntities([...response.member], { collection: 'schedule' }),
+                      {
+                        totalSchedules: response.totalItems,
+                        listCallState: successCallState(null),
+                      },
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    if (
+                      store.organization() !== options.organization ||
+                      store.scopeGeneration() !== scopeGeneration
+                    )
+                      return;
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { listCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      maintenanceSchedulesStoreEvents.listFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          'Failed to load maintenance schedules',
+                        ),
+                      ),
+                    );
+                  },
+                }),
+              ),
+            ),
+          ),
+        ),
+
+        /**
+         * Method setIntervalOverride
+         * @method setIntervalOverride
+         *
+         * @description
+         * Sets or clears one schedule's interval override. Each organization admits one
+         * override at a time; accepted writes continue across scope changes. On success the
+         * full recomputed schedule replaces the entity directly, without a refetch.
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<{
+         *   organization: string;
+         *   scheduleId: string;
+         *   intervalOverride: string | null;
+         * }>}
+         */
+        setIntervalOverride: rxMethod<{
+          organization: string;
+          scheduleId: string;
+          intervalOverride: string | null;
+        }>(
+          pipe(
+            mergeMap(({ organization, scheduleId, intervalOverride }) => {
+              if (store.organization() === null) setOrganization(organization);
+              if (store.organization() !== organization || overrideWrites.has(organization))
+                return EMPTY;
+              const scopeGeneration = store.scopeGeneration();
+              const cached = store.scheduleEntityMap()[scheduleId];
+              if (cached && cached.organization !== organization) return EMPTY;
+              overrideWrites.add(organization);
+              patchState(store, { overrideCallState: pendingCallState() });
+              return maintenanceScheduleService
+                .setIntervalOverride(scheduleId, intervalOverride)
+                .pipe(
+                  tapResponse({
+                    next: (schedule: MaintenanceScheduleOutput): void => {
+                      if (
+                        store.organization() !== organization ||
+                        store.scopeGeneration() !== scopeGeneration ||
+                        schedule.organization !== organization
+                      )
+                        return;
+                      patchState(store, setEntity(schedule, { collection: 'schedule' }), {
+                        overrideCallState: successCallState(schedule),
+                      });
                     },
-                  );
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { listCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    maintenanceSchedulesStoreEvents.listFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        'Failed to load maintenance schedules',
-                      ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    error: (error: unknown): void => {
+                      if (
+                        store.organization() !== organization ||
+                        store.scopeGeneration() !== scopeGeneration
+                      )
+                        return;
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { overrideCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        maintenanceSchedulesStoreEvents.overrideFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            'Failed to update the interval override',
+                          ),
+                        ),
+                      );
+                    },
+                  }),
+                  finalize(() => {
+                    overrideWrites.delete(organization);
+                    if (
+                      store.organization() === organization &&
+                      (store.scopeGeneration() !== scopeGeneration ||
+                        store.overrideCallState().status === 'pending')
+                    )
+                      patchState(store, { overrideCallState: idleCallState() });
+                  }),
+                );
+            }),
           ),
         ),
-      ),
 
-      /**
-       * Method setIntervalOverride
-       * @method setIntervalOverride
-       *
-       * @description
-       * Sets or clears one schedule's interval override. `exhaustMap`
-       * prevents a concurrent submission. On success the response — the full
-       * recomputed schedule — replaces the entity directly; no refetch.
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<{ scheduleId: string; intervalOverride: string | null }>}
-       */
-      setIntervalOverride: rxMethod<{ scheduleId: string; intervalOverride: string | null }>(
-        pipe(
-          tap((): void => {
-            patchState(store, { overrideCallState: pendingCallState() });
-          }),
-          exhaustMap(({ scheduleId, intervalOverride }) =>
-            maintenanceScheduleService.setIntervalOverride(scheduleId, intervalOverride).pipe(
-              tapResponse({
-                next: (schedule: MaintenanceScheduleOutput): void => {
-                  patchState(store, setEntity(schedule, { collection: 'schedule' }), {
-                    overrideCallState: successCallState(schedule),
-                  });
-                },
-                error: (error: unknown): void => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { overrideCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    maintenanceSchedulesStoreEvents.overrideFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        'Failed to update the interval override',
+        /**
+         * Method generateCampaign
+         * @method generateCampaign
+         *
+         * @description
+         * Generates an inspection campaign from the schedules matching the given scope. Each
+         * organization admits one campaign at a time while accepted writes continue across scope
+         * changes. Every failure — including the 422 no-match outcome — stays in `campaignError`
+         * for the dialog to render inline; nothing is dispatched as a toast (`events.ts`).
+         *
+         * @since 1.0.0
+         *
+         * @type {RxMethod<GenerateMaintenanceCampaignInput>}
+         */
+        generateCampaign: rxMethod<GenerateMaintenanceCampaignInput>(
+          pipe(
+            mergeMap((input) => {
+              if (store.organization() === null) setOrganization(input.organization);
+              if (
+                store.organization() !== input.organization ||
+                campaignWrites.has(input.organization)
+              )
+                return EMPTY;
+              const scopeGeneration = store.scopeGeneration();
+              campaignWrites.add(input.organization);
+              patchState(store, {
+                campaignCallState: pendingCallState(),
+                campaignResultOrganization: null,
+              });
+              return maintenanceScheduleService.generateCampaign(input).pipe(
+                tapResponse({
+                  next: (result: MaintenanceCampaignOutput): void => {
+                    if (
+                      store.organization() !== input.organization ||
+                      store.scopeGeneration() !== scopeGeneration
+                    )
+                      return;
+                    patchState(store, {
+                      campaignCallState: successCallState(result),
+                      campaignResultOrganization: input.organization,
+                    });
+                    dispatcher.dispatch(
+                      maintenanceSchedulesStoreEvents.campaignSucceeded(
+                        successFeedback(
+                          $localize`:@@maintenance.campaign.toast.created:Campaign #${result.number}:number: created with ${result.workItemsCount}:count: work item(s)`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    );
+                  },
+                  error: (error: unknown): void => {
+                    if (
+                      store.organization() !== input.organization ||
+                      store.scopeGeneration() !== scopeGeneration
+                    )
+                      return;
+                    patchState(store, { campaignCallState: errorCallState(toStoreError(error)) });
+                  },
+                }),
+                finalize(() => {
+                  campaignWrites.delete(input.organization);
+                  if (
+                    store.organization() === input.organization &&
+                    (store.scopeGeneration() !== scopeGeneration ||
+                      store.campaignCallState().status === 'pending')
+                  )
+                    patchState(store, { campaignCallState: idleCallState() });
+                }),
+              );
+            }),
           ),
         ),
-      ),
 
-      /**
-       * Method generateCampaign
-       * @method generateCampaign
-       *
-       * @description
-       * Generates an inspection campaign from the schedules matching the
-       * given scope. `exhaustMap` prevents a concurrent submission. Every
-       * failure — including the documented 422 no-match outcome — stays in
-       * `campaignError` for the dialog to render inline; nothing is
-       * dispatched as a toast (`events.ts`).
-       *
-       * @since 1.0.0
-       *
-       * @type {RxMethod<GenerateMaintenanceCampaignInput>}
-       */
-      generateCampaign: rxMethod<GenerateMaintenanceCampaignInput>(
-        pipe(
-          tap((): void => {
-            patchState(store, { campaignCallState: pendingCallState() });
-          }),
-          exhaustMap((input) =>
-            maintenanceScheduleService.generateCampaign(input).pipe(
-              tapResponse({
-                next: (result: MaintenanceCampaignOutput): void => {
-                  patchState(store, { campaignCallState: successCallState(result) });
-                  dispatcher.dispatch(
-                    maintenanceSchedulesStoreEvents.campaignSucceeded(
-                      successFeedback(
-                        $localize`:@@maintenance.campaign.toast.created:Campaign #${result.number}:number: created with ${result.workItemsCount}:count: work item(s)`,
-                      ),
-                    ),
-                  );
-                },
-                error: (error: unknown): void => {
-                  patchState(store, { campaignCallState: errorCallState(toStoreError(error)) });
-                },
-              }),
-            ),
-          ),
-        ),
-      ),
+        /**
+         * Method resetOverrideOperation
+         *
+         * @description
+         * Clears override feedback for the dialog's close/reopen, preserving accepted work as
+         * pending.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @returns {void}
+         */
+        resetOverrideOperation(): void {
+          const organization = store.organization();
+          patchState(store, {
+            overrideCallState:
+              organization !== null && overrideWrites.has(organization)
+                ? pendingCallState()
+                : idleCallState(),
+          });
+        },
 
-      /**
-       * Method resetOverrideOperation
-       *
-       * @description
-       * Resets the override operation back to idle, for the dialog's close/reopen.
-       *
-       * @access public
-       * @since 1.0.0
-       *
-       * @returns {void}
-       */
-      resetOverrideOperation(): void {
-        patchState(store, { overrideCallState: idleCallState() });
-      },
-
-      /**
-       * Method resetCampaignOperation
-       *
-       * @description
-       * Resets the campaign operation back to idle, for the dialog's close/reopen.
-       *
-       * @access public
-       * @since 1.0.0
-       *
-       * @returns {void}
-       */
-      resetCampaignOperation(): void {
-        patchState(store, { campaignCallState: idleCallState() });
-      },
-    }),
+        /**
+         * Method resetCampaignOperation
+         *
+         * @description
+         * Clears campaign feedback for the dialog's close/reopen, preserving accepted work as
+         * pending.
+         *
+         * @access public
+         * @since 1.0.0
+         *
+         * @returns {void}
+         */
+        resetCampaignOperation(): void {
+          const organization = store.organization();
+          patchState(store, {
+            campaignCallState:
+              organization !== null && campaignWrites.has(organization)
+                ? pendingCallState()
+                : idleCallState(),
+            campaignResultOrganization: null,
+          });
+        },
+      };
+    },
   ),
 );
 

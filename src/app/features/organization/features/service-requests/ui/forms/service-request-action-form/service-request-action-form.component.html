@@ -1,0 +1,153 @@
+<form
+  class="flex min-w-0 flex-col gap-5 px-1"
+  (submit)="submit($event)"
+  data-testid="service-request-action-form"
+>
+  @if (kind() === 'qualify') {
+    @if (!request().equipmentId) {
+      <div hlmField>
+        <label
+          hlmFieldLabel
+          for="service-request-qualification-equipment"
+          i18n="@@serviceRequest.form.equipment"
+          >Equipment</label
+        >
+        <app-service-request-equipment-picker
+          inputId="service-request-qualification-equipment"
+          [organizationId]="organizationId()"
+          [siteId]="request().siteId ?? ''"
+          [formField]="actionForm.equipmentId"
+        />
+        @if (actionForm().touched()) {
+          @for (error of actionForm.equipmentId().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    }
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="service-request-qualification-note"
+        i18n="@@serviceRequest.action.note"
+        >Qualification note</label
+      >
+      <textarea
+        hlmTextarea
+        id="service-request-qualification-note"
+        rows="4"
+        [formField]="actionForm.note"
+      ></textarea>
+      @if (actionForm.note().touched()) {
+        @for (error of actionForm.note().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </div>
+  }
+  @if (kind() === 'reject' || kind() === 'cancel') {
+    <div hlmField>
+      <label
+        hlmFieldLabel
+        for="service-request-decision-reason"
+        i18n="@@serviceRequest.action.reason"
+        >Decision reason</label
+      >
+      <textarea
+        hlmTextarea
+        id="service-request-decision-reason"
+        rows="4"
+        [formField]="actionForm.reason"
+      ></textarea>
+      @if (actionForm().touched()) {
+        @for (error of actionForm.reason().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </div>
+  }
+  @if (kind() === 'convert') {
+    <p class="text-sm text-muted-foreground" i18n="@@serviceRequest.action.convertExplanation">
+      Link an existing corrective task or create an intervention for this qualified request.
+    </p>
+    @if (workReadable()) {
+      <div hlmField>
+        <label hlmFieldLabel for="service-request-existing-work" i18n="@@serviceRequest.action.work"
+          >Corrective work</label
+        >
+        <hlm-combobox
+          [value]="actionForm.workItemId().value()"
+          (valueChange)="pickWork($event)"
+          [itemToString]="workLabel"
+          [filter]="remoteFilter"
+          [disabled]="pending() || locked() || workPending()"
+        >
+          <hlm-combobox-input inputId="service-request-existing-work" />
+          <hlm-combobox-content *hlmComboboxPortal>
+            <div hlmComboboxList>
+              <hlm-combobox-item value="" i18n="@@serviceRequest.action.newWork"
+                >Create a corrective intervention</hlm-combobox-item
+              >
+              @for (work of openWork(); track work.workItemId) {
+                <hlm-combobox-item [value]="work.workItemId">{{
+                  workLabel(work.workItemId)
+                }}</hlm-combobox-item>
+              }
+            </div>
+          </hlm-combobox-content>
+        </hlm-combobox>
+        @if (actionForm().touched()) {
+          @for (error of actionForm.workItemId().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    } @else {
+      <p class="text-sm text-muted-foreground" i18n="@@serviceRequest.action.workDenied">
+        Your permissions do not allow viewing existing interventions.
+      </p>
+    }
+    @if (workPending()) {
+      <div role="status">
+        <hlm-spinner /><span i18n="@@serviceRequest.action.loadingWork">Loading open work</span>
+      </div>
+    }
+    @if (workError(); as error) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription>{{ error.message }}</p>
+      </div>
+    }
+  }
+  @if (error(); as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      [disabled]="pending() || locked()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button
+      hlmBtn
+      type="submit"
+      class="mobile-ui:min-h-11"
+      [variant]="kind() === 'reject' || kind() === 'cancel' ? 'destructive' : 'default'"
+      [disabled]="
+        pending() || locked() || (kind() === 'convert' && (workPending() || !!workError()))
+      "
+    >
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      {{ submitLabel() }}
+    </button>
+  </div>
+</form>

@@ -1,0 +1,97 @@
+<form class="flex flex-col gap-6" (submit)="submit($event)">
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@equipment.catalog.form.identity">Equipment type</legend>
+    <div hlmFieldGroup>
+      <div hlmField>
+        <label hlmFieldLabel for="equipment-type-code" i18n="@@equipment.catalog.form.code"
+          >Permanent code</label
+        >
+        <input hlmInput id="equipment-type-code" [formField]="fields.value" />
+        <p hlmFieldDescription i18n="@@equipment.catalog.form.codeHint">
+          The code cannot be changed after creation.
+        </p>
+        @if (fields.value().touched()) {
+          @for (error of fields.value().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label hlmFieldLabel for="equipment-type-label" i18n="@@equipment.catalog.form.label"
+          >Name</label
+        >
+        <input hlmInput id="equipment-type-label" [formField]="fields.label" />
+        @if (fields.label().touched()) {
+          @for (error of fields.label().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <fieldset hlmFieldSet>
+        <legend hlmFieldLegend id="equipment-type-family" i18n="@@equipment.catalog.form.family">
+          Family
+        </legend>
+        <hlm-toggle-group
+          type="single"
+          variant="outline"
+          [nullable]="false"
+          [value]="draft().family"
+          [disabled]="pending() || !available()"
+          (valueChange)="familyChanged($event)"
+          aria-labelledby="equipment-type-family"
+        >
+          <button
+            hlmToggleGroupItem
+            type="button"
+            value="fire"
+            i18n="@@equipment.catalog.family.fire"
+          >
+            Fire
+          </button>
+          <button
+            hlmToggleGroupItem
+            type="button"
+            value="safety"
+            i18n="@@equipment.catalog.family.safety"
+          >
+            Safety
+          </button>
+          <button
+            hlmToggleGroupItem
+            type="button"
+            value="other"
+            i18n="@@equipment.catalog.family.other"
+          >
+            Other
+          </button>
+        </hlm-toggle-group>
+      </fieldset>
+    </div>
+  </fieldset>
+  @if (error(); as message) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@equipment.catalog.form.saveFailed">
+        Equipment type could not be saved
+      </h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap justify-end gap-2">
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      [disabled]="pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+    <button hlmBtn type="submit" [disabled]="pending() || !available()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      {{ submitLabel() }}
+    </button>
+  </div>
+</form>

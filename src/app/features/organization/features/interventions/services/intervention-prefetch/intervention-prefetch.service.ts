@@ -1,5 +1,15 @@
 import { effect, inject, Service, signal, type WritableSignal } from '@angular/core';
-import { catchError, EMPTY, forkJoin, from, map, mergeMap, type Observable, switchMap } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  forkJoin,
+  from,
+  map,
+  mergeMap,
+  of,
+  type Observable,
+  switchMap,
+} from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { OrganizationMemberService } from '@features/organization/data-access';
@@ -11,6 +21,8 @@ import {
 } from '@features/organization/features/interventions/data-access';
 import type { InterventionOutput } from '@features/organization/features/interventions/models';
 import { ActiveOrganizationStore } from '@features/organization/state';
+import { InterventionEquipmentCatalogService } from '../intervention-equipment-catalog';
+import { InterventionInventoryService } from '../intervention-inventory';
 
 /**
  * Service InterventionPrefetchService
@@ -31,9 +43,13 @@ export class InterventionPrefetchService {
   /**
    * Property authSession
    * @readonly
-   * @description Prevents background requests before sign-in and cancels prefetch when the session ends.
+   *
+   * @description
+   * Prevents background requests before sign-in and cancels prefetch when the session ends.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {AuthSessionPort}
    */
   private readonly authSession = inject<AuthSessionPort>(AUTH_SESSION_PORT);
@@ -128,6 +144,34 @@ export class InterventionPrefetchService {
   );
 
   /**
+   * Property equipmentCatalog
+   * @readonly
+   *
+   * @description
+   * Captures the complete authorized catalog alongside each durable workspace.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionEquipmentCatalogService}
+   */
+  private readonly equipmentCatalog = inject(InterventionEquipmentCatalogService);
+
+  /**
+   * Property inventory
+   * @readonly
+   *
+   * @description
+   * Prepares authorized parts and warehouses after the workspace is durable.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionInventoryService}
+   */
+  private readonly inventory: InterventionInventoryService = inject(InterventionInventoryService);
+
+  /**
    * Property members
    * @readonly
    *
@@ -180,11 +224,13 @@ export class InterventionPrefetchService {
         .getCurrentProfile(organizationId)
         .pipe(
           switchMap((profile) =>
-            this.service.listAll(organizationId, {
-              responsible: `/api/organizations/${organizationId}/members/${profile.id}`,
-            }),
+            this.service
+              .listAll(organizationId, {
+                responsible: `/api/organizations/${organizationId}/members/${profile.id}`,
+              })
+              .pipe(map((interventions) => ({ interventions, actorId: profile.id }))),
           ),
-          switchMap((interventions) =>
+          switchMap(({ interventions, actorId }) =>
             // Prefetch each workspace independently: a single failure must not
             // wipe out every other cached workspace (the old forkJoin was
             // all-or-nothing), so an offline-bound agent keeps the ones that
@@ -195,7 +241,7 @@ export class InterventionPrefetchService {
               ),
             ).pipe(
               mergeMap((intervention) =>
-                this.prefetch(organizationId, intervention).pipe(catchError(() => EMPTY)),
+                this.prefetch(organizationId, intervention, actorId).pipe(catchError(() => EMPTY)),
               ),
             ),
           ),
@@ -237,10 +283,15 @@ export class InterventionPrefetchService {
    *
    * @param {string} organizationId - Organization owning the intervention.
    * @param {InterventionOutput} intervention - Intervention to prefetch.
+   * @param {string} actorId - Current beneficiary of actor-only journal pages.
    *
    * @returns {Observable<void>} Completes once the workspace is persisted.
    */
-  private prefetch(organizationId: string, intervention: InterventionOutput): Observable<void> {
+  private prefetch(
+    organizationId: string,
+    intervention: InterventionOutput,
+    actorId: string,
+  ): Observable<void> {
     const owner = this.offline.publicationOwner();
     return forkJoin({
       workItems: this.service.listAllWorkItems(intervention.id),
@@ -248,10 +299,18 @@ export class InterventionPrefetchService {
       issues: this.service.listIssues(intervention.id),
     }).pipe(
       switchMap(({ workItems, changes, issues }) => {
-        if (this.organization.selectedOrganizationId() !== organizationId) return EMPTY;
+        if (
+          this.organization.selectedOrganizationId() !== organizationId ||
+          owner !== this.offline.publicationOwner()
+        )
+          return EMPTY;
         return from(
           this.offline.saveWorkspace(intervention, workItems, changes, issues.member),
         ).pipe(
+          switchMap(() => this.equipmentCatalog.capture(intervention, owner)),
+          switchMap(() =>
+            this.inventory.capture(intervention, owner).pipe(catchError(() => of(null))),
+          ),
           switchMap(() =>
             from(
               workItems.filter(
@@ -261,7 +320,7 @@ export class InterventionPrefetchService {
           ),
           mergeMap(
             (item) =>
-              this.time.journal(item.id).pipe(
+              this.time.journal(item.id, 1, 30, item.allowedActions?.canManageTime !== true).pipe(
                 switchMap((journal) =>
                   from(
                     this.timeRepository.saveJournal(
@@ -269,6 +328,14 @@ export class InterventionPrefetchService {
                         interventionId: intervention.id,
                         workItemId: item.id,
                         entries: journal.entries,
+                        audience:
+                          item.allowedActions?.canManageTime === true ? 'all' : `member:${actorId}`,
+                        pagination: {
+                          page: journal.page,
+                          itemsPerPage: journal.itemsPerPage,
+                          totalItems: journal.totalItems,
+                          nextPage: journal.nextPage,
+                        },
                       },
                       owner,
                     ),

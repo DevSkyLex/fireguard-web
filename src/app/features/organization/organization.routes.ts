@@ -45,19 +45,16 @@ function redirectToOrganizationMembersTab(tab: 'roles' | 'teams'): RedirectFunct
  *
  * @description
  * The feature's route entry point, and everything served under one organization.
- *
  * `/organizations` is redirect-only: `organizationGuard` forwards to the
  * default workspace — the last organization persisted in the cookie when it is
  * still accessible, else the first accessible one, else onboarding. Its empty
  * `children` exists only to make the path matchable, since the guard always
  * redirects and no component is ever constructed. There is no organization list
  * page; switching happens through the sidebar switcher.
- *
  * `/organizations/:organizationId` resolves organization context before any
  * child renders, so a page never has to reason about a half-known workspace.
  * Its `more` child is the full secondary navigation directory, available in both
  * experiences under the same parent guard and resolver without additional reads.
- *
  * The landing page — the merged Dashboard, combining the retired Today and
  * Statistics pages into one tabbed surface (`FEATURE.md`) — the
  * conversational surfaces (direct messages and channels), the estate
@@ -67,14 +64,12 @@ function redirectToOrganizationMembersTab(tab: 'roles' | 'teams'): RedirectFunct
  * (`audit`), the administration pages (members, settings) and a member's
  * profile are mounted today. `statistics` is a permanent redirect to the
  * landing page for old bookmarks and deep links.
- *
  * `members` now also carries what used to be the `team` (roles &
  * permissions) and `teams` routes, absorbed as `OrganizationMembersPage`
  * tabs (`?tab=roles`, `?tab=teams`) — see the page's own `@description` for
  * the per-tab permission story. `/team` and `/teams` stay addressable as
  * functional redirects ({@link redirectToOrganizationMembersTab}) so
  * existing links and bookmarks keep working.
- *
  * `messages` and `channels` load the collaboration subfeature's route files
  * directly rather than its barrel, which also exports the offline sync
  * coordinator and would pull it into this lazy chunk.
@@ -168,9 +163,9 @@ export const ORGANIZATION_ROUTES: Routes = [
           import('./ui/pages/organization-assets-page/organization-assets-page.component').then(
             (m) => m.OrganizationAssetsPage,
           ),
-        title: $localize`:@@route.assets:Assets`,
+        title: $localize`:@@route.park:Equipment park`,
         data: {
-          breadcrumb: $localize`:@@route.assets:Assets`,
+          breadcrumb: $localize`:@@route.park:Equipment park`,
           [DASHBOARD_MOBILE_NAVIGATION_ROOT_DATA_KEY]: true,
         } satisfies DashboardRouteData,
       },
@@ -178,6 +173,45 @@ export const ORGANIZATION_ROUTES: Routes = [
         path: 'equipments',
         loadChildren: () =>
           import('./features/equipments/equipments.routes').then((m) => m.EQUIPMENT_ROUTES),
+      },
+      {
+        path: 'customers',
+        loadChildren: () =>
+          import('./features/customers/customers.routes').then((m) => m.CUSTOMER_ROUTES),
+      },
+      {
+        path: 'service-requests',
+        loadChildren: () =>
+          import('./features/service-requests/service-requests.routes').then(
+            (m) => m.SERVICE_REQUEST_ROUTES,
+          ),
+      },
+      {
+        path: 'inventory',
+        loadChildren: () =>
+          import('./features/inventory/inventory.routes').then((m) => m.INVENTORY_ROUTES),
+      },
+      {
+        path: 'procurement',
+        canActivate: [
+          organizationPermissionGuard({ permissions: [ORGANIZATION_PERMISSION.PROCUREMENT_READ] }),
+        ],
+        loadChildren: () =>
+          import('./features/procurement/procurement.routes').then((m) => m.PROCUREMENT_ROUTES),
+      },
+      {
+        path: 'maintenance-costs',
+        loadChildren: () =>
+          import('./features/maintenance-costs/maintenance-costs.routes').then(
+            (m) => m.MAINTENANCE_COST_ROUTES,
+          ),
+      },
+      {
+        path: 'maintenance-exports',
+        loadChildren: () =>
+          import('./features/maintenance-exports/maintenance-exports.routes').then(
+            (m) => m.MAINTENANCE_EXPORT_ROUTES,
+          ),
       },
       {
         path: 'facilities',

@@ -19,25 +19,30 @@ workspace. Two primary contexts:
   offline (IndexedDB persistence + outbox replay). They need fast,
   thumb-reachable actions and a clear "next recommended action".
 
-The job to be done: take a fire-safety intervention from draft → planned →
-executed in the field → reviewed → published, without losing data offline and
-without ambiguity about what to do next.
+The job to be done: know the fire-equipment park, organize its controls and
+maintenance, and preserve the record of every intervention. Service providers
+select their internal customer and sites; operators manage their own sites
+without a mandatory customer record. Both use the same authorized workflows.
 
 ## Product Purpose
 
-Fireguard is an organization-scoped platform for planning, executing and
-publishing field interventions (facilities, equipment, inspections). Success is
-an intervention that moves through its full workflow with zero data loss
-offline, clear blocker resolution, and an atomic publication that either fully
-succeeds or leaves records untouched.
+FireGuard is a specialized maintenance management application for fire-equipment
+parks. Its promise is: "Know your fire-equipment park, organize its controls and
+maintenance, and preserve the record of every intervention." Fire safety leads
+the initial views and workflows; emergency lighting, gas detection, access
+control and cameras are adjacent equipment families in the same park.
 
 ## Positioning
 
-**The headline claim is atomic offline publication.** The agent works fully
-offline; publication then applies every inspection, equipment change and record
-as one transaction that either fully succeeds or leaves records untouched.
-There is no half-published intervention. This leads because it is the hardest
-mechanism for a neighboring product to copy truthfully.
+**The headline is fire-equipment park management.** Park is the primary entry
+point. The equipment dossier distinguishes declared operational status, control
+deadlines and unresolved anomalies. A performed unfavorable control remains a
+performed control; its anomalies remain open. A failed repair remains necessary.
+
+Atomic publication and durable offline execution support this promise: publication
+applies inspections, equipment changes and validated work results in one transaction.
+A validated dossier preserves its customer/site identity, evidence and execution
+facts at publication, while later corrections remain separately traceable.
 
 Two further mechanisms are equally true and support it, but do not lead:
 
@@ -52,6 +57,22 @@ Two further mechanisms are equally true and support it, but do not lead:
 
 ## Operating Context
 
+- **Park context** starts with fire equipment and offers an explicit all-equipment
+  view. Customer, site and action-queue filters are shared by exact server counts
+  and their destination lists. Operational unavailability, upcoming controls and
+  unresolved anomalies form the three principal action queues.
+- **Equipment identity** includes an organization-unique asset reference,
+  descriptive name, declared criticality and simple value/unit characteristics.
+  Organization-owned catalogue types complement preserved historical codes.
+  Replacement retires the predecessor and links one successor idempotently;
+  historical controls, documents and QR identification remain attached to the old item.
+- **Independent preventive operations** have original due dates and explicit
+  validated results. Control and servicing calendars are independent; fixed
+  calendars retain their anchor across short months. Historical calendars remain
+  compatible until the organization explicitly switches its single active engine.
+- **Organization profile** adapts starting views and onboarding. Effective API
+  permissions determine rights; the profile never grants permissions or shares
+  customers between organizations.
 - **The intervention lifecycle** is the spine of the product:
   `draft → planned → in_progress → submitted (review) → published`, plus
   `changes_requested` (reviewer sends work back with a required note) and
@@ -108,6 +129,23 @@ Two further mechanisms are equally true and support it, but do not lead:
 
 **Constraints future work must preserve**
 
+- FireGuard retains its name. Brand replacement, customer portals, collaboration
+  between organizations, meters, sensors and a dedicated ERP connector are later
+  projects. General building maintenance and industry are outside this trajectory.
+- Organization-defined intervals and checklists provide operational tracking;
+  they do not constitute automatic regulatory certification.
+- Repair requests, interventions, quantitative parts, warehouses, suppliers,
+  orders, partial receipts, returns, time and internal costs form one maintenance
+  chain. Unresolved physical declarations stay traceable and block publication.
+  Individual equipment in reserve remains separate from quantitative stock.
+- Financial reports allocate each contribution once to equipment, site or customer,
+  with explicit unallocated and unknown costs. Current realized costs remain distinct
+  from the snapshot frozen at publication and from planned amounts.
+- Versioned JSON/CSV maintenance exports preserve their original bytes and stable
+  references. A later correction creates a linked adjustment. Export generation and
+  confirmed ERP import are separate states, and financial inclusion requires its
+  own permission. Commercial quotes, sales prices, invoices, taxes and payments
+  remain in the external ERP. `Billing` owns the FireGuard SaaS subscription.
 - **Market frame: EU multi-market.** No single national fire-safety regime may
   be presumed in the domain model, and no copy may claim conformity with a
   specific standard (ERP registre de sécurité, APSAD, NF, or any other).

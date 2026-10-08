@@ -14,11 +14,12 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import { type CallState } from '@core/request-state';
+import { idleCallState, type CallState } from '@core/request-state';
 import type {
   InterventionTimeDraft,
   InterventionTimeEntryView,
   InterventionTimeWrite,
+  InterventionTimeEntryVersionsOutput,
   InterventionWorkItemOutput,
   MemberSelectOption,
 } from '@features/organization/features/interventions/models';
@@ -41,7 +42,8 @@ import { InterventionTimeForm } from '../../forms/intervention-time-form';
  * @class InterventionTimeSheet
  *
  * @description
- * Contextual journal and explicit corrections, usable after publication. Draft persistence and transport remain owned by the page.
+ * Contextual journal and explicit corrections, usable after publication. Draft persistence and
+ * transport remain owned by the page.
  *
  * @version 1.0.0
  */
@@ -135,11 +137,11 @@ export class InterventionTimeSheet {
    */
   protected readonly draftServerEntry: Signal<InterventionTimeEntryView | null> = computed(() => {
     const draft = this.draft();
-    return draft?.baseRevision !== null
-      ? (this.entries().find(
-          (entry) =>
-            entry.id === draft?.id && !entry.syncStatus && entry.revision !== draft.baseRevision,
-        ) ?? null)
+    if (!draft || draft.baseRevision === null) return null;
+    const latest =
+      this.draftEntryState().data ?? this.entries().find((entry) => entry.id === draft.id);
+    return latest?.id === draft.id && !latest.syncStatus && latest.revision !== draft.baseRevision
+      ? latest
       : null;
   });
 
@@ -302,6 +304,135 @@ export class InterventionTimeSheet {
    * @type {InputSignal<boolean>}
    */
   public readonly historyUnavailable: InputSignal<boolean> = input(false);
+
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * Displayed journal page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number>}
+   */
+  public readonly page: InputSignal<number> = input(1);
+
+  /**
+   * Property draftEntryState
+   * @readonly
+   *
+   * @description
+   * Independent current-entry read for a saved correction outside the visible page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<CallState<InterventionTimeEntryView>>}
+   */
+  public readonly draftEntryState: InputSignal<CallState<InterventionTimeEntryView>> =
+    input(idleCallState<InterventionTimeEntryView>());
+
+  /**
+   * Property draftReviewRequested
+   * @readonly
+   *
+   * @description
+   * Explicit retry of the saved correction's current revision read.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<void>}
+   */
+  public readonly draftReviewRequested: OutputEmitterRef<void> = output();
+
+  /**
+   * Property totalItems
+   * @readonly
+   *
+   * @description
+   * Exact saved entry count across pages, or unknown offline.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number | null>}
+   */
+  public readonly totalItems: InputSignal<number | null> = input<number | null>(null);
+
+  /**
+   * Property nextPage
+   * @readonly
+   *
+   * @description
+   * Known next journal page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<number | null>}
+   */
+  public readonly nextPage: InputSignal<number | null> = input<number | null>(null);
+
+  /**
+   * Property historyStates
+   * @readonly
+   *
+   * @description
+   * Independent expanded history request states.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<Readonly<Partial<Record<string, CallState<InterventionTimeEntryVersionsOutput>>>>>}
+   */
+  public readonly historyStates: InputSignal<
+    Readonly<Partial<Record<string, CallState<InterventionTimeEntryVersionsOutput>>>>
+  > = input<Readonly<Partial<Record<string, CallState<InterventionTimeEntryVersionsOutput>>>>>({});
+
+  /**
+   * Property pageChanged
+   * @readonly
+   *
+   * @description
+   * Explicit journal page navigation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<number>}
+   */
+  public readonly pageChanged: OutputEmitterRef<number> = output();
+
+  /**
+   * Property historyExpanded
+   * @readonly
+   *
+   * @description
+   * Entry whose immutable revision history was expanded.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly historyExpanded: OutputEmitterRef<string> = output();
+
+  /**
+   * Property olderVersionsRequested
+   * @readonly
+   *
+   * @description
+   * Explicit earlier history-page continuation or retry.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly olderVersionsRequested: OutputEmitterRef<string> = output();
 
   /**
    * Property closed
@@ -479,12 +610,32 @@ export class InterventionTimeSheet {
    * @since 1.0.0
    *
    * @param {string} id - Member identifier.
+   *
    * @returns {string}
    */
   protected memberName(id: string): string {
     return (
       this.members().find((member) => member.value.split('/').at(-1) === id)?.displayName ?? id
     );
+  }
+
+  /**
+   * Method changePage
+   * @method changePage
+   *
+   * @description
+   * Emits a known journal continuation without inferring unavailable offline pages.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {number | null} page - Known next journal page.
+   *
+   * @returns {void} Emits the explicit page request.
+   */
+  protected changePage(page: number | null): void {
+    if (page !== null && !this.pending() && this.readState().status !== 'pending')
+      this.pageChanged.emit(page);
   }
 
   /**
@@ -522,6 +673,7 @@ export class InterventionTimeSheet {
    * @since 1.0.0
    *
    * @param {InterventionTimeEntryView} entry - Entry to correct.
+   *
    * @returns {void}
    */
   protected correct(entry: InterventionTimeEntryView): void {
@@ -549,6 +701,7 @@ export class InterventionTimeSheet {
    * @since 1.0.0
    *
    * @param {InterventionTimeEntryView} entry - Journal row.
+   *
    * @returns {boolean}
    */
   protected canCorrect(entry: InterventionTimeEntryView): boolean {

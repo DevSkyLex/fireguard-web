@@ -6,7 +6,11 @@ import {
   OrganizationRoleService,
   OrganizationService,
 } from '@features/organization/data-access';
-import { EquipmentService } from '@features/organization/features/equipments/data-access';
+import {
+  EquipmentService,
+  EquipmentTypeService,
+} from '@features/organization/features/equipments/data-access';
+import { equipmentTypeOption } from '@features/organization/features/equipments/utils';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import type {
@@ -16,6 +20,7 @@ import type {
   SetupCreateInspectionInput,
   SetupCreateOrganizationInput,
   SetupEquipmentSummary,
+  SetupEquipmentTypeOption,
   SetupFacilitySummary,
   SetupFacilityAddressMatch,
   SetupInviteMemberInput,
@@ -33,6 +38,7 @@ import type {
  * payloads or services.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -111,6 +117,20 @@ export class OrganizationSetupService {
   private readonly equipmentService: EquipmentService = inject<EquipmentService>(EquipmentService);
 
   /**
+   * Property equipmentTypeService
+   * @readonly
+   *
+   * @description
+   * Reads the complete server-owned equipment catalogue through its owning transport.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {EquipmentTypeService}
+   */
+  private readonly equipmentTypeService: EquipmentTypeService = inject(EquipmentTypeService);
+
+  /**
    * Property inspectionService
    * @readonly
    *
@@ -132,8 +152,13 @@ export class OrganizationSetupService {
    * Creates an organization through the setup boundary and hides the internal
    * transport payload from consumers.
    *
+   * @access public
+   * @since unknown
+   *
    * @param {SetupCreateOrganizationInput} input Organization creation payload.
-   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one resource creation.
+   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one
+   *   resource creation.
+   *
    * @returns {Observable<void>} Observable completing when the organization has been created.
    */
   public createOrganization(
@@ -150,8 +175,13 @@ export class OrganizationSetupService {
    * Lists assignable organization roles and maps them to the setup-owned DTO
    * shape exposed to consumers.
    *
+   * @access public
+   * @since unknown
+   *
    * @param {string} organizationId Target organization identifier.
-   * @returns {Observable<readonly SetupOrganizationRole[]>} Observable emitting setup role summaries.
+   *
+   * @returns {Observable<readonly SetupOrganizationRole[]>} Observable emitting setup role
+   *   summaries.
    */
   public listRoles(organizationId: string): Observable<readonly SetupOrganizationRole[]> {
     return this.organizationRoleService.listAll(organizationId).pipe(
@@ -172,9 +202,14 @@ export class OrganizationSetupService {
    * Sends one or more member invitations for the target organization through
    * the setup boundary.
    *
+   * @access public
+   * @since unknown
+   *
    * @param {string} organizationId Target organization identifier.
    * @param {readonly SetupInviteMemberInput[]} invitations Invitations to create.
-   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one resource creation.
+   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one
+   *   resource creation.
+   *
    * @returns {Observable<void>} Observable completing when all invitations have been sent.
    */
   public inviteMembers(
@@ -199,7 +234,21 @@ export class OrganizationSetupService {
     ).pipe(map(() => undefined));
   }
 
-  /** @description Lists all persisted sites as setup summaries so an activation resumed after reload can attach equipment. */
+  /**
+   * Method listFacilities
+   * @method listFacilities
+   *
+   * @description
+   * Lists persisted site summaries so resumed activation can attach equipment without duplicating
+   * sites.
+   *
+   * @access public
+   * @since unknown
+   *
+   * @param {string} organizationId - Organization owning the persisted sites.
+   *
+   * @returns {Observable<readonly SetupFacilitySummary[]>} Complete site choices.
+   */
   public listFacilities(organizationId: string): Observable<readonly SetupFacilitySummary[]> {
     return this.facilityService
       .listAll(organizationId)
@@ -209,12 +258,19 @@ export class OrganizationSetupService {
   /**
    * Method searchFacilityAddresses
    * @method searchFacilityAddresses
-   * @description Retrieves address suggestions through the facility-owned search provider without exposing its transport envelope to onboarding.
+   *
+   * @description
+   * Retrieves address suggestions through the facility-owned search provider without exposing its
+   * transport envelope to onboarding.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization owning the new facility.
    * @param {string} query - Postal address fragment entered by the user.
-   * @returns {Observable<readonly SetupFacilityAddressMatch[]>} Suggested addresses, preserving upstream HTTP errors.
+   *
+   * @returns {Observable<readonly SetupFacilityAddressMatch[]>} Suggested addresses, preserving
+   *   upstream HTTP errors.
    */
   public searchFacilityAddresses(
     organizationId: string,
@@ -257,10 +313,16 @@ export class OrganizationSetupService {
    * their setup-owned summaries so consumers can reference the created
    * resources — onboarding attaches the first equipment to one of them.
    *
+   * @access public
+   * @since unknown
+   *
    * @param {string} organizationId Target organization identifier.
    * @param {readonly SetupCreateFacilityInput[]} facilities Facilities to create.
-   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one resource creation.
-   * @returns {Observable<readonly SetupFacilitySummary[]>} Observable emitting the created facility summaries.
+   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one
+   *   resource creation.
+   *
+   * @returns {Observable<readonly SetupFacilitySummary[]>} Observable emitting the created facility
+   *   summaries.
    */
   public createFacilities(
     organizationId: string,
@@ -281,15 +343,55 @@ export class OrganizationSetupService {
   }
 
   /**
+   * Method listEquipmentTypes
+   * @method listEquipmentTypes
+   *
+   * @description
+   * Publishes active localized catalogue choices without exposing Equipment transport metadata.
+   * Archived types cannot be selected for a new setup creation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the catalogue.
+   *
+   * @returns {Observable<readonly SetupEquipmentTypeOption[]>} Complete active catalogue.
+   */
+  public listEquipmentTypes(
+    organizationId: string,
+  ): Observable<readonly SetupEquipmentTypeOption[]> {
+    return this.equipmentTypeService.listAll(organizationId).pipe(
+      map((entries) =>
+        entries
+          .filter((entry) => !entry.archived)
+          .map((entry) => {
+            const option = equipmentTypeOption(entry);
+            return {
+              value: option.value,
+              label: option.label,
+              family: option.family,
+              icon: option.icon,
+            };
+          }),
+      ),
+    );
+  }
+
+  /**
    * Method listEquipment
    *
    * @description
    * Lists equipment records needed during setup flows and maps them to the
    * setup-owned summary DTO.
    *
+   * @access public
+   * @since unknown
+   *
    * @param {string} organizationId Target organization identifier.
    * @param {number} [itemsPerPage=100] Maximum number of items requested from the backend.
-   * @returns {Observable<readonly SetupEquipmentSummary[]>} Observable emitting equipment summaries.
+   *
+   * @returns {Observable<readonly SetupEquipmentSummary[]>} Observable emitting equipment
+   *   summaries.
    */
   public listEquipment(
     organizationId: string,
@@ -314,9 +416,14 @@ export class OrganizationSetupService {
    * setup boundary. An optional `facilityId` is mapped to the flat facility
    * IRI the API validates, assigning the equipment in the same request.
    *
+   * @access public
+   * @since unknown
+   *
    * @param {string} organizationId Target organization identifier.
    * @param {SetupCreateEquipmentInput} input Equipment creation payload.
-   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one resource creation.
+   * @param {SetupOperationContext | undefined} context - Optional server receipt for exactly one
+   *   resource creation.
+   *
    * @returns {Observable<void>} Observable completing when the equipment has been created.
    */
   public createEquipment(
@@ -342,8 +449,12 @@ export class OrganizationSetupService {
    * Creates an inspection record for setup flows without exposing the internal
    * organization inspection payloads to consumers.
    *
+   * @access public
+   * @since unknown
+   *
    * @param {string} organizationId Target organization identifier.
    * @param {SetupCreateInspectionInput} input Inspection creation payload.
+   *
    * @returns {Observable<void>} Observable completing when the inspection has been created.
    */
   public createInspection(

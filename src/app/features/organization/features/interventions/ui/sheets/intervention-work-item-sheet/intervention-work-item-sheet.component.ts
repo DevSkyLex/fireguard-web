@@ -35,13 +35,11 @@ import {
  *
  * @description
  * The spartan sheet hosting {@link InterventionWorkItemForm}.
- *
  * Purely presentational: it owns the panel, forwards `visible`/`visibleChange`
  * and re-emits the form's `submitted`; the page keeps the orchestration
  * (`ARCHITECTURE.md` §10.5). Its open state is derived from `visible` rather
  * than held locally, so the page stays the single owner and the two cannot
  * drift.
- *
  * Below `sm` the panel presents as a bottom drawer (`@shared/sheet-side`)
  * instead of a right-hand panel, so its footer lands in the thumb zone.
  *
@@ -56,6 +54,21 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionWorkItemSheet {
+  /**
+   * Property prefill
+   * @readonly
+   *
+   * @description
+   * Equipment-dossier context forwarded to the standard preparation form.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<Pick<InterventionWorkItemFormValues, 'action' | 'target'> | null>}
+   */
+  public readonly prefill = input<Pick<InterventionWorkItemFormValues, 'action' | 'target'> | null>(
+    null,
+  );
   /**
    * Property workloadOrganizationId
    * @readonly
@@ -100,17 +113,27 @@ export class InterventionWorkItemSheet {
   /**
    * Property catalogueSearched
    * @readonly
-   * @description Requests remote options without replacing the draft.
+   *
+   * @description
+   * Requests remote options without replacing the draft.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<PlanningCatalogueRequest>}
    */
   public readonly catalogueSearched = output<PlanningCatalogueRequest>();
   /**
    * Property catalogues
    * @readonly
-   * @description Loaded coverage and failures by preparation source.
+   *
+   * @description
+   * Loaded coverage and failures by preparation source.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {InputSignal<Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>>}
    */
   public readonly catalogues = input<
     Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
@@ -118,9 +141,14 @@ export class InterventionWorkItemSheet {
   /**
    * Property catalogueRequested
    * @readonly
-   * @description Requests another source page while preserving the form.
+   *
+   * @description
+   * Requests another source page while preserving the form.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<PlanningCatalogueKind>}
    */
   public readonly catalogueRequested = output<PlanningCatalogueKind>();
 
@@ -128,9 +156,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property visible
    * @readonly
-   * @description Whether the panel is open. Owned by the page.
+   *
+   * @description
+   * Whether the panel is open. Owned by the page.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly visible: InputSignal<boolean> = input<boolean>(false);
@@ -138,9 +170,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property pending
    * @readonly
-   * @description Whether the creation request is in flight.
+   *
+   * @description
+   * Whether the creation request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -148,9 +184,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property disabled
    * @readonly
-   * @description Whether the scope may still grow, forwarded to the form.
+   *
+   * @description
+   * Whether the scope may still grow, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly disabled: InputSignal<boolean> = input<boolean>(false);
@@ -158,9 +198,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the creation failed with, forwarded to the form.
+   *
+   * @description
+   * Whatever the creation failed with, forwarded to the form.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -168,9 +212,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property targetOptions
    * @readonly
-   * @description The facilities and equipment an item can point at.
+   *
+   * @description
+   * The facilities and equipment an item can point at.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly SelectOption[]>}
    */
   public readonly targetOptions: InputSignal<readonly SelectOption[]> = input<
@@ -180,9 +228,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property memberOptions
    * @readonly
-   * @description The members an item can be assigned to.
+   *
+   * @description
+   * The members an item can be assigned to.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly MemberSelectOption[]>}
    */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
@@ -194,9 +246,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property visibleChange
    * @readonly
-   * @description The panel wants to open or close.
+   *
+   * @description
+   * The panel wants to open or close.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<boolean>}
    */
   public readonly visibleChange: OutputEmitterRef<boolean> = output<boolean>();
@@ -204,9 +260,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property submitted
    * @readonly
-   * @description The form's validated item, forwarded untouched.
+   *
+   * @description
+   * The form's validated item, forwarded untouched.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionWorkItemFormValues>}
    */
   public readonly submitted: OutputEmitterRef<InterventionWorkItemFormValues> =
@@ -240,9 +300,13 @@ export class InterventionWorkItemSheet {
   /**
    * Property sheetState
    * @readonly
-   * @description The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
+   * @description
+   * The panel state, derived from {@link visible} so there is no second copy of the truth.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly sheetState: Signal<BrnDialogState> = computed<BrnDialogState>(() =>
@@ -252,9 +316,14 @@ export class InterventionWorkItemSheet {
   /**
    * Property side
    * @readonly
-   * @description The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action Surfaces" rule 2).
+   *
+   * @description
+   * The panel's side — `'bottom'` below `sm`, `'right'` at and above it (`DESIGN.md` "Action
+   * Surfaces" rule 2).
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {Signal<'right' | 'bottom'>}
    */
   protected readonly side: Signal<'right' | 'bottom'> = sheetSide();
@@ -277,9 +346,14 @@ export class InterventionWorkItemSheet {
   /**
    * Property unsavedChangesDialogState
    * @readonly
-   * @description Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when {@link dirty} is true.
+   *
+   * @description
+   * Open state of the shared {@link UnsavedChangesDialog}, raised by {@link requestClose} when
+   * {@link dirty} is true.
+   *
    * @access protected
    * @since 7.1.0
+   *
    * @type {WritableSignal<BrnDialogState>}
    */
   protected readonly unsavedChangesDialogState: WritableSignal<BrnDialogState> =
@@ -364,9 +438,13 @@ export class InterventionWorkItemSheet {
   /**
    * Method onUnsavedChangesConfirmed
    * @method onUnsavedChangesConfirmed
-   * @description The operator chose to discard the draft — closes both the confirmation and the panel itself.
+   *
+   * @description
+   * The operator chose to discard the draft — closes both the confirmation and the panel itself.
+   *
    * @access protected
    * @since 7.1.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesConfirmed(): void {
@@ -377,9 +455,13 @@ export class InterventionWorkItemSheet {
   /**
    * Method onUnsavedChangesDismissed
    * @method onUnsavedChangesDismissed
-   * @description The operator chose to keep editing — closes the confirmation only, the panel stays open.
+   *
+   * @description
+   * The operator chose to keep editing — closes the confirmation only, the panel stays open.
+   *
    * @access protected
    * @since 7.1.0
+   *
    * @returns {void}
    */
   protected onUnsavedChangesDismissed(): void {

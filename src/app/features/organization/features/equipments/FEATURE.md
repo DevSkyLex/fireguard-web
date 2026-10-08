@@ -2,297 +2,142 @@
 
 **Reading guide:** [Documentation index](../../../../../../docs/README.md) · [Related guide](../../../../../../docs/guides/facilities-and-spatial-views.md).
 
-## Purpose
+## Purpose and ownership
 
-Owns organization-scoped equipment workflows.
+Owns the organization equipment inventory, declared identity and lifecycle, type catalog,
+replacement links, attachments, maintenance history and tags. The inventory remains centered
+on fire equipment; `fire`, `safety` and `other` are server catalog families, not separate apps.
+FireGuard's public identity and existing URLs remain unchanged.
 
-`EquipmentService.summaryByFacility` reads the Equipment-owned exact summary:
-`scope`, `totalItems`, all four `byStatus` counts and `needingAttentionCount`.
-Detail and Assets share a default subtree scope and explicit direct option
-through `equipmentScope`; both pass matching `includeDescendants` values.
-Summary counts are independent of list page limits. Equipment read permission is
-distinct from Facilities read permission. Creation plus assignment/intervention
-association is atomic in the API, and conflict handling preserves input drafts.
+Inspections own control results and anomalies. Interventions own work orders and execution.
+Maintenance owns operation plans and due dates. Equipment consumes their authorized read
+projections and deep links; it never infers a control result from operational status or
+considers a generated intervention a completed control.
 
-This subfeature is responsible for:
+## Routes and presentation
 
-- listing equipments for the active organization,
-- equipment creation, detail, and editing,
-- assignment, unassignment, commissioning, maintenance, and decommissioning actions,
-- maintenance logs, attachments, and tags,
-- active equipment selection and detail-oriented state.
+- `/organizations/:organizationId/equipments`: server-paged table and mobile cards,
+  search, type/status filters, sort preferences, CSV export, QR labels and a create sheet.
+- `/equipments/create`: compatibility redirect to the list with `?create=1`, retaining
+  the optional facility context. Creation is permission-gated and site-scoped.
+- `/equipments/types`: catalog administration, guarded by `EQUIPMENT_WRITE`.
+  Stable codes cannot be renamed. Revision conflicts retain the draft and require explicit
+  comparison with the latest server revision before retry.
+- `/equipments/:equipmentId`: the equipment dossier. The resolver seeds
+  `ActiveEquipmentStore` without blocking activation; skeleton, failure and retry belong
+  to the page. The document title prefers name and asset reference, retaining historical
+  type/brand/model fallback.
 
-This subfeature does not own top-level organization context or inspection workflows.
+The dossier distinguishes declared operational state, control due status and exact open
+anomalies. `maintenanceDueStatus` describes controls only; maintenance operations remain
+independent and open through the plan library filtered by equipment and operation kind.
+Inspection and intervention permissions are checked separately. Loading, denied and failed
+secondary projections never render as zero counts or an empty confirmed work queue.
 
-## Entry Points
+Identity remains editable on the record through `EquipmentInformationPanel`. Name and
+organization-unique asset reference are optional. The characteristics editor is a native
+Signal Form for criticality and up to fifty unique key/value/unit declarations. These
+values do not establish regulatory obligations.
 
-- Routes: `equipments.routes.ts`
-- Public API: `index.ts`, narrowed to `EQUIPMENT_TYPE_OPTIONS` — the only symbol
-  any external consumer imports (see below). It used to `export *` the state,
-  models, data-access and options trees.
+Overview, attachments, maintenance history and tags remain dossier sections. Secondary tabs
+load on first activation. Facility assignment uses a read-only paged facility picker.
+Floor-plan placement remains owned by the facility Plans tab.
 
-## Routes
+## Catalog and replacement invariants
 
-- `/organizations/:organizationId/equipments` — `EquipmentsPage`: an
-  `hlmTable` of the organization's equipment (`EquipmentTable`), a debounced
-  search box (`?q=`, mapped to the backend `search` filter) and an editable
-  type/status filter chip row (`app-collection-filter-bar`,
-  `@shared/collection-filters`, replacing the earlier popover), paginated
-  server-side. No row menu and no bulk actions — the record itself is where
-  every property is edited (see below), so the list has nothing left to
-  orchestrate beyond search, filter, page and a "New equipment" link
-  (`EQUIPMENT_WRITE`-gated) into `create`. `EquipmentTable`'s Equipment
-  (type), Brand / model (brand) and Status heads are sortable — the
-  backend's own `order[<field>]` whitelist (`type`, `status`, `brand`,
-  `model`, `createdAt`, `updatedAt`; `ListEquipmentsProvider`) intersected
-  with the columns this table renders; `model` and the two timestamps have
-  no dedicated column and carry no sortable head. `EquipmentsPage.sortOrder`
-  is sent through the typed `RequestOptions.sort` option (`@core/api`), and
-  remembered across visits by `EquipmentListPreferencesService`
-  (`fg-equipment-list` cookie) — the third feature-local occurrence of the
-  cookie-preference shape `InterventionListPreferencesService` introduced;
-  kept local rather than shared (`ARCHITECTURE.md` §2.9).
-- The list toolbar's **Export** button downloads a server-side CSV
-  (`EquipmentService.exportCsv`, `GET
-/api/organizations/{organizationId}/equipment/export`, mirroring
-  `InterventionService.exportCsv`: direct `this.http` call, `responseType:
-'blob'`, saved through `BrowserDownloadService`). The endpoint accepts
-  **no filter by design** — the export always covers the whole inventory —
-  so any active search or filter raises the
-  `equipment.list.exportFiltersIgnored` warn toast before the download. The
-  server caps the collection at 50,000 rows; the resulting 422's RFC 7807
-  `detail` (read back through `resolveCsvExportErrorDetail`,
-  `@features/organization/utils`) is surfaced as the error toast.
-- The list toolbar's **Print QR labels** button downloads the printable QR
-  label sheet as PDF (`EquipmentService.exportLabels`, `GET
-/api/organizations/{organizationId}/equipment/labels`, same
-  direct-`this.http` blob shape, saved as
-  `equipment-labels-{organizationId}.pdf`). Its action surface explicitly
-  selects inventory, one facility, or checked records from the current
-  list page. Inventory/site counts come from the server's filtered total;
-  selections count distinct identities. `EquipmentLabelsStore` enables printing
-  only after a matching preview resolves between 1 and 500 labels, exposes
-  independent preview/export errors, and cancels obsolete scope/session reads.
-  An empty explicit selection is rejected rather than expanding to inventory.
-  The facility-scoped variant of the same
-  endpoint lives on the estate explorer (`organization/FEATURE.md`
-  "Assets"), which prints the selected node's subtree via `facilityId`.
-- The detail page's header carries **Export equipment sheet**
-  (`EquipmentService.exportReport`, `GET
-/api/organizations/{organizationId}/equipment/{equipmentId}/report`): the
-  equipment's PDF sheet, same direct-`this.http` blob shape, saved as
-  `equipment-{equipmentId}-sheet.pdf`. The endpoint is additionally gated on
-  the organization's plan tier (pro/max): a non-entitled plan answers 403
-  with an RFC 7807 `detail`, read back through `resolveCsvExportErrorDetail`
-  and surfaced verbatim as the error toast.
-- `/organizations/:organizationId/equipments/create` — a functional redirect onto the list with `?create=1` (keeping `?facility=`); creation is `EquipmentCreateSheet`, opened by `EquipmentsPage`:
-  `EquipmentCreateForm` (Signal Forms) asking for the one required field,
-  `type`; the five remaining editable properties are filled in afterward, in
-  place, on the created record. Navigates to `/:equipmentId` on success.
-- `/organizations/:organizationId/equipments/:equipmentId` —
-  `EquipmentDetailPage`. `equipmentResolver` (route `resolve`) **seeds**
-  `ActiveEquipmentStore` fire-and-forget so activation never waits on the
-  network (first-order on slow field connections): the page paints a
-  full-page skeleton from the store's pending state, and on load failure the
-  page — not the resolver — toasts through the global feedback listener and
-  returns to the index. `equipmentTitleResolver` (route `title`) answers
-  synchronously via `buildEquipmentTitle` (`utils/equipment-title/`), falling
-  back to a neutral section label; once the record lands the page re-sets the
-  document title through `TitleService`, which also refreshes the
-  breadcrumb's current-page label. The resolver stays the single loading path
-  for the record — the page never re-fetches it.
+`EquipmentTypeCatalogStore` loads every server catalog page, cancels obsolete organization
+reads and clears earlier organization choices. It can seed an authorized offline snapshot.
+Secondary catalog reads are browser-only and never use broad authenticated TransferState.
+All entries, including archived ones, remain available for historical labels and filters;
+new creation choices exclude archived entries.
 
-  The lifecycle status band (page header) names the single relevant forward
-  transition for the current status — commission, resume service, or move
-  to maintenance — as the primary action, with Decommission as the
-  secondary; both read `EquipmentOutput.status` only, no per-status template
-  branching. `EquipmentStore.commission` serves both "Commission"
-  (`in_stock`) and "Resume service" (`under_maintenance`): the backend
-  handler accepts either non-decommissioned status and always lands on
-  `operational`.
+Historical codes at revision one reuse localized labels and their existing icons. Revised
+historical labels and custom labels come from the server. Custom codes use a safe icon
+fallback. `EQUIPMENT_TYPE_OPTIONS` is the historical presentation registry, not the authority
+for allowed equipment types.
 
-  **Decommission confirms; the forward transitions do not.** It is the one
-  terminal move — `primaryAction()` resolves to `null` on a `decommissioned`
-  record, so nothing puts the equipment back in service afterwards — which is
-  exactly the case `DESIGN.md` §Action Surfaces rule 5 reserves a confirmation
-  for. It opens `ui/dialogs/equipment-decommission-dialog/`, a feature-local
-  alert-dialog on the `organization-delete-dialog` model: presentational, it
-  emits `confirmed` and never calls the store. Until 2026-08-28 the action
-  fired on a single click from the shell header, with no way back.
+Replacement accepts a reserve successor or creates a new identity in the same server
+transaction. The terminal move requires explicit alert-dialog confirmation after editing
+the replacement sheet. A network-uncertain result retains its exact command and operation
+UUID for replay; editing cannot silently create a second operation. Draft dismissal is
+protected, and switching between existing/new successor choices preserves the draft.
 
-**Creation is site-scoped.** `EquipmentCreatePage` binds `?facility=` and the
-create form carries a **Site** field, so a link from the asset explorer's
-selected site lands on a form already assigned. `CreateEquipmentInput.facility`
-had always accepted it — the backend validates a flat
-`^/api/facilities/{uuid}$` IRI — but no frontend surface ever sent one, so the
-only path was: create unassigned → detail page → assignment dialog → search the
-site in a combobox. The form maps the picked id onto that IRI itself; the
-`?facility=` seed writes the model rather than the field, so arriving
-preselected does not start the form dirty and does not trip the
-unsaved-changes guard.
+The historical equipment is retired, its dossier and QR remain readable, and predecessor
+and successor links open their real records. Individualized reserve equipment is distinct
+from future quantitative consumable stocks.
 
-**The record is the edit surface.** Every property `UpdateEquipmentInput`
-accepts (`type`, `subType`, `brand`, `model`, `serialNumber`, `locationLabel`)
-opens where it is displayed, through `@shared/inplace-field`
-(`EquipmentInformationPanel`, `ui/components/`); the panel owns the shared
-text draft and the cancel path, the page owns the call (ARCHITECTURE.md
-§10.5) and the `EquipmentEditState`/`EquipmentEditTarget` pair
-(`models/equipment-edit/`) that tracks which field is open, saving, or
-rejected. `type` reuses the same `EQUIPMENT_TYPE_OPTIONS` catalog as the
-create form and commits on selection (`pick`); the other five are free text
-with an explicit Save (`confirm`), sharing one draft signal since only one
-field is ever open at a time. There is no separate edit page and no
-planning wizard.
+## State and transport
 
-Equipment status (`in_stock`/`operational`/`under_maintenance`/
-`decommissioned`) and maintenance-due status
-(`unscheduled`/`up_to_date`/`due_soon`/`overdue`) render through this
-feature's own presentation registry, `models/equipment-status-tag/` +
-`ui/components/equipment-status-tag/` (`EquipmentStatusTag`,
-`app-equipment-status-tag`) — named `-status-tag`, not `-tag`, because
-`equipment-tag/` already names the unrelated labeling-tag resource
-(`EquipmentTagOutput`). Its `status` kind reuses the exact `equipmentStatus.*`
-i18n ids `interventions`' own registry already defined for the same enum
-(one translation, two call sites) when it renders equipment read-only on the
-intervention detail page's Linked tab.
+Each leaf route provides its own `EquipmentStore`; `ActiveEquipmentStore` remains the
+root current-record source. The page provides independent catalog, replacement,
+inspection-summary and open-work stores with explicit request states.
 
-**Attachments, maintenance history, tags, and facility assignment are now
-built** on the detail page, closing the "Deferred, not built" gap this
-section used to record. Three tabs sit beside **Overview** (the identity
-fields, unchanged): **Attachments** (`EquipmentAttachments`, `ui/components/`)
-— upload/list/download/delete, base64 JSON on the wire
-(`EquipmentService.addAttachment`'s `AddAttachmentInput.content`; the page
-converts each picked `File` with the local `utils/file-to-base64/` before
-calling the store) and download via `EquipmentService.downloadAttachment`
-(`GET .../attachments/{attachmentId}/download`, `responseType: 'blob'`,
-mirroring `InterventionService.downloadAttachment`) saved through
-`BrowserDownloadService`; **Maintenance** (`EquipmentMaintenanceHistory`) —
-read-only, newest-first, rendering `EquipmentMaintenanceLogOutput`'s `source`
-(`'status_transition' | 'intervention'`) as an icon-and-label pair and
-linking to the originating intervention (`FG-{interventionNumber}`) when
-`interventionId` is present; **Tags** (`EquipmentTags`) — the current tags as
-removable chips plus an `hlm-combobox` over the organization's tag catalog
-that creates-or-attaches by name (`AddTagInput`) on a typed match or a "Create"
-pick, mirroring `FacilityMoveDialog`'s combobox pattern. Each tab's data
-loads once, on its own first activation (`EquipmentDetailPage.onTabActivated`),
-mirroring `FacilityDetailPage`'s Plans tab.
+`EquipmentService` owns the equipment transport and consumes owner read endpoints:
 
-Facility assignment/unassignment (`EquipmentStore.assignToFacility` /
-`unassignFromFacility`) gets its own dialog
-(`EquipmentAssignFacilityDialog`, `ui/dialogs/`) opened from the header's
-facility row — a single pick/clear action, not a browsing surface, so it did
-not earn a fourth tab. Unassign has no separate confirm dialog, matching the
-header's own Decommission action.
+- Exact inventory/facility summaries share matching family/customer/due filters and
+  subtree scope with the corresponding list; counts never depend on page size.
+- `inspection-summary` returns authorized published control evidence and exact anomaly counts.
+- `open-work` returns authorized intervention/work-item identities without pagination.
+- `replace` sends one stable atomic command and reads its receipt.
 
-There is no `/:equipmentId/edit` route: the record itself is the edit
-surface (see above), and no route in this document links to one.
+The dossier reuses open work of the same action before offering a new intervention.
+Intervention links carry `targetEquipment` and `workAction`; new preparation additionally
+uses `create=1`. Observed defects reuse the equipment-scoped inspection creation workflow.
+No unsupported equipment filter is invented on the intervention list.
 
-## State and Data Access
+Write responses merge with known records rather than erase fields omitted by serialization.
+Accepted equipment writes keep their initiating organization, equipment and selection generation.
+Their confirmed result may update that equipment's local cache, but only the same dossier visit
+can synchronize the active record. The dossier renders and offers actions only for a record
+matching both route identities; changing the route clears transient edits and dialog targets.
+An accepted explicit-null detail patch clears the requested field even when the response
+omits nulls; unrelated omitted fields remain unchanged. Unassignment always clears the
+facility relation. Lifecycle actions respect the terminal retired state.
 
-Primary stores:
+CSV export covers the complete inventory and warns when list filters are ignored.
+QR printing retains explicit inventory/facility/selection scopes and server preview limits.
+Equipment reports and attachment downloads keep the existing entitlement and transport
+contracts. Published equipment deletion remains decommissioning; there is no duplicate
+delete button or standalone edit route.
 
-- `EquipmentStore` — provided per leaf route (list, create, detail), each
-  getting its own instance: unlike `interventions`, this feature has no
-  documented list ↔ detail state-sharing requirement (no prev/next walk), so
-  the simpler independently-scoped default applies (`ARCHITECTURE.md` §10.11).
-- `ActiveEquipmentStore` — root-provided; the currently active record,
-  populated by `equipmentResolver`.
+## Public APIs and boundaries
 
-The list page's KPI strip is backed by `EquipmentKpisStore`
-(`state/equipment-kpis/`, `withQueryState`), component-scoped on the list
-route and reloaded only on an organization switch. Its data comes from
-`EquipmentService.kpis()` (`GET /organizations/{organizationId}/equipment/kpis`).
-`EquipmentKpiOutput.openNonConformities` is organization-wide, not
-equipment-scoped — non-conformities attach to inspections, not equipment —
-and the strip's tile label states that explicitly rather than implying a
-per-record count.
+The feature `index.ts` publishes the historical options, `EquipmentTypeCatalogStore`
+and its instance type, catalog output/option/family types, and `buildEquipmentTitle`.
+Organization assets, onboarding, compliance settings, facilities, maintenance schedules,
+service requests and procurement
+may consume these contracts. Models remain type-only except the existing status registries.
 
-Primary service:
+`data-access` publishes stable services. Facilities may read equipment, exact summaries
+and plan positions. Maintenance schedules may read equipment choices. Inspection and work
+projections are permission-gated server resources, rather than cross-feature private store imports.
 
-- `EquipmentService`
+Service requests may use the published equipment transport, identity models and title utility
+to qualify a repair target and reuse open work. Procurement may use the authorized catalog
+and its public models to declare equipment that will be individualized by the server.
+Quantitative parts remain Inventory-owned; reserve equipment does not contribute to those balances.
 
-Utility:
+Facility options and assignment selectors use the facilities feature's approved public APIs.
+Organization setup may consume the catalog transport and pure Equipment-owned option mapping
+through its façade. Onboarding consumes that setup contract rather than Equipment internals.
+Pages own requests, navigation and mutations; forms, dialogs, sheets and tables consume
+inputs and emit intent. Native Spartan primitives, Signal Forms, localization, SSR and
+central interaction capabilities remain mandatory.
 
-- `buildEquipmentTitle` (`utils/equipment-title/`) — the shared "type —
-  brand model" title, consumed by both `equipmentTitleResolver` (document
-  title, breadcrumb) and `EquipmentDetailPage` (page `<h1>`), so the two
-  never drift.
-- `fileToBase64` (`utils/file-to-base64/`) — converts a picked `File` to the
-  base64 string `AddAttachmentInput.content` expects; the single consumer is
-  `EquipmentDetailPage`'s attachment upload handler.
+### Published entry points
 
-## Cross-Feature Dependencies
+| Entry point     | Consumers                                                                                                                                                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`      | `organization`, `onboarding`, `organization/features/facilities`, `organization/features/maintenance-schedules`, `organization/features/procurement`, `organization/features/service-requests`                                |
+| `data-access`   | `organization`, `organization/features/facilities`, `organization/features/maintenance-schedules`, `organization/features/inspections`, `organization/features/service-requests`, `organization/features/maintenance-exports` |
+| `models`        | `organization/features/service-requests`, `organization/features/procurement`, `organization/features/maintenance-exports`                                                                                                    |
+| `utils`         | `organization`, `organization/features/service-requests`                                                                                                                                                                      |
+| `ui/components` | `organization`                                                                                                                                                                                                                |
 
-- Depends on organization route context from the parent feature.
-- Consumes `CollectionPagination`, `CollectionToolbar`, `CollectionSearchBox`,
-  `CollectionFilterBar` and `CollectionFilterToggle` from `@shared/collection-pagination`,
-  `@shared/collection-toolbar` and `@shared/collection-filters` for the list page's shared
-  pagination band, toolbar shell, search box, "Filters" toggle and editable type/status filter
-  chip row — see `organization/FEATURE.md` § UI Conventions.
-- May be referenced by other organization subfeatures, but equipment ownership stays local to this subfeature.
-- Publishes the canonical localized label and Lucide icon catalog as
-  `EQUIPMENT_TYPE_OPTIONS` through the feature public API (`index.ts`); the onboarding
-  `create-equipment-form`, organization compliance form, and the `maintenance-schedules`
-  subfeature's filter bar, table and campaign dialog all consume it so the equipment type
-  catalog is not duplicated.
-- `EquipmentService` is depended on directly by the `facilities` subfeature's `FacilityPlansStore` (`listByFacility`, `setPlanPosition`) for the floor-plan editor's equipment-pin placement — the same cross-feature dependency `FacilityOverviewStore` already took on for the equipment status summary. `EquipmentService.setPlanPosition` (`PUT
-/api/organizations/{organizationId}/equipment/{equipmentId}/plan-position`)
-  places, moves, or clears (all-null body) one equipment item's pin on its
-  assigned facility's floor plan; the 409 the backend returns when the
-  equipment carries no facility assignment is reworded client-side by the
-  calling store, not here.
-- The reverse dependency uses the facilities feature's `FacilityOptionsStore`
-  for read-only site choices. No write crosses into `facilities`; assignment stays on
-  `EquipmentStore.assignToFacility` / `unassignFromFacility`.
+## Verification
 
-- Facility pickers (`equipment-create-form`, `equipment-assign-facility-dialog`)
-  take `FacilityOption[]` from the facilities feature's `models` barrel, and the
-  list/detail pages provide the facilities feature's `FacilityOptionsStore`
-  (its `state` barrel) instead of listing facilities inline — one loader, one
-  option shape, no raw id on a trigger. They render `FacilityOptionPicker`
-  from the documented `facilities/ui/components` public barrel, using server
-  pages of 200 and server search while keeping a chosen label outside its page.
-
-## Deletion (data-access only, no duplicate UI)
-
-`EquipmentService.remove` / `EquipmentStore.remove` call the canonical
-`DELETE /api/equipment/{id}` endpoint (resolving the current revision via a
-canonical `GET` first, since the organization-scoped read never carries
-`revision`). For a published equipment — the only state reachable from this
-app's org-scoped pages — the backend outcome is **decommissioned**, which is
-exactly what the equipment-detail header's existing, non-deprecated
-**Decommission** action already does through a different endpoint. To avoid
-shipping two buttons with an identical outcome and permission gate, the
-canonical `remove()` path is **not** wired to a second detail-page action; it
-exists for data-access parity and future consumers (for example, a
-draft-equipment hard-delete flow inside an intervention). If a genuinely
-distinct "delete" outcome is ever needed here, revisit this decision.
-
-## Invariants
-
-- Facility's spatial views may read the approved equipment projection and position
-  candidates across a facility subtree, with server search and pagination. Placement
-  retains the real assigned facility and the original attachment's coordinate space.
-- The 3D view reuses equipment type/status labels and opens equipment records through
-  page-owned navigation; unplaced equipment remains accessible through its list.
-
-- Mobile cards and touch targets follow the central interaction-capabilities contract, independent of width.
-  Desktop keeps table density and native menus in narrow windows. Creation uses one sheet
-  and one Signal Form across interaction mode changes; mobile sheets fill the available width.
-
-- Equipment workflows remain organization-scoped.
-- Equipment state and events stay owned by this subfeature.
-- Equipment lifecycle actions must respect the current equipment status.
-- Pages orchestrate stores; reusable UI components must not hide equipment workflow decisions.
-- A write response merges into the already-known entity (`utils/merge-equipment`) in both `EquipmentStore` and `ActiveEquipmentStore` — fields a response omits never erase known values, since API Platform omits null fields and a lifecycle Result may serialize fewer fields than the detail read. The one exception is unassign: its response's absent facility relation means unassigned, so `facilityId`/`facilityName` are cleared, never resurrected by the merge.
-- A create refusal that carries no violations (the 409 plan-quota refusal) renders inline in the create form through the normalized `StoreError.message`; the store deliberately suppresses the generic error toast for quota refusals.
-- `EquipmentsPage` closes the create sheet and resets the create operation only after the success navigation resolves; the sheet's own unsaved-changes gate replaces the route-level `unsavedChangesGuard`, and `?create=1` is ignored without `EQUIPMENT_WRITE`.
-- The detail header keeps one primary lifecycle action; Decommission — irreversible — lives in the header's overflow menu as a destructive item and still confirms (`DESIGN.md` "Header actions").
-
-## Public entry points
-
-These narrow entry points are published to the named consumers. `app` denotes the application composition root. Standard concern barrels follow ARCHITECTURE.md; prose examples do not grant access.
-
-| Entry point                          | Consumers      |
-| ------------------------------------ | -------------- |
-| `ui/components/equipment-status-tag` | `organization` |
+Transport tests cover catalog pagination, optimistic revisions and atomic replacement
+payloads. Store tests cover organization changes, stale reads, uncertain command replay
+and duplicate submissions. Form tests cover normalized unique properties and retained
+drafts. Dossier tests distinguish operational/control/anomaly states and authorized work.
+Browser scenarios cover catalog administration and replacement on desktop and mobile.

@@ -1,0 +1,21 @@
+<app-facility-option-picker
+  [inputId]="inputId()"
+  [value]="value()"
+  (valueChange)="value.set($event)"
+  [disabled]="disabled() || !canRead()"
+  [options]="store.siteOptions()"
+  [hydratedOption]="store.selectedSiteOption()"
+  [callState]="store.siteCallState()"
+  [page]="page()"
+  [pageCount]="store.sitePageCount()"
+  (searchChanged)="search($event)"
+  (pageChanged)="page.set($event)"
+/>
+@if (!canRead()) {
+  <p class="text-sm text-muted-foreground" i18n="@@serviceRequest.target.siteDenied">
+    Site selection requires permission to read sites.
+  </p>
+}
+@if (store.selectedSiteCallState().error; as error) {
+  <p role="alert" class="text-sm text-destructive">{{ error.message }}</p>
+}

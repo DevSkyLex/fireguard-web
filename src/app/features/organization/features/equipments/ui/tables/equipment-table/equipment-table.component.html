@@ -51,7 +51,7 @@
           <ng-icon [name]="sortIcon('status')" aria-hidden="true" />
         </button>
       </th>
-      <th hlmTableHead scope="col" i18n="@@equipment.table.colMaintenance">Maintenance</th>
+      <th hlmTableHead scope="col" i18n="@@equipment.table.colMaintenance">Controls</th>
       <th hlmTableHead scope="col" i18n="@@equipment.table.colLocation">Location</th>
     </tr>
   </ng-container>
@@ -63,8 +63,11 @@
           <a
             class="inline-flex items-center rounded-sm font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
             [routerLink]="[...detailRouteBase(), item.id]"
-            >{{ typeLabelOf(item.type) }}</a
+            >{{ item.name || typeLabelOf(item.type) }}</a
           >
+          @if (item.assetCode) {
+            <span class="block text-sm font-medium">{{ item.assetCode }}</span>
+          }
           @if (item.serialNumber) {
             <span class="block text-sm text-muted-foreground">{{ item.serialNumber }}</span>
           }
@@ -99,7 +102,7 @@
         <td hlmTableCell>
           <app-equipment-status-tag
             kind="maintenanceDueStatus"
-            [value]="item.maintenanceDueStatus"
+            [value]="item.controlDueStatus ?? item.maintenanceDueStatus"
           />
         </td>
 
@@ -143,8 +146,11 @@
           <a
             class="flex items-center rounded-sm text-base font-medium break-words text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring mobile-ui:min-h-11"
             [routerLink]="[...detailRouteBase(), item.id]"
-            >{{ typeLabelOf(item.type) }}</a
+            >{{ item.name || typeLabelOf(item.type) }}</a
           >
+          @if (item.assetCode) {
+            <span class="text-sm font-medium">{{ item.assetCode }}</span>
+          }
           @if (item.serialNumber) {
             <span class="text-sm break-words text-muted-foreground">{{ item.serialNumber }}</span>
           }
@@ -183,7 +189,7 @@
           <app-equipment-status-tag kind="status" [value]="item.status" />
           <app-equipment-status-tag
             kind="maintenanceDueStatus"
-            [value]="item.maintenanceDueStatus"
+            [value]="item.controlDueStatus ?? item.maintenanceDueStatus"
           />
         </div>
         @if (item.tags.length > 0) {

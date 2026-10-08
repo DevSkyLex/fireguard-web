@@ -63,11 +63,19 @@ import type { InterventionWorkItemFormValues } from './models';
 import type { InterventionWorkItemFormDraft } from './models/intervention-work-item-form-draft.model';
 
 import { HlmItemImports } from '@shared/ui/item';
-/** The kinds of field work an item can record. */
+/**
+ * Constant ACTION_VALUES
+ *
+ * @description
+ * The kinds of field work an item can record.
+ */
 const ACTION_VALUES: ReadonlyArray<InterventionWorkItemAction> = [
   'site_setup',
   'inventory',
   'inspection',
+  'maintenance',
+  'repair',
+  'replacement',
 ];
 
 /**
@@ -77,6 +85,7 @@ const ACTION_VALUES: ReadonlyArray<InterventionWorkItemAction> = [
  * A new task with unknown effort and no period override.
  *
  * @since 1.0.0
+ *
  * @type {InterventionWorkItemFormDraft}
  */
 const EMPTY_VALUES: InterventionWorkItemFormDraft = {
@@ -94,11 +103,8 @@ const EMPTY_VALUES: InterventionWorkItemFormDraft = {
  *
  * @description
  * A task being added to an intervention's prepared scope.
- *
- * Only the action is required. A target and an assignee are genuinely optional
- * — the backend accepts an item without either, and a planner often knows what
- * kind of work is needed before knowing which equipment or which agent.
- *
+ * Equipment maintenance, repair and replacement require an equipment target.
+ * Other preparation actions may remain untargeted; assignment and effort are optional.
  * Its own host fills the flex column its hosting sheet establishes: the field
  * group scrolls independently while the `hlm-sheet-footer` action row stays
  * pinned, without the sheet needing to know about the form's internal layout.
@@ -137,6 +143,21 @@ const EMPTY_VALUES: InterventionWorkItemFormDraft = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InterventionWorkItemForm {
+  /**
+   * Property prefill
+   * @readonly
+   *
+   * @description
+   * Equipment preparation context confirmed through the normal task form.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<Pick<InterventionWorkItemFormValues, 'action' | 'target'> | null>}
+   */
+  public readonly prefill = input<Pick<InterventionWorkItemFormValues, 'action' | 'target'> | null>(
+    null,
+  );
   /**
    * Property locale
    * @readonly
@@ -274,17 +295,27 @@ export class InterventionWorkItemForm {
   /**
    * Property catalogueSearched
    * @readonly
-   * @description Requests remote options without replacing the draft.
+   *
+   * @description
+   * Requests remote options without replacing the draft.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<PlanningCatalogueRequest>}
    */
   public readonly catalogueSearched = output<PlanningCatalogueRequest>();
   /**
    * Property catalogues
    * @readonly
-   * @description Loaded coverage and failures by preparation source.
+   *
+   * @description
+   * Loaded coverage and failures by preparation source.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {InputSignal<Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>>}
    */
   public readonly catalogues = input<
     Partial<Record<PlanningCatalogueKind, PlanningCatalogueState>>
@@ -292,9 +323,14 @@ export class InterventionWorkItemForm {
   /**
    * Property catalogueRequested
    * @readonly
-   * @description Requests another source page while preserving the form.
+   *
+   * @description
+   * Requests another source page while preserving the form.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<PlanningCatalogueKind>}
    */
   public readonly catalogueRequested = output<PlanningCatalogueKind>();
 
@@ -302,9 +338,13 @@ export class InterventionWorkItemForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether the creation request is in flight.
+   *
+   * @description
+   * Whether the creation request is in flight.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -312,9 +352,13 @@ export class InterventionWorkItemForm {
   /**
    * Property disabled
    * @readonly
-   * @description Whether the scope may still grow.
+   *
+   * @description
+   * Whether the scope may still grow.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly disabled: InputSignal<boolean> = input<boolean>(false);
@@ -322,9 +366,13 @@ export class InterventionWorkItemForm {
   /**
    * Property serverError
    * @readonly
-   * @description Whatever the creation failed with.
+   *
+   * @description
+   * Whatever the creation failed with.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<unknown>}
    */
   public readonly serverError: InputSignal<unknown> = input<unknown>(null);
@@ -332,9 +380,13 @@ export class InterventionWorkItemForm {
   /**
    * Property targetOptions
    * @readonly
-   * @description The facilities and equipment an item can point at.
+   *
+   * @description
+   * The facilities and equipment an item can point at.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly SelectOption[]>}
    */
   public readonly targetOptions: InputSignal<readonly SelectOption[]> = input<
@@ -344,9 +396,13 @@ export class InterventionWorkItemForm {
   /**
    * Property memberOptions
    * @readonly
-   * @description The members an item can be assigned to.
+   *
+   * @description
+   * The members an item can be assigned to.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly MemberSelectOption[]>}
    */
   public readonly memberOptions: InputSignal<readonly MemberSelectOption[]> = input<
@@ -358,9 +414,13 @@ export class InterventionWorkItemForm {
   /**
    * Property submitted
    * @readonly
-   * @description The validated item, with its optional fields trimmed.
+   *
+   * @description
+   * The validated item, with its optional fields trimmed.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<InterventionWorkItemFormValues>}
    */
   public readonly submitted: OutputEmitterRef<InterventionWorkItemFormValues> =
@@ -369,9 +429,13 @@ export class InterventionWorkItemForm {
   /**
    * Property cancelled
    * @readonly
-   * @description The planner backed out.
+   *
+   * @description
+   * The planner backed out.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly cancelled: OutputEmitterRef<void> = output<void>();
@@ -406,6 +470,13 @@ export class InterventionWorkItemForm {
    * @since 7.1.0
    */
   public constructor() {
+    effect(() => {
+      const prefill = this.prefill();
+      untracked(() => {
+        this.model.set(prefill ? { ...EMPTY_VALUES, ...prefill } : EMPTY_VALUES);
+        this.workItemForm().reset();
+      });
+    });
     effect((): void => {
       const dirty: boolean = this.workItemForm().dirty();
 
@@ -427,19 +498,79 @@ export class InterventionWorkItemForm {
   /**
    * Property actionValues
    * @readonly
-   * @description Exposed for the action select.
+   *
+   * @description
+   * Exposed for the action select.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {ReadonlyArray<InterventionWorkItemAction>}
    */
   protected readonly actionValues: ReadonlyArray<InterventionWorkItemAction> = ACTION_VALUES;
 
   /**
+   * Property requiresEquipment
+   * @readonly
+   *
+   * @description
+   * Maintenance work records a result against one identified equipment.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly requiresEquipment: Signal<boolean> = computed(() =>
+    ['maintenance', 'repair', 'replacement'].includes(this.model().action),
+  );
+
+  /**
+   * Property targetPlaceholder
+   * @readonly
+   *
+   * @description
+   * Distinguishes mandatory equipment selection from optional site-level targeting.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string>}
+   */
+  protected readonly targetPlaceholder = computed(() =>
+    this.requiresEquipment()
+      ? $localize`:@@intervention.wif.equipmentTargetPlaceholder:Select equipment`
+      : $localize`:@@intervention.wif.targetPlaceholder:Optional site, facility or equipment target`,
+  );
+
+  /**
+   * Property availableTargets
+   * @readonly
+   *
+   * @description
+   * Keeps facilities out of equipment-specific maintenance choices.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly SelectOption[]>}
+   */
+  protected readonly availableTargets: Signal<readonly SelectOption[]> = computed(() =>
+    this.requiresEquipment()
+      ? this.targetOptions().filter((option) => option.value.startsWith('/api/equipment/'))
+      : this.targetOptions(),
+  );
+
+  /**
    * Property model
    * @readonly
-   * @description The drafted item.
+   *
+   * @description
+   * The drafted item.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<InterventionWorkItemFormDraft>}
    */
   protected readonly model: WritableSignal<InterventionWorkItemFormDraft> =
@@ -658,15 +789,28 @@ export class InterventionWorkItemForm {
       required(path.action, {
         message: $localize`:@@intervention.wif.actionRequired:Choose what kind of work this item records.`,
       });
+      validate(path.target, ({ value }) =>
+        !['maintenance', 'repair', 'replacement'].includes(this.model().action) ||
+        /^\/api\/equipment\/[^/?#]+$/.test(value())
+          ? null
+          : {
+              kind: 'equipment',
+              message: $localize`:@@intervention.wif.equipmentRequired:Choose the equipment this work concerns.`,
+            },
+      );
     },
   );
 
   /**
    * Property targetLabelOf
    * @readonly
-   * @description Names a target IRI for the combobox trigger.
+   *
+   * @description
+   * Names a target IRI for the combobox trigger.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: string) => string}
    */
   protected readonly targetLabelOf: (value: string) => string = (value) =>
@@ -676,9 +820,13 @@ export class InterventionWorkItemForm {
   /**
    * Property memberLabelOf
    * @readonly
-   * @description Names a member IRI for the combobox trigger.
+   *
+   * @description
+   * Names a member IRI for the combobox trigger.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: string) => string}
    */
   protected readonly memberLabelOf: (value: string) => string = (value) =>
@@ -688,9 +836,13 @@ export class InterventionWorkItemForm {
   /**
    * Property actionLabelOf
    * @readonly
-   * @description Names an action for the select's own value rendering.
+   *
+   * @description
+   * Names an action for the select's own value rendering.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {(value: InterventionWorkItemAction) => string}
    */
   protected readonly actionLabelOf: (value: InterventionWorkItemAction) => string = (value) =>
@@ -730,6 +882,7 @@ export class InterventionWorkItemForm {
    * @since 1.0.0
    *
    * @param {string | null} value - Intervention bound, optionally including its offset.
+   *
    * @returns {Date | undefined} Calendar date without a browser-zone day shift.
    */
   private toCalendarDate(value: string | null): Date | undefined {
@@ -749,6 +902,7 @@ export class InterventionWorkItemForm {
    * @since 1.0.0
    *
    * @param {BrnOverlayState} state - Native drawer state.
+   *
    * @returns {void}
    */
   protected changeCalendarState(state: BrnOverlayState): void {

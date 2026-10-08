@@ -104,7 +104,7 @@
 
   <ng-template #typeChip>
     <app-collection-filter-select
-      [options]="typeOptions"
+      [options]="typeOptions()"
       [value]="filters().type"
       placeholder="Any type"
       i18n-placeholder="@@equipment.table.filterTypePlaceholder"
@@ -216,6 +216,7 @@
     </div>
   } @else {
     <app-equipment-table
+      [typeOptions]="typeOptions()"
       [items]="items()"
       [loading]="store.isLoadingEquipment()"
       [detailRouteBase]="listRouteBase()"
@@ -239,6 +240,15 @@
 
 <ng-template #pageActions>
   @if (canCreate()) {
+    <a
+      hlmBtn
+      variant="outline"
+      [routerLink]="['/organizations', organizationId(), 'equipments', 'types']"
+      class="mobile-ui:min-h-11"
+      data-testid="equipment-catalog-link"
+      i18n="@@equipment.catalog.title"
+      >Equipment types</a
+    >
     <button
       hlmBtn
       type="button"
@@ -285,6 +295,7 @@
 }
 
 <app-equipment-create-sheet
+  [typeOptions]="typeCatalog.activeOptions()"
   [visible]="createSheetVisible()"
   [pending]="store.isCreating()"
   [serverError]="store.createError()"

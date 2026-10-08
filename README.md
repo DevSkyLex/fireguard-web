@@ -1,7 +1,8 @@
 # Fireguard Web
 
-Angular frontend for Fireguard: organization-scoped fire-safety work, field
-interventions, offline workflows and collaboration. It uses the
+Angular frontend for FireGuard fire-equipment park management: controls,
+maintenance, field interventions, offline workflows, parts and purchasing,
+private economic reports and retained ERP exports. It uses the
 [Fireguard API](https://github.com/DevSkyLex/fireguard-api).
 
 ## Tech stack

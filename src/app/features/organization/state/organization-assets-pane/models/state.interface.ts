@@ -1,6 +1,9 @@
 import type { CallState } from '@core/request-state';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
-import type { InspectionOutput } from '@features/organization/features/inspections/models';
+import type {
+  InspectionOutput,
+  NonConformityOutput,
+} from '@features/organization/features/inspections/models';
 
 /**
  * Interface OrganizationAssetsPaneState
@@ -16,6 +19,59 @@ import type { InspectionOutput } from '@features/organization/features/inspectio
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export interface OrganizationAssetsPaneState {
+  /**
+   * Property anomaliesPage
+   * @readonly
+   *
+   * @description
+   * Server page of the unresolved anomaly register.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number}
+   */
+  readonly anomaliesPage: number;
+  /**
+   * Property anomaliesTotal
+   * @readonly
+   *
+   * @description
+   * Exact filtered anomaly count across all server pages.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {number}
+   */
+  readonly anomaliesTotal: number;
+  /**
+   * Property anomaliesScope
+   * @readonly
+   *
+   * @description
+   * Scope fingerprint cancels and clears obsolete client/family/site results.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {string}
+   */
+  readonly anomaliesScope: string;
+  /**
+   * Property anomaliesCallState
+   * @readonly
+   *
+   * @description
+   * Independent list lifecycle; unknown is distinct from a verified empty register.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {CallState<readonly NonConformityOutput[]>}
+   */
+  readonly anomaliesCallState: CallState<readonly NonConformityOutput[]>;
+
   /**
    * Property equipmentPage
    * @readonly

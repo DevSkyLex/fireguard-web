@@ -1,4 +1,52 @@
 <div id="organization-assets" class="flex min-h-0 w-full flex-1 flex-col gap-4">
+  @if (axis() !== 'compliance') {
+    <div class="flex flex-wrap items-end gap-3" data-testid="park-context">
+      <hlm-toggle-group
+        type="single"
+        [value]="family()"
+        (valueChange)="familyChanged($event)"
+        aria-label="Equipment coverage"
+        i18n-aria-label="@@park.context.coverage"
+      >
+        <button
+          hlmToggleGroupItem
+          class="mobile-ui:min-h-11"
+          value="fire"
+          i18n="@@park.context.fire"
+        >
+          Fire equipment
+        </button>
+        <button hlmToggleGroupItem class="mobile-ui:min-h-11" value="all" i18n="@@park.context.all">
+          All equipment
+        </button>
+      </hlm-toggle-group>
+      @if (canReadCustomers()) {
+        <div class="flex min-w-0 flex-1 flex-col gap-1">
+          <label for="park-customer" class="text-sm font-medium" i18n="@@facility.form.customer"
+            >Customer</label
+          >
+          <app-customer-picker
+            inputId="park-customer"
+            [organizationId]="organizationId()"
+            [value]="customerId()"
+            (valueChange)="customerChanged($event)"
+          />
+        </div>
+      }
+      @if (queue()) {
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          (click)="clearQueue()"
+          i18n="@@park.context.clearQueue"
+        >
+          Show the complete park
+        </button>
+      }
+    </div>
+  }
   <hlm-tabs
     [tab]="axis()"
     orientation="horizontal"
@@ -91,7 +139,7 @@
                   hlmBtn
                   variant="outline"
                   class="mobile-ui:min-h-11"
-                  (click)="tree.loadRoots(organizationId())"
+                  (click)="tree.loadRoots(organizationId(), customerId() || null)"
                 >
                   <span i18n="@@common.tryAgain">Try again</span>
                 </button>
@@ -490,69 +538,230 @@
 
 <ng-template #assetPanes>
   <div class="flex min-h-0 flex-col gap-6 overflow-y-auto">
-    @if (canReadEquipment()) {
-      <section aria-labelledby="assets-equipment-title" data-testid="assets-equipment-pane">
-        <div
-          class="mb-3 flex items-center justify-between gap-2 mobile-ui:flex-wrap mobile-ui:gap-4"
-        >
-          @if (axis() === 'site' && selectedFacilityId() !== null) {
-            <h3 id="assets-equipment-title" hlmLarge>
-              <span i18n="@@org.assets.equipment.title">Equipment</span>
-              @if (!pane.isLoadingEquipment()) {
-                <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
-                  pane.equipmentTotal()
-                }}</span>
-              }
-            </h3>
+    @if (queue() === 'anomalies') {
+      @if (canReadEquipment() && canReadInspections()) {
+        <section class="flex flex-col gap-4" data-testid="park-anomalies-pane">
+          <h3 hlmLarge i18n="@@park.queues.anomalies">Anomalies to address</h3>
+          @if (pane.anomaliesCallState().status === 'success' && pane.anomalies().length === 0) {
+            <div hlmEmpty>
+              <div hlmEmptyHeader>
+                <app-state-illustration hlmEmptyMedia state="all-clear" />
+                <h4 hlmEmptyTitle i18n="@@park.anomalies.empty">
+                  No unresolved anomalies in this park scope
+                </h4>
+              </div>
+            </div>
           } @else {
-            <h2 id="assets-equipment-title" hlmLarge>
-              <span i18n="@@org.assets.equipment.title">Equipment</span>
-              @if (!pane.isLoadingEquipment()) {
-                <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
-                  pane.equipmentTotal()
-                }}</span>
-              }
-            </h2>
+            <app-non-conformity-list
+              [organizationId]="organizationId()"
+              [nonConformities]="pane.anomalies()"
+              [loading]="pane.anomaliesCallState().status === 'pending'"
+              [error]="pane.anomaliesCallState().error?.message ?? null"
+              [canWrite]="false"
+              [showSourceLinks]="true"
+              [regionalFormatting]="regionalFormatting()"
+              (retryRequested)="retryPane()"
+            />
           }
-          @if (axis() === 'site' && selectedFacilityId() !== null) {
-            <button
-              hlmBtn
-              type="button"
-              variant="outline"
-              size="sm"
-              class="mobile-ui:min-h-11"
-              data-testid="assets-print-labels"
-              [attr.aria-disabled]="labelsBusy() ? 'true' : null"
-              [attr.aria-busy]="labelsBusy() ? 'true' : null"
-              (click)="onPrintLabels()"
-            >
-              <ng-icon name="lucideQrCode" aria-hidden="true" />
-              <span i18n="@@org.assets.printLabelsButton">Print QR labels</span>
-            </button>
-            @if (labelsBusy()) {
-              <span
-                class="sr-only"
-                aria-live="polite"
-                data-testid="assets-print-labels-status"
-                i18n="@@org.assets.printingLabelsStatus"
-              >
-                Preparing the label sheet…
-              </span>
-            }
-          }
-        </div>
-
-        @if (pane.isLoadingEquipment()) {
-          <div role="status" class="space-y-3" data-testid="assets-equipment-loading">
-            <span class="sr-only" i18n="@@org.assets.loadingResources">Loading resources…</span>
-            @if (isMobileInteractionMode()) {
-              <app-collection-skeleton-cards [rows]="5" />
+          <app-collection-pagination
+            testIdPrefix="park-anomalies"
+            [page]="pane.anomaliesPage()"
+            [pageCount]="pane.anomaliesPageCount()"
+            [pageSize]="50"
+            [pageSizes]="[50]"
+            [total]="pane.anomaliesTotal()"
+            [shown]="pane.anomalies().length"
+            (pageChanged)="changePanePage('anomalies', $event)"
+          />
+        </section>
+      }
+    } @else {
+      @if (canReadEquipment()) {
+        <section aria-labelledby="assets-equipment-title" data-testid="assets-equipment-pane">
+          <div
+            class="mb-3 flex items-center justify-between gap-2 mobile-ui:flex-wrap mobile-ui:gap-4"
+          >
+            @if (axis() === 'site' && selectedFacilityId() !== null) {
+              <h3 id="assets-equipment-title" hlmLarge>
+                <span i18n="@@org.assets.equipment.title">Equipment</span>
+                @if (!pane.isLoadingEquipment()) {
+                  <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
+                    pane.equipmentTotal()
+                  }}</span>
+                }
+              </h3>
             } @else {
-              <div hlmTableContainer class="rounded-md border border-border" aria-hidden="true">
-                <table hlmTable data-testid="assets-equipment-loading-table">
-                  <caption class="sr-only" i18n="@@org.assets.loadingResources">
-                    Loading resources…
-                  </caption>
+              <h2 id="assets-equipment-title" hlmLarge>
+                <span i18n="@@org.assets.equipment.title">Equipment</span>
+                @if (!pane.isLoadingEquipment()) {
+                  <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
+                    pane.equipmentTotal()
+                  }}</span>
+                }
+              </h2>
+            }
+            @if (axis() === 'site' && selectedFacilityId() !== null) {
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="mobile-ui:min-h-11"
+                data-testid="assets-print-labels"
+                [attr.aria-disabled]="labelsBusy() ? 'true' : null"
+                [attr.aria-busy]="labelsBusy() ? 'true' : null"
+                (click)="onPrintLabels()"
+              >
+                <ng-icon name="lucideQrCode" aria-hidden="true" />
+                <span i18n="@@org.assets.printLabelsButton">Print QR labels</span>
+              </button>
+              @if (labelsBusy()) {
+                <span
+                  class="sr-only"
+                  aria-live="polite"
+                  data-testid="assets-print-labels-status"
+                  i18n="@@org.assets.printingLabelsStatus"
+                >
+                  Preparing the label sheet…
+                </span>
+              }
+            }
+          </div>
+
+          @if (pane.isLoadingEquipment()) {
+            <div role="status" class="space-y-3" data-testid="assets-equipment-loading">
+              <span class="sr-only" i18n="@@org.assets.loadingResources">Loading resources…</span>
+              @if (isMobileInteractionMode()) {
+                <app-collection-skeleton-cards [rows]="5" />
+              } @else {
+                <div hlmTableContainer class="rounded-md border border-border" aria-hidden="true">
+                  <table hlmTable data-testid="assets-equipment-loading-table">
+                    <caption class="sr-only" i18n="@@org.assets.loadingResources">
+                      Loading resources…
+                    </caption>
+                    <thead hlmTableHeader>
+                      <tr hlmTableRow>
+                        <th hlmTableHead scope="col" i18n="@@org.assets.equipment.columnName">
+                          Equipment
+                        </th>
+                        <th hlmTableHead scope="col" i18n="@@org.assets.equipment.columnFacility">
+                          Facility
+                        </th>
+                        <th hlmTableHead scope="col" i18n="@@org.assets.equipment.columnStatus">
+                          Status
+                        </th>
+                        <th
+                          hlmTableHead
+                          scope="col"
+                          i18n="@@org.assets.equipment.columnMaintenance"
+                        >
+                          Maintenance
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody hlmTableBody>
+                      <app-collection-skeleton-rows
+                        [rows]="5"
+                        [columns]="['w-40', 'w-36', 'w-20', 'w-24']"
+                        [columnCount]="4"
+                      />
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          } @else if (pane.hasEquipmentError()) {
+            <div hlmEmpty role="alert" data-testid="assets-equipment-error">
+              <div hlmEmptyHeader>
+                <div hlmEmptyMedia variant="icon" class="text-destructive">
+                  <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                </div>
+                <p hlmEmptyTitle i18n="@@org.assets.equipment.error">Couldn't load equipment.</p>
+              </div>
+              <div hlmEmptyContent>
+                <button
+                  hlmBtn
+                  variant="outline"
+                  class="mobile-ui:min-h-11"
+                  (click)="changePanePage('equipment', pane.equipmentPage())"
+                >
+                  <span i18n="@@common.tryAgain">Try again</span>
+                </button>
+              </div>
+            </div>
+          } @else if (!pane.isLoadingEquipment() && pane.equipment().length === 0) {
+            <div hlmEmpty>
+              <div hlmEmptyHeader>
+                @if (
+                  pane.equipmentListCallState().status === 'success' && pane.equipmentTotal() === 0
+                ) {
+                  <app-resource-illustration hlmEmptyMedia resource="equipment" />
+                } @else {
+                  <div hlmEmptyMedia variant="icon">
+                    <ng-icon name="lucideWrench" aria-hidden="true" />
+                  </div>
+                }
+                <p hlmEmptyTitle i18n="@@org.assets.equipment.empty">No equipment in view.</p>
+                <p hlmEmptyDescription i18n="@@org.assets.equipment.emptyDescription">
+                  No equipment is assigned to this scope yet.
+                </p>
+              </div>
+              @if (canCreateEquipment()) {
+                <div hlmEmptyContent>
+                  <a
+                    hlmBtn
+                    variant="outline"
+                    class="mobile-ui:min-h-11"
+                    [routerLink]="['/organizations', organizationId(), 'equipments']"
+                    [queryParams]="createScopeParams('facility')"
+                  >
+                    <ng-icon name="lucidePlus" aria-hidden="true" />
+                    <span i18n="@@equipment.newButton">New equipment</span>
+                  </a>
+                </div>
+              }
+            </div>
+          } @else {
+            @if (isMobileInteractionMode()) {
+              <div hlmItemGroup class="divide-y divide-border" data-testid="assets-equipment-cards">
+                @for (item of pane.equipment(); track item.id) {
+                  <div hlmItem>
+                    <div hlmItemContent class="min-w-0">
+                      <a
+                        class="flex min-h-11 items-center text-base font-medium wrap-anywhere hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                        [routerLink]="['/organizations', organizationId(), 'equipments', item.id]"
+                      >
+                        {{ equipmentTitleOf(item) }}
+                      </a>
+                      @if (equipmentSecondaryLineOf(item); as secondary) {
+                        <p class="text-sm wrap-anywhere text-muted-foreground">{{ secondary }}</p>
+                      }
+                      <p class="text-sm wrap-anywhere text-muted-foreground">
+                        @if (item.facilityName; as facilityName) {
+                          {{ facilityName }}
+                          @if (item.locationLabel) {
+                            · {{ item.locationLabel }}
+                          }
+                        } @else if (item.locationLabel) {
+                          {{ item.locationLabel }}
+                        } @else {
+                          <span aria-hidden="true">—</span>
+                        }
+                      </p>
+                    </div>
+                    <div hlmItemFooter class="flex-wrap gap-2">
+                      <app-equipment-status-tag kind="status" [value]="item.status" />
+                      <app-equipment-status-tag
+                        kind="maintenanceDueStatus"
+                        [value]="item.maintenanceDueStatus"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div hlmTableContainer class="rounded-md border border-border">
+                <table hlmTable data-testid="assets-equipment-table">
                   <thead hlmTableHeader>
                     <tr hlmTableRow>
                       <th hlmTableHead scope="col" i18n="@@org.assets.equipment.columnName">
@@ -570,216 +779,234 @@
                     </tr>
                   </thead>
                   <tbody hlmTableBody>
-                    <app-collection-skeleton-rows
-                      [rows]="5"
-                      [columns]="['w-40', 'w-36', 'w-20', 'w-24']"
-                      [columnCount]="4"
-                    />
+                    @for (item of pane.equipment(); track item.id) {
+                      <tr hlmTableRow data-testid="assets-equipment-row">
+                        <td hlmTableCell class="whitespace-normal">
+                          <a
+                            class="font-medium text-foreground hover:underline mobile-ui:min-h-11"
+                            [routerLink]="[
+                              '/organizations',
+                              organizationId(),
+                              'equipments',
+                              item.id,
+                            ]"
+                          >
+                            {{ equipmentTitleOf(item) }}
+                          </a>
+                          @if (equipmentSecondaryLineOf(item); as secondary) {
+                            <span class="block text-sm text-muted-foreground">{{ secondary }}</span>
+                          }
+                        </td>
+                        <td hlmTableCell class="whitespace-normal text-muted-foreground">
+                          @if (item.facilityName; as facilityName) {
+                            <span class="text-foreground">{{ facilityName }}</span>
+                            @if (item.locationLabel) {
+                              <span class="block text-sm text-muted-foreground">{{
+                                item.locationLabel
+                              }}</span>
+                            }
+                          } @else if (item.locationLabel) {
+                            {{ item.locationLabel }}
+                          } @else {
+                            <span aria-hidden="true">—</span>
+                          }
+                        </td>
+                        <td hlmTableCell>
+                          <app-equipment-status-tag kind="status" [value]="item.status" />
+                        </td>
+                        <td hlmTableCell>
+                          <app-equipment-status-tag
+                            kind="maintenanceDueStatus"
+                            [value]="item.maintenanceDueStatus"
+                          />
+                        </td>
+                      </tr>
+                    }
                   </tbody>
                 </table>
               </div>
             }
-          </div>
-        } @else if (pane.hasEquipmentError()) {
-          <div hlmEmpty role="alert" data-testid="assets-equipment-error">
-            <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon" class="text-destructive">
-                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-              </div>
-              <p hlmEmptyTitle i18n="@@org.assets.equipment.error">Couldn't load equipment.</p>
-            </div>
-            <div hlmEmptyContent>
-              <button
-                hlmBtn
-                variant="outline"
-                class="mobile-ui:min-h-11"
-                (click)="changePanePage('equipment', pane.equipmentPage())"
-              >
-                <span i18n="@@common.tryAgain">Try again</span>
-              </button>
-            </div>
-          </div>
-        } @else if (!pane.isLoadingEquipment() && pane.equipment().length === 0) {
-          <div hlmEmpty>
-            <div hlmEmptyHeader>
-              @if (
-                pane.equipmentListCallState().status === 'success' && pane.equipmentTotal() === 0
-              ) {
-                <app-resource-illustration hlmEmptyMedia resource="equipment" />
+          }
+          @if (pane.equipmentTotal() > 50) {
+            <app-collection-pagination
+              testIdPrefix="assets-equipment"
+              [page]="pane.equipmentPage()"
+              [pageSize]="50"
+              [pageSizes]="[50]"
+              [total]="pane.equipmentTotal()"
+              [shown]="pane.equipment().length"
+              [pageCount]="pane.equipmentPageCount()"
+              (pageChanged)="changePanePage('equipment', $event)"
+            />
+          }
+        </section>
+      }
+
+      @if (canReadInspections()) {
+        <section aria-labelledby="assets-inspections-title" data-testid="assets-inspections-pane">
+          @if (axis() === 'site' && selectedFacilityId() !== null) {
+            <h3 id="assets-inspections-title" hlmLarge class="mb-3">
+              <span i18n="@@org.assets.inspections.title">Inspections</span>
+              @if (!pane.isLoadingInspections()) {
+                <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
+                  pane.inspectionTotal()
+                }}</span>
+              }
+            </h3>
+          } @else {
+            <h2 id="assets-inspections-title" hlmLarge class="mb-3">
+              <span i18n="@@org.assets.inspections.title">Inspections</span>
+              @if (!pane.isLoadingInspections()) {
+                <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
+                  pane.inspectionTotal()
+                }}</span>
+              }
+            </h2>
+          }
+
+          @if (pane.isLoadingInspections()) {
+            <div role="status" class="space-y-3" data-testid="assets-inspections-loading">
+              <span class="sr-only" i18n="@@org.assets.loadingResources">Loading resources…</span>
+              @if (isMobileInteractionMode()) {
+                <app-collection-skeleton-cards [rows]="5" />
               } @else {
-                <div hlmEmptyMedia variant="icon">
-                  <ng-icon name="lucideWrench" aria-hidden="true" />
+                <div hlmTableContainer class="rounded-md border border-border" aria-hidden="true">
+                  <table hlmTable data-testid="assets-inspections-loading-table">
+                    <caption class="sr-only" i18n="@@org.assets.loadingResources">
+                      Loading resources…
+                    </caption>
+                    <thead hlmTableHeader>
+                      <tr hlmTableRow>
+                        <th hlmTableHead scope="col" i18n="@@org.assets.inspections.columnDate">
+                          Performed
+                        </th>
+                        <th
+                          hlmTableHead
+                          scope="col"
+                          i18n="@@org.assets.inspections.columnInspector"
+                        >
+                          Inspector
+                        </th>
+                        <th hlmTableHead scope="col" i18n="@@org.assets.inspections.columnResult">
+                          Result
+                        </th>
+                        <th hlmTableHead scope="col" i18n="@@org.assets.inspections.columnStatus">
+                          Status
+                        </th>
+                        <th
+                          hlmTableHead
+                          scope="col"
+                          i18n="@@org.assets.inspections.columnNonConformities"
+                        >
+                          Non-conformities
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody hlmTableBody>
+                      <app-collection-skeleton-rows
+                        [rows]="5"
+                        [columns]="['w-40', 'w-32', 'w-24', 'w-24', 'w-20']"
+                        [columnCount]="5"
+                      />
+                    </tbody>
+                  </table>
                 </div>
               }
-              <p hlmEmptyTitle i18n="@@org.assets.equipment.empty">No equipment in view.</p>
-              <p hlmEmptyDescription i18n="@@org.assets.equipment.emptyDescription">
-                No equipment is assigned to this scope yet.
-              </p>
             </div>
-            @if (canCreateEquipment()) {
+          } @else if (pane.hasInspectionsError()) {
+            <div hlmEmpty role="alert" data-testid="assets-inspections-error">
+              <div hlmEmptyHeader>
+                <div hlmEmptyMedia variant="icon" class="text-destructive">
+                  <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+                </div>
+                <p hlmEmptyTitle i18n="@@org.assets.inspections.error">
+                  Couldn't load inspections.
+                </p>
+              </div>
               <div hlmEmptyContent>
-                <a
+                <button
                   hlmBtn
                   variant="outline"
                   class="mobile-ui:min-h-11"
-                  [routerLink]="['/organizations', organizationId(), 'equipments']"
-                  [queryParams]="createScopeParams('facility')"
+                  (click)="changePanePage('inspections', pane.inspectionPage())"
                 >
-                  <ng-icon name="lucidePlus" aria-hidden="true" />
-                  <span i18n="@@equipment.newButton">New equipment</span>
-                </a>
+                  <span i18n="@@common.tryAgain">Try again</span>
+                </button>
               </div>
-            }
-          </div>
-        } @else {
-          @if (isMobileInteractionMode()) {
-            <div hlmItemGroup class="divide-y divide-border" data-testid="assets-equipment-cards">
-              @for (item of pane.equipment(); track item.id) {
-                <div hlmItem>
-                  <div hlmItemContent class="min-w-0">
-                    <a
-                      class="flex min-h-11 items-center text-base font-medium wrap-anywhere hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                      [routerLink]="['/organizations', organizationId(), 'equipments', item.id]"
-                    >
-                      {{ typeLabelOf(item.type) }}
-                    </a>
-                    @if (equipmentSecondaryLineOf(item); as secondary) {
-                      <p class="text-sm wrap-anywhere text-muted-foreground">{{ secondary }}</p>
-                    }
-                    <p class="text-sm wrap-anywhere text-muted-foreground">
-                      @if (item.facilityName; as facilityName) {
-                        {{ facilityName }}
-                        @if (item.locationLabel) {
-                          · {{ item.locationLabel }}
-                        }
-                      } @else if (item.locationLabel) {
-                        {{ item.locationLabel }}
-                      } @else {
-                        <span aria-hidden="true">—</span>
-                      }
-                    </p>
+            </div>
+          } @else if (!pane.isLoadingInspections() && pane.inspections().length === 0) {
+            <div hlmEmpty>
+              <div hlmEmptyHeader>
+                @if (
+                  pane.inspectionListCallState().status === 'success' &&
+                  pane.inspectionTotal() === 0
+                ) {
+                  <app-resource-illustration hlmEmptyMedia resource="inspection" />
+                } @else {
+                  <div hlmEmptyMedia variant="icon">
+                    <ng-icon name="lucideClipboardList" aria-hidden="true" />
                   </div>
-                  <div hlmItemFooter class="flex-wrap gap-2">
-                    <app-equipment-status-tag kind="status" [value]="item.status" />
-                    <app-equipment-status-tag
-                      kind="maintenanceDueStatus"
-                      [value]="item.maintenanceDueStatus"
-                    />
-                  </div>
-                </div>
-              }
+                }
+                <p hlmEmptyTitle i18n="@@org.assets.inspections.empty">No inspections in view.</p>
+                <p hlmEmptyDescription i18n="@@org.assets.inspections.emptyDescription">
+                  No inspection has been recorded for this scope yet.
+                </p>
+              </div>
             </div>
           } @else {
-            <div hlmTableContainer class="rounded-md border border-border">
-              <table hlmTable data-testid="assets-equipment-table">
-                <thead hlmTableHeader>
-                  <tr hlmTableRow>
-                    <th hlmTableHead scope="col" i18n="@@org.assets.equipment.columnName">
-                      Equipment
-                    </th>
-                    <th hlmTableHead scope="col" i18n="@@org.assets.equipment.columnFacility">
-                      Facility
-                    </th>
-                    <th hlmTableHead scope="col" i18n="@@org.assets.equipment.columnStatus">
-                      Status
-                    </th>
-                    <th hlmTableHead scope="col" i18n="@@org.assets.equipment.columnMaintenance">
-                      Maintenance
-                    </th>
-                  </tr>
-                </thead>
-                <tbody hlmTableBody>
-                  @for (item of pane.equipment(); track item.id) {
-                    <tr hlmTableRow data-testid="assets-equipment-row">
-                      <td hlmTableCell class="whitespace-normal">
-                        <a
-                          class="font-medium text-foreground hover:underline mobile-ui:min-h-11"
-                          [routerLink]="['/organizations', organizationId(), 'equipments', item.id]"
-                        >
-                          {{ typeLabelOf(item.type) }}
-                        </a>
-                        @if (equipmentSecondaryLineOf(item); as secondary) {
-                          <span class="block text-sm text-muted-foreground">{{ secondary }}</span>
-                        }
-                      </td>
-                      <td hlmTableCell class="whitespace-normal text-muted-foreground">
-                        @if (item.facilityName; as facilityName) {
-                          <span class="text-foreground">{{ facilityName }}</span>
-                          @if (item.locationLabel) {
-                            <span class="block text-sm text-muted-foreground">{{
-                              item.locationLabel
-                            }}</span>
-                          }
-                        } @else if (item.locationLabel) {
-                          {{ item.locationLabel }}
-                        } @else {
-                          <span aria-hidden="true">—</span>
-                        }
-                      </td>
-                      <td hlmTableCell>
-                        <app-equipment-status-tag kind="status" [value]="item.status" />
-                      </td>
-                      <td hlmTableCell>
-                        <app-equipment-status-tag
-                          kind="maintenanceDueStatus"
-                          [value]="item.maintenanceDueStatus"
-                        />
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        }
-        @if (pane.equipmentTotal() > 50) {
-          <app-collection-pagination
-            testIdPrefix="assets-equipment"
-            [page]="pane.equipmentPage()"
-            [pageSize]="50"
-            [pageSizes]="[50]"
-            [total]="pane.equipmentTotal()"
-            [shown]="pane.equipment().length"
-            [pageCount]="pane.equipmentPageCount()"
-            (pageChanged)="changePanePage('equipment', $event)"
-          />
-        }
-      </section>
-    }
-
-    @if (canReadInspections()) {
-      <section aria-labelledby="assets-inspections-title" data-testid="assets-inspections-pane">
-        @if (axis() === 'site' && selectedFacilityId() !== null) {
-          <h3 id="assets-inspections-title" hlmLarge class="mb-3">
-            <span i18n="@@org.assets.inspections.title">Inspections</span>
-            @if (!pane.isLoadingInspections()) {
-              <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
-                pane.inspectionTotal()
-              }}</span>
-            }
-          </h3>
-        } @else {
-          <h2 id="assets-inspections-title" hlmLarge class="mb-3">
-            <span i18n="@@org.assets.inspections.title">Inspections</span>
-            @if (!pane.isLoadingInspections()) {
-              <span hlmBadge variant="secondary" class="ms-1.5 tabular-nums">{{
-                pane.inspectionTotal()
-              }}</span>
-            }
-          </h2>
-        }
-
-        @if (pane.isLoadingInspections()) {
-          <div role="status" class="space-y-3" data-testid="assets-inspections-loading">
-            <span class="sr-only" i18n="@@org.assets.loadingResources">Loading resources…</span>
             @if (isMobileInteractionMode()) {
-              <app-collection-skeleton-cards [rows]="5" />
+              <div
+                hlmItemGroup
+                class="divide-y divide-border"
+                data-testid="assets-inspection-cards"
+              >
+                @for (item of pane.inspections(); track item.id) {
+                  <div hlmItem>
+                    <div hlmItemContent class="min-w-0">
+                      <a
+                        class="flex min-h-11 items-center text-base font-medium break-words hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                        [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
+                      >
+                        {{ item.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                      </a>
+                    </div>
+                    <div hlmItemFooter class="flex-wrap justify-start gap-2">
+                      <app-inspection-status-tag kind="result" [value]="item.result" />
+                      <app-inspection-status-tag kind="status" [value]="item.status" />
+                      <span class="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                        <hlm-avatar size="sm" class="size-5">
+                          @if (item.inspector?.avatarUrl; as avatar) {
+                            <img hlmAvatarImage [src]="avatar" alt="" />
+                          }
+                          <span hlmAvatarFallback class="text-[10px]">{{
+                            inspectorAvatarFallback(item.inspector)
+                          }}</span>
+                        </hlm-avatar>
+                        <span class="truncate">{{
+                          item.inspector?.displayName ?? notSpecifiedLabel
+                        }}</span>
+                      </span>
+                      @if (item.nonConformitiesCount > 0) {
+                        <span hlmBadge variant="outline" class="gap-1">
+                          <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+                          <span aria-hidden="true">{{ item.nonConformitiesCount }}</span>
+                          <span
+                            class="sr-only"
+                            i18n="@@org.assets.inspections.nonConformitiesCount"
+                            >{item.nonConformitiesCount, plural,
+                              =1 {1 non-conformity}
+                              other {{{ item.nonConformitiesCount }} non-conformities}
+                            }</span
+                          >
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
             } @else {
-              <div hlmTableContainer class="rounded-md border border-border" aria-hidden="true">
-                <table hlmTable data-testid="assets-inspections-loading-table">
-                  <caption class="sr-only" i18n="@@org.assets.loadingResources">
-                    Loading resources…
-                  </caption>
+              <div hlmTableContainer class="rounded-md border border-border">
+                <table hlmTable data-testid="assets-inspections-table">
                   <thead hlmTableHeader>
                     <tr hlmTableRow>
                       <th hlmTableHead scope="col" i18n="@@org.assets.inspections.columnDate">
@@ -804,193 +1031,75 @@
                     </tr>
                   </thead>
                   <tbody hlmTableBody>
-                    <app-collection-skeleton-rows
-                      [rows]="5"
-                      [columns]="['w-40', 'w-32', 'w-24', 'w-24', 'w-20']"
-                      [columnCount]="5"
-                    />
+                    @for (item of pane.inspections(); track item.id) {
+                      <tr hlmTableRow data-testid="assets-inspections-row">
+                        <td hlmTableCell>
+                          <a
+                            class="font-medium text-foreground hover:underline mobile-ui:min-h-11"
+                            [routerLink]="[
+                              '/organizations',
+                              organizationId(),
+                              'inspections',
+                              item.id,
+                            ]"
+                          >
+                            {{ item.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
+                          </a>
+                        </td>
+                        <td hlmTableCell class="text-muted-foreground">
+                          <span class="flex min-w-0 items-center gap-2">
+                            <hlm-avatar size="sm">
+                              @if (item.inspector?.avatarUrl; as avatar) {
+                                <img hlmAvatarImage [src]="avatar" alt="" />
+                              }
+                              <span hlmAvatarFallback>{{
+                                inspectorAvatarFallback(item.inspector)
+                              }}</span>
+                            </hlm-avatar>
+                            <span class="truncate">{{
+                              item.inspector?.displayName ?? notSpecifiedLabel
+                            }}</span>
+                          </span>
+                        </td>
+                        <td hlmTableCell>
+                          <app-inspection-status-tag kind="result" [value]="item.result" />
+                        </td>
+                        <td hlmTableCell>
+                          <app-inspection-status-tag kind="status" [value]="item.status" />
+                        </td>
+                        <td hlmTableCell class="tabular-nums">
+                          @if (item.nonConformitiesCount > 0) {
+                            <span hlmBadge variant="outline" class="gap-1">
+                              <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
+                              {{ item.nonConformitiesCount }}
+                            </span>
+                          } @else {
+                            <span class="text-muted-foreground">{{
+                              item.nonConformitiesCount
+                            }}</span>
+                          }
+                        </td>
+                      </tr>
+                    }
                   </tbody>
                 </table>
               </div>
             }
-          </div>
-        } @else if (pane.hasInspectionsError()) {
-          <div hlmEmpty role="alert" data-testid="assets-inspections-error">
-            <div hlmEmptyHeader>
-              <div hlmEmptyMedia variant="icon" class="text-destructive">
-                <ng-icon name="lucideCircleAlert" aria-hidden="true" />
-              </div>
-              <p hlmEmptyTitle i18n="@@org.assets.inspections.error">Couldn't load inspections.</p>
-            </div>
-            <div hlmEmptyContent>
-              <button
-                hlmBtn
-                variant="outline"
-                class="mobile-ui:min-h-11"
-                (click)="changePanePage('inspections', pane.inspectionPage())"
-              >
-                <span i18n="@@common.tryAgain">Try again</span>
-              </button>
-            </div>
-          </div>
-        } @else if (!pane.isLoadingInspections() && pane.inspections().length === 0) {
-          <div hlmEmpty>
-            <div hlmEmptyHeader>
-              @if (
-                pane.inspectionListCallState().status === 'success' && pane.inspectionTotal() === 0
-              ) {
-                <app-resource-illustration hlmEmptyMedia resource="inspection" />
-              } @else {
-                <div hlmEmptyMedia variant="icon">
-                  <ng-icon name="lucideClipboardList" aria-hidden="true" />
-                </div>
-              }
-              <p hlmEmptyTitle i18n="@@org.assets.inspections.empty">No inspections in view.</p>
-              <p hlmEmptyDescription i18n="@@org.assets.inspections.emptyDescription">
-                No inspection has been recorded for this scope yet.
-              </p>
-            </div>
-          </div>
-        } @else {
-          @if (isMobileInteractionMode()) {
-            <div hlmItemGroup class="divide-y divide-border" data-testid="assets-inspection-cards">
-              @for (item of pane.inspections(); track item.id) {
-                <div hlmItem>
-                  <div hlmItemContent class="min-w-0">
-                    <a
-                      class="flex min-h-11 items-center text-base font-medium break-words hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                      [routerLink]="['/organizations', organizationId(), 'inspections', item.id]"
-                    >
-                      {{ item.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
-                    </a>
-                  </div>
-                  <div hlmItemFooter class="flex-wrap justify-start gap-2">
-                    <app-inspection-status-tag kind="result" [value]="item.result" />
-                    <app-inspection-status-tag kind="status" [value]="item.status" />
-                    <span class="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                      <hlm-avatar size="sm" class="size-5">
-                        @if (item.inspector?.avatarUrl; as avatar) {
-                          <img hlmAvatarImage [src]="avatar" alt="" />
-                        }
-                        <span hlmAvatarFallback class="text-[10px]">{{
-                          inspectorAvatarFallback(item.inspector)
-                        }}</span>
-                      </hlm-avatar>
-                      <span class="truncate">{{
-                        item.inspector?.displayName ?? notSpecifiedLabel
-                      }}</span>
-                    </span>
-                    @if (item.nonConformitiesCount > 0) {
-                      <span hlmBadge variant="outline" class="gap-1">
-                        <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
-                        <span aria-hidden="true">{{ item.nonConformitiesCount }}</span>
-                        <span
-                          class="sr-only"
-                          i18n="@@org.assets.inspections.nonConformitiesCount"
-                          >{item.nonConformitiesCount, plural,
-                            =1 {1 non-conformity}
-                            other {{{ item.nonConformitiesCount }} non-conformities}
-                          }</span
-                        >
-                      </span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <div hlmTableContainer class="rounded-md border border-border">
-              <table hlmTable data-testid="assets-inspections-table">
-                <thead hlmTableHeader>
-                  <tr hlmTableRow>
-                    <th hlmTableHead scope="col" i18n="@@org.assets.inspections.columnDate">
-                      Performed
-                    </th>
-                    <th hlmTableHead scope="col" i18n="@@org.assets.inspections.columnInspector">
-                      Inspector
-                    </th>
-                    <th hlmTableHead scope="col" i18n="@@org.assets.inspections.columnResult">
-                      Result
-                    </th>
-                    <th hlmTableHead scope="col" i18n="@@org.assets.inspections.columnStatus">
-                      Status
-                    </th>
-                    <th
-                      hlmTableHead
-                      scope="col"
-                      i18n="@@org.assets.inspections.columnNonConformities"
-                    >
-                      Non-conformities
-                    </th>
-                  </tr>
-                </thead>
-                <tbody hlmTableBody>
-                  @for (item of pane.inspections(); track item.id) {
-                    <tr hlmTableRow data-testid="assets-inspections-row">
-                      <td hlmTableCell>
-                        <a
-                          class="font-medium text-foreground hover:underline mobile-ui:min-h-11"
-                          [routerLink]="[
-                            '/organizations',
-                            organizationId(),
-                            'inspections',
-                            item.id,
-                          ]"
-                        >
-                          {{ item.performedAt | appOrgDate: 'datetime' : regionalFormatting() }}
-                        </a>
-                      </td>
-                      <td hlmTableCell class="text-muted-foreground">
-                        <span class="flex min-w-0 items-center gap-2">
-                          <hlm-avatar size="sm">
-                            @if (item.inspector?.avatarUrl; as avatar) {
-                              <img hlmAvatarImage [src]="avatar" alt="" />
-                            }
-                            <span hlmAvatarFallback>{{
-                              inspectorAvatarFallback(item.inspector)
-                            }}</span>
-                          </hlm-avatar>
-                          <span class="truncate">{{
-                            item.inspector?.displayName ?? notSpecifiedLabel
-                          }}</span>
-                        </span>
-                      </td>
-                      <td hlmTableCell>
-                        <app-inspection-status-tag kind="result" [value]="item.result" />
-                      </td>
-                      <td hlmTableCell>
-                        <app-inspection-status-tag kind="status" [value]="item.status" />
-                      </td>
-                      <td hlmTableCell class="tabular-nums">
-                        @if (item.nonConformitiesCount > 0) {
-                          <span hlmBadge variant="outline" class="gap-1">
-                            <ng-icon name="lucideTriangleAlert" aria-hidden="true" />
-                            {{ item.nonConformitiesCount }}
-                          </span>
-                        } @else {
-                          <span class="text-muted-foreground">{{ item.nonConformitiesCount }}</span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
           }
-        }
-        @if (pane.inspectionTotal() > 50) {
-          <app-collection-pagination
-            testIdPrefix="assets-inspections"
-            [page]="pane.inspectionPage()"
-            [pageSize]="50"
-            [pageSizes]="[50]"
-            [total]="pane.inspectionTotal()"
-            [shown]="pane.inspections().length"
-            [pageCount]="pane.inspectionPageCount()"
-            (pageChanged)="changePanePage('inspections', $event)"
-          />
-        }
-      </section>
+          @if (pane.inspectionTotal() > 50) {
+            <app-collection-pagination
+              testIdPrefix="assets-inspections"
+              [page]="pane.inspectionPage()"
+              [pageSize]="50"
+              [pageSizes]="[50]"
+              [total]="pane.inspectionTotal()"
+              [shown]="pane.inspections().length"
+              [pageCount]="pane.inspectionPageCount()"
+              (pageChanged)="changePanePage('inspections', $event)"
+            />
+          }
+        </section>
+      }
     }
   </div>
 </ng-template>

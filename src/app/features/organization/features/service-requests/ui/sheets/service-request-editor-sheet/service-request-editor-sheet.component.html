@@ -1,0 +1,130 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="state()"
+  [disableClose]="pending() || uncertain()"
+  (stateChanged)="stateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-w-none! overflow-y-auto pb-[env(safe-area-inset-bottom)] mobile-ui:max-h-[85svh] desktop-ui:w-[min(600px,100vw)]!"
+    data-testid="service-request-editor"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle>{{ title() }}</h3>
+      <p hlmSheetDescription i18n="@@serviceRequest.editor.description">
+        Qualify the maintenance need before explicitly organizing corrective work.
+      </p>
+    </hlm-sheet-header>
+    @if (conflict()) {
+      <div hlmAlert variant="destructive" role="alert">
+        <p hlmAlertDescription i18n="@@serviceRequest.editor.conflict">
+          The request has changed. Review its latest version before applying your draft.
+        </p>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          [disabled]="pending()"
+          (click)="refreshRequested.emit()"
+          i18n="@@serviceRequest.editor.review"
+        >
+          Review latest version
+        </button>
+        @if (latestRequest(); as latest) {
+          <p class="text-sm">{{ latest.title }} · {{ statusLabel(latest.status) }}</p>
+          <p class="text-sm wrap-anywhere whitespace-pre-wrap">{{ latest.description }}</p>
+          @if (!canAcceptRevision()) {
+            <p
+              class="text-sm text-muted-foreground"
+              i18n="@@serviceRequest.editor.actionUnavailable"
+            >
+              The current request state no longer allows this action.
+            </p>
+          }
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mobile-ui:min-h-11"
+            [disabled]="!canAcceptRevision()"
+            (click)="revisionAccepted.emit()"
+            i18n="@@serviceRequest.editor.useRevision"
+          >
+            Use reviewed version and keep my draft
+          </button>
+        }
+      </div>
+    }
+    @if (uncertain()) {
+      <div hlmAlert role="status">
+        <p hlmAlertDescription i18n="@@serviceRequest.editor.uncertain">
+          The work link has not been confirmed. Retry this conversion before choosing another
+          action.
+        </p>
+        <button
+          hlmBtn
+          type="button"
+          class="mobile-ui:min-h-11"
+          [disabled]="pending() || !canRetryConversion()"
+          (click)="retryConversionRequested.emit()"
+          i18n="@@serviceRequest.editor.retryConversion"
+        >
+          Retry the same conversion
+        </button>
+      </div>
+    }
+    @if (kind() === 'create' || kind() === 'update') {
+      <app-service-request-form
+        [organizationId]="organizationId()"
+        [request]="request()"
+        [initialEquipmentId]="initialEquipmentId()"
+        [initialSiteId]="initialSiteId()"
+        [originInspectionId]="originInspectionId()"
+        [originNonConformityId]="originNonConformityId()"
+        [pending]="pending()"
+        [error]="error()"
+        (submitted)="descriptionSubmitted.emit($event)"
+        (cancelled)="requestClose()"
+        (dirtyChanged)="dirty.set($event)"
+      />
+    }
+    @if (actionKind(); as actionKind) {
+      @if (request(); as request) {
+        <app-service-request-action-form
+          [organizationId]="organizationId()"
+          [request]="request"
+          [kind]="actionKind"
+          [pending]="pending()"
+          [locked]="uncertain()"
+          [error]="error()"
+          [openWork]="openWork()"
+          [workPending]="workPending()"
+          [workError]="workError()"
+          [workReadable]="workReadable()"
+          (submitted)="actionSubmitted.emit($event)"
+          (cancelled)="requestClose()"
+          (dirtyChanged)="dirty.set($event)"
+        />
+        @if (workError()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mobile-ui:min-h-11"
+            [disabled]="pending()"
+            (click)="retryWorkRequested.emit()"
+            i18n="@@common.retry"
+          >
+            Retry
+          </button>
+        }
+      }
+    }
+  </hlm-sheet-content>
+</hlm-sheet>
+<app-unsaved-changes-dialog
+  [state]="confirmation()"
+  (confirmed)="discard()"
+  (dismissed)="resolveConfirmation(false)"
+/>

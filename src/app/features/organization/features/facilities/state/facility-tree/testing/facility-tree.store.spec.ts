@@ -597,4 +597,25 @@ describe('FacilityTreeStore', () => {
     expect(store.rootsPage()).toBe(1);
     expect(store.hasRootsError()).toBe(false);
   });
+
+  it('filters every root page by customer and cancels old roots and children after customer changes', () => {
+    const oldRoots = new Subject<HydraCollection<FacilityOutput>>();
+    const oldChildren = new Subject<HydraCollection<FacilityOutput>>();
+    mockFacilityService.list.mockReturnValueOnce(oldRoots);
+    mockFacilityService.listChildren.mockReturnValueOnce(oldChildren);
+    store.loadRoots('org-1', 'customer-first');
+    store.loadChildren({ organizationId: 'org-1', facilityId: 'site-old' });
+    expect(mockFacilityService.list).toHaveBeenCalledWith(
+      'org-1',
+      expect.objectContaining({ rootsOnly: true, params: { customerId: 'customer-first' } }),
+    );
+    store.loadRoots('org-1', 'customer-second');
+    expect(oldRoots.observed).toBe(false);
+    expect(oldChildren.observed).toBe(false);
+    expect(store.childrenByParent()).toEqual({});
+    expect(mockFacilityService.list).toHaveBeenLastCalledWith(
+      'org-1',
+      expect.objectContaining({ params: { customerId: 'customer-second' } }),
+    );
+  });
 });

@@ -183,6 +183,7 @@ function appendFacilities(
  */
 const INITIAL_STATE: FacilityTreeState = {
   organizationId: null,
+  customerId: null,
   rootsPage: 0,
   rootsTotal: 0,
   childPagesByParent: {},
@@ -322,19 +323,24 @@ export const FacilityTreeStore = signalStore(
       );
       const scopeChanged = new Subject<void>();
       const branchInvalidated = new Subject<string>();
-      const loadRootPage = rxMethod<{ organizationId: string; page: number }>(
+      const loadRootPage = rxMethod<{
+        organizationId: string;
+        page: number;
+        customerId?: string | null;
+      }>(
         pipe(
-          switchMap(({ organizationId, page }) => {
+          switchMap(({ organizationId, page, customerId = null }) => {
             if (!organizationId) return EMPTY;
-            if (store.organizationId() !== organizationId) {
+            if (store.organizationId() !== organizationId || store.customerId() !== customerId) {
               scopeChanged.next();
-              patchState(store, { ...INITIAL_STATE, organizationId });
+              patchState(store, { ...INITIAL_STATE, organizationId, customerId });
             }
             const previous = page === 1 ? [] : store.roots();
             patchState(store, { rootsCallState: pendingCallState(store.roots()) });
             return facilityService
               .list(organizationId, {
                 rootsOnly: true,
+                ...(customerId ? { params: { customerId } } : {}),
                 page,
                 itemsPerPage: BRANCH_PAGE_SIZE,
                 includePath: true,
@@ -409,8 +415,8 @@ export const FacilityTreeStore = signalStore(
          * @description
          * Loads the first root page, retaining previous nodes on failure.
          */
-        loadRoots(organizationId: string | undefined): void {
-          if (organizationId) loadRootPage({ organizationId, page: 1 });
+        loadRoots(organizationId: string | undefined, customerId: string | null = null): void {
+          if (organizationId) loadRootPage({ organizationId, page: 1, customerId });
         },
         /**
          * @description
@@ -418,7 +424,11 @@ export const FacilityTreeStore = signalStore(
          */
         loadMoreRoots(organizationId: string): void {
           if (store.canLoadMoreRoots() && !store.isLoadingRoots())
-            loadRootPage({ organizationId, page: store.rootsPage() + 1 });
+            loadRootPage({
+              organizationId,
+              page: store.rootsPage() + 1,
+              customerId: store.customerId(),
+            });
         },
         /**
          * @description
@@ -609,7 +619,7 @@ export const FacilityTreeStore = signalStore(
                             store.rootsTotal() + (destinationParentId === null ? 1 : -1),
                           ),
                         });
-                        loadRootPage({ organizationId, page: 1 });
+                        loadRootPage({ organizationId, page: 1, customerId: store.customerId() });
                       }
                       for (const parentId of branchesToReload)
                         loadChildPage({ organizationId, facilityId: parentId, page: 1 });

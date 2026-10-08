@@ -15,6 +15,10 @@ import type {
   SetPlanPositionInput,
   EquipmentKpiOutput,
   EquipmentFacilitySummaryOutput,
+  EquipmentInspectionSummaryOutput,
+  EquipmentOpenWorkOutput,
+  ReplaceEquipmentInput,
+  ReplaceEquipmentOutput,
 } from '@features/organization/features/equipments/models';
 
 /**
@@ -53,6 +57,76 @@ export class EquipmentService extends HydraApiService {
   //#endregion
 
   //#region Methods
+  /**
+   * Method openWork
+   *
+   * @description
+   * Reads authorized intervention-owned work without inferring an empty queue from missing rights.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the equipment.
+   * @param {string} equipmentId - Equipment targeted by the work.
+   *
+   * @returns {Observable<HydraCollection<EquipmentOpenWorkOutput>>} Authorized open work.
+   */
+  public openWork(
+    organizationId: string,
+    equipmentId: string,
+  ): Observable<HydraCollection<EquipmentOpenWorkOutput>> {
+    return this.getCollection<EquipmentOpenWorkOutput>(
+      `${this.equipmentPath(organizationId, equipmentId)}/open-work`,
+    );
+  }
+  /**
+   * Method inspectionSummary
+   *
+   * @description
+   * Reads the Inspection-owned exact summary requiring both equipment and inspection read access.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the equipment.
+   * @param {string} equipmentId - Equipment whose evidence is requested.
+   *
+   * @returns {Observable<EquipmentInspectionSummaryOutput>} Last control and unresolved anomalies.
+   */
+  public inspectionSummary(
+    organizationId: string,
+    equipmentId: string,
+  ): Observable<EquipmentInspectionSummaryOutput> {
+    return this.getOne<EquipmentInspectionSummaryOutput>(
+      `${this.equipmentPath(organizationId, equipmentId)}/inspection-summary`,
+    );
+  }
+  /**
+   * Method replace
+   *
+   * @description
+   * Atomically retires the historical identity and installs its successor.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning both identities.
+   * @param {string} equipmentId - Historical equipment to retire.
+   * @param {ReplaceEquipmentInput} input - Stable command reused after network uncertainty.
+   *
+   * @returns {Observable<ReplaceEquipmentOutput>} Replacement receipt.
+   */
+  public replace(
+    organizationId: string,
+    equipmentId: string,
+    input: ReplaceEquipmentInput,
+  ): Observable<ReplaceEquipmentOutput> {
+    return this.http.post<ReplaceEquipmentOutput>(
+      this.buildUrl(`${this.equipmentPath(organizationId, equipmentId)}/replace`),
+      input,
+      { headers: this.buildHeaders(), withCredentials: true },
+    );
+  }
   /**
    * Method equipmentPath
    * @method equipmentPath
@@ -236,6 +310,30 @@ export class EquipmentService extends HydraApiService {
   }
 
   /**
+   * Method summary
+   *
+   * @description
+   * Reads exact organization or customer equipment counts using the collection's server filters.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Owning organization.
+   * @param {RequestOptions} options - Family and optional customer query.
+   *
+   * @returns {Observable<EquipmentFacilitySummaryOutput>} Authoritative counts across all pages.
+   */
+  public summary(
+    organizationId: string,
+    options?: RequestOptions,
+  ): Observable<EquipmentFacilitySummaryOutput> {
+    return this.getOne<EquipmentFacilitySummaryOutput>(
+      `${EquipmentService.BASE_PATH}/${organizationId}/equipment-summary`,
+      options,
+    );
+  }
+
+  /**
    * Method summaryByFacility
    * @method summaryByFacility
    *
@@ -248,6 +346,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - Owning organization.
    * @param {string} facilityId - Selected facility.
    * @param {boolean} includeDescendants - Include equipment assigned to descendant facilities.
+   * @param {RequestOptions} options - Family and optional customer query.
    *
    * @returns {Observable<EquipmentFacilitySummaryOutput>} Authoritative counts across all pages.
    */
@@ -255,10 +354,11 @@ export class EquipmentService extends HydraApiService {
     organizationId: string,
     facilityId: string,
     includeDescendants: boolean = true,
+    options?: RequestOptions,
   ): Observable<EquipmentFacilitySummaryOutput> {
     return this.getOne<EquipmentFacilitySummaryOutput>(
       `${EquipmentService.BASE_PATH}/${organizationId}/facilities/${facilityId}/equipment-summary`,
-      { params: { includeDescendants } },
+      { ...options, params: { ...options?.params, includeDescendants } },
     );
   }
 

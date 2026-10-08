@@ -1,6 +1,13 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import {
@@ -9,6 +16,7 @@ import {
   defer,
   EMPTY,
   exhaustMap,
+  firstValueFrom,
   filter,
   finalize,
   forkJoin,
@@ -36,6 +44,7 @@ import {
   toStoreFailureEventPayload,
   type StoreError,
 } from '@core/request-state';
+import { EquipmentTypeCatalogStore } from '@features/organization/features/equipments';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import type { FacilityOutput } from '@features/organization/features/facilities/models';
 import {
@@ -51,12 +60,18 @@ import type {
   InterventionIssueOutput,
   InterventionOutboxOperation,
   InterventionOutput,
+  InterventionEquipmentCatalogSnapshot,
   InterventionQueuedAttachment,
   InterventionTransitionRequest,
   InterventionWorkItemOutput,
 } from '@features/organization/features/interventions/models';
+import { InterventionEquipmentCatalogService } from '@features/organization/features/interventions/services/intervention-equipment-catalog';
+import { InterventionInventoryService } from '@features/organization/features/interventions/services/intervention-inventory';
 import { InterventionWorkspaceOptimisticService } from '@features/organization/features/interventions/services/intervention-workspace-optimistic';
-import { projectInterventionWorkspace } from '@features/organization/features/interventions/utils';
+import {
+  projectInterventionWorkspace,
+  projectInterventionWorkItemExecutionResult,
+} from '@features/organization/features/interventions/utils';
 import { workloadAssessmentFromError } from '@features/organization/features/workload/utils';
 import { interventionWorkspaceStoreEvents } from './events';
 import type {
@@ -86,6 +101,7 @@ import type {
  * @constant INITIAL_STATE
  */
 const INITIAL_STATE: InterventionWorkspaceState = {
+  equipmentCatalogSnapshot: null,
   planningConfirmation: null,
   contextId: null,
   loadGeneration: 0,
@@ -411,6 +427,8 @@ export const InterventionWorkspaceStore = signalStore(
         InterventionWorkspaceOptimisticService,
       ),
       dispatcher = inject<Dispatcher>(Dispatcher),
+      equipmentCatalog = inject(InterventionEquipmentCatalogService),
+      inventory = inject(InterventionInventoryService),
     ) => {
       let contextGeneration = 0;
       const teamAssignments = new Set<number>();
@@ -433,6 +451,7 @@ export const InterventionWorkspaceStore = signalStore(
                       workItems: workspace.workItems,
                       changes: workspace.changes,
                       issues: { member: workspace.issues },
+                      equipmentCatalog: workspace.equipmentCatalog,
                       fromCache: true,
                     };
                   }),
@@ -464,14 +483,17 @@ export const InterventionWorkspaceStore = signalStore(
         changes,
         issues,
         fromCache,
+        equipmentCatalog: cachedCatalog,
       }: {
         intervention: InterventionOutput;
         workItems: readonly InterventionWorkItemOutput[];
         changes: readonly InterventionChangeOutput[];
         issues: { readonly member: readonly InterventionIssueOutput[] };
         fromCache: boolean;
+        equipmentCatalog?: InterventionEquipmentCatalogSnapshot;
       }): void => {
         patchState(store, {
+          equipmentCatalogSnapshot: cachedCatalog ?? null,
           intervention,
           workItems,
           changes,
@@ -481,7 +503,21 @@ export const InterventionWorkspaceStore = signalStore(
           loadCallState: successCallState(null),
         });
         if (fromCache) return; // Re-saving the snapshot we just read would only refresh its timestamp and lie about its age.
-        void offline.saveWorkspace(intervention, workItems, changes, issues.member);
+        const owner = equipmentCatalog.accountId();
+        const generation = store.loadGeneration();
+        void offline
+          .saveWorkspace(intervention, workItems, changes, issues.member)
+          .then(() => firstValueFrom(equipmentCatalog.capture(intervention, owner)))
+          .then((snapshot) => {
+            if (
+              snapshot &&
+              store.contextId() === intervention.id &&
+              store.loadGeneration() === generation
+            )
+              patchState(store, { equipmentCatalogSnapshot: snapshot });
+          })
+          .then(() => firstValueFrom(inventory.capture(intervention, owner)))
+          .catch(() => undefined);
       };
 
       const loadFailure = (error: unknown) =>
@@ -545,6 +581,7 @@ export const InterventionWorkspaceStore = signalStore(
         const generation = store.loadGeneration() + 1;
         patchState(store, {
           contextId: interventionId,
+          equipmentCatalogSnapshot: null,
           loadGeneration: generation,
           intervention: null,
           workItems: [],
@@ -1254,8 +1291,8 @@ export const InterventionWorkspaceStore = signalStore(
          * @method updateWorkItem
          *
          * @description
-         * Persists explicit effort, period or assignment edits; offline proposals remain unverified
-         * until replay.
+         * Persists effort, period, assignment and execution-result edits; offline proposals remain
+         * unverified until replay.
          *
          * @access public
          * @since 1.0.0
@@ -1290,6 +1327,10 @@ export const InterventionWorkspaceStore = signalStore(
                   map((): InterventionWorkItemOutput => ({
                     ...item,
                     ...input,
+                    executionResult:
+                      input.executionResult !== undefined
+                        ? projectInterventionWorkItemExecutionResult(item, input.executionResult)
+                        : item.executionResult,
                     assigneeProfile:
                       input.assignee !== undefined && input.assignee !== item.assignee
                         ? null
@@ -2251,6 +2292,15 @@ export const InterventionWorkspaceStore = signalStore(
       }
     },
   })),
+  withHooks((store) => {
+    const catalog = inject(InterventionEquipmentCatalogService);
+    const target = inject(EquipmentTypeCatalogStore, { optional: true });
+    return {
+      onInit(): void {
+        if (target) effect(() => catalog.restore(store.equipmentCatalogSnapshot(), target));
+      },
+    };
+  }),
 );
 
 /**

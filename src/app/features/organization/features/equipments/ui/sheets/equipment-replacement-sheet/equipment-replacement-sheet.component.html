@@ -1,0 +1,186 @@
+<hlm-sheet
+  [side]="side()"
+  [state]="visible() ? 'open' : 'closed'"
+  [disableClose]="pending()"
+  (stateChanged)="stateChanged($event)"
+>
+  <hlm-sheet-content
+    *hlmSheetPortal
+    class="w-full! max-w-none! overflow-y-auto mobile-ui:max-h-[90svh] desktop-ui:w-[min(540px,100vw)]!"
+    data-testid="equipment-replacement-sheet"
+  >
+    <hlm-sheet-header>
+      <h3 hlmSheetTitle i18n="@@equipment.replacement.title">Replace equipment</h3>
+      <p hlmSheetDescription i18n="@@equipment.replacement.description">
+        {{ equipmentName() }} will be retired. Its history remains accessible and the successor
+        inherits its site and position.
+      </p>
+    </hlm-sheet-header>
+    @if (error()) {
+      <hlm-field-error role="alert">{{ error() }}</hlm-field-error>
+    }
+    @if (uncertain()) {
+      <p class="text-sm" i18n="@@equipment.replacement.uncertain">
+        The response was lost. Retry the same operation to recover its result without creating a
+        second replacement.
+      </p>
+      <button
+        hlmBtn
+        type="button"
+        class="mobile-ui:min-h-11"
+        [disabled]="pending()"
+        (click)="retried.emit()"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    }
+    <div [class.hidden]="uncertain()" class="flex flex-col gap-4">
+      <hlm-toggle-group
+        type="single"
+        [nullable]="false"
+        [value]="mode()"
+        (valueChange)="mode.set($any($event))"
+        [disabled]="pending()"
+        variant="outline"
+        class="mx-4"
+      >
+        <button
+          hlmToggleGroupItem
+          value="existing"
+          class="mobile-ui:min-h-11"
+          i18n="@@equipment.replacement.reserve"
+        >
+          From reserve
+        </button>
+        <button
+          hlmToggleGroupItem
+          value="new"
+          class="mobile-ui:min-h-11"
+          i18n="@@equipment.replacement.new"
+        >
+          New equipment
+        </button>
+      </hlm-toggle-group>
+      <div [class.hidden]="mode() !== 'new'">
+        <app-equipment-create-form
+          [typeOptions]="typeOptions()"
+          [pending]="pending()"
+          [inheritPlacement]="true"
+          [replacement]="true"
+          (submitted)="submitNew($event)"
+          (cancelled)="close()"
+          (dirtyChanged)="newDraftDirty.set($event)"
+        />
+      </div>
+      <div [class.hidden]="mode() !== 'existing'">
+        <form (submit)="submitExisting($event)" class="flex flex-col gap-4 px-4">
+          <hlm-field>
+            <label
+              hlmFieldLabel
+              for="equipment-successor"
+              i18n="@@equipment.replacement.successorLabel"
+              >Successor equipment</label
+            >
+            <hlm-combobox
+              [formField]="selectionForm.successorEquipmentId"
+              [itemToString]="labelOf"
+              [filter]="remoteFilter"
+              (valueChange)="pick($event)"
+              (searchChange)="searchChanged.emit($event)"
+            >
+              <hlm-combobox-input
+                inputId="equipment-successor"
+                placeholder="Search reserve equipment"
+                i18n-placeholder="@@equipment.replacement.search"
+              />
+              <hlm-combobox-content *hlmComboboxPortal>
+                <div hlmComboboxList>
+                  @for (candidate of candidates(); track candidate.id) {
+                    <hlm-combobox-item [value]="candidate.id">{{
+                      labelOf(candidate.id)
+                    }}</hlm-combobox-item>
+                  }
+                </div>
+              </hlm-combobox-content>
+            </hlm-combobox>
+            @if (
+              selectionForm.successorEquipmentId().touched() &&
+              selectionForm.successorEquipmentId().invalid()
+            ) {
+              <hlm-field-error>{{
+                selectionForm.successorEquipmentId().errors()[0].message
+              }}</hlm-field-error>
+            }
+            @if (candidateCallState().error; as failure) {
+              <hlm-field-error role="alert">{{ failure.message }}</hlm-field-error>
+            }
+          </hlm-field>
+          <div class="flex items-center justify-between gap-2">
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              [disabled]="page() <= 1 || candidateCallState().status === 'pending'"
+              (click)="pageChanged.emit(page() - 1)"
+              i18n="@@common.previous"
+            >
+              Previous
+            </button>
+            <output>{{ page() }} / {{ pageCount() }}</output>
+            <button
+              hlmBtn
+              type="button"
+              variant="ghost"
+              [disabled]="page() >= pageCount() || candidateCallState().status === 'pending'"
+              (click)="pageChanged.emit(page() + 1)"
+              i18n="@@common.next"
+            >
+              Next
+            </button>
+          </div>
+          @if (candidateCallState().status === 'error') {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="mobile-ui:min-h-11"
+              (click)="pageChanged.emit(page())"
+              i18n="@@common.retry"
+            >
+              Retry
+            </button>
+          }
+          <hlm-sheet-footer>
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              [disabled]="pending()"
+              (click)="close()"
+              class="mobile-ui:min-h-11"
+              i18n="@@common.cancel"
+            >
+              Cancel
+            </button>
+            <button
+              hlmBtn
+              type="submit"
+              class="mobile-ui:min-h-11"
+              [disabled]="pending()"
+              data-testid="equipment-replacement-confirm"
+              i18n="@@equipment.replacement.confirm"
+            >
+              Confirm replacement
+            </button>
+          </hlm-sheet-footer>
+        </form>
+      </div>
+    </div>
+  </hlm-sheet-content>
+</hlm-sheet>
+<app-unsaved-changes-dialog
+  [state]="unsavedState()"
+  (confirmed)="discard()"
+  (dismissed)="unsavedState.set('closed')"
+/>

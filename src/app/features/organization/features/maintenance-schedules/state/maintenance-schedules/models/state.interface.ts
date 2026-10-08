@@ -16,12 +16,80 @@ import type {
  * @since 1.0.0
  */
 export interface MaintenanceSchedulesState {
-  /** @type {CallState<null>} */
+  /**
+   * Property organization
+   * @readonly
+   *
+   * @description
+   * Canonical organization IRI owning the visible historical schedules.
+   *
+   * @type {string | null}
+   */
+  readonly organization: string | null;
+
+  /**
+   * Property scopeGeneration
+   * @readonly
+   *
+   * @description
+   * Monotonic fence for responses from earlier organization visits.
+   *
+   * @type {number}
+   */
+  readonly scopeGeneration: number;
+
+  /**
+   * Property campaignResultOrganization
+   * @readonly
+   *
+   * @description
+   * Original organization IRI of the confirmed campaign used for navigation.
+   *
+   * @type {string | null}
+   */
+  readonly campaignResultOrganization: string | null;
+
+  /**
+   * Property listCallState
+   * @readonly
+   *
+   * @description
+   * Request state of the current organization's schedule query.
+   *
+   * @type {CallState<null>}
+   */
   readonly listCallState: CallState<null>;
-  /** @type {number} */
+
+  /**
+   * Property totalSchedules
+   * @readonly
+   *
+   * @description
+   * Exact server total for the current query.
+   *
+   * @type {number}
+   */
   readonly totalSchedules: number;
-  /** @type {CallState<MaintenanceScheduleOutput>} */
+
+  /**
+   * Property overrideCallState
+   * @readonly
+   *
+   * @description
+   * Current organization's interval override result and request state.
+   *
+   * @type {CallState<MaintenanceScheduleOutput>}
+   */
   readonly overrideCallState: CallState<MaintenanceScheduleOutput>;
-  /** @type {CallState<MaintenanceCampaignOutput>} */
+
+  /**
+   * Property campaignCallState
+   * @readonly
+   *
+   * @description
+   * Current organization's campaign generation result and request state.
+   *
+   * @type {CallState<MaintenanceCampaignOutput>}
+   */
   readonly campaignCallState: CallState<MaintenanceCampaignOutput>;
 }

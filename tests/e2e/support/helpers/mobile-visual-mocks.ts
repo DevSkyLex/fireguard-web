@@ -61,8 +61,18 @@ import {
 } from '../fixtures/role-fixtures';
 import { visualCatalogFixtures } from '../fixtures/visual-catalog-fixtures';
 import { ApiMock } from '../mocks/api-mock';
+import { installMaintenanceExports } from '../mocks/maintenance-export-api-mock';
 import { WorkloadApiMock } from '../mocks/workload-api-mock';
 import { INTERACTION_MODE_INTERVENTIONS } from './interaction-mode';
+import { fixtures as inventoryFixtures, mockInventory } from './inventory-scenario';
+import { installMaintenanceReports } from './maintenance-reports';
+import {
+  installProcurement,
+  PROCUREMENT_ORDER_ID,
+  PROCUREMENT_PART_ID,
+  PROCUREMENT_SUPPLIER_ID,
+} from './procurement';
+import { installServiceRequests } from './service-requests';
 
 /** A 1×1 transparent PNG, standing in for the OpenFreeMap sprite image — mirrors `facilities-map.spec.ts`. */
 const BLANK_PNG_BASE64 =
@@ -99,13 +109,16 @@ export async function installOpenFreeMapStubs(page: Page): Promise<void> {
  * @access public
  * @since 1.0.0
  * @param {Page} page - Isolated browser page before navigation.
+ * @param {string} routeId - Route whose populated maintenance reads are required.
  * @returns {Promise<void>} All endpoint families registered behind ApiMock's safety net.
  */
-export async function mockMobileVisualWorkspace(page: Page): Promise<void> {
+export async function mockMobileVisualWorkspace(page: Page, routeId = ''): Promise<void> {
   const api = new ApiMock(page);
   const org = E2E_ORGANIZATION_ID;
   const catalogs = visualCatalogFixtures();
   await api.mockAuthenticatedSession({ notifications: [notificationOutput()], unreadCount: 1 });
+  const maintenanceRoute = await mockMobileVisualMaintenance(page, routeId);
+  // Dedicated scenarios retain the same permission scope as the More directory.
   await api.mockOrganizationAccess(org, {
     permissions: [
       ...ALL_ORGANIZATION_PERMISSIONS,
@@ -115,6 +128,7 @@ export async function mockMobileVisualWorkspace(page: Page): Promise<void> {
       'organization.teams.write',
     ],
   });
+  if (maintenanceRoute) return;
   await api.mockOrganizationMembers(
     org,
     [organizationMemberOutput(), inspectorOrganizationMemberOutput()],
@@ -237,4 +251,63 @@ export async function mockMobileVisualWorkspace(page: Page): Promise<void> {
   }
   /* eslint-enable no-await-in-loop */
   await api.mockAccountVisualReads();
+}
+
+/** Registers one populated owner scenario per isolated maintenance capture. */
+async function mockMobileVisualMaintenance(page: Page, routeId: string): Promise<boolean> {
+  const org = E2E_ORGANIZATION_ID;
+  switch (routeId) {
+    case 'service-requests':
+      await installServiceRequests(page, { qualified: true });
+      return true;
+    case 'maintenance-reports':
+      await installMaintenanceReports(page, { compact: true });
+      return true;
+    case 'maintenance-exports':
+      await installMaintenanceExports(page, { finance: true, readOnly: true });
+      return true;
+    case 'inventory':
+      await mockInventory(page, inventoryFixtures(), async () => {
+        throw new Error('The inventory capture must not issue a physical mutation.');
+      });
+      return true;
+    case 'procurement': {
+      const procurement = await installProcurement(page, { supplierDirectory: true });
+      const now = new Date().toISOString();
+      procurement.order = {
+        '@id': `/api/organizations/${org}/procurement/orders/${PROCUREMENT_ORDER_ID}`,
+        '@type': 'ProcurementOrder',
+        id: PROCUREMENT_ORDER_ID,
+        organizationId: org,
+        supplierId: PROCUREMENT_SUPPLIER_ID,
+        name: 'Extinguisher maintenance seals',
+        currency: 'EUR',
+        status: 'ordered',
+        financialVisible: true,
+        revision: 2,
+        createdAt: now,
+        updatedAt: now,
+        replayed: false,
+        lines: [
+          {
+            id: '910e8400-e29b-41d4-a716-446655810008',
+            kind: 'part',
+            partId: PROCUREMENT_PART_ID,
+            partCode: 'SEAL',
+            partLabel: 'Extinguisher valve seal',
+            partUnit: 'piece',
+            identityTemplate: [],
+            quantity: '3.000000',
+            receivedQuantity: '1.000000',
+            returnedQuantity: '0.000000',
+            remainingQuantity: '2.000000',
+            unitCost: '12.123456',
+          },
+        ],
+      };
+      return true;
+    }
+    default:
+      return false;
+  }
 }

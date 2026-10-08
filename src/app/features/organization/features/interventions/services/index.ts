@@ -1,4 +1,5 @@
 /**
+ * @description
  * Interventions service public exports.
  */
 export { BrowserDownloadService } from './browser-download';
@@ -13,6 +14,8 @@ export { InterventionOfflineLifecycleService } from './intervention-offline-life
 export { InterventionPhotoCompressorService } from './intervention-photo-compressor';
 export { InterventionPwaUpdateService } from './intervention-pwa-update';
 export { InterventionPrefetchService } from './intervention-prefetch';
+export { InterventionInventoryService } from './intervention-inventory';
 export { InterventionQrScannerService } from './intervention-qr-scanner';
+export { InterventionReplacementContextService } from './intervention-replacement-context';
 export { InterventionSyncService, interventionSyncEvents } from './intervention-sync';
 export { InterventionSyncCoordinatorService } from './intervention-sync-coordinator';

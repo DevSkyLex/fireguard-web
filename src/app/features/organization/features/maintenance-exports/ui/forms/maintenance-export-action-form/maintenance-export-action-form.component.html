@@ -1,0 +1,76 @@
+<form
+  [formRoot]="fields"
+  (submit)="submit($event)"
+  class="flex min-w-0 flex-col gap-4"
+  data-testid="maintenance-export-action-form"
+>
+  <div hlmField>
+    @if (confirmation()) {
+      <label
+        hlmFieldLabel
+        for="maintenance-export-action-value"
+        i18n="@@maintenanceExport.action.importReference"
+        >Actual external import reference</label
+      >
+      <input
+        hlmInput
+        id="maintenance-export-action-value"
+        [formField]="fields.value"
+        autocomplete="off"
+      />
+      <p hlmFieldDescription i18n="@@maintenanceExport.action.confirmHelp">
+        Confirm only after your ERP has imported this exact archive. FireGuard does not send or
+        import it automatically.
+      </p>
+    } @else {
+      <label
+        hlmFieldLabel
+        for="maintenance-export-action-value"
+        i18n="@@maintenanceExport.action.reason"
+        >Reason for adjustment</label
+      >
+      <textarea
+        hlmTextarea
+        id="maintenance-export-action-value"
+        rows="4"
+        [formField]="fields.value"
+      ></textarea>
+      <p hlmFieldDescription i18n="@@maintenanceExport.action.adjustHelp">
+        Validated corrections produce a new linked archive. The original file and published dossier
+        remain unchanged.
+      </p>
+    }
+    @if (fields.value().touched()) {
+      @for (error of fields.value().errors(); track error) {
+        <hlm-field-error>{{ error.message }}</hlm-field-error>
+      }
+    }
+  </div>
+  @if (error(); as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
+  }
+  <div class="flex flex-wrap gap-2">
+    <button hlmBtn type="submit" class="mobile-ui:min-h-11" [disabled]="fields().disabled()">
+      @if (pending()) {
+        <hlm-spinner />
+      }
+      @if (confirmation()) {
+        <span i18n="@@maintenanceExport.action.confirm">Confirm actual import</span>
+      } @else {
+        <span i18n="@@maintenanceExport.action.adjust">Generate adjustment</span>
+      }</button
+    ><button
+      hlmBtn
+      type="button"
+      variant="ghost"
+      class="mobile-ui:min-h-11"
+      [disabled]="locked() || pending()"
+      (click)="cancelled.emit()"
+      i18n="@@common.cancel"
+    >
+      Cancel
+    </button>
+  </div>
+</form>

@@ -20,6 +20,7 @@ const flushEffects = async (): Promise<void> => {
 describe('EquipmentStore', () => {
   let store: EquipmentStore;
   let mockEquipmentService: {
+    get: ReturnType<typeof vi.fn>;
     list: ReturnType<typeof vi.fn>;
     listMaintenanceLogs: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
@@ -42,6 +43,8 @@ describe('EquipmentStore', () => {
     selectedEquipment: ReturnType<typeof signal<EquipmentOutput | null>>;
     isLoadingEquipment: ReturnType<typeof signal<boolean>>;
     setEquipment: ReturnType<typeof vi.fn>;
+    selectedOrganizationId: ReturnType<typeof signal<string | null>>;
+    selectionGeneration: ReturnType<typeof signal<number>>;
   };
 
   const equipment = { id: 'equipment-1', name: 'Generator' } as unknown as EquipmentOutput;
@@ -66,6 +69,7 @@ describe('EquipmentStore', () => {
 
   beforeEach(() => {
     mockEquipmentService = {
+      get: vi.fn(),
       list: vi.fn().mockReturnValue(of(collection)),
       listMaintenanceLogs: vi.fn().mockReturnValue(
         of({
@@ -111,6 +115,8 @@ describe('EquipmentStore', () => {
       selectedEquipment: signal<EquipmentOutput | null>(null),
       isLoadingEquipment: signal(false),
       setEquipment: vi.fn(),
+      selectedOrganizationId: signal<string | null>('org-1'),
+      selectionGeneration: signal(1),
     };
 
     TestBed.configureTestingModule({
@@ -127,6 +133,90 @@ describe('EquipmentStore', () => {
     });
 
     store = TestBed.inject(EquipmentStore);
+  });
+
+  describe('late mutation responses', () => {
+    let active: ActiveEquipmentStore;
+    const original = {
+      ...equipment,
+      organizationId: 'org-1',
+      locationLabel: 'Hall A',
+    } as EquipmentOutput;
+    const current = {
+      ...equipment,
+      id: 'equipment-2',
+      organizationId: 'org-1',
+      name: 'Pump B',
+    } as EquipmentOutput;
+
+    beforeEach(() => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          EquipmentStore,
+          { provide: Dispatcher, useValue: mockDispatcher },
+          { provide: EquipmentService, useValue: mockEquipmentService },
+          { provide: PLATFORM_ID, useValue: 'browser' },
+        ],
+      });
+      active = TestBed.inject(ActiveEquipmentStore);
+      active.setEquipment(original);
+      store = TestBed.inject(EquipmentStore);
+    });
+
+    it('retains the confirmed A update without replacing the active B dossier', () => {
+      const response = new Subject<EquipmentOutput>();
+      mockEquipmentService.update.mockReturnValue(response);
+      store.update({
+        organizationId: 'org-1',
+        equipmentId: original.id,
+        input: { name: 'Saved A' },
+      });
+      active.setEquipment(current);
+      response.next({ id: original.id, name: 'Saved A' } as EquipmentOutput);
+      response.complete();
+      expect(active.selectedEquipment()).toEqual(current);
+      expect(store.equipmentEntityMap()[original.id]).toMatchObject({
+        name: 'Saved A',
+        locationLabel: 'Hall A',
+      });
+      expect(store.updateCallState().status).toBe('success');
+      store.update({
+        organizationId: 'org-1',
+        equipmentId: current.id,
+        input: { name: 'Saved B' },
+      });
+      expect(mockEquipmentService.update).toHaveBeenLastCalledWith('org-1', current.id, {
+        name: 'Saved B',
+      });
+    });
+
+    it('does not apply a late lifecycle response to another selection or a later visit to A', () => {
+      const response = new Subject<EquipmentOutput>();
+      mockEquipmentService.decommission.mockReturnValue(response);
+      store.decommission({ organizationId: 'org-1', equipmentId: original.id });
+      active.setEquipment(current);
+      active.setEquipment({ ...original, name: 'Revisited A' });
+      response.next({ ...original, status: 'decommissioned' });
+      response.complete();
+      expect(active.selectedEquipment()).toMatchObject({ name: 'Revisited A' });
+      expect(store.equipmentEntityMap()[original.id].status).toBe('decommissioned');
+    });
+
+    it('does not sync a write when the organization changed with the same equipment id', () => {
+      const response = new Subject<EquipmentOutput>();
+      mockEquipmentService.commission.mockReturnValue(response);
+      store.commission({ organizationId: 'org-1', equipmentId: original.id });
+      const otherOrganization = {
+        ...original,
+        organizationId: 'org-2',
+        name: 'Other organization',
+      };
+      active.setEquipment(otherOrganization);
+      response.next({ ...original, status: 'operational' });
+      response.complete();
+      expect(active.selectedEquipment()).toEqual(otherOrganization);
+    });
   });
 
   it('should load equipment', async () => {
@@ -224,7 +314,14 @@ describe('EquipmentStore', () => {
 
       expect(mockEquipmentService.update).toHaveBeenCalledWith('org-1', 'equipment-1', {});
       expect(store.updateCallState().status).toBe('success');
-      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(equipment);
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+        equipment,
+        expect.objectContaining({
+          organizationId: 'org-1',
+          equipmentId: 'equipment-1',
+          selectionGeneration: 1,
+        }),
+      );
     });
 
     it('should set the update error and dispatch updateFailed on error', async () => {
@@ -254,7 +351,14 @@ describe('EquipmentStore', () => {
         facilityId: 'facility-1',
       });
       expect(store.assignToFacilityCallState().status).toBe('success');
-      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(equipment);
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+        equipment,
+        expect.objectContaining({
+          organizationId: 'org-1',
+          equipmentId: 'equipment-1',
+          selectionGeneration: 1,
+        }),
+      );
     });
 
     it('should set the error and dispatch assignToFacilityFailed on error', async () => {
@@ -284,11 +388,14 @@ describe('EquipmentStore', () => {
         'equipment-1',
       );
       expect(store.unassignFromFacilityCallState().status).toBe('success');
-      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith({
-        ...equipment,
-        facilityId: null,
-        facilityName: null,
-      });
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+        {
+          ...equipment,
+          facilityId: null,
+          facilityName: null,
+        },
+        expect.objectContaining({ selectionGeneration: 1 }),
+      );
     });
 
     it('should set the error and dispatch unassignFromFacilityFailed on error', async () => {
@@ -338,7 +445,10 @@ describe('EquipmentStore', () => {
         locationLabel: 'Hall east wall',
       });
       expect(store.equipmentEntityMap()['equipment-1']).toEqual(merged);
-      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(merged);
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+        merged,
+        expect.objectContaining({ selectionGeneration: 1 }),
+      );
     });
 
     it('should clear the facility relation on unassign even when the response omits it', async () => {
@@ -361,7 +471,14 @@ describe('EquipmentStore', () => {
 
       expect(mockEquipmentService.commission).toHaveBeenCalledWith('org-1', 'equipment-1');
       expect(store.commissionCallState().status).toBe('success');
-      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(equipment);
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+        equipment,
+        expect.objectContaining({
+          organizationId: 'org-1',
+          equipmentId: 'equipment-1',
+          selectionGeneration: 1,
+        }),
+      );
     });
 
     it('should reflect isChangingLifecycle while pending and set the error on failure', async () => {
@@ -385,7 +502,14 @@ describe('EquipmentStore', () => {
 
       expect(mockEquipmentService.decommission).toHaveBeenCalledWith('org-1', 'equipment-1');
       expect(store.decommissionCallState().status).toBe('success');
-      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(equipment);
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+        equipment,
+        expect.objectContaining({
+          organizationId: 'org-1',
+          equipmentId: 'equipment-1',
+          selectionGeneration: 1,
+        }),
+      );
     });
 
     it('should set the error and dispatch decommissionFailed on error', async () => {
@@ -408,7 +532,14 @@ describe('EquipmentStore', () => {
 
       expect(mockEquipmentService.maintenance).toHaveBeenCalledWith('org-1', 'equipment-1');
       expect(store.maintenanceCallState().status).toBe('success');
-      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(equipment);
+      expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+        equipment,
+        expect.objectContaining({
+          organizationId: 'org-1',
+          equipmentId: 'equipment-1',
+          selectionGeneration: 1,
+        }),
+      );
     });
 
     it('should set the error and dispatch maintenanceFailed on error', async () => {
@@ -560,10 +691,13 @@ describe('EquipmentStore', () => {
         store.addTag({ organizationId: 'org-1', equipmentId: 'equipment-1', input: {} as never });
         await flushEffects();
 
-        expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith({
-          ...activeEquipment,
-          tags: [tag],
-        });
+        expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+          {
+            ...activeEquipment,
+            tags: [tag],
+          },
+          expect.objectContaining({ selectionGeneration: 1 }),
+        );
       });
 
       it('should not sync ActiveEquipmentStore when the active equipment already has the tag', async () => {
@@ -624,10 +758,13 @@ describe('EquipmentStore', () => {
         store.removeTag({ organizationId: 'org-1', equipmentId: 'equipment-1', tagId: 'tag-1' });
         await flushEffects();
 
-        expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith({
-          ...activeEquipment,
-          tags: [],
-        });
+        expect(mockActiveEquipmentStore.setEquipment).toHaveBeenCalledWith(
+          {
+            ...activeEquipment,
+            tags: [],
+          },
+          expect.objectContaining({ selectionGeneration: 1 }),
+        );
       });
 
       it('should not sync ActiveEquipmentStore when the active equipment does not match', async () => {

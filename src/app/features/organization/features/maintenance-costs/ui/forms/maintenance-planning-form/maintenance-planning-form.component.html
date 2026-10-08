@@ -1,0 +1,242 @@
+<form
+  [formRoot]="planningForm"
+  (submit)="submit($event)"
+  class="flex min-w-0 flex-col gap-5"
+  data-testid="maintenance-planning-form"
+>
+  <fieldset hlmFieldSet>
+    <legend hlmFieldLegend i18n="@@maintenanceCost.planning.title">Financial preparation</legend>
+    <p hlmFieldDescription i18n="@@maintenanceCost.planning.unknownHint">
+      Leave an estimate blank when it is unknown. Zero is a known value.
+    </p>
+    <div hlmFieldGroup class="grid gap-4 @lg:grid-cols-2">
+      <div hlmField>
+        <label hlmFieldLabel for="maintenance-budget" i18n="@@maintenanceCost.planning.budget"
+          >Planned budget</label
+        >
+        <input
+          hlmInput
+          id="maintenance-budget"
+          inputmode="decimal"
+          [formField]="planningForm.plannedBudget"
+        />
+        @if (planningForm.plannedBudget().touched()) {
+          @for (error of planningForm.plannedBudget().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+      <div hlmField>
+        <label
+          hlmFieldLabel
+          for="maintenance-estimated-minutes"
+          i18n="@@maintenanceCost.planning.minutes"
+          >Estimated minutes</label
+        >
+        <input
+          hlmInput
+          id="maintenance-estimated-minutes"
+          inputmode="numeric"
+          [formField]="planningForm.estimatedMinutes"
+        />
+        @if (planningForm.estimatedMinutes().touched()) {
+          @for (error of planningForm.estimatedMinutes().errors(); track error) {
+            <hlm-field-error>{{ error.message }}</hlm-field-error>
+          }
+        }
+      </div>
+    </div>
+  </fieldset>
+  @for (resource of planningForm.resources; track $index; let index = $index) {
+    <fieldset hlmFieldSet class="border-t border-border pt-4">
+      <legend hlmFieldLegend i18n="@@maintenanceCost.planning.resource">Estimated resource</legend>
+      <div hlmFieldGroup class="grid gap-3 @lg:grid-cols-2">
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            [attr.for]="'maintenance-resource-kind-' + index"
+            i18n="@@maintenanceCost.planning.kind"
+            >Resource type</label
+          >
+          <hlm-select [formField]="resource.kind" [itemToString]="kindLabelOf">
+            <hlm-select-trigger
+              [buttonId]="'maintenance-resource-kind-' + index"
+              class="w-full mobile-ui:min-h-11"
+              ><hlm-select-value
+            /></hlm-select-trigger>
+            <hlm-select-content *hlmSelectPortal>
+              <hlm-select-item value="time" i18n="@@maintenanceCost.kind.time"
+                >Work time</hlm-select-item
+              >
+              <hlm-select-item value="material" i18n="@@maintenanceCost.kind.material"
+                >Materials</hlm-select-item
+              >
+              <hlm-select-item value="external" i18n="@@maintenanceCost.kind.external"
+                >External service</hlm-select-item
+              >
+            </hlm-select-content>
+          </hlm-select>
+        </div>
+        <div hlmField>
+          <label
+            hlmFieldLabel
+            [attr.for]="'maintenance-resource-description-' + index"
+            i18n="@@maintenanceCost.planning.description"
+            >Description</label
+          >
+          <input
+            hlmInput
+            [id]="'maintenance-resource-description-' + index"
+            [formField]="resource.description"
+          />
+          @if (resource.description().touched()) {
+            @for (error of resource.description().errors(); track error) {
+              <hlm-field-error>{{ error.message }}</hlm-field-error>
+            }
+          }
+        </div>
+        @if (resource.kind().value() !== 'external') {
+          <div hlmField>
+            <label
+              hlmFieldLabel
+              [attr.for]="'maintenance-resource-unit-' + index"
+              i18n="@@maintenanceCost.planning.unit"
+              >Unit or hourly amount</label
+            >
+            <input
+              hlmInput
+              [id]="'maintenance-resource-unit-' + index"
+              inputmode="decimal"
+              [formField]="resource.unitCost"
+            />
+            @if (resource.unitCost().touched()) {
+              @for (error of resource.unitCost().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+        }
+        @if (resource.kind().value() === 'time') {
+          <div hlmField>
+            <label
+              hlmFieldLabel
+              [attr.for]="'maintenance-resource-minutes-' + index"
+              i18n="@@maintenanceCost.planning.minutes"
+              >Estimated minutes</label
+            >
+            <input
+              hlmInput
+              [id]="'maintenance-resource-minutes-' + index"
+              inputmode="numeric"
+              [formField]="resource.estimatedMinutes"
+            />
+            @if (resource.estimatedMinutes().touched()) {
+              @for (error of resource.estimatedMinutes().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+        } @else if (resource.kind().value() === 'material') {
+          <div hlmField>
+            <label
+              hlmFieldLabel
+              [attr.for]="'maintenance-resource-quantity-' + index"
+              i18n="@@maintenanceCost.planning.quantity"
+              >Quantity</label
+            >
+            <input
+              hlmInput
+              [id]="'maintenance-resource-quantity-' + index"
+              inputmode="decimal"
+              [formField]="resource.quantity"
+            />
+            @if (resource.quantity().touched()) {
+              @for (error of resource.quantity().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+        }
+        @if (resource.kind().value() === 'external') {
+          <div hlmField>
+            <label
+              hlmFieldLabel
+              [attr.for]="'maintenance-resource-amount-' + index"
+              i18n="@@maintenanceCost.planning.amount"
+              >Estimated amount</label
+            >
+            <input
+              hlmInput
+              [id]="'maintenance-resource-amount-' + index"
+              inputmode="decimal"
+              [formField]="resource.amount"
+            />
+            @if (resource.amount().touched()) {
+              @for (error of resource.amount().errors(); track error) {
+                <hlm-field-error>{{ error.message }}</hlm-field-error>
+              }
+            }
+          </div>
+        }
+      </div>
+      <button
+        hlmBtn
+        variant="ghost"
+        type="button"
+        class="mobile-ui:min-h-11"
+        [disabled]="planningForm().disabled()"
+        (click)="removeResource(index)"
+        i18n="@@maintenanceCost.planning.remove"
+      >
+        Remove resource
+      </button>
+    </fieldset>
+  }
+  <button
+    hlmBtn
+    variant="outline"
+    type="button"
+    class="self-start mobile-ui:min-h-11"
+    [disabled]="planningForm().disabled() || draft().resources.length >= 1000"
+    (click)="addResource()"
+    i18n="@@maintenanceCost.planning.add"
+  >
+    Add estimated resource
+  </button>
+  @if (stale()) {
+    <div hlmAlert>
+      <h3 hlmAlertTitle i18n="@@maintenanceCost.planning.changed">
+        The financial preparation has changed
+      </h3>
+      <p hlmAlertDescription i18n="@@maintenanceCost.planning.compare">
+        Your edits are retained. Compare them with the refreshed budget before using its latest
+        version.
+      </p>
+      <button
+        hlmBtn
+        variant="outline"
+        type="button"
+        class="mt-3 mobile-ui:min-h-11"
+        [disabled]="planningForm().disabled()"
+        (click)="acceptRevision()"
+        i18n="@@maintenanceCost.planning.acceptVersion"
+      >
+        Use the latest version for these edits
+      </button>
+    </div>
+  }
+  @if (error()) {
+    <p class="text-sm text-muted-foreground" role="status">{{ error()?.message }}</p>
+  }
+  <button
+    hlmBtn
+    type="submit"
+    class="self-start mobile-ui:min-h-11"
+    [disabled]="planningForm().disabled() || stale()"
+  >
+    @if (pending()) {
+      <hlm-spinner />
+    }
+    <span i18n="@@maintenanceCost.planning.save">Save financial preparation</span>
+  </button>
+</form>

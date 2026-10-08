@@ -32,6 +32,7 @@ import type {
 } from '@features/organization/features/equipments/models';
 import {
   EquipmentKpisStore,
+  EquipmentTypeCatalogStore,
   EquipmentStore,
 } from '@features/organization/features/equipments/state';
 import { EquipmentLabelsStore } from '@features/organization/features/equipments/state/equipment-labels';
@@ -116,6 +117,15 @@ describe('EquipmentsPage', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        {
+          provide: EquipmentTypeCatalogStore,
+          useValue: {
+            options: signal([]),
+            activeOptions: signal([]),
+            loadCallState: signal(idleCallState()),
+            load: vi.fn(),
+          },
+        },
         {
           provide: THEME_PORT,
           useValue: {

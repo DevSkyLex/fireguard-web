@@ -2,6 +2,8 @@ import type { CallState } from '@core/request-state';
 import type {
   InterventionTimeDraft,
   InterventionTimeScope,
+  InterventionTimeEntryVersionsOutput,
+  InterventionTimeEntryView,
 } from '@features/organization/features/interventions/models';
 
 /**
@@ -139,4 +141,97 @@ export interface InterventionTimeState {
    * @type {boolean}
    */
   readonly historyUnavailable: boolean;
+
+  /**
+   * Property page
+   * @readonly
+   *
+   * @description
+   * Current requested journal page.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly page: number;
+
+  /**
+   * Property itemsPerPage
+   * @readonly
+   *
+   * @description
+   * Bounded server journal page size.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly itemsPerPage: number;
+
+  /**
+   * Property totalItems
+   * @readonly
+   *
+   * @description
+   * Exact authorized saved entry count; null when offline metadata is unknown.
+   *
+   * @access public
+   *
+   * @type {number | null}
+   */
+  readonly totalItems: number | null;
+
+  /**
+   * Property nextPage
+   * @readonly
+   *
+   * @description
+   * Known next journal page.
+   *
+   * @access public
+   *
+   * @type {number | null}
+   */
+  readonly nextPage: number | null;
+
+  /**
+   * Property readVersion
+   * @readonly
+   *
+   * @description
+   * Monotonic read generation fencing obsolete history responses.
+   *
+   * @access public
+   *
+   * @type {number}
+   */
+  readonly readVersion: number;
+
+  /**
+   * Property historyCallStates
+   * @readonly
+   *
+   * @description
+   * Independent explicit revision-page request states, including retained pages on retry.
+   *
+   * @access public
+   *
+   * @type {Readonly<Partial<Record<string, CallState<InterventionTimeEntryVersionsOutput>>>>}
+   */
+  readonly historyCallStates: Readonly<
+    Partial<Record<string, CallState<InterventionTimeEntryVersionsOutput>>>
+  >;
+
+  /**
+   * Property draftEntryCallState
+   * @readonly
+   *
+   * @description
+   * Independent bounded read of a saved correction target outside the displayed journal page.
+   *
+   * @access public
+   *
+   * @type {CallState<InterventionTimeEntryView>}
+   */
+  readonly draftEntryCallState: CallState<InterventionTimeEntryView>;
 }

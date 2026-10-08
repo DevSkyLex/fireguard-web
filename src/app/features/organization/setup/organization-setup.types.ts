@@ -35,6 +35,17 @@ export interface SetupCreateOrganizationInput {
   readonly name: string;
 
   /**
+   * Property operatingProfile
+   * @readonly
+   *
+   * @description
+   * Operational defaults retained in the durable organization creation draft.
+   *
+   * @type {'operator' | 'service_provider' | undefined}
+   */
+  readonly operatingProfile?: 'operator' | 'service_provider';
+
+  /**
    * Property slug
    * @readonly
    *
@@ -513,6 +524,60 @@ export interface SetupCreateEquipmentInput {
    * @type {string | null | undefined}
    */
   readonly facilityId?: string | null;
+}
+
+/**
+ * Interface SetupEquipmentTypeOption
+ * @interface SetupEquipmentTypeOption
+ *
+ * @description
+ * Active catalogue choice published by setup; codes are open to organization-defined equipment
+ * types.
+ */
+export interface SetupEquipmentTypeOption {
+  /**
+   * Property value
+   * @readonly
+   *
+   * @description
+   * Permanent server-owned equipment type code.
+   *
+   * @type {string}
+   */
+  readonly value: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Localized historical label or organization-defined display name.
+   *
+   * @type {string}
+   */
+  readonly label: string;
+
+  /**
+   * Property family
+   * @readonly
+   *
+   * @description
+   * Server-assigned family used to focus the initial fire inventory.
+   *
+   * @type {'fire' | 'safety' | 'other'}
+   */
+  readonly family: 'fire' | 'safety' | 'other';
+
+  /**
+   * Property icon
+   * @readonly
+   *
+   * @description
+   * Registered equipment glyph with a generic fallback for custom codes.
+   *
+   * @type {string}
+   */
+  readonly icon: string;
 }
 
 /**

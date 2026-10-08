@@ -13,11 +13,13 @@
     <hlm-sheet-header>
       <h3 hlmSheetTitle i18n="@@intervention.workItemDrawer.header">Add work item</h3>
       <p hlmSheetDescription i18n="@@intervention.wif.hint">
-        Only the action is required; target and assignee can be set now or during execution.
+        Choose the action and, for maintenance, the equipment concerned. Assignment and estimates
+        are optional.
       </p>
     </hlm-sheet-header>
 
     <app-intervention-work-item-form
+      [prefill]="prefill()"
       [workloadOrganizationId]="workloadOrganizationId()"
       [workloadStartsOn]="workloadStartsOn()"
       [workloadEndsOn]="workloadEndsOn()"

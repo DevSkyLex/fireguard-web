@@ -1,0 +1,254 @@
+<section
+  class="@container flex min-w-0 flex-col gap-4"
+  [attr.aria-busy]="pending()"
+  data-testid="maintenance-financial-directory"
+>
+  <header class="flex flex-col gap-1">
+    <h2 class="text-lg font-semibold" i18n="@@maintenanceCost.directory.title">
+      Financial dossiers
+    </h2>
+    <p class="text-sm text-muted-foreground" i18n="@@maintenanceCost.directory.description">
+      Find a work reference or name, open its private financial dossier, or narrow the economic
+      report using its named scope.
+    </p>
+  </header>
+  <form
+    [formRoot]="searchForm"
+    (submit)="submit($event)"
+    class="flex min-w-0 flex-col gap-3 @lg:flex-row @lg:items-end"
+    data-testid="maintenance-financial-search-form"
+  >
+    <div hlmField class="min-w-0 flex-1">
+      <label
+        hlmFieldLabel
+        for="maintenance-financial-search"
+        i18n="@@maintenanceCost.directory.searchLabel"
+        >Work reference or name</label
+      ><input hlmInput id="maintenance-financial-search" [formField]="searchForm.search" />
+      @if (searchForm.search().touched()) {
+        @for (error of searchForm.search().errors(); track error) {
+          <hlm-field-error>{{ error.message }}</hlm-field-error>
+        }
+      }
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button
+        hlmBtn
+        type="submit"
+        class="mobile-ui:min-h-11"
+        [disabled]="pending()"
+        i18n="@@maintenanceCost.directory.search"
+      >
+        Search dossiers
+      </button>
+      @if (draft().search.trim()) {
+        <button
+          hlmBtn
+          variant="outline"
+          type="button"
+          class="mobile-ui:min-h-11"
+          [disabled]="pending()"
+          (click)="clearSearch()"
+          i18n="@@maintenanceCost.directory.clearSearch"
+        >
+          Clear search
+        </button>
+      }
+    </div>
+  </form>
+  @if (pending()) {
+    <p class="flex items-center gap-2 text-sm text-muted-foreground" role="status">
+      <hlm-spinner /><span i18n="@@maintenanceCost.directory.loading"
+        >Reading financial dossiers</span
+      >
+    </p>
+  }
+  @if (error(); as failure) {
+    @if (items().length) {
+      <div hlmAlert variant="destructive" role="alert">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <h3 hlmAlertTitle i18n="@@maintenanceCost.directory.failed">
+          Financial dossiers could not be loaded
+        </h3>
+        <div hlmAlertDescription class="flex flex-col gap-3">
+          <p>{{ failure.message }}</p>
+          <button
+            hlmBtn
+            variant="outline"
+            type="button"
+            class="self-start mobile-ui:min-h-11"
+            [disabled]="pending()"
+            (click)="retryRequested.emit()"
+            i18n="@@maintenanceCost.directory.retry"
+          >
+            Retry directory
+          </button>
+        </div>
+      </div>
+    } @else if (!pending()) {
+      <div hlmEmpty role="alert">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+          </div>
+          <h3 hlmEmptyTitle i18n="@@maintenanceCost.directory.failed">
+            Financial dossiers could not be loaded
+          </h3>
+          <p hlmEmptyDescription>{{ failure.message }}</p>
+        </div>
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            variant="outline"
+            type="button"
+            class="mobile-ui:min-h-11"
+            (click)="retryRequested.emit()"
+            i18n="@@maintenanceCost.directory.retry"
+          >
+            Retry directory
+          </button>
+        </div>
+      </div>
+    }
+  }
+  @if (items().length) {
+    <div hlmItemGroup role="list" class="min-w-0" data-testid="maintenance-financial-items">
+      @for (entry of items(); track entry.id; let last = $last) {
+        <article hlmItem role="listitem" class="min-w-0 mobile-ui:flex-col mobile-ui:items-stretch">
+          <div hlmItemContent class="max-w-full min-w-0">
+            <div hlmItemHeader class="flex flex-wrap items-start gap-2">
+              <h3 hlmItemTitle class="max-w-full min-w-0 wrap-anywhere whitespace-normal">
+                {{ entry.number }} · {{ entry.name }}
+              </h3>
+              <span hlmBadge variant="secondary" class="whitespace-normal">{{
+                snapshotLabel(entry.snapshotState)
+              }}</span>
+            </div>
+            @if (!entry.identityComplete) {
+              <p hlmItemDescription i18n="@@maintenanceCost.directory.incompleteIdentity">
+                Historical identity is incomplete. Only available named filters can be selected.
+              </p>
+            }
+            @if (entry.publishedAt) {
+              <p hlmItemDescription class="flex flex-wrap gap-x-1">
+                <span i18n="@@maintenanceCost.directory.publishedOn">Published on</span>
+                <span>{{ entry.publishedAt | appOrgDate: 'datetime' : regionalFormatting() }}</span>
+              </p>
+            }
+            <div class="flex min-w-0 flex-wrap gap-2">
+              @if (entry.site; as site) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
+                  [disabled]="pending()"
+                  (click)="scopeSelected.emit({ site: site })"
+                >
+                  <span class="max-w-full min-w-0 wrap-anywhere"
+                    ><span i18n="@@maintenanceCost.directory.scopeSite">Limit to site</span>:
+                    {{ site.name }}</span
+                  >
+                </button>
+              }
+              @if (entry.customer; as customer) {
+                <button
+                  hlmBtn
+                  type="button"
+                  variant="outline"
+                  class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
+                  [disabled]="pending()"
+                  (click)="scopeSelected.emit({ customer: customer })"
+                >
+                  <span class="max-w-full min-w-0 wrap-anywhere"
+                    ><span i18n="@@maintenanceCost.directory.scopeCustomer">Limit to customer</span
+                    >: {{ customer.name }}</span
+                  >
+                </button>
+              }
+            </div>
+            @if (entry.equipment.length) {
+              <div
+                class="flex min-w-0 flex-wrap gap-2"
+                role="group"
+                aria-label="Equipment report filters"
+                i18n-aria-label="@@maintenanceCost.directory.equipmentFilters"
+              >
+                @for (equipment of entry.equipment; track equipmentAssignmentKey(equipment)) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
+                    [disabled]="pending()"
+                    (click)="selectEquipment(equipment)"
+                  >
+                    <span class="max-w-full min-w-0 wrap-anywhere"
+                      ><span i18n="@@maintenanceCost.directory.scopeEquipment"
+                        >Limit to equipment</span
+                      >: {{ equipmentLabel(equipment) }}</span
+                    >
+                  </button>
+                }
+              </div>
+            }
+          </div>
+          <div hlmItemActions class="max-w-full min-w-0 flex-wrap">
+            <a
+              hlmBtn
+              variant="outline"
+              class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
+              [routerLink]="['/organizations', organizationId(), 'maintenance-costs']"
+              [queryParams]="{ interventionId: entry.id }"
+              i18n="@@maintenanceCost.directory.open"
+              >Open financial dossier</a
+            >
+          </div>
+        </article>
+        @if (!last) {
+          <hlm-item-separator />
+        }
+      }
+    </div>
+  } @else if (!pending() && !error()) {
+    <div hlmEmpty>
+      <div hlmEmptyHeader>
+        @if (search().trim()) {
+          <app-state-illustration state="no-results" class="w-40" />
+        } @else {
+          <app-resource-illustration resource="intervention" class="w-40" />
+        }
+        <h3 hlmEmptyTitle i18n="@@maintenanceCost.directory.empty">
+          No financial dossiers in this scope
+        </h3>
+        <p hlmEmptyDescription i18n="@@maintenanceCost.directory.emptyHint">
+          Try another work reference, date window or named filter.
+        </p>
+      </div>
+      @if (search().trim()) {
+        <div hlmEmptyContent>
+          <button
+            hlmBtn
+            variant="outline"
+            type="button"
+            class="mobile-ui:min-h-11"
+            (click)="clearSearch()"
+            i18n="@@maintenanceCost.directory.clearSearch"
+          >
+            Clear search
+          </button>
+        </div>
+      }
+    </div>
+  }
+  <app-collection-pagination
+    [page]="page()"
+    [pageCount]="pageCount()"
+    [pageSize]="itemsPerPage()"
+    [total]="totalItems()"
+    [shown]="items().length"
+    testIdPrefix="maintenance-financial"
+    (pageChanged)="pageChanged.emit($event)"
+    (pageSizeChanged)="pageSizeChanged.emit($event)"
+  />
+</section>

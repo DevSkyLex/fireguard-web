@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { EquipmentTypeOutput } from '@features/organization/features/equipments/models';
 import type {
   InterventionOutput,
   PublicationTracking,
@@ -26,6 +27,7 @@ describe('InterventionOfflineService', () => {
     listOutbox: vi.fn(),
     refresh: vi.fn(),
   };
+  const catalogWorkspace = { saveEquipmentCatalog: vi.fn() };
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -38,6 +40,7 @@ describe('InterventionOfflineService', () => {
     database.clearAll.mockResolvedValue(undefined);
     outbox.listOutbox.mockResolvedValue([]);
     outbox.refresh.mockResolvedValue(undefined);
+    catalogWorkspace.saveEquipmentCatalog.mockResolvedValue(undefined);
   });
 
   /**
@@ -53,7 +56,7 @@ describe('InterventionOfflineService', () => {
         InterventionOfflineService,
         { provide: InterventionDatabaseService, useValue: database },
         { provide: InterventionOutboxRepository, useValue: outbox },
-        { provide: InterventionWorkspaceRepository, useValue: {} },
+        { provide: InterventionWorkspaceRepository, useValue: catalogWorkspace },
       ],
     });
     return TestBed.inject(InterventionOfflineService);
@@ -114,6 +117,28 @@ describe('InterventionOfflineService', () => {
     );
 
     expect(workspace.saveWorkspace).toHaveBeenCalledOnce();
+  });
+
+  it('forwards the captured owner and complete catalogue to its persistence repository', async () => {
+    const service = configurePersistence();
+    const entries: readonly EquipmentTypeOutput[] = [
+      {
+        '@id': '/api/organizations/org-1/equipment-types/legacy_pump',
+        '@type': 'EquipmentType',
+        value: 'legacy_pump',
+        label: 'Historical pump',
+        family: 'fire',
+        archived: true,
+        revision: 3,
+      },
+    ];
+    await service.saveEquipmentCatalog('intervention-1', 'org-1', entries, 'account-1');
+    expect(catalogWorkspace.saveEquipmentCatalog).toHaveBeenCalledExactlyOnceWith(
+      'intervention-1',
+      'org-1',
+      entries,
+      'account-1',
+    );
   });
 
   it('scopes publication recovery metadata to account, organization and intervention', async () => {
@@ -233,13 +258,34 @@ describe('InterventionOfflineService', () => {
 
     expect(database.ensureOwnerBound).toHaveBeenCalledOnce();
     expect(database.remove).toHaveBeenCalledExactlyOnceWith('interventions', 'intervention-1');
-    expect(database.removeWhere).toHaveBeenCalledTimes(stores.length);
+    expect(database.removeWhere).toHaveBeenCalledTimes(stores.length + 1);
     for (const store of stores) {
       expect(records.get(store)).toEqual([
         { interventionId: 'intervention-2', intervention: '/api/interventions/intervention-2' },
       ]);
     }
     expect(outbox.refresh).toHaveBeenCalledOnce();
+  });
+
+  it('purges only the selected intervention catalogue metadata and preserves other records', async () => {
+    const service = configurePersistence();
+    let records = [
+      'equipmentCatalog:account-1:org-1:intervention-1',
+      'equipmentCatalog:account-1:org-1:intervention-2',
+      'publication:account-1:org-1:intervention-1',
+      'owner',
+    ];
+    database.removeWhere.mockImplementation(
+      async (store: string, predicate: (value: unknown, key: IDBValidKey) => boolean) => {
+        if (store === 'metadata') records = records.filter((key) => !predicate({}, key));
+      },
+    );
+    await service.clearIntervention('intervention-1');
+    expect(records).toEqual([
+      'equipmentCatalog:account-1:org-1:intervention-2',
+      'publication:account-1:org-1:intervention-1',
+      'owner',
+    ]);
   });
 
   it('does not announce an empty queue when a local purge fails', async () => {

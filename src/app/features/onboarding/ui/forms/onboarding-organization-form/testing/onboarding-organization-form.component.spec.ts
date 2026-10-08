@@ -51,7 +51,35 @@ describe('OnboardingOrganizationForm', () => {
     await fill('onboarding-org-name', ' Acme Fire Safety ');
     await submit();
 
-    expect(emitted).toEqual([{ name: 'Acme Fire Safety' }]);
+    expect(emitted).toEqual([{ name: 'Acme Fire Safety', operatingProfile: 'operator' }]);
+  });
+
+  it('retains the selected service-provider profile in the creation payload', async () => {
+    const emitted: SetupCreateOrganizationInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value: SetupCreateOrganizationInput): void => {
+      emitted.push(value);
+    });
+    await fill('onboarding-org-name', 'FireGuard Services');
+    element
+      .querySelector<HTMLButtonElement>('[data-testid="onboarding-org-profile-provider"]')
+      ?.click();
+    await fixture.whenStable();
+    await submit();
+    expect(emitted).toEqual([{ name: 'FireGuard Services', operatingProfile: 'service_provider' }]);
+  });
+
+  it('restores the profile together with the pending organization draft', async () => {
+    fixture.componentRef.setInput('restored', {
+      name: 'FireGuard Services',
+      operatingProfile: 'service_provider',
+    });
+    await fixture.whenStable();
+    const emitted: SetupCreateOrganizationInput[] = [];
+    fixture.componentInstance.submitted.subscribe((value: SetupCreateOrganizationInput): void => {
+      emitted.push(value);
+    });
+    await submit();
+    expect(emitted).toEqual([{ name: 'FireGuard Services', operatingProfile: 'service_provider' }]);
   });
 
   it('should lock the submit control while a request is in flight', async () => {

@@ -24,9 +24,11 @@ its published setup boundary.
   workspace access to the entry resolver. A failed onboarding read is an unknown state, not proof that activation is incomplete;
   organization access guards remain authoritative. The dashboard parent authenticates before this
   guard runs on its Account/Organization children, preserving anonymous deep-link destinations.
-- Completing activation opens `/organizations/:targetOrganizationId`; when no target exists,
-  a safe `returnUrl` or `/` is the fallback. Visiting an already completed wizard instead
-  resumes its safe `returnUrl`, falling back to the target organization and then `/`.
+- Completing activation retains a safe deep link inside the completed target organization;
+  otherwise its default is `/organizations/:targetOrganizationId/assets` when API-confirmed
+  facilities-read is granted, or the historical organization dashboard. A link to another
+  organization does not replace the newly created target. With no target, a safe return URL or
+  `/` remains the fallback. Visiting an already completed wizard resumes its safe return URL first.
 - The shell mounts auth's `withLogoutControl()` because the mandatory gate must still permit
   signing out. The dashboard parent rechecks authentication on navigation; maintenance retains its existing scope.
 
@@ -54,21 +56,27 @@ explicit local retry. Subscriptions end with the page.
 
 ## Cross-Feature Dependencies
 
-- `@features/organization/setup`: activation commands, role/site summaries and the
+- `@features/organization/setup`: activation commands, role/site summaries, active equipment-type choices and the
   `organizationInvitationAcceptStoreEvents.acceptSucceeded` event that invalidates onboarding before guards reload.
 - `@features/organization/data-access`: root `PlanService` and `BillingService`, because
   onboarding runs outside the dashboard's scoped organization provider.
 - `@features/organization/models`: plans, billing, access policies, domains and admission contracts.
 - `@features/organization/utils`: localized admission failure mapping.
+- `@features/organization/services/organization-landing`: the narrowly published default
+  destination facade, using the target organization's existing access coordinator and grants.
 - `@features/auth/data-access`, `models` and `ui/forms`: mailbox proof transport and OTP form.
 - `@features/account`: notification-center invalidation counter; no private notification content.
-- `@features/organization/features/equipments`: the canonical `EQUIPMENT_TYPE_OPTIONS`.
 - `@features/auth`: session lifecycle events; `@features/auth/utils`: safe return URL validation.
 - `@shared/layout-slot`: the layout contribution contract.
 
 The organization surfaces listed here are the complete lint-enforced allowlist. No organization
 subfeature store or private transport is consumed by onboarding. Facility type choices remain
 local until their owning feature publishes an approved shared contract.
+
+Explicit organization dashboard bookmarks remain valid. Workspace selection preserves safe
+client/site query context in the selected organization. Superseded permission reads cannot
+navigate back to an earlier selection. Exploitant and Prestataire profiles do not grant access;
+the same facilities-read check determines their default fleet entry.
 
 ## UI
 
@@ -109,6 +117,11 @@ local until their owning feature publishes an approved shared contract.
 - Equipment restores persisted sites when the wizard resumes. One site is automatically attached
   and shown as a summary; multiple sites require an explicit searchable selection. The site ID
   is mapped by the setup facade to the facility IRI in the same equipment creation request.
+- Equipment choices come from the organization's complete active server catalogue through setup,
+  loaded after browser rendering only while the equipment step is active. Obsolete organization/step
+  reads are cancelled. Empty and failed reads expose explicit refresh without retry loops.
+  Fire types are shown initially; all active families remain selectable. Custom codes remain strings;
+  prepared codes and other fields are retained, but an unavailable type cannot create new equipment.
 - API command failures use the app-wide feedback toast once per failed request; forms retain only local field validation. The page keeps retry controls and failed-row markers without repeating the API message inline.
   Catalog loading, empty responses, recoverable failures and blocked activation are distinct.
 

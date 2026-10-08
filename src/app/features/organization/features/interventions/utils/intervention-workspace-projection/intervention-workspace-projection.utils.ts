@@ -7,6 +7,8 @@ import {
   type InterventionChangeOutput,
   type InterventionWorkItemTableQuery,
   type InterventionChangeTableQuery,
+  type InterventionWorkItemExecutionResultInput,
+  type InterventionWorkItemExecutionResultOutput,
 } from '@features/organization/features/interventions/models';
 import {
   formatInterventionChangePatch,
@@ -20,12 +22,14 @@ import {
  * Overlays only outstanding local operations, including conflicts, on complete data.
  * Applying the same outbox twice is idempotent. Unrelated fresh server fields remain authoritative.
  *
- * @param {InterventionWorkspaceData} base - Complete saved or freshly fetched workspace.
- * @param {readonly InterventionOutboxOperation[]} operations - Remaining local intent in queue order.
- * @param {InterventionWorkspaceData} saved - Saved labels for pending local associations.
- * @returns {InterventionWorkspaceData} Projected workspace without mutating inputs.
- *
  * @since 6.2.0
+ *
+ * @param {InterventionWorkspaceData} base - Complete saved or freshly fetched workspace.
+ * @param {readonly InterventionOutboxOperation[]} operations - Remaining local intent in queue
+ *   order.
+ * @param {InterventionWorkspaceData} saved - Saved labels for pending local associations.
+ *
+ * @returns {InterventionWorkspaceData} Projected workspace without mutating inputs.
  */
 export function projectInterventionWorkspace(
   base: InterventionWorkspaceData,
@@ -35,6 +39,21 @@ export function projectInterventionWorkspace(
   const intervention = { ...base.intervention };
   const workItems = new Map(base.workItems.map((item) => [item.id, item]));
   const changes = new Map(base.changes.map((change) => [change.id, change]));
+  const latestResults = new Map<string, InterventionWorkItemExecutionResultInput | null>();
+  for (const operation of operations) {
+    if (
+      operation.interventionId === intervention.id &&
+      operation.type === 'work-item.update' &&
+      operation.payload.executionResult !== undefined
+    )
+      latestResults.set(operation.payload.workItemId, operation.payload.executionResult);
+  }
+  const projectedResultIds = new Set(
+    [...latestResults].flatMap(([id, result]) => {
+      const current = workItems.get(id)?.executionResult;
+      return current && !current.authorId && equalExecutionFacts(current, result) ? [id] : [];
+    }),
+  );
   let workChanged = false;
   for (const operation of operations) {
     if (operation.interventionId !== intervention.id) continue;
@@ -44,7 +63,13 @@ export function projectInterventionWorkspace(
         break;
       }
       case 'work-item.update': {
-        workChanged = applyWorkItemUpdate(workItems, operation, saved) || workChanged;
+        workChanged =
+          applyWorkItemUpdate(
+            workItems,
+            operation,
+            saved,
+            projectedResultIds.has(operation.payload.workItemId),
+          ) || workChanged;
         break;
       }
       case 'change.create': {
@@ -84,6 +109,7 @@ export function projectInterventionWorkspace(
  *
  * @param {Map<string, InterventionWorkItemOutput>} workItems - Projected work items.
  * @param {InterventionOutboxOperationFor<'work-item.create'>} operation - Queued creation.
+ *
  * @returns {boolean} Whether a new row was added.
  */
 function applyWorkItemCreation(
@@ -108,17 +134,21 @@ function applyWorkItemCreation(
  * @param {Map<string, InterventionWorkItemOutput>} workItems - Projected work items.
  * @param {InterventionOutboxOperationFor<'work-item.update'>} operation - Queued update.
  * @param {InterventionWorkspaceData} saved - Saved rows and association labels.
+ * @param {boolean} isResultProjected - Whether the snapshot already contains the final local
+ *   result.
+ *
  * @returns {boolean} Whether a row was updated or restored.
  */
 function applyWorkItemUpdate(
   workItems: Map<string, InterventionWorkItemOutput>,
   operation: InterventionOutboxOperationFor<'work-item.update'>,
   saved: InterventionWorkspaceData,
+  isResultProjected: boolean,
 ): boolean {
   const { workItemId } = operation.payload;
   const item = workItems.get(workItemId) ?? saved.workItems.find((row) => row.id === workItemId);
   if (!item) return false;
-  workItems.set(workItemId, projectedUpdatedWorkItem(operation, item, saved));
+  workItems.set(workItemId, projectedUpdatedWorkItem(operation, item, saved, isResultProjected));
   return true;
 }
 
@@ -133,6 +163,7 @@ function applyWorkItemUpdate(
  *
  * @param {Map<string, InterventionChangeOutput>} changes - Projected changes.
  * @param {InterventionOutboxOperationFor<'change.create'>} operation - Queued creation.
+ *
  * @returns {void}
  */
 function applyChangeCreation(
@@ -169,6 +200,7 @@ function applyChangeCreation(
  * @param {Map<string, InterventionChangeOutput>} changes - Projected changes.
  * @param {InterventionOutboxOperationFor<'change.update'>} operation - Queued update.
  * @param {InterventionWorkspaceData} saved - Saved rows available for restoration.
+ *
  * @returns {void}
  */
 function applyChangeUpdate(
@@ -183,11 +215,16 @@ function applyChangeUpdate(
 
 /**
  * Function projectedCreatedWorkItem
- * @description Builds the optimistic row for an outstanding work-item creation.
+ *
+ * @description
+ * Builds the optimistic row for an outstanding work-item creation.
+ *
+ * @since 6.2.0
+ *
  * @param {InterventionOutboxOperationFor<'work-item.create'>} operation - Queued creation.
  * @param {string} id - Stable client-generated identifier.
+ *
  * @returns {InterventionWorkItemOutput} Local projection.
- * @since 6.2.0
  */
 function projectedCreatedWorkItem(
   operation: InterventionOutboxOperationFor<'work-item.create'>,
@@ -200,6 +237,10 @@ function projectedCreatedWorkItem(
     id,
     intervention: input.intervention,
     action: input.action,
+    operationId: input.operationId ?? null,
+    occurrenceId: input.occurrenceId ?? null,
+    operationKind: input.operationKind ?? null,
+    executionResult: null,
     target: input.target ?? null,
     resultResource: input.resultResource ?? null,
     assignee: input.assignee ?? null,
@@ -221,26 +262,45 @@ function projectedCreatedWorkItem(
 
 /**
  * Function projectedUpdatedWorkItem
- * @description Applies a queued edit while retaining saved profile labels and clearing stale remaining effort.
+ *
+ * @description
+ * Applies a queued edit while retaining saved profile labels and clearing stale remaining effort.
+ *
+ * @since 6.2.0
+ *
  * @param {InterventionOutboxOperationFor<'work-item.update'>} operation - Queued edit.
  * @param {InterventionWorkItemOutput} item - Current projected row.
  * @param {InterventionWorkspaceData} saved - Saved labels for existing associations.
+ * @param {boolean} isResultProjected - Whether the snapshot already contains the final local
+ *   result.
+ *
  * @returns {InterventionWorkItemOutput} Updated local row.
- * @since 6.2.0
  */
 function projectedUpdatedWorkItem(
   operation: InterventionOutboxOperationFor<'work-item.update'>,
   item: InterventionWorkItemOutput,
   saved: InterventionWorkspaceData,
+  isResultProjected: boolean,
 ): InterventionWorkItemOutput {
-  const { workItemId, clientId: _clientId, revision: _revision, ...fields } = operation.payload;
+  const {
+    workItemId,
+    clientId: _clientId,
+    revision: _revision,
+    executionResult,
+    ...fields
+  } = operation.payload;
+  const status = isResultProjected && executionResult !== undefined ? item.status : fields.status;
   return {
     ...item,
     ...fields,
+    ...(status !== undefined ? { status } : {}),
+    ...(executionResult !== undefined && !isResultProjected
+      ? { executionResult: projectInterventionWorkItemExecutionResult(item, executionResult) }
+      : {}),
     ...((item.status === 'completed' || item.status === 'skipped') &&
-    fields.status &&
-    fields.status !== 'completed' &&
-    fields.status !== 'skipped' &&
+    status &&
+    status !== 'completed' &&
+    status !== 'skipped' &&
     fields.remainingMinutes === undefined
       ? { remainingMinutes: null }
       : {}),
@@ -255,12 +315,87 @@ function projectedUpdatedWorkItem(
 }
 
 /**
+ * Function projectInterventionWorkItemExecutionResult
+ *
+ * @description
+ * Stages a local execution fact and preserves earlier attempts without inventing provenance.
+ *
+ * @access public
+ *
+ * @param {InterventionWorkItemOutput} item - Work item carrying preventive identifiers.
+ * @param {InterventionWorkItemExecutionResultInput | null} input - Recorded fact or explicit
+ *   removal.
+ *
+ * @returns {InterventionWorkItemExecutionResultOutput | null} Local result or unchanged recorded
+ *   fact.
+ */
+export function projectInterventionWorkItemExecutionResult(
+  item: InterventionWorkItemOutput,
+  input: InterventionWorkItemExecutionResultInput | null,
+): InterventionWorkItemExecutionResultOutput | null {
+  if (!input) return item.executionResult ?? null;
+  const previous = item.executionResult;
+  if (previous && equalExecutionFacts(previous, input)) return previous;
+  const history = [...(previous?.history ?? [])];
+  if (previous) {
+    const { history: _history, ...attempt } = previous;
+    history.push(attempt);
+  }
+  return {
+    equipmentId: input.equipmentId,
+    performedAt: input.performedAt,
+    outcome: input.outcome,
+    workPerformed: input.workPerformed,
+    operationId: item.operationId ?? null,
+    occurrenceId: item.occurrenceId ?? null,
+    state: 'staged',
+    validatedAt: null,
+    history,
+  };
+}
+
+/**
+ * Function equalExecutionFacts
+ *
+ * @description
+ * Compares facts using the API's second-precision date and trimmed description normalization.
+ *
+ * @access private
+ *
+ * @param {InterventionWorkItemExecutionResultInput | null} previous - Previously recorded fact.
+ * @param {InterventionWorkItemExecutionResultInput | null} input - Pending fact or removal.
+ *
+ * @returns {boolean} Whether the declaration is unchanged.
+ */
+function equalExecutionFacts(
+  previous: InterventionWorkItemExecutionResultInput | null,
+  input: InterventionWorkItemExecutionResultInput | null,
+): boolean {
+  return (
+    previous === input ||
+    (!!previous &&
+      !!input &&
+      previous.equipmentId === input.equipmentId &&
+      previous.outcome === input.outcome &&
+      previous.workPerformed.trim() === input.workPerformed.trim() &&
+      previous.performedAt.replace(/\.\d+(?=Z|[+-]\d{2}:\d{2}$)/u, '').replace(/Z$/u, '+00:00') ===
+        input.performedAt.replace(/\.\d+(?=Z|[+-]\d{2}:\d{2}$)/u, '').replace(/Z$/u, '+00:00'))
+  );
+}
+
+/**
  * Function searchSavedWorkItems
- * @description Evaluates offline criteria over all saved rows and available display labels.
- * @param {readonly InterventionWorkItemOutput[]} items - Complete local projection.
- * @param {InterventionWorkItemTableQuery} query - Controlled table criteria, including Remaining's scalar statuses.
- * @returns {readonly InterventionWorkItemOutput[]} Matching saved rows.
+ *
+ * @description
+ * Evaluates offline criteria over all saved rows and available display labels.
+ *
  * @since 6.2.0
+ *
+ * @param {readonly InterventionWorkItemOutput[]} items - Complete local projection.
+ * @param {InterventionWorkItemTableQuery} query - Controlled table criteria, including Remaining's
+ *   scalar statuses.
+ *
+ * @returns {readonly InterventionWorkItemOutput[]} Matching saved rows.
  */
 export function searchSavedWorkItems(
   items: readonly InterventionWorkItemOutput[],
@@ -289,12 +424,17 @@ export function searchSavedWorkItems(
 
 /**
  * Function searchSavedChanges
- * @description Evaluates offline history criteria over the complete local projection and patch values.
+ *
+ * @description
+ * Evaluates offline history criteria over the complete local projection and patch values.
+ *
+ * @since 6.2.0
+ *
  * @param {readonly InterventionChangeOutput[]} changes - All projected changes.
  * @param {InterventionChangeTableQuery} query - Controlled history criteria.
  * @param {readonly InterventionWorkItemOutput[]} items - Available target labels.
+ *
  * @returns {readonly InterventionChangeOutput[]} Matching saved changes.
- * @since 6.2.0
  */
 export function searchSavedChanges(
   changes: readonly InterventionChangeOutput[],

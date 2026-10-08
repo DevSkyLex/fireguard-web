@@ -417,4 +417,28 @@ describe('InterventionWorkItemForm', () => {
       'Unknown member',
     );
   });
+
+  it('requires an equipment target for maintenance and excludes facilities from the picker', async () => {
+    fixture.componentRef.setInput('targetOptions', [
+      { value: '/api/facilities/site', label: 'Main site' },
+      { value: '/api/equipment/equipment-1', label: 'Extinguisher A-12' },
+    ]);
+    const component = fixture.componentInstance;
+    component['workItemForm'].action().value.set('maintenance');
+    await fixture.whenStable();
+    expect(component['availableTargets']()).toEqual([
+      { value: '/api/equipment/equipment-1', label: 'Extinguisher A-12' },
+    ]);
+    await submit();
+    expect(submissions).toEqual([]);
+    component['workItemForm'].target().value.set('/api/facilities/site');
+    await submit();
+    expect(submissions).toEqual([]);
+    component['workItemForm'].target().value.set('/api/equipment/equipment-1');
+    await submit();
+    expect(submissions[0]).toMatchObject({
+      action: 'maintenance',
+      target: '/api/equipment/equipment-1',
+    });
+  });
 });

@@ -25,11 +25,20 @@ const STATUS_VALUES: readonly InterventionStatus[] = [
   'published',
   'abandoned',
 ];
-const TYPE_VALUES: readonly InterventionType[] = ['site_setup', 'inventory', 'inspection_campaign'];
+const TYPE_VALUES: readonly InterventionType[] = [
+  'site_setup',
+  'inventory',
+  'inspection_campaign',
+  'preventive_maintenance',
+  'corrective_maintenance',
+];
 const WORK_ITEM_ACTION_VALUES: readonly InterventionWorkItemAction[] = [
   'site_setup',
   'inventory',
   'inspection',
+  'maintenance',
+  'repair',
+  'replacement',
 ];
 const WORK_ITEM_STATUS_VALUES: readonly InterventionWorkItemStatus[] = [
   'planned',

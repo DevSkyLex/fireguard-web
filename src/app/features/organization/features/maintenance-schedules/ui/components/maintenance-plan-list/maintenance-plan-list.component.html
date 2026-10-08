@@ -1,0 +1,115 @@
+<div hlmItemGroup>
+  @for (plan of plans(); track plan.id; let last = $last) {
+    <div hlmItem class="flex-wrap" [attr.data-testid]="'maintenance-plan-' + plan.id">
+      <div hlmItemContent class="min-w-0">
+        <div hlmItemTitle class="flex-wrap">
+          <button
+            hlmBtn
+            type="button"
+            variant="link"
+            class="h-auto text-left whitespace-normal"
+            (click)="previewRequested.emit(plan)"
+          >
+            {{ plan.name }}
+          </button>
+          <span hlmBadge variant="secondary">{{ operationLabel(plan) }}</span>
+          @if (!plan.active) {
+            <span hlmBadge variant="outline" i18n="@@maintenance.plans.prepared">Prepared</span>
+          }
+        </div>
+        <div hlmItemDescription class="flex flex-col gap-1">
+          <a
+            [routerLink]="['/organizations', organizationId(), 'equipments', plan.equipmentId]"
+            class="underline"
+            i18n="@@maintenance.plans.viewEquipment"
+            >View equipment</a
+          >
+          <span>{{ cadenceLabel(plan) }} · {{ durationLabel(plan.interval) }}</span>
+          @if (plan.nextDueAt; as dueAt) {
+            <span i18n="@@maintenance.plans.nextDue"
+              >Next due:
+              {{ dateValue(dueAt, plan) | appOrgDate: dateMode(plan) : regionalFormatting() }}</span
+            >
+          } @else {
+            <span i18n="@@maintenance.plans.firstDueMissing"
+              >First deadline to configure — no validated control recorded.</span
+            >
+          }
+          @if (plan.openOccurrence; as occurrence) {
+            <span i18n="@@maintenance.plans.originalDue"
+              >Original deadline:
+              {{
+                dateValue(occurrence.dueAt, plan)
+                  | appOrgDate: dateMode(plan) : regionalFormatting()
+              }}
+              · attempt
+              {{ occurrence.attempt }}</span
+            >
+            @if (occurrence.interventionId; as interventionId) {
+              <a
+                [routerLink]="['/organizations', organizationId(), 'interventions', interventionId]"
+                class="underline"
+                i18n="@@maintenance.plans.openWork"
+                >Open existing intervention</a
+              >
+            }
+          }
+        </div>
+      </div>
+      <div hlmItemActions class="flex-wrap">
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          class="mobile-ui:min-h-11"
+          (click)="previewRequested.emit(plan)"
+          i18n="@@maintenance.plans.preview"
+        >
+          Preview dates
+        </button>
+        @if (canManage()) {
+          <button
+            hlmBtn
+            type="button"
+            variant="ghost"
+            class="mobile-ui:min-h-11"
+            [disabled]="pending()"
+            (click)="editRequested.emit(plan)"
+            i18n="@@maintenance.plans.configure"
+          >
+            Configure
+          </button>
+        }
+        @if (canGenerate() && plan.active) {
+          <button
+            hlmBtn
+            type="button"
+            variant="outline"
+            class="mobile-ui:min-h-11"
+            [disabled]="pending()"
+            (click)="generationRequested.emit({ planId: plan.id, retry: false })"
+            i18n="@@maintenance.plans.prepareWork"
+          >
+            Prepare intervention
+          </button>
+          @if (plan.openOccurrence?.retryAllowed) {
+            <button
+              hlmBtn
+              type="button"
+              variant="outline"
+              class="mobile-ui:min-h-11"
+              [disabled]="pending()"
+              (click)="generationRequested.emit({ planId: plan.id, retry: true })"
+              i18n="@@maintenance.plans.newAttempt"
+            >
+              Start a new attempt
+            </button>
+          }
+        }
+      </div>
+    </div>
+    @if (!last) {
+      <div hlmItemSeparator></div>
+    }
+  }
+</div>

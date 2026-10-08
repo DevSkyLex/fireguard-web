@@ -14,10 +14,20 @@ import type { SetupCreateOrganizationInput } from '@features/organization/setup'
 import { RequiredMarker } from '@shared/required-marker';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import type { OnboardingOrganizationFormDraft } from './models';
 
-/** A blank draft. */
-const EMPTY_VALUES: OnboardingOrganizationFormDraft = { name: '' };
+/**
+ * Constant EMPTY_VALUES
+ *
+ * @description
+ * A blank draft.
+ *
+ * @type {OnboardingOrganizationFormDraft}
+ *
+ * @const EMPTY_VALUES
+ */
+const EMPTY_VALUES: OnboardingOrganizationFormDraft = { name: '', operatingProfile: 'operator' };
 
 /**
  * Component OnboardingOrganizationForm
@@ -35,16 +45,23 @@ const EMPTY_VALUES: OnboardingOrganizationFormDraft = { name: '' };
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-onboarding-organization-form [pending]="isCreating()" (submitted)="createOrganization($event)" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-onboarding-organization-form',
-  imports: [RequiredMarker, FormField, HlmInput, OnboardingStepFooter, ...HlmFieldImports],
+  imports: [
+    RequiredMarker,
+    FormField,
+    HlmInput,
+    OnboardingStepFooter,
+    ...HlmFieldImports,
+    ...HlmToggleGroupImports,
+  ],
   templateUrl: './onboarding-organization-form.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,9 +70,13 @@ export class OnboardingOrganizationForm {
   /**
    * Property restored
    * @readonly
-   * @description Pending fields restored from the server before any durable creation result exists.
+   *
+   * @description
+   * Pending fields restored from the server before any durable creation result exists.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<SetupCreateOrganizationInput | null>}
    */
   public readonly restored: InputSignal<SetupCreateOrganizationInput | null> =
@@ -65,9 +86,13 @@ export class OnboardingOrganizationForm {
   /**
    * Property pending
    * @readonly
-   * @description Whether the organization is being created, which locks the controls.
+   *
+   * @description
+   * Whether the organization is being created, which locks the controls.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input<boolean>(false);
@@ -75,9 +100,14 @@ export class OnboardingOrganizationForm {
   /**
    * Property skippable
    * @readonly
-   * @description Whether the backend currently lets this step be skipped. Always false here — the organization is the one required step — but every step form shares the footer contract.
+   *
+   * @description
+   * Whether the backend currently lets this step be skipped. Always false here — the organization
+   * is the one required step — but every step form shares the footer contract.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly skippable: InputSignal<boolean> = input<boolean>(false);
@@ -87,9 +117,13 @@ export class OnboardingOrganizationForm {
   /**
    * Property submitted
    * @readonly
-   * @description Emits the setup-boundary payload once the form is valid.
+   *
+   * @description
+   * Emits the setup-boundary payload once the form is valid.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<SetupCreateOrganizationInput>}
    */
   public readonly submitted: OutputEmitterRef<SetupCreateOrganizationInput> =
@@ -98,32 +132,80 @@ export class OnboardingOrganizationForm {
   /**
    * Property skipped
    * @readonly
-   * @description Relays the footer's skip request to the page.
+   *
+   * @description
+   * Relays the footer's skip request to the page.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly skipped: OutputEmitterRef<void> = output<void>();
   //#endregion
 
   //#region Properties
-  /** The footer's resting label — the step's verb, not a generic "Continue". */
+  /**
+   * Property submitLabel
+   * @readonly
+   *
+   * @description
+   * The footer's resting label — the step's verb, not a generic "Continue".
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   *
+   * @property submitLabel
+   */
   protected readonly submitLabel: string = $localize`:@@onboarding.orgForm.submit:Create organization`;
 
-  /** The footer's label while the organization is being created. */
+  /**
+   * Property pendingLabel
+   * @readonly
+   *
+   * @description
+   * The footer's label while the organization is being created.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   *
+   * @property pendingLabel
+   */
   protected readonly pendingLabel: string = $localize`:@@onboarding.orgForm.submitting:Creating…`;
 
-  /** The edited draft. */
+  /**
+   * Property model
+   * @readonly
+   *
+   * @description
+   * The edited draft.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @type {WritableSignal<OnboardingOrganizationFormDraft>}
+   *
+   * @property model
+   */
   protected readonly model: WritableSignal<OnboardingOrganizationFormDraft> = linkedSignal(() => ({
     name: this.restored()?.name ?? EMPTY_VALUES.name,
+    operatingProfile: this.restored()?.operatingProfile ?? EMPTY_VALUES.operatingProfile,
   }));
 
   /**
    * Property organizationForm
    * @readonly
-   * @description The field tree and its one rule.
+   *
+   * @description
+   * The field tree and its one rule.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FieldTree<OnboardingOrganizationFormDraft>}
    */
   protected readonly organizationForm: FieldTree<OnboardingOrganizationFormDraft> = form(
@@ -161,7 +243,27 @@ export class OnboardingOrganizationForm {
 
     const draft: OnboardingOrganizationFormDraft = this.model();
 
-    this.submitted.emit({ name: draft.name.trim() });
+    this.submitted.emit({ name: draft.name.trim(), operatingProfile: draft.operatingProfile });
+  }
+
+  /**
+   * Method changeOperatingProfile
+   *
+   * @description
+   * Writes the selected profile into the same durable Signal Forms draft.
+   *
+   * @access protected
+   * @since 1.1.0
+   *
+   * @param {string | readonly string[] | null | undefined} value - Native toggle-group selection.
+   *
+   * @returns {void}
+   */
+  protected changeOperatingProfile(value: string | readonly string[] | null | undefined): void {
+    if (value === 'operator' || value === 'service_provider') {
+      this.organizationForm.operatingProfile().value.set(value);
+      this.organizationForm.operatingProfile().markAsTouched();
+    }
   }
   //#endregion
 }

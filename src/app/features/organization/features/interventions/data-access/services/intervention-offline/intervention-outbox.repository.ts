@@ -11,6 +11,7 @@ import type {
   InterventionOutboxQueueEntry,
   InterventionOutboxType,
 } from '@features/organization/features/interventions/models';
+import type { DeclareInventoryConsumptionInput } from '@features/organization/features/inventory/models';
 import type { WorkloadAssessment } from '@features/organization/features/workload/models';
 import { InterventionDatabaseService } from './intervention-database.service';
 
@@ -150,6 +151,20 @@ export class InterventionOutboxRepository {
   private lastQueuedAt: number = 0;
 
   /**
+   * Property consumptionQueues
+   * @readonly
+   *
+   * @description
+   * Serializes repeat declarations locally so one immutable physical intention has one durable row.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Map<string, Promise<void>>}
+   */
+  private readonly consumptionQueues: Map<string, Promise<void>> = new Map();
+
+  /**
    * Property hasUnsyncedChanges
    * @readonly
    *
@@ -282,6 +297,124 @@ export class InterventionOutboxRepository {
     this.unsynced.set(true);
     this.pending.set(true);
     this.pendingOps.update((count: number) => count + 1);
+  }
+
+  /**
+   * Method queueInventoryConsumption
+   * @method queueInventoryConsumption
+   *
+   * @description
+   * Durably records a physical declaration once, retaining its operation UUID and original
+   * timestamp. Identical retries reactivate its row; an identity reused for another fact is
+   * rejected.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the saved workspace.
+   * @param {DeclareInventoryConsumptionInput} input - Immutable physical intention.
+   * @param {string} actorId - Account captured before submission.
+   * @param {() => boolean} scopeCurrent - Additional organization and permission fence.
+   *
+   * @returns {Promise<void>} Resolves only after persistence; callers may then clear the draft.
+   */
+  public queueInventoryConsumption(
+    organizationId: string,
+    input: DeclareInventoryConsumptionInput,
+    actorId: string,
+    scopeCurrent: () => boolean,
+  ): Promise<void> {
+    const mutationCurrent = this.captureMutationContext();
+    const isCurrent = (): boolean =>
+      mutationCurrent() && scopeCurrent() && actorId === this.database.currentOwnerId();
+    const key = `inventory:${input.clientOperationId}`;
+    const preceding = this.consumptionQueues.get(key) ?? Promise.resolve();
+    const write: Promise<void> = preceding
+      .catch(() => undefined)
+      .then(async () => {
+        this.assertCurrent(isCurrent);
+        await this.database.ensureOwnerBound();
+        this.assertCurrent(isCurrent);
+        const workspace = await this.database.get<{ readonly organization: string }>(
+          'interventions',
+          input.interventionId,
+        );
+        this.assertCurrent(isCurrent);
+        if (workspace?.organization !== `/api/organizations/${organizationId}`)
+          throw new Error(
+            $localize`:@@intervention.inventory.queueWorkspaceRequired:This intervention must be saved on this device before a consumption can be queued. Retry preparing the workspace.`,
+          );
+        const existing = await this.database.get<InterventionOutboxOperation>('outbox', key);
+        this.assertCurrent(isCurrent);
+        if (existing) {
+          if (
+            existing.type !== 'inventory-consumption.declare' ||
+            existing.interventionId !== input.interventionId ||
+            existing.payload.actorId !== actorId ||
+            this.consumptionFingerprint(existing.payload) !== this.consumptionFingerprint(input)
+          )
+            throw new Error(
+              $localize`:@@intervention.inventory.operationConflict:This declaration identifier already belongs to another physical fact. Keep the original declaration and review it before continuing.`,
+            );
+          if (existing.status === 'conflict')
+            throw new Error(
+              $localize`:@@intervention.inventory.reviewConflict:Review the conflicted declaration before retrying it.`,
+            );
+          if (existing.status === 'failed') {
+            await this.retryOutbox(existing.id);
+            this.assertCurrent(isCurrent);
+          }
+          return;
+        }
+        const queuedAt = Math.max(Date.now(), this.lastQueuedAt + 1);
+        this.lastQueuedAt = queuedAt;
+        const operation: InterventionOutboxOperationFor<'inventory-consumption.declare'> = {
+          id: key,
+          interventionId: input.interventionId,
+          type: 'inventory-consumption.declare',
+          payload: { ...input, actorId, clientId: input.clientOperationId },
+          createdAt: new Date(queuedAt).toISOString(),
+          status: 'pending',
+          error: null,
+        };
+        await this.database.put('outbox', key, operation, isCurrent);
+        this.assertCurrent(isCurrent);
+        this.unsynced.set(true);
+        this.pending.set(true);
+        this.pendingOps.update((count: number) => count + 1);
+      });
+    const settled = write.finally(() => {
+      if (this.consumptionQueues.get(key) === settled) this.consumptionQueues.delete(key);
+    });
+    this.consumptionQueues.set(key, settled);
+    return settled;
+  }
+
+  /**
+   * Method consumptionFingerprint
+   * @method consumptionFingerprint
+   *
+   * @description
+   * Compares only immutable declaration fields; technical queue identity never changes a fact.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {DeclareInventoryConsumptionInput} input - Physical declaration.
+   *
+   * @returns {string} Stable field-order-independent comparison.
+   */
+  private consumptionFingerprint(input: DeclareInventoryConsumptionInput): string {
+    return JSON.stringify([
+      input.clientOperationId,
+      input.partId,
+      input.warehouseId,
+      input.quantity,
+      input.interventionId,
+      input.workItemId ?? null,
+      input.equipmentId ?? null,
+      input.occurredAt,
+    ]);
   }
 
   /**

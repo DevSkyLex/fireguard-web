@@ -41,8 +41,10 @@ export {
 export { interventionRecurrenceFrequencyLabel } from './intervention-recurrence-frequency-label/intervention-recurrence-frequency-label.utils';
 export {
   projectInterventionWorkspace,
+  projectInterventionWorkItemExecutionResult,
   searchSavedWorkItems,
   searchSavedChanges,
 } from './intervention-workspace-projection/intervention-workspace-projection.utils';
 export { projectInterventionTime } from './project-intervention-time/project-intervention-time.utils';
 export { orderInterventionWorkItems } from './order-intervention-work-items/order-intervention-work-items.utils';
+export { resolveInterventionEquipmentContext } from './intervention-equipment-context/intervention-equipment-context.utils';

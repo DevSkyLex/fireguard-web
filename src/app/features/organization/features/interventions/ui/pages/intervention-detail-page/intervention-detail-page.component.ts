@@ -1,4 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   afterNextRender,
@@ -11,6 +11,7 @@ import {
   input,
   linkedSignal,
   LOCALE_ID,
+  PLATFORM_ID,
   signal,
   untracked,
   viewChild,
@@ -21,7 +22,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideActivity,
@@ -69,6 +70,7 @@ import {
 import { TitleService } from '@core/title';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { TeamService } from '@features/organization/data-access';
+import { EquipmentTypeCatalogStore } from '@features/organization/features/equipments';
 import type {
   CreateFacilityInput,
   FacilityType,
@@ -100,6 +102,7 @@ import type {
   InterventionScanResult,
   InterventionStatus,
   InterventionWorkItemOutput,
+  InterventionWorkItemExecutionResultInput,
   InterventionWorkItemStatusChange,
   UpdateInterventionInput,
 } from '@features/organization/features/interventions/models';
@@ -107,6 +110,7 @@ import {
   BrowserDownloadService,
   InterventionFieldExecutionService,
   InterventionPhotoCompressorService,
+  InterventionInventoryService,
   InterventionSyncCoordinatorService,
   interventionSyncEvents,
 } from '@features/organization/features/interventions/services';
@@ -115,6 +119,10 @@ import {
   interventionStoreEvents,
   type InterventionStoreType,
 } from '@features/organization/features/interventions/state';
+import {
+  InterventionInventoryStore,
+  type InterventionInventoryStoreType,
+} from '@features/organization/features/interventions/state/intervention-inventory';
 import {
   InterventionLabelStore,
   interventionLabelStoreEvents,
@@ -134,6 +142,7 @@ import {
   interventionPublicationStoreEvents,
   type InterventionPublicationStoreType,
 } from '@features/organization/features/interventions/state/intervention-publication';
+import { InterventionReplacementContextStore } from '@features/organization/features/interventions/state/intervention-replacement-context';
 import {
   InterventionTableQueryStore,
   type InterventionTableQueryStoreType,
@@ -150,8 +159,11 @@ import {
 } from '@features/organization/features/interventions/state/intervention-workspace';
 import {
   buildInterventionDuplicatePrefill,
+  resolveInterventionEquipmentContext,
   createInterventionCapabilities,
 } from '@features/organization/features/interventions/utils';
+import type { DeclareInventoryConsumptionInput } from '@features/organization/features/inventory/models';
+import { InventoryConsumptionPanel } from '@features/organization/features/inventory/ui/components';
 import { WorkloadConfirmationDialog } from '@features/organization/features/workload/ui/dialogs/workload-confirmation-dialog';
 import {
   ORGANIZATION_PERMISSION,
@@ -184,9 +196,11 @@ import { HlmSheetImports } from '@shared/ui/sheet';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmSpinner } from '@shared/ui/spinner';
 import { HlmTabsImports } from '@shared/ui/tabs';
+import { UnsavedChangesDialog, type UnsavedChangesAware } from '@shared/unsaved-changes';
 import { InterventionActivityThread } from '../../components/intervention-activity-thread';
 import { InterventionAttachments } from '../../components/intervention-attachments';
 import { InterventionGettingStarted } from '../../components/intervention-getting-started';
+import { InterventionInventoryContext } from '../../components/intervention-inventory-context';
 import { InterventionIssuesChecklist } from '../../components/intervention-issues-checklist';
 import { InterventionPropertiesGrid } from '../../components/intervention-properties-grid';
 import { InterventionSyncBlockedAlert } from '../../components/intervention-sync-blocked-alert';
@@ -194,6 +208,7 @@ import { InterventionTag } from '../../components/intervention-tag';
 import { InterventionAbandonDialog } from '../../dialogs/intervention-abandon-dialog';
 import { InterventionAttachmentDeleteDialog } from '../../dialogs/intervention-attachment-delete-dialog';
 import { InterventionConfirmDialog } from '../../dialogs/intervention-confirm-dialog';
+import { InterventionExecutionResultDialog } from '../../dialogs/intervention-execution-result-dialog';
 import { InterventionLabelManageDialog } from '../../dialogs/intervention-label-manage-dialog';
 import type {
   InterventionLabelCreateSubmittedEvent,
@@ -312,6 +327,10 @@ const IDLE_EDIT_STATE: InterventionEditState = {
 @Component({
   selector: 'app-intervention-detail-page',
   imports: [
+    RouterLink,
+    UnsavedChangesDialog,
+    InventoryConsumptionPanel,
+    InterventionInventoryContext,
     CollectionSkeletonCards,
     ...HlmDrawerImports,
     ...HlmItemImports,
@@ -353,16 +372,20 @@ const IDLE_EDIT_STATE: InterventionEditState = {
     InterventionTag,
     InterventionWorkItemSheet,
     InterventionWorkItemTable,
+    InterventionExecutionResultDialog,
     WorkloadConfirmationDialog,
     InterventionEffortSheet,
     InterventionTimeSheet,
     ...HlmTabsImports,
   ],
   providers: [
+    EquipmentTypeCatalogStore,
+    InterventionReplacementContextStore,
     FacilityOptionsStore,
     InterventionOperationsStore,
     InterventionWorkspaceStore,
     InterventionTimeStore,
+    InterventionInventoryStore,
     InterventionPlanningOptionsStore,
     InterventionLinkedResourcesStore,
     InterventionTableQueryStore,
@@ -400,7 +423,451 @@ const IDLE_EDIT_STATE: InterventionEditState = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown)': 'onDocumentKeydown($event)' },
 })
-export class InterventionDetailPage {
+export class InterventionDetailPage implements UnsavedChangesAware {
+  /**
+   * Property inventoryStore
+   * @readonly
+   *
+   * @description
+   * Stock declarations and reference catalogs owned by this intervention and account.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InterventionInventoryStoreType}
+   */
+  protected readonly inventoryStore: InterventionInventoryStoreType = inject(
+    InterventionInventoryStore,
+  );
+
+  /**
+   * Property inventoryService
+   * @readonly
+   *
+   * @description
+   * Captures session and loaded API permissions before any stock exposure.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {InterventionInventoryService}
+   */
+  private readonly inventoryService: InterventionInventoryService = inject(
+    InterventionInventoryService,
+  );
+
+  /**
+   * Property inventoryOpened
+   * @readonly
+   *
+   * @description
+   * Preserves the mounted declaration form while the section is collapsed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly inventoryOpened: WritableSignal<boolean> = linkedSignal({
+    source: () => this.interventionId(),
+    computation: () => false,
+  });
+
+  /**
+   * Property inventoryPrepared
+   * @readonly
+   *
+   * @description
+   * Keeps physical input mounted after opening, including while the section is collapsed.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly inventoryPrepared: WritableSignal<boolean> = linkedSignal({
+    source: () => this.interventionId(),
+    computation: () => false,
+  });
+
+  /**
+   * Property inventoryWorkItemId
+   * @readonly
+   *
+   * @description
+   * Optional task identity is independent of the declaration's stable replay identity.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string | null>}
+   */
+  protected readonly inventoryWorkItemId: WritableSignal<string | null> = linkedSignal({
+    source: () => this.interventionId(),
+    computation: () => null,
+  });
+
+  /**
+   * Property canConsumeForIntervention
+   * @readonly
+   *
+   * @description
+   * Responsible members and participants can declare against the entire intervention.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canConsumeForIntervention: Signal<boolean> = computed(() => {
+    const member = this.currentMemberIri();
+    const intervention = this.store.intervention();
+    return (
+      member !== null &&
+      intervention !== null &&
+      (intervention.responsible === member || (intervention.participants ?? []).includes(member))
+    );
+  });
+
+  /**
+   * Property inventoryWorkItems
+   * @readonly
+   *
+   * @description
+   * Named assignees can report their tasks even when they are not general participants.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly InterventionWorkItemOutput[]>}
+   */
+  protected readonly inventoryWorkItems: Signal<readonly InterventionWorkItemOutput[]> = computed(
+    () => {
+      const member = this.currentMemberIri();
+      return member
+        ? this.store
+            .workItems()
+            .filter(
+              (item) =>
+                item.intervention === `/api/interventions/${this.interventionId()}` &&
+                (item.assignee ? item.assignee === member : this.canConsumeForIntervention()),
+            )
+        : [];
+    },
+  );
+
+  /**
+   * Property inventoryWorkItem
+   * @readonly
+   *
+   * @description
+   * Missing or revoked task context stays unavailable until explicitly selected again.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<InterventionWorkItemOutput | null>}
+   */
+  protected readonly inventoryWorkItem: Signal<InterventionWorkItemOutput | null> = computed(
+    () => this.inventoryWorkItems().find((item) => item.id === this.inventoryWorkItemId()) ?? null,
+  );
+
+  /**
+   * Property inventoryEquipmentId
+   * @readonly
+   *
+   * @description
+   * The equipment reference is derived from the task, never selected across organizations.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<string | null>}
+   */
+  protected readonly inventoryEquipmentId: Signal<string | null> = computed(
+    () => /^\/api\/equipment\/([^/?#]+)$/.exec(this.inventoryWorkItem()?.target ?? '')?.[1] ?? null,
+  );
+
+  /**
+   * Method selectInventoryContext
+   * @method selectInventoryContext
+   *
+   * @description
+   * Context cannot be changed while a submitted fact is waiting for device persistence.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string | null} workItemId - Authorized task identity, or null for the entire
+   *   intervention.
+   *
+   * @returns {void} Retains the current context until a submitted declaration is durable.
+   */
+  protected selectInventoryContext(workItemId: string | null): void {
+    if (
+      this.inventoryStore.hasUnpersistedDeclaration() ||
+      this.inventoryStore.queueCallState().status === 'pending'
+    )
+      return;
+    if (
+      (workItemId === null && this.canConsumeForIntervention()) ||
+      this.inventoryWorkItems().some((item) => item.id === workItemId)
+    )
+      this.inventoryWorkItemId.set(workItemId);
+  }
+
+  /**
+   * Method toggleInventory
+   * @method toggleInventory
+   *
+   * @description
+   * Collapsing the section never clears a declaration or its local persistence state.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Opens or collapses the existing mounted section.
+   */
+  protected toggleInventory(): void {
+    this.inventoryPrepared.set(true);
+    this.inventoryOpened.update((open) => !open);
+  }
+
+  /**
+   * Property canReadInventory
+   * @readonly
+   *
+   * @description
+   * Stock access is explicit and independent of access to internal costs.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadInventory: Signal<boolean> = computed(
+    () => this.inventoryService.scope(this.organizationId(), this.interventionId()) !== null,
+  );
+
+  /**
+   * Property canDeclareInventory
+   * @readonly
+   *
+   * @description
+   * A complete authorized catalog and execution rights are required for a new declaration.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canDeclareInventory: Signal<boolean> = computed(() => {
+    const scope = this.inventoryStore.scope();
+    return (
+      scope !== null &&
+      this.inventoryStore.catalogReady() &&
+      this.inventoryService.isCurrent(scope, true) &&
+      (this.inventoryWorkItemId() === null
+        ? this.canConsumeForIntervention()
+        : this.inventoryWorkItem() !== null) &&
+      this.canExecute() &&
+      !this.publishing()
+    );
+  });
+
+  /**
+   * Property canReadMaintenanceCosts
+   * @readonly
+   *
+   * @description
+   * Internal costing opens its dedicated permission-protected feature.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadMaintenanceCosts: Signal<boolean> = computed(
+    () =>
+      !this.permissions.isLoadingPermissions() &&
+      !this.permissions.permissionError() &&
+      this.permissions.hasPermission(ORGANIZATION_PERMISSION.MAINTENANCE_COST_READ),
+  );
+
+  /**
+   * Property inventoryLeaveState
+   * @readonly
+   *
+   * @description
+   * Hosted warning is shown only while a submitted physical fact has not been saved.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<BrnDialogState>}
+   */
+  protected readonly inventoryLeaveState: WritableSignal<BrnDialogState> = signal('closed');
+
+  /**
+   * Property inventoryLeaveDecision
+   *
+   * @description
+   * Pending route deactivation is settled by the hosted confirmation.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {((leave: boolean) => void) | null}
+   */
+  private inventoryLeaveDecision: ((leave: boolean) => void) | null = null;
+
+  /**
+   * Method hasUnsavedChanges
+   * @method hasUnsavedChanges
+   *
+   * @description
+   * Indicates input at risk of being discarded; durable queued operations survive navigation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @returns {boolean} Whether leaving would discard an unpersisted declaration or time draft.
+   */
+  public hasUnsavedChanges(): boolean {
+    return (
+      this.inventoryStore.hasUnpersistedDeclaration() || this.timeStore.hasUnpersistedFailedDraft()
+    );
+  }
+
+  /**
+   * Method confirmDeactivation
+   * @method confirmDeactivation
+   *
+   * @description
+   * Uses the application's declarative warning before discarding unsaved physical input.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @returns {Promise<boolean>} Resolves to the explicit decision, or true when no input is at
+   *   risk.
+   */
+  public confirmDeactivation(): Promise<boolean> {
+    if (!this.hasUnsavedChanges()) return Promise.resolve(true);
+    this.inventoryLeaveDecision?.(false);
+    this.inventoryLeaveState.set('open');
+    return new Promise<boolean>((resolve) => {
+      this.inventoryLeaveDecision = resolve;
+    });
+  }
+
+  /**
+   * Method resolveInventoryLeave
+   * @method resolveInventoryLeave
+   *
+   * @description
+   * Settles the route warning without changing any durable queue.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {boolean} leave - Explicit confirmation to leave the current workspace.
+   *
+   * @returns {void} Closes the warning and settles the pending route decision.
+   */
+  protected resolveInventoryLeave(leave: boolean): void {
+    this.inventoryLeaveState.set('closed');
+    this.inventoryLeaveDecision?.(leave);
+    this.inventoryLeaveDecision = null;
+  }
+
+  /**
+   * Method refreshInventory
+   * @method refreshInventory
+   *
+   * @description
+   * Retries complete preparation without interpreting a cached catalog as current availability.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} Restarts preparation only for a currently authorized scope.
+   */
+  protected refreshInventory(): void {
+    const scope = this.inventoryService.scope(this.organizationId(), this.interventionId());
+    if (scope) this.inventoryStore.load(scope);
+  }
+
+  /**
+   * Method declareInventory
+   * @method declareInventory
+   *
+   * @description
+   * ACK clearing is exclusively owned by the durable queue, never by the transport request.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {DeclareInventoryConsumptionInput} declaration - Stable physical declaration matching
+   *   the selected task and equipment.
+   *
+   * @returns {void} Delegates the captured input to its durable account-scoped queue.
+   */
+  protected declareInventory(declaration: DeclareInventoryConsumptionInput): void {
+    const scope = this.inventoryStore.scope();
+    if (
+      scope &&
+      this.canDeclareInventory() &&
+      (declaration.workItemId ?? null) === this.inventoryWorkItemId() &&
+      (declaration.equipmentId ?? null) === this.inventoryEquipmentId()
+    )
+      this.inventoryStore.declare({ scope, input: declaration });
+  }
+  /**
+   * Property equipmentTypeCatalog
+   * @readonly
+   *
+   * @description
+   * Equipment-owned catalog seeded from the authorized current workspace snapshot.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentTypeCatalogStoreType}
+   */
+  protected readonly equipmentTypeCatalog = inject(EquipmentTypeCatalogStore);
+
+  /**
+   * Property replacementContext
+   * @readonly
+   *
+   * @description
+   * Current account-scoped Equipment proof of the captured original's successor.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {InterventionReplacementContextStoreType}
+   */
+  protected readonly replacementContext = inject(InterventionReplacementContextStore);
+
+  /**
+   * Property originalEquipmentLink
+   * @readonly
+   *
+   * @description
+   * Opens the original dossier while preserving a replacement execution draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<readonly string[] | null>}
+   */
+  protected readonly originalEquipmentLink = computed(() => {
+    const id = /^\/api\/equipment\/([^/?#]+)$/.exec(this.executionItem()?.target ?? '')?.[1];
+    return id ? ['/organizations', this.organizationId(), 'equipments', id] : null;
+  });
+
   /**
    * Property effortItem
    * @readonly
@@ -613,6 +1080,20 @@ export class InterventionDetailPage {
   protected readonly proofItem = signal<InterventionWorkItemOutput | null>(null);
 
   /**
+   * Property executionItem
+   * @readonly
+   *
+   * @description
+   * Task revision captured when the operator opens actual-work recording.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<InterventionWorkItemOutput | null>}
+   */
+  protected readonly executionItem = signal<InterventionWorkItemOutput | null>(null);
+
+  /**
    * Property proofSheetSide
    * @readonly
    *
@@ -687,6 +1168,34 @@ export class InterventionDetailPage {
    * @type {InputSignal<string>}
    */
   public readonly interventionId: InputSignal<string> = input.required<string>();
+
+  /**
+   * Property targetEquipment
+   * @readonly
+   *
+   * @description
+   * Equipment dossier UUID handed off after intervention creation.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly targetEquipment = input<string>();
+
+  /**
+   * Property workAction
+   * @readonly
+   *
+   * @description
+   * Equipment operation prepared in the existing task form.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly workAction = input<string>();
 
   /**
    * Property tab
@@ -1143,6 +1652,20 @@ export class InterventionDetailPage {
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
 
   /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Route preparation hints are consumed only by the browser after SSR.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {object}
+   */
+  private readonly platformId: object = inject(PLATFORM_ID);
+
+  /**
    * Property locale
    * @readonly
    *
@@ -1312,7 +1835,74 @@ export class InterventionDetailPage {
    * @since 1.0.0
    */
   public constructor() {
+    effect(() => {
+      const ready = this.tableQueriesReady();
+      const prepared = this.inventoryPrepared();
+      const scope =
+        ready && prepared
+          ? this.inventoryService.scope(this.organizationId(), this.interventionId())
+          : null;
+      this.connectivity.online();
+      untracked(() => this.inventoryStore.load(scope));
+    });
+    effect(() => {
+      this.offline.pendingCount();
+      this.sync.syncing();
+      const scope = this.inventoryStore.scope();
+      if (scope) untracked(() => this.inventoryStore.refreshLocal(scope));
+    });
+    effect(() => {
+      const context = resolveInterventionEquipmentContext(
+        this.targetEquipment(),
+        this.workAction(),
+      );
+      const allowed = this.canAddWorkItem();
+      const intervention = this.store.intervention();
+      untracked(() => {
+        if (
+          !context ||
+          !allowed ||
+          !intervention ||
+          intervention.id !== this.interventionId() ||
+          !isPlatformBrowser(this.platformId)
+        )
+          return;
+        const existing = this.store
+          .workItems()
+          .find(
+            (item) =>
+              item.target === context.target &&
+              item.action === context.action &&
+              item.status !== 'completed' &&
+              item.status !== 'skipped',
+          );
+        if (existing) this.workItemTable()?.revealItem(existing.id);
+        else {
+          this.workItemPrefill.set({ action: context.action, target: context.target });
+          this.planningOptions.ensureSelected(this.organizationId(), [context.target]);
+          this.workItemSheetVisible.set(true);
+        }
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          replaceUrl: true,
+          queryParamsHandling: 'merge',
+          queryParams: { targetEquipment: null, workAction: null, siteContext: null },
+        });
+      });
+    });
     afterNextRender(() => this.tableQueriesReady.set(true));
+    effect(() => {
+      const item = this.executionItem();
+      const organizationId = this.organizationId();
+      const equipmentId = /^\/api\/equipment\/([^/?#]+)$/.exec(item?.target ?? '')?.[1];
+      untracked(() =>
+        this.replacementContext.load(
+          item?.action === 'replacement' && equipmentId
+            ? { organizationId, equipmentId, workItemId: item.id }
+            : null,
+        ),
+      );
+    });
     this.destroyRef.onDestroy((): void => {
       if (this.pendingFocusTimeout !== null) clearTimeout(this.pendingFocusTimeout);
     });
@@ -1365,6 +1955,7 @@ export class InterventionDetailPage {
       untracked((): void => {
         this.reloadCollections.clear();
         this.proofItem.set(null);
+        this.executionItem.set(null);
         this.operationsVisible.set(false);
         this.tableQueries.setContext(interventionId);
         this.linkedResources.setContext(interventionId);
@@ -1552,7 +2143,14 @@ export class InterventionDetailPage {
       this.connectivity.online();
       untracked(() =>
         this.timeStore.load(
-          item && actorId ? { workItemId: item.id, interventionId, actorId } : null,
+          item && actorId
+            ? {
+                workItemId: item.id,
+                interventionId,
+                actorId,
+                manageOthers: item.allowedActions?.canManageTime === true,
+              }
+            : null,
         ),
       );
     });
@@ -1572,6 +2170,7 @@ export class InterventionDetailPage {
         if (payload.source === 'queued') this.tableQueries.setOffline(true, false);
         if (payload.workItem) this.tableQueries.reconcileWorkItem(payload.workItem);
         if (payload.workItem?.id === this.effortItem()?.item.id) this.effortItem.set(null);
+        if (payload.workItem?.id === this.executionItem()?.id) this.executionItem.set(null);
         if (payload.change) this.tableQueries.reconcileChange(payload.change);
         if (payload.deletedWorkItemIds)
           this.tableQueries.removeWorkItems(payload.interventionId, payload.deletedWorkItemIds);
@@ -1586,6 +2185,11 @@ export class InterventionDetailPage {
       .pipe(takeUntilDestroyed())
       .subscribe(({ payload }): void => {
         this.refreshAfterWorkspace(payload.interventionId, payload.collections);
+        if (
+          payload.interventionId === this.interventionId() &&
+          payload.collections.includes('consumptions')
+        )
+          this.refreshInventory();
         const scope = this.timeStore.scope();
         if (
           scope?.interventionId === payload.interventionId &&
@@ -1618,7 +2222,10 @@ export class InterventionDetailPage {
       .on(interventionWorkspaceStoreEvents.workItemCreateSucceeded)
       .pipe(takeUntilDestroyed())
       .subscribe(({ payload }): void => {
-        if (payload.interventionId === this.interventionId()) this.workItemSheetVisible.set(false);
+        if (payload.interventionId === this.interventionId()) {
+          this.workItemSheetVisible.set(false);
+          this.workItemPrefill.set(null);
+        }
       });
     this.events
       .on(interventionWorkspaceStoreEvents.transitionSucceeded)
@@ -2301,6 +2908,23 @@ export class InterventionDetailPage {
    * @type {WritableSignal<boolean>}
    */
   protected readonly workItemSheetVisible: WritableSignal<boolean> = signal<boolean>(false);
+
+  /**
+   * Property workItemPrefill
+   * @readonly
+   *
+   * @description
+   * Validated equipment context for one explicitly confirmed task creation.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<Pick<InterventionWorkItemFormValues, 'action' | 'target'> | null>}
+   */
+  protected readonly workItemPrefill = signal<Pick<
+    InterventionWorkItemFormValues,
+    'action' | 'target'
+  > | null>(null);
 
   /**
    * Property facilityParents
@@ -3562,7 +4186,114 @@ export class InterventionDetailPage {
    * @returns {void}
    */
   protected onWorkItemStatusChanged(change: InterventionWorkItemStatusChange): void {
+    const item = this.store.workItems().find((candidate) => candidate.id === change.workItemId);
+    if (
+      item &&
+      change.status === 'completed' &&
+      ['maintenance', 'repair', 'replacement'].includes(item.action)
+    ) {
+      if (!this.canRecordExecutionResult(item)) return;
+      this.executionItem.set(item);
+      return;
+    }
     this.store.setWorkItemStatus({ interventionId: this.interventionId(), ...change });
+  }
+
+  /**
+   * Method canRecordExecutionResult
+   * @method canRecordExecutionResult
+   *
+   * @description
+   * Rechecks the visible workflow and current task capabilities before recording work.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionWorkItemOutput} item - Captured task being executed.
+   *
+   * @returns {boolean} Whether the task remains executable by this member.
+   */
+  protected canRecordExecutionResult(item: InterventionWorkItemOutput): boolean {
+    const current = this.store.workItems().find((candidate) => candidate.id === item.id);
+    const status = this.store.intervention()?.status;
+    return (
+      !!current &&
+      !!status &&
+      ['planned', 'in_progress', 'changes_requested'].includes(status) &&
+      (current.allowedActions?.canExecute ?? this.canExecute()) &&
+      (!current.assignee || current.assignee === this.currentMemberIri())
+    );
+  }
+
+  /**
+   * Method recordExecutionResult
+   * @method recordExecutionResult
+   *
+   * @description
+   * Persists actual work through the existing revision-checked offline task command.
+   * Failed work remains open for another attempt.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {InterventionWorkItemExecutionResultInput} result - Explicit operator result.
+   *
+   * @returns {void}
+   */
+  protected recordExecutionResult(result: InterventionWorkItemExecutionResultInput): void {
+    const item = this.executionItem();
+    if (
+      !item ||
+      !this.canRecordExecutionResult(item) ||
+      this.store.pendingWorkItemIds().has(item.id)
+    )
+      return;
+    const replacement = item.action === 'replacement' && result.outcome === 'successful';
+    const scope = this.replacementContext.scope();
+    const successor = this.replacementContext.queryData()?.successor;
+    if (
+      replacement &&
+      (!this.replacementContext.authorized() ||
+        this.replacementContext.isQueryLoading() ||
+        !this.replacementContext.isQueryLoaded() ||
+        scope?.workItemId !== item.id ||
+        scope.organizationId !== this.organizationId() ||
+        item.target !== `/api/equipment/${result.equipmentId}` ||
+        scope.equipmentId !== result.equipmentId ||
+        !successor)
+    )
+      return;
+    this.store.updateWorkItem({
+      interventionId: this.interventionId(),
+      item,
+      input: {
+        status: result.outcome === 'failed' ? 'in_progress' : 'completed',
+        executionResult: result,
+        ...(replacement && successor ? { resultResource: `/api/equipment/${successor.id}` } : {}),
+      },
+    });
+  }
+
+  /**
+   * Method refreshReplacement
+   *
+   * @description
+   * Rechecks Equipment-owned proof without replacing the captured work item or its draft.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void}
+   */
+  protected refreshReplacement(): void {
+    const item = this.executionItem();
+    const equipmentId = /^\/api\/equipment\/([^/?#]+)$/.exec(item?.target ?? '')?.[1];
+    if (item?.action !== 'replacement' || !equipmentId) return;
+    this.replacementContext.load({
+      organizationId: this.organizationId(),
+      equipmentId,
+      workItemId: item.id,
+    });
   }
 
   /**
@@ -4656,6 +5387,12 @@ export class InterventionDetailPage {
   protected async confirmPublish(): Promise<void> {
     const intervention = this.store.intervention();
     if (!intervention || this.publishing() || this.publicationStore.unresolved()) return;
+    if (this.inventoryStore.hasUnpersistedDeclaration()) {
+      this.offlineBlockReason.set(
+        $localize`:@@intervention.inventory.unsavedPublish:Save the submitted parts declaration on this device before publishing. Retry the declaration in Parts used.`,
+      );
+      return;
+    }
     if (!this.online()) {
       this.offlineBlockReason.set(
         $localize`:@@intervention.cta.reasonOffline:Connect to the network to publish.`,

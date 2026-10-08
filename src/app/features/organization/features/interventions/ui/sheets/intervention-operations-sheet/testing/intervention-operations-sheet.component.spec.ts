@@ -73,6 +73,73 @@ describe('InterventionOperationsSheet', () => {
 
   afterEach(() => fixture.destroy());
 
+  it('shows physical result facts beside the current server values before reapplying a conflict', async () => {
+    fixture.componentRef.setInput('operations', [
+      {
+        ...operation('execution-result', 'work-item.update', {
+          workItemId: 'task',
+          revision: 7,
+          status: 'in_progress',
+          executionResult: {
+            equipmentId: 'eq-1',
+            performedAt: '2026-03-01T11:00:00+01:00',
+            outcome: 'failed',
+            workPerformed: 'Local pressure test failed; follow-up is required.',
+          },
+        }),
+        status: 'conflict',
+        baseRevision: 7,
+        serverRevision: 8,
+        serverValues: { workPerformed: 'Server valve replacement passed.', outcome: 'successful' },
+      },
+    ]);
+    await open();
+    expect(row('execution-result')?.textContent).toContain(
+      'Local pressure test failed; follow-up is required.',
+    );
+    expect(row('execution-result')?.textContent).toContain('Unsuccessful — work still required');
+    button(row('execution-result'), 'Review and retry')?.click();
+    await fixture.whenStable();
+    expect(document.body.textContent).toContain(
+      'Local pressure test failed; follow-up is required.',
+    );
+    expect(document.body.textContent).toContain('Server valve replacement passed.');
+    expect(resolved).toEqual([]);
+  });
+
+  it('keeps the queued replacement successor visible when reviewing a conflicting result', async () => {
+    const resultResource = '/api/equipment/00000000-0000-4000-8000-000000000002';
+    fixture.componentRef.setInput('operations', [
+      {
+        ...operation('replacement', 'work-item.update', {
+          workItemId: 'task',
+          revision: 7,
+          status: 'completed',
+          resultResource,
+          executionResult: {
+            equipmentId: '00000000-0000-4000-8000-000000000001',
+            performedAt: '2026-03-01T11:00:00+01:00',
+            outcome: 'successful',
+            workPerformed: 'Installed the replacement extinguisher.',
+          },
+        }),
+        status: 'conflict',
+        baseRevision: 7,
+        serverRevision: 8,
+        serverValues: { resultResource: '/api/equipment/00000000-0000-4000-8000-000000000003' },
+      },
+    ]);
+    await open();
+    expect(row('replacement')?.textContent).toContain(`Replacement equipment: ${resultResource}`);
+    button(row('replacement'), 'Review and retry')?.click();
+    await fixture.whenStable();
+    expect(document.body.textContent).toContain(resultResource);
+    expect(document.body.textContent).toContain(
+      '/api/equipment/00000000-0000-4000-8000-000000000003',
+    );
+    expect(resolved).toEqual([]);
+  });
+
   it('shows loading, a truthful empty state and a retryable local-read failure', async () => {
     expect(sheet()).toBeNull();
     fixture.componentRef.setInput('callState', pendingCallState());

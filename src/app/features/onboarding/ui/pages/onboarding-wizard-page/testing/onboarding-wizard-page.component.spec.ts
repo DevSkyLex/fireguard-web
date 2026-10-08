@@ -1,4 +1,12 @@
-import { provideZonelessChangeDetection, signal, type WritableSignal } from '@angular/core';
+import {
+  createComponent,
+  createEnvironmentInjector,
+  EnvironmentInjector,
+  PLATFORM_ID,
+  provideZonelessChangeDetection,
+  signal,
+  type WritableSignal,
+} from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { Dispatcher } from '@ngrx/signals/events';
@@ -22,6 +30,7 @@ import {
   onboardingSetupEvents,
 } from '@features/onboarding/state';
 import { BillingService, PlanService } from '@features/organization/data-access';
+import { OrganizationLandingService } from '@features/organization/services/organization-landing';
 import {
   OrganizationSetupService,
   type SetupCreateFacilityInput,
@@ -82,6 +91,7 @@ describe('OnboardingWizardPage', () => {
     createEquipment: ReturnType<typeof vi.fn>;
     listRoles: ReturnType<typeof vi.fn>;
     listFacilities: ReturnType<typeof vi.fn>;
+    listEquipmentTypes: ReturnType<typeof vi.fn>;
   };
   let setupMock: {
     operations: WritableSignal<readonly OnboardingSetupOperation[]>;
@@ -100,6 +110,18 @@ describe('OnboardingWizardPage', () => {
   };
   let routerMock: { navigateByUrl: ReturnType<typeof vi.fn> };
   let feedbackMock: { success: ReturnType<typeof vi.fn>; show: ReturnType<typeof vi.fn> };
+
+  beforeAll(() =>
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe(): void {}
+        unobserve(): void {}
+        disconnect(): void {}
+      },
+    ),
+  );
+  afterAll(() => vi.unstubAllGlobals());
 
   beforeEach(async () => {
     storeMock = {
@@ -134,6 +156,16 @@ describe('OnboardingWizardPage', () => {
       createEquipment: vi.fn().mockReturnValue(of(undefined)),
       listRoles: vi.fn().mockReturnValue(of([])),
       listFacilities: vi.fn().mockReturnValue(of([])),
+      listEquipmentTypes: vi.fn().mockReturnValue(
+        of([
+          {
+            value: 'fire_extinguisher',
+            label: 'Fire extinguisher',
+            family: 'fire',
+            icon: 'lucideFireExtinguisher',
+          },
+        ]),
+      ),
     };
     setupMock = {
       operations: signal([]),
@@ -176,6 +208,14 @@ describe('OnboardingWizardPage', () => {
         { provide: OrganizationSetupService, useValue: organizationSetupServiceMock },
         { provide: PlanService, useValue: planServiceMock },
         { provide: BillingService, useValue: billingServiceMock },
+        {
+          provide: OrganizationLandingService,
+          useValue: {
+            defaultDestination: vi.fn((organizationId: string) =>
+              of(`/organizations/${organizationId}/assets`),
+            ),
+          },
+        },
         { provide: Router, useValue: routerMock },
         {
           provide: ActivatedRoute,
@@ -191,6 +231,97 @@ describe('OnboardingWizardPage', () => {
     });
     fixture = TestBed.createComponent(OnboardingWizardPage);
     await fixture.whenStable();
+  });
+
+  it('loads equipment choices only when that step is visible and cancels an obsolete organization read', async () => {
+    expect(organizationSetupServiceMock.listEquipmentTypes).not.toHaveBeenCalled();
+    const oldRead = new Subject<
+      readonly { value: string; label: string; family: 'fire'; icon: string }[]
+    >();
+    const newRead = new Subject<
+      readonly { value: string; label: string; family: 'fire'; icon: string }[]
+    >();
+    organizationSetupServiceMock.listEquipmentTypes
+      .mockReturnValueOnce(oldRead)
+      .mockReturnValueOnce(newRead);
+    storeMock.targetOrganizationId.set('org-1');
+    storeMock.nextStep.set('create_first_equipment');
+    storeMock.steps.set([stepOf('create_first_equipment', 'pending')]);
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listEquipmentTypes).toHaveBeenCalledWith('org-1');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="onboarding-catalog-loading"]',
+      ),
+    ).not.toBeNull();
+    storeMock.targetOrganizationId.set('org-2');
+    await fixture.whenStable();
+    oldRead.next([{ value: 'obsolete', label: 'Obsolete', family: 'fire', icon: 'lucideBox' }]);
+    expect(fixture.componentInstance['equipmentTypeOptions']()).toEqual([]);
+    newRead.next([{ value: 'custom', label: 'Custom', family: 'fire', icon: 'lucideBox' }]);
+    await fixture.whenStable();
+    expect(
+      fixture.componentInstance['equipmentTypeOptions']().map((option) => option.value),
+    ).toEqual(['custom']);
+  });
+
+  it('shows a retryable catalogue failure without automatically refetching or duplicating successful site recovery', async () => {
+    organizationSetupServiceMock.listEquipmentTypes.mockReturnValueOnce(
+      throwError(() => new Error('Catalogue unavailable')),
+    );
+    storeMock.targetOrganizationId.set('org-1');
+    storeMock.nextStep.set('create_first_equipment');
+    storeMock.steps.set([stepOf('create_first_equipment', 'pending')]);
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listEquipmentTypes).toHaveBeenCalledTimes(1);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="onboarding-catalog-error"]',
+      ),
+    ).not.toBeNull();
+    fixture.componentInstance['retryCatalog']();
+    await fixture.whenStable();
+    expect(organizationSetupServiceMock.listEquipmentTypes).toHaveBeenCalledTimes(2);
+    expect(organizationSetupServiceMock.listFacilities).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats an empty equipment catalogue as a successful state with explicit refresh', async () => {
+    organizationSetupServiceMock.listEquipmentTypes.mockReturnValue(of([]));
+    storeMock.targetOrganizationId.set('org-1');
+    storeMock.nextStep.set('create_first_equipment');
+    storeMock.steps.set([stepOf('create_first_equipment', 'pending')]);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['equipmentTypesCallState']().status).toBe('success');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="onboarding-equipment-catalog-empty"]',
+      ),
+    ).not.toBeNull();
+    expect(organizationSetupServiceMock.listEquipmentTypes).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the equipment catalogue deferred during an SSR-owned render', () => {
+    fixture.destroy();
+    storeMock.targetOrganizationId.set('org-1');
+    storeMock.nextStep.set('create_first_equipment');
+    storeMock.steps.set([stepOf('create_first_equipment', 'pending')]);
+    organizationSetupServiceMock.listEquipmentTypes.mockClear();
+    const environment = createEnvironmentInjector(
+      [{ provide: PLATFORM_ID, useValue: 'server' }],
+      TestBed.inject(EnvironmentInjector),
+    );
+    const component = createComponent(OnboardingWizardPage, {
+      environmentInjector: environment,
+      hostElement: document.createElement('div'),
+    });
+    try {
+      component.changeDetectorRef.detectChanges();
+      expect(organizationSetupServiceMock.listEquipmentTypes).not.toHaveBeenCalled();
+      expect(component.instance['equipmentTypesCallState']().status).toBe('idle');
+    } finally {
+      component.destroy();
+      environment.destroy();
+    }
   });
 
   it('loads the onboarding record once on initialization', () => {
@@ -682,6 +813,7 @@ describe('OnboardingWizardPage', () => {
     expect(organizationSetupServiceMock.listFacilities).not.toHaveBeenCalled();
 
     storeMock.targetOrganizationId.set('org-2');
+    await fixture.whenStable();
     fixture.componentInstance['retryCatalog']();
     await fixture.whenStable();
     expect(organizationSetupServiceMock.listFacilities).toHaveBeenCalledExactlyOnceWith('org-2');
@@ -790,7 +922,18 @@ describe('OnboardingWizardPage', () => {
     storeMock.targetOrganizationId.set('new-org');
     storeMock.isCompleted.set(true);
     await fixture.whenStable();
-    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/organizations/new-org');
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/organizations/new-org/assets');
+  });
+  it('retains a deep link with client and site scope in the newly completed organization', async () => {
+    const destination = '/organizations/new-org/assets?customerId=customer-1&facilityId=site-1';
+    vi.spyOn(TestBed.inject(ActivatedRoute).snapshot.queryParamMap, 'get').mockReturnValue(
+      destination,
+    );
+    storeMock.targetOrganizationId.set('new-org');
+    storeMock.isCompleted.set(true);
+    await fixture.whenStable();
+    expect(routerMock.navigateByUrl).toHaveBeenCalledWith(destination);
+    expect(TestBed.inject(OrganizationLandingService).defaultDestination).not.toHaveBeenCalled();
   });
   it('continues through Billing for a zero-priced commercial offer', () => {
     storeMock.targetOrganizationId.set('org-1');

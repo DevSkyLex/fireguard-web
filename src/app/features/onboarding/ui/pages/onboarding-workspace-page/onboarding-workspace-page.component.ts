@@ -5,20 +5,24 @@ import {
   ElementRef,
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   type Signal,
   untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMail, lucideClock3, lucideCircleAlert } from '@ng-icons/lucide';
+import { map, of, Subject, switchMap } from 'rxjs';
 import { NOTIFICATION_CENTER_PORT } from '@features/account';
 import { OtpForm } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';
 import { WorkspaceStore, OnboardingStore } from '@features/onboarding/state';
 import type { OrganizationJoinRequestOutput } from '@features/organization/models';
+import { OrganizationLandingService } from '@features/organization/services/organization-landing';
 import { getOrganizationInitials } from '@features/organization/utils';
 import { ResourceIllustration } from '@shared/resource-illustration';
 import { HlmAvatarImports } from '@shared/ui/avatar';
@@ -31,8 +35,11 @@ import { HlmLarge, HlmMuted } from '@shared/ui/typography';
 /**
  * Component OnboardingWorkspacePage
  * @class OnboardingWorkspacePage
- * @description Orchestrates explicit workspace selection and owned request tracking in the auth split shell.
+ *
+ * @description
+ * Orchestrates explicit workspace selection and owned request tracking in the auth split shell.
  * Mailbox challenges and private discovery load browser-side and never enter the hydration payload.
+ *
  * @since 1.0.0
  */
 @Component({
@@ -57,80 +64,157 @@ import { HlmLarge, HlmMuted } from '@shared/ui/typography';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingWorkspacePage {
-  /** Property store
+  /**
+   * Property landing
    * @readonly
-   * @description Page-scoped commands and private choices.
+   *
+   * @description
+   * Resolves default destinations using target organization API permissions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {OrganizationLandingService}
+   */
+  private readonly landing: OrganizationLandingService = inject(OrganizationLandingService);
+
+  /**
+   * Property organizationNavigation
+   * @readonly
+   *
+   * @description
+   * Latest explicit workspace selection wins while target permissions are loading.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Subject<{ organizationId: string; replaceUrl: boolean }>}
+   */
+  private readonly organizationNavigation: Subject<{
+    organizationId: string;
+    replaceUrl: boolean;
+  }> = new Subject();
+
+  /**
+   * Property store
+   * @readonly
+   *
+   * @description
+   * Page-scoped commands and private choices.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WorkspaceStore}
    */
   protected readonly store: WorkspaceStore = inject(WorkspaceStore);
-  /** Property onboarding
+  /**
+   * Property onboarding
    * @readonly
-   * @description Existing creation remains resumable when choosing another workspace.
+   *
+   * @description
+   * Existing creation remains resumable when choosing another workspace.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {OnboardingStore}
    */
   protected readonly onboarding: OnboardingStore = inject(OnboardingStore);
-  /** Property host
+  /**
+   * Property host
    * @readonly
-   * @description Focuses the active proof form or the result heading after user actions.
+   *
+   * @description
+   * Focuses the active proof form or the result heading after user actions.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ElementRef<HTMLElement>}
    */
   private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
-  /** Property router
+  /**
+   * Property router
    * @readonly
-   * @description Application navigation.
+   *
+   * @description
+   * Application navigation.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Router}
    */
   private readonly router: Router = inject(Router);
-  /** Property route
+  /**
+   * Property route
    * @readonly
-   * @description Validated incoming destination and display mode.
+   *
+   * @description
+   * Validated incoming destination and display mode.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
-  /** Property requestsOnly
+  /**
+   * Property requestsOnly
    * @readonly
-   * @description Indicates the dedicated request-tracking route.
+   *
+   * @description
+   * Indicates the dedicated request-tracking route.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   protected readonly requestsOnly: boolean = this.route.snapshot.data['requestsOnly'] === true;
-  /** Property destination
+  /**
+   * Property destination
    * @readonly
-   * @description Only the safe return destination is propagated between workflow pages.
+   *
+   * @description
+   * Only the safe return destination is propagated between workflow pages.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {string}
    */
   protected readonly destination: string = resolveReturnUrl(
     this.route.snapshot.queryParamMap.get('returnUrl'),
     '',
   );
-  /** Property hasRequests
+  /**
+   * Property hasRequests
    * @readonly
-   * @description Whether the current account has request history.
+   *
+   * @description
+   * Whether the current account has request history.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly hasRequests: Signal<boolean> = computed(
     () => (this.store.options()?.requests.length ?? 0) > 0,
   );
-  /** Property isOrganizationsEmpty
+  /**
+   * Property isOrganizationsEmpty
    * @readonly
-   * @description Whether the "no organization available" empty state is the one being rendered, so its Create action moves into it and the footer's copy hides.
+   *
+   * @description
+   * Whether the "no organization available" empty state is the one being rendered, so its Create
+   * action moves into it and the footer's copy hides.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isOrganizationsEmpty: Signal<boolean> = computed(() => {
@@ -144,11 +228,17 @@ export class OnboardingWorkspacePage {
       !this.store.optionsCallState().error
     );
   });
-  /** Property isRequestsEmpty
+  /**
+   * Property isRequestsEmpty
    * @readonly
-   * @description Whether the "no membership requests" empty state is the one being rendered, so its Choose-a-workspace action moves into it and the footer's copy hides.
+   *
+   * @description
+   * Whether the "no membership requests" empty state is the one being rendered, so its
+   * Choose-a-workspace action moves into it and the footer's copy hides.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @type {Signal<boolean>}
    */
   protected readonly isRequestsEmpty: Signal<boolean> = computed(
@@ -158,23 +248,47 @@ export class OnboardingWorkspacePage {
       !this.hasRequests() &&
       !this.store.optionsCallState().error,
   );
-  /** Property getOrganizationInitials
+  /**
+   * Property getOrganizationInitials
    * @readonly
-   * @description Template-bound reference to the shared organization initials util, used for a logo-less avatar fallback.
+   *
+   * @description
+   * Template-bound reference to the shared organization initials util, used for a logo-less avatar
+   * fallback.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {typeof getOrganizationInitials}
    */
   protected readonly getOrganizationInitials: typeof getOrganizationInitials =
     getOrganizationInitials;
-  /** Constructor
+  /**
+   * Constructor
    * @constructor
-   * @description Loads private choices after hydration and navigates only after confirmed admission.
+   *
+   * @description
+   * Loads private choices after hydration and navigates only after confirmed admission.
+   *
    * @access public
    * @since 1.0.0
    */
   public constructor() {
     const notifications = inject(NOTIFICATION_CENTER_PORT);
+    this.organizationNavigation
+      .pipe(
+        switchMap(({ organizationId, replaceUrl }) => {
+          const explicit: string | null = this.organizationDestination(organizationId);
+          return (explicit ? of(explicit) : this.landing.defaultDestination(organizationId)).pipe(
+            map((destination) => ({ destination, replaceUrl })),
+          );
+        }),
+        takeUntilDestroyed(inject(DestroyRef)),
+      )
+      .subscribe(({ destination, replaceUrl }) => {
+        if (replaceUrl) void this.router.navigateByUrl(destination, { replaceUrl: true });
+        else void this.router.navigateByUrl(destination);
+      });
     afterNextRender(() => {
       this.store.load();
       notifications.connectMercure();
@@ -211,46 +325,67 @@ export class OnboardingWorkspacePage {
     effect(() => {
       const result = this.store.admissionCallState().data;
       if (!result) return;
-      void this.router.navigateByUrl(this.organizationDestination(result.organizationId), {
-        replaceUrl: true,
-      });
+      untracked(() =>
+        this.organizationNavigation.next({
+          organizationId: result.organizationId,
+          replaceUrl: true,
+        }),
+      );
     });
   }
   /**
    * Method organizationDestination
-   * @description Retains a safe deep link in the selected organization; guards still enforce permissions.
+   *
+   * @description
+   * Retains a safe deep link in the selected organization; guards still enforce permissions.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string} organizationId - Server-authorized organization.
-   * @returns {string} Local destination.
+   *
+   * @returns {string | null} Explicit local destination, otherwise a permission-gated default is
+   *   needed.
    */
-  private organizationDestination(organizationId: string): string {
+  private organizationDestination(organizationId: string): string | null {
     const root = '/organizations/' + encodeURIComponent(organizationId);
     return this.destination === root ||
       this.destination.startsWith(root + '/') ||
       this.destination.startsWith(root + '?')
       ? this.destination
-      : root;
+      : null;
   }
 
-  /** Method open
+  /**
+   * Method open
    * @method open
-   * @description Opens an already accessible organization, causing guards to refresh activation state.
+   *
+   * @description
+   * Opens an already accessible organization, causing guards to refresh activation state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {string} organizationId - Server-authorized organization.
+   *
    * @returns {void} Starts navigation.
    */
   protected open(organizationId: string): void {
     this.onboarding.clear();
-    void this.router.navigateByUrl(this.organizationDestination(organizationId));
+    this.organizationNavigation.next({ organizationId, replaceUrl: false });
   }
-  /** Method statusLabel
+  /**
+   * Method statusLabel
    * @method statusLabel
-   * @description Localizes request lifecycle states without exposing raw API values.
+   *
+   * @description
+   * Localizes request lifecycle states without exposing raw API values.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {OrganizationJoinRequestOutput['status']} status - Request lifecycle state.
+   *
    * @returns {string} Localized status.
    */
   protected statusLabel(status: OrganizationJoinRequestOutput['status']): string {

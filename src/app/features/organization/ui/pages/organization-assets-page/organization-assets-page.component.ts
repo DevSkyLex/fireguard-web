@@ -53,13 +53,15 @@ import { PageTabsService, registerPageTabs } from '@core/page-tabs';
 import type { CallState, StoreError } from '@core/request-state';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { COMPLIANCE_BUCKET_TAG_ICON_CLASS } from '@features/organization/constants';
-import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
+import { CustomerPicker } from '@features/organization/features/customers/ui/components';
+import {
+  EquipmentTypeCatalogStore,
+  buildEquipmentTitle,
+  type EquipmentTypeCatalogStoreType,
+} from '@features/organization/features/equipments';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
-import type {
-  EquipmentOutput,
-  EquipmentType,
-} from '@features/organization/features/equipments/models';
-import { EquipmentStatusTag } from '@features/organization/features/equipments/ui/components/equipment-status-tag';
+import type { EquipmentOutput } from '@features/organization/features/equipments/models';
+import { EquipmentStatusTag } from '@features/organization/features/equipments/ui/components';
 import type {
   FacilityOption,
   FacilityMoveRequest,
@@ -78,6 +80,7 @@ import {
 } from '@features/organization/features/facilities/utils';
 import type { InspectorOutput } from '@features/organization/features/inspections/models';
 import { InspectionStatusTag } from '@features/organization/features/inspections/ui/components/inspection-status-tag';
+import { NonConformityList } from '@features/organization/features/inspections/ui/dataviews/non-conformity-list';
 import {
   ORGANIZATION_PERMISSION,
   resolveComplianceBucketTag,
@@ -124,6 +127,7 @@ import { HlmSeparator } from '@shared/ui/separator';
 import { HlmSkeleton } from '@shared/ui/skeleton';
 import { HlmTableImports } from '@shared/ui/table';
 import { HlmTabsImports } from '@shared/ui/tabs';
+import { HlmToggleGroupImports } from '@shared/ui/toggle-group';
 import { HlmTooltip } from '@shared/ui/tooltip';
 import { HlmLarge } from '@shared/ui/typography';
 import { resolveComplianceStatusTag } from './models/compliance-status-tag/compliance-status-tag.util';
@@ -178,6 +182,9 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
 @Component({
   selector: 'app-organization-assets-page',
   imports: [
+    CustomerPicker,
+    NonConformityList,
+    ...HlmToggleGroupImports,
     CollectionPagination,
     ResourceIllustration,
     StateIllustration,
@@ -210,6 +217,7 @@ type OrganizationAssetsAxis = 'site' | 'everything' | 'compliance';
     ...HlmTabsImports,
   ],
   providers: [
+    EquipmentTypeCatalogStore,
     FacilityOptionsStore,
     provideIcons({
       lucideCircleAlert,
@@ -1177,8 +1185,11 @@ export class OrganizationAssetsPage {
    *
    * @type {Signal<boolean>}
    */
-  protected readonly canReadInspections: Signal<boolean> = computed<boolean>(() =>
-    this.permissions.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ),
+  protected readonly canReadInspections: Signal<boolean> = computed<boolean>(
+    () =>
+      this.permissions.hasPermission(ORGANIZATION_PERMISSION.INSPECTION_READ) &&
+      ((this.family() === 'all' && !this.customerId()) ||
+        this.permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ)),
   );
 
   /**
@@ -1221,6 +1232,166 @@ export class OrganizationAssetsPage {
   );
   //#endregion
 
+  //#region Properties
+  /**
+   * Property familyParam
+   * @readonly
+   *
+   * @description
+   * Directory's fire-only default is a server family filter, never a list of hardcoded types.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly familyParam: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+    { alias: 'family' },
+  );
+  /**
+   * Property customerParam
+   * @readonly
+   *
+   * @description
+   * Customer context restored from a scoped dashboard or shared Parc link.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly customerParam: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+    { alias: 'customerId' },
+  );
+  /**
+   * Property queueParam
+   * @readonly
+   *
+   * @description
+   * Action queue restored from the dashboard.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string | undefined>}
+   */
+  public readonly queueParam: InputSignal<string | undefined> = input<string | undefined>(
+    undefined,
+    { alias: 'queue' },
+  );
+  /**
+   * Property family
+   * @readonly
+   *
+   * @description
+   * Family selected for equipment and control projections.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<'fire' | 'all'>}
+   */
+  protected readonly family: WritableSignal<'fire' | 'all'> = signal('fire');
+  /**
+   * Property customerId
+   * @readonly
+   *
+   * @description
+   * Optional customer context; empty means the organization's complete park.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly customerId: WritableSignal<string> = signal('');
+  /**
+   * Property queue
+   * @readonly
+   *
+   * @description
+   * Scoped action queue; controls uses the server's due union.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WritableSignal<string>}
+   */
+  protected readonly queue: WritableSignal<string> = signal('');
+  /**
+   * Property catalog
+   * @readonly
+   *
+   * @description
+   * Server-owned equipment labels include custom and archived catalog types.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {EquipmentTypeCatalogStoreType}
+   */
+  protected readonly catalog: EquipmentTypeCatalogStoreType = inject(EquipmentTypeCatalogStore);
+  /**
+   * Property canReadCustomers
+   * @readonly
+   *
+   * @description
+   * Directory access is independent of equipment and facility permissions.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly canReadCustomers: Signal<boolean> = computed(() =>
+    this.permissions.hasPermission(ORGANIZATION_PERMISSION.CUSTOMERS_READ),
+  );
+  /**
+   * Property parkFilters
+   * @readonly
+   *
+   * @description
+   * Reusable immutable filter scope for reads, retries and pagination.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<{ readonly family?: string; readonly customerId?: string }>}
+   */
+  protected readonly parkFilters: Signal<{
+    readonly family?: string;
+    readonly customerId?: string;
+  }> = computed(() => ({
+    ...(this.family() === 'fire' ? { family: 'fire' } : {}),
+    ...(this.customerId() ? { customerId: this.customerId() } : {}),
+  }));
+  /**
+   * Property queueFilters
+   * @readonly
+   *
+   * @description
+   * Additional equipment filter shared with the dashboard queue definition.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<{ readonly status?: string; readonly maintenanceDueStatus?: string }>}
+   */
+  protected readonly queueFilters: Signal<{
+    readonly status?: string;
+    readonly maintenanceDueStatus?: string;
+  }> = computed(() =>
+    this.queue() === 'unavailable'
+      ? { status: 'under_maintenance' }
+      : this.queue() === 'controls'
+        ? { maintenanceDueStatus: 'due' }
+        : {},
+  );
+
+  //#endregion
+
   //#region Constructor
   /**
    * Constructor
@@ -1245,10 +1416,18 @@ export class OrganizationAssetsPage {
      */
     effect((): void => {
       const axis: string | undefined = this.axisParam();
+      const family = this.familyParam();
+      const customer = this.customerParam();
+      const queue = this.queueParam();
       const facilityId: string | undefined = this.facilityParam();
       const complianceFacilityId: string | undefined = this.complianceParam();
 
       untracked((): void => {
+        this.family.set(family === 'all' ? 'all' : 'fire');
+        this.customerId.set(customer ?? '');
+        this.queue.set(
+          queue === 'unavailable' || queue === 'controls' || queue === 'anomalies' ? queue : '',
+        );
         const restored: OrganizationAssetsAxis =
           axis === 'everything' || axis === 'compliance' ? axis : 'site';
 
@@ -1294,8 +1473,10 @@ export class OrganizationAssetsPage {
 
     effect((): void => {
       const organizationId: string = this.organizationId();
+      const customerId = this.customerId();
       untracked((): void => {
-        this.tree.loadRoots(organizationId);
+        this.tree.loadRoots(organizationId, customerId || null);
+        this.catalog.load(organizationId);
       });
     });
 
@@ -1338,6 +1519,9 @@ export class OrganizationAssetsPage {
       const axis: OrganizationAssetsAxis = this.axis();
       const facilityId: string | null = this.selectedFacilityId();
       const includeDescendants = this.equipmentIncludeDescendants();
+      const filters = this.parkFilters();
+      const queueFilters = this.queueFilters();
+      const queue = this.queue();
       const canReadEquipment: boolean = this.canReadEquipment();
       const canReadInspections: boolean = this.canReadInspections();
 
@@ -1347,15 +1531,93 @@ export class OrganizationAssetsPage {
 
         const scope = axis === 'site' && facilityId !== null ? { facilityId } : {};
 
+        if (queue === 'anomalies') {
+          if (canReadEquipment && canReadInspections)
+            this.pane.loadAnomalies({
+              organizationId,
+              ...scope,
+              ...(scope.facilityId ? { includeDescendants } : {}),
+              ...filters,
+            });
+          return;
+        }
         if (canReadEquipment)
-          this.pane.loadEquipment({ organizationId, ...scope, includeDescendants });
-        if (canReadInspections) this.pane.loadInspections({ organizationId, ...scope });
+          this.pane.loadEquipment({
+            organizationId,
+            ...scope,
+            includeDescendants,
+            ...filters,
+            ...queueFilters,
+          });
+        if (canReadInspections)
+          this.pane.loadInspections({
+            organizationId,
+            ...scope,
+            ...(axis === 'site' && facilityId !== null ? { includeDescendants } : {}),
+            ...filters,
+          });
       });
     });
   }
   //#endregion
 
   //#region Methods
+  /**
+   * Method familyChanged
+   * @method
+   *
+   * @description
+   * Applies a server family filter and preserves the selected site context.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {unknown} value - Value supplied by the owning park workflow.
+   *
+   * @returns {void} No return value.
+   */
+  protected familyChanged(value: unknown): void {
+    if (value !== 'fire' && value !== 'all') return;
+    this.family.set(value);
+    this.writeUrlState();
+  }
+  /**
+   * Method customerChanged
+   * @method
+   *
+   * @description
+   * Changes the customer authority and clears an incompatible selected site.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {string} value - Value supplied by the owning park workflow.
+   *
+   * @returns {void} No return value.
+   */
+  protected customerChanged(value: string): void {
+    if (value === this.customerId()) return;
+    this.customerId.set(value);
+    this.selectedFacilityId.set(null);
+    this.writeUrlState();
+  }
+  /**
+   * Method clearQueue
+   * @method
+   *
+   * @description
+   * Clears a scoped dashboard queue while retaining client, site and family.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @returns {void} No return value.
+   */
+  protected clearQueue(): void {
+    this.queue.set('');
+    this.writeUrlState();
+  }
+
   /**
    * Method retryPane
    *
@@ -1383,19 +1645,30 @@ export class OrganizationAssetsPage {
    *
    * @returns {void}
    */
-  protected changePanePage(kind: 'equipment' | 'inspections', page: number): void {
+  protected changePanePage(kind: 'equipment' | 'inspections' | 'anomalies', page: number): void {
     const facilityId = this.selectedFacilityId();
     const request = {
+      ...this.parkFilters(),
       organizationId: this.organizationId(),
       page,
       ...(this.axis() === 'site' && facilityId !== null ? { facilityId } : {}),
     };
+    if (kind === 'anomalies' && this.canReadEquipment() && this.canReadInspections())
+      this.pane.loadAnomalies({
+        ...request,
+        ...(request.facilityId ? { includeDescendants: this.equipmentIncludeDescendants() } : {}),
+      });
     if (kind === 'equipment' && this.canReadEquipment())
       this.pane.loadEquipment({
         ...request,
+        ...this.queueFilters(),
         includeDescendants: this.equipmentIncludeDescendants(),
       });
-    if (kind === 'inspections' && this.canReadInspections()) this.pane.loadInspections(request);
+    if (kind === 'inspections' && this.canReadInspections())
+      this.pane.loadInspections({
+        ...request,
+        ...(request.facilityId ? { includeDescendants: this.equipmentIncludeDescendants() } : {}),
+      });
   }
 
   /**
@@ -1415,13 +1688,31 @@ export class OrganizationAssetsPage {
     const facilityId: string | null = this.selectedFacilityId();
     const scope = this.axis() === 'site' && facilityId !== null ? { facilityId } : {};
 
+    if (this.queue() === 'anomalies') {
+      if (this.canReadEquipment() && this.canReadInspections())
+        this.pane.loadAnomalies({
+          organizationId,
+          ...scope,
+          ...this.parkFilters(),
+          ...(scope.facilityId ? { includeDescendants: this.equipmentIncludeDescendants() } : {}),
+        });
+      return;
+    }
     if (this.canReadEquipment())
       this.pane.loadEquipment({
         organizationId,
         ...scope,
+        ...this.parkFilters(),
+        ...this.queueFilters(),
         includeDescendants: this.equipmentIncludeDescendants(),
       });
-    if (this.canReadInspections()) this.pane.loadInspections({ organizationId, ...scope });
+    if (this.canReadInspections())
+      this.pane.loadInspections({
+        organizationId,
+        ...scope,
+        ...this.parkFilters(),
+        ...(scope.facilityId ? { includeDescendants: this.equipmentIncludeDescendants() } : {}),
+      });
   }
 
   /**
@@ -1748,9 +2039,27 @@ export class OrganizationAssetsPage {
    */
   protected typeLabelOf(type: string): string {
     return (
-      EQUIPMENT_TYPE_OPTIONS.find((option) => option.value === (type as EquipmentType))?.label ??
+      this.catalog.options().find((option) => option.value === type)?.label ??
       type.replaceAll('_', ' ')
     );
+  }
+
+  /**
+   * Method equipmentTitleOf
+   * @method
+   *
+   * @description
+   * Equipment identity uses the name and asset reference, with the authorized server type label.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {EquipmentOutput} item - Value supplied by the owning park workflow.
+   *
+   * @returns {string} Result consumed by the owning park workflow.
+   */
+  protected equipmentTitleOf(item: EquipmentOutput): string {
+    return buildEquipmentTitle(item, this.typeLabelOf(item.type));
   }
 
   /**
@@ -1768,6 +2077,13 @@ export class OrganizationAssetsPage {
    * @returns {string | null} The secondary line, or `null`.
    */
   protected equipmentSecondaryLineOf(item: EquipmentOutput): string | null {
+    if (item.name || item.assetCode)
+      return [
+        this.typeLabelOf(item.type),
+        item.serialNumber || [item.brand, item.model].filter(Boolean).join(' '),
+      ]
+        .filter(Boolean)
+        .join(' · ');
     if (item.serialNumber) return item.serialNumber;
     const parts: readonly string[] = [item.brand, item.model].filter(
       (part): part is string => !!part,
@@ -1947,6 +2263,9 @@ export class OrganizationAssetsPage {
       relativeTo: this.route,
       queryParams: {
         axis: axis === 'site' ? null : axis,
+        family: this.family() === 'all' ? 'all' : null,
+        customerId: this.customerId() || null,
+        queue: this.queue() || null,
         facility: axis === 'site' ? this.selectedFacilityId() : null,
         equipmentScope: axis === 'site' ? equipmentScope : null,
         compliance: axis === 'compliance' ? this.selectedComplianceFacilityId() : null,

@@ -1,0 +1,207 @@
+<header class="border-b bg-muted/25 p-4 mobile-ui:p-3">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-semibold" i18n="@@customer.page.title">Customers</h1>
+      <p class="text-sm text-muted-foreground" i18n="@@customer.page.description">
+        Internal customer records and contacts for your sites.
+      </p>
+    </div>
+    @if (canManage()) {
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        [disabled]="!online() || store.writeCallState().status === 'pending'"
+        (click)="open(null)"
+        data-testid="customers-new"
+        i18n="@@customer.editor.create"
+      >
+        New customer
+      </button>
+    }
+  </div>
+</header>
+<div class="flex flex-col gap-4 p-4 mobile-ui:p-3">
+  @if (!online()) {
+    <div hlmAlert>
+      <h3 hlmAlertTitle i18n="@@customer.page.offlineTitle">Customers are managed online</h3>
+      <p hlmAlertDescription i18n="@@customer.page.offlineHint">
+        Reconnect to update customer records. Your draft is preserved.
+      </p>
+    </div>
+  }
+  <div class="flex flex-wrap items-end gap-3">
+    <div class="flex min-w-0 flex-1 flex-col gap-1">
+      <label for="customer-search" class="text-sm font-medium" i18n="@@customer.page.search"
+        >Search customers</label
+      ><input
+        hlmInput
+        id="customer-search"
+        data-testid="customers-search"
+        type="search"
+        [value]="search()"
+        (input)="searchChanged($any($event.target).value)"
+      />
+    </div>
+    <hlm-toggle-group
+      type="single"
+      [value]="archived() ? 'archived' : 'active'"
+      (valueChange)="archiveFilter($event)"
+      aria-label="Customer status"
+      i18n-aria-label="@@customer.page.status"
+    >
+      <button
+        hlmToggleGroupItem
+        class="mobile-ui:min-h-11"
+        value="active"
+        i18n="@@customer.page.active"
+      >
+        Active</button
+      ><button
+        hlmToggleGroupItem
+        class="mobile-ui:min-h-11"
+        value="archived"
+        i18n="@@customer.page.archived"
+      >
+        Archived
+      </button>
+    </hlm-toggle-group>
+  </div>
+  @if (store.listCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@customer.page.loadFailed">Customers could not be loaded</h3>
+      <p hlmAlertDescription>{{ error.message }}</p>
+      <button
+        hlmBtn
+        class="mobile-ui:min-h-11"
+        type="button"
+        variant="outline"
+        (click)="reload()"
+        i18n="@@common.retry"
+      >
+        Retry
+      </button>
+    </div>
+  }
+  @if (!editorVisible() && store.writeCallState().error; as error) {
+    <div hlmAlert variant="destructive" role="alert">
+      <h3 hlmAlertTitle i18n="@@customer.page.actionFailed">Customer action failed</h3>
+      <p hlmAlertDescription>{{ error.message }}</p>
+    </div>
+  }
+  @if (store.listCallState().status === 'pending' && store.customerEntities().length === 0) {
+    <div hlmSkeleton class="h-40 w-full"></div>
+  }
+  @if (store.customerEntities().length > 0) {
+    <div class="overflow-x-auto">
+      <table hlmTable>
+        <thead hlmTHead>
+          <tr hlmTr>
+            <th hlmTh i18n="@@customer.form.name">Name</th>
+            <th hlmTh i18n="@@customer.form.code">Internal reference</th>
+            <th hlmTh i18n="@@customer.form.contacts">Contacts</th>
+            <th hlmTh i18n="@@customer.page.actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody hlmTBody>
+          @for (customer of store.customerEntities(); track customer.id) {
+            <tr hlmTr [attr.data-customer-id]="customer.id">
+              <td hlmTd>
+                <span class="font-medium">{{ customer.name }}</span>
+                @if (customer.archivedAt) {
+                  <span hlmBadge variant="secondary" i18n="@@customer.page.archived">Archived</span>
+                }
+                <p class="text-sm text-muted-foreground">
+                  {{ customer.email }} {{ customer.phone }}
+                </p>
+              </td>
+              <td hlmTd>{{ customer.code }}</td>
+              <td hlmTd>
+                <ul class="flex flex-col gap-2">
+                  @for (contact of customer.contacts; track $index) {
+                    <li>
+                      <span>{{ contact.name }}</span
+                      ><span class="text-sm text-muted-foreground">
+                        {{ contact.role }} {{ contact.email }} {{ contact.phone }}</span
+                      >
+                    </li>
+                  }
+                </ul>
+              </td>
+              <td hlmTd>
+                @if (canManage()) {
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      hlmBtn
+                      class="mobile-ui:min-h-11"
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      [disabled]="!online() || store.writeCallState().status === 'pending'"
+                      (click)="open(customer)"
+                      i18n="@@common.edit"
+                    >
+                      Edit</button
+                    ><button
+                      hlmBtn
+                      class="mobile-ui:min-h-11"
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [disabled]="!online() || store.writeCallState().status === 'pending'"
+                      (click)="archive(customer)"
+                    >
+                      @if (customer.archivedAt) {
+                        <span i18n="@@customer.page.restore">Restore</span>
+                      } @else {
+                        <span i18n="@@customer.page.archive">Archive</span>
+                      }
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-collection-pagination
+      [page]="page()"
+      [pageCount]="store.pageCount()"
+      [pageSize]="20"
+      [pageSizes]="[20]"
+      testIdPrefix="customers"
+      [total]="store.total()"
+      [shown]="store.customerEntities().length"
+      (pageChanged)="page.set($event)"
+    />
+  } @else if (store.listCallState().status === 'success') {
+    <hlm-empty
+      ><hlm-empty-header
+        ><div hlmEmptyMedia>
+          @if (search()) {
+            <app-state-illustration state="no-results" />
+          } @else {
+            <app-resource-illustration resource="member" />
+          }
+        </div>
+        <h2 hlmEmptyTitle i18n="@@customer.page.emptyTitle">No customers in this view</h2>
+        <p hlmEmptyDescription i18n="@@customer.page.emptyHint">
+          Change your search or create a customer. Sites can also be managed without a customer.
+        </p></hlm-empty-header
+      ></hlm-empty
+    >
+  }
+</div>
+@if (editorVisible()) {
+  <app-customer-editor-sheet
+    [visible]="true"
+    [customer]="editing()"
+    [pending]="store.writeCallState().status === 'pending'"
+    [error]="store.readCallState().error?.message ?? store.writeCallState().error?.message ?? null"
+    [conflict]="store.writeCallState().error?.code === 412"
+    (refreshRequested)="refreshRevision()"
+    (dismissed)="editorVisible.set(false)"
+    (submitted)="submitted($event)"
+  />
+}

@@ -20,6 +20,8 @@ import type {
   InterventionTimeScope,
   InterventionTimeWrite,
   InterventionTimeJournalView,
+  InterventionTimeEntryVersionsOutput,
+  InterventionTimeEntryOutput,
 } from '@features/organization/features/interventions/models';
 import { projectInterventionTime } from '@features/organization/features/interventions/utils';
 
@@ -102,20 +104,27 @@ export class InterventionTimeJournalService {
    * @since 1.0.0
    *
    * @param {InterventionTimeScope} scope - Captured task/account scope.
-   * @returns {Observable<InterventionTimeJournalView>} Journal with draft and synchronization status.
+   * @param {number} page - Positive requested journal page.
+   *
+   * @returns {Observable<InterventionTimeJournalView>} Journal with draft and synchronization
+   *   status.
    */
-  public read(scope: InterventionTimeScope): Observable<InterventionTimeJournalView> {
+  public read(scope: InterventionTimeScope, page = 1): Observable<InterventionTimeJournalView> {
     return defer(() => {
       const owner = this.offline.publicationOwner();
       const cached = () =>
-        from(this.repository.readJournal(scope.interventionId, scope.workItemId)).pipe(
-          map((entries) => ({
-            entries: entries ?? [],
+        from(this.repository.readJournalPage(scope, page)).pipe(
+          map((snapshot) => ({
+            entries: snapshot?.entries ?? [],
+            page,
+            itemsPerPage: snapshot?.itemsPerPage ?? 30,
+            totalItems: snapshot?.totalItems ?? null,
+            nextPage: snapshot?.nextPage ?? null,
             offline: true,
-            historyUnavailable: entries === null,
+            historyUnavailable: snapshot === null,
           })),
         );
-      const remote = this.api.journal(scope.workItemId).pipe(
+      const remote = this.api.journal(scope.workItemId, page, 30, scope.manageOthers !== true).pipe(
         switchMap((journal) =>
           from(
             this.repository.saveJournal(
@@ -123,11 +132,26 @@ export class InterventionTimeJournalService {
                 interventionId: scope.interventionId,
                 workItemId: scope.workItemId,
                 entries: journal.entries,
+                audience: scope.manageOthers === true ? 'all' : `member:${scope.actorId}`,
+                pagination: {
+                  page: journal.page,
+                  itemsPerPage: journal.itemsPerPage,
+                  totalItems: journal.totalItems,
+                  nextPage: journal.nextPage,
+                },
               },
               owner,
             ),
           ).pipe(
-            map(() => ({ entries: journal.entries, offline: false, historyUnavailable: false })),
+            map(() => ({
+              entries: journal.entries,
+              page: journal.page,
+              itemsPerPage: journal.itemsPerPage,
+              totalItems: journal.totalItems,
+              nextPage: journal.nextPage,
+              offline: false,
+              historyUnavailable: false,
+            })),
           ),
         ),
         catchError((error: unknown) =>
@@ -142,11 +166,115 @@ export class InterventionTimeJournalService {
         map(({ journal, draft, operations }) => {
           if (owner !== this.offline.publicationOwner())
             throw new Error('The active account changed.');
+          const visibleIds = new Set(journal.entries.map((entry) => entry.id));
+          if (page === 1)
+            for (const operation of operations)
+              if (
+                operation.type === 'time-entry.create' &&
+                operation.payload.workItemId === scope.workItemId &&
+                (scope.manageOthers || operation.payload.memberId === scope.actorId)
+              )
+                visibleIds.add(operation.payload.id);
           return {
             ...journal,
             draft,
-            entries: projectInterventionTime(journal.entries, operations, scope.workItemId),
+            entries: projectInterventionTime(
+              journal.entries,
+              operations.filter((operation) => {
+                if (
+                  (operation.type === 'time-entry.create' ||
+                    operation.type === 'time-entry.correct') &&
+                  !scope.manageOthers &&
+                  operation.payload.memberId !== scope.actorId
+                )
+                  return false;
+                return (
+                  !operation.type.startsWith('time-entry.') ||
+                  ('id' in operation.payload && visibleIds.has(operation.payload.id))
+                );
+              }),
+              scope.workItemId,
+            ),
           };
+        }),
+      );
+    });
+  }
+
+  /**
+   * Method readVersions
+   * @method readVersions
+   *
+   * @description
+   * Reads one explicit history page online; device snapshots never imply complete audit history.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {InterventionTimeScope} scope - Captured task/account authority.
+   * @param {string} entryId - Authorized entry whose history was expanded.
+   * @param {number} beforeRevision - Exclusive cursor for older revisions.
+   *
+   * @returns {Observable<InterventionTimeEntryVersionsOutput>} One authorized immutable history
+   *   page.
+   */
+  public readVersions(
+    scope: InterventionTimeScope,
+    entryId: string,
+    beforeRevision?: number,
+  ): Observable<InterventionTimeEntryVersionsOutput> {
+    return defer(() => {
+      if (this.connectivity.isOffline())
+        return throwError(
+          () =>
+            new Error(
+              $localize`:@@intervention.time.historyOffline:Correction history is unavailable offline. Reconnect to load earlier versions.`,
+            ),
+        );
+      const owner = this.offline.publicationOwner();
+      return this.api.versions(scope.workItemId, entryId, beforeRevision).pipe(
+        map((result) => {
+          if (owner !== this.offline.publicationOwner())
+            throw new Error('The active account changed.');
+          return result;
+        }),
+      );
+    });
+  }
+
+  /**
+   * Method readEntry
+   * @method readEntry
+   *
+   * @description
+   * Reads the current saved correction target directly when it is outside the displayed page.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {InterventionTimeScope} scope - Captured task/account authority.
+   * @param {string} entryId - Saved correction target to review.
+   *
+   * @returns {Observable<InterventionTimeEntryOutput>} Bounded current entry for revision review.
+   */
+  public readEntry(
+    scope: InterventionTimeScope,
+    entryId: string,
+  ): Observable<InterventionTimeEntryOutput> {
+    return defer(() => {
+      if (this.connectivity.isOffline())
+        return throwError(
+          () =>
+            new Error(
+              $localize`:@@intervention.time.reviewOffline:Reconnect to review the current version of this saved correction.`,
+            ),
+        );
+      const owner = this.offline.publicationOwner();
+      return this.api.getEntry(scope.workItemId, entryId).pipe(
+        map((result) => {
+          if (owner !== this.offline.publicationOwner())
+            throw new Error('The active account changed.');
+          return result;
         }),
       );
     });
@@ -165,6 +293,7 @@ export class InterventionTimeJournalService {
    * @param {InterventionTimeScope} scope - Task and actor captured on submission.
    * @param {InterventionTimeWrite} command - Stable entry identifier and reviewed revision.
    * @param {string | null} expectedOwner - Account captured before queued draft persistence.
+   *
    * @returns {Observable<'queued' | 'remote'>} Where the intention was durably recorded.
    */
   public write(

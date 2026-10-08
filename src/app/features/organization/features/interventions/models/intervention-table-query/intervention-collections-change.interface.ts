@@ -64,6 +64,7 @@ export interface InterventionCollectionsChange {
     | 'inspections'
     | 'activity'
     | 'attachments'
+    | 'consumptions'
   )[];
 
   /**

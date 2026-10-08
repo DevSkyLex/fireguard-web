@@ -70,7 +70,7 @@ describe('InterventionWorkItemSheet', () => {
     await fixture.whenStable();
 
     expect(inSheet('[data-slot="sheet-description"]')?.textContent?.trim()).toBe(
-      'Only the action is required; target and assignee can be set now or during execution.',
+      'Choose the action and, for maintenance, the equipment concerned. Assignment and estimates are optional.',
     );
   });
 

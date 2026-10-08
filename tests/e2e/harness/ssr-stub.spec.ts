@@ -1,4 +1,4 @@
-import { createServer } from 'node:http';
+import { createServer, type ServerResponse } from 'node:http';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
@@ -72,5 +72,127 @@ test('serves the real HTTP stub locally and records wrong methods and endpoints'
   } finally {
     server.closeAllConnections();
     await new Promise<void>((done) => server.close(() => done()));
+  }
+});
+
+test('keeps the authenticated Mercure stream open with exact origin CORS', async ({
+  page,
+}, info) => {
+  const documentServer = createServer((_request, response) => {
+    response.writeHead(200, { 'Content-Type': 'text/html' });
+    response.end('<p>SSE harness</p>');
+  });
+  await new Promise<void>((done) => documentServer.listen(0, '127.0.0.1', done));
+  let server: ReturnType<typeof createServer> | undefined;
+  let stream: ServerResponse | undefined;
+  let finished = false;
+  let closed = false;
+  try {
+    const documentAddress = documentServer.address();
+    if (!documentAddress || typeof documentAddress === 'string')
+      throw new Error('No local document port.');
+    const appOrigin = 'http://127.0.0.1:' + documentAddress.port;
+    const stub = createApiStub(appOrigin);
+    server = createServer(stub.handler);
+    server.on('request', (request, response) => {
+      if (!request.url?.startsWith('/.well-known/mercure?')) return;
+      stream = response;
+      response.once('finish', () => {
+        finished = true;
+      });
+      response.once('close', () => {
+        closed = true;
+      });
+    });
+    const apiServer = server;
+    await new Promise<void>((done) => apiServer.listen(0, '127.0.0.1', done));
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('No local stub port.');
+    const apiOrigin = 'http://127.0.0.1:' + address.port;
+    await page.goto(appOrigin + '/');
+    const hub = new URL('/.well-known/mercure', apiOrigin);
+    hub.searchParams.set('topic', '/users/e2e-user-1/presence-preference');
+    hub.searchParams.set('authorization', 'e2e-mercure-token');
+    const state = await page.evaluateHandle((url) => {
+      const source = new EventSource(url);
+      const streamState = { source, errors: 0 };
+      source.addEventListener('error', () => streamState.errors++);
+      return streamState;
+    }, hub.toString());
+    try {
+      const connection = await state.evaluate(
+        (connectionState) =>
+          new Promise<{ open: boolean; credentials: boolean; errors: number }>((complete) => {
+            const { source } = connectionState;
+            const snapshot = () => ({
+              open: source.readyState === EventSource.OPEN,
+              credentials: source.withCredentials,
+              errors: connectionState.errors,
+            });
+            if (source.readyState !== EventSource.CONNECTING) return complete(snapshot());
+            const onOpen = () => {
+              source.removeEventListener('error', onError);
+              complete(snapshot());
+            };
+            const onError = () => {
+              source.removeEventListener('open', onOpen);
+              complete(snapshot());
+            };
+            source.addEventListener('open', onOpen, { once: true });
+            source.addEventListener('error', onError, { once: true });
+          }),
+      );
+      await info.attach('mercure-transport', {
+        body: JSON.stringify({
+          connection,
+          status: stream?.statusCode,
+          headers: stream?.getHeaders(),
+        }),
+        contentType: 'application/json',
+      });
+      expect(connection).toEqual({ open: true, credentials: false, errors: 0 });
+      if (!stream) throw new Error('Mercure must reach the real local HTTP stub.');
+      expect(stream.statusCode).toBe(200);
+      expect(stream.getHeader('Content-Type')).toMatch(/^text\/event-stream\b/);
+      expect(stream.getHeader('Access-Control-Allow-Origin')).toBe(appOrigin);
+      expect(stream.getHeader('Access-Control-Allow-Credentials')).toBe('true');
+      expect(stream.getHeader('Vary')).toBe('Origin');
+      await page.evaluate(
+        async (url) => (await fetch(url)).text(),
+        apiOrigin + '/__harness/health',
+      );
+      expect(
+        await state.evaluate(({ source, errors }) => ({
+          open: source.readyState === EventSource.OPEN,
+          credentials: source.withCredentials,
+          errors,
+        })),
+      ).toEqual({ open: true, credentials: false, errors: 0 });
+      expect(stream.writableEnded).toBe(false);
+      expect(stream.destroyed).toBe(false);
+      expect(finished).toBe(false);
+      expect(closed).toBe(false);
+      expect(stub.requests).toEqual([
+        expect.objectContaining({ method: 'GET', path: '/.well-known/mercure', status: 200 }),
+      ]);
+      expect(stub.unexpected).toEqual([]);
+      await state.evaluate(({ source }) => source.close());
+      expect(await state.evaluate(({ source }) => source.readyState === EventSource.CLOSED)).toBe(
+        true,
+      );
+      await expect.poll(() => closed).toBe(true);
+      expect(finished).toBe(false);
+    } finally {
+      await state.evaluate(({ source }) => source.close()).catch(() => undefined);
+      await state.dispose();
+    }
+  } finally {
+    if (server) {
+      const apiServer = server;
+      apiServer.closeAllConnections();
+      await new Promise<void>((done) => apiServer.close(() => done()));
+    }
+    documentServer.closeAllConnections();
+    await new Promise<void>((done) => documentServer.close(() => done()));
   }
 });

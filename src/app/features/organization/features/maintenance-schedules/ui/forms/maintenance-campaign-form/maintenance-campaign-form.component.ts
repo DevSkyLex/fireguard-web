@@ -20,7 +20,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import { idleCallState, type CallState, type StoreError } from '@core/request-state';
-import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments';
+import type { EquipmentTypeOption } from '@features/organization/features/equipments';
 import type { FacilityOption } from '@features/organization/features/facilities/models';
 import { FacilityOptionPicker } from '@features/organization/features/facilities/ui/components';
 import type { GenerateMaintenanceCampaignInput } from '@features/organization/features/maintenance-schedules/models';
@@ -247,14 +247,16 @@ export class MaintenanceCampaignForm {
    * @readonly
    *
    * @description
-   * The equipment-type choices offered, reused from the equipments feature's public catalog.
+   * Equipment-type choices supplied from the authorized server catalog, including custom codes.
    *
-   * @access protected
+   * @access public
    * @since unreleased
    *
-   * @type {typeof EQUIPMENT_TYPE_OPTIONS}
+   * @type {InputSignal<readonly EquipmentTypeOption[]>}
    */
-  protected readonly equipmentTypeOptions: typeof EQUIPMENT_TYPE_OPTIONS = EQUIPMENT_TYPE_OPTIONS;
+  public readonly equipmentTypeOptions: InputSignal<readonly EquipmentTypeOption[]> = input<
+    readonly EquipmentTypeOption[]
+  >([]);
 
   /**
    * Property noScopeValue
@@ -365,7 +367,7 @@ export class MaintenanceCampaignForm {
     }
 
     return (
-      this.equipmentTypeOptions.find((option) => option.value === value)?.label ??
+      this.equipmentTypeOptions().find((option) => option.value === value)?.label ??
       $localize`:@@common.unknownType:Unknown type`
     );
   };

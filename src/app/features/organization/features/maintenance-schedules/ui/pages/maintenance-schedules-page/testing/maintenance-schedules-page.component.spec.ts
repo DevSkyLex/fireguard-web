@@ -19,6 +19,7 @@ import { idleCallState, successCallState, type CallState } from '@core/request-s
 import { THEME_PORT, type ThemePort } from '@core/theme';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
+import { EquipmentTypeService } from '@features/organization/features/equipments/data-access';
 import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { MaintenanceScheduleService } from '@features/organization/features/maintenance-schedules/data-access';
 import type {
@@ -61,12 +62,14 @@ const renderPageActions = (): HTMLElement => {
 describe('MaintenanceSchedulesPage', () => {
   let fixture: ComponentFixture<MaintenanceSchedulesPage>;
   let load: ReturnType<typeof vi.fn>;
+  let setOrganization: ReturnType<typeof vi.fn>;
   let setIntervalOverride: ReturnType<typeof vi.fn>;
   let generateCampaign: ReturnType<typeof vi.fn>;
   let resetOverrideOperation: ReturnType<typeof vi.fn>;
   let resetCampaignOperation: ReturnType<typeof vi.fn>;
   let overrideCallState: WritableSignal<CallState<MaintenanceScheduleOutput>>;
   let campaignResult: WritableSignal<MaintenanceCampaignOutput | null>;
+  let campaignResultOrganization: WritableSignal<string | null>;
   let hasPermission: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let totalSchedules: WritableSignal<number>;
@@ -89,14 +92,23 @@ describe('MaintenanceSchedulesPage', () => {
     updatedAt: '2026-01-01T00:00:00+00:00',
   };
 
+  const otherSchedule: MaintenanceScheduleOutput = {
+    ...schedule,
+    '@id': '/api/maintenance/schedules/schedule-2',
+    id: 'schedule-2',
+    organization: '/api/organizations/org-2',
+  };
+
   beforeEach(() => {
     load = vi.fn();
+    setOrganization = vi.fn();
     setIntervalOverride = vi.fn();
     generateCampaign = vi.fn();
     resetOverrideOperation = vi.fn();
     resetCampaignOperation = vi.fn();
     overrideCallState = signal<CallState<MaintenanceScheduleOutput>>(idleCallState());
     campaignResult = signal<MaintenanceCampaignOutput | null>(null);
+    campaignResultOrganization = signal<string | null>(null);
     hasPermission = vi.fn().mockReturnValue(true);
     totalSchedules = signal<number>(1);
     listCallState = signal<CallState>(successCallState(null));
@@ -137,6 +149,7 @@ describe('MaintenanceSchedulesPage', () => {
           provide: MaintenanceSchedulesStore,
           useValue: {
             load,
+            setOrganization,
             setIntervalOverride,
             generateCampaign,
             resetOverrideOperation,
@@ -151,11 +164,39 @@ describe('MaintenanceSchedulesPage', () => {
             isGeneratingCampaign: signal(false),
             campaignError: signal(null),
             campaignResult,
+            campaignResultOrganization,
             overrideCallState,
           },
         },
         { provide: OrganizationPermissionService, useValue: { hasPermission } },
         { provide: MaintenanceScheduleService, useValue: { exportCsv } },
+        {
+          provide: EquipmentTypeService,
+          useValue: {
+            listAll: vi.fn().mockReturnValue(
+              of([
+                {
+                  '@id': '/api/types/fire_extinguisher',
+                  '@type': 'EquipmentType',
+                  value: 'fire_extinguisher',
+                  label: 'Fire extinguisher',
+                  family: 'fire',
+                  archived: false,
+                  revision: 1,
+                },
+                {
+                  '@id': '/api/types/smoke_detector',
+                  '@type': 'EquipmentType',
+                  value: 'smoke_detector',
+                  label: 'Smoke detector',
+                  family: 'fire',
+                  archived: false,
+                  revision: 1,
+                },
+              ]),
+            ),
+          },
+        },
         { provide: FeedbackService, useValue: { warn: feedbackWarn, error: feedbackError } },
         {
           provide: FacilityService,
@@ -173,6 +214,7 @@ describe('MaintenanceSchedulesPage', () => {
 
     expect(load).toHaveBeenCalledTimes(1);
     expect(load.mock.calls[0][0]).toMatchObject({ organization: '/api/organizations/org-1' });
+    expect(setOrganization).toHaveBeenCalledWith('/api/organizations/org-1');
   });
 
   it('should render search and forward a settled term from the first page', async () => {
@@ -206,6 +248,7 @@ describe('MaintenanceSchedulesPage', () => {
     ).submitOverride('P6M');
 
     expect(setIntervalOverride).toHaveBeenCalledWith({
+      organization: '/api/organizations/org-1',
       scheduleId: 'schedule-1',
       intervalOverride: 'P6M',
     });
@@ -235,6 +278,7 @@ describe('MaintenanceSchedulesPage', () => {
   it('should navigate to the created intervention once a campaign result lands', async () => {
     fixture = await createPage();
 
+    campaignResultOrganization.set('/api/organizations/org-1');
     campaignResult.set({
       '@id': '',
       '@type': 'MaintenanceCampaignResult',
@@ -251,6 +295,147 @@ describe('MaintenanceSchedulesPage', () => {
       'intervention-1',
     ]);
     expect(resetCampaignOperation).toHaveBeenCalled();
+  });
+
+  it('clears organization-specific filters and dialogs and hides stale rows on a workspace change', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['openOverrideDialog'](schedule);
+    fixture.componentInstance['filters'].set({
+      dueStatus: 'overdue',
+      facility: '/api/organizations/org-1/facilities/site-1',
+      equipmentType: 'fire_extinguisher',
+      dueBefore: new Date('2026-12-31T00:00:00Z'),
+    });
+    fixture.componentInstance['draftSearch'].set('old organization');
+    fixture.componentInstance['searchTerm'].set('old organization');
+    fixture.componentInstance['page'].set(3);
+    fixture.componentInstance['openFilterKey'].set('facility');
+    await fixture.whenStable();
+    load.mockClear();
+
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    await fixture.whenStable();
+
+    expect(setOrganization).toHaveBeenLastCalledWith('/api/organizations/org-2');
+    expect(fixture.componentInstance['filters']()).toEqual({
+      dueStatus: null,
+      facility: null,
+      equipmentType: null,
+      dueBefore: null,
+    });
+    expect(fixture.componentInstance['draftSearch']()).toBe('');
+    expect(fixture.componentInstance['searchTerm']()).toBe('');
+    expect(fixture.componentInstance['page']()).toBe(1);
+    expect(fixture.componentInstance['openFilterKey']()).toBeNull();
+    expect(fixture.componentInstance['overrideDialogVisible']()).toBe(false);
+    expect(fixture.componentInstance['overrideTarget']()).toBeNull();
+    expect(fixture.componentInstance['items']()).toEqual([]);
+    expect(load.mock.calls.at(-1)?.[0]).toEqual({
+      organization: '/api/organizations/org-2',
+      facility: undefined,
+      equipmentType: undefined,
+      dueStatus: undefined,
+      dueBefore: undefined,
+      search: undefined,
+      page: 1,
+      itemsPerPage: 30,
+    });
+
+    const root: HTMLElement = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('[data-testid="maintenance-schedule-table-row"]')).toBeNull();
+    expect(root.querySelector('[data-testid="maintenance-schedule-table-override"]')).toBeNull();
+
+    fixture.componentInstance['openOverrideDialog'](schedule);
+    fixture.componentInstance['submitOverride']('P3M');
+
+    expect(fixture.componentInstance['overrideDialogVisible']()).toBe(false);
+    expect(setIntervalOverride).not.toHaveBeenCalled();
+  });
+
+  it('keeps a reopened organization B override dialog open when organization A succeeds late', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['openOverrideDialog'](schedule);
+    fixture.componentInstance['submitOverride']('P6M');
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    await fixture.whenStable();
+    schedules.set([schedule, otherSchedule]);
+    fixture.componentInstance['openOverrideDialog'](otherSchedule);
+    await fixture.whenStable();
+    resetOverrideOperation.mockClear();
+
+    overrideCallState.set(successCallState({ ...schedule, intervalOverride: 'P6M' }));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['items']()).toEqual([otherSchedule]);
+    expect(fixture.componentInstance['overrideDialogVisible']()).toBe(true);
+    expect(fixture.componentInstance['overrideTarget']()).toEqual(otherSchedule);
+    expect(resetOverrideOperation).not.toHaveBeenCalled();
+  });
+
+  it('keeps the override dialog open when a different target in the same organization succeeds', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['openOverrideDialog'](schedule);
+    await fixture.whenStable();
+
+    overrideCallState.set(successCallState({ ...schedule, id: 'another-schedule' }));
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['overrideDialogVisible']()).toBe(true);
+    expect(fixture.componentInstance['overrideTarget']()).toEqual(schedule);
+    expect(resetOverrideOperation).not.toHaveBeenCalled();
+  });
+
+  it('keeps a reopened organization B campaign dialog open when organization A succeeds late', async () => {
+    fixture = await createPage();
+    fixture.componentInstance['openCampaignDialog']();
+    fixture.componentInstance['submitCampaign']({
+      name: 'Organization A campaign',
+      dueBefore: '2026-12-31T00:00:00.000Z',
+    });
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    await fixture.whenStable();
+    expect(fixture.componentInstance['campaignDialogVisible']()).toBe(false);
+    fixture.componentInstance['openCampaignDialog']();
+    await fixture.whenStable();
+    resetCampaignOperation.mockClear();
+
+    campaignResultOrganization.set('/api/organizations/org-1');
+    campaignResult.set({
+      '@id': '',
+      '@type': 'MaintenanceCampaignResult',
+      interventionId: 'intervention-from-org-1',
+      number: 42,
+      workItemsCount: 7,
+    });
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['campaignDialogVisible']()).toBe(true);
+    expect(navigate).not.toHaveBeenCalled();
+    expect(resetCampaignOperation).not.toHaveBeenCalled();
+  });
+
+  it('navigates a confirmed campaign under its current organization', async () => {
+    fixture = await createPage();
+    fixture.componentRef.setInput('organizationId', 'org-2');
+    await fixture.whenStable();
+    fixture.componentInstance['openCampaignDialog']();
+    campaignResultOrganization.set('/api/organizations/org-2');
+    campaignResult.set({
+      '@id': '',
+      '@type': 'MaintenanceCampaignResult',
+      interventionId: 'intervention-from-org-2',
+      number: 43,
+      workItemsCount: 2,
+    });
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['campaignDialogVisible']()).toBe(false);
+    expect(navigate).toHaveBeenCalledWith([
+      '/organizations',
+      'org-2',
+      'interventions',
+      'intervention-from-org-2',
+    ]);
   });
 
   it('should narrow the list to the picked due-status filter', async () => {

@@ -28,11 +28,11 @@ import { UnsavedChangesDialog } from '@shared/unsaved-changes';
 import { FacilityCreateForm } from '../../forms/facility-create-form';
 
 /**
- * Component FacilityCreateSheet
+ * Class FacilityCreateSheet
  * @class FacilityCreateSheet
  *
  * @description
- * The spartan sheet hosting {@link FacilityCreateForm} on the facilities list: the
+ * The spartan sheet hosting  on the facilities list: the
  * record is created without leaving the list, the same surface every other
  * resource creation uses (`DESIGN.md` "Action Surfaces" rule 2). Purely
  * presentational: it owns the panel, forwards `visible`/`visibleChange` and
@@ -43,9 +43,7 @@ import { FacilityCreateForm } from '../../forms/facility-create-form';
  * `intervention-work-item-sheet` does. Below `sm` the panel is a bottom
  * drawer (`@shared/sheet-side`).
  *
- * @version 1.0.0
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ * @since unreleased
  */
 @Component({
   selector: 'app-facility-create-sheet',
@@ -54,6 +52,20 @@ import { FacilityCreateForm } from '../../forms/facility-create-form';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FacilityCreateSheet {
+  /**
+   * Property organizationId
+   * @readonly
+   *
+   * @description
+   * Organization passed to the root-site customer chooser.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @type {InputSignal<string>}
+   */
+  public readonly organizationId: InputSignal<string> = input('');
+
   /**
    * Property parentCallState
    * @readonly

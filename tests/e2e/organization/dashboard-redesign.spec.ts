@@ -87,6 +87,30 @@ for (const width of [1440, 390]) {
         );
         await expect(risk.getByTestId('donut-chart')).toBeVisible();
         await expect(risk.locator('dl > div')).toHaveCount(4);
+        const queues = page.getByTestId('park-action-queues');
+        const trends = page.getByTestId('org-dashboard-trends');
+        await expect(queues.locator('app-stat-tile')).toHaveCount(3);
+        const queueBounds = await queues.boundingBox();
+        const trendsBounds = await trends.boundingBox();
+        if (!queueBounds || !trendsBounds) throw new Error('Missing queue or analytics bounds');
+        expect(queueBounds.y + queueBounds.height).toBeLessThanOrEqual(trendsBounds.y);
+        if (width === 1440) {
+          expect(queueBounds.y + queueBounds.height).toBeLessThanOrEqual(900);
+          const tiles = await queues.locator('app-stat-tile').all();
+          const tileBounds = await Promise.all(
+            tiles.map(async (tile) => {
+              await expect(tile).toBeInViewport({ ratio: 1 });
+              const bounds = await tile.boundingBox();
+              if (!bounds) throw new Error('Missing park action tile bounds');
+              return bounds;
+            }),
+          );
+          expect(
+            Math.max(...tileBounds.map((box) => box.y)) -
+              Math.min(...tileBounds.map((box) => box.y)),
+          ).toBeLessThanOrEqual(1);
+          await trends.scrollIntoViewIfNeeded();
+        }
         const a = await activity.boundingBox();
         const b = await risk.boundingBox();
         if (!a || !b) throw new Error('Missing chart bounds');

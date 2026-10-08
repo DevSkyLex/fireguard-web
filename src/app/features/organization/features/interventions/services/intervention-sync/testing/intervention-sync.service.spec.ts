@@ -9,6 +9,7 @@ import { FacilityService } from '@features/organization/features/facilities/data
 import type { CreateFacilityInput } from '@features/organization/features/facilities/models';
 import { InspectionService } from '@features/organization/features/inspections/data-access';
 import {
+  InterventionInventoryRepository,
   InterventionOfflineService,
   InterventionService,
   InterventionTimeService,
@@ -17,7 +18,13 @@ import type {
   InterventionOutboxOperationFor,
   InterventionOutboxPayloadMap,
   InterventionOutboxType,
+  InterventionWorkItemExecutionResultInput,
 } from '@features/organization/features/interventions/models';
+import { InventoryService } from '@features/organization/features/inventory/data-access';
+import type {
+  DeclareInventoryConsumptionInput,
+  InventoryConsumptionOutput,
+} from '@features/organization/features/inventory/models';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { InterventionSyncService } from '../intervention-sync.service';
 
@@ -36,6 +43,33 @@ function operation<Type extends InterventionOutboxType>(
 }
 
 describe('InterventionSyncService', () => {
+  const consumption: DeclareInventoryConsumptionInput = {
+    clientOperationId: '11111111-1111-4111-8111-111111111111',
+    partId: 'part-1',
+    warehouseId: 'warehouse-1',
+    quantity: '2.000000',
+    interventionId: 'intervention-1',
+    workItemId: 'work-item-1',
+    equipmentId: 'equipment-1',
+    occurredAt: '2026-10-06T10:00:00.123Z',
+  };
+  const receipt: InventoryConsumptionOutput = {
+    '@id': '/api/organizations/org-1/inventory-consumptions/receipt-1',
+    '@type': 'InventoryConsumption',
+    id: 'receipt-1',
+    partId: consumption.partId,
+    warehouseId: consumption.warehouseId,
+    quantity: consumption.quantity,
+    interventionId: consumption.interventionId,
+    workItemId: consumption.workItemId,
+    equipmentId: consumption.equipmentId,
+    actorId: 'account-a',
+    occurredAt: consumption.occurredAt,
+    status: 'received_pending',
+    reason: 'insufficient_stock',
+    late: false,
+    replayed: false,
+  };
   let service: InterventionSyncService;
   let revision: WritableSignal<number>;
   let profile: WritableSignal<ShellUserProfile | null>;
@@ -59,6 +93,8 @@ describe('InterventionSyncService', () => {
     uploadEvidence: ReturnType<typeof vi.fn>;
   };
   let mockInspections: { createForIntervention: ReturnType<typeof vi.fn> };
+  let mockInventory: { declareConsumption: ReturnType<typeof vi.fn> };
+  let mockInventorySnapshots: { saveReceipt: ReturnType<typeof vi.fn> };
   let mockOffline: {
     listOutbox: ReturnType<typeof vi.fn>;
     removeOutbox: ReturnType<typeof vi.fn>;
@@ -69,6 +105,7 @@ describe('InterventionSyncService', () => {
   };
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     sessionEnded = new Subject<void>();
     revision = signal(1);
     profile = signal<ShellUserProfile | null>({ id: 'account-a' });
@@ -91,6 +128,8 @@ describe('InterventionSyncService', () => {
       uploadEvidence: vi.fn().mockReturnValue(of({})),
     };
     mockInspections = { createForIntervention: vi.fn().mockReturnValue(of({})) };
+    mockInventory = { declareConsumption: vi.fn().mockReturnValue(of(receipt)) };
+    mockInventorySnapshots = { saveReceipt: vi.fn().mockResolvedValue(undefined) };
     mockOffline = {
       listOutbox: vi.fn().mockResolvedValue([]),
       removeOutbox: vi.fn().mockResolvedValue(undefined),
@@ -117,6 +156,7 @@ describe('InterventionSyncService', () => {
           provide: InterventionTimeService,
           useValue: {
             journal: vi.fn().mockReturnValue(of({ entries: [] })),
+            getEntry: vi.fn(),
             createEntry: vi.fn().mockReturnValue(of({})),
             correctEntry: vi.fn().mockReturnValue(of({})),
             cancelEntry: vi.fn().mockReturnValue(of(undefined)),
@@ -126,11 +166,180 @@ describe('InterventionSyncService', () => {
         { provide: FacilityService, useValue: mockFacilities },
         { provide: EquipmentService, useValue: mockEquipment },
         { provide: InspectionService, useValue: mockInspections },
+        { provide: InventoryService, useValue: mockInventory },
+        { provide: InterventionInventoryRepository, useValue: mockInventorySnapshots },
         { provide: InterventionOfflineService, useValue: mockOffline },
       ],
     });
 
     service = TestBed.inject(InterventionSyncService);
+  });
+
+  it('persists a received pending consumption before deleting its stable outbox operation', async () => {
+    const operationId = `inventory:${consumption.clientOperationId}`;
+    mockOffline.listOutbox.mockResolvedValue([
+      operation(operationId, 'inventory-consumption.declare', {
+        ...consumption,
+        actorId: 'account-a',
+        clientId: consumption.clientOperationId,
+      }),
+    ]);
+    let release: (() => void) | undefined;
+    mockInventorySnapshots.saveReceipt.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const dispatch = vi.spyOn(TestBed.inject(Dispatcher), 'dispatch');
+    const replay = service.replayOutbox('org-1', 'intervention-1');
+
+    await vi.waitFor(() => expect(mockInventorySnapshots.saveReceipt).toHaveBeenCalledOnce());
+    expect(mockInventory.declareConsumption).toHaveBeenCalledExactlyOnceWith('org-1', consumption);
+    expect(mockInventorySnapshots.saveReceipt).toHaveBeenCalledExactlyOnceWith(
+      'org-1',
+      'account-a',
+      receipt,
+      expect.any(Function),
+    );
+    expect(mockInventorySnapshots.saveReceipt.mock.calls[0]?.[3]()).toBe(true);
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+
+    release?.();
+    expect(await replay).toBe(1);
+    expect(mockOffline.removeOutbox).toHaveBeenCalledExactlyOnceWith(operationId);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          interventionId: 'intervention-1',
+          collections: ['consumptions'],
+        }),
+      }),
+    );
+  });
+
+  it('strips technical outbox actor and replay fields while retaining the original UUID and timestamp', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'inventory-consumption.declare', {
+        ...consumption,
+        actorId: 'account-a',
+        clientId: 'technical-client-id',
+      }),
+    ]);
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(1);
+    expect(mockInventory.declareConsumption).toHaveBeenCalledExactlyOnceWith('org-1', consumption);
+    expect(mockInventory.declareConsumption.mock.calls[0]?.[1]).not.toHaveProperty('actorId');
+    expect(mockInventory.declareConsumption.mock.calls[0]?.[1]).not.toHaveProperty('clientId');
+  });
+
+  it('retains a server-accepted consumption when its durable receipt fails and replays the same UUID', async () => {
+    const operationId = `inventory:${consumption.clientOperationId}`;
+    mockOffline.listOutbox.mockResolvedValue([
+      operation(operationId, 'inventory-consumption.declare', {
+        ...consumption,
+        actorId: 'account-a',
+        clientId: consumption.clientOperationId,
+      }),
+    ]);
+    mockInventorySnapshots.saveReceipt.mockRejectedValueOnce(
+      new DOMException('Storage full.', 'QuotaExceededError'),
+    );
+
+    await expect(service.replayOutbox('org-1', 'intervention-1')).rejects.toMatchObject({
+      name: 'AcceptedInventoryPersistenceError',
+      cause: expect.objectContaining({ name: 'QuotaExceededError' }),
+    });
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxFailed).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxConflict).not.toHaveBeenCalled();
+
+    mockInventory.declareConsumption.mockReturnValue(of({ ...receipt, replayed: true }));
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(1);
+    expect(mockInventory.declareConsumption.mock.calls).toEqual([
+      ['org-1', consumption],
+      ['org-1', consumption],
+    ]);
+    expect(mockOffline.removeOutbox).toHaveBeenCalledExactlyOnceWith(operationId);
+  });
+
+  it.each(['account', 'session', 'organization'] as const)(
+    'suppresses receipt persistence and queue removal after the %s changes during server replay',
+    async (change) => {
+      const pending = new Subject<InventoryConsumptionOutput>();
+      mockInventory.declareConsumption.mockReturnValue(pending);
+      mockOffline.listOutbox.mockResolvedValue([
+        operation('op-1', 'inventory-consumption.declare', {
+          ...consumption,
+          actorId: 'account-a',
+        }),
+      ]);
+      const replay = service.replayOutbox('org-1', 'intervention-1');
+      await vi.waitFor(() => expect(mockInventory.declareConsumption).toHaveBeenCalledOnce());
+      if (change === 'account') profile.set({ id: 'account-b' });
+      if (change === 'session') revision.set(2);
+      if (change === 'organization') organizationId.set('org-2');
+      pending.next(receipt);
+      pending.complete();
+
+      expect(await replay).toBe(0);
+      expect(mockInventorySnapshots.saveReceipt).not.toHaveBeenCalled();
+      expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+      expect(mockOffline.markOutboxFailed).not.toHaveBeenCalled();
+    },
+  );
+
+  it('does not remove a consumption when the session changes while storing its accepted receipt', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'inventory-consumption.declare', {
+        ...consumption,
+        actorId: 'account-a',
+      }),
+    ]);
+    let release: (() => void) | undefined;
+    mockInventorySnapshots.saveReceipt.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const replay = service.replayOutbox('org-1', 'intervention-1');
+    await vi.waitFor(() => expect(mockInventorySnapshots.saveReceipt).toHaveBeenCalledOnce());
+    revision.set(2);
+    expect(mockInventorySnapshots.saveReceipt.mock.calls[0]?.[3]()).toBe(false);
+    release?.();
+    expect(await replay).toBe(0);
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+  });
+
+  it('does not submit a queued physical fact belonging to another actor', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'inventory-consumption.declare', {
+        ...consumption,
+        actorId: 'account-b',
+      }),
+    ]);
+    await expect(service.replayOutbox('org-1', 'intervention-1')).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    expect(mockInventory.declareConsumption).not.toHaveBeenCalled();
+    expect(mockInventorySnapshots.saveReceipt).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+  });
+
+  it('retains the queued declaration when the server receipt belongs to another intervention', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('op-1', 'inventory-consumption.declare', {
+        ...consumption,
+        actorId: 'account-a',
+      }),
+    ]);
+    mockInventory.declareConsumption.mockReturnValue(
+      of({ ...receipt, interventionId: 'intervention-2' }),
+    );
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+    expect(mockInventorySnapshots.saveReceipt).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -323,28 +532,28 @@ describe('InterventionSyncService', () => {
         detail: 'Time entry changed.',
       })),
     );
-    vi.mocked(time.journal).mockReturnValue(
+    vi.mocked(time.getEntry).mockReturnValue(
       of({
         '@id': '/api/intervention-work-items/task/time-entries',
         '@type': 'InterventionTimeJournal',
-        workItemId: 'task',
-        entries: [
-          {
-            id: 'entry',
-            workItemId: 'task',
-            memberId: 'member',
-            workedOn: '2026-09-16',
-            minutes: 90,
-            note: 'Server note',
-            revision: 3,
-            cancelled: false,
-            createdBy: 'member',
-            updatedBy: 'manager',
-            createdAt: '2026-09-16T09:00:00Z',
-            updatedAt: '2026-09-16T10:00:00Z',
-            versions: [],
-          },
-        ],
+        id: 'entry',
+        entry: {
+          id: 'entry',
+          workItemId: 'task',
+          memberId: 'member',
+          workedOn: '2026-09-16',
+          minutes: 90,
+          note: 'Server note',
+          revision: 3,
+          cancelled: false,
+          createdBy: 'member',
+          updatedBy: 'manager',
+          createdAt: '2026-09-16T09:00:00Z',
+          updatedAt: '2026-09-16T10:00:00Z',
+          versions: [],
+          totalVersions: 3,
+          nextBeforeRevision: 3,
+        },
       }),
     );
     const input = {
@@ -1050,6 +1259,297 @@ describe('InterventionSyncService', () => {
       2,
     );
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
+  });
+
+  it('replays the durable execution fact without changing the operator timestamp or revision', async () => {
+    const executionResult: InterventionWorkItemExecutionResultInput = {
+      equipmentId: 'equipment-1',
+      performedAt: '2026-10-05T16:35:00+02:00',
+      outcome: 'performed',
+      workPerformed: 'Cleaned and adjusted the pump.',
+    };
+    const queued = operation('execution-op', 'work-item.update', {
+      workItemId: 'work-item-1',
+      clientId: 'execution-client-id',
+      revision: 2,
+      status: 'completed',
+      executionResult,
+    });
+    mockOffline.listOutbox.mockResolvedValue([queued]);
+
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(1);
+    expect(mockInterventionService.updateWorkItem).toHaveBeenCalledWith(
+      'work-item-1',
+      { status: 'completed', executionResult },
+      2,
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledWith('execution-op');
+    expect(queued.payload.executionResult?.performedAt).toBe('2026-10-05T16:35:00+02:00');
+    expect(queued.payload.revision).toBe(2);
+  });
+
+  it('keeps the local result and verified server facts for human review after a revision conflict', async () => {
+    const executionResult: InterventionWorkItemExecutionResultInput = {
+      equipmentId: 'equipment-1',
+      performedAt: '2026-10-05T16:35:00+02:00',
+      outcome: 'failed',
+      workPerformed: 'Repair attempt failed; the valve must be replaced.',
+    };
+    const queued = operation('execution-op', 'work-item.update', {
+      workItemId: 'work-item-1',
+      revision: 2,
+      status: 'in_progress',
+      executionResult,
+    });
+    mockOffline.listOutbox.mockResolvedValue([queued]);
+    mockInterventionService.updateWorkItem.mockReturnValue(
+      throwError(() => ({ status: 412, detail: 'Another result was recorded.' })),
+    );
+    mockInterventionService.listAllWorkItems.mockReturnValue(
+      of([
+        {
+          id: 'work-item-1',
+          revision: 5,
+          status: 'completed',
+          executionResult: {
+            equipmentId: 'equipment-1',
+            performedAt: '2026-10-06T10:00:00Z',
+            outcome: 'successful',
+            workPerformed: 'Installed a new valve.',
+            authorId: 'member-2',
+            state: 'staged',
+            validatedAt: null,
+          },
+        },
+      ]),
+    );
+
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith(
+      'execution-op',
+      'Another result was recorded.',
+      null,
+      {
+        revision: 5,
+        values: {
+          assignee: null,
+          status: 'completed',
+          estimatedMinutes: null,
+          remainingMinutes: null,
+          workStartsOn: null,
+          workEndsOn: null,
+          equipmentId: 'equipment-1',
+          performedAt: '2026-10-06T10:00:00Z',
+          outcome: 'successful',
+          workPerformed: 'Installed a new valve.',
+          authorId: 'member-2',
+          resultState: 'staged',
+          validatedAt: null,
+        },
+      },
+    );
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(queued.payload.executionResult).toEqual(executionResult);
+    expect(queued.payload.revision).toBe(2);
+  });
+
+  it('replays replacement completion, successor and execution facts in one revision-guarded command', async () => {
+    const resultResource = '/api/equipment/d1d145d0-e1c5-4e9c-a36e-1b2f267068ce';
+    const executionResult: InterventionWorkItemExecutionResultInput = {
+      equipmentId: '76ebd96a-c1f3-4c04-8c77-9d2b4ba9b1a4',
+      performedAt: '2026-10-06T09:35:00+02:00',
+      outcome: 'successful',
+      workPerformed: 'Replaced the decommissioned extinguisher with its published successor.',
+    };
+    const queued = operation('replacement-op', 'work-item.update', {
+      workItemId: 'replacement-work-item',
+      clientId: 'replacement-client-id',
+      revision: 7,
+      status: 'completed',
+      resultResource,
+      executionResult,
+    });
+    mockOffline.listOutbox.mockResolvedValue([queued]);
+
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(1);
+    expect(mockInterventionService.updateWorkItem).toHaveBeenCalledExactlyOnceWith(
+      'replacement-work-item',
+      { status: 'completed', resultResource, executionResult },
+      7,
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledExactlyOnceWith('replacement-op');
+    expect(queued.payload).toEqual({
+      workItemId: 'replacement-work-item',
+      clientId: 'replacement-client-id',
+      revision: 7,
+      status: 'completed',
+      resultResource,
+      executionResult,
+    });
+  });
+
+  it('retains the queued successor and operator facts when a replacement result revision conflicts', async () => {
+    const resultResource = '/api/equipment/d1d145d0-e1c5-4e9c-a36e-1b2f267068ce';
+    const serverResource = '/api/equipment/5da7fd7c-30d2-4c3b-8a27-bb060a6de3e3';
+    const executionResult: InterventionWorkItemExecutionResultInput = {
+      equipmentId: '76ebd96a-c1f3-4c04-8c77-9d2b4ba9b1a4',
+      performedAt: '2026-10-06T09:35:00+02:00',
+      outcome: 'successful',
+      workPerformed: 'Installed the verified replacement extinguisher.',
+    };
+    const queued = operation('replacement-op', 'work-item.update', {
+      workItemId: 'replacement-work-item',
+      revision: 7,
+      status: 'completed',
+      resultResource,
+      executionResult,
+    });
+    mockOffline.listOutbox.mockResolvedValue([queued]);
+    mockInterventionService.updateWorkItem.mockReturnValueOnce(
+      throwError(() => ({ status: 412, detail: 'The replacement result changed.' })),
+    );
+    mockInterventionService.listAllWorkItems.mockReturnValueOnce(
+      of([
+        {
+          id: 'replacement-work-item',
+          revision: 9,
+          status: 'completed',
+          resultResource: serverResource,
+          executionResult: {
+            ...executionResult,
+            performedAt: '2026-10-06T12:00:00Z',
+            workPerformed: 'Recorded a different successor.',
+            authorId: 'another-member',
+            state: 'staged',
+            validatedAt: null,
+          },
+        },
+      ]),
+    );
+
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+    expect(mockInterventionService.updateWorkItem).toHaveBeenCalledExactlyOnceWith(
+      'replacement-work-item',
+      { status: 'completed', resultResource, executionResult },
+      7,
+    );
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledExactlyOnceWith(
+      'replacement-op',
+      'The replacement result changed.',
+      null,
+      {
+        revision: 9,
+        values: {
+          assignee: null,
+          status: 'completed',
+          estimatedMinutes: null,
+          remainingMinutes: null,
+          workStartsOn: null,
+          workEndsOn: null,
+          resultResource: serverResource,
+          equipmentId: executionResult.equipmentId,
+          performedAt: '2026-10-06T12:00:00Z',
+          outcome: 'successful',
+          workPerformed: 'Recorded a different successor.',
+          authorId: 'another-member',
+          resultState: 'staged',
+          validatedAt: null,
+        },
+      },
+    );
+    expect(queued.payload).toEqual({
+      workItemId: 'replacement-work-item',
+      revision: 7,
+      status: 'completed',
+      resultResource,
+      executionResult,
+    });
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+  });
+
+  it('preserves an execution conflict when the current server fact cannot be fetched', async () => {
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('clear-result', 'work-item.update', {
+        workItemId: 'work-item-1',
+        executionResult: null,
+        revision: 2,
+      }),
+    ]);
+    mockInterventionService.updateWorkItem.mockReturnValue(
+      throwError(() => ({ status: 412, detail: 'The work item changed.' })),
+    );
+    mockInterventionService.listAllWorkItems.mockReturnValue(throwError(() => ({ status: 503 })));
+
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+    expect(mockOffline.markOutboxConflict).toHaveBeenCalledWith(
+      'clear-result',
+      'The work item changed.',
+      null,
+      null,
+    );
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+  });
+
+  it('retries a result after a transient server failure without losing or duplicating local intent', async () => {
+    const queued = operation('execution-op', 'work-item.update', {
+      workItemId: 'work-item-1',
+      revision: 2,
+      status: 'completed',
+      executionResult: {
+        equipmentId: 'equipment-1',
+        performedAt: '2026-10-05T16:35:00+02:00',
+        outcome: 'successful',
+        workPerformed: 'Replaced the valve.',
+      },
+    });
+    mockOffline.listOutbox.mockResolvedValue([queued]);
+    mockInterventionService.updateWorkItem.mockReturnValueOnce(
+      throwError(() => ({ status: 503, detail: 'Service temporarily unavailable.' })),
+    );
+
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxConflict).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxFailed).not.toHaveBeenCalled();
+    expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(1);
+    expect(mockInterventionService.updateWorkItem).toHaveBeenNthCalledWith(
+      2,
+      'work-item-1',
+      { status: 'completed', executionResult: queued.payload.executionResult },
+      2,
+    );
+    expect(mockOffline.removeOutbox).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a late execution acknowledgement after the recording account changes', async () => {
+    const held = new Subject<Record<string, never>>();
+    mockOffline.listOutbox.mockResolvedValue([
+      operation('execution-op', 'work-item.update', {
+        workItemId: 'work-item-1',
+        revision: 2,
+        executionResult: {
+          equipmentId: 'equipment-1',
+          performedAt: '2026-10-05T16:35:00+02:00',
+          outcome: 'performed',
+          workPerformed: 'Cleaned and adjusted the pump.',
+        },
+      }),
+    ]);
+    mockInterventionService.updateWorkItem.mockReturnValueOnce(held);
+    const replay = service.replayOutbox('org-1', 'intervention-1');
+    await vi.waitFor(() => expect(mockInterventionService.updateWorkItem).toHaveBeenCalledOnce());
+    profile.set({ id: 'account-b' });
+    revision.set(2);
+    sessionEnded.next();
+    held.next({});
+
+    expect(await replay).toBe(0);
+    expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+    expect(mockOffline.markOutboxConflict).not.toHaveBeenCalled();
+    expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
   });
 
   it('should replay a queued intervention change creation', async () => {

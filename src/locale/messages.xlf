@@ -2752,15 +2752,23 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">22,23</context>
+          <context context-type="linenumber">27,29</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">229,231</context>
+          <context context-type="linenumber">65,66</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
+          <context context-type="linenumber">272,274</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">89,90</context>
+          <context context-type="linenumber">37,39</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
+          <context context-type="linenumber">110,111</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.html</context>
@@ -7389,7 +7397,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">48,49</context>
+          <context context-type="linenumber">91,92</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/webhooks/ui/pages/webhooks-page/webhooks-page.component.html</context>
@@ -7670,7 +7678,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1608,1610</context>
+          <context context-type="linenumber">1617,1619</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-discussion-sheet/intervention-discussion-sheet.component.html</context>
@@ -7690,7 +7698,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">234,235</context>
+          <context context-type="linenumber">368,369</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-reports-page/maintenance-reports-page.component.html</context>
@@ -8152,7 +8160,15 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">105,106</context>
+          <context context-type="linenumber">67,68</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">128,129</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">258,259</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-recurrence-table/intervention-recurrence-table.component.html</context>
@@ -9171,6 +9187,10 @@
           <context context-type="linenumber">325,327</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">340,341</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inventory/ui/components/inventory-part-picker/inventory-part-picker.component.html</context>
           <context context-type="linenumber">50,52</context>
         </context-group>
@@ -9236,6 +9256,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inspections/ui/forms/inspection-create-form/inspection-create-form.component.html</context>
           <context context-type="linenumber">341,342</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">352,353</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/inventory/ui/components/inventory-part-picker/inventory-part-picker.component.html</context>
@@ -11498,7 +11522,7 @@
         <source>Equipment deleted</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/state/equipment/equipment.store.ts</context>
-          <context context-type="linenumber">870</context>
+          <context context-type="linenumber">941</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.attachments.title" datatype="html">
@@ -12214,7 +12238,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">532</context>
+          <context context-type="linenumber">552</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.criticality.low" datatype="html">
@@ -12225,7 +12249,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">525</context>
+          <context context-type="linenumber">545</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.criticality.medium" datatype="html">
@@ -12236,7 +12260,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">526</context>
+          <context context-type="linenumber">546</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.criticality.high" datatype="html">
@@ -12247,7 +12271,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">527</context>
+          <context context-type="linenumber">547</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.criticality.critical" datatype="html">
@@ -12258,7 +12282,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">528</context>
+          <context context-type="linenumber">548</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.characteristics.keyRequired" datatype="html">
@@ -12829,49 +12853,49 @@
         <source>Prepare a control</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">337</context>
+          <context context-type="linenumber">357</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.work.prepareMaintenance" datatype="html">
         <source>Prepare maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">341</context>
+          <context context-type="linenumber">361</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.work.prepareRepair" datatype="html">
         <source>Organize a repair</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">343</context>
+          <context context-type="linenumber">363</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.commission" datatype="html">
         <source>Commission</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">944</context>
+          <context context-type="linenumber">964</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.resumeService" datatype="html">
         <source>Resume service</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">949</context>
+          <context context-type="linenumber">969</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.maintenance" datatype="html">
         <source>Maintenance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">954</context>
+          <context context-type="linenumber">974</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.report.exportFailed" datatype="html">
         <source>Couldn&apos;t export the equipment sheet.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/equipments/ui/pages/equipment-detail-page/equipment-detail-page.component.ts</context>
-          <context context-type="linenumber">1712</context>
+          <context context-type="linenumber">1746</context>
         </context-group>
       </trans-unit>
       <trans-unit id="equipment.catalog.description" datatype="html">
@@ -14044,7 +14068,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">154,155</context>
+          <context context-type="linenumber">197,198</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/ui/components/organization-park-queues/organization-park-queues.component.html</context>
@@ -19814,6 +19838,24 @@
           <context context-type="linenumber">25</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.time.historyOffline" datatype="html">
+        <source>Correction history is unavailable offline. Reconnect to load earlier versions.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/services/intervention-time-journal/intervention-time-journal.service.ts</context>
+          <context context-type="linenumber">231</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">208,210</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.time.reviewOffline" datatype="html">
+        <source>Reconnect to review the current version of this saved correction.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/services/intervention-time-journal/intervention-time-journal.service.ts</context>
+          <context context-type="linenumber">269</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.labels.manage.toast.created" datatype="html">
         <source>Label created</source>
         <context-group purpose="location">
@@ -23383,7 +23425,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1581,1582</context>
+          <context context-type="linenumber">1590,1591</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.inventory.title" datatype="html">
@@ -23549,41 +23591,41 @@
         <source>Intervention actions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1102,1103</context>
+          <context context-type="linenumber">1111,1112</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1138,1139</context>
+          <context context-type="linenumber">1147,1148</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.discussion.activityTrigger" datatype="html">
         <source><x id="START_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="&lt;ng-icon name=&quot;lucideActivity&quot; aria-hidden=&quot;true&quot; /&gt;"/><x id="CLOSE_TAG_NG_ICON" ctype="x-ng_icon" equiv-text="&lt;ng-icon name=&quot;lucideActivity&quot; aria-hidden=&quot;true&quot; /&gt;"/><x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span&gt;"/>Intervention activity<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1171,1173</context>
+          <context context-type="linenumber">1180,1182</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1215,1221</context>
+          <context context-type="linenumber">1224,1230</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1418,1420</context>
+          <context context-type="linenumber">1427,1429</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.moreActions" datatype="html">
         <source>More actions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1191,1194</context>
+          <context context-type="linenumber">1200,1203</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1200,1201</context>
+          <context context-type="linenumber">1209,1210</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1405,1408</context>
+          <context context-type="linenumber">1414,1417</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.view" datatype="html">
@@ -23593,11 +23635,11 @@
                   /&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span hlmItemContent&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span hlmItemTitle&gt;"/>View saved operations<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1229,1235</context>
+          <context context-type="linenumber">1238,1244</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1427,1429</context>
+          <context context-type="linenumber">1436,1438</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.band.blockers" datatype="html">
@@ -23607,11 +23649,11 @@
                     /&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span hlmItemContent&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span hlmItemTitle&gt;"/><x id="INTERPOLATION" equiv-text="{{ store.blockerCount() }}"/> blocking issues<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1245,1251</context>
+          <context context-type="linenumber">1254,1260</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1438,1440</context>
+          <context context-type="linenumber">1447,1449</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.discussion.teamChat" datatype="html">
@@ -23621,44 +23663,44 @@
                     /&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="START_TAG_SPAN_2" ctype="x-span_2" equiv-text="&lt;span hlmItemContent&gt;"/><x id="START_TAG_SPAN_1" ctype="x-span_1" equiv-text="&lt;span hlmItemTitle&gt;"/>Team chat<x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/><x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1264,1270</context>
+          <context context-type="linenumber">1273,1279</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1452,1454</context>
+          <context context-type="linenumber">1461,1463</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.statusMenuLabel" datatype="html">
         <source> Send it to </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1279,1280</context>
+          <context context-type="linenumber">1288,1289</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1462,1464</context>
+          <context context-type="linenumber">1471,1473</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.menuEntry" datatype="html">
         <source>Assign team…</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1311,1313</context>
+          <context context-type="linenumber">1320,1322</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1483,1486</context>
+          <context context-type="linenumber">1492,1495</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.duplicate.action" datatype="html">
         <source>Duplicate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1328,1330</context>
+          <context context-type="linenumber">1337,1339</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1493,1496</context>
+          <context context-type="linenumber">1502,1505</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/tables/intervention-table/intervention-table.component.html</context>
@@ -23669,51 +23711,51 @@
         <source>Export validated report</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1347,1349</context>
+          <context context-type="linenumber">1356,1358</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1505,1507</context>
+          <context context-type="linenumber">1514,1516</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.report.draft" datatype="html">
         <source>Export draft report</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1349,1351</context>
+          <context context-type="linenumber">1358,1360</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1507,1509</context>
+          <context context-type="linenumber">1516,1518</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.abandon.action" datatype="html">
         <source>Abandon intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1367,1369</context>
+          <context context-type="linenumber">1376,1378</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1517,1520</context>
+          <context context-type="linenumber">1526,1529</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.delete.action" datatype="html">
         <source>Delete intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1385,1387</context>
+          <context context-type="linenumber">1394,1396</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1528,1530</context>
+          <context context-type="linenumber">1537,1539</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.proofs.viewAll" datatype="html">
         <source> View all intervention files </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.html</context>
-          <context context-type="linenumber">1618,1620</context>
+          <context context-type="linenumber">1627,1629</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.actionRequired" datatype="html">
@@ -23763,135 +23805,135 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">5740</context>
+          <context context-type="linenumber">5747</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.publication.succeeded" datatype="html">
         <source>Published to the compliance record</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">2254</context>
+          <context context-type="linenumber">2261</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.detail.overdue" datatype="html">
         <source>Overdue</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3839</context>
+          <context context-type="linenumber">3846</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.site" datatype="html">
         <source>Choose a site</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3871</context>
+          <context context-type="linenumber">3878</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.responsible" datatype="html">
         <source>Assign a responsible agent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3877</context>
+          <context context-type="linenumber">3884</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.start" datatype="html">
         <source>Set a planned start</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3883</context>
+          <context context-type="linenumber">3890</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.schedule" datatype="html">
         <source>Set a due date</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3889</context>
+          <context context-type="linenumber">3896</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.checklist.scope" datatype="html">
         <source>Prepare the field work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">3895</context>
+          <context context-type="linenumber">3902</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.prepareFailed" datatype="html">
         <source><x id="fileName" equiv-text="fileName"/> could not be prepared for upload.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4342</context>
+          <context context-type="linenumber">4349</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4409</context>
+          <context context-type="linenumber">4416</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.attachments.downloadFailed" datatype="html">
         <source>Couldn&apos;t download <x id="fileName" equiv-text="attachment.fileName"/>.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4495</context>
+          <context context-type="linenumber">4502</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.report.exportFailed" datatype="html">
         <source>Couldn&apos;t export the intervention report.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4532</context>
+          <context context-type="linenumber">4539</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.unreadable" datatype="html">
         <source>No QR code could be read from this capture.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4582</context>
+          <context context-type="linenumber">4589</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4585</context>
+          <context context-type="linenumber">4592</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4615</context>
+          <context context-type="linenumber">4622</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.noMatch" datatype="html">
         <source>No work item of this intervention matches the scanned code.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4593</context>
+          <context context-type="linenumber">4600</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4596</context>
+          <context context-type="linenumber">4603</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.scan.matched" datatype="html">
         <source>Found: <x id="target" equiv-text="result.item.targetSummary?.label ?? result.item.id"/></source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">4609</context>
+          <context context-type="linenumber">4616</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.loadFailed" datatype="html">
         <source>Couldn&apos;t load the organization&apos;s teams.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">5138</context>
+          <context context-type="linenumber">5145</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.inventory.unsavedPublish" datatype="html">
         <source>Save the submitted parts declaration on this device before publishing. Retry the declaration in Parts used.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">5385</context>
+          <context context-type="linenumber">5392</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.reasonOffline" datatype="html">
         <source>Connect to the network to publish.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">5391</context>
+          <context context-type="linenumber">5398</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/utils/intervention-command-action/intervention-command-action.utils.ts</context>
@@ -23902,14 +23944,14 @@
         <source>Resolve this intervention&apos;s local operations before publishing.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">5412</context>
+          <context context-type="linenumber">5419</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.publication.preflightBlocked" datatype="html">
         <source>Publication is unavailable. Review the updated permissions, connection and blocking issues.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/pages/intervention-detail-page/intervention-detail-page.component.ts</context>
-          <context context-type="linenumber">5434</context>
+          <context context-type="linenumber">5441</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.cta.plan" datatype="html">
@@ -24967,7 +25009,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">304,307</context>
+          <context context-type="linenumber">438,441</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.operations.reapply" datatype="html">
@@ -25067,188 +25109,214 @@
           <context context-type="linenumber">30,32</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="intervention.time.reviewLoading" datatype="html">
+        <source>Checking saved correction</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">53,54</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="intervention.time.refresh" datatype="html">
         <source> Refresh journal </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">69,71</context>
+          <context context-type="linenumber">92,94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.discardDraft" datatype="html">
         <source>Discard draft</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">80,83</context>
+          <context context-type="linenumber">103,106</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">273,274</context>
+          <context context-type="linenumber">407,408</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">285,286</context>
+          <context context-type="linenumber">419,420</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.staleDraft" datatype="html">
         <source> This entry changed since your correction began. Compare the current server values before saving. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">86,88</context>
+          <context context-type="linenumber">109,111</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.reviewCorrection" datatype="html">
         <source>Review correction</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">95,98</context>
+          <context context-type="linenumber">118,121</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">296,297</context>
+          <context context-type="linenumber">430,431</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.resume" datatype="html">
         <source>Resume draft</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">112,114</context>
+          <context context-type="linenumber">135,137</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.log" datatype="html">
         <source>Log time</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">114,116</context>
+          <context context-type="linenumber">137,139</context>
         </context-group>
-      </trans-unit>
-      <trans-unit id="intervention.time.historyOffline" datatype="html">
-        <source>Correction history is unavailable offline. Reconnect to load earlier versions.</source>
-      </trans-unit>
-      <trans-unit id="intervention.time.reviewOffline" datatype="html">
-        <source>Reconnect to review the current version of this saved correction.</source>
-      </trans-unit>
-      <trans-unit id="intervention.time.reviewLoading" datatype="html">
-        <source>Checking saved correction</source>
-      </trans-unit>
-      <trans-unit id="intervention.time.pageUnavailable" datatype="html">
-        <source> This journal page has not been saved on this device. Reconnect to load it. </source>
-      </trans-unit>
-      <trans-unit id="intervention.time.historyPending" datatype="html">
-        <source> Synchronize or review this pending change before loading correction history. </source>
-      </trans-unit>
-      <trans-unit id="intervention.time.historyLoading" datatype="html">
-        <source>Loading correction history</source>
-      </trans-unit>
-      <trans-unit id="intervention.time.olderVersions" datatype="html">
-        <source> Load earlier versions </source>
-      </trans-unit>
-      <trans-unit id="intervention.time.pages" datatype="html">
-        <source>Time journal pages</source>
-      </trans-unit>
-      <trans-unit id="intervention.time.page" datatype="html">
-        <source> Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> </source>
-      </trans-unit>
-      <trans-unit id="intervention.time.savedTotal" datatype="html">
-        <source> Saved entries: <x id="INTERPOLATION" equiv-text="{{ totalItems() }}"/> </source>
       </trans-unit>
       <trans-unit id="intervention.time.historyUnavailable" datatype="html">
         <source> No journal has been saved on this device. Reconnect to load its history. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">121,123</context>
+          <context context-type="linenumber">145,147</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.time.pageUnavailable" datatype="html">
+        <source> This journal page has not been saved on this device. Reconnect to load it. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">149,151</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.cancelled" datatype="html">
         <source>Cancelled</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">139,142</context>
+          <context context-type="linenumber">169,172</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">175,177</context>
+          <context context-type="linenumber">230,232</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.pending" datatype="html">
         <source>Awaiting synchronization</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">144,146</context>
+          <context context-type="linenumber">174,176</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.conflict" datatype="html">
         <source> This local change needs review in pending operations. It has not overwritten server history. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">150,152</context>
+          <context context-type="linenumber">180,182</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.versions" datatype="html">
         <source> Correction history </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">163,164</context>
+          <context context-type="linenumber">200,201</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.time.historyPending" datatype="html">
+        <source> Synchronize or review this pending change before loading correction history. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">215,217</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.time.historyLoading" datatype="html">
+        <source>Loading correction history</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">243,244</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.time.olderVersions" datatype="html">
+        <source> Load earlier versions </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">272,273</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.correct" datatype="html">
         <source> Correct </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">195,196</context>
+          <context context-type="linenumber">287,288</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.cancelEntry" datatype="html">
         <source> Cancel entry </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">205,206</context>
+          <context context-type="linenumber">297,298</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">262,263</context>
+          <context context-type="linenumber">396,397</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.empty" datatype="html">
         <source>No time logged yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">215,216</context>
+          <context context-type="linenumber">307,308</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.emptyDescription" datatype="html">
         <source> Log actual work without changing the remaining estimate. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">217,219</context>
+          <context context-type="linenumber">309,311</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.time.pages" datatype="html">
+        <source>Time journal pages</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">318,319</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.time.page" datatype="html">
+        <source> Page <x id="INTERPOLATION" equiv-text="{{ page() }}"/> </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">322,323</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="intervention.time.savedTotal" datatype="html">
+        <source> Saved entries: <x id="INTERPOLATION" equiv-text="{{ totalItems() }}"/> </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
+          <context context-type="linenumber">326,327</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.cancelTitle" datatype="html">
         <source>Cancel this time entry?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">250,251</context>
+          <context context-type="linenumber">384,385</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.cancelDescription" datatype="html">
         <source> It will no longer count as time spent. Its full correction history will be retained. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">252,255</context>
+          <context context-type="linenumber">386,389</context>
         </context-group>
       </trans-unit>
       <trans-unit id="common.back" datatype="html">
         <source>Back</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">256,258</context>
+          <context context-type="linenumber">390,392</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">279,281</context>
+          <context context-type="linenumber">413,415</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">317,319</context>
+          <context context-type="linenumber">451,453</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/workload/ui/dialogs/workload-confirmation-dialog/workload-confirmation-dialog.component.html</context>
@@ -25267,28 +25335,28 @@
         <source> Only the unfinished input will be removed. Saved and queued time entries are not affected. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">275,278</context>
+          <context context-type="linenumber">409,412</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.reviewDescription" datatype="html">
         <source> Continue editing your draft against the displayed server revision. Nothing is saved until you submit the form. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">298,300</context>
+          <context context-type="linenumber">432,434</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.yourDraft" datatype="html">
         <source>Your draft</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">311,312</context>
+          <context context-type="linenumber">445,446</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.time.continueCorrection" datatype="html">
         <source> Continue correction </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/sheets/intervention-time-sheet/intervention-time-sheet.component.html</context>
-          <context context-type="linenumber">323,325</context>
+          <context context-type="linenumber">457,459</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workItemDrawer.header" datatype="html">
@@ -27707,11 +27775,11 @@
         <source>Economic pilotage</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/maintenance-costs.routes.ts</context>
-          <context context-type="linenumber">22</context>
+          <context context-type="linenumber">23</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/maintenance-costs.routes.ts</context>
-          <context context-type="linenumber">24</context>
+          <context context-type="linenumber">25</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
@@ -27722,25 +27790,40 @@
         <source>Maintenance costs</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/maintenance-costs.routes.ts</context>
-          <context context-type="linenumber">37</context>
+          <context context-type="linenumber">39</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/maintenance-costs.routes.ts</context>
-          <context context-type="linenumber">39</context>
+          <context context-type="linenumber">41</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.recovery.uncertain" datatype="html">
+        <source>The previous declaration has no confirmed result. Retry it unchanged before creating another.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/state/maintenance-cost/maintenance-cost.store.ts</context>
+          <context context-type="linenumber">328</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/state/maintenance-cost/maintenance-cost.store.ts</context>
+          <context context-type="linenumber">377</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/state/maintenance-cost/maintenance-cost.store.ts</context>
+          <context context-type="linenumber">452</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.feedback.saved" datatype="html">
         <source>Financial information saved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/state/maintenance-cost/maintenance-cost.store.ts</context>
-          <context context-type="linenumber">322</context>
+          <context context-type="linenumber">436</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.feedback.failed" datatype="html">
         <source>Financial information could not be saved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/state/maintenance-cost/maintenance-cost.store.ts</context>
-          <context context-type="linenumber">338</context>
+          <context context-type="linenumber">462</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceReport.error.scope" datatype="html">
@@ -28283,95 +28366,99 @@
           <context context-type="linenumber">43,46</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="maintenanceCost.expense.description" datatype="html">
-        <source>Description or correction reason</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
-          <context context-type="linenumber">65,68</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="maintenanceCost.expense.saveAdjustment" datatype="html">
-        <source>Record adjustment</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
-          <context context-type="linenumber">89,91</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="maintenanceCost.expense.save" datatype="html">
-        <source>Record expense</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
-          <context context-type="linenumber">91,94</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="maintenanceCost.expense.cancel" datatype="html">
-        <source> Cancel adjustment </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
-          <context context-type="linenumber">104,108</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="maintenanceCost.expense.amountRequired" datatype="html">
-        <source>Enter the exact expense amount.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
-          <context context-type="linenumber">238</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="maintenanceCost.expense.exactAmount" datatype="html">
-        <source>Enter an exact decimal with at most six decimal places. A negative correction requires its original expense.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
-          <context context-type="linenumber">245</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="maintenanceCost.expense.reasonRequired" datatype="html">
-        <source>Describe the expense or explain its correction.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
-          <context context-type="linenumber">249</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
-          <context context-type="linenumber">257</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="maintenanceCost.expense.dateRequired" datatype="html">
-        <source>Enter the actual expense date and time.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
-          <context context-type="linenumber">261</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="maintenanceCost.expense.offset" datatype="html">
         <source>UTC offset for this repeated hour</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+          <context context-type="linenumber">65,67</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.expense.chooseOffset" datatype="html">
         <source>Choose the actual UTC offset</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+          <context context-type="linenumber">72,73</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.expense.offsetHint" datatype="html">
         <source> The same local time occurred twice because the clocks changed. Select the UTC offset when the expense actually occurred. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+          <context context-type="linenumber">86,89</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="maintenanceCost.expense.offsetRequired" datatype="html">
-        <source>This local hour occurs twice. Choose the UTC offset of the actual expense.</source>
+      <trans-unit id="maintenanceCost.expense.description" datatype="html">
+        <source>Description or correction reason</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+          <context context-type="linenumber">102,105</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.saveAdjustment" datatype="html">
+        <source>Record adjustment</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+          <context context-type="linenumber">126,128</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.save" datatype="html">
+        <source>Record expense</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+          <context context-type="linenumber">128,131</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.cancel" datatype="html">
+        <source> Cancel adjustment </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.html</context>
+          <context context-type="linenumber">141,145</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.amountRequired" datatype="html">
+        <source>Enter the exact expense amount.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
+          <context context-type="linenumber">305</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.exactAmount" datatype="html">
+        <source>Enter an exact decimal with at most six decimal places. A negative correction requires its original expense.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
+          <context context-type="linenumber">312</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.reasonRequired" datatype="html">
+        <source>Describe the expense or explain its correction.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
+          <context context-type="linenumber">316</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
+          <context context-type="linenumber">324</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.dateRequired" datatype="html">
+        <source>Enter the actual expense date and time.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
+          <context context-type="linenumber">328</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.expense.actualDate" datatype="html">
         <source>Enter a valid actual date that is not in the future.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
-          <context context-type="linenumber">274</context>
+          <context context-type="linenumber">339</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.expense.offsetRequired" datatype="html">
+        <source>This local hour occurs twice. Choose the UTC offset of the actual expense.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/forms/maintenance-expense-form/maintenance-expense-form.component.ts</context>
+          <context context-type="linenumber">347</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.planning.title" datatype="html">
@@ -28396,11 +28483,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">105,107</context>
+          <context context-type="linenumber">132,134</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">208,210</context>
+          <context context-type="linenumber">235,237</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.planning.minutes" datatype="html">
@@ -28834,183 +28921,211 @@
         <source>Open economic pilotage</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">19,21</context>
+          <context context-type="linenumber">19,22</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.page.waitBeforeLeaving" datatype="html">
+        <source> Wait for the current declaration to finish before leaving this page. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
+          <context context-type="linenumber">24,28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.recovery.failed" datatype="html">
+        <source> Could not recover previous declarations </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
+          <context context-type="linenumber">31,33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.recovery.failedHint" datatype="html">
+        <source> New declarations stay unavailable until recovery succeeds. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
+          <context context-type="linenumber">34,37</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="maintenanceCost.recovery.retry" datatype="html">
+        <source> Retry recovery </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
+          <context context-type="linenumber">44,47</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.uncertain" datatype="html">
         <source>Confirmation is still needed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">23,24</context>
+          <context context-type="linenumber">50,51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.retryHint" datatype="html">
         <source> Your original declaration is retained. Retry it unchanged to confirm whether it was saved. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">25,28</context>
+          <context context-type="linenumber">52,55</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.retryOriginal" datatype="html">
         <source> Retry the original declaration </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">36,40</context>
+          <context context-type="linenumber">63,67</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.dossier" datatype="html">
         <source> Intervention costs </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">47,49</context>
+          <context context-type="linenumber">74,76</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.settings" datatype="html">
         <source> Currency and hourly rates </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">54,56</context>
+          <context context-type="linenumber">81,83</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.readFailed" datatype="html">
         <source> Could not load the financial dossier </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">67,69</context>
+          <context context-type="linenumber">94,96</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.reload" datatype="html">
         <source> Reload </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">78,80</context>
+          <context context-type="linenumber">105,107</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.current" datatype="html">
         <source>Current realized costs</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">84,85</context>
+          <context context-type="linenumber">111,112</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.openIntervention" datatype="html">
         <source>Open intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">98,102</context>
+          <context context-type="linenumber">125,129</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.known" datatype="html">
         <source> Known contributions </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">113,115</context>
+          <context context-type="linenumber">140,142</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">222,223</context>
+          <context context-type="linenumber">249,250</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.total" datatype="html">
         <source> Complete realized total </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">121,123</context>
+          <context context-type="linenumber">148,150</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">228,229</context>
+          <context context-type="linenumber">255,256</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.incomplete" datatype="html">
         <source> The valuation is incomplete </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">131,133</context>
+          <context context-type="linenumber">158,160</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.incompleteHint" datatype="html">
         <source> Some prices or hourly rates are unknown. Known contributions are shown separately and missing values are not treated as zero. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">134,136</context>
+          <context context-type="linenumber">161,163</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.preparationClosed" datatype="html">
         <source> Financial preparation is closed. The recorded budget is retained. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">160,163</context>
+          <context context-type="linenumber">187,190</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.planning.reloadLatest" datatype="html">
         <source> Read the latest budget for comparison </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">172,174</context>
+          <context context-type="linenumber">199,201</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.frozen" datatype="html">
         <source>Costs recorded at closure</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">193,194</context>
+          <context context-type="linenumber">220,221</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.immutable" datatype="html">
         <source>Immutable snapshot</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">195,197</context>
+          <context context-type="linenumber">222,224</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.frozenHint" datatype="html">
         <source> Later expenses, returns and corrected time affect the current costs while this original snapshot stays unchanged. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">199,201</context>
+          <context context-type="linenumber">226,228</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.captured" datatype="html">
         <source> Captured on </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">216,218</context>
+          <context context-type="linenumber">243,245</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.frozenIncomplete" datatype="html">
         <source> Some valuations were unknown at closure. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">240,242</context>
+          <context context-type="linenumber">267,269</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.choose" datatype="html">
         <source>Choose an intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">249,250</context>
+          <context context-type="linenumber">276,277</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.chooseHint" datatype="html">
         <source> Open an intervention&apos;s financial dossier to prepare its budget and follow its costs. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">251,253</context>
+          <context context-type="linenumber">278,280</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.browse" datatype="html">
         <source>Browse interventions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">260,263</context>
+          <context context-type="linenumber">287,290</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenanceCost.page.protected" datatype="html">
         <source> Financial information is available only in an authorized browser session. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-costs-page/maintenance-costs-page.component.html</context>
-          <context context-type="linenumber">302,306</context>
+          <context context-type="linenumber">329,333</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-costs/ui/pages/maintenance-reports-page/maintenance-reports-page.component.html</context>
@@ -30265,7 +30380,7 @@
         <source>Campaign #<x id="number" equiv-text="result.number"/> created with <x id="count" equiv-text="result.workItemsCount"/> work item(s)</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/state/maintenance-schedules/maintenance-schedules.store.ts</context>
-          <context context-type="linenumber">269</context>
+          <context context-type="linenumber">382</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.plans.prepared" datatype="html">
@@ -30997,7 +31112,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.ts</context>
-          <context context-type="linenumber">737</context>
+          <context context-type="linenumber">741</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.filter.anyType" datatype="html">
@@ -31029,7 +31144,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.ts</context>
-          <context context-type="linenumber">749</context>
+          <context context-type="linenumber">753</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.filter.dueBeforePlaceholder" datatype="html">
@@ -31047,7 +31162,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.ts</context>
-          <context context-type="linenumber">755</context>
+          <context context-type="linenumber">759</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.list.forbiddenTitle" datatype="html">
@@ -31135,21 +31250,21 @@
         <source>Facility</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.ts</context>
-          <context context-type="linenumber">743</context>
+          <context context-type="linenumber">747</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.filter.dueBeforeOperator" datatype="html">
         <source>before</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.ts</context>
-          <context context-type="linenumber">759</context>
+          <context context-type="linenumber">763</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.list.exportFailed" datatype="html">
         <source>Couldn&apos;t export maintenance schedules.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/maintenance-schedules/ui/pages/maintenance-schedules-page/maintenance-schedules-page.component.ts</context>
-          <context context-type="linenumber">1383</context>
+          <context context-type="linenumber">1401</context>
         </context-group>
       </trans-unit>
       <trans-unit id="maintenance.table.title" datatype="html">
@@ -32642,11 +32757,11 @@
         <source>Repair requests</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/service-requests.routes.ts</context>
-          <context context-type="linenumber">29</context>
+          <context context-type="linenumber">31</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/service-requests.routes.ts</context>
-          <context context-type="linenumber">31</context>
+          <context context-type="linenumber">33</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/navigation/organization-navigation.config.ts</context>
@@ -32657,11 +32772,18 @@
         <source>Maintenance request</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/service-requests.routes.ts</context>
-          <context context-type="linenumber">44</context>
+          <context context-type="linenumber">47</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/service-requests.routes.ts</context>
-          <context context-type="linenumber">46</context>
+          <context context-type="linenumber">49</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="serviceRequest.command.persistFailed" datatype="html">
+        <source>This conversion could not be saved on this device. Your draft has been kept. Retry to send it.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/services/service-request-conversion/service-request-conversion.service.ts</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.target.noEquipment" datatype="html">
@@ -32715,7 +32837,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">116,118</context>
+          <context context-type="linenumber">159,161</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.action.note" datatype="html">
@@ -32733,7 +32855,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">190,191</context>
+          <context context-type="linenumber">233,234</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.action.convertExplanation" datatype="html">
@@ -32836,11 +32958,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">87,90</context>
+          <context context-type="linenumber">130,133</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.ts</context>
-          <context context-type="linenumber">518</context>
+          <context context-type="linenumber">546</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.action.cancel" datatype="html">
@@ -32851,11 +32973,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">100,103</context>
+          <context context-type="linenumber">143,146</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.ts</context>
-          <context context-type="linenumber">520</context>
+          <context context-type="linenumber">548</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.action.linkWork" datatype="html">
@@ -32880,11 +33002,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">110,112</context>
+          <context context-type="linenumber">153,155</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">167,169</context>
+          <context context-type="linenumber">194,196</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.form.site" datatype="html">
@@ -32895,7 +33017,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">139,140</context>
+          <context context-type="linenumber">182,183</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.form.siteOptional" datatype="html">
@@ -32913,7 +33035,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">165,166</context>
+          <context context-type="linenumber">192,193</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.form.description" datatype="html">
@@ -32931,7 +33053,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">172,173</context>
+          <context context-type="linenumber">199,200</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.priority.low" datatype="html">
@@ -33032,85 +33154,118 @@
         <source>Maintenance requests</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">8,11</context>
+          <context context-type="linenumber">8,10</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="serviceRequest.command.restoreFailed" datatype="html">
+        <source> Saved maintenance operations could not be restored. Retry before starting another action. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
+          <context context-type="linenumber">18,22</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
+          <context context-type="linenumber">28,32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="serviceRequest.editor.uncertain" datatype="html">
+        <source> The work link has not been confirmed. Retry this conversion before choosing another action. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
+          <context context-type="linenumber">34,37</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.html</context>
+          <context context-type="linenumber">62,65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="serviceRequest.editor.retryConversion" datatype="html">
+        <source> Retry the same conversion </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
+          <context context-type="linenumber">49,54</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.html</context>
+          <context context-type="linenumber">73,77</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.requestedAt" datatype="html">
         <source>Requested</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">34,35</context>
+          <context context-type="linenumber">77,78</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">173,175</context>
+          <context context-type="linenumber">200,202</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.detail.qualify" datatype="html">
         <source> Qualify request </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">61,64</context>
+          <context context-type="linenumber">104,107</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.editor.convert" datatype="html">
         <source> Organize corrective work </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">74,77</context>
+          <context context-type="linenumber">117,120</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.ts</context>
-          <context context-type="linenumber">522</context>
+          <context context-type="linenumber">550</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.detail.equipment" datatype="html">
         <source>Open equipment dossier</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">132,135</context>
+          <context context-type="linenumber">175,178</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.detail.site" datatype="html">
         <source>Open site dossier</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">147,150</context>
+          <context context-type="linenumber">190,193</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.detail.source" datatype="html">
         <source>Open source inspection</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">171,175</context>
+          <context context-type="linenumber">214,218</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.detail.qualification" datatype="html">
         <source>Qualification</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">177,179</context>
+          <context context-type="linenumber">220,222</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.detail.work" datatype="html">
         <source>Corrective work</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">196,197</context>
+          <context context-type="linenumber">239,240</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.detail.intervention" datatype="html">
         <source>Open corrective intervention</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">215,220</context>
+          <context context-type="linenumber">258,263</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.detail.loadFailed" datatype="html">
         <source> This request could not be opened </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-          <context context-type="linenumber">224,226</context>
+          <context context-type="linenumber">267,269</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.description" datatype="html">
@@ -33128,78 +33283,78 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">121,123</context>
+          <context context-type="linenumber">148,150</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.ts</context>
-          <context context-type="linenumber">512</context>
+          <context context-type="linenumber">540</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.submitted" datatype="html">
         <source> Maintenance request submitted: <x id="INTERPOLATION" equiv-text="{{ confirmedTitle() }}"/> </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">23,25</context>
+          <context context-type="linenumber">44,46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.offline" datatype="html">
         <source> You are offline. Your open draft is kept until you can submit it. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">30,34</context>
+          <context context-type="linenumber">51,55</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.search" datatype="html">
         <source>Search maintenance requests</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">41,42</context>
+          <context context-type="linenumber">62,63</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.statusFilter" datatype="html">
         <source>Request status</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">51,52</context>
+          <context context-type="linenumber">72,73</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">170,172</context>
+          <context context-type="linenumber">197,199</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.allStatuses" datatype="html">
         <source> All statuses </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">62,64</context>
+          <context context-type="linenumber">83,85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.loadFailed" datatype="html">
         <source>Requests could not be loaded</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">78,79</context>
+          <context context-type="linenumber">99,100</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.empty" datatype="html">
         <source>No maintenance requests</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">103,104</context>
+          <context context-type="linenumber">124,125</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.emptyDescription" datatype="html">
         <source> The current target and filters have no requests to display. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">105,108</context>
+          <context context-type="linenumber">126,129</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.page.clearFilters" datatype="html">
         <source> Clear filters </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-          <context context-type="linenumber">117,119</context>
+          <context context-type="linenumber">138,140</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.editor.description" datatype="html">
@@ -33237,47 +33392,18 @@
           <context context-type="linenumber">54,57</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="serviceRequest.command.restoreFailed" datatype="html">
-        <source> Saved maintenance operations could not be restored. Retry before starting another action. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-request-detail-page/service-request-detail-page.component.html</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/pages/service-requests-page/service-requests-page.component.html</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="serviceRequest.command.persistFailed" datatype="html">
-        <source>This conversion could not be saved on this device. Your draft has been kept. Retry to send it.</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/service-requests/services/service-request-conversion/service-request-conversion.service.ts</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="serviceRequest.editor.uncertain" datatype="html">
-        <source> The work link has not been confirmed. Retry this conversion before choosing another action. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.html</context>
-          <context context-type="linenumber">62,65</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="serviceRequest.editor.retryConversion" datatype="html">
-        <source> Retry the same conversion </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.html</context>
-          <context context-type="linenumber">73,77</context>
-        </context-group>
-      </trans-unit>
       <trans-unit id="serviceRequest.editor.edit" datatype="html">
         <source>Edit maintenance request</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.ts</context>
-          <context context-type="linenumber">514</context>
+          <context context-type="linenumber">542</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.editor.qualify" datatype="html">
         <source>Qualify maintenance request</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/service-requests/ui/sheets/service-request-editor-sheet/service-request-editor-sheet.component.ts</context>
-          <context context-type="linenumber">516</context>
+          <context context-type="linenumber">544</context>
         </context-group>
       </trans-unit>
       <trans-unit id="serviceRequest.status.requested" datatype="html">
@@ -42762,11 +42888,6 @@
           <context context-type="linenumber">276</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="maintenanceCost.recovery.uncertain" datatype="html"><source>The previous declaration has no confirmed result. Retry it unchanged before creating another.</source></trans-unit>
-      <trans-unit id="maintenanceCost.recovery.failed" datatype="html"><source>Could not recover previous declarations</source></trans-unit>
-      <trans-unit id="maintenanceCost.recovery.failedHint" datatype="html"><source>New declarations stay unavailable until recovery succeeds.</source></trans-unit>
-      <trans-unit id="maintenanceCost.recovery.retry" datatype="html"><source>Retry recovery</source></trans-unit>
-      <trans-unit id="maintenanceCost.page.waitBeforeLeaving" datatype="html"><source>Wait for the current declaration to finish before leaving this page.</source></trans-unit>
     </body>
   </file>
 </xliff>

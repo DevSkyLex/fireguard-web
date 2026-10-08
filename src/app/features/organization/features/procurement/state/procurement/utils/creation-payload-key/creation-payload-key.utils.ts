@@ -24,10 +24,27 @@ export function creationPayloadKey(input: CreateSupplierInput | CreatePurchaseOr
     (_key, value: unknown): unknown => {
       if (value === null || typeof value !== 'object' || Array.isArray(value)) return value;
       return Object.fromEntries(
-        Object.entries(value).toSorted(([left], [right]) =>
-          left < right ? -1 : left > right ? 1 : 0,
-        ),
+        Object.entries(value).toSorted(([left], [right]) => compareCreationKeys(left, right)),
       );
     },
   );
+}
+
+/**
+ * Function compareCreationKeys
+ *
+ * @description
+ * Preserves code-unit ordering so replay identities never depend on the browser's locale.
+ *
+ * @access private
+ *
+ * @param {string} left - First object key.
+ * @param {string} right - Second object key.
+ *
+ * @returns {number} Original lexical ordering of the two keys.
+ */
+function compareCreationKeys(left: string, right: string): number {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
 }

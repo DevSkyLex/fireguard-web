@@ -147,7 +147,8 @@ export const InterventionTimeStore = signalStore(
         switchMap(() => {
           const scope = store.scope();
           const draft = store.draft();
-          if (!scope || !draft || draft.baseRevision === null || store.offline()) return EMPTY;
+          if (!scope || !draft) return EMPTY;
+          if (draft.baseRevision === null || store.offline()) return EMPTY;
           const readVersion = store.readVersion();
           patchState(store, {
             draftEntryCallState: pendingCallState(store.draftEntryCallState().data),
@@ -237,7 +238,8 @@ export const InterventionTimeStore = signalStore(
                   nextPage: value.nextPage,
                 });
                 const draft = store.draft();
-                if (draft && draft.baseRevision !== null && !store.entityMap()[draft.id])
+                if (!draft) return;
+                if (draft.baseRevision !== null && !store.entityMap()[draft.id])
                   store.reviewDraft();
               },
               error: (error: unknown) =>

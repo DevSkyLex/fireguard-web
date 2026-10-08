@@ -1,5 +1,3 @@
-import type { EquipmentType } from '@features/organization/features/equipments/models';
-
 /**
  * Constant EQUIPMENT_TYPE_OPTIONS
  *
@@ -12,7 +10,7 @@ import type { EquipmentType } from '@features/organization/features/equipments/m
  * @type {ReadonlyArray<{
  *   readonly icon: string;
  *   readonly label: string;
- *   readonly value: EquipmentType;
+ *   readonly value: string;
  * }>}
  *
  * @constant EQUIPMENT_TYPE_OPTIONS
@@ -20,7 +18,7 @@ import type { EquipmentType } from '@features/organization/features/equipments/m
 export const EQUIPMENT_TYPE_OPTIONS: ReadonlyArray<{
   readonly icon: string;
   readonly label: string;
-  readonly value: EquipmentType;
+  readonly value: string;
 }> = [
   {
     icon: 'lucideFireExtinguisher',

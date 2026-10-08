@@ -323,7 +323,7 @@ export class MaintenanceExportReferenceForm {
     system: string;
     reference: string;
   }> = form(this.draft, (path) => {
-    disabled(path, () => this.locked() || this.pending());
+    disabled(path, { when: () => this.locked() || this.pending() });
     required(path.resourceId, {
       message: $localize`:@@maintenanceExport.reference.targetRequired:Select an authorized resource.`,
     });

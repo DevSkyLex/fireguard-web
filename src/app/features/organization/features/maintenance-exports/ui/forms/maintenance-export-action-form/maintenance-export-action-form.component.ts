@@ -168,7 +168,7 @@ export class MaintenanceExportActionForm {
    * @type {FieldTree<{ value: string }>}
    */
   protected readonly fields: FieldTree<{ value: string }> = form(this.draft, (path) => {
-    disabled(path, () => this.locked() || this.pending());
+    disabled(path, { when: () => this.locked() || this.pending() });
     required(path.value, {
       message: $localize`:@@maintenanceExport.action.required:Enter the reason or actual external import reference.`,
     });

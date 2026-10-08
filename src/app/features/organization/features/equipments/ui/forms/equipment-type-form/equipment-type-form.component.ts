@@ -182,8 +182,8 @@ export class EquipmentTypeForm {
    * @type {FieldTree<CreateEquipmentTypeInput>}
    */
   protected readonly fields: FieldTree<CreateEquipmentTypeInput> = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || !this.available());
-    disabled(path.value, () => this.entry() !== null);
+    disabled(path, { when: () => this.pending() || !this.available() });
+    disabled(path.value, { when: () => this.entry() !== null });
     validate(path.value, ({ value }) =>
       /^[a-z][a-z0-9_]{0,31}$/.test(value())
         ? null

@@ -10,6 +10,7 @@ import {
   input,
   signal,
   untracked,
+  type Signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { form, FormField } from '@angular/forms/signals';
@@ -30,6 +31,7 @@ import {
   inventoryEvents,
   type InventorySection,
   type InventoryQuery,
+  type InventoryRecord,
 } from '@features/organization/features/inventory/state/inventory';
 import { InventoryPartPicker } from '@features/organization/features/inventory/ui/components/inventory-part-picker';
 import { InventoryWarehousePicker } from '@features/organization/features/inventory/ui/components/inventory-warehouse-picker';
@@ -556,15 +558,18 @@ export class InventoryPage implements UnsavedChangesAware {
    *
    * @type {import('@angular/core').Signal<string>}
    */
-  protected readonly editorTitle = computed(() =>
-    this.editor() === 'part'
-      ? $localize`:@@inventory.editor.part:Part or consumable`
-      : this.editor() === 'warehouse'
-        ? $localize`:@@inventory.editor.warehouse:Warehouse`
-        : this.editor() === 'return'
-          ? $localize`:@@inventory.return:Record return`
-          : $localize`:@@inventory.editor.correction:Record stock correction`,
-  );
+  protected readonly editorTitle: Signal<string> = computed(() => {
+    switch (this.editor()) {
+      case 'part':
+        return $localize`:@@inventory.editor.part:Part or consumable`;
+      case 'warehouse':
+        return $localize`:@@inventory.editor.warehouse:Warehouse`;
+      case 'return':
+        return $localize`:@@inventory.return:Record return`;
+      default:
+        return $localize`:@@inventory.editor.correction:Record stock correction`;
+    }
+  });
   /**
    * Property rows
    * @readonly
@@ -577,69 +582,8 @@ export class InventoryPage implements UnsavedChangesAware {
    *
    * @type {import('@angular/core').Signal<readonly InventoryRow[]>}
    */
-  protected readonly rows = computed<readonly InventoryRow[]>(() =>
-    this.store.recordEntities().map((record) => {
-      if ('label' in record)
-        return {
-          record,
-          title: record.label,
-          detail:
-            record.code +
-            ' · ' +
-            (record.kind === 'part'
-              ? $localize`:@@inventory.kind.part:Part`
-              : $localize`:@@inventory.kind.consumable:Consumable`),
-          unit: record.unit,
-          status: record.archived
-            ? $localize`:@@inventory.archived:Archived`
-            : $localize`:@@inventory.active:Active`,
-          canEdit: this.canManage(),
-          archived: record.archived,
-          canArchive: this.canManage(),
-        };
-      if ('name' in record)
-        return {
-          record,
-          title: record.name,
-          detail: record.code,
-          status: record.archived
-            ? $localize`:@@inventory.archived:Archived`
-            : $localize`:@@inventory.active:Active`,
-          canEdit: this.canManage(),
-          archived: record.archived,
-          canArchive: this.canManage(),
-        };
-      const common = {
-        record,
-        title: this.store.partLabels()[record.partId] ?? record.partId,
-        detail: this.store.warehouseLabels()[record.warehouseId] ?? record.warehouseId,
-        quantity: record.quantity,
-        unit: this.store.partUnits()[record.partId],
-      };
-      if ('status' in record)
-        return Object.assign({}, common, {
-          status:
-            record.status === 'confirmed'
-              ? $localize`:@@inventory.status.confirmed:Confirmed`
-              : $localize`:@@inventory.status.pending:Received — to reconcile`,
-          pending: record.status === 'received_pending',
-          date: record.occurredAt,
-          reason: record.reason ? REASON_LABELS[record.reason] : undefined,
-          late: record.late,
-          interventionId: record.interventionId,
-          canReconcile: record.status === 'received_pending' && this.canReconcile(),
-          canReturn: record.status === 'confirmed' && this.canReturn(),
-        });
-      if ('kind' in record)
-        return Object.assign({}, common, {
-          status: MOVEMENT_LABELS[record.kind],
-          date: record.occurredAt,
-          reason: record.reason,
-          late: record.late,
-          interventionId: record.interventionId ?? undefined,
-        });
-      return common;
-    }),
+  protected readonly rows: Signal<readonly InventoryRow[]> = computed<readonly InventoryRow[]>(() =>
+    this.store.recordEntities().map((record) => this.inventoryRow(record)),
   );
   /**
    * Constructor
@@ -700,6 +644,116 @@ export class InventoryPage implements UnsavedChangesAware {
       });
     inject(DestroyRef).onDestroy(() => this.resolver?.(false));
   }
+  /**
+   * Method inventoryRow
+   *
+   * @description
+   * Projects stock facts separately from reference identity and operational permissions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InventoryRecord} record - Canonical quantity-only record.
+   *
+   * @returns {InventoryRow} Localized row retaining the original fact.
+   */
+  private inventoryRow(record: InventoryRecord): InventoryRow {
+    if ('label' in record) return this.partRow(record);
+    if ('name' in record) return this.warehouseRow(record);
+    const common = {
+      record,
+      title: this.store.partLabels()[record.partId] ?? record.partId,
+      detail: this.store.warehouseLabels()[record.warehouseId] ?? record.warehouseId,
+      quantity: record.quantity,
+      unit: this.store.partUnits()[record.partId],
+    };
+    if ('status' in record)
+      return {
+        ...common,
+        status:
+          record.status === 'confirmed'
+            ? $localize`:@@inventory.status.confirmed:Confirmed`
+            : $localize`:@@inventory.status.pending:Received — to reconcile`,
+        pending: record.status === 'received_pending',
+        date: record.occurredAt,
+        reason: record.reason ? REASON_LABELS[record.reason] : undefined,
+        late: record.late,
+        interventionId: record.interventionId,
+        canReconcile: record.status === 'received_pending' && this.canReconcile(),
+        canReturn: record.status === 'confirmed' && this.canReturn(),
+      };
+    if ('kind' in record)
+      return {
+        ...common,
+        status: MOVEMENT_LABELS[record.kind],
+        date: record.occurredAt,
+        reason: record.reason,
+        late: record.late,
+        interventionId: record.interventionId ?? undefined,
+      };
+    return common;
+  }
+
+  /**
+   * Method partRow
+   *
+   * @description
+   * Presents the retained part identity with its current administration permissions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InventoryPartOutput} record - Individual quantitative reference.
+   *
+   * @returns {InventoryRow} Localized part or consumable description.
+   */
+  private partRow(record: InventoryPartOutput): InventoryRow {
+    return {
+      record,
+      title: record.label,
+      detail:
+        record.code +
+        ' · ' +
+        (record.kind === 'part'
+          ? $localize`:@@inventory.kind.part:Part`
+          : $localize`:@@inventory.kind.consumable:Consumable`),
+      unit: record.unit,
+      status: record.archived
+        ? $localize`:@@inventory.archived:Archived`
+        : $localize`:@@inventory.active:Active`,
+      canEdit: this.canManage(),
+      archived: record.archived,
+      canArchive: this.canManage(),
+    };
+  }
+
+  /**
+   * Method warehouseRow
+   *
+   * @description
+   * Presents a retained warehouse without mixing it with stock movements.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InventoryWarehouseOutput} record - Warehouse identity.
+   *
+   * @returns {InventoryRow} Localized warehouse description.
+   */
+  private warehouseRow(record: InventoryWarehouseOutput): InventoryRow {
+    return {
+      record,
+      title: record.name,
+      detail: record.code,
+      status: record.archived
+        ? $localize`:@@inventory.archived:Archived`
+        : $localize`:@@inventory.active:Active`,
+      canEdit: this.canManage(),
+      archived: record.archived,
+      canArchive: this.canManage(),
+    };
+  }
+
   /**
    * Method reload
    *

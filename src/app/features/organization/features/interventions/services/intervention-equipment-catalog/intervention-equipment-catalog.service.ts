@@ -190,11 +190,7 @@ export class InterventionEquipmentCatalogService {
     snapshot: InterventionEquipmentCatalogSnapshot | null | undefined,
     target: Pick<EquipmentTypeCatalogStoreType, 'seed' | 'clear'>,
   ): void {
-    if (
-      !snapshot ||
-      snapshot.version !== 1 ||
-      !this.authorized(snapshot.organizationId, snapshot.accountId)
-    ) {
+    if (snapshot?.version !== 1 || !this.authorized(snapshot.organizationId, snapshot.accountId)) {
       target.clear();
       return;
     }

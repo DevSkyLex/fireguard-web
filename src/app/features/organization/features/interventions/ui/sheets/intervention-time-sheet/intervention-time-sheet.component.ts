@@ -137,7 +137,8 @@ export class InterventionTimeSheet {
    */
   protected readonly draftServerEntry: Signal<InterventionTimeEntryView | null> = computed(() => {
     const draft = this.draft();
-    if (!draft || draft.baseRevision === null) return null;
+    if (!draft) return null;
+    if (draft.baseRevision === null) return null;
     const latest =
       this.draftEntryState().data ?? this.entries().find((entry) => entry.id === draft.id);
     return latest?.id === draft.id && !latest.syncStatus && latest.revision !== draft.baseRevision

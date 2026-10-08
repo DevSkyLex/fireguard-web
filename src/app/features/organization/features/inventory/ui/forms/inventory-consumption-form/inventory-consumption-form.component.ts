@@ -21,7 +21,6 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import type {
-  DeclareInventoryConsumptionInput,
   InventoryPartOutput,
   InventoryWarehouseOutput,
 } from '@features/organization/features/inventory/models';
@@ -32,6 +31,7 @@ import { HlmComboboxImports } from '@shared/ui/combobox';
 import { HlmFieldImports } from '@shared/ui/field';
 import { HlmInput } from '@shared/ui/input';
 import { HlmSpinner } from '@shared/ui/spinner';
+import type { InventoryConsumptionDraft } from './models/inventory-consumption-draft.type';
 
 /**
  * Class InventoryConsumptionForm
@@ -169,12 +169,11 @@ export class InventoryConsumptionForm {
    * @since unreleased
    *
    * @type {OutputEmitterRef<
-   *   Pick<DeclareInventoryConsumptionInput, 'partId' | 'warehouseId' | 'quantity'>
+   *   InventoryConsumptionDraft
    * >}
    */
-  public readonly submitted: OutputEmitterRef<
-    Pick<DeclareInventoryConsumptionInput, 'partId' | 'warehouseId' | 'quantity'>
-  > = output<Pick<DeclareInventoryConsumptionInput, 'partId' | 'warehouseId' | 'quantity'>>();
+  public readonly submitted: OutputEmitterRef<InventoryConsumptionDraft> =
+    output<InventoryConsumptionDraft>();
 
   /**
    * Property draft
@@ -187,12 +186,14 @@ export class InventoryConsumptionForm {
    * @since unreleased
    *
    * @type {WritableSignal<
-   *   Pick<DeclareInventoryConsumptionInput, 'partId' | 'warehouseId' | 'quantity'>
+   *   InventoryConsumptionDraft
    * >}
    */
-  protected readonly draft: WritableSignal<
-    Pick<DeclareInventoryConsumptionInput, 'partId' | 'warehouseId' | 'quantity'>
-  > = signal({ partId: '', warehouseId: '', quantity: '' });
+  protected readonly draft: WritableSignal<InventoryConsumptionDraft> = signal({
+    partId: '',
+    warehouseId: '',
+    quantity: '',
+  });
 
   /**
    * Property activeParts
@@ -271,47 +272,48 @@ export class InventoryConsumptionForm {
    * @since unreleased
    *
    * @type {FieldTree<
-   *   Pick<DeclareInventoryConsumptionInput, 'partId' | 'warehouseId' | 'quantity'>
+   *   InventoryConsumptionDraft
    * >}
    */
-  protected readonly consumptionForm: FieldTree<
-    Pick<DeclareInventoryConsumptionInput, 'partId' | 'warehouseId' | 'quantity'>
-  > = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || this.locked());
-    required(path.partId, {
-      message: $localize`:@@inventory.consumption.partRequired:Choose an active part.`,
-    });
-    validate(path.partId, ({ value }) =>
-      this.activeParts().some((part) => part.id === value())
-        ? null
-        : {
-            kind: 'reference',
-            message: $localize`:@@inventory.consumption.partRequired:Choose an active part.`,
-          },
-    );
-    required(path.warehouseId, {
-      message: $localize`:@@inventory.consumption.warehouseRequired:Choose an active warehouse.`,
-    });
-    validate(path.warehouseId, ({ value }) =>
-      this.activeWarehouses().some((warehouse) => warehouse.id === value())
-        ? null
-        : {
-            kind: 'reference',
-            message: $localize`:@@inventory.consumption.warehouseRequired:Choose an active warehouse.`,
-          },
-    );
-    required(path.quantity, {
-      message: $localize`:@@inventory.consumption.quantityRequired:Enter the quantity used.`,
-    });
-    validate(path.quantity, ({ value }) =>
-      normalizeInventoryQuantity(value())
-        ? null
-        : {
-            kind: 'quantity',
-            message: $localize`:@@inventory.consumption.quantityInvalid:Enter a positive decimal with up to 18 whole digits and 6 decimal places, using a dot.`,
-          },
-    );
-  });
+  protected readonly consumptionForm: FieldTree<InventoryConsumptionDraft> = form(
+    this.draft,
+    (path) => {
+      disabled(path, { when: () => this.pending() || this.locked() });
+      required(path.partId, {
+        message: $localize`:@@inventory.consumption.partRequired:Choose an active part.`,
+      });
+      validate(path.partId, ({ value }) =>
+        this.activeParts().some((part) => part.id === value())
+          ? null
+          : {
+              kind: 'reference',
+              message: $localize`:@@inventory.consumption.partRequired:Choose an active part.`,
+            },
+      );
+      required(path.warehouseId, {
+        message: $localize`:@@inventory.consumption.warehouseRequired:Choose an active warehouse.`,
+      });
+      validate(path.warehouseId, ({ value }) =>
+        this.activeWarehouses().some((warehouse) => warehouse.id === value())
+          ? null
+          : {
+              kind: 'reference',
+              message: $localize`:@@inventory.consumption.warehouseRequired:Choose an active warehouse.`,
+            },
+      );
+      required(path.quantity, {
+        message: $localize`:@@inventory.consumption.quantityRequired:Enter the quantity used.`,
+      });
+      validate(path.quantity, ({ value }) =>
+        normalizeInventoryQuantity(value())
+          ? null
+          : {
+              kind: 'quantity',
+              message: $localize`:@@inventory.consumption.quantityInvalid:Enter a positive decimal with up to 18 whole digits and 6 decimal places, using a dot.`,
+            },
+      );
+    },
+  );
   //#endregion
 
   //#region Constructor

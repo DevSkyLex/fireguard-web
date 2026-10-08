@@ -478,10 +478,10 @@ export class InterventionSyncService {
     if (await this.skipBlockedOperation(operation, blocked)) return advance(replayed);
     if (!isCurrent()) return replayed;
 
-    let appliedToServer = false;
+    let inventoryAcceptedByServer = false;
     try {
       await this.replay(organizationId, operation);
-      appliedToServer = true;
+      inventoryAcceptedByServer = operation.type === 'inventory-consumption.declare';
       if (!isCurrent()) return replayed;
       await this.offline.removeOutbox(operation.id);
       if (!isCurrent()) return replayed;
@@ -489,8 +489,7 @@ export class InterventionSyncService {
       return advance(replayed + 1);
     } catch (error: unknown) {
       if (!isCurrent()) return replayed;
-      if (appliedToServer && operation.type === 'inventory-consumption.declare')
-        throw new AcceptedInventoryPersistenceError(error);
+      if (inventoryAcceptedByServer) throw new AcceptedInventoryPersistenceError(error);
       const outcome = await this.handleReplayFailure(operation, error, blocked, isCurrent);
       if (!isCurrent()) return replayed;
       if (outcome === 'applied') {

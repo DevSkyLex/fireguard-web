@@ -13,7 +13,7 @@ import {
 import { removeAllEntities, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, map, pipe, switchMap, type Observable } from 'rxjs';
+import { EMPTY, exhaustMap, pipe, switchMap, type Observable } from 'rxjs';
 import {
   idleCallState,
   pendingCallState,
@@ -23,16 +23,16 @@ import {
 } from '@core/request-state';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
-import { CustomerService } from '@features/organization/features/customers/data-access';
-import { EquipmentService } from '@features/organization/features/equipments/data-access';
-import { FacilityService } from '@features/organization/features/facilities/data-access';
 import { MaintenanceExportService } from '@features/organization/features/maintenance-exports/data-access';
 import type {
   MaintenanceExportOutput,
   MaintenanceExportReferenceOutput,
-  MaintenanceExportReferencePage,
   MaintenanceExportResourceType,
 } from '@features/organization/features/maintenance-exports/models';
+import {
+  MaintenanceExportReferenceDirectoryService,
+  type MaintenanceExportReferenceDirectoryQuery,
+} from '@features/organization/features/maintenance-exports/services/maintenance-export-reference-directory';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { maintenanceExportStoreEvents } from './events/events';
 import type {
@@ -90,9 +90,7 @@ export const MaintenanceExportStore = signalStore(
     (
       store,
       api = inject(MaintenanceExportService),
-      customers = inject(CustomerService),
-      facilities = inject(FacilityService),
-      equipments = inject(EquipmentService),
+      directory = inject(MaintenanceExportReferenceDirectoryService),
       permissions = inject(OrganizationPermissionService),
       session = inject(AUTH_SESSION_PORT),
       platform = inject(PLATFORM_ID),
@@ -276,12 +274,7 @@ export const MaintenanceExportStore = signalStore(
           }),
         ),
       );
-      const loadTargets = rxMethod<{
-        readonly resourceType: MaintenanceExportResourceType;
-        readonly page: number;
-        readonly search?: string;
-        readonly archived?: boolean;
-      } | null>(
+      const loadTargets = rxMethod<MaintenanceExportReferenceDirectoryQuery | null>(
         pipe(
           switchMap((query) => {
             const scope = store.scope();
@@ -290,51 +283,8 @@ export const MaintenanceExportStore = signalStore(
               return EMPTY;
             }
             const generation = store.generation();
-            const options = { page: query.page, itemsPerPage: 30, search: query.search };
-            let request: Observable<MaintenanceExportReferencePage>;
-            if (
-              query.resourceType === 'customer' &&
-              permissions.hasPermission(ORGANIZATION_PERMISSION.CUSTOMERS_READ)
-            )
-              request = customers
-                .list(scope.organizationId, {
-                  ...options,
-                  params: { archived: query.archived ?? false },
-                })
-                .pipe(
-                  map((page) => ({
-                    member: page.member.map((item) => ({ id: item.id, label: item.name })),
-                    totalItems: page.totalItems,
-                  })),
-                );
-            else if (
-              query.resourceType === 'site' &&
-              permissions.hasPermission(ORGANIZATION_PERMISSION.FACILITIES_READ)
-            )
-              request = facilities
-                .list(scope.organizationId, { ...options, rootsOnly: true, includeArchived: true })
-                .pipe(
-                  map((page) => ({
-                    member: page.member
-                      .filter((item) => item.type === 'site')
-                      .map((item) => ({ id: item.id, label: item.name })),
-                    totalItems: page.totalItems,
-                  })),
-                );
-            else if (
-              query.resourceType === 'equipment' &&
-              permissions.hasPermission(ORGANIZATION_PERMISSION.EQUIPMENT_READ)
-            )
-              request = equipments.list(scope.organizationId, options).pipe(
-                map((page) => ({
-                  member: page.member.map((item) => ({
-                    id: item.id,
-                    label: item.name ?? item.assetCode ?? item.serialNumber ?? item.type,
-                  })),
-                  totalItems: page.totalItems,
-                })),
-              );
-            else {
+            const request = directory.list(scope.organizationId, query);
+            if (!request) {
               patchState(store, { targetsCallState: idleCallState() });
               return EMPTY;
             }

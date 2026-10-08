@@ -18,7 +18,6 @@ import type {
   EquipmentEditState,
   EquipmentEditTarget,
   EquipmentOutput,
-  EquipmentType,
   UpdateEquipmentInput,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
@@ -252,7 +251,7 @@ export class EquipmentInformationPanel {
    * @type {(value: string) => string}
    */
   protected readonly typeLabelOf: (value: string) => string = (value) =>
-    this.typeOptions().find((option) => option.value === (value as EquipmentType))?.label ??
+    this.typeOptions().find((option) => option.value === value)?.label ??
     value.replaceAll('_', ' ');
   //#endregion
 
@@ -372,11 +371,11 @@ export class EquipmentInformationPanel {
    * @access protected
    * @since 1.0.0
    *
-   * @param {EquipmentType} type - The chosen type.
+   * @param {string} type - The chosen type.
    *
    * @returns {void}
    */
-  protected pickType(type: EquipmentType): void {
+  protected pickType(type: string): void {
     if (type === this.equipment().type) return;
 
     this.detailsChanged.emit({ type });

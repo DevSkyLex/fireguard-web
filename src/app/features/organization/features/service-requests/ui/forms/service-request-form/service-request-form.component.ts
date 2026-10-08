@@ -8,7 +8,15 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { disabled, form, FormField, maxLength, required, validate } from '@angular/forms/signals';
+import {
+  disabled,
+  form,
+  FormField,
+  maxLength,
+  required,
+  validate,
+  type FieldTree,
+} from '@angular/forms/signals';
 import type { StoreError } from '@core/request-state';
 import type {
   ServiceRequestOutput,
@@ -300,8 +308,8 @@ export class ServiceRequestForm {
    *
    * @type {FieldTree<ServiceRequestDraft>}
    */
-  protected readonly requestForm = form(this.draft, (path) => {
-    disabled(path, () => this.pending());
+  protected readonly requestForm: FieldTree<ServiceRequestDraft> = form(this.draft, (path) => {
+    disabled(path, { when: () => this.pending() });
     required(path.title, {
       message: $localize`:@@serviceRequest.form.titleRequired:Describe the request with a title.`,
     });

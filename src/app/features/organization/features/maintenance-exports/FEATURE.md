@@ -8,6 +8,8 @@ The route tree is `/organizations/:organizationId/maintenance-exports`, publicly
 `MAINTENANCE_EXPORT_ROUTES`. Published dossier choices are server-paginated and retain their
 publication-time customer/site identities. A missing historical snapshot blocks selection explicitly.
 External references are picked from readable owner directories, never entered as arbitrary UUIDs.
+An internal reference-directory coordinator applies each owner read grant and projects only ids,
+labels and authoritative page totals; the archive store retains scope fences and read cancellation.
 Customer choices explicitly browse active or archived server pages under the same Customer read grant.
 A historical archived customer remains mappable without restoring it; changing directory pages or status
 retains the chosen stable identity and reviewed mapping draft, with no customer contacts projected.

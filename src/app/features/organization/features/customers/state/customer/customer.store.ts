@@ -242,11 +242,9 @@ export const CustomerStore = signalStore(
               query,
               listCallState: pendingCallState(),
               writeCallState:
-                store.writeCallState().status === 'pending'
+                store.writeCallState().status === 'pending' || sameOrganization
                   ? store.writeCallState()
-                  : sameOrganization
-                    ? store.writeCallState()
-                    : idleCallState(),
+                  : idleCallState(),
             },
           );
           return service

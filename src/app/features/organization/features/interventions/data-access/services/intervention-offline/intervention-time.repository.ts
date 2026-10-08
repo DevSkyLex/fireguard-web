@@ -169,8 +169,10 @@ export class InterventionTimeRepository {
       itemsPerPage,
       totalItems: entries.length,
       nextPage: page * itemsPerPage < entries.length ? page + 1 : null,
-      entries: entries.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((entry) =>
-        Object.assign({}, entry, {
+      entries: Array.from(
+        entries.slice((page - 1) * itemsPerPage, page * itemsPerPage),
+        (entry) => ({
+          ...entry,
           versions: entry.versions
             .filter((version) => version.revision === entry.revision)
             .slice(0, 1),

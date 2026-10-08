@@ -839,8 +839,8 @@ export class ServiceRequestDetailPage {
    */
   protected retryConversion(): void {
     const command = this.store.conversionCommand();
+    if (!command) return;
     if (
-      command &&
       command.organizationId === this.organizationId() &&
       command.request.id === this.requestId() &&
       this.store.commandsReady() &&

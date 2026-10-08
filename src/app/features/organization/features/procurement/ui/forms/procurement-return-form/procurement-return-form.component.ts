@@ -193,7 +193,7 @@ export class ProcurementReturnForm {
    * @type {FieldTree<ProcurementReturnDraft>}
    */
   protected readonly returnForm: FieldTree<ProcurementReturnDraft> = form(this.draft, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     validate(path.quantity, ({ value }) =>
       isProcurementQuantity(value(), this.receipt().kind, this.limit())
         ? null

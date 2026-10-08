@@ -27,6 +27,35 @@ const RECEIPT_LABELS: Readonly<Record<string, string>> = {
   stock_received: $localize`:@@procurement.status.stockReceived:Stock received`,
   returned: $localize`:@@procurement.status.returned:Returned`,
 };
+
+/**
+ * Constant RETURN_LABELS
+ *
+ * @description
+ * Distinguishes declared physical returns from their confirmed inventory reversal.
+ *
+ * @since unreleased
+ */
+const RETURN_LABELS: Readonly<Record<string, string>> = {
+  awaiting_reconciliation: $localize`:@@procurement.status.awaitingReconciliation:Awaiting inventory reconciliation`,
+  confirmed: $localize`:@@procurement.status.returnConfirmed:Inventory reversal confirmed`,
+};
+
+/**
+ * Constant STATUS_LABELS
+ *
+ * @description
+ * Each resource family retains its own server lifecycle labels.
+ *
+ * @since unreleased
+ */
+const STATUS_LABELS: Readonly<
+  Record<'order' | 'receipt' | 'return', Readonly<Record<string, string>>>
+> = {
+  order: ORDER_LABELS,
+  receipt: RECEIPT_LABELS,
+  return: RETURN_LABELS,
+};
 /**
  * Function procurementStatusLabel
  *
@@ -45,14 +74,5 @@ export function procurementStatusLabel(
   family: 'order' | 'receipt' | 'return',
   value: string,
 ): string {
-  const labels =
-    family === 'order'
-      ? ORDER_LABELS
-      : family === 'receipt'
-        ? RECEIPT_LABELS
-        : {
-            awaiting_reconciliation: $localize`:@@procurement.status.awaitingReconciliation:Awaiting inventory reconciliation`,
-            confirmed: $localize`:@@procurement.status.returnConfirmed:Inventory reversal confirmed`,
-          };
-  return labels[value as keyof typeof labels] ?? value.replaceAll('_', ' ');
+  return STATUS_LABELS[family][value] ?? value.replaceAll('_', ' ');
 }

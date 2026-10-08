@@ -115,6 +115,7 @@ import { SupplierForm } from '../../forms/supplier-form';
   },
 })
 export class ProcurementPage implements UnsavedChangesAware {
+  //#region Properties
   /**
    * Property organizationId
    * @readonly
@@ -299,13 +300,11 @@ export class ProcurementPage implements UnsavedChangesAware {
    *
    * @type {Signal<'suppliers' | 'orders' | 'receipts'>}
    */
-  protected readonly view: Signal<'suppliers' | 'orders' | 'receipts'> = computed(() =>
-    this.section() === 'suppliers'
-      ? 'suppliers'
-      : this.section() === 'receipts'
-        ? 'receipts'
-        : 'orders',
-  );
+  protected readonly view: Signal<'suppliers' | 'orders' | 'receipts'> = computed(() => {
+    const section = this.section();
+    if (section === 'suppliers' || section === 'receipts') return section;
+    return 'orders';
+  });
   /**
    * Property editor
    * @readonly
@@ -950,6 +949,9 @@ export class ProcurementPage implements UnsavedChangesAware {
     }
   });
 
+  //#endregion
+
+  //#region Constructor
   /**
    * Constructor
    * @constructor
@@ -1098,6 +1100,9 @@ export class ProcurementPage implements UnsavedChangesAware {
       });
   }
 
+  //#endregion
+
+  //#region Methods
   /**
    * Method selectSection
    * @method selectSection
@@ -1727,6 +1732,25 @@ export class ProcurementPage implements UnsavedChangesAware {
    */
   protected adoptLatestRevision(): void {
     if (!this.reviewReady()) return;
+    this.adoptEditorRevision();
+    this.adoptConfirmationRevision();
+    this.reviewRequested.set(false);
+    this.store.clearCommand();
+  }
+
+  /**
+   * Method adoptEditorRevision
+   * @method adoptEditorRevision
+   *
+   * @description
+   * Refreshes only the reviewed editor's source snapshot while retaining its physical draft.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void} No return value; updates the retained editor source.
+   */
+  private adoptEditorRevision(): void {
     const supplier = this.store.supplierCallState().data;
     const order = this.store.selectedOrder();
     if (this.editor() === 'supplier' && supplier?.id === this.editingSupplier()?.id)
@@ -1746,6 +1770,23 @@ export class ProcurementPage implements UnsavedChangesAware {
       const current = this.store.receiptCallState().data;
       if (current) this.returningReceipt.set(current);
     }
+  }
+
+  /**
+   * Method adoptConfirmationRevision
+   * @method adoptConfirmationRevision
+   *
+   * @description
+   * Adopts reviewed command authority without replacing its original operation identity or payload.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void} No return value; updates the retained confirmation source.
+   */
+  private adoptConfirmationRevision(): void {
+    const supplier = this.store.supplierCallState().data;
+    const order = this.store.selectedOrder();
     const command = this.confirmation();
     if (command?.kind === 'archive_supplier' && supplier)
       this.confirmation.set({ ...command, supplier });
@@ -1759,8 +1800,6 @@ export class ProcurementPage implements UnsavedChangesAware {
       const current = this.store.returnCallState().data;
       if (current) this.confirmation.set({ ...command, returned: current });
     }
-    this.reviewRequested.set(false);
-    this.store.clearCommand();
   }
   /**
    * Method reload
@@ -1852,11 +1891,9 @@ export class ProcurementPage implements UnsavedChangesAware {
    */
   protected lineTitle(line: PurchaseOrderLineOutput): string {
     if (line.kind === 'part') {
-      return line.partLabel
-        ? line.partCode
-          ? `${line.partCode} — ${line.partLabel}`
-          : line.partLabel
-        : $localize`:@@procurement.line.articleUnavailable:Stock article label unavailable`;
+      if (!line.partLabel)
+        return $localize`:@@procurement.line.articleUnavailable:Stock article label unavailable`;
+      return line.partCode ? `${line.partCode} — ${line.partLabel}` : line.partLabel;
     }
     const type =
       this.catalog.options().find((option) => option.value === line.typeCode)?.label ??
@@ -2055,7 +2092,7 @@ export class ProcurementPage implements UnsavedChangesAware {
   protected beforeUnload(event: BeforeUnloadEvent): void {
     if (this.hasUnsavedChanges()) {
       event.preventDefault();
-      event.returnValue = '';
     }
   }
+  //#endregion
 }

@@ -112,104 +112,108 @@
     }
   }
   @if (items().length) {
-    <div hlmItemGroup role="list" class="min-w-0" data-testid="maintenance-financial-items">
+    <ul hlmItemGroup class="min-w-0 list-none p-0" data-testid="maintenance-financial-items">
       @for (entry of items(); track entry.id; let last = $last) {
-        <article hlmItem role="listitem" class="min-w-0 mobile-ui:flex-col mobile-ui:items-stretch">
-          <div hlmItemContent class="max-w-full min-w-0">
-            <div hlmItemHeader class="flex flex-wrap items-start gap-2">
-              <h3 hlmItemTitle class="max-w-full min-w-0 wrap-anywhere whitespace-normal">
-                {{ entry.number }} · {{ entry.name }}
-              </h3>
-              <span hlmBadge variant="secondary" class="whitespace-normal">{{
-                snapshotLabel(entry.snapshotState)
-              }}</span>
-            </div>
-            @if (!entry.identityComplete) {
-              <p hlmItemDescription i18n="@@maintenanceCost.directory.incompleteIdentity">
-                Historical identity is incomplete. Only available named filters can be selected.
-              </p>
-            }
-            @if (entry.publishedAt) {
-              <p hlmItemDescription class="flex flex-wrap gap-x-1">
-                <span i18n="@@maintenanceCost.directory.publishedOn">Published on</span>
-                <span>{{ entry.publishedAt | appOrgDate: 'datetime' : regionalFormatting() }}</span>
-              </p>
-            }
-            <div class="flex min-w-0 flex-wrap gap-2">
-              @if (entry.site; as site) {
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="outline"
-                  class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
-                  [disabled]="pending()"
-                  (click)="scopeSelected.emit({ site: site })"
-                >
-                  <span class="max-w-full min-w-0 wrap-anywhere"
-                    ><span i18n="@@maintenanceCost.directory.scopeSite">Limit to site</span>:
-                    {{ site.name }}</span
-                  >
-                </button>
+        <li class="min-w-0">
+          <article hlmItem class="min-w-0 mobile-ui:flex-col mobile-ui:items-stretch">
+            <div hlmItemContent class="max-w-full min-w-0">
+              <div hlmItemHeader class="flex flex-wrap items-start gap-2">
+                <h3 hlmItemTitle class="max-w-full min-w-0 wrap-anywhere whitespace-normal">
+                  {{ entry.number }} · {{ entry.name }}
+                </h3>
+                <span hlmBadge variant="secondary" class="whitespace-normal">{{
+                  snapshotLabel(entry.snapshotState)
+                }}</span>
+              </div>
+              @if (!entry.identityComplete) {
+                <p hlmItemDescription i18n="@@maintenanceCost.directory.incompleteIdentity">
+                  Historical identity is incomplete. Only available named filters can be selected.
+                </p>
               }
-              @if (entry.customer; as customer) {
-                <button
-                  hlmBtn
-                  type="button"
-                  variant="outline"
-                  class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
-                  [disabled]="pending()"
-                  (click)="scopeSelected.emit({ customer: customer })"
-                >
-                  <span class="max-w-full min-w-0 wrap-anywhere"
-                    ><span i18n="@@maintenanceCost.directory.scopeCustomer">Limit to customer</span
-                    >: {{ customer.name }}</span
-                  >
-                </button>
+              @if (entry.publishedAt) {
+                <p hlmItemDescription class="flex flex-wrap gap-x-1">
+                  <span i18n="@@maintenanceCost.directory.publishedOn">Published on</span>
+                  <span>{{
+                    entry.publishedAt | appOrgDate: 'datetime' : regionalFormatting()
+                  }}</span>
+                </p>
               }
-            </div>
-            @if (entry.equipment.length) {
-              <div
-                class="flex min-w-0 flex-wrap gap-2"
-                role="group"
-                aria-label="Equipment report filters"
-                i18n-aria-label="@@maintenanceCost.directory.equipmentFilters"
-              >
-                @for (equipment of entry.equipment; track equipmentAssignmentKey(equipment)) {
+              <div class="flex min-w-0 flex-wrap gap-2">
+                @if (entry.site; as site) {
                   <button
                     hlmBtn
                     type="button"
                     variant="outline"
                     class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
                     [disabled]="pending()"
-                    (click)="selectEquipment(equipment)"
+                    (click)="scopeSelected.emit({ site: site })"
                   >
                     <span class="max-w-full min-w-0 wrap-anywhere"
-                      ><span i18n="@@maintenanceCost.directory.scopeEquipment"
-                        >Limit to equipment</span
-                      >: {{ equipmentLabel(equipment) }}</span
+                      ><span i18n="@@maintenanceCost.directory.scopeSite">Limit to site</span>:
+                      {{ site.name }}</span
+                    >
+                  </button>
+                }
+                @if (entry.customer; as customer) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    variant="outline"
+                    class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
+                    [disabled]="pending()"
+                    (click)="scopeSelected.emit({ customer: customer })"
+                  >
+                    <span class="max-w-full min-w-0 wrap-anywhere"
+                      ><span i18n="@@maintenanceCost.directory.scopeCustomer"
+                        >Limit to customer</span
+                      >: {{ customer.name }}</span
                     >
                   </button>
                 }
               </div>
-            }
-          </div>
-          <div hlmItemActions class="max-w-full min-w-0 flex-wrap">
-            <a
-              hlmBtn
-              variant="outline"
-              class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
-              [routerLink]="['/organizations', organizationId(), 'maintenance-costs']"
-              [queryParams]="{ interventionId: entry.id }"
-              i18n="@@maintenanceCost.directory.open"
-              >Open financial dossier</a
-            >
-          </div>
-        </article>
-        @if (!last) {
-          <hlm-item-separator />
-        }
+              @if (entry.equipment.length) {
+                <fieldset
+                  class="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0"
+                  aria-label="Equipment report filters"
+                  i18n-aria-label="@@maintenanceCost.directory.equipmentFilters"
+                >
+                  @for (equipment of entry.equipment; track equipmentAssignmentKey(equipment)) {
+                    <button
+                      hlmBtn
+                      type="button"
+                      variant="outline"
+                      class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
+                      [disabled]="pending()"
+                      (click)="selectEquipment(equipment)"
+                    >
+                      <span class="max-w-full min-w-0 wrap-anywhere"
+                        ><span i18n="@@maintenanceCost.directory.scopeEquipment"
+                          >Limit to equipment</span
+                        >: {{ equipmentLabel(equipment) }}</span
+                      >
+                    </button>
+                  }
+                </fieldset>
+              }
+            </div>
+            <div hlmItemActions class="max-w-full min-w-0 flex-wrap">
+              <a
+                hlmBtn
+                variant="outline"
+                class="h-auto max-w-full min-w-0 whitespace-normal mobile-ui:min-h-11"
+                [routerLink]="['/organizations', organizationId(), 'maintenance-costs']"
+                [queryParams]="{ interventionId: entry.id }"
+                i18n="@@maintenanceCost.directory.open"
+                >Open financial dossier</a
+              >
+            </div>
+          </article>
+          @if (!last) {
+            <hlm-item-separator />
+          }
+        </li>
       }
-    </div>
+    </ul>
   } @else if (!pending() && !error()) {
     <div hlmEmpty>
       <div hlmEmptyHeader>

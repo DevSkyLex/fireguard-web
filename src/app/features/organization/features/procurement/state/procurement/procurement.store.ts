@@ -29,6 +29,31 @@ import type { ProcurementState } from './models/procurement-state.interface';
 import { creationPayloadKey } from './utils/creation-payload-key/creation-payload-key.utils';
 
 /**
+ * Function snapshotCreationCommand
+ *
+ * @description
+ * Preserves the command discriminator while isolating its readonly creation payload from later
+ * edits.
+ *
+ * @access private
+ *
+ * @template T
+ *
+ * @param {T} proposed - Supplier or purchase creation command.
+ * @param {string} clientOperationId - Fresh identity retained across uncertain delivery.
+ *
+ * @returns {T} Typed command containing an isolated payload and operation identity.
+ */
+function snapshotCreationCommand<
+  T extends Extract<ProcurementCommand, { kind: 'create_supplier' | 'create_order' }>,
+>(proposed: T, clientOperationId: string): T {
+  return {
+    ...proposed,
+    input: { ...structuredClone(proposed.input), clientOperationId },
+  };
+}
+
+/**
  * Constant ProcurementStore
  *
  * @description
@@ -137,9 +162,7 @@ export const ProcurementStore = signalStore(
       )
         return retained;
       const clientOperationId = globalThis.crypto.randomUUID();
-      return proposed.kind === 'create_supplier'
-        ? { ...proposed, input: { ...structuredClone(proposed.input), clientOperationId } }
-        : { ...proposed, input: { ...structuredClone(proposed.input), clientOperationId } };
+      return snapshotCreationCommand(proposed, clientOperationId);
     };
     return {
       /**

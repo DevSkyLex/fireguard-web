@@ -1,7 +1,6 @@
 import type {
   EquipmentPlanPosition,
   EquipmentStatus,
-  EquipmentType,
 } from '@features/organization/features/equipments/models';
 import type { FacilityPlanCalibration } from '../facility-attachment/facility-plan-calibration.interface';
 import type { FacilityPlanOverlayZone } from '../facility-plan-overlay/facility-plan-overlay-output.interface';
@@ -100,7 +99,7 @@ export interface FacilityBuildingModelEquipment {
    * @description
    * Equipment catalog type.
    */
-  readonly type: EquipmentType;
+  readonly type: string;
 
   /**
    * Property serialNumber

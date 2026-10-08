@@ -171,7 +171,9 @@ export class MaintenanceCurrencyForm {
    * @type {FieldTree<{ currency: string }>}
    */
   protected readonly fields: FieldTree<{ currency: string }> = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || !this.canManage() || !!this.currency()?.locked);
+    disabled(path, {
+      when: () => this.pending() || !this.canManage() || !!this.currency()?.locked,
+    });
     validate(path.currency, ({ value }) =>
       /^[A-Z]{3}$/.test(value())
         ? null

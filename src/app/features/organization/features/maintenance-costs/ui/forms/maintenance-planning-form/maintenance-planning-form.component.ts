@@ -358,7 +358,9 @@ export class MaintenancePlanningForm {
    * @type {FieldTree<PlanningDraft>}
    */
   protected readonly planningForm: FieldTree<PlanningDraft> = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || this.locked() || !this.cost().planningEditable);
+    disabled(path, {
+      when: () => this.pending() || this.locked() || !this.cost().planningEditable,
+    });
     validate(path.plannedBudget, ({ value }) =>
       !value().trim() || isMaintenanceAmount(value()) ? null : this.amountError(),
     );
@@ -366,10 +368,10 @@ export class MaintenancePlanningForm {
       this.validMinutes(value()) ? null : this.minutesError(),
     );
     applyEach(path.resources, (row) => {
-      disabled(row.quantity, ({ valueOf }) => valueOf(row.kind) !== 'material');
-      disabled(row.unitCost, ({ valueOf }) => valueOf(row.kind) === 'external');
-      disabled(row.estimatedMinutes, ({ valueOf }) => valueOf(row.kind) !== 'time');
-      disabled(row.amount, ({ valueOf }) => valueOf(row.kind) !== 'external');
+      disabled(row.quantity, { when: ({ valueOf }) => valueOf(row.kind) !== 'material' });
+      disabled(row.unitCost, { when: ({ valueOf }) => valueOf(row.kind) === 'external' });
+      disabled(row.estimatedMinutes, { when: ({ valueOf }) => valueOf(row.kind) !== 'time' });
+      disabled(row.amount, { when: ({ valueOf }) => valueOf(row.kind) !== 'external' });
       required(row.description, {
         message: $localize`:@@maintenanceCost.planning.descriptionRequired:Describe this estimated resource.`,
       });

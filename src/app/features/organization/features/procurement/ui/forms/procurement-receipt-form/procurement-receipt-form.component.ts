@@ -252,7 +252,7 @@ export class ProcurementReceiptForm {
    * @type {FieldTree<ProcurementReceiptDraft>}
    */
   protected readonly receiptForm: FieldTree<ProcurementReceiptDraft> = form(this.draft, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     validate(path.quantity, ({ value }) =>
       isProcurementQuantity(value(), this.line().kind, this.limit())
         ? null

@@ -275,7 +275,7 @@ export class MaintenanceExportCreateForm {
     includeInternalCosts: boolean;
     interventionIds: string[];
   }> = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || this.locked());
+    disabled(path, { when: () => this.pending() || this.locked() });
     required(path.system, {
       message: $localize`:@@maintenanceExport.form.systemRequired:Enter the external system code.`,
     });
@@ -296,7 +296,7 @@ export class MaintenanceExportCreateForm {
             message: $localize`:@@maintenanceExport.form.selectionRequired:Select between 1 and 100 ready published dossiers.`,
           },
     );
-    disabled(path.includeInternalCosts, () => !this.canIncludeCosts());
+    disabled(path.includeInternalCosts, { when: () => !this.canIncludeCosts() });
   });
 
   //#endregion
@@ -341,13 +341,10 @@ export class MaintenanceExportCreateForm {
    */
   protected toggle(source: MaintenanceExportSourceOutput, checked: boolean): void {
     if (this.fields().disabled() || !source.ready) return;
-    this.selection.update((items) =>
-      checked
-        ? items.some((item) => item.id === source.id)
-          ? items
-          : [...items, source]
-        : items.filter((item) => item.id !== source.id),
-    );
+    this.selection.update((items) => {
+      if (!checked) return items.filter((item) => item.id !== source.id);
+      return items.some((item) => item.id === source.id) ? items : [...items, source];
+    });
     this.draft.update((draft) => ({
       ...draft,
       interventionIds: this.selection().map((item) => item.id),

@@ -134,12 +134,20 @@ describe('ProcurementService', () => {
   });
 
   it('uses retained detail identifiers including archived suppliers', () => {
-    service.readSupplier('org', 'supplier').subscribe();
-    http.expectOne(url + '/suppliers/supplier').flush(supplier);
-    service.readOrder('org', 'order').subscribe();
-    http.expectOne(url + '/orders/order').flush(order);
-    service.readReceipt('org', 'receipt').subscribe();
-    http.expectOne(url + '/receipts/receipt').flush(receipt);
+    const results: (SupplierOutput | PurchaseOrderOutput | ProcurementReceiptOutput)[] = [];
+    service.readSupplier('org', 'supplier').subscribe((result) => results.push(result));
+    const supplierRequest = http.expectOne(url + '/suppliers/supplier');
+    expect(supplierRequest.request.method).toBe('GET');
+    supplierRequest.flush(supplier);
+    service.readOrder('org', 'order').subscribe((result) => results.push(result));
+    const orderRequest = http.expectOne(url + '/orders/order');
+    expect(orderRequest.request.method).toBe('GET');
+    orderRequest.flush(order);
+    service.readReceipt('org', 'receipt').subscribe((result) => results.push(result));
+    const receiptRequest = http.expectOne(url + '/receipts/receipt');
+    expect(receiptRequest.request.method).toBe('GET');
+    receiptRequest.flush(receipt);
+    expect(results).toEqual([supplier, order, receipt]);
   });
   it('creates internal drafts with exact decimal strings and no commercial currency or billing fields', () => {
     service

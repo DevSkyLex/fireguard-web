@@ -36,16 +36,6 @@ export type HistoricalEquipmentType =
   | 'other';
 
 /**
- * Type EquipmentType
- *
- * @description
- * Stable catalog code, including organization-owned types.
- *
- * @type {EquipmentType}
- */
-export type EquipmentType = string;
-
-/**
  * Type EquipmentCriticality
  *
  * @description

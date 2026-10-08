@@ -1,5 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
-import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
+import { computed, effect, inject, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -37,6 +36,7 @@ import {
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService } from '@features/organization/data-access';
+import { MaintenanceCostAccessService } from '@features/organization/features/maintenance-costs/access/services/maintenance-cost-access';
 import {
   MaintenanceCostCommandRepository,
   MaintenanceCostService,
@@ -119,20 +119,15 @@ export const MaintenanceCostStore = signalStore(
       store,
       api = inject(MaintenanceCostService),
       members = inject(OrganizationMemberService),
-      permissions = inject(OrganizationPermissionService),
-      session = inject(AUTH_SESSION_PORT),
-      platform = inject(PLATFORM_ID),
+      access = inject(MaintenanceCostAccessService),
       dispatcher = inject(Dispatcher),
       journal = inject(MaintenanceCostCommandRepository),
     ) => {
-      const readable = (): boolean =>
-        isPlatformBrowser(platform) &&
-        session.isAuthenticated() &&
-        permissions.hasPermission(ORGANIZATION_PERMISSION.MAINTENANCE_COST_READ);
+      const readable = (): boolean => access.isReadable();
       const current = (scope: MaintenanceCostScope, generation: number): boolean =>
         readable() &&
         generation === store.scopeVersion() &&
-        session.sessionRevision() === scope.sessionRevision &&
+        access.isSessionCurrent(scope.sessionRevision) &&
         store.scopeUserId() !== null &&
         store.scopeUserId() === journal.captureOwner(scope.organizationId, scope.sessionRevision) &&
         store.scope()?.organizationId === scope.organizationId &&
@@ -143,7 +138,7 @@ export const MaintenanceCostStore = signalStore(
             if (
               !scope?.interventionId ||
               !readable() ||
-              scope.sessionRevision !== session.sessionRevision()
+              !access.isSessionCurrent(scope.sessionRevision)
             ) {
               patchState(store, { costCallState: idleCallState() });
               return EMPTY;
@@ -177,7 +172,7 @@ export const MaintenanceCostStore = signalStore(
       const readCurrency = rxMethod<MaintenanceCostScope | null>(
         pipe(
           switchMap((scope) => {
-            if (!scope || !readable() || scope.sessionRevision !== session.sessionRevision()) {
+            if (!scope || !readable() || !access.isSessionCurrent(scope.sessionRevision)) {
               patchState(store, { currencyCallState: idleCallState() });
               return EMPTY;
             }
@@ -214,11 +209,7 @@ export const MaintenanceCostStore = signalStore(
       } | null>(
         pipe(
           switchMap((query) => {
-            if (
-              !query ||
-              !readable() ||
-              query.scope.sessionRevision !== session.sessionRevision()
-            ) {
+            if (!query || !readable() || !access.isSessionCurrent(query.scope.sessionRevision)) {
               patchState(store, { ratesCallState: idleCallState() });
               return EMPTY;
             }
@@ -250,8 +241,8 @@ export const MaintenanceCostStore = signalStore(
             if (
               !scope ||
               !readable() ||
-              scope.sessionRevision !== session.sessionRevision() ||
-              !permissions.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ)
+              !access.isSessionCurrent(scope.sessionRevision) ||
+              !access.canReadMembers()
             ) {
               patchState(store, { membersCallState: idleCallState() });
               return EMPTY;
@@ -263,10 +254,7 @@ export const MaintenanceCostStore = signalStore(
             return members.listAll(scope.organizationId).pipe(
               tapResponse({
                 next: (roster) => {
-                  if (
-                    current(scope, generation) &&
-                    permissions.hasPermission(ORGANIZATION_PERMISSION.MEMBERS_READ)
-                  )
+                  if (current(scope, generation) && access.canReadMembers())
                     patchState(store, {
                       membersCallState: successCallState(
                         roster
@@ -350,8 +338,8 @@ export const MaintenanceCostStore = signalStore(
               !store.journalReady() ||
               !current(scope, store.scopeVersion()) ||
               !readable() ||
-              scope.sessionRevision !== session.sessionRevision() ||
-              !permissions.hasPermission(ORGANIZATION_PERMISSION.MAINTENANCE_COST_MANAGE) ||
+              !access.isSessionCurrent(scope.sessionRevision) ||
+              !access.canManage() ||
               scope.organizationId !== incoming.organizationId ||
               ('interventionId' in incoming && scope.interventionId !== incoming.interventionId)
             )

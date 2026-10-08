@@ -247,7 +247,7 @@ export class MaintenanceReportFilterForm {
    * @type {FieldTree<ReportFilterDraft>}
    */
   protected readonly filtersForm: FieldTree<ReportFilterDraft> = form(this.draft, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     required(path.from, {
       message: $localize`:@@maintenanceCost.report.filters.fromRequired:Choose the first report date.`,
     });

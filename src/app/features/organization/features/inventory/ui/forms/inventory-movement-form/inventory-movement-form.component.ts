@@ -7,7 +7,15 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { disabled, form, FormField, maxLength, required, validate } from '@angular/forms/signals';
+import {
+  disabled,
+  form,
+  FormField,
+  maxLength,
+  required,
+  validate,
+  type FieldTree,
+} from '@angular/forms/signals';
 import { InventoryPartPicker } from '@features/organization/features/inventory/ui/components/inventory-part-picker';
 import { InventoryWarehousePicker } from '@features/organization/features/inventory/ui/components/inventory-warehouse-picker';
 import { normalizeInventoryQuantity } from '@features/organization/features/inventory/utils';
@@ -241,8 +249,13 @@ export class InventoryMovementForm {
    *   'writable'
    * >}
    */
-  protected readonly fields = form(this.draft, (path) => {
-    disabled(path, () => this.pending() || !this.available());
+  protected readonly fields: FieldTree<{
+    partId: string;
+    warehouseId: string;
+    quantity: string;
+    reason: string;
+  }> = form(this.draft, (path) => {
+    disabled(path, { when: () => this.pending() || !this.available() });
     required(path.partId, { when: () => this.mode() === 'correction' });
     required(path.warehouseId, { when: () => this.mode() === 'correction' });
     required(path.quantity);

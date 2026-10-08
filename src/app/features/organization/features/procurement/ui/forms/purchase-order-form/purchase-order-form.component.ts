@@ -373,7 +373,7 @@ export class PurchaseOrderForm {
    * @type {FieldTree<PurchaseOrderDraft>}
    */
   protected readonly orderForm: FieldTree<PurchaseOrderDraft> = form(this.draft, (path) => {
-    disabled(path, () => this.pending());
+    disabled(path, { when: () => this.pending() });
     required(path.name, {
       message: $localize`:@@procurement.order.nameRequired:Enter the order name.`,
     });
@@ -727,11 +727,12 @@ export class PurchaseOrderForm {
           ? { partId: line.partId }
           : {
               typeCode: line.typeCode,
-              identityTemplate: Object.assign({}, line.identityTemplate, {
+              identityTemplate: {
+                ...line.identityTemplate,
                 name: line.name.trim() || null,
                 brand: line.brand.trim() || null,
                 model: line.model.trim() || null,
-              }),
+              },
             }),
         ...(costUpdated ? { unitCost } : {}),
       });

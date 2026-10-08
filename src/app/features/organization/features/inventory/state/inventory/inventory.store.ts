@@ -120,136 +120,175 @@ export const InventoryStore = signalStore(
   withComputed((store) => ({
     pageCount: computed(() => Math.max(1, Math.ceil(store.total() / 20))),
   })),
-  withMethods((store, service = inject(InventoryService)) => ({
+  withMethods((store, service = inject(InventoryService)) => {
     /**
-     * Method load
+     * Function listRecords
      *
      * @description
-     * Cancels obsolete reads; bounded reference hydration keeps stock facts recognizable.
+     * Dispatches the scoped directory request with the section's server filters.
      *
-     * @param {InventoryQuery | null} query - Authorized scope and server filters.
+     * @param {InventoryQuery} query - Authorized scope and committed filters.
+     *
+     * @returns {Observable<HydraCollection<InventoryRecord>>} Current server page.
      */
-    load: rxMethod<InventoryQuery | null>(
-      pipe(
-        switchMap((query) => {
-          const old = store.query();
-          const changed =
-            !query || old?.organizationId !== query.organizationId || old?.userId !== query.userId;
-          if (changed)
+    const listRecords = (query: InventoryQuery): Observable<HydraCollection<InventoryRecord>> => {
+      const referenceDirectory = query.section === 'parts' || query.section === 'warehouses';
+      const options: RequestOptions = {
+        page: query.page ?? 1,
+        itemsPerPage: 20,
+        search: referenceDirectory ? query.search : undefined,
+        params: {
+          ...(referenceDirectory ? { archived: query.archived ?? false } : {}),
+          ...(query.partId ? { partId: query.partId } : {}),
+          ...(query.warehouseId ? { warehouseId: query.warehouseId } : {}),
+          ...(query.section === 'consumptions' && query.status ? { status: query.status } : {}),
+        },
+      };
+      switch (query.section) {
+        case 'parts':
+          return service.listParts(query.organizationId, options);
+        case 'warehouses':
+          return service.listWarehouses(query.organizationId, options);
+        case 'balances':
+          return service.listBalances(query.organizationId, options);
+        case 'consumptions':
+          return service.listConsumptions(query.organizationId, options);
+        default:
+          return service.listMovements(query.organizationId, options);
+      }
+    };
+
+    /**
+     * Function hydrateReferences
+     *
+     * @description
+     * Resolves missing retained reference labels with at most four concurrent reads.
+     * A failed historical reference never removes the physical record.
+     *
+     * @param {string} organizationId - Original directory authority.
+     * @param {HydraCollection<InventoryRecord>} response - Server page to retain.
+     *
+     * @returns {Observable<{
+     *   response: HydraCollection<InventoryRecord>;
+     *   labels: ({
+     *     ref: { kind: 'part' | 'warehouse'; id: string };
+     *     entry: InventoryPartOutput | InventoryWarehouseOutput;
+     *   } | null)[];
+     * }>}
+     *   Page and successful reference projections.
+     */
+    const hydrateReferences = (
+      organizationId: string,
+      response: HydraCollection<InventoryRecord>,
+    ) => {
+      const missing = new Map<string, { kind: 'part' | 'warehouse'; id: string }>();
+      for (const entry of response.member) {
+        if ('partId' in entry && !store.partLabels()[entry.partId])
+          missing.set('part:' + entry.partId, { kind: 'part', id: entry.partId });
+        if ('warehouseId' in entry && !store.warehouseLabels()[entry.warehouseId])
+          missing.set('warehouse:' + entry.warehouseId, {
+            kind: 'warehouse',
+            id: entry.warehouseId,
+          });
+      }
+      return from(missing.values()).pipe(
+        mergeMap((ref) => {
+          const read: Observable<InventoryPartOutput | InventoryWarehouseOutput> =
+            ref.kind === 'part'
+              ? service.readPart(organizationId, ref.id)
+              : service.readWarehouse(organizationId, ref.id);
+          return read.pipe(
+            map((entry) => ({ ref, entry })),
+            catchError(() => of(null)),
+          );
+        }, 4),
+        toArray(),
+        map((labels) => ({ response, labels })),
+      );
+    };
+
+    return {
+      /**
+       * Method load
+       *
+       * @description
+       * Cancels obsolete reads; bounded reference hydration keeps stock facts recognizable.
+       *
+       * @param {InventoryQuery | null} query - Authorized scope and server filters.
+       */
+      load: rxMethod<InventoryQuery | null>(
+        pipe(
+          switchMap((query) => {
+            const old = store.query();
+            const changed =
+              !query ||
+              old?.organizationId !== query.organizationId ||
+              old?.userId !== query.userId;
+            if (changed)
+              patchState(
+                store,
+                INITIAL,
+                { scopeRevision: store.scopeRevision() + 1 },
+                setAllEntities([] as InventoryRecord[], RECORDS),
+                setAllEntities([] as InventoryPhysicalCommand[], PENDING),
+              );
+            if (!query) return EMPTY;
             patchState(
               store,
-              INITIAL,
-              { scopeRevision: store.scopeRevision() + 1 },
+              { query, listCallState: pendingCallState() },
               setAllEntities([] as InventoryRecord[], RECORDS),
-              setAllEntities([] as InventoryPhysicalCommand[], PENDING),
             );
-          if (!query) return EMPTY;
-          patchState(
-            store,
-            { query, listCallState: pendingCallState() },
-            setAllEntities([] as InventoryRecord[], RECORDS),
-          );
-          const options: RequestOptions = {
-            page: query.page ?? 1,
-            itemsPerPage: 20,
-            search:
-              query.section === 'parts' || query.section === 'warehouses'
-                ? query.search
-                : undefined,
-            params: {
-              ...(query.section === 'parts' || query.section === 'warehouses'
-                ? { archived: query.archived ?? false }
-                : {}),
-              ...(query.partId ? { partId: query.partId } : {}),
-              ...(query.warehouseId ? { warehouseId: query.warehouseId } : {}),
-              ...(query.section === 'consumptions' && query.status ? { status: query.status } : {}),
-            },
-          };
-          const request: Observable<HydraCollection<InventoryRecord>> =
-            query.section === 'parts'
-              ? service.listParts(query.organizationId, options)
-              : query.section === 'warehouses'
-                ? service.listWarehouses(query.organizationId, options)
-                : query.section === 'balances'
-                  ? service.listBalances(query.organizationId, options)
-                  : query.section === 'consumptions'
-                    ? service.listConsumptions(query.organizationId, options)
-                    : service.listMovements(query.organizationId, options);
-          return request.pipe(
-            switchMap((response) => {
-              const missing = new Map<string, { kind: 'part' | 'warehouse'; id: string }>();
-              for (const entry of response.member) {
-                if ('partId' in entry && !store.partLabels()[entry.partId])
-                  missing.set('part:' + entry.partId, { kind: 'part', id: entry.partId });
-                if ('warehouseId' in entry && !store.warehouseLabels()[entry.warehouseId])
-                  missing.set('warehouse:' + entry.warehouseId, {
-                    kind: 'warehouse',
-                    id: entry.warehouseId,
-                  });
-              }
-              return from(missing.values()).pipe(
-                mergeMap((ref) => {
-                  const read: Observable<InventoryPartOutput | InventoryWarehouseOutput> =
-                    ref.kind === 'part'
-                      ? service.readPart(query.organizationId, ref.id)
-                      : service.readWarehouse(query.organizationId, ref.id);
-                  return read.pipe(
-                    map((entry) => ({ ref, entry })),
-                    catchError(() => of(null)),
+            return listRecords(query).pipe(
+              switchMap((response) => hydrateReferences(query.organizationId, response)),
+              tapResponse({
+                next: ({ response, labels }) => {
+                  const partLabels = { ...store.partLabels() },
+                    partUnits = { ...store.partUnits() },
+                    warehouseLabels = { ...store.warehouseLabels() };
+                  for (const result of labels) {
+                    if (!result) continue;
+                    const { ref, entry } = result;
+                    if ('label' in entry) {
+                      partLabels[ref.id] = entry.label;
+                      partUnits[ref.id] = entry.unit;
+                    } else warehouseLabels[ref.id] = entry.name;
+                  }
+                  patchState(
+                    store,
+                    setAllEntities(response.member.map(quantityOnlyInventoryRecord), RECORDS),
+                    {
+                      total: response.totalItems,
+                      partLabels,
+                      partUnits,
+                      warehouseLabels,
+                      listCallState: successCallState(null),
+                    },
                   );
-                }, 4),
-                toArray(),
-                map((labels) => ({ response, labels })),
-              );
-            }),
-            tapResponse({
-              next: ({ response, labels }) => {
-                const partLabels = { ...store.partLabels() },
-                  partUnits = { ...store.partUnits() },
-                  warehouseLabels = { ...store.warehouseLabels() };
-                for (const result of labels) {
-                  if (!result) continue;
-                  const { ref, entry } = result;
-                  if ('label' in entry) {
-                    partLabels[ref.id] = entry.label;
-                    partUnits[ref.id] = entry.unit;
-                  } else warehouseLabels[ref.id] = entry.name;
-                }
-                patchState(
-                  store,
-                  setAllEntities(response.member.map(quantityOnlyInventoryRecord), RECORDS),
-                  {
-                    total: response.totalItems,
-                    partLabels,
-                    partUnits,
-                    warehouseLabels,
-                    listCallState: successCallState(null),
-                  },
-                );
-              },
-              error: (error: unknown) =>
-                patchState(store, { listCallState: errorCallState(toStoreError(error)) }),
-            }),
-          );
-        }),
+                },
+                error: (error: unknown) =>
+                  patchState(store, { listCallState: errorCallState(toStoreError(error)) }),
+              }),
+            );
+          }),
+        ),
       ),
-    ),
-    /**
-     * Method clearWrite
-     *
-     * @description
-     * Clears feedback when opening a new editor without cancelling an accepted command.
-     *
-     * @access public
-     * @since unreleased
-     *
-     * @returns {void}
-     */
-    clearWrite(): void {
-      if (store.writeCallState().status !== 'pending')
-        patchState(store, { writeCallState: idleCallState() });
-    },
-  })),
+      /**
+       * Method clearWrite
+       *
+       * @description
+       * Clears feedback when opening a new editor without cancelling an accepted command.
+       *
+       * @access public
+       * @since unreleased
+       *
+       * @returns {void}
+       */
+      clearWrite(): void {
+        if (store.writeCallState().status !== 'pending')
+          patchState(store, { writeCallState: idleCallState() });
+      },
+    };
+  }),
   withMethods((store, journal = inject(InventoryCommandRepository)) => ({
     /**
      * Method loadJournal

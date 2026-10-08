@@ -201,9 +201,7 @@ export class InterventionWorkspaceRepository {
     );
     if (!intervention || owner !== this.database.currentOwnerId()) return null;
     const interventionIri = `/api/interventions/${interventionId}`;
-    const organizationId = intervention.organization.match(
-      /^\/api\/organizations\/([^/?#]+)$/,
-    )?.[1];
+    const organizationId = /^\/api\/organizations\/([^/?#]+)$/.exec(intervention.organization)?.[1];
     const [workItems, changes, resources, catalog] = await Promise.all([
       this.database.getAll<InterventionWorkItemOutput>('workItems'),
       this.database.getAll<InterventionChangeOutput>('changes'),

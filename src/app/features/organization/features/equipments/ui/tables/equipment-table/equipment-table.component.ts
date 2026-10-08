@@ -13,7 +13,6 @@ import type {
   EquipmentListSort,
   EquipmentOutput,
   EquipmentSortField,
-  EquipmentType,
 } from '@features/organization/features/equipments/models';
 import { EQUIPMENT_TYPE_OPTIONS } from '@features/organization/features/equipments/options';
 import { CollectionSurface } from '@shared/collection-surface';
@@ -222,8 +221,7 @@ export class EquipmentTable {
    */
   protected typeLabelOf(type: string): string {
     return (
-      this.typeOptions().find((option) => option.value === (type as EquipmentType))?.label ??
-      type.replaceAll('_', ' ')
+      this.typeOptions().find((option) => option.value === type)?.label ?? type.replaceAll('_', ' ')
     );
   }
 

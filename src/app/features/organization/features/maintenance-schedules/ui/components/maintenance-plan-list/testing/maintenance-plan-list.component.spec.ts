@@ -105,7 +105,12 @@ describe('MaintenancePlanList', () => {
     expect(root().querySelector('a')?.getAttribute('href')).toBe(
       '/organizations/' + organizationId + '/equipments/' + equipmentId,
     );
-    expect(root().querySelector('a[href$="/interventions/' + interventionId + '"]')).not.toBeNull();
+    const interventionLink = [...root().querySelectorAll<HTMLAnchorElement>('a')].find(
+      (link) => link.textContent?.trim() === 'Open existing intervention',
+    );
+    expect(interventionLink?.getAttribute('href')).toBe(
+      '/organizations/' + organizationId + '/interventions/' + interventionId,
+    );
     expect(root().textContent).not.toContain('Completed');
   });
 

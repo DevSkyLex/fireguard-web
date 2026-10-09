@@ -342,17 +342,21 @@ export const MaintenanceExportStore = signalStore(
               !scope ||
               !readable() ||
               scope.sessionRevision !== session.sessionRevision() ||
-              scope.organizationId !== incoming.organizationId ||
-              !permissions.hasPermission(
-                incoming.kind === 'confirm'
-                  ? ORGANIZATION_PERMISSION.MAINTENANCE_EXPORTS_CONFIRM
-                  : ORGANIZATION_PERMISSION.MAINTENANCE_EXPORTS_MANAGE,
-              )
+              scope.organizationId !== incoming.organizationId
             )
               return EMPTY;
             const command = store.uncertainWrite()
               ? (store.command() ?? incoming)
               : structuredClone(incoming);
+            if (
+              scope.organizationId !== command.organizationId ||
+              !permissions.hasPermission(
+                command.kind === 'confirm'
+                  ? ORGANIZATION_PERMISSION.MAINTENANCE_EXPORTS_CONFIRM
+                  : ORGANIZATION_PERMISSION.MAINTENANCE_EXPORTS_MANAGE,
+              )
+            )
+              return EMPTY;
             const detail = store.detailCallState().data;
             if (
               ((command.kind === 'create' && command.input.includeInternalCosts) ||

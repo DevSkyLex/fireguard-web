@@ -20,6 +20,8 @@ populate another organization. Conflicts preserve the user's draft and require e
 Supplier and purchase draft creations always send an operation UUID. Failed identical creations
 retain it; success or a changed draft after a confirmed rejection starts a fresh operation.
 A lost response retains the original creation payload until its result is recovered.
+Clearing a purchase selection cancels its detail, receipt and return reads, so late responses
+cannot restore the cleared context. Pending or uncertain physical commands still block clearing.
 A received quantity remains retained while individualization is blocked, and reserve equipment is
 created only after explicit confirmation.
 

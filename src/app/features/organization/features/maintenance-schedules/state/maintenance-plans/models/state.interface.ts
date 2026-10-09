@@ -28,6 +28,18 @@ export interface MaintenancePlansState {
    */
   readonly organizationId: string;
   /**
+   * Property scopeGeneration
+   * @readonly
+   *
+   * @description
+   * Distinguishes later visits to the same organization from earlier accepted requests.
+   *
+   * @since unreleased
+   *
+   * @type {number}
+   */
+  readonly scopeGeneration: number;
+  /**
    * Property totalPlans
    * @readonly
    *
@@ -160,3 +172,17 @@ export interface MaintenancePlansState {
    */
   readonly totalEquipment: number;
 }
+
+/**
+ * Type MaintenancePlanCommandCallStateKey
+ *
+ * @description
+ * Named action states whose accepted writes outlive their originating organization visit.
+ *
+ * @type MaintenancePlanCommandCallStateKey
+ */
+export type MaintenancePlanCommandCallStateKey =
+  | 'createCallState'
+  | 'updateCallState'
+  | 'generationCallState'
+  | 'migrationCallState';

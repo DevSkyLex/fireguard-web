@@ -421,15 +421,18 @@ export const InterventionWorkspaceStore = signalStore(
       store,
       service = inject<InterventionService>(InterventionService),
       facilityService = inject<FacilityService>(FacilityService),
-      offline = inject<InterventionOfflineService>(InterventionOfflineService),
-      connectivity = inject<ConnectivityService>(ConnectivityService),
-      optimistic = inject<InterventionWorkspaceOptimisticService>(
-        InterventionWorkspaceOptimisticService,
-      ),
+      offlineExecution = {
+        offline: inject<InterventionOfflineService>(InterventionOfflineService),
+        connectivity: inject<ConnectivityService>(ConnectivityService),
+        optimistic: inject<InterventionWorkspaceOptimisticService>(
+          InterventionWorkspaceOptimisticService,
+        ),
+      },
       dispatcher = inject<Dispatcher>(Dispatcher),
       equipmentCatalog = inject(InterventionEquipmentCatalogService),
       inventory = inject(InterventionInventoryService),
     ) => {
+      const { offline, connectivity, optimistic } = offlineExecution;
       let contextGeneration = 0;
       const teamAssignments = new Set<number>();
 

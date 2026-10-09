@@ -862,7 +862,9 @@ export class MaintenanceExportsPage {
   protected act(value: string): void {
     const detail = this.store.detailCallState().data;
     if (!detail || this.locked() || this.conflict()) return;
-    if (this.confirming() && this.canConfirm())
+    const confirming = this.confirming();
+    if (!(confirming ? this.canConfirm() : this.canManage())) return;
+    if (confirming)
       this.store.write({
         kind: 'confirm',
         organizationId: this.organizationId(),
@@ -870,7 +872,7 @@ export class MaintenanceExportsPage {
         revision: detail.revision,
         input: { clientOperationId: crypto.randomUUID(), externalImportReference: value },
       });
-    else if (this.canManage())
+    else
       this.store.write({
         kind: 'adjust',
         organizationId: this.organizationId(),

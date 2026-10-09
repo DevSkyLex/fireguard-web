@@ -126,4 +126,33 @@ describe('SupplierForm', () => {
     form.submit(new Event('submit'));
     expect(emitted).not.toHaveBeenCalled();
   });
+
+  it('reports contact edits as dirty and submits only the remaining internal contact', async () => {
+    const { fixture, form, emitted } = await setup();
+    const dirty = vi.fn();
+    fixture.componentInstance.dirtyChanged.subscribe(dirty);
+    form.draft.set(validDraft);
+    form.addContact();
+    await fixture.whenStable();
+    expect(form.draft().contacts).toHaveLength(2);
+    const contactNameInput: HTMLInputElement =
+      fixture.nativeElement.querySelector('#contact-name-1');
+    contactNameInput.value = '  Jane  ';
+    contactNameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    form.removeContact(0);
+    await fixture.whenStable();
+    expect(dirty).toHaveBeenLastCalledWith(true);
+    expect(
+      form.draft().contacts.map(({ name, email, phone, role }) => ({ name, email, phone, role })),
+    ).toEqual([{ name: '  Jane  ', email: '', phone: '', role: '' }]);
+    form.submit(new Event('submit'));
+    expect(emitted).toHaveBeenCalledExactlyOnceWith({
+      name: 'Fire supplies',
+      code: 'SUP-1',
+      email: null,
+      phone: '+33 1 23 45 67 89',
+      contacts: [{ name: 'Jane', email: null, phone: null, role: null }],
+    });
+  });
 });

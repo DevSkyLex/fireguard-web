@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
+import { idleCallState } from '@core/request-state';
 import { ProcurementService } from '@features/organization/features/procurement/data-access';
 import type {
   SupplierOutput,
@@ -13,6 +14,7 @@ import type {
   CreateSupplierInput,
   CreatePurchaseOrderInput,
 } from '@features/organization/features/procurement/models';
+import { procurementStoreEvents } from '../events/events';
 import type { ProcurementCommand } from '../models/procurement-command.type';
 import { ProcurementStore } from '../procurement.store';
 const supplier: SupplierOutput = {
@@ -100,6 +102,12 @@ describe('ProcurementStore', () => {
     reconcileReturn: ReturnType<typeof vi.fn>;
     createSupplier: ReturnType<typeof vi.fn>;
     createOrder: ReturnType<typeof vi.fn>;
+    readSupplier: ReturnType<typeof vi.fn>;
+    updateSupplier: ReturnType<typeof vi.fn>;
+    archiveSupplier: ReturnType<typeof vi.fn>;
+    updateOrder: ReturnType<typeof vi.fn>;
+    placeOrder: ReturnType<typeof vi.fn>;
+    cancelRemaining: ReturnType<typeof vi.fn>;
   };
   let dispatch: ReturnType<typeof vi.fn>;
   const input: ReceivePurchaseOrderInput = {
@@ -124,6 +132,12 @@ describe('ProcurementStore', () => {
       reconcileReturn: vi.fn().mockReturnValue(of(returned)),
       createSupplier: vi.fn().mockReturnValue(of(supplier)),
       createOrder: vi.fn().mockReturnValue(of(order)),
+      readSupplier: vi.fn().mockReturnValue(of(supplier)),
+      updateSupplier: vi.fn().mockReturnValue(of(supplier)),
+      archiveSupplier: vi.fn().mockReturnValue(of(supplier)),
+      updateOrder: vi.fn().mockReturnValue(of(order)),
+      placeOrder: vi.fn().mockReturnValue(of(order)),
+      cancelRemaining: vi.fn().mockReturnValue(of(order)),
     };
     dispatch = vi.fn();
     TestBed.configureTestingModule({
@@ -607,5 +621,356 @@ describe('ProcurementStore', () => {
     expect(store.receiptCallState().data).toBeNull();
     expect(store.returnCallState().status).toBe('idle');
     expect(store.returnCallState().data).toBeNull();
+  });
+
+  const readCases = [
+    { method: 'listSuppliers', action: 'loadSuppliers', state: 'suppliersCallState', source: {} },
+    {
+      method: 'readSupplier',
+      action: 'readSupplier',
+      state: 'supplierCallState',
+      source: { supplierId: 'supplier' },
+    },
+    { method: 'listOrders', action: 'loadOrders', state: 'ordersCallState', source: {} },
+    {
+      method: 'readOrder',
+      action: 'readOrder',
+      state: 'orderCallState',
+      source: { orderId: 'order' },
+    },
+    {
+      method: 'listReceipts',
+      action: 'loadReceipts',
+      state: 'receiptsCallState',
+      source: { orderId: 'order' },
+    },
+    {
+      method: 'readReceipt',
+      action: 'readReceipt',
+      state: 'receiptCallState',
+      source: { receiptId: 'receipt' },
+    },
+    {
+      method: 'listReturns',
+      action: 'loadReturns',
+      state: 'returnsCallState',
+      source: { receiptId: 'receipt' },
+    },
+    {
+      method: 'readReturn',
+      action: 'readReturn',
+      state: 'returnCallState',
+      source: { returnId: 'returned' },
+    },
+  ] as const;
+
+  it.each(readCases)(
+    'normalizes $action failures and permits an explicit retry',
+    ({ method, action, state, source }) => {
+      const response = new Subject<never>();
+      service[method].mockReturnValueOnce(response);
+      const request = {
+        organizationId: 'org',
+        supplierId: 'supplier',
+        orderId: 'order',
+        receiptId: 'receipt',
+        returnId: 'returned',
+        ...source,
+      };
+      store[action](request);
+      expect(store[state]().status).toBe('pending');
+      const error = new HttpErrorResponse({
+        status: 403,
+        error: { detail: 'Procurement access denied.' },
+      });
+      response.error(error);
+      expect(store[state]()).toEqual({
+        status: 'error',
+        data: null,
+        error: {
+          error,
+          code: 403,
+          message: 'Procurement access denied.',
+          retryable: false,
+          timestamp: expect.any(Number),
+        },
+      });
+      store[action](request);
+      expect(store[state]().status).toBe('success');
+      expect(service[method]).toHaveBeenCalledTimes(2);
+      expect(dispatch).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(readCases)(
+    'ignores foreign scope $action requests and late errors from a previous visit',
+    ({ method, action, state, source }) => {
+      const request = {
+        supplierId: 'supplier',
+        orderId: 'order',
+        receiptId: 'receipt',
+        returnId: 'returned',
+        ...source,
+      };
+      store[action]({ organizationId: 'another', ...request });
+      expect(service[method]).not.toHaveBeenCalled();
+      expect(store[state]()).toEqual(idleCallState());
+      const previous = new Subject<never>();
+      service[method].mockReturnValueOnce(previous);
+      store[action]({ organizationId: 'org', ...request });
+      store.setScope('another');
+      store.setScope('org');
+      previous.error(new HttpErrorResponse({ status: 503 }));
+      expect(store[state]()).toEqual(idleCallState());
+      expect(dispatch).not.toHaveBeenCalled();
+    },
+  );
+
+  it('reads an archived supplier label independently from the active supplier picker', () => {
+    const archived = { ...supplier, archivedAt: '2026-10-06T10:00:00Z', revision: 4 };
+    const superseded = new Subject<SupplierOutput>();
+    service.listSuppliers.mockReturnValue(of({ member: [], totalItems: 0 }));
+    service.readSupplier.mockReturnValueOnce(superseded).mockReturnValueOnce(of(archived));
+    store.loadSuppliers({ organizationId: 'org', options: { params: { archived: false } } });
+    store.readSupplier({ organizationId: 'org', supplierId: 'other' });
+    expect(store.supplierCallState().status).toBe('pending');
+    store.readSupplier({ organizationId: 'org', supplierId: 'supplier' });
+    superseded.next({ ...supplier, id: 'other' });
+    expect(store.supplierEntities()).toEqual([]);
+    expect(store.supplierCallState()).toEqual({ status: 'success', data: archived, error: null });
+    expect(service.readSupplier).toHaveBeenLastCalledWith('org', 'supplier');
+  });
+
+  it('preserves the displayed order revision while its refresh is pending or fails', () => {
+    store.readOrder({ organizationId: 'org', orderId: order.id });
+    const refresh = new Subject<PurchaseOrderOutput>();
+    service.readOrder.mockReturnValueOnce(refresh);
+    store.readOrder({ organizationId: 'org', orderId: order.id });
+    expect(store.orderCallState()).toEqual({ status: 'pending', data: order, error: null });
+    refresh.error(
+      new HttpErrorResponse({ status: 503, error: { detail: 'Source is unavailable.' } }),
+    );
+    expect(store.selectedOrder()).toEqual(order);
+    expect(store.orderCallState().status).toBe('error');
+    expect(store.orderCallState().error).toMatchObject({
+      code: 503,
+      retryable: true,
+      message: 'Source is unavailable.',
+    });
+  });
+
+  it('keeps server order totals while excluding a superseded page response', () => {
+    const stale = new Subject<HydraCollection<PurchaseOrderOutput>>();
+    service.listOrders
+      .mockReturnValueOnce(stale)
+      .mockReturnValueOnce(of({ member: [order], totalItems: 61 }));
+    store.loadOrders({ organizationId: 'org', options: { page: 1 } });
+    expect(store.ordersCallState().status).toBe('pending');
+    store.loadOrders({
+      organizationId: 'org',
+      options: { page: 3, params: { status: 'ordered' } },
+    });
+    stale.next({ '@id': '/orders', '@type': 'Collection', member: [], totalItems: 0 });
+    expect(store.orderEntities()).toEqual([order]);
+    expect(store.totalOrders()).toBe(61);
+    expect(store.ordersCallState().status).toBe('success');
+    expect(service.listOrders).toHaveBeenLastCalledWith('org', {
+      page: 3,
+      params: { status: 'ordered' },
+    });
+  });
+
+  it('clears the previous source receipts during a new order read and retains server pagination', () => {
+    store.loadReceipts({ organizationId: 'org', orderId: 'order' });
+    const response = new Subject<HydraCollection<ProcurementReceiptOutput>>();
+    service.listReceipts.mockReturnValueOnce(response);
+    store.loadReceipts({ organizationId: 'org', orderId: 'next', options: { page: 2 } });
+    expect(store.receiptEntities()).toEqual([]);
+    expect(store.receiptOrderId()).toBe('next');
+    expect(store.receiptsCallState().status).toBe('pending');
+    const nextReceipt = { ...receipt, id: 'next-receipt', orderId: 'next' };
+    response.next({
+      '@id': '/receipts',
+      '@type': 'Collection',
+      member: [nextReceipt],
+      totalItems: 31,
+    });
+    response.complete();
+    expect(store.receiptEntities()).toEqual([nextReceipt]);
+    expect(store.totalReceipts()).toBe(31);
+    expect(service.listReceipts).toHaveBeenLastCalledWith('org', 'next', { page: 2 });
+    store.loadReceipts({ organizationId: 'org', orderId: 'next', options: { page: 1 } });
+    expect(store.receiptEntities()).toEqual([receipt]);
+  });
+
+  const lifecycleCases = [
+    {
+      method: 'updateSupplier',
+      command: {
+        kind: 'update_supplier',
+        organizationId: 'org',
+        supplier,
+        input: { name: 'Updated supplier', code: null, contacts: [{ name: 'Mary' }] },
+      },
+      args: [
+        'org',
+        supplier,
+        { name: 'Updated supplier', code: null, contacts: [{ name: 'Mary' }] },
+      ],
+      result: { ...supplier, revision: 4 },
+    },
+    {
+      method: 'archiveSupplier',
+      command: { kind: 'archive_supplier', organizationId: 'org', supplier },
+      args: ['org', supplier],
+      result: { ...supplier, revision: 4, archivedAt: '2026-10-06T10:00:00Z' },
+    },
+    {
+      method: 'updateOrder',
+      command: {
+        kind: 'update_order',
+        organizationId: 'org',
+        order: { ...order, status: 'draft' },
+        input: {
+          name: 'Updated purchase',
+          supplierId: supplier.id,
+          lines: [{ kind: 'part', partId: 'part', quantity: '0.250000' }],
+        },
+      },
+      args: [
+        'org',
+        { ...order, status: 'draft' },
+        {
+          name: 'Updated purchase',
+          supplierId: supplier.id,
+          lines: [{ kind: 'part', partId: 'part', quantity: '0.250000' }],
+        },
+      ],
+      result: { ...order, revision: 8 },
+    },
+    {
+      method: 'placeOrder',
+      command: { kind: 'place_order', organizationId: 'org', order: { ...order, status: 'draft' } },
+      args: ['org', { ...order, status: 'draft' }],
+      result: { ...order, revision: 8 },
+    },
+    {
+      method: 'cancelRemaining',
+      command: { kind: 'cancel_remaining', organizationId: 'org', order },
+      args: ['org', order],
+      result: { ...order, status: 'cancelled', revision: 8 },
+    },
+  ] as const satisfies readonly {
+    method: keyof typeof service;
+    command: ProcurementCommand;
+    args: readonly unknown[];
+    result: SupplierOutput | PurchaseOrderOutput;
+  }[];
+
+  it.each(lifecycleCases)(
+    'sends the displayed revision for $method and dispatches only its confirmed result',
+    ({ method, command, args, result }) => {
+      const accepted = new Subject<SupplierOutput | PurchaseOrderOutput>();
+      service[method].mockReturnValueOnce(accepted);
+      store.execute(command);
+      expect(service[method]).toHaveBeenCalledExactlyOnceWith(...args);
+      expect(store.command()).toEqual(command);
+      expect(store.commandCallState()).toEqual({ status: 'pending', data: null, error: null });
+      store.clearCommand();
+      expect(store.command()).toEqual(command);
+      expect(dispatch).not.toHaveBeenCalled();
+      accepted.next(result);
+      accepted.complete();
+      expect(store.commandCallState()).toEqual({ status: 'success', data: result, error: null });
+      expect(store.command()).toBeNull();
+      expect(dispatch).toHaveBeenCalledExactlyOnceWith(
+        procurementStoreEvents.saved({ organizationId: 'org', command, result }),
+      );
+    },
+  );
+
+  it('retains the original update payload and revision after a retryable server failure', () => {
+    const command: ProcurementCommand = {
+      kind: 'update_supplier',
+      organizationId: 'org',
+      supplier,
+      input: { name: 'Reviewed name', contacts: [] },
+    };
+    service.updateSupplier.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 503 })),
+    );
+    store.execute(command);
+    expect(store.uncertainCommand()).toBe(true);
+    expect(store.commandCallState().error?.code).toBe(503);
+    store.execute({
+      ...command,
+      supplier: { ...supplier, revision: 9 },
+      input: { name: 'Edited later', contacts: [] },
+    });
+    expect(service.updateSupplier).toHaveBeenLastCalledWith('org', supplier, command.input);
+    expect(dispatch).toHaveBeenCalledExactlyOnceWith(
+      procurementStoreEvents.saved({ organizationId: 'org', command, result: supplier }),
+    );
+  });
+
+  it.each(['pending', 'uncertain'] as const)(
+    'retains the physical source when clearing a %s write',
+    (state) => {
+      store.readOrder({ organizationId: 'org', orderId: 'order' });
+      store.loadReceipts({ organizationId: 'org', orderId: 'order' });
+      service.receiveOrder.mockReturnValueOnce(
+        state === 'pending'
+          ? new Subject<ProcurementReceiptOutput>()
+          : throwError(() => new HttpErrorResponse({ status: 0 })),
+      );
+      store.execute({ kind: 'receive', organizationId: 'org', order, input });
+      store.clearOrder();
+      expect(store.selectedOrder()).toEqual(order);
+      expect(store.receiptEntities()).toEqual([receipt]);
+      expect(store.receiptOrderId()).toBe('order');
+    },
+  );
+
+  it('excludes a source response that arrives after its order selection was cleared', () => {
+    const response = new Subject<PurchaseOrderOutput>();
+    service.readOrder.mockReturnValueOnce(response);
+    store.readOrder({ organizationId: 'org', orderId: 'order' });
+    store.clearOrder();
+    response.next(order);
+    response.complete();
+    expect(store.selectedOrder()).toBeNull();
+    expect(store.orderCallState()).toEqual(idleCallState());
+  });
+
+  it('retains a physical receipt UUID and payload for recovery after a retryable server failure', () => {
+    const accepted = new Subject<ProcurementReceiptOutput>();
+    service.receiveOrder.mockReturnValueOnce(accepted);
+    const original: ProcurementCommand = { kind: 'receive', organizationId: 'org', order, input };
+    store.execute(original);
+    accepted.error(
+      new HttpErrorResponse({
+        status: 503,
+        error: { detail: 'Original organization service failed.' },
+      }),
+    );
+    expect(store.uncertainCommand()).toBe(true);
+    expect(store.command()).toEqual(original);
+    store.clearCommand();
+    expect(store.command()).toEqual(original);
+    expect(dispatch).not.toHaveBeenCalled();
+    store.execute({
+      ...original,
+      order: { ...order, revision: 8 },
+      input: {
+        ...input,
+        quantity: '1.000000',
+        clientOperationId: '98cc99ec-bee2-4871-8cb7-93f62e7d0e83',
+      },
+    });
+    expect(service.receiveOrder).toHaveBeenLastCalledWith('org', order, input);
+    expect(store.commandCallState().status).toBe('success');
+    expect(dispatch).toHaveBeenCalledExactlyOnceWith(
+      procurementStoreEvents.saved({ organizationId: 'org', command: original, result: receipt }),
+    );
   });
 });

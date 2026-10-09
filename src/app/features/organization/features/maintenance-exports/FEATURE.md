@@ -20,6 +20,8 @@ no private archive, reference or financial response enters TransferState or SSR 
 Accepted writes survive navigation while late results cannot populate another session or scope.
 Uncertain operations retain their exact UUID, revision and body until recovery. Confirmed conflicts
 keep the draft and require explicit source review before a new command is accepted.
+Replay checks the permission for the retained command itself. Losing confirm permission while
+its sheet is open cannot convert that confirmation intent into an adjustment.
 
 Forms own Signal Forms state and emit intents only. Native sheets stay open during writes and
 failures. Downloads return retained server bytes; the browser never rebuilds a file. Adjustments

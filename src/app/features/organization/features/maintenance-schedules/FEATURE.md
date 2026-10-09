@@ -63,8 +63,15 @@ engine and historical campaign linkage.
 Generation is bounded to one equipment operation. Ordinary submission recovers already
 created work; a new attempt is a separate action exposed only by `retryAllowed` from the
 API. Original due dates and attempt numbers remain visible. Creating work never counts
-as completion. Accepted writes survive navigation without replacing another
-organization's current page; stale queries and previews are cancelled or ignored.
+as completion. In the page store, each organization visit owns its reads, preview and
+command feedback. Accepted preparation, configuration, generation and migration writes
+finish across organization changes; each command admits one write per organization at a
+time, so the newly displayed organization can submit immediately. Returning to an
+organization with an unfinished command keeps that action pending until settlement.
+An earlier visit's result cannot replace current data, close an editor or emit a completion
+event, even after returning to the same organization. Stale queries and previews are
+cancelled or ignored. Only plans owned by the requested organization enter the list or
+command feedback; an inconsistent response leaves existing rows and totals intact.
 
 Named `maintenance-schedules`, not the unqualified `maintenance` — an
 app-level feature already owns that name for the unrelated app-maintenance-mode
@@ -115,6 +122,12 @@ Changing organization clears them before the next read; refreshes within the sam
 retain their current rows. Override commands include the originating organization, and campaign
 results retain it for intervention navigation. Accepted writes finish without cancellation, but
 responses from an earlier organization visit cannot update the current scope or its action feedback.
+
+The independent `MaintenancePlansStore` applies the same visit boundary to its plan list,
+engine read, equipment choices and saved-plan preview. Its preparation, configuration,
+generation and migration commands keep separate admission and action states from historical
+overrides and campaigns. Client request admission does not decide the server's active scheduling
+engine or legacy migration outcome.
 
 Primary service: `MaintenanceScheduleService` — extends `HydraApiService`
 but calls the **canonical** `/api/maintenance/schedules` and

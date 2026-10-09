@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Events } from '@ngrx/signals/events';
 import { Subject } from 'rxjs';
 import {
+  errorCallState,
   idleCallState,
   pendingCallState,
   successCallState,
@@ -156,7 +157,11 @@ describe('ProcurementPage', () => {
       totalReceipts: signal(0),
       totalReturns: signal(0),
     };
-    const catalog = { load: vi.fn(), clear: vi.fn(), options: signal([]) };
+    const catalog = {
+      load: vi.fn(),
+      clear: vi.fn(),
+      options: signal<readonly { value: string; label: string }[]>([]),
+    };
     const navigate = vi.fn().mockResolvedValue(true);
     const savedEvents = new Subject<ReturnType<typeof procurementStoreEvents.saved>>();
     TestBed.configureTestingModule({
@@ -608,4 +613,451 @@ describe('ProcurementPage', () => {
       expect(event.defaultPrevented).toBe(state !== 'clean');
     },
   );
+
+  it('creates a supplier and forwards later edits with the displayed source revision', async () => {
+    const { page, store } = await setup();
+    const input = {
+      name: 'Reviewed supplier',
+      code: null,
+      contacts: [{ name: 'Mary', role: 'Parts' }],
+    };
+    page['openSupplier'](null);
+    page['saveSupplier'](input);
+    expect(store.execute).toHaveBeenCalledExactlyOnceWith({
+      kind: 'create_supplier',
+      organizationId: 'org',
+      input,
+    });
+    store.execute.mockClear();
+    page['openSupplier'](supplier);
+    store.supplierCallState.set(successCallState({ ...supplier, revision: 3 }));
+    page['saveSupplier'](input);
+    expect(store.execute).toHaveBeenCalledExactlyOnceWith({
+      kind: 'update_supplier',
+      organizationId: 'org',
+      supplier,
+      input,
+    });
+    expect(page['editorTitle']()).toBe('Supplier information');
+  });
+
+  it('opens a new purchase with an active-only supplier picker and submits exact decimal strings', async () => {
+    const { fixture, page, store, catalog } = await setup();
+    page['pickerSearch'].set('previous');
+    page['pickerPage'].set(4);
+    page['openOrder'](null);
+    await fixture.whenStable();
+    expect(page['pickerSearch']()).toBe('');
+    expect(page['pickerPage']()).toBe(1);
+    expect(store.loadSuppliers).toHaveBeenLastCalledWith({
+      organizationId: 'org',
+      options: { page: 1, itemsPerPage: 30, search: '', params: { archived: false } },
+    });
+    expect(catalog.load).not.toHaveBeenCalled();
+    page['ensureEquipmentTypes']();
+    page['ensureEquipmentTypes']();
+    expect(catalog.load).toHaveBeenCalledExactlyOnceWith('org');
+    const input = {
+      name: 'Stock replenishment',
+      supplierId: supplier.id,
+      lines: [{ kind: 'part' as const, partId: 'part', quantity: '0.000001' }],
+    };
+    page['saveOrder'](input);
+    expect(store.execute).toHaveBeenCalledExactlyOnceWith({
+      kind: 'create_order',
+      organizationId: 'org',
+      input,
+    });
+    expect(page['editorTitle']()).toBe('Purchase draft');
+  });
+
+  it('edits only a purchase draft and sends its original revision after a background refresh', async () => {
+    const { page, store } = await setup();
+    page['openOrder'](order);
+    expect(page['editor']()).toBeNull();
+    const draft = { ...order, status: 'draft' as const };
+    page['openOrder'](draft);
+    store.selectedOrder.set({ ...draft, revision: 8 });
+    const input = {
+      name: 'Reviewed draft',
+      supplierId: supplier.id,
+      lines: [
+        { kind: 'part' as const, partId: 'part', quantity: '0.750000', unitCost: '0.000000' },
+      ],
+    };
+    page['saveOrder'](input);
+    expect(store.execute).toHaveBeenCalledExactlyOnceWith({
+      kind: 'update_order',
+      organizationId: 'org',
+      order: draft,
+      input,
+    });
+  });
+
+  it('records a physical return with the retained receipt revision and validated UUID', async () => {
+    const { page, store } = await setup();
+    const input = {
+      quantity: returned.quantity,
+      reason: returned.reason,
+      clientOperationId: returned.clientOperationId,
+    };
+    page['recordReturn'](input);
+    expect(store.execute).not.toHaveBeenCalled();
+    page['openReturn'](receipt);
+    store.receiptCallState.set(successCallState({ ...receipt, revision: 4 }));
+    page['recordReturn'](input);
+    expect(store.execute).toHaveBeenCalledExactlyOnceWith({
+      kind: 'return',
+      organizationId: 'org',
+      receipt,
+      input,
+    });
+    expect(page['editorTitle']()).toBe('Record a physical return');
+  });
+
+  it('stops write intents when procurement management is unavailable', async () => {
+    const { page, store } = await setup([ORGANIZATION_PERMISSION.PROCUREMENT_READ]);
+    page['openSupplier'](null);
+    page['openOrder'](null);
+    page['openReturn'](receipt);
+    page['saveSupplier']({ name: 'Unauthorized', contacts: [] });
+    page['saveOrder']({ name: 'Unauthorized', supplierId: 'supplier', lines: [] });
+    page['requestConfirmation']({ kind: 'archive_supplier', organizationId: 'org', supplier });
+    expect(page['editor']()).toBeNull();
+    expect(page['confirmation']()).toBeNull();
+    expect(store.clearCommand).not.toHaveBeenCalled();
+    expect(store.execute).not.toHaveBeenCalled();
+  });
+
+  it.each(['pending', 'uncertain'] as const)(
+    'blocks edits, confirmation changes and source navigation during a %s write',
+    async (state) => {
+      const { page, store, navigate } = await setup();
+      page['openReturn'](receipt);
+      const command: ProcurementCommand = {
+        kind: 'archive_supplier',
+        organizationId: 'org',
+        supplier,
+      };
+      page['requestConfirmation'](command);
+      if (state === 'pending') store.commandPending.set(true);
+      else store.uncertainCommand.set(true);
+      page['openSupplier'](null);
+      page['openOrder'](null);
+      page['saveSupplier']({ name: 'Locked', contacts: [] });
+      page['saveOrder']({ name: 'Locked', supplierId: 'supplier', lines: [] });
+      page['recordReturn']({
+        quantity: returned.quantity,
+        reason: returned.reason,
+        clientOperationId: returned.clientOperationId,
+      });
+      page['requestIndividualization'](receipt);
+      page['requestReconciliation'](returned);
+      page['confirmOperation']();
+      page['confirmationStateChanged']('closed');
+      page['sheetStateChanged']('closed');
+      page['reviewLatest']();
+      page['selectOrder'](order, true);
+      page['clearSelection']();
+      expect(page['editor']()).toBe('return');
+      expect(page['confirmation']()).toEqual(command);
+      expect(page['reviewRequested']()).toBe(false);
+      expect(store.execute).not.toHaveBeenCalled();
+      expect(navigate).not.toHaveBeenCalled();
+    },
+  );
+
+  it('requires equipment and inventory authority before opening their operation confirmations', async () => {
+    const { page, store } = await setup([ORGANIZATION_PERMISSION.PROCUREMENT_MANAGE]);
+    page['requestIndividualization'](receipt);
+    page['requestReconciliation'](returned);
+    expect(page['confirmation']()).toBeNull();
+    expect(store.clearCommand).not.toHaveBeenCalled();
+    page['confirmOperation']();
+    page['retryCommand']();
+    expect(store.execute).not.toHaveBeenCalled();
+  });
+
+  it('keeps source quantities and lifecycle authoritative for equipment and return operations', async () => {
+    const { page, store, permissions } = await setup();
+    const hardware = {
+      ...receipt,
+      kind: 'equipment_to_individualize' as const,
+      status: 'awaiting_individualization' as const,
+    };
+    expect(page['canIndividualize'](hardware)).toBe(true);
+    expect(page['canIndividualize']({ ...hardware, equipmentIds: ['equipment'] })).toBe(false);
+    expect(page['canIndividualize']({ ...hardware, status: 'individualized' })).toBe(false);
+    store.receiptsCallState.set(pendingCallState());
+    expect(page['canIndividualize'](hardware)).toBe(false);
+    expect(page['canReconcile']({ ...returned, status: 'confirmed' })).toBe(false);
+    store.returnsCallState.set(pendingCallState());
+    expect(page['canReconcile'](returned)).toBe(false);
+    expect(page['canCancelOrder']({ ...order, status: 'received' })).toBe(false);
+    expect(page['canCancelOrder']({ ...order, status: 'cancelled' })).toBe(false);
+    expect(page['canCancelOrder']({ ...order, status: 'partial_received' })).toBe(true);
+    expect(page['canEditOrder']({ ...order, status: 'draft' })).toBe(true);
+    expect(page['canReceive']({ ...order, status: 'partial_received' }, stockLine)).toBe(true);
+    expect(page['canReceive'](order, { ...stockLine, remainingQuantity: 'invalid' })).toBe(false);
+    permissions.set(new Set([ORGANIZATION_PERMISSION.PROCUREMENT_MANAGE]));
+    expect(page['canReturn'](hardware)).toBe(true);
+    expect(page['canReturn']({ ...receipt, returnedQuantity: 'invalid' })).toBe(false);
+  });
+
+  it('merges source navigation into the route while resetting receipt history for a different order', async () => {
+    const { page, navigate } = await setup();
+    page['receiptPage'].set(3);
+    page['returnsReceiptId'].set(receipt.id);
+    page['selectOrder'](order, true);
+    expect(page['receiptPage']()).toBe(1);
+    expect(page['returnsReceiptId']()).toBeNull();
+    expect(navigate).toHaveBeenLastCalledWith([], {
+      queryParams: { orderId: 'order', section: 'receipts' },
+      queryParamsHandling: 'merge',
+    });
+    page['selectOrder'](order);
+    expect(navigate).toHaveBeenLastCalledWith([], {
+      queryParams: { orderId: 'order', section: 'orders' },
+      queryParamsHandling: 'merge',
+    });
+    page['clearSelection']();
+    expect(navigate).toHaveBeenLastCalledWith([], {
+      queryParams: { orderId: null },
+      queryParamsHandling: 'merge',
+    });
+    page['selectSection']('suppliers');
+    expect(navigate).toHaveBeenLastCalledWith([], {
+      queryParams: { section: 'suppliers' },
+      queryParamsHandling: 'merge',
+    });
+  });
+
+  it('clears the previous organization editor and reloads catalogue labels only when the new source needs them', async () => {
+    const { page, store, fixture, catalog } = await setup();
+    const hardwareLine = {
+      ...stockLine,
+      kind: 'equipment_to_individualize' as const,
+      typeCode: 'EXTINGUISHER',
+    };
+    store.selectedOrder.set({ ...order, lines: [hardwareLine] });
+    await fixture.whenStable();
+    expect(catalog.load).toHaveBeenCalledExactlyOnceWith('org');
+    store.selectedOrder.set({ ...order, revision: 8, lines: [hardwareLine] });
+    await fixture.whenStable();
+    expect(catalog.load).toHaveBeenCalledOnce();
+    page['openSupplier'](supplier);
+    page['dirty'].set(true);
+    page['requestConfirmation']({ kind: 'archive_supplier', organizationId: 'org', supplier });
+    fixture.componentRef.setInput('organizationId', 'another');
+    await fixture.whenStable();
+    expect(store.setScope).toHaveBeenLastCalledWith('another');
+    expect(page['editor']()).toBeNull();
+    expect(page['confirmation']()).toBeNull();
+    expect(page.hasUnsavedChanges()).toBe(false);
+    expect(catalog.clear).toHaveBeenCalledTimes(2);
+    expect(catalog.load).toHaveBeenLastCalledWith('another');
+  });
+
+  it.each(['create_order', 'update_order'] as const)(
+    'selects the confirmed $kind result and refreshes the current server view',
+    async (kind) => {
+      const { page, store, savedEvents, navigate } = await setup();
+      const input = { name: 'Saved purchase', supplierId: supplier.id, lines: [] };
+      const command: ProcurementCommand =
+        kind === 'create_order'
+          ? { kind, organizationId: 'org', input }
+          : { kind, organizationId: 'org', order, input };
+      page['openOrder'](null);
+      page['dirty'].set(true);
+      store.loadOrders.mockClear();
+      savedEvents.next(
+        procurementStoreEvents.saved({
+          organizationId: 'org',
+          command,
+          result: { ...order, id: 'saved-order' },
+        }),
+      );
+      expect(navigate).toHaveBeenCalledExactlyOnceWith([], {
+        queryParams: { orderId: 'saved-order', section: 'orders' },
+        queryParamsHandling: 'merge',
+      });
+      expect(page['editor']()).toBeNull();
+      expect(page.hasUnsavedChanges()).toBe(false);
+      expect(store.loadOrders).toHaveBeenCalledExactlyOnceWith({
+        organizationId: 'org',
+        options: { page: 1, itemsPerPage: 30, params: {} },
+      });
+    },
+  );
+
+  it('renders historical equipment and stock references without inventing labels or units', async () => {
+    const { page, catalog, store } = await setup();
+    catalog.options.set([{ value: 'OLD_TYPE', label: 'Archived extinguisher' }]);
+    const hardware = {
+      ...stockLine,
+      kind: 'equipment_to_individualize' as const,
+      typeCode: 'OLD_TYPE',
+      identityTemplate: { name: 'Reserve unit' },
+    };
+    expect(page['lineTitle'](hardware)).toBe('Reserve unit · Archived extinguisher');
+    expect(page['lineTitle']({ ...hardware, identityTemplate: {}, typeCode: 'UNKNOWN_TYPE' })).toBe(
+      'UNKNOWN_TYPE',
+    );
+    expect(page['lineTitle']({ ...hardware, identityTemplate: { name: 42 }, typeCode: null })).toBe(
+      '',
+    );
+    expect(page['lineUnit'](hardware)).toBe('units');
+    expect(page['lineTitle'](stockLine)).toBe('SEAL — Seal');
+    expect(page['lineTitle']({ ...stockLine, partCode: null })).toBe('Seal');
+    expect(page['lineTitle']({ ...stockLine, partLabel: null })).toBe(
+      'Stock article label unavailable',
+    );
+    expect(page['lineUnit']({ ...stockLine, partUnit: null })).toBe('unit unavailable');
+    expect(page['receiptUnit'](receipt)).toBe('piece');
+    store.selectedOrder.set(null);
+    expect(page['receiptUnit'](receipt)).toBe('');
+    expect(page['blockedLabel']('insufficient_stock')).toBe(
+      'The physical return is retained. Inventory needs reconciliation before its movement can be confirmed.',
+    );
+    expect(page['blockedLabel']('new_server_reason')).toBe('new server reason');
+  });
+
+  it('exposes definitive revision conflicts for explicit review and retains the normalized error message', async () => {
+    const { page, store } = await setup();
+    expect(page['commandError']()).toBeNull();
+    expect(page['revisionConflict']()).toBe(false);
+    for (const code of [409, 412, 503]) {
+      store.commandCallState.set(
+        errorCallState({
+          error: null,
+          code,
+          message: 'Review displayed revision.',
+          retryable: code === 503,
+          timestamp: 0,
+        }),
+      );
+      expect(page['commandError']()).toBe('Review displayed revision.');
+      expect(page['revisionConflict']()).toBe(code !== 503);
+    }
+  });
+
+  it('requests a discard for a dirty sheet and dismisses clean sheets and unaccepted confirmations', async () => {
+    const { page } = await setup();
+    page['openSupplier'](supplier);
+    page['dirty'].set(true);
+    page['sheetStateChanged']('closed');
+    expect(page['discardState']()).toBe('open');
+    expect(page['editor']()).toBe('supplier');
+    page['resolveDiscard'](false);
+    page['dirty'].set(false);
+    page['sheetStateChanged']('closed');
+    expect(page['editor']()).toBeNull();
+    page['requestConfirmation']({ kind: 'archive_supplier', organizationId: 'org', supplier });
+    page['confirmationStateChanged']('open');
+    expect(page['confirmation']()?.kind).toBe('archive_supplier');
+    page['confirmationStateChanged']('closed');
+    expect(page['confirmation']()).toBeNull();
+  });
+
+  it.each([
+    {
+      kind: 'archive_supplier',
+      title: 'Archive this supplier?',
+      description:
+        'The supplier remains in existing purchases and history. New orders require an active supplier.',
+    },
+    {
+      kind: 'place_order',
+      title: 'Place this purchase order?',
+      description: 'The draft becomes an order. Physical deliveries will be recorded separately.',
+    },
+    {
+      kind: 'cancel_remaining',
+      title: 'Cancel undelivered quantities?',
+      description:
+        'Only quantities still awaiting delivery are cancelled. Previous receipts and returns remain retained.',
+    },
+    {
+      kind: 'individualize',
+      title: 'Create reserve equipment for this receipt?',
+      description:
+        'The server creates a bounded set of individually identified reserve equipment. A quota or unavailable type keeps the physical receipt awaiting action.',
+    },
+    {
+      kind: 'reconcile',
+      title: 'Reconcile this physical return?',
+      description:
+        'The server tries to confirm the inventory reversal. The original physical quantity and reason stay unchanged if stock is still insufficient.',
+    },
+  ] as const)(
+    'requires an explicit confirmation explaining the $kind operation',
+    async ({ kind, title, description }) => {
+      const { page, store } = await setup();
+      const hardware = {
+        ...receipt,
+        kind: 'equipment_to_individualize' as const,
+        status: 'awaiting_individualization' as const,
+      };
+      if (kind === 'individualize') page['requestIndividualization'](hardware);
+      else if (kind === 'reconcile') page['requestReconciliation'](returned);
+      else
+        page['requestConfirmation'](
+          kind === 'archive_supplier'
+            ? { kind, organizationId: 'org', supplier }
+            : { kind, organizationId: 'org', order },
+        );
+      const command = page['confirmation']();
+      expect(command?.kind).toBe(kind);
+      if (command?.kind === 'individualize') {
+        expect(command.receipt).toEqual(hardware);
+        expect(command.input.clientOperationId).toMatch(
+          /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/,
+        );
+      }
+      if (command?.kind === 'reconcile') {
+        expect(command.returned).toEqual(returned);
+        expect(command.input.clientOperationId).toMatch(
+          /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/,
+        );
+      }
+      expect(page['confirmationTitle']()).toBe(title);
+      expect(page['confirmationDescription']()).toBe(description);
+      expect(store.execute).not.toHaveBeenCalled();
+      page['confirmOperation']();
+      expect(store.execute).toHaveBeenCalledExactlyOnceWith(command);
+    },
+  );
+
+  it('forwards server filters and pagination to orders and expanded receipt history on refresh', async () => {
+    const { page, store, fixture } = await setup();
+    page['orderStatus'].set('partial_received');
+    page['orderPage'].set(3);
+    page['receiptPage'].set(2);
+    page['showReturns'](receipt);
+    page['returnPage'].set(2);
+    store.totalSuppliers.set(0);
+    store.totalOrders.set(61);
+    store.totalReceipts.set(31);
+    store.totalReturns.set(60);
+    await fixture.whenStable();
+    expect(page['supplierPageCount']()).toBe(1);
+    expect(page['orderPageCount']()).toBe(3);
+    expect(page['receiptPageCount']()).toBe(2);
+    expect(page['returnPageCount']()).toBe(2);
+    page['reload']();
+    expect(store.loadOrders).toHaveBeenLastCalledWith({
+      organizationId: 'org',
+      options: { page: 3, itemsPerPage: 30, params: { status: 'partial_received' } },
+    });
+    expect(store.loadReceipts).toHaveBeenLastCalledWith({
+      organizationId: 'org',
+      orderId: 'order',
+      options: { page: 2, itemsPerPage: 30 },
+    });
+    expect(store.loadReturns).toHaveBeenLastCalledWith({
+      organizationId: 'org',
+      receiptId: receipt.id,
+      options: { page: 2, itemsPerPage: 30 },
+    });
+  });
 });

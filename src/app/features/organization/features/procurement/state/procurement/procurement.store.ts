@@ -4,7 +4,7 @@ import { patchState, signalStore, type, withComputed, withMethods, withState } f
 import { removeAllEntities, setAllEntities, withEntities } from '@ngrx/signals/entities';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, pipe, switchMap, type Observable } from 'rxjs';
+import { EMPTY, Subject, exhaustMap, pipe, switchMap, takeUntil, type Observable } from 'rxjs';
 import type { RequestOptions } from '@core/api/models';
 import {
   errorCallState,
@@ -113,6 +113,15 @@ export const ProcurementStore = signalStore(
   })),
   withMethods((store, service = inject(ProcurementService), dispatcher = inject(Dispatcher)) => {
     /**
+     * Constant sourceCleared
+     *
+     * @description
+     * Cancels detail and history reads when their purchase selection is cleared, without
+     * cancelling an accepted physical command.
+     */
+    const sourceCleared = new Subject<void>();
+
+    /**
      * Constant request
      *
      * @description
@@ -181,6 +190,7 @@ export const ProcurementStore = signalStore(
        */
       setScope(organizationId: string): void {
         if (store.organizationId() === organizationId) return;
+        sourceCleared.next();
         patchState(
           store,
           removeAllEntities({ collection: 'supplier' }),
@@ -307,6 +317,7 @@ export const ProcurementStore = signalStore(
             const scopeVersion = store.scopeVersion();
             patchState(store, { orderCallState: pendingCallState(store.selectedOrder()) });
             return service.readOrder(organizationId, orderId).pipe(
+              takeUntil(sourceCleared),
               tapResponse({
                 next: (order) => {
                   if (store.scopeVersion() === scopeVersion)
@@ -336,6 +347,7 @@ export const ProcurementStore = signalStore(
               patchState(store, removeAllEntities({ collection: 'receipt' }));
             patchState(store, { receiptOrderId: orderId, receiptsCallState: pendingCallState() });
             return service.listReceipts(organizationId, orderId, options).pipe(
+              takeUntil(sourceCleared),
               tapResponse({
                 next: (response) => {
                   if (store.scopeVersion() === scopeVersion)
@@ -372,6 +384,7 @@ export const ProcurementStore = signalStore(
             const scopeVersion = store.scopeVersion();
             patchState(store, { receiptCallState: pendingCallState() });
             return service.readReceipt(organizationId, receiptId).pipe(
+              takeUntil(sourceCleared),
               tapResponse({
                 next: (receipt) => {
                   if (store.scopeVersion() === scopeVersion)
@@ -401,6 +414,7 @@ export const ProcurementStore = signalStore(
             const scopeVersion = store.scopeVersion();
             patchState(store, { returnCallState: pendingCallState() });
             return service.readReturn(organizationId, returnId).pipe(
+              takeUntil(sourceCleared),
               tapResponse({
                 next: (returned) => {
                   if (store.scopeVersion() === scopeVersion)
@@ -435,6 +449,7 @@ export const ProcurementStore = signalStore(
               patchState(store, removeAllEntities({ collection: 'supplyReturn' }));
             patchState(store, { returnReceiptId: receiptId, returnsCallState: pendingCallState() });
             return service.listReturns(organizationId, receiptId, options).pipe(
+              takeUntil(sourceCleared),
               tapResponse({
                 next: (response) => {
                   if (store.scopeVersion() === scopeVersion)
@@ -536,6 +551,7 @@ export const ProcurementStore = signalStore(
        */
       clearOrder(): void {
         if (store.commandPending() || store.uncertainCommand()) return;
+        sourceCleared.next();
         patchState(
           store,
           removeAllEntities({ collection: 'receipt' }),

@@ -1,10 +1,12 @@
 import { PLATFORM_ID, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { FieldTree } from '@angular/forms/signals';
+import type { EquipmentTypeOption } from '@features/organization/features/equipments';
 import { InventoryService } from '@features/organization/features/inventory/data-access';
 import type {
   PurchaseOrderLineOutput,
   PurchaseOrderOutput,
+  SupplierOutput,
 } from '@features/organization/features/procurement/models';
 import type {
   PurchaseOrderDraft,
@@ -81,6 +83,8 @@ describe('PurchaseOrderForm', () => {
       draft: WritableSignal<PurchaseOrderDraft>;
       orderForm: FieldTree<PurchaseOrderDraft>;
       submit: (event: Event) => void;
+      addLine: () => void;
+      removeLine: (index: number) => void;
     };
     return { fixture, form, emitted };
   }
@@ -270,5 +274,130 @@ describe('PurchaseOrderForm', () => {
       supplierId: 'supplier',
       lines: [{ id: 'line', kind: 'part', partId: 'part', quantity: '0.250000' }],
     });
+  });
+
+  it('creates stable local line UUIDs, reports dirtiness and submits only the retained line', async () => {
+    const { fixture, form, emitted } = await setup();
+    const originalId = form.draft().lines[0].id;
+    const dirty = vi.fn();
+    fixture.componentInstance.dirtyChanged.subscribe(dirty);
+    form.addLine();
+    const nextId = form.draft().lines[1].id;
+    expect(nextId).toMatch(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/);
+    expect(nextId).not.toBe(originalId);
+    form.removeLine(0);
+    form.draft.update((draft) => ({
+      ...draft,
+      name: 'Parts',
+      supplierId: 'supplier',
+      lines: [{ ...draftLine, id: nextId }],
+    }));
+    await fixture.whenStable();
+    expect(dirty).toHaveBeenLastCalledWith(true);
+    form.submit(new Event('submit'));
+    expect(emitted).toHaveBeenCalledExactlyOnceWith({
+      name: 'Parts',
+      supplierId: 'supplier',
+      lines: [{ id: nextId, kind: 'part', partId: 'part', quantity: '0.250000' }],
+    });
+    emitted.mockClear();
+    form.removeLine(0);
+    await fixture.whenStable();
+    form.submit(new Event('submit'));
+    expect(emitted).not.toHaveBeenCalled();
+    expect(
+      form.orderForm
+        .lines()
+        .errors()
+        .map(({ kind, message }) => ({ kind, message })),
+    ).toEqual([{ kind: 'lines', message: 'Add between 1 and 100 lines.' }]);
+  });
+
+  it('bounds added purchase lines and locks local line editing while a write is pending', async () => {
+    const { fixture, form } = await setup();
+    const lines = Array.from({ length: 100 }, (_, index) => ({
+      ...draftLine,
+      id: `line-${index}`,
+    }));
+    form.draft.set({ name: 'Parts', supplierId: 'supplier', lines });
+    form.addLine();
+    expect(form.draft().lines).toEqual(lines);
+    form.draft.set({ name: 'Parts', supplierId: 'supplier', lines: [draftLine] });
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    form.addLine();
+    form.removeLine(0);
+    expect(form.draft().lines).toEqual([draftLine]);
+  });
+
+  it('retains archived supplier labels independently from currently assignable supplier pages', async () => {
+    const { fixture } = await setup(order);
+    const archived: SupplierOutput = {
+      '@id': '/suppliers/supplier',
+      '@type': 'Supplier',
+      id: 'supplier',
+      organizationId: 'org',
+      name: 'Fire supplies',
+      code: 'SUP-1',
+      contacts: [],
+      revision: 3,
+      archivedAt: '2026-10-06T10:00:00Z',
+      createdAt: '2026-10-05T10:00:00Z',
+      updatedAt: '2026-10-05T10:00:00Z',
+      replayed: false,
+    };
+    const active = {
+      ...archived,
+      id: 'active',
+      code: null,
+      name: 'Active supplier',
+      archivedAt: null,
+    };
+    fixture.componentRef.setInput('selectedSupplier', archived);
+    fixture.componentRef.setInput('suppliers', [active, archived]);
+    await fixture.whenStable();
+    expect(fixture.componentInstance['activeSuppliers']()).toEqual([active]);
+    expect(fixture.componentInstance['supplierLabelOf']('supplier')).toBe('SUP-1 — Fire supplies');
+    expect(fixture.componentInstance['supplierLabelOf']('active')).toBe('Active supplier');
+    const input: HTMLInputElement = fixture.nativeElement.querySelector(
+      '#procurement-order-supplier',
+    );
+    expect(input.value).toBe('SUP-1 — Fire supplies');
+    fixture.componentRef.setInput('selectedSupplier', null);
+    fixture.componentRef.setInput('suppliers', []);
+    await fixture.whenStable();
+    expect(input.value).toBe('SUP-1 — Fire supplies');
+    expect(fixture.componentInstance['supplierLabelOf']('unavailable')).toBe('unavailable');
+  });
+
+  it('requests equipment catalogue options only for equipment lines and retains a historical selected type', async () => {
+    const { fixture, form } = await setup(order);
+    const requested = vi.fn();
+    fixture.componentInstance.equipmentTypesRequested.subscribe(requested);
+    const base = {
+      '@id': '/equipment-types/type',
+      '@type': 'EquipmentType',
+      family: 'fire' as const,
+      revision: 2,
+      icon: 'lucideFireExtinguisher',
+    };
+    const options = [
+      { ...base, value: 'ACTIVE', label: 'Active extinguisher', archived: false },
+      { ...base, value: 'OLD', label: 'Archived extinguisher', archived: true },
+      { ...base, value: 'OTHER_OLD', label: 'Other archived type', archived: true },
+    ] satisfies readonly EquipmentTypeOption[];
+    fixture.componentRef.setInput('typeOptions', options);
+    await fixture.whenStable();
+    expect(requested).not.toHaveBeenCalled();
+    form.draft.update((draft) => ({
+      ...draft,
+      lines: [{ ...draft.lines[0], kind: 'equipment_to_individualize', typeCode: 'OLD' }],
+    }));
+    await fixture.whenStable();
+    expect(requested).toHaveBeenCalledOnce();
+    expect(fixture.componentInstance['selectableTypes']('OLD')).toEqual(options.slice(0, 2));
+    expect(fixture.componentInstance['typeLabelOf']('OLD')).toBe('Archived extinguisher');
+    expect(fixture.componentInstance['typeLabelOf']('UNKNOWN')).toBe('UNKNOWN');
+    expect(fixture.componentInstance['selectableTypes']('UNKNOWN')).toEqual([options[0]]);
   });
 });

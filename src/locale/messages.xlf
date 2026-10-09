@@ -19970,28 +19970,28 @@
         <source>This intervention has not been saved on this device, so it cannot be opened offline. Reconnect and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">527</context>
+          <context context-type="linenumber">530</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.loadFailed" datatype="html">
         <source>The intervention workspace could not be loaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">531</context>
+          <context context-type="linenumber">534</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.attachmentQueueFull" datatype="html">
         <source>The offline file queue is full (25 files or 50 MB). Reconnect to sync your pending files before adding more.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">804</context>
+          <context context-type="linenumber">807</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.commentAddFailed" datatype="html">
         <source>The comment could not be posted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">903</context>
+          <context context-type="linenumber">906</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-comment-form/intervention-comment-form.component.ts</context>
@@ -20002,14 +20002,14 @@
         <source>The intervention status could not be updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1064</context>
+          <context context-type="linenumber">1067</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.store.transitionStale" datatype="html">
         <source>This intervention changed since it was loaded. Refresh and try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1066</context>
+          <context context-type="linenumber">1069</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -20020,7 +20020,7 @@
         <source>You do not have permission to change this intervention&apos;s status.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1068</context>
+          <context context-type="linenumber">1071</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -20031,7 +20031,7 @@
         <source>This status change is not allowed from the intervention&apos;s current status.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1070</context>
+          <context context-type="linenumber">1073</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -20042,46 +20042,46 @@
         <source>Intervention planning details could not be saved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1152</context>
+          <context context-type="linenumber">1155</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1203</context>
+          <context context-type="linenumber">1206</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.toast.succeeded" datatype="html">
         <source>Team assigned</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1254</context>
+          <context context-type="linenumber">1257</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.error.generic" datatype="html">
         <source>The team could not be assigned.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1262</context>
+          <context context-type="linenumber">1265</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.error.noActiveMembers" datatype="html">
         <source>This team has no active members.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1264</context>
+          <context context-type="linenumber">1267</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.team.assign.error.conflict" datatype="html">
         <source>This intervention can no longer be assigned a team; refreshing its current state.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1266</context>
+          <context context-type="linenumber">1269</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.workItemCreateFailed" datatype="html">
         <source>The work item could not be created.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1558</context>
+          <context context-type="linenumber">1561</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/ui/forms/intervention-work-item-form/intervention-work-item-form.component.ts</context>
@@ -20092,35 +20092,35 @@
         <source>The work item could not be updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1696</context>
+          <context context-type="linenumber">1699</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.rejectChangeFailed" datatype="html">
         <source>The proposed change could not be rejected.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1831</context>
+          <context context-type="linenumber">1834</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.workItemDeleteOffline" datatype="html">
         <source>Connect to the network to delete planned work items.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1874</context>
+          <context context-type="linenumber">1877</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.workItemDeleteFailed" datatype="html">
         <source>The work item could not be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1928</context>
+          <context context-type="linenumber">1931</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.delete.toast" datatype="html">
         <source>Intervention deleted</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1970</context>
+          <context context-type="linenumber">1973</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -20131,7 +20131,7 @@
         <source>The intervention could not be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1976</context>
+          <context context-type="linenumber">1979</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -20142,7 +20142,7 @@
         <source>Only draft or abandoned interventions can be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1980</context>
+          <context context-type="linenumber">1983</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -20153,7 +20153,7 @@
         <source>You do not have permission to delete this intervention.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">1982</context>
+          <context context-type="linenumber">1985</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention/intervention.store.ts</context>
@@ -20164,18 +20164,18 @@
         <source>The file could not be uploaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">2110</context>
+          <context context-type="linenumber">2113</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.workspace.attachmentDeleteFailed" datatype="html">
         <source>The file could not be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">2148</context>
+          <context context-type="linenumber">2151</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/interventions/state/intervention-workspace/intervention-workspace.store.ts</context>
-          <context context-type="linenumber">2194</context>
+          <context context-type="linenumber">2197</context>
         </context-group>
       </trans-unit>
       <trans-unit id="intervention.store.transitionFailed" datatype="html">

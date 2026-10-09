@@ -42,6 +42,8 @@ import type {
   InterventionOutput,
   InterventionRecurrenceOutput,
   InterventionRecurrenceFormValues,
+  MemberSelectOption,
+  SelectOption,
 } from '@features/organization/features/interventions/models';
 import { InterventionStore } from '@features/organization/features/interventions/state';
 import { InterventionBoardStore } from '@features/organization/features/interventions/state/intervention-board';
@@ -175,22 +177,6 @@ const renderPageTabs = (): HTMLElement => {
 };
 
 describe('InterventionsPage', () => {
-  it('prepares an equipment-scoped corrective intervention without creating any work implicitly', async () => {
-    const fixture = await createPage({
-      create: '1',
-      targetEquipment: '00000000-0000-4000-8000-000000000001',
-      workAction: 'repair',
-      siteContext: '00000000-0000-4000-8000-000000000002',
-    });
-    expect(fixture.componentInstance['duplicatePrefill']()).toEqual({
-      name: '',
-      type: 'corrective_maintenance',
-      priority: 'normal',
-      site: '/api/facilities/00000000-0000-4000-8000-000000000002',
-      responsible: '',
-    });
-    expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
-  });
   const mobile = signal(false);
   let fixture: ComponentFixture<InterventionsPage>;
   let mutationCallStates: WritableSignal<Record<string, CallState>>;
@@ -379,6 +365,57 @@ describe('InterventionsPage', () => {
       ],
     });
   });
+
+  it('prepares an equipment-scoped corrective intervention without creating any work implicitly', async () => {
+    const preparedFixture = await createPage({
+      create: '1',
+      targetEquipment: '00000000-0000-4000-8000-000000000001',
+      workAction: 'repair',
+      siteContext: '00000000-0000-4000-8000-000000000002',
+    });
+    expect(preparedFixture.componentInstance['duplicatePrefill']()).toEqual({
+      name: '',
+      type: 'corrective_maintenance',
+      priority: 'normal',
+      site: '/api/facilities/00000000-0000-4000-8000-000000000002',
+      responsible: '',
+    });
+    expect(preparedFixture.componentInstance['createSheetVisible']()).toBe(true);
+  });
+
+  it.each([
+    ['inspection', 'inspection_campaign'],
+    ['maintenance', 'preventive_maintenance'],
+    ['replacement', 'corrective_maintenance'],
+  ] as const)(
+    'prepares %s work from an equipment dossier and clears its route hints when cancelled',
+    async (workAction, type) => {
+      fixture = await createPage({
+        create: '1',
+        targetEquipment: '00000000-0000-4000-8000-000000000001',
+        workAction,
+      });
+      expect(fixture.componentInstance['duplicatePrefill']()).toMatchObject({ type, site: '' });
+      expect(fixture.componentInstance['createSheetVisible']()).toBe(true);
+      expect(create).not.toHaveBeenCalled();
+      expect(instantiateFromTemplate).not.toHaveBeenCalled();
+      navigate.mockClear();
+
+      fixture.componentInstance['onCreateSheetVisibleChange'](false);
+
+      expect(fixture.componentInstance['duplicatePrefill']()).toBeNull();
+      expect(fixture.componentInstance['createSheetVisible']()).toBe(false);
+      expect(navigate).toHaveBeenCalledExactlyOnceWith(
+        [],
+        expect.objectContaining({
+          queryParams: { targetEquipment: null, workAction: null, siteContext: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        }),
+      );
+      expect(create).not.toHaveBeenCalled();
+    },
+  );
 
   it('should load the list for the workspace on arrival', async () => {
     fixture = await createPage();
@@ -1054,6 +1091,58 @@ describe('InterventionsPage', () => {
   });
 
   describe('bulk transition', () => {
+    it('opens the publication workspace when a row requests publication', async () => {
+      fixture = await createPage();
+      const row = intervention({ id: 'publish-1', status: 'submitted', revision: 7 });
+
+      fixture.componentInstance['applyTransition']({ intervention: row, status: 'published' });
+
+      expect(navigate).toHaveBeenCalledExactlyOnceWith([
+        '/organizations',
+        'org-1',
+        'interventions',
+        'publish-1',
+      ]);
+      expect(transition).not.toHaveBeenCalled();
+    });
+
+    it('opens assignment from the selection bar and waits for the operator to confirm', async () => {
+      interventionList.set([intervention({ id: 'assign-1', status: 'draft' })]);
+      fixture = await createPage();
+      fixture.componentInstance['onSelectionChanged'](new Set(['assign-1']));
+
+      fixture.componentInstance['onSelectionActionRequested']('assign');
+
+      expect(fixture.componentInstance['pendingBulkAssignIds']()).toEqual(['assign-1']);
+      expect(fixture.componentInstance['assignRequest']()).toMatchObject({
+        interventionId: '',
+        interventionName: '1 intervention',
+        currentResponsible: null,
+      });
+      expect(assignResponsible).not.toHaveBeenCalled();
+    });
+
+    it('rejects selection commands when the viewer has no mutation permissions', async () => {
+      TestBed.overrideProvider(OrganizationPermissionService, {
+        useValue: { hasAnyPermission: (): boolean => false, hasPermission: (): boolean => false },
+      });
+      interventionList.set([
+        intervention({ id: 'locked-1', status: 'draft', allowedTransitions: ['planned'] }),
+      ]);
+      fixture = await createPage();
+      fixture.componentInstance['onSelectionChanged'](new Set(['locked-1']));
+
+      for (const command of ['assign', 'delete', 'transition:planned']) {
+        fixture.componentInstance['onSelectionActionRequested'](command);
+      }
+
+      expect(fixture.componentInstance['assignRequest']()).toBeNull();
+      expect(fixture.componentInstance['pendingBulkDeleteIds']()).toBeNull();
+      expect(assignResponsible).not.toHaveBeenCalled();
+      expect(deleteIntervention).not.toHaveBeenCalled();
+      expect(transition).not.toHaveBeenCalled();
+    });
+
     it('routes a selected status command from the floating bar through the existing transition handler', async () => {
       interventionList.set([
         intervention({
@@ -1272,6 +1361,25 @@ describe('InterventionsPage', () => {
         expect(feedbackError).toHaveBeenCalledWith('Export capped at 50,000 rows.'),
       );
     });
+
+    it.each(['<html>Export unavailable</html>', '{"message":"Export unavailable"}'])(
+      'reports the export failure when its blob has no API problem detail: %s',
+      async (body) => {
+        totalInterventions.set(2);
+        exportCsv.mockReturnValue(
+          throwError(() => new HttpErrorResponse({ status: 500, error: new Blob([body]) })),
+        );
+        fixture = await createPage();
+
+        fixture.componentInstance['exportCsv']();
+
+        await vi.waitFor(() =>
+          expect(feedbackError).toHaveBeenCalledExactlyOnceWith("Couldn't export interventions."),
+        );
+        expect(fixture.componentInstance['exportBusy']()).toBe(false);
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+      },
+    );
 
     it('should mark the export button busy and announce it while the export is in flight', async () => {
       totalInterventions.set(5);
@@ -2143,6 +2251,54 @@ describe('InterventionsPage', () => {
   });
 
   describe('list navigation and filter controls', () => {
+    it('passes site names and distinct member avatars to list rows from the planning catalogue', async () => {
+      const responsibleIri = '/api/organizations/org-1/members/responsible';
+      const participantIri = '/api/organizations/org-1/members/participant';
+      const responsible: MemberSelectOption = {
+        value: responsibleIri,
+        label: 'Alex Martin',
+        displayName: 'Alex Martin',
+        roleLabel: 'Technician',
+        avatarUrl: 'https://example.test/alex.png',
+        initials: 'AM',
+      };
+      const participant: MemberSelectOption = {
+        value: participantIri,
+        label: 'Sam Dupont',
+        displayName: 'Sam Dupont',
+        roleLabel: '',
+        avatarUrl: null,
+        initials: 'SD',
+      };
+      const planningOptions = TestBed.inject(InterventionPlanningOptionsStore) as unknown as {
+        sites: WritableSignal<readonly SelectOption[]>;
+        members: WritableSignal<readonly MemberSelectOption[]>;
+      };
+      planningOptions.sites.set([{ value: '/api/facilities/site-1', label: 'North workshop' }]);
+      planningOptions.members.set([responsible, participant]);
+      interventionList.set([
+        intervention({
+          site: '/api/facilities/site-1',
+          responsible: responsibleIri,
+          participants: [responsibleIri, participantIri, participantIri],
+        }),
+      ]);
+      fixture = await createPage();
+
+      expect(fixture.componentInstance['items']()[0]).toMatchObject({
+        siteName: 'North workshop',
+        responsible,
+        people: [
+          {
+            label: 'Alex Martin',
+            image: 'https://example.test/alex.png',
+            tooltip: 'Alex Martin · Technician',
+          },
+          { label: 'Sam Dupont', image: undefined, tooltip: 'Sam Dupont' },
+        ],
+      });
+    });
+
     it('marks only active work as overdue or due soon and keeps repeated people to one avatar', async () => {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();

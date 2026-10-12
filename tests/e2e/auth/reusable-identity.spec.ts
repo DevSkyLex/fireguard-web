@@ -58,12 +58,17 @@ for (const theme of ['light', 'dark'] as const) {
 
 test('blocks registration while the published password policy is unavailable and retries it', async ({
   page,
+  browserName,
 }) => {
   const api = new ApiMock(page);
   const auth = new AuthPages(page);
   await api.mockUnauthenticatedSession();
   let requests = 0;
   let registrations = 0;
+  let releasePolicy!: () => void;
+  const policyReady = new Promise<void>((resolve) => {
+    releasePolicy = resolve;
+  });
   await page.route('**/api/auth/register', async (route) => {
     registrations++;
     expect(route.request().postDataJSON().password).toBe('🧯abc');
@@ -80,6 +85,7 @@ test('blocks registration while the published password policy is unavailable and
   });
   await page.route('**/api/auth/password-policy', async (route) => {
     requests++;
+    if (requests > 1) await policyReady;
     await route.fulfill({
       status: requests === 1 ? 500 : 200,
       contentType: 'application/json',
@@ -111,7 +117,56 @@ test('blocks registration while the published password policy is unavailable and
   await auth.registerConfirmPassword.fill('🧯abc');
   await auth.registerSubmit.click();
   expect(registrations).toBe(0);
-  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  const loading = auth.registerRoot
+    .getByRole('status')
+    .filter({ hasText: 'Loading password requirements…' });
+  await expect(loading).toBeVisible();
+  await expect(loading).toHaveAttribute('aria-live', 'polite');
+  await expect(loading).toHaveAttribute('aria-atomic', 'true');
+  expect(await loading.ariaSnapshot()).toBe('- status: Loading password requirements…');
+  expect(await loading.evaluate((element) => element instanceof HTMLOutputElement)).toBe(true);
+  expect(await loading.evaluate((element) => element.tabIndex)).toBe(-1);
+  await auth.registerSubmit.click();
+  expect(registrations).toBe(0);
+  await expect(auth.registerPassword).toHaveValue('🧯abc');
+  await expect(auth.registerConfirmPassword).toHaveValue('🧯abc');
+  await auth.registerFirstName.focus();
+  await page.keyboard.press('Tab');
+  await expect(auth.registerLastName).toBeFocused();
+  if (browserName === 'chromium') {
+    const cdp = await page.context().newCDPSession(page);
+    try {
+      const { root } = await cdp.send('DOM.getDocument');
+      const { nodeId } = await cdp.send('DOM.querySelector', {
+        nodeId: root.nodeId,
+        selector: '#register-page app-password-policy-status output',
+      });
+      const { nodes } = await cdp.send('Accessibility.getPartialAXTree', {
+        nodeId,
+        fetchRelatives: false,
+      });
+      const status = nodes.find((node) => !node.ignored && node.role?.value === 'status');
+      expect(status?.properties).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: 'live',
+            value: expect.objectContaining({ value: 'polite' }),
+          }),
+          expect.objectContaining({
+            name: 'atomic',
+            value: expect.objectContaining({ value: true }),
+          }),
+        ]),
+      );
+    } finally {
+      await cdp.detach();
+    }
+  }
+  expect(registrations).toBe(0);
+  releasePolicy();
+  await expect(loading).toHaveCount(0);
   await expect(
     page.getByText('Password requirements are unavailable', { exact: true }),
   ).toHaveCount(0);

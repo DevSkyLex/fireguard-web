@@ -287,8 +287,7 @@ export const OrganizationSettingsStore = signalStore(
           map((params) => {
             const fileName = params.fileName ?? 'logo';
             if (
-              !logoIntent ||
-              logoIntent.organizationId !== params.organizationId ||
+              logoIntent?.organizationId !== params.organizationId ||
               logoIntent.file !== params.file ||
               logoIntent.fileName !== fileName ||
               logoIntent.generation !== params.context.generation

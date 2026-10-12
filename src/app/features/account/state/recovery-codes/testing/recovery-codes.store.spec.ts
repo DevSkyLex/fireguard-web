@@ -55,6 +55,19 @@ describe('RecoveryCodesStore', () => {
     );
   });
 
+  it('replaces a failed proof intention immediately when the session changes', () => {
+    service.generateRecoveryCodes.mockReturnValue(throwError(() => new Error('offline')));
+    store.generate('123456');
+    const previous = service.generateRecoveryCodes.mock.calls[0]?.[1];
+
+    revision.set(2);
+    store.generate('123456');
+
+    expect(previous).toEqual(expect.objectContaining({ idempotencyKey: expect.any(String) }));
+    expect(service.generateRecoveryCodes.mock.calls[1]?.[1]).not.toEqual(previous);
+    expect(store.codes()).toEqual([]);
+  });
+
   it('shows codes only in memory and clears them when dismissed', () => {
     service.generateRecoveryCodes.mockReturnValue(of(generated));
     store.generate('123456');

@@ -27,6 +27,10 @@ trigger and exposes its existing queue and retry actions in a drawer. Shell cons
 must keep this widget visible outside hidden mobile tools when work needs attention;
 the outbox remains device-global. Discard still requires its existing alert dialog.
 
+Background synchronization coalesces session, account and organization changes received while
+a replay is running. After that cycle finishes, it scans again with the current authorized
+context when online and visible. Context fences still prevent stale operations from being sent.
+
 ## Purpose
 
 Owns organization-scoped field intervention workflows.

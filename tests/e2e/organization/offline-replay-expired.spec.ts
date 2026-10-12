@@ -18,6 +18,9 @@ import {
   setAppOnline,
 } from '../support/helpers/offline';
 
+// Retain the first failed execution even when a subsequent retry succeeds.
+test.use({ trace: 'retain-on-failure' });
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const START = new Date('2026-09-16T10:00:00Z');

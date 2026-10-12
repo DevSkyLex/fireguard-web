@@ -12,6 +12,7 @@ describe('MessagingSyncCoordinatorService', () => {
   let online: WritableSignal<boolean>;
   let pendingCount: WritableSignal<number>;
   let replay: ReturnType<typeof vi.fn>;
+  let refresh: ReturnType<typeof vi.fn>;
   let revision: WritableSignal<number>;
   let authenticated: WritableSignal<boolean>;
   let profile: WritableSignal<ShellUserProfile | null>;
@@ -37,7 +38,7 @@ describe('MessagingSyncCoordinatorService', () => {
           useValue: {
             pendingCount,
             failedCount: signal(0),
-            refresh: vi.fn().mockResolvedValue(undefined),
+            refresh,
           },
         },
       ],
@@ -53,6 +54,7 @@ describe('MessagingSyncCoordinatorService', () => {
     organizationId = signal<string | null>('org-1');
     online = signal(true);
     pendingCount = signal(0);
+    refresh = vi.fn().mockResolvedValue(undefined);
     replay = vi
       .fn()
       .mockResolvedValue({ replayed: 0, deferred: 0, failed: 0 } satisfies MessagingReplayResult);
@@ -86,6 +88,63 @@ describe('MessagingSyncCoordinatorService', () => {
     authenticated.set(true);
     TestBed.tick();
     await vi.waitFor(() => expect(replay).toHaveBeenCalledTimes(1));
+  });
+
+  it('restores durable queue counters when the authenticated owner arrives after startup', async () => {
+    const persistedRows = [{ id: 'saved-message' }];
+    authenticated.set(false);
+    profile.set(null);
+    refresh.mockImplementation(async () => {
+      if (!authenticated() || !(profile()?.id ?? profile()?.sub))
+        throw new DOMException('Offline operation ownership changed.', 'AbortError');
+      pendingCount.set(persistedRows.length);
+    });
+    const coordinator = build();
+    TestBed.runInInjectionContext(() => coordinator.start());
+    TestBed.tick();
+    expect(pendingCount()).toBe(0);
+    expect(refresh).not.toHaveBeenCalled();
+    expect(replay).not.toHaveBeenCalled();
+
+    authenticated.set(true);
+    TestBed.tick();
+    expect(refresh).not.toHaveBeenCalled();
+
+    profile.set({ name: 'Profile awaiting its identifier' });
+    TestBed.tick();
+    expect(refresh).not.toHaveBeenCalled();
+
+    profile.set({ sub: 'account-a' });
+    TestBed.tick();
+    await vi.waitFor(() => expect(replay).toHaveBeenCalledTimes(1));
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(pendingCount()).toBe(1);
+  });
+
+  it('refreshes owner-bound counters after session replacement without following count changes', async () => {
+    online.set(false);
+    const coordinator = build();
+    TestBed.runInInjectionContext(() => coordinator.start());
+    TestBed.tick();
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    revision.set(2);
+    TestBed.tick();
+    expect(refresh).toHaveBeenCalledTimes(2);
+
+    profile.set({ id: 'account-b' });
+    TestBed.tick();
+    expect(refresh).toHaveBeenCalledTimes(3);
+
+    pendingCount.set(2);
+    TestBed.tick();
+    expect(refresh).toHaveBeenCalledTimes(3);
+    expect(replay).not.toHaveBeenCalled();
+
+    online.set(true);
+    TestBed.tick();
+    await vi.waitFor(() => expect(replay).toHaveBeenCalledTimes(1));
+    expect(refresh).toHaveBeenCalledTimes(3);
   });
 
   it.each(['session', 'organization'])(

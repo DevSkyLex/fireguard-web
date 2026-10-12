@@ -94,6 +94,20 @@ export class InterventionSyncCoordinatorService {
   private readonly syncingState: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
+   * Property backgroundReplayRequested
+   *
+   * @description
+   * Coalesces background triggers received during a running cycle so the latest context gets a
+   * fresh replay after the current cycle finishes.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
+  private backgroundReplayRequested: boolean = false;
+
+  /**
    * Property blockedOperationsState
    * @readonly
    *
@@ -303,7 +317,10 @@ export class InterventionSyncCoordinatorService {
       this.session.sessionRevision();
       this.organization.selectedOrganizationId();
       if (this.connectivity.online() && this.visibility() === 'visible') {
-        untracked(() => void this.syncAll());
+        untracked(() => {
+          if (this.syncing()) this.backgroundReplayRequested = true;
+          else void this.syncAll();
+        });
       }
     });
   }
@@ -365,7 +382,8 @@ export class InterventionSyncCoordinatorService {
    * offline state. Sets {@link syncing} for the duration and updates
    * {@link blockedOperations} and {@link problem} on completion. Stamps
    * {@link lastSyncedAt} only when the cycle completes clean, that is with
-   * no blocked operations and no problem.
+   * no blocked operations and no problem. A background trigger received while busy schedules
+   * one fresh cycle for the current session and workspace when still online and visible.
    *
    * @access public
    * @since 1.0.0
@@ -404,6 +422,12 @@ export class InterventionSyncCoordinatorService {
         this.lastSyncedAtState.set(new Date());
       }
       this.syncingState.set(false);
+      if (this.backgroundReplayRequested) {
+        this.backgroundReplayRequested = false;
+        if (this.started() && this.connectivity.online() && this.visibility() === 'visible') {
+          await this.syncAll();
+        }
+      }
     }
   }
 

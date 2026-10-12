@@ -584,6 +584,9 @@ Restoration preserves client IDs/timestamps and never overwrites a confirmed mes
 server pagination totals. Late storage responses are fenced by account and conversation.
 
 The messaging database binds to the canonical profile `id`, retaining `sub` as a legacy fallback.
+Queue counters refresh when authentication, that owner and the current session revision become
+available. This also restores pending writes after a reload where the profile arrives late,
+without relying on an existing pending count or a connectivity transition.
 
 ## Public entry points
 

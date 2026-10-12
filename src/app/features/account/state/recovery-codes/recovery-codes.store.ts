@@ -75,7 +75,7 @@ export const RecoveryCodesStore = signalStore(
             exhaustMap((code) => {
               const currentDisplay = displayRevision;
               const currentSession = session.sessionRevision();
-              if (!attempt || attempt.code !== code || attempt.scope !== currentSession)
+              if (attempt?.code !== code || attempt.scope !== currentSession)
                 attempt = { code, scope: currentSession, operation: operations.create() };
               patchState(store, { codes: [], generateCallState: pendingCallState() });
               return service

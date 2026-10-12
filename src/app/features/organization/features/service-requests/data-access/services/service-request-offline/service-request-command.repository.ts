@@ -1,5 +1,6 @@
 import { effect, inject, Service } from '@angular/core';
 import { IndexedDbService, type IndexedDbSchema } from '@core/indexed-db';
+import { WriteOperationService, type WriteOperation } from '@core/request-state';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import type { ServiceRequestConversionCommand } from '@features/organization/features/service-requests/models';
 import { ORGANIZATION_PERMISSION } from '@features/organization/models';
@@ -17,6 +18,20 @@ import {
  */
 @Service()
 export class ServiceRequestCommandRepository extends IndexedDbService {
+  /**
+   * Property writeOperations
+   * @readonly
+   *
+   * @description
+   * Mints receipt identities inside the owning IndexedDB transaction.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WriteOperationService}
+   */
+  private readonly writeOperations: WriteOperationService = inject(WriteOperationService);
+
   //#region Properties
   /**
    * Property schema
@@ -245,12 +260,14 @@ export class ServiceRequestCommandRepository extends IndexedDbService {
    * @param {ServiceRequestConversionCommand} command - Original accepted conversion.
    * @param {number} revision - Authentication generation captured before acceptance.
    *
-   * @returns {Promise<void>} Durable acceptance or an explicit storage/ownership failure.
+   * @returns {Promise<WriteOperation>} Committed receipt identity or an explicit storage/ownership
+   *   failure.
    */
   public retain(
     command: ServiceRequestConversionCommand,
     revision: number = this.sessionRevision(),
-  ): Promise<void> {
+  ): Promise<WriteOperation> {
+    const frozen = structuredClone(command);
     this.observeContext();
     const current = () => this.isCurrent(command.userId, command.organizationId, revision);
     const retained = this.writes
@@ -261,19 +278,43 @@ export class ServiceRequestCommandRepository extends IndexedDbService {
         if (!current()) throw new Error('Maintenance conversion ownership changed.');
         await this.ensureOwnerBound(command.userId);
         if (!current()) throw new Error('Maintenance conversion ownership changed.');
-        const id: string = command.input.clientOperationId;
-        const previous = await this.get<ServiceRequestConversionCommand>('commands', id);
-        if (!current()) throw new Error('Maintenance conversion ownership changed.');
-        if (previous) {
-          if (JSON.stringify(previous) !== JSON.stringify(command))
-            throw new Error(
-              'Maintenance conversion UUID already belongs to a different intention.',
-            );
-          return;
-        }
-        await this.put('commands', id, command, current);
+        const id: string = frozen.input.clientOperationId;
+        let identity: WriteOperation | null = null;
+        await this.updateTransaction(
+          { commands: [id] },
+          (values) => {
+            const previous = values['commands']?.[id] as
+              | ServiceRequestConversionCommand
+              | null
+              | undefined;
+            if (
+              previous &&
+              JSON.stringify({ ...previous, idempotencyKey: undefined }) !==
+                JSON.stringify({ ...frozen, idempotencyKey: undefined })
+            )
+              throw new Error(
+                'Maintenance conversion UUID already belongs to a different intention.',
+              );
+            identity = {
+              idempotencyKey:
+                previous?.idempotencyKey ||
+                frozen.idempotencyKey ||
+                this.writeOperations.create().idempotencyKey,
+            };
+            return previous?.idempotencyKey
+              ? { commands: [] }
+              : { commands: [{ key: id, value: { ...frozen, ...identity } }] };
+          },
+          current,
+        );
+        if (!current() || identity === null)
+          throw new Error('Maintenance conversion ownership changed.');
+        return identity;
       });
-    this.writes = retained.catch(() => undefined);
+    this.writes = retained.then(
+      () => undefined,
+      () => undefined,
+    );
     return retained;
   }
 

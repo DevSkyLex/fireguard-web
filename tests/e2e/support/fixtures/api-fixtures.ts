@@ -53,11 +53,11 @@ export interface RegisterOutputFixture {
   readonly '@type': string;
   readonly success: boolean;
   readonly message: string;
-  readonly challengeToken: string | null;
-  readonly maskedRecipient: string | null;
-  readonly expiresAt: string | null;
-  readonly maxAttempts: number | null;
-  readonly canResendIn: number | null;
+  readonly challengeToken?: string | null;
+  readonly maskedRecipient?: string | null;
+  readonly expiresAt?: string | null;
+  readonly maxAttempts?: number | null;
+  readonly canResendIn?: number | null;
 }
 
 /** The registration request's response — carries the challenge token the verify step needs. */

@@ -80,6 +80,18 @@ export interface MessagingOutboxPayloadMap {
  */
 export interface MessagingOutboxOperationFor<Type extends MessagingOutboxType> {
   /**
+   * Property idempotencyKey
+   * @readonly
+   *
+   * @description
+   * Persisted HTTP receipt identity, distinct from the row id and client-minted message id.
+   * Legacy rows acquire it atomically before their first replay.
+   *
+   * @type {string}
+   */
+  readonly idempotencyKey?: string;
+
+  /**
    * Property id
    * @readonly
    *

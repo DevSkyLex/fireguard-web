@@ -244,9 +244,10 @@ export class ApiMock {
 
   /** Completes a provider callback through the existing session/MFA response contract. */
   public async mockFederatedLoginComplete(
-    provider: 'google' | 'microsoft',
+    provider: string,
     response: LoginOutputFixture,
   ): Promise<void> {
+    if (!/^[a-z][a-z0-9_-]{0,19}$/.test(provider)) throw new Error('Invalid provider fixture ID.');
     await this.installSafetyNet();
     await this.page.route(
       new RegExp(`/api/auth/federated/${provider}/complete(\\?.*)?$`),
@@ -488,6 +489,21 @@ export class ApiMock {
         title: message,
       });
       expect.soft(false, `Hermetic safety net: ${message}`).toBe(true);
+    });
+    await this.page.route(`${API_BASE_URL}/api/auth/password-policy`, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        '@id': '/api/auth/password-policy',
+        '@type': 'PasswordPolicy',
+        minimumLength: 8,
+        maximumLength: 128,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireDigit: true,
+        specialCharacters: '@$!%*?&#',
+        allowedInitialCharacters:
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@$!%*?&#',
+      });
     });
     await this.page.route('http://localhost:3000/.well-known/mercure**', async (route) => {
       await route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' });
@@ -3981,6 +3997,15 @@ export class ApiMock {
    */
   public async mockAccountVisualReads(): Promise<void> {
     await this.installSafetyNet();
+    await this.page.route(`${API_BASE_URL}/api/otp/totp/recovery-codes`, async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      await fulfillJson(route, 200, {
+        '@id': '/api/otp/totp/recovery-codes',
+        '@type': 'RecoveryStatus',
+        remainingCount: 0,
+        generatedAt: null,
+      });
+    });
     for (const path of [
       'sessions',
       'trusted-devices',

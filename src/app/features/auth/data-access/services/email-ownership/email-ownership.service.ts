@@ -1,6 +1,7 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
+import type { ApiRequestOptions } from '@core/api/models';
 import type { EmailOwnershipOutput, EmailOwnershipChallengeOutput } from '@features/auth/models';
 
 /**
@@ -40,10 +41,16 @@ export class EmailOwnershipService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<EmailOwnershipChallengeOutput>} Transient challenge and resend delay.
    */
-  public start(): Observable<EmailOwnershipChallengeOutput> {
-    return this.postAction<EmailOwnershipChallengeOutput>('/api/auth/email-ownership/start');
+  public start(options?: ApiRequestOptions): Observable<EmailOwnershipChallengeOutput> {
+    return this.postAction<EmailOwnershipChallengeOutput>(
+      '/api/auth/email-ownership/start',
+      options,
+    );
   }
 
   /**
@@ -58,13 +65,20 @@ export class EmailOwnershipService extends HydraApiService {
    *
    * @param {string} challengeToken - Transient OTP challenge.
    * @param {string} code - Verification digits.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
    *
    * @returns {Observable<EmailOwnershipOutput>} Confirmed mailbox status.
    */
-  public confirm(challengeToken: string, code: string): Observable<EmailOwnershipOutput> {
+  public confirm(
+    challengeToken: string,
+    code: string,
+    options?: ApiRequestOptions,
+  ): Observable<EmailOwnershipOutput> {
     return this.post<{ challengeToken: string; code: string }, EmailOwnershipOutput>(
       '/api/auth/email-ownership/confirm',
       { challengeToken, code },
+      options,
     );
   }
 }

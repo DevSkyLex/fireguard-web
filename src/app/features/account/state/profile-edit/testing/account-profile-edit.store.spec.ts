@@ -88,7 +88,10 @@ describe('AccountProfileEditStore', () => {
 
     store.save(INPUT);
 
-    expect(mockUserProfileService.updateCurrentProfile).toHaveBeenCalledWith(INPUT);
+    expect(mockUserProfileService.updateCurrentProfile).toHaveBeenCalledWith(
+      INPUT,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(mockUserStore.setProfile).toHaveBeenCalledWith(USER_PROFILE_OUTPUT);
     expect(mockUserStore.reload).not.toHaveBeenCalled();
     expect(store.isSaving()).toBe(false);
@@ -114,7 +117,11 @@ describe('AccountProfileEditStore', () => {
 
     store.uploadAvatar(file);
 
-    expect(mockUserProfileService.uploadCurrentAvatar).toHaveBeenCalledWith(file, 'avatar.png');
+    expect(mockUserProfileService.uploadCurrentAvatar).toHaveBeenCalledWith(
+      file,
+      'avatar.png',
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(mockUserStore.setProfile).toHaveBeenCalledWith({
       ...USER_PROFILE_OUTPUT,
       avatarUrl: USER_OUTPUT.avatarUrl,

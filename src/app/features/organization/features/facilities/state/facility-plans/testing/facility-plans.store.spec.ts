@@ -1,8 +1,9 @@
-import { PLATFORM_ID } from '@angular/core';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import type { ApiError, HydraCollection } from '@core/api/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import {
@@ -109,6 +110,8 @@ const facilityEquipment = (overrides: Partial<EquipmentOutput> = {}): EquipmentO
 });
 
 describe('FacilityPlansStore', () => {
+  const sessionRevision = signal(1);
+  const authenticated = signal(true);
   let store: FacilityPlansStoreType;
   let mockService: {
     list: ReturnType<typeof vi.fn>;
@@ -139,6 +142,8 @@ describe('FacilityPlansStore', () => {
   }
 
   beforeEach(() => {
+    sessionRevision.set(1);
+    authenticated.set(true);
     const emptyCollection = { '@id': '', '@type': 'Collection', member: [], totalItems: 0 };
 
     mockService = {
@@ -168,6 +173,10 @@ describe('FacilityPlansStore', () => {
     TestBed.configureTestingModule({
       providers: [
         FacilityPlansStore,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision, isAuthenticated: authenticated },
+        },
         { provide: FacilityAttachmentService, useValue: mockService },
         { provide: FacilityService, useValue: mockFacilityService },
         { provide: EquipmentService, useValue: mockEquipmentService },
@@ -230,6 +239,7 @@ describe('FacilityPlansStore', () => {
         file,
         'ground-floor.png',
         'floor_plan',
+        { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
       );
       expect(store.orderedPlans().map((item: FacilityAttachmentOutput) => item.id)).toEqual([
         'plan-new',
@@ -249,6 +259,88 @@ describe('FacilityPlansStore', () => {
   });
 
   describe('setPrimary', () => {
+    it('retains an upload key after response loss and list refresh but separates files with identical metadata', () => {
+      const file = new File(['abc'], 'same.png', { type: 'image/png', lastModified: 1 });
+      const replacement = new File(['def'], 'same.png', { type: 'image/png', lastModified: 1 });
+      mockService.upload.mockReturnValue(throwError(() => apiError(0, 'Lost reply')));
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      store.upload({ facilityId: 'facility-1', file });
+      const first = mockService.upload.mock.calls[0]?.[4];
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      store.upload({ facilityId: 'facility-1', file });
+      expect(mockService.upload.mock.calls[1]?.[4]).toEqual(first);
+      store.upload({ facilityId: 'facility-1', file: replacement });
+      expect(replacement.size).toBe(file.size);
+      expect(mockService.upload.mock.calls[2]?.[4]).not.toEqual(first);
+    });
+
+    it('releases upload identities after confirmation, definitive rejection and session replacement', () => {
+      const file = new File(['abc'], 'same.png', { type: 'image/png' });
+      mockService.upload.mockReturnValueOnce(of(plan()));
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      store.upload({ facilityId: 'facility-1', file });
+      mockService.upload.mockReturnValue(throwError(() => apiError(422, 'Rejected file')));
+      store.upload({ facilityId: 'facility-1', file });
+      store.upload({ facilityId: 'facility-1', file });
+      const keys = mockService.upload.mock.calls.map((call) => call[4]?.idempotencyKey);
+      expect(new Set(keys).size).toBe(3);
+      sessionRevision.set(2);
+      TestBed.tick();
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      store.upload({ facilityId: 'facility-1', file });
+      expect(keys).not.toContain(mockService.upload.mock.calls[3]?.[4]?.idempotencyKey);
+      authenticated.set(false);
+      TestBed.tick();
+      store.upload({ facilityId: 'facility-1', file });
+      expect(mockService.upload).toHaveBeenCalledTimes(4);
+    });
+
+    it('keeps unchanged outline and pin HTTP keys after response loss and replaces edited payloads', () => {
+      loadReadyPlan();
+      mockFacilityService.setPlanGeometry.mockReturnValue(
+        throwError(() => apiError(0, 'Lost reply')),
+      );
+      mockEquipmentService.setPlanPosition.mockReturnValue(
+        throwError(() => apiError(0, 'Lost reply')),
+      );
+      const points = [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+      ] as const;
+      store.saveZoneGeometryFromDialog('zone-1', points);
+      store.saveZoneGeometryFromDialog('zone-1', points);
+      expect(mockFacilityService.setPlanGeometry.mock.calls[1]?.[3]).toEqual(
+        mockFacilityService.setPlanGeometry.mock.calls[0]?.[3],
+      );
+      store.saveZoneGeometryFromDialog('zone-1', [
+        [0, 0],
+        [1, 0],
+        [0.5, 1],
+      ]);
+      expect(mockFacilityService.setPlanGeometry.mock.calls[2]?.[3]).not.toEqual(
+        mockFacilityService.setPlanGeometry.mock.calls[0]?.[3],
+      );
+      store.movePin('equipment-1', [0.1, 0.2]);
+      store.movePin('equipment-1', [0.1, 0.2]);
+      expect(mockEquipmentService.setPlanPosition.mock.calls[1]?.[3]).toEqual(
+        mockEquipmentService.setPlanPosition.mock.calls[0]?.[3],
+      );
+      store.movePin('equipment-1', [0.3, 0.2]);
+      expect(mockEquipmentService.setPlanPosition.mock.calls[2]?.[3]).not.toEqual(
+        mockEquipmentService.setPlanPosition.mock.calls[0]?.[3],
+      );
+    });
+
+    it('suppresses an old-session upload response before it can populate the current plans', () => {
+      const response = new Subject<FacilityAttachmentOutput>();
+      mockService.upload.mockReturnValue(response);
+      store.load({ facilityId: 'facility-1', organizationId: 'org-1' });
+      store.upload({ facilityId: 'facility-1', file: new File(['abc'], 'same.png') });
+      sessionRevision.set(2);
+      response.next(plan());
+      expect(store.orderedPlans()).toEqual([]);
+    });
     it('swaps the primary flag between the previous and the new plan', () => {
       mockService.list.mockReturnValue(
         of({
@@ -609,14 +701,19 @@ describe('FacilityPlansStore', () => {
       store.addDraftVertex([1, 1]);
       store.finishDrawZone();
 
-      expect(mockFacilityService.setPlanGeometry).toHaveBeenCalledWith('org-1', 'zone-1', {
-        attachmentId: 'plan-1',
-        points: [
-          [0, 0],
-          [1, 0],
-          [1, 1],
-        ],
-      });
+      expect(mockFacilityService.setPlanGeometry).toHaveBeenCalledWith(
+        'org-1',
+        'zone-1',
+        {
+          attachmentId: 'plan-1',
+          points: [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+          ],
+        },
+        { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
+      );
       expect(store.saveZoneGeometryCallState().status).toBe('success');
       expect(store.editMode()).toBe('none');
       expect(store.draftPoints()).toEqual([]);
@@ -671,10 +768,15 @@ describe('FacilityPlansStore', () => {
 
       store.clearZoneGeometry('zone-1');
 
-      expect(mockFacilityService.setPlanGeometry).toHaveBeenCalledWith('org-1', 'zone-1', {
-        attachmentId: null,
-        points: null,
-      });
+      expect(mockFacilityService.setPlanGeometry).toHaveBeenCalledWith(
+        'org-1',
+        'zone-1',
+        {
+          attachmentId: null,
+          points: null,
+        },
+        { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
+      );
     });
   });
 
@@ -702,11 +804,16 @@ describe('FacilityPlansStore', () => {
 
       store.placePin([0.4, 0.6]);
 
-      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith('org-1', 'equipment-1', {
-        attachmentId: 'plan-1',
-        x: 0.4,
-        y: 0.6,
-      });
+      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith(
+        'org-1',
+        'equipment-1',
+        {
+          attachmentId: 'plan-1',
+          x: 0.4,
+          y: 0.6,
+        },
+        { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
+      );
       expect(store.savePinPositionCallState().status).toBe('success');
       expect(store.editMode()).toBe('none');
     });
@@ -725,11 +832,16 @@ describe('FacilityPlansStore', () => {
 
       store.movePin('equipment-2', [0.1, 0.9]);
 
-      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith('org-1', 'equipment-2', {
-        attachmentId: 'plan-1',
-        x: 0.1,
-        y: 0.9,
-      });
+      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith(
+        'org-1',
+        'equipment-2',
+        {
+          attachmentId: 'plan-1',
+          x: 0.1,
+          y: 0.9,
+        },
+        { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
+      );
     });
 
     it('removePinFromPlan writes null attachment and coordinates', () => {
@@ -738,11 +850,16 @@ describe('FacilityPlansStore', () => {
 
       store.removePinFromPlan('equipment-1');
 
-      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith('org-1', 'equipment-1', {
-        attachmentId: null,
-        x: null,
-        y: null,
-      });
+      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith(
+        'org-1',
+        'equipment-1',
+        {
+          attachmentId: null,
+          x: null,
+          y: null,
+        },
+        { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
+      );
     });
 
     it('rewords a 409 into the assignment constraint message', () => {
@@ -806,11 +923,16 @@ describe('FacilityPlansStore', () => {
       overlayB.next(overlay({ attachmentId: 'plan-2' }));
       expect(store.selectedPlanReady()).toBe(true);
       store.movePin('equipment-1', [0.2, 0.3]);
-      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith('org-1', 'equipment-1', {
-        attachmentId: 'plan-2',
-        x: 0.2,
-        y: 0.3,
-      });
+      expect(mockEquipmentService.setPlanPosition).toHaveBeenCalledWith(
+        'org-1',
+        'equipment-1',
+        {
+          attachmentId: 'plan-2',
+          x: 0.2,
+          y: 0.3,
+        },
+        { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
+      );
     });
 
     it('cancels A reads through A-B-A and cancels reads when selection disappears', () => {
@@ -1442,10 +1564,15 @@ describe('FacilityPlansStore', () => {
     store.saveZoneGeometryFromDialog('zone-1', points);
     store.saveZoneGeometryFromDialog('zone-1', points);
 
-    expect(mockFacilityService.setPlanGeometry).toHaveBeenCalledExactlyOnceWith('org-1', 'zone-1', {
-      attachmentId: 'plan-1',
-      points,
-    });
+    expect(mockFacilityService.setPlanGeometry).toHaveBeenCalledExactlyOnceWith(
+      'org-1',
+      'zone-1',
+      {
+        attachmentId: 'plan-1',
+        points,
+      },
+      { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
+    );
     expect(store.isSavingZoneGeometry()).toBe(true);
     pending.next();
     pending.complete();
@@ -1491,6 +1618,10 @@ describe('FacilityPlansStore', () => {
     TestBed.configureTestingModule({
       providers: [
         FacilityPlansStore,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision, isAuthenticated: authenticated },
+        },
         { provide: PLATFORM_ID, useValue: 'server' },
         { provide: FacilityAttachmentService, useValue: mockService },
         { provide: FacilityService, useValue: mockFacilityService },
@@ -1574,14 +1705,19 @@ describe('FacilityPlansStore', () => {
     store.addDraftVertex([0.8, 0.2]);
     store.addDraftVertex([0.8, 0.9]);
     store.finishDrawZone();
-    expect(mockFacilityService.setPlanGeometry).toHaveBeenLastCalledWith('org-1', 'facility-1', {
-      attachmentId: 'plan-1',
-      points: [
-        [0.1, 0.2],
-        [0.8, 0.2],
-        [0.8, 0.9],
-      ],
-    });
+    expect(mockFacilityService.setPlanGeometry).toHaveBeenLastCalledWith(
+      'org-1',
+      'facility-1',
+      {
+        attachmentId: 'plan-1',
+        points: [
+          [0.1, 0.2],
+          [0.8, 0.2],
+          [0.8, 0.9],
+        ],
+      },
+      { idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/) },
+    );
   });
 
   it('preserves measured points on a calibration conflict and retries with the refreshed revision', () => {

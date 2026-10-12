@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { Events } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
-import type { HydraCollection, HydraItem } from '@core/api/models';
+import type { ApiRequestOptions, HydraCollection, HydraItem } from '@core/api/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { WebhookService } from '@features/organization/features/webhooks/data-access';
 import type {
@@ -31,8 +32,16 @@ const collection = <T extends HydraItem>(
 describe('WebhookSubscriptionsStore', () => {
   const api = { list: vi.fn(), deliveries: vi.fn(), events: vi.fn(), mutate: vi.fn() };
   const permissions = { hasPermission: vi.fn() };
+  const sessionRevision = signal(0);
+  const isAuthenticated = signal(true);
+  const lastKey = (): string | undefined => {
+    const options = api.mutate.mock.calls.at(-1)?.[2] as ApiRequestOptions | undefined;
+    return options?.idempotencyKey;
+  };
   beforeEach(() => {
     vi.resetAllMocks();
+    sessionRevision.set(0);
+    isAuthenticated.set(true);
     api.list.mockReturnValue(of(collection([endpoint], 41)));
     api.deliveries.mockReturnValue(of(collection([], 61)));
     api.events.mockReturnValue(
@@ -51,6 +60,7 @@ describe('WebhookSubscriptionsStore', () => {
     TestBed.configureTestingModule({
       providers: [
         WebhookSubscriptionsStore,
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision, isAuthenticated } },
         { provide: WebhookService, useValue: api },
         { provide: OrganizationPermissionService, useValue: permissions },
       ],
@@ -170,4 +180,149 @@ describe('WebhookSubscriptionsStore', () => {
     store.mutate({ kind: 'ping', id: 'hook' });
     expect(store.deliveryEntities()[0]?.status).toBe('pending');
   });
+  it('reuses an unchanged create intention after a lost response and cleared feedback', () => {
+    const store = TestBed.inject(WebhookSubscriptionsStore);
+    store.load({ organizationId: 'org', page: 1 });
+    api.mutate.mockReturnValue(throwError(() => new Error('response lost')));
+    const input = {
+      url: endpoint.url,
+      description: endpoint.description,
+      eventTypes: endpoint.eventTypes,
+      isActive: false,
+    };
+    store.mutate({ kind: 'create', input });
+    const key = lastKey();
+    expect(key).toMatch(/^[\da-f-]{36}$/);
+    store.clearMutationFeedback();
+    store.load({ organizationId: 'org', page: 1 });
+    store.mutate({
+      kind: 'create',
+      input: { ...input, isActive: true },
+    });
+    expect(api.mutate).toHaveBeenCalledTimes(2);
+    expect(lastKey()).toBe(key);
+  });
+  it('starts a new create intention when the actual wire payload changes', () => {
+    const store = TestBed.inject(WebhookSubscriptionsStore);
+    store.load({ organizationId: 'org', page: 1 });
+    api.mutate.mockReturnValue(throwError(() => new Error('response lost')));
+    const input = {
+      url: endpoint.url,
+      description: endpoint.description,
+      eventTypes: endpoint.eventTypes,
+    };
+    store.mutate({ kind: 'create', input });
+    const key = lastKey();
+    store.mutate({ kind: 'create', input: { ...input, url: 'https://example.com/changed' } });
+    expect(lastKey()).not.toBe(key);
+  });
+  it('keeps a rotation retry identity until success and then starts a fresh rotation', () => {
+    const store = TestBed.inject(WebhookSubscriptionsStore);
+    store.load({ organizationId: 'org', page: 1 });
+    api.mutate.mockReturnValueOnce(throwError(() => new Error('response lost')));
+    api.mutate.mockReturnValue(of({ ...endpoint, secret: 'replayed-secret' }));
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    const key = lastKey();
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    expect(lastKey()).toBe(key);
+    expect(store.mutationCallState().status).toBe('success');
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    expect(lastKey()).not.toBe(key);
+    expect(api.mutate).toHaveBeenCalledTimes(3);
+  });
+  it('retains an expired secret replay identity without automatically repeating the write', () => {
+    const store = TestBed.inject(WebhookSubscriptionsStore);
+    store.load({ organizationId: 'org', page: 1 });
+    api.mutate.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: {
+              status: 409,
+              title: 'Replay expired',
+              detail: 'The completed operation cannot disclose its secret again.',
+              code: 'idempotency_replay_expired',
+              operationCompleted: true,
+            },
+          }),
+      ),
+    );
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    const key = lastKey();
+    expect(api.mutate).toHaveBeenCalledTimes(1);
+    expect(store.mutationCallState().error).not.toBeNull();
+    store.clearMutationFeedback();
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    expect(lastKey()).toBe(key);
+    expect(api.mutate).toHaveBeenCalledTimes(2);
+  });
+  it('releases unresolved keys on organization round trips and session replacement', () => {
+    const store = TestBed.inject(WebhookSubscriptionsStore);
+    api.mutate.mockReturnValue(throwError(() => new Error('response lost')));
+    store.load({ organizationId: 'org', page: 1 });
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    const originalKey = lastKey();
+    store.load({ organizationId: 'other', page: 1 });
+    store.load({ organizationId: 'org', page: 1 });
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    const newScopeKey = lastKey();
+    expect(newScopeKey).not.toBe(originalKey);
+    sessionRevision.set(1);
+    store.load({ organizationId: 'org', page: 1 });
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    expect(lastKey()).not.toBe(newScopeKey);
+  });
+  it('fences a late secret immediately on session replacement before the reset effect runs', () => {
+    const store = TestBed.inject(WebhookSubscriptionsStore);
+    const request = new Subject<WebhookSecretOutput>();
+    api.mutate.mockReturnValue(request);
+    const received = vi.fn();
+    const subscription = TestBed.inject(Events)
+      .on(webhookSubscriptionsEvents.completed)
+      .subscribe(received);
+    store.load({ organizationId: 'org', page: 1 });
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    sessionRevision.set(1);
+    request.next({ ...endpoint, secret: 'previous-session-secret' });
+    request.complete();
+    expect(received).not.toHaveBeenCalled();
+    TestBed.tick();
+    expect(store.organizationId()).toBeNull();
+    expect(store.subscriptionEntities()).toEqual([]);
+    expect(store.mutationCallState().status).toBe('idle');
+    subscription.unsubscribe();
+  });
+  it('clears private reads and fences a late error when the session ends', () => {
+    const store = TestBed.inject(WebhookSubscriptionsStore);
+    const request = new Subject<WebhookSecretOutput>();
+    api.mutate.mockReturnValue(request);
+    store.load({ organizationId: 'org', page: 1 });
+    store.loadCatalog();
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    isAuthenticated.set(false);
+    request.error(new Error('obsolete error'));
+    TestBed.tick();
+    expect(store.subscriptionEntities()).toEqual([]);
+    expect(store.deliveryEntities()).toEqual([]);
+    expect(store.events()).toEqual([]);
+    expect(store.mutationCallState().status).toBe('idle');
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    expect(api.mutate).toHaveBeenCalledTimes(1);
+  });
+  it('releases pending write subscriptions when the route store is destroyed', () => {
+    const store = TestBed.inject(WebhookSubscriptionsStore);
+    const request = new Subject<WebhookSecretOutput>();
+    api.mutate.mockReturnValue(request);
+    const received = vi.fn();
+    TestBed.inject(Events).on(webhookSubscriptionsEvents.completed).subscribe(received);
+    store.load({ organizationId: 'org', page: 1 });
+    store.mutate({ kind: 'rotate', id: 'hook' });
+    TestBed.resetTestingModule();
+    expect(request.observed).toBe(false);
+    request.next({ ...endpoint, secret: 'destroyed-route-secret' });
+    expect(received).not.toHaveBeenCalled();
+  });
 });
+import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';

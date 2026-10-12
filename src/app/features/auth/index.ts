@@ -23,3 +23,9 @@ export type {
 } from './models';
 export { FederatedAuthStore } from './state';
 export { resolveFederatedAuthErrorMessage } from './utils';
+
+export { PasswordPolicyStore } from './state/password-policy';
+export type { PasswordPolicyOutput } from './models/password-policy';
+export { PasswordPolicyStatus } from './ui/components/password-policy-status';
+
+export { RecoveryCodeForm } from './ui/forms/recovery-code-form';

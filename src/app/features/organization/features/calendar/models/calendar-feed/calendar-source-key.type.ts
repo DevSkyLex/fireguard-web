@@ -2,11 +2,11 @@
  * Type CalendarSourceKey
  *
  * @description
- * The four sources the backend's unified calendar feed merges — and the only
- * four: standalone events (this feed's own data), inspections by
- * `performedAt`, interventions by `plannedStartAt`/`dueAt`, and preventive
- * maintenance by `nextDueAt`. Literals match the API byte for byte.
+ * Identifier of a source contributed to the backend's unified calendar feed.
+ * FireGuard's source literals remain valid; historical and additional sources also render safely.
  *
  * @since 1.0.0
+ *
+ * @type {string}
  */
-export type CalendarSourceKey = 'calendar_event' | 'inspection' | 'intervention' | 'maintenance';
+export type CalendarSourceKey = string;

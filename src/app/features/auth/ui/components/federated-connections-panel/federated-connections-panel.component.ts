@@ -12,13 +12,20 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideKeyRound, lucideLink, lucideUnlink } from '@ng-icons/lucide';
+import {
+  lucideCheck,
+  lucideKeyRound,
+  lucideLink,
+  lucideUnlink,
+  lucideGlobe,
+} from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { FEDERATED_PROVIDER_ICONS } from '@features/auth/constants';
+import { FEDERATED_PROVIDER_ICONS, federatedProviderIcon } from '@features/auth/constants';
 import type {
   FederatedConnectionOutput,
   FederatedConnectionsOutput,
   FederatedProvider,
+  FederatedProviderOutput,
 } from '@features/auth/models';
 import { FEDERATED_PROVIDER_LABELS } from '@features/auth/options';
 import { HlmAlertDialogImports } from '@shared/ui/alert-dialog';
@@ -34,6 +41,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
  * page supplies state and handles every emitted mutation intent.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -41,6 +49,7 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
   imports: [NgIcon, DatePipe, HlmButton, HlmSkeleton, ...HlmAlertDialogImports],
   providers: [
     provideIcons({
+      lucideGlobe,
       lucideCheck,
       lucideKeyRound,
       lucideLink,
@@ -53,11 +62,43 @@ import { HlmSkeleton } from '@shared/ui/skeleton';
 })
 export class FederatedConnectionsPanel {
   /**
-   * Property providers
+   * Property descriptors
    * @readonly
-   * @description Providers available for connection or already connected.
+   *
+   * @description
+   * Provides descriptors for the current authentication flow.
+   *
    * @access public
    * @since 1.0.0
+   *
+   * @type {InputSignal<readonly FederatedProviderOutput[]>}
+   */
+  public readonly descriptors: InputSignal<readonly FederatedProviderOutput[]> = input<
+    readonly FederatedProviderOutput[]
+  >([]);
+  /**
+   * Property providerIcon
+   * @readonly
+   *
+   * @description
+   * Provides provider icon for the current authentication flow.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {(provider: FederatedProvider) => string}
+   */
+  protected readonly providerIcon: (provider: FederatedProvider) => string = federatedProviderIcon;
+  /**
+   * Property providers
+   * @readonly
+   *
+   * @description
+   * Providers available for connection or already connected.
+   *
+   * @access public
+   * @since 1.0.0
+   *
    * @type {InputSignal<readonly FederatedProvider[]>}
    */
   public readonly providers: InputSignal<readonly FederatedProvider[]> = input<
@@ -66,9 +107,13 @@ export class FederatedConnectionsPanel {
   /**
    * Property connections
    * @readonly
-   * @description Current authenticated sign-in methods.
+   *
+   * @description
+   * Current authenticated sign-in methods.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<FederatedConnectionsOutput | null>}
    */
   public readonly connections: InputSignal<FederatedConnectionsOutput | null> =
@@ -78,9 +123,12 @@ export class FederatedConnectionsPanel {
    * Property loading
    * @readonly
    *
-   * @description Whether connections are loading.
+   * @description
+   * Whether connections are loading.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input(false);
@@ -89,9 +137,12 @@ export class FederatedConnectionsPanel {
    * Property pending
    * @readonly
    *
-   * @description Whether a connection mutation is pending.
+   * @description
+   * Whether a connection mutation is pending.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly pending: InputSignal<boolean> = input(false);
@@ -100,9 +151,12 @@ export class FederatedConnectionsPanel {
    * Property pendingProvider
    * @readonly
    *
-   * @description Provider owning the pending mutation.
+   * @description
+   * Provider owning the pending mutation.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<FederatedProvider | null>}
    */
   public readonly pendingProvider: InputSignal<FederatedProvider | null> =
@@ -112,9 +166,12 @@ export class FederatedConnectionsPanel {
    * Property error
    * @readonly
    *
-   * @description Current connection error for the inline retry state.
+   * @description
+   * Current connection error for the inline retry state.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<string | null>}
    */
   public readonly error: InputSignal<string | null> = input<string | null>(null);
@@ -123,9 +180,12 @@ export class FederatedConnectionsPanel {
    * Property connectRequested
    * @readonly
    *
-   * @description Emits the provider selected for connection.
+   * @description
+   * Emits the provider selected for connection.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<FederatedProvider>}
    */
   public readonly connectRequested: OutputEmitterRef<FederatedProvider> =
@@ -135,9 +195,12 @@ export class FederatedConnectionsPanel {
    * Property disconnectRequested
    * @readonly
    *
-   * @description Emits a confirmed provider removal.
+   * @description
+   * Emits a confirmed provider removal.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<FederatedProvider>}
    */
   public readonly disconnectRequested: OutputEmitterRef<FederatedProvider> =
@@ -147,9 +210,12 @@ export class FederatedConnectionsPanel {
    * Property passwordSetupRequested
    * @readonly
    *
-   * @description Emits when the user requests a first local password.
+   * @description
+   * Emits when the user requests a first local password.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly passwordSetupRequested: OutputEmitterRef<void> = output<void>();
@@ -158,9 +224,12 @@ export class FederatedConnectionsPanel {
    * Property retried
    * @readonly
    *
-   * @description Emits when connection loading should be retried.
+   * @description
+   * Emits when connection loading should be retried.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly retried: OutputEmitterRef<void> = output<void>();
@@ -169,9 +238,12 @@ export class FederatedConnectionsPanel {
    * Property disconnectingProvider
    * @readonly
    *
-   * @description Provider selected in the removal dialog.
+   * @description
+   * Provider selected in the removal dialog.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<FederatedProvider | null>}
    */
   protected readonly disconnectingProvider: WritableSignal<FederatedProvider | null> = signal(null);
@@ -180,9 +252,12 @@ export class FederatedConnectionsPanel {
    * Property dialogState
    * @readonly
    *
-   * @description Spartan dialog state derived from the selected provider.
+   * @description
+   * Spartan dialog state derived from the selected provider.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<BrnDialogState>}
    */
   protected readonly dialogState: Signal<BrnDialogState> = computed(() =>
@@ -193,25 +268,31 @@ export class FederatedConnectionsPanel {
    * Property visibleProviders
    * @readonly
    *
-   * @description Enabled providers plus existing connections kept visible for management.
+   * @description
+   * Enabled providers plus existing connections kept visible for management.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {Signal<readonly FederatedProvider[]>}
    */
   protected readonly visibleProviders: Signal<readonly FederatedProvider[]> = computed(() => {
     const connected = this.connections()?.connections.map((item) => item.provider) ?? [];
-    return (['google', 'microsoft'] as const).filter(
-      (provider) => this.providers().includes(provider) || connected.includes(provider),
-    );
+    return [...new Set([...this.providers(), ...connected])];
   });
 
   /**
    * Method connection
    * @method connection
-   * @description Finds connection details for one rendered provider row.
+   *
+   * @description
+   * Finds connection details for one rendered provider row.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FederatedProvider} provider - Provider represented by the row.
+   *
    * @returns {FederatedConnectionOutput | null} Matching connection when present.
    */
   protected connection(provider: FederatedProvider): FederatedConnectionOutput | null {
@@ -221,23 +302,40 @@ export class FederatedConnectionsPanel {
   /**
    * Method providerLabel
    * @method providerLabel
-   * @description Resolves a provider's localized display name from the shared registry, rather than branching on it here.
+   *
+   * @description
+   * Resolves a provider's localized display name from the shared registry, rather than branching on
+   * it here.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {FederatedProvider} provider - Provider to label.
+   *
    * @returns {string} Localized provider name.
    */
   protected providerLabel(provider: FederatedProvider): string {
-    return FEDERATED_PROVIDER_LABELS[provider];
+    return (
+      this.descriptors().find((descriptor) => descriptor.provider === provider)?.label ??
+      (Object.hasOwn(FEDERATED_PROVIDER_LABELS, provider)
+        ? FEDERATED_PROVIDER_LABELS[provider]
+        : undefined) ??
+      provider
+    );
   }
 
   /**
    * Method requestDisconnect
    * @method requestDisconnect
-   * @description Opens the confirmation dialog for the selected provider.
+   *
+   * @description
+   * Opens the confirmation dialog for the selected provider.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {FederatedProvider} provider - Provider selected for removal.
+   *
    * @returns {void}
    */
   protected requestDisconnect(provider: FederatedProvider): void {
@@ -247,9 +345,13 @@ export class FederatedConnectionsPanel {
   /**
    * Method confirmDisconnect
    * @method confirmDisconnect
-   * @description Emits the confirmed disconnect intent once per dialog action.
+   *
+   * @description
+   * Emits the confirmed disconnect intent once per dialog action.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @returns {void}
    */
   protected confirmDisconnect(): void {
@@ -262,10 +364,15 @@ export class FederatedConnectionsPanel {
   /**
    * Method onDialogStateChanged
    * @method onDialogStateChanged
-   * @description Mirrors the Spartan dialog state into the selected provider signal.
+   *
+   * @description
+   * Mirrors the Spartan dialog state into the selected provider signal.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {BrnDialogState} state - Latest dialog visibility state.
+   *
    * @returns {void}
    */
   protected onDialogStateChanged(state: BrnDialogState): void {

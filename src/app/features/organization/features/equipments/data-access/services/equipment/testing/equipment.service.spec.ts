@@ -1,6 +1,9 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { PLATFORM_ID, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { retry, type Observable } from 'rxjs';
+import type { ApiRequestOptions } from '@core/api';
 
 import type { HydraCollection, HydraItem, ApiError } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
@@ -46,6 +49,58 @@ describe('EquipmentService', () => {
   afterEach(() => {
     httpMock.verify();
   });
+
+  it.each(['replace', 'setPlanPosition'] as const)(
+    '%s retains one key across retry and cold subscriptions and accepts a caller key with ETag',
+    (action) => {
+      const invoke = (options?: ApiRequestOptions): Observable<unknown> =>
+        action === 'replace'
+          ? service.replace(
+              orgId,
+              equipmentId,
+              {
+                clientOperationId: 'd2389ec7-894c-4aab-89d3-e5b3f427b1ff',
+                successorEquipmentId: 'successor',
+              },
+              options,
+            )
+          : service.setPlanPosition(
+              orgId,
+              equipmentId,
+              { attachmentId: 'plan', x: 0.4, y: 0.6 },
+              options,
+            );
+      const url = `${equipmentBaseUrl}/${equipmentId}/${action === 'replace' ? 'replace' : 'plan-position'}`;
+      const request$ = invoke();
+      request$.pipe(retry(1)).subscribe();
+      const lost = httpMock.expectOne(url);
+      const key = lost.request.headers.get('Idempotency-Key');
+      expect(key).toMatch(/^[0-9a-f-]{36}$/i);
+      lost.flush({}, { status: 503, statusText: 'Response unavailable' });
+      const retried = httpMock.expectOne(url);
+      expect(retried.request.headers.get('Idempotency-Key')).toBe(key);
+      retried.flush(null);
+      request$.subscribe();
+      const resubscribed = httpMock.expectOne(url);
+      expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(key);
+      resubscribed.flush(null);
+      invoke().subscribe();
+      const newIntent = httpMock.expectOne(url);
+      expect(newIntent.request.headers.get('Idempotency-Key')).not.toBe(key);
+      newIntent.flush(null);
+      const options = {
+        idempotencyKey: 'c3c1e943-227b-4f31-98c7-90e988359b68',
+        headers: { 'If-Match': '"revision-3"' },
+      };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        invoke(options).subscribe();
+        const manual = httpMock.expectOne(url);
+        expect(manual.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+        expect(manual.request.headers.get('If-Match')).toBe('"revision-3"');
+        manual.flush(null);
+      }
+    },
+  );
 
   it('posts one stable atomic replacement command without creating a separate equipment first', () => {
     const input = {
@@ -684,5 +739,119 @@ describe('EquipmentService', () => {
       expect(caught).toBeInstanceOf(HttpErrorResponse);
       expect((caught as HttpErrorResponse).status).toBe(403);
     });
+  });
+  const effectfulExports = [
+    {
+      name: 'inventory CSV',
+      url: `${equipmentBaseUrl}/export`,
+      invoke: (requestOptions?: ApiRequestOptions) => service.exportCsv(orgId, requestOptions),
+    },
+    {
+      name: 'QR labels PDF',
+      url: `${equipmentBaseUrl}/labels`,
+      invoke: (requestOptions?: ApiRequestOptions) =>
+        service.exportLabels(orgId, { ids: ['eq-1', 'eq-2'] }, requestOptions),
+    },
+    {
+      name: 'equipment report PDF',
+      url: `${equipmentBaseUrl}/${equipmentId}/report`,
+      invoke: (requestOptions?: ApiRequestOptions) =>
+        service.exportReport(orgId, equipmentId, requestOptions),
+    },
+  ];
+
+  it.each(effectfulExports)(
+    'retains one binary GET identity across retries and resubscriptions for $name',
+    ({ url, invoke }) => {
+      const intent = invoke();
+      const received = vi.fn();
+      const content = new Blob(['export-bytes'], { type: 'application/octet-stream' });
+      httpMock.expectNone(url);
+      intent.pipe(retry(1)).subscribe(received);
+
+      const initial = httpMock.expectOne((request) => request.url === url);
+      const key = initial.request.headers.get('Idempotency-Key');
+      expect(key).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      expect(initial.request.method).toBe('GET');
+      expect(initial.request.responseType).toBe('blob');
+      expect(initial.request.body).toBeNull();
+      expect(initial.request.withCredentials).toBe(true);
+      expect(initial.request.params.has('idempotencyKey')).toBe(false);
+      const query = initial.request.params.toString();
+      initial.error(new ProgressEvent('error'));
+
+      const retried = httpMock.expectOne((request) => request.url === url);
+      expect(retried.request.headers.get('Idempotency-Key')).toBe(key);
+      expect(retried.request.params.toString()).toBe(query);
+      retried.flush(content);
+      expect(received).toHaveBeenLastCalledWith(content);
+
+      intent.subscribe(received);
+      const resubscribed = httpMock.expectOne((request) => request.url === url);
+      expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(key);
+      resubscribed.flush(content);
+
+      invoke().subscribe(received);
+      const nextIntent = httpMock.expectOne((request) => request.url === url);
+      expect(nextIntent.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(nextIntent.request.headers.get('Idempotency-Key')).not.toBe(key);
+      nextIntent.flush(content);
+      expect(received).toHaveBeenCalledTimes(3);
+    },
+  );
+
+  it.each(effectfulExports)(
+    'forwards an explicit identity for manual binary GET retries of $name',
+    ({ url, invoke }) => {
+      const requestOptions: ApiRequestOptions = {
+        idempotencyKey: '24316949-d384-4fa7-9f67-6b3af1c4bbce',
+        headers: { 'X-Export-Trace': 'transport-check' },
+      };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        invoke(requestOptions).subscribe();
+        const request = httpMock.expectOne((candidate) => candidate.url === url);
+        expect(request.request.headers.get('Idempotency-Key')).toBe(requestOptions.idempotencyKey);
+        expect(request.request.headers.get('X-Export-Trace')).toBe('transport-check');
+        expect(request.request.params.has('idempotencyKey')).toBe(false);
+        expect(request.request.params.has('headers')).toBe(false);
+        request.flush(new Blob());
+      }
+    },
+  );
+
+  it('allocates independent export identities in separate server request injectors without TransferState', () => {
+    const keys: (string | null)[] = [];
+    for (let requestIndex = 0; requestIndex < 2; requestIndex++) {
+      httpMock.verify();
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          EquipmentService,
+          { provide: ENV_CONFIG, useValue: mockEnv },
+          { provide: PLATFORM_ID, useValue: 'server' },
+        ],
+      });
+      service = TestBed.inject(EquipmentService);
+      httpMock = TestBed.inject(HttpTestingController);
+      service.exportCsv(orgId).subscribe();
+      const request = httpMock.expectOne(`${equipmentBaseUrl}/export`);
+      keys.push(request.request.headers.get('Idempotency-Key'));
+      expect(keys[requestIndex]).toMatch(/^[0-9a-f-]{36}$/i);
+      request.flush(new Blob());
+      expect(TestBed.inject(TransferState).toJson()).toBe('{}');
+    }
+    expect(keys[0]).not.toBe(keys[1]);
+  });
+
+  it('keeps immutable attachment bytes as an ordinary read', () => {
+    service.downloadAttachment(orgId, equipmentId, 'attachment-1').subscribe();
+    const request = httpMock.expectOne(
+      `${equipmentBaseUrl}/${equipmentId}/attachments/attachment-1/download`,
+    );
+    expect(request.request.headers.has('Idempotency-Key')).toBe(false);
+    expect(request.request.responseType).toBe('blob');
+    request.flush(new Blob());
   });
 });

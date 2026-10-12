@@ -1,6 +1,7 @@
 import { Service } from '@angular/core';
-import { catchError, type Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
+import type { ApiRequestOptions } from '@core/api/models';
 import type {
   ConfirmPasswordChangeInput,
   ConfirmPasswordChangeOutput,
@@ -16,7 +17,6 @@ import type {
 /**
  * Service UserProfileService
  * @class UserProfileService
- * @extends {HydraApiService}
  *
  * @description
  * Account-owned API service for retrieving the current authenticated user
@@ -25,17 +25,23 @@ import type {
  * the account feature because it owns current user profile state.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class UserProfileService extends HydraApiService {
   /**
-   * Constant BASE_PATH
+   * Property BASE_PATH
    * @readonly
    * @static
    *
    * @description
    * Base path for the current authenticated user profile resource.
+   *
+   * @access private
+   * @since 1.0.0
    *
    * @type {string}
    */
@@ -47,6 +53,9 @@ export class UserProfileService extends HydraApiService {
    * @description
    * Retrieves the authenticated user's current profile and effective
    * global rights.
+   *
+   * @access public
+   * @since 1.0.0
    *
    * @returns {Observable<UserProfileOutput>} Observable emitting the current profile.
    */
@@ -60,13 +69,23 @@ export class UserProfileService extends HydraApiService {
    * @description
    * Partially updates the authenticated user's editable profile fields.
    *
+   * @access public
+   * @since 1.0.0
+   *
    * @param {UpdateCurrentUserProfileInput} input - Profile fields to update.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<UserProfileOutput>} Observable emitting the updated profile.
    */
-  public updateCurrentProfile(input: UpdateCurrentUserProfileInput): Observable<UserProfileOutput> {
+  public updateCurrentProfile(
+    input: UpdateCurrentUserProfileInput,
+    options?: ApiRequestOptions,
+  ): Observable<UserProfileOutput> {
     return this.patch<UpdateCurrentUserProfileInput, UserProfileOutput>(
       `${UserProfileService.BASE_PATH}/me`,
       input,
+      options,
     );
   }
 
@@ -76,20 +95,29 @@ export class UserProfileService extends HydraApiService {
    * @description
    * Replaces the authenticated user's avatar.
    *
+   * @access public
+   * @since 1.0.0
+   *
    * @param {Blob} avatar - Avatar image to upload.
    * @param {string} fileName - Original avatar file name.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<UserOutput>} Observable emitting the updated user.
    */
-  public uploadCurrentAvatar(avatar: Blob, fileName: string = 'avatar'): Observable<UserOutput> {
+  public uploadCurrentAvatar(
+    avatar: Blob,
+    fileName: string = 'avatar',
+    options?: ApiRequestOptions,
+  ): Observable<UserOutput> {
     const body = new FormData();
     body.set('avatar', avatar, fileName);
 
-    return this.http
-      .put<UserOutput>(this.buildUrl(`${UserProfileService.BASE_PATH}/me/avatar`), body, {
-        headers: this.defaultHeaders.delete('Content-Type'),
-        withCredentials: true,
-      })
-      .pipe(catchError(this.handleError));
+    return this.putMultipart<UserOutput>(
+      `${UserProfileService.BASE_PATH}/me/avatar`,
+      body,
+      options,
+    );
   }
 
   /**
@@ -101,10 +129,19 @@ export class UserProfileService extends HydraApiService {
    * now-inactive profile. Reactivation is admin-only — signing in again does
    * not restore the account.
    *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<UserProfileOutput>} Observable emitting the deactivated profile.
    */
-  public deactivateCurrentAccount(): Observable<UserProfileOutput> {
-    return this.postAction<UserProfileOutput>(`${UserProfileService.BASE_PATH}/me/deactivate`);
+  public deactivateCurrentAccount(options?: ApiRequestOptions): Observable<UserProfileOutput> {
+    return this.postAction<UserProfileOutput>(
+      `${UserProfileService.BASE_PATH}/me/deactivate`,
+      options,
+    );
   }
 
   /**
@@ -114,15 +151,24 @@ export class UserProfileService extends HydraApiService {
    * Starts the authenticated password change flow: verifies the current
    * password then sends a one-time code to the user's email address.
    *
+   * @access public
+   * @since 1.0.0
+   *
    * @param {RequestPasswordChangeInput} input - Current password to verify.
-   * @returns {Observable<RequestPasswordChangeOutput>} Observable emitting the OTP challenge details.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
+   * @returns {Observable<RequestPasswordChangeOutput>} Observable emitting the OTP challenge
+   *   details.
    */
   public requestPasswordChange(
     input: RequestPasswordChangeInput,
+    options?: ApiRequestOptions,
   ): Observable<RequestPasswordChangeOutput> {
     return this.post<RequestPasswordChangeInput, RequestPasswordChangeOutput>(
       `${UserProfileService.BASE_PATH}/me/password/request`,
       input,
+      options,
     );
   }
 
@@ -133,15 +179,23 @@ export class UserProfileService extends HydraApiService {
    * Completes the authenticated password change flow with the OTP code.
    * On success the backend revokes every active session and OAuth token.
    *
+   * @access public
+   * @since 1.0.0
+   *
    * @param {ConfirmPasswordChangeInput} input - Challenge token, OTP code and new password.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<ConfirmPasswordChangeOutput>} Observable emitting the change result.
    */
   public confirmPasswordChange(
     input: ConfirmPasswordChangeInput,
+    options?: ApiRequestOptions,
   ): Observable<ConfirmPasswordChangeOutput> {
     return this.post<ConfirmPasswordChangeInput, ConfirmPasswordChangeOutput>(
       `${UserProfileService.BASE_PATH}/me/password/confirm`,
       input,
+      options,
     );
   }
 
@@ -155,13 +209,23 @@ export class UserProfileService extends HydraApiService {
    * pending one. A wrong current password is a 422, an address that cannot
    * be used a neutral 409.
    *
+   * @access public
+   * @since 1.0.0
+   *
    * @param {RequestEmailChangeInput} input - New address and current password.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<RequestEmailChangeOutput>} Observable emitting the request outcome.
    */
-  public requestEmailChange(input: RequestEmailChangeInput): Observable<RequestEmailChangeOutput> {
+  public requestEmailChange(
+    input: RequestEmailChangeInput,
+    options?: ApiRequestOptions,
+  ): Observable<RequestEmailChangeOutput> {
     return this.post<RequestEmailChangeInput, RequestEmailChangeOutput>(
       `${UserProfileService.BASE_PATH}/me/email-change`,
       input,
+      options,
     );
   }
 
@@ -172,9 +236,15 @@ export class UserProfileService extends HydraApiService {
    * Cancels the pending sign-in email change request. Idempotent: the
    * backend answers 204 whether or not a request was pending.
    *
+   * @access public
+   * @since 1.0.0
+   *
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<void>} Observable completing when the request is cancelled.
    */
-  public cancelEmailChange(): Observable<void> {
-    return this.delete(`${UserProfileService.BASE_PATH}/me/email-change`);
+  public cancelEmailChange(options?: ApiRequestOptions): Observable<void> {
+    return this.delete(`${UserProfileService.BASE_PATH}/me/email-change`, options);
   }
 }

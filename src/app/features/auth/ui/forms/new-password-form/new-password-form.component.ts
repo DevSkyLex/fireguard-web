@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { form, type FieldTree } from '@angular/forms/signals';
 import type { StoreError } from '@core/request-state';
+import type { PasswordPolicyOutput } from '@features/auth/models';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
@@ -30,12 +31,12 @@ import type { NewPasswordFormValues } from './models';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-new-password-form [pending]="isConfirming()" (submitted)="reset($event)" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-new-password-form',
@@ -51,7 +52,32 @@ import type { NewPasswordFormValues } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewPasswordForm {
-  /** @description Request failures are displayed inline above the fields. */
+  /**
+   * Property passwordPolicy
+   * @readonly
+   *
+   * @description
+   * Authoritative server policy; an absent value keeps creation invalid.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<PasswordPolicyOutput | null>}
+   */
+  public readonly passwordPolicy: InputSignal<PasswordPolicyOutput | null> =
+    input<PasswordPolicyOutput | null>(null);
+  /**
+   * Property serverError
+   * @readonly
+   *
+   * @description
+   * Request failures are displayed inline above the fields.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<StoreError | null>}
+   */
   public readonly serverError: InputSignal<StoreError | null> = input<StoreError | null>(null);
 
   //#region Inputs
@@ -120,7 +146,7 @@ export class NewPasswordForm {
   protected readonly passwordForm: FieldTree<NewPasswordFormValues> = form(
     this.model,
     (path): void => {
-      applyPasswordRules(path.password);
+      applyPasswordRules(path.password, () => this.passwordPolicy());
       applyPasswordConfirmation(path.confirmPassword, path.password);
     },
   );
@@ -136,6 +162,8 @@ export class NewPasswordForm {
    *
    * @access protected
    * @since 1.0.0
+   *
+   * @param {Event} event - Form submission event.
    *
    * @returns {void}
    */

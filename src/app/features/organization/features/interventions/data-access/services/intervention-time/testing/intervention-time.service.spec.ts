@@ -95,17 +95,30 @@ describe('InterventionTimeService', () => {
     request.flush({});
   });
   it('corrects against the journal revision only', () => {
-    service.correctEntry('task', input, 3).subscribe();
+    const key = crypto.randomUUID();
+    service
+      .correctEntry('task', input, 3, { idempotencyKey: key, headers: { 'X-Caller': 'review' } })
+      .subscribe();
     const request = http.expectOne(url + '/stable-id');
     expect(request.request.method).toBe('PATCH');
     expect(request.request.headers.get('If-Match')).toBe('"revision-3"');
+    expect(request.request.headers.get('Idempotency-Key')).toBe(key);
+    expect(request.request.headers.get('X-Caller')).toBe('review');
     request.flush({});
   });
   it('cancels using the reviewed revision', () => {
-    service.cancelEntry('task', 'stable-id', 4).subscribe();
+    const key = crypto.randomUUID();
+    service
+      .cancelEntry('task', 'stable-id', 4, {
+        idempotencyKey: key,
+        headers: { 'X-Caller': 'review' },
+      })
+      .subscribe();
     const request = http.expectOne(url + '/stable-id');
     expect(request.request.method).toBe('DELETE');
     expect(request.request.headers.get('If-Match')).toBe('"revision-4"');
+    expect(request.request.headers.get('Idempotency-Key')).toBe(key);
+    expect(request.request.headers.get('X-Caller')).toBe('review');
     request.flush(null, { status: 204, statusText: 'No Content' });
   });
   it('keeps revision conflicts visible to its caller', () => {

@@ -14,6 +14,14 @@ Published `models`, `data-access`, `services` and `state` expose request contrac
 
 Component-provided stores cancel obsolete reads. A root conversion coordinator commits its account-bound UUID, request revision and exact work tuple to the independent `fireguard-service-requests` IndexedDB journal before transmission. It keeps accepted transmissions alive after route destruction; returning or reloading restores unresolved conversions without sending them automatically. New actions wait for journal restoration, and storage failures leave them blocked with an explicit retry.
 
+The conversion journal commits its HTTP `Idempotency-Key` in the same local transaction. Legacy rows
+receive one key atomically across tabs; exact retry and reload preserve that key, the business UUID,
+revision and work tuple. Receipt conflicts, uncertain execution, unavailable results and revoked
+access retain the original intent. Only explicit validation/precondition refusals release a rejected
+intent. For an authenticated expired replay with `operationCompleted: true`, the coordinator first
+reads the authoritative request; failed refresh retains the journal, and successful refresh acknowledges
+the original conversion without another mutation or a fabricated result.
+
 Auth's published session revision and Organization's active member account, organization and permissions fence asynchronous reads, writes, acknowledgments and exact replay. The root journal purges on logout or account/session replacement even when no request page remains mounted; a same-account browser reload retains its journal. Only conversion has a server-supported replay identity. Other mutations are never journaled or automatically retried. Secondary authenticated reads and all journal access run only in the browser; SSR stores no request command in HTML or TransferState.
 
 Collections use exact server search, status and equipment/site scopes with pagination. Target pickers separately hydrate retained selections; retired or draft equipment cannot be newly chosen. Request customer identity is derived from the root site by the server and contains no contacts.

@@ -25,6 +25,11 @@ import {
   type Observable,
 } from 'rxjs';
 import {
+  getIdempotencyErrorCode,
+  isIdempotencyOperationCompleted,
+  type ApiRequestOptions,
+} from '@core/api';
+import {
   idleCallState,
   pendingCallState,
   successCallState,
@@ -109,8 +114,10 @@ export const MaintenanceCostStore = signalStore(
         () =>
           store.writeCallState().status === 'error' &&
           !!store.command() &&
+          (!!store.command()?.idempotencyKey || store.writeCallState().error?.code != null) &&
           (store.writeCallState().error?.retryable === true ||
-            store.writeCallState().error?.code === 0),
+            getIdempotencyErrorCode(store.writeCallState().error?.error) !== null ||
+            ![400, 412, 422].includes(Number(store.writeCallState().error?.code))),
       ),
     }),
   ),
@@ -274,7 +281,10 @@ export const MaintenanceCostStore = signalStore(
           }),
         ),
       );
-      const request = (command: MaintenanceCostCommand): Observable<MaintenanceCostMutation> => {
+      const request = (
+        command: MaintenanceCostCommand,
+        options: ApiRequestOptions,
+      ): Observable<MaintenanceCostMutation> => {
         switch (command.kind) {
           case 'planning':
             return api.writePlanning(
@@ -282,13 +292,19 @@ export const MaintenanceCostStore = signalStore(
               command.interventionId,
               command.input,
               command.revision,
+              options,
             );
           case 'expense':
-            return api.createExpense(command.organizationId, command.interventionId, command.input);
+            return api.createExpense(
+              command.organizationId,
+              command.interventionId,
+              command.input,
+              options,
+            );
           case 'currency':
-            return api.writeCurrency(command.organizationId, command.currency);
+            return api.writeCurrency(command.organizationId, command.currency, options);
           case 'rate':
-            return api.createRate(command.organizationId, command.input);
+            return api.createRate(command.organizationId, command.input, options);
         }
       };
       const hydrate = rxMethod<MaintenanceCostScope | null>(
@@ -346,9 +362,7 @@ export const MaintenanceCostStore = signalStore(
               return EMPTY;
             const generation = store.scopeVersion();
             const wasUncertain = store.uncertainWrite();
-            const command = wasUncertain
-              ? (store.command() ?? incoming)
-              : structuredClone(incoming);
+            let command = wasUncertain ? (store.command() ?? incoming) : structuredClone(incoming);
             const userId = store.scopeUserId();
             let transmitted = false;
             let acknowledged = false;
@@ -368,18 +382,43 @@ export const MaintenanceCostStore = signalStore(
               );
             patchState(store, { command, writeCallState: pendingCallState() });
             return defer(() => journal.retain(command)).pipe(
-              switchMap(() => {
+              switchMap((operation) => {
                 if (!current(scope, generation)) {
                   if (!store.command()) patchState(store, { writeCallState: idleCallState() });
                   return EMPTY;
                 }
+                command = { ...command, ...operation };
+                patchState(store, { command });
                 transmitted = true;
-                return request(command);
+                return request(command, operation);
               }),
               switchMap((result) => acknowledge().pipe(map(() => result))),
               catchError((error: unknown) => {
                 const failure = toStoreError(error);
-                return transmitted && !failure.retryable && failure.code !== 0
+                if (transmitted && isIdempotencyOperationCompleted(error)) {
+                  return acknowledge().pipe(
+                    tap(() => {
+                      if (!current(scope, generation)) return;
+                      patchState(store, { command: null, writeCallState: idleCallState() });
+                      hydrate(scope);
+                      if (command.kind === 'rate') readRates({ scope, page: store.ratePage() });
+                      if (command.kind === 'expense' || command.kind === 'planning')
+                        readCost(scope);
+                      if (command.kind === 'currency') readCurrency(scope);
+                      dispatcher.dispatch(
+                        maintenanceCostStoreEvents.saved({
+                          organizationId: command.organizationId,
+                          kind: command.kind,
+                        }),
+                      );
+                    }),
+                    switchMap(() => EMPTY),
+                  );
+                }
+                return transmitted &&
+                  !failure.retryable &&
+                  getIdempotencyErrorCode(error) === null &&
+                  [400, 412, 422].includes(Number(failure.code))
                   ? acknowledge().pipe(switchMap(() => throwError(() => error)))
                   : throwError(() => error);
               }),

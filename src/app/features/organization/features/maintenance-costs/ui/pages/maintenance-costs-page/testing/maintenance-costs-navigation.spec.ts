@@ -5,6 +5,7 @@ import { provideRouter, Router, withComponentInputBinding } from '@angular/route
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, Subject } from 'rxjs';
 import { ConnectivityService } from '@core/connectivity';
+import { mockIndexedDbTransactions } from '@core/indexed-db/testing';
 import { THEME_PORT } from '@core/theme';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
@@ -168,6 +169,7 @@ describe('MaintenanceCostsPage', () => {
     vi.spyOn(repository, 'clearAll').mockImplementation(async () => {
       entries.clear();
     });
+    mockIndexedDbTransactions(repository, entries);
     const url = `/organizations/org/maintenance-costs?interventionId=${cost.interventionId}`;
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(url, MaintenanceCostsPage);
@@ -301,7 +303,7 @@ describe('MaintenanceCostsPage', () => {
     restoredSettings.rateSubmitted.emit({ ...originalRate, hourlyAmount: '1' });
     expect(api.createExpense).toHaveBeenCalledTimes(2);
     expect(api.createRate).toHaveBeenCalledTimes(1);
-    expect(newIdentity).toHaveBeenCalledTimes(2);
+    expect(newIdentity).toHaveBeenCalledTimes(4);
     releaseRecovery();
     await vi.waitFor(() => expect(restored?.command()?.kind).toBe('rate'));
     await harness.fixture.whenStable();
@@ -310,7 +312,7 @@ describe('MaintenanceCostsPage', () => {
     expect(restored?.costCallState().data?.current).toEqual(confirmedCost.current);
     restoredSettings.rateSubmitted.emit({ ...originalRate, hourlyAmount: '1' });
     expect(api.createRate).toHaveBeenCalledTimes(1);
-    expect(newIdentity).toHaveBeenCalledTimes(2);
+    expect(newIdentity).toHaveBeenCalledTimes(4);
     const rateRetry = [
       ...(harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('button') ?? []),
     ].find((button) => button.textContent?.includes('Retry the original declaration'));
@@ -321,7 +323,7 @@ describe('MaintenanceCostsPage', () => {
     await harness.fixture.whenStable();
     expect(api.createRate).toHaveBeenCalledTimes(2);
     expect(api.createRate.mock.calls[1]?.[1]).toEqual(originalRate);
-    expect(newIdentity).toHaveBeenCalledTimes(2);
+    expect(newIdentity).toHaveBeenCalledTimes(4);
     expect(restored?.command()).toBeNull();
     expect(restored?.uncertainWrite()).toBe(false);
     expect([...entries.keys()].filter((key) => key.startsWith('commands:'))).toEqual([]);

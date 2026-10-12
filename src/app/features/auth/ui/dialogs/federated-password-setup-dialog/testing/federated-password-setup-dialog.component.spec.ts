@@ -1,5 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { DEFAULT_PASSWORD_POLICY } from '@features/auth/state/password-policy/testing/password-policy.fixture';
 import { HlmDialog } from '@shared/ui/dialog';
 import { FederatedPasswordSetupDialog } from '../federated-password-setup-dialog.component';
 
@@ -8,6 +9,7 @@ describe('FederatedPasswordSetupDialog', () => {
 
   beforeEach(async () => {
     fixture = TestBed.createComponent(FederatedPasswordSetupDialog);
+    fixture.componentRef.setInput('passwordPolicy', DEFAULT_PASSWORD_POLICY);
     fixture.componentRef.setInput('visible', true);
     fixture.componentRef.setInput('challengeToken', 'challenge-1');
     fixture.componentRef.setInput('maskedRecipient', 'm***@example.com');

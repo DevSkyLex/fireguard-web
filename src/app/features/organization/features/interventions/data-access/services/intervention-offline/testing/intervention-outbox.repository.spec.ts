@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Events } from '@ngrx/signals/events';
 import { EMPTY, Subject } from 'rxjs';
+import type { IndexedDbService } from '@core/indexed-db';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import type { InterventionOutboxOperation } from '@features/organization/features/interventions/models';
@@ -21,12 +22,29 @@ function inMemoryDatabase(
   currentOwnerId: ReturnType<typeof vi.fn>;
   ensureOwnerBound: ReturnType<typeof vi.fn>;
   put: ReturnType<typeof vi.fn>;
+  updateTransaction: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
   getAll: ReturnType<typeof vi.fn>;
   remove: ReturnType<typeof vi.fn>;
 } {
   return {
     browser: true,
+    updateTransaction: vi.fn(
+      async (
+        reads: Parameters<IndexedDbService['updateTransaction']>[0],
+        update: Parameters<IndexedDbService['updateTransaction']>[1],
+      ) => {
+        const values: Record<string, Record<string, unknown>> = {};
+        for (const [name, keys] of Object.entries(reads)) {
+          values[name] = Object.fromEntries(keys.map((key) => [key, store.get(key) ?? null]));
+        }
+        const writes = update(values);
+        for (const entries of Object.values(writes))
+          for (const entry of entries)
+            store.set(entry.key, entry.value as InterventionOutboxOperation);
+      },
+    ),
+
     currentOwnerId: vi.fn().mockReturnValue('account'),
     ensureOwnerBound: vi.fn().mockResolvedValue(undefined),
     put: vi.fn(async (_collection: string, key: string, value: InterventionOutboxOperation) => {
@@ -67,6 +85,81 @@ function build(
 }
 
 describe('InterventionOutboxRepository', () => {
+  it('persists one legacy key atomically and retains it across reload and unchanged retry', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const legacy: InterventionOutboxOperation = {
+      id: 'legacy-row',
+      interventionId: 'intervention-1',
+      type: 'comment.create',
+      payload: { body: 'Saved fact', clientId: 'native-client-id' },
+      createdAt: '2026-01-01T00:00:00Z',
+    };
+    entries.set(legacy.id, legacy);
+    const database = inMemoryDatabase(entries);
+    const repository = build(database);
+    const keys = await Promise.all([
+      repository.ensureIdempotencyKey(legacy.id),
+      repository.ensureIdempotencyKey(legacy.id),
+    ]);
+    expect(keys[0]).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(keys[1]).toBe(keys[0]);
+    expect(database.updateTransaction).toHaveBeenCalledTimes(2);
+    expect(entries.get(legacy.id)).toEqual({ ...legacy, idempotencyKey: keys[0] });
+    await repository.markOutboxFailed(legacy.id, 'Temporary failure');
+    await repository.retryOutbox(legacy.id);
+    TestBed.resetTestingModule();
+    expect(await build(database).ensureIdempotencyKey(legacy.id)).toBe(keys[0]);
+    expect(entries.get(legacy.id)?.payload.clientId).toBe('native-client-id');
+  });
+
+  it('renews only the receipt identity after a reviewed revision changes the payload', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    const repository = build(inMemoryDatabase(entries));
+    await repository.queue('intervention-1', 'time-entry.correct', {
+      workItemId: 'task',
+      id: 'native-time-entry-id',
+      memberId: 'member',
+      actorId: 'account',
+      workedOn: '2026-01-01',
+      minutes: 30,
+      note: null,
+      revision: 1,
+      clientId: 'native-client-id',
+    });
+    const original = [...entries.values()][0];
+    await repository.markOutboxConflict(original.id, 'Revision changed', null, {
+      revision: 2,
+      values: { revision: 2 },
+    });
+    await repository.confirmRevision(original.id, 2);
+    const confirmed = entries.get(original.id);
+    expect(confirmed?.id).toBe(original.id);
+    expect(confirmed?.idempotencyKey).not.toBe(original.idempotencyKey);
+    expect(confirmed?.payload).toMatchObject({
+      id: 'native-time-entry-id',
+      clientId: 'native-client-id',
+      revision: 2,
+    });
+  });
+
+  it('does not expose a legacy key when its transaction fails', async () => {
+    const entries = new Map<string, InterventionOutboxOperation>();
+    entries.set('legacy', {
+      id: 'legacy',
+      interventionId: 'intervention-1',
+      type: 'comment.create',
+      payload: { body: 'Saved fact' },
+      createdAt: '2026-01-01T00:00:00Z',
+    });
+    const database = inMemoryDatabase(entries);
+    database.updateTransaction.mockRejectedValueOnce(
+      new DOMException('Storage full', 'QuotaExceededError'),
+    );
+    await expect(build(database).ensureIdempotencyKey('legacy')).rejects.toMatchObject({
+      name: 'QuotaExceededError',
+    });
+    expect(entries.get('legacy')?.idempotencyKey).toBeUndefined();
+  });
   const consumption: DeclareInventoryConsumptionInput = {
     clientOperationId: '11111111-1111-4111-8111-111111111111',
     partId: 'part-1',
@@ -319,7 +412,8 @@ describe('InterventionOutboxRepository', () => {
       revision: 1,
       assignee: '/api/organization-members/new-member',
     });
-    const [{ id }] = [...entries.values()];
+    const original = [...entries.values()][0];
+    const { id } = original;
     const assessment = {
       confirmationRequired: true,
       confirmationToken: 'reviewed-token',
@@ -341,6 +435,9 @@ describe('InterventionOutboxRepository', () => {
     await repository.confirmWorkload(id, 'stale-token');
     expect(entries.get(id)?.status).toBe('conflict');
     await repository.confirmWorkload(id, 'reviewed-token');
+    expect(entries.get(id)?.idempotencyKey).not.toBe(original.idempotencyKey);
+    expect(entries.get(id)?.id).toBe(original.id);
+    expect(entries.get(id)?.payload.clientId).toBe(original.payload.clientId);
     expect(entries.get(id)).toMatchObject({
       status: 'pending',
       workloadAssessment: null,

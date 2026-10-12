@@ -751,8 +751,10 @@ export class CalendarPage {
           : null,
         allDay: item.allDay,
         label: item.title,
-        tone: SOURCE_TONE[key] ?? 'outline',
-        icon: SOURCE_ICON[key],
+        tone: Object.hasOwn(SOURCE_TONE, key) ? (SOURCE_TONE[key] ?? 'outline') : 'outline',
+        icon: Object.hasOwn(SOURCE_ICON, key)
+          ? (SOURCE_ICON[key] ?? 'lucideCalendar')
+          : 'lucideCalendar',
         sourceLabel: calendarSourceLabelOf(key),
         draggable: item.sourceKey === 'calendar_event' && this.canWriteEvents(),
       };

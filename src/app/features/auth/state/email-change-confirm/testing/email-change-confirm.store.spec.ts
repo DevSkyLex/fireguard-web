@@ -1,7 +1,9 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError, type Observable } from 'rxjs';
 import { EmailChangeService } from '@features/auth/data-access';
 import type { ConfirmEmailChangeInput, ConfirmEmailChangeOutput } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { EmailChangeConfirmStore } from '../email-change-confirm.store';
 
 interface MockEmailChangeService {
@@ -23,6 +25,7 @@ describe('EmailChangeConfirmStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         EmailChangeConfirmStore,
         { provide: EmailChangeService, useValue: mockEmailChangeService },
       ],
@@ -46,7 +49,10 @@ describe('EmailChangeConfirmStore', () => {
 
     store.confirm('a'.repeat(64));
 
-    expect(mockEmailChangeService.confirm).toHaveBeenCalledWith({ token: 'a'.repeat(64) });
+    expect(mockEmailChangeService.confirm).toHaveBeenCalledWith(
+      { token: 'a'.repeat(64) },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.isConfirmed()).toBe(true);
     expect(store.confirmError()).toBeNull();
   });

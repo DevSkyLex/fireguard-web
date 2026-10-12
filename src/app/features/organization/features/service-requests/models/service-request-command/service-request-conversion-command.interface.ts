@@ -10,6 +10,17 @@ import type { ConvertServiceRequestInput, ServiceRequestOutput } from '../index'
  */
 export interface ServiceRequestConversionCommand {
   /**
+   * Property idempotencyKey
+   * @readonly
+   *
+   * @description
+   * Durable HTTP intention identity; old rows receive one atomically before transmission.
+   *
+   * @type {string | undefined}
+   */
+  readonly idempotencyKey?: string;
+
+  /**
    * Property kind
    * @readonly
    *

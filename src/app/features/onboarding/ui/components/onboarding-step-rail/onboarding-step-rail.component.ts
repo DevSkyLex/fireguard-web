@@ -7,13 +7,13 @@ import {
   type Signal,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { ONBOARDING_STEP_PRESENTATION } from '@features/onboarding/constants';
 import {
   resolveOnboardingStepStatusTag,
   type OnboardingOutput,
   type OnboardingStepKey,
   type OnboardingStepOutput,
 } from '@features/onboarding/models';
+import { resolveOnboardingStepPresentation } from '@features/onboarding/utils';
 import { HlmItem, HlmItemGroup } from '@shared/ui/item';
 import { HlmProgress, HlmProgressIndicator } from '@shared/ui/progress';
 import { ONBOARDING_STEP_RAIL_ICONS } from './constants/onboarding-step-rail-icons.constants';
@@ -139,7 +139,7 @@ export class OnboardingStepRail {
     const activeIndex: number = steps.findIndex((step) => step.key === activeKey);
 
     return steps.map((step: OnboardingStepOutput, index: number): OnboardingStepRailRow => {
-      const presentation = ONBOARDING_STEP_PRESENTATION[step.key];
+      const presentation = resolveOnboardingStepPresentation(step);
       const upcoming: boolean =
         step.status === 'blocked' && activeIndex !== -1 && index > activeIndex;
       const statusTag = resolveOnboardingStepStatusTag(upcoming ? 'pending' : step.status);

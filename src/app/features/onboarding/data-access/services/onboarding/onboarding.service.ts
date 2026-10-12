@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { HydraApiService, type ApiRequestOptions } from '@core/api';
 import type {
   OnboardingOutput,
   StartOnboardingInput,
@@ -11,7 +11,6 @@ import type {
 /**
  * Service OnboardingService
  * @class OnboardingService
- * @extends {HydraApiService}
  *
  * @description
  * API service for the organization onboarding flow.
@@ -19,7 +18,10 @@ import type {
  * step skipping, and rollback to a previous step.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class OnboardingService extends HydraApiService {
@@ -34,6 +36,7 @@ export class OnboardingService extends HydraApiService {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private static readonly BASE_PATH: string = '/api/onboarding/organization';
@@ -48,6 +51,7 @@ export class OnboardingService extends HydraApiService {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private static readonly ROLLBACK_ENDPOINT: string = 'rollback';
@@ -62,6 +66,7 @@ export class OnboardingService extends HydraApiService {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private static readonly STEP_ENDPOINT: string = 'steps';
@@ -76,6 +81,7 @@ export class OnboardingService extends HydraApiService {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private static readonly START_ENDPOINT: string = 'start';
@@ -85,10 +91,17 @@ export class OnboardingService extends HydraApiService {
   /**
    * Method prepareSetup
    * @method prepareSetup
-   * @description Persists the complete batch before creating any resource, enabling recovery after reload or a lost response.
+   *
+   * @description
+   * Persists the complete batch before creating any resource, enabling recovery after reload or a
+   * lost response.
+   *
    * @access public
    * @since 1.1.0
-   * @param {PrepareOnboardingSetupInput} input - Session-scoped immutable item keys and wire payloads.
+   *
+   * @param {PrepareOnboardingSetupInput} input - Session-scoped immutable item keys and wire
+   *   payloads.
+   *
    * @returns {Observable<OnboardingOutput>} Persisted setup operations and current flow.
    */
   public prepareSetup(input: PrepareOnboardingSetupInput): Observable<OnboardingOutput> {
@@ -104,15 +117,18 @@ export class OnboardingService extends HydraApiService {
    *
    * @description
    * Retrieves the current onboarding state for the organization,
-   * including the active step and overall progress.
+   * including the active step and overall progress. The server synchronizes persisted state,
+   * so this GET retains one operation identity across subscriptions and retries.
    *
    * @access public
    * @since 1.0.0
    *
-   * @return {Observable<OnboardingOutput>} An observable emitting the current onboarding details.
+   * @param {ApiRequestOptions} [options] - Retry identity for this synchronization request.
+   *
+   * @returns {Observable<OnboardingOutput>} An observable emitting the current onboarding details.
    */
-  public get(): Observable<OnboardingOutput> {
-    return this.getOne<OnboardingOutput>(OnboardingService.BASE_PATH);
+  public get(options?: ApiRequestOptions): Observable<OnboardingOutput> {
+    return this.getOneWithWriteIdentity<OnboardingOutput>(OnboardingService.BASE_PATH, options);
   }
 
   /**
@@ -126,9 +142,10 @@ export class OnboardingService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {StartOnboardingInput} input - Input data required to start the onboarding (e.g. organization name).
+   * @param {StartOnboardingInput} input - Input data required to start the onboarding (e.g.
+   *   organization name).
    *
-   * @return {Observable<OnboardingOutput>} An observable emitting the initial onboarding state.
+   * @returns {Observable<OnboardingOutput>} An observable emitting the initial onboarding state.
    */
   public start(input: StartOnboardingInput): Observable<OnboardingOutput> {
     return this.post<StartOnboardingInput, OnboardingOutput>(
@@ -150,7 +167,8 @@ export class OnboardingService extends HydraApiService {
    *
    * @param {OnboardingStepKey} stepKey - The key identifying the step to execute.
    *
-   * @return {Observable<OnboardingOutput>} An observable emitting the updated onboarding state after execution.
+   * @returns {Observable<OnboardingOutput>} An observable emitting the updated onboarding state
+   *   after execution.
    */
   public executeStep(stepKey: OnboardingStepKey): Observable<OnboardingOutput> {
     return this.post<Record<string, never>, OnboardingOutput>(
@@ -172,7 +190,8 @@ export class OnboardingService extends HydraApiService {
    *
    * @param {OnboardingStepKey} stepKey - The key identifying the step to skip.
    *
-   * @return {Observable<OnboardingOutput>} An observable emitting the updated onboarding state after skipping.
+   * @returns {Observable<OnboardingOutput>} An observable emitting the updated onboarding state
+   *   after skipping.
    */
   public skipStep(stepKey: OnboardingStepKey): Observable<OnboardingOutput> {
     return this.postAction<OnboardingOutput>(
@@ -191,7 +210,8 @@ export class OnboardingService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @return {Observable<OnboardingOutput>} An observable emitting the updated onboarding state after rollback.
+   * @returns {Observable<OnboardingOutput>} An observable emitting the updated onboarding state
+   *   after rollback.
    */
   public rollback(): Observable<OnboardingOutput> {
     return this.postAction<OnboardingOutput>(

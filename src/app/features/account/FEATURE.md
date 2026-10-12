@@ -391,3 +391,23 @@ initialization does not load dashboard widgets. The same feature provider remain
 | Entry point           | Consumers |
 | --------------------- | --------- |
 | `providers/bootstrap` | `app`     |
+
+## TOTP recovery
+
+Account owns recovery availability and generation at `/account/security` through
+`GET` and `POST /api/otp/totp/recovery-codes`. Status carries only remaining count
+and generation time. Generation requires a current six-digit TOTP proof and replaces
+the previous set. Generated codes remain only in the page-scoped `RecoveryCodesStore`
+while their display is open; close, navigation, destruction, session replacement and
+a late response after closure all clear or suppress them. Codes never enter events,
+toasts, logs, TransferState or browser storage. These secondary reads are browser-only.
+
+Losing the authenticator can be handled by disabling TOTP with an explicit
+`recovery_code` proof, then using the existing setup workflow. `UserProfileOutput.totpEnabled`
+remains the only enabled flag; recovery availability never establishes another flag.
+Password creation consumes Auth's loaded policy and blocks while it is unavailable.
+Profile/avatar writes accept transport identities; an unchanged immutable File retry
+retains its operation, and a different File or session receives a new one.
+
+Global permission identifiers accept backend contributions; the known constants are conveniences
+and permission checks remain based on the authoritative effective permissions payload.

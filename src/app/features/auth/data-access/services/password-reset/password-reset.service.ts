@@ -1,6 +1,7 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
+import type { ApiRequestOptions } from '@core/api/models';
 import type {
   PasswordResetRequestInput,
   PasswordResetRequestOutput,
@@ -13,20 +14,22 @@ import type {
 /**
  * Service PasswordResetService
  * @class PasswordResetService
- * @extends HydraApiService
  *
  * @description
  * Service for password reset operations.
  * Handles password reset request and verification endpoints.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends HydraApiService
  */
 @Service()
 export class PasswordResetService extends HydraApiService {
   //#region Constants
   /**
-   * Constant REQUEST_PATH
+   * Property REQUEST_PATH
    * @readonly
    * @static
    *
@@ -41,7 +44,7 @@ export class PasswordResetService extends HydraApiService {
   private static readonly REQUEST_PATH: string = '/api/auth/password/reset/request';
 
   /**
-   * Constant CONFIRM_PATH
+   * Property CONFIRM_PATH
    * @readonly
    * @static
    *
@@ -56,7 +59,7 @@ export class PasswordResetService extends HydraApiService {
   private static readonly CONFIRM_PATH: string = '/api/auth/password/reset/confirm';
 
   /**
-   * Constant RESEND_PATH
+   * Property RESEND_PATH
    * @readonly
    * @static
    *
@@ -82,6 +85,7 @@ export class PasswordResetService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {PasswordResetRequestInput} input - Request input data.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write intent.
    *
    * @returns {Observable<PasswordResetRequestOutput>} - Password reset request response.
    *
@@ -94,10 +98,14 @@ export class PasswordResetService extends HydraApiService {
    *   });
    * ```
    */
-  public request(input: PasswordResetRequestInput): Observable<PasswordResetRequestOutput> {
+  public request(
+    input: PasswordResetRequestInput,
+    options?: ApiRequestOptions,
+  ): Observable<PasswordResetRequestOutput> {
     return this.post<PasswordResetRequestInput, PasswordResetRequestOutput>(
       PasswordResetService.REQUEST_PATH,
       input,
+      options,
     );
   }
 
@@ -111,6 +119,7 @@ export class PasswordResetService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {PasswordResetVerifyInput} input - Confirmation input data.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write intent.
    *
    * @returns {Observable<PasswordResetVerifyOutput>} - Confirmation response.
    *
@@ -131,10 +140,14 @@ export class PasswordResetService extends HydraApiService {
    *   });
    * ```
    */
-  public confirm(input: PasswordResetVerifyInput): Observable<PasswordResetVerifyOutput> {
+  public confirm(
+    input: PasswordResetVerifyInput,
+    options?: ApiRequestOptions,
+  ): Observable<PasswordResetVerifyOutput> {
     return this.post<PasswordResetVerifyInput, PasswordResetVerifyOutput>(
       PasswordResetService.CONFIRM_PATH,
       input,
+      options,
     );
   }
 
@@ -149,6 +162,7 @@ export class PasswordResetService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {PasswordResetResendInput} input - Resend input data.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write intent.
    *
    * @returns {Observable<PasswordResetResendOutput>} - Resend response with new token.
    *
@@ -163,10 +177,14 @@ export class PasswordResetService extends HydraApiService {
    *   });
    * ```
    */
-  public resend(input: PasswordResetResendInput): Observable<PasswordResetResendOutput> {
+  public resend(
+    input: PasswordResetResendInput,
+    options?: ApiRequestOptions,
+  ): Observable<PasswordResetResendOutput> {
     return this.post<PasswordResetResendInput, PasswordResetResendOutput>(
       PasswordResetService.RESEND_PATH,
       input,
+      options,
     );
   }
   //#endregion

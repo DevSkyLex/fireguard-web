@@ -29,12 +29,12 @@ const PUBLIC_ENDPOINTS: RegExp[] = [
   /\/api\/auth\/refresh$/,
   /\/api\/auth\/register$/,
   /\/api\/auth\/federated\/providers$/,
-  /\/api\/auth\/federated\/(google|microsoft)\/(start|complete)$/,
+  /\/api\/auth\/federated\/([a-z][a-z0-9_-]{0,19})\/(start|complete)$/,
   /\/api\/oauth2\/token$/,
 ];
 
 /**
- * Function authInterceptor
+ * Constant authInterceptor
  *
  * @description
  * Adds Bearer token to outgoing API requests.

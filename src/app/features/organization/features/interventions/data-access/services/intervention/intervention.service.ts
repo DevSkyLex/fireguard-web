@@ -12,7 +12,7 @@ import {
   timer,
   type Observable,
 } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { type ApiRequestOptions, HydraApiService } from '@core/api';
 import type { HydraCollection, HydraItem, RequestOptions } from '@core/api/models';
 import type {
   AssignInterventionTeamInput,
@@ -298,10 +298,16 @@ export class InterventionService extends HydraApiService {
    *
    * @param {string} organizationId - organization Id value.
    * @param {InterventionExportOptions} [options] - The accepted narrowing to apply.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
    * @returns {Observable<Blob>} The export's CSV binary content.
    */
-  public exportCsv(organizationId: string, options?: InterventionExportOptions): Observable<Blob> {
+  public exportCsv(
+    organizationId: string,
+    options?: InterventionExportOptions,
+    requestOptions?: ApiRequestOptions,
+  ): Observable<Blob> {
     const params: Record<string, string | readonly string[]> = {
       organization: `/api/organizations/${organizationId}`,
     };
@@ -315,6 +321,7 @@ export class InterventionService extends HydraApiService {
 
     return this.http.get(this.buildUrl('/api/interventions/export'), {
       params: this.buildParams({ params }),
+      headers: this.buildWriteHeaders(requestOptions),
       responseType: 'blob',
       withCredentials: true,
     });
@@ -405,6 +412,7 @@ export class InterventionService extends HydraApiService {
    *   offline outbox. Replaying the same key returns the stored comment instead of
    *   appending a second one — a response lost in the field is indistinguishable,
    *   from the device, from a request that never arrived.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionActivityOutput>} The created comment activity entry.
    */
@@ -412,10 +420,12 @@ export class InterventionService extends HydraApiService {
     interventionId: string,
     body: string,
     clientId?: string,
+    options?: ApiRequestOptions,
   ): Observable<InterventionActivityOutput> {
     return this.post<{ body: string; clientId?: string }, InterventionActivityOutput>(
       `/api/interventions/${interventionId}/comments`,
       clientId === undefined ? { body } : { body, clientId },
+      options,
     );
   }
 
@@ -495,6 +505,7 @@ export class InterventionService extends HydraApiService {
    *   `labelIds`, when present, replaces the intervention's whole label set
    *   (merge-patch semantics); omit the key to leave labels untouched.
    * @param {number} [revision] - revision value.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionOutput>} Result of the update operation.
    */
@@ -502,6 +513,7 @@ export class InterventionService extends HydraApiService {
     interventionId: string,
     input: UpdateInterventionInput,
     revision?: number,
+    options?: ApiRequestOptions,
   ): Observable<InterventionOutput> {
     const body: Record<string, unknown> = { ...input };
     if ('plannedStartAt' in input)
@@ -512,7 +524,11 @@ export class InterventionService extends HydraApiService {
       `/api/interventions/${interventionId}`,
       body,
       {
-        headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` },
+        ...options,
+        headers: {
+          ...options?.headers,
+          ...(revision === undefined ? {} : { 'If-Match': `"revision-${revision}"` }),
+        },
       },
     );
   }
@@ -686,24 +702,27 @@ export class InterventionService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {CreateInterventionWorkItemInput} input - input value.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionWorkItemOutput>} Result of the create work item operation.
    */
   public createWorkItem(
     input: CreateInterventionWorkItemInput,
+    options?: ApiRequestOptions,
   ): Observable<InterventionWorkItemOutput> {
     if (input.clientId) {
       const { clientId, ...body } = input;
       return this.put<typeof body, InterventionWorkItemOutput>(
         `/api/intervention-work-items/${clientId}`,
         body,
-        { headers: { 'If-None-Match': '*' } },
+        { ...options, headers: { ...options?.headers, 'If-None-Match': '*' } },
       );
     }
 
     return this.post<CreateInterventionWorkItemInput, InterventionWorkItemOutput>(
       '/api/intervention-work-items',
       input,
+      options,
     );
   }
 
@@ -721,6 +740,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} workItemId - work Item Id value.
    * @param {UpdateInterventionWorkItemInput} input - input value.
    * @param {number} [revision] - revision value.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionWorkItemOutput>} Result of the update work item operation.
    */
@@ -728,11 +748,18 @@ export class InterventionService extends HydraApiService {
     workItemId: string,
     input: UpdateInterventionWorkItemInput,
     revision?: number,
+    options?: ApiRequestOptions,
   ): Observable<InterventionWorkItemOutput> {
     return this.patch<UpdateInterventionWorkItemInput, InterventionWorkItemOutput>(
       `/api/intervention-work-items/${workItemId}`,
       input,
-      { headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` } },
+      {
+        ...options,
+        headers: {
+          ...options?.headers,
+          ...(revision === undefined ? {} : { 'If-Match': `"revision-${revision}"` }),
+        },
+      },
     );
   }
 
@@ -842,24 +869,27 @@ export class InterventionService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {CreateInterventionChangeInput} input - input value.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionChangeOutput>} Result of the create change operation.
    */
-  public createChange(input: CreateInterventionChangeInput): Observable<InterventionChangeOutput> {
+  public createChange(
+    input: CreateInterventionChangeInput,
+    options?: ApiRequestOptions,
+  ): Observable<InterventionChangeOutput> {
     if (input.clientId) {
       const { clientId, ...body } = input;
       return this.put<typeof body, InterventionChangeOutput>(
         `/api/intervention-changes/${clientId}`,
         body,
-        {
-          headers: { 'If-None-Match': '*' },
-        },
+        { ...options, headers: { ...options?.headers, 'If-None-Match': '*' } },
       );
     }
 
     return this.post<CreateInterventionChangeInput, InterventionChangeOutput>(
       '/api/intervention-changes',
       input,
+      options,
     );
   }
 
@@ -877,6 +907,7 @@ export class InterventionService extends HydraApiService {
    * @param {string} changeId - change Id value.
    * @param {UpdateInterventionChangeInput} input - input value.
    * @param {number} [revision] - revision value.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionChangeOutput>} Result of the update change operation.
    */
@@ -884,11 +915,18 @@ export class InterventionService extends HydraApiService {
     changeId: string,
     input: UpdateInterventionChangeInput,
     revision?: number,
+    options?: ApiRequestOptions,
   ): Observable<InterventionChangeOutput> {
     return this.patch<UpdateInterventionChangeInput, InterventionChangeOutput>(
       `/api/intervention-changes/${changeId}`,
       input,
-      { headers: revision === undefined ? undefined : { 'If-Match': `"revision-${revision}"` } },
+      {
+        ...options,
+        headers: {
+          ...options?.headers,
+          ...(revision === undefined ? {} : { 'If-Match': `"revision-${revision}"` }),
+        },
+      },
     );
   }
 
@@ -947,6 +985,7 @@ export class InterventionService extends HydraApiService {
    * @param {InterventionAttachmentKind} [kind] - `'file'` (default) or `'signature'`.
    * @param {string} [clientId] - Client-generated UUID making an offline replay idempotent (the
    *   endpoint returns the existing attachment instead of duplicating).
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionAttachmentOutput>} The created attachment.
    */
@@ -958,6 +997,7 @@ export class InterventionService extends HydraApiService {
     workItemId?: string,
     kind?: InterventionAttachmentKind,
     clientId?: string,
+    options?: ApiRequestOptions,
   ): Observable<InterventionAttachmentOutput> {
     const body: FormData = new FormData();
     body.set('file', file, fileName);
@@ -969,7 +1009,7 @@ export class InterventionService extends HydraApiService {
     return this.http.post<InterventionAttachmentOutput>(
       this.buildUrl(`/api/interventions/${interventionId}/attachments`),
       body,
-      { withCredentials: true, headers: { Accept: 'application/ld+json' } },
+      { withCredentials: true, headers: this.buildWriteHeaders(options, true) },
     );
   }
 
@@ -1036,11 +1076,17 @@ export class InterventionService extends HydraApiService {
    * @since 4.7.0
    *
    * @param {string} interventionId - intervention Id value.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
    * @returns {Observable<Blob>} The report's PDF binary content.
    */
-  public exportReport(interventionId: string): Observable<Blob> {
+  public exportReport(
+    interventionId: string,
+    requestOptions?: ApiRequestOptions,
+  ): Observable<Blob> {
     return this.http.get(this.buildUrl(`/api/interventions/${interventionId}/report`), {
+      headers: this.buildWriteHeaders(requestOptions),
       responseType: 'blob',
       withCredentials: true,
     });

@@ -1,5 +1,6 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { IndexedDbService } from '@core/indexed-db';
 import { USER_IDENTITY_PORT, type ShellUserProfile } from '@features/account/ports';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import type { MessagingOutboxOperation } from '@features/organization/features/collaboration/models';
@@ -10,6 +11,21 @@ import { MessagingOutboxRepository } from '../messaging-outbox.repository';
 function inMemoryDatabase(store: Map<string, unknown>) {
   return {
     browser: true,
+    updateTransaction: vi.fn(
+      async (
+        reads: Parameters<IndexedDbService['updateTransaction']>[0],
+        update: Parameters<IndexedDbService['updateTransaction']>[1],
+      ) => {
+        const values: Record<string, Record<string, unknown>> = {};
+        for (const [name, keys] of Object.entries(reads)) {
+          values[name] = Object.fromEntries(keys.map((key) => [key, store.get(key) ?? null]));
+        }
+        const writes = update(values);
+        for (const entries of Object.values(writes))
+          for (const entry of entries) store.set(entry.key, entry.value);
+      },
+    ),
+
     ensureOwnerBound: vi.fn().mockResolvedValue(undefined),
     put: vi.fn(async (_storeName: string, key: string, value: unknown) => {
       store.set(key, value);
@@ -57,6 +73,33 @@ describe('MessagingOutboxRepository', () => {
   });
 
   afterEach(() => TestBed.resetTestingModule());
+
+  it('persists one legacy key atomically without changing native row and message identities', async () => {
+    const legacy: MessagingOutboxOperation = {
+      id: 'legacy-row',
+      conversationId: 'c1',
+      type: 'message.send',
+      payload: {
+        conversationId: 'c1',
+        clientId: 'native-message-id',
+        input: { body: 'Saved message' },
+      },
+      createdAt: '2026-01-01T00:00:00Z',
+    };
+    store.set(legacy.id, legacy);
+    const repository = build();
+    const keys = await Promise.all([
+      repository.ensureIdempotencyKey(legacy.id),
+      repository.ensureIdempotencyKey(legacy.id),
+    ]);
+    expect(keys[0]).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(keys[1]).toBe(keys[0]);
+    expect(store.get(legacy.id)).toEqual({ ...legacy, idempotencyKey: keys[0] });
+    await repository.markFailed(legacy.id, 'Temporary failure');
+    await repository.retry(legacy.id);
+    TestBed.resetTestingModule();
+    expect(await build().ensureIdempotencyKey(legacy.id)).toBe(keys[0]);
+  });
 
   it('should queue an operation as pending and count it', async () => {
     const repository = build();

@@ -23,6 +23,7 @@ import {
   tap,
 } from 'rxjs';
 import { isConstraintViolation } from '@core/api/utils';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -300,6 +301,7 @@ export const AuthStore = signalStore(
       activeTrustedDeviceStore = inject<ActiveTrustedDeviceStore>(ActiveTrustedDeviceStore),
       destroyRef = inject(DestroyRef),
       coordination = inject(SessionCoordinationService),
+      writeTracker = inject(WriteOperationService).createTracker(),
     ) => {
       /**
        * @description
@@ -308,6 +310,7 @@ export const AuthStore = signalStore(
        * against one refresh rather than racing several against a rotating token.
        */
       let renewal: Observable<string | null> | null = null;
+      destroyRef.onDestroy(() => writeTracker.clear());
       const invalidated = new Subject<void>();
       const mfaInvalidated = new Subject<void>();
 
@@ -322,6 +325,7 @@ export const AuthStore = signalStore(
        * @returns {void}
        */
       function invalidateSession(): void {
+        writeTracker.clear();
         patchState(store, {
           sessionRevision: store.sessionRevision() + 1,
           loginCallState: store.isLoggingIn() ? idleCallState() : store.loginCallState(),
@@ -385,54 +389,69 @@ export const AuthStore = signalStore(
         const request$: Observable<string | null> = defer(() => {
           if (revision !== store.sessionRevision() || store.isLoggingOut()) return of(null);
           patchState(store, { refreshCallState: pendingCallState() });
-          return authService.refresh().pipe(
-            takeUntil(invalidated),
-            takeUntilDestroyed(destroyRef),
-            map((response: AuthenticatedLoginOutput): string | null => {
-              if (revision !== store.sessionRevision()) return null;
-              if (
-                previousToken &&
-                (!previousSubject || readJwtSubject(response.access_token) !== previousSubject)
-              ) {
-                clearLocalSession(true);
-                dispatcher.dispatch(authStoreEvents.sessionInvalidated());
-                return null;
-              }
-              patchState(store, {
-                accessToken: response.access_token,
-                expiresAt: calculateExpiresAt(response.expires_in),
-                refreshCallState: successCallState(response),
-              });
-              return response.access_token;
-            }),
-            catchError((error: unknown) => {
-              const failure = errorCallState<AuthenticatedLoginOutput>(toStoreError(error));
-              if (revision === store.sessionRevision()) {
+          return authService
+            .refresh(writeTracker.options('authService.refresh', [], store.sessionRevision()))
+            .pipe(
+              tap({
+                next: (result): void => {
+                  const outcome: unknown = result;
+                  if (
+                    outcome &&
+                    typeof outcome === 'object' &&
+                    'success' in outcome &&
+                    outcome.success === false
+                  )
+                    return;
+                  writeTracker.complete('authService.refresh');
+                },
+              }),
+              takeUntil(invalidated),
+              takeUntilDestroyed(destroyRef),
+              map((response: AuthenticatedLoginOutput): string | null => {
+                if (revision !== store.sessionRevision()) return null;
+                if (
+                  previousToken &&
+                  (!previousSubject || readJwtSubject(response.access_token) !== previousSubject)
+                ) {
+                  clearLocalSession(true);
+                  dispatcher.dispatch(authStoreEvents.sessionInvalidated());
+                  return null;
+                }
                 patchState(store, {
-                  accessToken: null,
-                  expiresAt: null,
-                  refreshCallState: failure,
+                  accessToken: response.access_token,
+                  expiresAt: calculateExpiresAt(response.expires_in),
+                  refreshCallState: successCallState(response),
                 });
-              }
-              return of(null).pipe(
-                finalize(() => {
-                  if (revision !== store.sessionRevision()) return;
-                  invalidateSession();
+                return response.access_token;
+              }),
+              catchError((error: unknown) => {
+                const failure = errorCallState<AuthenticatedLoginOutput>(toStoreError(error));
+                if (revision === store.sessionRevision()) {
                   patchState(store, {
-                    ...INITIAL_AUTH_STATE,
-                    initialized: true,
-                    sessionRevision: store.sessionRevision(),
+                    accessToken: null,
+                    expiresAt: null,
                     refreshCallState: failure,
                   });
-                  activeTrustedDeviceStore.clear();
-                  userProfilePort.clear();
-                  dispatcher.dispatch(authStoreEvents.sessionEnded());
-                  coordination.publish();
-                }),
-              );
-            }),
-            defaultIfEmpty(null),
-          );
+                }
+                return of(null).pipe(
+                  finalize(() => {
+                    if (revision !== store.sessionRevision()) return;
+                    invalidateSession();
+                    patchState(store, {
+                      ...INITIAL_AUTH_STATE,
+                      initialized: true,
+                      sessionRevision: store.sessionRevision(),
+                      refreshCallState: failure,
+                    });
+                    activeTrustedDeviceStore.clear();
+                    userProfilePort.clear();
+                    dispatcher.dispatch(authStoreEvents.sessionEnded());
+                    coordination.publish();
+                  }),
+                );
+              }),
+              defaultIfEmpty(null),
+            );
         }).pipe(
           finalize(() => {
             if (renewal === request$) renewal = null;
@@ -527,34 +546,52 @@ export const AuthStore = signalStore(
           pipe(
             exhaustMap((credentials) => {
               patchState(store, { loginCallState: pendingCallState() });
-              return authService.login(credentials).pipe(
-                takeUntil(invalidated),
-                tapResponse({
-                  next: (response: LoginOutput) => {
-                    if (response.mfa_required === true) {
-                      applyMfaChallenge(response);
-                    } else {
-                      patchState(store, { loginCallState: successCallState(response) });
-                      applySessionTokens(response);
-                    }
-                  },
-                  error: (error: unknown) => {
-                    const normalizedError = toStoreError(error);
-                    const validationMessage = isConstraintViolation(error)
-                      ? error.violations.map((violation) => violation.message).join(' ')
-                      : null;
-                    const storeError: StoreError = validationMessage
-                      ? { ...normalizedError, message: validationMessage }
-                      : normalizedError;
-                    patchState(store, { loginCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      authStoreEvents.loginFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to sign in'),
-                      ),
-                    );
-                  },
-                }),
-              );
+              return authService
+                .login(
+                  credentials,
+                  writeTracker.options('authService.login', [credentials], store.sessionRevision()),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('authService.login');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  tapResponse({
+                    next: (response: LoginOutput) => {
+                      if (response.mfa_required === true) {
+                        applyMfaChallenge(response);
+                      } else {
+                        patchState(store, { loginCallState: successCallState(response) });
+                        applySessionTokens(response);
+                      }
+                    },
+                    error: (error: unknown) => {
+                      const normalizedError = toStoreError(error);
+                      const validationMessage = isConstraintViolation(error)
+                        ? error.violations.map((violation) => violation.message).join(' ')
+                        : null;
+                      const storeError: StoreError = validationMessage
+                        ? { ...normalizedError, message: validationMessage }
+                        : normalizedError;
+                      patchState(store, { loginCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        authStoreEvents.loginFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to sign in'),
+                        ),
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),
@@ -572,50 +609,65 @@ export const AuthStore = signalStore(
             exhaustMap(() => {
               patchState(store, { logoutCallState: pendingCallState() });
               const revision = store.sessionRevision();
-              return authService.logout().pipe(
-                takeUntil(invalidated),
-                tapResponse({
-                  next: (response: LogoutOutput) => {
-                    if (revision !== store.sessionRevision()) return;
-                    invalidateSession();
-                    patchState(store, {
-                      ...INITIAL_AUTH_STATE,
-                      sessionRevision: store.sessionRevision(),
-                      initialized: true,
-                      logoutCallState: successCallState(response),
-                    });
-                    activeTrustedDeviceStore.clear();
-                    // Clear user profile on logout
-                    userProfilePort.clear();
-                    dispatcher.dispatch(authStoreEvents.sessionEnded());
-                    dispatcher.dispatch(authStoreEvents.logoutSucceeded());
-                    coordination.publish();
-                  },
-                  error: (error: unknown) => {
-                    if (revision !== store.sessionRevision()) return;
-                    const storeError: StoreError = toStoreError(error);
-                    invalidateSession();
-                    patchState(store, {
-                      ...INITIAL_AUTH_STATE,
-                      sessionRevision: store.sessionRevision(),
-                      initialized: true,
-                      logoutCallState: errorCallState(storeError),
-                    });
-                    activeTrustedDeviceStore.clear();
-                    // Clear user profile even on logout error
-                    userProfilePort.clear();
-                    // The local session is gone either way, so downstream data must
-                    // be purged here too — not only on the success branch.
-                    dispatcher.dispatch(authStoreEvents.sessionEnded());
-                    dispatcher.dispatch(
-                      authStoreEvents.logoutFailed(
-                        toStoreFailureEventPayload(storeError, 'Logout failed'),
-                      ),
-                    );
-                    coordination.publish();
-                  },
-                }),
-              );
+              return authService
+                .logout(writeTracker.options('authService.logout', [], store.sessionRevision()))
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('authService.logout');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  tapResponse({
+                    next: (response: LogoutOutput) => {
+                      if (revision !== store.sessionRevision()) return;
+                      invalidateSession();
+                      patchState(store, {
+                        ...INITIAL_AUTH_STATE,
+                        sessionRevision: store.sessionRevision(),
+                        initialized: true,
+                        logoutCallState: successCallState(response),
+                      });
+                      activeTrustedDeviceStore.clear();
+                      // Clear user profile on logout
+                      userProfilePort.clear();
+                      dispatcher.dispatch(authStoreEvents.sessionEnded());
+                      dispatcher.dispatch(authStoreEvents.logoutSucceeded());
+                      coordination.publish();
+                    },
+                    error: (error: unknown) => {
+                      if (revision !== store.sessionRevision()) return;
+                      const storeError: StoreError = toStoreError(error);
+                      invalidateSession();
+                      patchState(store, {
+                        ...INITIAL_AUTH_STATE,
+                        sessionRevision: store.sessionRevision(),
+                        initialized: true,
+                        logoutCallState: errorCallState(storeError),
+                      });
+                      activeTrustedDeviceStore.clear();
+                      // Clear user profile even on logout error
+                      userProfilePort.clear();
+                      // The local session is gone either way, so downstream data must
+                      // be purged here too — not only on the success branch.
+                      dispatcher.dispatch(authStoreEvents.sessionEnded());
+                      dispatcher.dispatch(
+                        authStoreEvents.logoutFailed(
+                          toStoreFailureEventPayload(storeError, 'Logout failed'),
+                        ),
+                      );
+                      coordination.publish();
+                    },
+                  }),
+                );
             }),
           ),
         ),
@@ -645,30 +697,48 @@ export const AuthStore = signalStore(
           pipe(
             exhaustMap((input) => {
               patchState(store, { mfaVerifyCallState: pendingCallState() });
-              return authService.mfaVerify(input).pipe(
-                takeUntil(invalidated),
-                takeUntil(mfaInvalidated),
-                tapResponse({
-                  next: (response: AuthenticatedLoginOutput) => {
-                    patchState(store, { mfaVerifyCallState: successCallState(response) });
-                    applySessionTokens(response);
+              return authService
+                .mfaVerify(
+                  input,
+                  writeTracker.options('authService.mfaVerify', [input], store.sessionRevision()),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('authService.mfaVerify');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  takeUntil(mfaInvalidated),
+                  tapResponse({
+                    next: (response: AuthenticatedLoginOutput) => {
+                      patchState(store, { mfaVerifyCallState: successCallState(response) });
+                      applySessionTokens(response);
 
-                    // Trust device if pending
-                    if (activeTrustedDeviceStore.pendingTrustDevice()) {
-                      activeTrustedDeviceStore.trustDevice();
-                    }
-                  },
-                  error: (error: unknown) => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { mfaVerifyCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      authStoreEvents.mfaVerifyFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to verify code'),
-                      ),
-                    );
-                  },
-                }),
-              );
+                      // Trust device if pending
+                      if (activeTrustedDeviceStore.pendingTrustDevice()) {
+                        activeTrustedDeviceStore.trustDevice();
+                      }
+                    },
+                    error: (error: unknown) => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { mfaVerifyCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        authStoreEvents.mfaVerifyFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to verify code'),
+                        ),
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),
@@ -701,36 +771,58 @@ export const AuthStore = signalStore(
                 return EMPTY;
               }
 
-              return authService.mfaResend({ preAuthToken }).pipe(
-                takeUntil(invalidated),
-                takeUntil(mfaInvalidated),
-                tapResponse({
-                  next: (response: MfaChallengeLoginOutput) => {
-                    patchState(store, {
-                      mfaToken: response.mfa_token ?? null,
-                      challengeToken: response.challenge_token ?? null,
-                      mfaResendAvailableAt: toResendAvailableAt(response.mfa_resend_in),
-                      loginCallState: successCallState(response),
-                      mfaResendCallState: successCallState(response),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    const storeError: StoreError = toStoreError(error);
-                    const retryDelay: number | null = toResendDelaySeconds(storeError);
-                    patchState(store, {
-                      mfaResendCallState: errorCallState(storeError),
-                      ...(retryDelay !== null
-                        ? { mfaResendAvailableAt: toResendAvailableAt(retryDelay) }
-                        : {}),
-                    });
-                    dispatcher.dispatch(
-                      authStoreEvents.mfaResendFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to resend code'),
-                      ),
-                    );
-                  },
-                }),
-              );
+              return authService
+                .mfaResend(
+                  { preAuthToken },
+                  writeTracker.options(
+                    'authService.mfaResend',
+                    [{ preAuthToken }],
+                    store.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('authService.mfaResend');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  takeUntil(mfaInvalidated),
+                  tapResponse({
+                    next: (response: MfaChallengeLoginOutput) => {
+                      patchState(store, {
+                        mfaToken: response.mfa_token ?? null,
+                        challengeToken: response.challenge_token ?? null,
+                        mfaResendAvailableAt: toResendAvailableAt(response.mfa_resend_in),
+                        loginCallState: successCallState(response),
+                        mfaResendCallState: successCallState(response),
+                      });
+                    },
+                    error: (error: unknown) => {
+                      const storeError: StoreError = toStoreError(error);
+                      const retryDelay: number | null = toResendDelaySeconds(storeError);
+                      patchState(store, {
+                        mfaResendCallState: errorCallState(storeError),
+                        ...(retryDelay !== null
+                          ? { mfaResendAvailableAt: toResendAvailableAt(retryDelay) }
+                          : {}),
+                      });
+                      dispatcher.dispatch(
+                        authStoreEvents.mfaResendFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to resend code'),
+                        ),
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),
@@ -885,6 +977,7 @@ export const AuthStore = signalStore(
          * @returns {void}
          */
         clearMfaState(): void {
+          writeTracker.clear();
           mfaInvalidated.next();
           activeTrustedDeviceStore.clear();
           patchState(store, {

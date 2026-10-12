@@ -19,14 +19,15 @@ describe('LoginPage', () => {
     isAuthenticated: WritableSignal<boolean>;
   };
   let mockFederatedStore: {
+    providers: WritableSignal<readonly import('@features/auth/models').FederatedProviderOutput[]>;
     loadProviders: ReturnType<typeof vi.fn>;
     startLogin: ReturnType<typeof vi.fn>;
     resetStart: ReturnType<typeof vi.fn>;
-    enabledProviders: WritableSignal<readonly ('google' | 'microsoft')[]>;
+    enabledProviders: WritableSignal<readonly string[]>;
     providersLoading: WritableSignal<boolean>;
     providersCallState: WritableSignal<CallState<readonly FederatedProviderOutput[]>>;
     startPending: WritableSignal<boolean>;
-    pendingProvider: WritableSignal<'google' | 'microsoft' | null>;
+    pendingProvider: WritableSignal<string | null>;
     startUrl: WritableSignal<string | null>;
     startCallState: WritableSignal<{ status: 'idle'; data: null; error: null }>;
   };
@@ -45,6 +46,7 @@ describe('LoginPage', () => {
       isAuthenticated,
     };
     mockFederatedStore = {
+      providers: signal([]),
       loadProviders: vi.fn(),
       startLogin: vi.fn(),
       resetStart: vi.fn(),
@@ -112,6 +114,33 @@ describe('LoginPage', () => {
       password: 'Str0ng!Passw0rd',
     });
     expect(mockFederatedStore.resetStart).toHaveBeenCalledOnce();
+  });
+
+  it('uses the server label and generic icon for a contributed provider', async () => {
+    mockFederatedStore.providers.set([
+      {
+        '@id': '/provider/company',
+        '@type': 'Provider',
+        id: 'company',
+        value: 'company',
+        provider: 'company',
+        label: 'Company SSO',
+        enabled: true,
+      },
+    ]);
+    mockFederatedStore.enabledProviders.set(['company']);
+    await fixture.whenStable();
+    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="auth-provider-company"]',
+    );
+    expect(button?.textContent).toContain('Company SSO');
+    expect(button?.querySelector('ng-icon')).not.toBeNull();
+    expect(fixture.componentInstance['providerIcon']('company')).toBe('lucideGlobe');
+    button?.click();
+    expect(mockFederatedStore.startLogin).toHaveBeenCalledWith({
+      provider: 'company',
+      returnUrl: '/',
+    });
   });
 
   it('should send remember_me when it was asked for', () => {

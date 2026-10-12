@@ -3,7 +3,11 @@
   class="mx-auto flex w-full max-w-md min-w-0 flex-col gap-8 mobile-ui:gap-6"
 >
   <app-page-heading heading="Two-factor verification" i18n-heading="@@auth.mfa.title">
-    @if (destination(); as sentTo) {
+    @if (usingRecovery()) {
+      <p class="text-sm text-muted-foreground" i18n="@@auth.recovery.instructions">
+        Enter one of your saved recovery codes.
+      </p>
+    } @else if (destination(); as sentTo) {
       <p class="text-sm text-muted-foreground">
         <span i18n="@@auth.mfa.sentTo">We sent a code to</span>
         <span class="mt-1 block font-medium break-all text-foreground">{{ sentTo }}</span>
@@ -15,16 +19,41 @@
     }
   </app-page-heading>
 
-  <app-otp-form
-    [pending]="authStore.isVerifyingMfa()"
-    [showResend]="canResend()"
-    [showTrustDevice]="true"
-    [resending]="authStore.isResendingMfa()"
-    [serverError]="authStore.mfaVerifyError() ?? authStore.mfaResendError()"
-    [resendAvailableIn]="authStore.mfaResendAvailableIn()"
-    (submitted)="verify($event)"
-    (resent)="resend()"
-  />
+  @if (usingRecovery()) {
+    <app-recovery-code-form
+      [pending]="authStore.isVerifyingMfa()"
+      [serverError]="authStore.mfaVerifyError()"
+      (submitted)="verifyRecovery($event)"
+    />
+  } @else {
+    <app-otp-form
+      [pending]="authStore.isVerifyingMfa()"
+      [showResend]="canResend()"
+      [showTrustDevice]="true"
+      [resending]="authStore.isResendingMfa()"
+      [serverError]="authStore.mfaVerifyError() ?? authStore.mfaResendError()"
+      [resendAvailableIn]="authStore.mfaResendAvailableIn()"
+      (submitted)="verify($event)"
+      (resent)="resend()"
+    />
+  }
+  @if (!canResend()) {
+    <button
+      hlmBtn
+      type="button"
+      variant="link"
+      class="mobile-ui:min-h-11"
+      [attr.aria-pressed]="usingRecovery()"
+      [disabled]="authStore.isVerifyingMfa() || authStore.isResendingMfa()"
+      (click)="toggleRecovery()"
+    >
+      @if (usingRecovery()) {
+        <span i18n="@@auth.recovery.useAuthenticator">Use my authenticator</span>
+      } @else {
+        <span i18n="@@auth.recovery.useCode">Use a recovery code</span>
+      }
+    </button>
+  }
 
   <p
     class="flex flex-wrap items-center justify-center gap-x-1 text-center text-sm text-muted-foreground"

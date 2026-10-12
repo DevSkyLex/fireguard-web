@@ -1,13 +1,13 @@
 import { Service } from '@angular/core';
 import { type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions } from '@core/api';
+import type { ApiRequestOptions } from '@core/api/models';
 import type { HydraCollection } from '@core/api/models';
 import type { RevokeOtherSessionsOutput, SessionOutput } from '@features/auth/models';
 
 /**
  * Service SessionService
  * @class SessionService
- * @extends {HydraApiService}
  *
  * @description
  * API service for user session management operations.
@@ -15,7 +15,10 @@ import type { RevokeOtherSessionsOutput, SessionOutput } from '@features/auth/mo
  * for security purposes.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  *
  * @example
  * ```typescript
@@ -38,7 +41,7 @@ import type { RevokeOtherSessionsOutput, SessionOutput } from '@features/auth/mo
 export class SessionService extends HydraApiService {
   //#region Constants
   /**
-   * Constant BASE_PATH
+   * Property BASE_PATH
    * @readonly
    * @static
    *
@@ -66,7 +69,8 @@ export class SessionService extends HydraApiService {
    *
    * @param {PaginationOptions} [options] - Pagination options (page, itemsPerPage).
    *
-   * @returns {Observable<HydraCollection<SessionOutput>>} Observable emitting the sessions collection.
+   * @returns {Observable<HydraCollection<SessionOutput>>} Observable emitting the sessions
+   *   collection.
    */
   public list(options?: PaginationOptions): Observable<HydraCollection<SessionOutput>> {
     return this.getCollection<SessionOutput>(SessionService.BASE_PATH, options);
@@ -100,11 +104,13 @@ export class SessionService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} id - Session unique identifier to revoke.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
    *
    * @returns {Observable<void>} Observable completing on success.
    */
-  public revoke(id: string): Observable<void> {
-    return this.delete(`${SessionService.BASE_PATH}/${id}`);
+  public revoke(id: string, options?: ApiRequestOptions): Observable<void> {
+    return this.delete(`${SessionService.BASE_PATH}/${id}`, options);
   }
 
   /**
@@ -113,7 +119,6 @@ export class SessionService extends HydraApiService {
    * @description
    * Revokes every session except the caller's current one. Idempotent,
    * `200` with the number of sessions actually revoked.
-   *
    * The API also exposes `POST /sessions/revoke-all` (current session
    * included, `204`); it is deliberately not wired here — signing the
    * caller out belongs to the logout flow, not to a session-management
@@ -122,10 +127,16 @@ export class SessionService extends HydraApiService {
    * @access public
    * @since 1.1.0
    *
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<RevokeOtherSessionsOutput>} How many sessions were revoked.
    */
-  public revokeOthers(): Observable<RevokeOtherSessionsOutput> {
-    return this.postAction<RevokeOtherSessionsOutput>(`${SessionService.BASE_PATH}/revoke-others`);
+  public revokeOthers(options?: ApiRequestOptions): Observable<RevokeOtherSessionsOutput> {
+    return this.postAction<RevokeOtherSessionsOutput>(
+      `${SessionService.BASE_PATH}/revoke-others`,
+      options,
+    );
   }
   //#endregion
 }

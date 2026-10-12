@@ -164,6 +164,21 @@ decides what a failure _means_; `MessagingSyncCoordinatorService` decides _when_
 coordinator is started from an app initializer, not from the shell route: a message queued
 yesterday must not wait for someone to navigate back to its channel.
 
+Every send persists its HTTP idempotency key before its first network attempt, including online
+sends. The key is distinct from the outbox row id and client message id. Reloads and unchanged
+retries retain all three identities; legacy rows receive their key in one guarded IndexedDB
+read/write transaction before replay. A storage failure prevents that first network attempt and
+retains the visible local intention. Successful acknowledgment removes the durable row.
+The queue has no key TTL or attempt limit. Receipt conflicts, expired replay results without
+explicit completion proof and unknown outcomes keep the row for review; an in-progress receipt
+defers the original key. Only HTTP 409 with `idempotency_replay_expired` and strict
+`operationCompleted: true` acknowledges an expired completed send. Before durable removal,
+synchronization acquires the native message through authorized conversation pages under its
+original account, session and workspace. Missing/unreadable projections or failed acknowledgement
+retain the pending row and original key. Existing replay events clear pending and failed indicators
+only for acknowledged native client ids, then refresh the visible thread without replacing a draft
+or clearing other queued messages.
+
 Each replay captures the authenticated session revision, account owner and workspace before
 loading durable operations. Session replacement, including returning to the same account,
 owner loss or workspace change stops further sends and suppresses obsolete queue mutations,
@@ -173,12 +188,13 @@ by the server may finish there, but an obsolete pass never retries it under anot
 
 Replay classification, in one place so it is not re-derived:
 
-| Outcome                 | Meaning                                               | Action                                                    |
-| ----------------------- | ----------------------------------------------------- | --------------------------------------------------------- |
-| `2xx`                   | sent                                                  | dequeue                                                   |
-| `409`                   | the client id was already used — it is already stored | dequeue, **not** an error                                 |
-| network / `5xx` / `429` | temporary                                             | leave queued, stop that conversation's chain, retry later |
-| other `4xx`             | the server will repeat this rejection                 | mark failed, wait for the member                          |
+| Outcome                       | Meaning                                               | Action                                                    |
+| ----------------------------- | ----------------------------------------------------- | --------------------------------------------------------- |
+| `2xx`                         | sent                                                  | dequeue                                                   |
+| native client-resource `409`  | the client id was already used — it is already stored | dequeue, **not** an error                                 |
+| completed replay-expiry `409` | explicit server completion proof                      | read current owner projection, then durable dequeue       |
+| network / `5xx` / `429`       | temporary                                             | leave queued, stop that conversation's chain, retry later |
+| other `4xx`                   | the server will repeat this rejection                 | mark failed, wait for the member                          |
 
 Operations replay **sequentially per conversation**, and the first temporary failure stops that
 conversation only — other conversations keep draining. There is no attempt limit: a queued message

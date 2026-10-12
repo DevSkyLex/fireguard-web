@@ -148,7 +148,11 @@ describe('InventoryPage', () => {
         ),
       ),
       retain: vi.fn(async (command: InventoryPhysicalCommand) => {
-        entries.set(command.input.clientOperationId, command);
+        const operation = {
+          idempotencyKey: command.idempotencyKey || '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11',
+        };
+        entries.set(command.input.clientOperationId, { ...command, ...operation });
+        return operation;
       }),
       acknowledge: vi.fn(async (command: InventoryPhysicalCommand) => {
         entries.delete(command.input.clientOperationId);
@@ -309,6 +313,7 @@ describe('InventoryPage', () => {
         quantity: '0.000001',
         reason: draft.reason,
       }),
+      { idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' },
     );
     expect(service.returnConsumption.mock.calls[0]?.[1]).not.toHaveProperty('partId');
   });
@@ -347,8 +352,9 @@ describe('InventoryPage', () => {
     await fixture.whenStable();
     expect(service.correctStock).toHaveBeenCalledTimes(1);
     expect(journal.retain).toHaveBeenCalledTimes(1);
-    const command = page['retained']();
-    if (!command) throw new Error('Expected retained physical command');
+    const retained = page['retained']();
+    if (!retained) throw new Error('Expected retained physical command');
+    const command = { ...retained, idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' };
     expect(entries.get(command.input.clientOperationId)).toEqual(command);
     expect(command.input.clientOperationId).toMatch(/^[0-9a-f-]{36}$/);
     page['requestClose']();
@@ -358,7 +364,12 @@ describe('InventoryPage', () => {
     page['retryPhysical'](command);
     await fixture.whenStable();
     expect(service.correctStock).toHaveBeenCalledTimes(2);
-    expect(service.correctStock.mock.calls[1]?.[1]).toBe(service.correctStock.mock.calls[0]?.[1]);
+    expect(service.correctStock.mock.calls[1]?.[1]).toEqual(
+      service.correctStock.mock.calls[0]?.[1],
+    );
+    expect(service.correctStock.mock.calls[1]?.[2]).toEqual(
+      service.correctStock.mock.calls[0]?.[2],
+    );
     expect(journal.acknowledge).toHaveBeenCalledWith(command, 1);
     expect(entries.size).toBe(0);
   });

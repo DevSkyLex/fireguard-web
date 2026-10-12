@@ -1,4 +1,4 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError, type Observable } from 'rxjs';
@@ -37,7 +37,11 @@ describe('EmailChangeConfirmPage', () => {
         { provide: EmailChangeService, useValue: mockEmailChangeService },
         {
           provide: AUTH_SESSION_PORT,
-          useValue: { clearSession, renewSession: vi.fn(() => of(null)) },
+          useValue: {
+            sessionRevision: signal(0),
+            clearSession,
+            renewSession: vi.fn(() => of(null)),
+          },
         },
         {
           provide: ActivatedRoute,
@@ -65,7 +69,10 @@ describe('EmailChangeConfirmPage', () => {
     confirmButton()?.click();
     await fixture.whenStable();
 
-    expect(mockEmailChangeService.confirm).toHaveBeenCalledWith({ token: 'emailed-token' });
+    expect(mockEmailChangeService.confirm).toHaveBeenCalledWith(
+      { token: 'emailed-token' },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(clearSession).toHaveBeenCalledTimes(1);
 
     const loginLink: HTMLAnchorElement | null = fixture.nativeElement.querySelector(

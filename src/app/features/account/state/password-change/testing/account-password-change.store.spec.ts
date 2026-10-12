@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError, type Observable } from 'rxjs';
 import { UserProfileService } from '@features/account/data-access';
@@ -7,6 +8,7 @@ import type {
   RequestPasswordChangeInput,
   RequestPasswordChangeOutput,
 } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AccountPasswordChangeStore } from '../account-password-change.store';
 
 interface MockUserProfileService {
@@ -41,6 +43,7 @@ describe('AccountPasswordChangeStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         AccountPasswordChangeStore,
         { provide: UserProfileService, useValue: mockUserProfileService },
       ],
@@ -55,9 +58,12 @@ describe('AccountPasswordChangeStore', () => {
 
     store.request('CurrentP@ssw0rd!');
 
-    expect(mockUserProfileService.requestPasswordChange).toHaveBeenCalledWith({
-      currentPassword: 'CurrentP@ssw0rd!',
-    });
+    expect(mockUserProfileService.requestPasswordChange).toHaveBeenCalledWith(
+      {
+        currentPassword: 'CurrentP@ssw0rd!',
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.step()).toBe('verify');
     expect(store.maskedRecipient()).toBe('j***e@example.com');
     expect(store.requestError()).toBeNull();
@@ -81,11 +87,14 @@ describe('AccountPasswordChangeStore', () => {
 
     store.confirm({ code: '123456', newPassword: 'NewP@ssw0rd!' });
 
-    expect(mockUserProfileService.confirmPasswordChange).toHaveBeenCalledWith({
-      token: 'abc123def456abc1',
-      code: '123456',
-      newPassword: 'NewP@ssw0rd!',
-    });
+    expect(mockUserProfileService.confirmPasswordChange).toHaveBeenCalledWith(
+      {
+        token: 'abc123def456abc1',
+        code: '123456',
+        newPassword: 'NewP@ssw0rd!',
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.step()).toBe('success');
     expect(store.confirmError()).toBeNull();
   });

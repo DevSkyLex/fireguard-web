@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
@@ -12,6 +12,7 @@ import {
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, pipe, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -28,6 +29,7 @@ import type {
   RegisterOutput,
   RegisterVerifyInput,
 } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import {
   toResendAvailableAt,
   toResendAvailableIn,
@@ -175,7 +177,7 @@ export const RegisterStore = signalStore(
      *
      * @type {Signal<boolean>}
      */
-    hasChallenge: computed<boolean>(() => store.challengeToken() !== null),
+    hasChallenge: computed<boolean>(() => !!store.challengeToken()),
 
     /**
      * @description
@@ -196,6 +198,21 @@ export const RegisterStore = signalStore(
       dispatcher = inject<Dispatcher>(Dispatcher),
       registrationService = inject<RegistrationService>(RegistrationService),
       authStore = inject<AuthStore>(AuthStore),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => {
       const invalidated = new Subject<void>();
       return {
@@ -216,31 +233,53 @@ export const RegisterStore = signalStore(
             tap(() => patchState(store, { requestCallState: pendingCallState() })),
             switchMap((input: RegisterInput) => {
               const revision = authStore.sessionRevision();
-              return registrationService.register(input).pipe(
-                takeUntil(invalidated),
-                tapResponse({
-                  next: (response: RegisterOutput) => {
-                    if (authStore.sessionRevision() !== revision) return;
-                    patchState(store, {
-                      currentChallenge: response,
-                      challengeToken: response.challengeToken,
-                      maskedRecipient: response.maskedRecipient,
-                      resendAvailableAt: toResendAvailableAt(response.canResendIn),
-                      requestCallState: successCallState(response),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    if (authStore.sessionRevision() !== revision) return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { requestCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      registerStoreEvents.requestFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to create account'),
-                      ),
-                    );
-                  },
-                }),
-              );
+              return registrationService
+                .register(
+                  input,
+                  writeTracker.options(
+                    'registrationService.register',
+                    [input],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('registrationService.register');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  tapResponse({
+                    next: (response: RegisterOutput) => {
+                      if (authStore.sessionRevision() !== revision) return;
+                      patchState(store, {
+                        currentChallenge: response.challengeToken ? response : null,
+                        challengeToken: response.success ? (response.challengeToken ?? null) : null,
+                        maskedRecipient: response.maskedRecipient ?? null,
+                        resendAvailableAt: toResendAvailableAt(response.canResendIn),
+                        requestCallState: successCallState(response),
+                      });
+                    },
+                    error: (error: unknown) => {
+                      if (authStore.sessionRevision() !== revision) return;
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { requestCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        registerStoreEvents.requestFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to create account'),
+                        ),
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),
@@ -275,34 +314,56 @@ export const RegisterStore = signalStore(
                 return EMPTY;
               }
 
-              return registrationService.verify({ token, ...input }).pipe(
-                takeUntil(invalidated),
-                tapResponse({
-                  next: (response: LoginOutput) => {
-                    if (
-                      authStore.sessionRevision() !== revision ||
-                      store.challengeToken() !== token
-                    )
-                      return;
-                    patchState(store, { verifyCallState: successCallState(response) });
-                    authStore.applySession(response);
-                  },
-                  error: (error: unknown) => {
-                    if (
-                      authStore.sessionRevision() !== revision ||
-                      store.challengeToken() !== token
-                    )
-                      return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { verifyCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      registerStoreEvents.verifyFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to verify email'),
-                      ),
-                    );
-                  },
-                }),
-              );
+              return registrationService
+                .verify(
+                  { token, ...input },
+                  writeTracker.options(
+                    'registrationService.verify',
+                    [{ token, ...input }],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('registrationService.verify');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  tapResponse({
+                    next: (response: LoginOutput) => {
+                      if (
+                        authStore.sessionRevision() !== revision ||
+                        store.challengeToken() !== token
+                      )
+                        return;
+                      patchState(store, { verifyCallState: successCallState(response) });
+                      authStore.applySession(response);
+                    },
+                    error: (error: unknown) => {
+                      if (
+                        authStore.sessionRevision() !== revision ||
+                        store.challengeToken() !== token
+                      )
+                        return;
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { verifyCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        registerStoreEvents.verifyFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to verify email'),
+                        ),
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),
@@ -334,37 +395,59 @@ export const RegisterStore = signalStore(
                 return EMPTY;
               }
 
-              return registrationService.resend({ token }).pipe(
-                takeUntil(invalidated),
-                tapResponse({
-                  next: (response: RegisterOutput) => {
-                    if (authStore.sessionRevision() !== revision) return;
-                    patchState(store, {
-                      currentChallenge: response,
-                      challengeToken: response.challengeToken ?? token,
-                      maskedRecipient: response.maskedRecipient,
-                      resendAvailableAt: toResendAvailableAt(response.canResendIn),
-                      resendCallState: successCallState(response),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    if (authStore.sessionRevision() !== revision) return;
-                    const storeError: StoreError = toStoreError(error);
-                    const retryDelay: number | null = toResendDelaySeconds(storeError);
-                    patchState(store, {
-                      resendCallState: errorCallState(storeError),
-                      ...(retryDelay !== null
-                        ? { resendAvailableAt: toResendAvailableAt(retryDelay) }
-                        : {}),
-                    });
-                    dispatcher.dispatch(
-                      registerStoreEvents.resendFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to resend code'),
-                      ),
-                    );
-                  },
-                }),
-              );
+              return registrationService
+                .resend(
+                  { token },
+                  writeTracker.options(
+                    'registrationService.resend',
+                    [{ token }],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('registrationService.resend');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  tapResponse({
+                    next: (response: RegisterOutput) => {
+                      if (authStore.sessionRevision() !== revision) return;
+                      patchState(store, {
+                        currentChallenge: response.challengeToken ? response : null,
+                        challengeToken: response.challengeToken ?? token,
+                        maskedRecipient: response.maskedRecipient ?? null,
+                        resendAvailableAt: toResendAvailableAt(response.canResendIn),
+                        resendCallState: successCallState(response),
+                      });
+                    },
+                    error: (error: unknown) => {
+                      if (authStore.sessionRevision() !== revision) return;
+                      const storeError: StoreError = toStoreError(error);
+                      const retryDelay: number | null = toResendDelaySeconds(storeError);
+                      patchState(store, {
+                        resendCallState: errorCallState(storeError),
+                        ...(retryDelay !== null
+                          ? { resendAvailableAt: toResendAvailableAt(retryDelay) }
+                          : {}),
+                      });
+                      dispatcher.dispatch(
+                        registerStoreEvents.resendFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to resend code'),
+                        ),
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),

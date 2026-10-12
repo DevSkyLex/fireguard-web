@@ -79,6 +79,31 @@ describe('FacilityAttachmentService', () => {
   });
 
   describe('upload', () => {
+    it('reuses explicit upload headers across a lost response, cold resubscription and manual retry', () => {
+      const file = new File(['plan'], 'floor.png', { type: 'image/png' });
+      const options = {
+        idempotencyKey: 'a6e0f7b2-2cae-4f87-af6f-f89011223344',
+        headers: { 'X-Intent': 'retained' },
+      };
+      const upload = service.upload(facilityId, file, file.name, 'floor_plan', options);
+      const url = `${mockEnv.apiUrl}/api/facilities/${facilityId}/attachments`;
+      upload.subscribe({ error: () => undefined });
+      const first = httpMock.expectOne(url);
+      expect(first.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+      first.error(new ProgressEvent('network'));
+      upload.subscribe();
+      const repeated = httpMock.expectOne(url);
+      expect(repeated.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+      repeated.flush(mockAttachment);
+      service.upload(facilityId, file, file.name, 'floor_plan', options).subscribe();
+      const retry = httpMock.expectOne(url);
+      expect(retry.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+      expect(retry.request.headers.has('Content-Type')).toBe(false);
+      expect(retry.request.headers.get('X-Intent')).toBe('retained');
+      expect(retry.request.withCredentials).toBe(true);
+      expect((retry.request.body as FormData).get('kind')).toBe('floor_plan');
+      retry.flush(mockAttachment);
+    });
     it('sends a multipart request carrying the kind field', () => {
       const file = new Blob(['plan'], { type: 'image/png' });
 

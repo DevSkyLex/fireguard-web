@@ -100,6 +100,37 @@ describe('AuthStore', () => {
     store = TestBed.inject(AuthStore);
   });
 
+  it('retains a login key after uncertain failure and replaces edited credentials', () => {
+    mockAuthService.login.mockReturnValue(throwError(() => new Error('network')));
+    store.login(credentials);
+    store.login(credentials);
+    expect(mockAuthService.login.mock.calls[0]?.[1]).toEqual(
+      mockAuthService.login.mock.calls[1]?.[1],
+    );
+    store.login({ ...credentials, password: 'edited-password' });
+    expect(mockAuthService.login.mock.calls[2]?.[1]).not.toEqual(
+      mockAuthService.login.mock.calls[0]?.[1],
+    );
+  });
+
+  it('retains a recovery-proof key across failure and changes it for an edited code', () => {
+    mockAuthService.mfaVerify.mockReturnValue(throwError(() => new Error('network')));
+    const proof: MfaVerifyInput = {
+      preAuthToken: 'pre-auth',
+      code: '123456789abcdef0123456789abcdef0',
+      method: 'recovery_code',
+    };
+    store.mfaVerify(proof);
+    store.mfaVerify(proof);
+    expect(mockAuthService.mfaVerify.mock.calls[0]?.[1]).toEqual(
+      mockAuthService.mfaVerify.mock.calls[1]?.[1],
+    );
+    store.mfaVerify({ ...proof, code: 'abcdef0123456789abcdef0123456789' });
+    expect(mockAuthService.mfaVerify.mock.calls[2]?.[1]).not.toEqual(
+      mockAuthService.mfaVerify.mock.calls[0]?.[1],
+    );
+  });
+
   it('should set and clear token synchronously', () => {
     store.setToken('manual-token', 3600);
 
@@ -186,7 +217,10 @@ describe('AuthStore', () => {
     store.login(credentials);
     await flushEffects();
 
-    expect(mockAuthService.login).toHaveBeenCalledWith(credentials);
+    expect(mockAuthService.login).toHaveBeenCalledWith(
+      credentials,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.loginCallState().status).toBe('success');
     expect(store.accessToken()).toBe(ACCESS_TOKEN);
     expect(store.expiresAt()).not.toBeNull();
@@ -386,7 +420,10 @@ describe('AuthStore', () => {
     store.mfaResend();
     await flushEffects();
 
-    expect(mockAuthService.mfaResend).toHaveBeenCalledWith({ preAuthToken: 'mfa-token' });
+    expect(mockAuthService.mfaResend).toHaveBeenCalledWith(
+      { preAuthToken: 'mfa-token' },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.mfaResendCallState().status).toBe('success');
     expect(store.loginCallState().status).toBe('success');
     expect(store.mfaToken()).toBe('new-mfa-token');
@@ -667,7 +704,10 @@ describe('AuthStore', () => {
     store.mfaResend();
     await flushEffects();
 
-    expect(mockAuthService.mfaResend).toHaveBeenCalledWith({ preAuthToken: 'mfa-token' });
+    expect(mockAuthService.mfaResend).toHaveBeenCalledWith(
+      { preAuthToken: 'mfa-token' },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.mfaResendCallState().status).toBe('error');
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
   });

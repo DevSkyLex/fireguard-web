@@ -46,8 +46,7 @@ Route entry components remain private to their owner and are not re-exported by 
 root barrel; the route-file exception is checked by the architecture suite.
 
 - `/auth/login`
-- `/auth/federated/:provider/callback` — uses client rendering, exchanges a single-use Google or
-  Microsoft callback in the browser only, removes `code` and `state` from browser history before
+- `/auth/federated/:provider/callback` — uses client rendering, exchanges a single-use configured-provider callback in the browser only, removes `code` and `state` from browser history before
   the exchange, and applies the resulting password-equivalent session through
   `AuthStore.applySession`.
 - `/auth/register`
@@ -106,12 +105,19 @@ errors stay next to the input that has to change.
 
 ## Password policy
 
-`validators/password/password.validator.ts` is the single expression of the API's password rules,
-applied by every surface that writes a password — registration and reset here, and the account
-change-password form through the published rule set below. `applyPasswordConfirmation`
-is the cross-field rule replacing the classic `matchFields` validator: a schema rule reading its
-sibling through `valueOf`, reporting on the confirmation field. Changing the policy means changing
-this file and nothing else.
+Auth publishes `PasswordPolicyOutput`, `PasswordPolicyService`, the page-scoped
+`PasswordPolicyStore` and `applyPasswordRules(path, policySignal)`. The public
+`GET /api/auth/password-policy` metadata is the authority for registration, reset,
+first-password setup and Account password changes. Rules react to loaded minimum
+and maximum lengths, enabled character classes, required symbols and the optional
+initial-character alphabet. Character counts use Unicode code points.
+
+An unavailable/loading policy prevents creation submission and exposes retry.
+The small public policy alone crosses SSR hydration through a consumed-and-removed
+TransferState key; stores remain isolated per rendered application. Login validates
+presence and the 4096 Unicode code point transport bound independently of creation rules,
+without trimming the existing password or imposing a native UTF-16 input length.
+The previous constants remain compatibility exports and do not govern forms.
 
 ## State and Data Access
 
@@ -144,7 +150,7 @@ Primary services:
 
 - `AUTH_SESSION_PORT`
 - `AuthSessionPort`
-- `PASSWORD_MIN_LENGTH`, `PASSWORD_MAX_LENGTH`, `PASSWORD_PATTERN`
+- `PasswordPolicyOutput`, `PasswordPolicyStore`, `PasswordPolicyStatus`
 - `applyPasswordRules`, `applyPasswordConfirmation`
 
 `AUTH_SESSION_PORT` is the stable boundary consumed by auth-owned infrastructure such as HTTP interceptors.
@@ -169,11 +175,10 @@ Registration verification, federated callback exchanges and their page continuat
 originating revision: a late result cannot establish a session after clearing or replacement.
 Reset cancels those reads without permanently destroying their reusable command streams.
 
-The password policy is published as a **rule set**, not only as constants: `features/account`'s
-change-password form owns the form but not the policy, and handing it the four numbers rather than
-the four rules would let two expressions of one API constraint drift apart. A consumer applies
-`applyPasswordRules(path)` to its own field; the messages come from here, so a policy change reaches
-every surface at once.
+Account consumes Auth's published policy store/status, metadata and rule set for its
+owned forms. Recovery proof forms are also published to Account: their input is
+kept only in the local Signal Forms model, normalized to 32 hexadecimal characters,
+and emitted as an explicit verification intent. TOTP remains a separate six-digit form.
 
 ## Cross-Feature Dependencies
 
@@ -232,6 +237,9 @@ every surface at once.
   receives a provider secret or persists a provider token.
 - Provider logos use the SVGL Ng Icons set on login, registration and linked-account surfaces;
   no separate public brand assets are maintained.
+- Provider IDs are open validated keys (`[a-z][a-z0-9_-]{0,19}`). Public descriptors
+  own their labels; known logos and a generic icon cover every configured provider.
+  Existing connections stay visible when a provider is disabled or uninstalled.
 - Disabled providers are absent from the login page. An existing Fireguard account is never linked
   by matching provider email; the user signs in first and links it from `/account/security`.
 - Password and provider sign-in starts are mutually exclusive. Completing a password session
@@ -290,3 +298,20 @@ The account panel formats country names using its explicit account-locale input,
 presentational, and preserves existing revoke/confirm/retry events. It displays city and country,
 country only, or a discreet unavailable label, with en/fr/es copy, approximate-location guidance
 and DB-IP attribution when geography is shown. Values render through escaped interpolation.
+
+## Recovery proof and write identity
+
+An active TOTP login challenge offers an explicit `recovery_code` alternative;
+ordinary OTP verification retains the API's default `otp` behavior. Recovery cannot
+request an OTP resend or generate new recovery codes. Callback paths and interceptor
+exclusions validate provider syntax while preserving local return destinations and
+removing `code`/`state` before exchange.
+
+API mutation methods accept optional `ApiRequestOptions`. Each workflow keeps its
+private write-operation tracker for unchanged manual retries, replaces identity on
+edited payload or session revision, and releases it after success, session replacement
+or destruction. No identity or credential fingerprint is persisted or transferred.
+
+Registration normalizes nullable challenge metadata omitted by serialization. An accepted
+response without a challenge returns to sign-in with localized completion feedback;
+responses carrying a challenge preserve the existing verification flow.

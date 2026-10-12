@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { retry, type Observable } from 'rxjs';
+import type { ApiRequestOptions } from '@core/api';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import { MaintenancePlanService } from '../maintenance-plan.service';
 
@@ -22,6 +24,51 @@ describe('MaintenancePlanService', () => {
     httpMock = TestBed.inject(HttpTestingController);
   });
   afterEach(() => httpMock.verify());
+
+  it.each(['generate', 'prepareLegacy', 'activateEngine'] as const)(
+    '%s retains its key across retries and cold subscriptions and forwards explicit options',
+    (action) => {
+      const invoke = (options?: ApiRequestOptions): Observable<unknown> =>
+        action === 'generate'
+          ? service.generate('org-1', 'plan-1', false, options)
+          : service[action]('org-1', options);
+      const path =
+        action === 'generate'
+          ? 'plan-1/generate'
+          : action === 'prepareLegacy'
+            ? 'prepare-legacy'
+            : 'activate';
+      const request$ = invoke();
+      request$.pipe(retry(1)).subscribe();
+      const lost = httpMock.expectOne(`${base}/${path}`);
+      const key = lost.request.headers.get('Idempotency-Key');
+      expect(key).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(lost.request.body).toEqual(action === 'generate' ? { retry: false } : {});
+      lost.flush({}, { status: 503, statusText: 'Response unavailable' });
+      const retried = httpMock.expectOne(`${base}/${path}`);
+      expect(retried.request.headers.get('Idempotency-Key')).toBe(key);
+      retried.flush({});
+      request$.subscribe();
+      const resubscribed = httpMock.expectOne(`${base}/${path}`);
+      expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(key);
+      resubscribed.flush({});
+      invoke().subscribe();
+      const newIntent = httpMock.expectOne(`${base}/${path}`);
+      expect(newIntent.request.headers.get('Idempotency-Key')).not.toBe(key);
+      newIntent.flush({});
+      const options = {
+        idempotencyKey: 'c3c1e943-227b-4f31-98c7-90e988359b68',
+        headers: { 'If-Match': '"revision-3"' },
+      };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        invoke(options).subscribe();
+        const manual = httpMock.expectOne(`${base}/${path}`);
+        expect(manual.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+        expect(manual.request.headers.get('If-Match')).toBe('"revision-3"');
+        manual.flush({});
+      }
+    },
+  );
 
   it('forwards independent operation kind, search and server pagination', () => {
     service
@@ -92,9 +139,9 @@ describe('MaintenancePlanService', () => {
       replayed: true,
     });
     service.generate('org-1', 'plan-1', true).subscribe();
-    const retry = httpMock.expectOne(`${base}/plan-1/generate`);
-    expect(retry.request.body).toEqual({ retry: true });
-    retry.flush({
+    const newAttempt = httpMock.expectOne(`${base}/plan-1/generate`);
+    expect(newAttempt.request.body).toEqual({ retry: true });
+    newAttempt.flush({
       occurrenceId: 'occurrence-1',
       interventionId: 'work-2',
       number: 2,

@@ -107,6 +107,11 @@ event-driven recalculation with an hourly recovery sweep and is rendered as-is.
 
 ## State and Data Access
 
+Maintenance schedule CSV export captures one execution identity per service invocation,
+retaining it through retries and cold resubscriptions. Optional trailing
+`ApiRequestOptions` accepts a retained key for an unchanged manual retry; changing the
+organization or narrowing starts a new intent. Schedule list reads remain unkeyed.
+
 Primary store: `MaintenanceSchedulesStore` — `withEntities<MaintenanceScheduleOutput>`
 keyed by id, plus three independent `CallState` fields (`listCallState`,
 `overrideCallState`, `campaignCallState`). A successful override replaces
@@ -128,6 +133,12 @@ engine read, equipment choices and saved-plan preview. Its preparation, configur
 generation and migration commands keep separate admission and action states from historical
 overrides and campaigns. Client request admission does not decide the server's active scheduling
 engine or legacy migration outcome.
+Generation, legacy preparation and engine activation accept trailing `ApiRequestOptions`.
+Their page store retains one HTTP identity per unchanged organization, target and command
+after a failed or lost response. Changing the target, retry flag or requested engine starts
+a new intention; confirmed success releases its key. Session replacement and destruction
+clear these in-memory identities. A previous principal's late result or settlement cannot
+change current feedback or release a new owner's pending command.
 
 Primary service: `MaintenanceScheduleService` — extends `HydraApiService`
 but calls the **canonical** `/api/maintenance/schedules` and

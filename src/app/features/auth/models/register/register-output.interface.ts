@@ -9,6 +9,7 @@ import type { HydraItem } from '@core/api/models';
  * Returned by POST /api/auth/register and POST /api/auth/register/resend.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @example
@@ -58,13 +59,14 @@ export interface RegisterOutput extends HydraItem {
    * @readonly
    *
    * @description
-   * Token for verifying the email in the next step.
+   * Token for verifying the email in the next step; omitted or null when verification is not
+   * required.
    *
    * @since 1.0.0
    *
    * @type {string | null}
    */
-  readonly challengeToken: string | null;
+  readonly challengeToken?: string | null;
 
   /**
    * Property maskedRecipient
@@ -77,7 +79,7 @@ export interface RegisterOutput extends HydraItem {
    *
    * @type {string | null}
    */
-  readonly maskedRecipient: string | null;
+  readonly maskedRecipient?: string | null;
 
   /**
    * Property expiresAt
@@ -90,7 +92,7 @@ export interface RegisterOutput extends HydraItem {
    *
    * @type {string | null}
    */
-  readonly expiresAt: string | null;
+  readonly expiresAt?: string | null;
 
   /**
    * Property maxAttempts
@@ -103,7 +105,7 @@ export interface RegisterOutput extends HydraItem {
    *
    * @type {number | null}
    */
-  readonly maxAttempts: number | null;
+  readonly maxAttempts?: number | null;
 
   /**
    * Property canResendIn
@@ -116,5 +118,5 @@ export interface RegisterOutput extends HydraItem {
    *
    * @type {number | null}
    */
-  readonly canResendIn: number | null;
+  readonly canResendIn?: number | null;
 }

@@ -54,6 +54,19 @@ describe('ImportJobTable', () => {
     expect(rows[1].textContent).not.toContain('Dry run');
   });
 
+  it('renders unfamiliar job kinds on the table and compact cards while retaining report access', async () => {
+    const historical = job({ kind: 'constructor' });
+    const selected: ImportJobOutput[] = [];
+    fixture.componentInstance.selected.subscribe((value) => selected.push(value));
+    fixture.componentRef.setInput('items', [historical]);
+    await fixture.whenStable();
+
+    expect(byTestId('import-job-table-row')?.textContent).toContain('constructor');
+    expect(byTestId('import-job-table-card')?.textContent).toContain('constructor');
+    byTestId('import-job-table-view')?.click();
+    expect(selected).toEqual([historical]);
+  });
+
   it('should render a progress bar and caption while a job is processing with a known total', async () => {
     fixture.componentRef.setInput('items', [
       job({

@@ -14,7 +14,6 @@ import type {
 /**
  * Service OrganizationInvitationService
  * @class OrganizationInvitationService
- * @extends {HydraApiService}
  *
  * @description
  * API service for organization invitation management.
@@ -22,7 +21,10 @@ import type {
  * via email.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class OrganizationInvitationService extends HydraApiService {
@@ -41,7 +43,8 @@ export class OrganizationInvitationService extends HydraApiService {
    *
    * @param {OrganizationInvitationListQuery} [query] - The typed filter, if any.
    *
-   * @return {RequestOptions['params'] | undefined} The parameter map, or undefined when nothing is filtered.
+   * @returns {RequestOptions['params'] | undefined} The parameter map, or undefined when nothing is
+   *   filtered.
    */
   private toListParams(
     query?: OrganizationInvitationListQuery,
@@ -64,7 +67,8 @@ export class OrganizationInvitationService extends HydraApiService {
    *
    * @param {AcceptOrganizationInvitationInput} input - Invitation acceptance payload.
    *
-   * @return {Observable<OrganizationMemberOutput>} An observable emitting the created organization membership.
+   * @returns {Observable<OrganizationMemberOutput>} An observable emitting the created organization
+   *   membership.
    */
   public accept(input: AcceptOrganizationInvitationInput): Observable<OrganizationMemberOutput> {
     return this.post<AcceptOrganizationInvitationInput, OrganizationMemberOutput>(
@@ -86,9 +90,11 @@ export class OrganizationInvitationService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} organizationId - The ID of the organization to invite the user to.
-   * @param {InviteOrganizationMemberInput} input - Input containing the email and optional role IDs.
+   * @param {InviteOrganizationMemberInput} input - Input containing the email and optional role
+   *   IDs.
    *
-   * @return {Observable<OrganizationInvitationOutput>} An observable emitting the created invitation details.
+   * @returns {Observable<OrganizationInvitationOutput>} An observable emitting the created
+   *   invitation details.
    */
   public invite(
     organizationId: string,
@@ -106,16 +112,20 @@ export class OrganizationInvitationService extends HydraApiService {
    *
    * @description
    * Retrieves a paginated list of pending and past invitations
-   * for the specified organization.
+   * for the specified organization. Listing reconciles expired invitations,
+   * so one execution identity is captured for retries of this observable.
    *
    * @access public
    * @since 1.2.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {RequestOptions} [options] - Optional pagination parameters.
-   * @param {OrganizationInvitationListQuery} [query] - Optional status filter. Filters from `query` are merged over `options.params`, so a caller passing both wins with the typed one.
+   * @param {RequestOptions} [options] - Optional pagination, headers and retained execution
+   *   identity.
+   * @param {OrganizationInvitationListQuery} [query] - Optional status filter. Filters from `query`
+   *   are merged over `options.params`, so a caller passing both wins with the typed one.
    *
-   * @return {Observable<HydraCollection<OrganizationInvitationOutput>>} An observable emitting the invitations collection.
+   * @returns {Observable<HydraCollection<OrganizationInvitationOutput>>} An observable emitting the
+   *   invitations collection.
    */
   public list(
     organizationId: string,
@@ -126,7 +136,7 @@ export class OrganizationInvitationService extends HydraApiService {
     const merged: RequestOptions | undefined =
       filters === undefined ? options : { ...options, params: { ...options?.params, ...filters } };
 
-    return this.getCollection<OrganizationInvitationOutput>(
+    return this.getOneWithWriteIdentity<HydraCollection<OrganizationInvitationOutput>>(
       `/api/organizations/${organizationId}/invitations`,
       merged,
     );
@@ -145,7 +155,8 @@ export class OrganizationInvitationService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} invitationId - The ID of the invitation to revoke.
    *
-   * @return {Observable<OrganizationInvitationOutput>} An observable emitting the revoked invitation.
+   * @returns {Observable<OrganizationInvitationOutput>} An observable emitting the revoked
+   *   invitation.
    */
   public revoke(
     organizationId: string,
@@ -171,7 +182,8 @@ export class OrganizationInvitationService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} invitationId - The ID of the invitation to resend.
    *
-   * @return {Observable<OrganizationInvitationOutput>} An observable emitting the renewed invitation (with `acceptUrl`).
+   * @returns {Observable<OrganizationInvitationOutput>} An observable emitting the renewed
+   *   invitation (with `acceptUrl`).
    */
   public resend(
     organizationId: string,
@@ -196,7 +208,8 @@ export class OrganizationInvitationService extends HydraApiService {
    *
    * @param {string} token - The raw invitation token.
    *
-   * @return {Observable<OrganizationInvitationPreviewOutput>} An observable emitting the invitation preview.
+   * @returns {Observable<OrganizationInvitationPreviewOutput>} An observable emitting the
+   *   invitation preview.
    */
   public preview(token: string): Observable<OrganizationInvitationPreviewOutput> {
     return this.getOne<OrganizationInvitationPreviewOutput>(

@@ -171,6 +171,11 @@ See the [intervention collection reference](../../../../../../docs/guides/interv
 
 ## State and Data Access
 
+Intervention CSV and PDF exports capture one execution identity per service invocation,
+retaining it through retries and cold resubscriptions. Optional trailing
+`ApiRequestOptions` accepts a retained key for an unchanged manual retry; changed export
+filters start a new intent. Immutable attachment downloads remain ordinary reads.
+
 `InterventionStore` is route-scoped for one server list page, creation and list actions.
 Board and Calendar keep separate bounded query stores. Prev/next is restricted to
 the loaded list page; extending it must carry the same query context.
@@ -429,6 +434,23 @@ See the [intervention form and collection reference](../../../../../../docs/arch
   18 px section titles, count badges, dashed empties, neutral publication cards and bottom space.
 
 ## Invariants
+
+Outbox rows persist a separate HTTP idempotency key before the first send. Reloads and unchanged
+retries preserve this key alongside operation, client-resource and native inventory identifiers.
+Legacy keys are backfilled under one owner-fenced IndexedDB read/write transaction. Reviewed
+revision or workload-confirmation payload changes allocate a new HTTP key while preserving the
+original operation and domain identifiers. Queues have no key TTL or attempt limit. Typed receipt
+conflicts, expired results without explicit completion proof and unknown outcomes require review
+with the existing key; in-progress receipts defer replay without creating a new intention.
+Only HTTP 409 with `idempotency_replay_expired` and strict `operationCompleted: true` confirms an
+expired operation. The current account/session/workspace must acquire authorized owner projections
+before durable queue removal; read or acknowledgement failure keeps the original intent pending.
+Nonphysical projections use the existing post-acknowledgement invalidation lifecycle and never
+overwrite other pending workspace edits. Physical declarations read their exact `clientOperationId`
+receipt correlation, require one correctly scoped current receipt, and save it durably before
+removing the row. Similar quantity, date or resource fields cannot identify a receipt.
+Timestamp consistency uses the server's published second precision while the original queued
+timestamp, payload, execution key and physical operation UUID remain unchanged.
 
 - **Every sheet that carries a form confirms before it discards one.** The
   five form-bearing sheets — create, work item, request changes, recurrence,

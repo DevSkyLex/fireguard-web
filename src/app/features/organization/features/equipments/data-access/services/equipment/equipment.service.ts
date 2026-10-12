@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import { catchError, EMPTY, expand, reduce, switchMap, throwError, type Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { type ApiRequestOptions, HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, HydraItem } from '@core/api/models';
 import type {
   EquipmentOutput,
@@ -113,6 +113,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - Organization owning both identities.
    * @param {string} equipmentId - Historical equipment to retire.
    * @param {ReplaceEquipmentInput} input - Stable command reused after network uncertainty.
+   * @param {ApiRequestOptions} [options] - Retained identity and conditional request headers.
    *
    * @returns {Observable<ReplaceEquipmentOutput>} Replacement receipt.
    */
@@ -120,11 +121,12 @@ export class EquipmentService extends HydraApiService {
     organizationId: string,
     equipmentId: string,
     input: ReplaceEquipmentInput,
+    options?: ApiRequestOptions,
   ): Observable<ReplaceEquipmentOutput> {
     return this.http.post<ReplaceEquipmentOutput>(
       this.buildUrl(`${this.equipmentPath(organizationId, equipmentId)}/replace`),
       input,
-      { headers: this.buildHeaders(), withCredentials: true },
+      { headers: this.buildWriteHeaders(options), withCredentials: true },
     );
   }
   /**
@@ -380,11 +382,14 @@ export class EquipmentService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
    * @returns {Observable<Blob>} The export's CSV binary content.
    */
-  public exportCsv(organizationId: string): Observable<Blob> {
+  public exportCsv(organizationId: string, requestOptions?: ApiRequestOptions): Observable<Blob> {
     return this.http.get(this.buildUrl(`${this.equipmentPath(organizationId)}/export`), {
+      headers: this.buildWriteHeaders(requestOptions),
       responseType: 'blob',
       withCredentials: true,
     });
@@ -410,12 +415,15 @@ export class EquipmentService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {{ ids?: readonly string[]; facilityId?: string }} [options] - The selection to print.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
    * @returns {Observable<Blob>} The label sheet's PDF binary content.
    */
   public exportLabels(
     organizationId: string,
     options?: { readonly ids?: readonly string[]; readonly facilityId?: string },
+    requestOptions?: ApiRequestOptions,
   ): Observable<Blob> {
     if (options?.ids?.length === 0) {
       return throwError(() => new Error('Select at least one equipment record to print.'));
@@ -427,6 +435,7 @@ export class EquipmentService extends HydraApiService {
 
     return this.http.get(this.buildUrl(`${this.equipmentPath(organizationId)}/labels`), {
       params: this.buildParams({ params }),
+      headers: this.buildWriteHeaders(requestOptions),
       responseType: 'blob',
       withCredentials: true,
     });
@@ -450,13 +459,20 @@ export class EquipmentService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {string} equipmentId - The equipment to export the sheet for.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
    * @returns {Observable<Blob>} The sheet's PDF binary content.
    */
-  public exportReport(organizationId: string, equipmentId: string): Observable<Blob> {
+  public exportReport(
+    organizationId: string,
+    equipmentId: string,
+    requestOptions?: ApiRequestOptions,
+  ): Observable<Blob> {
     return this.http.get(
       this.buildUrl(`${this.equipmentPath(organizationId, equipmentId)}/report`),
       {
+        headers: this.buildWriteHeaders(requestOptions),
         responseType: 'blob',
         withCredentials: true,
       },
@@ -542,6 +558,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - organization Id value.
    * @param {string} interventionId - intervention Id value.
    * @param {CreateEquipmentInput} input - input value.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<EquipmentOutput>} Result of the create for intervention operation.
    */
@@ -549,6 +566,7 @@ export class EquipmentService extends HydraApiService {
     organizationId: string,
     interventionId: string,
     input: CreateEquipmentInput,
+    options?: ApiRequestOptions,
   ): Observable<EquipmentOutput> {
     const payload: CreateEquipmentInput = {
       ...input,
@@ -559,11 +577,11 @@ export class EquipmentService extends HydraApiService {
       return this.put<CreateEquipmentInput, EquipmentOutput>(
         `/api/equipment/${input.clientId}`,
         payload,
-        { headers: { 'If-None-Match': '*' } },
+        { ...options, headers: { ...options?.headers, 'If-None-Match': '*' } },
       );
     }
 
-    return this.post<CreateEquipmentInput, EquipmentOutput>('/api/equipment', payload);
+    return this.post<CreateEquipmentInput, EquipmentOutput>('/api/equipment', payload, options);
   }
 
   /**
@@ -581,6 +599,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} fileName - file Name value.
    * @param {string} [interventionId] - Intervention authorizing the field evidence upload.
    * @param {string} [clientId] - Stable client UUID used to replay uploads idempotently.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<HydraItem>} Result of the upload evidence operation.
    */
@@ -590,6 +609,7 @@ export class EquipmentService extends HydraApiService {
     fileName: string,
     interventionId?: string,
     clientId?: string,
+    options?: ApiRequestOptions,
   ): Observable<HydraItem> {
     const body: FormData = new FormData();
     body.set('equipment', `/api/equipment/${equipmentId}`);
@@ -599,7 +619,7 @@ export class EquipmentService extends HydraApiService {
 
     return this.http.post<HydraItem>(this.buildUrl('/api/media'), body, {
       withCredentials: true,
-      headers: { Accept: 'application/ld+json' },
+      headers: this.buildWriteHeaders(options, true),
     });
   }
 
@@ -649,6 +669,7 @@ export class EquipmentService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} equipmentId - The ID of the equipment whose pin is set.
    * @param {SetPlanPositionInput} input - The position to write, or nulls to clear it.
+   * @param {ApiRequestOptions} [options] - Retained identity and conditional request headers.
    *
    * @returns {Observable<void>} An observable completing once the write lands.
    */
@@ -656,12 +677,13 @@ export class EquipmentService extends HydraApiService {
     organizationId: string,
     equipmentId: string,
     input: SetPlanPositionInput,
+    options?: ApiRequestOptions,
   ): Observable<void> {
     return this.http
       .put<void>(
         this.buildUrl(`${this.equipmentPath(organizationId, equipmentId)}/plan-position`),
         input,
-        { headers: this.buildHeaders(), withCredentials: true },
+        { headers: this.buildWriteHeaders(options), withCredentials: true },
       )
       .pipe(catchError(this.handleError));
   }

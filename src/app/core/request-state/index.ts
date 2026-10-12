@@ -27,3 +27,6 @@ export {
   resetQuery,
 } from './utils';
 export { withQueryState } from './features';
+export type { WriteOperation } from './models/write-operation.interface';
+export type { WriteOperationTracker } from './models/write-operation-tracker.interface';
+export { WriteOperationService } from './services/write-operation/write-operation.service';

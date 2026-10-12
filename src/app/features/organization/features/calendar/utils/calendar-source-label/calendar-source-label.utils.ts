@@ -26,5 +26,7 @@ export function calendarSourceLabelOf(sourceKey: CalendarSourceKey): string {
       return $localize`:@@calendar.source.intervention:Intervention`;
     case 'maintenance':
       return $localize`:@@calendar.source.maintenance:Maintenance`;
+    default:
+      return sourceKey;
   }
 }

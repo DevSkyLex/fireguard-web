@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { retry } from 'rxjs';
 
 import type { ApiError, HydraCollection, HydraItem } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
@@ -194,5 +195,67 @@ describe('OrganizationInvitationService', () => {
       expect(req.request.withCredentials).toBe(true);
       req.flush({ ...mockInvitation, status: 'revoked' });
     });
+  });
+  it('captures one invitation reconciliation identity before retry or cold resubscription', () => {
+    const intent = service.list(
+      orgId,
+      { page: 2, itemsPerPage: 25, params: { status: 'pending' } },
+      { status: 'expired' },
+    );
+    const received = vi.fn();
+    httpMock.expectNone((request) => request.url === invitationsUrl);
+    intent.pipe(retry(1)).subscribe(received);
+    const initial = httpMock.expectOne((request) => request.url === invitationsUrl);
+    const key = initial.request.headers.get('Idempotency-Key');
+    expect(key).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(initial.request.method).toBe('GET');
+    expect(initial.request.params.get('page')).toBe('2');
+    expect(initial.request.params.get('itemsPerPage')).toBe('25');
+    expect(initial.request.params.get('status')).toBe('expired');
+    const query = initial.request.params.toString();
+    initial.error(new ProgressEvent('error'));
+
+    const retried = httpMock.expectOne((request) => request.url === invitationsUrl);
+    expect(retried.request.headers.get('Idempotency-Key')).toBe(key);
+    expect(retried.request.params.toString()).toBe(query);
+    const collection = mockCollection([mockInvitation]);
+    retried.flush(collection);
+    expect(received).toHaveBeenLastCalledWith(collection);
+
+    intent.subscribe(received);
+    const resubscribed = httpMock.expectOne((request) => request.url === invitationsUrl);
+    expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(key);
+    resubscribed.flush(collection);
+
+    service.list(orgId).subscribe();
+    const nextIntent = httpMock.expectOne(invitationsUrl);
+    expect(nextIntent.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(nextIntent.request.headers.get('Idempotency-Key')).not.toBe(key);
+    nextIntent.flush(collection);
+    expect(received).toHaveBeenCalledTimes(2);
+  });
+
+  it('accepts a retained invitation reconciliation key without leaking transport options into the query', () => {
+    const key = '2b7e3c3b-86fb-4165-aa64-2528d40589ea';
+    for (let attempt = 0; attempt < 2; attempt++) {
+      service
+        .list(orgId, { idempotencyKey: key, headers: { 'X-Trace': 'retained' }, page: 1 })
+        .subscribe();
+      const request = httpMock.expectOne((candidate) => candidate.url === invitationsUrl);
+      expect(request.request.headers.get('Idempotency-Key')).toBe(key);
+      expect(request.request.headers.get('X-Trace')).toBe('retained');
+      expect(request.request.params.keys()).toEqual(['page']);
+      request.flush(mockCollection([]));
+    }
+  });
+
+  it('keeps the public invitation preview as an ordinary read', () => {
+    service.preview('preview-token').subscribe();
+    const request = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/organizations/invitations/preview-token/preview`,
+    );
+    expect(request.request.method).toBe('GET');
+    expect(request.request.headers.has('Idempotency-Key')).toBe(false);
+    request.flush({});
   });
 });

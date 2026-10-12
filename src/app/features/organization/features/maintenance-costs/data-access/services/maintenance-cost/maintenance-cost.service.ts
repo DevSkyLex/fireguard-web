@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { HydraApiService, type ApiRequestOptions } from '@core/api';
 import type { HydraCollection, RequestOptions } from '@core/api/models';
 import type {
   MaintenanceCostOutput,
@@ -60,6 +60,7 @@ export class MaintenanceCostService extends HydraApiService {
    * @param {string} interventionId - Scoped intervention UUID.
    * @param {WriteMaintenanceCostPlanningInput} input - Explicit nullable forecast fields.
    * @param {number} revision - Displayed forecast revision.
+   * @param {ApiRequestOptions | undefined} options - Original write identity and transport headers.
    *
    * @returns {Observable<MaintenanceCostOutput>} Updated dedicated dossier.
    */
@@ -68,11 +69,12 @@ export class MaintenanceCostService extends HydraApiService {
     interventionId: string,
     input: WriteMaintenanceCostPlanningInput,
     revision: number,
+    options?: ApiRequestOptions,
   ): Observable<MaintenanceCostOutput> {
     return this.patch<WriteMaintenanceCostPlanningInput, MaintenanceCostOutput>(
       `/api/organizations/${organizationId}/interventions/${interventionId}/costs/planning`,
       input,
-      { headers: { 'If-Match': `"revision-${revision}"` } },
+      { ...options, headers: { ...options?.headers, 'If-Match': `"revision-${revision}"` } },
     );
   }
 
@@ -89,6 +91,7 @@ export class MaintenanceCostService extends HydraApiService {
    * @param {string} organizationId - Owning organization UUID.
    * @param {string} interventionId - Scoped intervention UUID.
    * @param {CreateMaintenanceExpenseInput} input - Exact immutable declaration.
+   * @param {ApiRequestOptions | undefined} options - Durable write identity reused across retries.
    *
    * @returns {Observable<MaintenanceCostOutput>} Current costs with the original closure unchanged.
    */
@@ -96,10 +99,12 @@ export class MaintenanceCostService extends HydraApiService {
     organizationId: string,
     interventionId: string,
     input: CreateMaintenanceExpenseInput,
+    options?: ApiRequestOptions,
   ): Observable<MaintenanceCostOutput> {
     return this.post<CreateMaintenanceExpenseInput, MaintenanceCostOutput>(
       `/api/organizations/${organizationId}/interventions/${interventionId}/costs/expenses`,
       input,
+      options,
     );
   }
 
@@ -135,16 +140,19 @@ export class MaintenanceCostService extends HydraApiService {
    *
    * @param {string} organizationId - Owning organization UUID.
    * @param {string} currency - Uppercase three-letter currency.
+   * @param {ApiRequestOptions | undefined} options - Original write identity for this submission.
    *
    * @returns {Observable<MaintenanceCurrencyOutput>} Confirmed currency and lock.
    */
   public writeCurrency(
     organizationId: string,
     currency: string,
+    options?: ApiRequestOptions,
   ): Observable<MaintenanceCurrencyOutput> {
     return this.patch<{ readonly currency: string }, MaintenanceCurrencyOutput>(
       `/api/organizations/${organizationId}/maintenance-cost/currency`,
       { currency },
+      options,
     );
   }
 
@@ -185,16 +193,19 @@ export class MaintenanceCostService extends HydraApiService {
    *
    * @param {string} organizationId - Owning organization UUID.
    * @param {CreateMaintenanceRateInput} input - Stable UUID and exact immutable rate declaration.
+   * @param {ApiRequestOptions | undefined} options - Durable write identity reused across retries.
    *
    * @returns {Observable<MaintenanceRateOutput>} Created rate or exact replay.
    */
   public createRate(
     organizationId: string,
     input: CreateMaintenanceRateInput,
+    options?: ApiRequestOptions,
   ): Observable<MaintenanceRateOutput> {
     return this.post<CreateMaintenanceRateInput, MaintenanceRateOutput>(
       `/api/organizations/${organizationId}/maintenance-cost/rates`,
       input,
+      options,
     );
   }
   //#endregion

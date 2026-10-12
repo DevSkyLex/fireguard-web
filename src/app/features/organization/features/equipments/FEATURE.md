@@ -61,12 +61,24 @@ transaction. The terminal move requires explicit alert-dialog confirmation after
 the replacement sheet. A network-uncertain result retains its exact command and operation
 UUID for replay; editing cannot silently create a second operation. Draft dismissal is
 protected, and switching between existing/new successor choices preserves the draft.
+The replacement store also retains its HTTP idempotency key with a snapshot of that command.
+Receipt conflicts and uncertain outcomes preserve both identities. Confirmed success or an
+explicit reset after a definitive business refusal releases the HTTP identity; a corrected
+command starts a new intention. Session replacement clears retained commands and keys,
+and old responses cannot update the new principal's dossier.
 
 The historical equipment is retired, its dossier and QR remain readable, and predecessor
 and successor links open their real records. Individualized reserve equipment is distinct
 from future quantitative consumable stocks.
 
 ## State and transport
+
+Equipment CSV, QR label and PDF report GETs each capture an execution identity at service
+invocation, shared by retries and cold resubscriptions. Their optional trailing
+`ApiRequestOptions` accepts a retained key for an unchanged manual retry; a new export
+intent gets a new key. Immutable attachment downloads remain ordinary reads.
+Replacement and floor-plan position methods accept trailing `ApiRequestOptions` for the same
+manual-retry contract, forwarding conditional headers alongside the retained identity.
 
 Each leaf route provides its own `EquipmentStore`; `ActiveEquipmentStore` remains the
 root current-record source. The page provides independent catalog, replacement,

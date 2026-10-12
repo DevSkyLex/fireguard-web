@@ -3,7 +3,6 @@ import type { CalendarDisplayEvent } from '@shared/calendar';
 
 /**
  * Constant SOURCE_TONE
- * @const SOURCE_TONE
  *
  * @description
  * The badge tone each feed source renders with, shared by the grid chips
@@ -16,8 +15,12 @@ import type { CalendarDisplayEvent } from '@shared/calendar';
  * ({@link SOURCE_ICON}), not its tone.
  *
  * @since 1.2.0
+ *
+ * @const SOURCE_TONE
  */
-export const SOURCE_TONE: Readonly<Record<CalendarSourceKey, CalendarDisplayEvent['tone']>> = {
+export const SOURCE_TONE: Readonly<
+  Partial<Record<CalendarSourceKey, CalendarDisplayEvent['tone']>>
+> = {
   calendar_event: 'outline',
   intervention: 'secondary',
   inspection: 'outline',

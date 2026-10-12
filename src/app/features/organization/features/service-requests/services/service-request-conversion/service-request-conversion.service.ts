@@ -12,6 +12,7 @@ import {
   throwError,
   type Observable,
 } from 'rxjs';
+import { getIdempotencyErrorCode, isIdempotencyOperationCompleted } from '@core/api';
 import { toStoreError } from '@core/request-state';
 import {
   ServiceRequestCommandRepository,
@@ -120,15 +121,16 @@ export class ServiceRequestConversionService {
    * @access public
    * @since unreleased
    *
-   * @param {ServiceRequestConversionCommand} command - Immutable conversion declaration.
+   * @param {ServiceRequestConversionCommand} incoming - Immutable conversion declaration.
    * @param {number} revision - Authentication generation captured before acceptance.
    *
    * @returns {Observable<ServiceRequestOutput>} Shared accepted outcome surviving page destruction.
    */
   public execute(
-    command: ServiceRequestConversionCommand,
+    incoming: ServiceRequestConversionCommand,
     revision: number,
   ): Observable<ServiceRequestOutput> {
+    const command = structuredClone(incoming);
     const key: string = `${command.userId}/${revision}/${command.organizationId}/${command.input.clientOperationId}`;
     const previous: Observable<ServiceRequestOutput> | undefined = this.accepted.get(key);
     if (previous) return previous;
@@ -137,19 +139,25 @@ export class ServiceRequestConversionService {
       from(this.journal.retain(command, revision)),
     ).pipe(
       catchError((error: unknown) => throwError(() => new ServiceRequestPersistenceError(error))),
-      switchMap(() =>
+      switchMap((operation) =>
         current()
-          ? this.service.convert(command.organizationId, command.request, command.input).pipe(
-              catchError((error: unknown) => {
-                const failure = toStoreError(error);
-                const code: number = Number(failure.code);
-                return code >= 400 && code < 500 && !failure.retryable
-                  ? from(this.journal.acknowledge(command, revision)).pipe(
-                      switchMap(() => throwError(() => error)),
-                    )
-                  : throwError(() => error);
-              }),
-            )
+          ? this.service
+              .convert(command.organizationId, command.request, command.input, operation)
+              .pipe(
+                catchError((error: unknown) => {
+                  const failure = toStoreError(error);
+                  const code: number = Number(failure.code);
+                  if (isIdempotencyOperationCompleted(error))
+                    return this.service.get(command.organizationId, command.request.id);
+                  return [400, 412, 422].includes(code) &&
+                    !failure.retryable &&
+                    getIdempotencyErrorCode(error) === null
+                    ? from(this.journal.acknowledge(command, revision)).pipe(
+                        switchMap(() => throwError(() => error)),
+                      )
+                    : throwError(() => error);
+                }),
+              )
           : EMPTY,
       ),
       concatMap((request) =>

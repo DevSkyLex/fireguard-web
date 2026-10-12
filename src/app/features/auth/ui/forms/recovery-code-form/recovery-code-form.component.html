@@ -1,0 +1,41 @@
+<form class="flex min-w-0 flex-col gap-4" (submit)="submit($event)">
+  @if (serverError()) {
+    <div hlmAlert variant="destructive" role="alert">
+      <p hlmAlertDescription i18n="@@auth.recovery.rejected">
+        That recovery code could not be used. Check the code and try again.
+      </p>
+    </div>
+  }
+  <div hlmField>
+    <label hlmFieldLabel for="recovery-code" i18n="@@auth.recovery.label">Recovery code</label>
+    <input
+      hlmInput
+      id="recovery-code"
+      class="font-mono"
+      autocomplete="off"
+      autocapitalize="none"
+      spellcheck="false"
+      [formField]="recoveryForm.code"
+    />
+    <p hlmFieldDescription i18n="@@auth.recovery.description">
+      Each code works once. Use one of the codes saved when you set up two-factor authentication.
+    </p>
+    @if (recoveryForm.code().touched()) {
+      @for (error of recoveryForm.code().errors(); track error.kind) {
+        <hlm-field-error>{{ error.message }}</hlm-field-error>
+      }
+    }
+  </div>
+  <button
+    hlmBtn
+    type="submit"
+    class="mobile-ui:min-h-11"
+    [attr.aria-disabled]="pending() ? 'true' : null"
+    [attr.aria-busy]="pending() ? 'true' : null"
+  >
+    @if (pending()) {
+      <hlm-spinner aria-hidden="true" />
+    }
+    <span i18n="@@auth.recovery.submit">Use recovery code</span>
+  </button>
+</form>

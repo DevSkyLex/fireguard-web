@@ -1,6 +1,8 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { retry } from 'rxjs';
+import type { ApiRequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type {
@@ -273,7 +275,11 @@ describe('ComplianceService', () => {
       );
       let caught: unknown;
 
-      service[method]('org-1', 'resource-1').subscribe({
+      const download =
+        method === 'exportOrganizationSafetyRegister'
+          ? service.exportOrganizationSafetyRegister('org-1')
+          : service[method]('org-1', 'resource-1');
+      download.subscribe({
         error: (value: unknown) => (caught = value),
       });
 
@@ -287,4 +293,89 @@ describe('ComplianceService', () => {
       expect(caught).toMatchObject({ status: 403, error: problem });
     },
   );
+  const liveExports = [
+    {
+      name: 'organization',
+      url: `${baseUrl}/org-1/compliance/export`,
+      invoke: (options?: ApiRequestOptions) =>
+        service.exportOrganizationSafetyRegister('org-1', options),
+    },
+    {
+      name: 'facility',
+      url: `${baseUrl}/org-1/facilities/facility-1/compliance/export`,
+      invoke: (options?: ApiRequestOptions) =>
+        service.exportFacilitySafetyRegister('org-1', 'facility-1', options),
+    },
+  ];
+
+  it.each(liveExports)(
+    'captures a stable binary GET key for retries and resubscriptions of the $name register',
+    ({ url, invoke }) => {
+      const intent = invoke();
+      const received = vi.fn();
+      const content = new Blob(['register-pdf-bytes'], { type: 'application/pdf' });
+      httpMock.expectNone(url);
+      intent.pipe(retry(1)).subscribe(received);
+      const initial = httpMock.expectOne(url);
+      const key = initial.request.headers.get('Idempotency-Key');
+      expect(key).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      expect(initial.request.method).toBe('GET');
+      expect(initial.request.responseType).toBe('blob');
+      expect(initial.request.withCredentials).toBe(true);
+      expect(initial.request.body).toBeNull();
+      expect(initial.request.params.keys()).toEqual([]);
+      initial.error(new ProgressEvent('error'));
+      const retried = httpMock.expectOne(url);
+      expect(retried.request.headers.get('Idempotency-Key')).toBe(key);
+      retried.flush(content);
+      intent.subscribe(received);
+      const resubscribed = httpMock.expectOne(url);
+      expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(key);
+      resubscribed.flush(content);
+      invoke().subscribe(received);
+      const nextIntent = httpMock.expectOne(url);
+      expect(nextIntent.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(nextIntent.request.headers.get('Idempotency-Key')).not.toBe(key);
+      nextIntent.flush(content);
+      expect(received.mock.calls).toEqual([[content], [content], [content]]);
+    },
+  );
+
+  it.each(liveExports)(
+    'preserves caller binary headers and explicit identity for manual retries of the $name register',
+    ({ url, invoke }) => {
+      const options: ApiRequestOptions = {
+        idempotencyKey: '5d80dbe9-8886-46d4-aa5f-49a03ecb3b6a',
+        headers: { Accept: '*/*', 'X-Export-Trace': 'same-register-intent' },
+      };
+      const content = new Blob(['pdf-register'], { type: 'application/pdf' });
+      const received = vi.fn();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        invoke(options).subscribe(received);
+        const request = httpMock.expectOne(url);
+        expect(request.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+        expect(request.request.headers.get('Accept')).toBe('*/*');
+        expect(request.request.headers.get('X-Export-Trace')).toBe('same-register-intent');
+        expect(request.request.responseType).toBe('blob');
+        expect(request.request.withCredentials).toBe(true);
+        expect(request.request.params.keys()).toEqual([]);
+        request.flush(content);
+      }
+      expect(received.mock.calls).toEqual([[content], [content]]);
+    },
+  );
+
+  it('keeps compliance projections and immutable archived snapshot bytes as ordinary reads', () => {
+    service.getOrganizationCompliance('org-1').subscribe();
+    const summary = httpMock.expectOne(`${baseUrl}/org-1/compliance`);
+    expect(summary.request.headers.has('Idempotency-Key')).toBe(false);
+    summary.flush(mockSummary);
+    service.downloadRegisterSnapshot('org-1', 'snap-1').subscribe();
+    const snapshot = httpMock.expectOne(
+      `${baseUrl}/org-1/compliance/register-snapshots/snap-1/download`,
+    );
+    expect(snapshot.request.headers.has('Idempotency-Key')).toBe(false);
+    expect(snapshot.request.responseType).toBe('blob');
+    snapshot.flush(new Blob());
+  });
 });

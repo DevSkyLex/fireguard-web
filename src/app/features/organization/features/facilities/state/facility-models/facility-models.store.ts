@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, inject, PLATFORM_ID } from '@angular/core';
+import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -39,7 +39,9 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
+  WriteOperationService,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import {
   FacilityModelService,
   FacilityService,
@@ -194,10 +196,15 @@ export const FacilityModelsStore = signalStore(
       assets = inject(FacilityModelAssetService),
       dispatcher = inject(Dispatcher),
       platformId = inject(PLATFORM_ID),
+      writeOperations = inject(WriteOperationService),
+      session = inject(AUTH_SESSION_PORT),
     ) => {
       const readCancelled: Subject<void> = new Subject<void>();
       const previewCancelled: Subject<void> = new Subject<void>();
       const acceptedRevisions: Map<string, number> = new Map();
+      const uploadIntents = writeOperations.createTracker();
+      let uploadFiles = new WeakMap<Blob, number>();
+      let nextUploadFile = 0;
       const isCurrent = (revision: number): boolean => revision === store.scopeRevision();
       const clearPreview = (): void => {
         previewCancelled.next();
@@ -326,6 +333,8 @@ export const FacilityModelsStore = signalStore(
       const command = rxMethod<FacilityModelCommand>(
         pipe(
           concatMap((request) => {
+            if (!session.isAuthenticated() || request.sessionRevision !== session.sessionRevision())
+              return EMPTY;
             const stateKey = `${request.kind}CallState` as
               | 'uploadCallState'
               | 'updateCallState'
@@ -347,6 +356,11 @@ export const FacilityModelsStore = signalStore(
               return EMPTY;
             }
             const action = defer(() => {
+              if (
+                !session.isAuthenticated() ||
+                request.sessionRevision !== session.sessionRevision()
+              )
+                return EMPTY;
               if (request.kind === 'upload') {
                 if (
                   request.input.file.size > 10 * 1024 * 1024 ||
@@ -359,12 +373,16 @@ export const FacilityModelsStore = signalStore(
                 return from(request.input.file.arrayBuffer()).pipe(
                   map((bytes) => readFacilityGlb(bytes)),
                   concatMap(() =>
-                    service.upload(
-                      request.organizationId,
-                      request.buildingId,
-                      request.input.file,
-                      request.input.fileName,
-                    ),
+                    session.isAuthenticated() &&
+                    request.sessionRevision === session.sessionRevision()
+                      ? service.upload(
+                          request.organizationId,
+                          request.buildingId,
+                          request.input.file,
+                          request.input.fileName,
+                          request.uploadOperation,
+                        )
+                      : EMPTY,
                   ),
                 );
               }
@@ -377,8 +395,17 @@ export const FacilityModelsStore = signalStore(
             return action.pipe(
               tapResponse({
                 next: (result) => {
+                  if (
+                    !session.isAuthenticated() ||
+                    request.sessionRevision !== session.sessionRevision()
+                  )
+                    return;
                   if (result) acceptedRevisions.set(result.id, result.revision);
                   if (!isCurrent(request.scopeRevision)) return;
+                  if (request.kind === 'upload')
+                    uploadIntents.complete(
+                      `upload:${request.uploadFileId}:${request.input.fileName}`,
+                    );
                   patchState(store, { [stateKey]: successCallState(null) });
                   if (result) {
                     patchState(store, setEntity(result, { collection: 'model' }));
@@ -401,8 +428,21 @@ export const FacilityModelsStore = signalStore(
                   if (request.kind === 'activate' || request.kind === 'remove') refresh();
                 },
                 error: (error: unknown) => {
+                  if (
+                    !session.isAuthenticated() ||
+                    request.sessionRevision !== session.sessionRevision()
+                  )
+                    return;
                   if (!isCurrent(request.scopeRevision)) return;
-                  patchState(store, { [stateKey]: errorCallState(toStoreError(error)) });
+                  const normalized = toStoreError(error);
+                  if (
+                    request.kind === 'upload' &&
+                    [400, 413, 415, 422].includes(Number(normalized.code))
+                  )
+                    uploadIntents.complete(
+                      `upload:${request.uploadFileId}:${request.input.fileName}`,
+                    );
+                  patchState(store, { [stateKey]: errorCallState(normalized) });
                   if (toStoreError(error).code === 409 || toStoreError(error).code === 412)
                     refresh();
                   if (store.optionsCallState().status !== 'success') loadOptions();
@@ -421,16 +461,52 @@ export const FacilityModelsStore = signalStore(
       ): void => {
         const organizationId = store.organizationId();
         const buildingId = store.buildingId();
-        if (!isPlatformBrowser(platformId) || !organizationId || !buildingId) return;
+        if (
+          !isPlatformBrowser(platformId) ||
+          !session.isAuthenticated() ||
+          !organizationId ||
+          !buildingId
+        )
+          return;
         const revision =
           request.kind === 'upload' ? null : (store.modelEntityMap()[request.id]?.revision ?? null);
         if (request.kind !== 'upload' && revision === null) return;
+        let uploadFileId: number | undefined;
+        if (request.kind === 'upload') {
+          uploadFileId = uploadFiles.get(request.input.file);
+          if (uploadFileId === undefined) {
+            uploadFileId = ++nextUploadFile;
+            uploadFiles.set(request.input.file, uploadFileId);
+          }
+        }
+        const uploadOperation =
+          request.kind === 'upload'
+            ? uploadIntents.options(
+                `upload:${uploadFileId}:${request.input.fileName}`,
+                {
+                  fileName: request.input.fileName,
+                  organizationId,
+                  buildingId,
+                  scopeRevision: store.scopeRevision(),
+                },
+                session.sessionRevision(),
+              )
+            : undefined;
+        const captured =
+          request.kind === 'upload'
+            ? { ...request, input: { ...request.input } }
+            : request.kind === 'update'
+              ? { ...request, input: structuredClone(request.input) }
+              : request;
         command({
-          ...request,
+          ...captured,
           organizationId,
           buildingId,
           revision,
           scopeRevision: store.scopeRevision(),
+          sessionRevision: session.sessionRevision(),
+          uploadFileId,
+          uploadOperation,
         });
       };
       return {
@@ -445,6 +521,8 @@ export const FacilityModelsStore = signalStore(
             store.buildingId() !== context.buildingId
           ) {
             readCancelled.next();
+            uploadIntents.clear();
+            uploadFiles = new WeakMap();
             clearPreview();
             patchState(store, removeAllEntities({ collection: 'model' }), {
               ...INITIAL_STATE,
@@ -542,18 +620,49 @@ export const FacilityModelsStore = signalStore(
          * Disposes source resources and cancels in-flight reads at scope teardown.
          */
         destroyAssets(): void {
+          uploadIntents.clear();
+          uploadFiles = new WeakMap();
           readCancelled.next();
           clearPreview();
           readCancelled.complete();
           previewCancelled.complete();
         },
+        /**
+         * @description
+         * Discards session-owned file identities and fences pending continuations.
+         */
+        resetSession(): void {
+          uploadIntents.clear();
+          uploadFiles = new WeakMap();
+          acceptedRevisions.clear();
+          readCancelled.next();
+          clearPreview();
+          patchState(store, removeAllEntities({ collection: 'model' }), {
+            ...INITIAL_STATE,
+            scopeRevision: store.scopeRevision() + 1,
+          });
+        },
       };
     },
   ),
-  withHooks({
-    onDestroy(store): void {
-      store.destroyAssets();
-    },
+  withHooks((store) => {
+    const session = inject(AUTH_SESSION_PORT);
+    let previousSession = session.sessionRevision();
+    return {
+      onInit(): void {
+        effect(() => {
+          const revision = session.sessionRevision();
+          const authenticated = session.isAuthenticated();
+          if (revision !== previousSession || !authenticated) {
+            previousSession = revision;
+            untracked(() => store.resetSession());
+          }
+        });
+      },
+      onDestroy(): void {
+        store.destroyAssets();
+      },
+    };
   }),
 );
 

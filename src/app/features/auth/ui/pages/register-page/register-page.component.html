@@ -6,7 +6,13 @@
     i18n-description="@@auth.register.subtitle"
   />
 
+  <app-password-policy-status
+    [state]="passwordPolicyStore.policyCallState()"
+    (retried)="passwordPolicyStore.load()"
+  />
+
   <app-register-form
+    [passwordPolicy]="passwordPolicyStore.policy()"
     [pending]="registerStore.isRegistering() || federatedStore.startPending()"
     [serverError]="registerStore.registerError()"
     (submitted)="register($event)"
@@ -75,7 +81,7 @@
                 i18n-aria-label="@@auth.federated.opening"
               />
             } @else {
-              <ng-icon [name]="provider" aria-hidden="true" />
+              <ng-icon [name]="providerIcon(provider)" aria-hidden="true" />
             }
             <span>{{ providerLabel(provider) }}</span>
           </button>

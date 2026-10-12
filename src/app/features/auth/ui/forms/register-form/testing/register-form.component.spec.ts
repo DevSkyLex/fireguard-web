@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { DEFAULT_PASSWORD_POLICY } from '@features/auth/state/password-policy/testing/password-policy.fixture';
 import type { RegisterFormValues } from '../models';
 import { RegisterForm } from '../register-form.component';
 
@@ -61,6 +62,7 @@ describe('RegisterForm', () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
     fixture = TestBed.createComponent(RegisterForm);
+    fixture.componentRef.setInput('passwordPolicy', DEFAULT_PASSWORD_POLICY);
     await fixture.whenStable();
   });
 
@@ -144,12 +146,36 @@ describe('RegisterForm', () => {
     const menu = document.body.querySelector('[data-slot="popover-content"]') as HTMLElement | null;
     expect(menu).not.toBeNull();
     expect(menu?.textContent).toContain('Password requirements');
-    expect(menu?.querySelectorAll('li')).toHaveLength(5);
+    expect(menu?.querySelectorAll('li')).toHaveLength(7);
 
     password.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }));
     await fixture.whenStable();
 
     expect(document.body.querySelector('[data-slot="popover-content"]')).toBeNull();
+  });
+
+  it('updates guidance and validation when the server publishes a different policy', async () => {
+    fixture.componentRef.setInput('passwordPolicy', {
+      ...DEFAULT_PASSWORD_POLICY,
+      minimumLength: 4,
+      maximumLength: 64,
+      requireUppercase: false,
+      requireLowercase: false,
+      requireDigit: false,
+      specialCharacters: '',
+      allowedInitialCharacters: null,
+    });
+    await fixture.whenStable();
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    await fill(fixture, { password: '🧯abc', confirmPassword: '🧯abc' });
+    await submit(fixture);
+    expect(fixture.componentInstance['passwordCriteria']()).toHaveLength(2);
+    expect(submitted).toHaveBeenCalledWith({
+      ...VALID,
+      password: '🧯abc',
+      confirmPassword: '🧯abc',
+    });
   });
 
   it('should mark the first name field aria-invalid once submission touches it empty', async () => {

@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
@@ -12,6 +12,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import type { PaginationOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
+import { WriteOperationService } from '@core/request-state';
 import {
   idleCallState,
   pendingCallState,
@@ -23,13 +24,13 @@ import {
 } from '@core/request-state';
 import { TrustedDeviceService } from '@features/auth/data-access';
 import type { TrustedDeviceOutput } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { trustedDeviceStoreEvents } from './events';
 import type { TrustedDeviceState } from './models';
 
 //#region Initial State
 /**
  * Constant INITIAL_TRUSTED_DEVICE_STATE
- * @const INITIAL_TRUSTED_DEVICE_STATE
  *
  * @description
  * Initial state for the TrustedDeviceStore. Entity state (`deviceEntities`,
@@ -39,6 +40,8 @@ import type { TrustedDeviceState } from './models';
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const INITIAL_TRUSTED_DEVICE_STATE
  */
 const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
   totalDevices: 0,
@@ -49,8 +52,7 @@ const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
 //#endregion
 
 /**
- * Store TrustedDeviceStore
- * @const TrustedDeviceStore
+ * Constant TrustedDeviceStore
  *
  * @description
  * Component-scoped NgRx SignalStore for trusted-device list management.
@@ -65,6 +67,12 @@ const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
  * For the `pendingTrustDevice` flag and trust-device API call, use the
  * root-level {@link ActiveTrustedDeviceStore} instead.
  *
+ * @version 2.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const TrustedDeviceStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [TrustedDeviceStore] })
@@ -72,9 +80,6 @@ const INITIAL_TRUSTED_DEVICE_STATE: TrustedDeviceState = {
  *   readonly store = inject<TrustedDeviceStore>(TrustedDeviceStore);
  * }
  * ```
- *
- * @version 2.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const TrustedDeviceStore = signalStore(
   //#region State
@@ -83,9 +88,8 @@ export const TrustedDeviceStore = signalStore(
 
   //#region Entities
   /**
-   * Feature withEntities
-   *
    * @description
+   * Feature withEntities
    * Adds NgRx entity state and entity-adapter updater functions for
    * `TrustedDeviceOutput` objects keyed by their `id` field. Provides:
    * - `deviceEntities` — ordered array of all cached entities
@@ -99,13 +103,15 @@ export const TrustedDeviceStore = signalStore(
 
   //#region Computed
   withComputed((store) => ({
-    /** Alias for deviceEntities — backward-compatible accessor. */
+    /**
+     * @description
+     * Alias for deviceEntities — backward-compatible accessor.
+     */
     devices: computed<ReadonlyArray<TrustedDeviceOutput>>(() => store.deviceEntities()),
 
     /**
-     * Computed isRevoking
-     *
      * @description
+     * Computed isRevoking
      * Returns true if a single-device revoke operation is in-flight.
      *
      * @since 1.0.0
@@ -115,9 +121,8 @@ export const TrustedDeviceStore = signalStore(
     isRevoking: computed<boolean>(() => store.revokeCallState().status === 'pending'),
 
     /**
-     * Computed isRevokingAll
-     *
      * @description
+     * Computed isRevokingAll
      * Returns true if the revoke-all operation is in-flight.
      *
      * @since 1.0.0
@@ -127,9 +132,8 @@ export const TrustedDeviceStore = signalStore(
     isRevokingAll: computed<boolean>(() => store.revokeAllCallState().status === 'pending'),
 
     /**
-     * Computed deviceCount
-     *
      * @description
+     * Computed deviceCount
      * Returns the number of trusted devices in the local entity collection.
      *
      * @since 1.0.0
@@ -139,9 +143,8 @@ export const TrustedDeviceStore = signalStore(
     deviceCount: computed<number>(() => store.deviceEntities().length),
 
     /**
-     * Computed hasDevices
-     *
      * @description
+     * Computed hasDevices
      * Quick check whether any trusted devices exist across all pages. Drives
      * the visibility of "Revoke all" controls.
      *
@@ -159,12 +162,26 @@ export const TrustedDeviceStore = signalStore(
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
       trustedDeviceService = inject<TrustedDeviceService>(TrustedDeviceService),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => {
       //#region Shared Reactive Pipelines
       /**
-       * Reactive pipeline loadFn
-       *
        * @description
+       * Reactive pipeline loadFn
        * Shared `rxMethod` pipeline for loading trusted devices. Uses
        * `switchMap` so that rapid successive calls cancel the previous
        * in-flight request. Exposed publicly as both `load` (generic) and
@@ -208,9 +225,13 @@ export const TrustedDeviceStore = signalStore(
 
       return {
         //#region Reactive Methods
-        /** @see loadFn — generic alias. */
+        /**
+         * @see loadFn — generic alias.
+         */
         load: loadFn,
-        /** @see loadFn — explicit alias. */
+        /**
+         * @see loadFn — explicit alias.
+         */
         loadDevices: loadFn,
 
         /**
@@ -231,25 +252,47 @@ export const TrustedDeviceStore = signalStore(
               patchState(store, { revokeCallState: pendingCallState() });
             }),
             switchMap((deviceId: string) =>
-              trustedDeviceService.revoke(deviceId).pipe(
-                tapResponse({
-                  next: () => {
-                    patchState(store, removeEntity(deviceId, { collection: 'device' }), {
-                      totalDevices: Math.max(0, store.totalDevices() - 1),
-                      revokeCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { revokeCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      trustedDeviceStoreEvents.revokeFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to revoke device'),
-                      ),
-                    );
-                  },
-                }),
-              ),
+              trustedDeviceService
+                .revoke(
+                  deviceId,
+                  writeTracker.options(
+                    'trustedDeviceService.revoke',
+                    [deviceId],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('trustedDeviceService.revoke');
+                    },
+                  }),
+                  tapResponse({
+                    next: () => {
+                      patchState(store, removeEntity(deviceId, { collection: 'device' }), {
+                        totalDevices: Math.max(0, store.totalDevices() - 1),
+                        revokeCallState: successCallState(null),
+                      });
+                    },
+                    error: (error: unknown) => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { revokeCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        trustedDeviceStoreEvents.revokeFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to revoke device'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),
@@ -269,25 +312,46 @@ export const TrustedDeviceStore = signalStore(
               patchState(store, { revokeAllCallState: pendingCallState() });
             }),
             switchMap(() =>
-              trustedDeviceService.revokeAll().pipe(
-                tapResponse({
-                  next: () => {
-                    patchState(store, removeAllEntities({ collection: 'device' }), {
-                      totalDevices: 0,
-                      revokeAllCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { revokeAllCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      trustedDeviceStoreEvents.revokeAllFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to revoke all devices'),
-                      ),
-                    );
-                  },
-                }),
-              ),
+              trustedDeviceService
+                .revokeAll(
+                  writeTracker.options(
+                    'trustedDeviceService.revokeAll',
+                    [],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('trustedDeviceService.revokeAll');
+                    },
+                  }),
+                  tapResponse({
+                    next: () => {
+                      patchState(store, removeAllEntities({ collection: 'device' }), {
+                        totalDevices: 0,
+                        revokeAllCallState: successCallState(null),
+                      });
+                    },
+                    error: (error: unknown) => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { revokeAllCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        trustedDeviceStoreEvents.revokeAllFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to revoke all devices'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),
@@ -343,12 +407,13 @@ export const TrustedDeviceStore = signalStore(
 );
 
 /**
- * Type TrustedDeviceStoreType
- * @type TrustedDeviceStoreType
+ * Type TrustedDeviceStore
  *
  * @description
  * Type alias for the TrustedDeviceStore instance.
  *
  * @since 1.0.0
+ *
+ * @type TrustedDeviceStoreType
  */
 export type TrustedDeviceStore = InstanceType<typeof TrustedDeviceStore>;

@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
@@ -8,6 +9,7 @@ import type {
   PasswordResetResendOutput,
   PasswordResetVerifyOutput,
 } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { PasswordResetStore } from '../password-reset.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -67,6 +69,7 @@ describe('PasswordResetStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: PasswordResetService, useValue: mockPasswordResetService },
       ],
@@ -83,7 +86,10 @@ describe('PasswordResetStore', () => {
     store.request(requestInput);
     await flushEffects();
 
-    expect(mockPasswordResetService.request).toHaveBeenCalledWith(requestInput);
+    expect(mockPasswordResetService.request).toHaveBeenCalledWith(
+      requestInput,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.requestCallState().status).toBe('success');
     expect(store.currentRequest()).toEqual(requestResponse);
     expect(store.challengeToken()).toBe('challenge-token');
@@ -119,11 +125,14 @@ describe('PasswordResetStore', () => {
     store.confirm({ code: '123456', newPassword: 'NewPass123!' });
     await flushEffects();
 
-    expect(mockPasswordResetService.confirm).toHaveBeenCalledWith({
-      token: 'challenge-token',
-      code: '123456',
-      newPassword: 'NewPass123!',
-    });
+    expect(mockPasswordResetService.confirm).toHaveBeenCalledWith(
+      {
+        token: 'challenge-token',
+        code: '123456',
+        newPassword: 'NewPass123!',
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.confirmCallState().status).toBe('success');
   });
 
@@ -145,9 +154,12 @@ describe('PasswordResetStore', () => {
     store.resend();
     await flushEffects();
 
-    expect(mockPasswordResetService.resend).toHaveBeenCalledWith({
-      token: 'challenge-token',
-    });
+    expect(mockPasswordResetService.resend).toHaveBeenCalledWith(
+      {
+        token: 'challenge-token',
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.resendCallState().status).toBe('success');
     expect(store.currentRequest()).toEqual(resendResponse);
     expect(store.challengeToken()).toBe('challenge-token-2');

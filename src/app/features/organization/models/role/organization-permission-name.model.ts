@@ -165,12 +165,12 @@ export const ORGANIZATION_PERMISSION = {
  * Type OrganizationPermissionName
  *
  * @description
- * Union of all known organization-scoped permission names.
+ * Backend-owned organization permission name. Known constants remain available while
+ * additional permissions can cross the published access boundary.
  *
- * @type {(typeof ORGANIZATION_PERMISSION)[keyof typeof ORGANIZATION_PERMISSION]}
+ * @type {string}
  */
-export type OrganizationPermissionName =
-  (typeof ORGANIZATION_PERMISSION)[keyof typeof ORGANIZATION_PERMISSION];
+export type OrganizationPermissionName = string;
 
 /**
  * Constant ORGANIZATION_PERMISSION_NAMES

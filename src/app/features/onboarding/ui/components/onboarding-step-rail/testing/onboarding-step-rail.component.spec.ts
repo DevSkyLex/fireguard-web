@@ -1,5 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { NgIcon } from '@ng-icons/core';
 import type { OnboardingStepOutput } from '@features/onboarding/models';
 import { OnboardingStepRail } from '../onboarding-step-rail.component';
 
@@ -49,6 +51,28 @@ describe('OnboardingStepRail', () => {
     expect(rows).toHaveLength(2);
     expect(element.textContent).toContain('Create organization');
     expect(element.textContent).toContain('Choose a plan');
+  });
+
+  it('renders contributed and historical steps with server labels without changing their order', async () => {
+    fixture.componentRef.setInput('steps', [
+      { ...stepOf('additional_review', 'pending'), label: 'Additional review' },
+      { ...stepOf('constructor', 'completed'), label: '<b>Historical step</b>' },
+      stepOf('create_organization', 'pending'),
+    ]);
+    fixture.componentRef.setInput('activeStepKey', 'additional_review');
+    await fixture.whenStable();
+
+    const rows = element.querySelectorAll('li');
+    expect(rows).toHaveLength(3);
+    expect(rows[0].textContent).toContain('Additional review');
+    expect(rows[0].getAttribute('aria-current')).toBe('step');
+    const activeIcon = fixture.debugElement.query(By.css('li')).query(By.directive(NgIcon))
+      .componentInstance as NgIcon;
+    expect(activeIcon.name()).toBe('lucideCircle');
+    expect(rows[0].querySelector('ng-icon svg')).not.toBeNull();
+    expect(rows[1].textContent).toContain('<b>Historical step</b>');
+    expect(rows[1].querySelector('b')).toBeNull();
+    expect(rows[2].textContent).toContain('Create organization');
   });
 
   it('should mark the active step with aria-current="step"', async () => {

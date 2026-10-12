@@ -1,9 +1,10 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -15,12 +16,12 @@ import {
 } from '@core/request-state';
 import { UserProfileService } from '@features/account/data-access';
 import type { RequestEmailChangeInput, RequestEmailChangeOutput } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { accountEmailChangeStoreEvents } from './events';
 import type { AccountEmailChangeState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial state of the sign-in email change workflow.
@@ -28,6 +29,8 @@ import type { AccountEmailChangeState } from './models';
  * @since 1.0.0
  *
  * @type {AccountEmailChangeState}
+ *
+ * @const INITIAL_STATE
  */
 const INITIAL_STATE: AccountEmailChangeState = {
   pendingEmail: null,
@@ -37,8 +40,7 @@ const INITIAL_STATE: AccountEmailChangeState = {
 } as const;
 
 /**
- * Store AccountEmailChangeStore
- * @const AccountEmailChangeStore
+ * Constant AccountEmailChangeStore
  *
  * @description
  * Component-scoped workflow store for the sign-in email change. The request
@@ -56,6 +58,8 @@ const INITIAL_STATE: AccountEmailChangeState = {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const AccountEmailChangeStore
  */
 export const AccountEmailChangeStore = signalStore(
   //#region State
@@ -65,9 +69,8 @@ export const AccountEmailChangeStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isRequesting
-     *
      * @description
+     * Computed isRequesting
      * Whether an email change request (or re-request) is in flight.
      *
      * @since 1.0.0
@@ -77,9 +80,8 @@ export const AccountEmailChangeStore = signalStore(
     isRequesting: computed<boolean>(() => store.requestCallState().status === 'pending'),
 
     /**
-     * Computed isCancelling
-     *
      * @description
+     * Computed isCancelling
      * Whether the cancellation is in flight.
      *
      * @since 1.0.0
@@ -89,9 +91,8 @@ export const AccountEmailChangeStore = signalStore(
     isCancelling: computed<boolean>(() => store.cancelCallState().status === 'pending'),
 
     /**
-     * Computed requestError
-     *
      * @description
+     * Computed requestError
      * Error of the latest email change request, if any.
      *
      * @since 1.0.0
@@ -101,9 +102,8 @@ export const AccountEmailChangeStore = signalStore(
     requestError: computed<StoreError | null>(() => store.requestCallState().error),
 
     /**
-     * Computed hasPendingRequest
-     *
      * @description
+     * Computed hasPendingRequest
      * Whether a confirmation link was sent during this page's lifetime and
      * has been neither cancelled nor superseded.
      *
@@ -121,6 +121,21 @@ export const AccountEmailChangeStore = signalStore(
       store,
       userProfileService = inject<UserProfileService>(UserProfileService),
       dispatcher = inject<Dispatcher>(Dispatcher),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => ({
       /**
        * Method request
@@ -140,30 +155,52 @@ export const AccountEmailChangeStore = signalStore(
         pipe(
           tap((): void => patchState(store, { requestCallState: pendingCallState() })),
           exhaustMap((input: RequestEmailChangeInput) =>
-            userProfileService.requestEmailChange(input).pipe(
-              tapResponse({
-                next: (result: RequestEmailChangeOutput) => {
-                  patchState(store, {
-                    pendingEmail: input.newEmail,
-                    expiresAt: result.expiresAt ?? null,
-                    requestCallState: successCallState(result),
-                    cancelCallState: idleCallState(),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { requestCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    accountEmailChangeStoreEvents.requestFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        $localize`:@@account.email.requestFailed:The email change could not be requested.`,
+            userProfileService
+              .requestEmailChange(
+                input,
+                writeTracker.options(
+                  'userProfileService.requestEmailChange',
+                  [input],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('userProfileService.requestEmailChange');
+                  },
+                }),
+                tapResponse({
+                  next: (result: RequestEmailChangeOutput) => {
+                    patchState(store, {
+                      pendingEmail: input.newEmail,
+                      expiresAt: result.expiresAt ?? null,
+                      requestCallState: successCallState(result),
+                      cancelCallState: idleCallState(),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { requestCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      accountEmailChangeStoreEvents.requestFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@account.email.requestFailed:The email change could not be requested.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       ),
@@ -182,30 +219,51 @@ export const AccountEmailChangeStore = signalStore(
         pipe(
           tap((): void => patchState(store, { cancelCallState: pendingCallState() })),
           exhaustMap(() =>
-            userProfileService.cancelEmailChange().pipe(
-              tapResponse({
-                next: () => {
-                  patchState(store, {
-                    pendingEmail: null,
-                    expiresAt: null,
-                    cancelCallState: successCallState(null),
-                    requestCallState: idleCallState(),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { cancelCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    accountEmailChangeStoreEvents.cancelFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        $localize`:@@account.email.cancelFailed:The pending email change could not be cancelled.`,
+            userProfileService
+              .cancelEmailChange(
+                writeTracker.options(
+                  'userProfileService.cancelEmailChange',
+                  [],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('userProfileService.cancelEmailChange');
+                  },
+                }),
+                tapResponse({
+                  next: () => {
+                    patchState(store, {
+                      pendingEmail: null,
+                      expiresAt: null,
+                      cancelCallState: successCallState(null),
+                      requestCallState: idleCallState(),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { cancelCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      accountEmailChangeStoreEvents.cancelFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@account.email.cancelFailed:The pending email change could not be cancelled.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       ),
@@ -216,11 +274,12 @@ export const AccountEmailChangeStore = signalStore(
 
 /**
  * Type AccountEmailChangeStore
- * @type AccountEmailChangeStore
  *
  * @description
  * Injectable instance type exposed by {@link AccountEmailChangeStore}.
  *
  * @since 1.0.0
+ *
+ * @type AccountEmailChangeStore
  */
 export type AccountEmailChangeStore = InstanceType<typeof AccountEmailChangeStore>;

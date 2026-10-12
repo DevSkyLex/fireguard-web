@@ -1,66 +1,104 @@
-import {
-  maxLength,
-  minLength,
-  pattern,
-  required,
-  validate,
-  type SchemaPath,
-  type ValidationError,
-} from '@angular/forms/signals';
-import {
-  PASSWORD_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_PATTERN,
-} from '@features/auth/constants';
+import { required, validate, type SchemaPath, type ValidationError } from '@angular/forms/signals';
+import type { PasswordPolicyOutput } from '@features/auth/models';
 
 /**
  * Function applyPasswordRules
- * @function applyPasswordRules
  *
  * @description
- * Applies the API's password policy to one field: present, long enough, not
- * absurdly long, and matching the complexity pattern. Auth is the single
- * authority mirroring the backend constraints, so every surface that sets a
- * password — registration and password reset alike — applies this rather than
- * restating the rules.
+ * Applies the currently published password creation policy to one field.
+ * An unavailable policy blocks creation until it can be loaded. Registration,
+ * reset, password change and first-password setup share these reactive rules.
  *
  * @access public
  * @since 1.0.0
  *
  * @param {SchemaPath<string>} path - The password field.
+ * @param {() => PasswordPolicyOutput | null} policy - Current published password creation policy.
  *
  * @returns {void}
+ *
+ * @function applyPasswordRules
  *
  * @example
  * ```typescript
  * form(this.model, (path) => {
- *   applyPasswordRules(path.password);
+ *   applyPasswordRules(path.password, () => this.passwordPolicy());
  * });
  * ```
  */
-export function applyPasswordRules(path: SchemaPath<string>): void {
+export function applyPasswordRules(
+  path: SchemaPath<string>,
+  policy: () => PasswordPolicyOutput | null,
+): void {
   required(path, { message: $localize`:@@auth.password.required:Enter a password` });
-  minLength(path, PASSWORD_MIN_LENGTH, {
-    message: $localize`:@@auth.password.minLength:Use at least ${PASSWORD_MIN_LENGTH}:min: characters`,
-  });
-  maxLength(path, PASSWORD_MAX_LENGTH, {
-    message: $localize`:@@auth.password.maxLength:Use at most ${PASSWORD_MAX_LENGTH}:max: characters`,
-  });
-  pattern(path, PASSWORD_PATTERN, {
-    message: $localize`:@@auth.password.pattern:Include an upper case letter, a lower case letter, a digit and a symbol`,
+  validate(path, ({ value }): ValidationError[] => {
+    const current = policy();
+    if (!current)
+      return [
+        {
+          kind: 'policyUnavailable',
+          message: $localize`:@@auth.password.policyUnavailable:Password requirements are unavailable`,
+        },
+      ];
+    const password = value();
+    if (!password) return [];
+    const length = Array.from(password).length;
+    const errors: ValidationError[] = [];
+    if (length < current.minimumLength)
+      errors.push({
+        kind: 'minLength',
+        message: $localize`:@@auth.password.minLength:Use at least ${current.minimumLength}:min: characters`,
+      });
+    if (length > current.maximumLength)
+      errors.push({
+        kind: 'maxLength',
+        message: $localize`:@@auth.password.maxLength:Use at most ${current.maximumLength}:max: characters`,
+      });
+    if (current.requireUppercase && !/[A-Z]/.test(password))
+      errors.push({
+        kind: 'uppercase',
+        message: $localize`:@@auth.password.requirements.uppercase:An upper case letter`,
+      });
+    if (current.requireLowercase && !/[a-z]/.test(password))
+      errors.push({
+        kind: 'lowercase',
+        message: $localize`:@@auth.password.requirements.lowercase:A lower case letter`,
+      });
+    if (current.requireDigit && !/[0-9]/.test(password))
+      errors.push({
+        kind: 'digit',
+        message: $localize`:@@auth.password.requirements.digit:A digit`,
+      });
+    if (
+      current.specialCharacters &&
+      !Array.from(current.specialCharacters).some((character) => password.includes(character))
+    )
+      errors.push({
+        kind: 'symbol',
+        message: $localize`:@@auth.password.requirements.symbols:Include one of these symbols: ${current.specialCharacters}:SYMBOLS:`,
+      });
+    const first = Array.from(password)[0];
+    if (
+      current.allowedInitialCharacters &&
+      first &&
+      !current.allowedInitialCharacters.includes(first)
+    )
+      errors.push({
+        kind: 'initialCharacter',
+        message: $localize`:@@auth.password.initialCharacter:Start with one of these characters: ${current.allowedInitialCharacters}:CHARACTERS:`,
+      });
+    return errors;
   });
 }
 
 /**
  * Function applyPasswordConfirmation
- * @function applyPasswordConfirmation
  *
  * @description
  * Declares the cross-field rule that the confirmation must repeat the
  * password. It is a schema rule reading its sibling through `valueOf`, which is
  * the Signal Forms form of a cross-field validator — the retired `matchFields`
  * `ValidatorFn` expressed against the new mechanism (`ARCHITECTURE.md` §10.4).
- *
  * The error lands on the confirmation field rather than on the parent, because
  * that is the input the user has to change.
  *
@@ -71,6 +109,8 @@ export function applyPasswordRules(path: SchemaPath<string>): void {
  * @param {SchemaPath<string>} passwordPath - The password it must repeat.
  *
  * @returns {void}
+ *
+ * @function applyPasswordConfirmation
  */
 export function applyPasswordConfirmation(
   confirmationPath: SchemaPath<string>,

@@ -1,5 +1,6 @@
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { mockIndexedDbTransactions } from '@core/indexed-db/testing';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import type { InventoryPhysicalCommand } from '@features/organization/features/inventory/models';
 import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
@@ -19,6 +20,7 @@ describe('InventoryCommandRepository', () => {
     permissions: [],
   };
   const command: InventoryPhysicalCommand = {
+    idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11',
     kind: 'correction',
     userId: 'user-a',
     organizationId: 'org-a',
@@ -89,6 +91,7 @@ describe('InventoryCommandRepository', () => {
       .mockImplementation(async (): Promise<void> => {
         entries.clear();
       });
+    const transaction = mockIndexedDbTransactions(repository, entries);
     return {
       repository,
       profile,
@@ -100,6 +103,7 @@ describe('InventoryCommandRepository', () => {
       put,
       remove,
       clearAll,
+      transaction,
     };
   }
 
@@ -123,6 +127,37 @@ describe('InventoryCommandRepository', () => {
       repository.retain({ ...command, input: { ...command.input, quantity: '2.000000' } }),
     ).rejects.toThrow('different intention');
     expect(entries.get('commands:stable-operation')).toEqual(command);
+  });
+
+  it('atomically backfills one legacy HTTP key across two journal owners before replay', async () => {
+    const { repository, entries, get, put } = setup();
+    const legacy = { ...command, idempotencyKey: undefined };
+    entries.set('commands:stable-operation', legacy);
+    const peer = TestBed.runInInjectionContext(() => new InventoryCommandRepository());
+    const read = get.getMockImplementation();
+    const write = put.getMockImplementation();
+    if (!read || !write) throw new Error('Missing storage fixture');
+    vi.spyOn(peer, 'get').mockImplementation(read);
+    vi.spyOn(peer, 'put').mockImplementation(write);
+    mockIndexedDbTransactions(peer, entries);
+    const [first, second] = await Promise.all([repository.retain(legacy), peer.retain(legacy)]);
+    expect(first.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(second).toEqual(first);
+    expect(entries.get('commands:stable-operation')).toEqual({ ...legacy, ...first });
+    expect(await repository.retain({ ...legacy, idempotencyKey: 'another-browser-key' })).toEqual(
+      first,
+    );
+    expect(await repository.readPending('user-a', 'org-a')).toEqual([{ ...legacy, ...first }]);
+    expect(put.mock.calls.filter(([store]) => store === 'commands')).toHaveLength(1);
+  });
+
+  it('creates a durable HTTP key while keeping a new physical business identity unchanged', async () => {
+    const { repository, entries } = setup();
+    const legacy = { ...command, idempotencyKey: undefined };
+    const operation = await repository.retain(legacy);
+    expect(operation.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(entries.get('commands:stable-operation')).toEqual({ ...legacy, ...operation });
+    expect(await repository.retain(legacy)).toEqual(operation);
   });
 
   it('serializes concurrent competing intentions sharing one UUID', async () => {

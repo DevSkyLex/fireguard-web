@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { HydraApiService, type ApiRequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   FacilityAttachmentKind,
@@ -69,6 +69,7 @@ export class FacilityAttachmentService extends HydraApiService {
    * @param {Blob} file - file value.
    * @param {string} fileName - file Name value.
    * @param {FacilityAttachmentKind} [kind] - `'document'` (default) or `'floor_plan'`.
+   * @param {ApiRequestOptions | undefined} options - Retained identity for an unchanged upload.
    *
    * @returns {Observable<FacilityAttachmentOutput>} The created attachment.
    */
@@ -77,6 +78,7 @@ export class FacilityAttachmentService extends HydraApiService {
     file: Blob,
     fileName: string,
     kind?: FacilityAttachmentKind,
+    options?: ApiRequestOptions,
   ): Observable<FacilityAttachmentOutput> {
     const body: FormData = new FormData();
     body.set('file', file, fileName);
@@ -85,7 +87,7 @@ export class FacilityAttachmentService extends HydraApiService {
     return this.http.post<FacilityAttachmentOutput>(
       this.buildUrl(`/api/facilities/${facilityId}/attachments`),
       body,
-      { withCredentials: true, headers: { Accept: 'application/ld+json' } },
+      { withCredentials: true, headers: this.buildWriteHeaders(options, true) },
     );
   }
 

@@ -1,10 +1,10 @@
 /**
- * Auth Store
- *
  * @description
+ * Auth Store
  * NGRX SignalStore for authentication state management.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 
@@ -33,3 +33,5 @@ export type { RegisterState, RegisterStoreType } from './register';
 export { registerStoreEvents } from './register';
 export { FederatedAuthStore } from './federated-auth';
 export type { FederatedAuthState, FederatedAuthStoreType } from './federated-auth';
+
+export { PasswordPolicyStore } from './password-policy';

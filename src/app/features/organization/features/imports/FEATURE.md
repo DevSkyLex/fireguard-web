@@ -17,6 +17,18 @@ through the same domain rules the manual create and invite forms use. It does no
 second-guess `status`, `processedRows`, or the row-level `code` values;
 those are authoritative from the backend, read by polling.
 
+Import kind identifiers are open strings in requests and responses. The upload form keeps
+FireGuard's existing supported choices; additional or historical kinds render their identifier
+as text in job tables and cards, retaining access to their report without inventing an upload flow.
+
+CSV submission accepts trailing `ApiRequestOptions` and retains one in-memory HTTP identity for the
+same File, kind, organization and dry-run choice across lost responses, repeated subscriptions and
+list refreshes. A different File object, including identical filename/size/date metadata, or changed
+multipart fields starts another intent. Confirmation and resumption retain their own JSON identities.
+Confirmed writes and definite validation refusals release upload identities. Auth's published session
+revision, organization changes and store teardown clear those references and fence old responses.
+Files and keys never enter persistent browser storage or TransferState; SSR cannot submit an upload.
+
 ## Entry Points
 
 - Routes: `imports.routes.ts`

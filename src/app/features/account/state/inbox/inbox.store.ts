@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
+import { computed, effect, inject, PLATFORM_ID, untracked, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
@@ -20,7 +20,8 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, pipe, Subject, switchMap, takeUntil } from 'rxjs';
+import { EMPTY, exhaustMap, pipe, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -33,6 +34,7 @@ import { InboxService, NotificationService } from '@features/account/data-access
 import type { InboxItemOutput } from '@features/account/models';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
 import { notificationStoreEvents } from '@features/account/state/notifications/events';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { messageThreadStoreEvents } from '@features/organization/features/collaboration/state/message-thread/events';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import type { InboxState } from './inbox-state.interface';
@@ -154,6 +156,21 @@ export const InboxStore = signalStore(
       notifications = inject(NotificationService),
       dispatcher = inject(Dispatcher),
       platformId = inject(PLATFORM_ID),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => {
       const scopeReset = new Subject<void>();
       const pageReset = new Subject<void>();
@@ -389,34 +406,56 @@ export const InboxStore = signalStore(
                 return EMPTY;
               const revision = store.revision();
               patchState(store, { readCallState: pendingCallState() });
-              return notifications.markAsRead(item.id).pipe(
-                takeUntil(scopeReset),
-                tapResponse({
-                  next: () => {
-                    if (revision !== store.revision()) return;
-                    patchState(
-                      store,
-                      updateEntity(
-                        { id: selectId(item), changes: { isRead: true } },
-                        { collection: 'entry' },
-                      ),
-                      { readCallState: successCallState(null) },
-                    );
-                    dispatcher.dispatch(inboxStoreEvents.readSucceeded(item.id));
-                    loadCount();
-                  },
-                  error: (error: unknown) => {
-                    if (revision !== store.revision()) return;
-                    const failure = toStoreError(error);
-                    patchState(store, { readCallState: errorCallState(failure) });
-                    dispatcher.dispatch(
-                      inboxStoreEvents.readFailed(
-                        toStoreFailureEventPayload(failure, 'Failed to mark update as read'),
-                      ),
-                    );
-                  },
-                }),
-              );
+              return notifications
+                .markAsRead(
+                  item.id,
+                  writeTracker.options(
+                    'notifications.markAsRead',
+                    [item.id],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('notifications.markAsRead');
+                    },
+                  }),
+                  takeUntil(scopeReset),
+                  tapResponse({
+                    next: () => {
+                      if (revision !== store.revision()) return;
+                      patchState(
+                        store,
+                        updateEntity(
+                          { id: selectId(item), changes: { isRead: true } },
+                          { collection: 'entry' },
+                        ),
+                        { readCallState: successCallState(null) },
+                      );
+                      dispatcher.dispatch(inboxStoreEvents.readSucceeded(item.id));
+                      loadCount();
+                    },
+                    error: (error: unknown) => {
+                      if (revision !== store.revision()) return;
+                      const failure = toStoreError(error);
+                      patchState(store, { readCallState: errorCallState(failure) });
+                      dispatcher.dispatch(
+                        inboxStoreEvents.readFailed(
+                          toStoreFailureEventPayload(failure, 'Failed to mark update as read'),
+                        ),
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),

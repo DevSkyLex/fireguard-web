@@ -1,6 +1,15 @@
-import { computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
-import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  type,
+  withComputed,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
 import {
   addEntity,
   removeAllEntities,
@@ -30,7 +39,9 @@ import {
   successCallState,
   toStoreError,
   type StoreError,
+  WriteOperationService,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { ImportJobService } from '@features/organization/features/imports/data-access';
 import type {
   ImportJobKind,
@@ -152,10 +163,16 @@ export const ImportJobsStore = signalStore(
       store,
       service: ImportJobService = inject(ImportJobService),
       dispatcher = inject(Dispatcher),
+      writeOperations = inject(WriteOperationService),
+      session = inject(AUTH_SESSION_PORT),
+      platformId = inject(PLATFORM_ID),
     ) => {
       let organization = '';
       let organizationGeneration = 0;
       const activeCreates = new Set<number>();
+      const writeIntents = writeOperations.createTracker();
+      let uploadFiles = new WeakMap<Blob, number>();
+      let nextUploadFile = 0;
       let lastQuery: {
         organizationId: string;
         options?: RequestOptions;
@@ -240,6 +257,8 @@ export const ImportJobsStore = signalStore(
         pipe(
           tap((request): void => {
             if (organization !== request.organizationId) {
+              writeIntents.clear();
+              uploadFiles = new WeakMap();
               organizationGeneration += 1;
               organization = request.organizationId;
               changedOrganization.next();
@@ -251,6 +270,7 @@ export const ImportJobsStore = signalStore(
           }),
           switchMap(({ organizationId, options, query }) =>
             service.list(organizationId, options, query).pipe(
+              takeUntil(changedOrganization),
               tapResponse({
                 next: (response: HydraCollection<ImportJobOutput>): void => {
                   const rows = response.member.map((summary) => {
@@ -305,6 +325,7 @@ export const ImportJobsStore = signalStore(
       }>(
         pipe(
           mergeMap(({ organizationId, kind, file, dryRun }) => {
+            if (!isPlatformBrowser(platformId) || !session.isAuthenticated()) return EMPTY;
             if (!organization) {
               organization = organizationId;
               organizationGeneration += 1;
@@ -312,13 +333,37 @@ export const ImportJobsStore = signalStore(
             if (organization !== organizationId || activeCreates.has(organizationGeneration))
               return EMPTY;
             const generation = organizationGeneration;
+            const sessionRevision = session.sessionRevision();
+            let fileId = uploadFiles.get(file);
+            if (fileId === undefined) {
+              fileId = ++nextUploadFile;
+              uploadFiles.set(file, fileId);
+            }
+            const operation = writeIntents.options(
+              'upload',
+              {
+                organizationId,
+                kind,
+                fileId,
+                fileName: file.name,
+                dryRun: dryRun ?? false,
+                generation,
+              },
+              sessionRevision,
+            );
             activeCreates.add(generation);
             patchState(store, { createCallState: pendingCallState() });
-            return service.create(organizationId, kind, file, dryRun).pipe(
+            return service.create(organizationId, kind, file, dryRun, operation).pipe(
               tapResponse({
                 next: (job: ImportJobOutput): void => {
-                  if (generation !== organizationGeneration || organization !== organizationId)
+                  if (
+                    generation !== organizationGeneration ||
+                    organization !== organizationId ||
+                    sessionRevision !== session.sessionRevision() ||
+                    !session.isAuthenticated()
+                  )
                     return;
+                  writeIntents.complete('upload');
                   patchState(store, addEntity(job, { collection: 'job' }), {
                     createCallState: successCallState(job),
                   });
@@ -329,10 +374,17 @@ export const ImportJobsStore = signalStore(
                   if (lastQuery) load(lastQuery);
                 },
                 error: (error: unknown): void => {
-                  if (generation !== organizationGeneration || organization !== organizationId)
+                  if (
+                    generation !== organizationGeneration ||
+                    organization !== organizationId ||
+                    sessionRevision !== session.sessionRevision() ||
+                    !session.isAuthenticated()
+                  )
                     return;
                   const storeError: StoreError = toStoreError(error);
                   patchState(store, { createCallState: errorCallState(storeError) });
+                  if ([400, 413, 415, 422].includes(Number(storeError.code)))
+                    writeIntents.complete('upload');
                 },
               }),
               finalize(() => activeCreates.delete(generation)),
@@ -367,17 +419,24 @@ export const ImportJobsStore = signalStore(
               )
                 return EMPTY;
               const scope = organization;
+              const action = `confirm:${simulationId}`;
+              const operation = writeIntents.options(
+                action,
+                { organizationGeneration, scope },
+                session.sessionRevision(),
+              );
               patchState(store, {
                 confirmCallStates: {
                   ...store.confirmCallStates(),
                   [simulationId]: pendingCallState(),
                 },
               });
-              return service.confirm(simulationId).pipe(
+              return service.confirm(simulationId, operation).pipe(
                 takeUntil(changedOrganization),
                 tapResponse({
                   next: (job) => {
                     if (scope !== organization) return;
+                    writeIntents.complete(action);
                     patchState(
                       store,
                       setEntity(job, { collection: 'job' }),
@@ -465,14 +524,21 @@ export const ImportJobsStore = signalStore(
               if (!job?.canResume || store.resumeCallStates()[jobId]?.status === 'pending')
                 return EMPTY;
               const scope = organization;
+              const action = `resume:${jobId}`;
+              const operation = writeIntents.options(
+                action,
+                { organizationGeneration, scope },
+                session.sessionRevision(),
+              );
               patchState(store, {
                 resumeCallStates: { ...store.resumeCallStates(), [jobId]: pendingCallState() },
               });
-              return service.resume(jobId).pipe(
+              return service.resume(jobId, operation).pipe(
                 takeUntil(changedOrganization),
                 tapResponse({
                   next: (resumed) => {
                     if (scope !== organization) return;
+                    writeIntents.complete(action);
                     patchState(store, setEntity(resumed, { collection: 'job' }), {
                       resumeCallStates: {
                         ...store.resumeCallStates(),
@@ -564,9 +630,42 @@ export const ImportJobsStore = signalStore(
           if (activeCreates.has(organizationGeneration)) return;
           patchState(store, { createCallState: idleCallState() });
         },
+        /**
+         * @description
+         * Releases in-memory upload identities and private projections on session loss or teardown.
+         */
+        resetSession(): void {
+          organizationGeneration += 1;
+          organization = '';
+          writeIntents.clear();
+          uploadFiles = new WeakMap();
+          changedOrganization.next();
+          activePolls.clear();
+          lastQuery = null;
+          patchState(store, removeAllEntities({ collection: 'job' }), INITIAL_STATE);
+        },
       };
     },
   ),
+  withHooks((store) => {
+    const session = inject(AUTH_SESSION_PORT);
+    let previousSession = session.sessionRevision();
+    return {
+      onInit(): void {
+        effect(() => {
+          const revision = session.sessionRevision();
+          const authenticated = session.isAuthenticated();
+          if (revision !== previousSession || !authenticated) {
+            previousSession = revision;
+            untracked(() => store.resetSession());
+          }
+        });
+      },
+      onDestroy(): void {
+        store.resetSession();
+      },
+    };
+  }),
 );
 
 /**

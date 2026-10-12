@@ -13,7 +13,7 @@ import type {
  *
  * @type MaintenanceCostCommand
  */
-export type MaintenanceCostCommand =
+export type MaintenanceCostCommand = { readonly idempotencyKey?: string } & (
   | {
       readonly kind: 'planning';
       readonly organizationId: string;
@@ -32,4 +32,5 @@ export type MaintenanceCostCommand =
       readonly kind: 'rate';
       readonly organizationId: string;
       readonly input: CreateMaintenanceRateInput;
-    };
+    }
+);

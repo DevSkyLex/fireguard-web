@@ -74,4 +74,21 @@ describe('OrganizationUsagePanel', () => {
     expect(root().querySelector('[data-testid="organization-usage-error"]')).toBeNull();
     expect(root().textContent).toContain('No usage data is available yet.');
   });
+
+  it('renders contributed and historical quota resources with counts and a neutral explanation', async () => {
+    await render({
+      items: [
+        { resource: 'external_reviews', used: 4, limit: 10 },
+        { resource: 'constructor', used: 6, limit: null },
+      ],
+    });
+
+    expect(root().textContent).toContain('external_reviews');
+    expect(root().textContent).toContain('constructor');
+    expect(root().textContent).toContain(
+      "Usage for this resource is counted by your organization's subscription plan.",
+    );
+    expect(root().querySelector('hlm-progress')?.getAttribute('aria-valuenow')).toBe('40');
+    expect(root().textContent).toContain('Unlimited');
+  });
 });

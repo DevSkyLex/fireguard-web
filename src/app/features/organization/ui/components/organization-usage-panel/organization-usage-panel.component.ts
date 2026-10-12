@@ -58,6 +58,8 @@ const PERCENT_SCALE = 100;
  *
  * @version 1.1.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-organization-usage-panel
@@ -67,8 +69,6 @@ const PERCENT_SCALE = 100;
  *   (retried)="quotaStore.reload()"
  * />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-organization-usage-panel',
@@ -140,9 +140,14 @@ export class OrganizationUsagePanel {
   /**
    * Property retried
    * @readonly
-   * @description The error state's Retry action was activated. The panel computes no reload itself — the page maps this to its own quota store's `reload`.
+   *
+   * @description
+   * The error state's Retry action was activated. The panel computes no reload itself — the page
+   * maps this to its own quota store's `reload`.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @type {OutputEmitterRef<void>}
    */
   public readonly retried: OutputEmitterRef<void> = output<void>();
@@ -171,8 +176,12 @@ export class OrganizationUsagePanel {
 
       return {
         resource,
-        label: ORGANIZATION_QUOTA_RESOURCE_LABELS[resource],
-        description: ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS[resource],
+        label: Object.hasOwn(ORGANIZATION_QUOTA_RESOURCE_LABELS, resource)
+          ? (ORGANIZATION_QUOTA_RESOURCE_LABELS[resource] ?? resource)
+          : resource,
+        description: Object.hasOwn(ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS, resource)
+          ? (ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS[resource] ?? '')
+          : $localize`:@@org.settings.usage.additionalDescription:Usage for this resource is counted by your organization's subscription plan.`,
         used: item.used,
         limit: item.limit,
         percent:
@@ -188,9 +197,13 @@ export class OrganizationUsagePanel {
   /**
    * Property statusIconClass
    * @readonly
-   * @description Maps a row's severity to its icon colour.
+   *
+   * @description
+   * Maps a row's severity to its icon colour.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {typeof QUOTA_STATUS_TAG_ICON_CLASS}
    */
   protected readonly statusIconClass: typeof QUOTA_STATUS_TAG_ICON_CLASS =

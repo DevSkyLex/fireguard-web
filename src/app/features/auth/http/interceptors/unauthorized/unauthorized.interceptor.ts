@@ -32,7 +32,7 @@ const EXCLUDED_ENDPOINTS: RegExp[] = [
   /\/api\/auth\/refresh$/,
   /\/api\/auth\/register$/,
   /\/api\/auth\/federated\/providers$/,
-  /\/api\/auth\/federated\/(google|microsoft)\/(start|complete)$/,
+  /\/api\/auth\/federated\/([a-z][a-z0-9_-]{0,19})\/(start|complete)$/,
   // Pre-authentication MFA challenge: there is no session to lose yet.
   /\/api\/auth\/mfa\/(verify|resend)$/,
   // Password reset: the caller is anonymous and holds a token, not a session.
@@ -43,7 +43,7 @@ const EXCLUDED_ENDPOINTS: RegExp[] = [
 ];
 
 /**
- * Function unauthorizedInterceptor
+ * Constant unauthorizedInterceptor
  *
  * @description
  * Handles 401 Unauthorized responses from the API.

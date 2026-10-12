@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, DestroyRef, inject, PLATFORM_ID } from '@angular/core';
+import { computed, DestroyRef, inject, PLATFORM_ID, effect, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
@@ -40,6 +40,7 @@ import {
 import type { HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import { MercureService } from '@core/mercure';
+import { WriteOperationService } from '@core/request-state';
 import {
   idleCallState,
   pendingCallState,
@@ -58,6 +59,7 @@ import type {
   NotificationTypeOutput,
 } from '@features/account/models';
 import { authStoreEvents } from '@features/auth';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { notificationStoreEvents } from './events';
 import type { NotificationStoreState } from './models';
 
@@ -245,6 +247,21 @@ export const NotificationStore = signalStore(
       mercureService = inject<MercureService>(MercureService),
       platformId = inject<object>(PLATFORM_ID),
       destroyRef = inject(DestroyRef),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => {
       let generation = 0;
       let feedGeneration = 0;
@@ -595,42 +612,64 @@ export const NotificationStore = signalStore(
             exhaustMap((id) => {
               const session = generation;
               patchState(store, { markAsReadCallState: pendingCallState() });
-              return notificationService.markAsRead(id).pipe(
-                takeUntil(invalidated),
-                tapResponse({
-                  next: (updated: NotificationOutput) => {
-                    if (session !== generation) return;
-                    feedAcknowledgements?.notifications.set(updated.id, updated);
-                    invalidateUnreadCount();
-                    const wasUnread = store.notificationEntityMap()[updated.id]?.isRead === false;
-                    const unreadCount = wasUnread
-                      ? Math.max(0, store.unreadCount() - 1)
-                      : store.unreadCount();
-                    if (store.notificationEntityMap()[updated.id]) {
-                      patchState(store, setEntity(updated, { collection: 'notification' }), {
-                        markAsReadCallState: successCallState(updated),
-                        unreadCount,
-                      });
-                    } else {
-                      patchState(store, { markAsReadCallState: successCallState(updated) });
-                    }
-                    dispatcher.dispatch(notificationStoreEvents.changed());
-                  },
-                  error: (error: unknown) => {
-                    if (session !== generation) return;
-                    const storeError = toStoreError(error);
-                    patchState(store, { markAsReadCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      notificationStoreEvents.markAsReadFailed(
-                        toStoreFailureEventPayload(
-                          storeError,
-                          'Failed to mark notification as read',
+              return notificationService
+                .markAsRead(
+                  id,
+                  writeTracker.options(
+                    'notificationService.markAsRead',
+                    [id],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('notificationService.markAsRead');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  tapResponse({
+                    next: (updated: NotificationOutput) => {
+                      if (session !== generation) return;
+                      feedAcknowledgements?.notifications.set(updated.id, updated);
+                      invalidateUnreadCount();
+                      const wasUnread = store.notificationEntityMap()[updated.id]?.isRead === false;
+                      const unreadCount = wasUnread
+                        ? Math.max(0, store.unreadCount() - 1)
+                        : store.unreadCount();
+                      if (store.notificationEntityMap()[updated.id]) {
+                        patchState(store, setEntity(updated, { collection: 'notification' }), {
+                          markAsReadCallState: successCallState(updated),
+                          unreadCount,
+                        });
+                      } else {
+                        patchState(store, { markAsReadCallState: successCallState(updated) });
+                      }
+                      dispatcher.dispatch(notificationStoreEvents.changed());
+                    },
+                    error: (error: unknown) => {
+                      if (session !== generation) return;
+                      const storeError = toStoreError(error);
+                      patchState(store, { markAsReadCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        notificationStoreEvents.markAsReadFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            'Failed to mark notification as read',
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                }),
-              );
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),
@@ -686,43 +725,64 @@ export const NotificationStore = signalStore(
             exhaustMap(() => {
               const session = generation;
               patchState(store, { markAllAsReadCallState: pendingCallState() });
-              return notificationService.markAllAsRead().pipe(
-                takeUntil(invalidated),
-                tapResponse({
-                  next: (result: MarkAllNotificationsAsReadOutput) => {
-                    if (session !== generation) return;
-                    const readAt = new Date().toISOString();
-                    if (feedAcknowledgements) feedAcknowledgements.readAt = readAt;
-                    invalidateUnreadCount();
-                    const marked: NotificationOutput[] = [];
-                    for (const notification of store.notificationEntities()) {
-                      marked.push(
-                        notification.isRead
-                          ? notification
-                          : { ...notification, isRead: true, readAt },
-                      );
-                    }
-                    patchState(store, setAllEntities(marked, { collection: 'notification' }), {
-                      markAllAsReadCallState: successCallState(result),
-                      unreadCount: 0,
-                    });
-                    dispatcher.dispatch(notificationStoreEvents.changed());
-                  },
-                  error: (error: unknown) => {
-                    if (session !== generation) return;
-                    const storeError = toStoreError(error);
-                    patchState(store, { markAllAsReadCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      notificationStoreEvents.markAllAsReadFailed(
-                        toStoreFailureEventPayload(
-                          storeError,
-                          'Failed to mark every notification as read',
+              return notificationService
+                .markAllAsRead(
+                  writeTracker.options(
+                    'notificationService.markAllAsRead',
+                    [],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('notificationService.markAllAsRead');
+                    },
+                  }),
+                  takeUntil(invalidated),
+                  tapResponse({
+                    next: (result: MarkAllNotificationsAsReadOutput) => {
+                      if (session !== generation) return;
+                      const readAt = new Date().toISOString();
+                      if (feedAcknowledgements) feedAcknowledgements.readAt = readAt;
+                      invalidateUnreadCount();
+                      const marked: NotificationOutput[] = [];
+                      for (const notification of store.notificationEntities()) {
+                        marked.push(
+                          notification.isRead
+                            ? notification
+                            : { ...notification, isRead: true, readAt },
+                        );
+                      }
+                      patchState(store, setAllEntities(marked, { collection: 'notification' }), {
+                        markAllAsReadCallState: successCallState(result),
+                        unreadCount: 0,
+                      });
+                      dispatcher.dispatch(notificationStoreEvents.changed());
+                    },
+                    error: (error: unknown) => {
+                      if (session !== generation) return;
+                      const storeError = toStoreError(error);
+                      patchState(store, { markAllAsReadCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        notificationStoreEvents.markAllAsReadFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            'Failed to mark every notification as read',
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                }),
-              );
+                      );
+                    },
+                  }),
+                );
             }),
           ),
         ),

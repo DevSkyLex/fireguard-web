@@ -1,4 +1,6 @@
 import { inject, Service, signal, type Signal, type WritableSignal } from '@angular/core';
+import { WriteOperationService } from '@core/request-state';
+import type { WriteOperation } from '@core/request-state';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import type {
@@ -40,6 +42,19 @@ const OUTBOX_STORE = 'outbox';
 @Service()
 export class MessagingOutboxRepository {
   //#region Properties
+  /**
+   * Property writeOperations
+   * @readonly
+   *
+   * @description
+   * Creates receipt identities for durable immutable message intentions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WriteOperationService}
+   */
+  private readonly writeOperations: WriteOperationService = inject(WriteOperationService);
   /**
    * Property session
    * @readonly
@@ -169,6 +184,8 @@ export class MessagingOutboxRepository {
    * @param {string} conversationId - Conversation the work belongs to.
    * @param {Type} type - Operation kind.
    * @param {MessagingOutboxPayloadMap[Type]} payload - Operation payload.
+   * @param {WriteOperation} [writeOperation] - Preallocated identity persisted before the first
+   *   send.
    *
    * @returns {Promise<string>} The new outbox row id.
    */
@@ -176,6 +193,7 @@ export class MessagingOutboxRepository {
     conversationId: string,
     type: Type,
     payload: MessagingOutboxPayloadMap[Type],
+    writeOperation?: WriteOperation,
   ): Promise<string> {
     const isCurrent = this.captureMutationContext();
     await this.database.ensureOwnerBound();
@@ -186,6 +204,8 @@ export class MessagingOutboxRepository {
 
     const operation = {
       id: crypto.randomUUID(),
+      idempotencyKey:
+        writeOperation?.idempotencyKey ?? this.writeOperations.create().idempotencyKey,
       conversationId,
       type,
       payload,
@@ -199,6 +219,42 @@ export class MessagingOutboxRepository {
     this.queued.update((count: number): number => count + 1);
 
     return operation.id;
+  }
+
+  /**
+   * Method ensureIdempotencyKey
+   * @method ensureIdempotencyKey
+   *
+   * @description
+   * Backfills a legacy receipt identity in one IndexedDB transaction before network I/O.
+   * Concurrent tabs retain the first committed key; missing or obsolete rows cannot be sent.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} id - Durable operation row id.
+   *
+   * @returns {Promise<string | null>} The persisted key, or null when the row no longer exists.
+   */
+  public async ensureIdempotencyKey(id: string): Promise<string | null> {
+    const isCurrent = this.captureMutationContext();
+    await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
+    let key: string | null = null;
+    await this.database.updateTransaction(
+      { [OUTBOX_STORE]: [id] },
+      (values) => {
+        const operation = values[OUTBOX_STORE]?.[id] as MessagingOutboxOperation | null | undefined;
+        if (!operation) return { outbox: [] };
+        key = operation.idempotencyKey ?? this.writeOperations.create().idempotencyKey;
+        return operation.idempotencyKey
+          ? { outbox: [] }
+          : { [OUTBOX_STORE]: [{ key: id, value: { ...operation, idempotencyKey: key } }] };
+      },
+      isCurrent,
+    );
+    this.assertCurrent(isCurrent);
+    return key;
   }
 
   /**

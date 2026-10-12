@@ -1,0 +1,94 @@
+<section
+  id="account-recovery-codes"
+  class="flex min-w-0 flex-col gap-4 rounded-lg border border-border p-4 sm:p-6"
+>
+  <header>
+    <h2 class="text-xl font-semibold tracking-tight" i18n="@@account.recovery.title">
+      Recovery codes
+    </h2>
+    <p class="mt-1 text-sm text-muted-foreground" i18n="@@account.recovery.description">
+      Save these codes securely. Each lets you sign in once if you lose your authenticator.
+    </p>
+  </header>
+  @if (codes().length) {
+    <div hlmAlert>
+      <p hlmAlertDescription i18n="@@account.recovery.once">
+        These codes are shown once. Generating another set invalidates all previous codes.
+      </p>
+    </div>
+    <ul
+      class="grid min-w-0 gap-2 sm:grid-cols-2"
+      aria-label="Recovery codes"
+      i18n-aria-label="@@account.recovery.title"
+    >
+      @for (code of codes(); track code) {
+        <li class="rounded bg-muted px-3 py-2 font-mono text-sm break-words">{{ code }}</li>
+      }
+    </ul>
+    <button
+      hlmBtn
+      type="button"
+      variant="outline"
+      class="mobile-ui:min-h-11"
+      (click)="closed.emit()"
+      #savedButton
+      i18n="@@account.recovery.close"
+    >
+      I saved my codes
+    </button>
+  } @else {
+    @if (status().status === 'error') {
+      <div hlmAlert variant="destructive">
+        <p hlmAlertDescription i18n="@@account.recovery.loadFailed">
+          Recovery status could not be loaded.
+        </p>
+        <button
+          hlmBtn
+          type="button"
+          variant="outline"
+          (click)="retried.emit()"
+          i18n="@@common.retry"
+        >
+          Retry
+        </button>
+      </div>
+    } @else if (status().data; as current) {
+      <p class="text-sm" i18n="@@account.recovery.remaining">
+        Remaining codes: {{ current.remainingCount }}
+      </p>
+      @if (current.generatedAt) {
+        <p class="text-xs text-muted-foreground">{{ current.generatedAt | date: 'medium' }}</p>
+      }
+    }
+    @if (proofVisible()) {
+      <p class="text-sm text-muted-foreground" i18n="@@account.recovery.proof">
+        Enter a current authenticator code. A new set replaces every previous recovery code.
+      </p>
+      @if (failed()) {
+        <div hlmAlert variant="destructive">
+          <p hlmAlertDescription i18n="@@account.recovery.failed">
+            Codes could not be generated. Check your authenticator code and retry.
+          </p>
+        </div>
+      }
+      <app-account-otp-code-form
+        inputId="recovery-generate-proof"
+        [pending]="pending()"
+        [submitLabel]="generateLabel"
+        (submitted)="generated.emit($event)"
+        (cancelled)="closed.emit()"
+      />
+    } @else {
+      <button
+        hlmBtn
+        type="button"
+        variant="outline"
+        class="mobile-ui:min-h-11"
+        (click)="opened.emit()"
+        #generateButton
+      >
+        {{ generateLabel }}
+      </button>
+    }
+  }
+</section>

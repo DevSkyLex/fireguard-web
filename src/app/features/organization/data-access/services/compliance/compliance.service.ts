@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { type ApiRequestOptions, HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   ComplianceFacilityTreeOutput,
@@ -12,16 +12,18 @@ import type {
 /**
  * Service ComplianceService
  * @class ComplianceService
- * @extends {HydraApiService}
  *
  * @description
- * API service for the backend Compliance module's read-only surface: the
+ * API service for the backend Compliance module's projections and exports: the
  * enriched facility hierarchy, the organization/facility compliance
  * register summary, the safety-register PDF export, and the dated
  * register-snapshot archive (create, list, download).
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class ComplianceService extends HydraApiService {
@@ -57,7 +59,7 @@ export class ComplianceService extends HydraApiService {
    *
    * @param {string} organizationId - The organization to read the tree for.
    *
-   * @return {Observable<ComplianceFacilityTreeOutput>} The tree snapshot.
+   * @returns {Observable<ComplianceFacilityTreeOutput>} The tree snapshot.
    */
   public getFacilityTree(organizationId: string): Observable<ComplianceFacilityTreeOutput> {
     return this.getOne<ComplianceFacilityTreeOutput>(
@@ -78,7 +80,7 @@ export class ComplianceService extends HydraApiService {
    *
    * @param {string} organizationId - The organization to read the summary for.
    *
-   * @return {Observable<ComplianceSummaryOutput>} The organization rollup summary.
+   * @returns {Observable<ComplianceSummaryOutput>} The organization rollup summary.
    */
   public getOrganizationCompliance(organizationId: string): Observable<ComplianceSummaryOutput> {
     return this.getOne<ComplianceSummaryOutput>(
@@ -100,7 +102,7 @@ export class ComplianceService extends HydraApiService {
    * @param {string} organizationId - The owning organization.
    * @param {string} facilityId - The facility to read the summary for.
    *
-   * @return {Observable<ComplianceSummaryOutput>} The single-facility summary.
+   * @returns {Observable<ComplianceSummaryOutput>} The single-facility summary.
    */
   public getFacilityCompliance(
     organizationId: string,
@@ -126,13 +128,18 @@ export class ComplianceService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} organizationId - The organization to export the register for.
+   * @param {ApiRequestOptions} [options] - Optional request headers and retained key for the same
+   *   export intent.
    *
-   * @return {Observable<Blob>} The exported PDF's binary content.
+   * @returns {Observable<Blob>} The exported PDF's binary content.
    */
-  public exportOrganizationSafetyRegister(organizationId: string): Observable<Blob> {
+  public exportOrganizationSafetyRegister(
+    organizationId: string,
+    options?: ApiRequestOptions,
+  ): Observable<Blob> {
     return this.http.get(
       this.buildUrl(`${ComplianceService.BASE_PATH}/${organizationId}/compliance/export`),
-      { responseType: 'blob', withCredentials: true },
+      { headers: this.buildWriteHeaders(options), responseType: 'blob', withCredentials: true },
     );
   }
 
@@ -149,18 +156,21 @@ export class ComplianceService extends HydraApiService {
    *
    * @param {string} organizationId - The owning organization.
    * @param {string} facilityId - The facility to export the register for.
+   * @param {ApiRequestOptions} [options] - Optional request headers and retained key for the same
+   *   export intent.
    *
-   * @return {Observable<Blob>} The exported PDF's binary content.
+   * @returns {Observable<Blob>} The exported PDF's binary content.
    */
   public exportFacilitySafetyRegister(
     organizationId: string,
     facilityId: string,
+    options?: ApiRequestOptions,
   ): Observable<Blob> {
     return this.http.get(
       this.buildUrl(
         `${ComplianceService.BASE_PATH}/${organizationId}/facilities/${facilityId}/compliance/export`,
       ),
-      { responseType: 'blob', withCredentials: true },
+      { headers: this.buildWriteHeaders(options), responseType: 'blob', withCredentials: true },
     );
   }
 
@@ -184,7 +194,7 @@ export class ComplianceService extends HydraApiService {
    * @param {string} organizationId - The organization to archive the register for.
    * @param {CreateSafetyRegisterSnapshotInput} input - The scope: `{ facilityId }` or `{}`.
    *
-   * @return {Observable<SafetyRegisterSnapshotOutput>} The created snapshot's metadata.
+   * @returns {Observable<SafetyRegisterSnapshotOutput>} The created snapshot's metadata.
    */
   public createRegisterSnapshot(
     organizationId: string,
@@ -213,7 +223,7 @@ export class ComplianceService extends HydraApiService {
    * @param {string} organizationId - The organization to list the snapshots for.
    * @param {RequestOptions} [options] - Pagination options.
    *
-   * @return {Observable<HydraCollection<SafetyRegisterSnapshotOutput>>} The snapshot page.
+   * @returns {Observable<HydraCollection<SafetyRegisterSnapshotOutput>>} The snapshot page.
    */
   public listRegisterSnapshots(
     organizationId: string,
@@ -242,7 +252,7 @@ export class ComplianceService extends HydraApiService {
    * @param {string} organizationId - The owning organization.
    * @param {string} snapshotId - The snapshot to download.
    *
-   * @return {Observable<Blob>} The archived PDF's binary content.
+   * @returns {Observable<Blob>} The archived PDF's binary content.
    */
   public downloadRegisterSnapshot(organizationId: string, snapshotId: string): Observable<Blob> {
     return this.http.get(

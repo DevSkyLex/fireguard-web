@@ -1,5 +1,6 @@
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { mockIndexedDbTransactions } from '@core/indexed-db/testing';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import type { MaintenanceCostCommand } from '@features/organization/features/maintenance-costs/models';
 import type { CurrentOrganizationMemberProfileOutput } from '@features/organization/models';
@@ -19,6 +20,7 @@ describe('MaintenanceCostCommandRepository', () => {
     permissions: [],
   };
   const expense: MaintenanceCostCommand = {
+    idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f12',
     kind: 'expense',
     organizationId: 'org-a',
     interventionId: 'dossier-a',
@@ -47,12 +49,12 @@ describe('MaintenanceCostCommandRepository', () => {
     });
     const repository = TestBed.inject(MaintenanceCostCommandRepository);
     const entries = new Map<string, unknown>([['metadata:ownerUserId', 'user-a']]);
-    vi.spyOn(repository, 'get').mockImplementation(
-      async <T>(store: string, key: string): Promise<T | null> => {
+    const get = vi
+      .spyOn(repository, 'get')
+      .mockImplementation(async <T>(store: string, key: string): Promise<T | null> => {
         const value = entries.get(`${store}:${key}`);
         return value === undefined ? null : (structuredClone(value) as T);
-      },
-    );
+      });
     const getAll = vi
       .spyOn(repository, 'getAll')
       .mockImplementation(async <T>(store: string): Promise<readonly T[]> =>
@@ -75,7 +77,20 @@ describe('MaintenanceCostCommandRepository', () => {
     const clear = vi.spyOn(repository, 'clearAll').mockImplementation(async () => {
       entries.clear();
     });
-    return { repository, entries, profile, revision, authenticated, getAll, put, remove, clear };
+    const transaction = mockIndexedDbTransactions(repository, entries);
+    return {
+      repository,
+      entries,
+      profile,
+      revision,
+      authenticated,
+      getAll,
+      put,
+      remove,
+      clear,
+      transaction,
+      get,
+    };
   }
 
   it('retains exact immutable expense and rate UUIDs and permits only matching dossier recovery', async () => {
@@ -89,6 +104,7 @@ describe('MaintenanceCostCommandRepository', () => {
       command: expense,
     });
     const rate: MaintenanceCostCommand = {
+      idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f13',
       kind: 'rate',
       organizationId: 'org-a',
       input: {
@@ -109,6 +125,52 @@ describe('MaintenanceCostCommandRepository', () => {
       repository.retain({ ...expense, input: { ...expense.input, amount: '1' } }),
     ).rejects.toThrow('different intention');
     expect(await repository.readPending('org-a', 'dossier-a')).toEqual(expense);
+  });
+
+  it('atomically backfills a legacy expense with one HTTP key across separate journal instances', async () => {
+    const { repository, entries, get, put } = setup();
+    const legacy = { ...expense, idempotencyKey: undefined };
+    entries.set('commands:expense:stable-expense', { userId: 'user-a', command: legacy });
+    const peer = TestBed.runInInjectionContext(() => new MaintenanceCostCommandRepository());
+    const read = get.getMockImplementation();
+    const write = put.getMockImplementation();
+    if (!read || !write) throw new Error('Missing storage fixture');
+    vi.spyOn(peer, 'get').mockImplementation(read);
+    vi.spyOn(peer, 'put').mockImplementation(write);
+    mockIndexedDbTransactions(peer, entries);
+    const [first, second] = await Promise.all([repository.retain(legacy), peer.retain(legacy)]);
+    expect(first.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(second).toEqual(first);
+    expect(entries.get('commands:expense:stable-expense')).toEqual({
+      userId: 'user-a',
+      command: { ...legacy, ...first },
+    });
+    expect(await repository.retain({ ...legacy, idempotencyKey: 'another-browser-key' })).toEqual(
+      first,
+    );
+    expect(await repository.readPending('org-a', 'dossier-a')).toEqual({ ...legacy, ...first });
+    expect(put.mock.calls.filter(([store]) => store === 'commands')).toHaveLength(1);
+  });
+
+  it('persists one HTTP key for a new immutable rate without changing its business UUID', async () => {
+    const { repository, entries } = setup();
+    const rate: MaintenanceCostCommand = {
+      kind: 'rate',
+      organizationId: 'org-a',
+      input: {
+        clientId: 'rate-business-id',
+        memberId: 'member-a',
+        hourlyAmount: '50',
+        effectiveFrom: '2025-01-01',
+      },
+    };
+    const operation = await repository.retain(rate);
+    expect(operation.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(entries.get('commands:rate:rate-business-id')).toEqual({
+      userId: 'user-a',
+      command: { ...rate, ...operation },
+    });
+    expect(await repository.retain(rate)).toEqual(operation);
   });
 
   it('recovers the original account-bound command after the journal owner is recreated', async () => {

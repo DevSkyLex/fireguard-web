@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { retry } from 'rxjs';
+import type { ApiRequestOptions } from '@core/api';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type {
   InterventionActivityOutput,
@@ -31,6 +33,22 @@ describe('InterventionService', () => {
   });
 
   afterEach(() => httpMock.verify());
+
+  it('retains the persisted comment identity separately from its native client ID', () => {
+    const key = crypto.randomUUID();
+    const submission = service.addComment('intervention-1', 'Recorded offline', 'comment-1', {
+      idempotencyKey: key,
+    });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      submission.subscribe();
+      const request = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/interventions/intervention-1/comments`,
+      );
+      expect(request.request.headers.get('Idempotency-Key')).toBe(key);
+      expect(request.request.body).toEqual({ body: 'Recorded offline', clientId: 'comment-1' });
+      request.flush({});
+    }
+  });
 
   it('reads an asynchronous publication by its canonical resource URL', () => {
     const publication = {
@@ -733,6 +751,7 @@ describe('InterventionService', () => {
     );
     expect(request.request.method).toBe('GET');
     expect(request.request.responseType).toBe('blob');
+    expect(request.request.headers.has('Idempotency-Key')).toBe(false);
     request.flush(content);
 
     expect(result).toEqual(content);
@@ -834,4 +853,77 @@ describe('InterventionService', () => {
     expect(request.request.method).toBe('GET');
     request.flush({ member: [], totalItems: 0 });
   });
+  const effectfulExports = [
+    {
+      name: 'intervention CSV',
+      url: `${mockEnv.apiUrl}/api/interventions/export`,
+      invoke: (requestOptions?: ApiRequestOptions) =>
+        service.exportCsv('organization-1', { status: 'draft' }, requestOptions),
+    },
+    {
+      name: 'intervention report PDF',
+      url: `${mockEnv.apiUrl}/api/interventions/intervention-1/report`,
+      invoke: (requestOptions?: ApiRequestOptions) =>
+        service.exportReport('intervention-1', requestOptions),
+    },
+  ];
+
+  it.each(effectfulExports)(
+    'retains one binary GET identity across retries and resubscriptions for $name',
+    ({ url, invoke }) => {
+      const intent = invoke();
+      const received = vi.fn();
+      const content = new Blob(['export-bytes'], { type: 'application/octet-stream' });
+      httpMock.expectNone(url);
+      intent.pipe(retry(1)).subscribe(received);
+
+      const initial = httpMock.expectOne((request) => request.url === url);
+      const key = initial.request.headers.get('Idempotency-Key');
+      expect(key).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      expect(initial.request.method).toBe('GET');
+      expect(initial.request.responseType).toBe('blob');
+      expect(initial.request.body).toBeNull();
+      expect(initial.request.withCredentials).toBe(true);
+      expect(initial.request.params.has('idempotencyKey')).toBe(false);
+      const query = initial.request.params.toString();
+      initial.error(new ProgressEvent('error'));
+
+      const retried = httpMock.expectOne((request) => request.url === url);
+      expect(retried.request.headers.get('Idempotency-Key')).toBe(key);
+      expect(retried.request.params.toString()).toBe(query);
+      retried.flush(content);
+      expect(received).toHaveBeenLastCalledWith(content);
+
+      intent.subscribe(received);
+      const resubscribed = httpMock.expectOne((request) => request.url === url);
+      expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(key);
+      resubscribed.flush(content);
+
+      invoke().subscribe(received);
+      const nextIntent = httpMock.expectOne((request) => request.url === url);
+      expect(nextIntent.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(nextIntent.request.headers.get('Idempotency-Key')).not.toBe(key);
+      nextIntent.flush(content);
+      expect(received).toHaveBeenCalledTimes(3);
+    },
+  );
+
+  it.each(effectfulExports)(
+    'forwards an explicit identity for manual binary GET retries of $name',
+    ({ url, invoke }) => {
+      const requestOptions: ApiRequestOptions = {
+        idempotencyKey: '24316949-d384-4fa7-9f67-6b3af1c4bbce',
+        headers: { 'X-Export-Trace': 'transport-check' },
+      };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        invoke(requestOptions).subscribe();
+        const request = httpMock.expectOne((candidate) => candidate.url === url);
+        expect(request.request.headers.get('Idempotency-Key')).toBe(requestOptions.idempotencyKey);
+        expect(request.request.headers.get('X-Export-Trace')).toBe('transport-check');
+        expect(request.request.params.has('idempotencyKey')).toBe(false);
+        expect(request.request.params.has('headers')).toBe(false);
+        request.flush(new Blob());
+      }
+    },
+  );
 });

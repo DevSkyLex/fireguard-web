@@ -370,11 +370,16 @@ describe('ServiceRequestDetailPage', () => {
     page.sheet.actionSubmitted.emit({ kind: 'convert', existingWork: repair });
     await page.fixture.whenStable();
     expect(page.api.convert).toHaveBeenCalledOnce();
-    expect(page.api.convert).toHaveBeenCalledWith('org', request, {
-      clientOperationId: expect.any(String),
-      existingInterventionId: 'existing-intervention',
-      existingTaskId: 'existing-task',
-    });
+    expect(page.api.convert).toHaveBeenCalledWith(
+      'org',
+      request,
+      {
+        clientOperationId: expect.any(String),
+        existingInterventionId: 'existing-intervention',
+        existingTaskId: 'existing-task',
+      },
+      { idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f14' },
+    );
   });
 
   it('checks planning rights again when the conversion editor emits its action', async () => {

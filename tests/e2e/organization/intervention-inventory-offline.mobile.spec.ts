@@ -29,6 +29,14 @@ test.describe('Physical stock declarations on an offline phone', () => {
     }, testInfo) => {
       const errors = collectConsoleErrors(page);
       if (theme === 'dark') await setDarkTheme(context, baseURL ?? 'http://localhost:4273');
+      const httpKeys: string[] = [];
+      page.on('request', (request) => {
+        if (
+          request.method() === 'POST' &&
+          new URL(request.url()).pathname.endsWith('/inventory-consumptions')
+        )
+          httpKeys.push(request.headers()['idempotency-key']);
+      });
       const { path, mock } = await arrangeInventory(page);
       await page.goto(path);
       await expect(page.locator('html')).toHaveAttribute('data-interaction-mode', 'mobile');
@@ -78,6 +86,8 @@ test.describe('Physical stock declarations on an offline phone', () => {
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
       );
       expect(queued.id).toBe(`inventory:${queued.payload['clientOperationId']}`);
+      expect(queued.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(queued.idempotencyKey).not.toBe(queued.payload['clientOperationId']);
       expect(queued.payload).toMatchObject({
         partId: mock.parts[0]?.id,
         warehouseId: mock.warehouses[0]?.id,
@@ -102,11 +112,13 @@ test.describe('Physical stock declarations on an offline phone', () => {
       const persisted = await readOutboxOperations(page, E2E_INTERVENTION_ID);
       expect(persisted).toHaveLength(1);
       expect(persisted[0]?.payload).toEqual(queued.payload);
+      expect(persisted[0]?.idempotencyKey).toBe(queued.idempotencyKey);
       expect(mock.writes).toEqual([]);
       await expect(page.getByTestId('intervention-maintenance-cost-link')).toHaveCount(0);
 
       await setAppOnline(page);
       await expect.poll(() => mock.writes.length).toBe(1);
+      expect(httpKeys).toEqual([queued.idempotencyKey]);
       expect(mock.writes[0]).toMatchObject({
         clientOperationId: queued.payload['clientOperationId'],
         partId: queued.payload['partId'],
@@ -145,6 +157,14 @@ test.describe('Physical stock declarations on an offline phone', () => {
     page,
   }, testInfo) => {
     const errors = collectConsoleErrors(page);
+    const httpKeys: string[] = [];
+    page.on('request', (request) => {
+      if (
+        request.method() === 'POST' &&
+        new URL(request.url()).pathname.endsWith('/inventory-consumptions')
+      )
+        httpKeys.push(request.headers()['idempotency-key']);
+    });
     const { path, mock } = await arrangeInventory(page);
     mock.loseNextCommittedResponse = true;
     await page.goto(path);
@@ -166,6 +186,8 @@ test.describe('Physical stock declarations on an offline phone', () => {
     const [original] = await readOutboxOperations(page, E2E_INTERVENTION_ID);
     if (!original) throw new Error('The physical declaration must already be durable.');
     const originalPayload = original.payload;
+    expect(original.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(original.idempotencyKey).not.toBe(originalPayload['clientOperationId']);
     expect(originalPayload['quantity']).toBe('0.000001');
     expect(originalPayload['actorId']).toBe(ACCOUNT_ID);
 
@@ -176,6 +198,7 @@ test.describe('Physical stock declarations on an offline phone', () => {
     const uncertain = await readOutboxOperations(page, E2E_INTERVENTION_ID);
     expect(uncertain).toHaveLength(1);
     expect(uncertain[0]?.payload).toEqual(originalPayload);
+    expect(uncertain[0]?.idempotencyKey).toBe(original.idempotencyKey);
     await page.addInitScript(() => {
       Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false });
     });
@@ -188,6 +211,7 @@ test.describe('Physical stock declarations on an offline phone', () => {
     expect(restored).toHaveLength(1);
     expect(restored[0]?.id).toBe(original.id);
     expect(restored[0]?.payload).toEqual(originalPayload);
+    expect(restored[0]?.idempotencyKey).toBe(original.idempotencyKey);
     expect(mock.writes).toHaveLength(1);
     expect(mock.receipts).toHaveLength(1);
 
@@ -197,6 +221,7 @@ test.describe('Physical stock declarations on an offline phone', () => {
       .poll(async () => (await readOutboxOperations(page, E2E_INTERVENTION_ID)).length)
       .toBe(0);
     expect(mock.writes[1]).toEqual(mock.writes[0]);
+    expect(httpKeys).toEqual([original.idempotencyKey, original.idempotencyKey]);
     expect(mock.writes[1]).toMatchObject({
       clientOperationId: originalPayload['clientOperationId'],
       quantity: '0.000001',

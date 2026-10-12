@@ -4,6 +4,7 @@ import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import { RegistrationService } from '@features/auth/data-access';
 import type { LoginOutput, RegisterInput, RegisterOutput } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AuthStore } from '@features/auth/state';
 import { RegisterStore } from '../register.store';
 
@@ -66,6 +67,7 @@ describe('RegisterStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: RegistrationService, useValue: mockRegistrationService },
         { provide: AuthStore, useValue: mockAuthStore },
@@ -81,7 +83,10 @@ describe('RegisterStore', () => {
     store.register(registerInput);
     await flushEffects();
 
-    expect(mockRegistrationService.register).toHaveBeenCalledWith(registerInput);
+    expect(mockRegistrationService.register).toHaveBeenCalledWith(
+      registerInput,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.requestCallState().status).toBe('success');
     expect(store.challengeToken()).toBe('challenge-token');
     expect(store.maskedRecipient()).toBe('j***@e***.com');
@@ -97,6 +102,23 @@ describe('RegisterStore', () => {
     expect(store.requestCallState().status).toBe('error');
     expect(store.registerError()).not.toBeNull();
     expect(mockDispatcher.dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('normalizes HTTP-omitted challenge fields when registration needs no verification', () => {
+    const accepted: RegisterOutput = {
+      '@id': '/api/auth/register',
+      '@type': 'RegisterOutput',
+      success: true,
+      message: 'Account created',
+    };
+    mockRegistrationService.register.mockReturnValue(of(accepted));
+    store.register(registerInput);
+
+    expect(store.requestCallState().data).toEqual(accepted);
+    expect(store.hasChallenge()).toBe(false);
+    expect(store.challengeToken()).toBeNull();
+    expect(store.maskedRecipient()).toBeNull();
+    expect(store.currentChallenge()).toBeNull();
   });
 
   it('should memorize the resend cooldown announced by the registration response', async () => {
@@ -160,10 +182,13 @@ describe('RegisterStore', () => {
     store.verify({ code: '123456' });
     await flushEffects();
 
-    expect(mockRegistrationService.verify).toHaveBeenCalledWith({
-      token: 'challenge-token',
-      code: '123456',
-    });
+    expect(mockRegistrationService.verify).toHaveBeenCalledWith(
+      {
+        token: 'challenge-token',
+        code: '123456',
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.verifyCallState().status).toBe('success');
     expect(mockAuthStore.applySession).toHaveBeenCalledWith(verifyResponse);
   });
@@ -186,7 +211,10 @@ describe('RegisterStore', () => {
     store.resend();
     await flushEffects();
 
-    expect(mockRegistrationService.resend).toHaveBeenCalledWith({ token: 'challenge-token' });
+    expect(mockRegistrationService.resend).toHaveBeenCalledWith(
+      { token: 'challenge-token' },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.resendCallState().status).toBe('success');
     expect(store.challengeToken()).toBe('challenge-token-2');
   });

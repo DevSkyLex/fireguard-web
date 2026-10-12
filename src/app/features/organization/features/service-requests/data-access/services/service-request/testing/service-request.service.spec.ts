@@ -96,14 +96,23 @@ describe('ServiceRequestService', () => {
       existingInterventionId: 'intervention',
       existingTaskId: 'task',
     };
-    service.convert('org', request, input).subscribe({ error: () => undefined });
+    const operation = {
+      idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f14',
+      headers: { 'If-Match': 'tampered', 'X-Intent': 'retained' },
+    };
+    service.convert('org', request, input, operation).subscribe({ error: () => undefined });
     const first = http.expectOne(url + '/request/convert');
     expect(first.request.body).toEqual(input);
+    expect(first.request.headers.get('Idempotency-Key')).toBe(operation.idempotencyKey);
     first.error(new ProgressEvent('network'), { status: 0 });
-    service.convert('org', request, input).subscribe();
+    service.convert('org', request, input, operation).subscribe();
     const replay = http.expectOne(url + '/request/convert');
     expect(replay.request.body).toEqual(input);
     expect(replay.request.headers.get('If-Match')).toBe('"revision-7"');
+    expect(replay.request.headers.get('Idempotency-Key')).toBe(
+      first.request.headers.get('Idempotency-Key'),
+    );
+    expect(replay.request.headers.get('X-Intent')).toBe('retained');
     replay.flush(
       serviceRequestFixture({
         status: 'converted',

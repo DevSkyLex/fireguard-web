@@ -1,12 +1,12 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
+import type { ApiRequestOptions } from '@core/api/models';
 import type { ConfirmEmailChangeInput, ConfirmEmailChangeOutput } from '@features/auth/models';
 
 /**
  * Service EmailChangeService
  * @class EmailChangeService
- * @extends HydraApiService
  *
  * @description
  * Auth-owned transport for the public half of the sign-in email change: the
@@ -17,13 +17,16 @@ import type { ConfirmEmailChangeInput, ConfirmEmailChangeOutput } from '@feature
  * half (request and cancel) belongs to account's `UserProfileService`.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends HydraApiService
  */
 @Service()
 export class EmailChangeService extends HydraApiService {
   //#region Constants
   /**
-   * Constant CONFIRM_PATH
+   * Property CONFIRM_PATH
    * @readonly
    * @static
    *
@@ -51,13 +54,19 @@ export class EmailChangeService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {ConfirmEmailChangeInput} input - The emailed confirmation token.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
    *
    * @returns {Observable<ConfirmEmailChangeOutput>} - Confirmation response.
    */
-  public confirm(input: ConfirmEmailChangeInput): Observable<ConfirmEmailChangeOutput> {
+  public confirm(
+    input: ConfirmEmailChangeInput,
+    options?: ApiRequestOptions,
+  ): Observable<ConfirmEmailChangeOutput> {
     return this.post<ConfirmEmailChangeInput, ConfirmEmailChangeOutput>(
       EmailChangeService.CONFIRM_PATH,
       input,
+      options,
     );
   }
   //#endregion

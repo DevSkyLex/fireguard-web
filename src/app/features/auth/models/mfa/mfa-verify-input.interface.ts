@@ -7,6 +7,7 @@
  * Sent to POST /api/auth/mfa/verify endpoint.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @example
@@ -18,6 +19,13 @@
  * ```
  */
 export interface MfaVerifyInput {
+  /**
+   * Property method
+   *
+   * @description
+   * Selected MFA proof method, with OTP as the default.
+   */
+  readonly method?: 'otp' | 'recovery_code';
   /**
    * Property preAuthToken
    * @readonly

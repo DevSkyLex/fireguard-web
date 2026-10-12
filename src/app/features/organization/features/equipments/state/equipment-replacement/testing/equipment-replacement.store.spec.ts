@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type {
   EquipmentOutput,
@@ -23,6 +24,7 @@ const receipt: ReplaceEquipmentOutput = {
 };
 
 const setup = () => {
+  const revision = signal(0);
   const selectedEquipment = signal({ id: 'old', status: 'operational' } as EquipmentOutput);
   const setEquipment = vi.fn();
   const replace = vi.fn();
@@ -31,6 +33,7 @@ const setup = () => {
     providers: [
       provideZonelessChangeDetection(),
       EquipmentReplacementStore,
+      { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: revision } },
       { provide: EquipmentService, useValue: { replace, list } },
       { provide: ActiveEquipmentStore, useValue: { selectedEquipment, setEquipment } },
     ],
@@ -41,6 +44,7 @@ const setup = () => {
     list,
     selectedEquipment,
     setEquipment,
+    revision,
   };
 };
 
@@ -53,13 +57,14 @@ describe('EquipmentReplacementStore', () => {
     store.replace({ organizationId: 'org', equipmentId: 'old', input: command });
     expect(store.replaceCallState().error?.retryable).toBe(true);
     store.reset();
-    expect(store.command()).toBe(command);
+    expect(store.command()).toEqual(command);
     store.replace({
       organizationId: 'org',
       equipmentId: 'old',
       input: { clientOperationId: 'another', successorEquipmentId: 'different' },
     });
-    expect(replace.mock.calls[1][2]).toBe(command);
+    expect(replace.mock.calls[1][2]).toEqual(command);
+    expect(replace.mock.calls[1][3].idempotencyKey).toBe(replace.mock.calls[0][3].idempotencyKey);
     expect(store.replaceCallState().data).toEqual(receipt);
     expect(setEquipment).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'old', status: 'decommissioned', successorEquipmentId: 'new' }),
@@ -92,7 +97,10 @@ describe('EquipmentReplacementStore', () => {
       successorEquipmentId: 'new',
     };
     store.replace({ organizationId: 'org', equipmentId: 'old', input: corrected });
-    expect(replace.mock.calls[1][2]).toBe(corrected);
+    expect(replace.mock.calls[1][2]).toEqual(corrected);
+    expect(replace.mock.calls[1][3].idempotencyKey).not.toBe(
+      replace.mock.calls[0][3].idempotencyKey,
+    );
   });
 
   it('never applies an old equipment receipt to another active dossier', () => {
@@ -103,5 +111,69 @@ describe('EquipmentReplacementStore', () => {
     selectedEquipment.set({ id: 'other' } as EquipmentOutput);
     pending.next(receipt);
     expect(setEquipment).not.toHaveBeenCalled();
+  });
+
+  it('retains a snapshot even if the caller edits its original object after a lost response', () => {
+    const { store, replace } = setup();
+    const edited = { ...command, successor: { type: 'fire_extinguisher', assetCode: 'EXT-2' } };
+    replace.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: edited });
+    edited.successor.assetCode = 'CHANGED';
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: edited });
+    expect(replace.mock.calls[1][2].successor.assetCode).toBe('EXT-2');
+    expect(replace.mock.calls[1][3]).toEqual(replace.mock.calls[0][3]);
+  });
+
+  it.each([
+    'idempotency_conflict',
+    'idempotency_in_progress',
+    'idempotency_replay_expired',
+    'idempotency_outcome_unknown',
+    'idempotency_result_unavailable',
+    'idempotency_owner_lost',
+  ])('retains the command and key after %s instead of blindly starting again', (code) => {
+    const { store, replace } = setup();
+    replace.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 409, error: { code } })),
+    );
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: command });
+    store.reset();
+    expect(store.command()).toEqual(command);
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: command });
+    expect(replace.mock.calls[1][3]).toEqual(replace.mock.calls[0][3]);
+  });
+
+  it('starts a fresh intent after success while preserving the native operation identifier', () => {
+    const { store, replace } = setup();
+    replace.mockReturnValue(of(receipt));
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: command });
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: command });
+    expect(replace.mock.calls[1][3].idempotencyKey).not.toBe(
+      replace.mock.calls[0][3].idempotencyKey,
+    );
+    expect(replace.mock.calls[1][2].clientOperationId).toBe(command.clientOperationId);
+  });
+
+  it('fences a previous session receipt without cancelling or blocking the new owner command', () => {
+    const { store, replace, revision, setEquipment } = setup();
+    const previous = new Subject<ReplaceEquipmentOutput>();
+    const current = new Subject<ReplaceEquipmentOutput>();
+    replace.mockReturnValueOnce(previous).mockReturnValue(current);
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: command });
+    revision.set(1);
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: command });
+    expect(replace.mock.calls[1][3].idempotencyKey).not.toBe(
+      replace.mock.calls[0][3].idempotencyKey,
+    );
+    previous.next(receipt);
+    previous.complete();
+    expect(setEquipment).not.toHaveBeenCalled();
+    expect(store.replaceCallState().status).toBe('pending');
+    store.replace({ organizationId: 'org', equipmentId: 'old', input: command });
+    expect(replace).toHaveBeenCalledTimes(2);
+    current.next(receipt);
+    current.complete();
+    expect(store.replaceCallState().status).toBe('success');
+    expect(setEquipment).toHaveBeenCalledOnce();
   });
 });

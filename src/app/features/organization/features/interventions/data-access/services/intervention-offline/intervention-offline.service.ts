@@ -596,6 +596,24 @@ export class InterventionOfflineService {
   }
 
   /**
+   * Method ensureOutboxIdempotencyKey
+   * @method ensureOutboxIdempotencyKey
+   *
+   * @description
+   * Returns a durably allocated receipt identity before replay starts network I/O.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} id - Queued operation identifier.
+   *
+   * @returns {Promise<string | null>} Persisted key, or null for a missing operation.
+   */
+  public ensureOutboxIdempotencyKey(id: string): Promise<string | null> {
+    return this.outbox.ensureIdempotencyKey(id);
+  }
+
+  /**
    * Method confirmOutboxWorkload
    * @method confirmOutboxWorkload
    *

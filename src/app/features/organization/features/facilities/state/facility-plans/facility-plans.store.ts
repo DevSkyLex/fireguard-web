@@ -33,7 +33,9 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
+  WriteOperationService,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import {
@@ -346,11 +348,25 @@ export const FacilityPlansStore = signalStore(
       equipmentService: EquipmentService = inject(EquipmentService),
       dispatcher: Dispatcher = inject(Dispatcher),
       platformId: object = inject(PLATFORM_ID),
+      writeOperations = inject(WriteOperationService),
+      session = inject(AUTH_SESSION_PORT),
     ) => {
       const selectionChanged = new Subject<void>();
       const contextChanged = new Subject<void>();
       let selectionGeneration = 0;
       let contextGeneration = 0;
+      const writeIntents = writeOperations.createTracker();
+      let uploadFiles = new WeakMap<Blob, number>();
+      let nextUploadFile = 0;
+
+      /**
+       * @description
+       * Releases caller-owned identities without retaining binary inputs in store state.
+       */
+      const clearWriteOperations = (): void => {
+        writeIntents.clear();
+        uploadFiles = new WeakMap();
+      };
 
       /**
        * @description
@@ -592,7 +608,8 @@ export const FacilityPlansStore = signalStore(
           mergeMap(({ organizationId, facilityId, attachmentId, points }) => {
             if (
               !store.selectedPlanReady() ||
-              store.saveZoneGeometryCallState().status === 'pending'
+              store.saveZoneGeometryCallState().status === 'pending' ||
+              !session.isAuthenticated()
             )
               return EMPTY;
 
@@ -608,13 +625,26 @@ export const FacilityPlansStore = signalStore(
             const generation = selectionGeneration;
             const key = store.selectedPlanKey();
             patchState(store, { saveZoneGeometryCallState: pendingCallState() });
+            const action = `geometry:${facilityId}`;
+            const sessionRevision = session.sessionRevision();
+            const operation = writeIntents.options(
+              action,
+              { attachmentId, points, organizationId, key, contextGeneration },
+              sessionRevision,
+            );
             return facilityService
-              .setPlanGeometry(organizationId, facilityId, { attachmentId, points })
+              .setPlanGeometry(organizationId, facilityId, { attachmentId, points }, operation)
               .pipe(
                 tapResponse({
                   next: (): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                    if (
+                      generation !== selectionGeneration ||
+                      key !== store.selectedPlanKey() ||
+                      !session.isAuthenticated() ||
+                      sessionRevision !== session.sessionRevision()
+                    )
                       return;
+                    writeIntents.complete(action);
                     patchState(store, {
                       saveZoneGeometryCallState: successCallState(null),
                       editMode: 'none',
@@ -643,7 +673,12 @@ export const FacilityPlansStore = signalStore(
                     }
                   },
                   error: (error: unknown): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                    if (
+                      generation !== selectionGeneration ||
+                      key !== store.selectedPlanKey() ||
+                      !session.isAuthenticated() ||
+                      sessionRevision !== session.sessionRevision()
+                    )
                       return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { saveZoneGeometryCallState: errorCallState(storeError) });
@@ -717,18 +752,35 @@ export const FacilityPlansStore = signalStore(
       }>(
         pipe(
           mergeMap(({ organizationId, equipmentId, attachmentId, x, y, exitPlaceMode }) => {
-            if (!store.selectedPlanReady() || store.savePinPositionCallState().status === 'pending')
+            if (
+              !store.selectedPlanReady() ||
+              store.savePinPositionCallState().status === 'pending' ||
+              !session.isAuthenticated()
+            )
               return EMPTY;
             const generation = selectionGeneration;
             const key = store.selectedPlanKey();
             patchState(store, { savePinPositionCallState: pendingCallState() });
+            const action = `pin:${equipmentId}`;
+            const sessionRevision = session.sessionRevision();
+            const operation = writeIntents.options(
+              action,
+              { attachmentId, x, y, organizationId, key, contextGeneration },
+              sessionRevision,
+            );
             return equipmentService
-              .setPlanPosition(organizationId, equipmentId, { attachmentId, x, y })
+              .setPlanPosition(organizationId, equipmentId, { attachmentId, x, y }, operation)
               .pipe(
                 tapResponse({
                   next: (): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                    if (
+                      generation !== selectionGeneration ||
+                      key !== store.selectedPlanKey() ||
+                      !session.isAuthenticated() ||
+                      sessionRevision !== session.sessionRevision()
+                    )
                       return;
+                    writeIntents.complete(action);
                     patchState(store, {
                       savePinPositionCallState: successCallState(null),
                       ...(exitPlaceMode
@@ -757,7 +809,12 @@ export const FacilityPlansStore = signalStore(
                     }
                   },
                   error: (error: unknown): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
+                    if (
+                      generation !== selectionGeneration ||
+                      key !== store.selectedPlanKey() ||
+                      !session.isAuthenticated() ||
+                      sessionRevision !== session.sessionRevision()
+                    )
                       return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { savePinPositionCallState: errorCallState(storeError) });
@@ -968,6 +1025,7 @@ export const FacilityPlansStore = signalStore(
             tap(({ organizationId, facilityId }): void => {
               if (store.organizationId() !== organizationId || store.facilityId() !== facilityId) {
                 contextGeneration += 1;
+                clearWriteOperations();
                 contextChanged.next();
                 clearSelectionResources();
                 patchState(store, removeAllEntities({ collection: 'plan' }), {
@@ -1022,16 +1080,35 @@ export const FacilityPlansStore = signalStore(
           pipe(
             mergeMap(({ facilityId, file }) => {
               if (
+                !isPlatformBrowser(platformId) ||
+                !session.isAuthenticated() ||
                 store.uploadCallState().status === 'pending' ||
                 (store.facilityId() !== null && store.facilityId() !== facilityId)
               )
                 return EMPTY;
               const generation = contextGeneration;
+              const sessionRevision = session.sessionRevision();
+              let fileId = uploadFiles.get(file);
+              if (fileId === undefined) {
+                fileId = ++nextUploadFile;
+                uploadFiles.set(file, fileId);
+              }
+              const operation = writeIntents.options(
+                'upload',
+                { facilityId, fileId, fileName: file.name, kind: 'floor_plan', generation },
+                sessionRevision,
+              );
               patchState(store, { uploadCallState: pendingCallState() });
-              return service.upload(facilityId, file, file.name, 'floor_plan').pipe(
+              return service.upload(facilityId, file, file.name, 'floor_plan', operation).pipe(
                 tapResponse({
                   next: (plan: FacilityAttachmentOutput): void => {
-                    if (generation !== contextGeneration) return;
+                    if (
+                      generation !== contextGeneration ||
+                      sessionRevision !== session.sessionRevision() ||
+                      !session.isAuthenticated()
+                    )
+                      return;
+                    writeIntents.complete('upload');
                     patchState(store, addEntity(plan, { collection: 'plan' }), {
                       uploadCallState: successCallState(plan),
                       selectedPlanId: plan.id,
@@ -1045,9 +1122,16 @@ export const FacilityPlansStore = signalStore(
                     );
                   },
                   error: (error: unknown): void => {
-                    if (generation !== contextGeneration) return;
+                    if (
+                      generation !== contextGeneration ||
+                      sessionRevision !== session.sessionRevision() ||
+                      !session.isAuthenticated()
+                    )
+                      return;
                     const storeError: StoreError = toStoreError(error);
                     patchState(store, { uploadCallState: errorCallState(storeError) });
+                    if ([400, 413, 415, 422].includes(Number(storeError.code)))
+                      writeIntents.complete('upload');
                     dispatcher.dispatch(
                       facilityPlansStoreEvents.uploadFailed(
                         toStoreFailureEventPayload(storeError, 'Failed to upload floor plan'),
@@ -1211,6 +1295,7 @@ export const FacilityPlansStore = signalStore(
          * Releases resources and cancels reads when the selected plan disappears.
          */
         clearSelectionResources,
+        clearWriteOperations,
 
         /**
          * @description
@@ -1218,6 +1303,7 @@ export const FacilityPlansStore = signalStore(
          */
         reset(): void {
           contextGeneration += 1;
+          clearWriteOperations();
           contextChanged.next();
           clearSelectionResources();
           patchState(store, removeAllEntities({ collection: 'plan' }), {
@@ -1665,6 +1751,8 @@ export const FacilityPlansStore = signalStore(
 
   withHooks((store) => {
     let previousKey: string | null = null;
+    const session = inject(AUTH_SESSION_PORT);
+    let previousSession = session.sessionRevision();
 
     return {
       /**
@@ -1674,6 +1762,14 @@ export const FacilityPlansStore = signalStore(
        * its overlay, keyed on the same selection.
        */
       onInit(): void {
+        effect(() => {
+          const revision = session.sessionRevision();
+          const authenticated = session.isAuthenticated();
+          if (revision !== previousSession || !authenticated) {
+            previousSession = revision;
+            untracked(() => store.reset());
+          }
+        });
         effect((): void => {
           const selected: FacilityAttachmentOutput | null = store.selectedPlan();
           const selectedKey = store.selectedPlanKey();
@@ -1704,6 +1800,7 @@ export const FacilityPlansStore = signalStore(
        * Revokes the last live object URL so the store never leaks one.
        */
       onDestroy(): void {
+        store.clearWriteOperations();
         store.clearSelectionResources();
       },
     };

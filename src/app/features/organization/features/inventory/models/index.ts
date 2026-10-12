@@ -7,6 +7,7 @@ export type { UpdateInventoryWarehouseInput } from './inventory-warehouse/update
 export type { InventoryBalanceOutput } from './inventory-stock/inventory-balance-output.interface';
 export type { InventoryMovementOutput } from './inventory-stock/inventory-movement-output.interface';
 export type { InventoryConsumptionOutput } from './inventory-consumption/inventory-consumption-output.interface';
+export type { InventoryConsumptionListOptions } from './inventory-consumption/inventory-consumption-list-options.interface';
 export type { DeclareInventoryConsumptionInput } from './inventory-consumption/declare-inventory-consumption-input.interface';
 export type { InventoryConsumptionIntent } from './inventory-consumption/inventory-consumption-intent.interface';
 export type { ReturnInventoryConsumptionInput } from './inventory-consumption/return-inventory-consumption-input.interface';

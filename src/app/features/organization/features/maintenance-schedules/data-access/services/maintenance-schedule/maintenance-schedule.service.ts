@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { type ApiRequestOptions, HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   GenerateMaintenanceCampaignInput,
@@ -13,20 +13,23 @@ import type {
 
 /**
  * Constant SCHEDULES_PATH
- * @description The canonical, non-organization-scoped schedules collection.
+ *
+ * @description
+ * The canonical, non-organization-scoped schedules collection.
  */
 const SCHEDULES_PATH: string = '/api/maintenance/schedules';
 
 /**
  * Constant CAMPAIGNS_PATH
- * @description The campaign-generation action endpoint.
+ *
+ * @description
+ * The campaign-generation action endpoint.
  */
 const CAMPAIGNS_PATH: string = '/api/maintenance/campaigns';
 
 /**
  * Service MaintenanceScheduleService
  * @class MaintenanceScheduleService
- * @extends {HydraApiService}
  *
  * @description
  * Transport for the Maintenance module: listing schedules, overriding a
@@ -39,7 +42,10 @@ const CAMPAIGNS_PATH: string = '/api/maintenance/campaigns';
  * canonical-collection bypass.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class MaintenanceScheduleService extends HydraApiService {
@@ -54,9 +60,11 @@ export class MaintenanceScheduleService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
-   * @param {MaintenanceScheduleListOptions} options - Required `organization` IRI plus optional narrowing, pagination and sort.
+   * @param {MaintenanceScheduleListOptions} options - Required `organization` IRI plus optional
+   *   narrowing, pagination and sort.
    *
-   * @returns {Observable<HydraCollection<MaintenanceScheduleOutput>>} An observable emitting the schedules collection.
+   * @returns {Observable<HydraCollection<MaintenanceScheduleOutput>>} An observable emitting the
+   *   schedules collection.
    */
   public list(
     options: MaintenanceScheduleListOptions,
@@ -84,23 +92,28 @@ export class MaintenanceScheduleService extends HydraApiService {
    * @method exportCsv
    *
    * @description
-   * Reads the organization's maintenance-schedules export as CSV
-   * (`GET /api/maintenance/schedules/export`). Like {@link list}, the
-   * organization travels as a required `organization` IRI query parameter;
-   * the optional `facility`/`equipmentType`/`dueStatus` narrowing is
-   * forwarded with the same inclusive `dueBefore` bound as the list. The collection is capped server-side at 50,000 rows; past it
-   * the endpoint answers `422` with an RFC 7807 `detail` instead of the
-   * file. Calls `this.http` directly for a response shape
-   * (`responseType: 'blob'`) the base class does not support.
+   * Reads the organization's maintenance-schedules export as CSV (`GET
+   * /api/maintenance/schedules/export`). Like {@link list}, the organization travels as a required
+   * `organization` IRI query parameter; the optional `facility`/`equipmentType`/`dueStatus`
+   * narrowing is forwarded with the same inclusive `dueBefore` bound as the list. The collection is
+   * capped server-side at 50,000 rows; past it the endpoint answers `422` with an RFC 7807 `detail`
+   * instead of the file. Calls `this.http` directly for a response shape (`responseType: 'blob'`)
+   * the base class does not support.
    *
    * @access public
    * @since 1.1.0
    *
-   * @param {MaintenanceScheduleExportOptions} options - Required `organization` IRI plus optional narrowing.
+   * @param {MaintenanceScheduleExportOptions} options - Required `organization` IRI plus optional
+   * narrowing.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   * for the same export intent.
    *
    * @returns {Observable<Blob>} The export's CSV binary content.
    */
-  public exportCsv(options: MaintenanceScheduleExportOptions): Observable<Blob> {
+  public exportCsv(
+    options: MaintenanceScheduleExportOptions,
+    requestOptions?: ApiRequestOptions,
+  ): Observable<Blob> {
     const params: NonNullable<RequestOptions['params']> = {};
 
     params['organization'] = options.organization;
@@ -111,6 +124,7 @@ export class MaintenanceScheduleService extends HydraApiService {
 
     return this.http.get(this.buildUrl(`${SCHEDULES_PATH}/export`), {
       params: this.buildParams({ params }),
+      headers: this.buildWriteHeaders(requestOptions),
       responseType: 'blob',
       withCredentials: true,
     });
@@ -131,7 +145,8 @@ export class MaintenanceScheduleService extends HydraApiService {
    * @param {string} scheduleId - The schedule to update.
    * @param {string | null} intervalOverride - The new override, or `null` to clear it.
    *
-   * @returns {Observable<MaintenanceScheduleOutput>} An observable emitting the recomputed schedule.
+   * @returns {Observable<MaintenanceScheduleOutput>} An observable emitting the recomputed
+   *   schedule.
    */
   public setIntervalOverride(
     scheduleId: string,
@@ -157,7 +172,8 @@ export class MaintenanceScheduleService extends HydraApiService {
    *
    * @param {GenerateMaintenanceCampaignInput} input - The campaign's scope and name.
    *
-   * @returns {Observable<MaintenanceCampaignOutput>} An observable emitting the created intervention's id, number and work-item count.
+   * @returns {Observable<MaintenanceCampaignOutput>} An observable emitting the created
+   *   intervention's id, number and work-item count.
    */
   public generateCampaign(
     input: GenerateMaintenanceCampaignInput,

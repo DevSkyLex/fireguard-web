@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, DestroyRef, effect, inject, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import { removeAllEntities, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
@@ -12,7 +12,9 @@ import {
   pendingCallState,
   successCallState,
   toStoreError,
+  WriteOperationService,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import { MaintenancePlanService } from '@features/organization/features/maintenance-schedules/data-access';
 import type {
@@ -92,6 +94,42 @@ export const MaintenancePlansStore = signalStore(
        * @type {Map<string, Set<MaintenancePlanCommandCallStateKey>>}
        */
       const pendingWrites = new Map<string, Set<MaintenancePlanCommandCallStateKey>>();
+      const session = inject(AUTH_SESSION_PORT);
+      const intentions = inject(WriteOperationService).createTracker();
+      let observedRevision = session.sessionRevision();
+      let sessionGenerationFloor = store.scopeGeneration();
+
+      /**
+       * Function synchronizeSession
+       *
+       * @description
+       * Clears retry identities and private feedback when the local principal changes.
+       * Accepted server commands continue, with their later callbacks fenced from the new owner.
+       *
+       * @param {number} revision - Current session identity.
+       *
+       * @returns {void} Starts a fresh view generation and releases command admission.
+       */
+      const synchronizeSession = (revision: number): void => {
+        if (revision === observedRevision) return;
+        observedRevision = revision;
+        intentions.clear();
+        pendingWrites.clear();
+        sessionGenerationFloor = store.scopeGeneration() + 1;
+        patchState(store, removeAllEntities({ collection: 'plan' }), {
+          ...INITIAL_STATE,
+          organizationId: store.organizationId(),
+          scopeGeneration: sessionGenerationFloor,
+        });
+      };
+      effect(() => {
+        const revision = session.sessionRevision();
+        untracked(() => synchronizeSession(revision));
+      });
+      inject(DestroyRef).onDestroy(() => {
+        intentions.clear();
+        pendingWrites.clear();
+      });
 
       /**
        * Function isCurrentScope
@@ -105,7 +143,9 @@ export const MaintenancePlansStore = signalStore(
        * @returns {boolean} Whether the originating visit is still displayed.
        */
       const isCurrentScope = (organizationId: string, scopeGeneration: number): boolean =>
-        store.organizationId() === organizationId && store.scopeGeneration() === scopeGeneration;
+        observedRevision === session.sessionRevision() &&
+        store.organizationId() === organizationId &&
+        store.scopeGeneration() === scopeGeneration;
 
       /**
        * Function acceptWrite
@@ -123,6 +163,7 @@ export const MaintenancePlansStore = signalStore(
         organizationId: string,
         action: MaintenancePlanCommandCallStateKey,
       ): number | null => {
+        synchronizeSession(session.sessionRevision());
         if (
           store.organizationId() !== organizationId ||
           pendingWrites.get(organizationId)?.has(action)
@@ -153,6 +194,11 @@ export const MaintenancePlansStore = signalStore(
         scopeGeneration: number,
         action: MaintenancePlanCommandCallStateKey,
       ): void => {
+        if (
+          scopeGeneration < sessionGenerationFloor ||
+          observedRevision !== session.sessionRevision()
+        )
+          return;
         const actions = pendingWrites.get(organizationId);
         actions?.delete(action);
         if (!actions?.size) pendingWrites.delete(organizationId);
@@ -179,6 +225,7 @@ export const MaintenancePlansStore = signalStore(
          * @returns {void} Clears local data only when scope changes.
          */
         setScope(organizationId: string): void {
+          synchronizeSession(session.sessionRevision());
           if (organizationId !== store.organizationId()) {
             patchState(store, removeAllEntities({ collection: 'plan' }), {
               ...INITIAL_STATE,
@@ -487,9 +534,14 @@ export const MaintenancePlansStore = signalStore(
             mergeMap(({ organizationId, planId, retry }) => {
               const scopeGeneration = acceptWrite(organizationId, 'generationCallState');
               if (scopeGeneration === null) return EMPTY;
-              return service.generate(organizationId, planId, retry).pipe(
+              const revision = session.sessionRevision();
+              const action = `maintenance.generate:${organizationId}`;
+              const options = intentions.options(action, [planId, { retry }], revision);
+              return service.generate(organizationId, planId, retry, options).pipe(
                 tapResponse({
                   next: (result) => {
+                    if (session.sessionRevision() !== revision) return;
+                    intentions.complete(action);
                     if (!isCurrentScope(organizationId, scopeGeneration)) return;
                     patchState(store, { generationCallState: successCallState(result) });
                     dispatcher.dispatch(
@@ -526,13 +578,18 @@ export const MaintenancePlansStore = signalStore(
             mergeMap(({ organizationId, activate }) => {
               const scopeGeneration = acceptWrite(organizationId, 'migrationCallState');
               if (scopeGeneration === null) return EMPTY;
+              const revision = session.sessionRevision();
+              const action = `maintenance.migrate:${organizationId}`;
+              const options = intentions.options(action, { activate }, revision);
               return (
                 activate
-                  ? service.activateEngine(organizationId)
-                  : service.prepareLegacy(organizationId)
+                  ? service.activateEngine(organizationId, options)
+                  : service.prepareLegacy(organizationId, options)
               ).pipe(
                 tapResponse({
                   next: (result) => {
+                    if (session.sessionRevision() !== revision) return;
+                    intentions.complete(action);
                     if (!isCurrentScope(organizationId, scopeGeneration)) return;
                     patchState(store, {
                       migrationCallState: successCallState(result),

@@ -62,6 +62,24 @@ describe('FederatedConnectionsPanel', () => {
     expect(disconnected).toHaveBeenCalledExactlyOnceWith('google');
   });
 
+  it('keeps a historical unloaded provider visible with a safe generic presentation', async () => {
+    fixture.componentRef.setInput('connections', {
+      ...connections,
+      connections: [{ ...connections.connections[0], provider: 'company' }],
+    });
+    fixture.componentRef.setInput('providers', []);
+    await fixture.whenStable();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('company');
+    expect(host.textContent).toContain('member@example.com');
+    expect(fixture.componentInstance['providerIcon']('company')).toBe('lucideGlobe');
+    expect(
+      Array.from(host.querySelectorAll('button')).some(
+        (button) => button.textContent?.trim() === 'Disconnect',
+      ),
+    ).toBe(true);
+  });
+
   it('does not disconnect while pending and allows cancellation without mutation', async () => {
     const disconnected = vi.fn();
     fixture.componentInstance.disconnectRequested.subscribe(disconnected);

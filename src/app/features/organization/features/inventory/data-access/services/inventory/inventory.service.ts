@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { type ApiRequestOptions, HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   InventoryPartOutput,
@@ -12,6 +12,7 @@ import type {
   InventoryBalanceOutput,
   InventoryMovementOutput,
   InventoryConsumptionOutput,
+  InventoryConsumptionListOptions,
   DeclareInventoryConsumptionInput,
   ReturnInventoryConsumptionInput,
   CorrectInventoryStockInput,
@@ -116,18 +117,24 @@ export class InventoryService extends HydraApiService {
    * @since unreleased
    *
    * @param {string} organizationId - Organization owning the inventory.
-   * @param {RequestOptions | undefined} options - Query filters and server page.
+   * @param {InventoryConsumptionListOptions | undefined} options - Query filters, exact operation
+   *   receipt and server page.
    *
    * @returns {Observable<HydraCollection<InventoryConsumptionOutput>>} Server-owned page and exact
    *   total.
    */
   public listConsumptions(
     organizationId: string,
-    options?: RequestOptions,
+    options?: InventoryConsumptionListOptions,
   ): Observable<HydraCollection<InventoryConsumptionOutput>> {
     return this.getCollection<InventoryConsumptionOutput>(
       `/api/organizations/${organizationId}/inventory-consumptions`,
-      options,
+      options?.clientOperationId === undefined
+        ? options
+        : {
+            ...options,
+            params: { ...options.params, clientOperationId: options.clientOperationId },
+          },
     );
   }
 
@@ -288,6 +295,7 @@ export class InventoryService extends HydraApiService {
    * @param {string} organizationId - Organization owning the inventory.
    * @param {DeclareInventoryConsumptionInput} input - Validated transport input preserved through
    *   retries.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InventoryConsumptionOutput>} Confirmed server resource or declaration
    *   receipt.
@@ -295,10 +303,12 @@ export class InventoryService extends HydraApiService {
   public declareConsumption(
     organizationId: string,
     input: DeclareInventoryConsumptionInput,
+    options?: ApiRequestOptions,
   ): Observable<InventoryConsumptionOutput> {
     return this.post<DeclareInventoryConsumptionInput, InventoryConsumptionOutput>(
       `/api/organizations/${organizationId}/inventory-consumptions`,
       input,
+      options,
     );
   }
 
@@ -315,6 +325,7 @@ export class InventoryService extends HydraApiService {
    * @param {string} organizationId - Organization owning the inventory.
    * @param {ReturnInventoryConsumptionInput} input - Validated transport input preserved through
    *   retries.
+   * @param {ApiRequestOptions | undefined} options - Durable write identity reused across retries.
    *
    * @returns {Observable<InventoryMovementOutput>} Confirmed server resource or declaration
    *   receipt.
@@ -322,10 +333,12 @@ export class InventoryService extends HydraApiService {
   public returnConsumption(
     organizationId: string,
     input: ReturnInventoryConsumptionInput,
+    options?: ApiRequestOptions,
   ): Observable<InventoryMovementOutput> {
     return this.post<ReturnInventoryConsumptionInput, InventoryMovementOutput>(
       `/api/organizations/${organizationId}/inventory-returns`,
       input,
+      options,
     );
   }
 
@@ -342,6 +355,7 @@ export class InventoryService extends HydraApiService {
    * @param {string} organizationId - Organization owning the inventory.
    * @param {CorrectInventoryStockInput} input - Validated transport input preserved through
    *   retries.
+   * @param {ApiRequestOptions | undefined} options - Durable write identity reused across retries.
    *
    * @returns {Observable<InventoryMovementOutput>} Confirmed server resource or declaration
    *   receipt.
@@ -349,10 +363,12 @@ export class InventoryService extends HydraApiService {
   public correctStock(
     organizationId: string,
     input: CorrectInventoryStockInput,
+    options?: ApiRequestOptions,
   ): Observable<InventoryMovementOutput> {
     return this.post<CorrectInventoryStockInput, InventoryMovementOutput>(
       `/api/organizations/${organizationId}/inventory-corrections`,
       input,
+      options,
     );
   }
 

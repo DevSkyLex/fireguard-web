@@ -23,6 +23,7 @@ import {
   type StoreError,
 } from '@core/request-state';
 import { THEME_PORT, type ThemePort } from '@core/theme';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
 import type {
@@ -192,6 +193,10 @@ describe('CalendarPage', () => {
           },
         },
         provideZonelessChangeDetection(),
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision: signal(0), isAuthenticated: signal(true) },
+        },
         provideRouter([]),
         { provide: OrganizationPermissionService, useValue: { hasPermission: () => canWrite } },
         {
@@ -323,6 +328,27 @@ describe('CalendarPage', () => {
       from: '2026-08-25T00:00:00+00:00',
       to: '2026-10-07T23:59:59+00:00',
     });
+  });
+
+  it('keeps unfamiliar feed sources neutral and read only while naming unavailable contributors', async () => {
+    await render(true);
+    items.set([feedItem({ sourceKey: 'constructor', title: 'Historical review' })]);
+    isComplete.set(false);
+    partialSources.set([{ sourceKey: 'external_review', available: false, truncated: false }]);
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance['events']()).toEqual([
+      expect.objectContaining({
+        id: 'constructor:item-1',
+        sourceLabel: 'constructor',
+        icon: 'lucideCalendar',
+        tone: 'outline',
+        draggable: false,
+      }),
+    ]);
+    expect(root().textContent).toContain('external_review');
+    expect(createEvent).not.toHaveBeenCalled();
+    expect(moveEvent).not.toHaveBeenCalled();
   });
 
   it('steps the window back and forward a month through the toolbar, reloading each time', async () => {

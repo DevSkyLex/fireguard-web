@@ -1,10 +1,10 @@
 /**
- * Auth Models
- *
  * @description
+ * Auth Models
  * Models for authentication operations.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 
@@ -53,3 +53,5 @@ export type {
 } from './federation/federated-auth.interface';
 export type { EmailOwnershipOutput } from './email-ownership/email-ownership-output.interface';
 export type { EmailOwnershipChallengeOutput } from './email-ownership/email-ownership-challenge-output.interface';
+
+export type { PasswordPolicyOutput } from './password-policy';

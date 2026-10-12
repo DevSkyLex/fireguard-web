@@ -70,7 +70,7 @@
       @for (provider of visibleProviders(); track provider) {
         <div class="flex min-w-0 flex-wrap items-center gap-3 p-4">
           <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-            <ng-icon [name]="provider" size="16" aria-hidden="true" />
+            <ng-icon [name]="providerIcon(provider)" size="16" aria-hidden="true" />
           </span>
           <div class="min-w-0 flex-1">
             <p class="text-sm font-medium">{{ providerLabel(provider) }}</p>

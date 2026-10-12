@@ -89,6 +89,27 @@ describe('FacilityModelService', () => {
     request.flush(model);
   });
 
+  it('preserves caller upload identity and multipart headers through repeated subscriptions and a lost response', () => {
+    const file = new Blob(['glb']);
+    const options = { idempotencyKey: 'a6e0f7b2-2cae-4f87-af6f-f89011223344' };
+    const upload = service.upload('org-1', 'building-1', file, 'building.glb', options);
+    const url = `${base}/api/organizations/org-1/facilities/building-1/models`;
+    upload.subscribe({ error: () => undefined });
+    const first = httpMock.expectOne(url);
+    first.error(new ProgressEvent('network'));
+    upload.subscribe();
+    const repeated = httpMock.expectOne(url);
+    expect(repeated.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+    repeated.flush(model);
+    service.upload('org-1', 'building-1', file, 'building.glb', options).subscribe();
+    const retry = httpMock.expectOne(url);
+    expect(retry.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+    expect(retry.request.headers.has('Content-Type')).toBe(false);
+    expect(retry.request.withCredentials).toBe(true);
+    expect((retry.request.body as FormData).get('file')).toBeInstanceOf(Blob);
+    retry.flush(model);
+  });
+
   it('sends complete settings with the revision and merge-patch content type', () => {
     service.update('model-1', settings, 4).subscribe();
     const request = httpMock.expectOne(`${base}/api/facility-models/model-1`);

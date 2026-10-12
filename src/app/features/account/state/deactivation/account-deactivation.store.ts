@@ -1,9 +1,10 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -16,12 +17,12 @@ import {
 } from '@core/request-state';
 import { UserProfileService } from '@features/account/data-access';
 import type { UserProfileOutput } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { accountDeactivationStoreEvents } from './events';
 import type { AccountDeactivationState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial state of the account deactivation workflow.
@@ -29,14 +30,15 @@ import type { AccountDeactivationState } from './models';
  * @since 1.0.0
  *
  * @type {AccountDeactivationState}
+ *
+ * @const INITIAL_STATE
  */
 const INITIAL_STATE: AccountDeactivationState = {
   deactivateCallState: idleCallState(),
 } as const;
 
 /**
- * Store AccountDeactivationStore
- * @const AccountDeactivationStore
+ * Constant AccountDeactivationStore
  *
  * @description
  * Component-scoped workflow store for self-service account deactivation
@@ -49,6 +51,8 @@ const INITIAL_STATE: AccountDeactivationState = {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const AccountDeactivationStore
  */
 export const AccountDeactivationStore = signalStore(
   //#region State
@@ -58,9 +62,8 @@ export const AccountDeactivationStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isDeactivating
-     *
      * @description
+     * Computed isDeactivating
      * Whether the deactivation request is in progress.
      *
      * @since 1.0.0
@@ -70,9 +73,8 @@ export const AccountDeactivationStore = signalStore(
     isDeactivating: computed<boolean>(() => store.deactivateCallState().status === 'pending'),
 
     /**
-     * Computed deactivateError
-     *
      * @description
+     * Computed deactivateError
      * Error of the latest deactivation attempt, if any.
      *
      * @since 1.0.0
@@ -89,6 +91,21 @@ export const AccountDeactivationStore = signalStore(
       store,
       userProfileService = inject<UserProfileService>(UserProfileService),
       dispatcher = inject<Dispatcher>(Dispatcher),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => ({
       /**
        * Method deactivate
@@ -103,32 +120,53 @@ export const AccountDeactivationStore = signalStore(
         pipe(
           tap((): void => patchState(store, { deactivateCallState: pendingCallState() })),
           exhaustMap(() =>
-            userProfileService.deactivateCurrentAccount().pipe(
-              tapResponse({
-                next: (profile: UserProfileOutput) => {
-                  patchState(store, { deactivateCallState: successCallState(profile) });
-                  dispatcher.dispatch(
-                    accountDeactivationStoreEvents.deactivateSucceeded(
-                      successFeedback(
-                        $localize`:@@account.deactivate.succeeded:Your account has been deactivated and every session signed out. An administrator can reactivate it.`,
+            userProfileService
+              .deactivateCurrentAccount(
+                writeTracker.options(
+                  'userProfileService.deactivateCurrentAccount',
+                  [],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('userProfileService.deactivateCurrentAccount');
+                  },
+                }),
+                tapResponse({
+                  next: (profile: UserProfileOutput) => {
+                    patchState(store, { deactivateCallState: successCallState(profile) });
+                    dispatcher.dispatch(
+                      accountDeactivationStoreEvents.deactivateSucceeded(
+                        successFeedback(
+                          $localize`:@@account.deactivate.succeeded:Your account has been deactivated and every session signed out. An administrator can reactivate it.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { deactivateCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    accountDeactivationStoreEvents.deactivateFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        $localize`:@@account.deactivate.failed:Your account could not be deactivated.`,
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { deactivateCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      accountDeactivationStoreEvents.deactivateFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@account.deactivate.failed:Your account could not be deactivated.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       ),

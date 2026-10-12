@@ -1,4 +1,4 @@
-import { computed, effect, inject, untracked } from '@angular/core';
+import { computed, DestroyRef, effect, inject, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -20,6 +20,8 @@ import {
   successFeedback,
   toStoreError,
   toStoreFailureEventPayload,
+  WriteOperationService,
+  type WriteOperation,
 } from '@core/request-state';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationMemberService, OrganizationService } from '@features/organization/data-access';
@@ -113,10 +115,24 @@ export const OrganizationSettingsStore = signalStore(
       activeOrganizationStore = inject<ActiveOrganizationStore>(ActiveOrganizationStore),
       dispatcher = inject<Dispatcher>(Dispatcher),
       authSession = inject(AUTH_SESSION_PORT),
+      writeOperations = inject(WriteOperationService),
+      destroyRef = inject(DestroyRef),
     ) => {
       let generation = 0;
       let currentOrganizationId = activeOrganizationStore.selectedOrganizationId();
       let sessionRevision = authSession.sessionRevision();
+      let currentAuthentication = authSession.isAuthenticated();
+      let logoIntent: {
+        readonly organizationId: string;
+        readonly file: Blob;
+        readonly fileName: string;
+        readonly generation: number;
+        readonly operation: WriteOperation;
+      } | null = null;
+      destroyRef.onDestroy((): void => {
+        logoIntent = null;
+        generation += 1;
+      });
 
       /**
        * Function synchronizeContext
@@ -131,9 +147,16 @@ export const OrganizationSettingsStore = signalStore(
       const synchronizeContext = (): void => {
         const selectedId = activeOrganizationStore.selectedOrganizationId();
         const revision = authSession.sessionRevision();
-        if (selectedId !== currentOrganizationId || revision !== sessionRevision) {
+        const authenticated = authSession.isAuthenticated();
+        if (
+          selectedId !== currentOrganizationId ||
+          revision !== sessionRevision ||
+          authenticated !== currentAuthentication
+        ) {
           currentOrganizationId = selectedId;
           sessionRevision = revision;
+          currentAuthentication = authenticated;
+          logoIntent = null;
           generation += 1;
           patchState(store, INITIAL_STATE);
         }
@@ -249,8 +272,9 @@ export const OrganizationSettingsStore = signalStore(
          * @method uploadLogo
          *
          * @description
-         * Uploads a new organization logo and refreshes the active organization
-         * with the returned `logoUrl` on success.
+         * Uploads a new organization logo and refreshes the active organization with the returned
+         * `logoUrl` on success. Unchanged file, filename and owner-context retries retain one
+         * private in-memory intent until success or abandonment.
          *
          * @param {OrganizationSettingsLogoParams} params - Organization id and logo file.
          */
@@ -263,12 +287,34 @@ export const OrganizationSettingsStore = signalStore(
                 authSession.isAuthenticated() &&
                 store.uploadLogoCallState().status !== 'pending',
             ),
+            map((params) => {
+              const fileName = params.fileName ?? 'logo';
+              if (
+                !logoIntent ||
+                logoIntent.organizationId !== params.organizationId ||
+                logoIntent.file !== params.file ||
+                logoIntent.fileName !== fileName ||
+                logoIntent.generation !== params.context.generation
+              )
+                logoIntent = {
+                  organizationId: params.organizationId,
+                  file: params.file,
+                  fileName,
+                  generation: params.context.generation,
+                  operation: writeOperations.create(),
+                };
+              return { ...params, intent: logoIntent };
+            }),
             tap(() => patchState(store, { uploadLogoCallState: pendingCallState() })),
-            mergeMap(({ organizationId, file, fileName, context }) =>
-              organizationService.uploadLogo(organizationId, file, fileName).pipe(
+            mergeMap(({ organizationId, file, fileName, context, intent }) =>
+              organizationService.uploadLogo(organizationId, file, fileName, intent.operation).pipe(
                 tapResponse({
                   next: (organization: OrganizationOutput) => {
-                    if (context.revision === authSession.sessionRevision())
+                    if (logoIntent === intent) logoIntent = null;
+                    if (
+                      context.revision === authSession.sessionRevision() &&
+                      authSession.isAuthenticated()
+                    )
                       dispatcher.dispatch(
                         organizationSettingsStoreEvents.organizationUpdated(organization),
                       );
@@ -323,7 +369,10 @@ export const OrganizationSettingsStore = signalStore(
                 authSession.isAuthenticated() &&
                 store.removeLogoCallState().status !== 'pending',
             ),
-            tap(() => patchState(store, { removeLogoCallState: pendingCallState() })),
+            tap(() => {
+              logoIntent = null;
+              patchState(store, { removeLogoCallState: pendingCallState() });
+            }),
             mergeMap(({ organizationId, context }) =>
               organizationService.removeLogo(organizationId).pipe(
                 tapResponse({
@@ -680,6 +729,7 @@ export const OrganizationSettingsStore = signalStore(
         effect(() => {
           activeOrganizationStore.selectedOrganizationId();
           authSession.sessionRevision();
+          authSession.isAuthenticated();
           untracked(() => store.synchronizeContext());
         });
       },

@@ -15,7 +15,13 @@ The page owns a route-scoped SignalStore, typed mutation feedback and browser-on
 Organization changes cancel obsolete reads and fence writes; old results never reveal secrets
 in a new scope. Plaintext secrets exist only in a transient event and local dialog state and
 are discarded on close, navigation or scope change. They never enter entity state, TransferState,
-URLs or browser storage. A lost secret response requires explicit rotation, never automatic retry.
+URLs or browser storage. Every management intention retains its in-memory idempotency key across
+unchanged manual retries, including a lost secret response or `idempotency_replay_expired`.
+Edited transport payloads and acknowledged successful commands start a new intention. Expired
+secret replays never trigger an automatic replacement or a new key. Organization or authenticated
+session replacement and store destruction discard intentions and fence late secret responses.
+The store consumes Auth's published `AUTH_SESSION_PORT`; transport mutations accept caller-owned
+`ApiRequestOptions`. Secret values never enter the intention tracker.
 
 Public scope is the lazy route tree; models/data-access/state barrels are internal to this
 subfeature. Organization context and permissions use the parent's published APIs. Native sheets

@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { HydraApiService, type ApiRequestOptions } from '@core/api';
 import type {
   CalendarEventOutput,
   CalendarFeedOutput,
@@ -23,11 +23,12 @@ import type {
  * server-side while an explicit `null` clears `description`, `endsAt` or
  * `facilityId` (`Calendar\MODULE.md`). Also carries the member's iCal feed
  * token lifecycle: `createFeedToken` returns the raw secret and full feed
- * URL exactly once (creating rotates any prior token), `getFeedTokenMetadata`
+ * URL for one write intention (creating rotates any prior token), `getFeedTokenMetadata`
  * reads secret-less metadata (404 while none exists), `revokeFeedToken`
  * kills the active link.
  *
  * @version 1.2.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Service()
@@ -46,7 +47,7 @@ export class CalendarService extends HydraApiService {
    * @param {string} from - inclusive ISO lower bound.
    * @param {string} to - inclusive ISO upper bound.
    *
-   * @return {Observable<CalendarFeedOutput>} The merged feed.
+   * @returns {Observable<CalendarFeedOutput>} The merged feed.
    */
   public getFeed(organizationId: string, from: string, to: string): Observable<CalendarFeedOutput> {
     return this.getOne<CalendarFeedOutput>(`/api/organizations/${organizationId}/calendar/feed`, {
@@ -67,7 +68,7 @@ export class CalendarService extends HydraApiService {
    * @param {string} organizationId - The owning organization.
    * @param {CreateCalendarEventInput} input - The event to create.
    *
-   * @return {Observable<CalendarEventOutput>} The created event.
+   * @returns {Observable<CalendarEventOutput>} The created event.
    */
   public createEvent(
     organizationId: string,
@@ -94,7 +95,7 @@ export class CalendarService extends HydraApiService {
    * @param {string} eventId - The event to update.
    * @param {UpdateCalendarEventInput} input - The dirty fields only.
    *
-   * @return {Observable<CalendarEventOutput>} The updated event.
+   * @returns {Observable<CalendarEventOutput>} The updated event.
    */
   public updateEvent(
     organizationId: string,
@@ -120,7 +121,7 @@ export class CalendarService extends HydraApiService {
    * @param {string} organizationId - The owning organization.
    * @param {string} eventId - The event to delete.
    *
-   * @return {Observable<void>} Completes on success.
+   * @returns {Observable<void>} Completes on success.
    */
   public deleteEvent(organizationId: string, eventId: string): Observable<void> {
     return this.delete(`/api/organizations/${organizationId}/calendar/events/${eventId}`);
@@ -132,19 +133,25 @@ export class CalendarService extends HydraApiService {
    *
    * @description
    * Creates — or rotates, revoking the previous one — the member's iCal feed
-   * token. The 201 payload is the only response that ever carries the raw
-   * secret and the complete feed URL.
+   * token. Its response carries the raw secret and complete feed URL; the same write identity
+   * can replay that original payload during the server's secure display period.
    *
    * @access public
    * @since 1.2.0
    *
    * @param {string} organizationId - The owning organization.
+   * @param {ApiRequestOptions} [options] - The caller-owned identity retained for an unchanged
+   *   retry.
    *
-   * @return {Observable<CalendarFeedTokenSecretOutput>} The one-time secret payload.
+   * @returns {Observable<CalendarFeedTokenSecretOutput>} The original secret payload.
    */
-  public createFeedToken(organizationId: string): Observable<CalendarFeedTokenSecretOutput> {
+  public createFeedToken(
+    organizationId: string,
+    options?: ApiRequestOptions,
+  ): Observable<CalendarFeedTokenSecretOutput> {
     return this.postAction<CalendarFeedTokenSecretOutput>(
       `/api/organizations/${organizationId}/calendar/feed-token`,
+      options,
     );
   }
 
@@ -161,7 +168,7 @@ export class CalendarService extends HydraApiService {
    *
    * @param {string} organizationId - The owning organization.
    *
-   * @return {Observable<CalendarFeedTokenOutput>} The token metadata.
+   * @returns {Observable<CalendarFeedTokenOutput>} The token metadata.
    */
   public getFeedTokenMetadata(organizationId: string): Observable<CalendarFeedTokenOutput> {
     return this.getOne<CalendarFeedTokenOutput>(
@@ -181,10 +188,12 @@ export class CalendarService extends HydraApiService {
    * @since 1.2.0
    *
    * @param {string} organizationId - The owning organization.
+   * @param {ApiRequestOptions} [options] - The caller-owned identity retained for an unchanged
+   *   retry.
    *
-   * @return {Observable<void>} Completes on success.
+   * @returns {Observable<void>} Completes on success.
    */
-  public revokeFeedToken(organizationId: string): Observable<void> {
-    return this.delete(`/api/organizations/${organizationId}/calendar/feed-token`);
+  public revokeFeedToken(organizationId: string, options?: ApiRequestOptions): Observable<void> {
+    return this.delete(`/api/organizations/${organizationId}/calendar/feed-token`, options);
   }
 }

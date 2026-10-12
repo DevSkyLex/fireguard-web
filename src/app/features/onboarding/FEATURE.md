@@ -35,6 +35,9 @@ its published setup boundary.
 ## State and Data Access
 
 Primary store: root-provided `OnboardingStore`. Primary transport: `OnboardingService`.
+Its `GET /api/onboarding/organization` synchronizes persisted server state and carries a
+preallocated operation key. Repeated subscriptions and authentication renewal retain that key;
+another logical synchronization request allocates a new one. Other reads remain ordinary GETs.
 The store owns named request states for load, start, execute, skip and rollback. Session end
 and confirmed admission, departure, status or ownership changes invalidate the cached record and its hydration handoff.
 Invalidation cancels all in-flight response subscriptions, including guard reads and initialization,
@@ -134,8 +137,12 @@ between a successful guard load and page initialization.
 
 ## Invariants
 
-- The API's five steps, available actions, skip/rollback permissions and completion state remain
+- The API's ordered steps, available actions, skip/rollback permissions and completion state remain
   authoritative. Progress is informative and never navigates freely between committed steps.
+- Step identifiers are open strings. FireGuard's five renderers retain their localized copy;
+  contributed and historical steps display the backend label and a neutral icon. An unfamiliar
+  current step displays an unavailable-workflow notice and exposes only a server-authorized skip;
+  it never creates a resource or infers a renderer from the identifier.
 - Creation results are journaled atomically by the server. After a lost response, reload or failed
   confirmation, saved resources are reused and only unfinished items are created. A completed singleton
   exposes confirmation directly; saved batch rows remain immutable and retry preserves their item keys.

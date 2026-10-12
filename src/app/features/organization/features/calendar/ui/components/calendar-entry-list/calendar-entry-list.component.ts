@@ -296,7 +296,7 @@ export class CalendarEntryList {
   protected toneOf(item: CalendarFeedItemOutput): CalendarDisplayEvent['tone'] {
     const key: CalendarSourceKey = item.sourceKey;
 
-    return SOURCE_TONE[key] ?? 'outline';
+    return Object.hasOwn(SOURCE_TONE, key) ? (SOURCE_TONE[key] ?? 'outline') : 'outline';
   }
 
   /**
@@ -315,7 +315,9 @@ export class CalendarEntryList {
    * @returns {string} The `ng-icon` name.
    */
   protected sourceIconOf(item: CalendarFeedItemOutput): string {
-    return SOURCE_ICON[item.sourceKey];
+    return Object.hasOwn(SOURCE_ICON, item.sourceKey)
+      ? (SOURCE_ICON[item.sourceKey] ?? 'lucideCalendar')
+      : 'lucideCalendar';
   }
 
   /**

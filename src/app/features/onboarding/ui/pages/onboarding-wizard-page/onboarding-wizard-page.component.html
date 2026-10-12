@@ -66,7 +66,28 @@
       </div>
     }
 
-    @if (step.key !== 'select_plan' && !setupStore.ready()) {
+    @if (!hasStepRenderer()) {
+      <div hlmAlert data-testid="onboarding-unsupported-step">
+        <p hlmAlertTitle i18n="@@onboarding.wizard.unsupportedTitle">Additional setup step</p>
+        <p hlmAlertDescription i18n="@@onboarding.wizard.unsupportedDescription">
+          This step is not supported by this application. Contact your administrator to continue.
+        </p>
+        @if (canSkip()) {
+          <button
+            hlmBtn
+            variant="ghost"
+            type="button"
+            class="mt-3 mobile-ui:min-h-11"
+            data-testid="onboarding-wizard-skip"
+            [disabled]="stepPending()"
+            (click)="skipCurrentStep()"
+            i18n="@@onboarding.wizard.skip"
+          >
+            Skip for now
+          </button>
+        }
+      </div>
+    } @else if (step.key !== 'select_plan' && !setupStore.ready()) {
       <div class="flex flex-col gap-4" role="status" data-testid="onboarding-setup-loading">
         @if (setupStore.loadCallState().error) {
           <p hlmMuted i18n="@@onboarding.setup.unavailable">

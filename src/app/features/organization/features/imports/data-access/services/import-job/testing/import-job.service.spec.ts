@@ -92,6 +92,38 @@ describe('ImportJobService', () => {
   });
 
   describe('create', () => {
+    it('retains explicit multipart identity through response loss, cold resubscription and manual retry', () => {
+      const file = new File(['a,b'], 'equipment.csv', { type: 'text/csv' });
+      const options = { idempotencyKey: 'a6e0f7b2-2cae-4f87-af6f-f89011223344' };
+      const upload = service.create(organizationId, 'equipment', file, true, options);
+      upload.subscribe({ error: () => undefined });
+      const first = httpMock.expectOne(importsUrl);
+      first.error(new ProgressEvent('network'));
+      upload.subscribe();
+      const repeated = httpMock.expectOne(importsUrl);
+      expect(repeated.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+      repeated.flush(job);
+      service.create(organizationId, 'equipment', file, true, options).subscribe();
+      const retry = httpMock.expectOne(importsUrl);
+      expect(retry.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+      expect(retry.request.headers.has('Content-Type')).toBe(false);
+      expect(retry.request.withCredentials).toBe(true);
+      expect((retry.request.body as FormData).get('dryRun')).toBe('true');
+      retry.flush(job);
+    });
+    it('preserves a contributed processor kind through multipart and the returned job', () => {
+      let accepted: ImportJobOutput | undefined;
+      const file = new File(['name\nReview'], 'reviews.csv', { type: 'text/csv' });
+      service
+        .create(organizationId, 'external_review', file)
+        .subscribe((value) => (accepted = value));
+
+      const request = httpMock.expectOne(importsUrl);
+      expect((request.request.body as FormData).get('kind')).toBe('external_review');
+      request.flush({ ...job, kind: 'external_review' });
+      expect(accepted?.kind).toBe('external_review');
+    });
+
     it('should POST the organization IRI, kind and file as multipart parts', () => {
       const file = new File(['a,b\n1,2'], 'equipment.csv', { type: 'text/csv' });
 

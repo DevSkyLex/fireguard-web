@@ -1,6 +1,10 @@
 import { calendarSourceLabelOf } from '../calendar-source-label.utils';
 
 describe('calendarSourceLabelOf', () => {
+  it('retains additional and historical source identifiers as text', () => {
+    expect(calendarSourceLabelOf('external_review')).toBe('external_review');
+    expect(calendarSourceLabelOf('constructor')).toBe('constructor');
+  });
   it('names a standalone event', () => {
     expect(calendarSourceLabelOf('calendar_event')).toBe('Event');
   });

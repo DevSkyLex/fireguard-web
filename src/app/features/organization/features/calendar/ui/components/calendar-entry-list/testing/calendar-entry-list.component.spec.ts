@@ -1,6 +1,8 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { NgIcon } from '@ng-icons/core';
 import type { CalendarFeedItemOutput } from '@features/organization/features/calendar/models';
 import { CalendarEntryList } from '../calendar-entry-list.component';
 
@@ -79,6 +81,28 @@ describe('CalendarEntryList', () => {
     await render([]);
 
     expect(root().querySelectorAll('[data-testid="calendar-day-item"]')).toHaveLength(0);
+  });
+
+  it('renders unfamiliar sources with a neutral registered icon and no event actions', async () => {
+    await render([
+      item({ sourceKey: 'external_review', title: 'External review' }),
+      item({ id: 'historical', sourceKey: 'constructor', title: 'Historical source' }),
+    ]);
+    fixture.componentRef.setInput('canWrite', true);
+    await fixture.whenStable();
+
+    const rows = root().querySelectorAll('[data-testid="calendar-day-item"]');
+    expect(rows[0].textContent).toContain('external_review');
+    expect(rows[1].textContent).toContain('constructor');
+    const icons = fixture.debugElement.queryAll(By.directive(NgIcon));
+    expect(icons.map((icon) => (icon.componentInstance as NgIcon).name())).toEqual([
+      'lucideCalendar',
+      'lucideCalendar',
+    ]);
+    expect(rows[0].querySelector('ng-icon svg')).not.toBeNull();
+    expect(rows[1].querySelector('ng-icon svg')).not.toBeNull();
+    expect(root().querySelector('[data-testid="calendar-day-item-edit"]')).toBeNull();
+    expect(root().querySelector('[data-testid="calendar-day-item-delete"]')).toBeNull();
   });
 
   it('never shows Edit/Delete on a non-event source, even when canWrite is set', async () => {

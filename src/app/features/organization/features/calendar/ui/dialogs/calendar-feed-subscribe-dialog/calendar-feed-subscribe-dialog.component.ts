@@ -18,7 +18,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import { isApiError } from '@core/api/utils';
+import { Subject, takeUntil } from 'rxjs';
+import { isApiError, isIdempotencyOperationCompleted } from '@core/api/utils';
+import { WriteOperationService, type WriteOperationTracker } from '@core/request-state';
+import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { CalendarService } from '@features/organization/features/calendar/data-access';
 import type {
   CalendarFeedTokenOutput,
@@ -58,7 +61,7 @@ type CalendarFeedTokenAction = 'regenerate' | 'revoke';
  * explains the link and offers Generate; right after a generation it shows
  * the full feed URL exactly once — readonly field, Copy with an
  * `aria-live` "Copied" announcement, and the cannot-be-shown-again warning —
- * because the backend keeps only a hash; with an existing token it shows
+ * while ordinary metadata never includes the secret; with an existing token it shows
  * `createdAt`/`lastUsedAt` (via `appOrgDate` and the caller-supplied
  * regional settings) plus Regenerate and Revoke, each behind an in-dialog
  * confirmation step. **Sanctioned deviation from §10.3, documented in
@@ -198,6 +201,77 @@ export class CalendarFeedSubscribeDialog {
   private readonly destroyRef: DestroyRef = inject(DestroyRef);
 
   /**
+   * Property session
+   * @readonly
+   *
+   * @description
+   * Invalidates dialog-owned intentions and secrets when the authenticated session is replaced.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {AuthSessionPort}
+   */
+  private readonly session: AuthSessionPort = inject(AUTH_SESSION_PORT);
+
+  /**
+   * Property writeTracker
+   * @readonly
+   *
+   * @description
+   * Keeps failed token writes under their original identity within this dialog context.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WriteOperationTracker}
+   */
+  private readonly writeTracker: WriteOperationTracker =
+    inject(WriteOperationService).createTracker();
+
+  /**
+   * Property contextEnded
+   * @readonly
+   *
+   * @description
+   * Cancels obsolete reads and prevents responses from a departed dialog context resurfacing
+   * secrets.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {Subject<void>}
+   */
+  private readonly contextEnded: Subject<void> = new Subject<void>();
+
+  /**
+   * Property contextRevision
+   *
+   * @description
+   * Separates organization visits and dialog openings, including a return to the same organization.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {number}
+   */
+  private contextRevision: number = 0;
+
+  /**
+   * Property contextOwner
+   *
+   * @description
+   * Captures the organization and session of the rendered visit so stale controls cannot submit
+   * under a replacement owner before Angular resets the view.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {{ organizationId: string; sessionRevision: number } | null}
+   */
+  private contextOwner: { organizationId: string; sessionRevision: number } | null = null;
+
+  /**
    * Property loading
    * @readonly
    *
@@ -331,17 +405,18 @@ export class CalendarFeedSubscribeDialog {
     effect((): void => {
       const visible: boolean = this.visible();
       const organizationId: string = this.organizationId();
+      const authenticated: boolean = this.session.isAuthenticated();
+      this.session.sessionRevision();
 
       untracked((): void => {
-        if (!visible || !isPlatformBrowser(this.platformId)) return;
-
-        this.secret.set(null);
-        this.metadata.set(null);
-        this.errorMessage.set(null);
-        this.copied.set(false);
-        this.confirming.set(null);
+        this.clearContext();
+        if (!visible || !authenticated || !isPlatformBrowser(this.platformId)) return;
         this.loadMetadata(organizationId);
       });
+    });
+    this.destroyRef.onDestroy((): void => {
+      this.clearContext();
+      this.contextEnded.complete();
     });
   }
   //#endregion
@@ -369,6 +444,7 @@ export class CalendarFeedSubscribeDialog {
 
     if (isOpen === this.visible()) return;
 
+    if (!isOpen) this.clearContext();
     this.visibleChange.emit(isOpen);
   }
 
@@ -387,6 +463,7 @@ export class CalendarFeedSubscribeDialog {
   protected close(): void {
     if (this.busy()) return;
 
+    this.clearContext();
     this.visibleChange.emit(false);
   }
 
@@ -403,7 +480,7 @@ export class CalendarFeedSubscribeDialog {
    * @returns {void}
    */
   protected generate(): void {
-    if (this.busy() || this.loading()) return;
+    if (this.busy() || this.loading() || !this.canSubmit()) return;
 
     this.createToken();
   }
@@ -460,7 +537,7 @@ export class CalendarFeedSubscribeDialog {
    * @returns {void}
    */
   protected confirmAction(): void {
-    if (this.busy()) return;
+    if (this.busy() || !this.canSubmit()) return;
 
     const action: CalendarFeedTokenAction | null = this.confirming();
     if (action === 'regenerate') this.createToken();
@@ -483,7 +560,12 @@ export class CalendarFeedSubscribeDialog {
     const feedUrl: string | undefined = this.secret()?.feedUrl;
     if (!feedUrl || !isPlatformBrowser(this.platformId)) return;
 
-    void navigator.clipboard.writeText(feedUrl).then((): void => this.copied.set(true));
+    const revision: number = this.contextRevision;
+    const organizationId: string = this.organizationId();
+    const sessionRevision: number = this.session.sessionRevision();
+    void navigator.clipboard.writeText(feedUrl).then((): void => {
+      if (this.isCurrentContext(revision, organizationId, sessionRevision)) this.copied.set(true);
+    });
   }
 
   /**
@@ -501,17 +583,21 @@ export class CalendarFeedSubscribeDialog {
    * @returns {void}
    */
   private loadMetadata(organizationId: string): void {
+    const revision: number = this.contextRevision;
+    const sessionRevision: number = this.session.sessionRevision();
     this.loading.set(true);
 
     this.calendarService
       .getFeedTokenMetadata(organizationId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntil(this.contextEnded), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (metadata: CalendarFeedTokenOutput): void => {
+          if (!this.isCurrentContext(revision, organizationId, sessionRevision)) return;
           this.metadata.set(metadata);
           this.loading.set(false);
         },
         error: (error: unknown): void => {
+          if (!this.isCurrentContext(revision, organizationId, sessionRevision)) return;
           this.loading.set(false);
           if (isApiError(error) && error.status === 404) return;
 
@@ -535,24 +621,35 @@ export class CalendarFeedSubscribeDialog {
    * @returns {void}
    */
   private createToken(): void {
+    const revision: number = this.contextRevision;
+    const organizationId: string = this.organizationId();
+    const sessionRevision: number = this.session.sessionRevision();
     this.busy.set(true);
     this.errorMessage.set(null);
 
     this.calendarService
-      .createFeedToken(this.organizationId())
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .createFeedToken(
+        organizationId,
+        this.writeTracker.options('createFeedToken', { organizationId }, revision),
+      )
+      .pipe(takeUntil(this.contextEnded), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (secret: CalendarFeedTokenSecretOutput): void => {
+          if (!this.isCurrentContext(revision, organizationId, sessionRevision)) return;
+          this.writeTracker.complete('createFeedToken');
           this.secret.set(secret);
           this.metadata.set(null);
           this.confirming.set(null);
           this.copied.set(false);
           this.busy.set(false);
         },
-        error: (): void => {
+        error: (error: unknown): void => {
+          if (!this.isCurrentContext(revision, organizationId, sessionRevision)) return;
           this.busy.set(false);
           this.errorMessage.set(
-            $localize`:@@calendar.feedSubscribe.generateError:The link could not be generated. Try again.`,
+            isIdempotencyOperationCompleted(error)
+              ? $localize`:@@calendar.feedSubscribe.replayExpired:The link was generated, but its secure display period has ended. Close and reopen this dialog to check the subscription before explicitly regenerating it.`
+              : $localize`:@@calendar.feedSubscribe.generateError:The link could not be generated. Try again.`,
           );
         },
       });
@@ -571,26 +668,118 @@ export class CalendarFeedSubscribeDialog {
    * @returns {void}
    */
   private revokeToken(): void {
+    const revision: number = this.contextRevision;
+    const organizationId: string = this.organizationId();
+    const sessionRevision: number = this.session.sessionRevision();
     this.busy.set(true);
     this.errorMessage.set(null);
 
     this.calendarService
-      .revokeFeedToken(this.organizationId())
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .revokeFeedToken(
+        organizationId,
+        this.writeTracker.options('revokeFeedToken', { organizationId }, revision),
+      )
+      .pipe(takeUntil(this.contextEnded), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (): void => {
+          if (!this.isCurrentContext(revision, organizationId, sessionRevision)) return;
+          this.writeTracker.complete('revokeFeedToken');
+          this.writeTracker.complete('createFeedToken');
           this.metadata.set(null);
           this.secret.set(null);
           this.confirming.set(null);
           this.busy.set(false);
         },
         error: (): void => {
+          if (!this.isCurrentContext(revision, organizationId, sessionRevision)) return;
           this.busy.set(false);
           this.errorMessage.set(
             $localize`:@@calendar.feedSubscribe.revokeError:The link could not be revoked. Try again.`,
           );
         },
       });
+  }
+
+  /**
+   * Method clearContext
+   * @method clearContext
+   *
+   * @description
+   * Disposes the current dialog visit immediately, without persisting any secret or write identity.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {void}
+   */
+  private clearContext(): void {
+    this.contextRevision++;
+    this.contextOwner = {
+      organizationId: this.organizationId(),
+      sessionRevision: this.session.sessionRevision(),
+    };
+    this.contextEnded.next();
+    this.writeTracker.clear();
+    this.secret.set(null);
+    this.metadata.set(null);
+    this.errorMessage.set(null);
+    this.copied.set(false);
+    this.confirming.set(null);
+    this.loading.set(false);
+    this.busy.set(false);
+  }
+
+  /**
+   * Method isCurrentContext
+   * @method isCurrentContext
+   *
+   * @description
+   * Fences callbacks even before Angular runs the context-reset effect after an input change.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {number} revision - The dialog visit captured when the request started.
+   * @param {string} organizationId - The organization captured when the request started.
+   * @param {number} sessionRevision - The authenticated session captured when the request started.
+   *
+   * @returns {boolean} Whether a response still belongs to this open dialog.
+   */
+  private isCurrentContext(
+    revision: number,
+    organizationId: string,
+    sessionRevision: number,
+  ): boolean {
+    return (
+      revision === this.contextRevision &&
+      this.visible() &&
+      this.session.isAuthenticated() &&
+      this.organizationId() === organizationId &&
+      this.session.sessionRevision() === sessionRevision
+    );
+  }
+
+  /**
+   * Method canSubmit
+   * @method canSubmit
+   *
+   * @description
+   * Accepts a write only from controls rendered for the current open organization and session.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @returns {boolean} Whether the current rendered visit still owns the submission.
+   */
+  private canSubmit(): boolean {
+    return (
+      this.contextOwner !== null &&
+      this.isCurrentContext(
+        this.contextRevision,
+        this.contextOwner.organizationId,
+        this.contextOwner.sessionRevision,
+      )
+    );
   }
   //#endregion
 }

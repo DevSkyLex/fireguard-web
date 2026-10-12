@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import { catchError, EMPTY, expand, reduce, switchMap, type Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { type ApiRequestOptions, HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   FacilityOutput,
@@ -128,10 +128,16 @@ export class FacilityService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {FacilityExportOptions} [options] - The narrowing to apply.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
    * @returns {Observable<Blob>} The export's CSV binary content.
    */
-  public exportCsv(organizationId: string, options?: FacilityExportOptions): Observable<Blob> {
+  public exportCsv(
+    organizationId: string,
+    options?: FacilityExportOptions,
+    requestOptions?: ApiRequestOptions,
+  ): Observable<Blob> {
     const params: NonNullable<RequestOptions['params']> = {};
 
     if (options?.includeArchived) params['includeArchived'] = true;
@@ -147,6 +153,7 @@ export class FacilityService extends HydraApiService {
       this.buildUrl(`${FacilityService.BASE_PATH}/${organizationId}/facilities/export`),
       {
         params: this.buildParams({ params }),
+        headers: this.buildWriteHeaders(requestOptions),
         responseType: 'blob',
         withCredentials: true,
       },
@@ -483,6 +490,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} facilityId - The ID of the facility whose outline is set.
    * @param {SetPlanGeometryInput} input - The geometry to write, or nulls to clear it.
+   * @param {ApiRequestOptions | undefined} options - Identity retained for an unchanged drawing.
    *
    * @returns {Observable<void>} An observable completing once the write lands.
    */
@@ -490,6 +498,7 @@ export class FacilityService extends HydraApiService {
     organizationId: string,
     facilityId: string,
     input: SetPlanGeometryInput,
+    options?: ApiRequestOptions,
   ): Observable<void> {
     return this.http
       .put<void>(
@@ -497,7 +506,7 @@ export class FacilityService extends HydraApiService {
           `${FacilityService.BASE_PATH}/${organizationId}/facilities/${facilityId}/plan-geometry`,
         ),
         input,
-        { headers: this.buildHeaders(), withCredentials: true },
+        { headers: this.buildWriteHeaders(options), withCredentials: true },
       )
       .pipe(catchError(this.handleError));
   }
@@ -538,6 +547,7 @@ export class FacilityService extends HydraApiService {
    * @param {string} organizationId - organization Id value.
    * @param {string} interventionId - intervention Id value.
    * @param {CreateFacilityInput} input - input value.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<FacilityOutput>} Result of the create for intervention operation.
    */
@@ -545,6 +555,7 @@ export class FacilityService extends HydraApiService {
     organizationId: string,
     interventionId: string,
     input: CreateFacilityInput,
+    options?: ApiRequestOptions,
   ): Observable<FacilityOutput> {
     const payload: CreateFacilityInput = {
       ...input,
@@ -555,11 +566,11 @@ export class FacilityService extends HydraApiService {
       return this.put<CreateFacilityInput, FacilityOutput>(
         `/api/facilities/${input.clientId}`,
         payload,
-        { headers: { 'If-None-Match': '*' } },
+        { ...options, headers: { ...options?.headers, 'If-None-Match': '*' } },
       );
     }
 
-    return this.post<CreateFacilityInput, FacilityOutput>('/api/facilities', payload);
+    return this.post<CreateFacilityInput, FacilityOutput>('/api/facilities', payload, options);
   }
 
   /**

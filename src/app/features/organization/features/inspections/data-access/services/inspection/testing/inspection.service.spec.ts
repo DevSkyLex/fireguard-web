@@ -1,6 +1,8 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { retry } from 'rxjs';
+import type { ApiRequestOptions } from '@core/api';
 
 import type { HydraCollection, HydraItem, ApiError } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
@@ -691,4 +693,89 @@ describe('InspectionService', () => {
       req.flush(new Blob(['pdf-bytes'], { type: 'application/pdf' }));
     });
   });
+  const effectfulExports = [
+    {
+      name: 'inspection CSV',
+      url: `${inspectionsBaseUrl}/export`,
+      invoke: (requestOptions?: ApiRequestOptions) =>
+        service.exportCsv(orgId, { result: 'pass' }, requestOptions),
+    },
+    {
+      name: 'non-conformity CSV',
+      url: `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/export`,
+      invoke: (requestOptions?: ApiRequestOptions) =>
+        service.exportNonConformitiesCsv(orgId, { severity: 'critical' }, requestOptions),
+    },
+    {
+      name: 'inspection report PDF',
+      url: `${inspectionsBaseUrl}/${inspectionId}/report`,
+      invoke: (requestOptions?: ApiRequestOptions) =>
+        service.exportReport(orgId, inspectionId, requestOptions),
+    },
+    {
+      name: 'non-conformity report PDF',
+      url: `${mockEnv.apiUrl}/api/organizations/${orgId}/non-conformities/report`,
+      invoke: (requestOptions?: ApiRequestOptions) =>
+        service.exportNonConformitiesReport(orgId, { status: 'open' }, requestOptions),
+    },
+  ];
+
+  it.each(effectfulExports)(
+    'retains one binary GET identity across retries and resubscriptions for $name',
+    ({ url, invoke }) => {
+      const intent = invoke();
+      const received = vi.fn();
+      const content = new Blob(['export-bytes'], { type: 'application/octet-stream' });
+      httpMock.expectNone(url);
+      intent.pipe(retry(1)).subscribe(received);
+
+      const initial = httpMock.expectOne((request) => request.url === url);
+      const key = initial.request.headers.get('Idempotency-Key');
+      expect(key).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      expect(initial.request.method).toBe('GET');
+      expect(initial.request.responseType).toBe('blob');
+      expect(initial.request.body).toBeNull();
+      expect(initial.request.withCredentials).toBe(true);
+      expect(initial.request.params.has('idempotencyKey')).toBe(false);
+      const query = initial.request.params.toString();
+      initial.error(new ProgressEvent('error'));
+
+      const retried = httpMock.expectOne((request) => request.url === url);
+      expect(retried.request.headers.get('Idempotency-Key')).toBe(key);
+      expect(retried.request.params.toString()).toBe(query);
+      retried.flush(content);
+      expect(received).toHaveBeenLastCalledWith(content);
+
+      intent.subscribe(received);
+      const resubscribed = httpMock.expectOne((request) => request.url === url);
+      expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(key);
+      resubscribed.flush(content);
+
+      invoke().subscribe(received);
+      const nextIntent = httpMock.expectOne((request) => request.url === url);
+      expect(nextIntent.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(nextIntent.request.headers.get('Idempotency-Key')).not.toBe(key);
+      nextIntent.flush(content);
+      expect(received).toHaveBeenCalledTimes(3);
+    },
+  );
+
+  it.each(effectfulExports)(
+    'forwards an explicit identity for manual binary GET retries of $name',
+    ({ url, invoke }) => {
+      const requestOptions: ApiRequestOptions = {
+        idempotencyKey: '24316949-d384-4fa7-9f67-6b3af1c4bbce',
+        headers: { 'X-Export-Trace': 'transport-check' },
+      };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        invoke(requestOptions).subscribe();
+        const request = httpMock.expectOne((candidate) => candidate.url === url);
+        expect(request.request.headers.get('Idempotency-Key')).toBe(requestOptions.idempotencyKey);
+        expect(request.request.headers.get('X-Export-Trace')).toBe('transport-check');
+        expect(request.request.params.has('idempotencyKey')).toBe(false);
+        expect(request.request.params.has('headers')).toBe(false);
+        request.flush(new Blob());
+      }
+    },
+  );
 });

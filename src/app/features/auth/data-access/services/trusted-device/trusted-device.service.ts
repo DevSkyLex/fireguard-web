@@ -1,13 +1,13 @@
 import { Service } from '@angular/core';
 import { catchError, type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions } from '@core/api';
+import type { ApiRequestOptions } from '@core/api/models';
 import type { HydraCollection } from '@core/api/models';
 import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/models';
 
 /**
  * Service TrustedDeviceService
  * @class TrustedDeviceService
- * @extends {HydraApiService}
  *
  * @description
  * API service for trusted device management.
@@ -15,7 +15,10 @@ import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/mode
  * and revoke trust.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  *
  * @example
  * ```typescript
@@ -41,7 +44,7 @@ import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/mode
 export class TrustedDeviceService extends HydraApiService {
   //#region Constants
   /**
-   * Constant BASE_PATH
+   * Property BASE_PATH
    * @readonly
    * @static
    *
@@ -68,10 +71,13 @@ export class TrustedDeviceService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<TrustDeviceOutput>} Observable emitting the trust response.
    */
-  public trustDevice(): Observable<TrustDeviceOutput> {
-    return this.postAction<TrustDeviceOutput>(TrustedDeviceService.BASE_PATH);
+  public trustDevice(options?: ApiRequestOptions): Observable<TrustDeviceOutput> {
+    return this.postAction<TrustDeviceOutput>(TrustedDeviceService.BASE_PATH, options);
   }
 
   /**
@@ -84,6 +90,7 @@ export class TrustedDeviceService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {PaginationOptions} [options] - Pagination options (page, itemsPerPage).
+   *
    * @returns {Observable<HydraCollection<TrustedDeviceOutput>>} Observable emitting the collection.
    */
   public list(options?: PaginationOptions): Observable<HydraCollection<TrustedDeviceOutput>> {
@@ -101,11 +108,13 @@ export class TrustedDeviceService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} deviceId - UUID of the device to revoke.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
    *
    * @returns {Observable<void>} Observable completing on success.
    */
-  public revoke(deviceId: string): Observable<void> {
-    return this.delete(`${TrustedDeviceService.BASE_PATH}/${deviceId}`);
+  public revoke(deviceId: string, options?: ApiRequestOptions): Observable<void> {
+    return this.delete(`${TrustedDeviceService.BASE_PATH}/${deviceId}`, options);
   }
 
   /**
@@ -118,12 +127,15 @@ export class TrustedDeviceService extends HydraApiService {
    * @access public
    * @since 1.0.0
    *
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<void>} Observable completing on success.
    */
-  public revokeAll(): Observable<void> {
+  public revokeAll(options?: ApiRequestOptions): Observable<void> {
     return this.http
       .post<void>(this.buildUrl(`${TrustedDeviceService.BASE_PATH}/revoke-all`), null, {
-        headers: this.defaultHeaders,
+        headers: this.buildWriteHeaders(options),
         withCredentials: true,
       })
       .pipe(catchError(this.handleError));

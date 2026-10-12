@@ -1,5 +1,6 @@
 import { inject, Service } from '@angular/core';
 import { IndexedDbService, type IndexedDbSchema } from '@core/indexed-db';
+import { WriteOperationService, type WriteOperation } from '@core/request-state';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import type { InventoryPhysicalCommand } from '@features/organization/features/inventory/models';
 import {
@@ -15,6 +16,20 @@ import {
  */
 @Service()
 export class InventoryCommandRepository extends IndexedDbService {
+  /**
+   * Property writeOperations
+   * @readonly
+   *
+   * @description
+   * Mints receipt identities inside the owning IndexedDB transaction.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WriteOperationService}
+   */
+  private readonly writeOperations: WriteOperationService = inject(WriteOperationService);
+
   /**
    * Property schema
    * @readonly
@@ -159,9 +174,11 @@ export class InventoryCommandRepository extends IndexedDbService {
    *
    * @param {InventoryPhysicalCommand} command - Stable UUID and body.
    *
-   * @returns {Promise<void>} Durable acceptance or explicit local-storage failure.
+   * @returns {Promise<WriteOperation>} Committed receipt identity or explicit local-storage
+   *   failure.
    */
-  public retain(command: InventoryPhysicalCommand): Promise<void> {
+  public retain(command: InventoryPhysicalCommand): Promise<WriteOperation> {
+    const frozen = structuredClone(command);
     const revision = this.sessionRevision();
     const current = () => this.isCurrent(command.userId, command.organizationId, revision);
     const retained = this.writes
@@ -170,13 +187,43 @@ export class InventoryCommandRepository extends IndexedDbService {
         if (!current()) throw new Error('Inventory command ownership changed.');
         await this.ensureOwnerBound(command.userId);
         if (!current()) throw new Error('Inventory command ownership changed.');
-        const id = command.input.clientOperationId;
-        const previous = await this.get<InventoryPhysicalCommand>('commands', id);
-        if (previous && JSON.stringify(previous) !== JSON.stringify(command))
-          throw new Error('Inventory command identity already belongs to a different intention.');
-        await this.put('commands', id, command, current);
+        const id = frozen.input.clientOperationId;
+        let identity: WriteOperation | null = null;
+        await this.updateTransaction(
+          { commands: [id] },
+          (values) => {
+            const previous = values['commands']?.[id] as
+              | InventoryPhysicalCommand
+              | null
+              | undefined;
+            if (
+              previous &&
+              JSON.stringify({ ...previous, idempotencyKey: undefined }) !==
+                JSON.stringify({ ...frozen, idempotencyKey: undefined })
+            )
+              throw new Error(
+                'Inventory command identity already belongs to a different intention.',
+              );
+            identity = {
+              idempotencyKey:
+                previous?.idempotencyKey ||
+                frozen.idempotencyKey ||
+                this.writeOperations.create().idempotencyKey,
+            };
+            return previous?.idempotencyKey
+              ? { commands: [] }
+              : { commands: [{ key: id, value: { ...frozen, ...identity } }] };
+          },
+          current,
+        );
+        if (!current() || identity === null)
+          throw new Error('Inventory command ownership changed.');
+        return identity;
       });
-    this.writes = retained;
+    this.writes = retained.then(
+      () => undefined,
+      () => undefined,
+    );
     return retained;
   }
 

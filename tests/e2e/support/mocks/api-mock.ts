@@ -601,7 +601,7 @@ export class ApiMock {
         '@type': 'PresencePreference',
         topic: `/users/${userId}/presence-preference`,
         token: 'e2e-private-presence',
-        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+        expiresAt: await this.page.evaluate(() => new Date(Date.now() + 3_600_000).toISOString()),
       });
     });
     await this.page.route(/\/api\/presence\/ping$/, async (route) => {
@@ -624,7 +624,7 @@ export class ApiMock {
         '@type': 'Presence',
         topic: `/organizations/${organization}/presence`,
         token: 'e2e-private-presence',
-        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+        expiresAt: await this.page.evaluate(() => new Date(Date.now() + 3_600_000).toISOString()),
       });
     });
     await this.page.route(/\/api\/presence(\?.*)?$/, async (route) => {

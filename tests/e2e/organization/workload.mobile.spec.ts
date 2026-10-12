@@ -101,13 +101,22 @@ for (const dark of [false, true]) {
       await expect(view.detail).toBeVisible();
       await expect(view.detail.getByText('Over capacity by 1 h', { exact: true })).toBeVisible();
       await expect(view.detail.locator('hlm-avatar')).toBeVisible();
-      const metricPositions = await view.detail
+      const metrics = view.detail
         .getByRole('region', { name: 'Daily workload', exact: true })
         .locator('dl')
         .nth(1)
-        .locator('dd')
-        .evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().top));
-      expect(Math.abs(metricPositions[0] - metricPositions[1])).toBeLessThan(1);
+        .locator('dd');
+      await expect(metrics).toHaveCount(2);
+      await expect
+        .poll(async () => {
+          const positions = await metrics.evaluateAll((elements) =>
+            elements.map((element) => element.getBoundingClientRect().top),
+          );
+          return positions.length === 2
+            ? Math.abs(positions[0] - positions[1])
+            : Number.POSITIVE_INFINITY;
+        })
+        .toBeLessThan(1);
       expect(
         await view.detail
           .getByRole('link', { name: 'Emergency pump', exact: true })

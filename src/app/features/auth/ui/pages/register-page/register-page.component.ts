@@ -19,8 +19,7 @@ import { FEDERATED_PROVIDER_ICONS, federatedProviderIcon } from '@features/auth/
 import type { FederatedProvider, RegisterInput } from '@features/auth/models';
 import { FEDERATED_PROVIDER_LABELS } from '@features/auth/options';
 import { FederatedReturnContextService } from '@features/auth/services';
-import { PasswordPolicyStore } from '@features/auth/state';
-import { FederatedAuthStore, RegisterStore } from '@features/auth/state';
+import { FederatedAuthStore, PasswordPolicyStore, RegisterStore } from '@features/auth/state';
 import { PasswordPolicyStatus } from '@features/auth/ui/components/password-policy-status';
 import { RegisterForm, type RegisterFormValues } from '@features/auth/ui/forms';
 import { resolveFederatedAuthErrorMessage, resolveReturnUrl } from '@features/auth/utils';

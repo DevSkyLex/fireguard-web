@@ -160,6 +160,52 @@ describe('MessagingSyncService', () => {
     expect(result.deferred).toBe(1);
   });
 
+  it.each([
+    { code: 'idempotency_conflict', expected: { replayed: 0, deferred: 0, failed: 1 } },
+    { code: 'idempotency_in_progress', expected: { replayed: 0, deferred: 1, failed: 0 } },
+  ])(
+    'retains the original send when receipt $code accompanies a native duplicate',
+    async ({ code, expected }) => {
+      const queued = operation('1', 'c1', 'Saved intention');
+      outbox.list.mockResolvedValue([queued]);
+      messages.postMessageWithClientId.mockReturnValue(
+        throwError(() => ({
+          ...apiError(409),
+          type: '/problems/client-resource-already-exists',
+          code,
+        })),
+      );
+
+      expect(await build().replay()).toEqual(expected);
+      expect(outbox.remove).not.toHaveBeenCalled();
+      expect(messages.list).not.toHaveBeenCalled();
+      expect(outbox.markFailed).toHaveBeenCalledTimes(expected.failed);
+      expect(messages.postMessageWithClientId).toHaveBeenCalledExactlyOnceWith(
+        'c1',
+        queued.payload.clientId,
+        queued.payload.input,
+        { idempotencyKey: queued.idempotencyKey },
+      );
+    },
+  );
+
+  it('retains a successfully sent intention when durable acknowledgement fails', async () => {
+    const queued = operation('1', 'c1', 'Accepted by the server');
+    outbox.list.mockResolvedValue([queued]);
+    outbox.remove.mockRejectedValue(new Error('IndexedDB transaction failed'));
+
+    expect(await build().replay()).toEqual({ replayed: 0, deferred: 1, failed: 0 });
+    expect(outbox.remove).toHaveBeenCalledExactlyOnceWith(queued.id);
+    expect(outbox.markFailed).not.toHaveBeenCalled();
+    expect(messages.postMessageWithClientId).toHaveBeenCalledExactlyOnceWith(
+      'c1',
+      queued.payload.clientId,
+      queued.payload.input,
+      { idempotencyKey: queued.idempotencyKey },
+    );
+    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+  });
+
   it('should treat a replayed client id as done, not as an error', async () => {
     outbox.list.mockResolvedValue([operation('1', 'c1', 'Bien reçu.')]);
     messages.postMessageWithClientId.mockReturnValue(

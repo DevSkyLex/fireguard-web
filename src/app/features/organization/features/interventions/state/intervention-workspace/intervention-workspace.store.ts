@@ -2079,7 +2079,7 @@ export const InterventionWorkspaceStore = signalStore(
               }
 
               return service
-                .uploadAttachment(interventionId, file, fileName, label, workItemId, kind)
+                .uploadAttachment(interventionId, file, fileName, { label, workItemId, kind })
                 .pipe(
                   map((created: InterventionAttachmentOutput) => {
                     const workItem = workItemId

@@ -723,10 +723,12 @@ describe('InterventionSyncService', () => {
       'intervention-1',
       file,
       'photo.jpg',
-      'Extinguisher',
-      'work-item-1',
-      undefined,
-      'client-1',
+      {
+        label: 'Extinguisher',
+        workItemId: 'work-item-1',
+        kind: undefined,
+        clientId: 'client-1',
+      },
       { idempotencyKey: expect.any(String) },
     );
     expect(mockOffline.removeOutbox).toHaveBeenCalledWith('op-1');
@@ -1997,6 +1999,99 @@ describe('InterventionSyncService', () => {
       expect(queued.payload.revision).toBe(2);
       expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
       expect(mockOffline.removeOutbox).toHaveBeenCalledExactlyOnceWith(queued.id);
+    },
+  );
+
+  it.each(['work-item.create', 'change.create'] as const)(
+    'acknowledges completed %s only through its original client UUID without changing the payload or key',
+    async (type) => {
+      const queued =
+        type === 'work-item.create'
+          ? operation('op-created', type, {
+              clientId: 'native-work',
+              intervention: '/api/interventions/intervention-1',
+              action: 'inventory',
+              target: '/api/equipment/equipment-1',
+              source: 'discovered',
+              required: false,
+            })
+          : operation('op-created', type, {
+              clientId: 'native-change',
+              intervention: '/api/interventions/intervention-1',
+              resource: '/api/equipment/equipment-1',
+              patch: { status: 'replaced' },
+            });
+      const write =
+        type === 'work-item.create'
+          ? mockInterventionService.createWorkItem
+          : mockInterventionService.createChange;
+      const read =
+        type === 'work-item.create'
+          ? mockInterventionService.listAllWorkItems
+          : mockInterventionService.listAllChanges;
+      const originalPayload = structuredClone(queued.payload);
+      mockOffline.listOutbox.mockResolvedValue([queued]);
+      write.mockReturnValue(throwError(() => completedExpiry));
+      mockInterventionService.get.mockReturnValue(
+        of({ id: 'intervention-1', organization: '/api/organizations/org-1' }),
+      );
+      read.mockReturnValueOnce(of([{ id: 'another-native-resource' }]));
+      read.mockReturnValueOnce(of([{ id: queued.payload.clientId }]));
+
+      expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(0);
+      expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+      expect(await service.replayOutbox('org-1', 'intervention-1')).toBe(1);
+      expect(write.mock.calls).toEqual([
+        [originalPayload, { idempotencyKey: queued.idempotencyKey }],
+        [originalPayload, { idempotencyKey: queued.idempotencyKey }],
+      ]);
+      expect(queued.payload).toEqual(originalPayload);
+      expect(read.mock.calls).toEqual([['intervention-1'], ['intervention-1']]);
+      expect(mockOffline.removeOutbox).toHaveBeenCalledExactlyOnceWith(queued.id);
+      expect(mockOffline.markOutboxFailed).not.toHaveBeenCalled();
+      expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['work-item.update', 'change.update'] as const)(
+    'retains completed %s when the session changes during its target projection read',
+    async (type) => {
+      const queued =
+        type === 'work-item.update'
+          ? operation('op-target', type, {
+              workItemId: 'native-work',
+              revision: 2,
+              status: 'completed',
+            })
+          : operation('op-target', type, {
+              changeId: 'native-change',
+              revision: 2,
+              status: 'rejected',
+            });
+      const write =
+        type === 'work-item.update'
+          ? mockInterventionService.updateWorkItem
+          : mockInterventionService.updateChange;
+      const read =
+        type === 'work-item.update'
+          ? mockInterventionService.listAllWorkItems
+          : mockInterventionService.listAllChanges;
+      const held = new Subject<{ id: string }[]>();
+      mockOffline.listOutbox.mockResolvedValue([queued]);
+      write.mockReturnValue(throwError(() => completedExpiry));
+      mockInterventionService.get.mockReturnValue(
+        of({ id: 'intervention-1', organization: '/api/organizations/org-1' }),
+      );
+      read.mockReturnValue(held);
+      const pass = service.replayOutbox('org-1', 'intervention-1');
+      await vi.waitFor(() => expect(read).toHaveBeenCalledOnce());
+      revision.set(2);
+      held.next([{ id: type === 'work-item.update' ? 'native-work' : 'native-change' }]);
+
+      expect(await pass).toBe(0);
+      expect(mockOffline.removeOutbox).not.toHaveBeenCalled();
+      expect(mockOffline.markOutboxFailed).not.toHaveBeenCalled();
+      expect(mockOffline.rebaseOutboxRevision).not.toHaveBeenCalled();
     },
   );
 

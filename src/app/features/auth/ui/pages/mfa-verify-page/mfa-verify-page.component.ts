@@ -1,4 +1,3 @@
-import type { WritableSignal } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,6 +8,7 @@ import {
   inject,
   untracked,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ActiveTrustedDeviceStore, AuthStore } from '@features/auth/state';

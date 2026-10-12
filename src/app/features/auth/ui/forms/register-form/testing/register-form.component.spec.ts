@@ -107,6 +107,27 @@ describe('RegisterForm', () => {
     expect(submitted).toHaveBeenCalledWith(VALID);
   });
 
+  it.each([
+    { digit: '0', met: true },
+    { digit: '9', met: true },
+    { digit: '١', met: false },
+    { digit: '１', met: false },
+  ])('keeps digit guidance and submission consistent for $digit', async ({ digit, met }) => {
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    const password = `Strong!Pass${digit}`;
+    const values = { ...VALID, password, confirmPassword: password };
+
+    await fill(fixture, values);
+    await submit(fixture);
+
+    const announcement = fixture.nativeElement.querySelector(
+      '[data-testid="register-password-requirements-announcement"]',
+    ) as HTMLElement;
+    expect(announcement.textContent).toContain(`A digit: ${met ? 'Met' : 'Not met'}`);
+    expect(submitted.mock.calls).toEqual(met ? [[values]] : []);
+  });
+
   it('should render the server error message when account creation failed', async () => {
     fixture.componentRef.setInput('serverError', {
       error: new Error('Email already in use.'),

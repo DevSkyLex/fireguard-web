@@ -320,7 +320,7 @@ export class RegisterForm {
       criteria.push({
         id: 'digit',
         label: $localize`:@@auth.password.requirements.digit:A digit`,
-        matches: (value: string): boolean => /[0-9]/.test(value),
+        matches: (value: string): boolean => /\d/.test(value),
       });
     if (policy.specialCharacters)
       criteria.push({

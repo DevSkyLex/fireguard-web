@@ -1,3 +1,5 @@
+import type { OrganizationPermissionOutput } from './organization-permission-output.interface';
+
 /**
  * Constant ORGANIZATION_PERMISSION
  *
@@ -166,11 +168,12 @@ export const ORGANIZATION_PERMISSION = {
  *
  * @description
  * Backend-owned organization permission name. Known constants remain available while
- * additional permissions can cross the published access boundary.
+ * additional permissions can cross the published access boundary. The API's permission
+ * descriptor defines the identifier accepted by organization permission checks.
  *
  * @type {string}
  */
-export type OrganizationPermissionName = string;
+export type OrganizationPermissionName = OrganizationPermissionOutput['name'];
 
 /**
  * Constant ORGANIZATION_PERMISSION_NAMES

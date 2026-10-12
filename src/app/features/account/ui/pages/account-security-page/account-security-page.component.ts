@@ -16,12 +16,12 @@ import {
 import { Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideTriangleAlert } from '@ng-icons/lucide';
-import { RecoveryCodesStore } from '@features/account/state';
 import {
   AccountDeactivationStore,
   AccountEmailChangeStore,
   AccountPasswordChangeStore,
   AccountTotpEnrollmentStore,
+  RecoveryCodesStore,
   UserStore,
 } from '@features/account/state';
 import { AccountMfaPanel } from '@features/account/ui/components/account-mfa-panel';
@@ -31,11 +31,12 @@ import { AccountTrustedDevicesPanel } from '@features/account/ui/components/acco
 import { AccountDeactivateDialog } from '@features/account/ui/dialogs/account-deactivate-dialog';
 import { AccountEmailChangeDialog } from '@features/account/ui/dialogs/account-email-change-dialog';
 import { AccountPasswordForm, type AccountEmailChangeFormValues } from '@features/account/ui/forms';
-import { PasswordPolicyStore, PasswordPolicyStatus } from '@features/auth';
 import {
   AUTH_SESSION_PORT,
   FederatedConnectionsPanel,
   FederatedPasswordSetupDialog,
+  PasswordPolicyStore,
+  PasswordPolicyStatus,
   resolveFederatedAuthErrorMessage,
   type AuthSessionPort,
   type FederatedProvider,

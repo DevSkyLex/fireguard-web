@@ -415,18 +415,17 @@ export const MessageThreadStore = signalStore(
     }),
   ),
 
-  withMethods(
-    (
-      store,
-      service = inject(MessageService),
-      dispatcher = inject(Dispatcher),
-      outbox = inject(MessagingOutboxRepository),
-      coordinator = inject(MessagingSyncCoordinatorService),
-      writeOperations = inject(WriteOperationService),
-      session = inject(AUTH_SESSION_PORT),
-      memberAccess = inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT),
-      userIdentity = inject<UserIdentityPort>(USER_IDENTITY_PORT),
-    ) => ({
+  withMethods((store) => {
+    const service = inject(MessageService);
+    const dispatcher = inject(Dispatcher);
+    const outbox = inject(MessagingOutboxRepository);
+    const coordinator = inject(MessagingSyncCoordinatorService);
+    const writeOperations = inject(WriteOperationService);
+    const session = inject(AUTH_SESSION_PORT);
+    const memberAccess = inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
+    const userIdentity = inject<UserIdentityPort>(USER_IDENTITY_PORT);
+
+    return {
       /**
        * @description
        * Opens a conversation on its newest messages.
@@ -1119,8 +1118,8 @@ export const MessageThreadStore = signalStore(
 
         await coordinator.flush();
       },
-    }),
-  ),
+    };
+  }),
 
   withComputed((store, mercure = inject(MercureService)) => ({
     /**

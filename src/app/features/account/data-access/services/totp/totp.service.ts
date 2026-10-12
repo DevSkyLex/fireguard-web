@@ -3,14 +3,12 @@ import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
 import type { ApiRequestOptions } from '@core/api/models';
 import type {
-  RecoveryCodesStatusOutput,
-  GenerateRecoveryCodesOutput,
-} from '@features/account/models';
-import type {
   ConfirmTotpInput,
   ConfirmTotpOutput,
   DisableTotpInput,
   DisableTotpOutput,
+  GenerateRecoveryCodesOutput,
+  RecoveryCodesStatusOutput,
   SetupTotpOutput,
 } from '@features/account/models';
 

@@ -1,5 +1,3 @@
-import type { OrganizationQuotaResource } from './organization-quota-resource.model';
-
 /**
  * Interface PlanQuotaOutput
  * @interface PlanQuotaOutput
@@ -11,13 +9,48 @@ import type { OrganizationQuotaResource } from './organization-quota-resource.mo
  */
 export interface PlanQuotaOutput {
   //#region Properties
-  /** @type {OrganizationQuotaResource} */
-  readonly resource: OrganizationQuotaResource;
-  /** @type {string} */
+  /**
+   * Property resource
+   * @readonly
+   *
+   * @description
+   * Open backend identifier for the resource counted by this quota.
+   *
+   * @type {string}
+   */
+  readonly resource: string;
+
+  /**
+   * Property label
+   * @readonly
+   *
+   * @description
+   * Backend-provided display name of the counted resource.
+   *
+   * @type {string}
+   */
   readonly label: string;
-  /** @type {(number | null)} */
+
+  /**
+   * Property limit
+   * @readonly
+   *
+   * @description
+   * Maximum allowed quantity, or null for an unlimited resource.
+   *
+   * @type {number | null}
+   */
   readonly limit: number | null;
-  /** @type {string} */
+
+  /**
+   * Property summary
+   * @readonly
+   *
+   * @description
+   * Backend-provided sentence describing this allowance.
+   *
+   * @type {string}
+   */
   readonly summary: string;
   //#endregion
 }

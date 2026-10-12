@@ -4,7 +4,7 @@ import type { HydraItem } from '@core/api/models';
  * Type FederatedProvider
  *
  * @description
- * External identity providers supported by the Fireguard API contract.
+ * Open provider identifier from the server's public availability descriptor.
  *
  * @version 1.0.0
  *
@@ -12,7 +12,7 @@ import type { HydraItem } from '@core/api/models';
  *
  * @type FederatedProvider
  */
-export type FederatedProvider = string;
+export type FederatedProvider = FederatedProviderOutput['value'];
 
 /**
  * Type FederatedAuthErrorCode
@@ -52,7 +52,8 @@ export type FederatedAuthErrorCode =
  * Type SignInMethod
  *
  * @description
- * Credential families that can remain as a usable sign-in method.
+ * Open credential family reported by the connections transport, including the local password
+ * and configured or historical federated providers.
  *
  * @version 1.0.0
  *
@@ -60,7 +61,7 @@ export type FederatedAuthErrorCode =
  *
  * @type SignInMethod
  */
-export type SignInMethod = FederatedProvider | 'password';
+export type SignInMethod = NonNullable<FederatedConnectionsOutput['last_sign_in_method']>;
 
 /**
  * Interface FederatedProviderOutput
@@ -403,9 +404,9 @@ export interface FederatedConnectionsOutput extends HydraItem {
    * @access public
    * @since 1.0.0
    *
-   * @type {SignInMethod | null}
+   * @type {string | null}
    */
-  readonly last_sign_in_method: SignInMethod | null;
+  readonly last_sign_in_method: string | null;
   /**
    * Property connections
    * @readonly

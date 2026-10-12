@@ -2,8 +2,7 @@ import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { HydraApiService } from '@core/api';
-import type { ApiRequestOptions } from '@core/api/models';
-import type { HydraCollection } from '@core/api/models';
+import type { ApiRequestOptions, HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
   InboxUnreadCountOutput,

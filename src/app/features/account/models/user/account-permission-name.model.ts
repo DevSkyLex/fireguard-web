@@ -1,3 +1,5 @@
+import type { UserProfileOutput } from './user-profile-output.interface';
+
 /**
  * Constant ACCOUNT_PERMISSION
  *
@@ -58,11 +60,12 @@ export const ACCOUNT_PERMISSION = {
  *
  * @description
  * Backend-owned global permission name. Known constants keep autocomplete available while
- * contributed permissions can be checked without changing this declaration.
+ * contributed permissions can be checked without changing this declaration. The profile's
+ * effective permissions define the identifier accepted by permission checks.
  *
  * @type {string}
  */
-export type AccountPermissionName = string;
+export type AccountPermissionName = UserProfileOutput['permissions'][number];
 
 /**
  * Constant ACCOUNT_PERMISSION_NAMES

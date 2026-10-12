@@ -116,6 +116,19 @@ describe('applyPasswordRules', () => {
     expect(passwordForm.password().valid()).toBe(true);
     expect(passwordForm.password().errors()).toEqual([]);
   });
+
+  it.each(['١', '１', '𝟙'])(
+    'requires an ASCII digit instead of %s and preserves the error message',
+    (digit) => {
+      const passwordForm = createForm({ password: `Strong!Password${digit}` });
+      expect(passwordForm.password().errors()).toEqual([
+        expect.objectContaining({ kind: 'digit', message: 'A digit' }),
+      ]);
+      passwordForm.password().value.set('Strong!Password1');
+      expect(passwordForm.password().valid()).toBe(true);
+      expect(passwordForm.password().errors()).toEqual([]);
+    },
+  );
 });
 
 describe('applyPasswordConfirmation', () => {

@@ -1,3 +1,5 @@
+import type { PlanQuotaOutput } from './plan-quota-output.interface';
+
 /**
  * Constant ORGANIZATION_QUOTA_RESOURCE
  *
@@ -21,11 +23,12 @@ export const ORGANIZATION_QUOTA_RESOURCE = {
  *
  * @description
  * Backend-owned identifier for a countable quota resource. Known constants remain available
- * without preventing contributed or historical resources from being displayed.
+ * without preventing contributed or historical resources from being displayed. The plan quota
+ * transport defines the open resource identifier used by quota consumers.
  *
  * @type {string}
  */
-export type OrganizationQuotaResource = string;
+export type OrganizationQuotaResource = PlanQuotaOutput['resource'];
 
 /**
  * Constant ORGANIZATION_QUOTA_RESOURCES

@@ -11,7 +11,6 @@ import {
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, finalize, mergeMap, pipe } from 'rxjs';
-import { WriteOperationService, type WriteOperation } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -21,6 +20,8 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
+  WriteOperationService,
+  type WriteOperation,
 } from '@core/request-state';
 import { UserProfileService } from '@features/account/data-access';
 import type {
@@ -233,11 +234,7 @@ export const AccountProfileEditStore = signalStore(
               if (uploading.has(revision)) return EMPTY;
               uploading.add(revision);
               patchState(store, { avatarCallState: pendingCallState() });
-              if (
-                !avatarAttempt ||
-                avatarAttempt.file !== file ||
-                avatarAttempt.revision !== revision
-              )
+              if (avatarAttempt?.file !== file || avatarAttempt.revision !== revision)
                 avatarAttempt = { file, revision, operation: operations.create() };
               return userProfileService
                 .uploadCurrentAvatar(file, file.name, avatarAttempt.operation)

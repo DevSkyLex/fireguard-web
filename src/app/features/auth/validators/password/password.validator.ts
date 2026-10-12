@@ -64,7 +64,7 @@ export function applyPasswordRules(
         kind: 'lowercase',
         message: $localize`:@@auth.password.requirements.lowercase:A lower case letter`,
       });
-    if (current.requireDigit && !/[0-9]/.test(password))
+    if (current.requireDigit && !/\d/.test(password))
       errors.push({
         kind: 'digit',
         message: $localize`:@@auth.password.requirements.digit:A digit`,

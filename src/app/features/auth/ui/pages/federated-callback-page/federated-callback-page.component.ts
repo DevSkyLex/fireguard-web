@@ -1,5 +1,4 @@
 import { isPlatformBrowser, Location } from '@angular/common';
-import type { WritableSignal } from '@angular/core';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,6 +9,7 @@ import {
   signal,
   untracked,
   type EffectRef,
+  type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';

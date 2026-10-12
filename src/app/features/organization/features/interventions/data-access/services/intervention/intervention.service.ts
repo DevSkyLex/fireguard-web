@@ -980,11 +980,8 @@ export class InterventionService extends HydraApiService {
    * @param {string} interventionId - intervention Id value.
    * @param {Blob} file - file value.
    * @param {string} fileName - file Name value.
-   * @param {string} [label] - optional operator label.
-   * @param {string} [workItemId] - Work item this upload documents, when scoped to one.
-   * @param {InterventionAttachmentKind} [kind] - `'file'` (default) or `'signature'`.
-   * @param {string} [clientId] - Client-generated UUID making an offline replay idempotent (the
-   *   endpoint returns the existing attachment instead of duplicating).
+   * @param {object} [metadata] - Optional multipart label, work item scope, attachment kind and
+   *   client-generated UUID. The UUID retains the attachment's offline identity.
    * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionAttachmentOutput>} The created attachment.
@@ -993,18 +990,20 @@ export class InterventionService extends HydraApiService {
     interventionId: string,
     file: Blob,
     fileName: string,
-    label?: string,
-    workItemId?: string,
-    kind?: InterventionAttachmentKind,
-    clientId?: string,
+    metadata?: {
+      readonly label?: string;
+      readonly workItemId?: string;
+      readonly kind?: InterventionAttachmentKind;
+      readonly clientId?: string;
+    },
     options?: ApiRequestOptions,
   ): Observable<InterventionAttachmentOutput> {
     const body: FormData = new FormData();
     body.set('file', file, fileName);
-    if (label) body.set('label', label);
-    if (workItemId) body.set('workItemId', workItemId);
-    if (kind) body.set('kind', kind);
-    if (clientId) body.set('clientId', clientId);
+    if (metadata?.label) body.set('label', metadata.label);
+    if (metadata?.workItemId) body.set('workItemId', metadata.workItemId);
+    if (metadata?.kind) body.set('kind', metadata.kind);
+    if (metadata?.clientId) body.set('clientId', metadata.clientId);
 
     return this.http.post<InterventionAttachmentOutput>(
       this.buildUrl(`/api/interventions/${interventionId}/attachments`),

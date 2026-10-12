@@ -86,7 +86,10 @@ export class WriteOperationService {
       const record = value as Record<string, unknown>;
       return Object.fromEntries(
         Object.keys(record)
-          .toSorted()
+          .toSorted((left, right) => {
+            if (left < right) return -1;
+            return left > right ? 1 : 0;
+          })
           .map((key) => [key, record[key]]),
       );
     });

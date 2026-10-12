@@ -53,4 +53,26 @@ describe('WriteOperationService', () => {
     expect(() => first.options('upload', new Blob(['contents']), 1)).toThrow(TypeError);
     expect(() => first.options('upload', new FormData(), 1)).toThrow(TypeError);
   });
+
+  it('retains distinct Unicode wire keys across property reorderings and preserves array order', () => {
+    const tracker = new WriteOperationService().createTracker();
+    const entries = [
+      ['é', 'composed'],
+      ['e\u0301', 'decomposed'],
+      ['\u{10000}', 'supplementary'],
+      ['\uE000', 'private-use'],
+    ] as const;
+    const first = tracker.options(
+      'save',
+      { details: Object.fromEntries(entries), values: ['é', 'e\u0301'] },
+      1,
+    );
+    const reordered = Object.fromEntries(entries.toReversed());
+    expect(tracker.options('save', { values: ['é', 'e\u0301'], details: reordered }, 1)).toBe(
+      first,
+    );
+    expect(
+      tracker.options('save', { details: reordered, values: ['e\u0301', 'é'] }, 1).idempotencyKey,
+    ).not.toBe(first.idempotencyKey);
+  });
 });

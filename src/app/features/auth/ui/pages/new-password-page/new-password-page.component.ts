@@ -1,8 +1,13 @@
-import type { EffectRef } from '@angular/core';
-import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  untracked,
+  type EffectRef,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { PasswordPolicyStore } from '@features/auth/state';
-import { PasswordResetStore } from '@features/auth/state';
+import { PasswordPolicyStore, PasswordResetStore } from '@features/auth/state';
 import { PasswordPolicyStatus } from '@features/auth/ui/components/password-policy-status';
 import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';

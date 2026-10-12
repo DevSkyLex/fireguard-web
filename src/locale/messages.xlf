@@ -174,28 +174,28 @@
         <source>Your profile has been updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/state/profile-edit/account-profile-edit.store.ts</context>
-          <context context-type="linenumber">192</context>
+          <context context-type="linenumber">193</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.profile.saveError" datatype="html">
         <source>Your profile could not be updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/state/profile-edit/account-profile-edit.store.ts</context>
-          <context context-type="linenumber">205</context>
+          <context context-type="linenumber">206</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.avatar.uploaded" datatype="html">
         <source>Your picture has been updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/state/profile-edit/account-profile-edit.store.ts</context>
-          <context context-type="linenumber">265</context>
+          <context context-type="linenumber">262</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.avatar.uploadError" datatype="html">
         <source>Your picture could not be uploaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/account/state/profile-edit/account-profile-edit.store.ts</context>
-          <context context-type="linenumber">278</context>
+          <context context-type="linenumber">275</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.mfa.setupError" datatype="html">
@@ -3112,14 +3112,14 @@
         <source>Enter the code we emailed you</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/dialogs/federated-password-setup-dialog/federated-password-setup-dialog.component.ts</context>
-          <context context-type="linenumber">332</context>
+          <context context-type="linenumber">331</context>
         </context-group>
       </trans-unit>
       <trans-unit id="account.signInMethods.codePattern" datatype="html">
         <source>Enter the six-digit code</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/auth/ui/dialogs/federated-password-setup-dialog/federated-password-setup-dialog.component.ts</context>
-          <context context-type="linenumber">336</context>
+          <context context-type="linenumber">335</context>
         </context-group>
       </trans-unit>
       <trans-unit id="auth.logout.pending.title" datatype="html">
@@ -13877,14 +13877,14 @@
         <source>The model action could not be completed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-models/facility-models.store.ts</context>
-          <context context-type="linenumber">223</context>
+          <context context-type="linenumber">220</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.model.uploadType" datatype="html">
         <source>Choose an autonomous GLB file no larger than 10 MiB.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-models/facility-models.store.ts</context>
-          <context context-type="linenumber">370</context>
+          <context context-type="linenumber">362</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/components/facility-model-manager/facility-model-manager.component.ts</context>
@@ -13902,7 +13902,7 @@
         <source>Draw a polygon with non-zero area and no crossing edges.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">617</context>
+          <context context-type="linenumber">611</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/ui/dialogs/facility-plan-zone-geometry-dialog/facility-plan-zone-geometry-dialog.component.ts</context>
@@ -13913,77 +13913,77 @@
         <source>Zone outline cleared</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">659</context>
+          <context context-type="linenumber">653</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.toast.zoneSaved" datatype="html">
         <source>Zone outline saved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">660</context>
+          <context context-type="linenumber">654</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.error.zoneSaveFailed" datatype="html">
         <source>Failed to save the zone outline</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">704</context>
+          <context context-type="linenumber">698</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.toast.pinRemoved" datatype="html">
         <source>Equipment removed from plan</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">795</context>
+          <context context-type="linenumber">787</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.toast.pinSaved" datatype="html">
         <source>Equipment position saved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">796</context>
+          <context context-type="linenumber">788</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.error.pinSaveFailed" datatype="html">
         <source>Failed to save the equipment position</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">840</context>
+          <context context-type="linenumber">832</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.saved" datatype="html">
         <source>Floor plan calibration saved</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">979</context>
+          <context context-type="linenumber">970</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.calibration.failed" datatype="html">
         <source>Could not save the floor plan calibration</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">994</context>
+          <context context-type="linenumber">984</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.toast.uploaded" datatype="html">
         <source>Floor plan uploaded</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">1119</context>
+          <context context-type="linenumber">1107</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.toast.primarySet" datatype="html">
         <source>Primary plan updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">1193</context>
+          <context context-type="linenumber">1181</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.toast.deleted" datatype="html">
         <source>Floor plan deleted</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/features/facilities/state/facility-plans/facility-plans.store.ts</context>
-          <context context-type="linenumber">1247</context>
+          <context context-type="linenumber">1235</context>
         </context-group>
       </trans-unit>
       <trans-unit id="facility.plans.editor.error.zoneConflict" datatype="html">
@@ -35682,112 +35682,112 @@
         <source>The organization settings have been updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">246</context>
+          <context context-type="linenumber">243</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.saveError" datatype="html">
         <source>The settings could not be saved.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">259</context>
+          <context context-type="linenumber">256</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logoDetail" datatype="html">
         <source>The organization logo has been updated.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">327</context>
+          <context context-type="linenumber">324</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logoError" datatype="html">
         <source>The logo could not be uploaded.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">340</context>
+          <context context-type="linenumber">337</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logoRemovedDetail" datatype="html">
         <source>The organization logo has been removed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">399</context>
+          <context context-type="linenumber">396</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.logoRemoveError" datatype="html">
         <source>The logo could not be removed.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">412</context>
+          <context context-type="linenumber">409</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.transferOwnershipDetail" datatype="html">
         <source>Ownership has been transferred.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">462</context>
+          <context context-type="linenumber">459</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.transferOwnershipError" datatype="html">
         <source>Ownership could not be transferred.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">475</context>
+          <context context-type="linenumber">472</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.suspendedDetail" datatype="html">
         <source>The organization has been suspended.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">521</context>
+          <context context-type="linenumber">518</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.suspendError" datatype="html">
         <source>The organization could not be suspended.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">534</context>
+          <context context-type="linenumber">531</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.restoredDetail" datatype="html">
         <source>The organization has been restored.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">579</context>
+          <context context-type="linenumber">576</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.restoreError" datatype="html">
         <source>The organization could not be restored.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">592</context>
+          <context context-type="linenumber">589</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.leftDetail" datatype="html">
         <source>You have left the organization.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">640</context>
+          <context context-type="linenumber">637</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.leaveError" datatype="html">
         <source>You could not leave this organization.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">653</context>
+          <context context-type="linenumber">650</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.deletedDetail" datatype="html">
         <source>The organization has been permanently deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">696</context>
+          <context context-type="linenumber">693</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.settings.deleteError" datatype="html">
         <source>The organization could not be deleted.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/features/organization/state/organization-settings/organization-settings.store.ts</context>
-          <context context-type="linenumber">709</context>
+          <context context-type="linenumber">706</context>
         </context-group>
       </trans-unit>
       <trans-unit id="org.teams.toast.mutationFailed" datatype="html">

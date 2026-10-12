@@ -322,7 +322,7 @@ export class InterventionSyncService {
    */
   public async replayOutbox(organizationId: string, interventionId: string): Promise<number> {
     const activeReplay = this.activeReplays.get(interventionId);
-    if (activeReplay) return activeReplay;
+    if (activeReplay !== undefined) return activeReplay;
 
     const replay = this.replayInterventionOutbox(organizationId, interventionId).finally(() => {
       if (this.activeReplays.get(interventionId) === replay)
@@ -575,15 +575,7 @@ export class InterventionSyncService {
       response.error?.detail ??
       (error instanceof Error ? error.message : 'The server rejected this operation.');
     if (isIdempotencyOperationCompleted(error)) {
-      try {
-        await this.reconcileCompletedOperation(organizationId, operation, isCurrent);
-        if (!isCurrent()) return 'blocked';
-        await this.offline.removeOutbox(operation.id);
-        return isCurrent() ? 'applied' : 'blocked';
-      } catch {
-        this.block(operation, blocked.transient);
-        return 'blocked';
-      }
+      return this.acknowledgeCompletedOperation(organizationId, operation, blocked, isCurrent);
     }
     const receiptFailure = getIdempotencyErrorCode(error);
     if (receiptFailure === 'idempotency_in_progress') {
@@ -624,6 +616,41 @@ export class InterventionSyncService {
       return 'blocked';
     }
     throw error;
+  }
+
+  /**
+   * Method acknowledgeCompletedOperation
+   * @method acknowledgeCompletedOperation
+   *
+   * @description
+   * Removes a completed intent only after current-owner reconciliation succeeds. Failed reads or
+   * device acknowledgements retain the original operation for a later replay.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the completed projection.
+   * @param {InterventionOutboxOperation} operation - Completed intent with its original identity.
+   * @param {BlockedResources} blocked - Resource blockers for this replay cycle.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<'applied' | 'blocked'>} Guarded acknowledgement disposition.
+   */
+  private async acknowledgeCompletedOperation(
+    organizationId: string,
+    operation: InterventionOutboxOperation,
+    blocked: BlockedResources,
+    isCurrent: () => boolean,
+  ): Promise<'applied' | 'blocked'> {
+    try {
+      await this.reconcileCompletedOperation(organizationId, operation, isCurrent);
+      if (!isCurrent()) return 'blocked';
+      await this.offline.removeOutbox(operation.id);
+      return isCurrent() ? 'applied' : 'blocked';
+    } catch {
+      this.block(operation, blocked.transient);
+      return 'blocked';
+    }
   }
 
   /**
@@ -668,47 +695,14 @@ export class InterventionSyncService {
         return;
       case 'time-entry.create':
       case 'time-entry.correct':
-      case 'time-entry.cancel': {
-        const current = await this.readCurrentReplay(
-          this.time.getEntry(operation.payload.workItemId, operation.payload.id),
-          isCurrent,
-        );
-        if (current.entry?.id !== operation.payload.id)
-          throw new Error('The completed time entry is unavailable.');
-        await this.readCurrentReplay(
-          this.service.listAllWorkItems(operation.interventionId),
-          isCurrent,
-        );
-        return;
-      }
+      case 'time-entry.cancel':
+        return this.reconcileCompletedTimeEntry(operation, isCurrent);
       case 'work-item.create':
-      case 'work-item.update': {
-        const rows = await this.readCurrentReplay(
-          this.service.listAllWorkItems(operation.interventionId),
-          isCurrent,
-        );
-        const target =
-          operation.type === 'work-item.create'
-            ? operation.payload.clientId
-            : operation.payload.workItemId;
-        if (!rows.some((row) => row.id === target))
-          throw new Error('The completed work item is unavailable.');
-        return;
-      }
+      case 'work-item.update':
+        return this.reconcileCompletedWorkItem(operation, isCurrent);
       case 'change.create':
-      case 'change.update': {
-        const rows = await this.readCurrentReplay(
-          this.service.listAllChanges(operation.interventionId),
-          isCurrent,
-        );
-        const target =
-          operation.type === 'change.create'
-            ? operation.payload.clientId
-            : operation.payload.changeId;
-        if (!rows.some((row) => row.id === target))
-          throw new Error('The completed change is unavailable.');
-        return;
-      }
+      case 'change.update':
+        return this.reconcileCompletedChange(operation, isCurrent);
       case 'facility.create':
         if (!operation.payload.clientId)
           throw new Error('The completed facility identity is unavailable.');
@@ -752,6 +746,113 @@ export class InterventionSyncService {
         );
         return;
     }
+  }
+
+  /**
+   * Method reconcileCompletedTimeEntry
+   * @method reconcileCompletedTimeEntry
+   *
+   * @description
+   * Acquires the exact journal entry and its intervention work-item projection before acknowledging
+   * a completed journal write.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionOutboxOperationFor<
+   *   'time-entry.create' | 'time-entry.correct' | 'time-entry.cancel'
+   * >} operation
+   *   - Completed journal intent with its original entry identity.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<void>} Completes after both current-owner reads succeed.
+   */
+  private async reconcileCompletedTimeEntry(
+    operation: InterventionOutboxOperationFor<
+      'time-entry.create' | 'time-entry.correct' | 'time-entry.cancel'
+    >,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    const current = await this.readCurrentReplay(
+      this.time.getEntry(operation.payload.workItemId, operation.payload.id),
+      isCurrent,
+    );
+    if (current.entry?.id !== operation.payload.id)
+      throw new Error('The completed time entry is unavailable.');
+    await this.readCurrentReplay(
+      this.service.listAllWorkItems(operation.interventionId),
+      isCurrent,
+    );
+  }
+
+  /**
+   * Method reconcileCompletedWorkItem
+   * @method reconcileCompletedWorkItem
+   *
+   * @description
+   * Verifies the original create or update target exists in the authorized current work items
+   * without rebasing the queued intent.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionOutboxOperationFor<'work-item.create'>
+   *   | InterventionOutboxOperationFor<'work-item.update'>} operation
+   *   - Completed work-item intent.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<void>} Completes only when the exact native target is available.
+   */
+  private async reconcileCompletedWorkItem(
+    operation:
+      | InterventionOutboxOperationFor<'work-item.create'>
+      | InterventionOutboxOperationFor<'work-item.update'>,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    const rows = await this.readCurrentReplay(
+      this.service.listAllWorkItems(operation.interventionId),
+      isCurrent,
+    );
+    const target =
+      operation.type === 'work-item.create'
+        ? operation.payload.clientId
+        : operation.payload.workItemId;
+    if (!rows.some((row) => row.id === target))
+      throw new Error('The completed work item is unavailable.');
+  }
+
+  /**
+   * Method reconcileCompletedChange
+   * @method reconcileCompletedChange
+   *
+   * @description
+   * Verifies the original create or update target exists in the authorized current changes
+   * without rebasing the queued intent.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionOutboxOperationFor<'change.create'>
+   *   | InterventionOutboxOperationFor<'change.update'>} operation
+   *   - Completed change intent.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<void>} Completes only when the exact native target is available.
+   */
+  private async reconcileCompletedChange(
+    operation:
+      | InterventionOutboxOperationFor<'change.create'>
+      | InterventionOutboxOperationFor<'change.update'>,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    const rows = await this.readCurrentReplay(
+      this.service.listAllChanges(operation.interventionId),
+      isCurrent,
+    );
+    const target =
+      operation.type === 'change.create' ? operation.payload.clientId : operation.payload.changeId;
+    if (!rows.some((row) => row.id === target))
+      throw new Error('The completed change is unavailable.');
   }
 
   /**
@@ -1152,10 +1253,12 @@ export class InterventionSyncService {
         operation.interventionId,
         file,
         fileName,
-        operation.payload.label,
-        operation.payload.workItemId,
-        operation.payload.kind,
-        operation.payload.clientId,
+        {
+          label: operation.payload.label,
+          workItemId: operation.payload.workItemId,
+          kind: operation.payload.kind,
+          clientId: operation.payload.clientId,
+        },
         { idempotencyKey: operation.idempotencyKey },
       ),
     );

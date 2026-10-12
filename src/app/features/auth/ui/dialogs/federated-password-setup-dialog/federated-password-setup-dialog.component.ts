@@ -21,8 +21,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert } from '@ng-icons/lucide';
 import type { BrnDialogState } from '@spartan-ng/brain/dialog';
-import type { PasswordPolicyOutput } from '@features/auth/models';
-import type { PasswordSetupConfirmInput } from '@features/auth/models';
+import type { PasswordPolicyOutput, PasswordSetupConfirmInput } from '@features/auth/models';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';

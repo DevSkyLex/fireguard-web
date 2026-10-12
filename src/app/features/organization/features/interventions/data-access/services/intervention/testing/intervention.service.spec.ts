@@ -817,7 +817,7 @@ describe('InterventionService', () => {
     const file = new Blob(['data'], { type: 'image/jpeg' });
 
     service
-      .uploadAttachment('intervention-1', file, 'evidence.jpg', undefined, 'work-item-1')
+      .uploadAttachment('intervention-1', file, 'evidence.jpg', { workItemId: 'work-item-1' })
       .subscribe();
 
     const request = httpMock.expectOne(
@@ -842,6 +842,90 @@ describe('InterventionService', () => {
     const body = request.request.body as FormData;
     expect(body.has('workItemId')).toBe(false);
     request.flush({});
+  });
+
+  it('retains multipart metadata and transport preconditions across retry and resubscription', async () => {
+    const file = new Blob(['signed evidence'], { type: 'image/png' });
+    const metadata = {
+      label: 'Inspection proof',
+      workItemId: 'work-item-1',
+      kind: 'signature' as const,
+      clientId: '083ce37c-9ffb-4566-8e68-ae46b2e07cb0',
+    };
+    const options: ApiRequestOptions = {
+      idempotencyKey: 'c74b72a6-334b-429e-8b4a-44a8f9311396',
+      headers: {
+        'If-Match': '"revision-3"',
+        'X-Upload-Trace': 'unchanged-upload',
+        'Content-Type': 'application/json',
+      },
+    };
+    const upload = service.uploadAttachment(
+      'intervention-1',
+      file,
+      'completion.png',
+      metadata,
+      options,
+    );
+    const received = vi.fn();
+    const uploadedContents: Promise<string>[] = [];
+    upload.pipe(retry(1)).subscribe(received);
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt === 2) upload.subscribe(received);
+      const request = httpMock.expectOne(
+        `${mockEnv.apiUrl}/api/interventions/intervention-1/attachments`,
+      );
+      expect(request.request.method).toBe('POST');
+      expect(request.request.withCredentials).toBe(true);
+      expect(request.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+      expect(request.request.headers.get('If-Match')).toBe('"revision-3"');
+      expect(request.request.headers.get('X-Upload-Trace')).toBe('unchanged-upload');
+      expect(request.request.headers.has('Content-Type')).toBe(false);
+      const body = request.request.body as FormData;
+      expect([...body.keys()]).toEqual(['file', 'label', 'workItemId', 'kind', 'clientId']);
+      expect(body.get('label')).toBe(metadata.label);
+      expect(body.get('workItemId')).toBe(metadata.workItemId);
+      expect(body.get('kind')).toBe(metadata.kind);
+      expect(body.get('clientId')).toBe(metadata.clientId);
+      const uploaded = body.get('file');
+      expect(uploaded).toBeInstanceOf(File);
+      if (!(uploaded instanceof File)) throw new TypeError('Expected uploaded file');
+      expect(uploaded.name).toBe('completion.png');
+      expect(uploaded.type).toBe(file.type);
+      uploadedContents.push(uploaded.text());
+      if (attempt === 0) request.error(new ProgressEvent('error'));
+      else request.flush({ id: 'attachment-1' });
+    }
+    expect(await Promise.all(uploadedContents)).toEqual([
+      'signed evidence',
+      'signed evidence',
+      'signed evidence',
+    ]);
+    expect(received).toHaveBeenCalledTimes(2);
+  });
+
+  it('omits empty optional multipart metadata while retaining non-empty whitespace labels', () => {
+    const file = new Blob(['data'], { type: 'image/jpeg' });
+    service
+      .uploadAttachment('intervention-1', file, 'evidence.jpg', {
+        label: '',
+        workItemId: '',
+        clientId: '',
+      })
+      .subscribe();
+    const omitted = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/interventions/intervention-1/attachments`,
+    );
+    expect([...(omitted.request.body as FormData).keys()]).toEqual(['file']);
+    omitted.flush({});
+
+    service.uploadAttachment('intervention-1', file, 'evidence.jpg', { label: ' ' }).subscribe();
+    const whitespace = httpMock.expectOne(
+      `${mockEnv.apiUrl}/api/interventions/intervention-1/attachments`,
+    );
+    expect((whitespace.request.body as FormData).get('label')).toBe(' ');
+    whitespace.flush({});
   });
 
   it('lists attachments narrowed to one work item via the workItem query param', () => {

@@ -336,40 +336,88 @@ export class MessagingSyncService {
 
       return 'done';
     } catch (error: unknown) {
-      if (!isCurrent()) return 'obsolete';
-      const status: number = isApiError(error) ? error.status : 0;
-      if (isIdempotencyOperationCompleted(error)) {
-        try {
-          await this.reconcileCompletedSend(operation, isCurrent);
-          if (!isCurrent()) return 'obsolete';
-          await this.outbox.remove(operation.id);
-          return isCurrent() ? 'done' : 'obsolete';
-        } catch {
-          return isCurrent() ? 'defer' : 'obsolete';
-        }
-      }
-      const receiptFailure = getIdempotencyErrorCode(error);
-      if (receiptFailure === 'idempotency_in_progress') return 'defer';
-      if (receiptFailure) {
-        await this.outbox.markFailed(operation.id, describe(error, status));
-        return 'failed';
-      }
+      return this.classifyReplayFailure(operation, isCurrent, error);
+    }
+  }
 
-      if (
-        status === 409 &&
-        isApiError(error) &&
-        error.type === '/problems/client-resource-already-exists'
-      ) {
-        await this.outbox.remove(operation.id);
-
-        return 'done';
-      }
-
-      if (status === 0 || status >= 500 || status === 429) return 'defer';
-
+  /**
+   * Method classifyReplayFailure
+   * @method classifyReplayFailure
+   *
+   * @description
+   * Applies receipt proofs before native duplicate acknowledgements or transport retry policy.
+   * Queue consequences remain owned by the initiating session and workspace.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {MessagingOutboxOperation} operation - Original durable send and its identities.
+   * @param {() => boolean} isCurrent - Original replay ownership guard.
+   * @param {unknown} error - Rejected send or failed durable acknowledgement.
+   *
+   * @returns {Promise<'done' | 'defer' | 'failed' | 'obsolete'>} Replay disposition.
+   */
+  private async classifyReplayFailure(
+    operation: MessagingOutboxOperation,
+    isCurrent: () => boolean,
+    error: unknown,
+  ): Promise<'done' | 'defer' | 'failed' | 'obsolete'> {
+    if (!isCurrent()) return 'obsolete';
+    const status: number = isApiError(error) ? error.status : 0;
+    if (isIdempotencyOperationCompleted(error)) {
+      return this.acknowledgeCompletedSend(operation, isCurrent);
+    }
+    const receiptFailure = getIdempotencyErrorCode(error);
+    if (receiptFailure === 'idempotency_in_progress') return 'defer';
+    if (receiptFailure) {
       await this.outbox.markFailed(operation.id, describe(error, status));
-
       return 'failed';
+    }
+
+    if (
+      status === 409 &&
+      isApiError(error) &&
+      error.type === '/problems/client-resource-already-exists'
+    ) {
+      await this.outbox.remove(operation.id);
+
+      return 'done';
+    }
+
+    if (status === 0 || status >= 500 || status === 429) return 'defer';
+
+    await this.outbox.markFailed(operation.id, describe(error, status));
+
+    return 'failed';
+  }
+
+  /**
+   * Method acknowledgeCompletedSend
+   * @method acknowledgeCompletedSend
+   *
+   * @description
+   * Reconciles an authoritative completion proof before removing the durable intention.
+   * Unavailable owner projections or failed removal retain the original pending send.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {MessagingOutboxOperation} operation - Completed send retaining its native message id.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<'done' | 'defer' | 'obsolete'>} Acknowledgement or retained intent.
+   */
+  private async acknowledgeCompletedSend(
+    operation: MessagingOutboxOperation,
+    isCurrent: () => boolean,
+  ): Promise<'done' | 'defer' | 'obsolete'> {
+    try {
+      await this.reconcileCompletedSend(operation, isCurrent);
+      if (!isCurrent()) return 'obsolete';
+      await this.outbox.remove(operation.id);
+      return isCurrent() ? 'done' : 'obsolete';
+    } catch {
+      return isCurrent() ? 'defer' : 'obsolete';
     }
   }
 

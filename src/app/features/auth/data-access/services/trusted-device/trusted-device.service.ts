@@ -1,8 +1,7 @@
 import { Service } from '@angular/core';
 import { catchError, type Observable } from 'rxjs';
 import { HydraApiService, type PaginationOptions } from '@core/api';
-import type { ApiRequestOptions } from '@core/api/models';
-import type { HydraCollection } from '@core/api/models';
+import type { ApiRequestOptions, HydraCollection } from '@core/api/models';
 import type { TrustDeviceOutput, TrustedDeviceOutput } from '@features/auth/models';
 
 /**

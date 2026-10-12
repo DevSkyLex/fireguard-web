@@ -4,8 +4,8 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, finalize, mergeMap, pipe, switchMap, tap } from 'rxjs';
-import { WriteOperationService } from '@core/request-state';
 import {
+  WriteOperationService,
   errorCallState,
   idleCallState,
   pendingCallState,
